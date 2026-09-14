@@ -1,0 +1,52 @@
+//@version=6
+indicator("Astra Universal Signal Bridge", overlay = true)
+
+// Example entry logic. Replace these conditions with your own indicator signals.
+fastLength = input.int(9, "Fast EMA", minval = 1)
+slowLength = input.int(21, "Slow EMA", minval = 2)
+atrLength = input.int(14, "ATR Length", minval = 1)
+slAtr = input.float(1.5, "Stop loss ATR", minval = 0.1)
+tpAtr = input.float(3.0, "Take profit ATR", minval = 0.1)
+broker = input.string("Binance Global", "Broker", options = ["Binance Global", "Binance TH", "InnovestX", "MT5", "Settrade"])
+riskPercent = input.float(0.5, "Risk % equity", minval = 0.01, maxval = 100)
+newsRisk = input.bool(false, "High-impact news active")
+
+fast = ta.ema(close, fastLength)
+slow = ta.ema(close, slowLength)
+atr = ta.atr(atrLength)
+volatilityPercent = atr / close * 100
+buySignal = ta.crossover(fast, slow)
+sellSignal = ta.crossunder(fast, slow)
+
+var bool inPosition = false
+var float trackedEntry = na
+var float trackedSl = na
+var float trackedTp = na
+
+jsonNumber(float value) => na(value) ? "null" : str.tostring(value, format.mintick)
+message(string eventName, string sideName, float entryValue, float slValue, float tpValue, bool reduceOnly) =>
+    tradeId = syminfo.ticker + "-" + eventName + "-" + str.tostring(timenow)
+    "{\"trade_id\":\"" + tradeId + "\",\"broker\":\"" + broker + "\",\"symbol\":\"" + syminfo.ticker + "\",\"timeframe\":\"" + timeframe.period + "\",\"event\":\"" + eventName + "\",\"side\":\"" + sideName + "\",\"order_type\":\"MARKET\",\"risk_mode\":\"PERCENT_EQUITY\",\"risk_value\":" + str.tostring(riskPercent) + ",\"entry\":" + jsonNumber(entryValue) + ",\"sl\":" + jsonNumber(slValue) + ",\"tp\":" + jsonNumber(tpValue) + ",\"reduce_only\":" + str.tostring(reduceOnly) + ",\"volatility_percent\":" + str.tostring(volatilityPercent) + ",\"news_risk\":" + str.tostring(newsRisk) + ",\"leverage\":1,\"timestamp\":" + str.tostring(timenow) + "}"
+
+if barstate.isconfirmed
+    if not inPosition and buySignal
+        trackedEntry := close
+        trackedSl := close - atr * slAtr
+        trackedTp := close + atr * tpAtr
+        inPosition := true
+        alert(message("BUY", "BUY", trackedEntry, trackedSl, trackedTp, false), alert.freq_once_per_bar_close)
+    else if inPosition and low <= trackedSl
+        alert(message("SL", "SELL", close, trackedSl, trackedTp, true), alert.freq_once_per_bar_close)
+        inPosition := false
+    else if inPosition and high >= trackedTp
+        alert(message("TP", "SELL", close, trackedSl, trackedTp, true), alert.freq_once_per_bar_close)
+        inPosition := false
+    else if inPosition and sellSignal
+        alert(message("SELL", "SELL", close, trackedSl, trackedTp, true), alert.freq_once_per_bar_close)
+        inPosition := false
+
+plot(fast, "Fast EMA", color = color.aqua)
+plot(slow, "Slow EMA", color = color.orange)
+plot(inPosition ? trackedSl : na, "SL", color = color.red, style = plot.style_linebr)
+plot(inPosition ? trackedTp : na, "TP", color = color.lime, style = plot.style_linebr)
+plotshape(buySignal and not inPosition[1], title = "BUY", style = shape.labelup, text = "BUY", color = color.lime, location = location.belowbar)

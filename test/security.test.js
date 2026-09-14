@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {hashPassword,verifyPassword,encryptJson,decryptJson} from '../src/security.js';
+test('passwords are salted and verified',async()=>{const hash=await hashPassword('very-secure-password');assert.equal(await verifyPassword('very-secure-password',hash),true);assert.equal(await verifyPassword('wrong-password',hash),false);assert.doesNotMatch(hash,/very-secure-password/);});
+test('broker credentials use authenticated encryption',()=>{const key='1'.repeat(64),encrypted=encryptJson({apiKey:'secret-key'},key);assert.doesNotMatch(encrypted,/secret-key/);assert.deepEqual(decryptJson(encrypted,key),{apiKey:'secret-key'});assert.throws(()=>decryptJson(encrypted,'2'.repeat(64)));});
