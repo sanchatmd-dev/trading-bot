@@ -13,6 +13,8 @@ import {executeOrder,validateCredentials} from '../src/adapters/registry.js';
 import {DatabaseSync} from 'node:sqlite';
 import {backupDatabase} from '../scripts/backup.mjs';
 import {acquireProcessLock} from '../src/process-lock.js';
+import {resetPassword} from '../scripts/reset-password.mjs';
+import {hashPassword,verifyPassword} from '../src/security.js';
 
 function fixture(t) {
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'astra-hardening-'));
@@ -205,4 +207,14 @@ test('graceful stop waits for the active worker',async t=>{
   worker.tick=()=>new Promise(resolve=>{release=resolve;});worker.run();
   let stopped=false;const stopping=worker.stop().then(()=>{stopped=true;});
   await Promise.resolve();assert.equal(stopped,false);release();await stopping;assert.equal(stopped,true);
+});
+
+test('admin password reset changes hash, revokes sessions and audits',async t=>{
+  const {store,user,filename}=fixture(t);
+  store.setPassword(user.id,await hashPassword('old-password-value'));
+  store.createSession(user.id,'old-session',Date.now()+100000);
+  await resetPassword({databasePath:filename,email:user.email,password:'new-password-value'});
+  assert.equal(store.session('old-session'),undefined);
+  assert.equal(await verifyPassword('new-password-value',store.userByEmail(user.email).password_hash),true);
+  assert.equal(store.db.prepare("SELECT count(*) n FROM audit WHERE event='account.password.admin_reset'").get().n,1);
 });
