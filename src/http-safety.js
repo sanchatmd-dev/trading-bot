@@ -42,3 +42,12 @@ export function booleanValue(value,name) {
   if(typeof value!=='boolean')throw new Error(`${name} must be true or false`);
   return value;
 }
+
+export function clientIp(req,trustLoopback=false) {
+  const remote=String(req.socket?.remoteAddress||'');
+  const loopback=remote==='127.0.0.1'||remote==='::1'||remote==='::ffff:127.0.0.1';
+  if(!trustLoopback||!loopback)return remote;
+  // Nginx appends the actual peer as the right-most address. Ignore earlier client-supplied values.
+  const forwarded=String(req.headers?.['x-forwarded-for']||'').split(',').map(x=>x.trim()).filter(Boolean);
+  return forwarded.at(-1)||remote;
+}

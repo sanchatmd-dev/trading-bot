@@ -9,7 +9,7 @@ import {normalizeSignal} from './domain.js';
 import {supportedBrokers,capabilities,validateCredentials} from './adapters/registry.js';
 import {EmailNotifier} from './notifier.js';
 import {Worker,NotificationWorker} from './worker.js';
-import {readJson,RateLimiter,booleanValue} from './http-safety.js';
+import {readJson,RateLimiter,booleanValue,clientIp} from './http-safety.js';
 import {acquireProcessLock} from './process-lock.js';
 
 assertProductionConfig();const releaseLock=acquireProcessLock(config.dbPath);const store=new Store(config.dbPath);const notifier=new EmailNotifier(config.smtp);const publicDir=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../public');
@@ -24,8 +24,8 @@ const session=req=>store.session(tokenOf(req));
 const requireSession=(req,res)=>{const user=session(req);if(!user||user.status!=='ACTIVE'){json(res,401,{error:'Unauthorized'});return null;}return user;};
 const requireAdmin=(req,res)=>{const user=requireSession(req,res);if(!user)return null;if(user.role!=='ADMIN'){json(res,403,{error:'Admin permission required'});return null;}return user;};
 const safeLimit=url=>Math.min(500,Math.max(1,Number(url.searchParams.get('limit')||100)));
-// Do not trust client-supplied forwarding headers. Behind Caddy this is a shared cap.
-const loginKey=req=>String(req.socket.remoteAddress);
+// Trust only the right-most address from the explicitly configured loopback proxy.
+const loginKey=req=>clientIp(req,config.trustLoopbackProxy);
 
 function validateRisk(input,current){
   const next={...current,paperTrading:true,equities:{...(current.equities||{})}};

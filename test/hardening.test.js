@@ -7,7 +7,7 @@ import {PassThrough} from 'node:stream';
 import {Store} from '../src/database.js';
 import {Worker,NotificationWorker} from '../src/worker.js';
 import {config} from '../src/config.js';
-import {readJson,RateLimiter,booleanValue} from '../src/http-safety.js';
+import {readJson,RateLimiter,booleanValue,clientIp} from '../src/http-safety.js';
 import {encryptJson,decryptJson} from '../src/security.js';
 import {executeOrder,validateCredentials} from '../src/adapters/registry.js';
 import {DatabaseSync} from 'node:sqlite';
@@ -128,6 +128,12 @@ test('bounded request parser and limiter reject abuse',async()=>{
   assert.equal(limiter.accept('a',0),true);assert.equal(limiter.accept('a',1),false);
   assert.equal(limiter.accept('b',2),false);assert.equal(limiter.accept('b',11),true);
   assert.throws(()=>booleanValue('false','flag'),/true or false/);
+});
+
+test('proxy address is trusted only from loopback and takes the last hop',()=>{
+  assert.equal(clientIp({socket:{remoteAddress:'8.8.8.8'},headers:{'x-forwarded-for':'1.1.1.1'}},true),'8.8.8.8');
+  assert.equal(clientIp({socket:{remoteAddress:'127.0.0.1'},headers:{'x-forwarded-for':'spoofed, 1.1.1.1'}},true),'1.1.1.1');
+  assert.equal(clientIp({socket:{remoteAddress:'127.0.0.1'},headers:{'x-forwarded-for':'1.1.1.1'}},false),'127.0.0.1');
 });
 
 test('notification failure is persisted and retried without affecting fills',async t=>{

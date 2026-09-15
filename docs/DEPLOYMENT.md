@@ -50,7 +50,7 @@ Rollback requires a pre-upgrade database snapshot **and** the matching old appli
 - Watch queue age/depth, disk space, SQLite errors, rejected signals, login failures and backup age.
 - Docker log files rotate at 10 MB × 3. Database/audit retention is manual; no automatic deletion of trade history.
 - Graceful shutdown awaits active worker and SMTP tasks. Forced kill remains recoverable through UNKNOWN, not resend.
-- HTTP limits: 64 KiB JSON, 240 requests/minute per direct peer, 20 login attempts/15 minutes, queue cap 1000 unresolved/queued orders. Forwarded IP headers are not trusted; behind Caddy the cap is shared.
+- HTTP limits: 64 KiB JSON, 240 requests/minute per client, 20 login attempts/15 minutes, queue cap 1000 unresolved/queued orders. Set `TRUST_LOOPBACK_PROXY=true` only when the app listens on loopback behind a same-host proxy; it uses the right-most forwarded hop.
 - Application request timeout 15 seconds; SMTP attempt timeout 20 seconds. Tune only after load tests.
 
 ## Required before public staging

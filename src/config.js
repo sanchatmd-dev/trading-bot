@@ -13,6 +13,7 @@ const bool = (name, fallback) => {
 
 export const config = {
   host: process.env.HOST || '127.0.0.1',
+  trustLoopbackProxy: bool('TRUST_LOOPBACK_PROXY', false),
   port: num('PORT', 8080, 1),
   dbPath: process.env.DB_PATH || path.resolve('data/astra-v2.db'),
   paperTrading: bool('PAPER_TRADING', true),
