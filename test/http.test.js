@@ -29,6 +29,9 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
     if(ready)break;if(exitCode!==null)break;await delay(50);
   }
   assert.equal(ready,true,output);
+  const loginPage=await (await fetch(base+'/')).text();
+  assert.match(loginPage,/showLoginPassword/);
+  assert.match(loginPage,/autocomplete="current-password"/);
   async function request(route,method='GET',body,token) {
     const response=await fetch(base+route,{method,headers:{'content-type':'application/json',...(token?{authorization:`Bearer ${token}`}:{})},body:body===undefined?undefined:JSON.stringify(body)});
     return {status:response.status,body:await response.json()};
