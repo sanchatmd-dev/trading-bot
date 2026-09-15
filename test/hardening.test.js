@@ -152,6 +152,14 @@ test('backup restores fills and encrypted secrets and refuses overwrite',t=>{
   }finally{restored.close();}
 });
 
+test('backup CLI recognizes a symlink-style argv path',async t=>{
+  const {filename}=fixture(t),dir=path.dirname(filename),target=path.join(dir,'cli.db');
+  const originalArgv=process.argv,originalDb=process.env.DB_PATH;
+  process.argv=[process.execPath,'/release/current/scripts/backup.mjs',target];process.env.DB_PATH=filename;
+  try{await import(`../scripts/backup.mjs?test=${Date.now()}`);}finally{process.argv=originalArgv;if(originalDb===undefined)delete process.env.DB_PATH;else process.env.DB_PATH=originalDb;}
+  assert.equal(fs.existsSync(target),true);
+});
+
 test('legacy migration preserves old positions and quarantines ambiguous orders',t=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'astra-migration-')),filename=path.join(dir,'old.db');
   t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));

@@ -1,7 +1,6 @@
 import {DatabaseSync} from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
 
 export function backupDatabase(sourceFile,targetFile) {
 const source=path.resolve(sourceFile),target=path.resolve(targetFile);
@@ -16,7 +15,7 @@ try {
 } finally {check.close();}
 return target;
 }
-if(path.resolve(process.argv[1]||'')===fileURLToPath(import.meta.url)){
+if(process.argv[1]&&path.basename(process.argv[1])==='backup.mjs'){
   if(!process.argv[2])throw new Error('Usage: node scripts/backup.mjs /absolute/new-backup.db');
   console.log(`Verified backup: ${backupDatabase(process.env.DB_PATH||'data/astra-v2.db',process.argv[2])}`);
 }
