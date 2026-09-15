@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package.json ./
 COPY src ./src
 COPY public ./public
+COPY scripts ./scripts
 RUN mkdir -p /data && chown -R node:node /app /data
 USER node
 ENV NODE_ENV=production PORT=8080 DB_PATH=/data/astra-v2.db

@@ -1,178 +1,136 @@
-# Astra Trade VPS v2.0.0
+# Astra Trade VPS 2.1.0 — hardened Paper staging
 
-Multi-user trade-bot platform รับ Universal Webhook จาก TradingView ตรวจสอบ License และ Risk ของผู้ใช้ แล้วส่งคำสั่งผ่าน Broker Adapter พร้อมบันทึกผลและแจ้ง Email
+รับ Universal Webhook จาก TradingView พร้อมบัญชีผู้ใช้, License, Risk UI, Trade log และ Email outbox
 
-> ระบบเริ่มต้นด้วย Paper Trading สำหรับผู้ใช้ทุกคน ห้ามเปิด Live ก่อนตั้ง Broker credentials, IP allowlist และทดสอบครบถ้วน
+**รุ่นนี้ล็อก Live ทุก Broker ทั้ง UI, API, Worker และ Adapter ไม่ใช่ระบบพร้อมเทรดเงินจริง**
+ไม่ต้องใส่ API key จริงเพื่อทดสอบ Paper และอย่าเปิดบริการสาธารณะก่อนผ่าน deployment checklist
 
-v2 ใช้ฐานข้อมูล `astra-v2.db` ใหม่และไม่แก้ฐานข้อมูล v1 อัตโนมัติ เพื่อป้องกันข้อมูลเดิมเสียหาย
+## การแก้ไขจาก v2.0
+
+- ตรวจ Max risk หลังคำนวณจำนวนทุกโหมด รวม explicit quantity และ fixed notional; BUY ต้องมี SL
+- ผูก `execution_mode`, `account_id`, `client_order_id` กับสัญญาณตั้งแต่รับเข้า ไม่เปลี่ยนตาม Risk profile ภายหลัง
+- แยก Position/สถิติด้วย user + account + mode; หนึ่ง primary account ต่อ Broker ในรุ่นนี้
+- บันทึก Fill, Position, PnL, สถานะ Order และ Email outbox ใน transaction เดียว
+- ใช้ cumulative fill ป้องกันลงบัญชีซ้ำ และคิด R จากความเสี่ยงตั้งต้น ไม่เพิ่ม Loss streak ทุก partial fill
+- เมื่อ restart งาน PROCESSING เปลี่ยนเป็น UNKNOWN ไม่ส่งคำสั่งซ้ำอัตโนมัติ
+- ตรวจรายการค้างตามเวลาแม้คิวไม่ว่าง และหมุนรายการที่ตรวจไม่สำเร็จ
+- นับ Pending BUY ใน exposure และจอง symbol ที่มี Pending order; Scale-in ยังปิดไว้
+- Kill switch หมายถึง **หยุดเปิดใหม่**; reduce-only exits ผ่านได้เมื่อ pause หรือ License หมดอายุ แต่ผู้ใช้ Suspended ยังถูกบล็อกทั้งหมด
+- News/Volatility Guard ปฏิเสธ entry เมื่อเปิด Guard แต่ข้อมูลขาดหาย
+- จำกัด request body, rate, queue; ตรวจ boolean อย่างเข้มงวด; เปลี่ยนรหัสผ่าน/ระงับบัญชีแล้วเพิกถอน Session
+- ไม่รับ Broker URL จากผู้ใช้; credentials ใหม่เข้ารหัส AES-GCM พร้อมผูก user/Broker
+- Schema migration แบบ transaction, single-instance lock, graceful shutdown, queue health, backup integrity check
+- เพิ่ม unit/integration tests และ GitHub Actions สำหรับ Windows/Linux และ container build
 
 ## Architecture
 
 ```text
-Layer 1 — Signal
-TradingView Indicator / Strategy
-  BUY · SELL · TP · SL
-  Universal Webhook · trade_id · user webhook secret
-                    │ HTTPS
-                    ▼
-Layer 2 — Bot Core on VPS
-Webhook receiver → Signal validator → User/License check
-                 → Risk manager → Position manager
-                 → Durable SQLite queue/database
-                 → Trade/Error log → Email notification
-                    │ Adapter contract
-                    ▼
-Layer 3 — Execution
-Binance Global · Binance TH · InnovestX
-MT5 Bridge · Settrade Bridge · Future HTTP Adapter
+TradingView → HTTP validation / authentication → durable signal queue
+                                                    ↓
+                                            Risk / Paper worker
+                                                    ↓
+                                transaction: fills + positions + daily ledger
+                                                    ↓
+                                           notification outbox → SMTP worker
+
+Reconciliation loop → unresolved / pending outcomes → manual review or verified ledger update
+Live adapters: LOCKED
 ```
 
-## ระบบที่เพิ่มใน v2
+ใช้ modular monolith + SQLite บน local disk และ **หนึ่ง bot process ต่อฐานข้อมูล**
+ไม่ใช้ฐานข้อมูลนี้บน network filesystem และไม่ scale หลาย instance ด้วย shared volume
+ยังไม่จำเป็นต้องเปลี่ยนเป็น microservices เพื่อทดสอบส่วนตัว
 
-- User account, salted `scrypt` password hash และ expiring session
-- Admin/User roles และ Suspend/Activate user
-- License key, Plan, expiry, redemption และ Subscription status control
-- Webhook secret แยกผู้ใช้ เก็บเฉพาะ SHA-256 hash และ rotate ได้
-- Broker credentials แยกผู้ใช้ เข้ารหัส AES-256-GCM
-- Risk profile, equity, Paper/Live และ Kill Switch แยกผู้ใช้
-- Global Kill Switch สำหรับ Admin
-- Trade/Error/Audit log แยกผู้ใช้
-- Execution fields: received time, user, trade ID, symbol, timeframe, event, entry, SL, TP, broker response, order ID, fill, slippage และ error
-- Order reconciliation สำหรับ Binance และ HTTP Bridge orders ที่ยัง `SUBMITTED/PARTIALLY_FILLED`
-- Max risk/trades/daily loss/open positions, one position per symbol, duplicate/stale signal และ loss-streak pause
-- Volatility/News Guard จาก `volatility_percent` และ `news_risk` ใน Signal
-- SMTP email เมื่อ Reject, Error หรือ Broker รับ Order
+## เริ่มทดสอบในเครื่อง
 
-## VPS requirements
+ต้องมี Node.js 24 ขึ้นไป
 
-- Ubuntu 22.04/24.04 LTS, RAM 1 GB ขึ้นไป
-- Public IPv4 และ domain/subdomain ที่มี A record ชี้มายัง VPS
-- เปิด TCP 80/443 และ UDP 443
-- Docker Engine + Compose plugin
-
-## Installation
-
-```bash
-cd /opt
-sudo unzip Astra-Trade-VPS-MultiUser-v2.0.0.zip
-cd astra-vps-trade-bot-v2
-sudo cp .env.example .env
-sudo chmod 600 .env
-sudo nano .env
+```sh
+npm ci
+npm test
+cp .env.example .env
 ```
 
-สร้าง Master key:
+แก้ `.env`: `DB_PATH=./data/astra-v2.db`, ตั้งรหัสผ่าน Admin ใหม่ และสร้าง Master key ด้วย `openssl rand -hex 32`
+จากนั้น `npm start` และเปิด `http://127.0.0.1:8080`
+ค่า `PAPER_TRADING=false` จะทำให้ startup ถูกปฏิเสธ ไม่ใช่ช่องทางปลดล็อก Live
 
-```bash
-openssl rand -hex 32
-```
+## VPS แบบส่วนตัว
 
-ใส่ผลลัพธ์ 64 ตัวอักษรใน `MASTER_ENCRYPTION_KEY` แล้วกำหนด:
+1. สำรองระบบเดิมก่อนอัปเกรด ตาม [คู่มือ deployment](docs/DEPLOYMENT.md)
+2. Copy `.env.example` เป็น `.env`; ใช้ `DB_PATH=/data/astra-v2.db` สำหรับ container
+3. ตั้ง `MASTER_ENCRYPTION_KEY` เป็น hex 64 ตัว, `ADMIN_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD` อย่างน้อย 10 ตัว
+4. ใช้ `DOMAIN=http://localhost` สำหรับ private staging
+5. รัน `docker compose up -d --build`
+6. เชื่อมจากเครื่องส่วนตัวด้วย `ssh -L 8080:127.0.0.1:80 USER@VPS` แล้วเปิด `http://localhost:8080`
 
-- `DOMAIN`
-- `ADMIN_EMAIL`
-- `ADMIN_BOOTSTRAP_PASSWORD` อย่างน้อย 10 ตัวอักษร
-- SMTP หากต้องการ Email
-
-เริ่มระบบ:
-
-```bash
-sudo docker compose up -d --build
-sudo docker compose ps
-sudo docker compose logs --tail=100
-```
-
-เปิด `https://YOUR-DOMAIN` และ Login ด้วย Admin account จาก `.env` บัญชี Admin จะถูกสร้างเฉพาะฐานข้อมูลใหม่ครั้งแรก
-
-ห้ามเปลี่ยน `MASTER_ENCRYPTION_KEY` หลังบันทึก Broker credentials เพราะข้อมูลเดิมจะถอดรหัสไม่ได้ ควรเก็บ key และ database backup แยกกันในที่ปลอดภัย
-
-## Admin workflow
-
-1. สร้าง User พร้อม temporary password
-2. สร้าง License โดยเลือก Plan และจำนวนวัน
-3. ส่ง License key ให้ User ทางช่องทางปลอดภัย เพราะระบบแสดง key เต็มเพียงครั้งเดียว
-4. User Login และ Activate License
-5. User สร้าง Webhook Secret และตั้ง Risk/Broker
-6. Admin ระงับ User, License หรือเปิด Global Kill ได้จาก Admin dashboard
-
-ระบบนี้ควบคุม Subscription ด้วย License status/expiry แบบ manual ยังไม่ได้รวม Payment Gateway หรือ recurring billing
+Compose bind proxy ที่ localhost เท่านั้น จึง **ยังรับ webhook จาก TradingView ภายนอกไม่ได้**
+ให้ทดสอบ payload ผ่าน tunnel ก่อน การเปิด HTTPS สาธารณะต้องผ่านรายการตรวจในคู่มือ
+อย่านำ HTTP ส่วนตัวนี้ไปเปิดบน public interface โดยไม่มี TLS และการจำกัดหน้า Admin
 
 ## Universal Webhook
 
-ไฟล์ตัวอย่าง Pine Script v6 อยู่ที่ `tradingview/astra_universal_signal.pine` หลังเพิ่ม Indicator ลงกราฟ ให้สร้าง Alert และเลือก Condition เป็น **Any alert() function call** แล้วใส่ Webhook URL ของผู้ใช้ ระบบใส่ Secret ไว้ใน URL จึงไม่ส่ง Secret หรือ Broker API key ใน JSON
-
-URL ของผู้ใช้:
+สร้าง Secret ในหน้า Account แล้วใช้ URL ที่ระบบแสดง:
 
 ```text
-https://YOUR-DOMAIN/webhooks/tradingview/USER_WEBHOOK_SECRET
+/webhooks/tradingview/USER_WEBHOOK_SECRET
 ```
-
-Payload:
 
 ```json
 {
-  "trade_id": "BTC-{{timenow}}",
+  "trade_id": "unique-order-0001",
   "broker": "Binance Global",
+  "account_type": "Spot",
   "symbol": "BTCUSDT",
   "timeframe": "15m",
   "event": "BUY",
   "order_type": "MARKET",
   "risk_mode": "PERCENT_EQUITY",
   "risk_value": 0.5,
-  "entry": {{close}},
+  "entry": 61000,
   "sl": 60000,
-  "tp": 68000,
+  "tp": 63000,
   "volatility_percent": 2.4,
   "news_risk": false,
-  "leverage": 1,
-  "timestamp": "{{timenow}}"
+  "timestamp": "REPLACE_WITH_CURRENT_ISO_TIME"
 }
 ```
 
-`event` รองรับ `BUY`, `SELL`, `TP`, `SL`; ระบบกำหนด TP/SL เป็น reduce-only SELL โดยอัตโนมัติสำหรับ Spot
+ใช้ `trade_id` ใหม่ต่อคำสั่งจริง และใช้ค่าเดิมเมื่อส่งซ้ำเพราะไม่ทราบผล HTTP
+HTTP 202 หมายถึงเข้าคิวแล้ว ไม่ใช่ Fill; ตรวจ Trade log เสมอ
+Secret อยู่ใน URL ไม่ส่ง API key หรือ secret ของ Broker ใน payload
 
-Volatility/News Guard รุ่นนี้ตรวจค่าที่ Indicator หรือระบบข่าวภายนอกส่งใน payload ยังไม่ได้ดาวน์โหลด Economic Calendar เอง หากไม่ส่ง `volatility_percent` ระบบจะไม่มีข้อมูลสำหรับตัดสินความผันผวน และหากไม่ส่ง `news_risk:true` ระบบจะไม่รู้ว่ามีข่าว
+TP/SL เป็น reduce-only SELL; SL/TP ที่แนบมากับ BUY **ยังไม่ใช่คำสั่งป้องกันที่ Broker**
+Paper เติมเต็มทันทีที่ราคาอ้างอิง แม้เป็น LIMIT ไม่จำลอง order book, gap, slippage, fee หรือราคาตลาดจริง
+Pine ใน `tradingview/` เป็นตัวอย่าง signal generator ไม่ใช่แหล่งข้อมูล Position ที่เชื่อถือแทน Broker ได้
 
-## Broker credential formats
+## ขอบเขต Risk และบัญชี
 
-Binance Global/TH:
+- Risk settings ใช้ต่อบัญชี Broker; dashboard ไม่บวก notional คนละสกุลเงินเข้าด้วยกัน
+- Binance Global จำลองคู่ quote USDT; Binance TH จำลองคู่ quote THB
+- InnovestX/Settrade จำลองราคาและ equity หน่วย THB เท่านั้น ไม่ได้เชื่อม API จริง
+- MT5/Future ไม่รองรับ Spot simulation และไม่เปิด execution
+- Equity เป็นยอดตั้งค่าจำลอง ไม่ได้ดึง balance/mark-to-market จาก Broker
+- วันตัดยอด UTC; trade count นับ Order ที่เริ่ม Fill รวม BUY/SELL ไม่ใช่จำนวนรอบเข้าออก
+- Daily loss R อัปเดตทุก Fill; Loss streak อัปเดตเมื่อปิด Position ทั้งหมด และไม่ reset เมื่อข้ามวัน
+- Zero-fee Paper ไม่ใช่ผลตอบแทนสุทธิจริง; Live fee ledger ยังเป็น release gate
+- News/Volatility มาจาก upstream payload ไม่ได้ตรวจสอบกับบริการข่าว/ราคาภายนอก
+- `onePositionPerSymbol` และ reduce-only SELL บังคับในรุ่นนี้ แม้ profile เก่าเคยตั้งปิด
 
-```json
-{"apiKey":"...","apiSecret":"...","baseUrl":"https://api.binance.com"}
-```
+## Credentials และ Email
 
-InnovestX:
+ไม่จำเป็นต้องเก็บ credentials ใน Paper staging หากต้องทดสอบ storage ให้ใช้ค่าทดสอบ
+Binance รับเฉพาะ `apiKey` และ `apiSecret`; ไม่รับ `baseUrl` หรือ `bridgeUrl`
+ข้อมูลเข้ารหัส v1 เดิมต้องกรอกใหม่ก่อนใช้ recovery เพราะยังไม่ได้ผูก tenant แบบ v2
+อย่าเปลี่ยน Master key โดยไม่มีแผน re-encryption; เก็บ key แยกจาก DB backup
 
-```json
-{"accessToken":"...","baseUrl":"YOUR_OFFICIAL_API_BASE_URL"}
-```
+SMTP ใช้ TLS หรือ STARTTLS, ส่งผ่าน outbox แยกและ retry ไม่เกิน 5 ครั้ง
+หากไม่ตั้ง SMTP รายการเป็น DISABLED; ส่งล้มเหลวครบจำนวนเป็น FAILED และต้องตรวจติดตาม
+License/subscription ยังควบคุมด้วย Admin ไม่ใช่ระบบรับชำระเงินอัตโนมัติ
 
-MT5, Settrade และ Future Adapter:
+## ข้อจำกัดและ Release gates
 
-```json
-{"bridgeUrl":"https://YOUR-PRIVATE-BRIDGE","bridgeToken":"..."}
-```
-
-MT5 official integration ติดต่อกับ MetaTrader Terminal ที่ติดตั้งอยู่ในเครื่องเดียวกัน จึงต้องมี Windows VPS/Terminal + Bridge service แล้วให้ Ubuntu Bot เรียกผ่าน HTTPS. Settrade Bridge ต้องสร้างตาม API/SDK และสิทธิ์ของบัญชีที่ผู้ให้บริการอนุมัติ
-
-ทุก API key ต้องเปิดเฉพาะสิทธิ์ Trade, ปิด Withdrawal และจำกัด IP เป็น Public IP ของ VPS
-
-## Email
-
-รองรับ SMTP SSL (`SMTP_SECURE=true`, ปกติ port 465) หรือ STARTTLS (`SMTP_SECURE=false`, ปกติ port 587) ระบบไม่บันทึก SMTP password ลงฐานข้อมูล แต่รับจาก `.env`
-
-## Backup
-
-```bash
-chmod +x scripts/backup.sh
-sudo ./scripts/backup.sh
-```
-
-## Limitations before unattended live trading
-
-- Binance order reconciliation มีแล้ว แต่ balance/equity ยังเป็น snapshot ที่ User ตั้งเอง
-- InnovestX adapter ต้องใช้ Base URL และ access token ที่ถูกต้องจากบัญชีจริง และยังไม่มี polling implementation เฉพาะผู้ให้บริการ
-- MT5/Settrade/Future adapters เป็น secure HTTP Bridge contract ต้อง deploy Bridge แยก
-- News blocking ต้องรับ flag จาก upstream signal/news service
-- ระบบ License เป็น local database control ไม่ใช่ cryptographically signed offline license และยังไม่มี billing/payment
-- ควรเพิ่ม PostgreSQL/Redis และ external secret manager หากใช้งานเชิงพาณิชย์หลาย VPS
+อ่าน [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) ก่อนอัปเกรด
+ยังต้องทำ native protective orders, authoritative balances/prices, exchange precision/filter verification,
+fee-aware live ledger, broker-specific contract/sandbox tests, และขั้นตอน cancel/close/reconcile จริง
+ก่อนออก release ที่เปิด Live ได้ การล็อก Live เป็นมาตรการป้องกัน ไม่ได้หมายความว่างานเหล่านี้เสร็จแล้ว

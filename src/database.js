@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { hashToken, randomId } from './security.js';
+import { migrateLedger } from './ledger.js';
 
 export class Store {
   constructor(filename) {
@@ -20,7 +21,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS daily_stats(user_id TEXT NOT NULL,day TEXT NOT NULL,trades INTEGER NOT NULL DEFAULT 0,notional REAL NOT NULL DEFAULT 0,realized_r REAL NOT NULL DEFAULT 0,loss_streak INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(user_id,day));
       CREATE TABLE IF NOT EXISTS system_settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
     `);
-    this.db.exec("UPDATE signals SET status='QUEUED' WHERE status='PROCESSING'");
+    migrateLedger(this);
   }
 
   createUser({ email, passwordHash, role = 'USER' }) {
@@ -32,8 +33,9 @@ export class Store {
   userByEmail(email) { return this.db.prepare('SELECT * FROM users WHERE email=?').get(String(email).toLowerCase()); }
   userById(id) { return this.db.prepare('SELECT id,email,role,status,webhook_hint,created_at FROM users WHERE id=?').get(id); }
   listUsers() { return this.db.prepare('SELECT id,email,role,status,webhook_hint,created_at FROM users ORDER BY created_at DESC').all(); }
-  setUserStatus(id,status) { this.db.prepare('UPDATE users SET status=? WHERE id=?').run(status,id); }
-  setPassword(id,passwordHash) { this.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(passwordHash,id); }
+  setUserStatus(id,status) { this.db.prepare('UPDATE users SET status=? WHERE id=?').run(status,id); if(status!=='ACTIVE')this.revokeSessions(id); }
+  setPassword(id,passwordHash) { this.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(passwordHash,id); this.revokeSessions(id); }
+  revokeSessions(id) { this.db.prepare('DELETE FROM sessions WHERE user_id=?').run(id); }
   setWebhookSecret(userId, secret) { this.db.prepare('UPDATE users SET webhook_secret_hash=?,webhook_hint=? WHERE id=?').run(hashToken(secret),secret.slice(-6),userId); }
   userByWebhook(secret) { return this.db.prepare('SELECT id,email,role,status FROM users WHERE webhook_secret_hash=?').get(hashToken(secret)); }
 
@@ -54,22 +56,11 @@ export class Store {
   credential(userId,broker) { return this.db.prepare('SELECT * FROM broker_credentials WHERE user_id=? AND broker=? AND enabled=1').get(userId,broker); }
   credentialSummary(userId) { return this.db.prepare('SELECT broker,enabled,updated_at FROM broker_credentials WHERE user_id=? ORDER BY broker').all(userId); }
 
-  enqueue(userId,signal) { try { this.db.prepare(`INSERT INTO signals(user_id,trade_id,received_at,signal_time,broker,symbol,timeframe,event,side,entry_price,stop_loss,take_profit,payload,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(userId,signal.tradeId,Date.now(),signal.timestamp,signal.broker,signal.symbol,signal.timeframe,signal.event,signal.side,signal.referencePrice||signal.limitPrice||null,signal.stopLoss||null,signal.takeProfit||null,JSON.stringify(signal),'QUEUED'); this.audit(userId,'webhook.accepted',signal.tradeId,{broker:signal.broker,symbol:signal.symbol,event:signal.event}); return true; } catch(error){ if(String(error.message).includes('UNIQUE')){this.audit(userId,'webhook.duplicate',signal.tradeId,{});return false;} throw error;} }
   claimNext(){const row=this.db.prepare("SELECT * FROM signals WHERE status='QUEUED' ORDER BY id LIMIT 1").get();if(!row)return null;const result=this.db.prepare("UPDATE signals SET status='PROCESSING' WHERE id=? AND status='QUEUED'").run(row.id);return result.changes?{...row,payload:JSON.parse(row.payload)}:null;}
   complete(id,status,{error=null,response=null,orderId=null,fillPrice=null,slippageBps=null,appliedQuantity=0,appliedQuote=0}={}){this.db.prepare('UPDATE signals SET status=?,error_message=?,broker_response=?,order_id=?,fill_price=?,slippage_bps=?,applied_quantity=?,applied_quote=?,processed_at=? WHERE id=?').run(status,error,response?JSON.stringify(response):null,orderId?String(orderId):null,fillPrice,slippageBps,appliedQuantity,appliedQuote,Date.now(),id);}
-  nextPending(){const row=this.db.prepare("SELECT * FROM signals WHERE status IN ('SUBMITTED','PARTIALLY_FILLED') AND order_id IS NOT NULL ORDER BY processed_at LIMIT 1").get();return row?{...row,payload:JSON.parse(row.payload)}:null;}
-  updateExecution(id,status,{response,fillPrice,slippageBps,appliedQuantity,appliedQuote,error=null}){this.db.prepare('UPDATE signals SET status=?,error_message=?,broker_response=?,fill_price=?,slippage_bps=?,applied_quantity=?,applied_quote=?,processed_at=? WHERE id=?').run(status,error,response?JSON.stringify(response):null,fillPrice||null,slippageBps,appliedQuantity,appliedQuote,Date.now(),id);}
   audit(userId,event,tradeId,details={}){this.db.prepare('INSERT INTO audit(user_id,ts,event,trade_id,details) VALUES(?,?,?,?,?)').run(userId||null,Date.now(),event,tradeId||null,JSON.stringify(details));}
   listSignals(userId,isAdmin=false,limit=100){return isAdmin?this.db.prepare('SELECT * FROM signals ORDER BY id DESC LIMIT ?').all(limit):this.db.prepare('SELECT * FROM signals WHERE user_id=? ORDER BY id DESC LIMIT ?').all(userId,limit);}
   listAudit(userId,isAdmin=false,limit=100){return isAdmin?this.db.prepare('SELECT * FROM audit ORDER BY id DESC LIMIT ?').all(limit):this.db.prepare('SELECT * FROM audit WHERE user_id=? ORDER BY id DESC LIMIT ?').all(userId,limit);}
-  position(userId,broker,symbol){return this.db.prepare('SELECT * FROM positions WHERE user_id=? AND broker=? AND symbol=?').get(userId,broker,symbol)||{quantity:0,avg_price:0};}
-  setPosition(userId,broker,symbol,quantity,avgPrice,sl,tp){this.db.prepare(`INSERT INTO positions(user_id,broker,symbol,quantity,avg_price,stop_loss,take_profit,updated_at) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(user_id,broker,symbol) DO UPDATE SET quantity=excluded.quantity,avg_price=excluded.avg_price,stop_loss=excluded.stop_loss,take_profit=excluded.take_profit,updated_at=excluded.updated_at`).run(userId,broker,symbol,quantity,avgPrice,sl||null,tp||null,Date.now());}
-  listPositions(userId,isAdmin=false){return isAdmin?this.db.prepare('SELECT * FROM positions WHERE quantity>0 ORDER BY updated_at DESC').all():this.db.prepare('SELECT * FROM positions WHERE user_id=? AND quantity>0 ORDER BY updated_at DESC').all(userId);}
-  openPositionCount(userId){return Number(this.db.prepare('SELECT count(*) n FROM positions WHERE user_id=? AND quantity>0').get(userId).n);}
-  hasPendingOrder(userId,broker,symbol){return Boolean(this.db.prepare("SELECT 1 FROM signals WHERE user_id=? AND broker=? AND symbol=? AND status IN ('SUBMITTED','PARTIALLY_FILLED') LIMIT 1").get(userId,broker,symbol));}
-  today(userId){const day=new Date().toISOString().slice(0,10);return this.db.prepare('SELECT * FROM daily_stats WHERE user_id=? AND day=?').get(userId,day)||{day,trades:0,notional:0,realized_r:0,loss_streak:0};}
-  addDaily(userId,notional,realizedR=0,isClosed=false){const day=new Date().toISOString().slice(0,10);this.db.prepare(`INSERT INTO daily_stats(user_id,day,trades,notional,realized_r,loss_streak) VALUES(?,?,1,?,?,?) ON CONFLICT(user_id,day) DO UPDATE SET trades=trades+1,notional=notional+excluded.notional,realized_r=realized_r+excluded.realized_r,loss_streak=CASE WHEN ?=0 THEN loss_streak WHEN excluded.realized_r<0 THEN loss_streak+1 ELSE 0 END`).run(userId,day,notional,realizedR,isClosed&&realizedR<0?1:0,isClosed?1:0);}
-  addRealized(userId,realizedR){const day=new Date().toISOString().slice(0,10);this.db.prepare(`INSERT INTO daily_stats(user_id,day,trades,notional,realized_r,loss_streak) VALUES(?,?,0,0,?,?) ON CONFLICT(user_id,day) DO UPDATE SET realized_r=realized_r+excluded.realized_r,loss_streak=CASE WHEN excluded.realized_r<0 THEN loss_streak+1 ELSE 0 END`).run(userId,day,realizedR,realizedR<0?1:0);}
   getSetting(key,fallback){const row=this.db.prepare('SELECT value FROM system_settings WHERE key=?').get(key);return row?JSON.parse(row.value):fallback;}
   setSetting(key,value){this.db.prepare('INSERT INTO system_settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key,JSON.stringify(value));}
   close(){this.db.close();}

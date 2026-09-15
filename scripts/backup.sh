@@ -1,8 +1,16 @@
 #!/bin/sh
 set -eu
+umask 077
 mkdir -p backups
 stamp=$(date -u +%Y%m%d-%H%M%S)
-docker compose exec -T bot node -e "const{DatabaseSync}=require('node:sqlite');const d=new DatabaseSync('/data/astra-v2.db');d.exec(\"VACUUM INTO '/data/backup.db'\");d.close()"
-docker compose cp bot:/data/backup.db "backups/astra-trade-${stamp}.db"
-docker compose exec -T bot rm -f /data/backup.db
-echo "Backup saved: backups/astra-trade-${stamp}.db"
+# Each invocation gets a separate container directory. Leave a failed backup for diagnosis.
+backup_dir=$(docker compose exec -T bot mktemp -d /data/backup-XXXXXXXX)
+case "$backup_dir" in
+  /data/backup-*) ;;
+  *) echo "Unexpected backup path" >&2; exit 1 ;;
+esac
+docker compose exec -T bot node scripts/backup.mjs "$backup_dir/snapshot.db"
+docker compose cp "bot:$backup_dir/snapshot.db" "backups/astra-trade-${stamp}-$$.db"
+docker compose exec -T bot rm -- "$backup_dir/snapshot.db"
+docker compose exec -T bot rmdir -- "$backup_dir"
+echo "Verified backup copied to backups/astra-trade-${stamp}-$$.db"

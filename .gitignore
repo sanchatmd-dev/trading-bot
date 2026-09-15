@@ -3,3 +3,5 @@ data/*
 !data/.gitkeep
 *.log
 .DS_Store
+backups/
+node_modules/

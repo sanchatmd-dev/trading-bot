@@ -1,23 +1,30 @@
 export function evaluateRisk(signal,context){
   const {policy,daily,position,now=Date.now()}=context;
   const reject=reason=>({ok:false,reason});
-  const isSpot=['binance-global','binance-th','innovestx'].includes(signal.broker);
+  const isSpot=['binance-global','binance-th','innovestx','settrade'].includes(signal.broker);
+  if(!isSpot)return reject('Only Spot simulation is supported in this release');
+  const quoteCurrency=signal.broker==='binance-global'?'USDT':'THB';
+  if(signal.broker.startsWith('binance-')&&!signal.symbol.endsWith(quoteCurrency))return reject(`This account supports ${quoteCurrency} quote currency only`);
   const isExit=isSpot&&signal.side==='SELL'&&signal.reduceOnly;
-  if(context.globalKill||policy.killSwitch)return reject('Kill switch is active');
-  if(!context.licensed)return reject('License is inactive or expired');
+  if(!isExit&&(context.globalKill||policy.killSwitch))return reject('Kill switch is active: entries paused');
+  if(!isExit&&!context.licensed)return reject('License is inactive or expired');
   if(now-signal.timestamp>policy.maxSignalAgeSeconds*1000)return reject('Signal is stale');
-  if(!isExit&&daily.trades>=policy.maxTradesPerDay)return reject('Maximum trades per day reached');
+  if(!isExit&&daily.trades+(context.reservedTrades||0)>=policy.maxTradesPerDay)return reject('Maximum trades per day reached');
   if(!isExit&&daily.realized_r<=-Math.abs(policy.maxDailyLossR))return reject('Maximum daily loss reached');
   if(!isExit&&daily.loss_streak>=policy.pauseAfterLossStreak)return reject('Trading paused after loss streak');
-  if(!isExit&&policy.blockHighVolatility&&signal.volatilityPercent!==undefined&&signal.volatilityPercent>policy.maxVolatilityPercent)return reject('High volatility block is active');
+  if(!isExit&&policy.blockHighVolatility&&!Number.isFinite(signal.volatilityPercent))return reject('Missing volatility data');
+  if(!isExit&&policy.blockHighVolatility&&signal.volatilityPercent>policy.maxVolatilityPercent)return reject('High volatility block is active');
+  if(!isExit&&policy.blockDuringNews&&typeof signal.newsRisk!=='boolean')return reject('Missing news risk data');
   if(!isExit&&policy.blockDuringNews&&signal.newsRisk)return reject('News trading block is active');
-  if(policy.allowedSymbols?.length&&!policy.allowedSymbols.includes(signal.symbol))return reject('Symbol is not allowed');
+  if(!isExit&&policy.allowedSymbols?.length&&!policy.allowedSymbols.includes(signal.symbol))return reject('Symbol is not allowed');
   if(policy.sideMode==='BUY_ONLY'&&signal.side!=='BUY'&&!isExit)return reject('Only BUY is allowed');
   if(policy.sideMode==='SELL_ONLY'&&signal.side!=='SELL')return reject('Only SELL is allowed');
   if(signal.side==='BUY'&&context.openPositions>=policy.maxOpenPositions)return reject('Maximum open positions reached');
   if(signal.side==='BUY'&&policy.onePositionPerSymbol&&(position.quantity>0||context.hasPendingOrder))return reject('Position or pending order already exists for symbol');
+  if(context.hasPendingOrder)return reject('Pending order already reserves this symbol');
+  if(signal.side==='BUY'&&position.quantity>0)return reject('Scale-in is disabled until aggregate position risk is supported');
   if(isSpot&&signal.leverage!==1)return reject('Spot leverage must equal 1');
-  if(isSpot&&signal.side==='SELL'&&policy.requireReduceOnlySell&&!signal.reduceOnly)return reject('Spot SELL must be reduce_only');
+  if(isSpot&&signal.side==='SELL'&&!signal.reduceOnly)return reject('Spot SELL must be reduce_only');
   if(isSpot&&signal.side==='SELL'&&position.quantity<=0)return reject('No Spot position available to sell');
   const price=signal.limitPrice||signal.referencePrice;
   if(!price)return reject('entry/reference_price is required for risk checks');
@@ -37,7 +44,15 @@ export function evaluateRisk(signal,context){
   if(!Number.isFinite(quantity)||quantity<=0)return reject('Unable to calculate quantity');
   if(isSpot&&signal.side==='SELL')quantity=Math.min(quantity,position.quantity);
   const notional=quantity*price;
+  if(!Number.isFinite(notional)||notional<=0)return reject('Invalid notional');
+  if(!isExit){
+    if(!Number.isFinite(context.equity)||context.equity<=0)return reject('Positive account equity is required');
+    if(!signal.stopLoss)return reject('stop_loss is required for all entry sizing modes');
+    const risk=quantity*Math.abs(price-signal.stopLoss);
+    if(risk>context.equity*policy.maxRiskPercent/100+1e-8)return reject('Calculated risk exceeds maximum risk percent');
+    if(notional+(context.committedNotional||0)>context.equity)return reject('Order exceeds available configured Spot equity');
+  }
   if(!isExit&&notional>policy.maxOrderNotional)return reject('Maximum order notional exceeded');
-  if(!isExit&&daily.notional+notional>policy.maxDailyNotional)return reject('Maximum daily notional exceeded');
+  if(!isExit&&daily.notional+(context.reservedNotional||0)+notional>policy.maxDailyNotional)return reject('Maximum daily notional exceeded');
   return {ok:true,order:{...signal,quantity,price,notional}};
 }

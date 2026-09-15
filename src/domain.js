@@ -5,18 +5,21 @@ const aliases = new Map([
 ]);
 const text=(value,name,max=100,optional=false)=>{if(optional&&(value===undefined||value===null||value===''))return '';if(typeof value!=='string'||!value.trim()||value.length>max)throw new Error(`${name} is required`);return value.trim();};
 const positive=(value,name,optional=false)=>{if(optional&&(value===undefined||value===null||value===''))return undefined;const n=Number(value);if(!Number.isFinite(n)||n<=0)throw new Error(`${name} must be greater than 0`);return n;};
-const flag=value=>value===true||String(value).toLowerCase()==='true'||value===1;
+const flag=value=>{if(value===undefined)return undefined;if(typeof value!=='boolean')throw new Error('Boolean fields must be true or false');return value;};
 
 export function normalizeSignal(body,now=Date.now()){
   if(!body||typeof body!=='object'||Array.isArray(body))throw new Error('JSON object required');
+  if(body.account_type!==undefined&&String(body.account_type).toUpperCase()!=='SPOT')throw new Error('Only Spot accounts are supported');
   const tradeId=text(body.trade_id??body.id,'trade_id',80);
   const broker=aliases.get(text(body.broker,'broker',40).toLowerCase());
   if(!broker)throw new Error('Unsupported broker');
   const symbol=text(body.symbol,'symbol',30).toUpperCase().replace(/[^A-Z0-9._-]/g,'');
+  if(!symbol)throw new Error('Invalid symbol');
   const event=text(body.event??body.action??body.side,'event',20).toUpperCase();
   if(!['BUY','SELL','TP','SL'].includes(event))throw new Error('event must be BUY, SELL, TP or SL');
   const side=String(body.side||(event==='BUY'?'BUY':'SELL')).toUpperCase();
   if(!['BUY','SELL'].includes(side))throw new Error('side must be BUY or SELL');
+  if(side!==(event==='BUY'?'BUY':'SELL'))throw new Error('event and side conflict');
   const orderType=String(body.order_type??body.type??'MARKET').toUpperCase();
   if(!['MARKET','LIMIT'].includes(orderType))throw new Error('order_type must be MARKET or LIMIT');
   let timestamp=Number(body.timestamp);
@@ -31,6 +34,6 @@ export function normalizeSignal(body,now=Date.now()){
     referencePrice:positive(body.reference_price??body.entry??body.entry_price,'entry',true),limitPrice:positive(body.limit_price??body.price,'limit_price',orderType!=='LIMIT'),
     stopLoss:positive(body.stop_loss??body.sl,'stop_loss',true),takeProfit:positive(body.take_profit??body.tp,'take_profit',true),
     reduceOnly:flag(body.reduce_only)||['TP','SL'].includes(event),leverage:positive(body.leverage??1,'leverage'),
-    volatilityPercent:positive(body.volatility_percent,'volatility_percent',true),newsRisk:flag(body.news_risk??body.high_impact_news)
+    volatilityPercent:body.volatility_percent===0?0:positive(body.volatility_percent,'volatility_percent',true),newsRisk:flag(body.news_risk??body.high_impact_news)
   };
 }

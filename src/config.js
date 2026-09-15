@@ -12,6 +12,7 @@ const bool = (name, fallback) => {
 };
 
 export const config = {
+  host: process.env.HOST || '127.0.0.1',
   port: num('PORT', 8080, 1),
   dbPath: process.env.DB_PATH || path.resolve('data/astra-v2.db'),
   paperTrading: bool('PAPER_TRADING', true),
@@ -39,6 +40,7 @@ export const config = {
 };
 
 export function assertProductionConfig() {
+  if(!config.paperTrading)throw new Error('PAPER_TRADING=false is disabled in this staging release');
   if (process.env.NODE_ENV !== 'production') return;
   if (!/^[a-fA-F0-9]{64}$/.test(config.masterKey)) throw new Error('MASTER_ENCRYPTION_KEY must be 64 hex characters');
 }

@@ -1,27 +1,117 @@
 import {evaluateRisk} from './risk.js';
 import {decryptJson} from './security.js';
-import {executeOrder,fetchOrderStatus} from './adapters/registry.js';
+import {fetchOrderStatus, assertLiveEnabled} from './adapters/registry.js';
 
-export class Worker{
-  constructor({store,config,notifier}){Object.assign(this,{store,config,notifier});this.busy=false;this.lastReconcile=0;}
-  start(){this.timer=setInterval(()=>this.tick(),this.config.workerIntervalMs);this.timer.unref();this.tick();}
-  stop(){clearInterval(this.timer);}
-  async tick(){if(this.busy)return;const job=this.store.claimNext();if(!job){if(Date.now()-this.lastReconcile>5000)await this.reconcile();return;}this.busy=true;const signal=job.payload;const user=this.store.userById(job.user_id);
-    try{
-      const policy=this.store.risk(job.user_id,this.config.defaultRisk),position=this.store.position(job.user_id,signal.broker,signal.symbol);
-      const result=evaluateRisk(signal,{policy,daily:this.store.today(job.user_id),position,equity:policy.equities?.[signal.broker]||0,licensed:user?.role==='ADMIN'||this.store.hasActiveLicense(job.user_id),globalKill:this.store.getSetting('globalKill',false),openPositions:this.store.openPositionCount(job.user_id),hasPendingOrder:this.store.hasPendingOrder(job.user_id,signal.broker,signal.symbol)});
-      if(!result.ok){this.store.complete(job.id,'REJECTED',{error:result.reason});this.store.audit(job.user_id,'risk.rejected',signal.tradeId,{reason:result.reason});void this.notifier.send(user?.email,`Astra rejected ${signal.tradeId}`,result.reason);return;}
-      const order=result.order,paper=policy.paperTrading??this.config.paperTrading;let execution;
-      if(paper)execution={status:'FILLED',orderId:`PAPER-${signal.tradeId}`,executedQty:order.quantity,quoteQty:order.notional,fillPrice:order.price,raw:{paper:true,status:'FILLED'}};
-      else{const row=this.store.credential(job.user_id,signal.broker);if(!row)throw new Error('Broker credentials are not configured or enabled');execution=await executeOrder(signal.broker,decryptJson(row.encrypted_data,this.config.masterKey),order);}
-      const fillPrice=execution.fillPrice||(execution.executedQty?execution.quoteQty/execution.executedQty:undefined);const slippageBps=fillPrice&&order.price?(signal.side==='BUY'?(fillPrice-order.price):(order.price-fillPrice))/order.price*10000:null;
-      let realizedR=0,isClosed=false;if(execution.executedQty>0){({realizedR,isClosed}=this.applyFill(job.user_id,{...order,quantity:execution.executedQty,price:fillPrice||order.price,notional:execution.quoteQty||execution.executedQty*(fillPrice||order.price)}));}
-      this.store.addDaily(job.user_id,order.notional,realizedR,isClosed);
-      const status=paper?'FILLED':execution.status==='FILLED'?'FILLED':execution.status==='PARTIALLY_FILLED'?'PARTIALLY_FILLED':'SUBMITTED';
-      this.store.complete(job.id,status,{response:execution.raw,orderId:execution.orderId,fillPrice:fillPrice||null,slippageBps,appliedQuantity:execution.executedQty||0,appliedQuote:execution.quoteQty||0});this.store.audit(job.user_id,'order.accepted',signal.tradeId,{paper,status,orderId:execution.orderId,fillPrice,slippageBps});
-      void this.notifier.send(user?.email,`Astra ${status}: ${signal.symbol}`,`${signal.event} ${signal.symbol}\nTrade ID: ${signal.tradeId}\nOrder ID: ${execution.orderId||'-'}\nFill: ${fillPrice||'-'}\nSlippage: ${slippageBps??'-'} bps`);
-    }catch(error){this.store.complete(job.id,'ERROR',{error:error.message});this.store.audit(job.user_id,'order.error',signal.tradeId,{message:error.message});void this.notifier.send(user?.email,`Astra error ${signal.tradeId}`,error.message);}finally{this.busy=false;}}
-  async reconcile(){this.lastReconcile=Date.now();const row=this.store.nextPending();if(!row)return;this.busy=true;try{const credential=this.store.credential(row.user_id,row.broker);if(!credential)return;const execution=await fetchOrderStatus(row.broker,decryptJson(credential.encrypted_data,this.config.masterKey),row);if(!execution)return;const totalQty=Number(execution.executedQty||0),totalQuote=Number(execution.quoteQty||0),deltaQty=Math.max(0,totalQty-row.applied_quantity),deltaQuote=Math.max(0,totalQuote-row.applied_quote),fillPrice=execution.fillPrice||(totalQty&&totalQuote?totalQuote/totalQty:null),signal=row.payload;if(deltaQty>0){const result=this.applyFill(row.user_id,{...signal,quantity:deltaQty,price:deltaQuote&&deltaQty?deltaQuote/deltaQty:(fillPrice||signal.referencePrice),notional:deltaQuote||deltaQty*(fillPrice||signal.referencePrice)});if(result.isClosed)this.store.addRealized(row.user_id,result.realizedR);}const status=['FILLED','CANCELED','REJECTED','EXPIRED'].includes(execution.status)?execution.status:(totalQty>0?'PARTIALLY_FILLED':'SUBMITTED'),entry=row.entry_price,slippageBps=fillPrice&&entry?(signal.side==='BUY'?(fillPrice-entry):(entry-fillPrice))/entry*10000:null;this.store.updateExecution(row.id,status,{response:execution.raw,fillPrice,slippageBps,appliedQuantity:totalQty,appliedQuote:totalQuote});this.store.audit(row.user_id,'order.reconciled',row.trade_id,{status,fillPrice,totalQty});}catch(error){this.store.audit(row.user_id,'reconcile.error',row.trade_id,{message:error.message});}finally{this.busy=false;}}
-  applyFill(userId,order){const current=this.store.position(userId,order.broker,order.symbol);if(order.side==='BUY'){const quantity=current.quantity+order.quantity,avg=((current.quantity*current.avg_price)+order.notional)/quantity;this.store.setPosition(userId,order.broker,order.symbol,quantity,avg,order.stopLoss,order.takeProfit);return{realizedR:0,isClosed:false};}
-    const sold=Math.min(order.quantity,current.quantity),pnl=(order.price-current.avg_price)*sold,riskPerUnit=current.stop_loss?Math.abs(current.avg_price-current.stop_loss):0,realizedR=riskPerUnit?pnl/(riskPerUnit*sold):0,quantity=Math.max(0,current.quantity-sold);this.store.setPosition(userId,order.broker,order.symbol,quantity,quantity?current.avg_price:0,quantity?current.stop_loss:null,quantity?current.take_profit:null);return{realizedR,isClosed:sold>0};}
+export class Worker {
+  constructor({store,config,notifier}) {
+    Object.assign(this,{store,config,notifier});
+    this.busy=false;
+    this.stopping=false;
+    this.lastTick=Date.now();
+    this.lastReconcile=0;
+  }
+  start() {
+    this.timer=setInterval(()=>this.run(),this.config.workerIntervalMs);
+    this.timer.unref();
+    this.run();
+  }
+  run() {
+    if(this.active||this.stopping)return;
+    this.active=this.tick().catch(error=>{
+      this.lastError=error.message;
+      console.error('Worker failure:',error.message);
+    }).finally(()=>{this.active=null;});
+  }
+  async stop() {
+    this.stopping=true;
+    clearInterval(this.timer);
+    await this.active;
+  }
+  async tick() {
+    if(this.busy||this.stopping)return;
+    this.busy=true;
+    try {
+      // Reconcile on a schedule even when intake never becomes idle.
+      if(Date.now()-this.lastReconcile>=5000)await this.reconcile();
+      const job=this.store.claimNext();
+      if(job)await this.process(job);
+      this.lastTick=Date.now();
+      this.lastError=null;
+    } finally { this.busy=false; }
+  }
+  async process(job) {
+    const signal=job.payload;
+    try {
+      if(job.execution_mode!=='PAPER')assertLiveEnabled(signal.broker);
+      const user=this.store.userById(job.user_id);
+      if(!user||user.status!=='ACTIVE')throw new Error('User is suspended or unavailable');
+      const policy=this.store.risk(job.user_id,this.config.defaultRisk);
+      const exposure=this.store.exposure(job);
+      if(exposure.uncertain)throw new Error('Unresolved order outcome: operator reconciliation required');
+      const result=evaluateRisk(signal,{
+        policy,daily:this.store.ledgerDaily(job),position:this.store.ledgerPosition(job),
+        equity:policy.equities?.[signal.broker]||0,
+        licensed:user.role==='ADMIN'||this.store.hasActiveLicense(job.user_id),
+        globalKill:this.store.getSetting('globalKill',false),...exposure
+      });
+      if(!result.ok)throw new Error(result.reason);
+      const order={...result.order,clientOrderId:job.client_order_id};
+      this.store.persistIntent(job,order);
+      // All live entry points are closed in this release, including direct adapter calls.
+      this.store.recordExecution(job,{
+        status:'FILLED',orderId:`PAPER-${job.client_order_id}`,executedQty:order.quantity,
+        quoteQty:order.notional,deltaFeeQuote:0,raw:{paper:true,status:'FILLED',feesSimulated:false}
+      },order);
+    } catch(error) {
+      // No external submission exists on this path in the staging release.
+      this.store.complete(job.id,'REJECTED',{error:error.message});
+      this.store.audit(job.user_id,'risk.rejected',signal.tradeId,{reason:error.message});
+      this.store.db.prepare('INSERT INTO notification_outbox(user_id,subject,body) VALUES(?,?,?)')
+        .run(job.user_id,`Astra rejected ${signal.tradeId}`,error.message);
+    }
+  }
+  async reconcile() {
+    this.lastReconcile=Date.now();
+    const row=this.store.pendingForReview();
+    if(!row)return;
+    // Rotate even missing-credential/unsupported orders to avoid starvation.
+    this.store.touchPending(row.id);
+    try {
+      if(row.execution_mode==='LEGACY')throw new Error('Legacy outcome requires manual broker review; ledger not imported');
+      const credential=this.store.credential(row.user_id,row.broker);
+      if(!credential)throw new Error('Credentials unavailable for reconciliation');
+      const execution=await fetchOrderStatus(row.broker,
+        decryptJson(credential.encrypted_data,this.config.masterKey,`${row.user_id}:${row.broker}`),row);
+      if(!execution)throw new Error('Broker reconciliation is not supported');
+      if(!row.order_intent)throw new Error('Missing order intent; manual review required');
+      this.store.recordExecution(row,execution,JSON.parse(row.order_intent));
+    } catch(error) {
+      this.store.markUnknown(row,error.message);
+    }
+  }
+}
+
+// SMTP has its own bounded retry loop and cannot hold up execution.
+export class NotificationWorker {
+  constructor({store,notifier}) { Object.assign(this,{store,notifier}); }
+  start() { this.timer=setInterval(()=>this.run(),1000);this.timer.unref(); }
+  run() {
+    if(this.active||this.stopping)return;
+    this.active=this.tick().catch(error=>console.error('Outbox failure:',error.message))
+      .finally(()=>{this.active=null;});
+  }
+  async tick() {
+    const row=this.store.db.prepare("SELECT * FROM notification_outbox WHERE status='PENDING' AND next_attempt<=? ORDER BY id LIMIT 1").get(Date.now());
+    if(!row)return;
+    if(!this.notifier.config?.host) {
+      this.store.db.prepare("UPDATE notification_outbox SET status='DISABLED' WHERE id=?").run(row.id);
+      return;
+    }
+    const user=this.store.userById(row.user_id);
+    const sent=await this.notifier.send(user?.email,row.subject,row.body);
+    const attempts=row.attempts+1;
+    this.store.db.prepare('UPDATE notification_outbox SET status=?,attempts=?,next_attempt=? WHERE id=?')
+      .run(sent?'SENT':attempts>=5?'FAILED':'PENDING',attempts,Date.now()+Math.min(3600000,1000*2**attempts),row.id);
+  }
+  async stop() { this.stopping=true;clearInterval(this.timer);await this.active; }
 }
