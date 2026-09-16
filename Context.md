@@ -67,11 +67,20 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 ## Operations
 
 - Run tests: npm test
-- Current test suite: 48 tests.
+- Current test suite: 53 tests.
 - Back up SQLite before production release changes using scripts/backup.mjs.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the user service.
-- Database schema version is 6. Migration 6 disables the legacy one-position-per-symbol block for existing profiles. An older application cannot open a newer schema.
+- Database schema version is 7. Migration 6 disables the legacy one-position-per-symbol block for existing profiles. Migration 7 adds per-user, per-broker analytics fee settings. An older application cannot open a newer schema.
 - All database changes require a verified backup and integrity check.
+
+## Analytics
+
+- Paper fills are matched into closed positions with round-trip FIFO per user, broker and symbol.
+- Summary metrics include win/loss, win rate, net profit, profit factor, drawdown, expectancy, realized average win/loss ratio, streaks, average holding time and fee impact.
+- Users can add a custom fee in basis points per broker. It changes analytics only; it does not mutate historical fills.
+- Analytics APIs and UI support daily, weekly, monthly, annual and custom UTC date ranges, plus asset filters.
+- Currency is selected by broker and never combined: Binance Global is USDT; Binance TH, InnovestX and Settrade are THB.
+- Normal users can read only their own analytics. Administrators may select a user explicitly.
 
 ## Known rejection causes and handling
 

@@ -45,6 +45,15 @@ test('Forgot Password opens recovery guidance without claiming email delivery',(
     assert.match(d.querySelector('#recoveryDialog pre').textContent,/reset-password.sh/);
   }finally{dom.window.close();}
 });
+test('Analytics UI exposes responsive controls, charts and strict broker currency',()=>{
+  const dom=setup(),d=dom.window.document;
+  try{
+    assert.ok(d.querySelector('[data-view="analytics"]'));assert.ok(d.querySelector('[data-page="analytics"]'));
+    assert.equal(d.querySelector('#analyticsCurrency').textContent,'USDT');assert.ok(d.querySelector('#equityChart'));
+    assert.ok(d.querySelector('#winLossDonut'));assert.ok(d.querySelector('#assetBars'));assert.ok(d.querySelector('#closedTrades'));
+    assert.match(publicFile('styles-v2.css'),/@media\(max-width:600px\).*#closedTrades/s);
+  }finally{dom.window.close();}
+});
 test('save popup follows successful API writes, not errors; Rejected notes are escaped and save correctly',async()=>{
   const dom=setup(),w=dom.window,d=w.document;let succeed=true,lastRequest;
   try{

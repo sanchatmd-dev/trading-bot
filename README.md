@@ -118,6 +118,26 @@ Pine ใน `tradingview/` เป็นตัวอย่าง signal generator
 - เปิด BUY ซ้ำใน symbol เดิมได้เมื่อ `onePositionPerSymbol=false` (ค่าเริ่มต้น) แต่ทุกคำสั่งต้องใช้ `trade_id` ใหม่และผ่าน Risk Manager แยกกัน
 - เปิด `onePositionPerSymbol` ใน Risk Manager ได้เมื่อต้องการบล็อกการเพิ่ม Position ใน symbol เดิม; reduce-only SELL ยังบังคับเสมอ
 
+## Analytics
+
+หน้า Analytics ใช้ Paper fills สร้าง Closed Position แบบ FIFO แยกตาม user, Broker และ symbol แล้วคำนวณ Total Trades, Win/Loss, Win Rate, Net Profit, Profit Factor, MDD, Expectancy, Realized Win/Loss Ratio, streak, Average Holding Time และ Fee Impact
+
+- Binance Global แสดง USDT; Binance TH, InnovestX และ Settrade แสดง THB โดยไม่รวมข้ามสกุล
+- เลือก Daily, Weekly, Monthly, Annually หรือ Custom UTC date range และกรอง Asset ได้
+- Custom fee กำหนดเป็น basis points ต่อ user/Broker และใช้คำนวณรายงานย้อนหลังโดยไม่แก้ historical fills
+- Normal user อ่านได้เฉพาะข้อมูลตัวเอง; Admin เลือก user ได้
+
+API ที่ต้องมี authenticated session:
+
+```text
+GET /api/analytics/summary?broker=binance-global&period=monthly&symbol=BTCUSDT
+GET /api/analytics/equity-curve?broker=binance-global&period=custom&from=2026-09-01&to=2026-09-30
+GET /api/analytics/breakdown?broker=binance-global&period=monthly
+PUT /api/analytics/settings
+```
+
+Body สำหรับตั้งค่าธรรมเนียม: `{"broker":"binance-global","feeBps":10}`
+
 ## Credentials และ Email
 
 ไม่จำเป็นต้องเก็บ credentials ใน Paper staging หากต้องทดสอบ storage ให้ใช้ค่าทดสอบ

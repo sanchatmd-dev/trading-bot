@@ -5,8 +5,9 @@ import {fileURLToPath} from 'node:url';
 import {config,assertProductionConfig} from './config.js';
 import {Store} from './database.js';
 import {hashPassword,verifyPassword,randomToken,encryptJson,decryptJson,hashToken} from './security.js';
-import {normalizeSignal} from './domain.js';
+import {normalizeSignal,normalizeSymbol} from './domain.js';
 import {evaluateRisk} from './risk.js';
+import {analyticsWindow,fifoClosedPositions,filterClosedPositions,summarizeClosedPositions,breakdownClosedPositions,groupClosedPositions,currencyForBroker} from './analytics.js';
 import {supportedBrokers,capabilities,validateCredentials} from './adapters/registry.js';
 import {EmailNotifier} from './notifier.js';
 import {Worker,NotificationWorker} from './worker.js';
@@ -27,6 +28,22 @@ const requireAdmin=(req,res)=>{const user=requireSession(req,res);if(!user)retur
 const safeLimit=url=>Math.min(500,Math.max(1,Number(url.searchParams.get('limit')||100)));
 // Trust only the right-most address from the explicitly configured loopback proxy.
 const loginKey=req=>clientIp(req,config.trustLoopbackProxy);
+const analyticsBrokers=['binance-global','binance-th','innovestx','settrade'];
+
+function analyticsData(url,targetUserId){
+  const broker=String(url.searchParams.get('broker')||'binance-global');
+  if(!analyticsBrokers.includes(broker))throw new Error('Analytics requires a supported Spot broker');
+  const period=String(url.searchParams.get('period')||'monthly').toLowerCase();
+  const window=analyticsWindow(period,url.searchParams.get('from'),url.searchParams.get('to'));
+  const rawSymbol=String(url.searchParams.get('symbol')||'').trim().toUpperCase();
+  if(rawSymbol&&!/^[A-Z0-9._:/-]{1,40}$/.test(rawSymbol))throw new Error('Invalid analytics symbol');
+  const symbol=rawSymbol?normalizeSymbol(rawSymbol,broker):'';
+  const feeBps=store.analyticsFeeBps(targetUserId,broker),policy=store.risk(targetUserId,config.defaultRisk);
+  const currency=currencyForBroker(broker),startingEquity=Number(policy.equities?.[broker]||0);
+  const all=fifoClosedPositions(store.analyticsRows(targetUserId,broker),{feeBps});
+  const closed=filterClosedPositions(all,{...window,symbol});
+  return {targetUserId,broker,currency,symbol:symbol||null,feeBps,startingEquity,window,closed,summary:summarizeClosedPositions(closed,{startingEquity,currency})};
+}
 
 function validateRisk(input,current){
   const next={...current,paperTrading:true,equities:{...(current.equities||{})},balances:{...(current.balances||{})},defaults:{...config.defaultRisk.defaults,...(current.defaults||{})}};
@@ -103,6 +120,29 @@ async function authRoutes(req,res,url){
 
 async function userRoutes(req,res,url){const user=requireSession(req,res);if(!user)return;
   const admin=user.role==='ADMIN';
+  if(url.pathname.startsWith('/api/analytics/')){
+    const requested=String(url.searchParams.get('user_id')||user.id),targetUserId=admin?requested:user.id;
+    if(!admin&&requested!==user.id)return json(res,403,{error:'Cannot access another user analytics'});
+    if(!store.userById(targetUserId))return json(res,404,{error:'Analytics user not found'});
+    if(req.method==='PUT'&&url.pathname==='/api/analytics/settings'){
+      const body=await readJson(req),broker=String(body.broker||'');
+      if(!analyticsBrokers.includes(broker))return json(res,400,{error:'Analytics requires a supported Spot broker'});
+      const feeBps=body.feeBps;if(typeof feeBps!=='number'||!Number.isFinite(feeBps)||feeBps<0||feeBps>1000)return json(res,400,{error:'feeBps must be between 0 and 1000'});
+      store.setAnalyticsFeeBps(targetUserId,broker,feeBps);store.audit(user.id,'analytics.settings.updated',null,{targetUserId,broker,feeBps});
+      return json(res,200,{userId:targetUserId,broker,feeBps});
+    }
+    if(req.method==='GET'&&['/api/analytics/summary','/api/analytics/equity-curve','/api/analytics/breakdown'].includes(url.pathname)){
+      const data=analyticsData(url,targetUserId),meta={userId:targetUserId,broker:data.broker,currency:data.currency,symbol:data.symbol,period:data.window.period,from:data.window.fromDate,to:data.window.toDate,feeBps:data.feeBps};
+      if(url.pathname==='/api/analytics/summary'){
+        const {equityCurve,...summary}=data.summary;
+        const groups=groupClosedPositions(data.closed,data.window.period,{startingEquity:data.startingEquity,currency:data.currency});
+        return json(res,200,{...meta,...summary,groups,closedPositions:[...data.closed].sort((a,b)=>b.exitAt-a.exitAt).slice(0,50)});
+      }
+      if(url.pathname==='/api/analytics/equity-curve')return json(res,200,{...meta,startingEquity:data.startingEquity,series:data.summary.equityCurve});
+      const assets=breakdownClosedPositions(data.closed,{startingEquity:data.startingEquity,currency:data.currency}).map(({equityCurve,...asset})=>asset);
+      return json(res,200,{...meta,assets});
+    }
+  }
   if(req.method==='GET'&&url.pathname==='/api/me'){
     const dailyAccounts=store.dailyAccounts(user.id);
     return json(res,200,{user:store.userById(user.id),license:admin?{plan:'ADMIN',status:'ACTIVE',expires_at:null}:store.licenseForUser(user.id),risk:{...store.risk(user.id,config.defaultRisk),paperTrading:true},brokers:store.credentialSummary(user.id),globalKill:store.getSetting('globalKill',false),capabilities,dailyAccounts,daily:{trades:dailyAccounts.reduce((sum,x)=>sum+x.trades,0)}});

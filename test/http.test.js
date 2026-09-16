@@ -80,12 +80,18 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
   assert.equal((await request(secret,'POST',{...payload,symbol:'BTCUSDT',trade_id:'exit',event:'SL',quantity:10,entry:90,timestamp:Date.now()})).status,202);
   await delay(350);
   assert.equal((await request('/api/positions','GET',undefined,token)).body.length,0);
+  const analytics=await request('/api/analytics/summary?broker=binance-global&period=daily','GET',undefined,token);
+  assert.equal(analytics.status,200);assert.equal(analytics.body.currency,'USDT');assert.equal(analytics.body.totalTrades,1);assert.ok(analytics.body.netProfit<0);
+  assert.equal((await request('/api/analytics/summary?broker=binance-th&period=daily','GET',undefined,token)).body.totalTrades,0);
+  assert.equal((await request('/api/analytics/settings','PUT',{broker:'binance-global',feeBps:12.5},token)).status,200);
+  assert.equal((await request('/api/analytics/summary?broker=binance-global&period=custom&from=invalid&to=2026-01-01','GET',undefined,token)).status,400);
   await request('/api/admin/users','POST',{email:'user@example.test',password:'temporary-user-password'},token);
   const userToken=(await request('/api/auth/login','POST',{email:'user@example.test',password:'temporary-user-password'})).body.token;
   assert.equal((await request('/api/me/webhook-secret','GET',undefined,userToken)).body.urlPath,null);
   assert.equal((await request('/api/me/webhook-secret','PUT',{url:'https://robot.test'+secret},userToken)).status,400);
   assert.equal((await request('/api/admin/users','GET',undefined,userToken)).status,403);
   assert.deepEqual((await request('/api/signals','GET',undefined,userToken)).body,[]);
+  assert.equal((await request('/api/analytics/summary?broker=binance-global&period=daily&user_id=not-this-user','GET',undefined,userToken)).status,403);
   assert.equal((await request(secret,'POST',{...payload,trade_id:'blocked',timestamp:Date.now()})).status,202);
   let rejected;
   for(let i=0;i<50;i++){rejected=(await request('/api/signals','GET',undefined,token)).body.find(x=>x.trade_id==='blocked');if(rejected?.status==='REJECTED')break;await delay(30);}

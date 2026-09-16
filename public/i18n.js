@@ -48,6 +48,15 @@ uiPairs.push(
   ['Order size will be reduced to remain within available funds and limits.','ระบบจะลดขนาดคำสั่งให้ไม่เกินเงินทุนและเพดานที่ตั้งไว้'],
   ['All current checks passed.','ผ่านการตรวจสอบทั้งหมดในขณะนี้']
 );
+uiPairs.push(
+  ['Analytics','วิเคราะห์ผลการเทรด'],['User','ผู้ใช้'],['Currency','สกุลเงิน'],['Asset','สินทรัพย์'],['All assets','ทุกสินทรัพย์'],
+  ['Custom fee (bps)','ค่าธรรมเนียมกำหนดเอง (bps)'],['Daily','รายวัน'],['Weekly','รายสัปดาห์'],['Monthly','รายเดือน'],['Annually','รายปี'],['Custom','กำหนดเอง'],['From','จาก'],['To','ถึง'],
+  ['Equity curve','กราฟ Equity'],['Cumulative realized PnL and drawdown','กำไรขาดทุนสะสมและ Drawdown'],['Win / Loss','ชนะ / แพ้'],['Asset performance','ผลลัพธ์รายสินทรัพย์'],['Closed positions','Position ที่ปิดแล้ว'],
+  ['Total trades','จำนวนเทรดทั้งหมด'],['Win rate','อัตราชนะ'],['Net profit','กำไรสุทธิ'],['Profit factor','Profit factor'],['Max drawdown','Drawdown สูงสุด'],['Expectancy','กำไรคาดหวัง'],
+  ['Avg win / loss','กำไรเฉลี่ย / ขาดทุนเฉลี่ย'],['Max win streak','ชนะต่อเนื่องสูงสุด'],['Max loss streak','แพ้ต่อเนื่องสูงสุด'],['Average holding','เวลาถือเฉลี่ย'],['Fee impact','ผลกระทบค่าธรรมเนียม'],['Starting equity','Equity เริ่มต้น'],
+  ['Wins','ชนะ'],['Losses','แพ้'],['Breakeven','เท่าทุน'],['Closed','เวลาปิด'],['Entry / Exit','เข้า / ออก'],['Fees','ค่าธรรมเนียม'],['Holding','เวลาถือ'],
+  ['No closed positions in this period','ไม่มี Position ปิดในช่วงนี้'],['Loading analytics…','กำลังโหลดข้อมูลวิเคราะห์…']
+);
 rejectionHelp['Order exceeds available configured Spot balance']='The calculated BUY exceeds available balance. Increase Balance only when it reflects actual available cash, or reduce the order size.';
 rejectionHelp['No remaining Spot sizing budget']='No usable balance or daily budget remains for another Spot entry.';
 uiPairs.push(

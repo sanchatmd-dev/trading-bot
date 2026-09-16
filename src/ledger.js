@@ -14,7 +14,7 @@ export function transaction(store, fn) {
 
 export function migrateLedger(store) {
   const version = store.db.prepare('PRAGMA user_version').get().user_version;
-  if (version > 6) throw new Error('Database is newer than this application');
+  if (version > 7) throw new Error('Database is newer than this application');
   if (version < 3) transaction(store, () => {
     store.db.exec(`
       ALTER TABLE signals ADD COLUMN execution_mode TEXT NOT NULL DEFAULT 'LEGACY';
@@ -65,6 +65,12 @@ export function migrateLedger(store) {
       store.db.prepare('UPDATE risk_profiles SET policy=?,updated_at=? WHERE user_id=?').run(JSON.stringify(policy),Date.now(),row.user_id);
     }
     store.db.exec('PRAGMA user_version=6;');
+  });
+  if (version < 7) transaction(store, () => {
+    store.db.exec(`CREATE TABLE IF NOT EXISTS analytics_settings(
+      user_id TEXT NOT NULL,broker TEXT NOT NULL,fee_bps REAL NOT NULL DEFAULT 0,updated_at INTEGER NOT NULL,
+      PRIMARY KEY(user_id,broker),FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
+      PRAGMA user_version=7;`);
   });
   store.db.exec(`UPDATE signals SET status='UNKNOWN',
     error_message='Interrupted execution: verify broker outcome; automatic resend disabled'
@@ -220,6 +226,16 @@ const methods = {
       LEFT JOIN ledger_streak s USING(user_id,account_id,execution_mode)
       WHERE d.user_id=? AND d.execution_mode=? AND d.day=?`).all(userId,mode,day());
   },
+  analyticsRows(userId,broker){
+    return this.db.prepare(`SELECT s.user_id,s.trade_id,s.broker,s.symbol,s.side,s.execution_mode,
+      f.signal_id,f.cumulative_quantity,f.delta_quantity quantity,f.price,f.fee_quote,f.received_at
+      FROM fills f JOIN signals s ON s.id=f.signal_id
+      WHERE s.user_id=? AND s.broker=? AND s.execution_mode='PAPER' AND f.delta_quantity>0
+      ORDER BY f.received_at,f.signal_id,f.cumulative_quantity`).all(userId,broker);
+  },
+  analyticsFeeBps(userId,broker){return Number(this.db.prepare('SELECT fee_bps FROM analytics_settings WHERE user_id=? AND broker=?').get(userId,broker)?.fee_bps||0);},
+  setAnalyticsFeeBps(userId,broker,feeBps){this.db.prepare(`INSERT INTO analytics_settings(user_id,broker,fee_bps,updated_at) VALUES(?,?,?,?)
+    ON CONFLICT(user_id,broker) DO UPDATE SET fee_bps=excluded.fee_bps,updated_at=excluded.updated_at`).run(userId,broker,feeBps,Date.now());},
   health() {
     this.db.prepare('SELECT 1').get();
     return this.db.prepare(`SELECT count(*) queued, MIN(received_at) oldest FROM signals WHERE status='QUEUED'`).get();
