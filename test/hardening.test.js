@@ -87,6 +87,16 @@ test('pending buys count toward exposure and reserve symbols',t=>{
   assert.equal(store.exposure({...row,id:999}).hasPendingOrder,true);
 });
 
+test('unique trade ids can scale into one aggregated Spot position',async t=>{
+  const {store,user}=fixture(t);
+  assert.equal(store.enqueue(user.id,signal('scale-1')),true);await new Worker({store,config}).tick();
+  assert.equal(store.enqueue(user.id,signal('scale-2')),true);await new Worker({store,config}).tick();
+  assert.equal(store.enqueue(user.id,signal('scale-2')),false);
+  const position=store.listPositions(user.id)[0],logs=store.listSignals(user.id);
+  assert.equal(position.symbol,'BTCUSDT');assert.equal(position.quantity,20);
+  assert.deepEqual(logs.map(x=>x.status),['FILLED','FILLED']);
+});
+
 test('suspended user cannot execute already queued signal',async t=>{
   const {store,user}=fixture(t);store.enqueue(user.id,signal());store.setUserStatus(user.id,'SUSPENDED');
   await new Worker({store,config}).tick();
@@ -180,12 +190,21 @@ test('legacy migration preserves old positions and quarantines ambiguous orders'
   old.close();
   const store=new Store(filename);
   try{
-    assert.equal(store.db.prepare('PRAGMA user_version').get().user_version,5);
+    assert.equal(store.db.prepare('PRAGMA user_version').get().user_version,6);
     assert.equal(store.db.prepare('SELECT quantity FROM positions').get().quantity,2);
     assert.equal(store.listPositions('legacy-user').length,0);
     assert.equal(store.db.prepare('SELECT status FROM signals WHERE id=1').get().status,'REJECTED');
     assert.equal(store.db.prepare('SELECT status FROM signals WHERE id=2').get().status,'UNKNOWN');
   }finally{store.close();}
+});
+
+test('schema 6 enables repeated-symbol entries for existing risk profiles',t=>{
+  const {store,user,filename}=fixture(t);
+  store.setRisk(user.id,{...config.defaultRisk,onePositionPerSymbol:true});
+  store.db.exec('PRAGMA user_version=5');store.close();
+  const reopened=new Store(filename);
+  try{assert.equal(reopened.risk(user.id,config.defaultRisk).onePositionPerSymbol,false);assert.equal(reopened.db.prepare('PRAGMA user_version').get().user_version,6);}
+  finally{reopened.close();}
 });
 
 test('single-instance lock prevents competing workers and releases cleanly',t=>{

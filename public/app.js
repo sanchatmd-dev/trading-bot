@@ -35,7 +35,7 @@ function fillRisk(p){
   for(const k of riskMaxFields)f[k].value=p[k];
   for(const[input,key]of Object.entries(riskDefaultsMap))f[input].value=p.defaults?.[key]??p[({riskPercent:'maxRiskPercent',tradesPerDay:'maxTradesPerDay',dailyLossR:'maxDailyLossR',lossStreak:'pauseAfterLossStreak',openPositions:'maxOpenPositions',signalAgeSeconds:'maxSignalAgeSeconds',orderNotional:'maxOrderNotional',dailyNotional:'maxDailyNotional',volatilityPercent:'maxVolatilityPercent'})[key]];
   for(const k of riskBooleanFields)f[k].checked=!!p[k];
-  f.paperTrading.checked=true;f.paperTrading.disabled=true;f.requireReduceOnlySell.checked=true;f.requireReduceOnlySell.disabled=true;f.onePositionPerSymbol.checked=true;f.onePositionPerSymbol.disabled=true;
+  f.paperTrading.checked=true;f.paperTrading.disabled=true;f.requireReduceOnlySell.checked=true;f.requireReduceOnlySell.disabled=true;
   f.sideMode.value=p.sideMode;f.allowedSymbols.value=(p.allowedSymbols||[]).join(',');
   for(const[equityInput,balanceInput,broker]of fundFields){const equity=p.equities?.[broker]||0;f[equityInput].value=equity;f[balanceInput].value=p.balances?.[broker]??equity;}
   if(!f.previewRiskPercent.value)f.previewRiskPercent.value=p.defaults?.riskPercent??1;

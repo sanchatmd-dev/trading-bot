@@ -31,6 +31,7 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 - Binance Global normalizes crypto USD aliases to USDT before risk and position checks: BTCUSD, BTC/USD and BINANCE:BTCUSD become BTCUSDT.
 - This is a symbol alias, not a currency conversion. Binance Global equity is USDT. Thai account policies remain THB.
 - Duplicate trade_id values are rejected per user.
+- Repeated BUY entries for the same symbol are allowed by default. Each entry requires a unique trade_id, is checked independently, and contributes to trade, notional, equity, balance and pending-order limits. Spot holdings remain aggregated per broker account and symbol, so scale-in does not consume another unique-symbol position slot.
 - Stale signals are rejected according to the user profile.
 - Existing rejected signals are historical records and are never resent automatically.
 
@@ -45,7 +46,7 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 - Each broker has Total Equity and Balance. Balance is available Spot buying cash, cannot exceed Total Equity, and falls back to Total Equity for older profiles.
 - The Risk Manager includes a real-time, non-executing preview that uses the same server-side risk engine as webhook orders. It shows risk amount, quantity, notional, available balance, open/remaining position slots and how many positions of the previewed size fit. A preview is point-in-time guidance; another concurrent signal can still consume capacity before execution.
 
-Other safeguards include max trades per day, maximum daily loss, maximum open positions, one position per symbol, loss-streak pause, volatility and news blocks, allowed-symbols list, side mode, kill switch and reduce-only enforcement.
+Other safeguards include max trades per day, maximum daily loss, maximum open positions, an optional repeated-symbol entry block, loss-streak pause, volatility and news blocks, allowed-symbols list, side mode, kill switch and reduce-only enforcement.
 
 ## UI
 
@@ -66,10 +67,10 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 ## Operations
 
 - Run tests: npm test
-- Current test suite: 45 tests.
+- Current test suite: 48 tests.
 - Back up SQLite before production release changes using scripts/backup.mjs.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the user service.
-- Database schema version is 5. An older application cannot open a newer schema.
+- Database schema version is 6. Migration 6 disables the legacy one-position-per-symbol block for existing profiles. An older application cannot open a newer schema.
 - All database changes require a verified backup and integrity check.
 
 ## Known rejection causes and handling

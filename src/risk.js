@@ -21,10 +21,10 @@ export function evaluateRisk(signal,context){
   if(!isExit&&policy.allowedSymbols?.length&&!policy.allowedSymbols.some(s=>normalizeSymbol(s,signal.broker)===signal.symbol))return reject('Symbol is not allowed');
   if(policy.sideMode==='BUY_ONLY'&&signal.side!=='BUY'&&!isExit)return reject('Only BUY is allowed');
   if(policy.sideMode==='SELL_ONLY'&&signal.side!=='SELL')return reject('Only SELL is allowed');
-  if(signal.side==='BUY'&&context.openPositions>=policy.maxOpenPositions)return reject('Maximum open positions reached');
+  const opensNewSymbol=signal.side==='BUY'&&position.quantity<=0&&!context.hasPendingOrder;
+  if(opensNewSymbol&&context.openPositions>=policy.maxOpenPositions)return reject('Maximum open positions reached');
   if(signal.side==='BUY'&&policy.onePositionPerSymbol&&(position.quantity>0||context.hasPendingOrder))return reject('Position or pending order already exists for symbol');
-  if(context.hasPendingOrder)return reject('Pending order already reserves this symbol');
-  if(signal.side==='BUY'&&position.quantity>0)return reject('Scale-in is disabled until aggregate position risk is supported');
+  if(isExit&&context.hasPendingOrder)return reject('Pending order already reserves this symbol');
   if(isSpot&&signal.leverage!==1)return reject('Spot leverage must equal 1');
   if(isSpot&&signal.side==='SELL'&&!signal.reduceOnly)return reject('Spot SELL must be reduce_only');
   if(isSpot&&signal.side==='SELL'&&position.quantity<=0)return reject('No Spot position available to sell');

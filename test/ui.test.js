@@ -75,7 +75,7 @@ test('Risk UI renders editable defaults, maxima, Balance and debounced authorita
   const dom=setup(),w=dom.window,d=w.document,calls=[];
   try{
     w.sessionStorage.setItem('astraV2Token','preview-token');
-    const risk={paperTrading:true,killSwitch:false,capPercentEquitySize:true,maxRiskPercent:100,maxTradesPerDay:10,maxDailyLossR:3,pauseAfterLossStreak:3,maxOpenPositions:4,maxSignalAgeSeconds:60,maxOrderNotional:10000,maxDailyNotional:100000,maxVolatilityPercent:5,sideMode:'BOTH',onePositionPerSymbol:true,requireReduceOnlySell:true,blockHighVolatility:true,blockDuringNews:true,allowedSymbols:['BTCUSDT'],equities:{'binance-global':10000},balances:{'binance-global':2500},defaults:{riskPercent:1,tradesPerDay:5,dailyLossR:2,lossStreak:2,openPositions:2,signalAgeSeconds:30,orderNotional:1000,dailyNotional:5000,volatilityPercent:2}};
+    const risk={paperTrading:true,killSwitch:false,capPercentEquitySize:true,maxRiskPercent:100,maxTradesPerDay:10,maxDailyLossR:3,pauseAfterLossStreak:3,maxOpenPositions:4,maxSignalAgeSeconds:60,maxOrderNotional:10000,maxDailyNotional:100000,maxVolatilityPercent:5,sideMode:'BOTH',onePositionPerSymbol:false,requireReduceOnlySell:true,blockHighVolatility:true,blockDuringNews:true,allowedSymbols:['BTCUSDT'],equities:{'binance-global':10000},balances:{'binance-global':2500},defaults:{riskPercent:1,tradesPerDay:5,dailyLossR:2,lossStreak:2,openPositions:2,signalAgeSeconds:30,orderNotional:1000,dailyNotional:5000,volatilityPercent:2}};
     w.fetch=async(path,options={})=>{
       calls.push(path);
       const body=path==='/api/me'?{user:{id:'u',email:'u@test',role:'USER',status:'ACTIVE'},risk,license:{status:'ACTIVE'},daily:{trades:0},dailyAccounts:[],brokers:[],globalKill:false}
@@ -87,6 +87,7 @@ test('Risk UI renders editable defaults, maxima, Balance and debounced authorita
     const f=d.querySelector('#riskForm').elements;
     assert.equal(f.defaultRiskPercent.value,'1');assert.equal(f.maxRiskPercent.value,'100');
     assert.equal(f.equityGlobal.value,'10000');assert.equal(f.balanceGlobal.value,'2500');
+    assert.equal(f.onePositionPerSymbol.checked,false);assert.equal(f.onePositionPerSymbol.disabled,false);
     assert.equal(d.querySelector('#previewSlots').textContent,'1 / 3');
     f.previewEntry.value='100';f.previewStopLoss.value='90';f.previewEntry.dispatchEvent(new w.Event('input',{bubbles:true}));
     await new Promise(resolve=>setTimeout(resolve,350));

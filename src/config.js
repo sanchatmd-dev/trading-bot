@@ -33,7 +33,7 @@ export const config = {
     maxRiskPercent: num('MAX_RISK_PERCENT', 100, 0.01), maxOrderNotional: num('MAX_ORDER_NOTIONAL', 10000, 0.01),
     maxDailyNotional: num('MAX_DAILY_NOTIONAL', 100000, 0.01), maxTradesPerDay: num('MAX_TRADES_PER_DAY', 10, 1),
     maxDailyLossR: num('MAX_DAILY_LOSS_R', 3, 0.01), maxOpenPositions: num('MAX_OPEN_POSITIONS', 3, 1),
-    onePositionPerSymbol: bool('ONE_POSITION_PER_SYMBOL', true), pauseAfterLossStreak: num('PAUSE_AFTER_LOSS_STREAK', 3, 1),
+    onePositionPerSymbol: false, pauseAfterLossStreak: num('PAUSE_AFTER_LOSS_STREAK', 3, 1),
     maxSignalAgeSeconds: num('MAX_SIGNAL_AGE_SECONDS', 60, 1), maxVolatilityPercent: num('MAX_VOLATILITY_PERCENT', 5, 0),
     blockHighVolatility: bool('BLOCK_HIGH_VOLATILITY', true), blockDuringNews: bool('BLOCK_DURING_NEWS', true),
     sideMode: String(process.env.SIDE_MODE || 'BOTH').toUpperCase(), requireReduceOnlySell: bool('REQUIRE_REDUCE_ONLY_SELL', true),
