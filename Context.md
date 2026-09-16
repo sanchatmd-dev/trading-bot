@@ -9,7 +9,7 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Public URL: https://www.robottrade.io
 - VPS host: 187.53.141.5
 - Application user: mikey
-- Current release: 0d8bd45 (the deployed release; update this value after the next production rollout)
+- Current release: cecc34e
 - Service: astra-trade.service (user service)
 - Application: /home/mikey/apps/astra-trade/current
 - Shared state: /home/mikey/apps/astra-trade/shared
