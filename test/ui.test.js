@@ -61,6 +61,10 @@ test('save popup follows successful API writes, not errors; Rejected notes are e
     w.eval(publicFile('app.js')+'\nsignals='+JSON.stringify([fixture])+';renderSignals();');
     assert.equal(d.querySelector('#signalRows script'),null);
     assert.equal(d.querySelector('.review-note').value,fixture.review_note);
+    assert.match(d.querySelector('.rejection-help').textContent,/older than Max signal age/);
+    assert.match(w.explainRejection('No Spot position available to sell'),/no open Spot position/);
+    assert.match(w.explainRejection('Order exceeds available configured Spot equity'),/exceeds available equity/);
+    assert.match(w.explainRejection('Symbol is not allowed'),/Allowed symbols/);
     d.querySelector('.review-note').value='Reviewed';
     d.querySelector('.save-note').click();await settle();
     assert.equal(lastRequest.path,'/api/signals/1/note');

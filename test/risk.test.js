@@ -28,3 +28,18 @@ test('USD allowlist aliases match USDT equity without bypassing capital limits',
   assert.equal(evaluateRisk(signal,context).ok,true);
   assert.match(evaluateRisk({...signal,quantity:1},context).reason,/equity/);
 });
+test('opt-in Percent Equity sizing caps to free equity, order and daily budgets',()=>{
+  const s={...signal,referencePrice:75992.88,stopLoss:75958.38,takeProfit:80000,riskValue:.5};
+  const c={...ctx,policy:{...policy,capPercentEquitySize:true,maxOrderNotional:10000,maxDailyNotional:5000}};
+  const result=evaluateRisk(s,c);
+  assert.equal(result.ok,true);assert.ok(result.order.notional<=5000);
+  assert.ok(result.order.sizingAdjustment.requestedQuantity>result.order.quantity);
+  const used=evaluateRisk(s,{...c,committedNotional:9800});
+  assert.equal(used.ok,true);assert.ok(used.order.notional<=200);
+  const reserved=evaluateRisk(s,{...c,reservedNotional:4900});
+  assert.equal(reserved.ok,true);assert.ok(reserved.order.notional<=100);
+  assert.equal(evaluateRisk(s,{...c,committedNotional:10000}).ok,false);
+  assert.match(evaluateRisk({...s,quantity:1},c).reason,/equity/);
+  assert.match(evaluateRisk(s,{...c,policy:{...c.policy,capPercentEquitySize:false}}).reason,/equity/);
+  assert.equal(evaluateRisk({...s,newsRisk:true},c).ok,false);
+});

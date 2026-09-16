@@ -14,7 +14,7 @@ export function transaction(store, fn) {
 
 export function migrateLedger(store) {
   const version = store.db.prepare('PRAGMA user_version').get().user_version;
-  if (version > 4) throw new Error('Database is newer than this application');
+  if (version > 5) throw new Error('Database is newer than this application');
   if (version < 3) transaction(store, () => {
     store.db.exec(`
       ALTER TABLE signals ADD COLUMN execution_mode TEXT NOT NULL DEFAULT 'LEGACY';
@@ -55,6 +55,9 @@ export function migrateLedger(store) {
   });
   if (version < 4) transaction(store, () => {
     store.db.exec("ALTER TABLE signals ADD COLUMN review_note TEXT NOT NULL DEFAULT ''; PRAGMA user_version=4;");
+  });
+  if (version < 5) transaction(store, () => {
+    store.db.exec("ALTER TABLE users ADD COLUMN webhook_secret_encrypted TEXT; PRAGMA user_version=5;");
   });
   store.db.exec(`UPDATE signals SET status='UNKNOWN',
     error_message='Interrupted execution: verify broker outcome; automatic resend disabled'

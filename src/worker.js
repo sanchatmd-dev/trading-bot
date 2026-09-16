@@ -60,14 +60,14 @@ export class Worker {
       // All live entry points are closed in this release, including direct adapter calls.
       this.store.recordExecution(job,{
         status:'FILLED',orderId:`PAPER-${job.client_order_id}`,executedQty:order.quantity,
-        quoteQty:order.notional,deltaFeeQuote:0,raw:{paper:true,status:'FILLED',feesSimulated:false}
+        quoteQty:order.notional,deltaFeeQuote:0,raw:{paper:true,status:'FILLED',feesSimulated:false,...(order.sizingAdjustment?{sizingAdjustment:order.sizingAdjustment}:{})}
       },order);
     } catch(error) {
       // No external submission exists on this path in the staging release.
       this.store.complete(job.id,'REJECTED',{error:error.message});
       this.store.audit(job.user_id,'risk.rejected',signal.tradeId,{reason:error.message});
       this.store.db.prepare('INSERT INTO notification_outbox(user_id,subject,body) VALUES(?,?,?)')
-        .run(job.user_id,`Astra rejected ${signal.tradeId}`,error.message);
+        .run(job.user_id,`Robot trade rejected ${signal.tradeId}`,error.message);
     }
   }
   async reconcile() {

@@ -36,7 +36,9 @@ export class Store {
   setUserStatus(id,status) { this.db.prepare('UPDATE users SET status=? WHERE id=?').run(status,id); if(status!=='ACTIVE')this.revokeSessions(id); }
   setPassword(id,passwordHash) { this.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(passwordHash,id); this.revokeSessions(id); }
   revokeSessions(id) { this.db.prepare('DELETE FROM sessions WHERE user_id=?').run(id); }
-  setWebhookSecret(userId, secret) { this.db.prepare('UPDATE users SET webhook_secret_hash=?,webhook_hint=? WHERE id=?').run(hashToken(secret),secret.slice(-6),userId); }
+  setWebhookSecret(userId, secret, encrypted=null) { this.db.prepare('UPDATE users SET webhook_secret_hash=?,webhook_hint=?,webhook_secret_encrypted=? WHERE id=?').run(hashToken(secret),secret.slice(-6),encrypted,userId); }
+  rememberWebhookSecret(userId,secret,encrypted) { return this.db.prepare('UPDATE users SET webhook_secret_encrypted=? WHERE id=? AND webhook_secret_hash=? AND webhook_secret_encrypted IS NULL').run(encrypted,userId,hashToken(secret)).changes>0; }
+  webhookSecret(userId) { return this.db.prepare('SELECT webhook_secret_hash,webhook_secret_encrypted FROM users WHERE id=?').get(userId); }
   userByWebhook(secret) { return this.db.prepare('SELECT id,email,role,status FROM users WHERE webhook_secret_hash=?').get(hashToken(secret)); }
 
   createSession(userId, token, expiresAt) { this.db.prepare('INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)').run(hashToken(token),userId,expiresAt,Date.now()); }

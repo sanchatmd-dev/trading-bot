@@ -32,7 +32,7 @@ export function evaluateRisk(signal,context){
   if(!price)return reject('entry/reference_price is required for risk checks');
   if(signal.side==='BUY'&&signal.stopLoss&&signal.stopLoss>=price)return reject('BUY stop loss must be below entry');
   if(signal.side==='BUY'&&signal.takeProfit&&signal.takeProfit<=price)return reject('BUY take profit must be above entry');
-  let quantity=signal.quantity;
+  let quantity=signal.quantity,sizingAdjustment;
   if(isSpot&&signal.side==='SELL'&&signal.reduceOnly&&!quantity&&!signal.quoteQuantity)quantity=position.quantity;
   if(!quantity&&signal.quoteQuantity)quantity=signal.quoteQuantity/price;
   if(!quantity&&signal.riskMode==='QUANTITY')quantity=signal.riskValue;
@@ -42,6 +42,14 @@ export function evaluateRisk(signal,context){
     if(signal.riskValue>policy.maxRiskPercent)return reject('Risk percent exceeds policy');
     const distance=Math.abs(price-signal.stopLoss); if(!distance)return reject('Stop loss must differ from entry');
     quantity=(context.equity*signal.riskValue/100)/distance;
+    if(signal.side==='BUY'&&policy.capPercentEquitySize){
+      const available=Math.min(context.equity-(context.committedNotional||0),policy.maxOrderNotional,policy.maxDailyNotional-daily.notional-(context.reservedNotional||0));
+      if(!Number.isFinite(available)||available<=0)return reject('No remaining Spot sizing budget');
+      const requestedQuantity=quantity;
+      // Round down slightly so floating-point multiplication cannot exceed any hard cap.
+      quantity=Math.min(quantity,available/price*(1-1e-12));
+      if(quantity<requestedQuantity)sizingAdjustment={requestedQuantity,quantity,reason:'Capped to available equity and notional limits'};
+    }
   }
   if(!Number.isFinite(quantity)||quantity<=0)return reject('Unable to calculate quantity');
   if(isSpot&&signal.side==='SELL')quantity=Math.min(quantity,position.quantity);
@@ -56,5 +64,5 @@ export function evaluateRisk(signal,context){
   }
   if(!isExit&&notional>policy.maxOrderNotional)return reject('Maximum order notional exceeded');
   if(!isExit&&daily.notional+(context.reservedNotional||0)+notional>policy.maxDailyNotional)return reject('Maximum daily notional exceeded');
-  return {ok:true,order:{...signal,quantity,price,notional}};
+  return {ok:true,order:{...signal,quantity,price,notional,...(sizingAdjustment?{sizingAdjustment}:{})}};
 }

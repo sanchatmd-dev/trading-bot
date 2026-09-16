@@ -7,3 +7,35 @@ dialog{color:#e8edf7;background:#141d30;border:1px solid #405170;border-radius:2
 dialog::backdrop{background:#0009}
 dialog pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;padding:16px;background:#0b1220;border-radius:10px}
 .review-note{min-width:220px;min-height:70px}.note-error{display:block;color:#ff9292}
+/* Fit the viewport at normal browser zoom without shrinking text or clipping data. */
+.shell{grid-template-columns:200px minmax(0,1fr)}
+main{min-width:0;max-width:none;padding:22px 24px}
+aside{min-width:0;padding:22px 14px}
+header{gap:14px;flex-wrap:wrap;margin-bottom:18px}
+header>div:last-child{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.panel,.metric{min-width:0;padding:16px}
+.panel-title{gap:12px;align-items:flex-start}
+.status-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.two-col{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+label,input,select,textarea{min-width:0;max-width:100%}
+.panel p{overflow-wrap:anywhere}
+pre,.secret-box{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
+.list-row{gap:10px;align-items:flex-start}.list-row>span{min-width:0;overflow-wrap:anywhere}
+.list-row small,.list-row time,td small{display:block}
+.list-row time{margin-top:5px;color:var(--muted);font-size:11px}
+table{table-layout:fixed}th,td{white-space:normal;overflow-wrap:anywhere;vertical-align:top;padding:10px 8px}
+#executionLog th:nth-child(1){width:15%}#executionLog th:nth-child(2){width:15%}
+#executionLog th:nth-child(3){width:12%}#executionLog th:nth-child(4){width:33%}#executionLog th:nth-child(5){width:25%}
+.rejection-help{margin:0 0 7px!important;color:#ffb2bc!important;font-size:13px}
+.raw-reason{font-size:11px;color:var(--muted)}
+.order-details{margin:12px 0}.order-details dt{font-size:11px;color:var(--muted)}.order-details dd{margin:0 0 9px;overflow-wrap:anywhere}
+.review-note{min-width:0;width:100%}details pre{width:100%;max-width:100%}details summary{white-space:normal;overflow:visible}
+.metric strong{font-size:clamp(16px,1.5vw,24px);overflow-wrap:anywhere}
+#webhookResult{font-family:ui-monospace,monospace;font-size:12px}#webhookStatus{font-size:12px}
+@media(min-width:1280px){#riskForm .form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1100px){.two-col{grid-template-columns:minmax(0,1fr)}main{padding:18px}.shell{grid-template-columns:180px minmax(0,1fr)}}
+@media(max-width:900px){.shell{display:block}.status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}nav button{flex-shrink:0}aside{padding:14px}nav{margin-top:12px}}
+@media(max-width:600px){.form-grid,.status-grid{grid-template-columns:minmax(0,1fr)}main{padding:12px}.panel{padding:12px}#executionLog thead{display:none}#executionLog tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}#executionLog td{display:block;width:100%;border:0;padding:5px 0}.panel-title{flex-wrap:wrap}}
+.form-grid label{margin:4px 0}
+.panel-title{margin-bottom:12px}

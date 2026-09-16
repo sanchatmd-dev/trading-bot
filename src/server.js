@@ -4,7 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {config,assertProductionConfig} from './config.js';
 import {Store} from './database.js';
-import {hashPassword,verifyPassword,randomToken,encryptJson} from './security.js';
+import {hashPassword,verifyPassword,randomToken,encryptJson,decryptJson,hashToken} from './security.js';
 import {normalizeSignal} from './domain.js';
 import {supportedBrokers,capabilities,validateCredentials} from './adapters/registry.js';
 import {EmailNotifier} from './notifier.js';
@@ -37,7 +37,7 @@ function validateRisk(input,current){
     if(['maxTradesPerDay','maxOpenPositions','pauseAfterLossStreak','maxSignalAgeSeconds'].includes(k)&&!Number.isInteger(n))throw new Error(`${k} must be an integer`);
     next[k]=n;
   }
-  for(const key of ['paperTrading','killSwitch','onePositionPerSymbol','blockHighVolatility','blockDuringNews','requireReduceOnlySell'])
+  for(const key of ['paperTrading','killSwitch','onePositionPerSymbol','blockHighVolatility','blockDuringNews','requireReduceOnlySell','capPercentEquitySize'])
     if(input[key]!==undefined)next[key]=booleanValue(input[key],key);
   if(!next.paperTrading)throw new Error('Live is locked in this Paper staging release');
   if(!next.requireReduceOnlySell)throw new Error('Spot reduce-only protection cannot be disabled');
@@ -77,7 +77,24 @@ async function userRoutes(req,res,url){const user=requireSession(req,res);if(!us
     const dailyAccounts=store.dailyAccounts(user.id);
     return json(res,200,{user:store.userById(user.id),license:admin?{plan:'ADMIN',status:'ACTIVE',expires_at:null}:store.licenseForUser(user.id),risk:{...store.risk(user.id,config.defaultRisk),paperTrading:true},brokers:store.credentialSummary(user.id),globalKill:store.getSetting('globalKill',false),capabilities,dailyAccounts,daily:{trades:dailyAccounts.reduce((sum,x)=>sum+x.trades,0)}});
   }
-  if(req.method==='POST'&&url.pathname==='/api/me/webhook-secret'){const secret=randomToken();store.setWebhookSecret(user.id,secret);store.audit(user.id,'webhook.secret.rotated',null,{});return json(res,200,{secret,urlPath:`/webhooks/tradingview/${secret}`});}
+  if(req.method==='GET'&&url.pathname==='/api/me/webhook-secret'){
+    const saved=store.webhookSecret(user.id);
+    if(!saved?.webhook_secret_encrypted)return json(res,200,{urlPath:null,configured:!!saved?.webhook_secret_hash,recoveryRequired:!!saved?.webhook_secret_hash});
+    const {secret}=decryptJson(saved.webhook_secret_encrypted,config.masterKey,`webhook:${user.id}`);
+    if(hashToken(secret)!==saved.webhook_secret_hash)throw new Error('Saved webhook verification failed');
+    return json(res,200,{urlPath:`/webhooks/tradingview/${secret}`,configured:true,recoveryRequired:false});
+  }
+  if(req.method==='PUT'&&url.pathname==='/api/me/webhook-secret'){
+    const body=await readJson(req);
+    if(typeof body.url!=='string'||body.url.length>2048)throw new Error('Invalid webhook URL');
+    const match=body.url.trim().match(/(?:^|\/)webhooks\/tradingview\/([a-f0-9]{64})$/);
+    const saved=store.webhookSecret(user.id),secret=match?.[1];
+    if(!secret||hashToken(secret)!==saved?.webhook_secret_hash)return json(res,400,{error:'URL does not match your current webhook'});
+    store.rememberWebhookSecret(user.id,secret,encryptJson({secret},config.masterKey,`webhook:${user.id}`));
+    store.audit(user.id,'webhook.secret.recovered',null,{});
+    return json(res,200,{urlPath:`/webhooks/tradingview/${secret}`});
+  }
+  if(req.method==='POST'&&url.pathname==='/api/me/webhook-secret'){const secret=randomToken();store.setWebhookSecret(user.id,secret,encryptJson({secret},config.masterKey,`webhook:${user.id}`));store.audit(user.id,'webhook.secret.rotated',null,{});return json(res,200,{secret,urlPath:`/webhooks/tradingview/${secret}`});}
   if(req.method==='POST'&&url.pathname==='/api/me/license/redeem'){const body=await readJson(req);if(!store.redeemLicense(user.id,String(body.licenseKey||'')))return json(res,400,{error:'License is invalid, assigned, or expired'});store.audit(user.id,'license.redeemed',null,{});return json(res,200,{license:store.licenseForUser(user.id)});}
   if(req.method==='POST'&&url.pathname==='/api/me/password'){const body=await readJson(req),full=store.userByEmail(user.email);if(!await verifyPassword(body.currentPassword,full.password_hash))return json(res,400,{error:'Current password is incorrect'});store.setPassword(user.id,await hashPassword(body.newPassword));store.audit(user.id,'account.password.changed',null,{});return json(res,200,{ok:true});}
   if(req.method==='GET'&&url.pathname==='/api/risk')return json(res,200,{...store.risk(user.id,config.defaultRisk),paperTrading:true});
@@ -132,6 +149,9 @@ const server=http.createServer(async(req,res)=>{res.setHeader('x-content-type-op
   if(req.method==='POST'&&url.pathname.startsWith('/webhooks/tradingview/')){
     const secret=decodeURIComponent(url.pathname.slice('/webhooks/tradingview/'.length)),user=store.userByWebhook(secret);
     if(!user||user.status!=='ACTIVE')return json(res,404,{error:'Not found'});
+    // Recover legacy hash-only secrets from authenticated requests without rotating URLs.
+    if(!store.webhookSecret(user.id)?.webhook_secret_encrypted)
+      store.rememberWebhookSecret(user.id,secret,encryptJson({secret},config.masterKey,`webhook:${user.id}`));
     const signal=normalizeSignal(await readJson(req));
     if(!capabilities[signal.broker]?.paper)throw new Error('Broker does not support Spot simulation');
     const isExit=signal.side==='SELL'&&signal.reduceOnly;
