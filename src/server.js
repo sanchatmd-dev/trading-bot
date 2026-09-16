@@ -6,6 +6,7 @@ import {config,assertProductionConfig} from './config.js';
 import {Store} from './database.js';
 import {hashPassword,verifyPassword,randomToken,encryptJson,decryptJson,hashToken} from './security.js';
 import {normalizeSignal} from './domain.js';
+import {evaluateRisk} from './risk.js';
 import {supportedBrokers,capabilities,validateCredentials} from './adapters/registry.js';
 import {EmailNotifier} from './notifier.js';
 import {Worker,NotificationWorker} from './worker.js';
@@ -28,7 +29,7 @@ const safeLimit=url=>Math.min(500,Math.max(1,Number(url.searchParams.get('limit'
 const loginKey=req=>clientIp(req,config.trustLoopbackProxy);
 
 function validateRisk(input,current){
-  const next={...current,paperTrading:true,equities:{...(current.equities||{})}};
+  const next={...current,paperTrading:true,equities:{...(current.equities||{})},balances:{...(current.balances||{})},defaults:{...config.defaultRisk.defaults,...(current.defaults||{})}};
   const ranges={maxRiskPercent:[.01,100],maxOrderNotional:[.01,1e12],maxDailyNotional:[.01,1e13],maxTradesPerDay:[1,10000],maxDailyLossR:[.01,1000],maxOpenPositions:[1,1000],pauseAfterLossStreak:[1,100],maxSignalAgeSeconds:[1,3600],maxVolatilityPercent:[0,1000]};
   for(const[k,[min,max]]of Object.entries(ranges)){
     if(input[k]===undefined)continue;
@@ -37,6 +38,25 @@ function validateRisk(input,current){
     if(['maxTradesPerDay','maxOpenPositions','pauseAfterLossStreak','maxSignalAgeSeconds'].includes(k)&&!Number.isInteger(n))throw new Error(`${k} must be an integer`);
     next[k]=n;
   }
+  const defaultFields={
+    riskPercent:['maxRiskPercent',.01],tradesPerDay:['maxTradesPerDay',1],
+    dailyLossR:['maxDailyLossR',.01],lossStreak:['pauseAfterLossStreak',1],
+    openPositions:['maxOpenPositions',1],signalAgeSeconds:['maxSignalAgeSeconds',1],
+    orderNotional:['maxOrderNotional',.01],dailyNotional:['maxDailyNotional',.01],
+    volatilityPercent:['maxVolatilityPercent',0]
+  };
+  if(input.defaults!==undefined){
+    if(!input.defaults||typeof input.defaults!=='object'||Array.isArray(input.defaults))throw new Error('Invalid defaults');
+    for(const[key,[maxKey,min]]of Object.entries(defaultFields)){
+      if(input.defaults[key]===undefined)continue;
+      const n=input.defaults[key];
+      if(typeof n!=='number'||!Number.isFinite(n)||n<min||n>next[maxKey])throw new Error(`Default ${key} must not exceed ${maxKey}`);
+      if(['tradesPerDay','lossStreak','openPositions','signalAgeSeconds'].includes(key)&&!Number.isInteger(n))throw new Error(`Default ${key} must be an integer`);
+      next.defaults[key]=n;
+    }
+  }
+  for(const[key,[maxKey]]of Object.entries(defaultFields))
+    if(next.defaults[key]>next[maxKey])throw new Error(`Default ${key} must not exceed ${maxKey}`);
   for(const key of ['paperTrading','killSwitch','onePositionPerSymbol','blockHighVolatility','blockDuringNews','requireReduceOnlySell','capPercentEquitySize'])
     if(input[key]!==undefined)next[key]=booleanValue(input[key],key);
   if(!next.paperTrading)throw new Error('Live is locked in this Paper staging release');
@@ -53,6 +73,16 @@ function validateRisk(input,current){
       next.equities[broker]=n;
     }
   }
+  if(input.balances!==undefined){
+    if(!input.balances||typeof input.balances!=='object'||Array.isArray(input.balances))throw new Error('Invalid balances');
+    for(const[broker,n]of Object.entries(input.balances)){
+      if(!supportedBrokers.includes(broker)||typeof n!=='number'||!Number.isFinite(n)||n<0||n>1e12)throw new Error('Invalid balance');
+      if(n>(next.equities[broker]??0))throw new Error('Balance cannot exceed Total Equity');
+      next.balances[broker]=n;
+    }
+  }
+  for(const[broker,balance]of Object.entries(next.balances))
+    if(balance>(next.equities[broker]??0))throw new Error('Balance cannot exceed Total Equity');
   return next;
 }
 
@@ -99,6 +129,24 @@ async function userRoutes(req,res,url){const user=requireSession(req,res);if(!us
   if(req.method==='POST'&&url.pathname==='/api/me/password'){const body=await readJson(req),full=store.userByEmail(user.email);if(!await verifyPassword(body.currentPassword,full.password_hash))return json(res,400,{error:'Current password is incorrect'});store.setPassword(user.id,await hashPassword(body.newPassword));store.audit(user.id,'account.password.changed',null,{});return json(res,200,{ok:true});}
   if(req.method==='GET'&&url.pathname==='/api/risk')return json(res,200,{...store.risk(user.id,config.defaultRisk),paperTrading:true});
   if(req.method==='PUT'&&url.pathname==='/api/risk'){const policy=validateRisk(await readJson(req),store.risk(user.id,config.defaultRisk));store.setRisk(user.id,policy);store.audit(user.id,'risk.updated',null,{policy});return json(res,200,policy);}
+  if(req.method==='POST'&&url.pathname==='/api/risk/preview'){
+    const body=await readJson(req),policy=validateRisk(body.policy||{},store.risk(user.id,config.defaultRisk));
+    const calculator=body.calculator||{},broker=String(calculator.broker||'binance-global');
+    const entry=Number(calculator.entry),stopLoss=Number(calculator.stopLoss),riskValue=Number(calculator.riskPercent);
+    const signal=normalizeSignal({trade_id:'risk-preview',broker,symbol:String(calculator.symbol||''),event:'BUY',
+      risk_mode:'PERCENT_EQUITY',risk_value:riskValue,entry,sl:stopLoss,tp:entry*1.01,
+      volatility_percent:Number(calculator.volatilityPercent??0),news_risk:false,timestamp:Date.now()});
+    const row={id:0,user_id:user.id,account_id:`${signal.broker}:primary`,execution_mode:'PAPER',symbol:signal.symbol,broker:signal.broker};
+    const exposure=store.exposure(row),daily=store.ledgerDaily(row),position=store.ledgerPosition(row);
+    const equity=policy.equities?.[signal.broker]||0,balance=policy.balances?.[signal.broker]??equity;
+    const result=evaluateRisk(signal,{policy,daily,position,equity,balance,
+      licensed:user.role==='ADMIN'||store.hasActiveLicense(user.id),globalKill:store.getSetting('globalKill',false),...exposure});
+    const positionsRemaining=Math.max(0,policy.maxOpenPositions-exposure.openPositions);
+    const freeBalance=Math.max(0,Math.min(equity,balance)-(exposure.committedNotional||0));
+    const positionCapacity=result.ok&&result.order.notional>0?Math.min(positionsRemaining,Math.floor(freeBalance/result.order.notional)):0;
+    return json(res,200,{...result,equity,balance,freeBalance,positionsOpen:exposure.openPositions,
+      positionsRemaining,positionCapacity,dailyRemaining:Math.max(0,policy.maxDailyNotional-daily.notional-(exposure.reservedNotional||0))});
+  }
   if(req.method==='GET'&&url.pathname==='/api/brokers')return json(res,200,{supported:supportedBrokers,capabilities,configured:store.credentialSummary(user.id)});
   if(req.method==='PUT'&&url.pathname.startsWith('/api/brokers/')){
     const broker=decodeURIComponent(url.pathname.slice('/api/brokers/'.length));

@@ -43,3 +43,11 @@ test('opt-in Percent Equity sizing caps to free equity, order and daily budgets'
   assert.match(evaluateRisk(s,{...c,policy:{...c.policy,capPercentEquitySize:false}}).reason,/equity/);
   assert.equal(evaluateRisk({...s,newsRisk:true},c).ok,false);
 });
+test('Spot Balance caps automatic sizing and rejects oversized explicit quantity',()=>{
+  const s={...signal,referencePrice:100,stopLoss:99,takeProfit:110,riskValue:50};
+  const c={...ctx,equity:10000,balance:1200,policy:{...policy,maxRiskPercent:100,maxOrderNotional:10000,maxDailyNotional:100000,capPercentEquitySize:true}};
+  const result=evaluateRisk(s,c);
+  assert.equal(result.ok,true);assert.ok(result.order.notional<=1200);
+  assert.equal(result.order.sizingAdjustment.reason,'Capped to available equity and notional limits');
+  assert.match(evaluateRisk({...s,quantity:20},c).reason,/balance/);
+});

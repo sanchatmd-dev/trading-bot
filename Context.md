@@ -9,7 +9,7 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Public URL: https://www.robottrade.io
 - VPS host: 187.53.141.5
 - Application user: mikey
-- Current release: 0d8bd45
+- Current release: 0d8bd45 (the deployed release; update this value after the next production rollout)
 - Service: astra-trade.service (user service)
 - Application: /home/mikey/apps/astra-trade/current
 - Shared state: /home/mikey/apps/astra-trade/shared
@@ -39,9 +39,11 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 - Max risk per trade: 100%
 - Max order notional: 10,000 USDT
 - Max daily notional: 100,000 USDT
-- Percent Equity sizing is capped automatically at the lowest safe value among risk-derived size, free configured equity after committed/reserved capital, max order notional and remaining daily notional budget.
+- Percent Equity sizing is capped automatically at the lowest safe value among risk-derived size, free configured equity, free configured cash balance, max order notional and remaining daily notional budget.
 - Explicit quantity and fixed-notional requests are still rejected if they exceed risk/equity constraints.
-- The Risk Manager UI lets the owner change order and daily limits.
+- Every numeric Risk Manager limit has an editable Default and Max Value. Default supplies the calculator's suggested setting; Max Value is the enforced ceiling.
+- Each broker has Total Equity and Balance. Balance is available Spot buying cash, cannot exceed Total Equity, and falls back to Total Equity for older profiles.
+- The Risk Manager includes a real-time, non-executing preview that uses the same server-side risk engine as webhook orders. It shows risk amount, quantity, notional, available balance, open/remaining position slots and how many positions of the previewed size fit. A preview is point-in-time guidance; another concurrent signal can still consume capacity before execution.
 
 Other safeguards include max trades per day, maximum daily loss, maximum open positions, one position per symbol, loss-streak pause, volatility and news blocks, allowed-symbols list, side mode, kill switch and reduce-only enforcement.
 
@@ -64,7 +66,7 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 ## Operations
 
 - Run tests: npm test
-- Current test suite: 43 tests.
+- Current test suite: 45 tests.
 - Back up SQLite before production release changes using scripts/backup.mjs.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the user service.
 - Database schema version is 5. An older application cannot open a newer schema.
@@ -73,6 +75,7 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 ## Known rejection causes and handling
 
 - **Order exceeds available configured Spot equity**: automatic Percent Equity sizing now caps the order. Explicit oversized quantity remains rejected.
+- **Order exceeds available configured Spot balance**: increase the configured Balance only when cash is actually available, or reduce the order. Percent Equity sizing caps automatically.
 - **No Spot position available to sell**: the prior entry did not fill or no Paper position exists; exit orders are not converted into entries.
 - **Symbol is not allowed**: add the symbol in Risk Manager only when intentionally approved.
 - **Risk percent exceeds policy**: lower risk_value or explicitly review the configured ceiling.
@@ -81,4 +84,3 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 
 - Remote: https://github.com/sanchatmd-dev/trading-bot.git
 - Main branch: main
-

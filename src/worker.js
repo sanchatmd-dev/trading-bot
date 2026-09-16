@@ -51,6 +51,7 @@ export class Worker {
       const result=evaluateRisk(signal,{
         policy,daily:this.store.ledgerDaily(job),position:this.store.ledgerPosition(job),
         equity:policy.equities?.[signal.broker]||0,
+        balance:policy.balances?.[signal.broker]??policy.equities?.[signal.broker]??0,
         licensed:user.role==='ADMIN'||this.store.hasActiveLicense(job.user_id),
         globalKill:this.store.getSetting('globalKill',false),...exposure
       });

@@ -37,7 +37,12 @@ export const config = {
     maxSignalAgeSeconds: num('MAX_SIGNAL_AGE_SECONDS', 60, 1), maxVolatilityPercent: num('MAX_VOLATILITY_PERCENT', 5, 0),
     blockHighVolatility: bool('BLOCK_HIGH_VOLATILITY', true), blockDuringNews: bool('BLOCK_DURING_NEWS', true),
     sideMode: String(process.env.SIDE_MODE || 'BOTH').toUpperCase(), requireReduceOnlySell: bool('REQUIRE_REDUCE_ONLY_SELL', true),
-    allowedSymbols: [], equities: {}
+    allowedSymbols: [], equities: {}, balances: {},
+    defaults: {
+      riskPercent: 1, tradesPerDay: 10, dailyLossR: 3, lossStreak: 3,
+      openPositions: 3, signalAgeSeconds: 60, orderNotional: 1000,
+      dailyNotional: 5000, volatilityPercent: 5
+    }
   }
 };
 

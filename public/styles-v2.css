@@ -39,3 +39,16 @@ table{table-layout:fixed}th,td{white-space:normal;overflow-wrap:anywhere;vertica
 @media(max-width:600px){.form-grid,.status-grid{grid-template-columns:minmax(0,1fr)}main{padding:12px}.panel{padding:12px}#executionLog thead{display:none}#executionLog tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}#executionLog td{display:block;width:100%;border:0;padding:5px 0}.panel-title{flex-wrap:wrap}}
 .form-grid label{margin:4px 0}
 .panel-title{margin-bottom:12px}
+.risk-table-wrap{width:100%;overflow:auto;margin:8px 0 18px}
+#riskLimits,#accountFunds{min-width:620px}
+#riskLimits th:first-child,#accountFunds th:first-child{width:34%}
+#riskLimits input,#accountFunds input{margin:0}
+.compact-risk{margin-top:14px}
+.risk-calculator{margin-top:24px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#07142480}
+.preview-badge{display:inline-flex;align-items:center;max-width:260px;padding:7px 11px;border-radius:999px;background:#182a42;color:var(--muted);font-size:12px;font-weight:700}
+.preview-badge.ok{background:#123e34;color:#63e5b0}.preview-badge.bad{background:#3e1a24;color:#ff9dab}
+.preview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.preview-grid article{min-width:0;padding:12px;border:1px solid var(--line);border-radius:10px;background:#091726}
+.preview-grid span{display:block;color:var(--muted);font-size:11px}.preview-grid strong{display:block;margin-top:7px;font-size:17px;overflow-wrap:anywhere}
+@media(max-width:700px){.preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.risk-calculator{padding:12px}}
+@media(max-width:600px){#riskLimits,#accountFunds{min-width:0;table-layout:fixed}#riskLimits th,#riskLimits td,#accountFunds th,#accountFunds td{padding:8px 5px;font-size:12px}#riskLimits th:first-child,#accountFunds th:first-child{width:42%}#riskLimits input,#accountFunds input{min-width:0;width:100%;padding:9px 7px}}

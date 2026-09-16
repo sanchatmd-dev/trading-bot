@@ -32,6 +32,28 @@ uiPairs.push(...[["Symbol / Event","สัญลักษณ์ / เหตุ�
 const rejectionHelp={"No Spot position available to sell":"There is no open Spot position to close. Check that the earlier BUY was filled. TradingView does not receive fill confirmation; do not resend this exit as a BUY.","Order exceeds available configured Spot equity":"The calculated BUY exceeds available equity. A tight stop loss can make Percent Equity sizing very large. Reduce risk_value or use a smaller explicit quantity; do not remove the equity guard.","Symbol is not allowed":"This symbol is outside Allowed symbols. Review and add it in Risk manager only if you intend to trade it. USD and USDT aliases share the same Binance Global position.","Risk percent exceeds policy":"The signal requests more risk than your policy allows. Lower risk_value or review the risk limit. Old rejected orders are not retried automatically.","Calculated risk exceeds maximum risk percent":"The signal requests more risk than your policy allows. Lower risk_value or review the risk limit. Old rejected orders are not retried automatically.","This account supports USDT quote currency only":"This account uses USDT quotes. Binance Global now accepts USD aliases and normalizes them to USDT; historical rejections remain unchanged.","Maximum order notional exceeded":"The order exceeds Max order notional. Reduce the requested size or explicitly review that limit.","Maximum daily notional exceeded":"The daily notional budget is exhausted or insufficient. Reduce size or wait for the next UTC trading day.","Signal is stale":"The signal is older than Max signal age. Use TradingView timenow as timestamp and investigate delivery delays; do not replay stale signals.","Position or pending order already exists for symbol":"An existing position or pending order already uses this symbol. USD and USDT are one symbol; use one alert stream per strategy/account.","Scale-in is disabled until aggregate position risk is supported":"An existing position or pending order already uses this symbol. USD and USDT are one symbol; use one alert stream per strategy/account."};
 function explainRejection(reason){return translate(rejectionHelp[reason]||"An entry protection rule rejected this order. Review the original reason below and the Risk manager settings. Nothing was sent to a live broker.");}
 uiPairs.push(['Cap Percent Equity size to available funds and notional limits','ลดขนาด Percent Equity อัตโนมัติให้ไม่เกินทุนและเพดานมูลค่าคำสั่ง']);
+uiPairs.push(
+  ['Default values seed the calculator. Max Values are enforced by the bot. UTC trading day.','ค่า Default ใช้เติมเครื่องคำนวณ ส่วน Max Value คือเพดานที่ Bot บังคับใช้ วันตัดยอด UTC'],
+  ['Setting','รายการ'],['Default','ค่าเริ่มต้น'],['Max Value','ค่าสูงสุด'],
+  ['Risk / trade (%)','ความเสี่ยง / เทรด (%)'],['Trades / day','จำนวนเทรด / วัน'],['Daily loss (R)','ขาดทุนต่อวัน (R)'],
+  ['Loss streak pause','หยุดหลังขาดทุนติดต่อกัน'],['Open positions','จำนวน Position ที่เปิด'],['Signal age (sec)','อายุสัญญาณ (วินาที)'],
+  ['Order notional','มูลค่าคำสั่ง'],['Daily notional','มูลค่ารวมต่อวัน'],['Volatility (%)','ความผันผวน (%)'],
+  ['Account funds','เงินทุนบัญชี'],['Total Equity','Total Equity'],['Balance','Balance'],
+  ['Total Equity limits portfolio risk. Balance is cash currently available to buy and cannot exceed Total Equity.','Total Equity ใช้จำกัดความเสี่ยงของพอร์ต ส่วน Balance คือเงินสดที่พร้อมซื้อและต้องไม่เกิน Total Equity'],
+  ['Real-time order check','ตรวจสอบคำสั่งแบบ Real-time'],['Uses the same risk engine as incoming TradingView signals. Preview only; no order is created.','ใช้ Risk Engine เดียวกับสัญญาณ TradingView เป็นเพียงการคำนวณล่วงหน้าและไม่สร้างคำสั่งซื้อ'],
+  ['Entry','ราคาเข้า'],['Stop Loss','Stop Loss'],['Risk (%)','ความเสี่ยง (%)'],['Enter price and Stop Loss','กรอกราคาเข้าและ Stop Loss'],
+  ['Risk amount','จำนวนเงินที่เสี่ยง'],['Order quantity','จำนวนสินทรัพย์'],['Order notional','มูลค่าคำสั่ง'],['Free balance','Balance คงเหลือ'],
+  ['Open / Remaining slots','เปิดอยู่ / เปิดเพิ่มได้'],['Positions this size','จำนวน Position ที่เปิดได้ด้วยขนาดนี้'],
+  ['Checking…','กำลังตรวจสอบ…'],['Likely accepted','มีแนวโน้มผ่าน'],['Would be rejected','จะถูกปฏิเสธ'],['Check input','ตรวจสอบข้อมูล'],
+  ['Order size will be reduced to remain within available funds and limits.','ระบบจะลดขนาดคำสั่งให้ไม่เกินเงินทุนและเพดานที่ตั้งไว้'],
+  ['All current checks passed.','ผ่านการตรวจสอบทั้งหมดในขณะนี้']
+);
+rejectionHelp['Order exceeds available configured Spot balance']='The calculated BUY exceeds available balance. Increase Balance only when it reflects actual available cash, or reduce the order size.';
+rejectionHelp['No remaining Spot sizing budget']='No usable balance or daily budget remains for another Spot entry.';
+uiPairs.push(
+  ['The calculated BUY exceeds available balance. Increase Balance only when it reflects actual available cash, or reduce the order size.','ขนาด BUY เกิน Balance ที่พร้อมใช้ เพิ่ม Balance เฉพาะเมื่อเป็นเงินสดที่มีอยู่จริง หรือลดขนาดคำสั่ง'],
+  ['No usable balance or daily budget remains for another Spot entry.','ไม่มี Balance หรือวงเงินรายวันเหลือสำหรับเปิด Position เพิ่ม']
+);
 const uiTranslations = new Map();
 for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
