@@ -9,12 +9,14 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Public URL: https://www.robottrade.io
 - VPS host: 187.53.141.5
 - Application user: mikey
-- Current release: 7bd355a
+- Current release: e56be94
 - Service: astra-trade.service (user service)
 - Application: /home/mikey/apps/astra-trade/current
 - Shared state: /home/mikey/apps/astra-trade/shared
 - Database: /home/mikey/apps/astra-trade/shared/data/astra-v2.db
 - Reverse proxy: Nginx with HTTPS
+- Bot-profile release verified after immutable symlink deployment: service active, health OK (PAPER_ONLY), schema v8, SQLite integrity OK, bot assets served, and unauthenticated bot API denied.
+- Pre-migration final backup: shared/backups/pre-bots-final-20260916T184434Z.db. Migration was rehearsed against a backup before production activation.
 
 Do not store passwords, webhook URLs, API keys, tokens, or private key material in this file.
 
