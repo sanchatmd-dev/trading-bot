@@ -1,5 +1,5 @@
 //@version=6
-indicator("Astra Universal Signal Bridge", overlay = true)
+indicator("Robot trade Universal Signal Bridge", overlay = true)
 
 // Example entry logic. Replace these conditions with your own indicator signals.
 fastLength = input.int(9, "Fast EMA", minval = 1)

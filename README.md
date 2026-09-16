@@ -1,4 +1,4 @@
-# Astra Trade VPS 2.1.0 — hardened Paper staging
+# Robot trade VPS 2.1.0 — hardened Paper staging
 
 รับ Universal Webhook จาก TradingView พร้อมบัญชีผู้ใช้, License, Risk UI, Trade log และ Email outbox
 

@@ -1,3 +1,5 @@
+import {normalizeSymbol} from './domain.js';
+
 export function evaluateRisk(signal,context){
   const {policy,daily,position,now=Date.now()}=context;
   const reject=reason=>({ok:false,reason});
@@ -16,7 +18,7 @@ export function evaluateRisk(signal,context){
   if(!isExit&&policy.blockHighVolatility&&signal.volatilityPercent>policy.maxVolatilityPercent)return reject('High volatility block is active');
   if(!isExit&&policy.blockDuringNews&&typeof signal.newsRisk!=='boolean')return reject('Missing news risk data');
   if(!isExit&&policy.blockDuringNews&&signal.newsRisk)return reject('News trading block is active');
-  if(!isExit&&policy.allowedSymbols?.length&&!policy.allowedSymbols.includes(signal.symbol))return reject('Symbol is not allowed');
+  if(!isExit&&policy.allowedSymbols?.length&&!policy.allowedSymbols.some(s=>normalizeSymbol(s,signal.broker)===signal.symbol))return reject('Symbol is not allowed');
   if(policy.sideMode==='BUY_ONLY'&&signal.side!=='BUY'&&!isExit)return reject('Only BUY is allowed');
   if(policy.sideMode==='SELL_ONLY'&&signal.side!=='SELL')return reject('Only SELL is allowed');
   if(signal.side==='BUY'&&context.openPositions>=policy.maxOpenPositions)return reject('Maximum open positions reached');

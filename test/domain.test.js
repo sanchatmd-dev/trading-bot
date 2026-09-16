@@ -1,3 +1,12 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {normalizeSignal} from '../src/domain.js';
 test('normalizes universal BUY/SELL/TP/SL fields',()=>{const now=Date.now(),s=normalizeSignal({trade_id:'tv-1',broker:'Binance Global',symbol:'BTC/USDT',timeframe:'15m',event:'TP',risk_mode:'Quantity',quantity:.01,entry:60000,sl:59000,tp:65000,timestamp:new Date(now).toISOString()},now);assert.equal(s.broker,'binance-global');assert.equal(s.symbol,'BTCUSDT');assert.equal(s.side,'SELL');assert.equal(s.reduceOnly,true);assert.equal(s.takeProfit,65000);});
 test('rejects future and invalid events',()=>{const base={trade_id:'x',broker:'MT5',symbol:'XAUUSD',quantity:.01,entry:2000};assert.throws(()=>normalizeSignal({...base,event:'WAIT',timestamp:Date.now()}),/event/);assert.throws(()=>normalizeSignal({...base,event:'BUY',timestamp:Date.now()+60000}),/future/);});
+test('Binance Global USD and USDT share a canonical spot symbol; other brokers keep their currency',()=>{
+  const base={trade_id:'alias',broker:'Binance Global',event:'BUY',quantity:1,entry:100,sl:90,timestamp:Date.now()};
+  for(const symbol of ['BTCUSD','BTCUSDT','BTC/USD','BINANCE:BTCUSD','COINBASE:BTCUSD']){
+    assert.equal(normalizeSignal({...base,symbol}).symbol,'BTCUSDT');
+  }
+  assert.equal(normalizeSignal({...base,broker:'MT5',symbol:'XAUUSD'}).symbol,'XAUUSD');
+  assert.equal(normalizeSignal({...base,broker:'Binance TH',symbol:'BTCTHB'}).symbol,'BTCTHB');
+  assert.throws(()=>normalizeSignal({...base,symbol:'BTC USDT'}),/Invalid symbol/);
+});

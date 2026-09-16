@@ -32,6 +32,9 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
   const loginPage=await (await fetch(base+'/')).text();
   assert.match(loginPage,/showLoginPassword/);
   assert.match(loginPage,/autocomplete="current-password"/);
+  assert.match(loginPage,/<title>Robot trade<\/title>/);
+  assert.match(loginPage,/id="forgotPassword"/);
+  assert.match(loginPage,/id="language"/);
   async function request(route,method='GET',body,token) {
     const response=await fetch(base+route,{method,headers:{'content-type':'application/json',...(token?{authorization:`Bearer ${token}`}:{})},body:body===undefined?undefined:JSON.stringify(body)});
     return {status:response.status,body:await response.json()};
@@ -39,12 +42,14 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
   assert.equal((await request('/api/me')).status,401);
   const login=await request('/api/auth/login','POST',{email:'admin@example.test',password:'temporary-test-password'});
   assert.equal(login.status,200);const token=login.body.token;
+  assert.equal((await request('/api/risk','GET',undefined,token)).body.maxRiskPercent,100);
+  assert.equal((await request('/api/risk','PUT',{maxRiskPercent:101},token)).status,400);
   assert.equal((await request('/api/risk','PUT',{paperTrading:false},token)).status,400);
   assert.equal((await request('/api/risk','PUT',{killSwitch:'false'},token)).status,400);
   assert.equal((await request('/api/brokers/binance-global','PUT',{credentials:{apiKey:'a',apiSecret:'b',baseUrl:'http://127.0.0.1'}},token)).status,400);
   assert.equal((await request('/api/risk','PUT',{equities:{'binance-global':10000}},token)).status,200);
   const secret=(await request('/api/me/webhook-secret','POST',{},token)).body.urlPath;
-  const payload={trade_id:'http-buy',broker:'Binance Global',symbol:'BTCUSDT',event:'BUY',quantity:10,entry:100,sl:90,timestamp:Date.now(),news_risk:false,volatility_percent:0};
+  const payload={trade_id:'http-buy',broker:'Binance Global',symbol:'BTCUSD',event:'BUY',quantity:10,entry:100,sl:90,timestamp:Date.now(),news_risk:false,volatility_percent:0};
   const accepted=await request(secret,'POST',payload);assert.equal(accepted.status,202);assert.equal(accepted.body.execution_mode,'PAPER');
   assert.equal((await request(secret,'POST',payload)).status,409);
   assert.match((await request(secret,'POST',{...payload,trade_id:'old',timestamp:Date.now()-120000})).body.error,/stale/);
@@ -53,14 +58,25 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
     if(log[0]?.status==='FILLED')break;await delay(30);
   }
   assert.equal((await request('/api/signals','GET',undefined,token)).body[0].status,'FILLED');
+  assert.equal((await request('/api/signals','GET',undefined,token)).body[0].symbol,'BTCUSDT');
   await request('/api/admin/global-kill','POST',{enabled:true},token);
-  assert.equal((await request(secret,'POST',{...payload,trade_id:'exit',event:'SL',quantity:10,entry:90,timestamp:Date.now()})).status,202);
+  assert.equal((await request(secret,'POST',{...payload,symbol:'BTCUSDT',trade_id:'exit',event:'SL',quantity:10,entry:90,timestamp:Date.now()})).status,202);
   await delay(350);
   assert.equal((await request('/api/positions','GET',undefined,token)).body.length,0);
   await request('/api/admin/users','POST',{email:'user@example.test',password:'temporary-user-password'},token);
   const userToken=(await request('/api/auth/login','POST',{email:'user@example.test',password:'temporary-user-password'})).body.token;
   assert.equal((await request('/api/admin/users','GET',undefined,userToken)).status,403);
   assert.deepEqual((await request('/api/signals','GET',undefined,userToken)).body,[]);
+  assert.equal((await request(secret,'POST',{...payload,trade_id:'blocked',timestamp:Date.now()})).status,202);
+  let rejected;
+  for(let i=0;i<50;i++){rejected=(await request('/api/signals','GET',undefined,token)).body.find(x=>x.trade_id==='blocked');if(rejected?.status==='REJECTED')break;await delay(30);}
+  assert.equal(rejected.status,'REJECTED');
+  const notePath='/api/signals/'+rejected.id+'/note';
+  assert.equal((await request(notePath,'PUT',{note:'review'})).status,401);
+  assert.equal((await request(notePath,'PUT',{note:'review'},userToken)).status,404);
+  assert.equal((await request(notePath,'PUT',{note:'x'.repeat(2001)},token)).status,400);
+  assert.equal((await request(notePath,'PUT',{note:'Reviewed kill switch'},token)).status,200);
+  assert.equal((await request('/api/signals','GET',undefined,token)).body.find(x=>x.id===rejected.id).review_note,'Reviewed kill switch');
   assert.equal((await request('/api/me/password','POST',{currentPassword:'temporary-user-password',newPassword:'new-temporary-password'},userToken)).status,200);
   assert.equal((await request('/api/me','GET',undefined,userToken)).status,401);
 });

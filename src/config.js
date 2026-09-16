@@ -25,11 +25,11 @@ export const config = {
   smtp: {
     host: process.env.SMTP_HOST || '', port: num('SMTP_PORT', 587, 1), secure: bool('SMTP_SECURE', false),
     user: process.env.SMTP_USER || '', password: process.env.SMTP_PASSWORD || '',
-    from: process.env.SMTP_FROM || 'Astra Trade <bot@example.com>'
+    from: process.env.SMTP_FROM || 'Robot trade <bot@example.com>'
   },
   defaultRisk: {
     paperTrading: bool('PAPER_TRADING', true), killSwitch: false,
-    maxRiskPercent: num('MAX_RISK_PERCENT', 1, 0.01), maxOrderNotional: num('MAX_ORDER_NOTIONAL', 1000, 0.01),
+    maxRiskPercent: num('MAX_RISK_PERCENT', 100, 0.01), maxOrderNotional: num('MAX_ORDER_NOTIONAL', 1000, 0.01),
     maxDailyNotional: num('MAX_DAILY_NOTIONAL', 5000, 0.01), maxTradesPerDay: num('MAX_TRADES_PER_DAY', 10, 1),
     maxDailyLossR: num('MAX_DAILY_LOSS_R', 3, 0.01), maxOpenPositions: num('MAX_OPEN_POSITIONS', 3, 1),
     onePositionPerSymbol: bool('ONE_POSITION_PER_SYMBOL', true), pauseAfterLossStreak: num('PAUSE_AFTER_LOSS_STREAK', 3, 1),

@@ -93,6 +93,12 @@ async function userRoutes(req,res,url){const user=requireSession(req,res);if(!us
     return json(res,200,{broker,configured:true,enabled,live:false});
   }
   if(req.method==='GET'&&url.pathname==='/api/signals')return json(res,200,store.listSignals(user.id,admin,safeLimit(url)));
+  const noteRoute=url.pathname.match(/^\/api\/signals\/(\d+)\/note$/);
+  if(req.method==='PUT'&&noteRoute){
+    const body=await readJson(req);
+    if(!store.setRejectedNote(user,Number(noteRoute[1]),body.note))return json(res,404,{error:'Signal not found'});
+    return json(res,200,{ok:true});
+  }
   if(req.method==='GET'&&url.pathname==='/api/audit')return json(res,200,store.listAudit(user.id,admin,safeLimit(url)));
   if(req.method==='GET'&&url.pathname==='/api/positions')return json(res,200,store.listPositions(user.id,admin));
   return json(res,404,{error:'Not found'});
@@ -141,7 +147,7 @@ const server=http.createServer(async(req,res)=>{res.setHeader('x-content-type-op
 }catch(error){store.audit(null,'request.error',null,{message:error.message,path:url.pathname.replace(/\/webhooks\/tradingview\/.+/,'/webhooks/tradingview/[redacted]')});if(!res.headersSent)json(res,400,{error:error.message});}});
 server.requestTimeout=15000;server.headersTimeout=10000;server.maxRequestsPerSocket=100;
 worker.start();notifications.start();
-server.listen(config.port,config.host,()=>console.log(`Astra Trade v2.1 Paper staging listening on :${config.port}`));
+server.listen(config.port,config.host,()=>console.log(`Robot trade v2.1 Paper staging listening on :${config.port}`));
 let shuttingDown=false;
 const shutdown=async()=>{
   if(shuttingDown)return;shuttingDown=true;

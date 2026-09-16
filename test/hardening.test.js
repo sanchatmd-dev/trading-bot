@@ -180,7 +180,7 @@ test('legacy migration preserves old positions and quarantines ambiguous orders'
   old.close();
   const store=new Store(filename);
   try{
-    assert.equal(store.db.prepare('PRAGMA user_version').get().user_version,3);
+    assert.equal(store.db.prepare('PRAGMA user_version').get().user_version,4);
     assert.equal(store.db.prepare('SELECT quantity FROM positions').get().quantity,2);
     assert.equal(store.listPositions('legacy-user').length,0);
     assert.equal(store.db.prepare('SELECT status FROM signals WHERE id=1').get().status,'REJECTED');

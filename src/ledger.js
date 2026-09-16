@@ -14,7 +14,7 @@ export function transaction(store, fn) {
 
 export function migrateLedger(store) {
   const version = store.db.prepare('PRAGMA user_version').get().user_version;
-  if (version > 3) throw new Error('Database is newer than this application');
+  if (version > 4) throw new Error('Database is newer than this application');
   if (version < 3) transaction(store, () => {
     store.db.exec(`
       ALTER TABLE signals ADD COLUMN execution_mode TEXT NOT NULL DEFAULT 'LEGACY';
@@ -53,6 +53,9 @@ export function migrateLedger(store) {
     `);
     // Legacy positions/stats remain intact for operator review; never guess Paper vs Live.
   });
+  if (version < 4) transaction(store, () => {
+    store.db.exec("ALTER TABLE signals ADD COLUMN review_note TEXT NOT NULL DEFAULT ''; PRAGMA user_version=4;");
+  });
   store.db.exec(`UPDATE signals SET status='UNKNOWN',
     error_message='Interrupted execution: verify broker outcome; automatic resend disabled'
     WHERE status='PROCESSING'`);
@@ -60,6 +63,18 @@ export function migrateLedger(store) {
 }
 
 const methods = {
+  setRejectedNote(actor, id, note) {
+    if(!Number.isSafeInteger(id)||id<1)throw new Error('Invalid signal ID');
+    if(typeof note!=='string'||note.length>2000)throw new Error('Note must be at most 2000 characters');
+    return transaction(this, () => {
+      const row=this.db.prepare('SELECT user_id,trade_id,status FROM signals WHERE id=?').get(id);
+      if(!row||(actor.role!=='ADMIN'&&row.user_id!==actor.id))return false;
+      if(row.status!=='REJECTED')throw new Error('Notes are available for Rejected signals only');
+      this.db.prepare('UPDATE signals SET review_note=? WHERE id=?').run(note.trim(),id);
+      this.audit(actor.id,'signal.note.updated',row.trade_id,{signalId:id,ownerId:row.user_id});
+      return true;
+    });
+  },
   enqueue(userId, signal, mode = 'PAPER') {
     if (!['PAPER', 'LIVE'].includes(mode)) throw new Error('Invalid execution mode');
     return transaction(this, () => {

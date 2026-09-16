@@ -7,13 +7,20 @@ const text=(value,name,max=100,optional=false)=>{if(optional&&(value===undefined
 const positive=(value,name,optional=false)=>{if(optional&&(value===undefined||value===null||value===''))return undefined;const n=Number(value);if(!Number.isFinite(n)||n<=0)throw new Error(`${name} must be greater than 0`);return n;};
 const flag=value=>{if(value===undefined)return undefined;if(typeof value!=='boolean')throw new Error('Boolean fields must be true or false');return value;};
 
+// USD is a TradingView symbol alias, not an FX conversion. Never rewrite non-crypto brokers.
+export function normalizeSymbol(value, broker) {
+  const symbol=text(value,'symbol',60).toUpperCase().split(':').at(-1).replaceAll('/','');
+  if(!/^[A-Z0-9._-]{1,30}$/.test(symbol))throw new Error('Invalid symbol');
+  return broker==='binance-global' && symbol.length>3 && symbol.endsWith('USD') ? symbol+'T' : symbol;
+}
+
 export function normalizeSignal(body,now=Date.now()){
   if(!body||typeof body!=='object'||Array.isArray(body))throw new Error('JSON object required');
   if(body.account_type!==undefined&&String(body.account_type).toUpperCase()!=='SPOT')throw new Error('Only Spot accounts are supported');
   const tradeId=text(body.trade_id??body.id,'trade_id',80);
   const broker=aliases.get(text(body.broker,'broker',40).toLowerCase());
   if(!broker)throw new Error('Unsupported broker');
-  const symbol=text(body.symbol,'symbol',30).toUpperCase().replace(/[^A-Z0-9._-]/g,'');
+  const symbol=normalizeSymbol(body.symbol,broker);
   if(!symbol)throw new Error('Invalid symbol');
   const event=text(body.event??body.action??body.side,'event',20).toUpperCase();
   if(!['BUY','SELL','TP','SL'].includes(event))throw new Error('event must be BUY, SELL, TP or SL');

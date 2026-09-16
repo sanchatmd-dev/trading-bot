@@ -23,3 +23,8 @@ test('quote currency and already committed capital are checked',()=>{
 test('blocks license, loss streak, volatility, news, and max positions',()=>{assert.match(evaluateRisk(signal,{...ctx,licensed:false}).reason,/License/);assert.match(evaluateRisk(signal,{...ctx,daily:{...ctx.daily,loss_streak:3}}).reason,/loss streak/);assert.match(evaluateRisk({...signal,volatilityPercent:6},ctx).reason,/volatility/);assert.match(evaluateRisk({...signal,newsRisk:true},ctx).reason,/News/);assert.match(evaluateRisk(signal,{...ctx,openPositions:3}).reason,/open positions/);});
 test('TP or SL without quantity closes the full Spot position',()=>{const exit={...signal,event:'TP',side:'SELL',reduceOnly:true,quantity:undefined,quoteQuantity:undefined,riskMode:'PERCENT_EQUITY'},r=evaluateRisk(exit,{...ctx,position:{quantity:.025,avg_price:59000}});assert.equal(r.ok,true);assert.equal(r.order.quantity,.025);});
 test('risk-reducing Spot exits bypass entry and daily notional limits',()=>{const exit={...signal,event:'SL',side:'SELL',reduceOnly:true,quantity:undefined,riskMode:'QUANTITY'},strict={...ctx,policy:{...policy,maxOrderNotional:1,maxDailyNotional:1,sideMode:'BUY_ONLY'},daily:{...ctx.daily,trades:99,notional:999999,loss_streak:99,realized_r:-99},position:{quantity:.02,avg_price:59000}};assert.equal(evaluateRisk(exit,strict).ok,true);});
+test('USD allowlist aliases match USDT equity without bypassing capital limits',()=>{
+  const context={...ctx,policy:{...policy,maxRiskPercent:100,allowedSymbols:['BTCUSD']}};
+  assert.equal(evaluateRisk(signal,context).ok,true);
+  assert.match(evaluateRisk({...signal,quantity:1},context).reason,/equity/);
+});
