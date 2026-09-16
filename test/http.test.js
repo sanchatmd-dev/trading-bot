@@ -92,6 +92,29 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
   assert.equal((await request('/api/admin/users','GET',undefined,userToken)).status,403);
   assert.deepEqual((await request('/api/signals','GET',undefined,userToken)).body,[]);
   assert.equal((await request('/api/analytics/summary?broker=binance-global&period=daily&user_id=not-this-user','GET',undefined,userToken)).status,403);
+  const createdBot=await request('/api/bots','POST',{label:'Scalp BTC'},token);
+  assert.equal(createdBot.status,201);const botId=createdBot.body.id;
+  assert.equal((await request('/api/risk?bot_id='+botId,'PUT',{equities:{'binance-global':1000},balances:{'binance-global':1000}},token)).status,200);
+  const botWebhook=(await request('/api/me/webhook-secret?bot_id='+botId,'GET',undefined,token)).body.urlPath;
+  assert.notEqual(botWebhook,secret);assert.ok(botWebhook);
+  for(const route of ['/api/me','/api/me/webhook-secret','/api/risk','/api/signals','/api/positions','/api/analytics/summary']){
+    assert.equal((await request(route+'?bot_id='+botId,'GET',undefined,userToken)).status,403,route);
+  }
+  assert.equal((await request('/api/risk?bot_id='+botId,'PUT',{killSwitch:true},userToken)).status,403);
+  assert.equal((await request('/api/bots/'+botId,'PATCH',{label:'stolen'},userToken)).status,404);
+  assert.equal((await request('/api/risk?bot_id=all','PUT',{killSwitch:true},token)).status,400);
+  assert.equal((await request('/api/bots/'+botId,'PATCH',{label:'Bot A: BTC'},token)).status,200);
+  await request('/api/admin/global-kill','POST',{enabled:false},token);
+  assert.equal((await request(botWebhook,'POST',{...payload,trade_id:'http-buy',quantity:1,timestamp:Date.now()})).status,202);
+  for(let i=0;i<50;i++){const rows=(await request('/api/signals?bot_id='+botId,'GET',undefined,token)).body;if(rows[0]?.status==='FILLED')break;await delay(30);}
+  assert.equal((await request('/api/signals?bot_id='+botId,'GET',undefined,token)).body[0].status,'FILLED',JSON.stringify((await request('/api/signals?bot_id='+botId,'GET',undefined,token)).body));
+  assert.equal((await request('/api/positions?bot_id='+botId,'GET',undefined,token)).body[0].quantity,1);
+  assert.equal((await request('/api/positions','GET',undefined,token)).body.length,0);
+  assert.equal((await request('/api/positions?bot_id=all','GET',undefined,token)).body[0].bot_id,botId);
+  for(let i=0;i<3;i++)assert.equal((await request('/api/bots','POST',{label:'Extra '+i},token)).status,201);
+  assert.equal((await request('/api/bots','POST',{label:'Over quota'},token)).status,400);
+  assert.equal((await request('/api/bots','GET',undefined,token)).body.bots.length,5);
+  await request('/api/admin/global-kill','POST',{enabled:true},token);
   assert.equal((await request(secret,'POST',{...payload,trade_id:'blocked',timestamp:Date.now()})).status,202);
   let rejected;
   for(let i=0;i<50;i++){rejected=(await request('/api/signals','GET',undefined,token)).body.find(x=>x.trade_id==='blocked');if(rejected?.status==='REJECTED')break;await delay(30);}

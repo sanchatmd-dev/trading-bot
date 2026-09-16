@@ -14,7 +14,7 @@ export function transaction(store, fn) {
 
 export function migrateLedger(store) {
   const version = store.db.prepare('PRAGMA user_version').get().user_version;
-  if (version > 7) throw new Error('Database is newer than this application');
+  if (version > 8) throw new Error('Database is newer than this application');
   if (version < 3) transaction(store, () => {
     store.db.exec(`
       ALTER TABLE signals ADD COLUMN execution_mode TEXT NOT NULL DEFAULT 'LEGACY';
@@ -72,6 +72,17 @@ export function migrateLedger(store) {
       PRIMARY KEY(user_id,broker),FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
       PRAGMA user_version=7;`);
   });
+  if(version<8)transaction(store,()=>store.db.exec(`
+    ALTER TABLE users ADD COLUMN parent_user_id TEXT REFERENCES users(id);
+    ALTER TABLE users ADD COLUMN bot_slot_index INTEGER NOT NULL DEFAULT 1 CHECK(bot_slot_index BETWEEN 1 AND 5);
+    ALTER TABLE users ADD COLUMN label TEXT NOT NULL DEFAULT 'Main Bot';
+    CREATE UNIQUE INDEX idx_bot_slot ON users(COALESCE(parent_user_id,id),bot_slot_index);
+    CREATE INDEX idx_bot_parent ON users(parent_user_id);
+    CREATE TRIGGER bot_parent_guard BEFORE INSERT ON users WHEN NEW.parent_user_id IS NOT NULL BEGIN
+      SELECT CASE WHEN NEW.bot_slot_index=1 OR NOT EXISTS(SELECT 1 FROM users WHERE id=NEW.parent_user_id AND parent_user_id IS NULL) THEN RAISE(ABORT,'Invalid bot owner or slot') END;
+    END;
+    PRAGMA user_version=8;
+  `));
   store.db.exec(`UPDATE signals SET status='UNKNOWN',
     error_message='Interrupted execution: verify broker outcome; automatic resend disabled'
     WHERE status='PROCESSING'`);

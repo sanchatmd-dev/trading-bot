@@ -67,13 +67,22 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 ## Operations
 
 - Run tests: npm test
-- Current test suite: 53 tests.
+- Current test suite: 55 tests.
 - Back up SQLite before production release changes using scripts/backup.mjs.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the user service.
-- Database schema version is 7. Migration 6 disables the legacy one-position-per-symbol block for existing profiles. Migration 7 adds per-user, per-broker analytics fee settings. An older application cannot open a newer schema.
+- Database schema version is 8. Migration 8 adds bot ownership, slot indexes and labels to users. Existing IDs, history and webhook secrets remain attached to Main Bot slot 1. An older application cannot open a newer schema.
 - All database changes require a verified backup and integrity check.
 
-## Analytics
+## Bot profiles
+
+- Each main account owns up to five bot profiles: the existing main ID in slot 1 and four child IDs in slots 2–5.
+- Child rows in `users` have `parent_user_id`, `bot_slot_index` and `label`. Existing `user_id` foreign keys and composite primary keys identify the canonical bot ID; no historical order ownership is rewritten.
+- Bot profiles have independent risk profiles, configured Paper equity/balance, positions, fills, daily limits, loss streaks, credentials, analytics fees and encrypted webhook secrets. Newly created bots start with zero configured funds.
+- Only main accounts can log in. Sessions and licenses belong to the main account. Suspension of the main account blocks all child webhooks and queued execution. Email notifications go to the owner.
+- `/api/bots` lists or creates profiles; `PATCH /api/bots/:id` renames a profile. Scoped routes use `bot_id`. `bot_id=all` is a read-only overview/trade-log scope within the authenticated owner's five profiles.
+- These are independent application Paper profiles, not exchange subaccounts. The global administrator kill switch still pauses entries across all bots.
+
+## Analytics behavior
 
 - Paper fills are matched into closed positions with round-trip FIFO per user, broker and symbol.
 - Summary metrics include win/loss, win rate, net profit, profit factor, drawdown, expectancy, realized average win/loss ratio, streaks, average holding time and fee impact.

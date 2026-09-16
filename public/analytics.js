@@ -4,7 +4,7 @@ const analyticsBrokerCurrency={'binance-global':'USDT','binance-th':'THB','innov
 function analyticsParams(){
   const params=new URLSearchParams({broker:$('#analyticsBroker').value,period:analyticsState.period});
   if($('#analyticsSymbol').value)params.set('symbol',$('#analyticsSymbol').value);
-  if(me?.user?.role==='ADMIN'&&$('#analyticsUser').value)params.set('user_id',$('#analyticsUser').value);
+  if(!selectedBot&&me?.user?.role==='ADMIN'&&$('#analyticsUser').value)params.set('user_id',$('#analyticsUser').value);
   if(analyticsState.period==='custom'){params.set('from',$('#analyticsFrom').value);params.set('to',$('#analyticsTo').value);}
   return params;
 }
@@ -33,7 +33,7 @@ async function loadAnalytics(){
 
 function renderAnalyticsUsers(){
   const wrap=$('#analyticsUserWrap'),select=$('#analyticsUser');if(!me)return;
-  if(me.user.role!=='ADMIN'){wrap.hidden=true;return;}
+  if(me.user.role!=='ADMIN'||selectedBot){wrap.hidden=true;return;}
   wrap.hidden=false;const current=select.value||me.user.id;
   select.innerHTML=users.map(user=>`<option value="${esc(user.id)}">${esc(user.email)}</option>`).join('');
   select.value=users.some(user=>user.id===current)?current:me.user.id;

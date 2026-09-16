@@ -2,7 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { hashToken, randomId } from './security.js';
-import { migrateLedger } from './ledger.js';
+import { migrateLedger, transaction } from './ledger.js';
 
 export class Store {
   constructor(filename) {
@@ -31,8 +31,22 @@ export class Store {
   }
   userCount() { return Number(this.db.prepare('SELECT count(*) n FROM users').get().n); }
   userByEmail(email) { return this.db.prepare('SELECT * FROM users WHERE email=?').get(String(email).toLowerCase()); }
-  userById(id) { return this.db.prepare('SELECT id,email,role,status,webhook_hint,created_at FROM users WHERE id=?').get(id); }
-  listUsers() { return this.db.prepare('SELECT id,email,role,status,webhook_hint,created_at FROM users ORDER BY created_at DESC').all(); }
+  userById(id) { return this.db.prepare('SELECT id,email,role,status,webhook_hint,created_at,parent_user_id,bot_slot_index,label FROM users WHERE id=?').get(id); }
+  listUsers() { return this.db.prepare('SELECT id,email,role,status,webhook_hint,created_at FROM users WHERE parent_user_id IS NULL ORDER BY created_at DESC').all(); }
+  botOwner(id){const bot=this.userById(id);return bot?this.userById(bot.parent_user_id||bot.id):null;}
+  listBots(ownerId){return this.db.prepare('SELECT id,parent_user_id,bot_slot_index,label,status,webhook_hint FROM users WHERE id=? OR parent_user_id=? ORDER BY bot_slot_index').all(ownerId,ownerId);}
+  ownsBot(ownerId,botId){return this.listBots(ownerId).some(bot=>bot.id===botId);}
+  createBot(ownerId,label,defaults,initialize=()=>{}){
+    if(typeof label!=='string'||!label.trim()||label.trim().length>80)throw new Error('Bot label must contain 1–80 characters');
+    return transaction(this,()=>{
+      const owner=this.userById(ownerId);if(!owner||owner.parent_user_id)throw new Error('Main account required');
+      const bots=this.listBots(ownerId),slot=[2,3,4,5].find(index=>!bots.some(bot=>bot.bot_slot_index===index));
+      if(!slot)throw new Error('Maximum 5 bot profiles per main account');
+      const id=randomId();
+      this.db.prepare("INSERT INTO users(id,email,password_hash,role,status,created_at,parent_user_id,bot_slot_index,label) VALUES(?,?,?,'BOT','ACTIVE',?,?,?,?)").run(id,`${id}@bot.invalid`,'NO_LOGIN',Date.now(),ownerId,slot,label.trim());
+      this.setRisk(id,structuredClone(defaults));initialize(id);return this.userById(id);
+    });
+  }
   setUserStatus(id,status) { this.db.prepare('UPDATE users SET status=? WHERE id=?').run(status,id); if(status!=='ACTIVE')this.revokeSessions(id); }
   setPassword(id,passwordHash) { this.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(passwordHash,id); this.revokeSessions(id); }
   revokeSessions(id) { this.db.prepare('DELETE FROM sessions WHERE user_id=?').run(id); }
@@ -41,7 +55,7 @@ export class Store {
   webhookSecret(userId) { return this.db.prepare('SELECT webhook_secret_hash,webhook_secret_encrypted FROM users WHERE id=?').get(userId); }
   userByWebhook(secret) { return this.db.prepare('SELECT id,email,role,status FROM users WHERE webhook_secret_hash=?').get(hashToken(secret)); }
 
-  createSession(userId, token, expiresAt) { this.db.prepare('INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)').run(hashToken(token),userId,expiresAt,Date.now()); }
+  createSession(userId, token, expiresAt) { if(this.userById(userId)?.parent_user_id)throw new Error('Main account session required');this.db.prepare('INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)').run(hashToken(token),userId,expiresAt,Date.now()); }
   session(token) { return this.db.prepare(`SELECT u.id,u.email,u.role,u.status,s.expires_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?`).get(hashToken(token),Date.now()); }
   deleteSession(token) { this.db.prepare('DELETE FROM sessions WHERE token_hash=?').run(hashToken(token)); }
 

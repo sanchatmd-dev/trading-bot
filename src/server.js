@@ -109,7 +109,7 @@ async function authRoutes(req,res,url){
     const body=await readJson(req);
     if(typeof body.email!=='string'||body.email.length>254)throw new Error('Invalid email');
     const user=store.userByEmail(body.email);
-    if(!user||user.status!=='ACTIVE'||!await verifyPassword(body.password,user.password_hash))return json(res,401,{error:'Invalid email or password'});
+    if(!user||user.parent_user_id||user.status!=='ACTIVE'||!await verifyPassword(body.password,user.password_hash))return json(res,401,{error:'Invalid email or password'});
     const token=randomToken(),expires=Date.now()+config.sessionTtlHours*3600000;
     store.createSession(user.id,token,expires);store.audit(user.id,'auth.login',null,{});
     return json(res,200,{token,expiresAt:expires,user:store.userById(user.id)});
@@ -118,11 +118,31 @@ async function authRoutes(req,res,url){
   return false;
 }
 
-async function userRoutes(req,res,url){const user=requireSession(req,res);if(!user)return;
-  const admin=user.role==='ADMIN';
+async function userRoutes(req,res,url){const actor=requireSession(req,res);if(!actor)return;
+  if(req.method==='GET'&&url.pathname==='/api/bots')return json(res,200,{bots:store.listBots(actor.id),maxBots:5});
+  if(req.method==='POST'&&url.pathname==='/api/bots'){
+    const body=await readJson(req),secret=randomToken();
+    const bot=store.createBot(actor.id,body.label,{...config.defaultRisk,paperTrading:true},id=>store.setWebhookSecret(id,secret,encryptJson({secret},config.masterKey,`webhook:${id}`)));
+    store.audit(actor.id,'bot.created',null,{botId:bot.id});return json(res,201,bot);
+  }
+  const botRoute=url.pathname.match(/^\/api\/bots\/([^/]+)$/);
+  if(req.method==='PATCH'&&botRoute){
+    const id=botRoute[1];if(!store.ownsBot(actor.id,id))return json(res,404,{error:'Bot not found'});
+    const body=await readJson(req);
+    if(typeof body.label!=='string'||!body.label.trim()||body.label.trim().length>80)throw new Error('Bot label must contain 1–80 characters');
+    store.db.prepare('UPDATE users SET label=? WHERE id=?').run(body.label.trim(),id);
+    store.audit(actor.id,'bot.renamed',null,{botId:id});return json(res,200,store.userById(id));
+  }
+  const requestedBot=String(url.searchParams.get('bot_id')||actor.id),allBots=requestedBot==='all';
+  if(!allBots&&!store.ownsBot(actor.id,requestedBot))return json(res,403,{error:'Bot access denied'});
+  if(allBots&&!['/api/signals','/api/positions','/api/me'].includes(url.pathname))return json(res,400,{error:'Select one bot for this operation'});
+  const selected=allBots?actor.id:requestedBot;
+  // Authentication and subscription operations always address the main account.
+  const accountRoute=['/api/me/password','/api/me/license/redeem'].includes(url.pathname);
+  const user={...actor,id:accountRoute?actor.id:selected},admin=actor.role==='ADMIN';
   if(url.pathname.startsWith('/api/analytics/')){
-    const requested=String(url.searchParams.get('user_id')||user.id),targetUserId=admin?requested:user.id;
-    if(!admin&&requested!==user.id)return json(res,403,{error:'Cannot access another user analytics'});
+    const requested=String(url.searchParams.get('user_id')||user.id),targetUserId=requested;
+    if(!admin&&!store.ownsBot(actor.id,requested))return json(res,403,{error:'Cannot access another user analytics'});
     if(!store.userById(targetUserId))return json(res,404,{error:'Analytics user not found'});
     if(req.method==='PUT'&&url.pathname==='/api/analytics/settings'){
       const body=await readJson(req),broker=String(body.broker||'');
@@ -144,8 +164,8 @@ async function userRoutes(req,res,url){const user=requireSession(req,res);if(!us
     }
   }
   if(req.method==='GET'&&url.pathname==='/api/me'){
-    const dailyAccounts=store.dailyAccounts(user.id);
-    return json(res,200,{user:store.userById(user.id),license:admin?{plan:'ADMIN',status:'ACTIVE',expires_at:null}:store.licenseForUser(user.id),risk:{...store.risk(user.id,config.defaultRisk),paperTrading:true},brokers:store.credentialSummary(user.id),globalKill:store.getSetting('globalKill',false),capabilities,dailyAccounts,daily:{trades:dailyAccounts.reduce((sum,x)=>sum+x.trades,0)}});
+    const dailyAccounts=(allBots?store.listBots(actor.id):[{id:user.id}]).flatMap(bot=>store.dailyAccounts(bot.id).map(row=>({...row,bot_id:bot.id})));
+    return json(res,200,{user:{...store.userById(actor.id)},bot:store.userById(user.id),allBots,license:admin?{plan:'ADMIN',status:'ACTIVE',expires_at:null}:store.licenseForUser(actor.id),risk:{...store.risk(user.id,config.defaultRisk),paperTrading:true},brokers:store.credentialSummary(user.id),globalKill:store.getSetting('globalKill',false),capabilities,dailyAccounts,daily:{trades:dailyAccounts.reduce((sum,x)=>sum+x.trades,0)}});
   }
   if(req.method==='GET'&&url.pathname==='/api/me/webhook-secret'){
     const saved=store.webhookSecret(user.id);
@@ -180,7 +200,7 @@ async function userRoutes(req,res,url){const user=requireSession(req,res);if(!us
     const exposure=store.exposure(row),daily=store.ledgerDaily(row),position=store.ledgerPosition(row);
     const equity=policy.equities?.[signal.broker]||0,balance=policy.balances?.[signal.broker]??equity;
     const result=evaluateRisk(signal,{policy,daily,position,equity,balance,
-      licensed:user.role==='ADMIN'||store.hasActiveLicense(user.id),globalKill:store.getSetting('globalKill',false),...exposure});
+      licensed:actor.role==='ADMIN'||store.hasActiveLicense(actor.id),globalKill:store.getSetting('globalKill',false),...exposure});
     const positionsRemaining=Math.max(0,policy.maxOpenPositions-exposure.openPositions);
     const freeBalance=Math.max(0,Math.min(equity,balance)-(exposure.committedNotional||0));
     const positionCapacity=result.ok&&result.order.notional>0?Math.min(positionsRemaining,Math.floor(freeBalance/result.order.notional)):0;
@@ -197,15 +217,18 @@ async function userRoutes(req,res,url){const user=requireSession(req,res);if(!us
     store.audit(user.id,'broker.credentials.updated',null,{broker,enabled});
     return json(res,200,{broker,configured:true,enabled,live:false});
   }
-  if(req.method==='GET'&&url.pathname==='/api/signals')return json(res,200,store.listSignals(user.id,admin,safeLimit(url)));
+  if(req.method==='GET'&&url.pathname==='/api/signals'){
+    const rows=(allBots?store.listBots(actor.id):store.listBots(actor.id).filter(bot=>bot.id===user.id)).flatMap(bot=>store.listSignals(bot.id,false,safeLimit(url)).map(row=>({...row,bot_id:bot.id,bot_label:bot.label})));
+    return json(res,200,rows.sort((a,b)=>b.id-a.id).slice(0,safeLimit(url)));
+  }
   const noteRoute=url.pathname.match(/^\/api\/signals\/(\d+)\/note$/);
   if(req.method==='PUT'&&noteRoute){
     const body=await readJson(req);
-    if(!store.setRejectedNote(user,Number(noteRoute[1]),body.note))return json(res,404,{error:'Signal not found'});
+    if(!store.setRejectedNote({...user,role:'USER'},Number(noteRoute[1]),body.note))return json(res,404,{error:'Signal not found'});
     return json(res,200,{ok:true});
   }
-  if(req.method==='GET'&&url.pathname==='/api/audit')return json(res,200,store.listAudit(user.id,admin,safeLimit(url)));
-  if(req.method==='GET'&&url.pathname==='/api/positions')return json(res,200,store.listPositions(user.id,admin));
+  if(req.method==='GET'&&url.pathname==='/api/audit')return json(res,200,store.listAudit(user.id,false,safeLimit(url)));
+  if(req.method==='GET'&&url.pathname==='/api/positions')return json(res,200,(allBots?store.listBots(actor.id):store.listBots(actor.id).filter(bot=>bot.id===user.id)).flatMap(bot=>store.listPositions(bot.id).map(row=>({...row,bot_id:bot.id,bot_label:bot.label}))));
   return json(res,404,{error:'Not found'});
 }
 
@@ -237,13 +260,15 @@ const server=http.createServer(async(req,res)=>{res.setHeader('x-content-type-op
   if(req.method==='POST'&&url.pathname.startsWith('/webhooks/tradingview/')){
     const secret=decodeURIComponent(url.pathname.slice('/webhooks/tradingview/'.length)),user=store.userByWebhook(secret);
     if(!user||user.status!=='ACTIVE')return json(res,404,{error:'Not found'});
+    const owner=store.botOwner(user.id);
+    if(!owner||owner.status!=='ACTIVE')return json(res,404,{error:'Not found'});
     // Recover legacy hash-only secrets from authenticated requests without rotating URLs.
     if(!store.webhookSecret(user.id)?.webhook_secret_encrypted)
       store.rememberWebhookSecret(user.id,secret,encryptJson({secret},config.masterKey,`webhook:${user.id}`));
     const signal=normalizeSignal(await readJson(req));
     if(!capabilities[signal.broker]?.paper)throw new Error('Broker does not support Spot simulation');
     const isExit=signal.side==='SELL'&&signal.reduceOnly;
-    if(!isExit&&user.role!=='ADMIN'&&!store.hasActiveLicense(user.id))return json(res,403,{error:'License inactive or expired'});
+    if(!isExit&&owner.role!=='ADMIN'&&!store.hasActiveLicense(owner.id))return json(res,403,{error:'License inactive or expired'});
     const policy=store.risk(user.id,config.defaultRisk);
     if(Date.now()-signal.timestamp>policy.maxSignalAgeSeconds*1000)throw new Error('Signal is stale');
     if(!store.enqueue(user.id,signal,'PAPER'))return json(res,409,{accepted:false,error:'Duplicate trade_id'});

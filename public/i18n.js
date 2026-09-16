@@ -64,6 +64,7 @@ uiPairs.push(
   ['No usable balance or daily budget remains for another Spot entry.','ไม่มี Balance หรือวงเงินรายวันเหลือสำหรับเปิด Position เพิ่ม']
 );
 const uiTranslations = new Map();
+uiPairs.push(['Bot Manager','จัดการ Bot'],['Select one bot for this operation','เลือก Bot หนึ่งตัวก่อนทำรายการ']);
 for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}

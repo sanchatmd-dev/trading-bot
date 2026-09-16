@@ -45,6 +45,8 @@ export class Worker {
       if(job.execution_mode!=='PAPER')assertLiveEnabled(signal.broker);
       const user=this.store.userById(job.user_id);
       if(!user||user.status!=='ACTIVE')throw new Error('User is suspended or unavailable');
+      const owner=this.store.botOwner(user.id);
+      if(!owner||owner.status!=='ACTIVE')throw new Error('Main account is suspended or unavailable');
       const policy=this.store.risk(job.user_id,this.config.defaultRisk);
       const exposure=this.store.exposure(job);
       if(exposure.uncertain)throw new Error('Unresolved order outcome: operator reconciliation required');
@@ -52,7 +54,7 @@ export class Worker {
         policy,daily:this.store.ledgerDaily(job),position:this.store.ledgerPosition(job),
         equity:policy.equities?.[signal.broker]||0,
         balance:policy.balances?.[signal.broker]??policy.equities?.[signal.broker]??0,
-        licensed:user.role==='ADMIN'||this.store.hasActiveLicense(job.user_id),
+        licensed:owner.role==='ADMIN'||this.store.hasActiveLicense(owner.id),
         globalKill:this.store.getSetting('globalKill',false),...exposure
       });
       if(!result.ok)throw new Error(result.reason);
@@ -108,7 +110,7 @@ export class NotificationWorker {
       this.store.db.prepare("UPDATE notification_outbox SET status='DISABLED' WHERE id=?").run(row.id);
       return;
     }
-    const user=this.store.userById(row.user_id);
+    const user=this.store.botOwner(row.user_id);
     const sent=await this.notifier.send(user?.email,row.subject,row.body);
     const attempts=row.attempts+1;
     this.store.db.prepare('UPDATE notification_outbox SET status=?,attempts=?,next_attempt=? WHERE id=?')
