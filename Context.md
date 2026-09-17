@@ -9,7 +9,7 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Public URL: https://www.robottrade.io
 - VPS host: 187.53.141.5
 - Application user: mikey
-- Current release: e56be94
+- Current release: 50062f5
 - Service: astra-trade.service (user service)
 - Application: /home/mikey/apps/astra-trade/current
 - Shared state: /home/mikey/apps/astra-trade/shared
@@ -17,6 +17,8 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Reverse proxy: Nginx with HTTPS
 - Bot-profile release verified after immutable symlink deployment: service active, health OK (PAPER_ONLY), schema v8, SQLite integrity OK, bot assets served, and unauthenticated bot API denied.
 - Pre-migration final backup: shared/backups/pre-bots-final-20260916T184434Z.db. Migration was rehearsed against a backup before production activation.
+- Phase 0 deployed on 2026-09-17 using an immutable release and symlink swap. Production schema v9, integrity/foreign keys OK, 58 Paper fills matched 58 cash journal entries, and public assets/authentication boundary checks passed.
+- Phase 0 final backup: shared/backups/pre-phase0-final-20260917T014852Z.db. Rehearsal preserved all IDs/secrets and row counts; no negative reconstructed cash, unresolved Paper orders, or FIFO analytics errors were found.
 
 Do not store passwords, webhook URLs, API keys, tokens, or private key material in this file.
 
@@ -42,10 +44,10 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 - Max risk per trade: 100%
 - Max order notional: 10,000 USDT
 - Max daily notional: 100,000 USDT
-- Percent Equity sizing is capped automatically at the lowest safe value among risk-derived size, free configured equity, free configured cash balance, max order notional and remaining daily notional budget.
+- Percent Equity sizing is capped automatically at the lowest safe value among risk-derived size, available book equity, journaled cash minus reservations, max order notional and remaining daily notional budget.
 - Explicit quantity and fixed-notional requests are still rejected if they exceed risk/equity constraints.
 - Every numeric Risk Manager limit has an editable Default and Max Value. Default supplies the calculator's suggested setting; Max Value is the enforced ceiling.
-- Each broker has Total Equity and Balance. Balance is available Spot buying cash, cannot exceed Total Equity, and falls back to Total Equity for older profiles.
+- Each broker has configured Total Equity and Balance funding. Changes append capital deltas without resetting PnL. Current Paper cash and book equity are displayed separately and drive execution risk checks; book equity is not mark-to-market.
 - The Risk Manager includes a real-time, non-executing preview that uses the same server-side risk engine as webhook orders. It shows risk amount, quantity, notional, available balance, open/remaining position slots and how many positions of the previewed size fit. A preview is point-in-time guidance; another concurrent signal can still consume capacity before execution.
 
 Other safeguards include max trades per day, maximum daily loss, maximum open positions, an optional repeated-symbol entry block, loss-streak pause, volatility and news blocks, allowed-symbols list, side mode, kill switch and reduce-only enforcement.
@@ -69,10 +71,10 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 ## Operations
 
 - Run tests: npm test
-- Current local test suite: 73 tests; deployed release e56be94 had 55 tests.
+- Current test suite: 73 tests, passed locally and on the VPS before deploying release 50062f5.
 - Back up SQLite before production release changes using scripts/backup.mjs.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the user service.
-- Production database schema is 8. The local Phase 0 candidate migrates to schema 9 with Paper funding, cash journals and book-value snapshots. It is not yet deployed. Existing IDs, history and webhook secrets are preserved. An older application cannot open a newer schema.
+- Production database schema is 9, with Paper funding, cash journals and book-value snapshots. Existing IDs, history and webhook secrets are preserved. An older application cannot open a newer schema.
 - All database changes require a verified backup and integrity check.
 
 ## Bot profiles
@@ -93,14 +95,14 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 - Currency is selected by broker and never combined: Binance Global is USDT; Binance TH, InnovestX and Settrade are THB.
 - Normal users can read only their own analytics. Administrators may select a user explicitly.
 
-## Phase 0 candidate (not deployed)
+## Phase 0 (deployed)
 
 - Risk now uses Paper cash and cost-based book equity from journaled fills. Realized losses reduce buying power; realized gains increase it. Pending reservations are deducted once.
 - Equity/Balance inputs represent cumulative funding. Changing them appends a funding delta and never resets PnL; unchanged saves are idempotent. The UI separately shows current ledger cash and book equity.
 - Migration reconstructs Paper cash from the current configured baseline and existing fills. Legacy funding dates are unknown; historical percentages are suppressed instead of fabricated. Negative reconstructed balances require operator review, not an automatic credit.
 - Restart revalidates unfilled Paper jobs, preserves/cancels partially filled remainders, and quarantines inconsistent ledgers. LIVE/LEGACY orders are not replayed.
 - Analytics counts completed flat-to-flat cycles. Period PnL and realized drawdown include partial exits; unrealized price changes are excluded. Historical funding records replace today's editable capital as the percentage basis.
-- See docs/PHASE0.md and scripts/rehearse-phase0.mjs. Production migration rehearsal and rendered desktop/mobile QA are still release gates. Browser tooling failed to start during implementation; DOM/translation/API tests are available but do not substitute for visual QA.
+- See docs/PHASE0.md and scripts/rehearse-phase0.mjs. Production migration rehearsal and backend smoke checks passed. Rendered desktop/mobile QA remains unverified because browser tooling failed to start; passing DOM/translation/API tests do not substitute for visual QA.
 
 ## Known rejection causes and handling
 

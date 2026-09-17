@@ -1,6 +1,6 @@
 # Phase 0: Paper accounting and recovery
 
-This is a schema-v9 release candidate. Live trading remains disabled. Production activation requires a migration rehearsal and operator approval of the resulting balances.
+Release 50062f5 uses schema v9 and was deployed on 2026-09-17. Live trading remains disabled. Future production activations require a migration rehearsal and review of the resulting balances.
 
 ## Money semantics
 
@@ -44,4 +44,11 @@ Review negative cash and UNKNOWN counts. Inspect representative Main/Sub-Bot bal
 
 Before activation, stop the service and run `scripts/backup.mjs` for a final pre-v9 snapshot. Preserve the encryption key separately. Deploy to a new immutable directory, swap the symlink, restart and verify schema, health, journals, balances and authentication. Rollback requires the matching v8 database and application; restoring a snapshot loses activity after that snapshot, so do not automatically roll back after accepting new signals.
 
-The production database has not been migrated by the Phase 0 implementation work.
+## Deployment verification — 2026-09-17
+
+- Release: 50062f5, activated by immutable directory and symlink swap after the user's deploy request.
+- Tests: 73/73 locally and on VPS; database-copy migration and balance guards passed before activation.
+- Final verified backup: `shared/backups/pre-phase0-final-20260917T014852Z.db`.
+- Production: schema 9, integrity and foreign keys OK, 58 Paper fills matched 58 cash journal entries. Service active; health reported PAPER_ONLY with zero queued jobs. Updated static assets returned 200; unauthenticated account, bots and analytics APIs returned 401.
+- Rehearsal found no negative cash, unresolved Paper orders or FIFO analytics errors. No test orders were submitted to production.
+- Limitation: actual rendered desktop/mobile browser QA is still outstanding because the browser runtime failed to initialize (`failed to write kernel assets`). DOM/EN-TH tests passed; this is not a claim of visual verification.
