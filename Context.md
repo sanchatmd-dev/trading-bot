@@ -10,23 +10,29 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - VPS host: 187.53.141.5
 - Application user: mikey
 - Current release: 0321ae6 (Phase 2, PostgreSQL schema 11)
-- Service: astra-trade.service (user service)
+- User services: astra-trade-phase2.service (API), astra-trade-worker.service (Paper execution and mail), robot-postgres.service (database). All three are enabled; user lingering is enabled.
 - Application: /home/mikey/apps/astra-trade/current
 - Shared state: /home/mikey/apps/astra-trade/shared
-- Database: /home/mikey/apps/astra-trade/shared/data/astra-v2.db
-- Reverse proxy: Nginx with HTTPS
+- Database: PostgreSQL 16, database robot_trade, schema 11. Data directory: /home/mikey/apps/astra-trade/postgres/data. Unix socket: /home/mikey/apps/astra-trade/postgres/socket, port identifier 55432; no PostgreSQL TCP listener.
+- Runtime environment: /home/mikey/apps/astra-trade/shared/astra-phase2.env (protected; never copy its contents into documentation).
+- Reverse proxy: Nginx with HTTPS, forwarding to the API on 127.0.0.1:18080.
+- Retired runtime: astra-trade.service is disabled and inactive. The SQLite file /home/mikey/apps/astra-trade/shared/data/astra-v2.db is retained as pre-cutover history, not the active database. Never restart the SQLite writer for this service without an explicit recovery/reconciliation plan.
+- Latest read-only acceptance check on 2026-09-18 (Asia/Bangkok): all three services active, HTTPS health v2.2.0/PAPER_ONLY with queue 0, schema 11, 151 fills and 151 cash-journal entries, no PROCESSING/UNKNOWN signals, and no warning-or-higher API/worker journal entries in the preceding 30 minutes.
+
+Do not store passwords, webhook URLs, API keys, tokens, or private key material in this file.
+
+## Historical deployments (SQLite; not current runtime)
+
 - Bot-profile release verified after immutable symlink deployment: service active, health OK (PAPER_ONLY), schema v8, SQLite integrity OK, bot assets served, and unauthenticated bot API denied.
 - Pre-migration final backup: shared/backups/pre-bots-final-20260916T184434Z.db. Migration was rehearsed against a backup before production activation.
 - Phase 0 deployed on 2026-09-17 using an immutable release and symlink swap. Production schema v9, integrity/foreign keys OK, 58 Paper fills matched 58 cash journal entries, and public assets/authentication boundary checks passed.
 - Phase 0 final backup: shared/backups/pre-phase0-final-20260917T014852Z.db. Rehearsal preserved all IDs/secrets and row counts; no negative reconstructed cash, unresolved Paper orders, or FIFO analytics errors were found.
 - UI hardening release 3feeb07 was deployed immutably on 2026-09-17 after 74/74 VPS tests. Backup: shared/backups/pre-ui-3feeb07-20260917T023024Z.db. Production remained schema v9/PAPER_ONLY; 59 Paper fills matched 59 cash journal entries and authentication checks passed.
 
-Do not store passwords, webhook URLs, API keys, tokens, or private key material in this file.
-
 ## Architecture
 
 1. **Signal layer**: TradingView indicator sends a Universal Webhook payload with trade_id, broker, symbol, event, sizing data, SL/TP, timestamp, volatility and news fields.
-2. **Bot core**: Node.js validates the signal, authenticates its per-user webhook secret, applies risk controls, persists it in SQLite and processes the Paper order.
+2. **Bot core**: The Node.js PostgreSQL API validates signals, authenticates each bot's webhook secret and durably queues accepted signals. A separate worker applies execution-time risk controls and commits the Paper fill, position, cash journal, audit and notification outbox atomically. PostgreSQL schema 11 and decimal.js preserve monetary precision.
 3. **Execution adapters**: Binance Global, Binance TH, InnovestX, MT5, Settrade and a future HTTP adapter use a common registry. Live execution is locked.
 
 ## Product rules
@@ -71,12 +77,13 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 
 ## Operations
 
-- Run tests: npm test
-- Current test suite: 88 tests, passed locally and on the VPS before deploying release b441476.
-- Back up SQLite before production release changes using scripts/backup.mjs.
-- Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the user service.
-- Production database schema is 10, with account security, Paper funding, cash journals and book-value snapshots. Existing IDs, history and webhook secrets are preserved. An older application cannot open a newer schema.
-- All database changes require a verified backup and integrity check.
+- Run legacy/regression/UI tests: npm test (89/89 passed in the latest local review). Run npm run test:postgres only against an isolated test database; the recorded PostgreSQL integration result is 15/15, not a fresh production test.
+- Production entry points: src/postgres/server.js (npm run start:postgres) and src/postgres/worker-main.js (npm run worker:postgres). npm start still selects the legacy SQLite runtime and must not be used to start production.
+- Back up PostgreSQL using scripts/backup-postgres.mjs with the protected DATABASE_URL and compatible pg_dump. Use scripts/rotate-postgres-key.mjs and scripts/reset-postgres-password.mjs for their respective PostgreSQL maintenance tasks; follow docs/PHASE2.md. scripts/backup.mjs is for historical SQLite snapshots/import only.
+- Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the PostgreSQL API and worker user services. Do not activate the retired SQLite service.
+- Production schema is 11, using NUMERIC(38,18), account security, Paper funding, cash journals and book-value snapshots. Existing IDs, history and webhook secrets are preserved. API and worker verify schema at startup; migrations run offline with the schema-owner role, not robot_app.
+- All database changes require a verified backup and integrity checks. After new PostgreSQL writes, restoring the old SQLite runtime loses those writes unless the delta is reconciled; there is no automatic reverse migration.
+- Acceptance work still open: scheduled off-host backups with failure alerts and a full system restore drill. Hosted CI, fresh production Login/MFA and authenticated Overview/session restoration were verified as recorded below. The owner deferred off-host backup setup until after the final project because no destination is available; no backup timer was installed. Provider-managed backups were not verified. Isolated database restore tests do not establish full-system disaster recovery.
 
 ## Bot profiles
 
@@ -107,7 +114,7 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 
 ## Phase 1 (deployed)
 
-- Agreed Phase 1 scope is security: MFA, sessions, password recovery, RBAC and secret rotation. Scaling/Postgres belongs to a later phase.
+- Phase 1 delivered security: MFA, sessions, password recovery, RBAC and secret rotation. PostgreSQL and the separate worker were subsequently delivered in Phase 2.
 - Schema 10 adds TOTP/recovery-code state, short-lived login/reset challenges, encrypted recovery mail and persistent attempt limits. It revokes legacy sessions while preserving existing trading/ownership data and secrets.
 - Browser login now uses HttpOnly same-site cookies, exact Origin checks and CSRF headers. ADMIN/SUPPORT require MFA for privileged controls; sensitive operations require recent identity confirmation. Password, MFA, status and role changes revoke authentication state.
 - UI includes MFA enrollment/login/recovery codes, identity confirmation and SMTP-backed password recovery with EN/TH labels. USER/SUPPORT/ADMIN have explicit grants; cross-owner bot access remains denied.
@@ -128,8 +135,16 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 - Offline import backs up schema 10, verifies copied rows, preserves IDs/ciphertexts, revokes transient authentication and quarantines interrupted orders. Legacy REAL precision requires an explicit rounding opt-in. Imported FIFO-only dust adjustments are disclosed and never change cash or fill records.
 - Added native PostgreSQL backup/key rotation, maintenance locks, offline schema initialization, runtime-role grant template, private Compose example and PostgreSQL CI job. See docs/PHASE2.md for immutable cutover and rollback restrictions.
 - Validation on 2026-09-18: 89/89 legacy/UI tests on Windows; 15/15 real PostgreSQL 16.15 integration tests on isolated VPS, including four OS workers, SIGKILL, migration rollback, full dump/restore hashes and key-rotation rollback. Production-copy rehearsal preserved 525 signals, 151 fills/cash entries and three users/bots; four secrets decrypt and 67 closed cycles calculate. No negative cash in that snapshot.
-- Chrome QA used isolated fixtures through a private SSH tunnel: Desktop 1440x900 and Mobile 390x844, login/reload, Risk preview/save, Analytics, EN/TH, navigation and no horizontal overflow. No production test trades were sent. Hosted CI, Docker startup and sustained load/failover acceptance remain pending.
+- Chrome QA used isolated fixtures through a private SSH tunnel: Desktop 1440x900 and Mobile 390x844, login/reload, Risk preview/save, Analytics, EN/TH, navigation and no horizontal overflow. No production test trades were sent. Docker/Compose runtime startup and sustained load/failover acceptance remain pending; hosted CI including the container build passed as recorded below.
 - Deployment completed on 2026-09-18 (Asia/Bangkok) as immutable release 0321ae6. Final offline import preserved 3 users, 534 signals and 151 fills, reported zero interrupted orders and zero negative-cash accounts, and revoked zero active sessions. Verified backups: `pre-phase2-0321ae6-20260917T201156Z.db` and `post-phase2-0321ae6-20260917T201156Z.dump` (SHA-256 `2b7257670234cabe39df69ecbd1712d55779d3b2ffa46360cd804bf4724d9c32`). PostgreSQL 16 listens only on a protected Unix socket; API/worker use a restricted runtime role. PostgreSQL, API and worker passed supervised restart, local/domain health returned v2.2.0 PAPER_ONLY with an empty queue, and recent journals contained no fatal/error entries. The old SQLite service is disabled. Rollback to SQLite is no longer safe after any new PostgreSQL write without delta reconciliation.
+
+## Phase 2 acceptance follow-up (2026-09-18, Asia/Bangkok)
+
+- GitHub Actions Safety checks #24 succeeded for commit 639fe809ee01c233a9e8d2f0646281c9fb1eaabb: Linux and Windows test jobs, PostgreSQL integration, and container build. Verified directly in the authenticated GitHub UI: https://github.com/sanchatmd-dev/trading-bot/actions/runs/35269699025. Connector calls returned empty run/status lists and were not reliable evidence of absent CI. Four non-failing annotations concern the Node 20 runtime used by actions/checkout@v4 and actions/setup-node@v4; action-version maintenance remains separate work.
+- A fresh production pg_dump used an exported repeatable-read snapshot and was restored into a uniquely named temporary database. Row counts and SHA-256 row fingerprints matched for all 27 public tables, including 539 signals, 151 fills and 151 cash-journal rows. Schema 11 verified and all four encrypted webhook/MFA records decrypted using the existing protected keyring. No source application rows were changed and no API, execution or email worker ran against the restored copy. The temporary database was dropped after verification.
+- Restore-tested archive: /home/mikey/apps/astra-trade/shared/backups/restore-verified-2026-09-17T20-33-19-885Z.dump (155863 bytes; SHA-256 f92337afdc8f1b9f2a07b6b085d05a8dfec21d475421922d132f83b25d90ccaf). A protected .verification.json report is beside it. This is a same-VPS database restore test, not off-host or full-system disaster recovery.
+- Production Chrome displayed authenticated Analytics and Overview. A newly opened tab restored the existing session and displayed v2.2/PostgreSQL/Paper with recent signals. The owner subsequently completed a fresh login. Database inspection verified a new, unexpired session created at 2026-09-18 03:35:08.838 Asia/Bangkok with mfa_verified=1; Chrome showed the authenticated Overview and health remained v2.2.0/PAPER_ONLY with queue 0. The agent did not collect credentials, generate an OTP, reset MFA or submit a trade.
+- Owner explicitly deferred automatic off-host backups until after the final project. Resume destination selection, encrypted transfer, scheduling, failure alerts and off-host restore verification then; do not count this deferred work as completed.
 
 ## Known rejection causes and handling
 
