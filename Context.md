@@ -71,7 +71,7 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 ## Operations
 
 - Run tests: npm test
-- Current test suite: 73 tests, passed locally and on the VPS before deploying release 50062f5.
+- Current test suite: 74 tests after adding mobile-navigation and public-recovery disclosure coverage.
 - Back up SQLite before production release changes using scripts/backup.mjs.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the user service.
 - Production database schema is 9, with Paper funding, cash journals and book-value snapshots. Existing IDs, history and webhook secrets are preserved. An older application cannot open a newer schema.
@@ -102,7 +102,7 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 - Migration reconstructs Paper cash from the current configured baseline and existing fills. Legacy funding dates are unknown; historical percentages are suppressed instead of fabricated. Negative reconstructed balances require operator review, not an automatic credit.
 - Restart revalidates unfilled Paper jobs, preserves/cancels partially filled remainders, and quarantines inconsistent ledgers. LIVE/LEGACY orders are not replayed.
 - Analytics counts completed flat-to-flat cycles. Period PnL and realized drawdown include partial exits; unrealized price changes are excluded. Historical funding records replace today's editable capital as the percentage basis.
-- See docs/PHASE0.md and scripts/rehearse-phase0.mjs. Production migration rehearsal and backend smoke checks passed. Rendered desktop/mobile QA remains unverified because browser tooling failed to start; passing DOM/translation/API tests do not substitute for visual QA.
+- See docs/PHASE0.md and scripts/rehearse-phase0.mjs. Production migration rehearsal and backend smoke checks passed. Rendered browser QA was completed at 1440×900 desktop and 390×844 mobile; login, password entry, EN/TH, mobile navigation and public recovery guidance were verified without sending production signals.
 
 ## Known rejection causes and handling
 

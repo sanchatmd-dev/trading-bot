@@ -6,4 +6,5 @@ data/*
 backups/
 node_modules/
 .deploy/
+.qa-local/
 .skill-install-*/

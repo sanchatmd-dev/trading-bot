@@ -51,4 +51,4 @@ Before activation, stop the service and run `scripts/backup.mjs` for a final pre
 - Final verified backup: `shared/backups/pre-phase0-final-20260917T014852Z.db`.
 - Production: schema 9, integrity and foreign keys OK, 58 Paper fills matched 58 cash journal entries. Service active; health reported PAPER_ONLY with zero queued jobs. Updated static assets returned 200; unauthenticated account, bots and analytics APIs returned 401.
 - Rehearsal found no negative cash, unresolved Paper orders or FIFO analytics errors. No test orders were submitted to production.
-- Limitation: actual rendered desktop/mobile browser QA is still outstanding because the browser runtime failed to initialize (`failed to write kernel assets`). DOM/EN-TH tests passed; this is not a claim of visual verification.
+- Rendered browser QA was completed at 1440×900 desktop and 390×844 mobile. Login, password entry, EN/TH switching and Forgot Password were exercised without submitting signals. The follow-up fixes replace the overflowing mobile navigation with a collapsible menu and remove operator paths/commands from the unauthenticated recovery dialog.

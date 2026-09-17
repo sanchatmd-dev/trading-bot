@@ -35,15 +35,36 @@ test('UI defaults to English; language persists, preserves inputs and protects u
   }finally{w.close();}
   const restored=setup('th');assert.equal(restored.window.document.documentElement.lang,'th');restored.window.close();
 });
-test('Forgot Password opens recovery guidance without claiming email delivery',()=>{
+test('Forgot Password gives safe guidance without exposing operator infrastructure',()=>{
   const dom=setup(),d=dom.window.document;
   try{
     let opened=false;d.querySelector('#recoveryDialog').showModal=()=>{opened=true;};
     d.querySelector('#forgotPassword').click();
     assert.equal(opened,true);
     assert.match(d.querySelector('#recoveryDialog').textContent,/Automatic email recovery is not configured/);
-    assert.match(d.querySelector('#recoveryDialog pre').textContent,/reset-password.sh/);
+    assert.match(d.querySelector('#recoveryDialog').textContent,/Contact your administrator/);
+    assert.equal(d.querySelector('#recoveryDialog pre'),null);
+    assert.doesNotMatch(d.querySelector('#recoveryDialog').textContent,/\/home\/|reset-password\.sh|SSH/i);
   }finally{dom.window.close();}
+});
+test('Mobile navigation opens, closes after selection and translates its state',async()=>{
+  const dom=setup(),w=dom.window,d=w.document;
+  try{
+    w.eval(publicFile('login.js'));
+    const toggle=d.querySelector('#mobileNavToggle'),nav=d.querySelector('#primaryNav');
+    assert.equal(toggle.getAttribute('aria-expanded'),'false');
+    assert.equal(nav.classList.contains('mobile-open'),false);
+    toggle.click();
+    assert.equal(toggle.getAttribute('aria-expanded'),'true');
+    assert.equal(nav.classList.contains('mobile-open'),true);
+    assert.equal(toggle.textContent,'Close menu');
+    nav.querySelector('button').click();
+    assert.equal(toggle.getAttribute('aria-expanded'),'false');
+    assert.equal(nav.classList.contains('mobile-open'),false);
+    const language=d.querySelector('#language');language.value='th';language.dispatchEvent(new w.Event('change'));await settle();
+    toggle.click();
+    assert.equal(toggle.textContent,'ปิดเมนู');
+  }finally{w.close();}
 });
 test('Analytics UI exposes responsive controls, charts and strict broker currency',()=>{
   const dom=setup(),d=dom.window.document;
