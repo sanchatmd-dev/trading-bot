@@ -52,3 +52,9 @@ Before activation, stop the service and run `scripts/backup.mjs` for a final pre
 - Production: schema 9, integrity and foreign keys OK, 58 Paper fills matched 58 cash journal entries. Service active; health reported PAPER_ONLY with zero queued jobs. Updated static assets returned 200; unauthenticated account, bots and analytics APIs returned 401.
 - Rehearsal found no negative cash, unresolved Paper orders or FIFO analytics errors. No test orders were submitted to production.
 - Rendered browser QA was completed at 1440×900 desktop and 390×844 mobile. Login, password entry, EN/TH switching and Forgot Password were exercised without submitting signals. The follow-up fixes replace the overflowing mobile navigation with a collapsible menu and remove operator paths/commands from the unauthenticated recovery dialog.
+
+## UI hardening follow-up — 2026-09-17
+
+- Release 3feeb07 was activated as a new immutable directory after 74/74 tests passed locally and on the VPS; backup `shared/backups/pre-ui-3feeb07-20260917T023024Z.db` was verified before the symlink swap.
+- Post-deploy checks reported PAPER_ONLY, schema 9, SQLite integrity/foreign keys OK, 59 Paper fills matched by 59 cash journal entries, updated assets served, and unauthenticated protected APIs returned 401.
+- Rendered production QA passed at 1440×900 and 390×844. The mobile document and navigation had no horizontal overflow, all seven visible destinations stayed inside the menu, Forgot Password exposed no operator path/command, and the browser console had no errors. No production signals or orders were submitted.

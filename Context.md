@@ -9,7 +9,7 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Public URL: https://www.robottrade.io
 - VPS host: 187.53.141.5
 - Application user: mikey
-- Current release: 50062f5
+- Current release: 3feeb07
 - Service: astra-trade.service (user service)
 - Application: /home/mikey/apps/astra-trade/current
 - Shared state: /home/mikey/apps/astra-trade/shared
@@ -19,6 +19,7 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Pre-migration final backup: shared/backups/pre-bots-final-20260916T184434Z.db. Migration was rehearsed against a backup before production activation.
 - Phase 0 deployed on 2026-09-17 using an immutable release and symlink swap. Production schema v9, integrity/foreign keys OK, 58 Paper fills matched 58 cash journal entries, and public assets/authentication boundary checks passed.
 - Phase 0 final backup: shared/backups/pre-phase0-final-20260917T014852Z.db. Rehearsal preserved all IDs/secrets and row counts; no negative reconstructed cash, unresolved Paper orders, or FIFO analytics errors were found.
+- UI hardening release 3feeb07 was deployed immutably on 2026-09-17 after 74/74 VPS tests. Backup: shared/backups/pre-ui-3feeb07-20260917T023024Z.db. Production remained schema v9/PAPER_ONLY; 59 Paper fills matched 59 cash journal entries and authentication checks passed.
 
 Do not store passwords, webhook URLs, API keys, tokens, or private key material in this file.
 
@@ -71,7 +72,7 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 ## Operations
 
 - Run tests: npm test
-- Current test suite: 74 tests after adding mobile-navigation and public-recovery disclosure coverage.
+- Current test suite: 74 tests, passed locally and on the VPS before deploying release 3feeb07.
 - Back up SQLite before production release changes using scripts/backup.mjs.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the user service.
 - Production database schema is 9, with Paper funding, cash journals and book-value snapshots. Existing IDs, history and webhook secrets are preserved. An older application cannot open a newer schema.
