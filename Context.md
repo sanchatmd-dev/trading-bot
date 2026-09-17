@@ -9,7 +9,7 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Public URL: https://www.robottrade.io
 - VPS host: 187.53.141.5
 - Application user: mikey
-- Current release: b441476 (Phase 1, schema 10)
+- Current release: 0321ae6 (Phase 2, PostgreSQL schema 11)
 - Service: astra-trade.service (user service)
 - Application: /home/mikey/apps/astra-trade/current
 - Shared state: /home/mikey/apps/astra-trade/shared
@@ -120,16 +120,16 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 - Final backup: /home/mikey/apps/astra-trade/shared/backups/pre-phase1-b441476-20260917T182451Z.db (matching protected environment backup: same path plus .env). Health, integrity/FKs, public assets, authentication/Origin boundaries and mobile recovery UI passed after activation. The service remains Paper-only. See docs/PHASE1.md for the deployment record and rollback restrictions.
 - Read-only acceptance review on 2026-09-18 confirmed release b441476, schema 10, integrity OK, no foreign-key errors, an active service, an empty queue and no service errors in the preceding 30 minutes. Administrator MFA was enrolled for 1/1 accounts and an unexpired MFA-verified session existed. No completed production password recovery was recorded. Owner confirmation of recovery-code safekeeping and a full isolated system-restore drill remain pending. Phase 2 development may start in isolation; this is not approval for Live trading or commercial launch.
 
-## Phase 2 (implemented; not deployed)
+## Phase 2 (deployed)
 
-- Separate async PostgreSQL runtime under src/postgres; schema 11 uses NUMERIC(38,18) and decimal.js. Existing npm start/SQLite production remains unchanged.
+- Separate async PostgreSQL runtime under src/postgres; schema 11 uses NUMERIC(38,18) and decimal.js. Production now runs the PostgreSQL API and worker; SQLite is retained read-only for the migration retention window.
 - API and worker run independently; owner/bot locks and SKIP LOCKED support concurrent workers. A Paper fill, cash journal, positions, audit and outbox commit atomically. Mail uses leases with at-least-once delivery.
 - Monetary API values are strings, including UI funding/notional edits and preview prices. USDT/THB and per-bot ownership remain isolated. No Live execution is enabled.
 - Offline import backs up schema 10, verifies copied rows, preserves IDs/ciphertexts, revokes transient authentication and quarantines interrupted orders. Legacy REAL precision requires an explicit rounding opt-in. Imported FIFO-only dust adjustments are disclosed and never change cash or fill records.
 - Added native PostgreSQL backup/key rotation, maintenance locks, offline schema initialization, runtime-role grant template, private Compose example and PostgreSQL CI job. See docs/PHASE2.md for immutable cutover and rollback restrictions.
 - Validation on 2026-09-18: 89/89 legacy/UI tests on Windows; 15/15 real PostgreSQL 16.15 integration tests on isolated VPS, including four OS workers, SIGKILL, migration rollback, full dump/restore hashes and key-rotation rollback. Production-copy rehearsal preserved 525 signals, 151 fills/cash entries and three users/bots; four secrets decrypt and 67 closed cycles calculate. No negative cash in that snapshot.
-- Chrome QA used isolated fixtures through a private SSH tunnel: Desktop 1440x900 and Mobile 390x844, login/reload, Risk preview/save, Analytics, EN/TH, navigation and no horizontal overflow. Production was not switched or sent test trades. Hosted CI, Docker startup, production PostgreSQL provisioning and load/failover acceptance remain pending.
-- Final checks: 69 JavaScript syntax checks, diff whitespace checks and production-dependency audit passed. Temporary QA services and tunnel were stopped; protected rehearsal backups remain on VPS. Production b441476 health stayed OK/PAPER_ONLY with an empty queue. Phase 2 changes have not been committed, pushed or deployed in this turn.
+- Chrome QA used isolated fixtures through a private SSH tunnel: Desktop 1440x900 and Mobile 390x844, login/reload, Risk preview/save, Analytics, EN/TH, navigation and no horizontal overflow. No production test trades were sent. Hosted CI, Docker startup and sustained load/failover acceptance remain pending.
+- Deployment completed on 2026-09-18 (Asia/Bangkok) as immutable release 0321ae6. Final offline import preserved 3 users, 534 signals and 151 fills, reported zero interrupted orders and zero negative-cash accounts, and revoked zero active sessions. Verified backups: `pre-phase2-0321ae6-20260917T201156Z.db` and `post-phase2-0321ae6-20260917T201156Z.dump` (SHA-256 `2b7257670234cabe39df69ecbd1712d55779d3b2ffa46360cd804bf4724d9c32`). PostgreSQL 16 listens only on a protected Unix socket; API/worker use a restricted runtime role. PostgreSQL, API and worker passed supervised restart, local/domain health returned v2.2.0 PAPER_ONLY with an empty queue, and recent journals contained no fatal/error entries. The old SQLite service is disabled. Rollback to SQLite is no longer safe after any new PostgreSQL write without delta reconciliation.
 
 ## Known rejection causes and handling
 

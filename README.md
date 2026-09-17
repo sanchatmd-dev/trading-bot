@@ -27,13 +27,13 @@ Deploy บน VPS แล้วเมื่อ 2026-09-18 (Asia/Bangkok) เพ�
 
 รายละเอียดผล deploy และข้อจำกัดอยู่ใน [Phase 1](docs/PHASE1.md)
 
-## Phase 2 — พัฒนาและทดสอบแยกแล้ว ยังไม่ deploy
+## Phase 2 — deploy แล้ว (0321ae6, PostgreSQL schema 11)
 
 เพิ่ม PostgreSQL schema 11, การคำนวณเงิน Decimal, API/Worker แยก process, คิวหลาย Worker, transaction ป้องกันบันทึก Fill/เงินซ้ำ และเครื่องมือ import/backup/หมุนกุญแจ ระบบยังคง Paper-only
 
-Tests: ชุดเดิมและ UI 89/89; PostgreSQL จริง 15/15 รวมฆ่า Worker กลาง transaction, หลาย process, MFA/CSRF และ backup/restore ซ้อมย้ายสำเนา Production 525 signals / 151 fills แล้ว โดยไม่เปลี่ยนข้อมูลต้นฉบับ ตรวจ Chrome Desktop/Mobile ผ่าน
+Tests: ชุดเดิมและ UI 89/89; PostgreSQL จริง 15/15 รวมฆ่า Worker กลาง transaction, หลาย process, MFA/CSRF และ backup/restore ตรวจ Chrome Desktop/Mobile ผ่าน Production ย้ายจริง 534 signals / 151 fills โดยไม่มีงานค้างหรือบัญชีเงินสดติดลบ และผ่าน restart/HTTPS health check หลัง deploy
 
-`npm start` ยังเป็น SQLite เดิม; PostgreSQL ใช้ `npm run start:postgres` และ `npm run worker:postgres` หลัง initialize/import แบบ offline อ่าน [Phase 2](docs/PHASE2.md) ก่อนสลับระบบ โดยเฉพาะการปัดทศนิยมข้อมูลเก่า, runtime role, backup และข้อจำกัด rollback หลังรับรายการใหม่
+Production ใช้ PostgreSQL API และ Worker แยก service; `npm start`/SQLite เก็บไว้ชั่วคราวสำหรับประวัติและ recovery เท่านั้น อ่าน [Phase 2](docs/PHASE2.md) โดยเฉพาะ backup และข้อจำกัด rollback หลังรับรายการใหม่
 
 ## การแก้ไขจาก v2.0
 

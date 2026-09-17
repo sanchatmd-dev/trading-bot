@@ -7,7 +7,7 @@
 - Live trading: hard-disabled. Do not remove the gate as an operational workaround.
 - Existing exchange orders/positions: v2.1 does not cancel or protect them. Manage them directly with the broker before upgrading.
 
-The production SQLite runtime is schema 10, release b441476; Phase 1 is deployed. Follow [Phase 1](PHASE1.md) for origin configuration, sessions, MFA and SQLite key rotation. The separate [Phase 2 PostgreSQL runtime](PHASE2.md) uses schema 11 and has not been deployed; its offline import, separate API/worker, runtime roles and cutover/rollback gates supersede the SQLite procedure when selected. The older-version section below is historical.
+Production runs release 0321ae6 on PostgreSQL schema 11 with separate supervised API and worker services. Follow [Phase 1](PHASE1.md) for authentication/origin history and [Phase 2](PHASE2.md) for PostgreSQL backup, runtime-role and rollback rules. The SQLite procedure below is historical and must not be used as a live rollback after new PostgreSQL writes without reconciling the delta.
 
 ## Upgrade from v2.0
 

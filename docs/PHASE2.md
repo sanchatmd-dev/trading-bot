@@ -1,6 +1,6 @@
 # Phase 2 — exact Paper accounting and shared PostgreSQL
 
-Status: implemented and tested in isolation on 2026-09-18 (Asia/Bangkok). **Not deployed to production.** Production remains SQLite schema 10, release `b441476`. This is a Paper-only infrastructure release, not approval for Live trading or commercial launch.
+Status: deployed to production as immutable release `0321ae6` on 2026-09-18 (Asia/Bangkok), PostgreSQL schema 11. This is a Paper-only infrastructure release, not approval for Live trading or commercial launch.
 
 ## Runtime boundaries
 
@@ -98,8 +98,8 @@ Emergency password reset also has a PostgreSQL-specific operator script: stop AP
 - Isolated PostgreSQL 16.15 on the VPS: 15 integration tests pass, covering concurrent duplicates, four independent OS workers, SIGKILL before commit, exact cash boundaries, partial fills/cost allocation, five-bot quota, ownership, funding reservations, suspension/staleness, mail leases, FIFO/MDD, HTTP MFA/CSRF/reset, offline maintenance, import rollback, full dump/restore row hashes and key-rotation rollback.
 - Production-copy rehearsal: 3 users/bots, 525 signals, 151 fills, 151 cash-journal rows and 12 funding rows copied; 4 encrypted webhook/MFA records decrypt; 67 closed cycles calculate. No negative cash or interrupted orders in that snapshot. Reviewed rounding affects 29 field values, each by less than `5e-19`. This is a point-in-time rehearsal, not a production migration.
 - Chrome via a private SSH tunnel: 1440×900 Desktop and 390×844 Mobile. Login, session reload, Risk preview/save, Analytics values/charts, EN/TH and mobile navigation passed. No horizontal document overflow, invalid chart coordinates or relevant console errors. A hidden-user-selector CSS issue and stale language legend were fixed during QA. Screenshots are outside the repository.
-- GitHub Actions now defines a PostgreSQL service job; its hosted result is not claimed until a push runs CI. Docker image/Compose startup, production roles/services, sustained load, failover, physical iOS/Android, Safari and independent security review remain separate acceptance work.
-- Final local checks: 69 JavaScript modules pass syntax checks, `git diff --check` passes and `npm audit --omit=dev` reports zero known production dependency vulnerabilities. QA API/worker/PostgreSQL and the SSH tunnel were stopped after verification. Protected rehearsal backups remain on the VPS. Production release b441476 remained active, `/healthz` returned ok/PAPER_ONLY and its queue was empty.
+- GitHub Actions defines a PostgreSQL service job; its hosted result is not claimed until a push runs CI. Docker image/Compose startup, sustained load, failover, physical iOS/Android, Safari and independent security review remain separate acceptance work.
+- Final local checks: 69 JavaScript modules pass syntax checks, `git diff --check` passes and `npm audit --omit=dev` reports zero known production dependency vulnerabilities. Production cutover imported 3 users, 534 signals and 151 fills with zero interrupted orders and negative-cash accounts. PostgreSQL is supervised and Unix-socket-only; the API and worker use the restricted `robot_app` role. Pre-import SQLite and post-import PostgreSQL backups were verified. Service restart and HTTPS health checks passed at v2.2.0/PAPER_ONLY with an empty queue; no production test trades were submitted.
 
 ## Capacity limitations
 
