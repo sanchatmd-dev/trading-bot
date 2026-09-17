@@ -1,6 +1,6 @@
 # Phase 1: Account security
 
-Status: implemented locally, not deployed. This phase covers MFA, browser sessions, password recovery, role-based access and encryption-key rotation. It does not enable Live trading, subscriptions/billing or horizontal scaling. Production remains on schema 9 until an explicitly approved deployment.
+Status: deployed as release `b441476` on 2026-09-18 (Asia/Bangkok), schema 10. This phase covers MFA, browser sessions, password recovery, role-based access and encryption-key rotation. It does not enable Live trading, subscriptions/billing or horizontal scaling.
 
 ## Authentication and sessions
 
@@ -89,6 +89,18 @@ This is an offline operator operation, separate from deployment and separate fro
 6. Verify credential/secret decryption, login and MFA without logging plaintext. Webhook URLs and hashes remain unchanged.
 
 Exchange API keys still require broker-side replacement/revocation. The account webhook rotation button immediately invalidates the old URL and requires updating TradingView alerts manually.
+
+## Deployment record
+
+Release `b441476` passed all 88 tests and JavaScript syntax checks on the VPS. GitHub main was verified at the same full commit before activation. Two migration rehearsals passed: one live snapshot and a final snapshot after stopping the service. The immutable release was activated with an atomic symlink swap.
+
+Final verified backup: `/home/mikey/apps/astra-trade/shared/backups/pre-phase1-b441476-20260917T182451Z.db`. The matching protected environment backup has the suffix `.env`; the migrated rehearsal copy has the suffix `.rehearsal`. Both environment files retain mode 600. The canonical PUBLIC_ORIGIN was configured without changing the master key or any other existing environment setting.
+
+All 18 pre-existing non-session tables were fingerprint-compared before and after migration: 513 signals, 151 fills, 151 cash-journal entries, three users/bot profiles and three risk profiles were preserved. All three encrypted webhook secrets decrypted successfully and remained unchanged. All 21 legacy sessions were revoked. Integrity and foreign-key checks passed. Historical notification rows were already DISABLED; no backlog was re-enabled.
+
+Post-deploy HTTPS checks passed for health (PAPER_ONLY, empty queue), schema 10, robot13 assets, CSP/HSTS headers, enabled email recovery, unauthenticated access denial and missing/foreign Origin rejection. The recent service error journal was empty. Rendered public login and the mobile recovery form were checked on production; no reset email or trade was submitted through that check. A browser-extension deprecation warning was attributed to a chrome-extension URL, not application code.
+
+The owner must now sign in and enroll their own administrator MFA, then retain recovery codes securely. Production MFA enrollment and a completed password reset remain user-operated acceptance steps. The deployment does not claim that these actions have already occurred.
 
 ## Validation and remaining release gates
 
