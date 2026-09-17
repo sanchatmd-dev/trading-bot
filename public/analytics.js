@@ -19,6 +19,7 @@ function analyticsError(error){$('#analyticsStatus').textContent=error.message;$
 
 async function loadAnalytics(){
   if(!authenticated||analyticsState.loading)return;
+  renderAnalyticsUsers();
   if(analyticsState.period==='custom'&&(!$('#analyticsFrom').value||!$('#analyticsTo').value))return;
   analyticsState.loading=true;$('#analyticsStatus').textContent=translate('Loading analytics…');$('#analyticsStatus').className='';
   try{
@@ -45,6 +46,7 @@ function renderAnalytics(){
   const ratio=s.avgWinLossRatio===null?'—':`${number(s.avgWinLossRatio)} ×`;
   const basisLabels=['Trades count completed flat-to-flat cycles. PnL and drawdown include partial exits and exclude unrealized moves. Custom fees affect analytics only.'];
   if(s.percentagesAvailable===false)basisLabels.push('Percentages unavailable: funding changed in this period or legacy funding history is incomplete.');
+  if(s.legacyPrecisionAdjustments?.length)basisLabels.push(uiLanguage==='th'?'ข้อมูลเก่ามีการปรับเศษทศนิยมเฉพาะ FIFO Analytics; ยอดเงินและ Fill เดิมไม่เปลี่ยน':'Legacy floating-point dust normalized in FIFO analytics only; original cash and fills are unchanged.');
   $('#analyticsBasis').innerHTML=basisLabels.map(label=>`<span data-ui-label="${esc(label)}">${esc(translate(label))}</span>`).join(' ');
   $('#analyticsMetrics').innerHTML=[
     metricCard('Closed round trips',number(s.totalTrades,0),`${s.wins} W / ${s.losses} L`),metricCard('Win rate',`${number(s.winRate)}%`),
@@ -92,3 +94,4 @@ for(const id of ['analyticsBroker','analyticsSymbol','analyticsUser','analyticsF
 });
 $('#saveAnalyticsFee').onclick=async()=>{try{await api('/api/analytics/settings?'+analyticsParams().toString(),{method:'PUT',body:JSON.stringify({broker:$('#analyticsBroker').value,feeBps:Number($('#analyticsFee').value)})});loadAnalytics();}catch(error){analyticsError(error);}};
 const today=new Date(),monthStart=new Date(Date.UTC(today.getUTCFullYear(),today.getUTCMonth(),1));$('#analyticsTo').value=today.toISOString().slice(0,10);$('#analyticsFrom').value=monthStart.toISOString().slice(0,10);
+$('#language').addEventListener('change',()=>{if(analyticsState.summary)renderAnalytics();});

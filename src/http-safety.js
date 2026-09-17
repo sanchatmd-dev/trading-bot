@@ -9,13 +9,13 @@ export function readJson(req) {
       if(size>65536){fail('Payload too large');return;}
       chunks.push(chunk);
     });
-    req.on('end',()=>{
+    req.on('end',async()=>{
       if(done)return;
       done=true;
       try {
         const value=JSON.parse(Buffer.concat(chunks).toString('utf8')||'{}');
         if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('JSON object required');
-        req.validateAuth?.();
+        await req.validateAuth?.();
         resolve(value);
       }catch(error){reject(error);}
     });

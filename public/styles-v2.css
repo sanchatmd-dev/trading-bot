@@ -3,6 +3,7 @@ label{display:grid;gap:7px;color:var(--muted);font-size:13px;margin:12px 0}texta
 #language{width:auto;display:inline-block;margin-right:12px;padding:9px;min-width:72px}
 #saveToast{position:fixed;right:24px;bottom:24px;z-index:10000;background:#123e34;color:#d4ffef;border:1px solid #37d59a;border-radius:14px;padding:16px 28px;box-shadow:0 12px 40px #0008}
 #saveToast[hidden]{display:none}
+#analyticsUserWrap[hidden]{display:none}
 .mobile-nav-toggle{display:none}
 #securityPanel{margin-bottom:16px}#securityPanel input,#stepUpDialog input,#recoveryDialog input{min-width:0;width:100%}#securityPanel pre{white-space:pre-wrap;overflow-wrap:anywhere}#mfaSetupDetails{margin-top:16px}#securityMessage,#stepMessage,#recoveryMessage{overflow-wrap:anywhere}#mfaLoginForm{margin-top:16px}
 dialog{color:#e8edf7;background:#141d30;border:1px solid #405170;border-radius:20px;max-width:min(680px,90vw);padding:28px}

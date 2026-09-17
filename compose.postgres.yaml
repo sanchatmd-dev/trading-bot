@@ -1,0 +1,48 @@
+# Standalone private Phase 2 stack. Do not combine with compose.yaml.
+x-runtime: &runtime
+  build: .
+  env_file: .env
+  environment:
+    HOST: 0.0.0.0
+    PORT: 8080
+    PAPER_TRADING: "true"
+    PG_POOL_SIZE: "5"
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+  security_opt: ["no-new-privileges:true"]
+  stop_grace_period: 60s
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "3"}
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: robot
+      POSTGRES_DB: robot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a strong database password}
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    # No public or host database port.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U robot -d robot"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+  api:
+    <<: *runtime
+    command: ["node", "src/postgres/server.js"]
+    ports: ["127.0.0.1:8080:8080"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+  worker:
+    <<: *runtime
+    command: ["node", "src/postgres/worker-main.js"]
+volumes:
+  postgres_data:

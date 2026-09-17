@@ -120,6 +120,17 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 - Final backup: /home/mikey/apps/astra-trade/shared/backups/pre-phase1-b441476-20260917T182451Z.db (matching protected environment backup: same path plus .env). Health, integrity/FKs, public assets, authentication/Origin boundaries and mobile recovery UI passed after activation. The service remains Paper-only. See docs/PHASE1.md for the deployment record and rollback restrictions.
 - Read-only acceptance review on 2026-09-18 confirmed release b441476, schema 10, integrity OK, no foreign-key errors, an active service, an empty queue and no service errors in the preceding 30 minutes. Administrator MFA was enrolled for 1/1 accounts and an unexpired MFA-verified session existed. No completed production password recovery was recorded. Owner confirmation of recovery-code safekeeping and a full isolated system-restore drill remain pending. Phase 2 development may start in isolation; this is not approval for Live trading or commercial launch.
 
+## Phase 2 (implemented; not deployed)
+
+- Separate async PostgreSQL runtime under src/postgres; schema 11 uses NUMERIC(38,18) and decimal.js. Existing npm start/SQLite production remains unchanged.
+- API and worker run independently; owner/bot locks and SKIP LOCKED support concurrent workers. A Paper fill, cash journal, positions, audit and outbox commit atomically. Mail uses leases with at-least-once delivery.
+- Monetary API values are strings, including UI funding/notional edits and preview prices. USDT/THB and per-bot ownership remain isolated. No Live execution is enabled.
+- Offline import backs up schema 10, verifies copied rows, preserves IDs/ciphertexts, revokes transient authentication and quarantines interrupted orders. Legacy REAL precision requires an explicit rounding opt-in. Imported FIFO-only dust adjustments are disclosed and never change cash or fill records.
+- Added native PostgreSQL backup/key rotation, maintenance locks, offline schema initialization, runtime-role grant template, private Compose example and PostgreSQL CI job. See docs/PHASE2.md for immutable cutover and rollback restrictions.
+- Validation on 2026-09-18: 89/89 legacy/UI tests on Windows; 15/15 real PostgreSQL 16.15 integration tests on isolated VPS, including four OS workers, SIGKILL, migration rollback, full dump/restore hashes and key-rotation rollback. Production-copy rehearsal preserved 525 signals, 151 fills/cash entries and three users/bots; four secrets decrypt and 67 closed cycles calculate. No negative cash in that snapshot.
+- Chrome QA used isolated fixtures through a private SSH tunnel: Desktop 1440x900 and Mobile 390x844, login/reload, Risk preview/save, Analytics, EN/TH, navigation and no horizontal overflow. Production was not switched or sent test trades. Hosted CI, Docker startup, production PostgreSQL provisioning and load/failover acceptance remain pending.
+- Final checks: 69 JavaScript syntax checks, diff whitespace checks and production-dependency audit passed. Temporary QA services and tunnel were stopped; protected rehearsal backups remain on VPS. Production b441476 health stayed OK/PAPER_ONLY with an empty queue. Phase 2 changes have not been committed, pushed or deployed in this turn.
+
 ## Known rejection causes and handling
 
 - **Order exceeds available configured Spot equity**: automatic Percent Equity sizing now caps the order. Explicit oversized quantity remains rejected.

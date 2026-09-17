@@ -43,6 +43,7 @@ const riskMaxFields=['maxRiskPercent','maxTradesPerDay','maxDailyLossR','pauseAf
 const riskBooleanFields=['capPercentEquitySize','paperTrading','killSwitch','onePositionPerSymbol','requireReduceOnlySell','blockHighVolatility','blockDuringNews'];
 const fundFields=[['equityGlobal','balanceGlobal','binance-global'],['equityTh','balanceTh','binance-th'],['equityInnovestx','balanceInnovestx','innovestx'],['equitySettrade','balanceSettrade','settrade']];
 function fillRisk(p){
+  const runtimeLabel=document.querySelector('.brand small');if(runtimeLabel&&me.moneyFormat==='decimal-string')runtimeLabel.textContent='VPS v2.2 · PostgreSQL · Paper';
   const f=$('#riskForm').elements;
   $('#paperAccountRows').innerHTML=(me.paperAccounts||[]).map(account=>`<div class="list-row"><span>${esc(account.broker)} · ${esc(account.currency)}</span><span><span data-ui-label="Cash">${esc(translate('Cash'))}</span>: ${fmt(account.cash)} · <span data-ui-label="Book equity">${esc(translate('Book equity'))}</span>: ${fmt(account.bookEquity)}</span></div>`).join('');
   for(const k of riskMaxFields)f[k].value=p[k];
@@ -56,7 +57,7 @@ function fillRisk(p){
   updatePositionSlots();scheduleRiskPreview();
 }
 function collectRiskPolicy(){
-  const f=$('#riskForm').elements,n=k=>+f[k].value,p={defaults:{},equities:{},balances:{}};
+  const f=$('#riskForm').elements,n=k=>me?.moneyFormat==='decimal-string'&&(/^(equity|balance)/.test(k)||['maxOrderNotional','maxDailyNotional','defaultOrderNotional','defaultDailyNotional'].includes(k))?f[k].value:+f[k].value,p={defaults:{},equities:{},balances:{}};
   for(const k of riskMaxFields)p[k]=n(k);
   for(const[input,key]of Object.entries(riskDefaultsMap))p.defaults[key]=n(input);
   for(const k of riskBooleanFields)p[k]=f[k].checked;
@@ -73,7 +74,7 @@ let riskPreviewTimer,riskPreviewSequence=0;
 function scheduleRiskPreview(){clearTimeout(riskPreviewTimer);riskPreviewTimer=setTimeout(previewRisk,250);}
 async function previewRisk(){
   if(!authenticated||!me)return;
-  const f=$('#riskForm').elements,entry=+f.previewEntry.value,stopLoss=+f.previewStopLoss.value;
+  const f=$('#riskForm').elements,entry=me.moneyFormat==='decimal-string'?f.previewEntry.value:+f.previewEntry.value,stopLoss=me.moneyFormat==='decimal-string'?f.previewStopLoss.value:+f.previewStopLoss.value;
   updatePositionSlots();
   if(!(entry>0&&stopLoss>0)){ $('#riskPreviewStatus').textContent=translate('Enter price and Stop Loss');$('#riskPreviewReason').textContent='';return; }
   const sequence=++riskPreviewSequence;$('#riskPreviewStatus').textContent=translate('Checking…');

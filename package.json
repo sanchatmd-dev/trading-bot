@@ -1,6 +1,6 @@
 {
   "name": "astra-vps-trade-bot",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "type": "module",
   "description": "Multi-user VPS TradingView execution platform",
@@ -10,9 +10,18 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env src/server.js",
     "dev": "node --env-file-if-exists=.env --watch src/server.js",
-    "test": "node --test --test-isolation=none test/*.test.js"
+    "start:postgres": "node --env-file-if-exists=.env src/postgres/server.js",
+    "worker:postgres": "node --env-file-if-exists=.env src/postgres/worker-main.js",
+    "test": "node --test --test-isolation=none test/*.test.js",
+    "test:postgres": "node --test --test-isolation=none test/postgres/*.test.mjs",
+    "import:postgres": "node --env-file-if-exists=.env scripts/import-postgres.mjs",
+    "backup:postgres": "node --env-file-if-exists=.env scripts/backup-postgres.mjs"
   },
   "devDependencies": {
     "jsdom": "^30.0.1"
+  },
+  "dependencies": {
+    "decimal.js": "10.6.0",
+    "pg": "8.23.0"
   }
 }

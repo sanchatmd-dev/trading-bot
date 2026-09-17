@@ -21,3 +21,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t astra-paper-staging .
+  postgres:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: robot_test
+          POSTGRES_PASSWORD: isolated_ci_only
+          POSTGRES_DB: robot_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U robot_test -d robot_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      TEST_DATABASE_URL: postgresql://robot_test:isolated_ci_only@127.0.0.1:5432/robot_test
+      PG_DUMP_PATH: /usr/lib/postgresql/16/bin/pg_dump
+      PG_RESTORE_PATH: /usr/lib/postgresql/16/bin/pg_restore
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client-16
+      - run: npm ci
+      - run: npm run test:postgres

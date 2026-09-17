@@ -88,6 +88,9 @@ test('Analytics labels distinguish round trips and realized risk; unknown capita
     const language=d.querySelector('#language');language.value='th';language.dispatchEvent(new w.Event('change'));await settle();
     assert.match(d.querySelector('#analyticsBasis').textContent,/ไม่แสดงเปอร์เซ็นต์/);
     assert.match(d.querySelector('#analyticsMetrics').textContent,/รอบเทรดที่ปิดครบ/);
+    assert.match(d.querySelector('#winLossLegend').textContent,/ชนะ 0/);
+    language.value='en';language.dispatchEvent(new w.Event('change'));await settle();
+    assert.match(d.querySelector('#winLossLegend').textContent,/Wins 0/);
   }finally{w.close();}
 });
 test('save popup follows successful API writes, not errors; Rejected notes are escaped and save correctly',async()=>{
@@ -140,5 +143,20 @@ test('Risk UI renders editable defaults, maxima, Balance and debounced authorita
     assert.ok(calls.includes('/api/risk/preview'));
     assert.equal(d.querySelector('#riskPreviewStatus').textContent,'Likely accepted');
     assert.equal(d.querySelector('#previewCapacity').textContent,'3');
+  }finally{w.close();}
+});
+
+test('PostgreSQL risk form preserves decimal strings while SQLite compatibility stays numeric',()=>{
+  const dom=setup(),w=dom.window;
+  try{
+    w.eval(publicFile('app.js')+'\nme={moneyFormat:"decimal-string"};');
+    const f=w.document.querySelector('#riskForm').elements;
+    f.equityGlobal.value='100.000000000000000001';f.balanceGlobal.value='99.999999999999999999';
+    f.maxOrderNotional.value='1000.000000000000000001';
+    const policy=w.collectRiskPolicy();
+    assert.equal(policy.equities['binance-global'],'100.000000000000000001');
+    assert.equal(policy.balances['binance-global'],'99.999999999999999999');
+    assert.equal(policy.maxOrderNotional,'1000.000000000000000001');
+    assert.equal(typeof policy.maxTradesPerDay,'number');
   }finally{w.close();}
 });

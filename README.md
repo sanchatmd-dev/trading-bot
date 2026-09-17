@@ -1,4 +1,4 @@
-# Robot trade VPS 2.1.0 — hardened Paper staging
+# Robot trade VPS 2.2.0 — PostgreSQL Paper staging
 
 รับ Universal Webhook จาก TradingView พร้อมบัญชีผู้ใช้, License, Risk UI, Trade log และ Email outbox
 
@@ -25,7 +25,15 @@ Deploy บน VPS แล้วเมื่อ 2026-09-18 (Asia/Bangkok) เพ�
 - ซ้อมกู้ระบบครบวงจรในพื้นที่แยก; migration rehearsal ไม่ใช่การทดสอบ restore ระบบทั้งหมด
 - ทดสอบอุปกรณ์ iOS/Android จริงและ Safari พร้อมประเมินความปลอดภัยแยกต่างหากก่อนเปิดขายบริการ
 
-เริ่มพัฒนา Phase 2 ในสภาพแวดล้อมแยกได้ โดยคง Paper-only ระหว่างพัฒนา รายละเอียดผล deploy และข้อจำกัดอยู่ใน [Phase 1](docs/PHASE1.md)
+รายละเอียดผล deploy และข้อจำกัดอยู่ใน [Phase 1](docs/PHASE1.md)
+
+## Phase 2 — พัฒนาและทดสอบแยกแล้ว ยังไม่ deploy
+
+เพิ่ม PostgreSQL schema 11, การคำนวณเงิน Decimal, API/Worker แยก process, คิวหลาย Worker, transaction ป้องกันบันทึก Fill/เงินซ้ำ และเครื่องมือ import/backup/หมุนกุญแจ ระบบยังคง Paper-only
+
+Tests: ชุดเดิมและ UI 89/89; PostgreSQL จริง 15/15 รวมฆ่า Worker กลาง transaction, หลาย process, MFA/CSRF และ backup/restore ซ้อมย้ายสำเนา Production 525 signals / 151 fills แล้ว โดยไม่เปลี่ยนข้อมูลต้นฉบับ ตรวจ Chrome Desktop/Mobile ผ่าน
+
+`npm start` ยังเป็น SQLite เดิม; PostgreSQL ใช้ `npm run start:postgres` และ `npm run worker:postgres` หลัง initialize/import แบบ offline อ่าน [Phase 2](docs/PHASE2.md) ก่อนสลับระบบ โดยเฉพาะการปัดทศนิยมข้อมูลเก่า, runtime role, backup และข้อจำกัด rollback หลังรับรายการใหม่
 
 ## การแก้ไขจาก v2.0
 

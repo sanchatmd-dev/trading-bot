@@ -7,7 +7,7 @@
 - Live trading: hard-disabled. Do not remove the gate as an operational workaround.
 - Existing exchange orders/positions: v2.1 does not cancel or protect them. Manage them directly with the broker before upgrading.
 
-Current source upgrades schema 9 to 10 for account security. Follow [Phase 1](PHASE1.md) for the required origin configuration, session invalidation, administrator MFA enrollment, migration rehearsal and key-rotation procedure. Phase 1 is not yet deployed. The older-version migration section below is historical and does not replace the current checklist.
+The production SQLite runtime is schema 10, release b441476; Phase 1 is deployed. Follow [Phase 1](PHASE1.md) for origin configuration, sessions, MFA and SQLite key rotation. The separate [Phase 2 PostgreSQL runtime](PHASE2.md) uses schema 11 and has not been deployed; its offline import, separate API/worker, runtime roles and cutover/rollback gates supersede the SQLite procedure when selected. The older-version section below is historical.
 
 ## Upgrade from v2.0
 
