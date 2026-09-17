@@ -1,4 +1,5 @@
 import path from 'node:path';
+import {encryptionKeys} from './security.js';
 
 const num = (name, fallback, min = 0) => {
   const value = Number(process.env[name] ?? fallback);
@@ -19,6 +20,8 @@ export const config = {
   paperTrading: bool('PAPER_TRADING', true),
   workerIntervalMs: num('WORKER_INTERVAL_MS', 250, 50),
   sessionTtlHours: num('SESSION_TTL_HOURS', 24, 1),
+  sessionIdleMinutes: num('SESSION_IDLE_MINUTES',30,1),
+  publicOrigin: process.env.PUBLIC_ORIGIN || process.env.DOMAIN || `http://127.0.0.1:${process.env.PORT||8080}`,
   masterKey: process.env.MASTER_ENCRYPTION_KEY || 'development-key-change-me',
   adminEmail: String(process.env.ADMIN_EMAIL || 'admin@example.com').toLowerCase(),
   adminPassword: process.env.ADMIN_BOOTSTRAP_PASSWORD || 'change-this-immediately',
@@ -45,6 +48,12 @@ export const config = {
     }
   }
 };
+config.keyring=encryptionKeys(config.masterKey,process.env.ENCRYPTION_KEY_ID||'k1',process.env.ENCRYPTION_PREVIOUS_KEYS||'{}');
+const origin=new URL(config.publicOrigin);
+if(!['http:','https:'].includes(origin.protocol)||origin.username||origin.password||origin.pathname!=='/'||origin.search||origin.hash)throw new Error('PUBLIC_ORIGIN must be an exact HTTP(S) origin');
+config.publicOrigin=origin.origin;
+config.secureCookies=origin.protocol==='https:';
+if(!config.secureCookies&&!['localhost','127.0.0.1','[::1]'].includes(origin.hostname))throw new Error('Public authentication requires HTTPS');
 
 export function assertProductionConfig() {
   if(!config.paperTrading)throw new Error('PAPER_TRADING=false is disabled in this staging release');

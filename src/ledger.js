@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import {migratePaperAccounting, paperMethods, paperAccount, snapshotPaper} from './paper-accounting.js';
+import {migrateAuth} from './auth-store.js';
 
 const pending = "('PROCESSING','SUBMITTED','PARTIALLY_FILLED','UNKNOWN')";
 const day = () => new Date().toISOString().slice(0, 10);
@@ -15,7 +16,7 @@ export function transaction(store, fn) {
 
 export function migrateLedger(store) {
   const version = store.db.prepare('PRAGMA user_version').get().user_version;
-  if (version > 9) throw new Error('Database is newer than this application');
+  if (version > 10) throw new Error('Database is newer than this application');
   if (version < 3) transaction(store, () => {
     store.db.exec(`
       ALTER TABLE signals ADD COLUMN execution_mode TEXT NOT NULL DEFAULT 'LEGACY';
@@ -88,6 +89,7 @@ export function migrateLedger(store) {
     migratePaperAccounting(store);
     store.db.exec('PRAGMA user_version=9');
   });
+  if(version<10)transaction(store,()=>migrateAuth(store));
   store.db.exec(`UPDATE signals SET status='UNKNOWN',
     error_message='Interrupted execution: verify broker outcome; automatic resend disabled'
     WHERE status='PROCESSING'`);

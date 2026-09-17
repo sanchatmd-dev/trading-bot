@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {removeAuthSchema} from './helpers.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -124,6 +125,7 @@ test('schema 8 migration backfills cash once and preserves fills, IDs and histor
   const f=fixture(t);await execute(f.store,f.user,signal('buy'));
   await execute(f.store,f.user,signal('sell',{side:'SELL',event:'SL',reduceOnly:true,referencePrice:90}));
   const ids=f.store.listSignals(f.user.id).map(row=>row.id),beforePolicy=f.store.risk(f.user.id,config.defaultRisk);
+  removeAuthSchema(f.store.db);
   f.store.db.exec('DROP TABLE paper_cash_journal; DROP TABLE paper_snapshots; DROP TABLE paper_funding; PRAGMA user_version=8');
   backupDatabase(f.filename,path.join(path.dirname(f.filename),'before-v9.db'));
   let reopened=f.reopen();assert.equal(reopened.paperAccount(f.user.id,broker).cash,900);
@@ -151,6 +153,7 @@ test('funding cannot withdraw cash reserved by another pending Paper order',t=>{
 
 test('rehearsal CLI migrates a verified copy while leaving the source schema and balances untouched',async t=>{
   const f=fixture(t);await execute(f.store,f.user,signal('buy',{quantity:5}));
+  removeAuthSchema(f.store.db);
   f.store.db.exec('DROP TABLE paper_cash_journal; DROP TABLE paper_snapshots; DROP TABLE paper_funding; PRAGMA user_version=8');
   const target=path.join(path.dirname(f.filename),'rehearsal.db'),originalArgv=process.argv;
   process.argv=[process.execPath,'scripts/rehearse-phase0.mjs',f.filename,target];
@@ -158,6 +161,6 @@ test('rehearsal CLI migrates a verified copy while leaving the source schema and
   assert.equal(f.store.db.prepare('PRAGMA user_version').get().user_version,8);
   assert.equal(f.store.listPositions(f.user.id)[0].quantity,5);
   const copy=new Store(target);
-  try{assert.equal(copy.paperAccount(f.user.id,broker).cash,500);assert.equal(copy.db.prepare('PRAGMA user_version').get().user_version,9);}
+  try{assert.equal(copy.paperAccount(f.user.id,broker).cash,500);assert.equal(copy.db.prepare('PRAGMA user_version').get().user_version,10);}
   finally{copy.close();}
 });

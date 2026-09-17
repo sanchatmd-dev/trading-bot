@@ -7,6 +7,8 @@
 - Live trading: hard-disabled. Do not remove the gate as an operational workaround.
 - Existing exchange orders/positions: v2.1 does not cancel or protect them. Manage them directly with the broker before upgrading.
 
+Current source upgrades schema 9 to 10 for account security. Follow [Phase 1](PHASE1.md) for the required origin configuration, session invalidation, administrator MFA enrollment, migration rehearsal and key-rotation procedure. Phase 1 is not yet deployed. The older-version migration section below is historical and does not replace the current checklist.
+
 ## Upgrade from v2.0
 
 1. Stop webhook delivery and the old bot. Check actual open orders/positions directly at each broker.
@@ -60,7 +62,7 @@ Rollback requires a pre-upgrade database snapshot **and** the matching old appli
 - Verify SMTP delivery with the actual provider, database migration on a representative backup, restore on another host and container startup/shutdown.
 - Pin reviewed container image digests and CI action revisions in the deployment environment; tags in this development Compose/CI remain moving tags.
 - Configure external uptime/disk/queue/backup alerts and document who responds.
-- Review authentication, session storage and administration controls; add MFA before wider use.
+- Verify Phase 1 authentication, cookie/CSRF controls, mandatory administrator MFA and recovery flows in the target browser/proxy environment before wider use.
 
 ## Required before Live release
 

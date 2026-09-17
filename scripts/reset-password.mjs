@@ -12,6 +12,10 @@ export async function resetPassword({databasePath,email,password}) {
     if(!user)throw new Error('User not found');
     db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(passwordHash,user.id);
     db.prepare('DELETE FROM sessions WHERE user_id=?').run(user.id);
+    if(db.prepare('PRAGMA user_version').get().user_version>=10){
+      for(const table of ['auth_challenges','password_resets','security_mail'])db.prepare(`DELETE FROM ${table} WHERE user_id=?`).run(user.id);
+      db.prepare('UPDATE user_security SET pending_secret=NULL,pending_expires=0 WHERE user_id=?').run(user.id);
+    }
     db.prepare('INSERT INTO audit(user_id,ts,event,trade_id,details) VALUES(?,?,?,?,?)')
       .run(user.id,Date.now(),'account.password.admin_reset',null,'{"sessionsRevoked":true}');
     db.exec('COMMIT');

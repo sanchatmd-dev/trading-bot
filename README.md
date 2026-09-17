@@ -11,6 +11,10 @@
 
 ช่อง Equity/Balance คือทุนสะสมที่กำหนด ไม่ใช่ยอดเงินปัจจุบัน การเปลี่ยนค่าเป็นการเพิ่ม/ลดทุนโดยไม่ล้างกำไรขาดทุน หน้า Risk แสดงเงินสดและทุนตามบัญชีแยกต่างหาก รุ่นนี้ยังไม่ประเมินทุนด้วยราคาตลาดสด
 
+## Phase 1 — พัฒนาในเครื่อง ยังไม่ deploy
+
+เพิ่ม MFA/TOTP และ recovery codes, HttpOnly cookie + CSRF, กู้รหัสผ่านทางอีเมล, USER/SUPPORT/ADMIN และเครื่องมือหมุนกุญแจเข้ารหัส ก่อนอัปเกรดต้องสำรอง DB, ทดสอบ schema 9 → 10 บนสำเนา และตั้ง `PUBLIC_ORIGIN` ให้ตรงโดเมนจริง Admin/Support ต้องตั้ง MFA ก่อนใช้สิทธิ์ผู้ดูแล Session เดิมจะถูกเพิกถอน รายละเอียดและข้อจำกัด QA อยู่ใน [Phase 1](docs/PHASE1.md)
+
 ## การแก้ไขจาก v2.0
 
 - ตรวจ Max risk หลังคำนวณจำนวนทุกโหมด รวม explicit quantity และ fixed notional; BUY ต้องมี SL
@@ -66,7 +70,7 @@ cp .env.example .env
 1. สำรองระบบเดิมก่อนอัปเกรด ตาม [คู่มือ deployment](docs/DEPLOYMENT.md)
 2. Copy `.env.example` เป็น `.env`; ใช้ `DB_PATH=/data/astra-v2.db` สำหรับ container
 3. ตั้ง `MASTER_ENCRYPTION_KEY` เป็น hex 64 ตัว, `ADMIN_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD` อย่างน้อย 10 ตัว
-4. ใช้ `DOMAIN=http://localhost` สำหรับ private staging
+4. ใช้ `DOMAIN=http://localhost` และ `PUBLIC_ORIGIN=http://localhost:8080` สำหรับ private staging ผ่าน tunnel ตามข้อ 6
 5. รัน `docker compose up -d --build`
 6. เชื่อมจากเครื่องส่วนตัวด้วย `ssh -L 8080:127.0.0.1:80 USER@VPS` แล้วเปิด `http://localhost:8080`
 

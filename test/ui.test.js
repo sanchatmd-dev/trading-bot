@@ -119,16 +119,15 @@ test('save popup follows successful API writes, not errors; Rejected notes are e
 test('Risk UI renders editable defaults, maxima, Balance and debounced authoritative preview',async()=>{
   const dom=setup(),w=dom.window,d=w.document,calls=[];
   try{
-    w.sessionStorage.setItem('astraV2Token','preview-token');
     const risk={paperTrading:true,killSwitch:false,capPercentEquitySize:true,maxRiskPercent:100,maxTradesPerDay:10,maxDailyLossR:3,pauseAfterLossStreak:3,maxOpenPositions:4,maxSignalAgeSeconds:60,maxOrderNotional:10000,maxDailyNotional:100000,maxVolatilityPercent:5,sideMode:'BOTH',onePositionPerSymbol:false,requireReduceOnlySell:true,blockHighVolatility:true,blockDuringNews:true,allowedSymbols:['BTCUSDT'],equities:{'binance-global':10000},balances:{'binance-global':2500},defaults:{riskPercent:1,tradesPerDay:5,dailyLossR:2,lossStreak:2,openPositions:2,signalAgeSeconds:30,orderNotional:1000,dailyNotional:5000,volatilityPercent:2}};
     w.fetch=async(path,options={})=>{
       calls.push(path);
-      const body=path==='/api/me'?{user:{id:'u',email:'u@test',role:'USER',status:'ACTIVE'},risk,license:{status:'ACTIVE'},daily:{trades:0},dailyAccounts:[],paperAccounts:[{broker:'binance-global',currency:'USDT',cash:2400,bookEquity:9900}],brokers:[],globalKill:false}
+      const body=path==='/api/me'?{user:{id:'u',email:'u@test',role:'USER',status:'ACTIVE'},security:{mfaEnrollmentRequired:false,permissions:['own:read','own:write']},risk,license:{status:'ACTIVE'},daily:{trades:0},dailyAccounts:[],paperAccounts:[{broker:'binance-global',currency:'USDT',cash:2400,bookEquity:9900}],brokers:[],globalKill:false}
         :path.startsWith('/api/signals')?[]:path==='/api/positions'?[{user_id:'u',broker:'binance-global',execution_mode:'PAPER',symbol:'ETHUSDT',quantity:1,avg_price:1}]
         :path==='/api/me/webhook-secret'?{urlPath:null}:path==='/api/risk/preview'?{ok:true,order:{quantity:.025,price:100,stopLoss:90,notional:2.5,sizingAdjustment:null},freeBalance:2497.5,positionsOpen:1,positionsRemaining:3,positionCapacity:3}:{ok:true};
       return{ok:true,json:async()=>body};
     };
-    w.eval(publicFile('app.js'));await new Promise(resolve=>setTimeout(resolve,80));
+    w.eval(publicFile('app.js')+'\nauthenticated=true;load();');await new Promise(resolve=>setTimeout(resolve,80));
     const f=d.querySelector('#riskForm').elements;
     assert.equal(f.defaultRiskPercent.value,'1');assert.equal(f.maxRiskPercent.value,'100');
     assert.equal(f.equityGlobal.value,'10000');assert.equal(f.balanceGlobal.value,'2500');

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {httpClient,enroll} from './helpers.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -14,7 +15,7 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
   const port=probe.address().port;await new Promise(resolve=>probe.close(resolve));
   const child=new TestServer(new URL('../src/server.js',import.meta.url),{
     env:{...process.env,PORT:String(port),HOST:'127.0.0.1',DB_PATH:path.join(dir,'db.sqlite'),
-      NODE_ENV:'production',PAPER_TRADING:'true',MASTER_ENCRYPTION_KEY:'a'.repeat(64),
+      PUBLIC_ORIGIN:`http://127.0.0.1:${port}`,NODE_ENV:'production',PAPER_TRADING:'true',MASTER_ENCRYPTION_KEY:'a'.repeat(64),
       ADMIN_EMAIL:'admin@example.test',ADMIN_BOOTSTRAP_PASSWORD:'temporary-test-password',SMTP_HOST:''},
     stdout:true,stderr:true
   });
@@ -35,13 +36,11 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
   assert.match(loginPage,/<title>Robot trade<\/title>/);
   assert.match(loginPage,/id="forgotPassword"/);
   assert.match(loginPage,/id="language"/);
-  async function request(route,method='GET',body,token) {
-    const response=await fetch(base+route,{method,headers:{'content-type':'application/json',...(token?{authorization:`Bearer ${token}`}:{})},body:body===undefined?undefined:JSON.stringify(body)});
-    return {status:response.status,body:await response.json()};
-  }
+  const request=httpClient(base);
   assert.equal((await request('/api/me')).status,401);
   const login=await request('/api/auth/login','POST',{email:'admin@example.test',password:'temporary-test-password'});
-  assert.equal(login.status,200);const token=login.body.token;
+  assert.equal(login.status,200);const token=login.session;
+  assert.equal(login.body.token,undefined);await enroll(request,token);
   assert.equal((await request('/api/risk','GET',undefined,token)).body.maxRiskPercent,100);
   assert.equal((await request('/api/risk','GET',undefined,token)).body.defaults.riskPercent,1);
   assert.equal((await request('/api/risk','GET',undefined,token)).body.maxOrderNotional,10000);
@@ -92,7 +91,7 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
   assert.equal((await request('/api/analytics/settings','PUT',{broker:'binance-global',feeBps:12.5},token)).status,200);
   assert.equal((await request('/api/analytics/summary?broker=binance-global&period=custom&from=invalid&to=2026-01-01','GET',undefined,token)).status,400);
   await request('/api/admin/users','POST',{email:'user@example.test',password:'temporary-user-password'},token);
-  const userToken=(await request('/api/auth/login','POST',{email:'user@example.test',password:'temporary-user-password'})).body.token;
+  const userToken=(await request('/api/auth/login','POST',{email:'user@example.test',password:'temporary-user-password'})).session;
   assert.equal((await request('/api/me/webhook-secret','GET',undefined,userToken)).body.urlPath,null);
   assert.equal((await request('/api/me/webhook-secret','PUT',{url:'https://robot.test'+secret},userToken)).status,400);
   assert.equal((await request('/api/admin/users','GET',undefined,userToken)).status,403);
@@ -135,4 +134,8 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
   assert.equal((await request('/api/signals','GET',undefined,token)).body.find(x=>x.id===rejected.id).review_note,'Reviewed kill switch');
   assert.equal((await request('/api/me/password','POST',{currentPassword:'temporary-user-password',newPassword:'new-temporary-password'},userToken)).status,200);
   assert.equal((await request('/api/me','GET',undefined,userToken)).status,401);
+  const rotated=(await request('/api/me/webhook-secret','POST',{},token)).body.urlPath;
+  assert.notEqual(rotated,secret);
+  assert.equal((await request(secret,'POST',{...payload,trade_id:'old-secret',timestamp:Date.now()})).status,404);
+  assert.equal((await request('/api/me/webhook-secret','GET',undefined,token)).body.urlPath,rotated);
 });

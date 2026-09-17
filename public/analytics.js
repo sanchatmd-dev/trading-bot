@@ -18,7 +18,7 @@ function duration(ms){if(!ms)return '0m';const minutes=Math.round(ms/60000);if(m
 function analyticsError(error){$('#analyticsStatus').textContent=error.message;$('#analyticsStatus').className='error';}
 
 async function loadAnalytics(){
-  if(!token||analyticsState.loading)return;
+  if(!authenticated||analyticsState.loading)return;
   if(analyticsState.period==='custom'&&(!$('#analyticsFrom').value||!$('#analyticsTo').value))return;
   analyticsState.loading=true;$('#analyticsStatus').textContent=translate('Loading analytics…');$('#analyticsStatus').className='';
   try{

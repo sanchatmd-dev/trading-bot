@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {removeAuthSchema} from './helpers.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -190,7 +191,7 @@ test('legacy migration preserves old positions and quarantines ambiguous orders'
   old.close();
   const store=new Store(filename);
   try{
-    assert.equal(store.db.prepare('PRAGMA user_version').get().user_version,9);
+    assert.equal(store.db.prepare('PRAGMA user_version').get().user_version,10);
     assert.equal(store.db.prepare('SELECT quantity FROM positions').get().quantity,2);
     assert.equal(store.listPositions('legacy-user').length,0);
     assert.equal(store.db.prepare('SELECT status FROM signals WHERE id=1').get().status,'REJECTED');
@@ -201,9 +202,10 @@ test('legacy migration preserves old positions and quarantines ambiguous orders'
 test('schema 6 enables repeated-symbol entries and schema 7 adds tenant fee settings',t=>{
   const {store,user,filename}=fixture(t);
   store.setRisk(user.id,{...config.defaultRisk,onePositionPerSymbol:true});
+  removeAuthSchema(store.db);
   store.db.exec('DROP TABLE paper_cash_journal; DROP TABLE paper_snapshots; DROP TABLE paper_funding; DROP TRIGGER bot_parent_guard; DROP INDEX idx_bot_slot; DROP INDEX idx_bot_parent; ALTER TABLE users DROP COLUMN parent_user_id; ALTER TABLE users DROP COLUMN bot_slot_index; ALTER TABLE users DROP COLUMN label; PRAGMA user_version=5');store.close();
   const reopened=new Store(filename);
-  try{assert.equal(reopened.risk(user.id,config.defaultRisk).onePositionPerSymbol,false);assert.equal(reopened.db.prepare('PRAGMA user_version').get().user_version,9);reopened.setAnalyticsFeeBps(user.id,'binance-global',7.5);assert.equal(reopened.analyticsFeeBps(user.id,'binance-global'),7.5);}
+  try{assert.equal(reopened.risk(user.id,config.defaultRisk).onePositionPerSymbol,false);assert.equal(reopened.db.prepare('PRAGMA user_version').get().user_version,10);reopened.setAnalyticsFeeBps(user.id,'binance-global',7.5);assert.equal(reopened.analyticsFeeBps(user.id,'binance-global'),7.5);}
   finally{reopened.close();}
 });
 

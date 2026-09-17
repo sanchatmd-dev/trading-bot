@@ -86,7 +86,7 @@ export class Worker {
       const credential=this.store.credential(row.user_id,row.broker);
       if(!credential)throw new Error('Credentials unavailable for reconciliation');
       const execution=await fetchOrderStatus(row.broker,
-        decryptJson(credential.encrypted_data,this.config.masterKey,`${row.user_id}:${row.broker}`),row);
+        decryptJson(credential.encrypted_data,this.config.keyring||this.config.masterKey,`${row.user_id}:${row.broker}`),row);
       if(!execution)throw new Error('Broker reconciliation is not supported');
       if(!row.order_intent)throw new Error('Missing order intent; manual review required');
       this.store.recordExecution(row,execution,JSON.parse(row.order_intent));

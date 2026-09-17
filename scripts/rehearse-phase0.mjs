@@ -16,7 +16,7 @@ const owners=snapshot.prepare('SELECT id,webhook_secret_hash,webhook_secret_encr
 snapshot.close();
 const store=new Store(target);
 try{
-  assert.equal(store.db.prepare('PRAGMA user_version').get().user_version,9);
+  assert.equal(store.db.prepare('PRAGMA user_version').get().user_version,10);
   assert.equal(store.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
   assert.equal(store.db.prepare('PRAGMA foreign_key_check').all().length,0);
   for(const [table,count] of Object.entries(counts))assert.equal(store.db.prepare(`SELECT count(*) n FROM ${table}`).get().n,count);
@@ -24,7 +24,7 @@ try{
   const expected=store.db.prepare("SELECT count(*) n FROM fills f JOIN signals s ON s.id=f.signal_id WHERE s.execution_mode='PAPER'").get().n;
   assert.equal(store.db.prepare('SELECT count(*) n FROM paper_cash_journal').get().n,expected);
   const accounts=store.db.prepare('SELECT DISTINCT user_id,broker FROM paper_funding').all().map(row=>store.paperAccount(row.user_id,row.broker));
-  console.log(JSON.stringify({schema:9,integrity:'ok',counts,journalEntries:expected,
+  console.log(JSON.stringify({schema:10,integrity:'ok',counts,journalEntries:expected,
     negativeCashAccounts:accounts.filter(row=>row.cash<0).length,
     unresolvedPaper:store.db.prepare("SELECT count(*) n FROM signals WHERE execution_mode='PAPER' AND status='UNKNOWN'").get().n,
     sourceUnmodified:true,rehearsal:path.resolve(target)},null,2));

@@ -15,6 +15,7 @@ export function readJson(req) {
       try {
         const value=JSON.parse(Buffer.concat(chunks).toString('utf8')||'{}');
         if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('JSON object required');
+        req.validateAuth?.();
         resolve(value);
       }catch(error){reject(error);}
     });

@@ -72,6 +72,14 @@ uiPairs.push(
   ['The calculated BUY exceeds available balance. Increase Balance only when it reflects actual available cash, or reduce the order size.','ขนาด BUY เกิน Balance ที่พร้อมใช้ เพิ่ม Balance เฉพาะเมื่อเป็นเงินสดที่มีอยู่จริง หรือลดขนาดคำสั่ง'],
   ['No usable balance or daily budget remains for another Spot entry.','ไม่มี Balance หรือวงเงินรายวันเหลือสำหรับเปิด Position เพิ่ม']
 );
+uiPairs.push(
+ ['Confirm identity','ยืนยันตัวตน'],['Confirm','ยืนยัน'],['Verify','ตรวจสอบ'],['Back to sign in','กลับไปเข้าสู่ระบบ'],
+ ['After confirmation, retry your action.','หลังยืนยันตัวตน กรุณาทำรายการอีกครั้ง'],
+ ['Authenticator or recovery code','รหัส Authenticator หรือรหัสกู้คืน'],
+ ['Send recovery link','ส่งลิงก์กู้รหัสผ่าน'],['Reset password','ตั้งรหัสผ่านใหม่'],
+ ['Password reset. Sign in with your new password.','ตั้งรหัสผ่านใหม่แล้ว เข้าสู่ระบบด้วยรหัสผ่านใหม่'],
+ ['If this account is eligible, a recovery link will be sent. Check your email or contact your administrator.','หากบัญชีนี้ใช้การกู้คืนได้ ระบบจะส่งลิงก์ให้ ตรวจอีเมลหรือติดต่อผู้ดูแล']
+);
 const uiTranslations = new Map();
 uiPairs.push(['Bot Manager','จัดการ Bot'],['Select one bot for this operation','เลือก Bot หนึ่งตัวก่อนทำรายการ']);
 for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}

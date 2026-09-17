@@ -4,6 +4,7 @@ import path from 'node:path';
 import { hashToken, randomId } from './security.js';
 import { migrateLedger, transaction } from './ledger.js';
 import {recordFunding} from './paper-accounting.js';
+import {invalidateAuth} from './auth-store.js';
 
 export class Store {
   constructor(filename) {
@@ -48,15 +49,15 @@ export class Store {
       this.setRisk(id,structuredClone(defaults));initialize(id);return this.userById(id);
     });
   }
-  setUserStatus(id,status) { this.db.prepare('UPDATE users SET status=? WHERE id=?').run(status,id); if(status!=='ACTIVE')this.revokeSessions(id); }
-  setPassword(id,passwordHash) { this.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(passwordHash,id); this.revokeSessions(id); }
-  revokeSessions(id) { this.db.prepare('DELETE FROM sessions WHERE user_id=?').run(id); }
+  setUserStatus(id,status) { const write=()=>{this.db.prepare('UPDATE users SET status=? WHERE id=?').run(status,id);if(status!=='ACTIVE')this.revokeSessions(id);};return this.db.isTransaction?write():transaction(this,write); }
+  setPassword(id,passwordHash) { const write=()=>{this.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(passwordHash,id);invalidateAuth(this,id);}; return this.db.isTransaction?write():transaction(this,write); }
+  revokeSessions(id) { invalidateAuth(this,id); }
   setWebhookSecret(userId, secret, encrypted=null) { this.db.prepare('UPDATE users SET webhook_secret_hash=?,webhook_hint=?,webhook_secret_encrypted=? WHERE id=?').run(hashToken(secret),secret.slice(-6),encrypted,userId); }
   rememberWebhookSecret(userId,secret,encrypted) { return this.db.prepare('UPDATE users SET webhook_secret_encrypted=? WHERE id=? AND webhook_secret_hash=? AND webhook_secret_encrypted IS NULL').run(encrypted,userId,hashToken(secret)).changes>0; }
   webhookSecret(userId) { return this.db.prepare('SELECT webhook_secret_hash,webhook_secret_encrypted FROM users WHERE id=?').get(userId); }
   userByWebhook(secret) { return this.db.prepare('SELECT id,email,role,status FROM users WHERE webhook_secret_hash=?').get(hashToken(secret)); }
 
-  createSession(userId, token, expiresAt) { if(this.userById(userId)?.parent_user_id)throw new Error('Main account session required');this.db.prepare('INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)').run(hashToken(token),userId,expiresAt,Date.now()); }
+  createSession(userId, token, expiresAt) { if(this.userById(userId)?.parent_user_id)throw new Error('Main account session required');this.db.prepare('INSERT INTO sessions(token_hash,user_id,expires_at,created_at,last_seen) VALUES(?,?,?,?,?)').run(hashToken(token),userId,expiresAt,Date.now(),Date.now()); }
   session(token) { return this.db.prepare(`SELECT u.id,u.email,u.role,u.status,s.expires_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?`).get(hashToken(token),Date.now()); }
   deleteSession(token) { this.db.prepare('DELETE FROM sessions WHERE token_hash=?').run(hashToken(token)); }
 

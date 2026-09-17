@@ -1,6 +1,6 @@
 const botText=(en,th)=>uiLanguage==='th'?th:en;
 async function refreshBots(){
-  if(!token)return;
+  if(!authenticated)return;
   try{const result=await api('/api/bots');botProfiles=result.bots;renderBots();}catch(error){$('#botMessage').textContent=error.message;}
 }
 function renderBots(){
@@ -45,5 +45,5 @@ document.querySelectorAll('nav button').forEach(button=>button.addEventListener(
   }
 }));
 $('#language').addEventListener('change',renderBots);
-const originalLoad=load;load=async function(){await originalLoad();if(token)await refreshBots();};
-if(token)refreshBots();
+const originalLoad=load;load=async function(){await originalLoad();if(authenticated)await refreshBots();};
+if(authenticated)refreshBots();
