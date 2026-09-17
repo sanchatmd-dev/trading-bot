@@ -49,9 +49,9 @@ test('worker rejects live jobs without calling a broker',async t=>{
   assert.match(store.listSignals(user.id)[0].error_message,/Live execution is disabled/);
 });
 
-test('restart quarantines processing orders instead of resending',t=>{
+test('restart quarantines LIVE processing orders instead of resending',t=>{
   const {store,user,filename}=fixture(t);
-  const row=claim(store,user,signal());store.persistIntent(row,{quantity:10});store.close();
+  const row=claim(store,user,signal(),'LIVE');store.persistIntent(row,{quantity:10});store.close();
   const reopened=new Store(filename);
   try{assert.equal(reopened.claimNext(),null);assert.equal(reopened.listSignals(user.id)[0].status,'UNKNOWN');}
   finally{reopened.close();}
@@ -190,7 +190,7 @@ test('legacy migration preserves old positions and quarantines ambiguous orders'
   old.close();
   const store=new Store(filename);
   try{
-    assert.equal(store.db.prepare('PRAGMA user_version').get().user_version,8);
+    assert.equal(store.db.prepare('PRAGMA user_version').get().user_version,9);
     assert.equal(store.db.prepare('SELECT quantity FROM positions').get().quantity,2);
     assert.equal(store.listPositions('legacy-user').length,0);
     assert.equal(store.db.prepare('SELECT status FROM signals WHERE id=1').get().status,'REJECTED');
@@ -201,9 +201,9 @@ test('legacy migration preserves old positions and quarantines ambiguous orders'
 test('schema 6 enables repeated-symbol entries and schema 7 adds tenant fee settings',t=>{
   const {store,user,filename}=fixture(t);
   store.setRisk(user.id,{...config.defaultRisk,onePositionPerSymbol:true});
-  store.db.exec('DROP TRIGGER bot_parent_guard; DROP INDEX idx_bot_slot; DROP INDEX idx_bot_parent; ALTER TABLE users DROP COLUMN parent_user_id; ALTER TABLE users DROP COLUMN bot_slot_index; ALTER TABLE users DROP COLUMN label; PRAGMA user_version=5');store.close();
+  store.db.exec('DROP TABLE paper_cash_journal; DROP TABLE paper_snapshots; DROP TABLE paper_funding; DROP TRIGGER bot_parent_guard; DROP INDEX idx_bot_slot; DROP INDEX idx_bot_parent; ALTER TABLE users DROP COLUMN parent_user_id; ALTER TABLE users DROP COLUMN bot_slot_index; ALTER TABLE users DROP COLUMN label; PRAGMA user_version=5');store.close();
   const reopened=new Store(filename);
-  try{assert.equal(reopened.risk(user.id,config.defaultRisk).onePositionPerSymbol,false);assert.equal(reopened.db.prepare('PRAGMA user_version').get().user_version,8);reopened.setAnalyticsFeeBps(user.id,'binance-global',7.5);assert.equal(reopened.analyticsFeeBps(user.id,'binance-global'),7.5);}
+  try{assert.equal(reopened.risk(user.id,config.defaultRisk).onePositionPerSymbol,false);assert.equal(reopened.db.prepare('PRAGMA user_version').get().user_version,9);reopened.setAnalyticsFeeBps(user.id,'binance-global',7.5);assert.equal(reopened.analyticsFeeBps(user.id,'binance-global'),7.5);}
   finally{reopened.close();}
 });
 

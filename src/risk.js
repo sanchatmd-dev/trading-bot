@@ -33,6 +33,7 @@ export function evaluateRisk(signal,context){
   if(signal.side==='BUY'&&signal.stopLoss&&signal.stopLoss>=price)return reject('BUY stop loss must be below entry');
   if(signal.side==='BUY'&&signal.takeProfit&&signal.takeProfit<=price)return reject('BUY take profit must be above entry');
   const availableBalance=Number.isFinite(context.balance)?context.balance:context.equity;
+  const freeCash=context.cashAvailable ?? availableBalance-(context.committedNotional||0);
   let quantity=signal.quantity,sizingAdjustment;
   if(isSpot&&signal.side==='SELL'&&signal.reduceOnly&&!quantity&&!signal.quoteQuantity)quantity=position.quantity;
   if(!quantity&&signal.quoteQuantity)quantity=signal.quoteQuantity/price;
@@ -44,7 +45,7 @@ export function evaluateRisk(signal,context){
     const distance=Math.abs(price-signal.stopLoss); if(!distance)return reject('Stop loss must differ from entry');
     quantity=(context.equity*signal.riskValue/100)/distance;
     if(signal.side==='BUY'&&policy.capPercentEquitySize){
-      const available=Math.min(context.equity-(context.committedNotional||0),availableBalance-(context.committedNotional||0),policy.maxOrderNotional,policy.maxDailyNotional-daily.notional-(context.reservedNotional||0));
+      const available=Math.min(context.equity-(context.committedNotional||0),freeCash,policy.maxOrderNotional,policy.maxDailyNotional-daily.notional-(context.reservedNotional||0));
       if(!Number.isFinite(available)||available<=0)return reject('No remaining Spot sizing budget');
       const requestedQuantity=quantity;
       // Round down slightly so floating-point multiplication cannot exceed any hard cap.
@@ -62,7 +63,7 @@ export function evaluateRisk(signal,context){
     const risk=quantity*Math.abs(price-signal.stopLoss);
     if(risk>context.equity*policy.maxRiskPercent/100+1e-8)return reject('Calculated risk exceeds maximum risk percent');
     if(notional+(context.committedNotional||0)>context.equity)return reject('Order exceeds available configured Spot equity');
-    if(notional+(context.committedNotional||0)>availableBalance)return reject('Order exceeds available configured Spot balance');
+    if(notional>freeCash)return reject('Order exceeds available configured Spot balance');
   }
   if(!isExit&&notional>policy.maxOrderNotional)return reject('Maximum order notional exceeded');
   if(!isExit&&daily.notional+(context.reservedNotional||0)+notional>policy.maxDailyNotional)return reject('Maximum daily notional exceeded');

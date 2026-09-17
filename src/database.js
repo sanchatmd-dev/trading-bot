@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { hashToken, randomId } from './security.js';
 import { migrateLedger, transaction } from './ledger.js';
+import {recordFunding} from './paper-accounting.js';
 
 export class Store {
   constructor(filename) {
@@ -66,7 +67,13 @@ export class Store {
   listLicenses() { return this.db.prepare('SELECT l.id,l.key_hint,l.plan,l.status,l.expires_at,l.assigned_user_id,u.email FROM licenses l LEFT JOIN users u ON u.id=l.assigned_user_id ORDER BY l.created_at DESC').all(); }
   setLicenseStatus(id,status) { this.db.prepare('UPDATE licenses SET status=? WHERE id=?').run(status,id); }
 
-  setRisk(userId, policy) { this.db.prepare('INSERT INTO risk_profiles(user_id,policy,updated_at) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET policy=excluded.policy,updated_at=excluded.updated_at').run(userId,JSON.stringify(policy),Date.now()); }
+  setRisk(userId, policy) {
+    const write = () => {
+      recordFunding(this,userId,policy);
+      this.db.prepare('INSERT INTO risk_profiles(user_id,policy,updated_at) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET policy=excluded.policy,updated_at=excluded.updated_at').run(userId,JSON.stringify(policy),Date.now());
+    };
+    return this.db.isTransaction ? write() : transaction(this,write);
+  }
   risk(userId, defaults) { const row=this.db.prepare('SELECT policy FROM risk_profiles WHERE user_id=?').get(userId); return row?{...defaults,...JSON.parse(row.policy)}:{...defaults}; }
   setCredential(userId,broker,encrypted,enabled=true) { this.db.prepare('INSERT INTO broker_credentials(user_id,broker,encrypted_data,enabled,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(user_id,broker) DO UPDATE SET encrypted_data=excluded.encrypted_data,enabled=excluded.enabled,updated_at=excluded.updated_at').run(userId,broker,encrypted,enabled?1:0,Date.now()); }
   credential(userId,broker) { return this.db.prepare('SELECT * FROM broker_credentials WHERE user_id=? AND broker=? AND enabled=1').get(userId,broker); }

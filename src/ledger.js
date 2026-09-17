@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import {migratePaperAccounting, paperMethods, paperAccount, snapshotPaper} from './paper-accounting.js';
 
 const pending = "('PROCESSING','SUBMITTED','PARTIALLY_FILLED','UNKNOWN')";
 const day = () => new Date().toISOString().slice(0, 10);
@@ -14,7 +15,7 @@ export function transaction(store, fn) {
 
 export function migrateLedger(store) {
   const version = store.db.prepare('PRAGMA user_version').get().user_version;
-  if (version > 8) throw new Error('Database is newer than this application');
+  if (version > 9) throw new Error('Database is newer than this application');
   if (version < 3) transaction(store, () => {
     store.db.exec(`
       ALTER TABLE signals ADD COLUMN execution_mode TEXT NOT NULL DEFAULT 'LEGACY';
@@ -83,13 +84,49 @@ export function migrateLedger(store) {
     END;
     PRAGMA user_version=8;
   `));
+  if (version < 9) transaction(store, () => {
+    migratePaperAccounting(store);
+    store.db.exec('PRAGMA user_version=9');
+  });
   store.db.exec(`UPDATE signals SET status='UNKNOWN',
     error_message='Interrupted execution: verify broker outcome; automatic resend disabled'
     WHERE status='PROCESSING'`);
-  Object.assign(store, methods);
+  Object.assign(store, methods, paperMethods);
+  store.recoverPaper();
 }
 
 const methods = {
+  recoverPaper() {
+    return transaction(this, () => {
+      const rows = this.db.prepare("SELECT * FROM signals WHERE execution_mode='PAPER' AND status IN ('PROCESSING','UNKNOWN','SUBMITTED','PARTIALLY_FILLED') ORDER BY id").all();
+      for (const row of rows) {
+        const fills = this.db.prepare('SELECT * FROM fills WHERE signal_id=? ORDER BY cumulative_quantity').all(row.id);
+        const quantity = fills.reduce((sum, fill) => sum + fill.delta_quantity, 0);
+        const quote = fills.reduce((sum, fill) => sum + fill.delta_quantity * fill.price, 0);
+        const cashRows = this.db.prepare('SELECT cumulative_quantity,cash_delta FROM paper_cash_journal WHERE signal_id=? ORDER BY cumulative_quantity').all(row.id);
+        const cashMatches = cashRows.length === fills.length && fills.every((fill,index) =>
+          cashRows[index].cumulative_quantity === fill.cumulative_quantity &&
+          Math.abs(cashRows[index].cash_delta - ((row.side==='BUY'?-1:1)*fill.delta_quantity*fill.price-fill.fee_quote)) < 1e-6);
+        if (![quantity,quote,row.applied_quantity,row.applied_quote].every(Number.isFinite) || !cashMatches || Math.abs(quantity - row.applied_quantity) > 1e-8 || Math.abs(quote - row.applied_quote) > 1e-6) {
+          this.markUnknown(row, 'Paper ledger mismatch: manual review required');
+          continue;
+        }
+        if (!fills.length && row.applied_quantity === 0 && row.applied_quote === 0) {
+          // No external submission exists in Paper. Revalidate the original signal, including staleness.
+          this.db.prepare("UPDATE signals SET status='QUEUED',order_intent=NULL,error_message=NULL,processed_at=NULL WHERE id=?").run(row.id);
+          this.audit(row.user_id, 'paper.recovered', row.trade_id, {action:'REVALIDATE_UNFILLED'});
+        } else {
+          // Preserve every booked partial fill; never replay the remainder after an interrupted simulation.
+          let intent;
+          try { intent = JSON.parse(row.order_intent || 'null'); } catch { /* Cancel the known remainder. */ }
+          const status = intent && Math.abs(quantity - intent.quantity) < 1e-8 ? 'FILLED' : 'CANCELED';
+          this.db.prepare('UPDATE signals SET status=?,error_message=?,processed_at=? WHERE id=?')
+            .run(status, 'Paper recovery preserved recorded fills; no execution replayed', Date.now(), row.id);
+          this.audit(row.user_id, 'paper.recovered', row.trade_id, {action:status,quantity});
+        }
+      }
+    });
+  },
   setRejectedNote(actor, id, note) {
     if(!Number.isSafeInteger(id)||id<1)throw new Error('Invalid signal ID');
     if(typeof note!=='string'||note.length>2000)throw new Error('Note must be at most 2000 characters');
@@ -146,7 +183,7 @@ const methods = {
       reservedTrades:orders.filter(p=>p.applied_quantity===0).length,
       openPositions:new Set([...positions.map(p => p.symbol), ...orders.filter(p => p.side==='BUY').map(p => p.symbol)]).size,
       hasPendingOrder:orders.some(p => p.symbol===row.symbol),
-      uncertain:this.db.prepare("SELECT 1 FROM signals WHERE user_id=? AND broker=? AND status='UNKNOWN' LIMIT 1").get(row.user_id,row.broker)
+      uncertain:this.db.prepare("SELECT 1 FROM signals WHERE user_id=? AND account_id=? AND execution_mode=? AND status='UNKNOWN' LIMIT 1").get(...scope(row))
     };
   },
   persistIntent(row, order) {
@@ -178,6 +215,13 @@ const methods = {
         const current = this.ledgerPosition(row), price = notional / qty;
         const fee = Number(execution.deltaFeeQuote ?? 0);
         if (!Number.isFinite(fee) || fee < 0) throw new Error('Invalid fill fee');
+        if (row.execution_mode === 'PAPER') {
+          const cashDelta = order.side === 'BUY' ? -notional-fee : notional-fee;
+          if (order.side === 'BUY' && paperAccount(this,row.user_id,row.broker).cash + cashDelta < 0)
+            throw new Error('Insufficient Paper cash including fees');
+          this.db.prepare('INSERT INTO paper_cash_journal VALUES(?,?,?,?,?,?)')
+            .run(row.id,total,row.user_id,row.broker,cashDelta,Date.now());
+        }
         let quantity, avg, initialRisk, pnl;
         if (order.side === 'BUY') {
           quantity = current.quantity + qty;
@@ -206,6 +250,7 @@ const methods = {
             order.side==='BUY'?order.stopLoss:current.stop_loss,order.side==='BUY'?(order.takeProfit||null):current.take_profit,
             quantity?initialRisk:0,quantity?pnl:0,Date.now());
         this.db.prepare('INSERT INTO fills VALUES(?,?,?,?,?,?,?)').run(row.id,total,qty,price,fee,realizedR,Date.now());
+        if(row.execution_mode === 'PAPER') snapshotPaper(this,row.user_id,row.broker,'FILL');
       }
       const first = saved.applied_quantity === 0 && total > 0;
       this.db.prepare(`INSERT INTO ledger_daily VALUES(?,?,?,?,?,?,?) ON CONFLICT(user_id,account_id,execution_mode,day)

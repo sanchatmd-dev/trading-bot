@@ -33,6 +33,16 @@ const rejectionHelp={"No Spot position available to sell":"There is no open Spot
 function explainRejection(reason){return translate(rejectionHelp[reason]||"An entry protection rule rejected this order. Review the original reason below and the Risk manager settings. Nothing was sent to a live broker.");}
 uiPairs.push(['Cap Percent Equity size to available funds and notional limits','ลดขนาด Percent Equity อัตโนมัติให้ไม่เกินทุนและเพดานมูลค่าคำสั่ง']);
 uiPairs.push(
+  ['Configured Paper capital','ทุน Paper ที่กำหนด'],
+  ['These inputs are cumulative funding, not current balances. Changes add or withdraw capital without resetting PnL. Preview includes unsaved funding changes.','ช่องนี้คือทุนสะสม ไม่ใช่ยอดคงเหลือปัจจุบัน การแก้ค่าคือเพิ่มหรือลดทุนโดยไม่ล้างกำไรขาดทุน Preview รวมค่าทุนที่ยังไม่บันทึก'],
+  ['Current Paper ledger','ยอดบัญชี Paper ปัจจุบัน'],
+  ['Cash includes fills and recorded fees. Book equity uses position cost, not live market prices. Currencies are never combined.','เงินสดรวมผลซื้อขายและค่าธรรมเนียมที่บันทึกแล้ว ทุนตามบัญชีใช้ต้นทุน Position ไม่ใช่ราคาตลาดสด และไม่รวมข้ามสกุลเงิน'],
+  ['Cash','เงินสด'],['Book equity','ทุนตามบัญชี'],['Closed round trips','รอบเทรดที่ปิดครบ'],
+  ['Realized net profit','กำไรสุทธิที่รับรู้'],['Realized max drawdown','Drawdown ที่รับรู้สูงสุด'],
+  ['Trades count completed flat-to-flat cycles. PnL and drawdown include partial exits and exclude unrealized moves. Custom fees affect analytics only.','จำนวนเทรดนับรอบตั้งแต่เปิดจนปิดหมด กำไรขาดทุนและ Drawdown รวมการขายบางส่วน แต่ไม่รวมราคาที่ยังไม่รับรู้ ค่าธรรมเนียมกำหนดเองมีผลเฉพาะ Analytics'],
+  ['Percentages unavailable: funding changed in this period or legacy funding history is incomplete.','ไม่แสดงเปอร์เซ็นต์: มีการเปลี่ยนทุนในช่วงนี้ หรือไม่มีประวัติทุนเดิมครบถ้วน']
+);
+uiPairs.push(
   ['Default values seed the calculator. Max Values are enforced by the bot. UTC trading day.','ค่า Default ใช้เติมเครื่องคำนวณ ส่วน Max Value คือเพดานที่ Bot บังคับใช้ วันตัดยอด UTC'],
   ['Setting','รายการ'],['Default','ค่าเริ่มต้น'],['Max Value','ค่าสูงสุด'],
   ['Risk / trade (%)','ความเสี่ยง / เทรด (%)'],['Trades / day','จำนวนเทรด / วัน'],['Daily loss (R)','ขาดทุนต่อวัน (R)'],

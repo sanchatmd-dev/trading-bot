@@ -49,11 +49,13 @@ export class Worker {
       if(!owner||owner.status!=='ACTIVE')throw new Error('Main account is suspended or unavailable');
       const policy=this.store.risk(job.user_id,this.config.defaultRisk);
       const exposure=this.store.exposure(job);
+      const account=this.store.paperAccount(job.user_id,signal.broker);
       if(exposure.uncertain)throw new Error('Unresolved order outcome: operator reconciliation required');
       const result=evaluateRisk(signal,{
         policy,daily:this.store.ledgerDaily(job),position:this.store.ledgerPosition(job),
-        equity:policy.equities?.[signal.broker]||0,
-        balance:policy.balances?.[signal.broker]??policy.equities?.[signal.broker]??0,
+        equity:account.bookEquity,
+        balance:account.cash,
+        cashAvailable:account.cash-exposure.reservedNotional,
         licensed:owner.role==='ADMIN'||this.store.hasActiveLicense(owner.id),
         globalKill:this.store.getSetting('globalKill',false),...exposure
       });

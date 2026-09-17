@@ -9,6 +9,7 @@ function analyticsParams(){
   return params;
 }
 function money(value,currency=analyticsState.summary?.currency||'USDT'){
+  if(value===null||value===undefined)return '—';
   const formatted=new Intl.NumberFormat(uiLanguage==='th'?'th-TH':'en-US',{maximumFractionDigits:2}).format(Number(value||0));
   return currency==='THB'?`฿${formatted}`:`${formatted} USDT`;
 }
@@ -41,11 +42,14 @@ function renderAnalyticsUsers(){
 function metricCard(label,value,note=''){return `<article class="metric analytics-metric"><span>${esc(translate(label))}</span><strong>${esc(value)}</strong>${note?`<small>${esc(note)}</small>`:''}</article>`;}
 function renderAnalytics(){
   const s=analyticsState.summary,b=analyticsState.breakdown;if(!s||!b)return;
-  const ratio=s.avgWinLossRatio===null?'—':`${number(s.avgWinLossRatio)} R`;
+  const ratio=s.avgWinLossRatio===null?'—':`${number(s.avgWinLossRatio)} ×`;
+  const basisLabels=['Trades count completed flat-to-flat cycles. PnL and drawdown include partial exits and exclude unrealized moves. Custom fees affect analytics only.'];
+  if(s.percentagesAvailable===false)basisLabels.push('Percentages unavailable: funding changed in this period or legacy funding history is incomplete.');
+  $('#analyticsBasis').innerHTML=basisLabels.map(label=>`<span data-ui-label="${esc(label)}">${esc(translate(label))}</span>`).join(' ');
   $('#analyticsMetrics').innerHTML=[
-    metricCard('Total trades',number(s.totalTrades,0),`${s.wins} W / ${s.losses} L`),metricCard('Win rate',`${number(s.winRate)}%`),
-    metricCard('Net profit',money(s.netProfit),s.netProfitPercent===null?'—':`${number(s.netProfitPercent)}%`),metricCard('Profit factor',number(s.profitFactor)),
-    metricCard('Max drawdown',money(Math.abs(s.maxDrawdown)),s.maxDrawdownPercent===null?'—':`${number(Math.abs(s.maxDrawdownPercent))}%`),metricCard('Expectancy',money(s.expectancy)),
+    metricCard('Closed round trips',number(s.totalTrades,0),`${s.wins} W / ${s.losses} L`),metricCard('Win rate',`${number(s.winRate)}%`),
+    metricCard('Realized net profit',money(s.netProfit),s.netProfitPercent===null?'—':`${number(s.netProfitPercent)}%`),metricCard('Profit factor',number(s.profitFactor)),
+    metricCard('Realized max drawdown',money(Math.abs(s.maxDrawdown)),s.maxDrawdownPercent===null?'—':`${number(Math.abs(s.maxDrawdownPercent))}%`),metricCard('Expectancy',money(s.expectancy)),
     metricCard('Avg win / loss',ratio,`${money(s.avgWin)} / ${money(s.avgLoss)}`),metricCard('Max win streak',number(s.maxConsecutiveWins,0)),
     metricCard('Max loss streak',number(s.maxConsecutiveLosses,0)),metricCard('Average holding',duration(s.averageHoldingMs)),
     metricCard('Fee impact',money(s.feeImpact),`${number(s.feeBps)} bps`),metricCard('Starting equity',money(s.startingEquity))

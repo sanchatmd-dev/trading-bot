@@ -43,6 +43,7 @@ const riskBooleanFields=['capPercentEquitySize','paperTrading','killSwitch','one
 const fundFields=[['equityGlobal','balanceGlobal','binance-global'],['equityTh','balanceTh','binance-th'],['equityInnovestx','balanceInnovestx','innovestx'],['equitySettrade','balanceSettrade','settrade']];
 function fillRisk(p){
   const f=$('#riskForm').elements;
+  $('#paperAccountRows').innerHTML=(me.paperAccounts||[]).map(account=>`<div class="list-row"><span>${esc(account.broker)} · ${esc(account.currency)}</span><span><span data-ui-label="Cash">${esc(translate('Cash'))}</span>: ${fmt(account.cash)} · <span data-ui-label="Book equity">${esc(translate('Book equity'))}</span>: ${fmt(account.bookEquity)}</span></div>`).join('');
   for(const k of riskMaxFields)f[k].value=p[k];
   for(const[input,key]of Object.entries(riskDefaultsMap))f[input].value=p.defaults?.[key]??p[({riskPercent:'maxRiskPercent',tradesPerDay:'maxTradesPerDay',dailyLossR:'maxDailyLossR',lossStreak:'pauseAfterLossStreak',openPositions:'maxOpenPositions',signalAgeSeconds:'maxSignalAgeSeconds',orderNotional:'maxOrderNotional',dailyNotional:'maxDailyNotional',volatilityPercent:'maxVolatilityPercent'})[key]];
   for(const k of riskBooleanFields)f[k].checked=!!p[k];
@@ -64,7 +65,7 @@ function collectRiskPolicy(){
 }
 function updatePositionSlots(){
   if(!me)return;
-  const f=$('#riskForm').elements,broker=f.previewBroker.value,open=positions.filter(x=>x.user_id===me.user.id&&x.broker===broker&&x.execution_mode==='PAPER').length,max=+f.maxOpenPositions.value||0;
+  const f=$('#riskForm').elements,broker=f.previewBroker.value,open=positions.filter(x=>x.user_id===(me.bot?.id||me.user.id)&&x.broker===broker&&x.execution_mode==='PAPER').length,max=+f.maxOpenPositions.value||0;
   $('#previewSlots').textContent=`${open} / ${Math.max(0,max-open)}`;
 }
 let riskPreviewTimer,riskPreviewSequence=0;

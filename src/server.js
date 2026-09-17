@@ -7,7 +7,7 @@ import {Store} from './database.js';
 import {hashPassword,verifyPassword,randomToken,encryptJson,decryptJson,hashToken} from './security.js';
 import {normalizeSignal,normalizeSymbol} from './domain.js';
 import {evaluateRisk} from './risk.js';
-import {analyticsWindow,fifoClosedPositions,filterClosedPositions,summarizeClosedPositions,breakdownClosedPositions,groupClosedPositions,currencyForBroker} from './analytics.js';
+import {analyticsWindow,fifoAnalytics,analyticsCapital,filterClosedPositions,summarizeClosedPositions,breakdownClosedPositions,groupClosedPositions,currencyForBroker} from './analytics.js';
 import {supportedBrokers,capabilities,validateCredentials} from './adapters/registry.js';
 import {EmailNotifier} from './notifier.js';
 import {Worker,NotificationWorker} from './worker.js';
@@ -38,11 +38,13 @@ function analyticsData(url,targetUserId){
   const rawSymbol=String(url.searchParams.get('symbol')||'').trim().toUpperCase();
   if(rawSymbol&&!/^[A-Z0-9._:/-]{1,40}$/.test(rawSymbol))throw new Error('Invalid analytics symbol');
   const symbol=rawSymbol?normalizeSymbol(rawSymbol,broker):'';
-  const feeBps=store.analyticsFeeBps(targetUserId,broker),policy=store.risk(targetUserId,config.defaultRisk);
-  const currency=currencyForBroker(broker),startingEquity=Number(policy.equities?.[broker]||0);
-  const all=fifoClosedPositions(store.analyticsRows(targetUserId,broker),{feeBps});
-  const closed=filterClosedPositions(all,{...window,symbol});
-  return {targetUserId,broker,currency,symbol:symbol||null,feeBps,startingEquity,window,closed,summary:summarizeClosedPositions(closed,{startingEquity,currency})};
+  const feeBps=store.analyticsFeeBps(targetUserId,broker),currency=currencyForBroker(broker);
+  const fills=store.analyticsRows(targetUserId,broker),all=fifoAnalytics(fills,{feeBps});
+  const basis=analyticsCapital(store.paperFunding(targetUserId,broker),all.realizations,fills,window);
+  const closed=filterClosedPositions(all.closedPositions,{...window,symbol});
+  const realizations=filterClosedPositions(all.realizations,{...window,symbol});
+  const options={...basis,currency,realizations};
+  return {targetUserId,broker,currency,symbol:symbol||null,feeBps,startingEquity:basis.startingEquity,basis,options,window,closed,summary:summarizeClosedPositions(closed,options)};
 }
 
 function validateRisk(input,current){
@@ -152,20 +154,21 @@ async function userRoutes(req,res,url){const actor=requireSession(req,res);if(!a
       return json(res,200,{userId:targetUserId,broker,feeBps});
     }
     if(req.method==='GET'&&['/api/analytics/summary','/api/analytics/equity-curve','/api/analytics/breakdown'].includes(url.pathname)){
-      const data=analyticsData(url,targetUserId),meta={userId:targetUserId,broker:data.broker,currency:data.currency,symbol:data.symbol,period:data.window.period,from:data.window.fromDate,to:data.window.toDate,feeBps:data.feeBps};
+      const data=analyticsData(url,targetUserId),meta={userId:targetUserId,broker:data.broker,currency:data.currency,symbol:data.symbol,period:data.window.period,from:data.window.fromDate,to:data.window.toDate,feeBps:data.feeBps,...data.basis};
       if(url.pathname==='/api/analytics/summary'){
         const {equityCurve,...summary}=data.summary;
-        const groups=groupClosedPositions(data.closed,data.window.period,{startingEquity:data.startingEquity,currency:data.currency});
+        const groups=groupClosedPositions(data.closed,data.window.period,data.options);
         return json(res,200,{...meta,...summary,groups,closedPositions:[...data.closed].sort((a,b)=>b.exitAt-a.exitAt).slice(0,50)});
       }
       if(url.pathname==='/api/analytics/equity-curve')return json(res,200,{...meta,startingEquity:data.startingEquity,series:data.summary.equityCurve});
-      const assets=breakdownClosedPositions(data.closed,{startingEquity:data.startingEquity,currency:data.currency}).map(({equityCurve,...asset})=>asset);
+      const assets=breakdownClosedPositions(data.closed,data.options).map(({equityCurve,...asset})=>asset);
       return json(res,200,{...meta,assets});
     }
   }
   if(req.method==='GET'&&url.pathname==='/api/me'){
     const dailyAccounts=(allBots?store.listBots(actor.id):[{id:user.id}]).flatMap(bot=>store.dailyAccounts(bot.id).map(row=>({...row,bot_id:bot.id})));
-    return json(res,200,{user:{...store.userById(actor.id)},bot:store.userById(user.id),allBots,license:admin?{plan:'ADMIN',status:'ACTIVE',expires_at:null}:store.licenseForUser(actor.id),risk:{...store.risk(user.id,config.defaultRisk),paperTrading:true},brokers:store.credentialSummary(user.id),globalKill:store.getSetting('globalKill',false),capabilities,dailyAccounts,daily:{trades:dailyAccounts.reduce((sum,x)=>sum+x.trades,0)}});
+    const paperAccounts=(allBots?store.listBots(actor.id):[{id:user.id}]).flatMap(bot=>store.paperAccounts(bot.id).map(row=>({...row,bot_id:bot.id})));
+    return json(res,200,{user:{...store.userById(actor.id)},bot:store.userById(user.id),allBots,license:admin?{plan:'ADMIN',status:'ACTIVE',expires_at:null}:store.licenseForUser(actor.id),risk:{...store.risk(user.id,config.defaultRisk),paperTrading:true},brokers:store.credentialSummary(user.id),globalKill:store.getSetting('globalKill',false),capabilities,paperAccounts,dailyAccounts,daily:{trades:dailyAccounts.reduce((sum,x)=>sum+x.trades,0)}});
   }
   if(req.method==='GET'&&url.pathname==='/api/me/webhook-secret'){
     const saved=store.webhookSecret(user.id);
@@ -198,11 +201,12 @@ async function userRoutes(req,res,url){const actor=requireSession(req,res);if(!a
       volatility_percent:Number(calculator.volatilityPercent??0),news_risk:false,timestamp:Date.now()});
     const row={id:0,user_id:user.id,account_id:`${signal.broker}:primary`,execution_mode:'PAPER',symbol:signal.symbol,broker:signal.broker};
     const exposure=store.exposure(row),daily=store.ledgerDaily(row),position=store.ledgerPosition(row);
-    const equity=policy.equities?.[signal.broker]||0,balance=policy.balances?.[signal.broker]??equity;
-    const result=evaluateRisk(signal,{policy,daily,position,equity,balance,
+    const account=store.paperAccount(user.id,signal.broker,policy),equity=account.bookEquity,balance=account.cash;
+    const cashAvailable=balance-(exposure.reservedNotional||0);
+    const result=evaluateRisk(signal,{policy,daily,position,equity,balance,cashAvailable,
       licensed:actor.role==='ADMIN'||store.hasActiveLicense(actor.id),globalKill:store.getSetting('globalKill',false),...exposure});
     const positionsRemaining=Math.max(0,policy.maxOpenPositions-exposure.openPositions);
-    const freeBalance=Math.max(0,Math.min(equity,balance)-(exposure.committedNotional||0));
+    const freeBalance=Math.max(0,Math.min(equity-(exposure.committedNotional||0),cashAvailable));
     const positionCapacity=result.ok&&result.order.notional>0?Math.min(positionsRemaining,Math.floor(freeBalance/result.order.notional)):0;
     return json(res,200,{...result,equity,balance,freeBalance,positionsOpen:exposure.openPositions,
       positionsRemaining,positionCapacity,dailyRemaining:Math.max(0,policy.maxDailyNotional-daily.notional-(exposure.reservedNotional||0))});

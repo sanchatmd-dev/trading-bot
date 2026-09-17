@@ -80,8 +80,14 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
   assert.equal((await request(secret,'POST',{...payload,symbol:'BTCUSDT',trade_id:'exit',event:'SL',quantity:10,entry:90,timestamp:Date.now()})).status,202);
   await delay(350);
   assert.equal((await request('/api/positions','GET',undefined,token)).body.length,0);
+  const funds=(await request('/api/me','GET',undefined,token)).body.paperAccounts.find(row=>row.broker==='binance-global');
+  assert.equal(funds.cash,2400);assert.equal(funds.bookEquity,9900);
+  const afterLossPreview=await request('/api/risk/preview','POST',{calculator:{broker:'binance-global',symbol:'BTCUSDT',entry:100,stopLoss:90,riskPercent:1,volatilityPercent:0}},token);
+  assert.equal(afterLossPreview.body.freeBalance,2400);assert.equal(afterLossPreview.body.balance,2400);
   const analytics=await request('/api/analytics/summary?broker=binance-global&period=daily','GET',undefined,token);
   assert.equal(analytics.status,200);assert.equal(analytics.body.currency,'USDT');assert.equal(analytics.body.totalTrades,1);assert.ok(analytics.body.netProfit<0);
+  assert.equal(analytics.body.tradeDefinition,'FLAT_TO_FLAT_PER_BOT_BROKER_SYMBOL');
+  assert.equal(analytics.body.drawdownBasis,'REALIZED_FIFO_EXCLUDING_CASH_FLOWS');
   assert.equal((await request('/api/analytics/summary?broker=binance-th&period=daily','GET',undefined,token)).body.totalTrades,0);
   assert.equal((await request('/api/analytics/settings','PUT',{broker:'binance-global',feeBps:12.5},token)).status,200);
   assert.equal((await request('/api/analytics/summary?broker=binance-global&period=custom&from=invalid&to=2026-01-01','GET',undefined,token)).status,400);
@@ -109,6 +115,8 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
   for(let i=0;i<50;i++){const rows=(await request('/api/signals?bot_id='+botId,'GET',undefined,token)).body;if(rows[0]?.status==='FILLED')break;await delay(30);}
   assert.equal((await request('/api/signals?bot_id='+botId,'GET',undefined,token)).body[0].status,'FILLED',JSON.stringify((await request('/api/signals?bot_id='+botId,'GET',undefined,token)).body));
   assert.equal((await request('/api/positions?bot_id='+botId,'GET',undefined,token)).body[0].quantity,1);
+  const childFunds=(await request('/api/me?bot_id='+botId,'GET',undefined,token)).body.paperAccounts.find(row=>row.broker==='binance-global');
+  assert.equal(childFunds.cash,900);assert.equal(childFunds.bookEquity,1000);
   assert.equal((await request('/api/positions','GET',undefined,token)).body.length,0);
   assert.equal((await request('/api/positions?bot_id=all','GET',undefined,token)).body[0].bot_id,botId);
   for(let i=0;i<3;i++)assert.equal((await request('/api/bots','POST',{label:'Extra '+i},token)).status,201);

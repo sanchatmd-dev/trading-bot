@@ -69,10 +69,10 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 ## Operations
 
 - Run tests: npm test
-- Current test suite: 55 tests.
+- Current local test suite: 73 tests; deployed release e56be94 had 55 tests.
 - Back up SQLite before production release changes using scripts/backup.mjs.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the user service.
-- Database schema version is 8. Migration 8 adds bot ownership, slot indexes and labels to users. Existing IDs, history and webhook secrets remain attached to Main Bot slot 1. An older application cannot open a newer schema.
+- Production database schema is 8. The local Phase 0 candidate migrates to schema 9 with Paper funding, cash journals and book-value snapshots. It is not yet deployed. Existing IDs, history and webhook secrets are preserved. An older application cannot open a newer schema.
 - All database changes require a verified backup and integrity check.
 
 ## Bot profiles
@@ -92,6 +92,15 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 - Analytics APIs and UI support daily, weekly, monthly, annual and custom UTC date ranges, plus asset filters.
 - Currency is selected by broker and never combined: Binance Global is USDT; Binance TH, InnovestX and Settrade are THB.
 - Normal users can read only their own analytics. Administrators may select a user explicitly.
+
+## Phase 0 candidate (not deployed)
+
+- Risk now uses Paper cash and cost-based book equity from journaled fills. Realized losses reduce buying power; realized gains increase it. Pending reservations are deducted once.
+- Equity/Balance inputs represent cumulative funding. Changing them appends a funding delta and never resets PnL; unchanged saves are idempotent. The UI separately shows current ledger cash and book equity.
+- Migration reconstructs Paper cash from the current configured baseline and existing fills. Legacy funding dates are unknown; historical percentages are suppressed instead of fabricated. Negative reconstructed balances require operator review, not an automatic credit.
+- Restart revalidates unfilled Paper jobs, preserves/cancels partially filled remainders, and quarantines inconsistent ledgers. LIVE/LEGACY orders are not replayed.
+- Analytics counts completed flat-to-flat cycles. Period PnL and realized drawdown include partial exits; unrealized price changes are excluded. Historical funding records replace today's editable capital as the percentage basis.
+- See docs/PHASE0.md and scripts/rehearse-phase0.mjs. Production migration rehearsal and rendered desktop/mobile QA are still release gates. Browser tooling failed to start during implementation; DOM/translation/API tests are available but do not substitute for visual QA.
 
 ## Known rejection causes and handling
 
