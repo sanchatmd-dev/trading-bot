@@ -1,0 +1,2559 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © MikeSanchat
+
+//@version=6
+indicator(
+     "SPT PRO Indicator",
+     overlay = true,
+     max_lines_count = 500,
+     max_boxes_count = 500,
+     max_labels_count = 500
+)
+
+//====================================================
+// SuperTrend PRO Indicator + Backtest Dashboard
+// Main market at design: BTC/USD
+// Main TF: 1D
+// Usable TF: 1H, 4H, 8H, 12H
+//
+// Concept:
+// - Buy/Sell signal-based entries
+// - Built-in TP/SL
+// - Trend following
+// - Money management dashboard
+// - Simulated backtest dashboard inside indicator
+//
+// Important:
+// This is an indicator, not a TradingView strategy.
+// Backtest dashboard is approximate.
+// For official broker-emulator backtest, convert to strategy().
+//====================================================
+
+
+//====================================================
+// INPUTS
+//====================================================
+
+groupPreset = "0. Preset"
+
+preset = input.string(
+     "Daily/Swing",
+     "Preset",
+     options = ["Daily/Swing", "Intraday", "Custom"],
+     group = groupPreset
+)
+
+useAutoHTF = input.bool(
+     true,
+     "Auto HTF mapping",
+     group = groupPreset
+)
+
+tradeDirectionectionection = input.string(
+     "Both Long & Short",
+     "Trade Direction",
+     options = ["Both Long & Short", "Long only", "Short only"],
+     group = groupPreset
+)
+
+allowLong =
+     tradeDirectionectionection == "Both Long & Short" or
+     tradeDirectionectionection == "Long only"
+
+allowShort =
+     tradeDirectionectionection == "Both Long & Short" or
+     tradeDirectionectionection == "Short only"
+
+//-------------------------
+// Trend Engine
+//-------------------------
+groupTrend = "1. Trend Engine"
+
+emaFastInput = input.int(
+     50,
+     "Custom Fast EMA",
+     minval = 1,
+     group = groupTrend
+)
+
+emaSlowInput = input.int(
+     200,
+     "Custom Slow EMA",
+     minval = 1,
+     group = groupTrend
+)
+
+useSlowFilter = input.bool(
+     true,
+     "Use Fast EMA > Slow EMA filter",
+     group = groupTrend
+)
+
+atrLenInput = input.int(
+     14,
+     "Custom ATR Length",
+     minval = 1,
+     group = groupTrend
+)
+
+stFactorInput = input.float(
+     3.0,
+     "Custom SuperTrend Factor",
+     minval = 0.1,
+     step = 0.1,
+     group = groupTrend
+)
+
+
+//-------------------------
+// MTF Filter
+//-------------------------
+groupMTF = "2. Multi-Timeframe Filter"
+
+useMTF = input.bool(
+     true,
+     "Use confirmed HTF filter",
+     group = groupMTF
+)
+
+mtfMode = input.string(
+     "Soft",
+     "HTF Filter Mode",
+     options = ["Soft", "Hard", "Off"],
+     group = groupMTF
+)
+
+manualHTF1 = input.timeframe(
+     "W",
+     "Manual HTF 1",
+     group = groupMTF
+)
+
+manualHTF2 = input.timeframe(
+     "M",
+     "Manual HTF 2",
+     group = groupMTF
+)
+
+
+//-------------------------
+// Entry Zone
+//-------------------------
+groupEntry = "3. Entry Zone"
+
+zoneAtrMultInput = input.float(
+     1.0,
+     "Custom Entry Zone ATR Multiplier",
+     minval = 0.1,
+     step = 0.05,
+     group = groupEntry
+)
+
+setupExpiryInput = input.int(
+     8,
+     "Custom Setup Expiry Bars",
+     minval = 1,
+     maxval = 100,
+     group = groupEntry
+)
+
+cooldownInput = input.int(
+     3,
+     "Custom Signal Cooldown Bars",
+     minval = 0,
+     maxval = 100,
+     group = groupEntry
+)
+
+
+//-------------------------
+// Confirmation
+//-------------------------
+groupConfirm = "4. Confirmation"
+
+confirmMode = input.string(
+     "Any",
+     "Confirmation Mode",
+     options = ["Any", "EMA reclaim", "Minor break", "Engulfing", "Strong candle"],
+     group = groupConfirm
+)
+
+confirmLookback = input.int(
+     5,
+     "Minor Break Lookback",
+     minval = 2,
+     maxval = 50,
+     group = groupConfirm
+)
+
+useRSIFilter = input.bool(
+     false,
+     "Use RSI momentum filter",
+     group = groupConfirm
+)
+
+rsiLen = input.int(
+     14,
+     "RSI Length",
+     minval = 1,
+     group = groupConfirm
+)
+
+rsiLongMin = input.float(
+     50,
+     "Long RSI minimum",
+     minval = 1,
+     maxval = 100,
+     group = groupConfirm
+)
+
+rsiShortMax = input.float(
+     50,
+     "Short RSI maximum",
+     minval = 1,
+     maxval = 100,
+     group = groupConfirm
+)
+
+
+//-------------------------
+// Structure / Sweep
+//-------------------------
+groupStructure = "5. Structure / Sweep"
+
+pivotLen = input.int(
+     5,
+     "Confirmed Pivot Length",
+     minval = 1,
+     maxval = 50,
+     group = groupStructure
+)
+
+requireBOS = input.bool(
+     false,
+     "Require BOS with confirmed swing",
+     group = groupStructure
+)
+
+requireSweep = input.bool(
+     false,
+     "Require liquidity sweep",
+     group = groupStructure
+)
+
+
+//-------------------------
+// Risk Management
+//-------------------------
+groupRisk = "6. Risk Management"
+
+slMode = input.string(
+     "Zone + ATR",
+     "SL Mode",
+     options = ["Zone + ATR", "Swing + ATR", "Wider of zone/swing", "Tighter of zone/swing"],
+     group = groupRisk
+)
+
+slAtrBufferInput = input.float(
+     0.50,
+     "Custom SL ATR Buffer",
+     minval = 0.0,
+     step = 0.05,
+     group = groupRisk
+)
+
+minRiskATRInput = input.float(
+     0.50,
+     "Custom Minimum Risk in ATR",
+     minval = 0.05,
+     step = 0.05,
+     group = groupRisk
+)
+
+rr1 = input.float(1.0, "TP1 RR", minval = 0.1, step = 0.1, group = groupRisk)
+rr2 = input.float(2.0, "TP2 RR", minval = 0.1, step = 0.1, group = groupRisk)
+rr3 = input.float(3.0, "TP3 RR", minval = 0.1, step = 0.1, group = groupRisk)
+rr4 = input.float(4.0, "TP4 RR", minval = 0.1, step = 0.1, group = groupRisk)
+rr5 = input.float(5.0, "TP5 RR", minval = 0.1, step = 0.1, group = groupRisk)
+
+showBE = input.bool(
+     true,
+     "Show Break-even after TP1",
+     group = groupRisk
+)
+
+
+//-------------------------
+// Backtest Dashboard
+//-------------------------
+groupBT = "7. Backtest Dashboard"
+
+btEnable = input.bool(
+     true,
+     "Enable simulated backtest",
+     group = groupBT
+)
+
+btTargetMode = input.string(
+     "TP3",
+     "Backtest exit target",
+     options = ["TP1", "TP2", "TP3", "TP4", "TP5"],
+     group = groupBT
+)
+
+btSameBarMode = input.string(
+     "Conservative",
+     "If TP and SL hit in same candle",
+     options = ["Conservative", "Optimistic"],
+     group = groupBT
+)
+
+btAllowReverse = input.bool(
+     true,
+     "Close and reverse on opposite signal",
+     group = groupBT
+)
+
+btUseDateFilter = input.bool(
+     false,
+     "Use backtest start date",
+     group = groupBT
+)
+
+btStartTime = input.time(
+     timestamp("2020-01-01T00:00:00"),
+     "Backtest start",
+     group = groupBT
+)
+
+
+//-------------------------
+// Session
+//-------------------------
+groupSession = "8. Session Filter"
+
+useSession = input.bool(
+     false,
+     "Use trading session filter",
+     group = groupSession
+)
+
+tradeSession = input.session(
+     "0000-2359",
+     "Trading Session",
+     group = groupSession
+)
+
+
+//-------------------------
+// Visual
+//-------------------------
+groupVisual = "9. Visual"
+
+showRibbon = input.bool(true, "Show Trend Ribbon", group = groupVisual)
+showEMA = input.bool(true, "Show EMA", group = groupVisual)
+showSuperTrend = input.bool(true, "Show SuperTrend Line", group = groupVisual)
+showLiveZone = input.bool(true, "Show Live Entry Zone", group = groupVisual)
+showSetupMarks = input.bool(true, "Show Setup Markers", group = groupVisual)
+showDashboard = input.bool(true, "Show Dashboard", group = groupVisual)
+
+lineForwardBars = input.int(
+     80,
+     "Project TP/SL lines forward",
+     minval = 10,
+     maxval = 300,
+     group = groupVisual
+)
+
+dashboardTextSizeInput = input.string(
+     "Tiny",
+     "Dashboard Text Size",
+     options = ["Tiny", "Small", "Normal", "Large", "Huge"],
+     group = groupVisual
+)
+
+//-------------------------
+// Notifications
+//-------------------------
+groupNotify = "10. Notifications"
+
+notifyEnabled = input.bool(
+     true,
+     "Enable notifications",
+     group = groupNotify
+)
+
+notifyExtra = input.string(
+     "None",
+     "Additional Notification",
+     options = [
+          "None",
+          "Email",
+          "Telegram",
+          "Webhook",
+          "Robot Trade (Spot)"
+     ],
+     group = groupNotify
+)
+
+notifyOnSignal = input.bool(
+     true,
+     "Notify BUY / SELL",
+     group = groupNotify
+)
+
+notifyOnTP = input.bool(
+     true,
+     "Notify TP hits",
+     group = groupNotify
+)
+
+notifyOnSL = input.bool(
+     true,
+     "Notify SL hit",
+     group = groupNotify
+)
+
+notifyOnSetup = input.bool(
+     false,
+     "Notify setup zone touch",
+     group = groupNotify
+)
+
+telegramChatId = input.string(
+     "",
+     "Telegram chat_id, direct mode only",
+     group = groupNotify
+)
+
+notifyPrefix = input.string(
+     "STP PRO",
+     "Message Prefix",
+     group = groupNotify
+)
+
+notifyUseEmoji = input.bool(
+     true,
+     "Use emoji",
+     group = groupNotify
+)
+
+notifyRouteText =
+     notifyEnabled ?
+     "TradingView" + (notifyExtra == "None" ? "" : " + " + notifyExtra) :
+     "OFF"
+
+//====================================================
+// EFFECTIVE BTC SETTINGS
+//====================================================
+
+isIntra = timeframe.isintraday
+isDaily = timeframe.isdaily
+isWeekly = timeframe.isweekly
+
+emaFastLen =
+     preset == "Daily/Swing" ? 50 :
+     preset == "Intraday" ? 55 :
+     emaFastInput
+
+emaSlowLen =
+     preset == "Daily/Swing" ? 200 :
+     preset == "Intraday" ? 200 :
+     emaSlowInput
+
+atrLen =
+     preset == "Daily/Swing" ? 14 :
+     preset == "Intraday" ? 14 :
+     atrLenInput
+
+stFactor =
+     preset == "Daily/Swing" ? 3.2 :
+     preset == "Intraday" ? 2.8 :
+     stFactorInput
+
+zoneAtrMult =
+     preset == "Daily/Swing" ? 1.15 :
+     preset == "Intraday" ? 0.90 :
+     zoneAtrMultInput
+
+slAtrBuffer =
+     preset == "Daily/Swing" ? 0.60 :
+     preset == "Intraday" ? 0.45 :
+     slAtrBufferInput
+
+minRiskATR =
+     preset == "Daily/Swing" ? 0.50 :
+     preset == "Intraday" ? 0.35 :
+     minRiskATRInput
+
+//====================================================
+// TIMEFRAME-AWARE AUTO HTF MAPPING
+//====================================================
+
+f_autoHTF1() =>
+    string _out = "W"
+    int _m = timeframe.multiplier
+
+    if timeframe.isintraday
+        if _m <= 15
+            // 5m / 10m / 15m
+            _out := "60"      // 1H
+        else if _m <= 60
+            // 30m / 45m / 1H
+            _out := "240"     // 4H
+        else if _m <= 120
+            // 2H
+            _out := "480"     // 8H
+        else if _m <= 180
+            // 3H
+            _out := "720"     // 12H
+        else if _m <= 720
+            // 4H / 8H / 12H
+            _out := "D"
+        else
+            _out := "W"
+    else if timeframe.isdaily
+        _out := "W"
+    else if timeframe.isweekly
+        _out := "M"
+    else
+        _out := "3M"
+
+    _out
+
+
+f_autoHTF2() =>
+    string _out = "M"
+    int _m = timeframe.multiplier
+
+    if timeframe.isintraday
+        if _m <= 15
+            // 5m / 10m / 15m
+            _out := "240"     // 4H
+        else if _m <= 180
+            // 30m / 45m / 1H / 2H / 3H
+            _out := "D"
+        else if _m <= 720
+            // 4H / 8H / 12H
+            _out := "W"
+        else
+            _out := "M"
+    else if timeframe.isdaily
+        _out := "M"
+    else if timeframe.isweekly
+        _out := "3M"
+    else
+        _out := "12M"
+
+    _out
+
+
+//====================================================
+// TIMEFRAME-AWARE SETUP EXPIRY
+//====================================================
+
+f_autoSetupExpiryBars() =>
+    int _bars = 8
+    int _m = timeframe.multiplier
+
+    if timeframe.isintraday
+        if _m <= 5
+            _bars := 48
+        else if _m <= 10
+            _bars := 42
+        else if _m <= 15
+            _bars := 36
+        else if _m <= 30
+            _bars := 28
+        else if _m <= 45
+            _bars := 24
+        else if _m <= 60
+            _bars := 20
+        else if _m <= 120
+            _bars := 16
+        else if _m <= 180
+            _bars := 14
+        else if _m <= 240
+            _bars := 12
+        else if _m <= 480
+            _bars := 8
+        else
+            _bars := 6
+    else if timeframe.isdaily
+        _bars := 8
+    else if timeframe.isweekly
+        _bars := 6
+    else
+        _bars := 4
+
+    _bars
+
+
+//====================================================
+// TIMEFRAME-AWARE COOLDOWN
+//====================================================
+
+f_autoCooldownBars() =>
+    int _bars = 3
+    int _m = timeframe.multiplier
+
+    if timeframe.isintraday
+        if _m <= 15
+            _bars := 8
+        else if _m <= 60
+            _bars := 5
+        else if _m <= 180
+            _bars := 4
+        else if _m <= 720
+            _bars := 3
+        else
+            _bars := 2
+    else if timeframe.isdaily
+        _bars := 3
+    else
+        _bars := 2
+
+    _bars
+
+
+setupExpiryBars =
+     preset == "Custom" ? setupExpiryInput :
+     f_autoSetupExpiryBars()
+
+cooldownBars =
+     preset == "Custom" ? cooldownInput :
+     f_autoCooldownBars()
+
+autoHTF1 = f_autoHTF1()
+autoHTF2 = f_autoHTF2()
+
+htf1 = useAutoHTF ? autoHTF1 : manualHTF1
+htf2 = useAutoHTF ? autoHTF2 : manualHTF2
+
+
+//====================================================
+// HELPER FUNCTIONS
+//====================================================
+
+f_price(float x) =>
+    na(x) ? "—" : str.tostring(x, format.mintick)
+
+f_num(float x) =>
+    na(x) ? "—" : str.tostring(x, "#.##")
+
+f_pct(float x) =>
+    na(x) ? "—" : str.tostring(x, "#.##") + "%"
+
+f_dirText(int d) =>
+    d == 1 ? "BUY / LONG" : d == -1 ? "SELL / SHORT" : "WAITING"
+
+f_delLine(line id) =>
+    if not na(id)
+        line.delete(id)
+
+f_delLabel(label id) =>
+    if not na(id)
+        label.delete(id)
+
+f_delBox(box id) =>
+    if not na(id)
+        box.delete(id)
+
+f_targetRR() =>
+    btTargetMode == "TP1" ? rr1 : btTargetMode == "TP2" ? rr2 : btTargetMode == "TP3" ? rr3 : btTargetMode == "TP4" ? rr4 : rr5
+
+f_textSize(string s) =>
+    s == "Tiny" ? size.tiny : s == "Small" ? size.small : s == "Normal" ? size.normal : s == "Large" ? size.large : size.huge
+
+
+//====================================================
+// CORE CALCULATION
+//====================================================
+
+emaFast = ta.ema(close, emaFastLen)
+emaSlow = ta.ema(close, emaSlowLen)
+atr = ta.atr(atrLen)
+
+[stLine, stDir] = ta.supertrend(stFactor, atrLen)
+
+// TradingView SuperTrend direction:
+// stDir < 0 = bullish
+// stDir > 0 = bearish
+stBull = stDir < 0
+stBear = stDir > 0
+
+slowBullOK = not useSlowFilter or na(emaSlow) or emaFast > emaSlow
+slowBearOK = not useSlowFilter or na(emaSlow) or emaFast < emaSlow
+
+emaBull = close > emaFast and slowBullOK
+emaBear = close < emaFast and slowBearOK
+
+
+//====================================================
+// CONFIRMED HTF FILTER
+//====================================================
+
+f_htfBull() =>
+    _emaFast = ta.ema(close, emaFastLen)
+    _emaSlow = ta.ema(close, emaSlowLen)
+    [_st, _dir] = ta.supertrend(stFactor, atrLen)
+
+    // If slow EMA is not available on Monthly BTC history,
+    // do not block HTF trend only because EMA200M is na.
+    _slowOK = useSlowFilter ? (na(_emaSlow[1]) or _emaFast[1] > _emaSlow[1]) : true
+
+    close[1] > _emaFast[1] and _slowOK and _dir[1] < 0
+
+f_htfBear() =>
+    _emaFast = ta.ema(close, emaFastLen)
+    _emaSlow = ta.ema(close, emaSlowLen)
+    [_st, _dir] = ta.supertrend(stFactor, atrLen)
+
+    _slowOK = useSlowFilter ? (na(_emaSlow[1]) or _emaFast[1] < _emaSlow[1]) : true
+
+    close[1] < _emaFast[1] and _slowOK and _dir[1] > 0
+
+htf1Bull = request.security(
+     syminfo.tickerid,
+     htf1,
+     f_htfBull(),
+     lookahead = barmerge.lookahead_on
+)
+
+htf2Bull = request.security(
+     syminfo.tickerid,
+     htf2,
+     f_htfBull(),
+     lookahead = barmerge.lookahead_on
+)
+
+htf1Bear = request.security(
+     syminfo.tickerid,
+     htf1,
+     f_htfBear(),
+     lookahead = barmerge.lookahead_on
+)
+
+htf2Bear = request.security(
+     syminfo.tickerid,
+     htf2,
+     f_htfBear(),
+     lookahead = barmerge.lookahead_on
+)
+
+mtfBullScore = (htf1Bull ? 1 : 0) + (htf2Bull ? 1 : 0)
+mtfBearScore = (htf1Bear ? 1 : 0) + (htf2Bear ? 1 : 0)
+
+mtfBullOK =
+     not useMTF or
+     mtfMode == "Off" or
+     (mtfMode == "Hard" and htf1Bull and htf2Bull) or
+     (mtfMode == "Soft" and mtfBullScore >= 1)
+
+mtfBearOK =
+     not useMTF or
+     mtfMode == "Off" or
+     (mtfMode == "Hard" and htf1Bear and htf2Bear) or
+     (mtfMode == "Soft" and mtfBearScore >= 1)
+
+
+//====================================================
+// FINAL TREND BIAS
+//====================================================
+
+longBias = stBull and emaBull and mtfBullOK
+shortBias = stBear and emaBear and mtfBearOK
+
+trendState =
+     longBias ? 1 :
+     shortBias ? -1 :
+     0
+
+
+//====================================================
+// SESSION FILTER
+//====================================================
+
+inSession = not useSession or not na(time(timeframe.period, tradeSession))
+
+
+//====================================================
+// CONFIRMED SWINGS
+//====================================================
+
+pivotHigh = ta.pivothigh(high, pivotLen, pivotLen)
+pivotLow = ta.pivotlow(low, pivotLen, pivotLen)
+
+var float lastSwingHigh = na
+var float lastSwingLow = na
+
+if not na(pivotHigh)
+    lastSwingHigh := pivotHigh
+
+if not na(pivotLow)
+    lastSwingLow := pivotLow
+
+bosLong = not na(lastSwingHigh) and close > lastSwingHigh
+bosShort = not na(lastSwingLow) and close < lastSwingLow
+
+sweepLong = not na(lastSwingLow) and low < lastSwingLow and close > lastSwingLow
+sweepShort = not na(lastSwingHigh) and high > lastSwingHigh and close < lastSwingHigh
+
+
+//====================================================
+// ENTRY ZONES
+//====================================================
+
+buyZoneLowRaw = stLine
+buyZoneHighRaw = stLine + atr * zoneAtrMult
+
+buyZoneLow = math.min(buyZoneLowRaw, buyZoneHighRaw)
+buyZoneHigh = math.max(buyZoneLowRaw, buyZoneHighRaw)
+
+sellZoneLowRaw = stLine - atr * zoneAtrMult
+sellZoneHighRaw = stLine
+
+sellZoneLow = math.min(sellZoneLowRaw, sellZoneHighRaw)
+sellZoneHigh = math.max(sellZoneLowRaw, sellZoneHighRaw)
+
+// Candle-overlap zone touch
+touchBuyZone = low <= buyZoneHigh and high >= buyZoneLow
+touchSellZone = low <= sellZoneHigh and high >= sellZoneLow
+
+
+//====================================================
+// SETUP MEMORY
+//====================================================
+
+var bool longSetupActive = false
+var bool shortSetupActive = false
+
+var int longSetupExpireBar = na
+var int shortSetupExpireBar = na
+
+var float longSetupZoneLow = na
+var float longSetupZoneHigh = na
+var float shortSetupZoneLow = na
+var float shortSetupZoneHigh = na
+
+newLongSetup =
+     barstate.isconfirmed and
+     allowLong and
+     inSession and
+     longBias and
+     touchBuyZone
+
+newShortSetup =
+     barstate.isconfirmed and
+     allowShort and
+     inSession and
+     shortBias and
+     touchSellZone
+
+if newLongSetup
+    longSetupActive := true
+    shortSetupActive := false
+    longSetupExpireBar := bar_index + setupExpiryBars
+    longSetupZoneLow := buyZoneLow
+    longSetupZoneHigh := buyZoneHigh
+
+if newShortSetup
+    shortSetupActive := true
+    longSetupActive := false
+    shortSetupExpireBar := bar_index + setupExpiryBars
+    shortSetupZoneLow := sellZoneLow
+    shortSetupZoneHigh := sellZoneHigh
+
+if barstate.isconfirmed and longSetupActive and not na(longSetupExpireBar) and bar_index > longSetupExpireBar
+    longSetupActive := false
+
+if barstate.isconfirmed and shortSetupActive and not na(shortSetupExpireBar) and bar_index > shortSetupExpireBar
+    shortSetupActive := false
+
+
+//====================================================
+// CONFIRMATION ENGINE
+//====================================================
+
+minorHigh = ta.highest(high[1], confirmLookback)
+minorLow = ta.lowest(low[1], confirmLookback)
+
+emaReclaimLong = close > emaFast and close[1] <= emaFast[1]
+emaReclaimShort = close < emaFast and close[1] >= emaFast[1]
+
+minorBreakLong = close > minorHigh
+minorBreakShort = close < minorLow
+
+bullEngulf =
+     close > open and
+     close[1] < open[1] and
+     close >= open[1] and
+     open <= close[1]
+
+bearEngulf =
+     close < open and
+     close[1] > open[1] and
+     close <= open[1] and
+     open >= close[1]
+
+strongBull =
+     close > open and
+     close > high[1]
+
+strongBear =
+     close < open and
+     close < low[1]
+
+confirmLong =
+     confirmMode == "Any" ? (emaReclaimLong or minorBreakLong or bullEngulf or strongBull) :
+     confirmMode == "EMA reclaim" ? emaReclaimLong :
+     confirmMode == "Minor break" ? minorBreakLong :
+     confirmMode == "Engulfing" ? bullEngulf :
+     strongBull
+
+confirmShort =
+     confirmMode == "Any" ? (emaReclaimShort or minorBreakShort or bearEngulf or strongBear) :
+     confirmMode == "EMA reclaim" ? emaReclaimShort :
+     confirmMode == "Minor break" ? minorBreakShort :
+     confirmMode == "Engulfing" ? bearEngulf :
+     strongBear
+
+rsi = ta.rsi(close, rsiLen)
+
+rsiLongOK = not useRSIFilter or rsi >= rsiLongMin
+rsiShortOK = not useRSIFilter or rsi <= rsiShortMax
+
+bosLongOK = not requireBOS or bosLong
+bosShortOK = not requireBOS or bosShort
+
+sweepLongOK = not requireSweep or sweepLong
+sweepShortOK = not requireSweep or sweepShort
+
+
+//====================================================
+// RISK ENGINE
+//====================================================
+
+longBaseZone = longSetupZoneLow
+shortBaseZone = shortSetupZoneHigh
+
+longSLBase =
+     slMode == "Zone + ATR" ? longBaseZone :
+     slMode == "Swing + ATR" ? (na(lastSwingLow) ? longBaseZone : lastSwingLow) :
+     slMode == "Wider of zone/swing" ? (na(lastSwingLow) ? longBaseZone : math.min(longBaseZone, lastSwingLow)) :
+     na(lastSwingLow) ? longBaseZone : math.max(longBaseZone, lastSwingLow)
+
+shortSLBase =
+     slMode == "Zone + ATR" ? shortBaseZone :
+     slMode == "Swing + ATR" ? (na(lastSwingHigh) ? shortBaseZone : lastSwingHigh) :
+     slMode == "Wider of zone/swing" ? (na(lastSwingHigh) ? shortBaseZone : math.max(shortBaseZone, lastSwingHigh)) :
+     na(lastSwingHigh) ? shortBaseZone : math.min(shortBaseZone, lastSwingHigh)
+
+longSLPreview = longSLBase - atr * slAtrBuffer
+shortSLPreview = shortSLBase + atr * slAtrBuffer
+
+longRiskPreview = close - longSLPreview
+shortRiskPreview = shortSLPreview - close
+
+validLongRisk =
+     not na(longSLPreview) and
+     longRiskPreview > atr * minRiskATR
+
+validShortRisk =
+     not na(shortSLPreview) and
+     shortRiskPreview > atr * minRiskATR
+
+
+//====================================================
+// FINAL BUY / SELL SIGNALS
+//====================================================
+
+var int tradeStartBar = na
+
+cooldownOK =
+     na(tradeStartBar) or
+     bar_index - tradeStartBar > cooldownBars
+
+rawBuySignal =
+     barstate.isconfirmed and
+     allowLong and
+     inSession and
+     cooldownOK and
+     longSetupActive and
+     longBias and
+     confirmLong and
+     rsiLongOK and
+     bosLongOK and
+     sweepLongOK and
+     validLongRisk
+
+rawSellSignal =
+     barstate.isconfirmed and
+     allowShort and
+     inSession and
+     cooldownOK and
+     shortSetupActive and
+     shortBias and
+     confirmShort and
+     rsiShortOK and
+     bosShortOK and
+     sweepShortOK and
+     validShortRisk
+
+buySignal = rawBuySignal and not rawSellSignal
+sellSignal = rawSellSignal and not rawBuySignal
+
+
+//====================================================
+// BACKTEST ENGINE INSIDE INDICATOR
+//====================================================
+
+btInDate = not btUseDateFilter or time >= btStartTime
+btRR = f_targetRR()
+
+var int btPos = 0
+var int btStartBar = na
+
+var float btEntry = na
+var float btSL = na
+var float btTarget = na
+var float btRisk = na
+
+var int btTrades = 0
+var int btWins = 0
+var int btLosses = 0
+var int btLongTrades = 0
+var int btShortTrades = 0
+var int btLongWins = 0
+var int btShortWins = 0
+
+var float btNetR = 0.0
+var float btGrossWinR = 0.0
+var float btGrossLossR = 0.0
+var float btPeakR = 0.0
+var float btMaxDDR = 0.0
+var float btLastR = na
+
+var int btWinStreak = 0
+var int btLossStreak = 0
+var int btMaxWinStreak = 0
+var int btMaxLossStreak = 0
+
+btHasOpen = btPos != 0
+btCanCheck =
+     btEnable and
+     btInDate and
+     btHasOpen and
+     not na(btStartBar) and
+     bar_index > btStartBar and
+     barstate.isconfirmed
+
+btLongSLHit = btCanCheck and btPos == 1 and low <= btSL
+btLongTPHit = btCanCheck and btPos == 1 and high >= btTarget
+
+btShortSLHit = btCanCheck and btPos == -1 and high >= btSL
+btShortTPHit = btCanCheck and btPos == -1 and low <= btTarget
+
+btBothHit =
+     (btLongSLHit and btLongTPHit) or
+     (btShortSLHit and btShortTPHit)
+
+btExitBySL =
+     btBothHit ? btSameBarMode == "Conservative" :
+     (btLongSLHit or btShortSLHit)
+
+btExitByTP =
+     btBothHit ? btSameBarMode == "Optimistic" :
+     (btLongTPHit or btShortTPHit)
+
+btOppositeSignal =
+     btEnable and
+     btInDate and
+     btAllowReverse and
+     btHasOpen and
+     barstate.isconfirmed and
+     ((btPos == 1 and sellSignal) or (btPos == -1 and buySignal))
+
+btExitNow = btExitBySL or btExitByTP or btOppositeSignal
+
+if btExitNow
+    exitR =
+         btExitByTP ? btRR :
+         btExitBySL ? -1.0 :
+         btPos == 1 ? (close - btEntry) / btRisk :
+         (btEntry - close) / btRisk
+
+    btTrades += 1
+    btLastR := exitR
+    btNetR += exitR
+
+    if exitR > 0
+        btWins += 1
+        btGrossWinR += exitR
+        btWinStreak += 1
+        btLossStreak := 0
+        btMaxWinStreak := math.max(btMaxWinStreak, btWinStreak)
+
+        if btPos == 1
+            btLongWins += 1
+        if btPos == -1
+            btShortWins += 1
+    else
+        btLosses += 1
+        btGrossLossR += math.abs(exitR)
+        btLossStreak += 1
+        btWinStreak := 0
+        btMaxLossStreak := math.max(btMaxLossStreak, btLossStreak)
+
+    btPeakR := math.max(btPeakR, btNetR)
+    btMaxDDR := math.max(btMaxDDR, btPeakR - btNetR)
+
+    btPos := 0
+    btStartBar := na
+    btEntry := na
+    btSL := na
+    btTarget := na
+    btRisk := na
+
+btOpenLong =
+     btEnable and
+     btInDate and
+     buySignal and
+     (btPos == 0)
+
+btOpenShort =
+     btEnable and
+     btInDate and
+     sellSignal and
+     (btPos == 0)
+
+if btOpenLong
+    _entry = close
+    _sl = longSLPreview
+    _risk = _entry - _sl
+
+    if _risk > 0
+        btPos := 1
+        btStartBar := bar_index
+        btEntry := _entry
+        btSL := _sl
+        btRisk := _risk
+        btTarget := _entry + _risk * btRR
+        btLongTrades += 1
+
+if btOpenShort
+    _entry = close
+    _sl = shortSLPreview
+    _risk = _sl - _entry
+
+    if _risk > 0
+        btPos := -1
+        btStartBar := bar_index
+        btEntry := _entry
+        btSL := _sl
+        btRisk := _risk
+        btTarget := _entry - _risk * btRR
+        btShortTrades += 1
+
+btWinRate =
+     btTrades > 0 ? 100.0 * btWins / btTrades : na
+
+btProfitFactor =
+     btGrossLossR > 0 ? btGrossWinR / btGrossLossR : na
+
+btExpectancy =
+     btTrades > 0 ? btNetR / btTrades : na
+
+btLongWinRate =
+     btLongTrades > 0 ? 100.0 * btLongWins / btLongTrades : na
+
+btShortWinRate =
+     btShortTrades > 0 ? 100.0 * btShortWins / btShortTrades : na
+
+btOpenR =
+     btHasOpen and not na(btRisk) and btRisk > 0 ?
+     btPos == 1 ? (close - btEntry) / btRisk :
+     (btEntry - close) / btRisk :
+     na
+
+
+//====================================================
+// TRADE STATE FOR VISUAL TP/SL
+//====================================================
+
+var int tradeDirectionection = 0
+var bool tradeActive = false
+
+var string tradeStatus = "Waiting"
+
+var float tradeEntry = na
+var float tradeEntryLow = na
+var float tradeEntryHigh = na
+var float tradeSL = na
+var float tradeTP1 = na
+var float tradeTP2 = na
+var float tradeTP3 = na
+var float tradeTP4 = na
+var float tradeTP5 = na
+
+var bool tp1WasHit = false
+var bool tp2WasHit = false
+var bool tp3WasHit = false
+var bool tp4WasHit = false
+var bool tp5WasHit = false
+var bool slWasHit = false
+
+
+//====================================================
+// DRAWING OBJECTS
+//====================================================
+
+var box entryBox = na
+
+var line lnEntryLow = na
+var line lnEntryHigh = na
+var line lnEntryMid = na
+var line lnSL = na
+var line lnTP1 = na
+var line lnTP2 = na
+var line lnTP3 = na
+var line lnTP4 = na
+var line lnTP5 = na
+var line lnBE = na
+
+var label signalLabel = na
+var label labEntry = na
+var label labSL = na
+var label labTP1 = na
+var label labTP2 = na
+var label labTP3 = na
+var label labTP4 = na
+var label labTP5 = na
+var label labBE = na
+
+
+//====================================================
+// CLEAR OLD OBJECTS ON NEW SIGNAL
+//====================================================
+
+if buySignal or sellSignal
+    f_delBox(entryBox)
+
+    f_delLine(lnEntryLow)
+    f_delLine(lnEntryHigh)
+    f_delLine(lnEntryMid)
+    f_delLine(lnSL)
+    f_delLine(lnTP1)
+    f_delLine(lnTP2)
+    f_delLine(lnTP3)
+    f_delLine(lnTP4)
+    f_delLine(lnTP5)
+    f_delLine(lnBE)
+
+    f_delLabel(signalLabel)
+    f_delLabel(labEntry)
+    f_delLabel(labSL)
+    f_delLabel(labTP1)
+    f_delLabel(labTP2)
+    f_delLabel(labTP3)
+    f_delLabel(labTP4)
+    f_delLabel(labTP5)
+    f_delLabel(labBE)
+
+    entryBox := na
+
+    lnEntryLow := na
+    lnEntryHigh := na
+    lnEntryMid := na
+    lnSL := na
+    lnTP1 := na
+    lnTP2 := na
+    lnTP3 := na
+    lnTP4 := na
+    lnTP5 := na
+    lnBE := na
+
+    signalLabel := na
+    labEntry := na
+    labSL := na
+    labTP1 := na
+    labTP2 := na
+    labTP3 := na
+    labTP4 := na
+    labTP5 := na
+    labBE := na
+
+
+//====================================================
+// REGISTER NEW LONG VISUAL TRADE
+//====================================================
+
+if buySignal
+    tradeDirectionection := 1
+    tradeActive := true
+    tradeStartBar := bar_index
+    tradeStatus := "Long active"
+
+    tradeEntry := close
+    tradeEntryLow := longSetupZoneLow
+    tradeEntryHigh := longSetupZoneHigh
+    tradeSL := longSLPreview
+
+    risk = tradeEntry - tradeSL
+
+    tradeTP1 := tradeEntry + risk * rr1
+    tradeTP2 := tradeEntry + risk * rr2
+    tradeTP3 := tradeEntry + risk * rr3
+    tradeTP4 := tradeEntry + risk * rr4
+    tradeTP5 := tradeEntry + risk * rr5
+
+    tp1WasHit := false
+    tp2WasHit := false
+    tp3WasHit := false
+    tp4WasHit := false
+    tp5WasHit := false
+    slWasHit := false
+
+    longSetupActive := false
+    shortSetupActive := false
+
+    boxTop = math.max(tradeEntryLow, tradeEntryHigh)
+    boxBot = math.min(tradeEntryLow, tradeEntryHigh)
+
+    entryBox := box.new(
+         left = bar_index,
+         top = boxTop,
+         right = bar_index + lineForwardBars,
+         bottom = boxBot,
+         bgcolor = color.new(color.blue, 82),
+         border_color = color.new(color.blue, 0),
+         border_width = 1
+    )
+
+    lnEntryLow := line.new(bar_index, tradeEntryLow, bar_index + lineForwardBars, tradeEntryLow, color = color.new(color.blue, 0), width = 1)
+    lnEntryHigh := line.new(bar_index, tradeEntryHigh, bar_index + lineForwardBars, tradeEntryHigh, color = color.new(color.blue, 0), width = 1)
+    lnEntryMid := line.new(bar_index, tradeEntry, bar_index + lineForwardBars, tradeEntry, color = color.new(color.yellow, 0), width = 2)
+    lnSL := line.new(bar_index, tradeSL, bar_index + lineForwardBars, tradeSL, color = color.new(color.red, 0), width = 2)
+
+    lnTP1 := line.new(bar_index, tradeTP1, bar_index + lineForwardBars, tradeTP1, color = color.new(color.lime, 0), width = 1)
+    lnTP2 := line.new(bar_index, tradeTP2, bar_index + lineForwardBars, tradeTP2, color = color.new(color.lime, 0), width = 1)
+    lnTP3 := line.new(bar_index, tradeTP3, bar_index + lineForwardBars, tradeTP3, color = color.new(color.lime, 0), width = 1)
+    lnTP4 := line.new(bar_index, tradeTP4, bar_index + lineForwardBars, tradeTP4, color = color.new(color.lime, 0), width = 1)
+    lnTP5 := line.new(bar_index, tradeTP5, bar_index + lineForwardBars, tradeTP5, color = color.new(color.lime, 0), width = 1)
+
+    signalLabel := label.new(bar_index, low, "BUY", style = label.style_label_up, color = color.new(color.green, 0), textcolor = color.white, size = size.normal)
+
+    labEntry := label.new(bar_index + lineForwardBars, tradeEntry, "Entry " + f_price(tradeEntry), style = label.style_label_left, color = color.new(color.yellow, 0), textcolor = color.black)
+    labSL := label.new(bar_index + lineForwardBars, tradeSL, "SL " + f_price(tradeSL), style = label.style_label_left, color = color.new(color.red, 0), textcolor = color.white)
+    labTP1 := label.new(bar_index + lineForwardBars, tradeTP1, "TP1 " + f_price(tradeTP1), style = label.style_label_left, color = color.new(color.green, 0), textcolor = color.white)
+    labTP2 := label.new(bar_index + lineForwardBars, tradeTP2, "TP2 " + f_price(tradeTP2), style = label.style_label_left, color = color.new(color.green, 0), textcolor = color.white)
+    labTP3 := label.new(bar_index + lineForwardBars, tradeTP3, "TP3 " + f_price(tradeTP3), style = label.style_label_left, color = color.new(color.green, 0), textcolor = color.white)
+    labTP4 := label.new(bar_index + lineForwardBars, tradeTP4, "TP4 " + f_price(tradeTP4), style = label.style_label_left, color = color.new(color.green, 0), textcolor = color.white)
+    labTP5 := label.new(bar_index + lineForwardBars, tradeTP5, "TP5 " + f_price(tradeTP5), style = label.style_label_left, color = color.new(color.green, 0), textcolor = color.white)
+
+
+//====================================================
+// REGISTER NEW SHORT VISUAL TRADE
+//====================================================
+
+if sellSignal
+    tradeDirectionection := -1
+    tradeActive := true
+    tradeStartBar := bar_index
+    tradeStatus := "Short active"
+
+    tradeEntry := close
+    tradeEntryLow := shortSetupZoneLow
+    tradeEntryHigh := shortSetupZoneHigh
+    tradeSL := shortSLPreview
+
+    risk = tradeSL - tradeEntry
+
+    tradeTP1 := tradeEntry - risk * rr1
+    tradeTP2 := tradeEntry - risk * rr2
+    tradeTP3 := tradeEntry - risk * rr3
+    tradeTP4 := tradeEntry - risk * rr4
+    tradeTP5 := tradeEntry - risk * rr5
+
+    tp1WasHit := false
+    tp2WasHit := false
+    tp3WasHit := false
+    tp4WasHit := false
+    tp5WasHit := false
+    slWasHit := false
+
+    longSetupActive := false
+    shortSetupActive := false
+
+    boxTop = math.max(tradeEntryLow, tradeEntryHigh)
+    boxBot = math.min(tradeEntryLow, tradeEntryHigh)
+
+    entryBox := box.new(
+         left = bar_index,
+         top = boxTop,
+         right = bar_index + lineForwardBars,
+         bottom = boxBot,
+         bgcolor = color.new(color.orange, 82),
+         border_color = color.new(color.orange, 0),
+         border_width = 1
+    )
+
+    lnEntryLow := line.new(bar_index, tradeEntryLow, bar_index + lineForwardBars, tradeEntryLow, color = color.new(color.orange, 0), width = 1)
+    lnEntryHigh := line.new(bar_index, tradeEntryHigh, bar_index + lineForwardBars, tradeEntryHigh, color = color.new(color.orange, 0), width = 1)
+    lnEntryMid := line.new(bar_index, tradeEntry, bar_index + lineForwardBars, tradeEntry, color = color.new(color.yellow, 0), width = 2)
+    lnSL := line.new(bar_index, tradeSL, bar_index + lineForwardBars, tradeSL, color = color.new(color.red, 0), width = 2)
+
+    lnTP1 := line.new(bar_index, tradeTP1, bar_index + lineForwardBars, tradeTP1, color = color.new(color.lime, 0), width = 1)
+    lnTP2 := line.new(bar_index, tradeTP2, bar_index + lineForwardBars, tradeTP2, color = color.new(color.lime, 0), width = 1)
+    lnTP3 := line.new(bar_index, tradeTP3, bar_index + lineForwardBars, tradeTP3, color = color.new(color.lime, 0), width = 1)
+    lnTP4 := line.new(bar_index, tradeTP4, bar_index + lineForwardBars, tradeTP4, color = color.new(color.lime, 0), width = 1)
+    lnTP5 := line.new(bar_index, tradeTP5, bar_index + lineForwardBars, tradeTP5, color = color.new(color.lime, 0), width = 1)
+
+    signalLabel := label.new(bar_index, high, "SELL", style = label.style_label_down, color = color.new(color.red, 0), textcolor = color.white, size = size.normal)
+
+    labEntry := label.new(bar_index + lineForwardBars, tradeEntry, "Entry " + f_price(tradeEntry), style = label.style_label_left, color = color.new(color.yellow, 0), textcolor = color.black)
+    labSL := label.new(bar_index + lineForwardBars, tradeSL, "SL " + f_price(tradeSL), style = label.style_label_left, color = color.new(color.red, 0), textcolor = color.white)
+    labTP1 := label.new(bar_index + lineForwardBars, tradeTP1, "TP1 " + f_price(tradeTP1), style = label.style_label_left, color = color.new(color.green, 0), textcolor = color.white)
+    labTP2 := label.new(bar_index + lineForwardBars, tradeTP2, "TP2 " + f_price(tradeTP2), style = label.style_label_left, color = color.new(color.green, 0), textcolor = color.white)
+    labTP3 := label.new(bar_index + lineForwardBars, tradeTP3, "TP3 " + f_price(tradeTP3), style = label.style_label_left, color = color.new(color.green, 0), textcolor = color.white)
+    labTP4 := label.new(bar_index + lineForwardBars, tradeTP4, "TP4 " + f_price(tradeTP4), style = label.style_label_left, color = color.new(color.green, 0), textcolor = color.white)
+    labTP5 := label.new(bar_index + lineForwardBars, tradeTP5, "TP5 " + f_price(tradeTP5), style = label.style_label_left, color = color.new(color.green, 0), textcolor = color.white)
+
+
+//====================================================
+// VISUAL TP / SL HIT DETECTION
+//====================================================
+
+canCheckTrade =
+     barstate.isconfirmed and
+     tradeActive and
+     not na(tradeStartBar) and
+     bar_index > tradeStartBar
+
+tp1HitNow =
+     canCheckTrade and
+     not tp1WasHit and
+     not na(tradeTP1) and
+     (tradeDirectionection == 1 ? high >= tradeTP1 : low <= tradeTP1)
+
+tp2HitNow =
+     canCheckTrade and
+     not tp2WasHit and
+     not na(tradeTP2) and
+     (tradeDirectionection == 1 ? high >= tradeTP2 : low <= tradeTP2)
+
+tp3HitNow =
+     canCheckTrade and
+     not tp3WasHit and
+     not na(tradeTP3) and
+     (tradeDirectionection == 1 ? high >= tradeTP3 : low <= tradeTP3)
+
+tp4HitNow =
+     canCheckTrade and
+     not tp4WasHit and
+     not na(tradeTP4) and
+     (tradeDirectionection == 1 ? high >= tradeTP4 : low <= tradeTP4)
+
+tp5HitNow =
+     canCheckTrade and
+     not tp5WasHit and
+     not na(tradeTP5) and
+     (tradeDirectionection == 1 ? high >= tradeTP5 : low <= tradeTP5)
+
+slHitNow =
+     canCheckTrade and
+     not slWasHit and
+     not na(tradeSL) and
+     (tradeDirectionection == 1 ? low <= tradeSL : high >= tradeSL)
+
+if tp1HitNow
+    tp1WasHit := true
+    tradeStatus := "TP1 hit"
+
+    if showBE and na(lnBE)
+        lnBE := line.new(
+             bar_index,
+             tradeEntry,
+             bar_index + lineForwardBars,
+             tradeEntry,
+             color = color.new(color.gray, 0),
+             width = 1,
+             style = line.style_dashed
+        )
+
+        labBE := label.new(
+             bar_index + lineForwardBars,
+             tradeEntry,
+             "BE " + f_price(tradeEntry),
+             style = label.style_label_left,
+             color = color.new(color.gray, 0),
+             textcolor = color.white
+        )
+
+if tp2HitNow
+    tp2WasHit := true
+    tradeStatus := "TP2 hit"
+
+if tp3HitNow
+    tp3WasHit := true
+    tradeStatus := "TP3 hit"
+
+if tp4HitNow
+    tp4WasHit := true
+    tradeStatus := "TP4 hit"
+
+if tp5HitNow
+    tp5WasHit := true
+    tradeStatus := "TP5 hit / closed"
+    tradeActive := false
+    tradeDirectionection := 0
+
+if slHitNow
+    slWasHit := true
+    tradeStatus := "SL hit / closed"
+    tradeActive := false
+    tradeDirectionection := 0
+
+//====================================================
+// NOTIFICATION HELPER FUNCTIONS
+// TradingView notification is always the base.
+// Additional notification is optional.
+//====================================================
+var int tradeDir = 0
+
+f_jsonEscape(string s) =>
+    string _s = s
+    _s := str.replace_all(_s, "\\", "\\\\")
+    _s := str.replace_all(_s, "\"", "\\\"")
+    _s := str.replace_all(_s, "\n", "\\n")
+    _s
+
+f_eventEmoji(string eventName) =>
+    string _emoji = ""
+
+    if notifyUseEmoji
+        if eventName == "BUY"
+            _emoji := "🟢 "
+        else if eventName == "SELL"
+            _emoji := "🔴 "
+        else if str.contains(eventName, "TP")
+            _emoji := "✅ "
+        else if eventName == "SL"
+            _emoji := "❌ "
+        else if eventName == "SETUP"
+            _emoji := "🔵 "
+        else
+            _emoji := "ℹ️ "
+
+    _emoji
+
+f_eventSide(string eventName, int dir) =>
+    string _side = "N/A"
+
+    if eventName == "BUY"
+        _side := "LONG"
+    else if eventName == "SELL"
+        _side := "SHORT"
+    else if dir == 1
+        _side := "LONG"
+    else if dir == -1
+        _side := "SHORT"
+
+    _side
+
+f_plainMessage(
+     string eventName,
+     string detailText,
+     int dir,
+     float entry,
+     float entryLow,
+     float entryHigh,
+     float tp1,
+     float tp2,
+     float tp3,
+     float tp4,
+     float tp5,
+     float sl
+) =>
+    string _emoji = f_eventEmoji(eventName)
+    string _side = f_eventSide(eventName, dir)
+
+    _emoji + notifyPrefix + "\n" +
+     "Event: " + eventName + "\n" +
+     "Detail: " + detailText + "\n" +
+     "Symbol: " + syminfo.ticker + "\n" +
+     "Exchange: " + syminfo.prefix + "\n" +
+     "Timeframe: " + timeframe.period + "\n" +
+     "Side: " + _side + "\n" +
+     "Price: " + f_price(close) + "\n" +
+     "Entry: " + f_price(entry) + "\n" +
+     "Entry Range: " + f_price(entryLow) + " - " + f_price(entryHigh) + "\n" +
+     "TP1: " + f_price(tp1) + "\n" +
+     "TP2: " + f_price(tp2) + "\n" +
+     "TP3: " + f_price(tp3) + "\n" +
+     "TP4: " + f_price(tp4) + "\n" +
+     "TP5: " + f_price(tp5) + "\n" +
+     "SL: " + f_price(sl)
+
+f_telegramJson(string msg) =>
+    "{" +
+     "\"chat_id\":\"" + f_jsonEscape(telegramChatId) + "\"," +
+     "\"text\":\"" + f_jsonEscape(msg) + "\"," +
+     "\"disable_web_page_preview\":true" +
+     "}"
+
+f_universalJson(
+     string eventName,
+     string detailText,
+     string msg,
+     int dir,
+     float entry,
+     float entryLow,
+     float entryHigh,
+     float tp1,
+     float tp2,
+     float tp3,
+     float tp4,
+     float tp5,
+     float sl
+) =>
+    "{" +
+     "\"channel\":\"universal\"," +
+     "\"source\":\"tradingview\"," +
+     "\"indicator\":\"" + f_jsonEscape(notifyPrefix) + "\"," +
+     "\"event\":\"" + f_jsonEscape(eventName) + "\"," +
+     "\"detail\":\"" + f_jsonEscape(detailText) + "\"," +
+     "\"symbol\":\"" + f_jsonEscape(syminfo.ticker) + "\"," +
+     "\"exchange\":\"" + f_jsonEscape(syminfo.prefix) + "\"," +
+     "\"timeframe\":\"" + f_jsonEscape(timeframe.period) + "\"," +
+     "\"side\":\"" + f_jsonEscape(f_eventSide(eventName, dir)) + "\"," +
+     "\"price\":\"" + f_price(close) + "\"," +
+     "\"entry\":\"" + f_price(entry) + "\"," +
+     "\"entry_low\":\"" + f_price(entryLow) + "\"," +
+     "\"entry_high\":\"" + f_price(entryHigh) + "\"," +
+     "\"tp1\":\"" + f_price(tp1) + "\"," +
+     "\"tp2\":\"" + f_price(tp2) + "\"," +
+     "\"tp3\":\"" + f_price(tp3) + "\"," +
+     "\"tp4\":\"" + f_price(tp4) + "\"," +
+     "\"tp5\":\"" + f_price(tp5) + "\"," +
+     "\"sl\":\"" + f_price(sl) + "\"," +
+     "\"message\":\"" + f_jsonEscape(msg) + "\"" +
+     "}"
+
+f_notifyPayload(
+     string eventName,
+     string detailText,
+     int dir,
+     float entry,
+     float entryLow,
+     float entryHigh,
+     float tp1,
+     float tp2,
+     float tp3,
+     float tp4,
+     float tp5,
+     float sl
+) =>
+    string _msg = f_plainMessage(
+         eventName,
+         detailText,
+         dir,
+         entry,
+         entryLow,
+         entryHigh,
+         tp1,
+         tp2,
+         tp3,
+         tp4,
+         tp5,
+         sl
+    )
+
+    string _payload = _msg
+
+    if notifyExtra == "Telegram Direct"
+        _payload := f_telegramJson(_msg)
+    else if notifyExtra == "Universal Webhook"
+        _payload := f_universalJson(
+             eventName,
+             detailText,
+             _msg,
+             dir,
+             entry,
+             entryLow,
+             entryHigh,
+             tp1,
+             tp2,
+             tp3,
+             tp4,
+             tp5,
+             sl
+        )
+    else
+        // None หรือ Email by TradingView ใช้ plain message
+        _payload := _msg
+
+    _payload
+
+f_sendNotify(
+     string eventName,
+     string detailText,
+     int dir,
+     float entry,
+     float entryLow,
+     float entryHigh,
+     float tp1,
+     float tp2,
+     float tp3,
+     float tp4,
+     float tp5,
+     float sl
+) =>
+    if notifyEnabled and notifyExtra != "Robot Trade (Spot)"
+        alert(
+             f_notifyPayload(
+                  eventName,
+                  detailText,
+                  dir,
+                  entry,
+                  entryLow,
+                  entryHigh,
+                  tp1,
+                  tp2,
+                  tp3,
+                  tp4,
+                  tp5,
+                  sl
+             ),
+             alert.freq_once_per_bar_close
+        )
+
+//====================================================
+// NOTIFICATION TRIGGERS
+// TradingView notification fires every time.
+// Additional notification depends on notifyExtra.
+// Use TradingView alert condition:
+// "Any alert() function call"
+//====================================================
+
+if notifyOnSetup and newLongSetup
+    f_sendNotify(
+         "SETUP",
+         "Long setup zone touched",
+         1,
+         na,
+         longSetupZoneLow,
+         longSetupZoneHigh,
+         na,
+         na,
+         na,
+         na,
+         na,
+         na
+    )
+
+if notifyOnSetup and newShortSetup
+    f_sendNotify(
+         "SETUP",
+         "Short setup zone touched",
+         -1,
+         na,
+         shortSetupZoneLow,
+         shortSetupZoneHigh,
+         na,
+         na,
+         na,
+         na,
+         na,
+         na
+    )
+
+if notifyOnSignal and buySignal
+    f_sendNotify(
+         "BUY",
+         "New BUY signal confirmed on candle close",
+         tradeDir,
+         tradeEntry,
+         tradeEntryLow,
+         tradeEntryHigh,
+         tradeTP1,
+         tradeTP2,
+         tradeTP3,
+         tradeTP4,
+         tradeTP5,
+         tradeSL
+    )
+
+if notifyOnSignal and sellSignal
+    f_sendNotify(
+         "SELL",
+         "New SELL signal confirmed on candle close",
+         tradeDir,
+         tradeEntry,
+         tradeEntryLow,
+         tradeEntryHigh,
+         tradeTP1,
+         tradeTP2,
+         tradeTP3,
+         tradeTP4,
+         tradeTP5,
+         tradeSL
+    )
+
+if notifyOnTP and tp1HitNow
+    f_sendNotify("TP1", "Take profit 1 reached", tradeDir, tradeEntry, tradeEntryLow, tradeEntryHigh, tradeTP1, tradeTP2, tradeTP3, tradeTP4, tradeTP5, tradeSL)
+
+if notifyOnTP and tp2HitNow
+    f_sendNotify("TP2", "Take profit 2 reached", tradeDir, tradeEntry, tradeEntryLow, tradeEntryHigh, tradeTP1, tradeTP2, tradeTP3, tradeTP4, tradeTP5, tradeSL)
+
+if notifyOnTP and tp3HitNow
+    f_sendNotify("TP3", "Take profit 3 reached", tradeDir, tradeEntry, tradeEntryLow, tradeEntryHigh, tradeTP1, tradeTP2, tradeTP3, tradeTP4, tradeTP5, tradeSL)
+
+if notifyOnTP and tp4HitNow
+    f_sendNotify("TP4", "Take profit 4 reached", tradeDir, tradeEntry, tradeEntryLow, tradeEntryHigh, tradeTP1, tradeTP2, tradeTP3, tradeTP4, tradeTP5, tradeSL)
+
+if notifyOnTP and tp5HitNow
+    f_sendNotify("TP5", "Take profit 5 reached", tradeDir, tradeEntry, tradeEntryLow, tradeEntryHigh, tradeTP1, tradeTP2, tradeTP3, tradeTP4, tradeTP5, tradeSL)
+
+if notifyOnSL and slHitNow
+    f_sendNotify("SL", "Stop loss reached", tradeDir, tradeEntry, tradeEntryLow, tradeEntryHigh, tradeTP1, tradeTP2, tradeTP3, tradeTP4, tradeTP5, tradeSL)
+
+//====================================================
+// EXTEND OBJECTS
+//====================================================
+
+if barstate.islast
+    rightX = bar_index + lineForwardBars
+
+    if not na(entryBox)
+        box.set_right(entryBox, rightX)
+
+    if not na(lnEntryLow)
+        line.set_x2(lnEntryLow, rightX)
+
+    if not na(lnEntryHigh)
+        line.set_x2(lnEntryHigh, rightX)
+
+    if not na(lnEntryMid)
+        line.set_x2(lnEntryMid, rightX)
+
+    if not na(lnSL)
+        line.set_x2(lnSL, rightX)
+
+    if not na(lnTP1)
+        line.set_x2(lnTP1, rightX)
+
+    if not na(lnTP2)
+        line.set_x2(lnTP2, rightX)
+
+    if not na(lnTP3)
+        line.set_x2(lnTP3, rightX)
+
+    if not na(lnTP4)
+        line.set_x2(lnTP4, rightX)
+
+    if not na(lnTP5)
+        line.set_x2(lnTP5, rightX)
+
+    if not na(lnBE)
+        line.set_x2(lnBE, rightX)
+
+    if not na(labEntry)
+        label.set_x(labEntry, rightX)
+        label.set_y(labEntry, tradeEntry)
+        label.set_text(labEntry, "Entry " + f_price(tradeEntry))
+
+    if not na(labSL)
+        label.set_x(labSL, rightX)
+        label.set_y(labSL, tradeSL)
+        label.set_text(labSL, "SL " + f_price(tradeSL))
+
+    if not na(labTP1)
+        label.set_x(labTP1, rightX)
+        label.set_y(labTP1, tradeTP1)
+        label.set_text(labTP1, "TP1 " + f_price(tradeTP1))
+
+    if not na(labTP2)
+        label.set_x(labTP2, rightX)
+        label.set_y(labTP2, tradeTP2)
+        label.set_text(labTP2, "TP2 " + f_price(tradeTP2))
+
+    if not na(labTP3)
+        label.set_x(labTP3, rightX)
+        label.set_y(labTP3, tradeTP3)
+        label.set_text(labTP3, "TP3 " + f_price(tradeTP3))
+
+    if not na(labTP4)
+        label.set_x(labTP4, rightX)
+        label.set_y(labTP4, tradeTP4)
+        label.set_text(labTP4, "TP4 " + f_price(tradeTP4))
+
+    if not na(labTP5)
+        label.set_x(labTP5, rightX)
+        label.set_y(labTP5, tradeTP5)
+        label.set_text(labTP5, "TP5 " + f_price(tradeTP5))
+
+    if not na(labBE)
+        label.set_x(labBE, rightX)
+        label.set_y(labBE, tradeEntry)
+        label.set_text(labBE, "BE " + f_price(tradeEntry))
+
+
+//====================================================
+// PLOTS
+//====================================================
+
+plot(
+     showEMA ? emaFast : na,
+     "EMA Fast",
+     color = color.new(color.yellow, 0),
+     linewidth = 2
+)
+
+plot(
+     showEMA ? emaSlow : na,
+     "EMA Slow",
+     color = color.new(color.orange, 0),
+     linewidth = 1
+)
+
+plot(
+     showSuperTrend ? stLine : na,
+     "SuperTrend",
+     color = stBull ? color.new(color.lime, 0) : color.new(color.red, 0),
+     linewidth = 3
+)
+
+pBuyLow = plot(
+     showLiveZone and longBias ? buyZoneLow : na,
+     "Live Buy Zone Low",
+     color = color.new(color.blue, 80)
+)
+
+pBuyHigh = plot(
+     showLiveZone and longBias ? buyZoneHigh : na,
+     "Live Buy Zone High",
+     color = color.new(color.blue, 80)
+)
+
+pSellLow = plot(
+     showLiveZone and shortBias ? sellZoneLow : na,
+     "Live Sell Zone Low",
+     color = color.new(color.orange, 80)
+)
+
+pSellHigh = plot(
+     showLiveZone and shortBias ? sellZoneHigh : na,
+     "Live Sell Zone High",
+     color = color.new(color.orange, 80)
+)
+
+fill(
+     pBuyLow,
+     pBuyHigh,
+     color = showLiveZone ? color.new(color.blue, 92) : na
+)
+
+fill(
+     pSellLow,
+     pSellHigh,
+     color = showLiveZone ? color.new(color.orange, 92) : na
+)
+
+bgcolor(
+     showRibbon ?
+     longBias ? color.new(color.green, 91) :
+     shortBias ? color.new(color.red, 91) :
+     color.new(color.gray, 95) :
+     na
+)
+
+plotshape(
+     showSetupMarks and newLongSetup,
+     title = "Long Setup",
+     style = shape.circle,
+     location = location.belowbar,
+     color = color.new(color.blue, 0),
+     size = size.tiny,
+     text = "Z"
+)
+
+plotshape(
+     showSetupMarks and newShortSetup,
+     title = "Short Setup",
+     style = shape.circle,
+     location = location.abovebar,
+     color = color.new(color.orange, 0),
+     size = size.tiny,
+     text = "Z"
+)
+
+plotshape(
+     buySignal,
+     title = "BUY Signal",
+     style = shape.labelup,
+     location = location.belowbar,
+     color = color.new(color.green, 0),
+     textcolor = color.white,
+     text = "BUY",
+     size = size.small
+)
+
+plotshape(
+     sellSignal,
+     title = "SELL Signal",
+     style = shape.labeldown,
+     location = location.abovebar,
+     color = color.new(color.red, 0),
+     textcolor = color.white,
+     text = "SELL",
+     size = size.small
+)
+
+//====================================================
+// LIVE SIGNAL DISPLAY STATE
+//====================================================
+
+liveSignalText =
+     buySignal ? "BUY / LONG" :
+     sellSignal ? "SELL / SHORT" :
+     "WAITING"
+
+liveSignalColor =
+     buySignal ? color.new(color.green, 0) :
+     sellSignal ? color.new(color.red, 0) :
+     color.new(color.blue, 0)
+
+displayStatus =
+     buySignal ? "New BUY signal" :
+     sellSignal ? "New SELL signal" :
+     tradeActive ? tradeStatus :
+     "Waiting"
+
+//====================================================
+// 4-COLUMN SIGNAL + BACKTEST DASHBOARD
+// Column 1-2 = Signal dashboard
+// Column 3-4 = Backtest dashboard
+//====================================================
+
+dashTextSize = f_textSize(dashboardTextSizeInput)
+
+var table dash = table.new(
+     position.top_right,
+     4,
+     18,
+     border_width = 1
+)
+
+f_dashPair(int row, int leftCol, string leftText, string rightText, color rightBg) =>
+    table.cell(
+         dash,
+         leftCol,
+         row,
+         leftText,
+         bgcolor = color.new(color.black, 0),
+         text_color = color.white,
+         text_size = dashTextSize
+    )
+
+    table.cell(
+         dash,
+         leftCol + 1,
+         row,
+         rightText,
+         bgcolor = rightBg,
+         text_color = color.white,
+         text_size = dashTextSize
+    )
+
+if showDashboard and barstate.islast
+    //==============================
+    // Signal side variables
+    //==============================
+
+    headerBg = liveSignalColor
+
+    trendText =
+         trendState == 1 ? "Uptrend" :
+         trendState == -1 ? "Downtrend" :
+         "Neutral"
+
+    mtfText =
+         not useMTF or mtfMode == "Off" ? "OFF" :
+         trendState == 1 and mtfBullOK ? "Bullish " + str.tostring(mtfBullScore) + "/2" :
+         trendState == -1 and mtfBearOK ? "Bearish " + str.tostring(mtfBearScore) + "/2" :
+         "Mixed"
+
+    setupText =
+         longSetupActive ? "Long setup" :
+         shortSetupActive ? "Short setup" :
+         "None"
+
+    //==============================
+    // Backtest side variables
+    //==============================
+
+    btStatus =
+         btPos == 1 ? "Open Long" :
+         btPos == -1 ? "Open Short" :
+         "Flat"
+
+    pfText =
+         na(btProfitFactor) ? "—" : str.tostring(btProfitFactor, "#.##")
+
+    openRText =
+         na(btOpenR) ? "—" : str.tostring(btOpenR, "#.##") + "R"
+
+    wrText =
+         na(btWinRate) ? "—" : str.tostring(btWinRate, "#.##") + "%"
+
+    expText =
+         na(btExpectancy) ? "—" : str.tostring(btExpectancy, "#.##") + "R"
+
+    longWRText =
+         na(btLongWinRate) ? "—" : str.tostring(btLongWinRate, "#.##") + "%"
+
+    shortWRText =
+         na(btShortWinRate) ? "—" : str.tostring(btShortWinRate, "#.##") + "%"
+
+    btHeaderColor =
+         btNetR > 0 ? color.new(color.green, 0) :
+         btNetR < 0 ? color.new(color.red, 0) :
+         color.new(color.blue, 0)
+
+    //================================================
+    // ROW 0: Headers
+    //================================================
+
+    table.cell(
+         dash,
+         0,
+         0,
+         "SPT PRO",
+         bgcolor = headerBg,
+         text_color = color.white,
+         text_size = dashTextSize
+    )
+
+    table.cell(
+         dash,
+         1,
+         0,
+         liveSignalText,
+         bgcolor = headerBg,
+         text_color = color.white,
+         text_size = dashTextSize
+    )
+
+    table.cell(
+         dash,
+         2,
+         0,
+         "BACKTEST",
+         bgcolor = btHeaderColor,
+         text_color = color.white,
+         text_size = dashTextSize
+    )
+
+    table.cell(
+         dash,
+         3,
+         0,
+         btTargetMode + " Exit",
+         bgcolor = btHeaderColor,
+         text_color = color.white,
+         text_size = dashTextSize
+    )
+
+    //================================================
+    // ROW 1-17
+    // Left side = Signal dashboard
+    // Right side = Backtest dashboard
+    //================================================
+
+    f_dashPair(1, 0, "Direction", tradeDirectionectionection, color.new(color.blue, 0))
+
+    f_dashPair(
+         1,
+         2,
+         "BT Status",
+         btStatus,
+         btPos == 1 ? color.new(color.green, 0) :
+         btPos == -1 ? color.new(color.red, 0) :
+         color.new(color.gray, 0)
+    )
+
+    f_dashPair(2, 0, "Chart TF", timeframe.period, color.new(color.gray, 0))
+    f_dashPair(2, 2, "Trades", str.tostring(btTrades), color.new(color.gray, 0))
+
+    f_dashPair(3, 0, "HTF", htf1 + " / " + htf2, color.new(color.blue, 0))
+    f_dashPair(3, 2, "Wins/Losses", str.tostring(btWins) + " / " + str.tostring(btLosses), color.new(color.gray, 0))
+
+    f_dashPair(4, 0, "HTF Mode", mtfMode, color.new(color.blue, 0))
+
+    f_dashPair(
+         4,
+         2,
+         "Win Rate",
+         wrText,
+         na(btWinRate) ? color.new(color.gray, 0) :
+         btWinRate >= 50 ? color.new(color.green, 0) :
+         color.new(color.red, 0)
+    )
+
+    f_dashPair(
+         5,
+         0,
+         "Trend",
+         trendText,
+         trendState == 1 ? color.new(color.green, 0) :
+         trendState == -1 ? color.new(color.red, 0) :
+         color.new(color.gray, 0)
+    )
+
+    f_dashPair(
+         5,
+         2,
+         "Net R",
+         str.tostring(btNetR, "#.##") + "R",
+         btNetR >= 0 ? color.new(color.green, 0) :
+         color.new(color.red, 0)
+    )
+
+    f_dashPair(
+         6,
+         0,
+         "HTF Bias",
+         mtfText,
+         mtfText == "Mixed" ? color.new(color.orange, 0) :
+         mtfText == "OFF" ? color.new(color.gray, 0) :
+         color.new(color.green, 0)
+    )
+
+    f_dashPair(
+         6,
+         2,
+         "Profit Factor",
+         pfText,
+         na(btProfitFactor) ? color.new(color.gray, 0) :
+         btProfitFactor >= 1 ? color.new(color.green, 0) :
+         color.new(color.red, 0)
+    )
+
+    f_dashPair(
+         7,
+         0,
+         "Setup",
+         setupText,
+         setupText == "None" ? color.new(color.gray, 0) :
+         color.new(color.blue, 0)
+    )
+
+    f_dashPair(
+         7,
+         2,
+         "Max DD",
+         str.tostring(btMaxDDR, "#.##") + "R",
+         color.new(color.red, 0)
+    )
+
+    f_dashPair(
+         8,
+         0,
+         "Status",
+         displayStatus,
+         buySignal ? color.new(color.green, 0) :
+         sellSignal ? color.new(color.red, 0) :
+         tradeActive ? color.new(color.blue, 0) :
+         color.new(color.gray, 0)
+    )
+
+    f_dashPair(
+         8,
+         2,
+         "Expectancy",
+         expText,
+         na(btExpectancy) ? color.new(color.gray, 0) :
+         btExpectancy >= 0 ? color.new(color.green, 0) :
+         color.new(color.red, 0)
+    )
+
+    f_dashPair(
+         9,
+         0,
+         "Entry Range",
+         f_price(tradeEntryLow) + " - " + f_price(tradeEntryHigh),
+         color.new(color.blue, 0)
+    )
+
+    f_dashPair(
+         9,
+         2,
+         "Open R",
+         openRText,
+         na(btOpenR) ? color.new(color.gray, 0) :
+         btOpenR >= 0 ? color.new(color.green, 0) :
+         color.new(color.red, 0)
+    )
+
+    f_dashPair(
+         10,
+         0,
+         "Entry",
+         f_price(tradeEntry),
+         color.new(color.yellow, 20)
+    )
+
+    f_dashPair(
+         10,
+         2,
+         "Long Trades",
+         str.tostring(btLongTrades) + " | WR " + longWRText,
+         color.new(color.gray, 0)
+    )
+
+    f_dashPair(
+         11,
+         0,
+         "TP1",
+         f_price(tradeTP1) + (tp1WasHit ? " ✓" : ""),
+         tp1WasHit ? color.new(color.green, 0) :
+         color.new(color.black, 0)
+    )
+
+    f_dashPair(
+         11,
+         2,
+         "Short Trades",
+         str.tostring(btShortTrades) + " | WR " + shortWRText,
+         color.new(color.gray, 0)
+    )
+
+    f_dashPair(
+         12,
+         0,
+         "TP2",
+         f_price(tradeTP2) + (tp2WasHit ? " ✓" : ""),
+         tp2WasHit ? color.new(color.green, 0) :
+         color.new(color.black, 0)
+    )
+
+    f_dashPair(
+         12,
+         2,
+         "Last Trade",
+         na(btLastR) ? "—" : str.tostring(btLastR, "#.##") + "R",
+         na(btLastR) ? color.new(color.gray, 0) :
+         btLastR >= 0 ? color.new(color.green, 0) :
+         color.new(color.red, 0)
+    )
+
+    f_dashPair(
+         13,
+         0,
+         "TP3",
+         f_price(tradeTP3) + (tp3WasHit ? " ✓" : ""),
+         tp3WasHit ? color.new(color.green, 0) :
+         color.new(color.black, 0)
+    )
+
+    f_dashPair(
+         13,
+         2,
+         "Max Streak",
+         "W " + str.tostring(btMaxWinStreak) + " / L " + str.tostring(btMaxLossStreak),
+         color.new(color.gray, 0)
+    )
+
+    f_dashPair(
+         14,
+         0,
+         "TP4",
+         f_price(tradeTP4) + (tp4WasHit ? " ✓" : ""),
+         tp4WasHit ? color.new(color.green, 0) :
+         color.new(color.black, 0)
+    )
+
+    f_dashPair(
+         14,
+         2,
+         "Same-bar",
+         btSameBarMode,
+         btSameBarMode == "Conservative" ? color.new(color.orange, 0) :
+         color.new(color.blue, 0)
+    )
+
+    f_dashPair(
+         15,
+         0,
+         "TP5",
+         f_price(tradeTP5) + (tp5WasHit ? " ✓" : ""),
+         tp5WasHit ? color.new(color.green, 0) :
+         color.new(color.black, 0)
+    )
+
+    f_dashPair(
+         15,
+         2,
+         "BT Open",
+         btPos == 0 ? "No position" :
+         btPos == 1 ? "Long" :
+         "Short",
+         btPos == 1 ? color.new(color.green, 0) :
+         btPos == -1 ? color.new(color.red, 0) :
+         color.new(color.gray, 0)
+    )
+
+    f_dashPair(
+         16,
+         0,
+         "SL",
+         f_price(tradeSL) + (slWasHit ? " ✕" : ""),
+         slWasHit ? color.new(color.red, 0) :
+         color.new(color.black, 0)
+    )
+
+    f_dashPair(
+         16,
+         2,
+         "Notify",
+         notifyRouteText,
+         notifyEnabled ? color.new(color.blue, 0) : color.new(color.gray, 0)
+    )
+
+//====================================================
+// @CONTACT
+//====================================================
+    f_dashPair(
+         17,
+         0,
+         "Contact",
+         "sanchat.fin@gmail.com",
+         color.new(color.black, 0)
+    )
+
+    f_dashPair(
+         17,
+         2,
+         "TradingView",
+         "@MikeSanchat",
+         color.new(color.black, 0)
+    )
+
+//====================================================
+// ALERTS
+//====================================================
+
+alertcondition(
+     buySignal,
+     title = "SPT PRO BUY",
+     message = "SPT PRO BUY on {{ticker}} {{interval}}"
+)
+
+alertcondition(
+     sellSignal,
+     title = "SPT PRO SELL",
+     message = "SPT PRO SELL on {{ticker}} {{interval}}"
+)
+
+alertcondition(
+     tp1HitNow,
+     title = "SPT PRO TP1 Hit",
+     message = "SPT PRO TP1 hit on {{ticker}} {{interval}}"
+)
+
+alertcondition(
+     tp2HitNow,
+     title = "SPT PRO TP2 Hit",
+     message = "SPT PRO TP2 hit on {{ticker}} {{interval}}"
+)
+
+alertcondition(
+     tp3HitNow,
+     title = "SPT PRO TP3 Hit",
+     message = "SPT PRO TP3 hit on {{ticker}} {{interval}}"
+)
+
+alertcondition(
+     tp4HitNow,
+     title = "SPT PRO TP4 Hit",
+     message = "SPT PRO TP4 hit on {{ticker}} {{interval}}"
+)
+
+alertcondition(
+     tp5HitNow,
+     title = "SPT PRO TP5 Hit",
+     message = "SPT PRO TP5 hit on {{ticker}} {{interval}}"
+)
+
+alertcondition(
+     slHitNow,
+     title = "SPT PRO SL Hit",
+     message = "SPT PRO SL hit on {{ticker}} {{interval}}"
+)
+
+// ROBOT TRADE BRIDGE BEGIN
+// Transport state only: does not change SPT signals, drawings or backtest.
+// One dedicated Spot paper bot per alert. Start/recreate alerts only when flat.
+groupRobot = "11. Robot Trade - Spot Paper"
+rtTag = input.string("spt1", "Unique alert deployment ID (1-12 letters/digits)", group = groupRobot)
+rtBroker = input.string("Binance Global", "Broker", options = ["Binance Global", "Binance TH", "InnovestX", "Settrade"], group = groupRobot)
+rtRisk = input.float(0.5, "Risk per BUY (% equity; server limits still apply)", minval = 0.01, maxval = 100, step = 0.1, group = groupRobot)
+rtExitOnSell = input.bool(false, "Opposite SELL closes existing long (never opens Short)", group = groupRobot)
+rtNews = input.bool(false, "Manually block BUY for news (not a news feed)", group = groupRobot)
+rtEnabled = notifyEnabled and notifyExtra == "Robot Trade (Spot)"
+if barstate.isfirst and rtEnabled
+    if str.length(rtTag) < 1 or str.length(rtTag) > 12 or str.match(rtTag, "^[A-Za-z0-9]+$") != rtTag
+        runtime.error("Robot Trade: deployment ID must be 1-12 letters/digits.")
+    if not chart.is_standard
+        runtime.error("Robot Trade: use standard candles, not synthetic charts.")
+
+// Price strings preserve decimal precision through the PostgreSQL normalizer.
+f_rtPayload(string ev, float px, float stop, float target, float vol, int stamp) =>
+    string id = "SPT-" + rtTag + "-" + syminfo.ticker + "-" + timeframe.period + "-" + str.tostring(stamp) + "-" + ev
+    if str.length(id) > 80
+        runtime.error("Robot Trade: trade_id exceeds 80 characters.")
+    string riskPart = ev == "BUY" ? ',"risk_mode":"PERCENT_EQUITY","risk_value":"' + str.tostring(rtRisk, "0.########") + '","stop_loss":"' + str.tostring(stop, format.mintick) + '","take_profit":"' + str.tostring(target, format.mintick) + '"' : ',"risk_mode":"QUANTITY"'
+    string payload = '{"trade_id":"' + f_jsonEscape(id) + '","broker":"' + f_jsonEscape(rtBroker) + '","symbol":"' + f_jsonEscape(syminfo.ticker) + '","timeframe":"' + f_jsonEscape(timeframe.period) + '","event":"' + ev + '","side":"' + (ev == "BUY" ? "BUY" : "SELL") + '","account_type":"Spot","order_type":"MARKET","timestamp":' + str.tostring(stamp) + ',"reference_price":"' + str.tostring(px, format.mintick) + '","reduce_only":' + (ev == "BUY" ? "false" : "true") + ',"leverage":1,"volatility_percent":' + str.tostring(vol, "0.########") + ',"news_risk":' + (rtNews ? "true" : "false") + riskPart + '}'
+    payload
+
+// This tracks EMITTED alerts, not broker acceptance. No webhook response reaches Pine.
+var bool rtLong = false
+var float rtStop = na
+var float rtTarget = na
+var int rtEntryBar = na
+if rtEnabled and barstate.isrealtime and barstate.isconfirmed
+    if na(time_close)
+        runtime.error("Robot Trade: chart must provide a bar-close timestamp.")
+    float rtPrice = math.round_to_mintick(close)
+    float rtVol = na(atr) or close <= 0 ? 0.0 : 100.0 * atr / close
+    string rtEvent = ""
+    if rtLong and bar_index > rtEntryBar
+        bool stopHit = low <= rtStop
+        bool targetHit = high >= rtTarget
+        if stopHit and targetHit
+            rtEvent := btSameBarMode == "Conservative" ? "SL" : "TP"
+        else if stopHit
+            rtEvent := "SL"
+        else if targetHit
+            rtEvent := "TP"
+        else if rtExitOnSell and sellSignal
+            rtEvent := "SELL"
+        if rtEvent != ""
+            // Omit quantity: current server closes ALL holdings of this bot/symbol.
+            alert(f_rtPayload(rtEvent, rtPrice, na, na, rtVol, time_close), alert.freq_once_per_bar_close)
+            rtLong := false
+            rtStop := na
+            rtTarget := na
+            rtEntryBar := na
+    else if not rtLong and buySignal and not rtNews
+        float nextStop = math.round_to_mintick(longSLPreview)
+        float nextTarget = math.round_to_mintick(close + (close - longSLPreview) * f_targetRR())
+        if rtPrice > 0 and not na(nextStop) and nextStop > 0 and nextStop < rtPrice and nextTarget > rtPrice and not na(atr)
+            rtStop := nextStop
+            rtTarget := nextTarget
+            rtEntryBar := bar_index
+            rtLong := true
+            alert(f_rtPayload("BUY", rtPrice, rtStop, rtTarget, rtVol, time_close), alert.freq_once_per_bar_close)
+// ROBOT TRADE BRIDGE END
+
