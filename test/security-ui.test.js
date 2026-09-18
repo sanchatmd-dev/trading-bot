@@ -23,6 +23,37 @@ async function fixture({authenticated=true,hash=''}={}){
   return {w,d:w.document,calls,respond:fn=>respond=fn,close:()=>w.close()};
 }
 
+test('login password permits typing, deletion, shortcuts and IME without cancelling native input',async()=>{
+  const f=await fixture({authenticated:false}),{w,d,calls}=f;
+  try{
+    const password=d.querySelector('#password');
+    const before=calls.length;
+    for(const options of [
+      {key:'a'},{key:'A',shiftKey:true},{key:'Backspace'},{key:'Delete'},
+      {key:'ArrowLeft'},{key:'ArrowRight'},{key:'Tab'},
+      {key:'v',ctrlKey:true},{key:'a',metaKey:true},
+      {key:'Unidentified',keyCode:229},{key:'Enter',isComposing:true},
+      {key:'Enter',keyCode:229},{key:'Enter',repeat:true}
+    ]){
+      const event=new w.KeyboardEvent('keydown',{bubbles:true,cancelable:true,...options});
+      assert.equal(password.dispatchEvent(event),true,JSON.stringify(options));
+      assert.equal(event.defaultPrevented,false,JSON.stringify(options));
+    }
+    assert.equal(calls.length,before,'Editing and composition must not submit login');
+    d.querySelector('#email').value='owner@example.test';
+    password.value='test-password';
+    f.respond(()=>({mfaRequired:true}));
+    const enter=new w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true});
+    password.dispatchEvent(enter);
+    await settle();
+    assert.equal(enter.defaultPrevented,true);
+    const logins=calls.filter(call=>call.path==='/api/auth/login');
+    assert.equal(logins.length,1);
+    assert.equal(JSON.parse(logins[0].options.body).password,'test-password');
+    assert.equal(d.querySelector('#mfaLoginForm').hidden,false);
+  }finally{f.close();}
+});
+
 test('security UI restores cookie session, enrolls MFA, shows recovery codes once and sends CSRF without bearer storage',async()=>{
   const f=await fixture(),{w,d,calls}=f;
   try{
