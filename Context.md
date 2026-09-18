@@ -9,7 +9,7 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Public URL: https://www.robottrade.io
 - VPS host: 187.53.141.5
 - Application user: mikey
-- Current release: 0321ae6 (Phase 2, PostgreSQL schema 11)
+- Last verified deployed release: c573e39 (branding and mobile installation guidance; PostgreSQL schema 11 unchanged). Production API/worker health and public manifest/icon delivery passed after the immutable release swap; local regression passed 93/93. Physical iOS/Android installation remains an acceptance task.
 - User services: astra-trade-phase2.service (API), astra-trade-worker.service (Paper execution and mail), robot-postgres.service (database). All three are enabled; user lingering is enabled.
 - Application: /home/mikey/apps/astra-trade/current
 - Shared state: /home/mikey/apps/astra-trade/shared
@@ -30,6 +30,8 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 - UI hardening release 3feeb07 was deployed immutably on 2026-09-17 after 74/74 VPS tests. Backup: shared/backups/pre-ui-3feeb07-20260917T023024Z.db. Production remained schema v9/PAPER_ONLY; 59 Paper fills matched 59 cash journal entries and authentication checks passed.
 
 ## Architecture
+
+Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md). APP-3 onward is proposed application scope; QL-1 through QL-4 describe the isolated Quant Lab. Next implementation milestone is QL-1. Research setup does not enable Live trading or authorize production writes.
 
 1. **Signal layer**: TradingView indicator sends a Universal Webhook payload with trade_id, broker, symbol, event, sizing data, SL/TP, timestamp, volatility and news fields.
 2. **Bot core**: The Node.js PostgreSQL API validates signals, authenticates each bot's webhook secret and durably queues accepted signals. A separate worker applies execution-time risk controls and commits the Paper fill, position, cash journal, audit and notification outbox atomically. PostgreSQL schema 11 and decimal.js preserve monetary precision.
