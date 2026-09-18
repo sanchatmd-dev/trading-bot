@@ -719,7 +719,9 @@ function serve(res, pathname) {
   const type = {
     '.html': 'text/html; charset=utf-8',
     '.css': 'text/css; charset=utf-8',
-    '.js': 'text/javascript; charset=utf-8'
+    '.js': 'text/javascript; charset=utf-8',
+    '.png': 'image/png',
+    '.webmanifest': 'application/manifest+json'
   }[path.extname(file)] || 'application/octet-stream';
   res.writeHead(200, {
     'content-type': type,
