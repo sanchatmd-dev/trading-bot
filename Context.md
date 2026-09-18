@@ -31,13 +31,15 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 
 ## Architecture
 
-Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md). APP-3 onward is proposed application scope; QL-1 through QL-4 describe the isolated Quant Lab. Next implementation milestone is QL-1. Research setup does not enable Live trading or authorize production writes.
+Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md), extended from roadmap commit `e4e473e`. APP-3 onward is proposed application scope; QL-1 through QL-4 cover isolated Quant Lab, versioned shared risk profiles, constrained optimization, reports and Pine export. [docs/PINE_EXPORT.md](docs/PINE_EXPORT.md) specifies the user's choice of `alert()` or strategy order-fill events per export, with source-specific validation. These additions are planned, not implemented. Next implementation milestone is QL-1. Research setup does not enable Live trading or authorize production writes.
 
 1. **Signal layer**: TradingView indicator sends a Universal Webhook payload with trade_id, broker, symbol, event, sizing data, SL/TP, timestamp, volatility and news fields.
 2. **Bot core**: The Node.js PostgreSQL API validates signals, authenticates each bot's webhook secret and durably queues accepted signals. A separate worker applies execution-time risk controls and commits the Paper fill, position, cash journal, audit and notification outbox atomically. PostgreSQL schema 11 and decimal.js preserve monetary precision.
 3. **Execution adapters**: Binance Global, Binance TH, InnovestX, MT5, Settrade and a future HTTP adapter use a common registry. Live execution is locked.
 
 ## Product rules
+
+Planned multi-indicator architecture: [docs/UNIVERSAL_RISK_MANAGER.md](docs/UNIVERSAL_RISK_MANAGER.md). Current Paper positions aggregate by bot/account/mode/symbol; they are not independently owned by indicator. Before enabling shared-symbol indicator deployments, add explicit group/lot exit ownership, reservations and versioned decisions. Quant optimization remains input-only and must preserve original indicator logic. This is a design finding, not a deployed capability.
 
 - Spot only; Spot SELL orders must be reduce_only.
 - Paper-only is enforced in configuration and server code.
