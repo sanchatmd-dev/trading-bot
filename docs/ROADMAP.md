@@ -4,6 +4,8 @@ Status: proposed implementation sequence after release `c573e39`. This document 
 
 Planning baseline: roadmap commit `e4e473e`. This extension incorporates shared Quant Lab risk management, constrained optimization and Pine Script export into QL-1 through QL-4, preserving the existing APP roadmap and the user's choice of alert source.
 
+Latest planning update (2026-09-19): add **R-1 — Per-entry positions and targeted exits** after the reported SPT scale-in incident: BUY1 and BUY2 fill, but TP for BUY1 closes the combined symbol inventory. R-1 pulls the necessary position-ownership slice of APP-3 forward; it is planned, not implemented or deployed.
+
 Use `APP-*` for the application roadmap and `QL-*` for Quant Lab. The previously deployed application Phases 0–2 retain their names. APP-3 below is the proposed next application scope, not an assertion that an older Phase 3 specification already exists.
 
 ## Verified starting point
@@ -18,11 +20,12 @@ Use `APP-*` for the application roadmap and `QL-*` for Quant Lab. The previously
 
 ## Sequence and dependencies
 
-Default delivery order: **R-0 → QL-1 → QL-2 → APP-3 → QL-3 → QL-4 → APP-4 → APP-5**.
+Default delivery order: **R-0 → R-1 → QL-1 → QL-2 → APP-3 → QL-3 → QL-4 → APP-4 → APP-5**.
 
 | Phase | Main deliverable | Completion gate |
 | --- | --- | --- |
 | R-0 | Current release/CI/acceptance baseline | Evidence and outstanding tasks recorded accurately. |
+| R-1 | Per-BUY position ownership and targeted TP/SL, end to end | TP1/SL1 closes only P1; P2 remains unchanged; migration, concurrency and Paper acceptance pass. |
 | QL-1 | Isolated Python/CI and shared indicator/input/risk contracts | Reproducible setup, validated schemas and correct CI routing. |
 | QL-2 | Read-only datasets, deterministic replay and accounting/risk parity | Decimal, ownership, signal and risk fixtures match their declared baseline. |
 | APP-3 | Universal Risk Manager runtime, multi-indicator isolation and measured Paper scaling | Scoped allocations/exits, reservations, migration, UI and load/recovery acceptance. |
@@ -35,9 +38,11 @@ After QL-2, isolated QL-3 research may proceed alongside APP-3. QL-4 depends on 
 
 The application may proceed to APP-3 while QL-2 research work continues if research is isolated and no shared contract is changing. Quant Lab reports are not a gate for delivering the core bot service. Customer-facing Quant Lab UI is a later product decision.
 
+R-1 does not wait for Quant Lab setup or optimization. Its canonical ownership contract and acceptance fixtures become inputs to QL-1/QL-2; APP-3 extends those records rather than building a second position engine. Independent research scaffolding may proceed, but repeated independently managed entries must not be advertised as supported until the R-1 gate passes.
+
 ## First integration candidate — SPT pro V4
 
-Use the user-supplied `SPT pro V4.txt` as the first planned indicator integration, subject to capability and parity acceptance. The source remains the user's original; it is not copied into this documentation commit or declared supported before testing.
+Use the user-supplied `SPT pro V4.txt` as the first indicator integration, subject to capability and parity acceptance. A separate transport copy now exists at `tradingview/spt_pro_v4_robot_trade.pine`; the Desktop original is preserved. User-provided screenshots confirm v1.3.0 BUY and SELL JSON webhook delivery. The subsequent user report confirms the aggregate-exit problem, not per-position acceptance. Optimization, per-entry TP/SL and full forward acceptance remain unverified.
 
 - Preserve EMA/SuperTrend/ATR/RSI, MTF confirmation, BOS/sweep, setup expiry, cooldown and session logic. Build a verified evaluator/adapter without substituting simpler trading rules.
 - Resolve effective inputs and preset overrides before search. Search only user-selected existing inputs, including an existing Custom/Long-only setting when explicitly selected; never rewrite preset branches to force optimized values.
@@ -117,6 +122,72 @@ Deliverables:
 
 Done when: each baseline item has a result, evidence or a named outstanding acceptance task. Do not hold research setup for unrelated device availability.
 
+## R-1 — Per-entry positions and targeted TP/SL
+
+Priority: correctness of the current Spot Paper workflow, before Quant Lab integration. Status: **planned / not implemented**. Successful BUY/SELL webhook delivery is separate from correct position execution.
+
+### Incident and required behavior
+
+The current ledger has one position per bot/account/mode/symbol. Filled BUY rows are not independently owned positions. The SPT bridge keeps one emitted stop/target pair, and exits without quantity close all symbol holdings. Enabling repeated BUY therefore does not provide separate P1/P2 protection.
+
+| Event | Required result |
+| --- | --- |
+| BUY1 fills | Open P1 with its actual filled quantity, SL1 and TP1. |
+| BUY2 fills on the same symbol | Open P2 with its actual filled quantity, SL2 and TP2; preserve P1. |
+| P1 reaches its TP or SL | Close only P1's unreserved remaining quantity; keep P2 quantity, cost, SL and TP unchanged. |
+| P2 later reaches its TP or SL | Close only P2; net inventory becomes flat only when all allocations are closed. |
+
+Here TP1/SL1 means the target/stop belonging to P1, not the indicator's partial-profit stage named TP1. Partial-profit stage identity and position identity must remain separate.
+
+### R-1A — Contract and database ownership
+
+- Define one stable `position_id` per independent BUY, linked to its entry `trade_id`, authenticated bot, broker account, mode, symbol and deployment. Keep event `trade_id` separate: each entry/exit/partial stage has its own idempotent event identity. `position_id` is the per-entry lot/allocation identifier within the Universal Risk Manager's optional `position_group_id`, not a replacement for group ownership.
+- Map an entry reference supplied by Pine to the server-owned position within that authenticated scope. Never authorize using a payload user/bot ID. Same identifier in another tenant, bot, account, deployment or symbol must not select that holding.
+- Persist actual filled and remaining quantity, reserved exit quantity, entry price/cost/fees, initial risk, SL/TP, state, originating entry and exit/fill allocations. Create inventory from fills, not from an emitted or merely queued BUY. Support partial/rejected/canceled entry outcomes without inventing holdings.
+- Keep net symbol holdings and separate entry allocations, with exact-decimal invariants: managed net quantity/cost reconcile to allocations plus an explicit legacy/unallocated bucket. A later BUY must not overwrite an earlier position's stop/target. Choose the next schema version against the repository at implementation time.
+- Design the upgrade from current schema 11 with an explicit legacy mapping. Do not infer independent SL/TP ownership for mixed old fills. Preserve IDs, cash, secrets and history; unresolved legacy holdings remain identified for reconciliation.
+
+### R-1B — Receiver, risk, position manager and accounting
+
+- Require `position_id` for TP/SL in the new scoped contract. Resolve close-remaining or a declared partial quantity/percentage only against that position's actual unreserved filled quantity. Risk sizing/capping on entry remains authoritative on the VPS; Pine must not guess the accepted quantity from its equity settings.
+- Missing, unknown, wrong-scope, rejected-entry or already-closed targets produce explicit outcomes; **never fall back to symbol-wide close-all**. The server enforces these rules again at execution time, not only on webhook receipt.
+- Reserve and consume target inventory atomically with order intent, fills, cash and position updates. Duplicate events, distinct TP/SL events racing for the same position, partial fills and worker crash/retry must not oversell or consume P2's inventory. Record stable rejection/reconciliation reasons.
+- Keep `reduce_only` mandatory for Spot exits. Define ordinary SELL mapping explicitly: targeted position or an explicitly selected owned-group exit. Symbol-wide/account-wide close-all remains a separately authorized action, never an implicit TP/SL fallback. Default new position-scoped connections to explicit targets.
+- Apply bot/account cash and exposure limits across all entries while enforcing owned inventory on exits. Distinguish unique-symbol limits from open-entry/lot limits in settings and previews; do not silently redefine existing limits.
+- Attribute costs, fees, realized PnL/R and completed-entry outcomes to the allocations actually closed. Update reports/analytics to honor explicit targets rather than assigning P2's exit to P1 through global FIFO. Retain FIFO only within the declared untargeted/legacy policy; version trade-count, daily-loss and streak semantics, and reconcile totals with the cash journal.
+
+### R-1C — Pine bridge and export compatibility
+
+- Replace the single `rtLong`/SL/TP tracker with bounded per-entry records containing stable entry/position reference, frozen SL/TP, bar time and exit-stage state. Preserve the original indicator's BUY/SELL logic. Each eligible BUY receives its own reference; its TP/SL carries that same target reference.
+- Support multiple independently targeted exits on one confirmed realtime bar. The existing once-per-bar-close alert frequency must not silently discard P2's event after P1's. Choose and test a supported batching or confirmed-bar multi-alert mechanism with TradingView rate limits, deterministic event IDs and per-position same-bar SL/TP precedence.
+- Separate locally emitted state from server-confirmed inventory. Handle rejected/capped/partial BUYs and delayed exits on the server; restarting/replacing a TradingView alert must have a documented existing-position continuation/reconciliation procedure. Never replay historical BUYs to rebuild real holdings.
+- Add a version/capability gate for position-aware payloads. Merely attaching an extra field is insufficient because an older receiver can ignore it and still close the entire symbol. Prove an incompatible receiver rejects the new exit contract before enabling the new Pine bridge.
+- Keep TP/SL bar-close execution and selected chart/broker price provenance explicit. Per-position metadata is not broker-hosted protection. QL-4 must reuse and validate the same targeting semantics for both `alert()` and strategy order-fill exports.
+
+### R-1D — UI, logs and reconciliation
+
+- Show P1/P2 as separate entry allocations with position ID, entry trade ID, actual filled/remaining quantity, entry cost, SL/TP, realized PnL and status. Retain an explicitly labeled net-symbol summary.
+- Trade Log links each exit to its position, entry and applied quantity; show actionable missing/closed/wrong-scope reasons. A filled entry row must not be labeled as an independent protected position until the allocation exists.
+- Display exit scope in setup/preview, including the effect of SELL and any explicit close-group/close-all action. Support EN/TH and mobile/desktop layouts.
+
+### R-1E — Acceptance and rollout
+
+Required tests and evidence:
+
+1. Two same-symbol BUYs with different quantities and stops: TP(P1) closes exactly P1; P2 quantity, cost, SL/TP and state are unchanged. Repeat with SL(P1), and with P2 closing first.
+2. Partial exit of P1 consumes only its declared quantity; subsequent SL consumes only P1's remainder. Risk-capped/partially filled entries use actual VPS quantities, not Pine-requested sizes.
+3. Duplicate TP, different TP/SL events in either order, simultaneous exits, and restart/retry create no duplicate cash debit/credit or negative inventory. Two distinct positions exiting on one candle both receive their own valid outcome.
+4. Wrong owner/bot/account/symbol/deployment, missing/unknown/closed position, rejected BUY and exit-before-entry cannot close another allocation. Unknown schema/version cannot silently execute as a legacy close-all.
+5. Sum of allocation quantities/costs, net inventory, fills, cash, realized PnL and versioned analytics reconcile after every event. Combined entry limits remain enforced across P1/P2.
+6. Migration/restore rehearsal preserves existing data and explicitly handles open legacy holdings. Preview and UI/log scope match worker decisions. Existing-position continuity is tested when replacing alerts or deployments.
+7. Node and isolated PostgreSQL tests pass; Pine compiles in TradingView and a controlled Paper sequence demonstrates BUY1 → P1, BUY2 → P2, TP/SL(P1) → only P1 closed, then P2's independent exit. Preserve the corresponding event IDs and reconciled outcomes as evidence.
+
+Before migration use `scripts/backup-postgres.mjs` with protected configuration and verify restore on an isolated database. `scripts/backup.mjs` backs up legacy SQLite and is not the current production backup path. Deploy backend capability before enabling the matching Pine alerts, using an immutable release and symlink swap after migration rehearsal. After allocation writes, rollback must preserve the new ownership data; an old aggregate-only binary is not a safe rollback by itself.
+
+Until acceptance: use one independent open entry per bot/symbol, disable repeated BUY where appropriate, and reconcile already-open aggregate holdings explicitly. Disabling repeated BUY does not split existing P1/P2 or undo past exits. This planning update does not change bot settings, migrate data or deploy code.
+
+Done when: per-position end-to-end acceptance passes and no targeted exit can close unrelated inventory. Hand the validated contract, migration record and fixtures to QL-1/QL-2 and APP-3.
+
 ## QL-1 — Isolated setup and reproducible CI
 
 Deliverables:
@@ -165,7 +236,7 @@ Deliverables:
 - Document operational recovery, deploy rollback boundaries and alert response. Perform isolated restart/failure rehearsals.
 - Close remaining risk UI, admin access, login/MFA and physical mobile acceptance gaps.
 - Deliver shared runtime risk/versioning changes only after QL-2 fixtures and migration rehearsal, with appropriate Node/PostgreSQL tests. Quant-only experiments stay separate; add scoped risk-profile/deployment APIs when the operator export workflow needs them, without enabling customer access implicitly.
-- Implement and gate the Universal Risk Manager multi-indicator runtime: authenticated mapping wizard, versioned policy/decisions, position groups/allocations, atomic cash/inventory reservations and scoped exit management. Rehearse legacy single-group migration, shadow decisions and Paper canary acceptance before shared-symbol deployment.
+- Extend the R-1 position/exit foundation into the Universal Risk Manager multi-indicator runtime: authenticated mapping wizard, versioned policy/decisions, position groups/allocations, atomic cash/inventory reservations and scoped exit management. Rehearse remaining legacy single-group migration, shadow decisions and Paper canary acceptance before shared-symbol deployment. R-1 is the earlier correctness gate and does not wait for QL-2; these broader runtime changes do.
 
 Done when: the agreed workload meets recorded thresholds, restart tests preserve order/accounting invariants, critical UI flows pass, and operators can detect and diagnose failures. This remains a Paper release; it is not a throughput claim beyond the tested workload or a Live approval.
 
@@ -240,4 +311,4 @@ Done when: broker-specific acceptance and recovery evidence exist and the owner 
 - Deploy application changes through immutable releases and atomic symlink swaps. Quant Lab has a separate environment and is not deployed merely because it shares the repository.
 - Commit/push/deploy follow the implementation request for that phase. This planning task changes documentation only.
 
-Next implementation milestone: **QL-1**, with R-0 record cleanup as a small prerequisite. Then QL-2 and APP-3 according to the dependencies above.
+Next implementation milestone: **R-1 — Per-entry positions and targeted exits**, with R-0 record cleanup as a small prerequisite. Then QL-1, QL-2 and APP-3 according to the dependencies above. Quant scaffolding can proceed independently, but it does not remove the R-1 execution gate.

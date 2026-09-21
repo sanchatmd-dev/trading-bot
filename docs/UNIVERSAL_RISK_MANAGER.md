@@ -4,6 +4,8 @@ Status: design proposal against deployed Paper code at `e4e473e` (application re
 
 ## Verdict and evidence
 
+Planning update (2026-09-19): [Roadmap R-1](ROADMAP.md#r-1--per-entry-positions-and-targeted-tpsl) brings per-entry allocation and targeted TP/SL forward before QL-1 after the reported P1/P2 aggregate-exit incident. `position_id` identifies an independent entry lot within the group model below. Isolation is needed even for repeated BUYs from ONE indicator, not only multiple indicators. R-1 delivers the initial contract/runtime/bridge gate; APP-3 extends it. The assessment below describes the existing aggregate implementation, not completed R-1 work.
+
 The current engine is a useful foundation for scoped, multi-user Paper trading. It is not sufficient for independently managed indicators sharing a bot/symbol, arbitrary webhook semantics, or reproducible input-only optimization. Extend it rather than introduce a separate risk engine for every indicator.
 
 Scope reviewed: PostgreSQL normalizer, risk engine, worker, ledger, schema, preview route, analytics and existing tests. A read-only in-memory diagnostic exercised the exit engine. The previous 93-test result is historical; this design review did not rerun the full suite or submit production trades.
@@ -143,6 +145,7 @@ Independent connection/deployment lifecycle: Draft, Webhook Validated, Paper Act
 
 | Milestone | Work and gate |
 | --- | --- |
+| R-1 / immediate position isolation | Define and implement per-entry ownership, targeted exits, atomic accounting and Pine/UI integration; prove TP(P1) preserves P2 before enabling independent repeated entries. Reuse this foundation in Quant contracts and APP-3. |
 | QL-1 / URM design contract | Define canonical events, capabilities, source/input invariants, typed policy/decision schemas and decimal fixtures. No production migration. |
 | QL-2 / evaluation foundation | Extract deterministic clock/state inputs; prove current-engine accounting/risk parity in an isolated DB; define new allocation/cost behaviors with separate fixtures and read-only export. |
 | APP-3 / multi-indicator runtime | Migrate versioned connections/policies and allocation/reservation records; add scoped APIs/wizard/preview/reconciliation; validate concurrent multi-owner/account/group behavior before enabling shared-symbol mode. |

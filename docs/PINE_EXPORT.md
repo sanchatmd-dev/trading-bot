@@ -46,6 +46,8 @@ The source must be visible in the export preview, package metadata, strategy hea
 
 ## Webhook and deployment contract
 
+Prerequisite update (2026-09-19): [Roadmap R-1](ROADMAP.md#r-1--per-entry-positions-and-targeted-tpsl) establishes `position_id` per independent BUY and targeted TP/SL before Quant Lab integration. Exports must reuse that accepted contract: preserve P1/P2 targets and actual-fill-based sizing, handle multiple exit events per candle without dropping messages, and reject incompatible receivers rather than silently falling back to legacy full-symbol exits. R-1 is planned, not already available in the current SPT bridge.
+
 Execution ownership follows [UNIVERSAL_RISK_MANAGER.md](UNIVERSAL_RISK_MANAGER.md). Map exits to a strategy-owned position group and declared quantity/percentage basis. Never export an unscoped close-all signal as the default for multiple indicators sharing a bot/symbol. Older deployment groups retain explicit exit ownership during replacements.
 
 Plan `schema_version`, `strategy_id`, `strategy_version`, `deployment_id`, `risk_profile_version`, `alert_source`, `bar_close_time` and an event sequence alongside existing event/price/risk fields. The deployment binds these to the selected run, bot and risk profile on the server. Final field names/compatibility rules are validated in QL-1/QL-2 before receiver changes in QL-4.

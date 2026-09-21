@@ -2496,11 +2496,15 @@ alertcondition(
 // Transport state only: does not change SPT signals, drawings or backtest.
 // One dedicated Spot paper bot per alert. Start/recreate alerts only when flat.
 groupRobot = "11. Robot Trade - Spot Paper"
+rtBuild = input.string("1.3.0", "Robot Bridge version", options = ["1.3.0"], group = groupRobot)
 rtTag = input.string("spt1", "Unique alert deployment ID (1-12 letters/digits)", group = groupRobot)
 rtBroker = input.string("Binance Global", "Broker", options = ["Binance Global", "Binance TH", "InnovestX", "Settrade"], group = groupRobot)
 rtRisk = input.float(0.5, "Risk per BUY (% equity; server limits still apply)", minval = 0.01, maxval = 100, step = 0.1, group = groupRobot)
-rtExitOnSell = input.bool(false, "Opposite SELL closes existing long (never opens Short)", group = groupRobot)
+rtExitOnSell = input.bool(true, "Send SELL as reduce-only (server checks holdings)", group = groupRobot)
 rtNews = input.bool(false, "Manually block BUY for news (not a news feed)", group = groupRobot)
+rtRepeatBuy = input.bool(true, "Send repeated BUY signals (server risk limits apply)", group = groupRobot)
+rtShowSkipped = input.bool(true, "Show skipped BUY/SELL reason on chart", group = groupRobot)
+rtShowStatus = input.bool(true, "Show Robot Bridge status (chart instance only)", group = groupRobot)
 rtEnabled = notifyEnabled and notifyExtra == "Robot Trade (Spot)"
 if barstate.isfirst and rtEnabled
     if str.length(rtTag) < 1 or str.length(rtTag) > 12 or str.match(rtTag, "^[A-Za-z0-9]+$") != rtTag
@@ -2522,6 +2526,33 @@ var bool rtLong = false
 var float rtStop = na
 var float rtTarget = na
 var int rtEntryBar = na
+var int rtLastHistoricalBuy = na
+var int rtLastLiveBuy = na
+var int rtLastHistoricalSell = na
+var int rtLastLiveSell = na
+var int rtLastLiveClose = na
+var int rtAlertCalls = 0
+var string rtLastDecision = "Waiting for a realtime BUY or SELL"
+if buySignal and not barstate.isrealtime
+    rtLastHistoricalBuy := time_close
+if sellSignal and not barstate.isrealtime
+    rtLastHistoricalSell := time_close
+if barstate.isrealtime and barstate.isconfirmed
+    rtLastLiveClose := time_close
+    if buySignal
+        rtLastLiveBuy := time_close
+        if not rtEnabled
+            rtLastDecision := not notifyEnabled ? "BUY skipped: notifications OFF" : "BUY skipped: select Robot Trade (Spot)"
+    if sellSignal
+        rtLastLiveSell := time_close
+        if not rtEnabled
+            rtLastDecision := not notifyEnabled ? "SELL skipped: notifications OFF" : "SELL skipped: select Robot Trade (Spot)"
+// Exit takes priority on the same bar; never submit a new BUY behind a full exit.
+f_rtCanBuy(bool signalBuy, bool trackingLong, bool repeatBuy, bool news, bool exitSent) =>
+    signalBuy and (not trackingLong or repeatBuy) and not news and not exitSent
+// The receiver owns actual holdings; SELL must not depend on Pine's BUY memory.
+f_rtExitEvent(string protectiveExit, bool signalSell, bool sendSell) =>
+    protectiveExit != "" ? protectiveExit : signalSell and sendSell ? "SELL" : ""
 if rtEnabled and barstate.isrealtime and barstate.isconfirmed
     if na(time_close)
         runtime.error("Robot Trade: chart must provide a bar-close timestamp.")
@@ -2537,23 +2568,72 @@ if rtEnabled and barstate.isrealtime and barstate.isconfirmed
             rtEvent := "SL"
         else if targetHit
             rtEvent := "TP"
-        else if rtExitOnSell and sellSignal
-            rtEvent := "SELL"
-        if rtEvent != ""
-            // Omit quantity: current server closes ALL holdings of this bot/symbol.
-            alert(f_rtPayload(rtEvent, rtPrice, na, na, rtVol, time_close), alert.freq_once_per_bar_close)
-            rtLong := false
-            rtStop := na
-            rtTarget := na
-            rtEntryBar := na
-    else if not rtLong and buySignal and not rtNews
+    rtEvent := f_rtExitEvent(rtEvent, sellSignal, rtExitOnSell)
+    if rtEvent != ""
+        // Omit quantity: current server closes ALL holdings of this bot/symbol.
+        // No holdings => server rejects SELL; never opens a Short.
+        alert(f_rtPayload(rtEvent, rtPrice, na, na, rtVol, time_close), alert.freq_once_per_bar_close)
+        rtAlertCalls += 1
+        rtLastDecision := rtEvent + ": alert() called; check Alert Log"
+        if sellSignal and rtEvent != "SELL"
+            rtLastDecision := "SELL covered by " + rtEvent + ": one exit alert() called"
+        rtLong := false
+        rtStop := na
+        rtTarget := na
+        rtEntryBar := na
+    else if sellSignal and not rtExitOnSell
+        rtLastDecision := "SELL skipped: Send SELL disabled"
+        if rtShowSkipped
+            label.new(bar_index, high, "Robot SELL skipped: Send SELL disabled", style = label.style_label_down, color = color.orange, textcolor = color.black, size = size.small)
+    string rtSkip = ""
+    if buySignal
+        rtSkip := rtEvent != "" ? "Exit takes priority this bar" : rtNews ? "Manual news block enabled" : rtLong and not rtRepeatBuy ? "Repeated BUY disabled" : ""
+    if f_rtCanBuy(buySignal, rtLong, rtRepeatBuy, rtNews, rtEvent != "")
         float nextStop = math.round_to_mintick(longSLPreview)
         float nextTarget = math.round_to_mintick(close + (close - longSLPreview) * f_targetRR())
         if rtPrice > 0 and not na(nextStop) and nextStop > 0 and nextStop < rtPrice and nextTarget > rtPrice and not na(atr)
-            rtStop := nextStop
-            rtTarget := nextTarget
-            rtEntryBar := bar_index
+            // Existing aggregate position keeps its first emitted stop/target.
+            // New BUY payload still includes its own SL/TP for server risk sizing.
+            if not rtLong
+                rtStop := nextStop
+                rtTarget := nextTarget
+                rtEntryBar := bar_index
             rtLong := true
-            alert(f_rtPayload("BUY", rtPrice, rtStop, rtTarget, rtVol, time_close), alert.freq_once_per_bar_close)
-// ROBOT TRADE BRIDGE END
+            alert(f_rtPayload("BUY", rtPrice, nextStop, nextTarget, rtVol, time_close), alert.freq_once_per_bar_close)
+            rtAlertCalls += 1
+            rtLastDecision := "BUY: alert() called; check Alert Log"
+        else
+            rtSkip := "Invalid rounded SL/TP or ATR unavailable"
+    if buySignal and rtSkip != ""
+        rtLastDecision := "BUY skipped: " + rtSkip
+        if rtShowSkipped
+            label.new(bar_index, low, "Robot BUY skipped: " + rtSkip, style = label.style_label_up, color = color.orange, textcolor = color.black, size = size.small)
 
+f_rtTime(int stamp) =>
+    na(stamp) ? "None since chart load" : str.format_time(stamp, "yyyy-MM-dd HH:mm:ss", "UTC")
+
+// Chart-local diagnostics cannot observe the saved alert instance or HTTP delivery.
+var table rtStatus = table.new(position.bottom_left, 2, 10, bgcolor = color.new(color.black, 15), border_width = 1)
+if barstate.islast and rtShowStatus
+    string rtMode = not notifyEnabled ? "OFF: Enable notifications" : not rtEnabled ? "OFF: select Robot Trade (Spot)" : "ON: confirmed realtime bars only"
+    table.cell(rtStatus, 0, 0, "Robot Bridge " + rtBuild, text_color = color.aqua, text_size = size.small)
+    table.cell(rtStatus, 1, 0, "Chart instance / times UTC", text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 0, 1, "Route", text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 1, 1, rtMode, text_color = rtEnabled ? color.lime : color.orange, text_size = size.small)
+    table.cell(rtStatus, 0, 2, "Last realtime close", text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 1, 2, f_rtTime(rtLastLiveClose), text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 0, 3, "Last historical BUY", text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 1, 3, f_rtTime(rtLastHistoricalBuy), text_color = color.gray, text_size = size.small)
+    table.cell(rtStatus, 0, 4, "Last realtime BUY", text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 1, 4, f_rtTime(rtLastLiveBuy), text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 0, 5, "Last historical SELL", text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 1, 5, f_rtTime(rtLastHistoricalSell), text_color = color.gray, text_size = size.small)
+    table.cell(rtStatus, 0, 6, "Last realtime SELL", text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 1, 6, f_rtTime(rtLastLiveSell), text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 0, 7, "Last decision", text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 1, 7, rtLastDecision, text_color = color.yellow, text_size = size.small)
+    table.cell(rtStatus, 0, 8, "alert() calls / chart load", text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 1, 8, str.tostring(rtAlertCalls), text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 0, 9, "Delivery confirmation", text_color = color.white, text_size = size.small)
+    table.cell(rtStatus, 1, 9, "TradingView Alert Log / Robot Trade Log", text_color = color.white, text_size = size.small)
+// ROBOT TRADE BRIDGE END
