@@ -89,7 +89,7 @@ export class PostgresDatabase {
         const row=(await this.query('SELECT version FROM schema_version')).rows[0];
         if(row?.version===11){
           await this.query(`
-            CREATE TABLE ledger_position_allocations(
+            CREATE TABLE IF NOT EXISTS ledger_position_allocations(
               position_id TEXT PRIMARY KEY,
               user_id TEXT NOT NULL,
               account_id TEXT NOT NULL,
@@ -109,7 +109,7 @@ export class PostgresDatabase {
               closed_at BIGINT,
               updated_at BIGINT NOT NULL
             );
-            CREATE INDEX idx_allocations_open ON ledger_position_allocations(user_id,account_id,execution_mode,symbol,status);
+            CREATE INDEX IF NOT EXISTS idx_allocations_open ON ledger_position_allocations(user_id,account_id,execution_mode,symbol,status);
             UPDATE schema_version SET version=12;
           `);
           return;
