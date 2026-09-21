@@ -188,6 +188,29 @@ Here TP1/SL1 means the target/stop belonging to P1, not the indicator's partial-
 - Trade Log links each exit to its position, entry and applied quantity; show actionable missing/closed/wrong-scope reasons. A filled entry row must not be labeled as an independent protected position until the allocation exists.
 - Display exit scope in setup/preview, including the effect of SELL and any explicit close-group/close-all action. Support EN/TH and mobile/desktop layouts.
 
+### Interactive Dashboard Charting (`lightweight-charts` v4+)
+
+To deliver actionable visual execution monitoring for Paper/Live operations, integrate an interactive TradingView `lightweight-charts` component into the web frontend:
+
+1. **UI & State Management:**
+   - Implement a responsive Symbol Selector (Dropdown/Tabs) supporting active pairs (e.g., BTCUSDT, ETHUSDT, BNBUSDT).
+   - Maintain client state for `currentSymbol` and synchronized `activePositions` retrieved from the backend API.
+
+2. **Chart Initialization & Dynamic Symbol Switching:**
+   - Expose a modular `renderChart(symbol)` lifecycle handler.
+   - On symbol transition, safely clear existing series (`series.setData([])`) or re-instantiate chart instances to prevent DOM/memory leaks.
+   - Stream/fetch OHLCV candle datasets for `currentSymbol` via exchange/market data endpoint into `candlestickSeries`.
+
+3. **Indicator Calculation & Overlay:**
+   - Compute and render multi-timeframe overlays per active symbol: Fast/Slow EMAs, Custom ATR, and Volume Profile.
+   - Plot indicators via `addLineSeries()` or the v4+ Custom Series API.
+
+4. **Active Position & Target Visualization (R-1 Alignment):**
+   - Filter `activePositions` by `currentSymbol`.
+   - **Entry Execution:** Render timestamped markers via `candlestickSeries.setMarkers()` for each distinct `position_id`.
+   - **Protection & Targets (SL/TP):** Render persistent, color-coded price levels via `candlestickSeries.createPriceLine({ price, color, title })` tied to specific allocations.
+   - Ensure target price lines and markers reliably re-render whenever switching between symbols with active positions.
+
 ### R-1E — Acceptance and rollout
 
 Required tests and evidence:
