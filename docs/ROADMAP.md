@@ -112,6 +112,24 @@ Add four EN/TH views: **Risk Policy**, **Optimization Bounds**, **Validation Res
 
 Use explicit states such as Draft, Validated, Paper Testing and Archived, with stale validation shown separately. Claim Validated only for the tested strategy/data/execution/source combination. Start with operator/private tooling; customer-facing access follows scoped API permissions, quota and tenant-isolation acceptance in APP-3/APP-4.
 
+### Bot Lifecycle & Session Management (Run, Pause, Stop, Reset)
+
+To ensure strict risk adherence and provide deterministic datasets for Quant Lab, bot instances must enforce a locked lifecycle:
+
+1. **Setup & Parameter Locking:**
+   - User explicitly defines `initial_capital` and configures the Risk Manager parameters before activation.
+   - Upon transition to **Run**, the risk profile and capital baseline are frozen (immutable). No parameters can be altered while the bot is active.
+
+2. **Operational States:**
+   - **Run:** Accepts execution signals; maintains immutable parameters; provides real-time balance and equity updates.
+   - **Pause:** Halts new position entries while permitting existing open positions to exit (reduce-only TP/SL active).
+   - **Stop:** Immediately ceases bot operation and incoming signal processing.
+   - **Reset:** Permitted only from a non-active state. Re-opens parameter editing for a new run cycle.
+
+3. **Session Archival for Quant Lab:**
+   - Triggering **Reset** automatically compiles an immutable session archive (`run_id`, locked parameters, initial capital, fills, ledger entries, and final balance).
+   - This dataset is persisted and indexed as a read-only historical fixture ready for ingestion by QL-1/QL-2 research pipelines.
+
 ## R-0 — Baseline and acceptance record
 
 Deliverables:
