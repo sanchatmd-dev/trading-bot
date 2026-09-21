@@ -127,3 +127,27 @@ BEGIN
 END $$;
 CREATE TRIGGER bot_parent_guard BEFORE INSERT OR UPDATE OF parent_user_id,bot_slot_index ON users
 FOR EACH ROW EXECUTE FUNCTION check_bot_parent();
+CREATE TABLE ledger_position_allocations(
+  position_id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  account_id TEXT NOT NULL,
+  execution_mode TEXT NOT NULL,
+  broker TEXT NOT NULL,
+  symbol TEXT NOT NULL,
+  entry_signal_id BIGINT NOT NULL REFERENCES signals(id),
+  entry_trade_id TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'OPEN',
+  filled_quantity NUMERIC(38,18) NOT NULL,
+  remaining_quantity NUMERIC(38,18) NOT NULL,
+  reserved_quantity NUMERIC(38,18) NOT NULL DEFAULT 0,
+  entry_price NUMERIC(38,18) NOT NULL,
+  stop_loss NUMERIC(38,18),
+  take_profit NUMERIC(38,18),
+  opened_at BIGINT NOT NULL,
+  closed_at BIGINT,
+  updated_at BIGINT NOT NULL
+);
+CREATE INDEX idx_allocations_open ON ledger_position_allocations(user_id,account_id,execution_mode,symbol,status);
+
+CREATE TABLE schema_version(version INTEGER PRIMARY KEY);
+INSERT INTO schema_version VALUES(12);

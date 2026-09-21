@@ -85,7 +85,38 @@ export class PostgresDatabase {
     await this.transaction(async()=>{
       await this.lock('robot:schema');
       const exists=(await this.query("SELECT to_regclass('public.schema_version') present")).rows[0].present;
-      if(exists){const row=(await this.query('SELECT version FROM schema_version')).rows[0];if(row?.version!==11)throw new Error('Unsupported PostgreSQL schema');return;}
+      if(exists){
+        const row=(await this.query('SELECT version FROM schema_version')).rows[0];
+        if(row?.version===11){
+          await this.query(`
+            CREATE TABLE ledger_position_allocations(
+              position_id TEXT PRIMARY KEY,
+              user_id TEXT NOT NULL,
+              account_id TEXT NOT NULL,
+              execution_mode TEXT NOT NULL,
+              broker TEXT NOT NULL,
+              symbol TEXT NOT NULL,
+              entry_signal_id BIGINT NOT NULL REFERENCES signals(id),
+              entry_trade_id TEXT NOT NULL,
+              status TEXT NOT NULL DEFAULT 'OPEN',
+              filled_quantity NUMERIC(38,18) NOT NULL,
+              remaining_quantity NUMERIC(38,18) NOT NULL,
+              reserved_quantity NUMERIC(38,18) NOT NULL DEFAULT 0,
+              entry_price NUMERIC(38,18) NOT NULL,
+              stop_loss NUMERIC(38,18),
+              take_profit NUMERIC(38,18),
+              opened_at BIGINT NOT NULL,
+              closed_at BIGINT,
+              updated_at BIGINT NOT NULL
+            );
+            CREATE INDEX idx_allocations_open ON ledger_position_allocations(user_id,account_id,execution_mode,symbol,status);
+            UPDATE schema_version SET version=12;
+          `);
+          return;
+        }
+        if(row?.version!==12)throw new Error('Unsupported PostgreSQL schema');
+        return;
+      }
       const tables=(await this.query("SELECT count(*)::int n FROM pg_tables WHERE schemaname='public'")).rows[0].n;
       if(tables)throw new Error('Refusing to initialize a nonempty database without a schema version');
       await this.query(await fs.readFile(new URL('./schema.sql',import.meta.url),'utf8'));
@@ -93,7 +124,7 @@ export class PostgresDatabase {
   }
   async verifySchema(){
     const exists=(await this.query("SELECT to_regclass('public.schema_version') present")).rows[0].present;
-    if(!exists||(await this.query('SELECT version FROM schema_version')).rows[0]?.version!==11)throw new Error('Initialize/import schema 11 offline before starting PostgreSQL services');
+    if(!exists||(await this.query('SELECT version FROM schema_version')).rows[0]?.version!==12)throw new Error('Initialize/import schema 12 offline before starting PostgreSQL services');
   }
   async close(){
     if(this.runtimeClient){await this.runtimeClient.query("SELECT pg_advisory_unlock_shared(hashtextextended('robot:maintenance',0))");this.runtimeClient.release();this.runtimeClient=null;}

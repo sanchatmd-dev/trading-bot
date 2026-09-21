@@ -81,15 +81,86 @@ export const ledgerMethods={
         const cashDelta=order.side==='BUY'?notional.plus(fee).neg():notional.minus(fee);
         if(order.side==='BUY'&&D((await this.paperAccount(row.user_id,row.broker)).cash).plus(cashDelta).lt(0))throw new Error('Insufficient Paper cash including fees');
         let quantity,cost,initialRisk,pnl;
+        let payloadObj = null;
+        try { payloadObj = JSON.parse(saved.payload || '{}'); } catch {}
+        const targetTradeId = payloadObj?.targetTradeId || null;
+
         if(order.side==='BUY'){
-          quantity=D(current.quantity).plus(qty);cost=D(current.cost_basis).plus(notional).plus(fee);
-          initialRisk=D(current.initial_risk).plus(qty.mul(price.minus(order.stopLoss).abs()));pnl=D(current.cumulative_pnl);
+          quantity=D(current.quantity).plus(qty);
+          cost=D(current.cost_basis).plus(notional).plus(fee);
+          initialRisk=D(current.initial_risk).plus(qty.mul(price.minus(order.stopLoss).abs()));
+          pnl=D(current.cumulative_pnl);
+
+          // R-1B: บันทึก Lot ใหม่ลงตาราง ledger_position_allocations
+          const posId = `pos_${row.id}_${Date.now()}`;
+          await this.db.prepare(`
+            INSERT INTO ledger_position_allocations(
+              position_id,user_id,account_id,execution_mode,broker,symbol,
+              entry_signal_id,entry_trade_id,status,filled_quantity,remaining_quantity,
+              entry_price,stop_loss,take_profit,opened_at,updated_at
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+          `).run(
+            posId, row.user_id, row.account_id, row.execution_mode, row.broker, row.symbol,
+            row.id, row.trade_id, 'OPEN', exact(qty), exact(qty),
+            amount(price), order.stopLoss || null, order.takeProfit || null, Date.now(), Date.now()
+          );
         }else{
           if(qty.gt(current.quantity))throw new Error('Fill exceeds tracked position; operator reconciliation required');
           quantity=D(current.quantity).minus(qty);
-          const removed=quantity.isZero()?D(current.cost_basis):D(amount(D(current.cost_basis).mul(qty).div(current.quantity)));
-          cost=D(current.cost_basis).minus(removed);initialRisk=D(current.initial_risk);
-          const profit=notional.minus(removed).minus(fee);pnl=D(current.cumulative_pnl).plus(profit);
+
+          // R-1B: ค้นหา Lot ที่ตรงกับ targetTradeId หรือเลือกแบบ FIFO หากไม่ได้ระบุ
+          let openAllocations = [];
+          if(targetTradeId){
+            openAllocations = await this.db.prepare(`
+              SELECT * FROM ledger_position_allocations 
+              WHERE user_id=? AND account_id=? AND execution_mode=? AND symbol=? 
+                AND entry_trade_id=? AND status='OPEN' AND remaining_quantity>0
+              ORDER BY opened_at ASC
+            `).all(...scope(row), row.symbol, targetTradeId);
+          }
+          if(!openAllocations.length){
+            openAllocations = await this.db.prepare(`
+              SELECT * FROM ledger_position_allocations 
+              WHERE user_id=? AND account_id=? AND execution_mode=? AND symbol=? 
+                AND status='OPEN' AND remaining_quantity>0
+              ORDER BY opened_at ASC
+            `).all(...scope(row), row.symbol);
+          }
+
+          let remainingToClose = D(qty);
+          let allocatedCost = D(0);
+
+          for(const alloc of openAllocations){
+            if(remainingToClose.lte(0)) break;
+            const allocRem = D(alloc.remaining_quantity);
+            const take = allocRem.lte(remainingToClose) ? allocRem : remainingToClose;
+            const isClosed = allocRem.minus(take).isZero();
+            
+            allocatedCost = allocatedCost.plus(take.mul(alloc.entry_price));
+            remainingToClose = remainingToClose.minus(take);
+
+            await this.db.prepare(`
+              UPDATE ledger_position_allocations 
+              SET remaining_quantity=?, status=?, closed_at=?, updated_at=?
+              WHERE position_id=?
+            `).run(
+              exact(allocRem.minus(take)),
+              isClosed ? 'CLOSED' : 'OPEN',
+              isClosed ? Date.now() : null,
+              Date.now(),
+              alloc.position_id
+            );
+          }
+
+          const removed = allocatedCost.gt(0) 
+            ? allocatedCost 
+            : (quantity.isZero() ? D(current.cost_basis) : D(amount(D(current.cost_basis).mul(qty).div(current.quantity))));
+
+          cost=D(current.cost_basis).minus(removed);
+          if(cost.lt(0)) cost = D(0);
+          initialRisk=D(current.initial_risk);
+          const profit=notional.minus(removed).minus(fee);
+          pnl=D(current.cumulative_pnl).plus(profit);
           realizedR=initialRisk.gt(0)?profit.div(initialRisk):D(0);
           if(quantity.isZero())await this.db.prepare(`INSERT INTO ledger_streak VALUES(?,?,?,?) ON CONFLICT(user_id,account_id,execution_mode)
             DO UPDATE SET loss_streak=CASE WHEN ?::numeric<0 THEN ledger_streak.loss_streak+1 ELSE 0 END`).run(...scope(row),pnl.lt(0)?1:0,amount(pnl));
