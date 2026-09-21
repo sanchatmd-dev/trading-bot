@@ -9,7 +9,7 @@ export async function rotatePostgresKey({db,backupPath,oldKeys,newKey,newId}){
   return db.transaction(async()=>{
     await db.maintenanceLock();
     await db.query("SET LOCAL idle_in_transaction_session_timeout='5min'");
-    if((await db.query('SELECT version FROM schema_version')).rows[0]?.version!==11)throw new Error('Schema 11 is required');
+    if(![11,12].includes((await db.query('SELECT version FROM schema_version')).rows[0]?.version))throw new Error('Schema 11 or 12 is required');
     const backup=await backupPostgres(backupPath,{connectionString:db.pool.options.connectionString});
     let count=0;
     const rewrite=(value,context)=>{count++;return encryptJson(decryptJson(value,oldKeys,context),next,context);};
