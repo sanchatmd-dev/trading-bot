@@ -31,10 +31,10 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 
 ## Architecture
 
-Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md), extended from roadmap commit `e4e473e`. The 2026-09-19 update adds R-1 (per-entry positions and targeted TP/SL) before QL-1 following the reported P1 TP closing P1 and P2 together. This extracts the immediate position-ownership work from APP-3; it is planned, not implemented or deployed. APP-3 onward covers broader application scope; QL-1 through QL-4 cover isolated Quant Lab, versioned shared risk profiles, constrained optimization, reports and Pine export. [docs/PINE_EXPORT.md](docs/PINE_EXPORT.md) specifies the user's choice of `alert()` or strategy order-fill events per export, with source-specific validation. Next implementation milestone is R-1 after R-0 record cleanup. Research setup does not enable Live trading or authorize production writes.
+Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md), extended from roadmap commit `e4e473e`. The 2026-09-19 update added R-1 (per-entry positions and targeted TP/SL) before QL-1 following the reported P1 TP closing P1 and P2 together. **Phase R-1 is now completed in the repository (Schema 12 via `ledger_position_allocations` and `test/scale-in.test.js`).** APP-3 onward covers broader application scope; QL-1 through QL-4 cover isolated Quant Lab, versioned shared risk profiles, constrained optimization, reports and Pine export. [docs/PINE_EXPORT.md](docs/PINE_EXPORT.md) specifies the user's choice of `alert()` or strategy order-fill events per export, with source-specific validation. **Next implementation milestone is Phase QL-1 (Isolated Python Setup, CI & Shared Contracts).** Research setup does not enable Live trading or authorize production writes.
 
 1. **Signal layer**: TradingView indicator sends a Universal Webhook payload with trade_id, broker, symbol, event, sizing data, SL/TP, timestamp, volatility and news fields.
-2. **Bot core**: The Node.js PostgreSQL API validates signals, authenticates each bot's webhook secret and durably queues accepted signals. A separate worker applies execution-time risk controls and commits the Paper fill, position, cash journal, audit and notification outbox atomically. PostgreSQL schema 11 and decimal.js preserve monetary precision.
+2. **Bot core**: The Node.js PostgreSQL API validates signals, authenticates each bot's webhook secret and durably queues accepted signals. A separate worker applies execution-time risk controls and commits the Paper fill, position, cash journal, audit and notification outbox atomically. **PostgreSQL schema 12 (supporting per-entry allocations)** and decimal.js preserve monetary precision.
 3. **Execution adapters**: Binance Global, Binance TH, InnovestX, MT5, Settrade and a future HTTP adapter use a common registry. Live execution is locked.
 
 ## Product rules
@@ -162,3 +162,15 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 
 - Remote: https://github.com/sanchatmd-dev/trading-bot.git
 - Main branch: main
+
+## Phase R-1 & Schema 12 Delivery (2026-09-21)
+
+- **Phase R-1 (Reconciliation & Scale-in Target Exit)**: Delivered in commit `b2cb863`. Added per-entry allocation tracking via table `ledger_position_allocations` to resolve single-position exit conflicts when scaling into positions. Independent allocation units allow targeted Take Profit/Stop Loss per order lot without prematurely closing concurrent allocations. Test suite verified via `test/scale-in.test.js`.
+- **Schema 12 Recovery & PostgreSQL Baseline Fixes**:
+  - Restored missing baseline tables, triggers, and indices in `src/postgres/schema.sql` (including `worker_heartbeats`, `notification_outbox`, `security_mail`, and Paper-trading journal structures) previously truncated during migration updates.
+  - Upgraded baseline version to Schema 12 cleanly.
+  - Updated `scripts/rotate-postgres-key.mjs` to validate and support Schema 12.
+  - Resolved advisory lock / background worker hang issues in `test/postgres/phase2.test.mjs`.
+- **CI / Automated Test Verification**:
+  - GitHub Actions runs across Ubuntu, Windows, Docker container build, and real PostgreSQL integration (`npm run test:postgres`) all passed with zero errors.
+- **Current Milestone**: Phase R-1 is complete and merged into `main`. The codebase is positioned at the entry point of **Phase QL-1 (Isolated Python Setup, CI & Shared Contracts)** as defined in `ROADMAP.md` (establishing `quant_lab/` environment, Python 3.12 lock, CI workflow, and shared data schemas).
