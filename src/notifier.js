@@ -32,7 +32,8 @@ async function smtpSend(config,message) {
       if(!/^\d{3} /.test(last))return;
       cleanup();
       const code=Number(last.slice(0,3));
-      if(expected.includes(code))resolve();else reject(new Error(`SMTP rejected request (${code})`));
+      const text=last.length>4?`: ${last.slice(4)}`:'';
+      if(expected.includes(code))resolve();else reject(new Error(`SMTP rejected request (${code})${text}`));
     };
     socket.on('data',onData);socket.once('error',onError);socket.once('close',onClose);
   });
@@ -60,7 +61,9 @@ async function smtpSend(config,message) {
     await command('DATA',[354]);
     const body=String(message.text).replace(/\r?\n/g,'\r\n').replace(/^\./gm,'..');
     const accepted=wait([250]);
-    socket.write(`From: ${clean(config.from)}\r\nTo: ${clean(message.to)}\r\nSubject: ${message.subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}\r\n.\r\n`);
+    const dateHeader=new Date().toUTCString();
+    const messageId=`<${Date.now()}.${Math.random().toString(36).slice(2)}@${config.host||'astra-trade'}>`;
+    socket.write(`From: ${clean(config.from)}\r\nTo: ${clean(message.to)}\r\nSubject: ${message.subject}\r\nDate: ${dateHeader}\r\nMessage-ID: ${messageId}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}\r\n.\r\n`);
     await accepted;await command('QUIT',[221]);
   } finally {clearTimeout(deadline);socket.destroy();}
 }
