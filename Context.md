@@ -208,5 +208,17 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
   - Server-side enforcement in `src/postgres/server.js`: `POST /api/bots` rejects creation with 403 when exceeding `maxBots`; `GET /api/analytics/*` restricts queries exceeding `historyDays`.
   - Account API (`/api/me`, `/api/auth/session`) returns active `plan` and `quota`.
   - Dynamic frontend rendering in `public/bots.js`: dynamically renders up to `maxBots` slots, automatically applying `.enterprise-grid` responsive layout for large bot counts. Date picker in `public/analytics.js` dynamically enforces minimum allowable history date.
-- **Current Milestone**: **TradingView → Production Paper Forward Acceptance** — Schema 14 deployed to production VPS (release c2921f3, verified health 2.2.0 PAPER_ONLY). Next steps: execute TradingView Paper forward acceptance sequence (BUY, scale-in BUY, targeted TP1/TP2 closing allocations P1/P2 independently, SL/reduce-only, deduplication/stale checks) and diagnose worker SMTP 550 notification issue.
+- **Paper Forward Acceptance Passed (2026-09-22)**:
+  - Executed automated acceptance suite `scripts/test-paper-acceptance.mjs` against live production `https://www.robottrade.io` (Release `c2921f3`, Schema 14).
+  - All 7 verification criteria passed:
+    1. *BUY P1*: HTTP 202 Accepted, Paper fill committed.
+    2. *Repeated BUY P2 (Scale-in)*: HTTP 202 Accepted, concurrent allocation P2 opened alongside P1.
+    3. *Duplicate Webhook*: HTTP 409 Rejected (`Duplicate trade_id`).
+    4. *Stale Webhook*: HTTP 400 Rejected (`Signal is stale`).
+    5. *Targeted TP1*: HTTP 202 Accepted, closed target allocation P1 independently while preserving P2.
+    6. *Targeted TP2*: HTTP 202 Accepted, closed target allocation P2, bringing net holdings to flat.
+    7. *Reduce-Only SL*: HTTP 202 queued, worker safely verified and rejected excess exit without opening opposite short.
+  - Production queue drained immediately to 0; `/healthz` verified `{"ok":true,"version":"2.2.0","mode":"PAPER_ONLY","queued":0}`.
+- **Current Milestone**: **SMTP Notification Diagnosis & PostgreSQL Password Rotation** — Schema 14, R-1 Targeted Exits, APP-3 Lifecycle, and APP-4 Quotas are fully deployed and verified live in production Paper forward mode. Follow-up items: diagnose worker SMTP 550 notification log and perform scheduled PostgreSQL password rotation.
+
 
