@@ -1,11 +1,12 @@
 const botText=(en,th)=>uiLanguage==='th'?th:en;
-let maxBots = 5;
+let maxBots = 5, botSessions={};
 async function refreshBots(){
   if(!authenticated)return;
   try{
     const result=await api('/api/bots');
     botProfiles=result.bots;
     maxBots=result.maxBots || 1;
+    botSessions=Object.fromEntries(await Promise.all(botProfiles.map(async bot=>[bot.id,await api('/api/bot/session',{botId:bot.id,silent:true})])));
     renderBots();
   }catch(error){$('#botMessage').textContent=error.message;}
 }
@@ -20,7 +21,10 @@ function renderBots(){
   const slots = Array.from({length: maxBots}, (_, i) => i + 1);
   $('#botSlots').innerHTML=slots.map(slot=>{
     const bot=botProfiles.find(row=>row.bot_slot_index===slot);
-    return bot?`<article class="panel bot-card"><small>Bot ${slot} · ${esc(bot.status)}</small><label>${botText('Label','ชื่อ Bot')}<input data-bot-label="${esc(bot.id)}" maxlength="80" value="${esc(bot.label)}"></label><div class="bot-actions"><button type="button" class="mini" data-bot-save="${esc(bot.id)}">${translate('Save')}</button><button type="button" class="mini" data-bot-copy="${esc(bot.id)}">${translate('Copy webhook')}</button><button type="button" class="mini" data-bot-open="${esc(bot.id)}">${botText('Open','เปิด')}</button></div></article>`:`<article class="panel bot-card"><small>Bot ${slot} · ${botText('Empty','ว่าง')}</small><p>${botText('Independent risk, balance and webhook','Risk, Balance และ Webhook แยกอิสระ')}</p><button type="button" class="primary" data-bot-create="${slot}">${botText('Create Sub-Bot','สร้าง Sub-Bot')}</button></article>`;
+    if(!bot)return `<article class="panel bot-card"><small>Bot ${slot} · ${botText('Empty','ว่าง')}</small><p>${botText('Independent risk, balance and webhook','Risk, Balance และ Webhook แยกอิสระ')}</p><button type="button" class="primary" data-bot-create="${slot}">${botText('Create Sub-Bot','สร้าง Sub-Bot')}</button></article>`;
+    const session=botSessions[bot.id]||{state:'SETUP'},actions={SETUP:['run'],RUNNING:['pause','stop'],PAUSED:['run','stop'],STOPPED:['reset']}[session.state]||[];
+    const controls=actions.map(action=>`<button type="button" class="mini lifecycle-${action}" data-bot-lifecycle="${action}" data-bot-id="${esc(bot.id)}">${action[0].toUpperCase()+action.slice(1)}</button>`).join('');
+    return `<article class="panel bot-card"><small>Bot ${slot} · ${esc(bot.status)}</small><strong class="lifecycle-state">Lifecycle: ${esc(session.state)}</strong><label>${botText('Label','ชื่อ Bot')}<input data-bot-label="${esc(bot.id)}" maxlength="80" value="${esc(bot.label)}"></label><div class="bot-actions"><button type="button" class="mini" data-bot-save="${esc(bot.id)}">${translate('Save')}</button><button type="button" class="mini" data-bot-copy="${esc(bot.id)}">${translate('Copy webhook')}</button><button type="button" class="mini" data-bot-open="${esc(bot.id)}">${botText('Open','เปิด')}</button>${controls}</div></article>`;
   }).join('');
   $('#botScopeNotice').textContent=selectedBot==='all'?botText('All Bots: overview and trade log only. Select a bot to edit settings.','ทุก Bot: ดูภาพรวมและประวัติ เลือก Bot ก่อนแก้การตั้งค่า'):botText('Settings and webhook apply to the selected bot.','การตั้งค่าและ Webhook เป็นของ Bot ที่เลือก');
 }
@@ -40,6 +44,11 @@ $('#botSlots').onclick=async event=>{
     if(button.dataset.botCreate){await api('/api/bots',{method:'POST',body:JSON.stringify({label:`Bot ${button.dataset.botCreate}`})});await refreshBots();}
     if(button.dataset.botSave){const id=button.dataset.botSave,label=document.querySelector(`[data-bot-label="${id}"]`).value;await api('/api/bots/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify({label})});await refreshBots();}
     if(button.dataset.botOpen)await switchBot(button.dataset.botOpen);
+    if(button.dataset.botLifecycle){
+      const result=await api('/api/bot/session/'+button.dataset.botLifecycle,{method:'POST',body:'{}',botId:button.dataset.botId});
+      $('#botMessage').textContent=`Bot is now ${result.state}.`;
+      await refreshBots();
+    }
     if(button.dataset.botCopy){
       const result=await api('/api/me/webhook-secret',{botId:button.dataset.botCopy});
       if(!result.urlPath)throw new Error(botText('Open this bot and create or recover its webhook in Account and License.','เปิด Bot แล้วสร้างหรือกู้คืน Webhook ในหน้าบัญชีและ License'));

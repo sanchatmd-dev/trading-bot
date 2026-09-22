@@ -255,20 +255,22 @@ async function userRoutes(req, res, url) {
     return json(res, 200, await store.userById(id));
   }
   // --- Bot Lifecycle ---
+  const lifecycleBotId = String(url.searchParams.get('bot_id') || actor.id);
+  if (url.pathname.startsWith('/api/bot/session') && !(await store.ownsBot(actor.id, lifecycleBotId))) return json(res, 403, { error: 'Bot access denied' });
   if (req.method === 'GET' && url.pathname === '/api/bot/session') {
-    const session = await store.getBotSession(user.id);
+    const session = await store.getBotSession(lifecycleBotId);
     return json(res, 200, { state: session.state, run_id: session.run_id, started_at: session.started_at, stopped_at: session.stopped_at });
   }
   const lifecycleAction = { '/api/bot/session/run': 'run', '/api/bot/session/pause': 'pause', '/api/bot/session/stop': 'stop', '/api/bot/session/reset': 'reset' }[url.pathname];
   if (req.method === 'POST' && lifecycleAction) {
-    const currentPolicy = await store.risk(user.id, config.defaultRisk);
-    const paperAccounts = await store.paperAccounts(user.id);
-    const result = await store.transitionBotState(user.id, lifecycleAction, currentPolicy, paperAccounts);
-    await store.audit(user.id, `bot.lifecycle.${lifecycleAction}`, null, { state: result.state, run_id: result.run_id });
+    const currentPolicy = await store.risk(lifecycleBotId, config.defaultRisk);
+    const paperAccounts = await store.paperAccounts(lifecycleBotId);
+    const result = await store.transitionBotState(lifecycleBotId, lifecycleAction, currentPolicy, paperAccounts);
+    await store.audit(actor.id, `bot.lifecycle.${lifecycleAction}`, null, { botId: lifecycleBotId, state: result.state, run_id: result.run_id });
     return json(res, 200, result);
   }
   if (req.method === 'GET' && url.pathname === '/api/bot/session/archive') {
-    return json(res, 200, { archive: await store.listSessionArchive(user.id) });
+    return json(res, 200, { archive: await store.listSessionArchive(lifecycleBotId) });
   }
   const requestedBot = String(url.searchParams.get('bot_id') || actor.id),
     allBots = requestedBot === 'all';
