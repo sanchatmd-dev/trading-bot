@@ -41,6 +41,7 @@ export function normalizeSignal(body,now=Date.now()){
     referencePrice:positive(body.reference_price??body.entry??body.entry_price,'entry',true),limitPrice:positive(body.limit_price??body.price,'limit_price',orderType!=='LIMIT'),
     stopLoss:positive(body.stop_loss??body.sl,'stop_loss',true),takeProfit:positive(body.take_profit??body.tp,'take_profit',true),
     reduceOnly:flag(body.reduce_only)||['TP','SL'].includes(event),leverage:positive(body.leverage??1,'leverage'),targetTradeId: text(body.target_trade_id ?? body.position_id ?? body.target_id, 'target_trade_id', 80, true),
-    volatilityPercent:body.volatility_percent===0?0:positive(body.volatility_percent,'volatility_percent',true),newsRisk:flag(body.news_risk??body.high_impact_news)
+    volatilityPercent:body.volatility_percent===0?0:positive(body.volatility_percent,'volatility_percent',true),newsRisk:flag(body.news_risk??body.high_impact_news),
+    alertSource: text(body.alert_source, 'alert_source', 30, true),strategyId: text(body.strategy_id, 'strategy_id', 50, true),strategyVersion: text(body.strategy_version, 'strategy_version', 30, true),deploymentId: text(body.deployment_id, 'deployment_id', 50, true)
   };
 }
