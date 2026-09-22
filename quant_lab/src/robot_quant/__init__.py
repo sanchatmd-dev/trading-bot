@@ -7,6 +7,12 @@ from robot_quant.analytics import (
     fifo_analytics,
     summarize_closed_positions,
 )
+from robot_quant.backtest import (
+    BacktestConfig,
+    BacktestEngine,
+    BacktestResult,
+    run_backtest,
+)
 from robot_quant.contracts import (
     Capability,
     Contract,
@@ -18,6 +24,20 @@ from robot_quant.contracts import (
     RiskProfile,
     Scope,
     StrategyDefinition,
+)
+from robot_quant.market_data import (
+    Candle,
+    candles_to_dataframe,
+    compute_candles_sha256,
+    generate_synthetic_ohlcv,
+    load_candles_from_parquet,
+    query_candles_with_duckdb,
+    save_candles_to_parquet,
+)
+from robot_quant.optimizer import (
+    CandidateEvaluation,
+    ConstrainedOptimizer,
+    OptimizationReport,
 )
 from robot_quant.records import (
     AnalyticsSettingsRecord,
@@ -36,13 +56,35 @@ from robot_quant.risk_evaluator import (
     RiskPolicy,
     evaluate_risk,
 )
+from robot_quant.risk_preview import (
+    RiskSimulationPreview,
+    generate_risk_preview,
+)
+from robot_quant.strategy import (
+    StrategySignal,
+    SyntheticEmaParameters,
+    SyntheticEmaStrategy,
+)
+from robot_quant.validation import (
+    ChronologicalDatasetSplit,
+    WalkForwardWindow,
+    chronological_split,
+    walk_forward_windows,
+)
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "AnalyticsSettingsRecord",
+    "BacktestConfig",
+    "BacktestEngine",
+    "BacktestResult",
+    "Candle",
+    "CandidateEvaluation",
     "Capability",
     "CashJournalRecord",
+    "ChronologicalDatasetSplit",
+    "ConstrainedOptimizer",
     "Contract",
     "DailyStats",
     "DatasetManifest",
@@ -51,6 +93,7 @@ __all__ = [
     "FillRecord",
     "FundingRecord",
     "LegacyAdjustment",
+    "OptimizationReport",
     "OptimizationRun",
     "ParameterBounds",
     "PositionAllocationRecord",
@@ -61,11 +104,26 @@ __all__ = [
     "RiskEvaluationResult",
     "RiskPolicy",
     "RiskProfile",
+    "RiskSimulationPreview",
     "Scope",
     "SignalRecord",
     "StrategyDefinition",
+    "StrategySignal",
     "SummaryMetrics",
+    "SyntheticEmaParameters",
+    "SyntheticEmaStrategy",
+    "WalkForwardWindow",
+    "candles_to_dataframe",
+    "chronological_split",
+    "compute_candles_sha256",
     "evaluate_risk",
     "fifo_analytics",
+    "generate_risk_preview",
+    "generate_synthetic_ohlcv",
+    "load_candles_from_parquet",
+    "query_candles_with_duckdb",
+    "run_backtest",
+    "save_candles_to_parquet",
     "summarize_closed_positions",
+    "walk_forward_windows",
 ]

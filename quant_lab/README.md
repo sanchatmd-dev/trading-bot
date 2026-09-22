@@ -74,7 +74,7 @@ Capability registry for this phase:
 
 | Template | Contract fixtures | Historical parity | Optimization | Validated export |
 | --- | --- | --- | --- | --- |
-| synthetic-ema-v1 | Yes | No | No engine yet | No |
+| synthetic-ema-v1 | Yes | Yes (QL-2) | Yes (ConstrainedOptimizer) | Pending QL-4 |
 | spt-pro-v4-transport-v1 | Metadata only | Unverified | Unavailable | Unverified |
 
 Run/Pause/Stop/Reset and immutable session archives from the roadmap remain runtime
@@ -112,17 +112,40 @@ not certify per-entry execution, migration rehearsal, or Paper acceptance. QL-2
 must distinguish observed current-runtime behavior from proposed scoped semantics.
 Production remains deferred.
 
+## QL-3: Backtest Simulation & Constrained Optimization
+
+QL-3 delivers an offline backtest engine, parameter optimizer, and walk-forward validator:
+- **Deterministic Market Data (`market_data.py`)**: Generates multi-year synthetic OHLCV candle datasets
+  without network access. Strict candle invariants ($high \ge \max(open, close)$, $low \le \min(open, close)$,
+  $low > 0$, $volume > 0$). Supports Parquet and DuckDB analytical queries with SHA-256 dataset digests.
+- **Reference Strategy (`strategy.py`)**: Verified `synthetic-ema-v1` indicator and signal generator.
+  Bar-close signal timing, next-bar open execution, ATR-based stop loss, conservative same-bar SL priority,
+  and indicator warm-up handling.
+- **Backtest Simulation & Ledger (`backtest.py`)**: Spot long-only simulation layer enforcing non-negative cash
+  balances and inventory-limited reduce-only exits. Produces auditable transaction ledgers (`SignalRecord`,
+  `FillRecord`, `CashJournalRecord`, `PositionAllocationRecord`) that reconcile realized PnL and trade counts
+  exactly with QL-2 FIFO analytics (`fifo_analytics` and `summarize_closed_positions`) at 80-digit precision.
+  Reports both cost-based book equity and mark-to-market equity curves.
+- **Chronological Validation (`validation.py`)**: Chronological train / validation / test partitioning
+  matching `OptimizationRun` contract boundaries (`train_end < validation_end < test_end`) with zero data leakage.
+  Generates rolling walk-forward evaluation windows for regime robustness testing.
+- **Constrained Optimizer (`optimizer.py`)**: Searches parameter spaces strictly constrained by `ParameterBounds`
+  and cross-field invariants (`ema_fast < ema_slow`). Evaluates candidates across multi-stage gates:
+  baseline comparison, parameter sensitivity stability ($\pm 1$ step neighbor check), fee/slippage stress
+  testing ($2\times$ fee and slippage), and out-of-sample test verification. Produces immutable `OptimizationRun`
+  contract records.
+- **Risk Simulation Preview (`risk_preview.py`)**: Pre-flight sizing estimates, consumed/free capital breakdowns,
+  position capacity calculations, and active constraint audits.
+- **Thin Experiment Interface (`notebooks/01_backtest_and_optimization.ipynb`)**: Interactive demonstration
+  of the end-to-end research workflow with outputs stripped for git hygiene.
+
 ## Local validation — 2026-09-22
 
 - Windows / Python 3.12.14: clean dependency installation from `uv.lock` with all
   extras succeeded; `uv lock --check --offline` confirms the manifest matches it.
-- Ruff passes; 27 offline pytest cases pass, including full NUMERIC(38,18)
-  precision, decimal JSON round trips, immutable risk, invalid versions/units,
-  bounds, locked candidates, scoped intents and export provenance.
-- All 12 package imports in `robot_quant.smoke` pass after the Plotly 5 constraint.
-- Node regression: 104/104 pass, including the CI routing matrix. `git diff --check`
-  passes and both workflow YAML files parse.
-- Linux/Windows hosted workflow results and real PostgreSQL integration remain
-  pending. This machine has no configured TEST_DATABASE_URL or available PostgreSQL
-  tools/Docker. No production database is used as a substitute.
-- Changes remain local and uncommitted; no deployment or production change occurred.
+- Ruff passes with zero violations (`ruff check quant_lab`).
+- 56 offline pytest cases pass (`pytest quant_lab/tests`), verifying NUMERIC(38,18) precision,
+  deterministic market data, reference strategy execution, FIFO ledger reconciliation,
+  chronological validation, walk-forward splitting, constrained optimization, and risk simulation preview.
+- Node regression: 104/104 pass (`npm test`).
+- Changes remain strictly isolated in `quant_lab/`; production database, schema, and workers remain untouched.
