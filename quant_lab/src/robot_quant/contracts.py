@@ -82,8 +82,9 @@ class RiskProfile(Contract):
 
 
 class ParameterBounds(Contract):
-    name: Identifier
-    unit: Literal["bars", "multiplier", "percent"]
+    # Only existing indicator inputs are eligible. Account risk fields cannot enter this namespace.
+    name: Literal["ema_fast", "ema_slow", "atr_period", "atr_multiplier"]
+    unit: Literal["bars", "multiplier"]
     minimum: Positive
     maximum: Positive
     step: Positive
@@ -101,9 +102,10 @@ class ParameterBounds(Contract):
             raise ValueError("Bounds and default must align to step")
         if self.locked and (self.optimizable or self.minimum != self.maximum):
             raise ValueError("Locked inputs cannot be searched or mutated")
-        if self.unit not in ["bars", "multiplier", "percent"]:
+        expected = "multiplier" if self.name == "atr_multiplier" else "bars"
+        if self.unit != expected:
             raise ValueError("Invalid unit for parameter")
-        if self.unit == "bars" and any(
+        if expected == "bars" and any(
             value != value.to_integral_value()
             for value in (self.minimum, self.maximum, self.default, self.step)
         ):

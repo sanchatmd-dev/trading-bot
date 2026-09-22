@@ -112,7 +112,7 @@ ALTER TABLE security_mail ADD COLUMN lease_token TEXT;
 ALTER TABLE security_mail ADD COLUMN lease_until BIGINT NOT NULL DEFAULT 0;
 
 CREATE TABLE schema_version(version INTEGER PRIMARY KEY);
-INSERT INTO schema_version VALUES(15);
+INSERT INTO schema_version VALUES(14);
 
 CREATE INDEX idx_execution_ready ON signals(id) WHERE status='QUEUED';
 CREATE INDEX idx_pending_scope ON signals(user_id,account_id,execution_mode,status);
@@ -181,8 +181,8 @@ CREATE TABLE bot_session_archive(
 
 CREATE INDEX idx_session_archive_user ON bot_session_archive(user_id, archived_at DESC);
 
--- Schema 15: Quant Lab Persistent Research Runs
-CREATE TABLE quant_research_runs(
+-- Quant Lab Persistent Research Runs
+CREATE TABLE IF NOT EXISTS quant_research_runs(
   run_id          TEXT PRIMARY KEY,
   user_id         TEXT NOT NULL REFERENCES users(id),
   bot_id          TEXT NOT NULL REFERENCES users(id),
@@ -194,4 +194,4 @@ CREATE TABLE quant_research_runs(
   updated_at      BIGINT NOT NULL
 );
 
-CREATE INDEX idx_quant_runs_bot ON quant_research_runs(user_id, bot_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_quant_runs_bot ON quant_research_runs(user_id, bot_id, created_at DESC);

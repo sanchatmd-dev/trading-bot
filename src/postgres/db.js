@@ -141,6 +141,22 @@ export class PostgresDatabase {
           `);
           row = { version: 14 };
         }
+        if(row.version===14){
+          await this.query(`
+            CREATE TABLE IF NOT EXISTS quant_research_runs(
+              run_id          TEXT PRIMARY KEY,
+              user_id         TEXT NOT NULL REFERENCES users(id),
+              bot_id          TEXT NOT NULL REFERENCES users(id),
+              indicators_config TEXT NOT NULL,
+              optimal_results TEXT,
+              metrics         TEXT,
+              status          TEXT NOT NULL DEFAULT 'PENDING' CHECK(status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')),
+              created_at      BIGINT NOT NULL,
+              updated_at      BIGINT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_quant_runs_bot ON quant_research_runs(user_id, bot_id, created_at DESC);
+          `);
+        }
         if(row?.version!==14)throw new Error('Unsupported PostgreSQL schema');
         return;
       }

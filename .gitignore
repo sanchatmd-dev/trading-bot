@@ -10,3 +10,5 @@ node_modules/
 .skill-install-*/
 .ql-tools/
 .uv-cache/
+__pycache__/
+*.pyc
