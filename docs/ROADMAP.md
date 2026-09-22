@@ -231,6 +231,12 @@ Done when: per-position end-to-end acceptance passes and no targeted exit can cl
 
 ## QL-1 — Isolated setup and reproducible CI
 
+Implementation update (2026-09-22): local scaffold, Python 3.12 uv lock, frozen
+contracts, offline tests, package import smoke and CI routing are implemented in
+`quant_lab/`. See its README for evidence and limitations. Full completion remains
+conditional on hosted Linux/Windows CI and isolated PostgreSQL checks. This update
+does not certify the separately disputed R-1 end-to-end acceptance.
+
 Deliverables:
 - Create `quant_lab/{data,notebooks,src/robot_quant,tests,reports}` and `quant_lab/pyproject.toml`.
 - Use Python 3.12 as the initial tested interpreter. Lock a compatible dependency set; do not claim support for untested later Python versions.

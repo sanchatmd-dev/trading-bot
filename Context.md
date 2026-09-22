@@ -2,6 +2,15 @@
 
 ## Purpose
 
+QL-1 update (2026-09-22): isolated `quant_lab/` Python 3.12 package, uv lock,
+frozen research contracts and offline tests are now implemented locally. See
+`quant_lab/README.md` for validation and compatibility boundaries. CI routing is
+added with workflows always triggered. Hosted Linux/Windows and isolated PostgreSQL
+acceptance remain pending; no production migration/deployment was performed.
+The earlier R-1 completion statement below records the handoff claim, not verified
+end-to-end acceptance: current aggregate sizing/FIFO fallback and Pine tracking
+still require reconciliation against the R-1 gate. QL-1 scaffolding proceeds independently.
+
 Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trading control plane. It is deployed on a VPS and currently runs in **Paper-only** mode: no real broker orders can be submitted by this release.
 
 ## Production

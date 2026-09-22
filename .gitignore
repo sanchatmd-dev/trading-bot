@@ -8,3 +8,5 @@ node_modules/
 .deploy/
 .qa-local/
 .skill-install-*/
+.ql-tools/
+.uv-cache/

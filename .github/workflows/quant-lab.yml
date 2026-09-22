@@ -1,0 +1,50 @@
+name: Quant Lab
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      quant: ${{ steps.scope.outputs.quant }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - id: scope
+        run: node scripts/ci-scope.mjs
+  quant:
+    needs: scope
+    if: needs.scope.outputs.quant == 'true'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: quant_lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.17'
+      - run: uv sync --locked --all-extras
+      - run: uv run --no-sync ruff check .
+      - run: uv run --no-sync pytest
+      - run: uv run --no-sync python -m robot_quant.smoke
+      - run: git diff --check
+  gate:
+    if: always()
+    needs: [scope, quant]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          SCOPE: ${{ needs.scope.result }}
+          QUANT: ${{ needs.quant.result }}
+        run: test "$SCOPE" = success && { test "$QUANT" = success || test "$QUANT" = skipped; }

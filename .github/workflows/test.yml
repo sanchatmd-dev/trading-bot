@@ -3,7 +3,22 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      node: ${{ steps.scope.outputs.node }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - id: scope
+        run: node scripts/ci-scope.mjs
   test:
+    needs: scope
+    if: always() && (needs.scope.result != 'success' || needs.scope.outputs.node == 'true')
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -17,11 +32,15 @@ jobs:
       - run: npm test
       - run: git diff --check
   container:
+    needs: scope
+    if: always() && (needs.scope.result != 'success' || needs.scope.outputs.node == 'true')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t astra-paper-staging .
   postgres:
+    needs: scope
+    if: always() && (needs.scope.result != 'success' || needs.scope.outputs.node == 'true')
     runs-on: ubuntu-24.04
     services:
       postgres:
