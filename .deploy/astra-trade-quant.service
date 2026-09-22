@@ -1,0 +1,23 @@
+[Unit]
+Description=Robot Trade Quant Lab bridge (offline research only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/mikey/apps/astra-trade/current
+Environment=QUANT_PORT=7654
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/mikey/apps/astra-trade/shared/quant-venv/bin/python src/quant_bridge.py
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/mikey/apps/astra-trade/shared
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=default.target
