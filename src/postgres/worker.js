@@ -27,7 +27,8 @@ export class ExecutionWorker {
         const policy=await this.store.risk(user.id,this.config.defaultRisk),exposure=await this.store.exposure(job),account=await this.store.paperAccount(user.id,job.broker);
         if(exposure.uncertain)reason='Unresolved order outcome: operator reconciliation required';
         else{
-          const result=evaluateRisk(signal,{policy,daily:await this.store.ledgerDaily(job),position:await this.store.ledgerPosition(job),equity:account.bookEquity,balance:account.cash,
+          const targetAllocation = signal.targetTradeId ? await this.store.ledgerTargetAllocation(job, signal.targetTradeId) : null;
+          const result=evaluateRisk(signal,{policy,daily:await this.store.ledgerDaily(job),position:await this.store.ledgerPosition(job),targetAllocation,equity:account.bookEquity,balance:account.cash,
             cashAvailable:amount(D(account.cash).minus(exposure.reservedNotional)),licensed:main.role==='ADMIN'||await this.store.hasActiveLicense(main.id),globalKill:await this.store.getSetting('globalKill',false),...exposure});
           if(!result.ok)reason=result.reason;
           else{

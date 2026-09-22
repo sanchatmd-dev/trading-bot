@@ -29,6 +29,9 @@ export function evaluateRisk(signal,context){
   if(isSpot&&signal.leverage!==1)return reject('Spot leverage must equal 1');
   if(isSpot&&signal.side==='SELL'&&!signal.reduceOnly)return reject('Spot SELL must be reduce_only');
   if(isSpot&&signal.side==='SELL'&&position.quantity<=0)return reject('No Spot position available to sell');
+  if(isExit&&signal.targetTradeId){
+    if(!context.targetAllocation||D(context.targetAllocation.remaining_quantity).lte(0))return reject('Target allocation not found or already closed');
+  }
 
   try {
     const price=D(signal.limitPrice||signal.referencePrice||0);
@@ -40,7 +43,9 @@ export function evaluateRisk(signal,context){
     const committed=D(context.committedNotional||0),reserved=D(context.reservedNotional||0);
     const freeCash=D(context.cashAvailable??balance.minus(committed));
     let quantity=signal.quantity===undefined?null:D(signal.quantity),sizingAdjustment;
-    if(isExit&&!quantity&&!signal.quoteQuantity)quantity=D(position.quantity);
+    if(isExit&&!quantity&&!signal.quoteQuantity){
+      quantity=signal.targetTradeId?D(context.targetAllocation.remaining_quantity):D(position.quantity);
+    }
     if(!quantity&&signal.quoteQuantity)quantity=D(down(D(signal.quoteQuantity).div(price)));
     if(!quantity&&signal.riskMode==='QUANTITY')quantity=D(signal.riskValue);
     if(!quantity&&signal.riskMode==='FIXED_NOTIONAL')quantity=D(down(D(signal.riskValue).div(price)));
@@ -59,7 +64,14 @@ export function evaluateRisk(signal,context){
       }
     }
     if(!quantity||quantity.lte(0))return reject('Unable to calculate quantity');
-    if(isExit)quantity=Money.min(quantity,D(position.quantity));
+    if(isExit){
+      const maxExit=signal.targetTradeId?Money.min(D(context.targetAllocation.remaining_quantity),D(position.quantity)):D(position.quantity);
+      if(quantity.gt(maxExit)){
+        const requestedQuantity=quantity.toFixed();
+        quantity=maxExit;
+        sizingAdjustment={requestedQuantity,quantity:quantity.toFixed(),reason:'Capped to available target allocation quantity'};
+      }
+    }
     // Quantity and cash debit have an explicit 18-decimal contract.
     exact(quantity);
     const notional=D(amount(quantity.mul(price)));

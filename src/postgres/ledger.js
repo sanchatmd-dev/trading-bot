@@ -48,6 +48,22 @@ export const ledgerMethods={
     });
   },
   async ledgerPosition(row){return await this.db.prepare('SELECT * FROM ledger_positions WHERE user_id=? AND account_id=? AND execution_mode=? AND symbol=?').get(...scope(row),row.symbol)||{quantity:'0',avg_price:'0',cost_basis:'0',initial_risk:'0',cumulative_pnl:'0'};},
+  async ledgerTargetAllocation(row, targetTradeId){
+    if(!targetTradeId) return null;
+    return await this.db.prepare(`
+      SELECT * FROM ledger_position_allocations 
+      WHERE user_id=? AND account_id=? AND execution_mode=? AND symbol=? 
+        AND (entry_trade_id=? OR position_id=?) AND status='OPEN' AND remaining_quantity>0
+      ORDER BY opened_at ASC LIMIT 1
+    `).get(...scope(row), row.symbol, targetTradeId, targetTradeId);
+  },
+  async listAllocations(row){
+    return await this.db.prepare(`
+      SELECT * FROM ledger_position_allocations 
+      WHERE user_id=? AND account_id=? AND execution_mode=? AND symbol=? AND status='OPEN' AND remaining_quantity>0
+      ORDER BY opened_at ASC
+    `).all(...scope(row), row.symbol);
+  },
   async ledgerDaily(row){
     const daily=await this.db.prepare('SELECT * FROM ledger_daily WHERE user_id=? AND account_id=? AND execution_mode=? AND day=?').get(...scope(row),day())||{day:day(),trades:0,notional:'0',realized_r:'0'};
     const streak=await this.db.prepare('SELECT loss_streak FROM ledger_streak WHERE user_id=? AND account_id=? AND execution_mode=?').get(...scope(row));return {...daily,loss_streak:streak?.loss_streak||0};
@@ -114,11 +130,13 @@ export const ledgerMethods={
             openAllocations = await this.db.prepare(`
               SELECT * FROM ledger_position_allocations 
               WHERE user_id=? AND account_id=? AND execution_mode=? AND symbol=? 
-                AND entry_trade_id=? AND status='OPEN' AND remaining_quantity>0
+                AND (entry_trade_id=? OR position_id=?) AND status='OPEN' AND remaining_quantity>0
               ORDER BY opened_at ASC
-            `).all(...scope(row), row.symbol, targetTradeId);
-          }
-          if(!openAllocations.length){
+            `).all(...scope(row), row.symbol, targetTradeId, targetTradeId);
+            if(!openAllocations.length){
+              throw new Error('Target allocation not found or already closed');
+            }
+          } else {
             openAllocations = await this.db.prepare(`
               SELECT * FROM ledger_position_allocations 
               WHERE user_id=? AND account_id=? AND execution_mode=? AND symbol=? 
@@ -152,6 +170,10 @@ export const ledgerMethods={
             );
           }
 
+          if(targetTradeId && remainingToClose.gt(0)){
+            throw new Error('Fill exceeds remaining target allocation quantity');
+          }
+
           const removed = allocatedCost.gt(0) 
             ? allocatedCost 
             : (quantity.isZero() ? D(current.cost_basis) : D(amount(D(current.cost_basis).mul(qty).div(current.quantity))));
@@ -165,10 +187,25 @@ export const ledgerMethods={
           if(quantity.isZero())await this.db.prepare(`INSERT INTO ledger_streak VALUES(?,?,?,?) ON CONFLICT(user_id,account_id,execution_mode)
             DO UPDATE SET loss_streak=CASE WHEN ?::numeric<0 THEN ledger_streak.loss_streak+1 ELSE 0 END`).run(...scope(row),pnl.lt(0)?1:0,amount(pnl));
         }
+        let activeStop = null, activeTp = null;
+        if(quantity.gt(0)){
+          if(order.side==='BUY'){
+            activeStop = order.stopLoss || null;
+            activeTp = order.takeProfit || null;
+          }else{
+            const latestAlloc = await this.db.prepare(`
+              SELECT stop_loss,take_profit FROM ledger_position_allocations
+              WHERE user_id=? AND account_id=? AND execution_mode=? AND symbol=? AND status='OPEN' AND remaining_quantity>0
+              ORDER BY opened_at DESC LIMIT 1
+            `).get(...scope(row), row.symbol);
+            activeStop = latestAlloc?.stop_loss ?? current.stop_loss;
+            activeTp = latestAlloc?.take_profit ?? current.take_profit;
+          }
+        }
         await this.db.prepare('INSERT INTO paper_cash_journal(signal_id,cumulative_quantity,user_id,broker,cash_delta,at) VALUES(?,?,?,?,?,?)').run(row.id,exact(total),row.user_id,row.broker,exact(cashDelta),Date.now());
         await this.db.prepare(`INSERT INTO ledger_positions(user_id,account_id,execution_mode,broker,symbol,quantity,avg_price,stop_loss,take_profit,initial_risk,cumulative_pnl,updated_at,cost_basis)
           VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id,account_id,execution_mode,symbol) DO UPDATE SET quantity=excluded.quantity,avg_price=excluded.avg_price,stop_loss=excluded.stop_loss,take_profit=excluded.take_profit,initial_risk=excluded.initial_risk,cumulative_pnl=excluded.cumulative_pnl,updated_at=excluded.updated_at,cost_basis=excluded.cost_basis`)
-          .run(...scope(row),row.broker,row.symbol,exact(quantity),quantity.gt(0)?amount(cost.div(quantity)):'0',order.side==='BUY'?order.stopLoss:current.stop_loss,order.side==='BUY'?(order.takeProfit||null):current.take_profit,quantity.gt(0)?amount(initialRisk):'0',quantity.gt(0)?amount(pnl):'0',Date.now(),exact(cost));
+          .run(...scope(row),row.broker,row.symbol,exact(quantity),quantity.gt(0)?amount(cost.div(quantity)):'0',activeStop,activeTp,quantity.gt(0)?amount(initialRisk):'0',quantity.gt(0)?amount(pnl):'0',Date.now(),exact(cost));
         await this.db.prepare('INSERT INTO fills(signal_id,cumulative_quantity,delta_quantity,price,fee_quote,realized_r,received_at,quote_amount) VALUES(?,?,?,?,?,?,?,?)').run(row.id,exact(total),exact(qty),amount(price),exact(fee),amount(realizedR),Date.now(),exact(notional));
         await this.snapshotPaper(row.user_id,row.broker,'FILL');
       }

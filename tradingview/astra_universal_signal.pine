@@ -2,51 +2,106 @@
 indicator("Robot trade Universal Signal Bridge", overlay = true)
 
 // Example entry logic. Replace these conditions with your own indicator signals.
-fastLength = input.int(9, "Fast EMA", minval = 1)
-slowLength = input.int(21, "Slow EMA", minval = 2)
-atrLength = input.int(14, "ATR Length", minval = 1)
-slAtr = input.float(1.5, "Stop loss ATR", minval = 0.1)
-tpAtr = input.float(3.0, "Take profit ATR", minval = 0.1)
-broker = input.string("Binance Global", "Broker", options = ["Binance Global", "Binance TH", "InnovestX", "MT5", "Settrade"])
-riskPercent = input.float(0.5, "Risk % equity", minval = 0.01, maxval = 100)
-newsRisk = input.bool(false, "High-impact news active")
+fastLength = input.int(9, "Fast EMA", minval = 1, group = "Strategy Signals")
+slowLength = input.int(21, "Slow EMA", minval = 2, group = "Strategy Signals")
+atrLength = input.int(14, "ATR Length", minval = 1, group = "Strategy Signals")
+
+groupRobot = "Robot Trade - Spot Paper Bridge"
+rtTag = input.string("ast1", "Deployment ID (1-12 letters/digits)", group = groupRobot)
+broker = input.string("Binance Global", "Broker", options = ["Binance Global", "Binance TH", "InnovestX", "MT5", "Settrade"], group = groupRobot)
+riskPercent = input.float(0.5, "Risk % equity", minval = 0.01, maxval = 100, step = 0.1, group = groupRobot)
+slAtr = input.float(1.5, "Stop loss ATR multiplier", minval = 0.1, step = 0.5, group = groupRobot)
+tpAtr = input.float(3.0, "Take profit ATR multiplier", minval = 0.1, step = 0.5, group = groupRobot)
+repeatBuy = input.bool(true, "Allow repeated BUY entries (Scale-in)", group = groupRobot)
+exitOnSell = input.bool(true, "Send SELL on sell signal (portfolio close)", group = groupRobot)
+newsRisk = input.bool(false, "High-impact news active", group = groupRobot)
+showVisuals = input.bool(true, "Show Entry, SL, TP lines", group = groupRobot)
 
 fast = ta.ema(close, fastLength)
 slow = ta.ema(close, slowLength)
 atr = ta.atr(atrLength)
-volatilityPercent = atr / close * 100
+volatilityPercent = na(atr) or close <= 0 ? 0.0 : atr / close * 100
 buySignal = ta.crossover(fast, slow)
 sellSignal = ta.crossunder(fast, slow)
 
-var bool inPosition = false
-var float trackedEntry = na
-var float trackedSl = na
-var float trackedTp = na
+// Multi-entry tracking parallel arrays (Phase R-1)
+var string[] rtEntryIds = array.new_string()
+var float[] rtEntryStops = array.new_float()
+var float[] rtEntryTargets = array.new_float()
+var int[] rtEntryBars = array.new_int()
+var int rtAlertCalls = 0
 
 jsonNumber(float value) => na(value) ? "null" : str.tostring(value, format.mintick)
-message(string eventName, string sideName, float entryValue, float slValue, float tpValue, bool reduceOnly) =>
-    tradeId = syminfo.ticker + "-" + eventName + "-" + str.tostring(timenow)
-    "{\"trade_id\":\"" + tradeId + "\",\"broker\":\"" + broker + "\",\"symbol\":\"" + syminfo.ticker + "\",\"timeframe\":\"" + timeframe.period + "\",\"event\":\"" + eventName + "\",\"side\":\"" + sideName + "\",\"order_type\":\"MARKET\",\"risk_mode\":\"PERCENT_EQUITY\",\"risk_value\":" + str.tostring(riskPercent) + ",\"entry\":" + jsonNumber(entryValue) + ",\"sl\":" + jsonNumber(slValue) + ",\"tp\":" + jsonNumber(tpValue) + ",\"reduce_only\":" + str.tostring(reduceOnly) + ",\"volatility_percent\":" + str.tostring(volatilityPercent) + ",\"news_risk\":" + str.tostring(newsRisk) + ",\"leverage\":1,\"timestamp\":" + str.tostring(timenow) + "}"
+
+message(string eventName, string sideName, float entryValue, float slValue, float tpValue, bool reduceOnly, string targetTradeId = "") =>
+    string suffix = targetTradeId != "" ? ("-" + targetTradeId) : ""
+    string tradeId = "AST-" + rtTag + "-" + syminfo.ticker + "-" + timeframe.period + "-" + str.tostring(time_close) + "-" + eventName + suffix
+    string targetPart = targetTradeId != "" ? ',"target_trade_id":"' + targetTradeId + '"' : ''
+    "{\"trade_id\":\"" + tradeId + "\",\"broker\":\"" + broker + "\",\"symbol\":\"" + syminfo.ticker + "\",\"timeframe\":\"" + timeframe.period + "\",\"event\":\"" + eventName + "\",\"side\":\"" + sideName + "\",\"account_type\":\"Spot\",\"order_type\":\"MARKET\",\"risk_mode\":\"PERCENT_EQUITY\",\"risk_value\":" + str.tostring(riskPercent) + ",\"reference_price\":" + jsonNumber(entryValue) + ",\"stop_loss\":" + jsonNumber(slValue) + ",\"take_profit\":" + jsonNumber(tpValue) + ",\"reduce_only\":" + str.tostring(reduceOnly) + ",\"volatility_percent\":" + str.tostring(volatilityPercent) + ",\"news_risk\":" + str.tostring(newsRisk) + ",\"leverage\":1,\"timestamp\":" + str.tostring(time_close) + targetPart + "}"
+
+var line rtLineEntry = na
+var line rtLineSL = na
+var line rtLineTP = na
 
 if barstate.isconfirmed
-    if not inPosition and buySignal
-        trackedEntry := close
-        trackedSl := close - atr * slAtr
-        trackedTp := close + atr * tpAtr
-        inPosition := true
-        alert(message("BUY", "BUY", trackedEntry, trackedSl, trackedTp, false), alert.freq_once_per_bar_close)
-    else if inPosition and low <= trackedSl
-        alert(message("SL", "SELL", close, trackedSl, trackedTp, true), alert.freq_once_per_bar_close)
-        inPosition := false
-    else if inPosition and high >= trackedTp
-        alert(message("TP", "SELL", close, trackedSl, trackedTp, true), alert.freq_once_per_bar_close)
-        inPosition := false
-    else if inPosition and sellSignal
-        alert(message("SELL", "SELL", close, trackedSl, trackedTp, true), alert.freq_once_per_bar_close)
-        inPosition := false
+    float rtPrice = math.round_to_mintick(close)
+    bool exitSentThisBar = false
+
+    // 1. General SELL signal (portfolio close)
+    if sellSignal and exitOnSell
+        alert(message("SELL", "SELL", rtPrice, na, na, true, ""), alert.freq_once_per_bar_close)
+        rtAlertCalls += 1
+        array.clear(rtEntryIds)
+        array.clear(rtEntryStops)
+        array.clear(rtEntryTargets)
+        array.clear(rtEntryBars)
+        exitSentThisBar := true
+
+    // 2. Protective exits for individual active entries (Targeted Exits)
+    if not exitSentThisBar and array.size(rtEntryIds) > 0
+        for i = array.size(rtEntryIds) - 1 to 0
+            int entryBar = array.get(rtEntryBars, i)
+            if bar_index > entryBar
+                float entryStop = array.get(rtEntryStops, i)
+                float entryTarget = array.get(rtEntryTargets, i)
+                bool stopHit = low <= entryStop
+                bool targetHit = high >= entryTarget
+                if stopHit or targetHit
+                    string ev = stopHit ? "SL" : "TP"
+                    string targetId = array.get(rtEntryIds, i)
+                    alert(message(ev, "SELL", rtPrice, entryStop, entryTarget, true, targetId), alert.freq_once_per_bar_close)
+                    rtAlertCalls += 1
+                    exitSentThisBar := true
+                    array.remove(rtEntryIds, i)
+                    array.remove(rtEntryStops, i)
+                    array.remove(rtEntryTargets, i)
+                    array.remove(rtEntryBars, i)
+
+    // 3. BUY entry / Scale-in
+    bool inPosition = array.size(rtEntryIds) > 0
+    bool canBuy = buySignal and (not inPosition or repeatBuy) and not newsRisk and not exitSentThisBar and array.size(rtEntryIds) < 10
+    if canBuy
+        float nextStop = math.round_to_mintick(close - atr * slAtr)
+        float nextTarget = math.round_to_mintick(close + atr * tpAtr)
+        if rtPrice > 0 and not na(nextStop) and nextStop > 0 and nextStop < rtPrice and nextTarget > rtPrice and not na(atr)
+            string buyId = "AST-" + rtTag + "-" + syminfo.ticker + "-" + timeframe.period + "-" + str.tostring(time_close) + "-BUY"
+            array.push(rtEntryIds, buyId)
+            array.push(rtEntryStops, nextStop)
+            array.push(rtEntryTargets, nextTarget)
+            array.push(rtEntryBars, bar_index)
+            alert(message("BUY", "BUY", rtPrice, nextStop, nextTarget, false, ""), alert.freq_once_per_bar_close)
+            rtAlertCalls += 1
+
+            if showVisuals
+                if not na(rtLineEntry)
+                    line.delete(rtLineEntry)
+                    line.delete(rtLineSL)
+                    line.delete(rtLineTP)
+                rtLineEntry := line.new(bar_index, rtPrice, bar_index + 15, rtPrice, color=color.blue, width=2)
+                rtLineSL := line.new(bar_index, nextStop, bar_index + 15, nextStop, color=color.red, width=2)
+                rtLineTP := line.new(bar_index, nextTarget, bar_index + 15, nextTarget, color=color.green, width=2)
 
 plot(fast, "Fast EMA", color = color.aqua)
 plot(slow, "Slow EMA", color = color.orange)
-plot(inPosition ? trackedSl : na, "SL", color = color.red, style = plot.style_linebr)
-plot(inPosition ? trackedTp : na, "TP", color = color.lime, style = plot.style_linebr)
-plotshape(buySignal and not inPosition[1], title = "BUY", style = shape.labelup, text = "BUY", color = color.lime, location = location.belowbar)
+plotshape(buySignal, title = "BUY Signal", style = shape.triangleup, location = location.belowbar, color = color.green, size = size.small)
+plotshape(sellSignal, title = "SELL Signal", style = shape.triangledown, location = location.abovebar, color = color.red, size = size.small)

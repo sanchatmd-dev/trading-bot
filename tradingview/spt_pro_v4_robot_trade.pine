@@ -2513,19 +2513,20 @@ if barstate.isfirst and rtEnabled
         runtime.error("Robot Trade: use standard candles, not synthetic charts.")
 
 // Price strings preserve decimal precision through the PostgreSQL normalizer.
-f_rtPayload(string ev, float px, float stop, float target, float vol, int stamp) =>
-    string id = "SPT-" + rtTag + "-" + syminfo.ticker + "-" + timeframe.period + "-" + str.tostring(stamp) + "-" + ev
+f_rtPayload(string ev, float px, float stop, float target, float vol, int stamp, string targetTradeId = "") =>
+    string id = "SPT-" + rtTag + "-" + syminfo.ticker + "-" + timeframe.period + "-" + str.tostring(stamp) + "-" + ev + (targetTradeId != "" ? ("-" + targetTradeId) : "")
     if str.length(id) > 80
         runtime.error("Robot Trade: trade_id exceeds 80 characters.")
     string riskPart = ev == "BUY" ? ',"risk_mode":"PERCENT_EQUITY","risk_value":"' + str.tostring(rtRisk, "0.########") + '","stop_loss":"' + str.tostring(stop, format.mintick) + '","take_profit":"' + str.tostring(target, format.mintick) + '"' : ',"risk_mode":"QUANTITY"'
-    string payload = '{"trade_id":"' + f_jsonEscape(id) + '","broker":"' + f_jsonEscape(rtBroker) + '","symbol":"' + f_jsonEscape(syminfo.ticker) + '","timeframe":"' + f_jsonEscape(timeframe.period) + '","event":"' + ev + '","side":"' + (ev == "BUY" ? "BUY" : "SELL") + '","account_type":"Spot","order_type":"MARKET","timestamp":' + str.tostring(stamp) + ',"reference_price":"' + str.tostring(px, format.mintick) + '","reduce_only":' + (ev == "BUY" ? "false" : "true") + ',"leverage":1,"volatility_percent":' + str.tostring(vol, "0.########") + ',"news_risk":' + (rtNews ? "true" : "false") + riskPart + '}'
+    string targetPart = targetTradeId != "" ? ',"target_trade_id":"' + f_jsonEscape(targetTradeId) + '"' : ''
+    string payload = '{"trade_id":"' + f_jsonEscape(id) + '","broker":"' + f_jsonEscape(rtBroker) + '","symbol":"' + f_jsonEscape(syminfo.ticker) + '","timeframe":"' + f_jsonEscape(timeframe.period) + '","event":"' + ev + '","side":"' + (ev == "BUY" ? "BUY" : "SELL") + '","account_type":"Spot","order_type":"MARKET","timestamp":' + str.tostring(stamp) + ',"reference_price":"' + str.tostring(px, format.mintick) + '","reduce_only":' + (ev == "BUY" ? "false" : "true") + ',"leverage":1,"volatility_percent":' + str.tostring(vol, "0.########") + ',"news_risk":' + (rtNews ? "true" : "false") + riskPart + targetPart + '}'
     payload
 
-// This tracks EMITTED alerts, not broker acceptance. No webhook response reaches Pine.
-var bool rtLong = false
-var float rtStop = na
-var float rtTarget = na
-var int rtEntryBar = na
+// Multi-entry tracking: bounded to max 10 entries per alert instance.
+var string[] rtEntryIds = array.new_string()
+var float[] rtEntryStops = array.new_float()
+var float[] rtEntryTargets = array.new_float()
+var int[] rtEntryBars = array.new_int()
 var int rtLastHistoricalBuy = na
 var int rtLastLiveBuy = na
 var int rtLastHistoricalSell = na
@@ -2559,47 +2560,61 @@ if rtEnabled and barstate.isrealtime and barstate.isconfirmed
     float rtPrice = math.round_to_mintick(close)
     float rtVol = na(atr) or close <= 0 ? 0.0 : 100.0 * atr / close
     string rtEvent = ""
-    if rtLong and bar_index > rtEntryBar
-        bool stopHit = low <= rtStop
-        bool targetHit = high >= rtTarget
-        if stopHit and targetHit
-            rtEvent := btSameBarMode == "Conservative" ? "SL" : "TP"
-        else if stopHit
-            rtEvent := "SL"
-        else if targetHit
-            rtEvent := "TP"
+    string rtTargetTradeId = ""
+
+    // Check protective exits for tracked entries
+    if array.size(rtEntryIds) > 0
+        for i = array.size(rtEntryIds) - 1 to 0
+            int entryBar = array.get(rtEntryBars, i)
+            if bar_index > entryBar
+                float entryStop = array.get(rtEntryStops, i)
+                float entryTarget = array.get(rtEntryTargets, i)
+                bool stopHit = low <= entryStop
+                bool targetHit = high >= entryTarget
+                if stopHit or targetHit
+                    string ev = (stopHit and targetHit) ? (btSameBarMode == "Conservative" ? "SL" : "TP") : (stopHit ? "SL" : "TP")
+                    string targetId = array.get(rtEntryIds, i)
+                    alert(f_rtPayload(ev, rtPrice, na, na, rtVol, time_close, targetId), alert.freq_once_per_bar_close)
+                    rtAlertCalls += 1
+                    rtEvent := ev
+                    rtTargetTradeId := targetId
+                    rtLastDecision := ev + ": alert() called; check Alert Log"
+                    array.remove(rtEntryIds, i)
+                    array.remove(rtEntryStops, i)
+                    array.remove(rtEntryTargets, i)
+                    array.remove(rtEntryBars, i)
+
     rtEvent := f_rtExitEvent(rtEvent, sellSignal, rtExitOnSell)
     if rtEvent != ""
-        // Omit quantity: current server closes ALL holdings of this bot/symbol.
-        // No holdings => server rejects SELL; never opens a Short.
-        alert(f_rtPayload(rtEvent, rtPrice, na, na, rtVol, time_close), alert.freq_once_per_bar_close)
-        rtAlertCalls += 1
-        rtLastDecision := rtEvent + ": alert() called; check Alert Log"
-        if sellSignal and rtEvent != "SELL"
+        if rtEvent == "SELL"
+            alert(f_rtPayload("SELL", rtPrice, na, na, rtVol, time_close, ""), alert.freq_once_per_bar_close)
+            rtAlertCalls += 1
+            rtLastDecision := "SELL: alert() called; check Alert Log"
+            array.clear(rtEntryIds)
+            array.clear(rtEntryStops)
+            array.clear(rtEntryTargets)
+            array.clear(rtEntryBars)
+        else if sellSignal and rtExitOnSell
             rtLastDecision := "SELL covered by " + rtEvent + ": one exit alert() called"
-        rtLong := false
-        rtStop := na
-        rtTarget := na
-        rtEntryBar := na
     else if sellSignal and not rtExitOnSell
         rtLastDecision := "SELL skipped: Send SELL disabled"
         if rtShowSkipped
             label.new(bar_index, high, "Robot SELL skipped: Send SELL disabled", style = label.style_label_down, color = color.orange, textcolor = color.black, size = size.small)
+
+    bool trackingLong = array.size(rtEntryIds) > 0
     string rtSkip = ""
     if buySignal
-        rtSkip := rtEvent != "" ? "Exit takes priority this bar" : rtNews ? "Manual news block enabled" : rtLong and not rtRepeatBuy ? "Repeated BUY disabled" : ""
-    if f_rtCanBuy(buySignal, rtLong, rtRepeatBuy, rtNews, rtEvent != "")
+        rtSkip := rtEvent != "" ? "Exit takes priority this bar" : rtNews ? "Manual news block enabled" : trackingLong and not rtRepeatBuy ? "Repeated BUY disabled" : array.size(rtEntryIds) >= 10 ? "Max 10 open entries reached" : ""
+    if f_rtCanBuy(buySignal, trackingLong, rtRepeatBuy, rtNews, rtEvent != "") and array.size(rtEntryIds) < 10
         float nextStop = math.round_to_mintick(longSLPreview)
         float nextTarget = math.round_to_mintick(close + (close - longSLPreview) * f_targetRR())
         if rtPrice > 0 and not na(nextStop) and nextStop > 0 and nextStop < rtPrice and nextTarget > rtPrice and not na(atr)
-            // Existing aggregate position keeps its first emitted stop/target.
-            // New BUY payload still includes its own SL/TP for server risk sizing.
-            if not rtLong
-                rtStop := nextStop
-                rtTarget := nextTarget
-                rtEntryBar := bar_index
-            rtLong := true
-            alert(f_rtPayload("BUY", rtPrice, nextStop, nextTarget, rtVol, time_close), alert.freq_once_per_bar_close)
+            string buyId = "SPT-" + rtTag + "-" + syminfo.ticker + "-" + timeframe.period + "-" + str.tostring(time_close) + "-BUY"
+            array.push(rtEntryIds, buyId)
+            array.push(rtEntryStops, nextStop)
+            array.push(rtEntryTargets, nextTarget)
+            array.push(rtEntryBars, bar_index)
+            alert(f_rtPayload("BUY", rtPrice, nextStop, nextTarget, rtVol, time_close, ""), alert.freq_once_per_bar_close)
             rtAlertCalls += 1
             rtLastDecision := "BUY: alert() called; check Alert Log"
         else

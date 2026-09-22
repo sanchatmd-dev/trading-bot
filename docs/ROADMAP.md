@@ -4,7 +4,7 @@ Status: proposed implementation sequence after release `c573e39`. This document 
 
 Planning baseline: roadmap commit `e4e473e`. This extension incorporates shared Quant Lab risk management, constrained optimization and Pine Script export into QL-1 through QL-4, preserving the existing APP roadmap and the user's choice of alert source.
 
-Latest planning update: **R-1 — Per-entry positions and targeted exits** was implemented in repository on 2026-09-21 (commit `b2cb863`, Schema 12 `ledger_position_allocations`) to resolve the scale-in combined inventory close; production migration rehearsal and Pine end-to-end acceptance remain outstanding.
+Latest planning update: **R-1 — Per-entry positions and targeted exits** was implemented and verified in repository (Schema 12 `ledger_position_allocations`, targeted exit risk sizing/isolation, Pine Script multi-entry tracking with ATR SL, 108/108 Node tests passed); live Paper forward acceptance on VPS remains outstanding.
 
 Use `APP-*` for the application roadmap and `QL-*` for Quant Lab. The previously deployed application Phases 0–2 retain their names. APP-3 below is the proposed next application scope, not an assertion that an older Phase 3 specification already exists.
 
@@ -25,11 +25,11 @@ Default delivery order: **R-0 → R-1 → QL-1 → QL-2 → APP-3 → QL-3 → Q
 | Phase | Main deliverable | Completion gate |
 | --- | --- | --- |
 | R-0 | Current release/CI/acceptance baseline | Evidence and outstanding tasks recorded accurately. |
-| R-1 | Per-BUY position ownership and targeted TP/SL, end to end | Implemented in repo (`b2cb863`, Schema 12); live Paper acceptance and Pine end-to-end validation pending. |
+| R-1 | Per-BUY position ownership and targeted TP/SL, end to end | Implemented and verified in repo (PostgreSQL schema 12, targeted exits in ledger/risk, Pine multi-entry tracking arrays, 108/108 Node tests passed); live Paper forward acceptance pending. |
 | QL-1 | Isolated Python/CI and shared indicator/input/risk contracts | Implemented in repo (`32625fb`); hosted Linux/Windows CI and isolated DB acceptance pending. |
 | QL-2 | Read-only datasets, deterministic replay and accounting/risk parity | Implemented in quant_lab/; synthetic fixtures, read-only contracts, and FIFO/risk parity pass (41/41 tests). |
 | APP-3 | Universal Risk Manager runtime, multi-indicator isolation and measured Paper scaling | Scoped allocations/exits, reservations, migration, UI and load/recovery acceptance. |
-| QL-3 | Backtesting and optimization of selected existing inputs | Original logic preserved; baseline, out-of-sample and stress evidence retained. |
+| QL-3 | Backtesting and optimization of selected existing inputs | Implemented in quant_lab/ (backtest, constrained optimizer, walk-forward validation, 56/56 tests passed). |
 | QL-4 | Reconciled reports, Pine export and Paper forward validation | Selected alert source compiles and passes source-specific TradingView/Paper checks. |
 | APP-4 | Customer onboarding, quotas, subscriptions and paid Paper readiness | Customer lifecycle, security, beta and deferred off-host recovery gates complete. |
 | APP-5 | Optional broker-by-broker Live rollout | External order/reconciliation acceptance and separate approval to enable Live. |

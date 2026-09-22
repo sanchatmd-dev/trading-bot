@@ -27,13 +27,14 @@ test('actual Pine BUY gate permits a new signal after a prior emitted or rejecte
   assert.equal(canBuy(true,false,true,false,true),false);
   assert.equal(canBuy(false,false,true,false,false),false);
 });
-function payload(ev,broker='Binance Global',symbol='BTCUSD'){
+function payload(ev,broker='Binance Global',symbol='BTCUSD',targetTradeId=''){
   const str={tostring:value=>String(value)};
-  const args=['str','syminfo','timeframe','format','f_jsonEscape','rtTag','rtBroker','rtRisk','rtNews','ev','px','stop','target','vol','stamp'];
-  const values=[str,{ticker:symbol},{period:'60'},{mintick:0.01},s=>JSON.stringify(s).slice(1,-1),'spt1',broker,0.5,false,ev,100,95,115,2,1900000000000];
+  const args=['str','syminfo','timeframe','format','f_jsonEscape','rtTag','rtBroker','rtRisk','rtNews','ev','px','stop','target','vol','stamp','targetTradeId'];
+  const values=[str,{ticker:symbol},{period:'60'},{mintick:0.01},s=>JSON.stringify(s).slice(1,-1),'spt1',broker,0.5,false,ev,100,95,115,2,1900000000000,targetTradeId];
   const id=Function(...args,'return '+expression('id'))(...values);
   const riskPart=Function(...args,'return '+expression('riskPart'))(...values);
-  return JSON.parse(Function(...args,'id','riskPart','return '+expression('payload'))(...values,id,riskPart));
+  const targetPart=Function(...args,'return '+expression('targetPart'))(...values);
+  return JSON.parse(Function(...args,'id','riskPart','targetPart','return '+expression('payload'))(...values,id,riskPart,targetPart));
 }
 test('actual Pine exit selector forwards SELL without BUY state and emits only one protective exit',()=>{
   const pine=source.match(/f_rtExitEvent\([^\n]+\) =>\n    ([^\n]+)/)[1];
@@ -84,3 +85,12 @@ test('SPT IDs deterministic and distinct by event; THB is not converted',()=>{
   const body=payload('BUY','Binance TH','BTCTHB');
   assert.equal(normalizeSignal(body,body.timestamp).symbol,'BTCTHB');
 });
+test('SPT TP/SL payload with targetTradeId carries target_trade_id and distinct trade_id',()=>{
+  const targetId = 'SPT-spt1-BTCUSD-60-1900000000000-BUY';
+  const body = payload('TP','Binance Global','BTCUSD',targetId);
+  const s = normalizeSignal(body, body.timestamp);
+  assert.equal(s.targetTradeId, targetId);
+  assert.equal(body.target_trade_id, targetId);
+  assert.ok(body.trade_id.includes(targetId));
+});
+

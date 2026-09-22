@@ -28,14 +28,19 @@ export function evaluateRisk(signal,context){
   if(isSpot&&signal.leverage!==1)return reject('Spot leverage must equal 1');
   if(isSpot&&signal.side==='SELL'&&!signal.reduceOnly)return reject('Spot SELL must be reduce_only');
   if(isSpot&&signal.side==='SELL'&&position.quantity<=0)return reject('No Spot position available to sell');
+  if(isExit&&signal.targetTradeId){
+    if(!context.targetAllocation||Number(context.targetAllocation.remaining_quantity)<=0)return reject('Target allocation not found or already closed');
+  }
   const price=signal.limitPrice||signal.referencePrice;
   if(!price)return reject('entry/reference_price is required for risk checks');
   if(signal.side==='BUY'&&signal.stopLoss&&signal.stopLoss>=price)return reject('BUY stop loss must be below entry');
   if(signal.side==='BUY'&&signal.takeProfit&&signal.takeProfit<=price)return reject('BUY take profit must be above entry');
   const availableBalance=Number.isFinite(context.balance)?context.balance:context.equity;
   const freeCash=context.cashAvailable ?? availableBalance-(context.committedNotional||0);
-  let quantity=signal.quantity,sizingAdjustment;
-  if(isSpot&&signal.side==='SELL'&&signal.reduceOnly&&!quantity&&!signal.quoteQuantity)quantity=position.quantity;
+  let quantity=(signal.quantity!==undefined&&signal.quantity!==null)?Number(signal.quantity):signal.quantity,sizingAdjustment;
+  if(isSpot&&signal.side==='SELL'&&signal.reduceOnly&&!quantity&&!signal.quoteQuantity){
+    quantity=signal.targetTradeId ? Number(context.targetAllocation.remaining_quantity) : Number(position.quantity);
+  }
   if(!quantity&&signal.quoteQuantity)quantity=signal.quoteQuantity/price;
   if(!quantity&&signal.riskMode==='QUANTITY')quantity=signal.riskValue;
   if(!quantity&&signal.riskMode==='FIXED_NOTIONAL')quantity=signal.riskValue/price;
@@ -54,7 +59,14 @@ export function evaluateRisk(signal,context){
     }
   }
   if(!Number.isFinite(quantity)||quantity<=0)return reject('Unable to calculate quantity');
-  if(isSpot&&signal.side==='SELL')quantity=Math.min(quantity,position.quantity);
+  if(isSpot&&signal.side==='SELL'){
+    const maxExit=signal.targetTradeId?Math.min(Number(context.targetAllocation.remaining_quantity),Number(position.quantity)):Number(position.quantity);
+    if(quantity>maxExit){
+      const requestedQuantity=quantity;
+      quantity=maxExit;
+      sizingAdjustment={requestedQuantity,quantity,reason:'Capped to available target allocation quantity'};
+    }
+  }
   const notional=quantity*price;
   if(!Number.isFinite(notional)||notional<=0)return reject('Invalid notional');
   if(!isExit){

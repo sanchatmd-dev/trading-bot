@@ -57,3 +57,27 @@ test('Spot Balance caps automatic sizing and rejects oversized explicit quantity
   assert.equal(result.order.sizingAdjustment.reason,'Capped to available equity and notional limits');
   assert.match(evaluateRisk({...s,quantity:20},c).reason,/balance/);
 });
+test('targeted TP or SL sizes to target allocation and rejects missing/closed allocation',()=>{
+  const targetExit={...signal,event:'TP',side:'SELL',reduceOnly:true,quantity:undefined,quoteQuantity:undefined,riskMode:'PERCENT_EQUITY',targetTradeId:'entry-lot-1'};
+  const context={...ctx,position:{quantity:'0.030',avg_price:59000},targetAllocation:{position_id:'pos_1',remaining_quantity:'0.010'}};
+  const res=evaluateRisk(targetExit,context);
+  assert.equal(res.ok,true);
+  assert.equal(res.order.quantity,0.01);
+
+  // Missing target allocation
+  const missing=evaluateRisk(targetExit,{...ctx,position:{quantity:'0.030',avg_price:59000},targetAllocation:null});
+  assert.equal(missing.ok,false);
+  assert.equal(missing.reason,'Target allocation not found or already closed');
+
+  // Closed target allocation (0 remaining)
+  const closed=evaluateRisk(targetExit,{...ctx,position:{quantity:'0.030',avg_price:59000},targetAllocation:{position_id:'pos_1',remaining_quantity:'0'}});
+  assert.equal(closed.ok,false);
+  assert.equal(closed.reason,'Target allocation not found or already closed');
+
+  // Explicit quantity larger than allocation remaining capped to allocation
+  const oversized=evaluateRisk({...targetExit,quantity:'0.025'},context);
+  assert.equal(oversized.ok,true);
+  assert.equal(oversized.order.quantity,0.01);
+  assert.equal(oversized.order.sizingAdjustment.reason,'Capped to available target allocation quantity');
+});
+

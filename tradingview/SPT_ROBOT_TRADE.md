@@ -73,12 +73,16 @@ The table does not send test orders, replay old BUYs or change SPT signal logic.
   only tracked TP/SL exits are wanted. Manual news blocking affects BUY only.
 - If SELL coincides with a tracked TP/SL, send one TP/SL exit, not a second SELL.
   The last-decision row reports that SELL was covered by the protective event.
-- Exits omit quantity and therefore close ALL holdings for that bot/symbol.
-  Do not mix indicators/manual entries in the same bot/symbol.
-- The bridge freezes entry SL/target until exit even if indicator drawings change.
-  Scale-in BUYs carry their own SL/TP for sizing, but aggregate full-close triggers
-  keep the FIRST emitted BUY's levels. There is no per-entry exit allocation.
-  The original BE line is visual only; it does not move the bridge stop.
+- Targeted Exits (Phase R-1): Protective exits (TP/SL) carry `target_trade_id`
+  targeting the specific entry lot. The VPS closes ONLY that lot's remaining
+  quantity in `ledger_position_allocations`, leaving subsequent scale-in lots
+  open with their own independent SL and TP levels.
+- General SELL forwarding (reduce-only portfolio exit) closes all open allocations
+  via FIFO when no specific target is supplied.
+- Unknown/already-closed targets fail closed: if a target allocation is not found
+  or is already closed, the server strictly rejects the exit order without falling
+  back to closing unrelated open lots.
+- The original BE line is visual only; it does not move the bridge stop.
 - Exit execution uses bar-close price, not the touched SL/TP price. This is
   close-bar notification, NOT an exchange-hosted protective stop. Alert outage,
   stale rejection and gaps can prevent or delay exits.
