@@ -88,18 +88,13 @@ function renderBots() {
     return;
   }
 
-  const slots = Array.from({ length: maxBots }, (_, i) => i + 1);
-  $('#botSlots').innerHTML = slots.map(slot => {
-    const bot = botProfiles.find(r => r.bot_slot_index === slot);
-    if (!bot) return `<article class="panel bot-card">
-      <small>Bot ${slot} · ${botT('Empty', 'ว่าง')}</small>
-      <p>${botT('Independent risk, balance and webhook', 'Risk, Balance และ Webhook แยกอิสระ')}</p>
-      <button type="button" class="primary" data-bot-create="${slot}">${botT('Create Sub-Bot', 'สร้าง Sub-Bot')}</button>
-    </article>`;
-    return renderBotCard(bot);
-  }).join('');
-
-  $('#botScopeNotice').textContent = translate('Settings and webhook apply to the selected bot.');
+  const bot = botProfiles.find(row => row.id === current);
+  if (!bot) {
+    $('#botSlots').innerHTML = `<p class="error">${translate('Select one bot for this operation')}</p>`;
+    return;
+  }
+  $('#botSlots').innerHTML = renderBotCard(bot);
+  $('#botScopeNotice').textContent = `${translate('Settings and webhook apply to the selected bot.')} ${bot.label}`;
 }
 
 function renderAllBotsCard() {
