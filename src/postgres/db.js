@@ -86,7 +86,7 @@ export class PostgresDatabase {
       await this.lock('robot:schema');
       const exists=(await this.query("SELECT to_regclass('public.schema_version') present")).rows[0].present;
       if(exists){
-        const row=(await this.query('SELECT version FROM schema_version')).rows[0];
+        let row=(await this.query('SELECT version FROM schema_version')).rows[0];
         if(row?.version===11){
           await this.query(`
             CREATE TABLE IF NOT EXISTS ledger_position_allocations(
