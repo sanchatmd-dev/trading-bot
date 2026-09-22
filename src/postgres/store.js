@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { transaction } from './db.js';
 import { hashToken, randomId } from '../security.js';
 import { ledgerMethods, recordFunding } from './ledger.js';
@@ -196,7 +197,6 @@ export class Store {
       if (!next) throw new Error(`Cannot ${action} from state ${session.state}`);
       const now = Date.now();
       if (next === 'RUNNING') {
-        const { randomUUID } = await import('node:crypto');
         const runId = randomUUID();
         // Snapshot capital: {broker: cash amount} from paper accounts at this moment
         const capital = {};
