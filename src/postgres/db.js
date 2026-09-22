@@ -112,7 +112,7 @@ export class PostgresDatabase {
             CREATE INDEX IF NOT EXISTS idx_allocations_open ON ledger_position_allocations(user_id,account_id,execution_mode,symbol,status);
             UPDATE schema_version SET version=12;
           `);
-          return;
+          row = { version: 12 };
         }
         if(row?.version===12){
           await this.query(`
@@ -139,7 +139,7 @@ export class PostgresDatabase {
             CREATE INDEX idx_session_archive_user ON bot_session_archive(user_id, archived_at DESC);
             UPDATE schema_version SET version=14;
           `);
-          return;
+          row = { version: 14 };
         }
         if(row?.version!==14)throw new Error('Unsupported PostgreSQL schema');
         return;

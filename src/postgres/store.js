@@ -197,17 +197,20 @@ export class Store {
       if (!next) throw new Error(`Cannot ${action} from state ${session.state}`);
       const now = Date.now();
       if (next === 'RUNNING') {
-        const runId = randomUUID();
+        const runId = session.run_id || randomUUID();
         // Snapshot capital: {broker: cash amount} from paper accounts at this moment
         const capital = {};
         for (const a of (paperAccounts || [])) capital[a.broker] = a.cash;
+        const lockedPolicy = session.locked_policy || JSON.stringify(currentPolicy);
+        const initialCapital = session.initial_capital || JSON.stringify(capital);
+        const startedAt = session.started_at || now;
         await this.db.prepare(
           `INSERT INTO bot_sessions(user_id,state,run_id,locked_policy,initial_capital,started_at,stopped_at,updated_at)
            VALUES(?,?,?,?,?,?,NULL,?)
            ON CONFLICT(user_id) DO UPDATE SET state=excluded.state,run_id=excluded.run_id,
              locked_policy=excluded.locked_policy,initial_capital=excluded.initial_capital,
              started_at=excluded.started_at,stopped_at=NULL,updated_at=excluded.updated_at`
-        ).run(userId, 'RUNNING', runId, JSON.stringify(currentPolicy), JSON.stringify(capital), now, now);
+        ).run(userId, 'RUNNING', runId, lockedPolicy, initialCapital, startedAt, now);
         return { state: 'RUNNING', run_id: runId };
       }
       if (next === 'PAUSED') {
