@@ -51,7 +51,8 @@ Production ใช้ PostgreSQL API และ Worker แยก service; `npm sta
   2. *P1#2*: แยก `balance` ออกจาก `initial_capital` ในการทดสอบ Backtest อย่างถูกต้อง
   3. *P1#3*: ปรับลำดับการคำนวณขนาด Order ให้โหมด Quote/Percent equity ทำงานก่อนการจำกัดขอบเขต Allocation ของ Target
   4. *P1#4*: ปรับปรุง Pine Script โหมด order_fills ให้ใช้ `var string currentEntryId` และสั่ง `strategy.close(currentEntryId)` เพื่อคงความเป็นเจ้าของของแต่ละ Entry
-  5. *Positive Regression Suite*: ชุดทดสอบถาวร `quant_lab/tests/test_audit_regressions.py` ครอบคลุมทุกจุดบกพร่อง
+  5. *Positive Regression Suite*: ชุดทดสอบถาวร `quant_lab/tests/test_audit_regressions.py` ครอบคลุมทุกจุดบกพร่อง (Passed 7/7)
+  6. *Direct Node Parity Verification*: สร้าง IPC script เรียก Node `src/postgres/risk.js` โดยตรงเพื่อตรวจสอบ parity ของ quantity/notional ผลลัพธ์ตรงกัน 100% กับ Python (Passed)
 
 คำสั่งตรวจในเครื่อง:
 
@@ -61,9 +62,14 @@ uv sync --locked --all-extras
 uv run --no-sync ruff check .
 uv run --no-sync pytest
 uv run --no-sync python -m robot_quant.smoke
+uv run --no-sync python quant_lab/tests/test_node_direct_parity.py
 ```
 
-ผล local ล่าสุด: Node tests 111/111 ผ่าน, Quant offline pytest 70/70 ผ่าน (อ่านรายละเอียดใน [Quant Lab README](quant_lab/README.md))
+ผล local ล่าสุด: Node tests 111/111 ผ่าน, Quant offline pytest 70/70 ผ่าน, Direct Parity ตรง 100% (อ่านรายละเอียดใน [Quant Lab README](quant_lab/README.md))
+
+**ขั้นตอนถัดไป (สำหรับ VPS):** 
+1. **Isolated Migration Rehearsal**: ซ้อมอัปเกรด Schema 12 บนฐานข้อมูลสำรองของ VPS โดยใช้ `node scripts/backup-postgres.mjs` และ `src/postgres/schema.sql` 
+2. **Pine/Paper Acceptance**: สร้าง order จริงผ่าน alert 2 โหมด เพื่อดูผลลัพธ์ของ Targeted TP/SL (R-1) ว่าปิด order ไม้ของตัวเองได้ถูกต้องตามที่เทสผ่านในระบบแล้ว
 
 ## การแก้ไขจาก v2.0
 

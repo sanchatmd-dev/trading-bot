@@ -131,13 +131,28 @@ def test_intrabar_sl_suppresses_pending_entry():
                 StrategySignal(1, candles[1].timestamp, "SL", Decimal("95"))
             ]
     result = BacktestEngine(BacktestConfig()).run(candles, Sequence())
-    # Should process the trade because backtest was patched to prioritize exit over entry correctly?
-    # Actually wait. If the SL triggers on the SAME bar as a pending BUY. Let's see if 1 fill or 0 fills.
+    
     # Previous defect was that the pending BUY was dropped entirely (zero fills).
     # We want it to fill the BUY, then immediately hit the SL.
     assert len(result.signals) == 2
     assert result.signals[0].side == "BUY"
     assert result.signals[1].side == "SELL"
+
+    # Assert on actual ledger execution, not just signals
+    assert len(result.fills) == 2
+    assert len(result.cash_journal) == 2
+    assert result.fills[0].delta_quantity > 0
+    assert result.fills[1].delta_quantity == result.fills[0].delta_quantity  # Fully closed
+    
+    assert result.cash_journal[0].cash_delta < 0  # Paid for entry
+    assert result.cash_journal[1].cash_delta > 0  # Received for exit
+    
+    assert len(result.allocations) == 1
+    assert result.allocations[0].status == "CLOSED"
+    assert result.allocations[0].remaining_quantity == Decimal("0")
+    
+    # Final inventory is zero
+    assert result.equity_curve.iloc[-1]["inventory"] == 0.0
 
 
 def test_quote_sized_exit_bounds():
@@ -150,8 +165,10 @@ def test_quote_sized_exit_bounds():
     )
     signal = dict(broker="binance-global", symbol="BTCUSDT", side="SELL", event="TP",
                   reduceOnly=True, leverage=1, timestamp=1700000000000,
-                  referencePrice="100", targetTradeId="P1", riskMode="QUANTITY", quantity="5")
+                  referencePrice="100", targetTradeId="P1", quoteQuantity="500")
     python_result = evaluate_risk(signal, RiskContext(policy=RiskPolicy(),
         position=PositionState(Decimal("3")), target_allocation=TargetAllocationState(Decimal("1")), now=1700000000000))
+    # quoteQuantity=500 / price=100 -> qty=5, capped by target_allocation to 1
     assert Decimal(python_result.order["quantity"]) == Decimal("1")
     assert "sizingAdjustment" in python_result.order
+
