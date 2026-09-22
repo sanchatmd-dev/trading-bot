@@ -69,6 +69,24 @@ const requireAdmin = async (req, res, url) => {
   return user;
 };
 const safeLimit = url => Math.min(500, Math.max(1, Number(url.searchParams.get('limit') || 100)));
+const quantPaths = new Set(['/api/quant/health', '/api/quant/backtest', '/api/quant/optimize', '/api/quant/risk-preview']);
+async function quantBridge(req, res, url) {
+  if (!quantPaths.has(url.pathname) || !['GET', 'POST'].includes(req.method)) return false;
+  const body = req.method === 'POST' ? JSON.stringify(await readJson(req)) : '';
+  const result = await new Promise((resolve, reject) => {
+    const upstream = http.request({hostname: '127.0.0.1', port: 7654, path: url.pathname.replace('/api', ''), method: req.method,
+      headers: body ? {'content-type': 'application/json', 'content-length': Buffer.byteLength(body)} : {}, timeout: 30000}, response => {
+      let raw = '';
+      response.setEncoding('utf8');
+      response.on('data', chunk => { raw += chunk; if (raw.length > 1024 * 1024) response.destroy(new Error('Quant response too large')); });
+      response.on('end', () => { try { resolve({status: response.statusCode || 502, body: JSON.parse(raw)}); } catch { reject(new Error('Invalid Quant response')); } });
+    });
+    upstream.on('timeout', () => upstream.destroy(new Error('Quant request timed out')));
+    upstream.on('error', reject);
+    upstream.end(body);
+  });
+  return json(res, result.status, result.body), true;
+}
 // Trust only the right-most address from the explicitly configured loopback proxy.
 const loginKey = req => clientIp(req, config.trustLoopbackProxy);
 const analyticsBrokers = ['binance-global', 'binance-th', 'innovestx', 'settrade'];
@@ -211,6 +229,8 @@ async function userRoutes(req, res, url) {
   if (!hasPermission(actor, req.method === 'GET' ? 'own:read' : 'own:write')) return json(res, 403, {
     error: 'Permission denied'
   });
+  try { if (await quantBridge(req, res, url)) return; }
+  catch (error) { return json(res, 503, {error: 'Quant Lab engine is unavailable'}); }
   if (req.method !== 'GET' && (url.pathname === '/api/me/webhook-secret' || url.pathname.startsWith('/api/brokers/')) || url.pathname === '/api/me/password') await auth.sensitive(req);
   if (req.method === 'GET' && url.pathname === '/api/bots') {
     const plan = await store.activePlan(actor.id);
