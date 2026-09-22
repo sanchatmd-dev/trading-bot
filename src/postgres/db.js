@@ -114,7 +114,34 @@ export class PostgresDatabase {
           `);
           return;
         }
-        if(row?.version!==12)throw new Error('Unsupported PostgreSQL schema');
+        if(row?.version===12){
+          await this.query(`
+            CREATE TABLE bot_sessions(
+              user_id       TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+              state         TEXT NOT NULL DEFAULT 'SETUP'
+                            CHECK(state IN ('SETUP','RUNNING','PAUSED','STOPPED')),
+              run_id        TEXT,
+              locked_policy TEXT,
+              initial_capital TEXT,
+              started_at    BIGINT,
+              stopped_at    BIGINT,
+              updated_at    BIGINT NOT NULL
+            );
+            CREATE TABLE bot_session_archive(
+              run_id          TEXT PRIMARY KEY,
+              user_id         TEXT NOT NULL REFERENCES users(id),
+              locked_policy   TEXT NOT NULL,
+              initial_capital TEXT NOT NULL,
+              started_at      BIGINT NOT NULL,
+              stopped_at      BIGINT NOT NULL,
+              archived_at     BIGINT NOT NULL
+            );
+            CREATE INDEX idx_session_archive_user ON bot_session_archive(user_id, archived_at DESC);
+            UPDATE schema_version SET version=14;
+          `);
+          return;
+        }
+        if(row?.version!==14)throw new Error('Unsupported PostgreSQL schema');
         return;
       }
       const tables=(await this.query("SELECT count(*)::int n FROM pg_tables WHERE schemaname='public'")).rows[0].n;
@@ -124,7 +151,7 @@ export class PostgresDatabase {
   }
   async verifySchema(){
     const exists=(await this.query("SELECT to_regclass('public.schema_version') present")).rows[0].present;
-    if(!exists||(await this.query('SELECT version FROM schema_version')).rows[0]?.version!==12)throw new Error('Initialize/import schema 12 offline before starting PostgreSQL services');
+    if(!exists||(await this.query('SELECT version FROM schema_version')).rows[0]?.version!==14)throw new Error('Initialize/import schema 14 offline before starting PostgreSQL services');
   }
   async close(){
     if(this.runtimeClient){await this.runtimeClient.query("SELECT pg_advisory_unlock_shared(hashtextextended('robot:maintenance',0))");this.runtimeClient.release();this.runtimeClient=null;}

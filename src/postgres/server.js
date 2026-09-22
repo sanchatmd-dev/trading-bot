@@ -243,6 +243,22 @@ async function userRoutes(req, res, url) {
     });
     return json(res, 200, await store.userById(id));
   }
+  // --- Bot Lifecycle ---
+  if (req.method === 'GET' && url.pathname === '/api/bot/session') {
+    const session = await store.getBotSession(user.id);
+    return json(res, 200, { state: session.state, run_id: session.run_id, started_at: session.started_at, stopped_at: session.stopped_at });
+  }
+  const lifecycleAction = { '/api/bot/session/run': 'run', '/api/bot/session/pause': 'pause', '/api/bot/session/stop': 'stop', '/api/bot/session/reset': 'reset' }[url.pathname];
+  if (req.method === 'POST' && lifecycleAction) {
+    const currentPolicy = await store.risk(user.id, config.defaultRisk);
+    const paperAccounts = await store.paperAccounts(user.id);
+    const result = await store.transitionBotState(user.id, lifecycleAction, currentPolicy, paperAccounts);
+    await store.audit(user.id, `bot.lifecycle.${lifecycleAction}`, null, { state: result.state, run_id: result.run_id });
+    return json(res, 200, result);
+  }
+  if (req.method === 'GET' && url.pathname === '/api/bot/session/archive') {
+    return json(res, 200, { archive: await store.listSessionArchive(user.id) });
+  }
   const requestedBot = String(url.searchParams.get('bot_id') || actor.id),
     allBots = requestedBot === 'all';
   if (!allBots && !(await store.ownsBot(actor.id, requestedBot))) return json(res, 403, {
@@ -369,7 +385,8 @@ async function userRoutes(req, res, url) {
       dailyAccounts,
       daily: {
         trades: dailyAccounts.reduce((sum, x) => sum + x.trades, 0)
-      }
+      },
+      botSession: (({ state, run_id, started_at, stopped_at }) => ({ state, run_id, started_at, stopped_at }))(await store.getBotSession(user.id))
     });
   }
   if (req.method === 'GET' && url.pathname === '/api/me/webhook-secret') {
@@ -452,6 +469,8 @@ async function userRoutes(req, res, url) {
     paperTrading: true
   });
   if (req.method === 'PUT' && url.pathname === '/api/risk') {
+    const session = await store.getBotSession(user.id);
+    if (session.state === 'RUNNING' || session.state === 'PAUSED') return json(res, 409, { error: `Risk profile is frozen while bot is ${session.state.toLowerCase()}. Stop the bot first.` });
     const policy = validateRisk(await readJson(req), await store.risk(user.id, config.defaultRisk));
     await store.setRisk(user.id, policy);
     await store.audit(user.id, 'risk.updated', null, {

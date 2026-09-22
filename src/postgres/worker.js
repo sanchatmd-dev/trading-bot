@@ -24,17 +24,25 @@ export class ExecutionWorker {
       if(job.execution_mode!=='PAPER')reason='Live execution is locked';
       else if(user?.status!=='ACTIVE'||main?.status!=='ACTIVE')reason='User or main account is suspended';
       else{
-        const policy=await this.store.risk(user.id,this.config.defaultRisk),exposure=await this.store.exposure(job),account=await this.store.paperAccount(user.id,job.broker);
-        if(exposure.uncertain)reason='Unresolved order outcome: operator reconciliation required';
+        const session=await this.store.getBotSession(job.user_id);
+        if(session.state==='STOPPED')reason='Bot is stopped: no signals accepted';
+        else if(session.state==='PAUSED'&&signal.side!=='SELL')reason='Bot is paused: only reduce-only exits are accepted';
+        else if(session.state==='PAUSED'&&!signal.reduceOnly)reason='Bot is paused: only reduce-only exits are accepted';
         else{
-          const targetAllocation = signal.targetTradeId ? await this.store.ledgerTargetAllocation(job, signal.targetTradeId) : null;
-          const result=evaluateRisk(signal,{policy,daily:await this.store.ledgerDaily(job),position:await this.store.ledgerPosition(job),targetAllocation,equity:account.bookEquity,balance:account.cash,
-            cashAvailable:amount(D(account.cash).minus(exposure.reservedNotional)),licensed:main.role==='ADMIN'||await this.store.hasActiveLicense(main.id),globalKill:await this.store.getSetting('globalKill',false),...exposure});
-          if(!result.ok)reason=result.reason;
+          // Use frozen policy when RUNNING; fall back to live policy for SETUP/PAUSED
+          const rawPolicy=session.state==='RUNNING'&&session.locked_policy?JSON.parse(session.locked_policy):null;
+          const policy=rawPolicy||await this.store.risk(user.id,this.config.defaultRisk),exposure=await this.store.exposure(job),account=await this.store.paperAccount(user.id,job.broker);
+          if(exposure.uncertain)reason='Unresolved order outcome: operator reconciliation required';
           else{
-            const order={...result.order,clientOrderId:job.client_order_id};
-            await this.store.persistIntent(job,order);
-            await this.store.recordExecution(job,{status:'FILLED',orderId:'PAPER-'+job.client_order_id,executedQty:order.quantity,quoteQty:order.notional,deltaFeeQuote:'0',raw:{paper:true,status:'FILLED',feesSimulated:false}},order);
+            const targetAllocation = signal.targetTradeId ? await this.store.ledgerTargetAllocation(job, signal.targetTradeId) : null;
+            const result=evaluateRisk(signal,{policy,daily:await this.store.ledgerDaily(job),position:await this.store.ledgerPosition(job),targetAllocation,equity:account.bookEquity,balance:account.cash,
+              cashAvailable:amount(D(account.cash).minus(exposure.reservedNotional)),licensed:main.role==='ADMIN'||await this.store.hasActiveLicense(main.id),globalKill:await this.store.getSetting('globalKill',false),...exposure});
+            if(!result.ok)reason=result.reason;
+            else{
+              const order={...result.order,clientOrderId:job.client_order_id};
+              await this.store.persistIntent(job,order);
+              await this.store.recordExecution(job,{status:'FILLED',orderId:'PAPER-'+job.client_order_id,executedQty:order.quantity,quoteQty:order.notional,deltaFeeQuote:'0',raw:{paper:true,status:'FILLED',feesSimulated:false}},order);
+            }
           }
         }
       }

@@ -177,6 +177,64 @@ export class Store {
   async setSetting(key, value) {
     await this.db.prepare('INSERT INTO system_settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key, JSON.stringify(value));
   }
+  // --- Bot Lifecycle ---
+  async getBotSession(userId) {
+    const row = await this.db.prepare('SELECT * FROM bot_sessions WHERE user_id=?').get(userId);
+    return row || { user_id: userId, state: 'SETUP', run_id: null, locked_policy: null, initial_capital: null, started_at: null, stopped_at: null };
+  }
+  async transitionBotState(userId, action, currentPolicy, paperAccounts) {
+    const VALID = {
+      SETUP:   { run: 'RUNNING' },
+      RUNNING: { pause: 'PAUSED', stop: 'STOPPED' },
+      PAUSED:  { run: 'RUNNING', stop: 'STOPPED' },
+      STOPPED: { reset: 'SETUP' },
+    };
+    return await this.db.transaction(async () => {
+      await this.db.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').get(userId);
+      const session = await this.getBotSession(userId);
+      const next = VALID[session.state]?.[action];
+      if (!next) throw new Error(`Cannot ${action} from state ${session.state}`);
+      const now = Date.now();
+      if (next === 'RUNNING') {
+        const { randomUUID } = await import('node:crypto');
+        const runId = randomUUID();
+        // Snapshot capital: {broker: cash amount} from paper accounts at this moment
+        const capital = {};
+        for (const a of (paperAccounts || [])) capital[a.broker] = a.cash;
+        await this.db.prepare(
+          `INSERT INTO bot_sessions(user_id,state,run_id,locked_policy,initial_capital,started_at,stopped_at,updated_at)
+           VALUES(?,?,?,?,?,?,NULL,?)
+           ON CONFLICT(user_id) DO UPDATE SET state=excluded.state,run_id=excluded.run_id,
+             locked_policy=excluded.locked_policy,initial_capital=excluded.initial_capital,
+             started_at=excluded.started_at,stopped_at=NULL,updated_at=excluded.updated_at`
+        ).run(userId, 'RUNNING', runId, JSON.stringify(currentPolicy), JSON.stringify(capital), now, now);
+        return { state: 'RUNNING', run_id: runId };
+      }
+      if (next === 'PAUSED') {
+        await this.db.prepare('UPDATE bot_sessions SET state=?,updated_at=? WHERE user_id=?').run('PAUSED', now, userId);
+        return { state: 'PAUSED', run_id: session.run_id };
+      }
+      if (next === 'STOPPED') {
+        await this.db.prepare('UPDATE bot_sessions SET state=?,stopped_at=?,updated_at=? WHERE user_id=?').run('STOPPED', now, now, userId);
+        return { state: 'STOPPED', run_id: session.run_id };
+      }
+      // reset: STOPPED → SETUP (archive then clear)
+      if (next === 'SETUP') {
+        if (session.run_id && session.locked_policy) {
+          await this.db.prepare(
+            'INSERT INTO bot_session_archive(run_id,user_id,locked_policy,initial_capital,started_at,stopped_at,archived_at) VALUES(?,?,?,?,?,?,?)'
+          ).run(session.run_id, userId, session.locked_policy, session.initial_capital || '{}', session.started_at, session.stopped_at || now, now);
+        }
+        await this.db.prepare(
+          `UPDATE bot_sessions SET state='SETUP',run_id=NULL,locked_policy=NULL,initial_capital=NULL,started_at=NULL,stopped_at=NULL,updated_at=? WHERE user_id=?`
+        ).run(now, userId);
+        return { state: 'SETUP', run_id: null };
+      }
+    });
+  }
+  async listSessionArchive(userId) {
+    return await this.db.prepare('SELECT run_id,started_at,stopped_at,archived_at FROM bot_session_archive WHERE user_id=? ORDER BY archived_at DESC LIMIT 100').all(userId);
+  }
   async close() {
     await this.db.close();
   }

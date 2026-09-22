@@ -155,3 +155,30 @@ CREATE TABLE IF NOT EXISTS ledger_position_allocations(
 );
 
 CREATE INDEX IF NOT EXISTS idx_allocations_open ON ledger_position_allocations(user_id,account_id,execution_mode,symbol,status);
+
+-- Schema 14: Bot Lifecycle & Session Management
+CREATE TABLE bot_sessions(
+  user_id       TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  state         TEXT NOT NULL DEFAULT 'SETUP'
+                CHECK(state IN ('SETUP','RUNNING','PAUSED','STOPPED')),
+  run_id        TEXT,
+  locked_policy TEXT,
+  initial_capital TEXT,
+  started_at    BIGINT,
+  stopped_at    BIGINT,
+  updated_at    BIGINT NOT NULL
+);
+
+CREATE TABLE bot_session_archive(
+  run_id          TEXT PRIMARY KEY,
+  user_id         TEXT NOT NULL REFERENCES users(id),
+  locked_policy   TEXT NOT NULL,
+  initial_capital TEXT NOT NULL,
+  started_at      BIGINT NOT NULL,
+  stopped_at      BIGINT NOT NULL,
+  archived_at     BIGINT NOT NULL
+);
+
+CREATE INDEX idx_session_archive_user ON bot_session_archive(user_id, archived_at DESC);
+
+UPDATE schema_version SET version=14;
