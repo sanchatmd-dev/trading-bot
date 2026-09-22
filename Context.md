@@ -1,8 +1,8 @@
 # Robot trade — Project Context
 
 ## Purpose
-
-QL-1 through QL-4 Delivery & Audit Hardening (2026-09-22): Quant Lab research workspace (QL-1 through QL-4) is fully implemented, verified, and hardened against the independent engineering audit. All 12 audit findings (F01–F12) and 4 P1 review blockers (Export Hardcoding with immutable risk snapshot digest, Capital Separation of balance from initial_capital, Quote Sizing Precedence & target allocation boundary enforcement in risk evaluator, and Targeted Order Fills in Pine Script using persistent entry ID tracking) have been resolved. Local validation passes 100%: Node tests 111/111, Quant offline pytest 70/70. `quant_lab/README.md` records architecture, contract guarantees, and compatibility bounds. Hosted CI and production PostgreSQL Schema 12 deployment rehearsal remain as acceptance gates for live VPS activation. Live trading remains locked.
+ 
+QL-1 through QL-4 Delivery, Quant Lab Studio UI & VPS Release (2026-09-23): Quant Lab research workspace is deployed to the production VPS under release `39590f7` as an offline research service (`astra-trade-quant.service` on loopback `127.0.0.1:7654` using `uv 0.12.17` with venv at `/home/mikey/apps/astra-trade/shared/quant-venv`). The authenticated Node.js proxy `/api/quant/*` and Quant Lab 4-tab studio UI (Backtest, Optimizer, Risk Preview; Pine Export unreleased) are live alongside the Trading Control Panel v2 (Bot lifecycle Schema 14, 4-button TCP, policy lock, and account cards). Local and VPS validation passes: Node tests 111/111, Quant tests 71/71, health `PAPER_ONLY`. Live trading remains strictly locked.
 
 Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trading control plane. It is deployed on a VPS and currently runs in **Paper-only** mode: no real broker orders can be submitted by this release.
 
@@ -11,18 +11,18 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Public URL: https://www.robottrade.io
 - VPS host: 187.53.141.5
 - Application user: mikey
-- Last verified deployed release: c2921f3 on 2026-09-22 (Schema 14 migration, APP-3 Bot Lifecycle, R-1 Targeted Exits, Interactive Charts, APP-4 Quotas). Rehearsal passed on isolated DB `robot_rehearsal_20260922T154535Z`; production cutover deployed via immutable release + symlink; runtime grants verified; API and Paper Worker active. Public health verified: `{"ok":true,"version":"2.2.0","mode":"PAPER_ONLY","queued":0}`.
+- Last verified deployed release: 39590f7 on 2026-09-23 (Quant Lab Studio UI, astra-trade-quant.service loopback bridge, authenticated proxy /api/quant/*, Bot Manager v2 Trading Control Panel, Schema 14). API, Paper Worker, and Quant bridge active. Public health verified: `{"ok":true,"version":"2.2.0","mode":"PAPER_ONLY","queued":0}`.
 - Verified backups:
   - Rehearsal backup: `/home/mikey/apps/astra-trade/shared/backups/pre-schema14-20260922T153316Z.dump` (SHA-256 `fc3a19cc850dc28ad1f12bd477bf3416804579951233feaa5733cd22017d77b0`)
   - Pre-live deployment backup created and archive-tested: `/home/mikey/apps/astra-trade/shared/backups/pre-schema14-cutover-20260922T160...Z.dump`
-- User services: astra-trade-phase2.service (API), astra-trade-worker.service (Paper execution and mail), robot-postgres.service (database). All three are enabled; user lingering is enabled.
-- Application: /home/mikey/apps/astra-trade/current -> releases/c2921f3
+- User services: astra-trade-phase2.service (API), astra-trade-worker.service (Paper execution and mail), robot-postgres.service (database), and astra-trade-quant.service (Quant bridge on loopback 127.0.0.1:7654). All four are enabled; user lingering is enabled.
+- Application: /home/mikey/apps/astra-trade/current -> releases/39590f7
 - Shared state: /home/mikey/apps/astra-trade/shared
 - Database: PostgreSQL 16, database robot_trade, schema 14. Data directory: /home/mikey/apps/astra-trade/postgres/data. Unix socket: /home/mikey/apps/astra-trade/postgres/socket, port identifier 55432; no PostgreSQL TCP listener.
 - Runtime environment: /home/mikey/apps/astra-trade/shared/astra-phase2.env (protected; never copy its contents into documentation).
 - Reverse proxy: Nginx with HTTPS, forwarding to the API on 127.0.0.1:18080.
 - Retired runtime: astra-trade.service is disabled and inactive. The SQLite file /home/mikey/apps/astra-trade/shared/data/astra-v2.db is retained as pre-cutover history, not the active database. Never restart the SQLite writer for this service without an explicit recovery/reconciliation plan.
-- Latest read-only acceptance check on 2026-09-22: all three services active, HTTPS health v2.2.0/PAPER_ONLY with queue 0, schema 14.
+- Latest read-only acceptance check on 2026-09-23: all four services active, HTTPS health v2.2.0/PAPER_ONLY with queue 0, quant bridge health OFFLINE_RESEARCH_ONLY, tests 71/71 quant, 111/111 node.
 
 Do not store passwords, webhook URLs, API keys, tokens, or private key material in this file.
 
