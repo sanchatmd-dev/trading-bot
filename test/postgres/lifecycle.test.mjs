@@ -18,7 +18,7 @@ describe('Bot lifecycle & session management', () => {
     db = new PostgresDatabase({ connectionString: target.toString(), max: 5 });
     await db.migrate();
     store = new Store(db);
-    const user = await store.createUser({ email: `lifecycle-${randomUUID()}@test.invalid`, passwordHash: await hashPassword('test'), role: 'USER' });
+    const user = await store.createUser({ email: `lifecycle-${randomUUID()}@test.invalid`, passwordHash: await hashPassword('temporary-test-password'), role: 'USER' });
     userId = user.id;
     await store.setRisk(userId, {
       paperTrading: true,
