@@ -11,15 +11,18 @@ Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trad
 - Public URL: https://www.robottrade.io
 - VPS host: 187.53.141.5
 - Application user: mikey
-- Last verified deployed release: c573e39 (branding and mobile installation guidance; PostgreSQL schema 11 unchanged). Production API/worker health and public manifest/icon delivery passed after the immutable release swap; local regression passed 93/93. Physical iOS/Android installation remains an acceptance task.
+- Last verified deployed release: c2921f3 on 2026-09-22 (Schema 14 migration, APP-3 Bot Lifecycle, R-1 Targeted Exits, Interactive Charts, APP-4 Quotas). Rehearsal passed on isolated DB `robot_rehearsal_20260922T154535Z`; production cutover deployed via immutable release + symlink; runtime grants verified; API and Paper Worker active. Public health verified: `{"ok":true,"version":"2.2.0","mode":"PAPER_ONLY","queued":0}`.
+- Verified backups:
+  - Rehearsal backup: `/home/mikey/apps/astra-trade/shared/backups/pre-schema14-20260922T153316Z.dump` (SHA-256 `fc3a19cc850dc28ad1f12bd477bf3416804579951233feaa5733cd22017d77b0`)
+  - Pre-live deployment backup created and archive-tested: `/home/mikey/apps/astra-trade/shared/backups/pre-schema14-cutover-20260922T160...Z.dump`
 - User services: astra-trade-phase2.service (API), astra-trade-worker.service (Paper execution and mail), robot-postgres.service (database). All three are enabled; user lingering is enabled.
-- Application: /home/mikey/apps/astra-trade/current
+- Application: /home/mikey/apps/astra-trade/current -> releases/c2921f3
 - Shared state: /home/mikey/apps/astra-trade/shared
-- Database: PostgreSQL 16, database robot_trade, schema 11. Data directory: /home/mikey/apps/astra-trade/postgres/data. Unix socket: /home/mikey/apps/astra-trade/postgres/socket, port identifier 55432; no PostgreSQL TCP listener.
+- Database: PostgreSQL 16, database robot_trade, schema 14. Data directory: /home/mikey/apps/astra-trade/postgres/data. Unix socket: /home/mikey/apps/astra-trade/postgres/socket, port identifier 55432; no PostgreSQL TCP listener.
 - Runtime environment: /home/mikey/apps/astra-trade/shared/astra-phase2.env (protected; never copy its contents into documentation).
 - Reverse proxy: Nginx with HTTPS, forwarding to the API on 127.0.0.1:18080.
 - Retired runtime: astra-trade.service is disabled and inactive. The SQLite file /home/mikey/apps/astra-trade/shared/data/astra-v2.db is retained as pre-cutover history, not the active database. Never restart the SQLite writer for this service without an explicit recovery/reconciliation plan.
-- Latest read-only acceptance check on 2026-09-18 (Asia/Bangkok): all three services active, HTTPS health v2.2.0/PAPER_ONLY with queue 0, schema 11, 151 fills and 151 cash-journal entries, no PROCESSING/UNKNOWN signals, and no warning-or-higher API/worker journal entries in the preceding 30 minutes.
+- Latest read-only acceptance check on 2026-09-22: all three services active, HTTPS health v2.2.0/PAPER_ONLY with queue 0, schema 14.
 
 Do not store passwords, webhook URLs, API keys, tokens, or private key material in this file.
 
@@ -205,5 +208,5 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
   - Server-side enforcement in `src/postgres/server.js`: `POST /api/bots` rejects creation with 403 when exceeding `maxBots`; `GET /api/analytics/*` restricts queries exceeding `historyDays`.
   - Account API (`/api/me`, `/api/auth/session`) returns active `plan` and `quota`.
   - Dynamic frontend rendering in `public/bots.js`: dynamically renders up to `maxBots` slots, automatically applying `.enterprise-grid` responsive layout for large bot counts. Date picker in `public/analytics.js` dynamically enforces minimum allowable history date.
-- **Current Milestone**: **VPS Production Migration Rehearsal & Pine/Paper Acceptance** — Schemas 12-14, Quant Lab QL-1 to QL-4, Interactive Charting, and APP-4 Quotas are completed in repository (111/111 Node tests passing). Next step is executing the isolated migration rehearsal on the VPS, deploying Schema 14, and validating live Paper forward acceptance.
+- **Current Milestone**: **TradingView → Production Paper Forward Acceptance** — Schema 14 deployed to production VPS (release c2921f3, verified health 2.2.0 PAPER_ONLY). Next steps: execute TradingView Paper forward acceptance sequence (BUY, scale-in BUY, targeted TP1/TP2 closing allocations P1/P2 independently, SL/reduce-only, deduplication/stale checks) and diagnose worker SMTP 550 notification issue.
 

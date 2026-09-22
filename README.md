@@ -84,9 +84,16 @@ uv run --no-sync python quant_lab/tests/test_node_direct_parity.py
 - **Server Enforcement**: `POST /api/bots` ปฏิเสธการสร้างบอทเกินโควต้า (403), `GET /api/analytics/*` บล็อกการดึงข้อมูลย้อนหลังเกินที่แพ็กเกจกำหนด
 - **Dynamic Frontend**: หน้า Bots สร้างการ์ดตาม `maxBots` อัตโนมัติ พร้อมสลับเลย์เอาต์เป็น `.enterprise-grid` เมื่อมีจำนวนบอทมากกว่า 10 ตัว และหน้า Analytics ล็อกปฏิทินไม่ให้เลือกย้อนหลังเกินโควต้า
 
-**ขั้นตอนถัดไป (สำหรับ VPS):** 
-1. **Isolated Migration Rehearsal**: ซ้อมอัปเกรด Schema 14 (ครอบคลุม R-1 Targeted Exits และ APP-3 Bot Lifecycle) บนฐานข้อมูลสำรองของ VPS โดยใช้ `node scripts/backup-postgres.mjs` และ `src/postgres/schema.sql` 
-2. **Pine/Paper Acceptance**: สร้าง order จริงผ่าน alert 2 โหมด เพื่อดูผลลัพธ์ของ Targeted TP/SL (R-1) และทดสอบสถานะ Run/Pause/Stop/Reset (APP-3) บนระบบ Paper forward จริง
+**ขั้นตอนถัดไป:** 
+1. **TradingView → Production Paper Forward Acceptance**: ส่งสัญญาณ Webhook จาก TradingView ทดสอบรอบคำสั่งจริงบนระบบ Paper forward:
+   - BUY ปกติ
+   - Repeated BUY / Scale-in
+   - TP1 ปิดเฉพาะ Allocation P1 (Targeted Exit)
+   - TP2 ปิดเฉพาะ Allocation P2
+   - SL / Reduce-only behavior
+   - Duplicate และ Stale webhook rejection
+2. **SMTP Diagnosis**: ตรวจสอบการแจ้งเตือนอีเมลของ Worker (ปัญหา SMTP 550)
+3. **PostgreSQL Password Rotation**: ดำเนินการหมุนรหัสผ่าน DB ตามรอบความปลอดภัย
 
 ## การแก้ไขจาก v2.0
 
