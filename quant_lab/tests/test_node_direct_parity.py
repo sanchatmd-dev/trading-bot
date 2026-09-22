@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 from decimal import Decimal
 
@@ -8,8 +9,6 @@ from robot_quant.risk_evaluator import (
     evaluate_risk,
 )
 
-
-import os
 
 def eval_node(signal, context_dict):
     js_code = """

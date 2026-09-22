@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci
-        working-directory: ..
+        working-directory: ${{ github.workspace }}
       - run: uv sync --locked --all-extras
       - run: uv run --no-sync ruff check .
       - run: uv run --no-sync pytest
