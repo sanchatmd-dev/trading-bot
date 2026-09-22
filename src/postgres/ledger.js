@@ -50,12 +50,16 @@ export const ledgerMethods={
   async ledgerPosition(row){return await this.db.prepare('SELECT * FROM ledger_positions WHERE user_id=? AND account_id=? AND execution_mode=? AND symbol=?').get(...scope(row),row.symbol)||{quantity:'0',avg_price:'0',cost_basis:'0',initial_risk:'0',cumulative_pnl:'0'};},
   async ledgerTargetAllocation(row, targetTradeId){
     if(!targetTradeId) return null;
-    return await this.db.prepare(`
+    const allocs = await this.db.prepare(`
       SELECT * FROM ledger_position_allocations 
       WHERE user_id=? AND account_id=? AND execution_mode=? AND symbol=? 
         AND (entry_trade_id=? OR position_id=?) AND status='OPEN' AND remaining_quantity>0
-      ORDER BY opened_at ASC LIMIT 1
-    `).get(...scope(row), row.symbol, targetTradeId, targetTradeId);
+      ORDER BY opened_at ASC
+    `).all(...scope(row), row.symbol, targetTradeId, targetTradeId);
+    if (!allocs.length) return null;
+    let sumRem = D(0);
+    for (const a of allocs) sumRem = sumRem.plus(a.remaining_quantity);
+    return { ...allocs[0], remaining_quantity: exact(sumRem) };
   },
   async listAllocations(row){
     return await this.db.prepare(`
@@ -107,8 +111,9 @@ export const ledgerMethods={
           initialRisk=D(current.initial_risk).plus(qty.mul(price.minus(order.stopLoss).abs()));
           pnl=D(current.cumulative_pnl);
 
-          // R-1B: บันทึก Lot ใหม่ลงตาราง ledger_position_allocations
+          // F10 Fix: entry_price includes fee for accurate cost removal on exit
           const posId = `pos_${row.id}_${Date.now()}`;
+          const lotCostPerUnit = notional.plus(fee).div(qty);
           await this.db.prepare(`
             INSERT INTO ledger_position_allocations(
               position_id,user_id,account_id,execution_mode,broker,symbol,
@@ -118,7 +123,7 @@ export const ledgerMethods={
           `).run(
             posId, row.user_id, row.account_id, row.execution_mode, row.broker, row.symbol,
             row.id, row.trade_id, 'OPEN', exact(qty), exact(qty),
-            amount(price), order.stopLoss || null, order.takeProfit || null, Date.now(), Date.now()
+            amount(lotCostPerUnit), order.stopLoss || null, order.takeProfit || null, Date.now(), Date.now()
           );
         }else{
           if(qty.gt(current.quantity))throw new Error('Fill exceeds tracked position; operator reconciliation required');
@@ -174,6 +179,7 @@ export const ledgerMethods={
             throw new Error('Fill exceeds remaining target allocation quantity');
           }
 
+          // F10 Fix: Exits deduct precise lot cost (allocatedCost) 
           const removed = allocatedCost.gt(0) 
             ? allocatedCost 
             : (quantity.isZero() ? D(current.cost_basis) : D(amount(D(current.cost_basis).mul(qty).div(current.quantity))));

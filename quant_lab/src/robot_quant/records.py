@@ -25,7 +25,8 @@ ExecutionModeLiteral = Literal["PAPER", "LIVE", "LEGACY"]
 EventLiteral = Literal["BUY", "SELL", "TP", "SL"]
 SideLiteral = Literal["BUY", "SELL"]
 SignalStatusLiteral = Literal[
-    "QUEUED", "PROCESSING", "PROCESSED", "REJECTED", "CANCELLED", "UNKNOWN"
+    "QUEUED", "PROCESSING", "PROCESSED", "REJECTED", "CANCELLED", "CANCELED", "UNKNOWN",
+    "NEW", "SUBMITTED", "PARTIALLY_FILLED", "FILLED", "EXPIRED"
 ]
 
 

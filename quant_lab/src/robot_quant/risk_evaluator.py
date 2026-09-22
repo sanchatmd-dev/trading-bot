@@ -45,10 +45,15 @@ class PositionState:
 
 
 @dataclass(frozen=True)
+class TargetAllocationState:
+    remaining_quantity: Decimal
+
+@dataclass(frozen=True)
 class RiskContext:
     policy: RiskPolicy
     daily: DailyStats = DailyStats()
     position: PositionState = PositionState()
+    target_allocation: TargetAllocationState | None = None
     now: int = 0
     equity: Decimal = Decimal(1000)
     balance: Decimal | None = None
@@ -211,7 +216,10 @@ def evaluate_risk(signal: dict[str, Any], context: RiskContext) -> RiskEvaluatio
             sizing_adjustment = None
 
             if is_exit and not quantity and not quote_quantity:
-                quantity = position.quantity
+                if context.target_allocation:
+                    quantity = context.target_allocation.remaining_quantity
+                else:
+                    quantity = position.quantity
 
             if not quantity and quote_quantity:
                 quantity = D(down(D(quote_quantity) / price))
@@ -254,7 +262,29 @@ def evaluate_risk(signal: dict[str, Any], context: RiskContext) -> RiskEvaluatio
                 return reject("Unable to calculate quantity")
 
             if is_exit:
-                quantity = min(quantity, position.quantity)
+                target_trade_id = signal.get("targetTradeId", signal.get("target_trade_id"))
+                if context.target_allocation:
+                    alloc_rem = context.target_allocation.remaining_quantity
+                    if alloc_rem <= 0:
+                        return reject("Target allocation not found or already closed")
+                    
+                    if quantity > alloc_rem:
+                        sizing_adjustment = {
+                            "requestedQuantity": amount(quantity),
+                            "quantity": amount(alloc_rem),
+                            "reason": "Capped to remaining target allocation quantity",
+                        }
+                        quantity = alloc_rem
+                else:
+                    if target_trade_id:
+                        return reject("Target allocation not found or already closed")
+                    if quantity > position.quantity:
+                        sizing_adjustment = {
+                            "requestedQuantity": amount(quantity),
+                            "quantity": amount(position.quantity),
+                            "reason": "Capped to remaining aggregate position quantity",
+                        }
+                        quantity = position.quantity
 
             notional = D(amount(quantity * price))
             if notional <= 0:

@@ -39,17 +39,19 @@ Production ใช้ PostgreSQL API และ Worker แยก service; `npm sta
 
 เพิ่มระบบติดตาม Position รายไม้ (per-entry allocation tracking) ผ่านตาราง `ledger_position_allocations` บน Schema 12 เพื่อแก้ปัญหาการ Scale-in แล้วคำสั่ง Take Profit ของไม้แรกไปปิดรวบทุกไม้ (Targeted TP/SL per lot) ทำให้แต่ละ Order Lot มีการจัดการกำไร/ขาดทุนที่เป็นอิสระต่อกัน ผ่านการทดสอบครบถ้วนด้วย `test/scale-in.test.js`
 
-## QL-1 — Quant Lab scaffold (32625fb; local validation complete)
+## Quant Lab (QL-1 ถึง QL-4) — เสร็จสมบูรณ์ใน repo พร้อม Audit Hardening
 
-เพิ่ม `quant_lab/` เป็น Python 3.12 workspace แยกจาก Node runtime และ Docker
-release payload ใช้ `uv.lock` เพื่อล็อก dependencies สำหรับ DuckDB, Polars,
-pandas, PyArrow, psycopg, CCXT, yfinance, vectorbt, pandas-ta, QuantStats,
-Jupyter, Ruff และ Pytest โดยไม่มี network หรือ database access ระหว่าง tests
-
-contracts แบบ immutable ใน `quant_lab/src/robot_quant/contracts.py` ครอบคลุม
-RiskProfile, parameter bounds, strategy definition, optimization run, export
-metadata, ownership scope, position intent และ risk decision ข้อมูลเงินใช้ decimal
-string สูงสุด 18 ตำแหน่งทศนิยมและ unknown fields/versions ถูกปฏิเสธ
+เพิ่มสภาพแวดล้อมวิจัยเชิงปริมาณแบบแยกส่วน (`quant_lab/`) บน Python 3.12 โดยไม่ยุ่งเกี่ยวกับ Node runtime หรือ Docker release payload พร้อมผ่านการ Audit วิศวกรรมซอฟต์แวร์และการแก้ 4 P1 Blockers ครบถ้วน:
+- **QL-1 (Contracts & Scaffolding)**: `contracts.py` กำหนด frozen Pydantic schema สำหรับ RiskProfile, ParameterBounds, StrategyDefinition, OptimizationRun, ExportMetadata พร้อมล็อก dependencies ผ่าน `uv.lock`
+- **QL-2 (Data & Accounting Parity)**: ตัวแปลงข้อมูล Parquet/DuckDB และเอนจินจำลอง FIFO/Risk Parity ที่ให้ผลลัพธ์ตรงกับ Node.js runtime แบบ 100%
+- **QL-3 (Backtest & Constrained Optimizer)**: ระบบ Discrete-event simulation, Chronological / Walk-forward validation ปราศจาก Data leakage, การค้นหาพารามิเตอร์แบบ Multi-stage gate (Sensitivity, Stress, Out-of-sample)
+- **QL-4 (Reports & Pine Script Export)**: สร้าง HTML Tear sheet พร้อมกราฟ SVG Equity/Drawdown ออฟไลน์, ส่งออกชุดบันเดิล Pine Script v6 (6 ไฟล์) ทั้งโหมด `alert_calls` และ `order_fills`, เอนจินอัปเดต Input preset diff, และการส่งต่อ Strategy metadata ผ่าน Webhook
+- **Audit Hardening & P1 Blocker Fixes**:
+  1. *P1#1*: ส่งต่อค่า RiskProfile, broker, symbol และ timeframe จริงเข้าสู่ Pine Script และ JSON bundles พร้อมตรวจเช็ค Hash digest
+  2. *P1#2*: แยก `balance` ออกจาก `initial_capital` ในการทดสอบ Backtest อย่างถูกต้อง
+  3. *P1#3*: ปรับลำดับการคำนวณขนาด Order ให้โหมด Quote/Percent equity ทำงานก่อนการจำกัดขอบเขต Allocation ของ Target
+  4. *P1#4*: ปรับปรุง Pine Script โหมด order_fills ให้ใช้ `var string currentEntryId` และสั่ง `strategy.close(currentEntryId)` เพื่อคงความเป็นเจ้าของของแต่ละ Entry
+  5. *Positive Regression Suite*: ชุดทดสอบถาวร `quant_lab/tests/test_audit_regressions.py` ครอบคลุมทุกจุดบกพร่อง
 
 คำสั่งตรวจในเครื่อง:
 
@@ -61,11 +63,7 @@ uv run --no-sync pytest
 uv run --no-sync python -m robot_quant.smoke
 ```
 
-ผล local: Node 104/104, Quant 27/27, Ruff, lock, workflow YAML และ package imports
-ผ่านแล้ว. GitHub Actions Linux/Windows และ isolated PostgreSQL integration ของ commit
-นี้ยังเป็น acceptance gate ก่อนปิด QL-1. อ่านรายละเอียดใน
-[Quant Lab README](quant_lab/README.md). QL-2 เริ่มได้เฉพาะ research แบบแยกส่วน;
-ไม่มีการ deploy หรือแก้ production DB จาก QL-1
+ผล local ล่าสุด: Node tests 111/111 ผ่าน, Quant offline pytest 70/70 ผ่าน (อ่านรายละเอียดใน [Quant Lab README](quant_lab/README.md))
 
 ## การแก้ไขจาก v2.0
 

@@ -72,7 +72,7 @@ def test_tearsheet_edge_case_zero_trades(tmp_path):
     assert stats["total_trades"] == 0
     assert stats["win_rate"] == 0.0
     assert stats["profit_factor"] is None
-    assert stats["sharpe"] == 0.0
+    assert stats["sharpe"] is None
 
     output_file = tmp_path / "zero_trades.html"
     path = generate_tear_sheet(result, output_file)

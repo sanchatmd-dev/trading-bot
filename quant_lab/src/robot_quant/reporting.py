@@ -189,8 +189,8 @@ def calculate_tearsheet_metrics(result: BacktestResult) -> dict[str, Any]:
     n_bars = len(eq_df)
     cagr_pct = 0.0
     annualized_vol_pct = 0.0
-    sharpe = 0.0
-    sortino = 0.0
+    sharpe = None
+    sortino = None
 
     if n_bars > 1 and "book_equity" in eq_df.columns:
         equity_series = eq_df["book_equity"].astype(float)
@@ -215,12 +215,16 @@ def calculate_tearsheet_metrics(result: BacktestResult) -> dict[str, Any]:
             if std_ret > 0:
                 annualized_vol_pct = std_ret * ann_factor * 100.0
                 sharpe = (mean_ret / std_ret) * ann_factor
+            else:
+                sharpe = None
 
             downside_ret = ret_series[ret_series < 0]
             if len(downside_ret) > 0:
                 downside_std = downside_ret.std()
                 if downside_std > 0:
                     sortino = (mean_ret / downside_std) * ann_factor
+                else:
+                    sortino = None
 
     # Underwater drawdown curve
     drawdown_pcts = []
@@ -336,7 +340,7 @@ def generate_tear_sheet(
     month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     for year in sorted(stats["monthly_table"].keys()):
         m_data = stats["monthly_table"][year]
-        year_total = sum(m_data.values())
+        year_total = (math.prod(1 + val / 100.0 for val in m_data.values()) - 1) * 100.0
         cols = [f"<td><strong>{year}</strong></td>"]
         for m_idx in range(1, 13):
             val = m_data.get(m_idx)
@@ -471,8 +475,8 @@ def generate_tear_sheet(
             </div>
             <div class="card">
                 <div class="card-title">Sharpe / Sortino Ratio</div>
-                <div class="card-value">{stats['sharpe']:.2f}</div>
-                <div class="card-sub">Sortino: {stats['sortino']:.2f} | Vol: {stats['annualized_vol_pct']:.1f}%</div>
+                <div class="card-value">{f"{stats['sharpe']:.2f}" if stats['sharpe'] is not None else "N/A"}</div>
+                <div class="card-sub">Sortino: {f"{stats['sortino']:.2f}" if stats['sortino'] is not None else "N/A"} | Vol: {stats['annualized_vol_pct']:.1f}%</div>
             </div>
         </div>
 

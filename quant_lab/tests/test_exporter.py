@@ -62,7 +62,19 @@ def _sample_run(alert_source: str = "alert_calls") -> OptimizationRun:
 
 def test_export_package_alert_calls(tmp_path):
     """Verify export package generation with alert_calls source."""
+    from decimal import Decimal
+
+    from robot_quant.contracts import RiskProfile, Scope
     run = _sample_run(alert_source="alert_calls")
+    rp = RiskProfile(risk_profile_id="rp1", version=1, 
+                     scope=Scope(owner_id="u1", bot_id="b1", account_id="a1", broker="binance-global", currency="USDT"),
+                     effective_at=1700000000000, capital_basis="COST_BASIS_NOT_MARK_TO_MARKET",
+                     max_risk_percent=Decimal("100"), requested_risk_percent=Decimal("100"),
+                     max_order_notional=Decimal("10000"), max_daily_notional=Decimal("100000"),
+                     initial_capital=Decimal("1000"), balance=Decimal("1000"))
+    # Match the mock hash in _sample_run
+    object.__setattr__(run, "risk_snapshot_sha256", rp.digest())
+
     candidate = CandidateEvaluation(
         params={"ema_fast": "12", "ema_slow": "26", "atr_period": "14", "atr_multiplier": "2.5"},
         in_sample_return=15.0,
@@ -79,7 +91,7 @@ def test_export_package_alert_calls(tmp_path):
     )
 
     out_dir = tmp_path / "export_calls"
-    meta = export_package(run, candidate, "alert_calls", out_dir)
+    meta = export_package(run, candidate, "alert_calls", out_dir, rp, "BTCUSDT")
 
     assert meta.alert_source == "alert_calls"
     assert meta.export_id == "export_run-opt-101_alert_calls"
@@ -123,14 +135,25 @@ def test_export_package_alert_calls(tmp_path):
 
 def test_export_package_order_fills(tmp_path):
     """Verify export package generation with order_fills source."""
+    from decimal import Decimal
+
+    from robot_quant.contracts import RiskProfile, Scope
     run = _sample_run(alert_source="order_fills")
+    rp = RiskProfile(risk_profile_id="rp1", version=1, 
+                     scope=Scope(owner_id="u1", bot_id="b1", account_id="a1", broker="binance-global", currency="USDT"),
+                     effective_at=1700000000000, capital_basis="COST_BASIS_NOT_MARK_TO_MARKET",
+                     max_risk_percent=Decimal("100"), requested_risk_percent=Decimal("100"),
+                     max_order_notional=Decimal("10000"), max_daily_notional=Decimal("100000"),
+                     initial_capital=Decimal("1000"), balance=Decimal("1000"))
+    object.__setattr__(run, "risk_snapshot_sha256", rp.digest())
+
     candidate = CandidateEvaluation(
         params={"ema_fast": "11", "ema_slow": "25", "atr_period": "14", "atr_multiplier": "2.0"},
         passed_all_gates=True,
     )
 
     out_dir = tmp_path / "export_fills"
-    meta = export_package(run, candidate, "order_fills", out_dir)
+    meta = export_package(run, candidate, "order_fills", out_dir, rp, "BTCUSDT")
 
     assert meta.alert_source == "order_fills"
 
@@ -147,11 +170,21 @@ def test_export_package_order_fills(tmp_path):
 
 def test_export_source_mismatch_raises(tmp_path):
     """Verify ValueError when export alert_source does not match strategy definition."""
+    from decimal import Decimal
+
+    from robot_quant.contracts import RiskProfile, Scope
     run = _sample_run(alert_source="alert_calls")
+    rp = RiskProfile(risk_profile_id="rp1", version=1, 
+                     scope=Scope(owner_id="u1", bot_id="b1", account_id="a1", broker="binance-global", currency="USDT"),
+                     effective_at=1700000000000, capital_basis="COST_BASIS_NOT_MARK_TO_MARKET",
+                     max_risk_percent=Decimal("100"), requested_risk_percent=Decimal("100"),
+                     max_order_notional=Decimal("10000"), max_daily_notional=Decimal("100000"),
+                     initial_capital=Decimal("1000"), balance=Decimal("1000"))
+    object.__setattr__(run, "risk_snapshot_sha256", rp.digest())
     candidate = CandidateEvaluation(params={"ema_fast": "12", "ema_slow": "26"})
 
     with pytest.raises(ValueError, match="must match evaluated strategy"):
-        export_package(run, candidate, "order_fills", tmp_path / "mismatch")
+        export_package(run, candidate, "order_fills", tmp_path / "mismatch", rp, "BTCUSDT")
 
 
 def test_apply_input_preset_and_diff():

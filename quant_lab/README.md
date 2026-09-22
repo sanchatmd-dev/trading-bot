@@ -74,7 +74,7 @@ Capability registry for this phase:
 
 | Template | Contract fixtures | Historical parity | Optimization | Validated export |
 | --- | --- | --- | --- | --- |
-| synthetic-ema-v1 | Yes | Yes (QL-2) | Yes (ConstrainedOptimizer) | Pending QL-4 |
+| synthetic-ema-v1 | Yes | Yes (QL-2) | Yes (ConstrainedOptimizer) | Yes (QL-4) |
 | spt-pro-v4-transport-v1 | Metadata only | Unverified | Unavailable | Unverified |
 
 Run/Pause/Stop/Reset and immutable session archives from the roadmap remain runtime
@@ -139,13 +139,43 @@ QL-3 delivers an offline backtest engine, parameter optimizer, and walk-forward 
 - **Thin Experiment Interface (`notebooks/01_backtest_and_optimization.ipynb`)**: Interactive demonstration
   of the end-to-end research workflow with outputs stripped for git hygiene.
 
+## QL-4: Risk Reports, Pine Script Export & Webhook Integration
+
+QL-4 delivers offline reporting, Pine Script v6 export bundles, and webhook metadata integration:
+- **Offline HTML Tear Sheets (`reporting.py`)**: Generates comprehensive standalone HTML performance reports
+  with inline SVG equity and drawdown curves. Safely handles zero-variance/zero-trade scenarios, utilizes
+  exact geometric compounding for multi-period returns, and formats monetary statistics at full precision.
+- **Pine Script v6 Exporter (`exporter.py`)**: Exports 6-file deployable bundles (`strategy.pine`, `strategy.json`,
+  `risk-profile.json`, `inputs.json`, `setup.md`, `validation.html`) supporting both `alert_calls` and `order_fills`
+  modes without mutating indicator formulas.
+- **Input Preset Diff Engine**: Computes exact before/after parameter diffs and applies optimized values exclusively
+  to user-selected input defaults while preserving indicator structure and comments.
+- **Webhook Strategy Metadata**: Validates `strategy_id`, `strategy_version`, `deployment_id`, and `alert_source`
+  in webhook payloads to ensure traceable execution.
+
+## Engineering Audit Hardening & P1 Blocker Fixes
+
+Following independent review (`HANDOFF_AUDIT_QL1_QL4_826daf2.md` and `HANDOFF_QL_FIXES_REVIEW.md`), all 12 findings
+and 4 P1 blockers were systematically resolved:
+1. **P1#1 (Export Hardcoding)**: Injected actual frozen `RiskProfile` (with hash digest verification against the run),
+   `broker`, `symbol`, and `timeframe` dynamically into exported Pine Script and JSON bundles.
+2. **P1#2 (Capital Separation)**: Separated `balance` from `initial_capital` in `BacktestConfig`, initializing cash
+   strictly from `balance`.
+3. **P1#3 (Quote Sizing Precedence)**: Restructured `risk_evaluator.py` sizing order so quote/percent equity sizing
+   resolves before target allocation remaining bounds are applied, and defaulted unallocated exits to position limits.
+4. **P1#4 (Targeted Order Fills in Pine)**: Rewrote Pine order-fill exporter to track active trades via
+   `var string currentEntryId = ""` and close positions using `strategy.close(currentEntryId)`.
+5. **Positive Regression Suite**: Converted all audit probes into standard independent pytest cases in
+   `quant_lab/tests/test_audit_regressions.py` (7 tests).
+
 ## Local validation — 2026-09-22
 
-- Windows / Python 3.12.14: clean dependency installation from `uv.lock` with all
-  extras succeeded; `uv lock --check --offline` confirms the manifest matches it.
+- Windows / Python 3.12.14: clean dependency installation from `uv.lock` with all extras succeeded;
+  `uv lock --check --offline` confirms the manifest matches it.
 - Ruff passes with zero violations (`ruff check quant_lab`).
-- 56 offline pytest cases pass (`pytest quant_lab/tests`), verifying NUMERIC(38,18) precision,
+- 70 offline pytest cases pass (`pytest quant_lab/tests`), verifying NUMERIC(38,18) precision,
   deterministic market data, reference strategy execution, FIFO ledger reconciliation,
-  chronological validation, walk-forward splitting, constrained optimization, and risk simulation preview.
-- Node regression: 104/104 pass (`npm test`).
+  chronological validation, walk-forward splitting, constrained optimization, HTML tear sheets,
+  Pine Script export, and all audit regression invariants.
+- Node regression: 111/111 pass (`npm test`).
 - Changes remain strictly isolated in `quant_lab/`; production database, schema, and workers remain untouched.

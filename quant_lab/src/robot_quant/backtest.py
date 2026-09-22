@@ -27,25 +27,25 @@ from robot_quant.records import (
     PositionAllocationRecord,
     SignalRecord,
 )
-from robot_quant.strategy import StrategySignal, SyntheticEmaStrategy
+from robot_quant.strategy import SyntheticEmaStrategy
 
 
 @dataclass(frozen=True)
 class BacktestConfig:
     initial_capital: Decimal = Decimal("10000.00")
+    balance: Decimal = Decimal("10000.00")
     max_risk_percent: Decimal = Decimal("100.0")
-    # Fraction of available balance to allocate per trade
     requested_risk_percent: Decimal = Decimal("100.0")
     max_order_notional: Decimal = Decimal("10000.00")
     max_daily_notional: Decimal = Decimal("50000.00")
-    fee_bps: Decimal = Decimal("10")  # 10 bps = 0.1%
-    slippage_bps: Decimal = Decimal("5")  # 5 bps = 0.05%
+    fee_bps: Decimal = Decimal("10")
+    slippage_bps: Decimal = Decimal("5")
     lot_size_step: Decimal = Decimal("0.0001")
     symbol: str = "BTCUSDT"
     broker: str = "binance-global"
     execution_mode: str = "PAPER"
     account_id: str = "paper"
-    user_id: str = "research_user"
+    user_id: str = "bot"
 
     @classmethod
     def from_risk_profile(
@@ -56,6 +56,7 @@ class BacktestConfig:
     ) -> "BacktestConfig":
         return cls(
             initial_capital=profile.initial_capital,
+            balance=profile.balance,
             max_risk_percent=profile.max_risk_percent,
             requested_risk_percent=profile.requested_risk_percent,
             max_order_notional=profile.max_order_notional,
@@ -65,7 +66,7 @@ class BacktestConfig:
             symbol="BTCUSDT",
             broker=profile.scope.broker,
             account_id=profile.scope.account_id,
-            user_id=profile.scope.owner_id,
+            user_id=profile.scope.bot_id,
         )
 
 
@@ -99,7 +100,7 @@ class BacktestEngine:
         with localcontext() as ctx:
             ctx.prec = PRECISION_CONTEXT
 
-            cash = self.config.initial_capital
+            cash = self.config.balance
             inventory_qty = Decimal("0")
             open_lots: list[dict[str, Any]] = []
 
@@ -128,52 +129,64 @@ class BacktestEngine:
                     current_day = candle_day
                     daily_notional_spent = Decimal("0")
 
-                # Check if there is an active signal triggered on bar i (e.g. SL intrabar)
-                # or triggered at bar i-1 close to be filled at bar i open.
-                sig_to_execute: StrategySignal | None = None
-                exec_price_ref: Decimal = candle.open
-
-                if i in signals_by_bar:
-                    sig = signals_by_bar[i]
-                    if sig.event == "SL":
-                        # Intrabar Stop Loss triggered on bar i
-                        sig_to_execute = sig
-                        exec_price_ref = sig.price
-                if sig_to_execute is None and (i - 1) in signals_by_bar:
+                signals_to_execute = []
+                
+                # 1. Pending from previous bar close (BUY/SELL) executed at candle open
+                if (i - 1) in signals_by_bar:
                     prev_sig = signals_by_bar[i - 1]
                     if prev_sig.event in ("BUY", "SELL"):
-                        sig_to_execute = prev_sig
-                        exec_price_ref = candle.open
+                        signals_to_execute.append((prev_sig, candle.open))
+                        
+                # 2. Intrabar signals (SL/TP) executed at their specified price
+                if i in signals_by_bar:
+                    curr_sig = signals_by_bar[i]
+                    if curr_sig.event in ("SL", "TP"):
+                        signals_to_execute.append((curr_sig, curr_sig.price))
 
-                if sig_to_execute is not None:
+                for sig_to_execute, exec_price_ref in signals_to_execute:
                     trade_id = f"t_{sig_to_execute.event.lower()}_{candle.timestamp}"
 
                     if sig_to_execute.event == "BUY":
-                        # Spot BUY logic:
-                        # 1. Compute requested notional based on requested risk % and available cash
+                        # Spot BUY logic: Percent Equity Sizing
+                        exec_price = exec_price_ref * (Decimal("1") + slip_rate)
+                        
+                        open_cost = sum((lot["cost_basis"] for lot in open_lots), Decimal("0"))
+                        current_book_equity = cash + open_cost
+                        
                         risk_ceiling = min(
                             self.config.requested_risk_percent, self.config.max_risk_percent
                         )
                         risk_mult = risk_ceiling / Decimal("100")
-                        allocatable_cash = cash * risk_mult
-                        target_notional = min(allocatable_cash, self.config.max_order_notional)
-
+                        
+                        max_qty = Decimal("0")
+                        if sig_to_execute.stop_loss and sig_to_execute.stop_loss < exec_price:
+                            risk_amount = current_book_equity * risk_mult
+                            risk_per_unit = exec_price - sig_to_execute.stop_loss
+                            if risk_per_unit > Decimal("0"):
+                                max_qty = risk_amount / risk_per_unit
+                        else:
+                            max_qty = (cash * risk_mult) / exec_price
+                            
+                        target_notional = max_qty * exec_price
+                        
                         # Daily notional limit check
                         remaining_daily = max(
                             Decimal("0"), self.config.max_daily_notional - daily_notional_spent
                         )
-                        target_notional = min(target_notional, remaining_daily)
-
-                        # Execution price with slippage (BUY pays higher)
-                        exec_price = exec_price_ref * (Decimal("1") + slip_rate)
+                        
+                        target_notional = min(
+                            target_notional,
+                            self.config.max_order_notional,
+                            remaining_daily,
+                            cash / (Decimal("1") + fee_rate)
+                        )
 
                         # Calculate quantity that fits within target notional including fees:
-                        # cost = qty * exec_price * (1 + fee_rate) <= target_notional
                         if target_notional > Decimal("10.0") and exec_price > Decimal("0"):
-                            max_qty = target_notional / (exec_price * (Decimal("1") + fee_rate))
+                            max_qty_capped = target_notional / exec_price
                             # Round down to lot step
                             step = self.config.lot_size_step
-                            lot_qty = (max_qty // step) * step
+                            lot_qty = (max_qty_capped // step) * step
 
                             if lot_qty > Decimal("0"):
                                 notional = lot_qty * exec_price

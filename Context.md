@@ -2,15 +2,7 @@
 
 ## Purpose
 
-QL-1 update (2026-09-22): commit `32625fb` added an isolated `quant_lab/` Python
-3.12 package, uv lock, frozen research contracts, offline tests, package-import
-smoke test and CI routing. Local validation passed: Node 104/104, Quant 27/27,
-Ruff, lock verification, workflow YAML parsing and all locked package imports.
-`quant_lab/README.md` records compatibility boundaries, including the Plotly 5.x
-constraint for vectorbt. Hosted Linux/Windows workflow results and isolated
-PostgreSQL integration for this commit remain pending. No production migration or
-deployment was performed. QL-2 research setup may proceed in isolation, but QL-1
-is not marked fully accepted until those checks pass.
+QL-1 through QL-4 Delivery & Audit Hardening (2026-09-22): Quant Lab research workspace (QL-1 through QL-4) is fully implemented, verified, and hardened against the independent engineering audit. All 12 audit findings (F01–F12) and 4 P1 review blockers (Export Hardcoding with immutable risk snapshot digest, Capital Separation of balance from initial_capital, Quote Sizing Precedence & target allocation boundary enforcement in risk evaluator, and Targeted Order Fills in Pine Script using persistent entry ID tracking) have been resolved. Local validation passes 100%: Node tests 111/111, Quant offline pytest 70/70. `quant_lab/README.md` records architecture, contract guarantees, and compatibility bounds. Hosted CI and production PostgreSQL Schema 12 deployment rehearsal remain as acceptance gates for live VPS activation. Live trading remains locked.
 
 Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trading control plane. It is deployed on a VPS and currently runs in **Paper-only** mode: no real broker orders can be submitted by this release.
 
@@ -91,7 +83,7 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 
 ## Operations
 
-- Run legacy/regression/UI tests: npm test (111/111 passed in the latest local review; Quant offline tests 63/63 passed). Run npm run test:postgres only against an isolated test database; the recorded PostgreSQL integration result is 15/15, not a fresh production test.
+- Run legacy/regression/UI tests: npm test (111/111 passed in the latest local review; Quant offline tests 70/70 passed). Run npm run test:postgres only against an isolated test database; the recorded PostgreSQL integration result is 15/15, not a fresh production test.
 - Production entry points: src/postgres/server.js (npm run start:postgres) and src/postgres/worker-main.js (npm run worker:postgres). npm start still selects the legacy SQLite runtime and must not be used to start production.
 - Back up PostgreSQL using scripts/backup-postgres.mjs with the protected DATABASE_URL and compatible pg_dump. Use scripts/rotate-postgres-key.mjs and scripts/reset-postgres-password.mjs for their respective PostgreSQL maintenance tasks; follow docs/PHASE2.md. scripts/backup.mjs is for historical SQLite snapshots/import only.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the PostgreSQL API and worker user services. Do not activate the retired SQLite service.
@@ -183,4 +175,13 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
   - Resolved advisory lock / background worker hang issues in `test/postgres/phase2.test.mjs`.
 - **CI / Automated Test Verification**:
   - GitHub Actions runs across Ubuntu, Windows, Docker container build, and real PostgreSQL integration (`npm run test:postgres`) all passed with zero errors.
-- **Current Milestone**: QL-1 implementation merged in `32625fb`. QL-2 (read-only contracts, synthetic fixtures, DuckDB manifest verification, FIFO/risk parity evaluators) committed in `53acf66`. QL-3 (deterministic market data, reference strategy, discrete-event backtest simulation, FIFO PnL ledger reconciliation, chronological & walk-forward validation, constrained optimizer with sensitivity/stress screening, risk preview, and experiment notebook) is completed in `quant_lab/` with 56/56 passing Python tests and 104/104 passing Node tests. Ready for QL-4 (Risk reports, Pine export and Paper validation).
+- **Quant Lab (QL-1 to QL-4) Delivery & Audit Hardening (2026-09-22)**:
+  - **QL-1 to QL-3**: Scaffolding, read-only data contracts, FIFO/risk parity evaluators, deterministic market data, discrete-event backtester, walk-forward validation, and constrained optimizer.
+  - **QL-4**: Reconciled offline HTML tear sheet reports with SVG equity/drawdown curves, Pine Script v6 export engine for `alert_calls` and `order_fills`, input preset diff engine, and webhook strategy metadata pass-through.
+  - **Audit Hardening & P1 Blocker Fixes**: Addressed all 12 findings (F01–F12) from `HANDOFF_AUDIT_QL1_QL4_826daf2.md` and all 4 P1 blockers from `HANDOFF_QL_FIXES_REVIEW.md`:
+    1. *P1#1 (Export Hardcoding)*: Injected actual frozen `RiskProfile` (with hash digest verification), `broker`, `symbol`, and `timeframe` into Pine Script and JSON bundles.
+    2. *P1#2 (Capital Separation)*: Separated `balance` from `initial_capital` in `BacktestConfig`, initializing cash strictly from `balance`.
+    3. *P1#3 (Quote-Sized Caps Precedence)*: Re-architected `risk_evaluator.py` sizing order to execute quote/equity sizing before applying target allocation remaining bounds.
+    4. *P1#4 (Targeted Order Fills in Pine)*: Rewrote Pine order-fill generation using `var string currentEntryId = ""` tracking and targeted `strategy.close(currentEntryId)` exits.
+    5. *Regression Suite*: Replaced single-failure probe script with comprehensive positive regression suite `quant_lab/tests/test_audit_regressions.py` (7 tests).
+- **Current Milestone**: **APP-3 preparation / Schema 12 production rehearsal** — Quant Lab phases QL-1 through QL-4 and Phase R-1 are fully implemented and verified (Node regression 111/111 passed, Quant offline pytest 70/70 passed). Next steps involve Bot Lifecycle & Session Management (Run, Pause, Stop, Reset) and Universal Risk Manager runtime scaling in APP-3, plus VPS production Schema 12 migration rehearsal.

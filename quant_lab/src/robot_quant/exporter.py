@@ -22,36 +22,39 @@ from robot_quant.contracts import (
     AlertSource,
     ExportMetadata,
     OptimizationRun,
+    RiskProfile,
 )
 from robot_quant.optimizer import CandidateEvaluation
 
 
 def apply_input_preset(pine_source: str, new_inputs: dict[str, Any]) -> str:
     """Update only defval parameters in input() declarations, leaving logic unchanged."""
-    lines = pine_source.splitlines(keepends=True)
-    updated_lines = []
-
-    # Regex matches: [indent][type ]var_name = input[.type]([defval = ]VAL, ...
+    # Pattern to match input declarations across multiple lines
     pattern = re.compile(
-        r"^(?P<prefix>\s*(?:(?:var|varip)\s+)?(?:(?:int|float|string|bool|color)\s+)?)(?P<var>[a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(?P<decl>input(?:\.[a-zA-Z_]+)?)\s*\(\s*(?:defval\s*=\s*)?(?P<val>[^,\)]+)(?P<rest>,.*|\))"
+        r"(?m)^(?P<prefix>[ \t]*(?:(?:var|varip)[ \t]+)?(?:(?:int|float|string|bool|color)[ \t]+)?)(?P<var>[a-zA-Z_][a-zA-Z0-9_]*)[ \t]*=[ \t]*(?P<decl>input(?:\.[a-zA-Z_]+)?)[ \t]*\([ \t]*(?:defval[ \t]*=[ \t]*)?(?P<val>[^,\)]+)(?P<rest>.*?\))",
+        re.DOTALL
     )
 
-    for line in lines:
-        match = pattern.match(line)
-        if match:
-            var_name = match.group("var")
-            if var_name in new_inputs:
-                new_val = str(new_inputs[var_name])
-                prefix = match.group("prefix")
-                decl = match.group("decl")
-                rest = match.group("rest")
-                has_defval_kw = "defval" in line[match.start("decl"):match.start("val")]
-                defval_prefix = "defval = " if has_defval_kw else ""
-                updated_lines.append(f"{prefix}{var_name} = {decl}({defval_prefix}{new_val}{rest}\n")
-                continue
-        updated_lines.append(line)
+    def replacer(match):
+        var_name = match.group("var")
+        if var_name in new_inputs:
+            val = new_inputs[var_name]
+            if isinstance(val, bool):
+                new_val = "true" if val else "false"
+            else:
+                new_val = str(val)
+            
+            prefix = match.group("prefix")
+            decl = match.group("decl")
+            rest = match.group("rest")
+            
+            has_defval_kw = "defval" in match.group(0)[match.start("decl") - match.start(0) : match.start("val") - match.start(0)]
+            defval_prefix = "defval = " if has_defval_kw else ""
+            
+            return f"{prefix}{var_name} = {decl}({defval_prefix}{new_val}{rest}"
+        return match.group(0)
 
-    return "".join(updated_lines)
+    return pattern.sub(replacer, pine_source)
 
 
 def generate_input_diff(original_source: str, updated_source: str) -> str:
@@ -88,12 +91,13 @@ int   emaFast   = input.int({ema_fast}, "Fast EMA Period", minval=1)
 int   emaSlow   = input.int({ema_slow}, "Slow EMA Period", minval=1)
 int   atrPeriod = input.int({atr_period}, "ATR Period", minval=1)
 float atrMult   = input.float({atr_mult}, "Stop Loss ATR Multiplier", minval=0.5, step=0.1)
-float rrRatio   = input.float(1.5, "Risk:Reward Ratio", minval=0.5, step=0.1)
 
 // Execution settings
 string rtBroker = input.string("{broker}", "Broker Account")
 string rtSymbol = input.string("{symbol}", "Symbol")
-float  rtRiskVal = input.float(100.0, "Risk Value (% Equity)")
+string rtStrategyId = input.string("", "Strategy ID (Auto-filled by deployment)")
+string rtDeploymentId = input.string("", "Deployment ID (Auto-filled by deployment)")
+float  rtRiskVal = input.float({params.get("requested_risk_percent", "100.0")}, "Risk Value (% Equity)")
 
 // ==========================================
 // 2. INDICATOR LOGIC
@@ -113,19 +117,20 @@ bool bearCross = ta.crossunder(fastMa, slowMa)
 // ==========================================
 var string[] rtEntryIds = array.new_string(0)
 var float[]  rtEntryStops = array.new_float(0)
-var float[]  rtEntryTargets = array.new_float(0)
 var int[]    rtEntryBars = array.new_int(0)
 
-f_rtPayload(string event, string tradeId, string targetTradeId, float slPrice, float tpPrice) =>
-    string payload = '{{"trade_id":"' + tradeId + '","broker":"' + rtBroker + '","symbol":"' + rtSymbol + '","event":"' + event + '","entry_price":' + str.tostring(close, "#.##")
+f_rtPayload(string event, string tradeId, string targetTradeId, float slPrice) =>
+    string payload = '{{"trade_id":"' + tradeId + '","broker":"' + rtBroker + '","symbol":"' + rtSymbol + '","event":"' + event + '","entry_price":' + str.tostring(event == "SL" ? slPrice : close, "#.##")
+    if rtStrategyId != ""
+        payload += ',"strategy_id":"' + rtStrategyId + '"'
+    if rtDeploymentId != ""
+        payload += ',"deployment_id":"' + rtDeploymentId + '"'
     if targetTradeId != ""
         payload += ',"target_trade_id":"' + targetTradeId + '"'
     if event == "BUY"
         payload += ',"risk_mode":"PERCENT_EQUITY","risk_value":' + str.tostring(rtRiskVal)
     if not na(slPrice) and slPrice > 0
         payload += ',"stop_loss":' + str.tostring(slPrice, "#.##")
-    if not na(tpPrice) and tpPrice > 0
-        payload += ',"take_profit":' + str.tostring(tpPrice, "#.##")
     payload += ',"timestamp":' + str.tostring(time) + '}}'
     payload
 
@@ -134,34 +139,36 @@ if barstate.isconfirmed and bullCross
     if array.size(rtEntryIds) < 10
         string entryId = "ENTRY-" + str.tostring(time)
         float stopLevel = close - (atrVal * atrMult)
-        float targetLevel = close + ((close - stopLevel) * rrRatio)
         array.push(rtEntryIds, entryId)
         array.push(rtEntryStops, stopLevel)
-        array.push(rtEntryTargets, targetLevel)
         array.push(rtEntryBars, bar_index)
-        alert(f_rtPayload("BUY", entryId, "", stopLevel, targetLevel), alert.freq_once_per_bar_close)
+        alert(f_rtPayload("BUY", entryId, "", stopLevel), alert.freq_once_per_bar_close)
 
-// Open entries evaluation for TP/SL exits
-if barstate.isconfirmed and array.size(rtEntryIds) > 0
+// SELL Exit (Crossover)
+if barstate.isconfirmed and bearCross
+    if array.size(rtEntryIds) > 0
+        int idx = array.size(rtEntryIds) - 1
+        while idx >= 0
+            string eId = array.get(rtEntryIds, idx)
+            alert(f_rtPayload("SELL", "SELL-" + eId, eId, na), alert.freq_once_per_bar_close)
+            array.remove(rtEntryIds, idx)
+            array.remove(rtEntryStops, idx)
+            array.remove(rtEntryBars, idx)
+            idx -= 1
+
+// Intrabar Stop Loss Evaluation
+if array.size(rtEntryIds) > 0
     int idx = array.size(rtEntryIds) - 1
     while idx >= 0
         string eId = array.get(rtEntryIds, idx)
         float eStop = array.get(rtEntryStops, idx)
-        float eTarget = array.get(rtEntryTargets, idx)
         int eBar = array.get(rtEntryBars, idx)
 
         if bar_index > eBar
             if low <= eStop
-                alert(f_rtPayload("SL", "SL-" + eId, eId, eStop, na), alert.freq_once_per_bar_close)
+                alert(f_rtPayload("SL", "SL-" + eId, eId, eStop), alert.freq_once_per_bar)
                 array.remove(rtEntryIds, idx)
                 array.remove(rtEntryStops, idx)
-                array.remove(rtEntryTargets, idx)
-                array.remove(rtEntryBars, idx)
-            else if high >= eTarget
-                alert(f_rtPayload("TP", "TP-" + eId, eId, na, eTarget), alert.freq_once_per_bar_close)
-                array.remove(rtEntryIds, idx)
-                array.remove(rtEntryStops, idx)
-                array.remove(rtEntryTargets, idx)
                 array.remove(rtEntryBars, idx)
         idx -= 1
 """
@@ -192,12 +199,13 @@ int   emaFast   = input.int({ema_fast}, "Fast EMA Period", minval=1)
 int   emaSlow   = input.int({ema_slow}, "Slow EMA Period", minval=1)
 int   atrPeriod = input.int({atr_period}, "ATR Period", minval=1)
 float atrMult   = input.float({atr_mult}, "Stop Loss ATR Multiplier", minval=0.5, step=0.1)
-float rrRatio   = input.float(1.5, "Risk:Reward Ratio", minval=0.5, step=0.1)
 
 // Execution settings
 string rtBroker = input.string("{broker}", "Broker Account")
 string rtSymbol = input.string("{symbol}", "Symbol")
-float  rtRiskVal = input.float(100.0, "Risk Value (% Equity)")
+string rtStrategyId = input.string("", "Strategy ID (Auto-filled by deployment)")
+string rtDeploymentId = input.string("", "Deployment ID (Auto-filled by deployment)")
+float  rtRiskVal = input.float({params.get("requested_risk_percent", "100.0")}, "Risk Value (% Equity)")
 
 // ==========================================
 // 2. INDICATOR LOGIC
@@ -215,29 +223,35 @@ bool bearCross = ta.crossunder(fastMa, slowMa)
 // ==========================================
 // 3. STRATEGY ORDERS & ORDER-FILL MESSAGES
 // ==========================================
-f_fillPayload(string event, string tradeId, string targetId, float slPrice, float tpPrice) =>
-    string payload = '{{"trade_id":"' + tradeId + '","broker":"' + rtBroker + '","symbol":"' + rtSymbol + '","event":"' + event + '","entry_price":' + str.tostring(close, "#.##")
+f_fillPayload(string event, string tradeId, string targetId, float slPrice) =>
+    string payload = '{{"trade_id":"' + tradeId + '","broker":"' + rtBroker + '","symbol":"' + rtSymbol + '","event":"' + event + '","entry_price":' + str.tostring(event == "SL" ? slPrice : close, "#.##")
+    if rtStrategyId != ""
+        payload += ',"strategy_id":"' + rtStrategyId + '"'
+    if rtDeploymentId != ""
+        payload += ',"deployment_id":"' + rtDeploymentId + '"'
     if targetId != ""
         payload += ',"target_trade_id":"' + targetId + '"'
     if event == "BUY"
         payload += ',"risk_mode":"PERCENT_EQUITY","risk_value":' + str.tostring(rtRiskVal)
     if not na(slPrice) and slPrice > 0
         payload += ',"stop_loss":' + str.tostring(slPrice, "#.##")
-    if not na(tpPrice) and tpPrice > 0
-        payload += ',"take_profit":' + str.tostring(tpPrice, "#.##")
     payload += ',"timestamp":' + str.tostring(time) + '}}'
     payload
 
+var string currentEntryId = ""
+
 if bullCross
-    string entryId = "ORD-" + str.tostring(time)
+    currentEntryId := "ORD-" + str.tostring(time)
     float stopLevel = close - (atrVal * atrMult)
-    float targetLevel = close + ((close - stopLevel) * rrRatio)
-    string buyMsg = f_fillPayload("BUY", entryId, "", stopLevel, targetLevel)
-    strategy.entry(entryId, strategy.long, alert_message=buyMsg)
+    string buyMsg = f_fillPayload("BUY", currentEntryId, "", stopLevel)
+    strategy.entry(currentEntryId, strategy.long, alert_message=buyMsg)
     
-    string tpMsg = f_fillPayload("TP", "TP-" + entryId, entryId, na, targetLevel)
-    string slMsg = f_fillPayload("SL", "SL-" + entryId, entryId, stopLevel, na)
-    strategy.exit("Exit-" + entryId, from_entry=entryId, stop=stopLevel, limit=targetLevel, alert_message=tpMsg)
+    string slMsg = f_fillPayload("SL", "SL-" + currentEntryId, currentEntryId, stopLevel)
+    strategy.exit("Exit-" + currentEntryId, from_entry=currentEntryId, stop=stopLevel, alert_message=slMsg)
+
+if bearCross and currentEntryId != ""
+    strategy.close(currentEntryId, alert_message=f_fillPayload("SELL", "SELL-" + str.tostring(time), currentEntryId, na))
+    currentEntryId := ""
 """
 
 
@@ -368,12 +382,21 @@ def export_package(
     candidate: CandidateEvaluation,
     alert_source: AlertSource,
     output_dir: Path,
+    risk_profile: RiskProfile,
+    symbol: str,
+    timeframe: str = "1h",
 ) -> ExportMetadata:
     """Generate complete deployment package under output_dir."""
     if alert_source != run.strategy.alert_source:
         raise ValueError(
             f"Export alert source ({alert_source}) must match evaluated strategy alert source ({run.strategy.alert_source})"
         )
+        
+    if risk_profile.digest() != run.risk_snapshot_sha256:
+        raise ValueError("Provided risk profile hash does not match run.risk_snapshot_sha256")
+        
+    if not candidate.passed_all_gates:
+        raise ValueError(f"Cannot export rejected candidate: {candidate.status} - {candidate.rejection_reason}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     strategy_def = run.strategy
@@ -408,10 +431,13 @@ def export_package(
     (output_dir / "inputs.json").write_text(json.dumps(inputs_payload, indent=2), encoding="utf-8")
 
     # 2. strategy.pine
+    opt_inputs["broker"] = risk_profile.scope.broker
+    opt_inputs["requested_risk_percent"] = str(risk_profile.requested_risk_percent)
+    
     if alert_source == "alert_calls":
-        pine_code = _generate_pine_alert_calls(template_id, opt_inputs, "binance-global", "BTCUSDT")
+        pine_code = _generate_pine_alert_calls(template_id, opt_inputs, risk_profile.scope.broker, symbol)
     else:
-        pine_code = _generate_pine_order_fills(template_id, opt_inputs, "binance-global", "BTCUSDT")
+        pine_code = _generate_pine_order_fills(template_id, opt_inputs, risk_profile.scope.broker, symbol)
     (output_dir / "strategy.pine").write_text(pine_code, encoding="utf-8")
 
     # 3. strategy.json
@@ -420,8 +446,8 @@ def export_package(
         "template_id": template_id,
         "alert_source": alert_source,
         "parameters": opt_inputs,
-        "timeframe": "1h",
-        "symbol": "BTCUSDT",
+        "timeframe": timeframe,
+        "symbol": symbol,
         "bar_close_execution": True,
         "same_bar_priority": "STOP_LOSS_FIRST",
     }
@@ -432,9 +458,10 @@ def export_package(
         "risk_snapshot_sha256": run.risk_snapshot_sha256,
         "capital_basis": "COST_BASIS_NOT_MARK_TO_MARKET",
         "spot_long_only": True,
+        "requested_risk_percent": str(risk_profile.requested_risk_percent),
+        "max_risk_percent": str(risk_profile.max_risk_percent),
+
         "reduce_only_exits": True,
-        "max_risk_percent": "100.0",
-        "requested_risk_percent": "100.0",
     }
     (output_dir / "risk-profile.json").write_text(json.dumps(risk_payload, indent=2), encoding="utf-8")
 

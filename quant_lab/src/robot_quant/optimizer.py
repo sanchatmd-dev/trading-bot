@@ -146,10 +146,10 @@ class ConstrainedOptimizer:
                 grid_values[p.name] = vals
 
         keys = list(grid_values.keys())
-        all_combinations = [
+        all_combinations = (
             dict(zip(keys, prod, strict=True))
             for prod in itertools.product(*(grid_values[k] for k in keys))
-        ]
+        )
 
         rejection_stats = {
             "rejected_bounds": 0,
@@ -176,10 +176,8 @@ class ConstrainedOptimizer:
                     continue
 
             valid_candidates.append(cand)
-
-        # Limit search budget if grid is larger than budget
-        if len(valid_candidates) > self.search_budget:
-            valid_candidates = valid_candidates[: self.search_budget]
+            if len(valid_candidates) >= self.search_budget:
+                break
 
         candidate_evals: list[CandidateEvaluation] = []
 
@@ -280,16 +278,16 @@ class ConstrainedOptimizer:
         best_cand: CandidateEvaluation | None = None
         if accepted_candidates:
             if self.objective == "net_return":
-                best_cand = max(accepted_candidates, key=lambda c: (c.val_return, c.test_return))
+                best_cand = max(accepted_candidates, key=lambda c: (c.val_return, c.in_sample_return))
             elif self.objective == "profit_factor":
                 best_cand = max(
                     accepted_candidates,
-                    key=lambda c: (c.val_profit_factor or 0.0, c.val_return),
+                    key=lambda c: (c.val_profit_factor or 0.0, c.in_sample_return),
                 )
             elif self.objective == "max_drawdown":
                 best_cand = max(
                     accepted_candidates,
-                    key=lambda c: (c.val_max_drawdown or -100.0, c.val_return),
+                    key=lambda c: (c.val_max_drawdown if c.val_max_drawdown is not None else -100.0, c.in_sample_return),
                 )
 
         # 6. Build immutable OptimizationRun contract

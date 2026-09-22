@@ -4,7 +4,7 @@ Status: proposed implementation sequence after release `c573e39`. This document 
 
 Planning baseline: roadmap commit `e4e473e`. This extension incorporates shared Quant Lab risk management, constrained optimization and Pine Script export into QL-1 through QL-4, preserving the existing APP roadmap and the user's choice of alert source.
 
-Latest planning update: **QL-4 — Risk reports, Pine export and Paper validation** was implemented and verified in repository (offline HTML tear sheets with SVG equity/drawdown curves, 6-file Pine Script v6 export bundles for `alert_calls` and `order_fills`, input preset replacement preserving indicator source logic, webhook strategy metadata pass-through, 63/63 pytest passed, 111/111 Node tests passed); production Schema 12 deployment and live Paper forward acceptance on VPS remain outstanding.
+Latest planning update: **QL-4 — Risk reports, Pine export and Paper validation** was implemented, audited, and hardened in repository (offline HTML tear sheets with SVG equity/drawdown curves, 6-file Pine Script v6 export bundles for `alert_calls` and `order_fills`, input preset replacement preserving indicator source logic, webhook strategy metadata pass-through, resolution of all 12 audit findings and 4 P1 review blockers, 70/70 pytest passed, 111/111 Node tests passed); production Schema 12 deployment and live Paper forward acceptance on VPS remain outstanding.
 
 Use `APP-*` for the application roadmap and `QL-*` for Quant Lab. The previously deployed application Phases 0–2 retain their names. APP-3 below is the proposed next application scope, not an assertion that an older Phase 3 specification already exists.
 
@@ -30,7 +30,7 @@ Default delivery order: **R-0 → R-1 → QL-1 → QL-2 → APP-3 → QL-3 → Q
 | QL-2 | Read-only datasets, deterministic replay and accounting/risk parity | Implemented in quant_lab/; synthetic fixtures, read-only contracts, and FIFO/risk parity pass (41/41 tests). |
 | APP-3 | Universal Risk Manager runtime, multi-indicator isolation and measured Paper scaling | Scoped allocations/exits, reservations, migration, UI and load/recovery acceptance. |
 | QL-3 | Backtesting and optimization of selected existing inputs | Implemented in quant_lab/ (backtest, constrained optimizer, walk-forward validation, 56/56 tests passed). |
-| QL-4 | Reconciled reports, Pine export and Paper forward validation | Implemented in repo (offline SVG HTML tear sheets, Pine v6 exporter, input preset updater, webhook metadata pass-through; 63/63 pytest, 111/111 Node tests passed); TradingView/VPS Paper forward acceptance pending. |
+| QL-4 | Reconciled reports, Pine export and Paper forward validation | Implemented and hardened in repo (offline SVG HTML tear sheets, Pine v6 exporter, input preset updater, webhook metadata pass-through, audit hardening with 4 P1 blocker fixes; 70/70 pytest, 111/111 Node tests passed); TradingView/VPS Paper forward acceptance pending. |
 | APP-4 | Customer onboarding, quotas, subscriptions and paid Paper readiness | Customer lifecycle, security, beta and deferred off-host recovery gates complete. |
 | APP-5 | Optional broker-by-broker Live rollout | External order/reconciliation acceptance and separate approval to enable Live. |
 
@@ -362,4 +362,4 @@ Done when: broker-specific acceptance and recovery evidence exist and the owner 
 - Deploy application changes through immutable releases and atomic symlink swaps. Quant Lab has a separate environment and is not deployed merely because it shares the repository.
 - Commit/push/deploy follow the implementation request for that phase. This planning task changes documentation only.
 
-Current milestone: **APP-3 preparation / Schema 12 production rehearsal** — Quant Lab phases QL-1 through QL-4 and Phase R-1 are implemented and verified in the repository (111/111 Node tests, 63/63 pytest passed). Next steps involve Bot Lifecycle & Session Management (Run, Pause, Stop, Reset) and Universal Risk Manager runtime scaling in APP-3, plus VPS production Schema 12 migration rehearsal.
+Current milestone: **APP-3 preparation / Schema 12 production rehearsal** — Quant Lab phases QL-1 through QL-4 and Phase R-1 are implemented, audit-hardened, and verified in the repository (111/111 Node tests, 70/70 pytest passed). Next steps involve Bot Lifecycle & Session Management (Run, Pause, Stop, Reset) and Universal Risk Manager runtime scaling in APP-3, plus VPS production Schema 12 migration rehearsal.
