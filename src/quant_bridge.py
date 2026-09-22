@@ -80,15 +80,75 @@ def backtest(body):
         "atr_period": params.atr_period, "atr_multiplier": str(params.atr_multiplier)}}
 
 def bounds(raw):
-    spec = (("ema_fast", "bars", "ema_fast_min", "ema_fast_max", "5", "25", "1", "10"),
-      ("ema_slow", "bars", "ema_slow_min", "ema_slow_max", "30", "80", "1", "30"),
-      ("atr_period", "bars", "atr_period_min", "atr_period_max", "10", "21", "1", "14"),
-      ("atr_multiplier", "multiplier", "atr_multiplier_min", "atr_multiplier_max", "1.5", "3.5", "0.5", "2.0"))
+    # raw could be the old bounds object or the new array of indicators
     result = []
-    for name, unit, min_key, max_key, low, high, step, default in spec:
-        minimum = decimal(raw.get(min_key, low), min_key, Decimal("0.01")); maximum = decimal(raw.get(max_key, high), max_key, minimum)
-        if not minimum <= Decimal(default) <= maximum: raise ValueError(f"{name} range must include its default value ({default})")
-        result.append(ParameterBounds(name=name, unit=unit, minimum=minimum, maximum=maximum, step=Decimal(step), default=Decimal(default)))
+    
+    indicators = raw.get("indicators", [])
+    if not isinstance(indicators, list):
+        indicators = []
+
+    # Count how many indicators we have
+    is_multi_indicator = len(indicators) > 1
+
+    # Extract all parameters
+    for ind in indicators:
+        params = ind.get("params", [])
+        for p in params:
+            minimum = decimal(p.get("minimum", 1), p.get("name"), Decimal("0.01"))
+            maximum = decimal(p.get("maximum", 1), p.get("name"), minimum)
+            step = decimal(p.get("step", 1), p.get("name"), Decimal("0.01"))
+            default = decimal(p.get("default", 1), p.get("name"), minimum)
+            
+            # CASE 2 constraint: if multi-indicator, lock all indicator inputs
+            locked = True if is_multi_indicator else bool(p.get("locked", False))
+            optimizable = False if is_multi_indicator else bool(p.get("optimizable", True))
+            
+            if not minimum <= default <= maximum: raise ValueError(f"{p.get('name')} range must include its default value")
+            result.append(ParameterBounds(name=p.get("name"), unit=p.get("unit", "bars"), minimum=minimum, maximum=maximum, step=step, default=default, locked=locked, optimizable=optimizable))
+            
+    # Add SL / RR (always optimizable if requested, not locked by multi-indicator rule)
+    for risk_param in ["sl_atr_multiplier", "rr_ratio"]:
+        if risk_param in raw:
+            p = raw[risk_param]
+            minimum = decimal(p.get("minimum", 1), risk_param, Decimal("0.01"))
+            maximum = decimal(p.get("maximum", 1), risk_param, minimum)
+            step = decimal(p.get("step", 1), risk_param, Decimal("0.01"))
+            default = decimal(p.get("default", 1), risk_param, minimum)
+            locked = bool(p.get("locked", False))
+            optimizable = bool(p.get("optimizable", True))
+            
+            if not minimum <= default <= maximum: raise ValueError(f"{risk_param} range must include its default value")
+            result.append(ParameterBounds(name=risk_param, unit="multiplier", minimum=minimum, maximum=maximum, step=step, default=default, locked=locked, optimizable=optimizable))
+            
+    # CASE 1 constraint check
+    optimizable_count = sum(1 for p in result if p.optimizable and not p.locked)
+    if optimizable_count > 10:
+        raise ValueError("Maximum 10 optimizable inputs exceeded")
+
+    # Fallback to old format if empty
+    if not result:
+        spec = (("ema_fast", "bars", "ema_fast_min", "ema_fast_max", "5", "25", "1", "10"),
+          ("ema_slow", "bars", "ema_slow_min", "ema_slow_max", "30", "80", "1", "30"),
+          ("atr_period", "bars", "atr_period_min", "atr_period_max", "10", "21", "1", "14"),
+          ("atr_multiplier", "multiplier", "atr_multiplier_min", "atr_multiplier_max", "1.5", "3.5", "0.5", "2.0"))
+        for name, unit, min_key, max_key, low, high, step, default in spec:
+            bounds_data = raw.get("bounds", {}) if "bounds" in raw else raw
+            minimum = decimal(bounds_data.get(min_key, low), min_key, Decimal("0.01")); maximum = decimal(bounds_data.get(max_key, high), max_key, minimum)
+            if not minimum <= Decimal(default) <= maximum: raise ValueError(f"{name} range must include its default value ({default})")
+            result.append(ParameterBounds(name=name, unit=unit, minimum=minimum, maximum=maximum, step=Decimal(step), default=Decimal(default)))
+
+    # Inject required Dummy parameters for SyntheticEmaStrategy
+    names = {p.name for p in result}
+    dummy_spec = [
+      ("ema_fast", "bars", "10"),
+      ("ema_slow", "bars", "30"),
+      ("atr_period", "bars", "14"),
+      ("atr_multiplier", "multiplier", "2.0")
+    ]
+    for name, unit, default in dummy_spec:
+        if name not in names:
+            result.append(ParameterBounds(name=name, unit=unit, minimum=Decimal(default), maximum=Decimal(default), step=Decimal("1"), default=Decimal(default), locked=True, optimizable=False))
+
     return tuple(result)
 
 def profile(balance, maximum=Decimal("100"), requested=Decimal("2"), name="quant-ui"):
@@ -100,7 +160,7 @@ def optimize(body):
     raw = body.get("config", {}); count, seed, balance, fee_bps, _ = config(raw)
     budget = integer(raw.get("max_candidates", 40), "max_candidates", 1, MAX_CANDIDATES)
     strategy = StrategyDefinition(strategy_id="quant-ui", version=1, template_id="synthetic-ema-v1", source_sha256="0" * 64,
-      alert_source="alert_calls", parameters=bounds(body.get("bounds", {})))
+      alert_source="alert_calls", parameters=bounds(body))
     report = ConstrainedOptimizer(strategy, profile(balance), generate_synthetic_ohlcv(bars_count=count, seed=seed), search_budget=budget).optimize()
     def candidate(row): return {"params": row.params, "train_score": row.in_sample_return, "validation_score": row.val_return,
       "test_score": row.test_return, "passed_stress": row.passed_stress, "stability_ok": row.passed_sensitivity, "status": row.status}

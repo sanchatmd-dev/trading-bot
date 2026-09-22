@@ -70,12 +70,31 @@ const requireAdmin = async (req, res, url) => {
 };
 const safeLimit = url => Math.min(500, Math.max(1, Number(url.searchParams.get('limit') || 100)));
 const quantPaths = new Set(['/api/quant/health', '/api/quant/backtest', '/api/quant/optimize', '/api/quant/risk-preview']);
-async function quantBridge(req, res, url) {
+async function quantBridge(req, res, url, actor, store) {
+  if (req.method === 'GET' && url.pathname === '/api/quant/runs') {
+    const requestedBot = String(url.searchParams.get('bot_id') || actor.id);
+    if (!(await store.ownsBot(actor.id, requestedBot))) { json(res, 403, { error: 'Bot access denied' }); return true; }
+    const runs = await store.db.prepare('SELECT * FROM quant_research_runs WHERE bot_id=? ORDER BY created_at DESC LIMIT 50').all(requestedBot);
+    json(res, 200, runs.map(r => ({...r, indicators_config: JSON.parse(r.indicators_config), optimal_results: r.optimal_results ? JSON.parse(r.optimal_results) : null, metrics: r.metrics ? JSON.parse(r.metrics) : null})));
+    return true;
+  }
+
   if (!quantPaths.has(url.pathname) || !['GET', 'POST'].includes(req.method)) return false;
-  const body = req.method === 'POST' ? JSON.stringify(await readJson(req)) : '';
+
+  const bodyObj = req.method === 'POST' ? await readJson(req) : null;
+  const bodyStr = bodyObj ? JSON.stringify(bodyObj) : '';
+
+  let runId = null;
+  if (url.pathname === '/api/quant/optimize' && bodyObj) {
+      const botId = String(bodyObj.bot_id || actor.id);
+      if (!(await store.ownsBot(actor.id, botId))) { json(res, 403, { error: 'Bot access denied' }); return true; }
+      runId = 'run-' + Date.now() + '-' + Math.floor(Math.random()*1000);
+      await store.db.prepare(`INSERT INTO quant_research_runs(run_id, user_id, bot_id, indicators_config, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'RUNNING', ?, ?)`).run(runId, actor.id, botId, JSON.stringify(bodyObj), Date.now(), Date.now());
+  }
+
   const result = await new Promise((resolve, reject) => {
     const upstream = http.request({hostname: '127.0.0.1', port: 7654, path: url.pathname.replace('/api', ''), method: req.method,
-      headers: body ? {'content-type': 'application/json', 'content-length': Buffer.byteLength(body)} : {}, timeout: 30000}, response => {
+      headers: bodyStr ? {'content-type': 'application/json', 'content-length': Buffer.byteLength(bodyStr)} : {}, timeout: 30000}, response => {
       let raw = '';
       response.setEncoding('utf8');
       response.on('data', chunk => { raw += chunk; if (raw.length > 1024 * 1024) response.destroy(new Error('Quant response too large')); });
@@ -83,9 +102,29 @@ async function quantBridge(req, res, url) {
     });
     upstream.on('timeout', () => upstream.destroy(new Error('Quant request timed out')));
     upstream.on('error', reject);
-    upstream.end(body);
+    upstream.end(bodyStr);
   });
-  return json(res, result.status, result.body), true;
+
+  if (runId) {
+      if (result.status === 200 && result.body && result.body.best) {
+          await store.db.prepare(`UPDATE quant_research_runs SET status='COMPLETED', optimal_results=?, metrics=?, updated_at=? WHERE run_id=?`).run(
+              JSON.stringify(result.body.best.params || {}),
+              JSON.stringify({
+                  train_score: result.body.best.train_score,
+                  validation_score: result.body.best.validation_score,
+                  test_score: result.body.best.test_score,
+                  fee_bps: result.body.fee_bps,
+                  dataset_split: result.body.dataset_split
+              }),
+              Date.now(), runId
+          );
+      } else {
+          await store.db.prepare(`UPDATE quant_research_runs SET status='FAILED', updated_at=? WHERE run_id=?`).run(Date.now(), runId);
+      }
+  }
+
+  json(res, result.status, result.body);
+  return true;
 }
 // Trust only the right-most address from the explicitly configured loopback proxy.
 const loginKey = req => clientIp(req, config.trustLoopbackProxy);
@@ -229,7 +268,7 @@ async function userRoutes(req, res, url) {
   if (!hasPermission(actor, req.method === 'GET' ? 'own:read' : 'own:write')) return json(res, 403, {
     error: 'Permission denied'
   });
-  try { if (await quantBridge(req, res, url)) return; }
+  try { if (await quantBridge(req, res, url, actor, store)) return; }
   catch (error) { return json(res, 503, {error: 'Quant Lab engine is unavailable'}); }
   if (req.method !== 'GET' && (url.pathname === '/api/me/webhook-secret' || url.pathname.startsWith('/api/brokers/')) || url.pathname === '/api/me/password') await auth.sensitive(req);
   if (req.method === 'GET' && url.pathname === '/api/bots') {
