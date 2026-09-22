@@ -27,7 +27,7 @@ Default delivery order: **R-0 → R-1 → QL-1 → QL-2 → APP-3 → QL-3 → Q
 | R-0 | Current release/CI/acceptance baseline | Evidence and outstanding tasks recorded accurately. |
 | R-1 | Per-BUY position ownership and targeted TP/SL, end to end | Implemented in repo (`b2cb863`, Schema 12); live Paper acceptance and Pine end-to-end validation pending. |
 | QL-1 | Isolated Python/CI and shared indicator/input/risk contracts | Implemented in repo (`32625fb`); hosted Linux/Windows CI and isolated DB acceptance pending. |
-| QL-2 | Read-only datasets, deterministic replay and accounting/risk parity | Decimal, ownership, signal and risk fixtures match their declared baseline. |
+| QL-2 | Read-only datasets, deterministic replay and accounting/risk parity | Implemented in quant_lab/; synthetic fixtures, read-only contracts, and FIFO/risk parity pass (41/41 tests). |
 | APP-3 | Universal Risk Manager runtime, multi-indicator isolation and measured Paper scaling | Scoped allocations/exits, reservations, migration, UI and load/recovery acceptance. |
 | QL-3 | Backtesting and optimization of selected existing inputs | Original logic preserved; baseline, out-of-sample and stress evidence retained. |
 | QL-4 | Reconciled reports, Pine export and Paper forward validation | Selected alert source compiles and passes source-specific TradingView/Paper checks. |
@@ -255,6 +255,8 @@ Deliverables:
 Done when: a clean environment installs from the lock, meaningful configuration/package tests pass, and a CI change matrix demonstrates correct behavior for Quant-only, docs-only, application-only and shared-contract changes. Contract tests reject invalid units, unknown versions, contradictory bounds and attempts to optimize locked hard limits. Baseline Node and isolated PostgreSQL checks pass for the CI configuration change. CI never requires production secrets or live market downloads.
 
 ## QL-2 — Read-only data, market data and accounting parity
+
+Implementation update (2026-09-22): read-only contracts, synthetic fixtures, DuckDB storage manifest verification, and FIFO/risk parity evaluators implemented in `quant_lab/`. Local tests pass: Quant 41/41, Node regression 104/104.
 
 Deliverables:
 - Start with synthetic fixtures and a restored snapshot. Use a separate research directory/process; do not run notebook workloads inside the API or execution worker.

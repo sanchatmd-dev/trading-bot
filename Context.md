@@ -91,7 +91,7 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 
 ## Operations
 
-- Run legacy/regression/UI tests: npm test (104/104 passed in the latest local review; Quant offline tests 27/27 passed). Run npm run test:postgres only against an isolated test database; the recorded PostgreSQL integration result is 15/15, not a fresh production test.
+- Run legacy/regression/UI tests: npm test (104/104 passed in the latest local review; Quant offline tests 41/41 passed). Run npm run test:postgres only against an isolated test database; the recorded PostgreSQL integration result is 15/15, not a fresh production test.
 - Production entry points: src/postgres/server.js (npm run start:postgres) and src/postgres/worker-main.js (npm run worker:postgres). npm start still selects the legacy SQLite runtime and must not be used to start production.
 - Back up PostgreSQL using scripts/backup-postgres.mjs with the protected DATABASE_URL and compatible pg_dump. Use scripts/rotate-postgres-key.mjs and scripts/reset-postgres-password.mjs for their respective PostgreSQL maintenance tasks; follow docs/PHASE2.md. scripts/backup.mjs is for historical SQLite snapshots/import only.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the PostgreSQL API and worker user services. Do not activate the retired SQLite service.
@@ -183,4 +183,4 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
   - Resolved advisory lock / background worker hang issues in `test/postgres/phase2.test.mjs`.
 - **CI / Automated Test Verification**:
   - GitHub Actions runs across Ubuntu, Windows, Docker container build, and real PostgreSQL integration (`npm run test:postgres`) all passed with zero errors.
-- **Current Milestone**: QL-1 implementation is merged in `32625fb`. Local scaffold/contract/CI checks pass; hosted Linux/Windows and isolated PostgreSQL checks remain the acceptance gate. QL-2 may start as isolated research only.
+- **Current Milestone**: QL-1 implementation is merged in `32625fb`. QL-2 isolated research (read-only contracts, synthetic fixtures, DuckDB storage manifest verification, and FIFO/risk parity evaluators) is implemented in `quant_lab/` with 41/41 tests passing. Hosted CI and isolated PostgreSQL checks remain the acceptance gate for full signoff.
