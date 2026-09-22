@@ -1,16 +1,15 @@
 import json
 import subprocess
 from decimal import Decimal
-import sys
 
 from robot_quant.risk_evaluator import (
-    DailyStats,
-    PositionState,
-    TargetAllocationState,
     RiskContext,
     RiskPolicy,
     evaluate_risk,
 )
+
+
+import os
 
 def eval_node(signal, context_dict):
     js_code = """
@@ -40,11 +39,12 @@ const context = {
 const res = evaluateRisk(signal, context);
 console.log(JSON.stringify(res));
 """
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     cmd = ["node", "--input-type=module", "-e", js_code, json.dumps(signal), json.dumps(context_dict)]
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=repo_root)
     return json.loads(proc.stdout)
 
-def main():
+def test_node_direct_parity():
     signal = {
         "broker": "binance-global",
         "symbol": "BTCUSDT",
@@ -121,4 +121,4 @@ def main():
     print("SUCCESS: Parity between Python and Node matched exactly.")
 
 if __name__ == "__main__":
-    main()
+    test_node_direct_parity()

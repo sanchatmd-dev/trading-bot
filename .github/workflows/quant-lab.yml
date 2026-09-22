@@ -34,6 +34,11 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.12.17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+        working-directory: ..
       - run: uv sync --locked --all-extras
       - run: uv run --no-sync ruff check .
       - run: uv run --no-sync pytest
