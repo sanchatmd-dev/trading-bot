@@ -4,13 +4,13 @@ Status: proposed implementation sequence after release `c573e39`. This document 
 
 Planning baseline: roadmap commit `e4e473e`. This extension incorporates shared Quant Lab risk management, constrained optimization and Pine Script export into QL-1 through QL-4, preserving the existing APP roadmap and the user's choice of alert source.
 
-Latest planning update (2026-09-19): add **R-1 — Per-entry positions and targeted exits** after the reported SPT scale-in incident: BUY1 and BUY2 fill, but TP for BUY1 closes the combined symbol inventory. R-1 pulls the necessary position-ownership slice of APP-3 forward; it is planned, not implemented or deployed.
+Latest planning update: **R-1 — Per-entry positions and targeted exits** was implemented in repository on 2026-09-21 (commit `b2cb863`, Schema 12 `ledger_position_allocations`) to resolve the scale-in combined inventory close; production migration rehearsal and Pine end-to-end acceptance remain outstanding.
 
 Use `APP-*` for the application roadmap and `QL-*` for Quant Lab. The previously deployed application Phases 0–2 retain their names. APP-3 below is the proposed next application scope, not an assertion that an older Phase 3 specification already exists.
 
 ## Verified starting point
 
-- Node.js 24 application, PostgreSQL 16 schema 11, separate API and Paper worker, immutable releases with a current symlink.
+- Node.js 24 application, PostgreSQL 16 schema 12 in repository (schema 11 on production VPS), separate API and Paper worker, immutable releases with a current symlink.
 - Multi-user authentication, MFA, bot profiles, risk controls, decimal accounting and FIFO analytics exist. Live execution remains locked.
 - Release `c573e39` added owner-selected branding, mobile installation guidance and a standalone web app manifest. Local regression: 93/93 passed; production API/worker health and asset delivery verified. Physical iOS/Android installation is still an acceptance check.
 - PostgreSQL integration checks previously passed for the Phase 2 implementation; rerun them for shared contracts/schema changes. The 93-test result is not a fresh PostgreSQL integration result.
@@ -25,8 +25,8 @@ Default delivery order: **R-0 → R-1 → QL-1 → QL-2 → APP-3 → QL-3 → Q
 | Phase | Main deliverable | Completion gate |
 | --- | --- | --- |
 | R-0 | Current release/CI/acceptance baseline | Evidence and outstanding tasks recorded accurately. |
-| R-1 | Per-BUY position ownership and targeted TP/SL, end to end | TP1/SL1 closes only P1; P2 remains unchanged; migration, concurrency and Paper acceptance pass. |
-| QL-1 | Isolated Python/CI and shared indicator/input/risk contracts | Reproducible setup, validated schemas and correct CI routing. |
+| R-1 | Per-BUY position ownership and targeted TP/SL, end to end | Implemented in repo (`b2cb863`, Schema 12); live Paper acceptance and Pine end-to-end validation pending. |
+| QL-1 | Isolated Python/CI and shared indicator/input/risk contracts | Implemented in repo (`32625fb`); hosted Linux/Windows CI and isolated DB acceptance pending. |
 | QL-2 | Read-only datasets, deterministic replay and accounting/risk parity | Decimal, ownership, signal and risk fixtures match their declared baseline. |
 | APP-3 | Universal Risk Manager runtime, multi-indicator isolation and measured Paper scaling | Scoped allocations/exits, reservations, migration, UI and load/recovery acceptance. |
 | QL-3 | Backtesting and optimization of selected existing inputs | Original logic preserved; baseline, out-of-sample and stress evidence retained. |
@@ -142,7 +142,7 @@ Done when: each baseline item has a result, evidence or a named outstanding acce
 
 ## R-1 — Per-entry positions and targeted TP/SL
 
-Priority: correctness of the current Spot Paper workflow, before Quant Lab integration. Status: **planned / not implemented**. Successful BUY/SELL webhook delivery is separate from correct position execution.
+Priority: correctness of the current Spot Paper workflow, before Quant Lab integration. Status: **implemented in repo (`b2cb863`, PostgreSQL schema 12)** via `ledger_position_allocations`; full end-to-end Pine validation and production migration rehearsal pending. Successful BUY/SELL webhook delivery is separate from correct position execution.
 
 ### Incident and required behavior
 

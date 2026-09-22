@@ -35,6 +35,10 @@ Tests: ชุดเดิมและ UI 89/89; PostgreSQL จริง 15/15 �
 
 Production ใช้ PostgreSQL API และ Worker แยก service; `npm start`/SQLite เก็บไว้ชั่วคราวสำหรับประวัติและ recovery เท่านั้น อ่าน [Phase 2](docs/PHASE2.md) โดยเฉพาะ backup และข้อจำกัด rollback หลังรับรายการใหม่
 
+## Phase R-1 — เสร็จสมบูรณ์ใน repo (b2cb863, PostgreSQL schema 12)
+
+เพิ่มระบบติดตาม Position รายไม้ (per-entry allocation tracking) ผ่านตาราง `ledger_position_allocations` บน Schema 12 เพื่อแก้ปัญหาการ Scale-in แล้วคำสั่ง Take Profit ของไม้แรกไปปิดรวบทุกไม้ (Targeted TP/SL per lot) ทำให้แต่ละ Order Lot มีการจัดการกำไร/ขาดทุนที่เป็นอิสระต่อกัน ผ่านการทดสอบครบถ้วนด้วย `test/scale-in.test.js`
+
 ## QL-1 — Quant Lab scaffold (32625fb; local validation complete)
 
 เพิ่ม `quant_lab/` เป็น Python 3.12 workspace แยกจาก Node runtime และ Docker
@@ -78,7 +82,7 @@ uv run --no-sync python -m robot_quant.smoke
 - จำกัด request body, rate, queue; ตรวจ boolean อย่างเข้มงวด; เปลี่ยนรหัสผ่าน/ระงับบัญชีแล้วเพิกถอน Session
 - ไม่รับ Broker URL จากผู้ใช้; credentials ใหม่เข้ารหัส AES-GCM พร้อมผูก user/Broker
 - Schema migration แบบ transaction, single-instance lock, graceful shutdown, queue health, backup integrity check
-- เพิ่ม unit/integration tests และ GitHub Actions สำหรับ Windows/Linux และ container build
+- เพิ่ม unit/integration tests และ GitHub Actions สำหรับ Windows/Linux, PostgreSQL 16 และ container build
 
 ## Architecture
 
@@ -87,7 +91,7 @@ TradingView → HTTP validation / authentication → durable signal queue
                                                     ↓
                                             Risk / Paper worker
                                                     ↓
-                                transaction: fills + positions + daily ledger
+                       transaction: fills + allocations + positions + daily ledger
                                                     ↓
                                            notification outbox → SMTP worker
 
@@ -95,9 +99,8 @@ Reconciliation loop → unresolved / pending outcomes → manual review or verif
 Live adapters: LOCKED
 ```
 
-ใช้ modular monolith + SQLite บน local disk และ **หนึ่ง bot process ต่อฐานข้อมูล**
-ไม่ใช้ฐานข้อมูลนี้บน network filesystem และไม่ scale หลาย instance ด้วย shared volume
-ยังไม่จำเป็นต้องเปลี่ยนเป็น microservices เพื่อทดสอบส่วนตัว
+ระบบปัจจุบันรันบน PostgreSQL 16 (Schema 12) แยก process ชัดเจนระหว่าง Web API และ Background Worker
+SQLite ในอดีตถูกเก็บไว้เป็นประวัติก่อน cutover เท่านั้น ห้ามเปิด writer บน SQLite ซ้ำ
 
 ## เริ่มทดสอบในเครื่อง
 
@@ -105,18 +108,20 @@ Live adapters: LOCKED
 
 ```sh
 npm ci
-npm test
-cp .env.example .env
+npm test              # รัน unit/regression tests ทั่วไป
+npm run test:postgres # รัน integration tests กับฐานข้อมูล PostgreSQL จริง
 ```
 
-แก้ `.env`: `DB_PATH=./data/astra-v2.db`, ตั้งรหัสผ่าน Admin ใหม่ และสร้าง Master key ด้วย `openssl rand -hex 32`
-จากนั้น `npm start` และเปิด `http://127.0.0.1:8080`
+cp .env.example .env
+
+แก้ `.env`: ตั้งค่าเชื่อมต่อฐานข้อมูล PostgreSQL, ตั้งรหัสผ่าน Admin ใหม่ และสร้าง Master key ด้วย `openssl rand -hex 32`
+จากนั้นรัน `npm run start:postgres` และเปิด `http://127.0.0.1:8080`
 ค่า `PAPER_TRADING=false` จะทำให้ startup ถูกปฏิเสธ ไม่ใช่ช่องทางปลดล็อก Live
 
 ## VPS แบบส่วนตัว
 
 1. สำรองระบบเดิมก่อนอัปเกรด ตาม [คู่มือ deployment](docs/DEPLOYMENT.md)
-2. Copy `.env.example` เป็น `.env`; ใช้ `DB_PATH=/data/astra-v2.db` สำหรับ container
+2. Copy `.env.example` เป็น `.env`
 3. ตั้ง `MASTER_ENCRYPTION_KEY` เป็น hex 64 ตัว, `ADMIN_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD` อย่างน้อย 10 ตัว
 4. ใช้ `DOMAIN=http://localhost` และ `PUBLIC_ORIGIN=http://localhost:8080` สำหรับ private staging ผ่าน tunnel ตามข้อ 6
 5. รัน `docker compose up -d --build`
@@ -185,7 +190,7 @@ Pine ใน `tradingview/` เป็นตัวอย่าง signal generator
 - ปุ่ม Copy webhook คัดลอก URL ของ Bot นั้นโดยตรง Main Bot ที่ยังไม่มี URL ให้สร้างใน Account and License
 - All Bots รวมรายการของเจ้าของบัญชีเท่านั้น แสดง Broker/สกุลเงินแยกกัน เลือก Bot รายตัวก่อนแก้การตั้งค่า
 - Login และ License ใช้บัญชีหลัก การระงับบัญชีหลักมีผลกับทุก Bot
-- Schema v8 เก็บ Bot ID ใน `users.id` และใช้ foreign keys เดิมในตารางคำสั่ง/ความเสี่ยง ข้อมูลและ URL เดิมยังเป็นของ Main Bot
+- ระบบรองรับ Multi-bot Slot โดยเก็บ Bot ID ใน users.id และเชื่อมโยงผ่าน parent_user_id พร้อมความปลอดภัยระดับ Schema 12
 
 ## Analytics reports
 
