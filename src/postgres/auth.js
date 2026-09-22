@@ -1,3 +1,4 @@
+import { getQuota } from './quotas.js';
 import { hashPassword, verifyPassword, randomToken, hashToken, encryptJson, decryptJson } from '../security.js';
 import { newTotpSecret, verifyTotp } from '../mfa.js';
 import {clientIp} from '../http-safety.js';
@@ -126,12 +127,19 @@ export class Auth {
       ip = clientIp(req, this.config.trustLoopbackProxy);
     if (method === 'GET' && route === '/api/auth/session') {
       const user = await this.session(req);
-      return this.json(res, 200, user ? {
-        authenticated: true,
-        csrfToken: hashToken('csrf:' + req.authToken),
-        user: await this.store.userById(user.id),
-        security: await this.state(user)
-      } : {
+      if (user) {
+        const plan = await this.store.activePlan(user.id);
+        const quota = getQuota(plan);
+        return this.json(res, 200, {
+          authenticated: true,
+          csrfToken: hashToken('csrf:' + req.authToken),
+          user: await this.store.userById(user.id),
+          security: await this.state(user),
+          plan,
+          quota
+        });
+      }
+      return this.json(res, 200, {
         authenticated: false
       });
     }

@@ -191,4 +191,19 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
   - **Execution Worker Enforcement**: `STOPPED` state immediately rejects all signals. `PAUSED` state halts new entries while allowing reduce-only exits (`side === 'SELL' && signal.reduceOnly`). When `RUNNING`, the worker executes against `locked_policy`.
   - **API Surface**: Added endpoints `GET /api/bot/session`, `POST /api/bot/session/run`, `POST /api/bot/session/pause`, `POST /api/bot/session/stop`, `POST /api/bot/session/reset`, `GET /api/bot/session/archive`, and enriched `GET /api/me` with `botSession`.
   - **Verification**: 12 integration tests in `test/postgres/lifecycle.test.mjs` passed on isolated real PostgreSQL. Hosted CI workflows (`Safety checks` including postgres, test ubuntu/windows, container, and `quant-lab`) all green.
-- **Current Milestone**: **VPS Production Migration Rehearsal & Pine/Paper Acceptance** — Schema 14 is complete in the repository. Next step is running an isolated migration rehearsal on the VPS using `scripts/backup-postgres.mjs`, then deploying Schema 14 and conducting live Pine/Paper forward acceptance.
+- **Interactive Dashboard Charting (2026-09-22)**:
+  - Integrated TradingView `lightweight-charts` (v4+) CDN into frontend Analytics panel without bundler overhead.
+  - Dynamically switches symbols and fetches real-time 1h OHLCV directly from broker public endpoints (Binance) to minimize VPS bandwidth.
+  - Dual custom EMAs (independently configurable periods) and custom ATR multiplier bands computed client-side in real-time.
+  - Plots active bot positions with Entry, Stop Loss, and Take Profit horizontal price lines directly on the candlestick canvas using `/api/positions`.
+- **APP-4 Delivery (2026-09-22) — Customer Lifecycle & Quotas**:
+  - Centralized quota definition (`src/postgres/quotas.js`) with 4 distinct tiers:
+    - **FREE**: 1 Bot, 30 days analytics history
+    - **PERSONAL**: 3 Bots, 90 days analytics history
+    - **PRO**: 10 Bots, 180 days analytics history
+    - **ENTERPRISE**: 50 Bots, Unlimited analytics history
+  - Server-side enforcement in `src/postgres/server.js`: `POST /api/bots` rejects creation with 403 when exceeding `maxBots`; `GET /api/analytics/*` restricts queries exceeding `historyDays`.
+  - Account API (`/api/me`, `/api/auth/session`) returns active `plan` and `quota`.
+  - Dynamic frontend rendering in `public/bots.js`: dynamically renders up to `maxBots` slots, automatically applying `.enterprise-grid` responsive layout for large bot counts. Date picker in `public/analytics.js` dynamically enforces minimum allowable history date.
+- **Current Milestone**: **VPS Production Migration Rehearsal & Pine/Paper Acceptance** — Schemas 12-14, Quant Lab QL-1 to QL-4, Interactive Charting, and APP-4 Quotas are completed in repository (111/111 Node tests passing). Next step is executing the isolated migration rehearsal on the VPS, deploying Schema 14, and validating live Paper forward acceptance.
+

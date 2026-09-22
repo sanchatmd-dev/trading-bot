@@ -94,4 +94,24 @@ for(const id of ['analyticsBroker','analyticsSymbol','analyticsUser','analyticsF
 });
 $('#saveAnalyticsFee').onclick=async()=>{try{await api('/api/analytics/settings?'+analyticsParams().toString(),{method:'PUT',body:JSON.stringify({broker:$('#analyticsBroker').value,feeBps:Number($('#analyticsFee').value)})});loadAnalytics();}catch(error){analyticsError(error);}};
 const today=new Date(),monthStart=new Date(Date.UTC(today.getUTCFullYear(),today.getUTCMonth(),1));$('#analyticsTo').value=today.toISOString().slice(0,10);$('#analyticsFrom').value=monthStart.toISOString().slice(0,10);
+
+function updateAnalyticsMinDate() {
+  if (me?.quota && me.quota.historyDays > 0) {
+    const minDate = new Date(Date.now() - me.quota.historyDays * 86400000);
+    $('#analyticsFrom').min = minDate.toISOString().slice(0,10);
+    if (new Date($('#analyticsFrom').value) < minDate) {
+      $('#analyticsFrom').value = minDate.toISOString().slice(0,10);
+    }
+  } else {
+    $('#analyticsFrom').min = '';
+  }
+}
+
+// Call updateAnalyticsMinDate() whenever load() runs or user changes.
+const originalLoadAnalytics = loadAnalytics;
+loadAnalytics = async function() {
+  updateAnalyticsMinDate();
+  return originalLoadAnalytics.apply(this, arguments);
+};
+
 $('#language').addEventListener('change',()=>{if(analyticsState.summary)renderAnalytics();});

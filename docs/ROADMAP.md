@@ -333,8 +333,22 @@ Done when: identical fixtures reproduce Node FIFO Win Rate/Profit Factor definit
 
 ## APP-4 — Customer lifecycle and paid Paper readiness
 
+Implementation update (2026-09-22): Core plan quota and lifecycle enforcement delivered in repository:
+- Defined central plan quotas (`src/postgres/quotas.js`):
+  - **FREE**: 1 Bot, 30 days analytics history
+  - **PERSONAL**: 3 Bots, 90 days analytics history
+  - **PRO**: 10 Bots, 180 days analytics history
+  - **ENTERPRISE**: 50 Bots, Unlimited analytics history
+- Backend enforcement in `src/postgres/server.js`:
+  - `POST /api/bots` enforces `maxBots` per plan (returns 403 when exceeded).
+  - `GET /api/analytics/*` enforces `historyDays` limit per plan.
+  - `/api/me` and `/api/auth/session` expose active `plan` and `quota`.
+- Frontend dynamic adaptations:
+  - `public/bots.js` dynamically renders up to `maxBots` with responsive `.enterprise-grid` layout for large bot counts.
+  - `public/analytics.js` enforces `min` date selection according to quota history limit.
+
 Deliverables:
-- Define plans and enforce bot/history/research quotas on the server. Extend existing license/subscription controls instead of duplicating them.
+- Define plans and enforce bot/history/research quotas on the server. Extend existing license/subscription controls instead of duplicating them. *(Delivered)*
 - Add onboarding, lifecycle operations, support permissions, data export/retention and auditable administrative changes.
 - After choosing a billing provider and plan rules, implement subscription events idempotently, including duplicate/out-of-order delivery, failed payment, expiry and reconciliation. Entry restrictions must preserve explicitly allowed risk-reducing exits.
 - Complete independent security review and acceptance of the supported device/browser matrix.
@@ -362,4 +376,4 @@ Done when: broker-specific acceptance and recovery evidence exist and the owner 
 - Deploy application changes through immutable releases and atomic symlink swaps. Quant Lab has a separate environment and is not deployed merely because it shares the repository.
 - Commit/push/deploy follow the implementation request for that phase. This planning task changes documentation only.
 
-Current milestone: **APP-3 preparation / Schema 12 production rehearsal** — Quant Lab phases QL-1 through QL-4 and Phase R-1 are implemented, audit-hardened, and verified in the repository (111/111 Node tests, 70/70 pytest passed). Next steps involve Bot Lifecycle & Session Management (Run, Pause, Stop, Reset) and Universal Risk Manager runtime scaling in APP-3, plus VPS production Schema 12 migration rehearsal.
+Current milestone: **VPS Production Migration Rehearsal (Schema 14) & Pine/Paper Acceptance** — Schemas 12-14, Quant Lab QL-1 through QL-4, Phase R-1, Interactive Charting, and APP-4 Quotas are implemented and verified in the repository (111/111 Node tests, 70/70 pytest passed). Next step is conducting the isolated migration rehearsal on the VPS, deploying Schema 14, and validating live Paper forward acceptance.

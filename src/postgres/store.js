@@ -116,6 +116,10 @@ export class Store {
   async licenseForUser(userId) {
     return await this.db.prepare("SELECT id,key_hint,plan,status,expires_at FROM licenses WHERE assigned_user_id=? ORDER BY expires_at DESC LIMIT 1").get(userId);
   }
+  async activePlan(userId) {
+    const row = await this.db.prepare("SELECT plan FROM licenses WHERE assigned_user_id=? AND status='ACTIVE' AND expires_at>? ORDER BY expires_at DESC LIMIT 1").get(userId, Date.now());
+    return row ? row.plan : 'FREE';
+  }
   async hasActiveLicense(userId) {
     const row = await this.db.prepare("SELECT 1 FROM licenses WHERE assigned_user_id=? AND status='ACTIVE' AND expires_at>? LIMIT 1").get(userId, Date.now());
     return Boolean(row);

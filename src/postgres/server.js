@@ -15,6 +15,7 @@ import { PostgresDatabase } from './db.js';
 import {Auth} from './auth.js';
 import {D,Money,amount,exact} from '../money.js';
 import { hasPermission, adminPermission } from '../permissions.js';
+import { getQuota } from './quotas.js';
 assertProductionConfig();
 const database = new PostgresDatabase();
 await database.runtimeLock();
@@ -211,11 +212,21 @@ async function userRoutes(req, res, url) {
     error: 'Permission denied'
   });
   if (req.method !== 'GET' && (url.pathname === '/api/me/webhook-secret' || url.pathname.startsWith('/api/brokers/')) || url.pathname === '/api/me/password') await auth.sensitive(req);
-  if (req.method === 'GET' && url.pathname === '/api/bots') return json(res, 200, {
-    bots: await store.listBots(actor.id),
-    maxBots: 5
-  });
+  if (req.method === 'GET' && url.pathname === '/api/bots') {
+    const plan = await store.activePlan(actor.id);
+    const quota = getQuota(plan);
+    return json(res, 200, {
+      bots: await store.listBots(actor.id),
+      maxBots: quota.maxBots
+    });
+  }
   if (req.method === 'POST' && url.pathname === '/api/bots') {
+    const plan = await store.activePlan(actor.id);
+    const quota = getQuota(plan);
+    const bots = await store.listBots(actor.id);
+    if (bots.length >= quota.maxBots) {
+      return json(res, 403, { error: `Bot limit reached. Your ${plan} plan allows up to ${quota.maxBots} bots.` });
+    }
     const body = await readJson(req),
       secret = randomToken();
     const bot = await store.createBot(actor.id, body.label, {
@@ -308,8 +319,20 @@ async function userRoutes(req, res, url) {
       });
     }
     if (req.method === 'GET' && ['/api/analytics/summary', '/api/analytics/equity-curve', '/api/analytics/breakdown'].includes(url.pathname)) {
-      const data = await analyticsData(url, targetUserId),
-        meta = {
+      const plan = await store.activePlan(actor.id);
+      const quota = getQuota(plan);
+      
+      const data = await analyticsData(url, targetUserId);
+      
+      if (quota.historyDays > 0) {
+        const minTime = Date.now() - (quota.historyDays * 86400000);
+        const reqFromTime = new Date(data.window.fromDate).getTime();
+        if (reqFromTime < minTime) {
+          return json(res, 403, { error: `Analytics history is limited to ${quota.historyDays} days on the ${plan} plan.` });
+        }
+      }
+
+      const meta = {
           userId: targetUserId,
           broker: data.broker,
           currency: data.currency,
@@ -361,6 +384,8 @@ async function userRoutes(req, res, url) {
       ...row,
       bot_id: bot.id
     }))))).flat();
+    const plan = await store.activePlan(actor.id);
+    const quota = getQuota(plan);
     return json(res, 200, {
       user: {
         ...(await store.userById(actor.id))
@@ -369,6 +394,8 @@ async function userRoutes(req, res, url) {
       moneyFormat: 'decimal-string',
       bot: await store.userById(user.id),
       allBots,
+      plan,
+      quota,
       license: admin ? {
         plan: 'ADMIN',
         status: 'ACTIVE',

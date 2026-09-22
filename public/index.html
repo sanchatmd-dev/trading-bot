@@ -15,6 +15,19 @@
 </div><div class="analytics-periods" role="group" aria-label="Analytics period"><button data-period="daily">Daily</button><button data-period="weekly">Weekly</button><button data-period="monthly" class="active">Monthly</button><button data-period="annually">Annually</button><button data-period="custom">Custom</button></div>
 <div id="analyticsDates" class="analytics-dates" hidden><label>From<input id="analyticsFrom" type="date"></label><label>To<input id="analyticsTo" type="date"></label></div><p id="analyticsStatus" role="status"></p></article>
 <p id="analyticsBasis" class="muted"></p><div id="analyticsMetrics" class="analytics-metrics"></div>
+<article class="panel chart-panel" id="interactiveChartPanel">
+  <div class="panel-title">
+    <div><h2>Interactive Chart</h2><p>Real-time execution & OHLCV monitoring</p></div>
+    <div class="inline-control" style="flex-wrap: wrap; gap: 10px;">
+      <select id="interactiveChartSymbol"><option value="">Select Asset</option></select>
+      <label style="font-size:12px">EMA 1 <input type="number" id="chartEmaPeriod" value="9" style="width:50px"></label>
+      <label style="font-size:12px">EMA 2 <input type="number" id="chartEma2Period" value="21" style="width:50px"></label>
+      <label style="font-size:12px">ATR <input type="number" id="chartAtrPeriod" value="14" style="width:50px"></label>
+      <label style="font-size:12px">Mult <input type="number" id="chartAtrMult" value="2" step="0.1" style="width:50px"></label>
+    </div>
+  </div>
+  <div id="interactiveChart" style="width:100%;height:400px;position:relative;margin-top:10px;"></div>
+</article>
 <div class="analytics-chart-grid"><article class="panel chart-panel"><div class="panel-title"><div><h2>Equity curve</h2><p>Cumulative realized PnL and drawdown</p></div></div><svg id="equityChart" class="analytics-chart" viewBox="0 0 760 300" role="img" aria-label="Equity and drawdown chart"></svg></article><article class="panel chart-panel"><h2>Win / Loss</h2><div id="winLossDonut" class="donut" aria-label="Win loss donut"></div><div id="winLossLegend" class="donut-legend"></div></article></div>
 <div class="analytics-chart-grid lower"><article class="panel chart-panel"><h2>Asset performance</h2><div id="assetBars" class="asset-bars"></div></article><article class="panel"><h2>Closed positions</h2><div class="table-wrap"><table id="closedTrades"><thead><tr><th>Closed</th><th>Asset</th><th>Entry / Exit</th><th>PnL</th><th>Fees</th><th>Holding</th></tr></thead><tbody id="closedTradeRows"></tbody></table></div></article></div>
 </section>
@@ -59,4 +72,6 @@
 <section data-page="admin" hidden=""><div class="status-grid"><article class="metric"><span>Users</span><strong id="userCount">0</strong></article><article class="metric"><span>Licenses</span><strong id="licenseCount">0</strong></article><article class="metric"><span>Global Kill</span><strong id="globalKillValue">—</strong><button id="globalKillToggle" class="mini danger">Change</button></article></div><div class="two-col"><form id="createUserForm" class="panel"><h2>Create user</h2><label>Email<input id="newUserEmail" type="email"></label><label>Password<input id="newUserPassword" type="password"></label><label>Role<select id="newUserRole"><option>USER</option><option>SUPPORT</option><option>ADMIN</option></select></label><button class="primary">Create account</button><p id="userMessage"></p></form><form id="createLicenseForm" class="panel"><h2>Create license</h2><label>Plan<select id="newLicensePlan"><option>PERSONAL</option><option>PRO</option><option>ENTERPRISE</option></select></label><label>Duration (days)<input id="newLicenseDays" type="number" value="30"></label><button class="primary">Create license</button><div id="newLicenseResult" class="secret-box">Shown only once</div></form></div><article class="panel"><h2>Users</h2><div class="table-wrap"><table><tbody id="userRows"></tbody></table></div></article><article class="panel admin-gap"><h2>Subscriptions / Licenses</h2><div class="table-wrap"><table><tbody id="licenseRows"></tbody></table></div></article></section>
 </div></main></div><div id="saveToast" role="status" aria-live="polite" hidden=""></div><dialog id="recoveryDialog" aria-labelledby="recoveryTitle"><h2 id="recoveryTitle">Forgot Password</h2><p>Contact your administrator to reset your password securely.</p><p>Automatic email recovery is not configured. Never send your password, webhook secret or broker API keys in chat.</p><form method="dialog"><button class="primary">Close</button></form></dialog><script src="/i18n.js?v=robot16"></script><script src="/app.js?v=robot17"></script><script src="/analytics.js?v=robot16"></script><script src="/bots.js?v=robot16"></script><script src="/account.js?v=robot16"></script><script src="/login.js?v=robot16"></script><script src="/security-ui.js?v=robot16"></script>
 <link rel="stylesheet" href="/install-shortcut.css?v=robot18"><script src="/install-shortcut.js?v=robot18"></script>
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<script src="/interactive-chart.js?v=robot19"></script>
 </body></html>

@@ -67,6 +67,23 @@ uv run --no-sync python quant_lab/tests/test_node_direct_parity.py
 
 ผล local ล่าสุด: Node tests 111/111 ผ่าน, Quant offline pytest 70/70 ผ่าน, Direct Parity ตรง 100% (อ่านรายละเอียดใน [Quant Lab README](quant_lab/README.md))
 
+## Interactive Dashboard Charting — เสร็จสมบูรณ์ใน repo
+
+เพิ่มหน้าต่างกราฟราคาเทคนิคัลแบบ Interactive ด้วย TradingView `lightweight-charts` (v4+) ในหน้า Analytics:
+- ดึงแท่งเทียน OHLCV ตรงจาก Public API ของ Broker (Binance) เพื่อลดภาระ Bandwidth และ CPU ของ VPS
+- คำนวณอินดิเคเตอร์แบบ Real-time บน Frontend: Dual Custom EMAs (ตั้งค่า period แยกอิสระ 2 เส้น) และ Custom ATR Bands (กำหนด Period และ Multiplier ได้)
+- แสดงเส้นระดับราคาคำสั่งและ Position สด (Entry, Stop Loss, Take Profit) โดยดึงข้อมูลตำแหน่งที่ถือครองจาก `/api/positions`
+
+## APP-4: Customer Lifecycle & Quotas — เสร็จสมบูรณ์ใน repo
+
+กำหนดและบังคับใช้โควต้าตามระดับ License/Plan (`src/postgres/quotas.js`):
+- **FREE**: บอท 1 ตัว / ประวัติย้อนหลัง 30 วัน
+- **PERSONAL**: บอท 3 ตัว / ประวัติ 90 วัน
+- **PRO**: บอท 10 ตัว / ประวัติ 180 วัน
+- **ENTERPRISE**: บอท 50 ตัว / ประวัติไม่จำกัด
+- **Server Enforcement**: `POST /api/bots` ปฏิเสธการสร้างบอทเกินโควต้า (403), `GET /api/analytics/*` บล็อกการดึงข้อมูลย้อนหลังเกินที่แพ็กเกจกำหนด
+- **Dynamic Frontend**: หน้า Bots สร้างการ์ดตาม `maxBots` อัตโนมัติ พร้อมสลับเลย์เอาต์เป็น `.enterprise-grid` เมื่อมีจำนวนบอทมากกว่า 10 ตัว และหน้า Analytics ล็อกปฏิทินไม่ให้เลือกย้อนหลังเกินโควต้า
+
 **ขั้นตอนถัดไป (สำหรับ VPS):** 
 1. **Isolated Migration Rehearsal**: ซ้อมอัปเกรด Schema 14 (ครอบคลุม R-1 Targeted Exits และ APP-3 Bot Lifecycle) บนฐานข้อมูลสำรองของ VPS โดยใช้ `node scripts/backup-postgres.mjs` และ `src/postgres/schema.sql` 
 2. **Pine/Paper Acceptance**: สร้าง order จริงผ่าน alert 2 โหมด เพื่อดูผลลัพธ์ของ Targeted TP/SL (R-1) และทดสอบสถานะ Run/Pause/Stop/Reset (APP-3) บนระบบ Paper forward จริง
