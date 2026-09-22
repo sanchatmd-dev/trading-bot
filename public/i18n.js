@@ -82,6 +82,58 @@ uiPairs.push(
 );
 const uiTranslations = new Map();
 uiPairs.push(['Bot Manager','จัดการ Bot'],['Select one bot for this operation','เลือก Bot หนึ่งตัวก่อนทำรายการ']);
+// Trading Control Panel labels
+uiPairs.push(
+  // Lifecycle button labels
+  ['Run','รัน'],['Pause','หยุดพัก'],['Stop','หยุด'],['Reset','รีเซ็ต'],
+  // State badges
+  ['SETUP','ตั้งค่า'],['RUNNING','กำลังทำงาน'],['PAUSED','หยุดพัก'],['STOPPED','หยุด'],
+  // Mode badges
+  ['PAPER','จำลอง'],['LIVE','เงินจริง'],
+  // Readiness & status messages
+  ['Ready to start','พร้อมเริ่มทำงาน'],
+  ['Save settings first','บันทึกการตั้งค่าก่อน'],
+  ['Settings are invalid','ค่าตั้งไม่ถูกต้อง'],
+  ['Unsaved changes — save first','มีการเปลี่ยนแปลงที่ยังไม่บันทึก'],
+  ['Loading…','กำลังโหลด…'],
+  ['Saving…','กำลังบันทึก…'],
+  ['Connections verified','การเชื่อมต่อถูกต้อง'],
+  ['Cannot start: no funded broker','ไม่สามารถเริ่มได้: ยังไม่มีทุนในโบรกเกอร์'],
+  ['Bot is running','Bot กำลังทำงาน'],
+  ['Bot is paused','Bot หยุดพักชั่วคราว'],
+  ['Bot is stopped','Bot หยุดทำงาน'],
+  ['Select a single bot to run','เลือก Bot ก่อนเริ่มทำงาน'],
+  // Account card labels
+  ['EQUITY','ทุนตามบัญชี'],['BALANCE','เงินสด'],
+  ['Updated','อัปเดต'],['just now','เพิ่งอัปเดต'],
+  ['Stale data — refresh to update','ข้อมูลเก่า กด Refresh เพื่ออัปเดต'],
+  // Disabled button reasons (for aria-label / title)
+  ['Not available in SETUP state','ไม่พร้อมใช้ในสถานะตั้งค่า'],
+  ['Not available while running','ไม่พร้อมใช้ขณะทำงาน'],
+  ['Not available while paused','ไม่พร้อมใช้ขณะหยุดพัก'],
+  ['Not available in STOPPED state','ไม่พร้อมใช้ในสถานะหยุด'],
+  ['Save and fix settings to run','บันทึกและแก้ไขการตั้งค่าก่อนเริ่ม'],
+  // Risk summary
+  ['Capital','ทุน'],['Per-trade','ต่อเทรด'],['Daily Loss','ขาดทุนต่อวัน'],
+  // Confirmation dialog — Stop
+  ['Stop bot?','หยุด Bot?'],
+  ['Stopping blocks all incoming signals, including protective exit signals. Open positions are NOT automatically closed.','การหยุดจะบล็อกสัญญาณทั้งหมด รวมถึงสัญญาณออกเพื่อป้องกันความเสี่ยง Position ที่เปิดอยู่จะไม่ถูกปิดอัตโนมัติ'],
+  ['Yes, stop bot','ยืนยัน หยุด Bot'],
+  // Confirmation dialog — Reset
+  ['Reset session?','รีเซ็ต Session?'],
+  ['This archives the current session. Trade history, balances, and PnL are preserved. The bot returns to SETUP state.','การรีเซ็ตจะ archive Session ปัจจุบัน ประวัติการเทรด ยอดเงิน และกำไรขาดทุนจะยังคงอยู่ Bot จะกลับสู่สถานะตั้งค่า'],
+  ['Yes, reset session','ยืนยัน รีเซ็ต Session'],
+  ['Cancel','ยกเลิก'],
+  // TCP panel header
+  ['Trading Control Panel','แผงควบคุมการเทรด'],
+  ['Daily Profit','กำไรวันนี้'],['Win Rate','อัตราชนะ'],
+  // All Bots scope card
+  ['All Bots','รวมทุก Bot'],
+  ['Total portfolio value','มูลค่าพอร์ตรวม'],
+  ['Combined daily P/L','กำไรขาดทุนรวมวันนี้'],
+  ['Read-Only','อ่านอย่างเดียว'],
+  ['All Bots: overview and trade log only. Select a bot to edit settings.','ทุก Bot: ดูภาพรวมและประวัติ เลือก Bot ก่อนแก้การตั้งค่า']
+);
 for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}

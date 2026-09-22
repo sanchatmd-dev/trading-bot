@@ -54,6 +54,8 @@ function fillRisk(p){
   for(const[equityInput,balanceInput,broker]of fundFields){const equity=p.equities?.[broker]||0;f[equityInput].value=equity;f[balanceInput].value=p.balances?.[broker]??equity;}
   if(!f.previewRiskPercent.value)f.previewRiskPercent.value=p.defaults?.riskPercent??1;
   if(!f.previewVolatilityPercent.value)f.previewVolatilityPercent.value=p.defaults?.volatilityPercent??0;
+  window._riskDirty=false;
+  if(typeof lockRiskForm==='function')lockRiskForm(['RUNNING','PAUSED'].includes(me?.botSession?.state));
   updatePositionSlots();scheduleRiskPreview();
 }
 function collectRiskPolicy(){
@@ -102,9 +104,22 @@ $('#password').addEventListener('keydown',event=>{
   login();
 });
 $('#logout').onclick=async()=>{try{await api('/api/auth/logout',{method:'POST'});}catch{}authenticated=false;csrfToken='';location.reload();};$('#refresh').onclick=()=>{load();if(!document.querySelector('[data-page="analytics"]').hidden&&typeof loadAnalytics==='function')loadAnalytics();};document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('[data-page]').forEach(x=>x.hidden=x.dataset.page!==b.dataset.view);$('#pageTitle').textContent=b.textContent;if(b.dataset.view==='analytics'&&typeof loadAnalytics==='function'){if(typeof renderAnalyticsUsers==='function')renderAnalyticsUsers();loadAnalytics();}});
-$('#riskForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/risk',{method:'PUT',body:JSON.stringify(collectRiskPolicy())});$('#riskMessage').textContent=translate('Saved');load();}catch(x){$('#riskMessage').textContent=x.message;}};
-$('#riskForm').addEventListener('input',event=>{if(event.target.matches('input,select'))scheduleRiskPreview();});
-$('#riskForm').addEventListener('change',event=>{if(event.target.matches('input,select'))scheduleRiskPreview();});
+$('#riskForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/risk',{method:'PUT',body:JSON.stringify(collectRiskPolicy())});window._riskDirty=false;$('#riskMessage').textContent=translate('Saved');load();}catch(x){$('#riskMessage').textContent=x.message;}};
+
+$('#riskForm').addEventListener('input',event=>{if(event.target.matches('input,select')){window._riskDirty=true;scheduleRiskPreview();}});
+$('#riskForm').addEventListener('change',event=>{if(event.target.matches('input,select')){window._riskDirty=true;scheduleRiskPreview();}});
+// Lock / unlock risk form inputs while bot is active (RUNNING, PAUSED, STOPPED)
+function lockRiskForm(locked){
+  const f=$('#riskForm');
+  if(!f)return;
+  const fields=f.querySelectorAll('input:not([name="paperTrading"]):not([name="requireReduceOnlySell"]):not([name^="preview"]),select:not([name^="preview"]),textarea');
+  fields.forEach(el=>{el.disabled=locked;});
+  const saveBtn=f.querySelector('button[type="submit"],button.primary:not([data-preview])');
+  if(saveBtn)saveBtn.disabled=locked;
+  const notice=f.querySelector('#riskLockNotice');
+  if(locked&&!notice){const n=document.createElement('p');n.id='riskLockNotice';n.className='warn';n.textContent=translate('Bot is running');n.style.cssText='color:#ffd36b;font-size:12px;margin:8px 0';f.insertBefore(n,f.firstChild);}
+  else if(!locked&&notice)notice.remove();
+}
 $('#brokerForm').onsubmit=async e=>{e.preventDefault();try{await api(`/api/brokers/${$('#brokerName').value}`,{method:'PUT',body:JSON.stringify({credentials:JSON.parse($('#brokerCredentials').value),enabled:$('#brokerEnabled').checked})});$('#brokerCredentials').value='';$('#brokerMessage').textContent='เข้ารหัสและบันทึกแล้ว';load();}catch(x){$('#brokerMessage').textContent=x.message;}};$('#rotateSecret').onclick=async()=>{if(!confirm(translate('The previous secret will stop working. Continue?')))return;const d=await api('/api/me/webhook-secret',{method:'POST'});webhook=d;renderWebhook();load();};$('#licenseForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/me/license/redeem',{method:'POST',body:JSON.stringify({licenseKey:$('#licenseKey').value})});$('#licenseMessage').textContent='เปิดใช้งานแล้ว';load();}catch(x){$('#licenseMessage').textContent=x.message;}};
 $('#createUserForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/admin/users',{method:'POST',body:JSON.stringify({email:$('#newUserEmail').value,password:$('#newUserPassword').value,role:$('#newUserRole').value})});$('#userMessage').textContent='สร้างแล้ว';load();}catch(x){$('#userMessage').textContent=x.message;}};$('#createLicenseForm').onsubmit=async e=>{e.preventDefault();try{const d=await api('/api/admin/licenses',{method:'POST',body:JSON.stringify({plan:$('#newLicensePlan').value,days:+$('#newLicenseDays').value})});$('#newLicenseResult').textContent=d.key;load();}catch(x){$('#newLicenseResult').textContent=x.message;}};$('#globalKillToggle').onclick=async()=>{try{await api('/api/admin/global-kill',{method:'POST',body:JSON.stringify({enabled:!me.globalKill})});await load();}catch(error){$('#adminStatus').textContent=error.message;}};async function changeStatus(kind,b){try{await api(`/api/admin/${kind}/${b.dataset.id}/status`,{method:'PUT',body:JSON.stringify({status:b.dataset.status})});await load();}catch(error){$('#adminStatus').textContent=error.message;}}
 document.querySelector('#signalRows').addEventListener('click',async event=>{

@@ -264,6 +264,9 @@ async function userRoutes(req, res, url) {
   const lifecycleAction = { '/api/bot/session/run': 'run', '/api/bot/session/pause': 'pause', '/api/bot/session/stop': 'stop', '/api/bot/session/reset': 'reset' }[url.pathname];
   if (req.method === 'POST' && lifecycleAction) {
     const currentPolicy = await store.risk(lifecycleBotId, config.defaultRisk);
+    if (lifecycleAction === 'run' && !Object.values(currentPolicy.equities || {}).some(value => D(exact(value)).gt(0))) {
+      return json(res, 409, { error: 'Cannot run a bot without funded Paper capital' });
+    }
     const paperAccounts = await store.paperAccounts(lifecycleBotId);
     const result = await store.transitionBotState(lifecycleBotId, lifecycleAction, currentPolicy, paperAccounts);
     await store.audit(actor.id, `bot.lifecycle.${lifecycleAction}`, null, { botId: lifecycleBotId, state: result.state, run_id: result.run_id });
