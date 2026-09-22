@@ -231,11 +231,13 @@ Done when: per-position end-to-end acceptance passes and no targeted exit can cl
 
 ## QL-1 — Isolated setup and reproducible CI
 
-Implementation update (2026-09-22): local scaffold, Python 3.12 uv lock, frozen
-contracts, offline tests, package import smoke and CI routing are implemented in
-`quant_lab/`. See its README for evidence and limitations. Full completion remains
-conditional on hosted Linux/Windows CI and isolated PostgreSQL checks. This update
-does not certify the separately disputed R-1 end-to-end acceptance.
+Implementation update (2026-09-22, commit `32625fb`): local scaffold, Python 3.12
+uv lock, frozen contracts, offline tests, package import smoke and CI routing are
+implemented in `quant_lab/`. Local evidence: Node 104/104, Quant 27/27, Ruff,
+lock verification, workflow YAML parsing and every locked package import pass.
+See its README for compatibility boundaries. Full completion remains conditional on
+hosted Linux/Windows CI and isolated PostgreSQL checks. QL-2 may begin as isolated
+research work; do not represent QL-1 as fully accepted before its remaining gate.
 
 Deliverables:
 - Create `quant_lab/{data,notebooks,src/robot_quant,tests,reports}` and `quant_lab/pyproject.toml`.
@@ -358,4 +360,7 @@ Done when: broker-specific acceptance and recovery evidence exist and the owner 
 - Deploy application changes through immutable releases and atomic symlink swaps. Quant Lab has a separate environment and is not deployed merely because it shares the repository.
 - Commit/push/deploy follow the implementation request for that phase. This planning task changes documentation only.
 
-Next implementation milestone: **R-1 — Per-entry positions and targeted exits**, with R-0 record cleanup as a small prerequisite. Then QL-1, QL-2 and APP-3 according to the dependencies above. Quant scaffolding can proceed independently, but it does not remove the R-1 execution gate.
+Current milestone: **QL-1 acceptance** — wait for hosted Linux/Windows CI and an
+isolated PostgreSQL run for commit `32625fb`. **QL-2** may proceed only as isolated
+read-only research scaffolding while that evidence is pending. Quant work does not
+remove any R-1 execution acceptance gate.

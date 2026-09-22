@@ -35,6 +35,34 @@ Tests: ชุดเดิมและ UI 89/89; PostgreSQL จริง 15/15 �
 
 Production ใช้ PostgreSQL API และ Worker แยก service; `npm start`/SQLite เก็บไว้ชั่วคราวสำหรับประวัติและ recovery เท่านั้น อ่าน [Phase 2](docs/PHASE2.md) โดยเฉพาะ backup และข้อจำกัด rollback หลังรับรายการใหม่
 
+## QL-1 — Quant Lab scaffold (32625fb; local validation complete)
+
+เพิ่ม `quant_lab/` เป็น Python 3.12 workspace แยกจาก Node runtime และ Docker
+release payload ใช้ `uv.lock` เพื่อล็อก dependencies สำหรับ DuckDB, Polars,
+pandas, PyArrow, psycopg, CCXT, yfinance, vectorbt, pandas-ta, QuantStats,
+Jupyter, Ruff และ Pytest โดยไม่มี network หรือ database access ระหว่าง tests
+
+contracts แบบ immutable ใน `quant_lab/src/robot_quant/contracts.py` ครอบคลุม
+RiskProfile, parameter bounds, strategy definition, optimization run, export
+metadata, ownership scope, position intent และ risk decision ข้อมูลเงินใช้ decimal
+string สูงสุด 18 ตำแหน่งทศนิยมและ unknown fields/versions ถูกปฏิเสธ
+
+คำสั่งตรวจในเครื่อง:
+
+```sh
+cd quant_lab
+uv sync --locked --all-extras
+uv run --no-sync ruff check .
+uv run --no-sync pytest
+uv run --no-sync python -m robot_quant.smoke
+```
+
+ผล local: Node 104/104, Quant 27/27, Ruff, lock, workflow YAML และ package imports
+ผ่านแล้ว. GitHub Actions Linux/Windows และ isolated PostgreSQL integration ของ commit
+นี้ยังเป็น acceptance gate ก่อนปิด QL-1. อ่านรายละเอียดใน
+[Quant Lab README](quant_lab/README.md). QL-2 เริ่มได้เฉพาะ research แบบแยกส่วน;
+ไม่มีการ deploy หรือแก้ production DB จาก QL-1
+
 ## การแก้ไขจาก v2.0
 
 - ตรวจ Max risk หลังคำนวณจำนวนทุกโหมด รวม explicit quantity และ fixed notional; BUY ต้องมี SL

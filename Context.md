@@ -2,14 +2,15 @@
 
 ## Purpose
 
-QL-1 update (2026-09-22): isolated `quant_lab/` Python 3.12 package, uv lock,
-frozen research contracts and offline tests are now implemented locally. See
-`quant_lab/README.md` for validation and compatibility boundaries. CI routing is
-added with workflows always triggered. Hosted Linux/Windows and isolated PostgreSQL
-acceptance remain pending; no production migration/deployment was performed.
-The earlier R-1 completion statement below records the handoff claim, not verified
-end-to-end acceptance: current aggregate sizing/FIFO fallback and Pine tracking
-still require reconciliation against the R-1 gate. QL-1 scaffolding proceeds independently.
+QL-1 update (2026-09-22): commit `32625fb` added an isolated `quant_lab/` Python
+3.12 package, uv lock, frozen research contracts, offline tests, package-import
+smoke test and CI routing. Local validation passed: Node 104/104, Quant 27/27,
+Ruff, lock verification, workflow YAML parsing and all locked package imports.
+`quant_lab/README.md` records compatibility boundaries, including the Plotly 5.x
+constraint for vectorbt. Hosted Linux/Windows workflow results and isolated
+PostgreSQL integration for this commit remain pending. No production migration or
+deployment was performed. QL-2 research setup may proceed in isolation, but QL-1
+is not marked fully accepted until those checks pass.
 
 Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trading control plane. It is deployed on a VPS and currently runs in **Paper-only** mode: no real broker orders can be submitted by this release.
 
@@ -40,7 +41,7 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 
 ## Architecture
 
-Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md), extended from roadmap commit `e4e473e`. The 2026-09-19 update added R-1 (per-entry positions and targeted TP/SL) before QL-1 following the reported P1 TP closing P1 and P2 together. **Phase R-1 is now completed in the repository (Schema 12 via `ledger_position_allocations` and `test/scale-in.test.js`).** APP-3 onward covers broader application scope; QL-1 through QL-4 cover isolated Quant Lab, versioned shared risk profiles, constrained optimization, reports and Pine export. [docs/PINE_EXPORT.md](docs/PINE_EXPORT.md) specifies the user's choice of `alert()` or strategy order-fill events per export, with source-specific validation. **Next implementation milestone is Phase QL-1 (Isolated Python Setup, CI & Shared Contracts).** Research setup does not enable Live trading or authorize production writes.
+Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md), extended from roadmap commit `e4e473e`. The 2026-09-19 update added R-1 (per-entry positions and targeted TP/SL) before QL-1 following the reported P1 TP closing P1 and P2 together. APP-3 onward covers broader application scope; QL-1 through QL-4 cover isolated Quant Lab, versioned shared risk profiles, constrained optimization, reports and Pine export. [docs/PINE_EXPORT.md](docs/PINE_EXPORT.md) specifies the user's choice of `alert()` or strategy order-fill events per export, with source-specific validation. **QL-1 implementation is committed in `32625fb`; its hosted CI and isolated PostgreSQL acceptance are pending.** Research setup does not enable Live trading or authorize production writes.
 
 1. **Signal layer**: TradingView indicator sends a Universal Webhook payload with trade_id, broker, symbol, event, sizing data, SL/TP, timestamp, volatility and news fields.
 2. **Bot core**: The Node.js PostgreSQL API validates signals, authenticates each bot's webhook secret and durably queues accepted signals. A separate worker applies execution-time risk controls and commits the Paper fill, position, cash journal, audit and notification outbox atomically. **PostgreSQL schema 12 (supporting per-entry allocations)** and decimal.js preserve monetary precision.
@@ -182,4 +183,4 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
   - Resolved advisory lock / background worker hang issues in `test/postgres/phase2.test.mjs`.
 - **CI / Automated Test Verification**:
   - GitHub Actions runs across Ubuntu, Windows, Docker container build, and real PostgreSQL integration (`npm run test:postgres`) all passed with zero errors.
-- **Current Milestone**: Phase R-1 is complete and merged into `main`. The codebase is positioned at the entry point of **Phase QL-1 (Isolated Python Setup, CI & Shared Contracts)** as defined in `ROADMAP.md` (establishing `quant_lab/` environment, Python 3.12 lock, CI workflow, and shared data schemas).
+- **Current Milestone**: QL-1 implementation is merged in `32625fb`. Local scaffold/contract/CI checks pass; hosted Linux/Windows and isolated PostgreSQL checks remain the acceptance gate. QL-2 may start as isolated research only.
