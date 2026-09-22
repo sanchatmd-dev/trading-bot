@@ -68,8 +68,8 @@ uv run --no-sync python quant_lab/tests/test_node_direct_parity.py
 ผล local ล่าสุด: Node tests 111/111 ผ่าน, Quant offline pytest 70/70 ผ่าน, Direct Parity ตรง 100% (อ่านรายละเอียดใน [Quant Lab README](quant_lab/README.md))
 
 **ขั้นตอนถัดไป (สำหรับ VPS):** 
-1. **Isolated Migration Rehearsal**: ซ้อมอัปเกรด Schema 12 บนฐานข้อมูลสำรองของ VPS โดยใช้ `node scripts/backup-postgres.mjs` และ `src/postgres/schema.sql` 
-2. **Pine/Paper Acceptance**: สร้าง order จริงผ่าน alert 2 โหมด เพื่อดูผลลัพธ์ของ Targeted TP/SL (R-1) ว่าปิด order ไม้ของตัวเองได้ถูกต้องตามที่เทสผ่านในระบบแล้ว
+1. **Isolated Migration Rehearsal**: ซ้อมอัปเกรด Schema 14 (ครอบคลุม R-1 Targeted Exits และ APP-3 Bot Lifecycle) บนฐานข้อมูลสำรองของ VPS โดยใช้ `node scripts/backup-postgres.mjs` และ `src/postgres/schema.sql` 
+2. **Pine/Paper Acceptance**: สร้าง order จริงผ่าน alert 2 โหมด เพื่อดูผลลัพธ์ของ Targeted TP/SL (R-1) และทดสอบสถานะ Run/Pause/Stop/Reset (APP-3) บนระบบ Paper forward จริง
 
 ## การแก้ไขจาก v2.0
 
