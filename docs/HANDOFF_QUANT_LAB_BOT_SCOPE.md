@@ -1,6 +1,6 @@
 # Handoff: Quant Lab Bot Scope, Dynamic Indicators & Persistent Runs
 
-- **Latest Commit:** `80e370b`
+- **Latest Commit:** `555d8a4`
 - **Branch:** `main`
 - **Repository:** `sanchatmd-dev/trading-bot`
 - **Mode:** `PAPER_ONLY` — Live Trading remains locked
@@ -151,24 +151,29 @@ flowchart TD
 
 ## 8. VPS Deployment Steps (ขั้นตอนการนำขึ้น VPS)
 
-1. ดึงโค้ดเวอร์ชันล่าสุด:
-   ```bash
-   cd /home/mikey/apps/astra-trade/current
-   git pull origin main
-   ```
-2. ดำเนินการ Migrate ฐานข้อมูล PostgreSQL:
-   ```bash
-   npm run start:postgres
-   # หรือรันผ่าน scripts/migrate-postgres.mjs
-   ```
-3. รีสตาร์ทเซอร์วิสทั้งหมด:
-   ```bash
-   sudo systemctl restart astra-trade-phase2
-   sudo systemctl restart astra-trade-worker
-   sudo systemctl restart astra-trade-quant
-   ```
-4. ตรวจสอบสถานะการทำงาน:
-   ```bash
-   curl -s http://127.0.0.1:7654/quant/health
-   # ตอบกลับ: {"ok":true,"version":"0.4.0","mode":"OFFLINE_RESEARCH_ONLY"}
-   ```
+Do not use `git pull` in `current`, `npm run start:postgres` as a migration command, or `sudo systemctl` for this application. Production uses immutable release directories, an atomic `current` symlink, offline migration with the schema-owner role, and user services.
+
+For a future deploy: run the relevant tests, take a verified PostgreSQL backup, rehearse a restore/migration, create a new immutable release, stop the user API/worker services, run `scripts/migrate-postgres.mjs` using the schema-owner connection, apply runtime grants, atomically switch `current`, and restart the services with `systemctl --user`. The Quant bridge must be restarted only when its release or environment changes. Verify local and public API health plus `http://127.0.0.1:7654/quant/health` after activation.
+
+Set the user-systemd session variables in SSH before operating services:
+
+```bash
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+```
+
+## 9. Next handoff — Risk Manager / Quant Lab alignment
+
+Read [RISK_MANAGER_NEXT.md](RISK_MANAGER_NEXT.md) before changing Risk Manager or enabling Pine Export.
+
+That document is also the canonical implementation path for the Indicator → Bot → Quant → Export loop: source capability classification, transport-only Bridge mapping, Bot policy/capital freeze, Bot-scoped baseline parity and constrained research, then the user-selected `alert()` or order-fill export with an independent TradingView/Paper acceptance run.
+
+The implementation order is:
+
+1. Separate saved policy, capital and preview UI state; fix Preview dirty-state behavior.
+2. Resolve Bot policy/capital snapshots server-side for Quant runs; store version/hash and stale-validation provenance.
+3. Add preview parity fixtures for sizing modes and targeted exits; show capacity by symbols and allocations separately.
+4. Add audited per-Bot entry pause while preserving reduce-only exits.
+5. Permit Optimization Bounds and Export only for source/exit combinations with baseline parity and Paper forward acceptance.
+
+Do not use the client-supplied Quant policy as execution authority. Do not call an SL/RR bound optimizable in the UI unless the Python bridge and the connected source both support it. Existing SMTP 550 diagnosis and PostgreSQL password rotation remain operational follow-ups.

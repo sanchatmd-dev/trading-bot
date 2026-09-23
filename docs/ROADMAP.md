@@ -105,6 +105,18 @@ Define the following in QL-1, prove data/risk parity in QL-2, consume them durin
 - Scope risk and exposure by owner, bot, broker and quote currency. Do not pool bot balances or combine THB with USDT. Main-account aggregate exposure, if added, is a separate policy with explicit currency treatment.
 - Risk-profile updates create immutable versions with author/time/change history. Changes to effective settings mark affected research validation/deployments stale. Specify how existing positions continue receiving valid reduce-only exits during transitions.
 
+### Risk Manager usability and Quant policy alignment
+
+The current Risk Manager remains the execution authority, but its user-entered form needs an explicit boundary between a saved Bot policy and a temporary calculator request. Implement the detailed scope in [RISK_MANAGER_NEXT.md](RISK_MANAGER_NEXT.md) before calling Quant candidates or exports policy-parity validated.
+
+- Keep **Default** as a UI/calculator suggestion and **Max Value** as the worker-enforced ceiling. Display this distinction with the selected Bot, broker, currency, policy version and snapshot hash.
+- Split Policy, Capital and Preview. Show configured funding, ledger cash, reserved cash, available cash and book equity separately. Preview inputs never create a policy draft, block RUN, or update policy persistence.
+- Keep unique-symbol capacity distinct from entry-allocation capacity. Introduce a scale-in allocation limit only with a matching worker invariant, risk setting and preview result.
+- Resolve the selected Bot's saved/locked policy and capital snapshot server-side for Quant and preview requests. Reject client-supplied policy overrides as authority; store policy/data/source/capital provenance with each run and mark evidence stale when any of those change.
+- Add preview fixtures for all supported sizing modes and targeted reduce-only exits. Label external guard data as verified, signal-supplied or unavailable.
+- Provide an audited per-Bot entry pause usable during RUNNING/PAUSED; it stops new entries while preserving valid reduce-only exits. It is separate from policy edits and from the administrator global kill switch.
+- Keep Optimization Bounds separate from Risk Policy. Multi-indicator behavior must be identical in UI and bridge: either explicitly allow a compatible SL/RR parameter or keep it locked and record that state.
+
 ### Required data and feature additions
 
 | Area | Contract and feature requirements |
