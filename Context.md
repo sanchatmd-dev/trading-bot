@@ -42,6 +42,25 @@ Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md), extended from roadmap commit `
 2. **Bot core**: The Node.js PostgreSQL API validates signals, authenticates each bot's webhook secret and durably queues accepted signals. A separate worker applies execution-time risk controls and commits the Paper fill, position, cash journal, audit and notification outbox atomically. **PostgreSQL schema 14 (supporting per-entry allocations and bot lifecycle state)** and decimal.js preserve monetary precision.
 3. **Execution adapters**: Binance Global, Binance TH, InnovestX, MT5, Settrade and a future HTTP adapter use a common registry. Live execution is locked.
 
+### Closed-Loop Workflow (5 ขั้นตอนหลัก)
+
+กระบวนการทั้งหมดของแพลตฟอร์มถูกออกแบบเป็น **Closed-Loop Workflow 5 ขั้นตอนหลัก**:
+
+```mermaid
+flowchart TD
+    S1["1. User เลือก Indicator / Strategy<br/>(Pine Script ใดๆ)"] --> S2["2. ติดตั้ง Robot Bridge ท้ายสคริปต์<br/>(ไม่แตะต้อง Indicator ดั้งเดิม)"]
+    S2 --> S3["3. Bot ทำงานบน VPS (Paper/Live)<br/>(Risk Engine, Per-Entry Allocations)"]
+    S3 --> S4["4. ส่งผลเทรด/ข้อมูลเข้า Quant Lab<br/>(Parity Check & Optimization)"]
+    S4 --> S5["5. Quant Lab Export ค่า Input ที่ดีที่สุด<br/>(inputs.json / Pine Script พร้อม Setup Guide)"]
+    S5 --> S1
+```
+
+- **Step 1 (User เลือก Indicator / Strategy)**: ผู้ใช้เลือก Indicator หรือ Strategy บน TradingView (Pine Script ใดๆ) ได้อย่างอิสระตามแนวคิด Bring Your Own Indicator
+- **Step 2 (ติดตั้ง Robot Bridge ท้ายสคริปต์)**: ผนวก Universal Signal Bridge ท้ายสคริปต์ เพื่อแปลงสัญญาณเป็น Webhook Payload ตามสัญญาข้อมูลโดยไม่แตะต้องตรรกะเดิมของ Indicator
+- **Step 3 (Bot ทำงานบน VPS)**: Bot ทำงานบน VPS ในโหมด Paper/Live ผ่าน Universal Risk Engine และ Schema 14 จัดการ Per-Entry Allocations (แยก Lot/ไม้ อิสระ)
+- **Step 4 (ส่งผลเทรด/ข้อมูลเข้า Quant Lab)**: ส่งผลเทรด ประวัติ Session และข้อมูลราคาเข้าสู่ Quant Lab Studio เพื่อทำ Parity Check และค้นหาพารามิเตอร์ที่เหมาะสมที่สุด (Constrained Optimizer พร้อม Sensitivity/Stress Gates)
+- **Step 5 (Quant Lab Export ค่า Input ที่ดีที่สุด)**: ส่งออกชุดค่า Input ที่ดีที่สุด (`inputs.json` / Pine Script v6 preset wrapper) พร้อม Setup Guide ให้ผู้ใช้นำกลับไปอัปเดตสคริปต์ใน Step 1 ครบวงจร Closed-Loop
+
 ## Product rules
 
 Planned multi-indicator architecture: [docs/UNIVERSAL_RISK_MANAGER.md](docs/UNIVERSAL_RISK_MANAGER.md). Current Paper positions aggregate by bot/account/mode/symbol; they are not independently owned by indicator. Before enabling shared-symbol indicator deployments, add explicit group/lot exit ownership, reservations and versioned decisions. Quant optimization remains input-only and must preserve original indicator logic. This is a design finding, not a deployed capability.

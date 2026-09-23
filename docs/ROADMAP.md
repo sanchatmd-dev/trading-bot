@@ -18,6 +18,27 @@ Use `APP-*` for the application roadmap and `QL-*` for Quant Lab. The previously
 - Scheduled off-host backup remains deferred by the owner until final project preparation. No off-host destination or schedule is claimed.
 - The existing Pine v6 Universal Signal Bridge is an indicator example, not an optimizer/exporter. Its local position flag is not VPS-confirmed inventory; its bar-close TP/SL alerts are not broker-hosted protection orders. These differences must be addressed in the export/simulation contract.
 
+## Closed-Loop Workflow Architecture
+
+กระบวนการทั้งหมดที่กำลังพัฒนา ถูกออกแบบเป็น **Closed-Loop Workflow 5 ขั้นตอนหลัก**:
+
+```mermaid
+flowchart TD
+    S1["1. User เลือก Indicator / Strategy<br/>(Pine Script ใดๆ)"] --> S2["2. ติดตั้ง Robot Bridge ท้ายสคริปต์<br/>(ไม่แตะต้อง Indicator ดั้งเดิม)"]
+    S2 --> S3["3. Bot ทำงานบน VPS (Paper/Live)<br/>(Risk Engine, Per-Entry Allocations)"]
+    S3 --> S4["4. ส่งผลเทรด/ข้อมูลเข้า Quant Lab<br/>(Parity Check & Optimization)"]
+    S4 --> S5["5. Quant Lab Export ค่า Input ที่ดีที่สุด<br/>(inputs.json / Pine Script พร้อม Setup Guide)"]
+    S5 --> S1
+```
+
+| Step | Phase Mapping | Responsibility & Description |
+|---|---|---|
+| **1. User เลือก Indicator / Strategy** | Bring Your Own Indicator | ผู้ใช้นำ Indicator หรือ Strategy ใดๆ บน TradingView (Pine Script) มาเป็นตัวตั้งต้นโดยไม่ต้องเขียนตรรกะใหม่ |
+| **2. ติดตั้ง Robot Bridge ท้ายสคริปต์** | Signal Layer & Bridge | ผนวก Universal Signal Bridge เข้าที่ส่วนท้ายของสคริปต์เดิม เพื่อสร้าง JSON Webhook ตามสัญญาข้อมูล โดยคงตรรกะเดิมไว้ 100% |
+| **3. Bot ทำงานบน VPS (Paper/Live)** | R-1, APP-3 (Schema 14) | Bot ทำงานบน VPS จัดการคิวคำสั่ง ตรวจสอบความเสี่ยง (Universal Risk Engine) และจัดการ Position แบบ Per-Entry Allocation (โหมด Paper-only) |
+| **4. ส่งผลเทรด/ข้อมูลเข้า Quant Lab** | QL-1, QL-2, QL-3 | นำประวัติการเทรด ข้อมูลราคา และ Session Archive เข้า Quant Lab Studio เพื่อทำ Parity Check และค้นหาชุดค่าพารามิเตอร์ที่เหมาะสมที่สุด (Constrained Optimizer) |
+| **5. Quant Lab Export ค่า Input ที่ดีที่สุด** | QL-4 (Pine Export) | ส่งออกชุดค่า Input ที่ดีที่สุด (`inputs.json` / Pine Script v6 preset wrapper) พร้อม Setup Guide ให้ผู้ใช้นำกลับไปอัปเดตสคริปต์ใน Step 1 ครบวงจร Closed-Loop |
+
 ## Sequence and dependencies
 
 Default delivery order: **R-0 → R-1 → QL-1 → QL-2 → APP-3 → QL-3 → QL-4 → APP-4 → APP-5**.

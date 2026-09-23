@@ -152,7 +152,26 @@ Reconciliation loop → unresolved / pending outcomes → manual review or verif
 Live adapters: LOCKED
 ```
 
-ระบบปัจจุบันรันบน PostgreSQL 16 (Schema 12) แยก process ชัดเจนระหว่าง Web API และ Background Worker
+## Closed-Loop Workflow 5 ขั้นตอนหลัก
+
+กระบวนการทั้งหมดที่กำลังพัฒนา ถูกออกแบบเป็น **Closed-Loop Workflow 5 ขั้นตอนหลัก**:
+
+```mermaid
+flowchart TD
+    S1["1. User เลือก Indicator / Strategy<br/>(Pine Script ใดๆ)"] --> S2["2. ติดตั้ง Robot Bridge ท้ายสคริปต์<br/>(ไม่แตะต้อง Indicator ดั้งเดิม)"]
+    S2 --> S3["3. Bot ทำงานบน VPS (Paper/Live)<br/>(Risk Engine, Per-Entry Allocations)"]
+    S3 --> S4["4. ส่งผลเทรด/ข้อมูลเข้า Quant Lab<br/>(Parity Check & Optimization)"]
+    S4 --> S5["5. Quant Lab Export ค่า Input ที่ดีที่สุด<br/>(inputs.json / Pine Script พร้อม Setup Guide)"]
+    S5 --> S1
+```
+
+1. **User เลือก Indicator / Strategy (Pine Script ใดๆ)**: ผู้ใช้นำ Indicator หรือ Strategy ใดๆ บน TradingView ที่ตนเองต้องการใช้งานมาเป็นตัวตั้งต้น โดยระบบสนับสนุนสถาปัตยกรรม "Bring Your Own Indicator"
+2. **ติดตั้ง Robot Bridge ท้ายสคริปต์ (ไม่แตะต้อง Indicator ดั้งเดิม)**: ผนวก Universal Signal Bridge เข้าที่ส่วนท้ายของสคริปต์ Pine Script โดยไม่ต้องดัดแปลงหรือรื้อตรรกะการคำนวณสัญญาณเดิมของอินดิเคเตอร์
+3. **Bot ทำงานบน VPS (Paper/Live) (Risk Engine, Per-Entry Allocations)**: สัญญาณ Webhook ถูกส่งมายังระบบ Bot บน VPS เพื่อผ่าน Universal Risk Engine ตรวจสอบความเสี่ยง บริหารจัดการ Position แบบรายไม้ (Per-entry allocations) และสั่งการคำสั่งเทรด (ปัจจุบันล็อกโหมด Paper-only)
+4. **ส่งผลเทรด/ข้อมูลเข้า Quant Lab (Parity Check & Optimization)**: นำผลลัพธ์การเทรดจริง สถิติ Session และข้อมูลราคาเข้าสู่ Quant Lab Studio เพื่อทำ Parity Check เทียบความถูกต้อง และทำการค้นหาชุดค่าพารามิเตอร์ที่เหมาะสมที่สุด (Constrained Optimizer / Walk-Forward Validation)
+5. **Quant Lab Export ค่า Input ที่ดีที่สุด (inputs.json / Pine Script พร้อม Setup Guide)**: ส่งออกชุดค่าพารามิเตอร์ที่ผ่านเกณฑ์ (Tear Sheet, inputs.json, Pine Script v6 preset wrapper) พร้อมคู่มือ Setup Guide เพื่อให้ผู้ใช้นำกลับไปอัปเดตสคริปต์ในข้อ 1 ทำให้วงจรการพัฒนากลยุทธ์ครบวงจรสมบูรณ์แบบ (Closed-Loop)
+
+ระบบปัจจุบันรันบน PostgreSQL 16 (Schema 14) แยก process ชัดเจนระหว่าง Web API, Background Worker และ Quant Bridge Service
 SQLite ในอดีตถูกเก็บไว้เป็นประวัติก่อน cutover เท่านั้น ห้ามเปิด writer บน SQLite ซ้ำ
 
 ## เริ่มทดสอบในเครื่อง
