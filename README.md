@@ -65,7 +65,7 @@ uv run --no-sync python -m robot_quant.smoke
 uv run --no-sync python quant_lab/tests/test_node_direct_parity.py
 ```
 
-ผล local ล่าสุด: Node tests 111/111 ผ่าน, Quant offline pytest 70/70 ผ่าน, Direct Parity ตรง 100% (อ่านรายละเอียดใน [Quant Lab README](quant_lab/README.md))
+ผลตรวจ checkout ใน R-0: Node tests 111/111 ผ่าน และ Quant offline pytest 71/71 ผ่าน; Direct Parity 100% เป็นผลจากการตรวจรอบก่อน (ดู [Quant Lab README](quant_lab/README.md))
 
 ## Interactive Dashboard Charting — เสร็จสมบูรณ์ใน repo
 
@@ -88,10 +88,10 @@ Risk Manager ปัจจุบันยังเป็นผู้คุมเ�
 
 งานถัดไปจะแยกหน้าเป็น Bot Risk Policy, Capital และ Order Preview ให้ชัดเจน แสดง cash/reserved cash/book equity และจำนวน Symbol/จำนวนไม้แยกกัน Preview จะไม่ทำให้เกิด unsaved risk draft และ Quant Lab จะอ่าน policy snapshot ของ Bot ที่เลือกจาก Server แทนการเชื่อค่าที่ Browser ส่งมา ดูรายละเอียดและเกณฑ์รับงานที่ [Risk Manager next scope](docs/RISK_MANAGER_NEXT.md)
 
-## Quant Lab Studio & Service Deployment — deploy แล้ว (39590f7)
+## Quant Lab Studio & Service Deployment — initial rollout (39590f7)
 
 เปิดใช้งานระบบวิจัยเชิงปริมาณบน VPS อย่างเป็นทางการ (`39590f7`):
-- **Quant Service**: ติดตั้ง `astra-trade-quant.service` รันบน Loopback `127.0.0.1:7654` โดยใช้ `uv 0.12.17` บน venv แยกเฉพาะ `/home/mikey/apps/astra-trade/shared/quant-venv`
+- **Quant Service**: `astra-trade-quant.service` ทำงานแบบ offline research บน loopback แยก Python environment ด้วย `uv 0.12.17`
 - **Authenticated Proxy**: Node.js ทำหน้าที่ Reverse Proxy ส่งต่อ `/api/quant/*` พร้อมบังคับตรวจ Session (ปฏิเสธ 401 ทันทีหากไม่ได้ล็อกอิน) และคุม Timeout / Error handling
 - **Quant Lab UI**: สตูดิโอ 4 แท็บในหน้าเว็บ:
   1. *Backtest Panel*: รัน Synthetic-data Backtest แบบ Discrete-event พร้อมวาดกราฟเส้น SVG Equity Curve
@@ -99,6 +99,8 @@ Risk Manager ปัจจุบันยังเป็นผู้คุมเ�
   3. *Risk Preview*: จำลอง Position Sizing และตรวจสอบเพดานความเสี่ยงก่อนเทรด
   4. *Pine Export*: **ยังไม่เปิดใช้งาน (Not released)** เนื่องจากสัญญาส่งออกยังอยู่ในระหว่างการตรวจสอบ
 - **Verification**: Quant tests ผ่าน 71/71, Node tests ผ่าน 111/111, API health `PAPER_ONLY`, Quant bridge health `OFFLINE_RESEARCH_ONLY`
+
+**R-0 VPS snapshot (2026-09-24)**: The owner observed `current` at `ff5a9d1` with all four user services active. Public health remained `PAPER_ONLY`; the queue count was 0 on the later of two checks. This release predates local persistent-run and dynamic-indicator commits, and R-0 tests were run on the local checkout rather than on the deployed release. A direct database read failed authentication. The worker journal contained 1,864 SMTP 550 rejection log entries in the preceding 24 hours, so Email Report delivery remains blocked pending diagnosis and a successful receipt check. See [R-0 baseline](docs/R0_BASELINE_2026-09-24.md).
 
 ## APP-4: Customer Lifecycle & Quotas — เสร็จสมบูรณ์ใน repo
 
@@ -158,24 +160,29 @@ Reconciliation loop → unresolved / pending outcomes → manual review or verif
 Live adapters: LOCKED
 ```
 
-## Closed-Loop Workflow 5 ขั้นตอนหลัก
+## Pine → Bot → Quant → Owner Workflow 5 ขั้นตอนหลัก
 
-กระบวนการทั้งหมดที่กำลังพัฒนา ถูกออกแบบเป็น **Closed-Loop Workflow 5 ขั้นตอนหลัก**:
+Workflow นี้ทำ Quant optimization หนึ่ง run แล้วส่งออกให้เจ้าของตรวจ ไม่มีการวนกลับไป Optimize ซ้ำหลัง Export:
 
 ```mermaid
 flowchart TD
-    S1["1. User เลือก Indicator / Strategy<br/>(Pine Script ใดๆ)"] --> S2["2. ติดตั้ง Robot Bridge ท้ายสคริปต์<br/>(ไม่แตะต้อง Indicator ดั้งเดิม)"]
-    S2 --> S3["3. Bot ทำงานบน VPS (Paper/Live)<br/>(Risk Engine, Per-Entry Allocations)"]
-    S3 --> S4["4. ส่งผลเทรด/ข้อมูลเข้า Quant Lab<br/>(Parity Check & Optimization)"]
-    S4 --> S5["5. Quant Lab Export ค่า Input ที่ดีที่สุด<br/>(inputs.json / Pine Script พร้อม Setup Guide)"]
-    S5 --> S1
+    S1["1. เชื่อม Pine<br/>ลงทะเบียน source และผูกกับ Bot"] --> S2["2. สร้าง Bridge<br/>เพิ่ม Bridge ATR SL = 2.0 และ RR = 1.5"]
+    S2 --> S3["3. รัน Bot บน Paper<br/>เก็บ Session, decisions, fills และข้อมูลราคา"]
+    S3 --> S4["4. Quant Lab<br/>ตรวจ parity แล้ว Optimize หนึ่ง run"]
+    S4 --> S5["5. ส่งออก Best Inputs + Email Report"]
+    S5 --> S6["เจ้าของตรวจ Best Pine Inputs<br/>และ Best Bot Risk Manager"]
+    S6 --> S7{"เจ้าของเลือกเริ่ม Bot ใหม่?"}
+    S7 -->|เริ่ม Bot| S8["ใช้ค่าที่ตรวจแล้วเริ่ม Bot<br/>จบกระบวนการ"]
+    S7 -->|ยังไม่เริ่ม| S9["จบกระบวนการ"]
 ```
 
-1. **User เลือก Indicator / Strategy (Pine Script ใดๆ)**: ผู้ใช้นำ Indicator หรือ Strategy ใดๆ บน TradingView ที่ตนเองต้องการใช้งานมาเป็นตัวตั้งต้น โดยระบบสนับสนุนสถาปัตยกรรม "Bring Your Own Indicator"
-2. **ติดตั้ง Robot Bridge ท้ายสคริปต์ (ไม่แตะต้อง Indicator ดั้งเดิม)**: ผนวก Universal Signal Bridge เข้าที่ส่วนท้ายของสคริปต์ Pine Script โดยไม่ต้องดัดแปลงหรือรื้อตรรกะการคำนวณสัญญาณเดิมของอินดิเคเตอร์
-3. **Bot ทำงานบน VPS (Paper/Live) (Risk Engine, Per-Entry Allocations)**: สัญญาณ Webhook ถูกส่งมายังระบบ Bot บน VPS เพื่อผ่าน Universal Risk Engine ตรวจสอบความเสี่ยง บริหารจัดการ Position แบบรายไม้ (Per-entry allocations) และสั่งการคำสั่งเทรด (ปัจจุบันล็อกโหมด Paper-only)
-4. **ส่งผลเทรด/ข้อมูลเข้า Quant Lab (Parity Check & Optimization)**: นำผลลัพธ์การเทรดจริง สถิติ Session และข้อมูลราคาเข้าสู่ Quant Lab Studio เพื่อทำ Parity Check เทียบความถูกต้อง และทำการค้นหาชุดค่าพารามิเตอร์ที่เหมาะสมที่สุด (Constrained Optimizer / Walk-Forward Validation)
-5. **Quant Lab Export ค่า Input ที่ดีที่สุด (inputs.json / Pine Script พร้อม Setup Guide)**: ส่งออกชุดค่าพารามิเตอร์ที่ผ่านเกณฑ์ (Tear Sheet, inputs.json, Pine Script v6 preset wrapper) พร้อมคู่มือ Setup Guide เพื่อให้ผู้ใช้นำกลับไปอัปเดตสคริปต์ในข้อ 1 ทำให้วงจรการพัฒนากลยุทธ์ครบวงจรสมบูรณ์แบบ (Closed-Loop)
+1. **เชื่อม Pine**: ลงทะเบียน Pine source/version/inputs และผูกกับ Bot
+2. **สร้าง Bridge**: เพิ่ม Bridge ATR for SL = 2.0 และ RR = 1.5 แยกจาก logic Pine พร้อมคู่มือตั้ง Webhook
+3. **รัน Bot บน Paper**: ผ่าน Universal Risk Engine และบันทึก Session, decisions, fills และข้อมูลที่ Quant ต้องใช้ (ระบบปัจจุบันล็อกโหมด Paper-only)
+4. **Quant Lab Optimize หนึ่ง run**: ตรวจ parity แล้ว Optimize ตามจำนวน Pine — Pine เดียวปรับทุก strategy input และ Bridge ATR/RR; หลาย Pine ตรึง source inputs แล้วปรับเฉพาะ Bridge ATR/RR คู่เดียวของ Bot
+5. **ส่งออกและให้เจ้าของตรวจ**: ส่ง Best Inputs (`inputs.json`, Pine Script, Setup Guide) และ Email Report เจ้าของตรวจ Best Pine Inputs กับค่าที่เสนอสำหรับ Bot Risk Manager แล้วเลือกนำไปใช้และเริ่ม Bot ใหม่ หรือจบโดยไม่เริ่ม Bot
+
+เมื่อเจ้าของเริ่ม Bot ใหม่ workflow นี้จบลง การ Optimize ครั้งต่อไปเป็นงานใหม่ที่เจ้าของเริ่มเอง ไม่ใช่การวนกลับอัตโนมัติจาก Paper ไป Quant Lab
 
 ระบบปัจจุบันรันบน PostgreSQL 16 (Schema 14) แยก process ชัดเจนระหว่าง Web API, Background Worker และ Quant Bridge Service
 SQLite ในอดีตถูกเก็บไว้เป็นประวัติก่อน cutover เท่านั้น ห้ามเปิด writer บน SQLite ซ้ำ

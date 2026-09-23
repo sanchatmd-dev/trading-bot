@@ -1,30 +1,30 @@
 # Risk Manager — next implementation scope
 
-Status: planned after release `555d8a4`. This document does not change the Paper-only execution gate or activate an optimized strategy.
+Status: planned M1 risk-policy and Bridge-settings scope under [the revised roadmap](ROADMAP.md). Historical release references remain in the archived roadmap. This document does not change the Paper-only execution gate or activate an optimized strategy.
 
 ## Goal
 
 Keep one authoritative Bot Risk Policy for execution while making the user interface easier to understand and making Quant Lab use the same recorded policy. A research candidate may request settings, but it cannot raise a Bot limit, change capital, bypass a guard, or activate a Bot.
 
-## Closed-loop delivery: Indicator → Bot → Quant → Export
+## Delivery workflow: Pine → Paper → Quant → owner review
 
-This Risk Manager work is the control boundary inside the product's five-step closed loop. The user keeps the original Indicator logic; Robot Trade adds a transport bridge, evaluates execution risk, records Paper evidence, and later exports only approved existing inputs.
+This Risk Manager work is the control boundary in the five-step workflow. The user keeps original Indicator logic. Robot Trade adds a Bridge with independent ATR-for-SL and RR defaults, runs the Bot on Paper, and records the evidence for Quant Lab. Quant Lab performs one optimization run and exports its result. The owner reviews Best Pine Inputs and the proposed Bot Risk Manager settings, then may explicitly apply eligible settings and start the Bot again. That action ends this workflow; it does not automatically feed the new Paper run back into another Quant optimization.
 
 | Step | User action | System responsibility | Gate before the next step |
 | --- | --- | --- | --- |
-| 1. Connect Indicator | Select an Indicator/Strategy and its existing inputs | Record source identity/version, supported symbols/timeframes and alert capability | Classify it as webhook-ready, optimization-supported or export-validated; these are separate states |
-| 2. Map Bridge | Install a reviewed Universal Signal Bridge or configure an exposed alert message | Map BUY, reduce-only exit, TP/SL, event identity, signal time and optional allocation reference without editing original signal logic | Send a Paper test signal; reject unsupported short-to-Spot mappings and incomplete exit identity |
-| 3. Run Bot | Select Bot, broker and Paper capital; save policy; start the Bot | Freeze the Bot policy/capital snapshot, run risk checks, create allocations and record fills/cash/audit events | Worker accepts/caps/rejects each signal against the frozen snapshot; exits remain reduce-only and allocation-scoped |
-| 4. Research Quant | Choose the same Bot, source version, dataset cutoff and whitelisted existing inputs | Read Bot-scoped data and recorded policy/capital snapshot; prove baseline parity before search; store run provenance | Unsupported/protected source or missing baseline parity has no optimization result |
-| 5. Export and validate | Choose `alert()` or order-fill export, review input changes and deploy a new alert manually | Generate `inputs.json`, input diff, setup guide and only where supported a private wrapper; retain checksums and validation evidence | Compile in TradingView and complete a separate Paper forward run for the chosen source/export mode |
+| 1. Connect Pine | Select an Indicator/Strategy and its existing inputs | Record source identity/version, supported symbols/timeframes and alert capability | Classify it as webhook-ready, optimization-supported or export-ready; these are separate states |
+| 2. Build Bridge | Generate a private Pine copy and configure the webhook | Map BUY, reduce-only exit, TP/SL, event identity, signal time and optional allocation reference without editing original signal logic; add independent Bridge ATR/RR defaults | Compile and match supported signals before using the Bridge with the Bot |
+| 3. Run Bot on Paper | Select Bot, broker and Paper capital; save policy; start the Bot | Freeze the Bot policy/capital snapshot, run risk checks, create allocations and record sessions, fills/cash/audit events and research data | Worker accepts/caps/rejects each signal against the frozen snapshot; exits remain reduce-only and allocation-scoped |
+| 4. Quant Lab optimization | Select Bot, source membership and dataset cutoff | Resolve frozen policy/capital/source snapshots; prove baseline parity; execute one optimization run for the Pine-count mode | Unsupported source, missing baseline parity or incomplete required search produces no Best Inputs result |
+| 5. Export and owner review | Review Best Pine Inputs and the proposed Bot Risk Manager settings | Create one versioned Best Inputs package and Email Report; provide authenticated review/import and, if owner chooses, alert replacement guidance | Owner may apply eligible values and start the Bot again, or finish without starting. No post-export Paper acceptance or automatic re-optimization is required. |
 
-Rules for the loop:
+Workflow rules:
 
-- Optimization can change only declared existing inputs. It cannot replace an Indicator's formulas, sessions, MTF logic, signal state, sizing authority or hard risk limits.
+- With one Pine per Bot, optimization must cover every strategy input parameter and the independent Bridge ATR/RR pair. The earlier 10-parameter ceiling is superseded; unsupported parameters block a complete optimized export. With multiple Pine scripts, source inputs are frozen and only the shared Bridge pair is searched. Preserve original formulas, sessions, MTF logic, signal state and hard risk limits.
 - A protected Indicator may be webhook-ready but is not optimization-supported unless an authorized equivalent evaluator and baseline parity evidence exist.
-- The selected Bot policy, capital snapshot, source version, source data, optimization bounds and alert source form one validation record. Changing any of them marks the result/export stale.
+- The selected Bot policy, capital snapshot, source version, source data, optimization bounds and alert source form one validation record. Changing any of them marks the result/export stale. Each completed workflow is tied to one Quant `run_id` and one `export_id`.
 - `alert()` and strategy order-fill events are separate export modes. An Indicator cannot gain native strategy order fills without a validated strategy wrapper that preserves its semantics.
-- Export does not edit the live Bot policy or activate a Bot. The user reviews the artifact and replaces the TradingView alert deliberately.
+- Export and email do not edit Bot settings or activate a Bot. The owner reviews Best Pine Inputs and the Bot Risk Manager proposal; only an explicit apply-and-start action begins a new Bot session. That new run ends this workflow and does not trigger another Quant run automatically.
 
 ## Current behavior to preserve
 
@@ -46,6 +46,8 @@ Split the page into three clearly labelled areas:
 | Order Preview | A temporary estimate for one proposed signal | Never saves policy or blocks Run |
 
 Show a policy version, snapshot hash, Bot label, broker and currency wherever a policy is saved, locked or used by Quant Lab. Explain that **Default** is a suggested request and **Max Value** is the hard ceiling checked by the worker.
+
+Show Bridge ATR/RR settings in a separate Bot Risk Manager area. These are strategy/Bridge settings, not hard Risk Policy ceilings. A saved Bridge value is a deployment proposal until the user creates a TradingView alert with the matching script/input snapshot. Show active and proposed deployment IDs separately; changing the web page does not update a running alert.
 
 ### 2. Separate capital and capacity
 
@@ -79,11 +81,11 @@ Provide a distinct per-Bot **Pause entries** / kill-switch control that is usabl
 
 Every research run stores the Bot ID, policy version/hash, capital snapshot, data cutoff, indicator/source version, parameter bounds, cost assumptions and result status. A policy, funding, source or parameter change marks associated validation/export evidence stale.
 
-Optimization Bounds remain separate from Risk Policy. They may search only whitelisted existing Indicator inputs and compatible existing SL/TP/RR inputs. They cannot edit execution ceilings. For multi-indicator runs, the UI and bridge must agree exactly on whether SL and RR are optimizable; unsupported fields remain locked and are recorded as locked.
+Optimization Bounds remain separate from Risk Policy. Bridge ATR Multiplier for SL and RR are mandatory independent parameters, initialized to versioned defaults 2.0 and 1.5. One Pine per Bot requires optimization of every strategy input parameter plus the pair; multiple Pine scripts per Bot permit only the pair. Never edit execution ceilings. Resolve connected script membership server-side; source membership/version changes invalidate affected evidence. Both ATR and RR must be implemented throughout the evaluator before enabling these modes.
 
 ### 6. Exit semantics
 
-For each strategy connection, require an explicit exit source: **Indicator-managed exits** or **approved Bot exit policy**. Do not create or optimize SL/TP/RR values unless the selected source already supports them. Targeted exits carry the server-owned allocation/position reference and remain reduce-only in Spot mode.
+Always create Bridge-owned ATR-for-SL and RR settings independently of user source logic, even when the source already defines similar inputs. Never inject the Bridge values into user formulas. Define the Bridge ATR period/timeframe, entry reference, frozen stop/target per allocation and precedence between mapped native exits and Bridge protection. Deduplicate competing exits and preserve actual remaining quantity. Targeted exits resolve to server-owned allocations and remain reduce-only. Store the Bridge pair as strategy/Bridge settings on the Bot Risk Manager page, separately from hard execution ceilings, with existing policy-lock and version rules.
 
 ## Delivery order and acceptance
 
@@ -91,6 +93,6 @@ For each strategy connection, require an explicit exit source: **Indicator-manag
 2. Add versioned Bot policy snapshots and server-side Quant policy resolution. Test Bot/tenant isolation, frozen-policy behavior, stale evidence and refusal of client policy overrides.
 3. Add preview parity for sizing modes and targeted exits. Use shared Node fixtures for accepted, capped and rejected decisions.
 4. Add the operational entry-pause control with audit history and worker enforcement.
-5. Enable Optimization Bounds and Pine Export only for a source/exit combination that has passed baseline parity and Paper forward acceptance.
+5. Enable Optimization Bounds and Pine Export only for a source/exit combination that has passed baseline parity and the pre-optimization Paper run. Record Pine compilation/package checks in export review; do not require post-export Paper trading as another gate in this workflow.
 
 Done when a user can see which Bot policy applies, distinguish capital from current ledger state, preview a request without changing a draft, and trace every Quant result/export to a locked policy snapshot. The worker must produce the same accept/cap/reject decision as the supported preview fixture.

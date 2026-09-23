@@ -2,26 +2,21 @@
 
 ## Purpose
  
-QL-1 through QL-4 Delivery, Quant Lab Studio UI & VPS Release (2026-09-23): Quant Lab research workspace is deployed to the production VPS under release `39590f7` as an offline research service (`astra-trade-quant.service` on loopback `127.0.0.1:7654` using `uv 0.12.17` with venv at `/home/mikey/apps/astra-trade/shared/quant-venv`). The authenticated Node.js proxy `/api/quant/*` and Quant Lab 4-tab studio UI (Backtest, Optimizer, Risk Preview; Pine Export unreleased) are live alongside the Trading Control Panel v2 (Bot lifecycle Schema 14, 4-button TCP, policy lock, and account cards). Local and VPS validation passes: Node tests 111/111, Quant tests 71/71, health `PAPER_ONLY`. Live trading remains strictly locked.
+Initial QL-1 through QL-4 deployment (2026-09-23, release `39590f7`): Quant Lab research workspace ran as an offline service using a dedicated Python environment. The authenticated Node.js proxy `/api/quant/*` and 4-tab studio UI (Backtest, Optimizer, Risk Preview; Pine Export unreleased) were deployed alongside Trading Control Panel v2. That release's recorded validation was Node 111/111, Quant 71/71, and `PAPER_ONLY`. The 2026-09-24 observed release and current limitations are recorded under Production below. Live trading remains strictly locked.
 
 Robot trade is a personal, multi-user TradingView webhook receiver and Spot-trading control plane. It is deployed on a VPS and currently runs in **Paper-only** mode: no real broker orders can be submitted by this release.
 
 ## Production
 
 - Public URL: https://www.robottrade.io
-- VPS host: 187.53.141.5
-- Application user: mikey
-- Last verified deployed release: 39590f7 on 2026-09-23 (Quant Lab Studio UI, astra-trade-quant.service loopback bridge, authenticated proxy /api/quant/*, Bot Manager v2 Trading Control Panel, Schema 14). API, Paper Worker, and Quant bridge active. Public health verified: `{"ok":true,"version":"2.2.0","mode":"PAPER_ONLY","queued":0}`.
-- Verified backups:
-  - Rehearsal backup: `/home/mikey/apps/astra-trade/shared/backups/pre-schema14-20260922T153316Z.dump` (SHA-256 `fc3a19cc850dc28ad1f12bd477bf3416804579951233feaa5733cd22017d77b0`)
-  - Pre-live deployment backup created and archive-tested: `/home/mikey/apps/astra-trade/shared/backups/pre-schema14-cutover-20260922T160...Z.dump`
-- User services: astra-trade-phase2.service (API), astra-trade-worker.service (Paper execution and mail), robot-postgres.service (database), and astra-trade-quant.service (Quant bridge on loopback 127.0.0.1:7654). All four are enabled; user lingering is enabled.
-- Application: /home/mikey/apps/astra-trade/current -> releases/39590f7
-- Shared state: /home/mikey/apps/astra-trade/shared
-- Database: PostgreSQL 16, database robot_trade, schema 14. Data directory: /home/mikey/apps/astra-trade/postgres/data. Unix socket: /home/mikey/apps/astra-trade/postgres/socket, port identifier 55432; no PostgreSQL TCP listener.
-- Runtime environment: /home/mikey/apps/astra-trade/shared/astra-phase2.env (protected; never copy its contents into documentation).
-- Reverse proxy: Nginx with HTTPS, forwarding to the API on 127.0.0.1:18080.
-- Retired runtime: astra-trade.service is disabled and inactive. The SQLite file /home/mikey/apps/astra-trade/shared/data/astra-v2.db is retained as pre-cutover history, not the active database. Never restart the SQLite writer for this service without an explicit recovery/reconciliation plan.
+- Current release target observed on 2026-09-24 from the owner's authenticated VPS session: `ff5a9d1`. All four user services reported `active`; public health returned v2.2.0/PAPER_ONLY, with the observed queue changing from 1 to 0 between checks. Direct schema/outbox verification is pending because a read-only `robot_app` connection failed authentication. Worker journal counts for the preceding 24 hours showed 1,865 `Email notification failed` occurrences, including 1,864 SMTP 550 rejections; these are log occurrences, not distinct emails. The previous verified release was `39590f7` on 2026-09-23.
+- Verified backups: Rehearsal and pre-live deployment backups were verified and archive-tested in protected storage.
+- User services: astra-trade-phase2.service (API), astra-trade-worker.service (Paper execution and mail), robot-postgres.service (database), and astra-trade-quant.service (Quant bridge). All four are enabled; user lingering is enabled.
+- Application: immutable release directories with an atomic `current` symlink; current release target is `ff5a9d1` (observed 2026-09-24).
+- Shared state and runtime environment are kept in protected directories; configuration contents are not stored in this document.
+- Database: PostgreSQL 16, database robot_trade. The last recorded schema is 14; the 2026-09-24 direct read-only query failed authentication, so the current schema was not freshly verified. PostgreSQL accepts local socket connections only; it has no TCP listener.
+- Reverse proxy: Nginx with HTTPS, forwarding to the API over loopback.
+- Retired runtime: astra-trade.service is disabled and inactive. The legacy SQLite store is retained as pre-cutover history, not the active database. Never restart the SQLite writer without an explicit recovery/reconciliation plan.
 - Latest read-only acceptance check on 2026-09-23: all four services active, HTTPS health v2.2.0/PAPER_ONLY with queue 0, quant bridge health OFFLINE_RESEARCH_ONLY, tests 71/71 quant, 111/111 node.
 
 Do not store passwords, webhook URLs, API keys, tokens, or private key material in this file.
@@ -29,37 +24,42 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 ## Historical deployments (SQLite; not current runtime)
 
 - Bot-profile release verified after immutable symlink deployment: service active, health OK (PAPER_ONLY), schema v8, SQLite integrity OK, bot assets served, and unauthenticated bot API denied.
-- Pre-migration final backup: shared/backups/pre-bots-final-20260916T184434Z.db. Migration was rehearsed against a backup before production activation.
+- Pre-migration final backup was retained in protected storage. Migration was rehearsed against a backup before production activation.
 - Phase 0 deployed on 2026-09-17 using an immutable release and symlink swap. Production schema v9, integrity/foreign keys OK, 58 Paper fills matched 58 cash journal entries, and public assets/authentication boundary checks passed.
-- Phase 0 final backup: shared/backups/pre-phase0-final-20260917T014852Z.db. Rehearsal preserved all IDs/secrets and row counts; no negative reconstructed cash, unresolved Paper orders, or FIFO analytics errors were found.
-- UI hardening release 3feeb07 was deployed immutably on 2026-09-17 after 74/74 VPS tests. Backup: shared/backups/pre-ui-3feeb07-20260917T023024Z.db. Production remained schema v9/PAPER_ONLY; 59 Paper fills matched 59 cash journal entries and authentication checks passed.
+- Phase 0 final backup was retained in protected storage. Rehearsal preserved all IDs/secrets and row counts; no negative reconstructed cash, unresolved Paper orders, or FIFO analytics errors were found.
+- UI hardening release 3feeb07 was deployed immutably on 2026-09-17 after 74/74 VPS tests. A matching backup was retained in protected storage. Production remained schema v9/PAPER_ONLY; 59 Paper fills matched 59 cash journal entries and authentication checks passed.
 
 ## Architecture
 
-Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md), extended from roadmap commit `e4e473e`. The 2026-09-19 update added R-1 (per-entry positions and targeted TP/SL) before QL-1 following the reported P1 TP closing P1 and P2 together. APP-3 onward covers broader application scope; QL-1 through QL-4 cover isolated Quant Lab, versioned shared risk profiles, constrained optimization, reports and Pine export. [docs/PINE_EXPORT.md](docs/PINE_EXPORT.md) specifies the user's choice of `alert()` or strategy order-fill events per export, with source-specific validation. **QL-1 implementation is committed in `32625fb`; its hosted CI and isolated PostgreSQL acceptance are pending.** Research setup does not enable Live trading or authorize production writes.
+Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md) is the revised 2026-09-24 Pine → Bot → Quant → Owner implementation sequence. Historical phase requirements remain in [the archived roadmap](docs/ROADMAP_ARCHIVE_2026-09-24.md). The workflow registers a Pine source, creates its Bridge, runs Paper, performs one Quant optimization run, exports Best Inputs and an Email Report, then ends with owner review and an optional new Bot start. It does not cycle from export back into Quant for another optimization. One Pine per Bot searches every strategy parameter plus independent Bridge ATR/RR; multiple Pine scripts per Bot search only a shared Bridge ATR/RR pair. [docs/PINE_EXPORT.md](docs/PINE_EXPORT.md) describes the two outputs and owner review. This plan does not enable Live trading or authorize production writes.
 
 1. **Signal layer**: TradingView indicator sends a Universal Webhook payload with trade_id, broker, symbol, event, sizing data, SL/TP, timestamp, volatility and news fields.
 2. **Bot core**: The Node.js PostgreSQL API validates signals, authenticates each bot's webhook secret and durably queues accepted signals. A separate worker applies execution-time risk controls and commits the Paper fill, position, cash journal, audit and notification outbox atomically. **PostgreSQL schema 14 (supporting per-entry allocations and bot lifecycle state)** and decimal.js preserve monetary precision.
 3. **Execution adapters**: Binance Global, Binance TH, InnovestX, MT5, Settrade and a future HTTP adapter use a common registry. Live execution is locked.
 
-### Closed-Loop Workflow (5 ขั้นตอนหลัก)
+### Pine → Bot → Quant → Owner Workflow (5 ขั้นตอนหลัก)
 
-กระบวนการทั้งหมดของแพลตฟอร์มถูกออกแบบเป็น **Closed-Loop Workflow 5 ขั้นตอนหลัก**:
+กระบวนการนี้มี 5 ขั้นตอนหลัก โดย Quant Lab ทำ optimization หนึ่ง run แล้วส่งผลให้เจ้าของตรวจ ไม่มีการวนกลับมา Optimize ซ้ำใน workflow นี้:
 
 ```mermaid
 flowchart TD
-    S1["1. User เลือก Indicator / Strategy<br/>(Pine Script ใดๆ)"] --> S2["2. ติดตั้ง Robot Bridge ท้ายสคริปต์<br/>(ไม่แตะต้อง Indicator ดั้งเดิม)"]
-    S2 --> S3["3. Bot ทำงานบน VPS (Paper/Live)<br/>(Risk Engine, Per-Entry Allocations)"]
-    S3 --> S4["4. ส่งผลเทรด/ข้อมูลเข้า Quant Lab<br/>(Parity Check & Optimization)"]
-    S4 --> S5["5. Quant Lab Export ค่า Input ที่ดีที่สุด<br/>(inputs.json / Pine Script พร้อม Setup Guide)"]
-    S5 --> S1
+    S1["1. เชื่อม Pine<br/>ลงทะเบียน source และผูกกับ Bot"] --> S2["2. สร้าง Bridge<br/>เพิ่ม Bridge ATR SL = 2.0 และ RR = 1.5"]
+    S2 --> S3["3. รัน Bot บน Paper<br/>เก็บ Session, decisions, fills และข้อมูลราคา"]
+    S3 --> S4["4. Quant Lab<br/>ตรวจ parity แล้ว Optimize หนึ่ง run"]
+    S4 --> S5["5. ส่งออก Best Inputs + Email Report"]
+    S5 --> S6["เจ้าของตรวจ Best Pine Inputs<br/>และ Best Bot Risk Manager"]
+    S6 --> S7{"เจ้าของเลือกเริ่ม Bot ใหม่?"}
+    S7 -->|เริ่ม Bot| S8["ใช้ค่าที่ตรวจแล้วเริ่ม Bot<br/>จบกระบวนการ"]
+    S7 -->|ยังไม่เริ่ม| S9["จบกระบวนการ"]
 ```
 
-- **Step 1 (User เลือก Indicator / Strategy)**: ผู้ใช้เลือก Indicator หรือ Strategy บน TradingView (Pine Script ใดๆ) ได้อย่างอิสระตามแนวคิด Bring Your Own Indicator
-- **Step 2 (ติดตั้ง Robot Bridge ท้ายสคริปต์)**: ผนวก Universal Signal Bridge ท้ายสคริปต์ เพื่อแปลงสัญญาณเป็น Webhook Payload ตามสัญญาข้อมูลโดยไม่แตะต้องตรรกะเดิมของ Indicator
-- **Step 3 (Bot ทำงานบน VPS)**: Bot ทำงานบน VPS ในโหมด Paper/Live ผ่าน Universal Risk Engine และ Schema 14 จัดการ Per-Entry Allocations (แยก Lot/ไม้ อิสระ)
-- **Step 4 (ส่งผลเทรด/ข้อมูลเข้า Quant Lab)**: ส่งผลเทรด ประวัติ Session และข้อมูลราคาเข้าสู่ Quant Lab Studio เพื่อทำ Parity Check และค้นหาพารามิเตอร์ที่เหมาะสมที่สุด (Constrained Optimizer พร้อม Sensitivity/Stress Gates)
-- **Step 5 (Quant Lab Export ค่า Input ที่ดีที่สุด)**: ส่งออกชุดค่า Input ที่ดีที่สุด (`inputs.json` / Pine Script v6 preset wrapper) พร้อม Setup Guide ให้ผู้ใช้นำกลับไปอัปเดตสคริปต์ใน Step 1 ครบวงจร Closed-Loop
+- **Step 1 (เชื่อม Pine)**: ผู้ใช้เลือก Indicator หรือ Strategy บน TradingView ลงทะเบียน source/version/inputs และผูกกับ Bot
+- **Step 2 (สร้าง Bridge)**: สร้าง Pine ฉบับใช้งานและคู่มือตั้ง Webhook โดย ATR for SL และ RR เป็น input ของ Bridge แยกจาก logic ต้นฉบับ
+- **Step 3 (รัน Bot บน Paper)**: ส่งสัญญาณผ่าน Universal Risk Engine และบันทึก Session, decisions, fills และข้อมูลที่จำเป็นสำหรับ Quant Lab
+- **Step 4 (Quant Lab Optimize หนึ่ง run)**: ตรวจ parity บน snapshot ที่กำหนด แล้วทำ optimization หนึ่ง run; Pine เดียว optimize ทุก strategy input และ Bridge ATR/RR ส่วนหลาย Pine ตรึง source inputs แล้ว optimize เฉพาะ Bridge ATR/RR คู่ร่วม
+- **Step 5 (ส่งออกและให้เจ้าของตรวจ)**: ส่ง Best Inputs (`inputs.json`, Pine Script, Setup Guide) และ Email Report ที่มี `bot_id`, `pine_import_id`, `export_id`, UTC timestamp และ Metrics สำคัญ เจ้าของตรวจ Best Pine Inputs และค่าที่เข้า Bot Risk Manager แล้วเลือกได้ว่าจะนำค่าไปใช้และเริ่ม Bot ใหม่หรือจบโดยไม่เริ่ม
+
+เมื่อเจ้าของเริ่ม Bot ใหม่ กระบวนการนี้จบลง การทำงานรอบใหม่นับเป็นการเริ่ม workflow ใหม่; ไม่มีการส่งผลรอบหลังกลับไป Optimize ซ้ำโดยอัตโนมัติ
 
 ## Product rules
 
@@ -113,11 +113,11 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 
 ## Operations
 
-- Run legacy/regression/UI tests: npm test (111/111 passed in the latest local review; Quant offline tests 70/70 passed). Run npm run test:postgres only against an isolated test database; the recorded PostgreSQL integration result is 15/15, not a fresh production test.
+- Latest local R-0 verification: npm test 111/111 and Quant offline pytest 71/71. These results apply to the local checkout, not the running release. Run npm run test:postgres only against an isolated test database; the recorded PostgreSQL integration result is 15/15, not a fresh production test.
 - Production entry points: src/postgres/server.js (npm run start:postgres) and src/postgres/worker-main.js (npm run worker:postgres). npm start still selects the legacy SQLite runtime and must not be used to start production.
 - Back up PostgreSQL using scripts/backup-postgres.mjs with the protected DATABASE_URL and compatible pg_dump. Use scripts/rotate-postgres-key.mjs and scripts/reset-postgres-password.mjs for their respective PostgreSQL maintenance tasks; follow docs/PHASE2.md. scripts/backup.mjs is for historical SQLite snapshots/import only.
 - Deploy each release as a new immutable directory, switch the current symlink only after tests pass, then restart the PostgreSQL API and worker user services. Do not activate the retired SQLite service.
-- Production schema is 11, using NUMERIC(38,18), account security, Paper funding, cash journals and book-value snapshots. Repository includes schema 14 with `ledger_position_allocations` (Phase R-1, targeted exits) and `bot_sessions` / `bot_session_archive` (APP-3, Bot Lifecycle). Existing IDs, history and webhook secrets are preserved. API and worker verify schema at startup; migrations run offline with the schema-owner role, not robot_app.
+- Historical Phase 2 notes record schema 11 at the PostgreSQL cutover. Repository schema 14 adds `ledger_position_allocations` (Phase R-1, targeted exits) and `bot_sessions` / `bot_session_archive` (APP-3, Bot Lifecycle); Context records a later production schema 14, but R-0 could not re-read it because `robot_app` authentication failed. API startup verifies schema; migrations run offline with the schema-owner role, not robot_app.
 - All database changes require a verified backup and integrity checks. After new PostgreSQL writes, restoring the old SQLite runtime loses those writes unless the delta is reconciled; there is no automatic reverse migration.
 - Acceptance work still open: scheduled off-host backups with failure alerts and a full system restore drill. Hosted CI, fresh production Login/MFA and authenticated Overview/session restoration were verified as recorded below. The owner deferred off-host backup setup until after the final project because no destination is available; no backup timer was installed. Provider-managed backups were not verified. Isolated database restore tests do not establish full-system disaster recovery.
 
@@ -160,7 +160,7 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 - Local validation on 2026-09-18: 88/88 tests passed (74 existing plus 14 Phase 1/API/DOM tests), 47 JavaScript modules passed syntax checks, and `git diff --check` passed. Automated tests are separate from the rendered-browser and production checks recorded here.
 - SMTP follow-up on 2026-09-18 (Asia/Bangkok): Gmail accepted one plain-text test message sent from the VPS using the existing EmailNotifier and protected environment configuration. The owner confirmed inbox receipt. A missing closing angle bracket in SMTP_FROM was corrected after a restricted-permission configuration backup. No production password reset or trade was triggered, and the service was not restarted. Recovery-token handling is covered by isolated automated tests, not a completed production password reset. The earlier absence of SMTP configuration is resolved.
 - Deployment completed on 2026-09-18 (Asia/Bangkok): immutable release b441476, schema 10, 88/88 VPS tests and syntax checks passed. Two verified-copy rehearsals passed before migration; all 18 pre-existing non-session tables were unchanged, including 513 signals, 151 fills/cash-journal entries and three webhook secrets. The 21 old sessions were intentionally revoked. PUBLIC_ORIGIN now matches https://www.robottrade.io; master key and webhook URLs were not rotated.
-- Final backup: /home/mikey/apps/astra-trade/shared/backups/pre-phase1-b441476-20260917T182451Z.db (matching protected environment backup: same path plus .env). Health, integrity/FKs, public assets, authentication/Origin boundaries and mobile recovery UI passed after activation. The service remains Paper-only. See docs/PHASE1.md for the deployment record and rollback restrictions.
+- Final Phase 1 database backup and matching protected environment backup were retained in restricted storage. Health, integrity/FKs, public assets, authentication/Origin boundaries and mobile recovery UI passed after activation. The service remained Paper-only. See docs/PHASE1.md for the deployment record and rollback restrictions.
 - Read-only acceptance review on 2026-09-18 confirmed release b441476, schema 10, integrity OK, no foreign-key errors, an active service, an empty queue and no service errors in the preceding 30 minutes. Administrator MFA was enrolled for 1/1 accounts and an unexpired MFA-verified session existed. No completed production password recovery was recorded. Owner confirmation of recovery-code safekeeping and a full isolated system-restore drill remain pending. Phase 2 development may start in isolation; this is not approval for Live trading or commercial launch.
 
 ## Phase 2 (deployed)
@@ -178,7 +178,7 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 
 - GitHub Actions Safety checks #24 succeeded for commit 639fe809ee01c233a9e8d2f0646281c9fb1eaabb: Linux and Windows test jobs, PostgreSQL integration, and container build. Verified directly in the authenticated GitHub UI: https://github.com/sanchatmd-dev/trading-bot/actions/runs/35269699025. Connector calls returned empty run/status lists and were not reliable evidence of absent CI. Four non-failing annotations concern the Node 20 runtime used by actions/checkout@v4 and actions/setup-node@v4; action-version maintenance remains separate work.
 - A fresh production pg_dump used an exported repeatable-read snapshot and was restored into a uniquely named temporary database. Row counts and SHA-256 row fingerprints matched for all 27 public tables, including 539 signals, 151 fills and 151 cash-journal rows. Schema 11 verified and all four encrypted webhook/MFA records decrypted using the existing protected keyring. No source application rows were changed and no API, execution or email worker ran against the restored copy. The temporary database was dropped after verification.
-- Restore-tested archive: /home/mikey/apps/astra-trade/shared/backups/restore-verified-2026-09-17T20-33-19-885Z.dump (155863 bytes; SHA-256 f92337afdc8f1b9f2a07b6b085d05a8dfec21d475421922d132f83b25d90ccaf). A protected .verification.json report is beside it. This is a same-VPS database restore test, not off-host or full-system disaster recovery.
+- Restore-tested archive (155863 bytes; SHA-256 f92337afdc8f1b9f2a07b6b085d05a8dfec21d475421922d132f83b25d90ccaf) has a protected verification report. This was a same-host database restore test, not off-host or full-system disaster recovery.
 - Production Chrome displayed authenticated Analytics and Overview. A newly opened tab restored the existing session and displayed v2.2/PostgreSQL/Paper with recent signals. The owner subsequently completed a fresh login. Database inspection verified a new, unexpired session created at 2026-09-18 03:35:08.838 Asia/Bangkok with mfa_verified=1; Chrome showed the authenticated Overview and health remained v2.2.0/PAPER_ONLY with queue 0. The agent did not collect credentials, generate an OTP, reset MFA or submit a trade.
 - Owner explicitly deferred automatic off-host backups until after the final project. Resume destination selection, encrypted transfer, scheduling, failure alerts and off-host restore verification then; do not count this deferred work as completed.
 
@@ -247,4 +247,3 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
     7. *Reduce-Only SL*: HTTP 202 queued, worker safely verified and rejected excess exit without opening opposite short.
   - Production queue drained immediately to 0; `/healthz` verified `{"ok":true,"version":"2.2.0","mode":"PAPER_ONLY","queued":0}`.
 - **Current Milestone**: **Risk Manager / Quant Lab alignment, SMTP Notification Diagnosis and PostgreSQL Password Rotation** — Schema 14, R-1 Targeted Exits, APP-3 Lifecycle, and APP-4 Quotas are fully deployed and verified live in production Paper forward mode. Next implementation work is the documented Bot policy snapshot, preview parity and operational pause scope; follow-up operations are SMTP diagnosis and scheduled PostgreSQL password rotation.
-
