@@ -1,5 +1,20 @@
 # Handoff: Quant Lab Bot Scope, Dynamic Indicators & Persistent Runs
 
+> Historical implementation handoff. The canonical current requirements are [ROADMAP.md](ROADMAP.md) and [PINE_BRIDGE_ADAPTER_API.md](PINE_BRIDGE_ADAPTER_API.md). The release facts below describe their original review, not current readiness. Earlier closed-loop, arbitrary Pine/strategy, all-input optimization and order-fill workflow descriptions below are superseded.
+
+## Current requirement override
+
+- Indicator Pine v5/v6 only. Reject Strategy before calling AI; the user converts externally and resubmits. Backend calls AI API directly with a versioned Bridge template/AI guide; no MCP connection.
+- Exactly 2 mandatory numeric slots: Bridge ATR Multiplier for SL = 2.0 and Risk-to-Reward = 1.5. User dropdowns map 0–8 additional distinct numeric source inputs; total at most 10. Slot identities are fixed, Bridge values are optimizable.
+- One Pine optimizes selected numeric slots and the Bridge pair; unselected inputs remain fixed and are labelled in the complete snapshot. Multiple Pine scripts freeze all source inputs and optimize/export only the shared Bridge pair.
+- Separate Bridge and Quant capabilities: SPT MTF/pivots may remain in an append-only draft, while optimization waits for their evaluators. Return the draft before Quant sample/repaint checks; Webhook ready needs only Bridge-stage evidence. Quant requires the larger numerical parity dataset and recorded/evidence-backed replay observations.
+- Implement durable AI jobs with owner-scoped idempotency, status/cancel, bounded timeout/retry/token/cost limits and recovery. Apply bridge-exit-v1 consistently in the new template, isolated Paper receiver and Quant replay: frozen close/ATR levels, next-bar protection, SL then TP then native, and verified bar-close fills with recorded costs.
+- R-0 follow-up complete: direct read-only database verification observed schema 14 and outbox SENT 2,946, FAILED 1,151, DISABLED 513. SMTP 550 and deploy readiness remain separate operational work. These are observed counts, not live counters.
+- APP-3A owns the versioned Bridge webhook/receiver and authenticated deployment/entry-to-allocation mapping before QL-2A. One Pine/one Bot is the first owner-facing flow; multiple-Pine optimization/export may be exercised in isolated fixtures, with owner apply/start gated by APP-3B. QL-4B builds package/report drafts; QL-4C validates before one-Pine recommendation/apply and SMTP-gated email enqueue.
+- Current flow: Connect indicator → Build Bridge → Paper → Quant Optimize once → Best Inputs + Email Report → owner review → optional new Bot start → end. No automatic optimization loop or mandatory post-export Paper cycle.
+
+## Historical release record
+
 - **Latest Commit:** `555d8a4`
 - **Branch:** `main`
 - **Repository:** `sanchatmd-dev/trading-bot`
@@ -16,7 +31,7 @@ In release `ff5a9d1`, Quant Lab operated with static defaults and did not react 
 
 ---
 
-## 2. Closed-Loop Workflow 5 ขั้นตอนหลัก
+## 2. Historical Closed-Loop Workflow (superseded)
 
 กระบวนการทั้งหมดที่กำลังพัฒนา ถูกออกแบบเป็น **Closed-Loop Workflow 5 ขั้นตอนหลัก**:
 
@@ -162,7 +177,7 @@ export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
 ```
 
-## 9. Next handoff — Risk Manager / Quant Lab alignment
+## 9. Historical next handoff — superseded by current requirement override
 
 Read [RISK_MANAGER_NEXT.md](RISK_MANAGER_NEXT.md) before changing Risk Manager or enabling Pine Export.
 

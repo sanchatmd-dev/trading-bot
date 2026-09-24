@@ -100,9 +100,11 @@ Risk Manager ปัจจุบันยังเป็นผู้คุมเ�
   4. *Pine Export*: **ยังไม่เปิดใช้งาน (Not released)** เนื่องจากสัญญาส่งออกยังอยู่ในระหว่างการตรวจสอบ
 - **Verification**: Quant tests ผ่าน 71/71, Node tests ผ่าน 111/111, API health `PAPER_ONLY`, Quant bridge health `OFFLINE_RESEARCH_ONLY`
 
-**R-0 VPS snapshot (2026-09-24)**: The owner observed `current` at `ff5a9d1` with all four user services active. Public health remained `PAPER_ONLY`; the queue count was 0 on the later of two checks. This release predates local persistent-run and dynamic-indicator commits, and R-0 tests were run on the local checkout rather than on the deployed release. A direct database read failed authentication. The worker journal contained 1,864 SMTP 550 rejection log entries in the preceding 24 hours, so Email Report delivery remains blocked pending diagnosis and a successful receipt check. See [R-0 baseline](docs/R0_BASELINE_2026-09-24.md).
+**R-0 VPS snapshot (2026-09-24)**: Release `ff5a9d1` and four active services were confirmed through SSH; public health remained `PAPER_ONLY` and queue count later reached 0. Local test results do not certify that deployed release. After an initial authentication failure, an authorized read-only database check directly verified schema 14 and outbox SENT 2,946 / FAILED 1,151 / DISABLED 513. Earlier journal checks counted 1,864 SMTP 550 rejections, so Email Report delivery still needs diagnosis and a confirmed receipt. See [R-0 baseline](docs/R0_BASELINE_2026-09-24.md).
 
-## APP-4: Customer Lifecycle & Quotas — เสร็จสมบูรณ์ใน repo
+## APP-4 เดิม: Customer Lifecycle & Quotas — มีโค้ดพื้นฐานใน repo
+
+รายการด้านล่างคือฐานงานเดิม ไม่ใช่การผ่านเกณฑ์ APP-4 ของ [roadmap ฉบับใหม่](docs/ROADMAP.md) ซึ่งยังต้องรับรองความปลอดภัย การกู้คืน และ paid Paper beta หลัง APP-3B
 
 กำหนดและบังคับใช้โควต้าตามระดับ License/Plan (`src/postgres/quotas.js`):
 - **FREE**: บอท 1 ตัว / ประวัติย้อนหลัง 30 วัน
@@ -176,13 +178,17 @@ flowchart TD
     S7 -->|ยังไม่เริ่ม| S9["จบกระบวนการ"]
 ```
 
-1. **เชื่อม Pine**: ลงทะเบียน Pine source/version/inputs และผูกกับ Bot
-2. **สร้าง Bridge**: เพิ่ม Bridge ATR for SL = 2.0 และ RR = 1.5 แยกจาก logic Pine พร้อมคู่มือตั้ง Webhook
+1. **เชื่อม Pine**: รับเฉพาะ Pine v5/v6 Indicator ที่มี source ให้ตรวจสอบ ลงทะเบียน source/version/inputs และผูกกับ Bot; หากเป็น Strategy ให้ผู้ใช้แปลงภายนอกก่อนส่งเข้า ระบบปฏิเสธก่อนเรียก AI
+2. **สร้าง Bridge**: Chatbot ใช้ AI API กับ Template/คู่มือให้ AI โดยตรง โดยไม่เชื่อม MCP เข้า Backend; มีช่องตัวเลขบังคับ Bridge ATR for SL = 2.0 และ RR = 1.5 พร้อม Dropdown ให้ผู้ใช้เลือกแมปตัวเลขจาก Indicator ได้ 0–8 ช่อง รวมไม่เกิน 10 ช่อง แยกจาก logic เดิม ดูขอบเขตและเกณฑ์ parity เชิงตัวเลขใน [Bridge Adapter](docs/PINE_BRIDGE_ADAPTER_API.md)
 3. **รัน Bot บน Paper**: ผ่าน Universal Risk Engine และบันทึก Session, decisions, fills และข้อมูลที่ Quant ต้องใช้ (ระบบปัจจุบันล็อกโหมด Paper-only)
-4. **Quant Lab Optimize หนึ่ง run**: ตรวจ parity แล้ว Optimize ตามจำนวน Pine — Pine เดียวปรับทุก strategy input และ Bridge ATR/RR; หลาย Pine ตรึง source inputs แล้วปรับเฉพาะ Bridge ATR/RR คู่เดียวของ Bot
+4. **Quant Lab Optimize หนึ่ง run**: ผ่านเกณฑ์ parity เชิงตัวเลขก่อน; Pine เดียวปรับเฉพาะ numeric inputs ที่เลือกไม่เกิน 8 ตัวและ Bridge ATR/RR โดยตรึง input อื่นไว้ ส่วนหลาย Pine ตรึง source inputs แล้วปรับเฉพาะ Bridge ATR/RR คู่เดียวของ Bot
 5. **ส่งออกและให้เจ้าของตรวจ**: ส่ง Best Inputs (`inputs.json`, Pine Script, Setup Guide) และ Email Report เจ้าของตรวจ Best Pine Inputs กับค่าที่เสนอสำหรับ Bot Risk Manager แล้วเลือกนำไปใช้และเริ่ม Bot ใหม่ หรือจบโดยไม่เริ่ม Bot
 
 เมื่อเจ้าของเริ่ม Bot ใหม่ workflow นี้จบลง การ Optimize ครั้งต่อไปเป็นงานใหม่ที่เจ้าของเริ่มเอง ไม่ใช่การวนกลับอัตโนมัติจาก Paper ไป Quant Lab
+
+ลำดับการเปิดใช้: APP-3A กำหนด webhook/receiver ที่ผูก owner, Bot, deployment และ entry กับ allocation ก่อน QL-2A ใช้ข้อมูลเดียวกัน; QL-4B สร้างชุดผลลัพธ์/รายงานเป็น candidate ภายใน, QL-4C ตรวจแล้วจึงเปิดให้เจ้าของใช้ผลของ Pine เดียว การส่งอีเมลรอแก้ SMTP และยืนยันรับอีเมล ส่วนหลาย Pine เปิดใช้กับเจ้าของหลัง APP-3B ผ่านการแยก allocation และ Paper canary
+
+แผนแยกความพร้อม Bridge ออกจาก Quant: ส่งร่าง Pine ได้ก่อนเก็บข้อมูล parity จำนวนมาก โดยคง MTF/pivot เดิมไว้หากต่อ Bridge ได้ การรัน Paper ในขอบเขตทดลองต้องผ่านการ compile/แมปตัวแปร/ตรวจ webhook ส่วน Quant ต้องผ่าน evaluator และเกณฑ์ข้อมูลแยกกัน งาน AI มี job ID, ป้องกันการกดซ้ำ, ยกเลิกได้ และจำกัดเวลา/retry/token/ค่าใช้จ่าย กติกา SL/TP และราคา fill ของ Paper/Quant ใช้สัญญา `bridge-exit-v1` ในเอกสาร Bridge Adapter; ข้อกำหนดเหล่านี้ยังเป็นงานพัฒนา
 
 ระบบปัจจุบันรันบน PostgreSQL 16 (Schema 14) แยก process ชัดเจนระหว่าง Web API, Background Worker และ Quant Bridge Service
 SQLite ในอดีตถูกเก็บไว้เป็นประวัติก่อน cutover เท่านั้น ห้ามเปิด writer บน SQLite ซ้ำ
