@@ -13,5 +13,6 @@ CREATE INDEX pine_capture_deployment ON pine_capture_sessions(deployment_id);
 CREATE TABLE pine_capture_events(
   capture_id TEXT NOT NULL REFERENCES pine_capture_sessions(capture_id), event_id TEXT NOT NULL,
   event_hash TEXT NOT NULL, payload JSONB NOT NULL, received_at BIGINT NOT NULL,
+  market_present_at_intake BOOLEAN, market_checked_at BIGINT, market_hash_at_intake TEXT,
   PRIMARY KEY(capture_id,event_id)
 );

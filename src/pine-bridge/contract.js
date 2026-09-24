@@ -1,7 +1,8 @@
 import {D,Money,exact} from '../money.js';
 import {fail,keys,number} from './source.js';
 
-export const SCHEMA_VERSION='bridge-exit-v1';
+export const SCHEMA_VERSION='bridge-exit-v2';
+export const LEGACY_SCHEMA_VERSION='bridge-exit-v1';
 export function levels(close,atr,multiplier,rr,tick) {
   [close,atr,multiplier,rr,tick].forEach(v=>number(v,{min:Number.MIN_VALUE,max:1e12}));
   const distance=D(atr).mul(multiplier),sl=D(close).minus(distance).div(tick).floor().mul(tick),tp=D(close).plus(distance.mul(rr)).div(tick).ceil().mul(tick);
@@ -25,7 +26,7 @@ export function executionPrice(close,side,slippageBps,tick) {
 export function validateEvent(body,deployment,now=Date.now(),maxAgeMs=60000) {
   const fields=['schema_version','deployment_id','pine_import_id','source_version','broker','symbol','timeframe','event_id','event_type','entry_ref','bar_time','sequence'];
   keys(body,[...fields,...(body.event_type==='BUY'?['close','atr']:['reason'])]);
-  if(body.schema_version!==SCHEMA_VERSION)throw fail('UNSUPPORTED_SCHEMA_VERSION');
+  if(![SCHEMA_VERSION,LEGACY_SCHEMA_VERSION].includes(body.schema_version))throw fail('UNSUPPORTED_SCHEMA_VERSION');
   for(const field of ['deployment_id','pine_import_id','source_version','broker','symbol','timeframe'])if(body[field]!==deployment[field])throw fail('DEPLOYMENT_MISMATCH',409);
   if(!['BUY','EXIT'].includes(body.event_type))throw fail('INVALID_EVENT_TYPE');
   number(body.bar_time,{min:1,max:now,integer:true});number(body.sequence,{min:0,max:10000,integer:true});

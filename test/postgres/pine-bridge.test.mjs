@@ -186,6 +186,27 @@ test('Bridge accepted fill maps one allocation; retries and scoped exits cannot 
   const fills=await db.prepare('SELECT f.* FROM fills f JOIN signals s ON s.id=f.signal_id WHERE s.user_id=? ORDER BY s.id').all(a);
   assert.equal(fills.length,2);assert.equal(Number(fills[1].price),87.91);assert.ok(Number(fills[1].fee_quote)>0);
 });
+test('isolated Bridge HTTP webhook reaches Paper fill without capture writes',async t=>{
+  const a=await owner(),x=await ready(a),time=Date.now()-5000;
+  await market(time);
+  const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
+  const base='http://127.0.0.1:'+port;
+  const child=fork(new URL('../../src/postgres/server.js',import.meta.url),[],{silent:true,env:{...process.env,DATABASE_URL:db.pool.options.connectionString,HOST:'127.0.0.1',PORT:String(port),PUBLIC_ORIGIN:base,SMTP_HOST:'',PINE_BRIDGE_ENABLED:'1'}});
+  const exited=once(child,'exit');let output='';child.stdout.on('data',chunk=>output+=chunk);child.stderr.on('data',chunk=>output+=chunk);
+  t.after(async()=>{child.kill();await exited;});
+  let listening=false;for(let i=0;i<100;i++){try{await fetch(base+'/healthz');listening=true;break;}catch{}await new Promise(r=>setTimeout(r,50));}assert.ok(listening,output);
+  const post=async body=>{const response=await fetch(base+'/webhooks/pine-bridge/v1/'+x.secret,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});return {status:response.status,body:await response.json()};};
+  const buy=event(x.d,time),accepted=await post(buy);assert.equal(accepted.status,202,JSON.stringify(accepted.body));
+  assert.equal((await post(buy)).status,200);
+  await execute();
+  assert.equal((await db.prepare('SELECT count(*) n FROM pine_bridge_entries WHERE deployment_id=?').get(x.d.deployment_id)).n,1);
+  await market(time+1000,{close:88,high:120,low:85});
+  const exit=event(x.d,time+1000,{type:'EXIT',entryTime:time,reason:'SL'});
+  assert.equal((await post(exit)).status,202);
+  await execute();
+  assert.equal((await db.prepare('SELECT count(*) n FROM fills f JOIN signals s ON s.id=f.signal_id WHERE s.user_id=?').get(a)).n,2);
+  assert.equal((await db.prepare('SELECT count(*) n FROM pine_capture_events').get()).n,0);
+});
 test('missing/mismatched market facts, unknown targets and unreviewed readiness fail closed',async()=>{
   const a=await owner(),x=await ready(a),time=Date.now()-8000;
   await assert.rejects(receiveBridge(store,x.secret,event(x.d,time)),{code:'VERIFIED_MARKET_DATA_REQUIRED'});

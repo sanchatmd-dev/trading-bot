@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 
-export const versions = Object.freeze({prompt:'bridge-prompt-v1', guide:'bridge-guide-v1', template:'bridge-exit-v1', parser:'pine-static-v1', bridge:'indicator-bridge-v1', quant:'quant-evaluator-v1'});
+export const versions = Object.freeze({prompt:'bridge-prompt-v3', guide:'bridge-guide-v4', template:'bridge-exit-v3', parser:'pine-static-v1', bridge:'indicator-bridge-v2', quant:'quant-evaluator-v1'});
 export const fail = (code, status=400) => Object.assign(new Error(code), {code,status});
 export const hash = value => createHash('sha256').update(value).digest('hex');
 export function canonical(value) {

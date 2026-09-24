@@ -48,6 +48,15 @@ CREATE TABLE pine_bridge_events(
   signal_id BIGINT REFERENCES signals(id), outcome TEXT NOT NULL,
   PRIMARY KEY(deployment_id,event_id)
 );
+CREATE TABLE pine_bridge_pending(
+  deployment_id TEXT NOT NULL REFERENCES pine_deployments(deployment_id), event_id TEXT NOT NULL,
+  event_hash TEXT NOT NULL, payload JSONB NOT NULL,
+  received_at BIGINT NOT NULL, deadline_at BIGINT NOT NULL, checked_at BIGINT,
+  status TEXT NOT NULL CHECK(status IN ('WAITING_MARKET','QUEUED','REJECTED')),
+  diagnostic TEXT, signal_id BIGINT REFERENCES signals(id),
+  PRIMARY KEY(deployment_id,event_id)
+);
+CREATE INDEX pine_bridge_pending_due ON pine_bridge_pending(deadline_at,received_at) WHERE status='WAITING_MARKET';
 CREATE TABLE pine_bridge_entries(
   deployment_id TEXT NOT NULL REFERENCES pine_deployments(deployment_id), entry_ref TEXT NOT NULL,
   allocation_id TEXT NOT NULL REFERENCES ledger_position_allocations(position_id),

@@ -892,9 +892,11 @@ async function handleRequest(req, res) {
       const result=await receiveCapture(pineBridgeService,url.pathname.slice('/webhooks/pine-capture/v1/'.length),body);
       return json(res,result.captured?(result.duplicate?200:202):422,result);
     }
-    if(req.method==='POST'&&url.pathname.startsWith('/webhooks/pine-bridge/v1/')) {
+    if(req.method==='POST'&&(url.pathname.startsWith('/webhooks/pine-bridge/v1/')||url.pathname.startsWith('/webhooks/pine-bridge/v2/'))) {
       if(!pineBridgeEnabled)return json(res,503,{code:'PINE_BRIDGE_DISABLED'});
-      const result=await receiveBridge(store,url.pathname.slice('/webhooks/pine-bridge/v1/'.length),await readJson(req),{defaultRisk:config.defaultRisk});
+      const contractVersion=url.pathname.startsWith('/webhooks/pine-bridge/v2/')?'bridge-exit-v2':'bridge-exit-v1';
+      const prefix=contractVersion==='bridge-exit-v2'?'/webhooks/pine-bridge/v2/':'/webhooks/pine-bridge/v1/';
+      const result=await receiveBridge(store,url.pathname.slice(prefix.length),await readJson(req),{defaultRisk:config.defaultRisk,contractVersion});
       return json(res,result.duplicate?200:202,result);
     }
     if (req.method === 'POST' && url.pathname.startsWith('/webhooks/tradingview/')) {
