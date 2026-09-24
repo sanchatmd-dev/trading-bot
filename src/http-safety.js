@@ -1,4 +1,4 @@
-export function readJson(req) {
+export function readJson(req, {maxBytes=65536}={}) {
   return new Promise((resolve,reject)=>{
     let size=0,done=false;
     const chunks=[];
@@ -6,7 +6,7 @@ export function readJson(req) {
     req.on('data',chunk=>{
       if(done)return; // Drain oversized bodies without retaining additional bytes.
       size+=chunk.length;
-      if(size>65536){fail('Payload too large');return;}
+      if(size>maxBytes){fail('Payload too large');return;}
       chunks.push(chunk);
     });
     req.on('end',async()=>{

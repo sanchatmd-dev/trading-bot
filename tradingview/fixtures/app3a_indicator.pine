@@ -1,0 +1,10 @@
+//@version=6
+indicator("APP-3A isolated Bridge fixture", overlay=true)
+fast = input.int(10, "Fast EMA", minval=1, maxval=100)
+slow = input.int(30, "Slow EMA", minval=1, maxval=200)
+fastEma = ta.ema(close, fast)
+slowEma = ta.ema(close, slow)
+buy = ta.crossover(fastEma, slowEma)
+sell = ta.crossunder(fastEma, slowEma)
+plot(fastEma, "Fast", color=color.blue)
+plot(slowEma, "Slow", color=color.orange)

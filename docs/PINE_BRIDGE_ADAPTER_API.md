@@ -1,6 +1,6 @@
 # Pine Script Bridge Adapter API — Step 2 plan
 
-Status: proposed APP-3A / M2 requirements. This revision replaces automatic strategy conversion and optimization of every source parameter with indicator-only generation and 2 mandatory Bridge numeric slots plus up to 8 user-mapped numeric source slots. Implementation and acceptance evidence remain pending.
+Status: APP-3A / M2 requirements; implementation in progress. This revision replaces automatic strategy conversion and optimization of every source parameter with indicator-only generation and 2 mandatory Bridge numeric slots plus up to 8 user-mapped numeric source slots. The [implementation record](APP_3A_IMPLEMENTATION.md) records the APIs, trusted-data receiver/worker, 45 isolated PostgreSQL passes and simple TradingView compile evidence. Real source-specific readiness remains pending; the APP-3A exit gate has not passed.
 
 ## Scope and transformation
 
@@ -154,3 +154,21 @@ Apply stage-specific thresholds. Return a reviewable draft without waiting for Q
 
 Return mappings, Bridge block when eligible, bindings, instruction versions, diagnostics and a concise webhook guide. Keep BUY and scoped reduce-only exits distinct; the worker controls fills, inventory, quantity and risk. Never output secrets, change policy, start a Bot or claim live deployment.
 ```
+
+## Implemented API additions (APP-3A)
+
+All private routes below require the existing authenticated owner, active Bot ownership and write CSRF/Origin checks. They are disabled when `PINE_BRIDGE_ENABLED=0`.
+
+| Route | Body / behavior |
+| --- | --- |
+| `POST /api/quant/pine-bridge/analyze` | Initial source: `bot_id`, `pine_source`, `source_name`; optional typed `effective_inputs`. Revision: additionally `pine_import_id` and next integer `source_version`. Requires `Idempotency-Key`; returns durable job identity. |
+| `POST /api/quant/pine-bridge/generate` | Exact source version, confirmed `selected_signals`, `parameter_slots`, independent `bridge_options`, and market. Requires successful analysis and `Idempotency-Key`; returns a draft job. |
+| `GET /api/quant/pine-bridge/jobs/{id}` | Owner-scoped state, diagnostic, usage/attempts and artifact when successful. |
+| `POST /api/quant/pine-bridge/jobs/{id}/cancel` | Empty JSON object; late provider results cannot publish an artifact. |
+| `POST /api/quant/pine-bridge/sources/{id}/membership` | `bot_id`, `connected` boolean. Invalidates existing entry routes when membership changes. |
+| `POST /api/quant/pine-bridge/deployments/{id}/activate` | Empty JSON object. Requires trusted source-specific evidence and current snapshot; replaces old READY routes with EXIT_ONLY. Does not start a Bot. |
+| `POST /webhooks/pine-bridge/v1/{secret}` | Strict versioned event; owner/Bot resolved from current secret, exact deployment scope, verified closed bar and trusted evidence. Returns 202 for new queue intake, 200 for identical duplicate. Worker acceptance is separate from intake. |
+
+Backend uses a deterministic template; AI returns reviewed mapping proposals rather than executable code. Numeric source slots bind existing inputs. Effective values differing from original defaults must be applied through existing TradingView settings and recorded in the review; preserving original bytes does not apply those settings automatically.
+
+Initial AI processing additionally limits each source line to 4,096 UTF-8 bytes (`SOURCE_LINE_TOO_LONG`) before tokenization. The trusted collector currently covers Binance Global USDT spot only. Unsupported markets remain drafts pending their data adapter and evidence. See the [implementation record](APP_3A_IMPLEMENTATION.md) for supported operations, test evidence and rollout gates.

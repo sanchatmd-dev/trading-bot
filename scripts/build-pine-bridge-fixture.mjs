@@ -1,0 +1,10 @@
+import fs from 'node:fs/promises';
+import {inspectSource,validateSelection,hash} from '../src/pine-bridge/source.js';
+import {assemble} from '../src/pine-bridge/template.js';
+const source=await fs.readFile(new URL('../tradingview/fixtures/app3a_indicator.pine',import.meta.url),'utf8');
+const analysis=inspectSource(source);
+const selection=validateSelection(analysis,{buy:'buy',exit:'sell',timing:'bar_close'},analysis.inputs.map((i,index)=>({slot:index+3,input_id:i.input_id,min:1,max:100,step:1})));
+const result=assemble(source,selection,{deployment_id:'12345678-1234-1234-1234-123456789abc',pine_import_id:'12345678-1234-1234-1234-123456789def',source_version:1,broker:'binance-global',symbol:'BTCUSDT',timeframe:'1D'});
+if(!process.argv[2])throw new Error('Provide a new output path');
+await fs.writeFile(process.argv[2],result.integrated_pine,{flag:'wx'});
+console.log(JSON.stringify({source_hash:hash(source),artifact_hash:hash(result.integrated_pine),status:result.artifact_status}));

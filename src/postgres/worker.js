@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {evaluateRisk} from './risk.js';
 import {D,amount} from '../money.js';
 import {decryptJson} from '../security.js';
+import {prepareBridgeExecution,roundBridgeOrder,completeBridgeExecution} from './pine-bridge-execution.js';
 
 export class ExecutionWorker {
   constructor({store,config,id=randomUUID(),beforeCommit}){Object.assign(this,{store,config,id,beforeCommit});}
@@ -20,28 +21,38 @@ export class ExecutionWorker {
       await db.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').get(job.user_id);
       await db.prepare("UPDATE signals SET status='PROCESSING' WHERE id=?").run(job.id);
       const signal=JSON.parse(job.payload),user=await this.store.userById(job.user_id),main=await this.store.userById(owner.id);
-      let reason;
+      let reason,bridgeModel;
       if(job.execution_mode!=='PAPER')reason='Live execution is locked';
       else if(user?.status!=='ACTIVE'||main?.status!=='ACTIVE')reason='User or main account is suspended';
       else{
+        if(signal.bridge){
+          try{bridgeModel=await prepareBridgeExecution(this.store,job,signal,this.config.defaultRisk);}
+          catch(error){if(!error.code||/^[0-9A-Z]{5}$/.test(error.code))throw error;reason=error.code;}
+        }
         const session=await this.store.getBotSession(job.user_id);
-        if(session.state==='STOPPED')reason='Bot is stopped: no signals accepted';
+        if(reason){} // Preserve the scoped Bridge rejection before legacy risk work.
+        else if(session.state==='STOPPED')reason='Bot is stopped: no signals accepted';
         else if(session.state==='PAUSED'&&signal.side!=='SELL')reason='Bot is paused: only reduce-only exits are accepted';
         else if(session.state==='PAUSED'&&!signal.reduceOnly)reason='Bot is paused: only reduce-only exits are accepted';
         else{
           // Use frozen policy when RUNNING; fall back to live policy for SETUP/PAUSED
-          const rawPolicy=session.state==='RUNNING'&&session.locked_policy?JSON.parse(session.locked_policy):null;
+          const rawPolicy=(session.state==='RUNNING'||signal.bridge)&&session.locked_policy?JSON.parse(session.locked_policy):null;
           const policy=rawPolicy||await this.store.risk(user.id,this.config.defaultRisk),exposure=await this.store.exposure(job),account=await this.store.paperAccount(user.id,job.broker);
           if(exposure.uncertain)reason='Unresolved order outcome: operator reconciliation required';
           else{
             const targetAllocation = signal.targetTradeId ? await this.store.ledgerTargetAllocation(job, signal.targetTradeId) : null;
+            const cashBudget=D(account.cash).minus(exposure.reservedNotional).div(bridgeModel&&signal.side==='BUY'?D(1).plus(D(bridgeModel.fee_bps).div(10000)):1);
             const result=evaluateRisk(signal,{policy,daily:await this.store.ledgerDaily(job),position:await this.store.ledgerPosition(job),targetAllocation,equity:account.bookEquity,balance:account.cash,
-              cashAvailable:amount(D(account.cash).minus(exposure.reservedNotional)),licensed:main.role==='ADMIN'||await this.store.hasActiveLicense(main.id),globalKill:await this.store.getSetting('globalKill',false),...exposure});
+              cashAvailable:amount(cashBudget),licensed:main.role==='ADMIN'||await this.store.hasActiveLicense(main.id),globalKill:await this.store.getSetting('globalKill',false),...exposure});
             if(!result.ok)reason=result.reason;
             else{
-              const order={...result.order,clientOrderId:job.client_order_id};
-              await this.store.persistIntent(job,order);
-              await this.store.recordExecution(job,{status:'FILLED',orderId:'PAPER-'+job.client_order_id,executedQty:order.quantity,quoteQty:order.notional,deltaFeeQuote:'0',raw:{paper:true,status:'FILLED',feesSimulated:false}},order);
+              let order={...result.order,clientOrderId:job.client_order_id},fee='0';
+              if(bridgeModel){try{({order,fee}=roundBridgeOrder(order,bridgeModel));}catch(error){reason=error.code;}}
+              if(!reason){
+                await this.store.persistIntent(job,order);
+                await this.store.recordExecution(job,{status:'FILLED',orderId:'PAPER-'+job.client_order_id,executedQty:order.quantity,quoteQty:order.notional,deltaFeeQuote:fee,raw:{paper:true,status:'FILLED',feesSimulated:!!bridgeModel,...(bridgeModel?{executionModel:bridgeModel,signalReference:signal.bridge}:{} )}},order);
+                if(signal.bridge)await completeBridgeExecution(this.store,job,signal,'FILLED');
+              }
             }
           }
         }
@@ -50,6 +61,7 @@ export class ExecutionWorker {
         await this.store.complete(job.id,'REJECTED',{error:reason});
         await this.store.audit(job.user_id,'risk.rejected',job.trade_id,{reason});
         await db.prepare('INSERT INTO notification_outbox(user_id,subject,body) VALUES(?,?,?)').run(job.user_id,'Robot trade rejected '+job.trade_id,reason);
+        if(signal.bridge)await completeBridgeExecution(this.store,job,signal,'REJECTED');
       }
       // A crash anywhere before commit rolls back claim, risk checks, fills and ledger together.
       await this.beforeCommit?.(job);

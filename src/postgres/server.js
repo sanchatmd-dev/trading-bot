@@ -16,11 +16,19 @@ import {Auth} from './auth.js';
 import {D,Money,amount,exact} from '../money.js';
 import { hasPermission, adminPermission } from '../permissions.js';
 import { getQuota } from './quotas.js';
+import {PineBridgeService,pineBridgeRoutes} from './pine-bridge.js';
+import {receiveBridge} from './pine-bridge-receiver.js';
 assertProductionConfig();
 const database = new PostgresDatabase();
 await database.runtimeLock();
 await database.verifySchema();
 const store = new Store(database);
+const pineBridgeEnabled=process.env.PINE_BRIDGE_ENABLED==='1';
+if(pineBridgeEnabled) {
+  const rows=(await database.query('SELECT version FROM pine_bridge_schema')).rows;
+  if(rows.length!==1||rows[0].version!==1)throw new Error('Initialize Pine Bridge extension 1 offline');
+}
+const pineBridgeService=new PineBridgeService(store,{defaultRisk:config.defaultRisk});
 const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
 await database.transaction(async()=>{
 await database.lock('robot:bootstrap');
@@ -268,6 +276,7 @@ async function userRoutes(req, res, url) {
   if (!hasPermission(actor, req.method === 'GET' ? 'own:read' : 'own:write')) return json(res, 403, {
     error: 'Permission denied'
   });
+  if(await pineBridgeRoutes(req,res,url,actor,pineBridgeService,json,{enabled:pineBridgeEnabled}))return;
   try { if (await quantBridge(req, res, url, actor, store)) return; }
   catch (error) { return json(res, 503, {error: 'Quant Lab engine is unavailable'}); }
   if (req.method !== 'GET' && (url.pathname === '/api/me/webhook-secret' || url.pathname.startsWith('/api/brokers/')) || url.pathname === '/api/me/password') await auth.sensitive(req);
@@ -861,6 +870,11 @@ async function handleRequest(req, res) {
     }
     if (url.pathname.startsWith('/api/')) auth.checkOrigin(req);
     if (url.pathname.startsWith('/api/auth/')) return await auth.routes(req, res, url);
+    if(req.method==='POST'&&url.pathname.startsWith('/webhooks/pine-bridge/v1/')) {
+      if(!pineBridgeEnabled)return json(res,503,{code:'PINE_BRIDGE_DISABLED'});
+      const result=await receiveBridge(store,url.pathname.slice('/webhooks/pine-bridge/v1/'.length),await readJson(req),{defaultRisk:config.defaultRisk});
+      return json(res,result.duplicate?200:202,result);
+    }
     if (req.method === 'POST' && url.pathname.startsWith('/webhooks/tradingview/')) {
       const secret = decodeURIComponent(url.pathname.slice('/webhooks/tradingview/'.length)),
         user = await store.userByWebhook(secret);
