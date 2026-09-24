@@ -4,6 +4,7 @@ import {providerConfig,budgetFor} from '../pine-bridge/provider.js';
 import {readJson} from './http.js';
 import {membershipSnapshot,effectiveInputs,invalidateEntries,setMembership} from './pine-bridge-registry.js';
 import {activateDeployment} from './pine-bridge-readiness.js';
+import {createCapture,captureStatus} from './pine-capture.js';
 
 const terminal=new Set(['SUCCEEDED','FAILED','TIMED_OUT','CANCELLED','OUTCOME_UNKNOWN']);
 export class PineBridgeService {
@@ -89,11 +90,25 @@ export class PineBridgeService {
   }
 }
 
-export async function pineBridgeRoutes(req,res,url,actor,service,json,{enabled=false}={}) {
+export async function pineBridgeRoutes(req,res,url,actor,service,json,{enabled=false,captureEnabled=false,capturePublicOrigin=''}={}) {
   if(!url.pathname.startsWith('/api/quant/pine-bridge/'))return false;
   if(!enabled)throw fail('PINE_BRIDGE_DISABLED',503);
   const base='/api/quant/pine-bridge/';
   const operation=url.pathname.slice(base.length);
+  const capture=operation.match(/^deployments\/([a-f0-9-]{36})\/capture$/);
+  const session=operation.match(/^captures\/([a-f0-9-]{36})(\/close)?$/);
+  if(capture||session){
+    if(!captureEnabled)throw fail('PINE_CAPTURE_DISABLED',503);
+    if(capture&&req.method==='POST'){
+      const created=await createCapture(service,actor.id,capture[1],await readJson(req));
+      json(res,201,{...created,...(capturePublicOrigin?{capture_url:capturePublicOrigin+created.capture_path}:{})});return true;
+    }
+    if(session&&((req.method==='GET'&&!session[2])||(req.method==='POST'&&session[2]))){
+      if(session[2])keys(await readJson(req),[]);
+      json(res,200,await captureStatus(service,actor.id,session[1],!!session[2]));return true;
+    }
+    throw fail('NOT_FOUND',404);
+  }
   const member=operation.match(/^sources\/([a-f0-9-]{36})\/membership$/);
   if(req.method==='POST'&&member){json(res,200,await setMembership(service,actor.id,member[1],await readJson(req)));return true;}
   const deployment=operation.match(/^deployments\/([a-f0-9-]{36})\/activate$/);

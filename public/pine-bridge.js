@@ -52,6 +52,27 @@
       const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));state.urls.push(a.href);a.download=name;a.textContent='Download '+name;const p=document.createElement('p');p.append(a);el('pbDownloads').append(p);
     }
     el('pbDiagnostics').textContent=JSON.stringify({status:result.artifact_status,bridge:result.bridge_capability,quant:result.quant_capability,diagnostics:result.diagnostics},null,2);
+    const capture=document.createElement('button');capture.type='button';capture.textContent='Create staging capture URL';
+    const note=document.createElement('p');note.textContent='Capture records webhook evidence only. It does not execute trades or make the draft ready.';
+    el('pbDownloads').append(note,capture);
+    capture.addEventListener('click',async()=>{
+      const epoch=state.epoch;capture.disabled=true;
+      try{
+        const session=await api('/api/quant/pine-bridge/deployments/'+result.deployment_id+'/capture',{method:'POST',botId:state.bot,silent:true,body:JSON.stringify({ttl_seconds:604800})});
+        if(epoch!==state.epoch)return;
+        const url=document.createElement('input');url.readOnly=true;url.value=session.capture_url??session.capture_path;url.setAttribute('aria-label',session.capture_url?'Private staging capture URL':'Capture path; public staging origin is not configured');
+        const resultBox=document.createElement('pre'),refresh=document.createElement('button'),close=document.createElement('button');refresh.type=close.type='button';refresh.textContent='Refresh capture evidence';close.textContent='Close capture';
+        const check=async(stop=false)=>{
+          try{
+            const record=await api('/api/quant/pine-bridge/captures/'+session.capture_id+(stop?'/close':''),stop?{method:'POST',botId:state.bot,silent:true,body:'{}'}:undefined);
+            if(epoch!==state.epoch)return;
+            resultBox.textContent=JSON.stringify(record,null,2);if(stop){url.value='';refresh.disabled=close.disabled=true;}
+          }catch(error){if(epoch===state.epoch)status(error.message);}
+        };
+        refresh.addEventListener('click',()=>check());close.addEventListener('click',()=>check(true));
+        el('pbDownloads').append(url,refresh,close,resultBox);await check();
+      }catch(error){if(epoch===state.epoch){status(error.message);capture.disabled=false;}}
+    });
   }
   async function poll(){
     const epoch=state.epoch;

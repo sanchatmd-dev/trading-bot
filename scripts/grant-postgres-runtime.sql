@@ -13,5 +13,8 @@ DO $$ BEGIN
     REVOKE INSERT,UPDATE,DELETE ON pine_bridge_schema FROM robot_app;
     REVOKE INSERT,UPDATE,DELETE ON pine_bridge_evidence,pine_market_bars FROM robot_app;
   END IF;
+  IF to_regclass('public.pine_capture_schema') IS NOT NULL THEN
+    REVOKE INSERT,UPDATE,DELETE ON pine_capture_schema FROM robot_app;
+  END IF;
 END $$;
 -- Reapply after future migrations; do not grant DDL or automatic ownership.

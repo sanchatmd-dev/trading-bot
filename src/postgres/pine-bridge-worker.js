@@ -1,10 +1,10 @@
 import {randomUUID} from 'node:crypto';
 import {assemble,validateProposal} from '../pine-bridge/template.js';
 import {hash,canonical,fail} from '../pine-bridge/source.js';
-import {OpenAIProvider} from '../pine-bridge/provider.js';
+import {DirectProvider} from '../pine-bridge/gemini.js';
 
 export class PineBridgeWorker {
-  constructor({service,provider=new OpenAIProvider(),clock=Date.now}){this.service=service;this.db=service.db;this.provider=provider;this.clock=clock;}
+  constructor({service,provider=new DirectProvider(),clock=Date.now}){this.service=service;this.db=service.db;this.provider=provider;this.clock=clock;}
   async sweep() {
     const now=this.clock();
     await this.db.prepare("UPDATE pine_bridge_jobs SET status='TIMED_OUT',diagnostic='JOB_DEADLINE_EXCEEDED',updated_at=? WHERE status IN ('QUEUED','RETRY_WAIT','RUNNING','VALIDATING') AND deadline<=?").run(now,now);

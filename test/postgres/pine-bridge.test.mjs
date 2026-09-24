@@ -7,6 +7,7 @@ import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {PineBridgeWorker} from '../../src/postgres/pine-bridge-worker.js';
 import {receiveBridge} from '../../src/postgres/pine-bridge-receiver.js';
+import {createCapture,captureStatus,receiveCapture} from '../../src/postgres/pine-capture.js';
 import {config} from '../../src/config.js';
 import {fail} from '../../src/pine-bridge/source.js';
 import {hash,canonical} from '../../src/pine-bridge/source.js';
@@ -38,6 +39,7 @@ before(async()=>{
   await assert.rejects(db.transaction(async()=>{await db.query(migration);throw new Error('rollback rehearsal');}));
   assert.equal((await db.query("SELECT to_regclass('public.pine_sources') present")).rows[0].present,null);
   await db.transaction(()=>db.query(migration));store=new Store(db);service=new PineBridgeService(store,{defaultRisk:config.defaultRisk,getProvider});
+  await db.query(await fs.readFile(new URL('../../src/postgres/pine-capture-schema.sql',import.meta.url),'utf8'));
 });
 after(async()=>{await db?.close();if(admin){if(databaseName)await admin.query('DROP DATABASE '+databaseName);await admin.close();}});
 async function owner(){const row=await store.createUser({email:randomUUID()+'@example.test',passwordHash:'fixture',role:'ADMIN'});await store.setRisk(row.id,structuredClone(config.defaultRisk));return row.id;}
@@ -133,6 +135,37 @@ function event(d,time,{type='BUY',entryTime=time,reason='NATIVE'}={}) {
   return {schema_version:'bridge-exit-v1',...d.snapshot.market,event_id:type==='BUY'?ref+':BUY':ref+':'+time+':EXIT',event_type:type,entry_ref:ref,bar_time:time,sequence:0,...(type==='BUY'?{close:100,atr:5}:{reason})};
 }
 async function execute(){const worker=new ExecutionWorker({store,config});for(let i=0;i<200&&(await store.health()).queued;i++)await worker.tick();}
+
+test('draft capture records delivery and duplicates without enqueuing or fabricating readiness',async()=>{
+  const a=await owner(),b=await owner(),d=await draft(a),now=Date.now();
+  const c=await db.transaction(()=>createCapture(service,a,d.deployment_id,{},now)),token=c.capture_path.split('/').at(-1);
+  await assert.rejects(db.transaction(()=>captureStatus(service,b,c.capture_id)),{code:'NOT_FOUND'});
+  const payload=event(d,now-1000),first=await receiveCapture(service,token,payload,now);
+  assert.equal(first.captured,true);assert.equal(first.execution_enabled,false);
+  assert.equal((await receiveCapture(service,token,payload,now)).duplicate,true);
+  assert.equal((await receiveCapture(service,token,{...payload,atr:6},now)).code,'EVENT_CONFLICT');
+  assert.equal((await receiveCapture(service,token,{message:'native payload'},now)).captured,false);
+  const status=await db.transaction(()=>captureStatus(service,a,c.capture_id));
+  assert.equal(status.received,1);assert.equal(status.duplicates,1);assert.equal(status.rejected,2);
+  assert.equal(status.events.length,1);assert.equal('token_hash' in status,false);
+  assert.equal((await db.prepare('SELECT count(*) n FROM signals WHERE user_id=?').get(a)).n,0);
+  assert.equal((await db.prepare('SELECT count(*) n FROM pine_bridge_evidence WHERE deployment_id=?').get(d.deployment_id)).n,0);
+  await assert.rejects(db.transaction(()=>activateDeployment(service,a,d.deployment_id)),{code:'BRIDGE_EXECUTION_EVIDENCE_REQUIRED'});
+  await db.transaction(()=>captureStatus(service,a,c.capture_id,true));
+  await assert.rejects(receiveCapture(service,token,payload,now),{code:'CAPTURE_EXPIRED'});
+});
+
+test('capture rotation, expiry, schema scope and quota remain fail closed',async()=>{
+  const a=await owner(),d=await draft(a),now=Date.now();
+  const first=await db.transaction(()=>createCapture(service,a,d.deployment_id,{ttl_seconds:60},now));
+  const second=await db.transaction(()=>createCapture(service,a,d.deployment_id,{ttl_seconds:60},now));
+  await assert.rejects(receiveCapture(service,first.capture_path.split('/').at(-1),event(d,now),now),{code:'CAPTURE_EXPIRED'});
+  const token=second.capture_path.split('/').at(-1);
+  assert.equal((await receiveCapture(service,token,{...event(d,now),pine_import_id:randomUUID()},now)).code,'DEPLOYMENT_MISMATCH');
+  await db.prepare('UPDATE pine_capture_sessions SET duplicates=1000 WHERE capture_id=?').run(second.capture_id);
+  await assert.rejects(receiveCapture(service,token,event(d,now),now),{code:'CAPTURE_LIMIT'});
+  await assert.rejects(receiveCapture(service,token,event(d,now),now+60001),{code:'CAPTURE_EXPIRED'});
+});
 
 test('Bridge accepted fill maps one allocation; retries and scoped exits cannot affect another Bot',async()=>{
   const a=await owner(),b=await owner(),x=await ready(a),y=await ready(b),time=Date.now()-5000;
