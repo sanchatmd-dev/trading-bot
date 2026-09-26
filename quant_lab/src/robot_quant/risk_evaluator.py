@@ -4,6 +4,7 @@ Evaluates signals deterministically against account policies, daily exposure,
 capital availability, volatility/news guards, and sizing rules.
 """
 
+import math
 from dataclasses import dataclass
 from decimal import Decimal, localcontext
 from typing import Any
@@ -47,6 +48,7 @@ class PositionState:
 @dataclass(frozen=True)
 class TargetAllocationState:
     remaining_quantity: Decimal
+
 
 @dataclass(frozen=True)
 class RiskContext:
@@ -128,7 +130,7 @@ def evaluate_risk(signal: dict[str, Any], context: RiskContext) -> RiskEvaluatio
 
     if not is_exit and policy.block_high_volatility:
         vol = signal.get("volatilityPercent", signal.get("volatility_percent"))
-        if vol is None or not isinstance(vol, (int, float)):
+        if isinstance(vol, bool) or not isinstance(vol, (int, float)) or not math.isfinite(vol):
             return reject("Missing volatility data")
         if float(vol) > policy.max_volatility_percent:
             return reject("High volatility block is active")
@@ -171,13 +173,16 @@ def evaluate_risk(signal: dict[str, Any], context: RiskContext) -> RiskEvaluatio
     if is_spot and side == "SELL" and position.quantity <= 0:
         return reject("No Spot position available to sell")
 
+    target_trade_id = signal.get("targetTradeId", signal.get("target_trade_id"))
+    if is_exit and target_trade_id:
+        if not context.target_allocation or context.target_allocation.remaining_quantity <= 0:
+            return reject("Target allocation not found or already closed")
+
     try:
         with localcontext() as ctx:
             ctx.prec = PRECISION_CONTEXT
             raw_price = (
-                signal.get("limitPrice")
-                or signal.get("entry")
-                or signal.get("referencePrice", 0)
+                signal.get("limitPrice") or signal.get("entry") or signal.get("referencePrice", 0)
             )
             price = D(raw_price) if raw_price is not None else Decimal(0)
             if price <= 0:
@@ -216,7 +221,7 @@ def evaluate_risk(signal: dict[str, Any], context: RiskContext) -> RiskEvaluatio
             sizing_adjustment = None
 
             if is_exit and not quantity and not quote_quantity:
-                if context.target_allocation:
+                if target_trade_id:
                     quantity = context.target_allocation.remaining_quantity
                 else:
                     quantity = position.quantity
@@ -262,29 +267,18 @@ def evaluate_risk(signal: dict[str, Any], context: RiskContext) -> RiskEvaluatio
                 return reject("Unable to calculate quantity")
 
             if is_exit:
-                target_trade_id = signal.get("targetTradeId", signal.get("target_trade_id"))
-                if context.target_allocation:
-                    alloc_rem = context.target_allocation.remaining_quantity
-                    if alloc_rem <= 0:
-                        return reject("Target allocation not found or already closed")
-                    
-                    if quantity > alloc_rem:
-                        sizing_adjustment = {
-                            "requestedQuantity": amount(quantity),
-                            "quantity": amount(alloc_rem),
-                            "reason": "Capped to remaining target allocation quantity",
-                        }
-                        quantity = alloc_rem
-                else:
-                    if target_trade_id:
-                        return reject("Target allocation not found or already closed")
-                    if quantity > position.quantity:
-                        sizing_adjustment = {
-                            "requestedQuantity": amount(quantity),
-                            "quantity": amount(position.quantity),
-                            "reason": "Capped to remaining aggregate position quantity",
-                        }
-                        quantity = position.quantity
+                max_exit = (
+                    min(context.target_allocation.remaining_quantity, position.quantity)
+                    if target_trade_id
+                    else position.quantity
+                )
+                if quantity > max_exit:
+                    sizing_adjustment = {
+                        "requestedQuantity": amount(quantity),
+                        "quantity": amount(max_exit),
+                        "reason": "Capped to available target allocation quantity",
+                    }
+                    quantity = max_exit
 
             notional = D(amount(quantity * price))
             if notional <= 0:

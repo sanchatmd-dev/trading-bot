@@ -1,0 +1,166 @@
+{
+  "phase": "QL-2A",
+  "status": "BASELINE_CANDIDATE",
+  "optimization_supported": false,
+  "candidate_acceptance_ready": true,
+  "profile": "spt-spot-v4-daily-1m-htf-off-candidate-v1",
+  "effective_dependency_coverage": {
+    "scope": "Reviewed hash-bound fixed Daily/Swing Spot profile only; not a generic Pine construct analyzer",
+    "active_dependency_coverage_percent": 100,
+    "unsupported_active_constructs": 0,
+    "selected_dynamic_slots": 0,
+    "fixed_source_inputs": 58,
+    "bridge_slots": 2,
+    "active_dependencies": [
+      "EMA50/200",
+      "ATR14",
+      "Supertrend3.2",
+      "zone1.15ATR",
+      "setup48bars",
+      "cooldown8bars",
+      "confirmationAny/lookback5",
+      "ZoneATR stop buffer0.60/minRisk0.50",
+      "Spot Long+Exit"
+    ],
+    "disabled_signal_filters": [
+      "HTF",
+      "RSI",
+      "session",
+      "BOS",
+      "sweep"
+    ],
+    "limitation": "Unsupported source/settings/bindings fail closed. Changed dimensions need evaluator/search-domain evidence before QL-3A optimization."
+  },
+  "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "artifact_hash": "4062f7a39e15ee9f92f1bbe7ab742098e9deb4823be0ffa9c6f6b3571b71867d",
+  "snapshot_hash": "d61ee4bcbab344c3b547408e70cce9167bbacb79955345fcd14ee7bff2ad59ff",
+  "csv_sha256": "4cf17cd5d88065e2975778fc18c1724a8ac7696b3aacee519990fe6cf52080d4",
+  "closed_bars": 5185,
+  "excluded_final_realtime_rows": 1,
+  "warmup": 1006,
+  "compared_bars": 4179,
+  "native_buy": 47,
+  "native_exit": 65,
+  "native_changed_bars": 0,
+  "first_native_mismatches": [],
+  "node_paper_comparison": {
+    "differences": {
+      "event_count": 0,
+      "event_identity_or_reason": 0,
+      "level_ticks": 0,
+      "decision_count": 0,
+      "accept_reject": 0,
+      "quantity_steps": 0,
+      "price_ticks": 0,
+      "fee": 0,
+      "allocation_targets": 0,
+      "sizing_outcome_or_reason": 0,
+      "sizing_quantities": 0,
+      "remaining_quantity": 0,
+      "open_allocation_count": 0
+    },
+    "per_entry_cash_max_delta": "0",
+    "final_cash_delta": "0E-18",
+    "final_position_cost_delta": "0E-18",
+    "matched": true,
+    "compared_decisions": 92,
+    "quantity_step": "0.00001",
+    "price_tick": "0.01"
+  },
+  "market_alignment": {
+    "compared_bars": 5185,
+    "measured_bars": 4179,
+    "unmatched": 0,
+    "ohlcv_mismatched": 0,
+    "frozen_rows_compared": 2842,
+    "frozen_ohlcv_mismatched": 0,
+    "matched": true,
+    "market_retrieved_at": 1790405373399,
+    "source": "https://api.binance.com/api/v3/klines",
+    "limitation": "Historical REST retrieval validates final OHLCV, not their availability at an earlier point-in-time."
+  },
+  "repaint_comparison": {
+    "recorded_closed_observations": 130,
+    "compared_to_later_history": 130,
+    "not_in_historical_export": 0,
+    "changed": 0,
+    "required": 100,
+    "matched": true,
+    "capture_id": "292cfaef-3f9a-42c8-a862-d28ea2396f40",
+    "capture_exported_at": 1790412754561
+  },
+  "paper_model": {
+    "price_tick": "0.01",
+    "quantity_step": "0.00001",
+    "fee_bps": "10",
+    "slippage_bps": "1",
+    "risk_percent": "1",
+    "version": "paper-close-v1"
+  },
+  "paper_summary": {
+    "prefix_intents": 42,
+    "measured_decisions": 92,
+    "fills": 6,
+    "rejected": 86,
+    "final_cash": "990.402124535600000000",
+    "open_allocations": 0,
+    "rejection_reasons": {
+      "Maximum daily loss reached": 41,
+      "TARGET_NOT_OPEN": 43,
+      "Trading paused after loss streak": 2
+    },
+    "filled_sizing_outcomes": {
+      "CAPPED": 3,
+      "ACCEPTED": 3
+    }
+  },
+  "initialization": {
+    "method": "reviewed_Pine_state_checkpoint; replay continuously without warmup reset; begin empty Bot ledger at measurement boundary",
+    "largest_effective_lookback": 200,
+    "first_bar": 1790094060000,
+    "measurement_first_bar": 1790154420000,
+    "original_chart_prefix_known": false,
+    "checkpoint": {
+      "index": 5,
+      "bar_time": 1790094360000,
+      "trace_artifact_hash": "e4b56b78eada15e7b47bca5955ed2c15699553f43210d1b63aec000d6a552a10",
+      "chart_review_sha256": "4500646e3d92ba26935b7eec1809c78a0a6f8f1ed1f43d98b8c03154ac21a2d8"
+    },
+    "source_state_changed_bars": 0,
+    "maximum_numeric_state_error": 5.238689482212067e-10,
+    "numeric_state_roundoff_budget": 1e-07
+  },
+  "blockers": [],
+  "limitations": [
+    "Hash-specific candidate only; arbitrary Pine, enabled HTF/RSI/pivots/session and changed source selections are unsupported.",
+    "Serial fully-filled Paper projection uses production Node risk and Bridge functions as an oracle; this does not exercise PostgreSQL transactions or authentication.",
+    "Warmup keeps source/Bridge state but creates no Paper fills. Unaccepted prefix entries can yield TARGET_NOT_OPEN exits.",
+    "Fees/slippage are explicit; quiet-market entries may be rejected when adverse BUY price exceeds TP."
+  ],
+  "input_provenance": {
+    "private_bundle_sha256": "a2b3da0d55d791ae9024f7526ae68c453c2fa48043ba127e21a7da9b5b338576",
+    "independent_market_sha256": "492ee6662fcc241ddef8f92f582916c12c7edbaaacef10cb705e1f6877100154",
+    "chart_export_source_binding_verified": true,
+    "native_capture_sha256": "ae26dee53e9c5598634b7354ffc7f97e1b1b0063bf250de899e89ee5a6316af5",
+    "later_repaint_csv_sha256": "46045b84cfdcd7656e1eb0bbb5a2690ec46d8bb3e89fef2c715ee77d10f89479",
+    "note": "Dedicated trace hash plus operator chart input/compile review; CSV state/native columns select that trace unambiguously."
+  },
+  "implementation_sha256": {
+    "quant_lab/src/robot_quant/ql2a.py": "73ecadec45dba0deb652a9f8397921ac8e87fecd3e8243cece35ec332cffd952",
+    "quant_lab/src/robot_quant/spt_evaluator.py": "59d57efe5811330256ecafe2a95fae16668e5d67c911b5d9e704f75a10d3231b",
+    "quant_lab/src/robot_quant/spt_checkpoint.py": "25e4dc88ec3d320087d2952a303439c10218bee397352c1eced00eec509f5b87",
+    "quant_lab/src/robot_quant/spt_repaint.py": "cef50f057ee93c830eef0fe2460def52073fadc0610ea2b061f5075bc7ef1149",
+    "quant_lab/src/robot_quant/bridge_replay.py": "ad6a9f60c8134b25e81c976ea009cbec843dc3d8a9bd3fd3cd5e8577b6639d02",
+    "quant_lab/src/robot_quant/bridge_paper.py": "8c777beb0c16dee12d681bce6ba527bafbe9cda0c9885d1b49d5da35d435d425",
+    "quant_lab/src/robot_quant/risk_evaluator.py": "9afff97912921f11592da9c9fdce124c73b1ecd4337fe6c0808c4817124c882e",
+    "scripts/quant-bridge-reference.mjs": "8b508fac62178d5b94211f7fec738468b5d5da74ec2784828e333cce6fbb44b7",
+    "src/postgres/risk.js": "f0d8959a1560011d6359a24042e6755bd539fb8ba5eeeaf920b2c16258506e83",
+    "src/postgres/ledger.js": "dc71af1ec7b18be474eab1d0b08e41ad39781fa112d8fc72fa26ccff0df56bbd",
+    "src/postgres/pine-bridge-execution.js": "80b37f623de5fd5a943f90f0801f07b46f8b8f31d783fdf683b86bbc5bd1b7a7",
+    "src/pine-bridge/contract.js": "841ea612e9c9f13b3e35cc21920ef5897a99921ec0d8a4df44a2b75a85ebabb0",
+    "src/pine-bridge/source.js": "d8dab38c2ee521a597a216215a08eb0f4ff0e841e770f33ad94850f5a62a3bdc",
+    "src/money.js": "3e3b7a80fd25cb5be30fbb262c1466b26b6c6b53ecfaf34a30233f0b2e82bdcf",
+    "quant_lab/uv.lock": "ee758ad79370c8629bb7000f260cbf0f35476634fb2861357ed3609d8b45112e",
+    "package-lock.json": "30c7ead0dbc18689097313bfc9a7f8c2021d67e138a04f74b42ab5d7c4484f62"
+  }
+}

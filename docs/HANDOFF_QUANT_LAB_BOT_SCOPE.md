@@ -4,7 +4,7 @@
 
 ## Current requirement override
 
-- Phase status, 2026-09-26: APP-3A Bridge engineering accepted in staging; QL-2A may start. [Acceptance evidence](APP_3A_ACCEPTANCE_2026-09-26.md) includes hosted controlled v2 Paper BUY/targeted EXIT with real Spot collector bars and a deployment-specific manifest. The original SPT remains DRAFT/capture-only and Quant UNSUPPORTED. The isolated activation test does not authorize owner/production rollout. QL-2A must establish actual-source evaluator/initialization/parity and reproduce the recorded Paper model, including cost-related rejection.
+- Phase status, 2026-09-26: APP-3A Bridge engineering accepted in staging; QL-2A engineering baseline accepted for the reviewed fixed SPT Spot v4 profile; next is QL-3A. [APP-3A acceptance evidence](APP_3A_ACCEPTANCE_2026-09-26.md) includes hosted controlled v2 Paper BUY/targeted EXIT with real Spot collector bars and a deployment-specific manifest. The original SPT remains DRAFT/capture-only and runtime Quant UNSUPPORTED. The isolated activation test and offline QL-2A acceptance do not authorize owner/production rollout.
 
 - Indicator Pine v5/v6 only. Reject Strategy before calling AI; the user converts externally and resubmits. Backend calls AI API directly with a versioned Bridge template/AI guide; no MCP connection.
 - Exactly 2 mandatory numeric slots: Bridge ATR Multiplier for SL = 2.0 and Risk-to-Reward = 1.5. User dropdowns map 0–8 additional distinct numeric source inputs; total at most 10. Slot identities are fixed, Bridge values are optimizable.
@@ -14,6 +14,10 @@
 - R-0 follow-up complete: direct read-only database verification observed schema 14 and outbox SENT 2,946, FAILED 1,151, DISABLED 513. SMTP 550 and deploy readiness remain separate operational work. These are observed counts, not live counters.
 - APP-3A owns the versioned Bridge webhook/receiver and authenticated deployment/entry-to-allocation mapping before QL-2A. One Pine/one Bot is the first owner-facing flow; multiple-Pine optimization/export may be exercised in isolated fixtures, with owner apply/start gated by APP-3B. QL-4B builds package/report drafts; QL-4C validates before one-Pine recommendation/apply and SMTP-gated email enqueue.
 - Current flow: Connect indicator → Build Bridge → Paper → Quant Optimize once → Best Inputs + Email Report → owner review → optional new Bot start → end. No automatic optimization loop or mandatory post-export Paper cycle.
+
+### QL-2A fixed-profile baseline accepted, 2026-09-26
+
+Dedicated trace compile/input review and captured-checkpoint replay passed: 4,179 measured bars, 47 BUY/65 EXIT, zero state/flag changes; all 5,185 closed OHLCV bars agree. Python/Node matches all 92 decisions including caps and costs. Alert **QL-2A SPT Spot v4 native state CAPTURE ONLY 1m** is active using the authorized v4 session. All 130 snapshot-bound native observations from 06:43–08:52 UTC match later history with zero changes, exceeding the minimum 100; the audit has no remaining blockers. Keep the original deployment DRAFT/capture-only and runtime Quant UNSUPPORTED. Next work is QL-3A bounds/validation and parameter search for the fixed profile, initially Bridge ATR/RR only. No dynamic source slots are certified and no customer optimizer is enabled. See [QL-2A record](QL_2A_IMPLEMENTATION.md).
 
 ## Historical release record
 

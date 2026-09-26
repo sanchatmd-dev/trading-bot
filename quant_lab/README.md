@@ -3,6 +3,14 @@
 Private, isolated Python 3.12 research workspace. No production database connection,
 market download, trading, or deployment occurs during imports or tests.
 
+## QL-2A accepted fixed-profile baseline (2026-09-26)
+
+`spt_evaluator.py` implements only the hash-bound SPT Spot v4 Daily/Swing 1-minute profile with HTF/RSI/session/BOS/sweep disabled and no dynamic slots. `bridge_replay.py` models bridge-exit-v2 intents; `bridge_paper.py` models serial funded Spot fills under the complete frozen Node policy. Rejected Pine BUY intents remain in source state, and their later EXIT cannot close another allocation.
+
+The private `python -m robot_quant.ql2a` audit validates source/artifact/snapshot hashes, chart OHLCV/native flags, independent Spot candles and production Node calculation parity via `scripts/quant-bridge-reference.mjs`. `spt_checkpoint.py` restores reviewed Pine state without guessing its unseen prefix; `spt_repaint.py` compares snapshot-bound captures against later chart exports. Checkpoint/input review and the baseline pass: 4,179 measured bars, 92 matching decisions and 130/130 unchanged later-history comparisons (minimum 100). Output remains `BASELINE_CANDIDATE` with `candidate_acceptance_ready=true` and no blockers; it is not a runtime capability registration. QL-3A may define bounds/validation for this fixed profile and the Bridge ATR/RR pair. Dynamic source dimensions require corresponding evaluator/domain evidence. See [implementation and acceptance](../docs/QL_2A_IMPLEMENTATION.md).
+
+No new optimizer or customer endpoint is enabled. The older synthetic EMA capability table below describes historical demo functionality; it does not certify arbitrary Pine or the new workflow.
+
 ## Reproduce
 
 Install Python 3.12 and uv 0.12.17, then from `quant_lab/`:
