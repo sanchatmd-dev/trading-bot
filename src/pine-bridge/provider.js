@@ -20,7 +20,12 @@ export function providerConfig(env=process.env) {
 export function providerMessages(request,source) {
   // Source already contains defaults, domains and declarations. Send only the
   // identity map beside it, avoiding duplicate manifests and JSON-escaped Pine.
-  const inputs=request.analysis.inputs.map(i=>({input_id:i.input_id,pine_variable:i.pine_variable,type:i.type,eligible:i.eligible,excluded_reason:i.excluded_reason,effective_value:i.effective_value}));
+  const inputs=request.analysis.inputs.map(i=>({
+    input_id:i.input_id,pine_variable:i.pine_variable,type:i.type,eligible:i.eligible,excluded_reason:i.excluded_reason,
+    // Non-numeric owner settings may contain private IDs or notification text.
+    effective_value:['int','float','bool'].includes(i.type)?i.effective_value:
+      i.pine_variable==='preset'&&['Custom','Daily/Swing','Intraday'].includes(i.effective_value)?i.effective_value:null
+  }));
   // Generation already carries the full frozen input list above. The provider
   // needs selected identifiers, not a second copy of every fixed input record.
   const selection=request.selection?{signals:request.selection.signals,selected_input_ids:request.selection.bindings.map(b=>b.input_id)}:null;

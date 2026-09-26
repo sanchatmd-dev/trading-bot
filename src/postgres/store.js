@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { transaction } from './db.js';
 import { hashToken, randomId } from '../security.js';
 import { ledgerMethods, recordFunding } from './ledger.js';
@@ -186,6 +186,46 @@ export class Store {
   async getBotSession(userId) {
     const row = await this.db.prepare('SELECT * FROM bot_sessions WHERE user_id=?').get(userId);
     return row || { user_id: userId, state: 'SETUP', run_id: null, locked_policy: null, initial_capital: null, started_at: null, stopped_at: null };
+  }
+  async lossStreaks(userId) {
+    const today = new Date().toISOString().slice(0, 10);
+    return await this.db.prepare("SELECT s.account_id,s.loss_streak,COALESCE(d.trades>0 OR d.notional<>0 OR d.realized_r<>0,FALSE) has_today_activity FROM ledger_streak s LEFT JOIN ledger_daily d ON d.user_id=s.user_id AND d.account_id=s.account_id AND d.execution_mode=s.execution_mode AND d.day=? WHERE s.user_id=? AND s.execution_mode='PAPER' ORDER BY s.account_id").all(today, userId);
+  }
+  async rearmLossStreak(ownerId, userId, broker, reason) {
+    if (!['binance-global', 'binance-th', 'innovestx', 'settrade'].includes(broker)) throw new Error('Supported Spot broker required');
+    if (typeof reason !== 'string' || reason.trim().length < 10 || reason.trim().length > 500) throw new Error('Review reason must contain 10–500 characters');
+    return await this.db.transaction(async () => {
+      // Match worker lock order: owner first, then Bot. The re-arm is serial with fills.
+      const owner = await this.db.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').get(ownerId);
+      if (!owner || !(await this.ownsBot(ownerId, userId))) throw new Error('Bot access denied');
+      if (userId !== ownerId) await this.db.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').get(userId);
+      const session = await this.getBotSession(userId);
+      if (session.state !== 'STOPPED') throw new Error('Stop the Bot before re-arming entries');
+      if (!session.run_id || !session.locked_policy) throw new Error('A stopped Paper session with locked policy is required');
+      const accountId = `${broker}:primary`;
+      const pending = await this.db.prepare("SELECT count(*) n FROM signals WHERE user_id=? AND account_id=? AND execution_mode='PAPER' AND status IN ('QUEUED','PROCESSING','SUBMITTED','PARTIALLY_FILLED','UNKNOWN')").get(userId, accountId);
+      if (Number(pending.n)) throw new Error('Resolve pending or unknown Paper orders before re-arming');
+      const position = await this.db.prepare("SELECT count(*) n FROM ledger_positions WHERE user_id=? AND account_id=? AND execution_mode='PAPER' AND quantity>0").get(userId, accountId);
+      if (Number(position.n)) throw new Error('Close or reconcile open Paper positions before re-arming');
+      const allocations = await this.db.prepare("SELECT count(*) n FROM ledger_position_allocations WHERE user_id=? AND account_id=? AND execution_mode='PAPER' AND status='OPEN'").get(userId, accountId);
+      if (Number(allocations.n)) throw new Error('Reconcile open Paper allocations before re-arming');
+      const policy = JSON.parse(session.locked_policy);
+      const threshold = policy.pauseAfterLossStreak;
+      const saved = await this.db.prepare("SELECT loss_streak FROM ledger_streak WHERE user_id=? AND account_id=? AND execution_mode='PAPER' FOR UPDATE").get(userId, accountId);
+      const before = Number(saved?.loss_streak || 0);
+      if (!Number.isInteger(threshold) || threshold < 1 || before < threshold) throw new Error('Loss-streak pause is not active');
+      const today = new Date().toISOString().slice(0, 10);
+      const dailyActivity = await this.db.prepare("SELECT 1 FROM ledger_daily WHERE user_id=? AND account_id=? AND execution_mode='PAPER' AND day=? AND (trades>0 OR notional<>0 OR realized_r<>0)").get(userId, accountId, today);
+      if (dailyActivity) throw new Error('Wait until the next UTC day after Paper account activity before re-arming');
+      const policyHash = createHash('sha256').update(JSON.stringify(policy)).digest('hex');
+      const rearmId = randomUUID(), at = Date.now();
+      await this.db.prepare("UPDATE ledger_streak SET loss_streak=0 WHERE user_id=? AND account_id=? AND execution_mode='PAPER'").run(userId, accountId);
+      await this.audit(ownerId, 'bot.risk.loss_streak_rearmed', null, {
+        rearmId, botId: userId, accountId, mode: 'PAPER', sessionRunId: session.run_id,
+        before, after: 0, threshold, policyHash, at, reason: reason.trim()
+      });
+      return { rearm_id: rearmId, bot_id: userId, broker, previous_loss_streak: before, loss_streak: 0, at, session_state: 'STOPPED' };
+    });
   }
   async transitionBotState(userId, action, currentPolicy, paperAccounts) {
     const VALID = {

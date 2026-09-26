@@ -71,6 +71,10 @@ uv run --no-sync python quant_lab/tests/test_node_direct_parity.py
 
 SPT Spot v4 profile ที่ผูก source hash ผ่าน engineering baseline แล้ว Trace compile/อินพุตและ checkpoint initialization ผ่าน ผล 4,179 แท่งหลัง warm-up: BUY 47, EXIT 65, mismatch 0; OHLCV Spot ตรงกันทั้ง 5,185 แท่ง และ Python/Node ตรงกัน 92 decisions รวม cap/rounding/ต้นทุน Observations จาก snapshot เดียวกันตรงกับ history ล่าสุด 130/130 ครั้ง เปลี่ยนย้อนหลัง 0 ครั้ง (ขั้นต่ำ 100) เริ่ม QL-3A เพื่อกำหนด bounds/validation และค้นหา Bridge ATR/RR ได้ ส่วน dynamic source slots ยังไม่ได้รับรอง Runtime Quant ยังคง UNSUPPORTED และยังไม่เริ่ม Optimize จริง ดู [QL-2A](docs/QL_2A_IMPLEMENTATION.md)
 
+**QL-3A เริ่มแล้ว แต่ยังไม่มี Best Inputs:** ค้นหา Bridge ATR/RR แบบ offline ครบ 25 คู่ในข้อมูลที่ตรึงไว้ ทุกคู่มี closed trades ใน train 3 ครั้ง และ validation 0 ครั้ง จึงคืน `NO_VALID_CANDIDATE` โดยไม่ดูผล test เพื่อเลือกค่า ไม่ปรับ Risk Manager และไม่ส่งผลไป QL-4B ดู [QL-3A](docs/QL_3A_IMPLEMENTATION.md)
+
+งานต่อของ QL-3A: เพิ่ม evaluator เฉพาะ SPT `Custom` สำหรับ source inputs ตัวเลขที่เจ้าของเลือกสูงสุด 8 ช่อง โดยคง ATR(14) ของ Bridge แยกจาก ATR ของ Indicator แล้ว Chatbot มีขั้น Inspect แบบไม่เรียก AI ให้เจ้าของยืนยัน input ทุกค่ากับ TradingView และบันทึก hash ของ source/ค่าที่ใช้จริง ก่อนส่ง Analyze; ยังต้องตรวจ parity ใหม่ก่อนใช้งานจริง อีกส่วนเตรียมทางให้เจ้าของตรวจและ re-arm loss streak ของ Paper Bot ที่หยุดและไม่มีสถานะค้าง เพื่อเก็บข้อมูลรอบใหม่ โดยไม่เปลี่ยนกฎขาดทุนรายวันหรือผล `NO_VALID_CANDIDATE` เดิม โค้ดยังไม่ deploy ดู [รายละเอียด](docs/QL_3A_IMPLEMENTATION.md)
+
 ## Interactive Dashboard Charting — เสร็จสมบูรณ์ใน repo
 
 เพิ่มหน้าต่างกราฟราคาเทคนิคัลแบบ Interactive ด้วย TradingView `lightweight-charts` (v4+) ในหน้า Analytics:

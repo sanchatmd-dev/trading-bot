@@ -4,6 +4,8 @@ Status: planned M1 risk-policy and Bridge-settings scope under [the revised road
 
 APP-3A staging acceptance passed on 2026-09-26; [the acceptance record](APP_3A_ACCEPTANCE_2026-09-26.md) selects a canary Paper model of fee 10 bps, slippage 1 bp and risk 1%. These test settings do not modify the owner's policy or production. A 10 bps slippage rehearsal was rejected because the BUY price exceeded frozen TP. QL-2A must reproduce that guard, sizing caps and costs; an optimizer cannot move protection levels or relax Bot limits to force acceptance.
 
+QL-3A follow-up (local code, not deployed): the first fixed SPT run has zero validation trades. Paper `ledger_streak` persists through session reset, so an owner-reviewed re-arm endpoint/UI was added for one stopped, flat Paper account after pending orders are resolved and no trading/PnL activity remains on the current UTC day. It logs actor, reason, prior streak, locked-policy threshold/hash and session; it resets only the streak. Daily loss, risk policy, balances and historical trades remain unchanged. The owner must start a separate Paper session and collect new evidence; this control does not manufacture a Quant candidate. See [QL-3A](QL_3A_IMPLEMENTATION.md).
+
 ## Goal
 
 Keep one authoritative Bot Risk Policy for execution while making the user interface easier to understand and making Quant Lab use the same recorded policy. A research candidate may request settings, but it cannot raise a Bot limit, change capital, bypass a guard, or activate a Bot.

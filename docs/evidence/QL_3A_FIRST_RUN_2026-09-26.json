@@ -1,0 +1,156 @@
+{
+  "phase": "QL-3A",
+  "status": "NO_VALID_CANDIDATE",
+  "owner_recommendation_ready": false,
+  "runtime_quant_supported": false,
+  "profile": "spt-spot-v4-daily-1m-htf-off-candidate-v1",
+  "scope": "one Pine, zero selected source inputs, independent Bridge ATR/RR only",
+  "input_hashes": {
+    "bundle": "a2b3da0d55d791ae9024f7526ae68c453c2fa48043ba127e21a7da9b5b338576",
+    "baseline": "346310229aa606bd207fd77bf87d1fd3786d116f4646941115064db850a17b93",
+    "chart_csv": "4cf17cd5d88065e2975778fc18c1724a8ac7696b3aacee519990fe6cf52080d4"
+  },
+  "snapshot_hash": "d61ee4bcbab344c3b547408e70cce9167bbacb79955345fcd14ee7bff2ad59ff",
+  "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "paper_model": {
+    "price_tick": "0.01",
+    "quantity_step": "0.00001",
+    "fee_bps": "10",
+    "slippage_bps": "1",
+    "risk_percent": "1",
+    "version": "paper-close-v1"
+  },
+  "rules": {
+    "train_fraction": "0.60",
+    "validation_fraction": "0.20",
+    "test_fraction": "0.20",
+    "minimum_closed_trades_train": 5,
+    "minimum_closed_trades_validation": 5,
+    "minimum_closed_trades_test": 5,
+    "maximum_drawdown_percent": "20",
+    "minimum_validation_return_percent": "0",
+    "minimum_stressed_validation_return_percent": "0",
+    "sensitivity_max_drop_percentage_points": "2",
+    "stress_fee_multiplier": "2",
+    "stress_slippage_multiplier": "2",
+    "objective": "validation_net_return_percent",
+    "selection": "highest_validation_return_then_lower_drawdown_then_lexical_pair"
+  },
+  "domains": {
+    "atr_multiplier": [
+      "1.0",
+      "1.5",
+      "2.0",
+      "2.5",
+      "3.0"
+    ],
+    "rr": [
+      "1.0",
+      "1.5",
+      "2.0",
+      "2.5",
+      "3.0"
+    ]
+  },
+  "search_algorithm": "exhaustive_lexical_grid",
+  "seed": 0,
+  "search_budget": 25,
+  "candidate_count": 25,
+  "dimension_coverage_percent": 100,
+  "split": {
+    "warmup_bars": 1006,
+    "train": [
+      1790154420000,
+      1790304780000
+    ],
+    "validation": [
+      1790304840000,
+      1790354940000
+    ],
+    "test": [
+      1790355000000,
+      1790405100000
+    ],
+    "train_bars": 2507,
+    "validation_bars": 836,
+    "test_bars": 836,
+    "holdout_evaluations": 0
+  },
+  "source_activity": {
+    "train": {
+      "native_buy": 29,
+      "native_exit": 38
+    },
+    "validation": {
+      "native_buy": 6,
+      "native_exit": 19
+    }
+  },
+  "baseline_pair": {
+    "atr_multiplier": "2.0",
+    "rr": "1.5"
+  },
+  "baseline_train": {
+    "bars": 2507,
+    "closed_trades": 3,
+    "start_equity": "1000.00",
+    "end_equity": "990.40212453560000000000",
+    "net_return_percent": "-0.959787546440000000",
+    "max_drawdown_percent": "0.9597875464400000",
+    "profit_factor": "0E+18",
+    "gross_profit": "0",
+    "gross_loss": "9.597875464400000000"
+  },
+  "baseline_validation": {
+    "bars": 836,
+    "closed_trades": 0,
+    "start_equity": "990.40212453560000000000",
+    "end_equity": "990.402124535600000000",
+    "net_return_percent": "0",
+    "max_drawdown_percent": "0",
+    "profit_factor": null,
+    "gross_profit": "0",
+    "gross_loss": "0"
+  },
+  "baseline_activity": {
+    "train": {
+      "decisions": 56,
+      "fills": 6,
+      "rejections": {
+        "Maximum daily loss reached": 25,
+        "TARGET_NOT_OPEN": 25
+      }
+    },
+    "validation": {
+      "decisions": 12,
+      "fills": 0,
+      "rejections": {
+        "Maximum daily loss reached": 6,
+        "TARGET_NOT_OPEN": 6
+      }
+    }
+  },
+  "candidate_closed_trade_ranges": {
+    "train": [
+      3,
+      3
+    ],
+    "validation": [
+      0,
+      0
+    ]
+  },
+  "candidate_rejection_counts": {
+    "INSUFFICIENT_TRAIN_TRADES": 25,
+    "INSUFFICIENT_VALIDATION_TRADES": 25
+  },
+  "selected": null,
+  "completion_reason": "INSUFFICIENT_OR_FAILED_VALIDATION_EVIDENCE",
+  "limitations": [
+    "The baseline dataset is a short fixed market window; no future return is guaranteed.",
+    "Candidate Bridge settings have not been compiled as new Pine or activated on a Bot.",
+    "Offline serial Paper simulation does not replace runtime PostgreSQL and owner authorization gates.",
+    "No source-input dimensions or multiple-Pine membership are supported by this run."
+  ],
+  "offline_run_id": "fb7e2621461be227b958b2d56c358e1e3cc2da15530169ab4dd9e6572edbd7d1"
+}

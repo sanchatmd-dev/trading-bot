@@ -11,6 +11,14 @@ The private `python -m robot_quant.ql2a` audit validates source/artifact/snapsho
 
 No new optimizer or customer endpoint is enabled. The older synthetic EMA capability table below describes historical demo functionality; it does not certify arbitrary Pine or the new workflow.
 
+## QL-3A offline research started (2026-09-26)
+
+`python -m robot_quant.ql3a` binds the accepted QL-2A report, source/snapshot, implementation and frozen TradingView CSV. It exhaustively evaluates 25 Bridge ATR/RR pairs on the fixed SPT profile, carrying source/Bridge/Paper state through chronological train and validation. The test period is replayed only after a train/validation candidate qualifies. First run: `NO_VALID_CANDIDATE`; every pair has three closed train trades and zero validation trades under the unchanged Bot policy. No customer recommendation, export, capability registration or production write occurs. See [QL-3A record](../docs/QL_3A_IMPLEMENTATION.md).
+
+`spt_custom_evaluator.py` is a separate, source-hash-bound Custom preset evaluator candidate. It accepts an explicit, reviewed effective-input snapshot and at most eight distinct selected numeric source slots. Each varied candidate starts from its own causal state, with Bridge ATR(14) independent of source ATR. The old fixed-profile result is untouched. Custom TradingView parity, an adequate new Paper sample and durable bounded job integration are still required before any Best Inputs can be issued.
+
+The Chatbot worktree now captures all effective Pine input values through local inspection and explicit owner review before AI analysis. The reviewed source/effective-input hashes flow into the source revision and Custom snapshot verifier. This does not substitute for a TradingView Custom trace or certify arbitrary Pine.
+
 ## Reproduce
 
 Install Python 3.12 and uv 0.12.17, then from `quant_lab/`:

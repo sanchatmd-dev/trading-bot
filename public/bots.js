@@ -196,6 +196,10 @@ function renderTCP(bot, session, risk) {
   const state = session.state || 'SETUP';
   const pending = lifecyclePending[bot.id];
   const { ready, reason } = runReadiness(state, risk);
+  const lockedThreshold = Number(session.locked_pause_after_loss_streak);
+  const rearmAccounts = state === 'STOPPED' ? (session.loss_streaks || []).filter(row =>
+    row.account_id?.endsWith(':primary') && lockedThreshold > 0 && Number(row.loss_streak) >= lockedThreshold
+  ) : [];
 
   // Button availability
   const avail = {
@@ -245,6 +249,11 @@ function renderTCP(bot, session, risk) {
       ${btn('reset', 'Reset', 'รีเซ็ต',   '↺', '')}
     </div>
     <div class="tcp-status ${statusClass}" role="status" aria-live="polite">${statusMsg}</div>
+    ${rearmAccounts.map(row => {
+      const broker = row.account_id.slice(0, -8);
+      const waiting = row.has_today_activity;
+      return `<button type="button" class="mini" data-bot-rearm="${esc(broker)}" data-bot-id="${esc(bot.id)}" ${pending || waiting ? 'disabled' : ''} title="${waiting ? esc(botT('Available next UTC day after account activity', 'ใช้ได้วัน UTC ถัดจากวันที่บัญชีมีรายการ')) : ''}">${botT('Review and re-arm entries', 'ตรวจแล้วเปิดรับ BUY ใหม่')} · ${esc(broker)} (${esc(row.loss_streak)}/${esc(lockedThreshold)})</button>`;
+    }).join('')}
   </div>`;
 }
 
@@ -390,6 +399,30 @@ $('#botSlots').onclick = async event => {
 
   // Open bot
   if (button.dataset.botOpen) { await switchBot(button.dataset.botOpen); return; }
+
+  // Explicit owner review after a loss-streak pause. Session reset alone never clears it.
+  if (button.dataset.botRearm) {
+    const botId = button.dataset.botId, broker = button.dataset.botRearm;
+    if (!botId || lifecyclePending[botId]) return;
+    const reason = window.prompt(botT(
+      `Review ${broker} Paper losses before re-arming BUY entries. Resolve positions while exits are possible, then stop the Bot. Re-arm is available on the next UTC day after account activity. The daily loss guard remains active. Enter your review reason (10–500 characters):`,
+      `ตรวจผลขาดทุน Paper ของ ${broker} ก่อนเปิดรับ BUY ใหม่ จัดการสถานะขณะยังส่ง EXIT ได้ แล้วจึงหยุด Bot การ re-arm ทำได้ในวัน UTC ถัดจากวันที่บัญชีมีรายการ กฎขาดทุนรายวันยังทำงานอยู่ ระบุเหตุผลการตรวจ (10–500 ตัวอักษร):`
+    ));
+    if (reason === null) return;
+    lifecyclePending[botId] = true;
+    button.disabled = true;
+    try {
+      const result = await api('/api/bot/session/rearm-loss-streak', {
+        method: 'POST', body: JSON.stringify({ broker, reason }), botId
+      });
+      $('#botMessage').textContent = botT(
+        `Entry pause re-armed for ${broker}. Streak ${result.previous_loss_streak} → 0. Reset the stopped session before starting a new run.`,
+        `เปิดรับ BUY ของ ${broker} ได้อีกครั้ง: streak ${result.previous_loss_streak} → 0 รีเซ็ต session ที่หยุดอยู่ก่อนเริ่มรอบใหม่`
+      );
+    } catch (err) { $('#botMessage').textContent = err.message; }
+    finally { lifecyclePending[botId] = false; await refreshBots(); }
+    return;
+  }
 
   // Copy webhook
   if (button.dataset.botCopy) {

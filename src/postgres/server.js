@@ -19,6 +19,7 @@ import { getQuota } from './quotas.js';
 import {PineBridgeService,pineBridgeRoutes} from './pine-bridge.js';
 import {receiveBridge} from './pine-bridge-receiver.js';
 import {receiveCapture} from './pine-capture.js';
+import {keys} from '../pine-bridge/source.js';
 assertProductionConfig();
 const database = new PostgresDatabase();
 await database.runtimeLock();
@@ -339,7 +340,13 @@ async function userRoutes(req, res, url) {
   if (url.pathname.startsWith('/api/bot/session') && !(await store.ownsBot(actor.id, lifecycleBotId))) return json(res, 403, { error: 'Bot access denied' });
   if (req.method === 'GET' && url.pathname === '/api/bot/session') {
     const session = await store.getBotSession(lifecycleBotId);
-    return json(res, 200, { state: session.state, run_id: session.run_id, started_at: session.started_at, stopped_at: session.stopped_at });
+    return json(res, 200, { state: session.state, run_id: session.run_id, started_at: session.started_at, stopped_at: session.stopped_at, locked_pause_after_loss_streak: session.locked_policy ? JSON.parse(session.locked_policy).pauseAfterLossStreak : null, loss_streaks: await store.lossStreaks(lifecycleBotId) });
+  }
+  if (req.method === 'POST' && url.pathname === '/api/bot/session/rearm-loss-streak') {
+    const body = await readJson(req);
+    keys(body, ['broker', 'reason']);
+    const result = await store.rearmLossStreak(actor.id, lifecycleBotId, body.broker, body.reason);
+    return json(res, 200, result);
   }
   const lifecycleAction = { '/api/bot/session/run': 'run', '/api/bot/session/pause': 'pause', '/api/bot/session/stop': 'stop', '/api/bot/session/reset': 'reset' }[url.pathname];
   if (req.method === 'POST' && lifecycleAction) {

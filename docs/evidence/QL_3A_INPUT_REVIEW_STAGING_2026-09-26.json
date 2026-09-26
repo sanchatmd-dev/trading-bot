@@ -1,0 +1,30 @@
+{
+  "phase": "QL-3A",
+  "checkpoint": "input-review-and-paper-rearm",
+  "date": "2026-09-26",
+  "status": "ISOLATED_STAGING_CHECKS_PASSED",
+  "environment": "isolated VPS workspace and temporary PostgreSQL 16 cluster; no active staging or production deployment",
+  "checks": {
+    "local_node_ui_and_backend": { "passed": 13, "total": 13 },
+    "vps_node_backend": { "passed": 12, "total": 12 },
+    "vps_isolated_postgres": { "passed": 25, "total": 25 },
+    "spt_effective_input_review": {
+      "status": "PASS",
+      "source_sha256": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+      "input_count": 58,
+      "preset": "Custom",
+      "effective_inputs_sha256": "e571b4d9d1bd10704c2bc0e480221669987ef1c2bfab22ebd3da2189f0071ec2",
+      "ai_metadata_excludes_owner_strings": true
+    },
+    "production_release_changed": false,
+    "production_services_active_after_checks": true,
+    "staging_service_active_after_checks": true
+  },
+  "limitations": [
+    "The active staging service was not updated; checks ran against a separate source copy and temporary database.",
+    "The staging runtime lacked the local UI test's dev-only jsdom dependency, so the UI test ran locally and the VPS ran backend tests.",
+    "No Gemini call, TradingView Custom parity check, Paper trade collection, or Quant acceptance was performed.",
+    "The input review is a synthetic reference check; an owner still must verify every effective value in TradingView.",
+    "The first offline QL-3A run remains NO_VALID_CANDIDATE and produces no Best Inputs."
+  ]
+}

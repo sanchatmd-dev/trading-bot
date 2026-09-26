@@ -3,6 +3,7 @@ import {inspectSource,validateSelection,canonical,hash,keys,number,fail,versions
 import {providerConfig,budgetFor} from '../pine-bridge/provider.js';
 import {readJson} from './http.js';
 import {membershipSnapshot,effectiveInputs,invalidateEntries,setMembership} from './pine-bridge-registry.js';
+import {reviewFields,reviewedInputs} from '../pine-bridge/input-review.js';
 import {activateDeployment} from './pine-bridge-readiness.js';
 import {createCapture,captureStatus} from './pine-capture.js';
 
@@ -20,9 +21,16 @@ export class PineBridgeService {
     const row=await this.db.prepare('SELECT r.*,s.owner_id,s.bot_id FROM pine_source_revisions r JOIN pine_sources s USING(pine_import_id) WHERE s.owner_id=? AND s.bot_id=? AND r.pine_import_id=? AND r.source_version=?').get(owner,bot,id,version);
     if(!row)throw fail('NOT_FOUND',404);return row;
   }
+  async inspect(owner,body) {
+    keys(body,['bot_id','pine_source']);
+    await this.authorize(owner,body.bot_id);
+    const analysis=inspectSource(body.pine_source);
+    if(analysis.bridge_capability.blockers.includes('INPUT_SCAN_INCOMPLETE'))throw fail('INPUT_SCAN_INCOMPLETE');
+    return {source_hash:analysis.source_hash,input_count:analysis.inputs.length,inputs:reviewFields(analysis)};
+  }
   async enqueue(owner,operation,body,key) {
     if(typeof key!=='string'||!/^[A-Za-z0-9_-]{8,128}$/.test(key))throw fail('IDEMPOTENCY_KEY_REQUIRED');
-    if(operation==='analyze')keys(body,['bot_id','pine_source','source_name','pine_import_id','source_version','effective_inputs'],['bot_id','pine_source','source_name']);
+    if(operation==='analyze')keys(body,['bot_id','pine_source','source_name','pine_import_id','source_version','effective_inputs','input_review'],['bot_id','pine_source','source_name']);
     else keys(body,['bot_id','pine_import_id','source_version','selected_signals','parameter_slots','bridge_options','market']);
     await this.authorize(owner,body.bot_id);
     const preflight=operation==='analyze'?inspectSource(body.pine_source):null;
@@ -35,7 +43,8 @@ export class PineBridgeService {
     if(old){if(old.request_hash!==requestHash)throw fail('IDEMPOTENCY_CONFLICT',409);return this.summary(old);}
     let source,analysis,selection;
     if(operation==='analyze') {
-      analysis=effectiveInputs(preflight,body.effective_inputs);
+      if(body.input_review!==undefined&&!body.effective_inputs)throw fail('EFFECTIVE_INPUT_REVIEW_REQUIRED');
+      analysis=body.input_review===undefined?effectiveInputs(preflight,body.effective_inputs):reviewedInputs(preflight,body.effective_inputs,body.input_review,owner);
       if(typeof body.source_name!=='string'||body.source_name.length<1||body.source_name.length>120)throw fail('INVALID_SOURCE_NAME');
       if(body.pine_import_id!==undefined){
         number(body.source_version,{min:2,max:2147483647,integer:true});
@@ -95,6 +104,9 @@ export async function pineBridgeRoutes(req,res,url,actor,service,json,{enabled=f
   if(!enabled)throw fail('PINE_BRIDGE_DISABLED',503);
   const base='/api/quant/pine-bridge/';
   const operation=url.pathname.slice(base.length);
+  if(operation==='inspect'&&req.method==='POST'){
+    json(res,200,await service.inspect(actor.id,await readJson(req)));return true;
+  }
   const capture=operation.match(/^deployments\/([a-f0-9-]{36})\/capture$/);
   const session=operation.match(/^captures\/([a-f0-9-]{36})(\/close)?$/);
   if(capture||session){
