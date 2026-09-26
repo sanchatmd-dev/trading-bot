@@ -1,0 +1,93 @@
+{
+  "phase": "QL-3A",
+  "scope": "LOCAL_DURABLE_RESEARCH_JOB_ENGINEERING",
+  "recorded_at": "2026-09-26T17:21:25.631Z",
+  "implementation": {
+    "extension_version": 1,
+    "base_schema_version": 14,
+    "enabled_by_default": false,
+    "allowed_environment": "PAPER_STAGING",
+    "engine_hash": "6b2ba2b720a54603761d1fa1d70fad789a2237db3cc87089c14c278380f32df1",
+    "input_lock_hash": "9db0f7723ecff6d05ce9c618b1a5798039d2081c83c698a8b3c9c51f3a1cb184",
+    "source_slots": 8,
+    "bridge_dimensions": 2
+  },
+  "verification": {
+    "node": {
+      "passed": 47,
+      "failed": 0,
+      "scope": "15 input/Bridge/grid unit checks, 25 existing Pine PostgreSQL regressions and seven new durable Quant PostgreSQL cases",
+      "database": "Separate temporary PostgreSQL 16 cluster, no TCP listener, never active staging or production",
+      "files": [
+        "test/pine-bridge.test.js",
+        "test/pine-input-review.test.js",
+        "test/quant-research.test.js",
+        "test/postgres/pine-bridge.test.mjs",
+        "test/postgres/quant-research.test.mjs"
+      ]
+    },
+    "python": {
+      "passed": 3,
+      "failed": 0,
+      "file": "quant_lab/tests/test_research_engine.py",
+      "scope": "Locked grid, isolated Bridge ATR, holdout exclusion and doubled cost model; mocked source acceptance/replay for calculation boundaries"
+    },
+    "real_source_baseline_ipc": {
+      "scope": "BASELINE_IPC_ENGINEERING_CHECK_ONLY",
+      "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+      "input_lock_hash": "9db0f7723ecff6d05ce9c618b1a5798039d2081c83c698a8b3c9c51f3a1cb184",
+      "source_slots": 8,
+      "bridge_atr": 60,
+      "rr": 1.5,
+      "pre_holdout_bars": 4533,
+      "warmup_bars": 1250,
+      "holdout_evaluated": false,
+      "optimization_started": false,
+      "best_inputs_exported": false,
+      "owner_recommendation_ready": false,
+      "train": {
+        "bars": 2401,
+        "closed_trades": 5,
+        "start_equity": "1000.00",
+        "end_equity": "988.47386957040000000000",
+        "net_return_percent": "-1.152613042960000000",
+        "max_drawdown_percent": "1.152613042960000000",
+        "profit_factor": "0E+18",
+        "gross_profit": "0",
+        "gross_loss": "11.526130429600000000"
+      },
+      "validation": {
+        "bars": 882,
+        "closed_trades": 0,
+        "start_equity": "988.47386957040000000000",
+        "end_equity": "988.473869570400000000",
+        "net_return_percent": "0",
+        "max_drawdown_percent": "0",
+        "profit_factor": null,
+        "gross_profit": "0",
+        "gross_loss": "0"
+      }
+    },
+    "service_readback": {
+      "staging_api": "active",
+      "staging_paper_worker": "active",
+      "staging_market_stream": "active",
+      "production_api": "active",
+      "production_paper_worker": "active",
+      "production_postgres": "active",
+      "production_quant_bridge": "active"
+    }
+  },
+  "limitations": [
+    "Queue tests inject strategy metrics; they do not establish profitability or natural trades.",
+    "The real-source IPC check changes no parameters and evaluates no holdout.",
+    "No active database was migrated and no collection process was restarted.",
+    "Frontend research controls are not introduced by this backend checkpoint.",
+    "A reviewed dataset cutoff, varied-input parity, fresh Custom repaint evidence and trade coverage remain required."
+  ],
+  "active_staging_deployed": false,
+  "production_deployed": false,
+  "owner_job_submitted": false,
+  "best_inputs_exported": false,
+  "owner_recommendation_ready": false
+}

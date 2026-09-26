@@ -12,6 +12,8 @@
     "dev": "node --env-file-if-exists=.env --watch src/server.js",
     "start:postgres": "node --env-file-if-exists=.env src/postgres/server.js",
     "worker:postgres": "node --env-file-if-exists=.env src/postgres/worker-main.js",
+    "worker:quant-research": "node --env-file-if-exists=.env src/postgres/quant-research-main.js",
+    "migrate:quant-research": "node --env-file-if-exists=.env scripts/migrate-quant-research.mjs",
     "test": "node --test --test-isolation=none test/*.test.js",
     "test:postgres": "node --test --test-isolation=none test/postgres/*.test.mjs",
     "import:postgres": "node --env-file-if-exists=.env scripts/import-postgres.mjs",

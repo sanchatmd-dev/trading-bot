@@ -201,6 +201,8 @@ flowchart TD
 แผนแยกความพร้อม Bridge ออกจาก Quant: ส่งร่าง Pine ได้ก่อนเก็บข้อมูล parity จำนวนมาก โดยคง MTF/pivot เดิมไว้หากต่อ Bridge ได้ การรัน Paper ในขอบเขตทดลองต้องผ่านการ compile/แมปตัวแปร/ตรวจ webhook ส่วน Quant ต้องผ่าน evaluator และเกณฑ์ข้อมูลแยกกัน งาน AI มี job ID, ป้องกันการกดซ้ำ, ยกเลิกได้ และจำกัดเวลา/retry/token/ค่าใช้จ่าย Pine ใหม่ใช้ `bridge-exit-v2` พร้อม bounded market wait ไม่เกิน 5 วินาที; legacy v1 ยังคง fail-fast ทั้งสองใช้กติกา SL/TP และราคา fill ในเอกสาร Bridge Adapter ส่วน evaluator ของ Quant ยังเป็นงาน QL-2A
 
 ระบบปัจจุบันรันบน PostgreSQL 16 (Schema 14) แยก process ชัดเจนระหว่าง Web API, Background Worker และ Quant Bridge Service
+
+QL-3A checkpoint 2026-09-27: เพิ่มโค้ด research job ใน PostgreSQL พร้อม progress/cancel/recovery และ snapshot ที่ตรึง source, input bounds, policy และ dataset เจ้าของอนุมัติ source 8 ช่องและ Bridge ATR/RR แล้ว ตรวจ Node/PostgreSQL 47/47 และ Python 3/3 ผ่าน แต่ยังไม่ deploy ส่วนนี้หรือเริ่ม optimization ใหม่ ยังต้องผ่าน varied-input parity, Custom repaint และจำนวน trades; QL-4B ยังไม่เปิด ดู [API และขั้นตอน rollout](docs/QL_3A_DURABLE_JOBS.md)
 SQLite ในอดีตถูกเก็บไว้เป็นประวัติก่อน cutover เท่านั้น ห้ามเปิด writer บน SQLite ซ้ำ
 
 ## เริ่มทดสอบในเครื่อง

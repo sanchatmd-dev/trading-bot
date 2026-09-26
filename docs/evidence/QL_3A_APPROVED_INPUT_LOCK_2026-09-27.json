@@ -1,0 +1,136 @@
+{
+  "phase": "QL-3A",
+  "scope": "OWNER_APPROVED_RESEARCH_INPUT_LOCK",
+  "approval": "Owner accepted the proposed eight source slots and two Bridge grids in this task.",
+  "recorded_at": "2026-09-26T17:13:37.160Z",
+  "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "baseline_snapshot_hash": "1ddf2c2f3ec988a1231785d990e066d7f303ec7403d86c811a2ef4a56620cacc",
+  "effective_inputs_hash": "e571b4d9d1bd10704c2bc0e480221669987ef1c2bfab22ebd3da2189f0071ec2",
+  "input_lock_hash": "9db0f7723ecff6d05ce9c618b1a5798039d2081c83c698a8b3c9c51f3a1cb184",
+  "source_slots": [
+    {
+      "slot": 3,
+      "input_id": "fdf9c1d93203e8995ad617e2",
+      "pine_variable": "emaFastInput",
+      "baseline": 50,
+      "bounds": {
+        "min": 30,
+        "max": 70,
+        "step": 10
+      }
+    },
+    {
+      "slot": 4,
+      "input_id": "b189201a6247930b3f974b6a",
+      "pine_variable": "emaSlowInput",
+      "baseline": 200,
+      "bounds": {
+        "min": 150,
+        "max": 250,
+        "step": 25
+      }
+    },
+    {
+      "slot": 5,
+      "input_id": "50681972c8cb0f3e6434f405",
+      "pine_variable": "atrLenInput",
+      "baseline": 14,
+      "bounds": {
+        "min": 10,
+        "max": 20,
+        "step": 2
+      }
+    },
+    {
+      "slot": 6,
+      "input_id": "96284b154c8db1b612918c54",
+      "pine_variable": "stFactorInput",
+      "baseline": 3.2,
+      "bounds": {
+        "min": 2.4,
+        "max": 4,
+        "step": 0.4
+      }
+    },
+    {
+      "slot": 7,
+      "input_id": "84fb9f9e607d880b2d9ecf33",
+      "pine_variable": "zoneAtrMultInput",
+      "baseline": 1.15,
+      "bounds": {
+        "min": 0.75,
+        "max": 1.55,
+        "step": 0.2
+      }
+    },
+    {
+      "slot": 8,
+      "input_id": "1405158d5805dbca7adcd86f",
+      "pine_variable": "setupExpiryInput",
+      "baseline": 48,
+      "bounds": {
+        "min": 24,
+        "max": 72,
+        "step": 12
+      }
+    },
+    {
+      "slot": 9,
+      "input_id": "86902b0384d38c39b3671cd9",
+      "pine_variable": "cooldownInput",
+      "baseline": 8,
+      "bounds": {
+        "min": 4,
+        "max": 12,
+        "step": 2
+      }
+    },
+    {
+      "slot": 10,
+      "input_id": "be4f29f201a27c098a4a8345",
+      "pine_variable": "confirmLookback",
+      "baseline": 5,
+      "bounds": {
+        "min": 3,
+        "max": 7,
+        "step": 1
+      }
+    }
+  ],
+  "bridge_domains": {
+    "atr_multiplier": {
+      "min": 40,
+      "max": 80,
+      "step": 10
+    },
+    "rr": {
+      "min": 1,
+      "max": 2,
+      "step": 0.25
+    }
+  },
+  "bridge_baseline": {
+    "atr_multiplier": 60,
+    "rr": 1.5
+  },
+  "source_inputs_fixed": 50,
+  "search": {
+    "algorithm": "axis-covered-seeded-grid-v1",
+    "seed": 20260927,
+    "budget": 100,
+    "planned_candidates": 100,
+    "grid_combinations": 11718750,
+    "minimum_axis_candidates": 21
+  },
+  "job_submitted": false,
+  "optimization_started": false,
+  "best_inputs_exported": false,
+  "owner_recommendation_ready": false,
+  "dataset_status": "Dataset selection/cutoff is required before submission; no collection or Bot mutation.",
+  "acceptance_blockers": [
+    "VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED",
+    "CUSTOM_REPAINT_EVIDENCE_REQUIRED",
+    "CHRONOLOGICAL_TRADE_COVERAGE_REQUIRED",
+    "CUSTOMER_QUANT_CAPABILITY_NOT_REGISTERED"
+  ]
+}
