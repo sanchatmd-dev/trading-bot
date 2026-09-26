@@ -1,0 +1,188 @@
+{
+  "schema_version": "app3a-phase-evidence-v1",
+  "recorded_at": "2026-09-26T05:52:12Z",
+  "phase": "APP-3A",
+  "status": "STAGING_ENGINEERING_ACCEPTED",
+  "deployment_id": "6bf6babf-ffa3-4df9-af9c-d6277b3b1122",
+  "pine_import_id": "60b8e2c8-a1c4-4ea1-acc2-3e384e0978ea",
+  "source_version": 4,
+  "original_deployment_state": "DRAFT",
+  "original_readiness_row_written": false,
+  "original_owner_activation": false,
+  "review": {
+    "snapshot_hash": "d61ee4bcbab344c3b547408e70cce9167bbacb79955345fcd14ee7bff2ad59ff",
+    "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+    "artifact_hash": "4062f7a39e15ee9f92f1bbe7ab742098e9deb4823be0ffa9c6f6b3571b71867d",
+    "compilation_errors": 0,
+    "warnings": 1,
+    "reviewed_warnings": 1,
+    "binding_coverage": 100,
+    "source_changed_bytes": 0,
+    "unresolved_references": 0,
+    "identifier_collisions": 0,
+    "duplicate_bindings": 0,
+    "native_alerts_isolated": true,
+    "effective_inputs_reviewed": true,
+    "signals_reviewed": true,
+    "cases": {
+      "sl": 10,
+      "tp": 10,
+      "native_and_bridge": 5,
+      "both_touched": 5,
+      "rejected": 5,
+      "capped": 5,
+      "buy": 1,
+      "targeted_exit": 1,
+      "duplicate_delivery": 1
+    },
+    "decision_match_percent": 100,
+    "duplicate_ledger_effects": 0,
+    "unrelated_payloads": 0,
+    "level_difference_ticks": 0,
+    "execution_model": {
+      "version": "paper-close-v1",
+      "price_tick": 0.01,
+      "quantity_step": 1E-05,
+      "fee_bps": 10,
+      "slippage_bps": 1,
+      "risk_percent": 1,
+      "data_profile": "closed-ohlcv-atr14-v1"
+    },
+    "references": {
+      "tradingview": "SPT APP-3A Spot Bridge DRAFT v4: prior compiled exact artifact on BINANCE:BTCUSDT 1m; 1 generic alert repaint caution reviewed separately from compiler errors",
+      "source_review": "docs/SPT_SPOT_COMPATIBILITY.md: approved revision 4, Long + Exit, HTF off, notifications off; source prefix preserved",
+      "paper_fixture": "987adc3: 24 PostgreSQL checks, including 10 SL/10 TP/5 simultaneous/5 conflict/5 rejected/5 capped; hosted canary supplements this fixture evidence"
+    }
+  },
+  "chart_review": {
+    "symbol": "BINANCE:BTCUSDT",
+    "timeframe": "1",
+    "standard_chart": true,
+    "preset": "Daily/Swing",
+    "spot_signal_mode": "Long + Exit",
+    "use_confirmed_htf_filter": false,
+    "enable_notifications": false,
+    "bridge_atr_multiplier": 2,
+    "bridge_rr": 1.5,
+    "dynamic_slots": 0,
+    "compiler_errors": 0,
+    "reviewed_alert_cautions": [
+      {
+        "count": 1,
+        "description": "Generic TradingView repaint caution; bounded source review and recorded sample do not prove universal non-repaint or Quant support."
+      }
+    ]
+  },
+  "evidence_scope": {
+    "contract_cases": "Controlled generic receiver/worker fixtures, not counts of naturally occurring SPT exits.",
+    "market_comparison": "22 v4 capture-only events independently checked against frozen market bars.",
+    "quant_capability": "UNSUPPORTED"
+  },
+  "hosted_canary": {
+    "passed": true,
+    "snapshot_hash": "3885169ec524ed7d1617007f5444a8583c07d8b6571a22a7a811686450d43766",
+    "evidence_hash": "725451c38616a6a985bfd66a4455497d45ab036e11900128cdba4aada7045304",
+    "model": {
+      "version": "paper-close-v1",
+      "price_tick": 0.01,
+      "quantity_step": 1E-05,
+      "fee_bps": 10,
+      "slippage_bps": 1,
+      "risk_percent": 1,
+      "data_profile": "closed-ohlcv-atr14-v1"
+    },
+    "signal_age_seconds": 300,
+    "configured_capital": 1000,
+    "timing": [
+      {
+        "type": "BUY",
+        "bar_time": 1790401800000,
+        "received_at": 1790401933045,
+        "deadline_at": 1790401938045,
+        "freeze_commit_observed_at": 1790401933284,
+        "queue_checked_at": 1790401933473,
+        "queue_commit_observed_at": 1790401933519,
+        "receipt_to_freeze_ms": 239,
+        "freeze_to_queue_observed_ms": 235,
+        "receipt_to_queue_observed_ms": 474,
+        "outcome": "FILLED"
+      },
+      {
+        "type": "EXIT",
+        "bar_time": 1790401860000,
+        "received_at": 1790401933807,
+        "deadline_at": 1790401938807,
+        "freeze_commit_observed_at": 1790401934020,
+        "queue_checked_at": 1790401934225,
+        "queue_commit_observed_at": 1790401934257,
+        "receipt_to_freeze_ms": 213,
+        "freeze_to_queue_observed_ms": 237,
+        "receipt_to_queue_observed_ms": 450,
+        "outcome": "FILLED"
+      }
+    ],
+    "timeout": {
+      "received_at": 1790401934539,
+      "deadline_at": 1790401939539,
+      "checked_at": 1790401939735,
+      "check_elapsed_ms": 5196,
+      "diagnostic": "MARKET_WAIT_EXPIRED",
+      "signals_created": 0,
+      "late_retry_revived": false
+    },
+    "fills": [
+      {
+        "side": "BUY",
+        "price": "83986.950000000000000000",
+        "delta_quantity": "0.011890000000000000",
+        "fee_quote": "0.998604835500000000"
+      },
+      {
+        "side": "SELL",
+        "price": "83970.160000000000000000",
+        "delta_quantity": "0.011890000000000000",
+        "fee_quote": "0.998405202400000000"
+      }
+    ],
+    "duplicate_extra_fills": 0,
+    "final_state": "STOPPED",
+    "runtime_protected_tables": [
+      "pine_market_bars",
+      "pine_bridge_evidence"
+    ],
+    "limitations": [
+      "Controlled HTTP intents, not observed TradingView-to-Paper signals.",
+      "Exact compiled artifact replicated in a fresh database; its deployment ID is reused only in that isolated database.",
+      "Independent collector bars are deliberately held before canary insertion; latency is not a natural-feed distribution.",
+      "Quant evaluator and automatic Futures adaptation are not certified."
+    ],
+    "market_exported_at": 1790401931346,
+    "independent_market_bars": [
+      {
+        "bar_time": 1790401800000,
+        "content_hash": "0df54c1e71db5438484593b3d9950d15c88647c3793cdb6b91ea06254b7f2d26",
+        "profile": "closed-ohlcv-atr14-v1",
+        "retrieved_at": 1790401800059
+      },
+      {
+        "bar_time": 1790401860000,
+        "content_hash": "82a9dd9ecd1581f7efda922e7ef4eb07d4ed5a6683cbcb34574321f82141d32c",
+        "profile": "closed-ohlcv-atr14-v1",
+        "retrieved_at": 1790401860083
+      }
+    ]
+  },
+  "private_record_sha256": {
+    "manifest": "27835340f5686d0d62b417f5f68d2be9ce408b97cae25cac80809f3f8c25700f",
+    "hosted_result": "4733b383830cee32984f803b30f4a16b65c9dd37072d82231e87c9d3f8018e44"
+  },
+  "followups": [
+    "QL-2A source evaluator and initialization/parity evidence",
+    "Owner activation requires fresh policy/capital/membership/model review",
+    "SMTP 550 before Email Report delivery",
+    "Provider OUTCOME_UNKNOWN accounting without automatic resend",
+    "10 bps slippage rejected in the quiet-market rehearsal; cost stress must retain rejection semantics",
+    "Production rollout and automatic Futures adaptation remain separate"
+  ],
+  "runtime_baseline_commit": "987adc3"
+}

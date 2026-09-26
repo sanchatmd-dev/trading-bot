@@ -188,7 +188,9 @@ flowchart TD
 
 ลำดับการเปิดใช้: APP-3A กำหนด webhook/receiver ที่ผูก owner, Bot, deployment และ entry กับ allocation ก่อน QL-2A ใช้ข้อมูลเดียวกัน; QL-4B สร้างชุดผลลัพธ์/รายงานเป็น candidate ภายใน, QL-4C ตรวจแล้วจึงเปิดให้เจ้าของใช้ผลของ Pine เดียว การส่งอีเมลรอแก้ SMTP และยืนยันรับอีเมล ส่วนหลาย Pine เปิดใช้กับเจ้าของหลัง APP-3B ผ่านการแยก allocation และ Paper canary
 
-แผนแยกความพร้อม Bridge ออกจาก Quant: ส่งร่าง Pine ได้ก่อนเก็บข้อมูล parity จำนวนมาก โดยคง MTF/pivot เดิมไว้หากต่อ Bridge ได้ การรัน Paper ในขอบเขตทดลองต้องผ่านการ compile/แมปตัวแปร/ตรวจ webhook ส่วน Quant ต้องผ่าน evaluator และเกณฑ์ข้อมูลแยกกัน งาน AI มี job ID, ป้องกันการกดซ้ำ, ยกเลิกได้ และจำกัดเวลา/retry/token/ค่าใช้จ่าย กติกา SL/TP และราคา fill ของ Paper/Quant ใช้สัญญา `bridge-exit-v1` ในเอกสาร Bridge Adapter; ข้อกำหนดเหล่านี้ยังเป็นงานพัฒนา
+สถานะ 2026-09-26: **APP-3A ผ่าน acceptance ด้าน Bridge ใน staging แล้ว เริ่ม QL-2A ได้** หลักฐานแยก capture จาก TradingView จริงออกจากการทดสอบ hosted Paper ด้วยสัญญาณควบคุมและแท่ง Spot จริง ดู [Acceptance record](docs/APP_3A_ACCEPTANCE_2026-09-26.md) และ [Readiness summary](docs/evidence/APP_3A_READINESS_2026-09-26.json) การ activate ทำเฉพาะ Bot ทดสอบแยกแล้วหยุด/ล้างฐานข้อมูล; SPT เดิมยัง DRAFT และ production ไม่เปลี่ยน SPT ยังไม่รองรับ Quant จนกว่าจะผ่าน evaluator/parity ใน QL-2A
+
+แผนแยกความพร้อม Bridge ออกจาก Quant: ส่งร่าง Pine ได้ก่อนเก็บข้อมูล parity จำนวนมาก โดยคง MTF/pivot เดิมไว้หากต่อ Bridge ได้ การรัน Paper ในขอบเขตทดลองต้องผ่านการ compile/แมปตัวแปร/ตรวจ webhook ส่วน Quant ต้องผ่าน evaluator และเกณฑ์ข้อมูลแยกกัน งาน AI มี job ID, ป้องกันการกดซ้ำ, ยกเลิกได้ และจำกัดเวลา/retry/token/ค่าใช้จ่าย Pine ใหม่ใช้ `bridge-exit-v2` พร้อม bounded market wait ไม่เกิน 5 วินาที; legacy v1 ยังคง fail-fast ทั้งสองใช้กติกา SL/TP และราคา fill ในเอกสาร Bridge Adapter ส่วน evaluator ของ Quant ยังเป็นงาน QL-2A
 
 ระบบปัจจุบันรันบน PostgreSQL 16 (Schema 14) แยก process ชัดเจนระหว่าง Web API, Background Worker และ Quant Bridge Service
 SQLite ในอดีตถูกเก็บไว้เป็นประวัติก่อน cutover เท่านั้น ห้ามเปิด writer บน SQLite ซ้ำ

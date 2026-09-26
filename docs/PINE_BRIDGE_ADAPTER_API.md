@@ -1,6 +1,6 @@
 # Pine Script Bridge Adapter API — Step 2 plan
 
-Status: APP-3A / M2 requirements; implementation in progress. This revision replaces automatic strategy conversion and optimization of every source parameter with indicator-only generation and 2 mandatory Bridge numeric slots plus up to 8 user-mapped numeric source slots. The [implementation record](APP_3A_IMPLEMENTATION.md) records the APIs, trusted-data receiver/worker, 45 isolated PostgreSQL passes and simple TradingView compile evidence. Real source-specific readiness remains pending; the APP-3A exit gate has not passed.
+Status: APP-3A / M2 Bridge engineering acceptance passed in staging on 2026-09-26. This revision replaces automatic strategy conversion and optimization of every source parameter with indicator-only generation and 2 mandatory Bridge numeric slots plus up to 8 user-mapped numeric source slots. The [acceptance record](APP_3A_ACCEPTANCE_2026-09-26.md) distinguishes exact-artifact SPT compile/capture evidence from controlled hosted Paper checks. Owner activation and production rollout remain separate, SPT Quant remains unsupported, and automatic Futures-to-Spot adaptation is still unimplemented.
 
 ## Scope and transformation
 

@@ -2,6 +2,8 @@
 
 Status: planned M1 risk-policy and Bridge-settings scope under [the revised roadmap](ROADMAP.md). Historical release references remain in the archived roadmap. This document does not change the Paper-only execution gate or activate an optimized strategy.
 
+APP-3A staging acceptance passed on 2026-09-26; [the acceptance record](APP_3A_ACCEPTANCE_2026-09-26.md) selects a canary Paper model of fee 10 bps, slippage 1 bp and risk 1%. These test settings do not modify the owner's policy or production. A 10 bps slippage rehearsal was rejected because the BUY price exceeded frozen TP. QL-2A must reproduce that guard, sizing caps and costs; an optimizer cannot move protection levels or relax Bot limits to force acceptance.
+
 ## Goal
 
 Keep one authoritative Bot Risk Policy for execution while making the user interface easier to understand and making Quant Lab use the same recorded policy. A research candidate may request settings, but it cannot raise a Bot limit, change capital, bypass a guard, or activate a Bot.
