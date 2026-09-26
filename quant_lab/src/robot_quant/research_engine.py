@@ -36,7 +36,7 @@ def evaluate(request: dict) -> dict:
     if not 0 < split["warmup"] < split["train_end"] < split["validation_end"] < split["test_end"] <= 10000 or len(dataset) != expected_length:
         raise ValueError("INVALID_RESEARCH_SPLIT")
     rows = dataset
-    if any(b["time"] - a["time"] != 60000 for a, b in zip(rows, rows[1:])):
+    if any(b["time"] - a["time"] != 60000 for a, b in zip(rows, rows[1:], strict=False)):
         raise ValueError("GAPPED_RESEARCH_DATASET")
     evaluated = evaluate_bars(rows, source_inputs)
     bars = [
