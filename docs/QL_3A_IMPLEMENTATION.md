@@ -10,6 +10,8 @@ TradingView `Custom` baseline check: the existing source-bound state trace was s
 
 ## Roadmap and workflow review
 
+Subsequent staging rollout (2026-09-27): checkpoint `6320169` is pushed and the API/dedicated Quant research worker run from a separate staging release. Quant extension 1 preserves base schema 14 and the Bot's policy, capital, session and daily/streak rows. Restricted-role submission validated the approved eight source slots and 100-candidate plan inside an intentional rollback; no job or optimization was committed. HTTP auth/CSRF/schema readbacks and worker startup passed. A conservative receiver-maintenance interval of 17:31:26–17:31:57 UTC on 2026-09-26 must be accounted for in natural webhook continuity; market stream continued. See [rollout evidence](evidence/QL_3A_DURABLE_JOBS_STAGING_ROLLOUT_2026-09-27.json). Dataset cutoff, trade coverage, varied-input parity and fresh Custom repaint remain open; production is unchanged.
+
 The governing order remains R-0, APP-3A, QL-2A, QL-3A, QL-4B, QL-4C, APP-3B, APP-4, APP-5. The five-step workflow runs Paper before one Quant optimization job, then delivers only validated Best Inputs and Email Report for owner review and optional new Bot start. It has no automatic re-optimization loop. QL-2A's accepted source-specific baseline is enough to start QL-3A engineering. It does not qualify arbitrary Pine, additional source inputs, multiple Pine scripts or customer optimization.
 
 ## First offline research run

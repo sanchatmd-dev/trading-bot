@@ -1,0 +1,100 @@
+{
+  "phase": "QL-3A",
+  "scope": "STAGING_DURABLE_RESEARCH_API_ROLLOUT",
+  "release": "6320169",
+  "checked_at": "2026-09-26T17:33:40.302Z",
+  "engine_hash": "02aa72c44c94d1e4ec567ad3c988ef95087c98483e27db00f88a1759226c1efb",
+  "jobs_before": 0,
+  "jobs_after": 0,
+  "api": {
+    "unauthenticated_status": 401,
+    "login_status": 200,
+    "mfa_required": false,
+    "invalid_submission_status": 400,
+    "invalid_submission_code": "INVALID_FIELDS",
+    "missing_job_status": 404,
+    "invalid_csrf_status": 403
+  },
+  "dry_run": {
+    "accepted": true,
+    "rolled_back": true,
+    "planned_candidates": 100,
+    "source_slots": 8,
+    "input_lock_hash": "9db0f7723ecff6d05ce9c618b1a5798039d2081c83c698a8b3c9c51f3a1cb184",
+    "owner_recommendation_ready": false
+  },
+  "runtime_privileges": {
+    "job_insert": true,
+    "job_update": true,
+    "checkpoint_insert": true,
+    "checkpoint_update": false,
+    "checkpoint_delete": false
+  },
+  "maintenance_window": {
+    "start": "2026-09-26T17:31:26Z",
+    "end": "2026-09-26T17:31:57Z",
+    "scope": "Conservative interval spanning the first failed pre-migration attempt and successful retry; receiver was restored between attempts.",
+    "market_stream_stopped": false
+  },
+  "market_window": {
+    "bars": 3250,
+    "expected": 3250,
+    "start_time": 1790249040000,
+    "end_time": 1790443980000
+  },
+  "migration": {
+    "release": "6320169",
+    "base_schema": 14,
+    "quant_extension": 1,
+    "backup": {
+      "bytes": 1074530,
+      "sha256": "31cb91ec0e853584dd55b99d70536bcb15b24750df843732c15a90f6d9b2dcd7",
+      "private_path_recorded": true
+    },
+    "guard_state_preserved": true,
+    "policy_hash": "e151fccd990ddd34ee368a410903f6d0edb2e1480c8585c07de5d49456cafff7",
+    "session_run_id": "138e6721-d893-4ae1-a6d6-2873efb3ba3c",
+    "snapshot_hash": "1ddf2c2f3ec988a1231785d990e066d7f303ec7403d86c811a2ef4a56620cacc",
+    "migrated_at": "2026-09-26T17:31:57.410Z"
+  },
+  "owner_optimization_started": false,
+  "best_inputs_exported": false,
+  "production_changed": false,
+  "services": {
+    "staging_api": "active",
+    "staging_paper_worker": "active",
+    "staging_quant_research_worker": "active",
+    "staging_market_stream": "active",
+    "production_api": "active",
+    "production_paper_worker": "active",
+    "production_postgres": "active",
+    "production_quant_bridge": "active"
+  },
+  "health": {
+    "ok": true,
+    "mode": "PAPER_ONLY",
+    "queued": 0
+  },
+  "quant_worker_log": {
+    "startup_observed": true,
+    "cycle_failure_observed": false
+  },
+  "rollout_notes": [
+    "The deployed API and dedicated Quant worker use a separate release; Paper worker and market stream keep their preceding code.",
+    "The migration is additive, base schema stays 14, and a protected pre-migration backup exists.",
+    "One attempt aborted before DB migration due to a port-format precondition; prior API/Paper worker were restored before the successful retry.",
+    "Market candles continued during the conservative receiver-maintenance interval; natural webhook continuity must account for that interval.",
+    "Default git archive excludes Quant Lab; the matching tracked Python source was supplied as a separate controlled bundle.",
+    "The deployed engine byte fingerprint is recorded separately because Git archive normalizes source line endings.",
+    "The existing Quant Python environment was reused without changing its packages or production service.",
+    "Source approval and the two Bridge grids validated under the restricted staging runtime role inside an intentionally rolled-back transaction.",
+    "No research job was committed, no new owner optimization was started and no strategy performance result was selected."
+  ],
+  "remaining_gates": [
+    "REVIEW_AND_FREEZE_DATASET_CUTOFF",
+    "VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED",
+    "CUSTOM_REPAINT_EVIDENCE_REQUIRED",
+    "CHRONOLOGICAL_TRADE_COVERAGE_REQUIRED",
+    "CUSTOMER_QUANT_CAPABILITY_NOT_REGISTERED"
+  ]
+}

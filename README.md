@@ -205,6 +205,8 @@ flowchart TD
 QL-3A checkpoint 2026-09-27: เพิ่มโค้ด research job ใน PostgreSQL พร้อม progress/cancel/recovery และ snapshot ที่ตรึง source, input bounds, policy และ dataset เจ้าของอนุมัติ source 8 ช่องและ Bridge ATR/RR แล้ว ตรวจ Node/PostgreSQL 47/47 และ Python 3/3 ผ่าน แต่ยังไม่ deploy ส่วนนี้หรือเริ่ม optimization ใหม่ ยังต้องผ่าน varied-input parity, Custom repaint และจำนวน trades; QL-4B ยังไม่เปิด ดู [API และขั้นตอน rollout](docs/QL_3A_DURABLE_JOBS.md)
 SQLite ในอดีตถูกเก็บไว้เป็นประวัติก่อน cutover เท่านั้น ห้ามเปิด writer บน SQLite ซ้ำ
 
+Staging rollout 2026-09-27: checkpoint `6320169` push แล้ว เปิด Quant extension 1 และ API/Quant worker แยก โดยคง schema 14 และ policy/session/capital/risk counters เดิม ตรวจ auth/CSRF และ submission แบบ rollback ผ่าน ยังไม่เริ่ม optimization จริง ต้องตรวจ cutoff/trades, varied-input parity และ Custom repaint ก่อน QL-4B ดู [หลักฐาน rollout](docs/evidence/QL_3A_DURABLE_JOBS_STAGING_ROLLOUT_2026-09-27.json)
+
 ## เริ่มทดสอบในเครื่อง
 
 ต้องมี Node.js 24 ขึ้นไป

@@ -59,4 +59,3 @@ def test_locked_dimensions_and_grid_fail_closed(calculations):
     for parameters in [{"atrLenInput": 15, "atr_multiplier": 60, "rr": 1.5}, {"atrLenInput": 14, "atr_multiplier": 60, "rr": 1.5, "fixed": 1}, {"atrLenInput": True, "atr_multiplier": 60, "rr": 1.5}]:
         with pytest.raises(ValueError):
             research_engine.evaluate(request_for(frozen, parameters, "CANDIDATE"))
-
