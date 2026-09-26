@@ -7,6 +7,7 @@ import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {PineBridgeWorker} from '../../src/postgres/pine-bridge-worker.js';
 import {receiveBridge} from '../../src/postgres/pine-bridge-receiver.js';
+import {PineMarketWaitWorker} from '../../src/postgres/pine-market-wait-worker.js';
 import {createCapture,captureStatus,receiveCapture} from '../../src/postgres/pine-capture.js';
 import {config} from '../../src/config.js';
 import {fail} from '../../src/pine-bridge/source.js';
@@ -118,8 +119,8 @@ async function draft(a){
   return db.prepare('SELECT * FROM pine_deployments WHERE deployment_id=?').get(done.result.deployment_id);
 }
 function evidenceFor(d){return {snapshot_hash:d.snapshot_hash,artifact_hash:d.snapshot.artifact_hash,source_hash:d.snapshot.source_hash,compilation_errors:0,warnings:0,reviewed_warnings:0,binding_coverage:100,source_changed_bytes:0,unresolved_references:0,identifier_collisions:0,duplicate_bindings:0,native_alerts_isolated:true,effective_inputs_reviewed:true,signals_reviewed:true,cases:{sl:10,tp:10,native_and_bridge:5,both_touched:5,rejected:5,capped:5,buy:1,targeted_exit:1,duplicate_delivery:1},decision_match_percent:100,duplicate_ledger_effects:0,unrelated_payloads:0,level_difference_ticks:0,execution_model:{version:'paper-close-v1',price_tick:.01,quantity_step:.001,fee_bps:10,slippage_bps:10,risk_percent:1,data_profile:'closed-ohlcv-atr14-v1'},references:{tradingview:'fixture-only-not-real-compilation',source_review:'fixture-only-source-review',paper_fixture:'fixture-only-gate-validation'}};}
-async function ready(a,{capital=1000,maxOrder=10000}={}){
-  await store.setRisk(a,{...structuredClone(config.defaultRisk),maxRiskPercent:2,maxDailyLossR:1000,pauseAfterLossStreak:100,maxOrderNotional:maxOrder,maxDailyNotional:1e7,maxTradesPerDay:10000,onePositionPerSymbol:false,blockHighVolatility:false,blockDuringNews:false,maxSignalAgeSeconds:3600,equities:{'binance-global':capital},balances:{'binance-global':capital},capPercentEquitySize:true});
+async function ready(a,{capital=1000,maxOrder=10000,maxSignalAgeSeconds=3600}={}){
+  await store.setRisk(a,{...structuredClone(config.defaultRisk),maxRiskPercent:2,maxDailyLossR:1000,pauseAfterLossStreak:100,maxOrderNotional:maxOrder,maxDailyNotional:1e7,maxTradesPerDay:10000,onePositionPerSymbol:false,blockHighVolatility:false,blockDuringNews:false,maxSignalAgeSeconds,equities:{'binance-global':capital},balances:{'binance-global':capital},capPercentEquitySize:true});
   const d=await draft(a),e=evidenceFor(d);validateEvidence(e,d.snapshot_hash);
   await db.prepare('INSERT INTO pine_bridge_evidence VALUES(?,?,?,?,?)').run(d.deployment_id,d.snapshot_hash,JSON.stringify(e),hash(canonical(e)),Date.now());
   await db.transaction(()=>activateDeployment(service,a,d.deployment_id));
@@ -162,7 +163,8 @@ test('capture rotation, expiry, schema scope and quota remain fail closed',async
   await assert.rejects(receiveCapture(service,first.capture_path.split('/').at(-1),event(d,now),now),{code:'CAPTURE_EXPIRED'});
   const token=second.capture_path.split('/').at(-1);
   assert.equal((await receiveCapture(service,token,{...event(d,now),pine_import_id:randomUUID()},now)).code,'DEPLOYMENT_MISMATCH');
-  await db.prepare('UPDATE pine_capture_sessions SET duplicates=1000 WHERE capture_id=?').run(second.capture_id);
+  await db.prepare('UPDATE pine_capture_sessions SET duplicates=9998 WHERE capture_id=?').run(second.capture_id);
+  assert.equal((await receiveCapture(service,token,event(d,now),now)).captured,true);
   await assert.rejects(receiveCapture(service,token,event(d,now),now),{code:'CAPTURE_LIMIT'});
   await assert.rejects(receiveCapture(service,token,event(d,now),now+60001),{code:'CAPTURE_EXPIRED'});
 });
@@ -187,6 +189,7 @@ test('Bridge accepted fill maps one allocation; retries and scoped exits cannot 
   assert.equal(fills.length,2);assert.equal(Number(fills[1].price),87.91);assert.ok(Number(fills[1].fee_quote)>0);
 });
 test('isolated Bridge HTTP webhook reaches Paper fill without capture writes',async t=>{
+  const capturesBefore=(await db.prepare('SELECT count(*) n FROM pine_capture_events').get()).n;
   const a=await owner(),x=await ready(a),time=Date.now()-5000;
   await market(time);
   const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
@@ -205,7 +208,7 @@ test('isolated Bridge HTTP webhook reaches Paper fill without capture writes',as
   assert.equal((await post(exit)).status,202);
   await execute();
   assert.equal((await db.prepare('SELECT count(*) n FROM fills f JOIN signals s ON s.id=f.signal_id WHERE s.user_id=?').get(a)).n,2);
-  assert.equal((await db.prepare('SELECT count(*) n FROM pine_capture_events').get()).n,0);
+  assert.equal((await db.prepare('SELECT count(*) n FROM pine_capture_events').get()).n,capturesBefore);
 });
 test('missing/mismatched market facts, unknown targets and unreviewed readiness fail closed',async()=>{
   const a=await owner(),x=await ready(a),time=Date.now()-8000;
@@ -215,6 +218,100 @@ test('missing/mismatched market facts, unknown targets and unreviewed readiness 
   assert.equal((await store.listSignals(a))[0].status,'REJECTED');assert.equal((await db.prepare('SELECT count(*) n FROM pine_bridge_entries WHERE deployment_id=?').get(x.d.deployment_id)).n,0);
   await db.prepare('DELETE FROM pine_bridge_evidence WHERE deployment_id=?').run(x.d.deployment_id);
   await assert.rejects(receiveBridge(store,x.secret,event(x.d,time)),{code:'BRIDGE_EXECUTION_EVIDENCE_REQUIRED'});
+});
+
+test('v2 HTTP BUY and NATIVE EXIT close only the referenced long with no duplicate ledger effects',async t=>{
+  const capturesBefore=(await db.prepare('SELECT count(*) n FROM pine_capture_events').get()).n;
+  const a=await owner(),b=await owner(),x=await ready(a),y=await ready(b),time=Date.now()-6000;
+  await market(time);
+  const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
+  const base='http://127.0.0.1:'+port;
+  const child=fork(new URL('../../src/postgres/server.js',import.meta.url),[],{silent:true,env:{...process.env,DATABASE_URL:db.pool.options.connectionString,HOST:'127.0.0.1',PORT:String(port),PUBLIC_ORIGIN:base,SMTP_HOST:'',PINE_BRIDGE_ENABLED:'1'}});
+  const exited=once(child,'exit');child.stdout.resume();child.stderr.resume();t.after(async()=>{child.kill();await exited;});
+  let listening=false;for(let i=0;i<100;i++){try{listening=(await fetch(base+'/healthz')).ok;if(listening)break;}catch{}await new Promise(r=>setTimeout(r,50));}assert.ok(listening);
+  const post=async(body,{version='v2',secret=x.secret}={})=>{const response=await fetch(base+'/webhooks/pine-bridge/'+version+'/'+secret,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});return {status:response.status,body:await response.json()};};
+  const buy={...event(x.d,time),schema_version:'bridge-exit-v2'};
+  assert.equal((await post(buy,{version:'v1'})).status,400);
+  assert.equal((await post(buy)).status,202);
+  assert.equal((await post(buy)).body.duplicate,true);
+  await receiveBridge(store,y.secret,{...event(y.d,time),schema_version:'bridge-exit-v2'});await execute();
+  await market(time+1000);await post({...event(x.d,time+1000),schema_version:'bridge-exit-v2'});await execute();
+  const allocations=await db.prepare('SELECT e.entry_ref,a.position_id,a.status FROM pine_bridge_entries e JOIN ledger_position_allocations a ON a.position_id=e.allocation_id WHERE e.deployment_id=?').all(x.d.deployment_id);
+  assert.equal(allocations.length,2);assert.ok(allocations.every(p=>p.status==='OPEN'));
+  const otherBotCost=(await store.paperAccount(b,'binance-global')).positionCost;
+  await market(time+2000);
+  const exit={...event(x.d,time+2000,{type:'EXIT',entryTime:time,reason:'NATIVE'}),schema_version:'bridge-exit-v2'};
+  assert.equal((await post(exit,{secret:y.secret})).status,404);
+  assert.equal((await post(exit)).status,202);assert.equal((await post(exit)).body.duplicate,true);await execute();
+  assert.equal((await post(exit)).body.duplicate,true);await execute();
+  const after=await db.prepare('SELECT e.entry_ref,a.status,a.remaining_quantity FROM pine_bridge_entries e JOIN ledger_position_allocations a ON a.position_id=e.allocation_id WHERE e.deployment_id=? ORDER BY e.entry_ref').all(x.d.deployment_id);
+  assert.equal(after.find(p=>p.entry_ref===buy.entry_ref).status,'CLOSED');
+  assert.equal(Number(after.find(p=>p.entry_ref===buy.entry_ref).remaining_quantity),0);
+  assert.equal(after.find(p=>p.entry_ref!==buy.entry_ref).status,'OPEN');
+  assert.equal((await store.paperAccount(b,'binance-global')).positionCost,otherBotCost);
+  const fills=await db.prepare('SELECT f.* FROM fills f JOIN signals s ON s.id=f.signal_id WHERE s.user_id=?').all(a);
+  assert.equal(fills.length,3);
+  assert.equal((await db.prepare('SELECT count(*) n FROM pine_capture_events').get()).n,capturesBefore);
+});
+
+test('v2 market wait queues BUY and NATIVE EXIT only after the matching bar is frozen',async t=>{
+  const a=await owner(),x=await ready(a),time=Date.now()-20000;
+  const worker=new PineMarketWaitWorker({store,defaultRisk:config.defaultRisk});
+  const buy={...event(x.d,time),schema_version:'bridge-exit-v2'};
+  const replies=await Promise.all(Array.from({length:5},()=>receiveBridge(store,x.secret,buy)));
+  assert.equal(replies.filter(r=>!r.duplicate).length,1);assert.ok(replies.every(r=>r.pending_market));
+  const pending=await db.prepare('SELECT * FROM pine_bridge_pending WHERE deployment_id=? AND event_id=?').get(x.d.deployment_id,buy.event_id);
+  assert.equal(pending.deadline_at-pending.received_at,5000);
+  assert.equal((await db.prepare('SELECT count(*) n FROM signals WHERE user_id=?').get(a)).n,0);
+  assert.equal(await worker.tick(),false);
+  await new Promise(r=>setTimeout(r,200));await market(time);const frozenAt=Date.now();
+  await worker.tick();const queuedAt=Date.now();await execute();
+  const queued=await db.prepare('SELECT * FROM pine_bridge_pending WHERE deployment_id=? AND event_id=?').get(x.d.deployment_id,buy.event_id);
+  assert.equal(queued.status,'QUEUED');assert.ok(queuedAt<pending.deadline_at);
+  assert.equal((await db.prepare('SELECT count(*) n FROM fills f JOIN signals s ON s.id=f.signal_id WHERE s.user_id=?').get(a)).n,1);
+  const exit={...event(x.d,time+1000,{type:'EXIT',entryTime:time,reason:'NATIVE'}),schema_version:'bridge-exit-v2'};
+  assert.equal((await receiveBridge(store,x.secret,exit)).pending_market,true);await execute();
+  assert.notEqual((await store.paperAccount(a,'binance-global')).positionCost,'0');
+  await market(time+1000);await worker.tick();await execute();
+  assert.equal((await store.paperAccount(a,'binance-global')).positionCost,'0');
+  assert.equal((await receiveBridge(store,x.secret,exit)).duplicate,true);await execute();
+  assert.equal((await db.prepare('SELECT count(*) n FROM fills f JOIN signals s ON s.id=f.signal_id WHERE s.user_id=?').get(a)).n,2);
+  t.diagnostic(JSON.stringify({fixture:'v2-bounded-market-wait',receipt_to_freeze_ms:frozenAt-pending.received_at,freeze_to_queue_ms:queuedAt-frozenAt,total_ms:queuedAt-pending.received_at}));
+});
+
+test('v2 market wait expires after five seconds and a late bar cannot create a signal',async t=>{
+  const a=await owner(),x=await ready(a),time=Date.now()-20000;
+  const buy={...event(x.d,time),schema_version:'bridge-exit-v2'};
+  await receiveBridge(store,x.secret,buy);
+  const pending=await db.prepare('SELECT * FROM pine_bridge_pending WHERE deployment_id=? AND event_id=?').get(x.d.deployment_id,buy.event_id);
+  assert.equal(pending.deadline_at-pending.received_at,5000);
+  await new Promise(r=>setTimeout(r,Math.max(0,pending.deadline_at-Date.now()+20)));
+  await new PineMarketWaitWorker({store,defaultRisk:config.defaultRisk}).tick();
+  const expired=await db.prepare('SELECT * FROM pine_bridge_pending WHERE deployment_id=? AND event_id=?').get(x.d.deployment_id,buy.event_id);
+  assert.equal(expired.status,'REJECTED');assert.equal(expired.diagnostic,'MARKET_WAIT_EXPIRED');
+  await market(time);const retry=await receiveBridge(store,x.secret,buy);assert.equal(retry.duplicate,true);assert.equal(retry.outcome,'REJECTED');
+  await execute();assert.equal((await db.prepare('SELECT count(*) n FROM signals WHERE user_id=?').get(a)).n,0);
+  assert.equal((await db.prepare('SELECT count(*) n FROM pine_bridge_events WHERE deployment_id=?').get(x.d.deployment_id)).n,0);
+  await assert.rejects(receiveBridge(store,x.secret,{...buy,atr:6}),{code:'EVENT_CONFLICT'});
+  t.diagnostic(JSON.stringify({fixture:'v2-market-expiry',expiry_check_ms:expired.checked_at-pending.received_at,signal_count:0}));
+});
+
+test('v2 market wait never extends signal age and rechecks policy and market facts before queue',async()=>{
+  const shortOwner=await owner(),short=await ready(shortOwner,{maxSignalAgeSeconds:1}),recent=Date.now()-500;
+  const shortBuy={...event(short.d,recent),schema_version:'bridge-exit-v2'};
+  const response=await receiveBridge(store,short.secret,shortBuy);assert.equal(response.deadline_at,recent+1000);
+  await new Promise(r=>setTimeout(r,Math.max(0,response.deadline_at-Date.now()+20)));
+  const worker=new PineMarketWaitWorker({store,defaultRisk:config.defaultRisk});await worker.tick();
+  assert.equal((await db.prepare('SELECT diagnostic FROM pine_bridge_pending WHERE deployment_id=?').get(short.d.deployment_id)).diagnostic,'MARKET_WAIT_EXPIRED');
+  for(const change of ['policy','facts']){
+    const a=await owner(),x=await ready(a),time=Date.now()-20000-(change==='facts'?1:0),buy={...event(x.d,time),schema_version:'bridge-exit-v2'};
+    await receiveBridge(store,x.secret,buy);
+    if(change==='policy')await store.setRisk(a,{...await store.risk(a,config.defaultRisk),maxRiskPercent:1.9});
+    await market(time,change==='facts'?{atr:4}:{});await worker.tick();
+    const rejected=await db.prepare('SELECT status,diagnostic FROM pine_bridge_pending WHERE deployment_id=?').get(x.d.deployment_id);
+    assert.equal(rejected.status,'REJECTED');assert.equal(rejected.diagnostic,change==='policy'?'STALE_POLICY':'MARKET_FACT_MISMATCH');
+    assert.equal((await db.prepare('SELECT count(*) n FROM signals WHERE user_id=?').get(a)).n,0);
+  }
 });
 
 test('policy and capital changes invalidate entries; queued entries recheck snapshots',async()=>{
@@ -330,7 +427,7 @@ test('protected backup restores extension records exactly and runtime cannot for
   try{
     await admin.query('CREATE DATABASE '+target);const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+target;
     restored=new PostgresDatabase({connectionString:url.toString()});
-    const snapshot=async connection=>{const rows={};for(const name of ['pine_sources','pine_source_revisions','pine_memberships','pine_bridge_jobs','pine_bridge_attempts','pine_deployments','pine_bridge_events','pine_bridge_entries','pine_bridge_evidence','pine_market_bars'])rows[name]=(await connection.query('SELECT * FROM '+name)).rows.map(canonical).sort();return hash(canonical(rows));};
+    const snapshot=async connection=>{const rows={};for(const name of ['pine_sources','pine_source_revisions','pine_memberships','pine_bridge_jobs','pine_bridge_attempts','pine_deployments','pine_bridge_events','pine_bridge_pending','pine_bridge_entries','pine_bridge_evidence','pine_market_bars'])rows[name]=(await connection.query('SELECT * FROM '+name)).rows.map(canonical).sort();return hash(canonical(rows));};
     const before=await snapshot(db),backup=await backupPostgres(path.join(dir,'bridge.dump'),{connectionString:db.pool.options.connectionString});
     const env=postgresToolEnvironment(url.toString());
     const status=await new Promise((resolve,reject)=>{const child=spawn(process.env.PG_RESTORE_PATH||'pg_restore',['--exit-on-error','--no-owner','--dbname',env.PGDATABASE,backup.path],{env,stdio:'ignore',windowsHide:true});child.on('error',reject);child.on('exit',resolve);});

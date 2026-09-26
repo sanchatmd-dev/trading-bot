@@ -1,6 +1,6 @@
 # APP-3A implementation record
 
-Status: **implementation and isolated receiver tests advanced; APP-3A exit gate remains open**. Date: 2026-09-24. This record supplements [ROADMAP.md](ROADMAP.md) and [PINE_BRIDGE_ADAPTER_API.md](PINE_BRIDGE_ADAPTER_API.md). It does not reduce their acceptance requirements.
+Status: **isolated Bridge engineering checks passed; APP-3A exit gate remains open for hosted v2 Paper timing and deployment-specific readiness recording**. Updated: 2026-09-26. The [acceptance checkpoint](APP_3A_ACCEPTANCE_2026-09-26.md) records 24 PostgreSQL and 22 focused Node passes and the remaining evidence. This record supplements [ROADMAP.md](ROADMAP.md) and [PINE_BRIDGE_ADAPTER_API.md](PINE_BRIDGE_ADAPTER_API.md). It does not reduce their acceptance requirements.
 
 ## Implemented
 
@@ -120,11 +120,8 @@ Source presets override several numeric inputs unless `preset=Custom`. Source SL
 
 The initial byte-bound budget rejected SPT. The OpenAI adapter's pinned tokenizer and compact metadata admit the full original analysis at **21,745 reserved input tokens**, including framing; this is a local count, not a Gemini measurement. Gemini's separate counted AI-only view measured 22,885 input tokens in the successful analysis. Source lines over 4,096 UTF-8 bytes are rejected before tokenization (`SOURCE_LINE_TOO_LONG`) to bound pathological long-literal processing. An initial stress test exposed this delay and caused older timestamp-based tests to expire; the final regression is after adding this resource guard.
 
-Before closing APP-3A:
+The 2026-09-26 [acceptance checkpoint](APP_3A_ACCEPTANCE_2026-09-26.md) supersedes this record's earlier pending registration/compilation checklist. Spot revision 4 is registered and compiled. A read-only audit verified first protection touch, close/ATR and exact rounded levels for its 11 captured exits with no gaps or mismatches. The v2 isolated HTTP/Paper NATIVE route and bounded wait/expiry tests passed; a natural SPT NATIVE event is not an additional prerequisite for these controlled Bridge checks.
 
-1. Review provider billing for earlier unknown requests. Preserve the successful analyze/generate usage and request identities; do not resend any ambiguous job.
-2. Review TradingView compile warnings, Custom preset dependencies and native-alert isolation for the final registered Spot revision. The long-only/opposite-signal-as-exit mapping has 3 trace observations, but the old DRAFT snapshot still has HTF enabled while the current trace has it disabled. Register and compile a separate revision with matched effective inputs after securing this capture; do not reuse the old snapshot.
-3. Verify the Spot stream and REST fallback against TradingView closed bars and ATR, plus recorded tick/fee/slippage rules. Under v2, require the trusted closed bar before Paper queue admission; measure bounded wait latency and expiry. Existing v1 remains fail-fast on missing data.
-4. Retain the real 1-minute SPT BUY/TP capture and the 118-point HTF-off repaint comparison as separate snapshot evidence. The 1D alert has not emitted an observed event. Finish the final Spot revision's source/Bridge parity, state initialization and execution checks; attach only evidence bound to its own source/artifact/snapshot hashes. Exercise owner activation only if every Bridge gate passes.
+Before closing APP-3A, finish the hosted v2 Paper receipt/freeze/queue timing record and deployment-specific readiness manifest, including reviewed warnings and the selected fee/slippage/risk model. Current real TradingView evidence is capture-only; controlled Paper fixtures must retain that label. Preserve unknown provider outcomes and their unresolved charge follow-up without retrying them. Record readiness and exercise owner activation only for an eligible deployment after its separate checks pass.
 
-Only after these gates pass may QL-2A start. SMTP 550 remains an independent Email Report delivery gate.
+QL-2A owns actual-source evaluator coverage, state initialization, numeric optimization bounds, historical sample floors and repaint/evaluator parity. Those checks do not block Bridge draft delivery or supported isolated Paper testing. SPT remains Quant unsupported and its older trace evidence cannot silently be attached to a different source/artifact/snapshot. QL-2A starts after the remaining APP-3A Bridge-stage phase evidence passes. SMTP 550 remains an independent Email Report delivery gate.
