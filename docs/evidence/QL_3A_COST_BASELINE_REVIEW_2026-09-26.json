@@ -1,0 +1,82 @@
+{
+  "recorded_at": "2026-09-26T13:10:10.796Z",
+  "purpose": "Cost-to-stop engineering baseline review, not a Quant optimization or Best Inputs recommendation",
+  "bars": 2000,
+  "first_bar": 1790308260000,
+  "last_bar": 1790428200000,
+  "fee_bps": 10,
+  "slippage_bps": 1,
+  "target": "Round-trip fees plus slippage <= 0.5 of raw stop distance on at least 95% of reference bars",
+  "reference_distribution": {
+    "atr_p05": 6.856724464241306,
+    "atr_median": 21.615272291256446
+  },
+  "candidates": [
+    {
+      "atr_multiplier": 2,
+      "cost_stop_ratio_median": 4.270755319149924,
+      "cost_stop_ratio_p95": 13.460497084547177,
+      "fraction_at_or_below_half": 0,
+      "qualifies": false
+    },
+    {
+      "atr_multiplier": 10,
+      "cost_stop_ratio_median": 0.854309122872004,
+      "cost_stop_ratio_p95": 2.6932772349427347,
+      "fraction_at_or_below_half": 0.231,
+      "qualifies": false
+    },
+    {
+      "atr_multiplier": 20,
+      "cost_stop_ratio_median": 0.42716444218270205,
+      "cost_stop_ratio_p95": 1.3466386174712244,
+      "fraction_at_or_below_half": 0.566,
+      "qualifies": false
+    },
+    {
+      "atr_multiplier": 40,
+      "cost_stop_ratio_median": 0.21358222109135103,
+      "cost_stop_ratio_p95": 0.6733438582419149,
+      "fraction_at_or_below_half": 0.8705,
+      "qualifies": false
+    },
+    {
+      "atr_multiplier": 60,
+      "cost_stop_ratio_median": 0.14238924528884062,
+      "cost_stop_ratio_p95": 0.4488904499161612,
+      "fraction_at_or_below_half": 0.965,
+      "qualifies": true
+    },
+    {
+      "atr_multiplier": 80,
+      "cost_stop_ratio_median": 0.10679172811020128,
+      "cost_stop_ratio_p95": 0.3366719291209485,
+      "fraction_at_or_below_half": 0.9935,
+      "qualifies": true
+    },
+    {
+      "atr_multiplier": 100,
+      "cost_stop_ratio_median": 0.08543367892187619,
+      "cost_stop_ratio_p95": 0.26933557927897095,
+      "fraction_at_or_below_half": 0.998,
+      "qualifies": true
+    },
+    {
+      "atr_multiplier": 150,
+      "cost_stop_ratio_median": 0.05695569811553612,
+      "cost_stop_ratio_p95": 0.17955879865047872,
+      "fraction_at_or_below_half": 1,
+      "qualifies": true
+    },
+    {
+      "atr_multiplier": 200,
+      "cost_stop_ratio_median": 0.04271683946093809,
+      "cost_stop_ratio_p95": 0.13466877164837868,
+      "fraction_at_or_below_half": 1,
+      "qualifies": true
+    }
+  ],
+  "proposed_multiplier": 60,
+  "deployment_state": "READY_ALERT_ACTIVE",
+  "risk_guard_scope": "Same Bot/account/session; daily realized R and loss streak unchanged. ATR60 replacement activated after actual TradingView compile/input review. BUY remains blocked today by the daily guard; rollover does not guarantee a fill or adequate samples."
+}

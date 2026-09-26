@@ -1,0 +1,135 @@
+{
+  "phase": "QL-3A",
+  "scope": "OFFLINE_ENGINEERING_BASELINE_DIAGNOSTIC",
+  "optimization_started": false,
+  "best_inputs_exported": false,
+  "live_trade_count": 0,
+  "csv_sha256": "892e1727be727f11c086ac356c81de6091e8b3706ec1875321cdc5f59a923b3e",
+  "policy_hash": "e151fccd990ddd34ee368a410903f6d0edb2e1480c8585c07de5d49456cafff7",
+  "warmup": 1006,
+  "measured_bars": 3527,
+  "untouched_holdout_bars": 882,
+  "ledger_initialization": "Separate historical simulation: 1000 USDT, flat, zero counters at historical start; no live account/counter mutation.",
+  "source_signal_origin": "Frozen Custom TradingView observations; does not certify varied source inputs or new live repaint observations.",
+  "candidates": [
+    {
+      "atr_multiplier": "2",
+      "rr": "1.5",
+      "node_python_parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 78,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "fills": 6,
+      "closed_trades": 3,
+      "exit_fill_reasons": {
+        "SL": 3
+      },
+      "rejections": {
+        "Maximum daily loss reached": 36,
+        "TARGET_NOT_OPEN": 36
+      },
+      "train": {
+        "bars": 2645,
+        "closed_trades": 3,
+        "start_equity": "1000.00",
+        "end_equity": "990.40212453560000000000",
+        "net_return_percent": "-0.959787546440000000",
+        "max_drawdown_percent": "0.9597875464400000",
+        "profit_factor": "0E+18",
+        "gross_profit": "0",
+        "gross_loss": "9.597875464400000000"
+      },
+      "validation": {
+        "bars": 882,
+        "closed_trades": 0,
+        "start_equity": "990.40212453560000000000",
+        "end_equity": "990.402124535600000000",
+        "net_return_percent": "0",
+        "max_drawdown_percent": "0",
+        "profit_factor": null,
+        "gross_profit": "0",
+        "gross_loss": "0"
+      }
+    },
+    {
+      "atr_multiplier": "60",
+      "rr": "1.5",
+      "node_python_parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 75,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "fills": 10,
+      "closed_trades": 5,
+      "exit_fill_reasons": {
+        "NATIVE": 5
+      },
+      "rejections": {
+        "Trading paused after loss streak": 35,
+        "TARGET_NOT_OPEN": 30
+      },
+      "train": {
+        "bars": 2645,
+        "closed_trades": 5,
+        "start_equity": "1000.00",
+        "end_equity": "988.47386957040000000000",
+        "net_return_percent": "-1.152613042960000000",
+        "max_drawdown_percent": "1.152613042960000000",
+        "profit_factor": "0E+18",
+        "gross_profit": "0",
+        "gross_loss": "11.526130429600000000"
+      },
+      "validation": {
+        "bars": 882,
+        "closed_trades": 0,
+        "start_equity": "988.47386957040000000000",
+        "end_equity": "988.473869570400000000",
+        "net_return_percent": "0",
+        "max_drawdown_percent": "0",
+        "profit_factor": null,
+        "gross_profit": "0",
+        "gross_loss": "0"
+      }
+    }
+  ],
+  "all_execution_parity_matched": true
+}
