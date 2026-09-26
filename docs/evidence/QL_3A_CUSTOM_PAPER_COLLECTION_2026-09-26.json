@@ -1,0 +1,81 @@
+{
+  "recorded_at": "2026-09-26T11:29:48.5Z",
+  "status": "COLLECTING_NATURAL_WEBHOOK_OBSERVED",
+  "dataset_id": "821674bf-93d7-4463-be86-622b0933781f",
+  "bot_id": "2bc0c439-3197-4cfd-8a73-fe7f6c92117e",
+  "pine_import_id": "e5056e45-fa4a-478d-85c6-2de3f5bda6f7",
+  "deployment_id": "72203da6-b42d-4613-b346-f3ccb81f5da8",
+  "source_version": 1,
+  "run_id": "138e6721-d893-4ae1-a6d6-2873efb3ba3c",
+  "bot_state": "RUNNING",
+  "deployment_state": "READY",
+  "bot_started_at": 1790421293837,
+  "collection_start": 1790421670389,
+  "cutoff_at": null,
+  "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "artifact_hash": "7fca5f0d0b9c2f722f15132ac87aa231f5e9ff41ee52fc1242fbb788513e2ac2",
+  "snapshot_hash": "cc872a0c032a61c7f6d05ba0aebc8f14976deca813da6583c9ca5cb2aae0effe",
+  "effective_inputs_hash": "e571b4d9d1bd10704c2bc0e480221669987ef1c2bfab22ebd3da2189f0071ec2",
+  "policy_hash": "e151fccd990ddd34ee368a410903f6d0edb2e1480c8585c07de5d49456cafff7",
+  "alert_name": "QL-3A SPT Custom PAPER staging 1m",
+  "execution_model": {
+    "version": "paper-close-v1",
+    "price_tick": 0.01,
+    "quantity_step": 1E-05,
+    "fee_bps": 10,
+    "slippage_bps": 1,
+    "risk_percent": 1,
+    "data_profile": "closed-ohlcv-atr14-v1"
+  },
+  "market": {
+    "bars": 8,
+    "first_bar": 1790421720000,
+    "latest_bar": 1790422140000,
+    "gaps": 0
+  },
+  "events": [
+    {
+      "event_type": "EXIT",
+      "outcome": "REJECTED",
+      "count": 1
+    }
+  ],
+  "pending": [
+    {
+      "status": "QUEUED",
+      "diagnostic": null,
+      "count": 1
+    }
+  ],
+  "decisions": [
+    {
+      "event": "SELL",
+      "side": "SELL",
+      "status": "REJECTED",
+      "error_message": "TARGET_NOT_OPEN",
+      "count": 1
+    }
+  ],
+  "allocations": [],
+  "natural_webhook_observed": true,
+  "quant_optimization_started": false,
+  "evidence_scope": "Natural EXIT webhook reached the staging Paper decision path and was rejected TARGET_NOT_OPEN because this Bot had no open allocation. BUY fill and completed trade remain unobserved; no Quant acceptance.",
+  "readiness_contract_scope": "Existing APP-3A generic contract fixtures reused for unchanged code; counts are not new natural trades.",
+  "tradingview": {
+    "script": "QL-3A SPT Custom Paper 1m",
+    "symbol": "BINANCE:BTCUSDT",
+    "timeframe": "1",
+    "chart": "standard candles",
+    "source_inputs_reviewed": 58,
+    "preset": "Custom",
+    "spot_signal_mode": "Long + Exit",
+    "use_confirmed_htf_filter": false,
+    "native_notifications": false,
+    "bridge_atr_multiplier": 2.0,
+    "bridge_rr": 1.5,
+    "compiler_errors": 0,
+    "reviewed_generic_alert_cautions": 1,
+    "alert_active": true,
+    "delivery": "webhook only"
+  }
+}
