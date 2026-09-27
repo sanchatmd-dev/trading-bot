@@ -16,23 +16,24 @@ export function pythonEvaluation(contract,parameters,kind,signal,{python=process
   const input=JSON.stringify({contract:calculationContract,parameters,kind});
   if(Buffer.byteLength(input)>8*1024*1024){reject(fail('RESEARCH_REQUEST_TOO_LARGE'));return;}
   const child=spawn(python,['-m','robot_quant.research_engine'],{cwd:root,env:{...process.env,PYTHONPATH:path.join(root,'quant_lab/src')},windowsHide:true,stdio:['pipe','pipe','pipe']});
-  let output='',settled=false;
+  let output='',settled=false,interrupted=null;
   const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);error?reject(error):resolve(value);};
-  const abort=()=>{child.kill();finish(fail('RESEARCH_INTERRUPTED'));};
-  const timer=setTimeout(()=>{child.kill();finish(fail('EVALUATION_TIMED_OUT'));},timeoutMs);
+  const abort=()=>{interrupted??='RESEARCH_INTERRUPTED';child.kill();};
+  const timer=setTimeout(()=>{interrupted??='EVALUATION_TIMED_OUT';child.kill();},timeoutMs);
   signal?.addEventListener('abort',abort,{once:true});
-  if(signal?.aborted){abort();return;}
-  child.stdout.on('data',data=>{output+=data;if(Buffer.byteLength(output)>2*1024*1024){child.kill();finish(fail('EVALUATION_OUTPUT_TOO_LARGE'));}});
+  if(signal?.aborted)abort();
+  child.stdout.on('data',data=>{if(interrupted)return;output+=data;if(Buffer.byteLength(output)>2*1024*1024){interrupted='EVALUATION_OUTPUT_TOO_LARGE';child.kill();}});
   child.stderr.on('data',()=>{}); // Never echo private source/contract through Python errors.
   child.stdin.on('error',()=>{});
   child.on('error',()=>finish(fail('QUANT_PYTHON_UNAVAILABLE')));
-  child.on('close',code=>{if(code!==0){finish(fail('EVALUATION_FAILED'));return;}try{const value=JSON.parse(output);if(value.error)throw Error();finish(null,value);}catch{finish(fail('INVALID_EVALUATION_RESPONSE'));}});
+  child.on('close',code=>{if(interrupted){finish(fail(interrupted));return;}if(code!==0){finish(fail('EVALUATION_FAILED'));return;}try{const value=JSON.parse(output);if(value.error)throw Error();finish(null,value);}catch{finish(fail('INVALID_EVALUATION_RESPONSE'));}});
   child.stdin.end(input);
  });
 }
 
 export class QuantResearchWorker{
  constructor({service,evaluate=pythonEvaluation,clock=Date.now,leaseMs=30000}){this.service=service;this.db=service.db;this.evaluate=evaluate;this.clock=clock;this.leaseMs=leaseMs;}
+ engineHash(){return engineHash(this.service.foundation);}
  async sweep(){
   const now=this.clock();
   await this.db.prepare("UPDATE quant_jobs SET status='TIMED_OUT',diagnostic='JOB_DEADLINE_EXCEEDED',lease_token=NULL,lease_until=0,updated_at=? WHERE status IN ('QUEUED','RUNNING') AND deadline<=?").run(now,now);
@@ -40,7 +41,7 @@ export class QuantResearchWorker{
   await this.db.prepare("UPDATE quant_jobs SET status='QUEUED',diagnostic='RECOVERING_FROM_CHECKPOINT',lease_token=NULL,lease_until=0,updated_at=? WHERE status='RUNNING' AND lease_until<=? AND attempt<3").run(now,now);
  }
  async claim(){return this.db.transaction(async()=>{
-  await this.db.lock('quant:research:queue');await this.sweep();
+  await this.db.lock('quant:research:queue');await this.service.executorMode();if(this.service.foundation)throw fail('RESEARCH_FOUNDATION_WORKER_REQUIRED');await this.sweep();
   const running=await this.db.prepare("SELECT owner_id FROM quant_jobs WHERE status='RUNNING'").all();if(running.length>=2)return null;
   const queue=await this.db.prepare("SELECT * FROM quant_jobs WHERE status='QUEUED' AND attempt<3 ORDER BY created_at,run_id LIMIT 10 FOR UPDATE").all();
   for(const job of queue){
@@ -71,7 +72,7 @@ export class QuantResearchWorker{
  async step(job,id,kind,parameters){
   const existing=(await this.steps(job)).find(s=>s.step_id===id);
   if(existing){if(existing.kind!==kind||canonical(existing.parameters)!==canonical(parameters))throw fail('CHECKPOINT_PARAMETER_MISMATCH');return existing.result;}
-  if(await engineHash()!==job.contract.engine_hash)throw fail('QUANT_ENGINE_CHANGED');
+  if(await this.engineHash()!==job.contract.engine_hash)throw fail('QUANT_ENGINE_CHANGED');
   await this.fenced(job,async row=>{
    await this.current(job);
    if(row.evaluations_started>=job.contract.max_evaluations)throw fail('EVALUATION_BUDGET_EXCEEDED');
@@ -88,7 +89,7 @@ export class QuantResearchWorker{
   }
   await this.fenced(job,async()=>{
    await this.current(job);
-   if(await engineHash()!==job.contract.engine_hash)throw fail('QUANT_ENGINE_CHANGED');
+   if(await this.engineHash()!==job.contract.engine_hash)throw fail('QUANT_ENGINE_CHANGED');
    await this.db.prepare('INSERT INTO quant_job_steps(run_id,step_id,kind,parameters,result,completed_at) VALUES(?,?,?,?,?,?)').run(job.run_id,id,kind,JSON.stringify(parameters),JSON.stringify(result),this.clock());
   });
   return result;
@@ -99,7 +100,7 @@ export class QuantResearchWorker{
   await this.service.store.audit(job.owner_id,'quant.research.finished',job.run_id,{status,contract_hash:job.contract_hash});
  });}
  async run(job){
-  if(await engineHash()!==job.contract.engine_hash)throw fail('QUANT_ENGINE_CHANGED');
+  if(await this.engineHash()!==job.contract.engine_hash)throw fail('QUANT_ENGINE_CHANGED');
   const contract=job.contract,results=[];
   for(let i=0;i<contract.plan.candidates.length;i++){
    const parameters=contract.plan.candidates[i];

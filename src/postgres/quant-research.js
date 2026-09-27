@@ -6,20 +6,31 @@ import {freshSnapshot,deploymentEvidence} from './pine-bridge-readiness.js';
 import {validateBar} from './pine-bridge-market.js';
 import {lockInputs,candidatePlan,coverage,SOURCE_HASH,RULES} from '../quant-research/contract.js';
 import {readJson} from './http.js';
+import {ResearchDatasetStore} from '../quant-research/research-dataset-store.js';
+import {validateFoundationRequest} from '../quant-research/foundation-contract.js';
 
 export const TERMINAL=new Set(['SUCCEEDED','NO_VALID_CANDIDATE','FAILED','CANCELLED','TIMED_OUT']);
 const engineFiles=['src/quant-research/contract.js','src/postgres/quant-research-worker.js','quant_lab/src/robot_quant/research_engine.py','quant_lab/src/robot_quant/spt_custom_evaluator.py','quant_lab/src/robot_quant/spt_evaluator.py','quant_lab/src/robot_quant/bridge_paper.py','quant_lab/src/robot_quant/bridge_replay.py','quant_lab/src/robot_quant/risk_evaluator.py','quant_lab/src/robot_quant/ql3a.py','quant_lab/src/robot_quant/analytics.py'];
-export async function engineHash(){
- const hashes=await Promise.all(engineFiles.map(async name=>[name,hash(await fs.readFile(new URL('../../'+name,import.meta.url)))]));
+export async function engineHash(foundation=false){
+ const files=foundation?[...engineFiles,'src/postgres/quant-research-foundation.js','src/postgres/quant-foundation-scheduler.js','src/quant-research/foundation-contract.js','src/quant-research/dataset-store.js','src/quant-research/research-dataset-store.js','src/quant-research/process-supervisor.js','src/quant-research/resource-health.js','quant_lab/src/robot_quant/research_chunk.py','quant_lab/src/robot_quant/paper_state.py']:engineFiles;
+ const hashes=await Promise.all(files.map(async name=>[name,hash(await fs.readFile(new URL('../../'+name,import.meta.url)))]));
  return hash(canonical(Object.fromEntries(hashes)));
 }
 
 export class QuantResearchService{
- constructor({pineService,clock=Date.now,supportedSourceHash=SOURCE_HASH}){this.pine=pineService;this.store=pineService.store;this.db=pineService.db;this.clock=clock;this.supportedSourceHash=supportedSourceHash;}
+ constructor({pineService,clock=Date.now,supportedSourceHash=SOURCE_HASH,foundation=process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1',datasetStore}){this.pine=pineService;this.store=pineService.store;this.db=pineService.db;this.clock=clock;this.supportedSourceHash=supportedSourceHash;this.foundation=foundation;this.datasetStore=datasetStore??(foundation?new ResearchDatasetStore({root:process.env.QUANT_RESEARCH_DATASET_ROOT}):null);}
+ async executorMode(){
+  const exists=(await this.db.query("SELECT to_regclass('quant_research_executor_mode') present")).rows[0].present;
+  if(!exists){if(this.foundation)throw fail('RESEARCH_FOUNDATION_SCHEMA_REQUIRED');return;}
+  const row=(await this.db.query('SELECT mode FROM quant_research_executor_mode WHERE singleton FOR SHARE')).rows[0];
+  if(row?.mode!==(this.foundation?'FOUNDATION':'LEGACY'))throw fail('RESEARCH_EXECUTOR_MODE_MISMATCH',503);
+ }
  async enqueue(owner,body,key){
   keys(body,['bot_id','deployment_id','parameter_slots','bridge_domains','dataset','budget','seed','deadline_seconds'],['bot_id','deployment_id','parameter_slots','bridge_domains','dataset','budget','seed']);
   if(typeof key!=='string'||!/^[A-Za-z0-9_-]{8,128}$/.test(key))throw fail('IDEMPOTENCY_KEY_REQUIRED');
   await this.pine.authorize(owner,body.bot_id);
+  await this.executorMode();
+  if(this.foundation)await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
   await this.db.lock('quant:research:queue');
   const submissionHash=hash(canonical(body));
   const old=await this.db.prepare('SELECT * FROM quant_jobs WHERE owner_id=? AND bot_id=? AND idempotency_key=?').get(owner,body.bot_id,key);
@@ -67,8 +78,22 @@ export class QuantResearchService{
   if(!capital||!D(capital.configuredEquity).gt(0)||!D(capital.configuredBalance).gt(0))throw fail('RESEARCH_CAPITAL_REQUIRED');
   const count=rows.length-warmup;
   const contract={version:'ql3a-research-job-v1',scope:'SPT_CUSTOM_ENGINEERING_ONLY',owner_id:owner,bot_id:body.bot_id,deployment_id:deployment.deployment_id,pine_import_id:deployment.pine_import_id,source_version:deployment.source_version,source:source.source,source_hash:source.source_hash,baseline_snapshot_hash:deployment.snapshot_hash,snapshot:{...snapshot,selection:lock.selection},input_lock:lock,plan,model,rules:RULES,engine_hash:await engineHash(),dataset:{...body.dataset,bar_count:rows.length,bars:rows.map(r=>r.bar),sha256:hash(canonical(rows.map(r=>({bar:r.bar,content_hash:r.content_hash,provenance:r.provenance}))))},split:{warmup,train_end:warmup+Math.floor(count*.6),validation_end:warmup+Math.floor(count*.8),test_end:rows.length},capital:{equity:capital.configuredEquity,cash:capital.configuredBalance},ledger_initialization:'Independent historical flat Paper simulation; live daily/streak counters are neither consumed nor reset.',max_evaluations:plan.planned_candidates+2*Object.keys(lock.domains).length+2+3,acceptance_blockers:['VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED','CUSTOM_REPAINT_EVIDENCE_REQUIRED','CUSTOMER_QUANT_CAPABILITY_NOT_REGISTERED']};
+  if(this.foundation){
+   const refs=await this.datasetStore.publish({version:'spot-dataset-v1',venue:'binance-global',market:'SPOT',symbol:'BTCUSDT',timeframe:'1',start_time:start,end_time:end+60000,warmup_bars:warmup,total_bars:rows.length,cutoff:end+60000,source:'binance-spot-klines-v1'},rows.map(r=>r.bar),{model});
+   delete contract.dataset.bars;contract.dataset.first_time=start;contract.dataset.references=refs;
+   contract.dataset.timestamp_semantics='verified closed-bar timestamps; half-open index end is last timestamp plus one minute';
+   contract.execution_backend='quant-foundation-v1';contract.engine_hash=await engineHash(true);
+  }
   const now=this.clock(),id=randomUUID();
   await this.db.prepare("INSERT INTO quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,status,created_at,updated_at,deadline) VALUES(?,?,?,?,?,?,?,?,'QUEUED',?,?,?)").run(id,owner,body.bot_id,deployment.deployment_id,key,submissionHash,hash(canonical(contract)),JSON.stringify(contract),now,now,now+seconds*1000);
+  if(this.foundation){
+   const request=validateFoundationRequest({version:'quant-foundation-v1',owner_id:owner,bot_id:body.bot_id,kind:'OPTIMIZE',dataset:contract.dataset.references.raw,engine_hash:contract.engine_hash,snapshot_hash:contract.baseline_snapshot_hash,budget:{candidates:plan.planned_candidates,max_evaluations:contract.max_evaluations,chunk_bars:Math.min(1000,rows.length),max_runtime_ms:seconds*1000,max_output_bytes:8*1024*1024,max_state_bytes:1024*1024}});
+   const count=(await this.db.query("SELECT count(*)::int total,count(*) FILTER(WHERE owner_id=$1)::int owned FROM quant_foundation_jobs WHERE status IN ('QUEUED','PAUSED','RUNNING','STOPPING')",[owner])).rows[0];
+   if(count.total>=100||count.owned>=20)throw fail('FOUNDATION_QUEUE_FULL');
+   await this.db.query('INSERT INTO quant_foundation_owners(owner_id) VALUES($1) ON CONFLICT DO NOTHING',[owner]);
+   await this.db.query("INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at) VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)",[id,owner,'research:'+id,JSON.stringify(request),hash(canonical(request)),now,now+seconds*1000]);
+   await this.db.query('INSERT INTO quant_research_foundation VALUES($1,$2,$3)',[id,id,hash(canonical(contract))]);
+  }
   await this.store.audit(owner,'quant.research.queued',id,{bot_id:body.bot_id,input_lock_hash:lock.lock_hash,dataset_hash:contract.dataset.sha256,budget:plan.planned_candidates,source_slots:lock.selection.bindings.length});
   return this.get(owner,id);
  }
@@ -78,6 +103,8 @@ export class QuantResearchService{
   return {run_id:row.run_id,bot_id:row.bot_id,deployment_id:row.deployment_id,status:row.status,phase:row.phase,created_at:row.created_at,updated_at:row.updated_at,deadline:row.deadline,attempts:row.attempt,evaluations_started:row.evaluations_started,contract_hash:row.contract_hash,source_hash:row.contract.source_hash,baseline_snapshot_hash:row.contract.baseline_snapshot_hash,input_lock_hash:row.contract.input_lock.lock_hash,dataset_hash:row.contract.dataset.sha256,source_slots:row.contract.input_lock.selection.bindings.map(i=>({slot:i.slot,input_id:i.input_id,pine_variable:i.pine_variable,effective_value:i.effective_value,search_domain:i.search_domain})),bridge_domains:{atr_multiplier:row.contract.input_lock.domains.atr_multiplier,rr:row.contract.input_lock.domains.rr},progress:{candidates_completed:candidates.length,candidates_planned:row.contract.plan.planned_candidates,percent:Math.floor(100*candidates.length/row.contract.plan.planned_candidates),checks_completed:steps.length-candidates.length,...coverage(candidates,row.contract.input_lock.domains)},result:row.result,diagnostic:row.diagnostic,owner_recommendation_ready:false,acceptance_blockers:row.contract.acceptance_blockers};
  }
  async get(owner,id,cancel=false){
+  await this.executorMode();
+  if(this.foundation)await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
   const scope=await this.db.prepare('SELECT bot_id FROM quant_jobs WHERE run_id=? AND owner_id=?').get(id,owner);
   if(!scope)throw fail('NOT_FOUND',404);
   await this.db.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').get(owner);
@@ -85,6 +112,10 @@ export class QuantResearchService{
   const row=await this.db.prepare('SELECT * FROM quant_jobs WHERE run_id=? AND owner_id=? FOR UPDATE').get(id,owner);
   if(!row)throw fail('NOT_FOUND',404);await this.pine.authorize(owner,row.bot_id);
   if(cancel&&!TERMINAL.has(row.status)){
+   if(row.contract.execution_backend==='quant-foundation-v1'){
+    const binding=(await this.db.query('SELECT job_id FROM quant_research_foundation WHERE run_id=$1',[id])).rows[0];
+    await this.db.query("UPDATE quant_foundation_jobs SET status=CASE WHEN status IN ('RUNNING','STOPPING') THEN 'STOPPING' ELSE 'CANCELLED' END,stop_reason=CASE WHEN status IN ('RUNNING','STOPPING') THEN 'CANCELLED' ELSE NULL END,lease_until=NULL,runtime_used_ms=runtime_used_ms+CASE WHEN run_started_at IS NULL THEN 0 ELSE GREATEST(0,$2-run_started_at) END,run_started_at=NULL WHERE job_id=$1 AND status IN ('QUEUED','PAUSED','RUNNING','STOPPING')",[binding.job_id,this.clock()]);
+   }
    row.status='CANCELLED';row.updated_at=this.clock();
    await this.db.prepare("UPDATE quant_jobs SET status='CANCELLED',lease_token=NULL,lease_until=0,updated_at=? WHERE run_id=?").run(row.updated_at,id);
    await this.store.audit(owner,'quant.research.cancelled',id,{});

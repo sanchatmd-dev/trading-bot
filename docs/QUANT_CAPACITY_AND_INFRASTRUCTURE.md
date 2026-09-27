@@ -5,6 +5,17 @@ Planning specification, 2026-09-27. Reviewed from the owner's capacity handoff.
 sequencing, status, infrastructure stages and acceptance. This document defines
 contracts; it does not authorize configuration changes or claim deployed limits.
 
+Implementation update, 2026-09-28: the local
+[QD-1/QS-1 foundation](QD_QS_FOUNDATION_CHECKPOINT_2026-09-28.md) implements
+referenced immutable storage and a separate fenced PostgreSQL scheduler under
+the [shared contract](QUANT_FOUNDATION_CONTRACT.md). The subsequent
+[worker checkpoint](QD_QS_WORKER_CHECKPOINT_2026-09-28.md) connects the research
+executor behind an offline opt-in mode, carries SPT/Paper state, and adds local
+health checks plus Linux transient-service supervision. The bounded supervisor
+smoke is separate from a full research staging rollout. Other heavy paths,
+cold-crash recovery, calibrated headroom, disk reservations and capacity expansion
+remain open. Targets below are not enabled production settings.
+
 ## Current facts and target decisions
 
 The owner supplied the initial hardware envelope: 2 vCPU, 8 GB RAM, 100 GB NVMe,

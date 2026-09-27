@@ -109,9 +109,10 @@ two TTLs. Test databases were removed and local PostgreSQL stopped. No deployed
 release or existing Bot was switched. Active V2 rollout still requires reviewed
 evidence and a metadata producer plan; public Paper filters are not Live venue
 approval. Quant rejects V2 until historical evaluator parity exists. PF-1A
-`9c5f8f3` is the preceding pushed checkpoint. This Git checkpoint packages
-PF-1B/PF-1C and the Caveman policy on the working branch; consult Git history
-for its revision. Deployment remains a separate action.
+`9c5f8f3` is the preceding checkpoint. PF-1B/PF-1C and the Caveman policy were
+committed and pushed as `cf8913d` on the working branch. Deployment remains a
+separate action. The subsequent QD-1/QS-1 foundation and worker integration are
+included in the current Git checkpoint; production rollout remains separate.
 
 Historical Preflight fetches matching Spot OHLCV from the exchange and evaluates
 a supported source locally, or replays a validated TradingView signal CSV for
@@ -152,6 +153,21 @@ uses 100K–250K search, 500K shortlist validation and 750K–1M final validatio
 and its narrow profile. Research period choices add 2Y/3Y/All Available, bounded
 by exact calendar/data/capability/resource admission; actual Bot All Registered
 and ledger retention remain separate. Preserve independent holdout boundaries.
+
+Local foundation update (2026-09-28): [QD-1/QS-1](docs/QD_QS_FOUNDATION_CHECKPOINT_2026-09-28.md)
+adds a shared immutable raw Spot dataset store and an optional PostgreSQL queue.
+Contracts reference datasets by ID/hash; the new scheduler uses a single fenced
+slot, persistent owner fairness and bounded checkpoints. Expired executors keep
+the slot until a trusted supervisor confirms they stopped. These modules are
+extended by the opt-in [research worker adapter](docs/QD_QS_WORKER_CHECKPOINT_2026-09-28.md).
+The adapter retains existing research routes and result semantics while storing
+raw data and frozen ATR14 separately, serializing complete SPT/Paper/metric state,
+and supervising each Python chunk through a Linux systemd service. Health checks
+cover the local Paper API, DB, trading queue, memory, disk and load; missing health
+blocks compute. Offline mode switching prevents mixed legacy/foundation research
+workers. A cold worker crash retains STOPPING until verified offline recovery;
+automatic crash recovery and full staging headroom remain open. No production
+rollout or expanded capacity is implied; the existing 10K/1m and V1 gates remain.
 
 The owner-provided initial envelope remains 2 vCPU / 8 GB / 100 GB NVMe, 8 TB
 bandwidth and one snapshot, without a current upgrade requirement. Planned QS-1

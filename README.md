@@ -33,7 +33,9 @@ Historical Preflight ใช้ราคา Spot จาก exchange API และ
 
 ## แผน Quant Research Library และ Best Performance
 
-Git checkpoint รอบนี้รวม PF-1B/PF-1C และกติกา Caveman บน branch `codex/app3a-market-wait-checkpoint`; ดู revision ใน Git history การ deploy เป็นขั้นตอนแยก
+Git checkpoint ที่ push แล้วคือ `cf8913d` รวม PF-1B/PF-1C และกติกา Caveman บน branch `codex/app3a-market-wait-checkpoint` การ deploy เป็นขั้นตอนแยก
+
+ต่อยอด [QD-1/QS-1 foundation](docs/QD_QS_FOUNDATION_CHECKPOINT_2026-09-28.md) ด้วย [research worker integration](docs/QD_QS_WORKER_CHECKPOINT_2026-09-28.md): worker แบบ opt-in อ่าน dataset ผ่าน reference, เก็บ SPT/Paper state ข้าม chunk และใช้ scheduler slot เดียว มี supervisor จำกัด process บน Linux และ health admission ที่ปฏิเสธเมื่อข้อมูลสุขภาพไม่ครบ การเปิดใช้ต้อง migration แบบ offline และตรวจ staging/headroom; capacity ยังเป็น 10K/1m และ V1 เดิม กรณี worker ตายขณะทำงานจะกัก slot ไว้จนพิสูจน์การหยุดได้
 
 อนุมัติแผนเก็บผล Quant ทุกรอบเป็นข้อมูลวิจัยที่มี version/hash และเพิ่ม `quant-data/` ใน Best Inputs package ส่วน Email Report ยังคงเป็น deliverable หลักรายการที่สอง ผลไม่ผ่านเก็บเป็น diagnostic ที่ตรวจย้อนหลังได้ โดยไม่สร้าง Best Inputs ให้ใช้งาน
 
@@ -45,7 +47,7 @@ Git checkpoint รอบนี้รวม PF-1B/PF-1C และกติกา 
 
 เจ้าของเลือก Replay ผลเดิม, Backtest ช่วงใหม่ หรือ Optimize รอบใหม่ได้ตามแผน โดยเป็นงานใหม่ที่อ้างอิงผลต้นทาง ไม่มีการวนวิจัยหรือเปลี่ยน Bot อัตโนมัติ การเปลี่ยน source inputs ยังต้องมี evaluator ที่รองรับ; CSV สัญญาณใช้ได้เฉพาะ snapshot ที่ตรวจแล้ว
 
-ดู [แผนรวมและ diagram](docs/ROADMAP.md#approved-extension--quant-research-library-and-best-performance), [ตารางช่วงเวลาต่อ timeframe](docs/ROADMAP.md#report-range-and-50000-bar-contract) และ [รายละเอียดข้อมูล/รายงาน](docs/QUANT_RESEARCH_LIBRARY.md) งานถัดไปยังเป็น PF-1; QD-1/QS-1 เป็น foundation ก่อนเปิดงานข้อมูลขนาดใหญ่ และ QR-1 ถึง QR-4 ยังเป็นแผน
+ดู [แผนรวมและ diagram](docs/ROADMAP.md#approved-extension--quant-research-library-and-best-performance), [ตารางช่วงเวลาต่อ timeframe](docs/ROADMAP.md#report-range-and-50000-bar-contract) และ [รายละเอียดข้อมูล/รายงาน](docs/QUANT_RESEARCH_LIBRARY.md) PF-1 engineering ผ่านแล้ว; งานถัดไปคือปิด gates ของ QD-1/QS-1 ก่อนเปิดงานข้อมูลขนาดใหญ่ พร้อมทำ PF-2 V2 evaluator parity ตาม dependency ส่วน QR-1 ถึง QR-4 ยังเป็นแผน
 
 คง VPS ตามข้อมูลเจ้าของที่ 2 vCPU / 8 GB RAM / 100 GB NVMe / 8 TB bandwidth / 1 snapshot ยังไม่ต้อง upgrade แผนให้ **งาน Quant หนักรันได้ 1 งานรวมทั้งระบบ** ผ่าน durable queue และ resource/health admission โดยให้ Trading/Web/PostgreSQL มีทรัพยากรก่อน จำนวน Bot ไม่ใช่สิทธิ์รัน Quant พร้อมกัน แผน [โครงสร้างพื้นฐาน](docs/ROADMAP.md#quant-resource-protection-and-infrastructure-scaling) รองรับการแยก Quant ไปอีกเครื่องภายหลังตาม telemetry; snapshot เดียวไม่แทน off-host backup และ restore drill
 

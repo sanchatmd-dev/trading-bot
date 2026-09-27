@@ -47,25 +47,27 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 
 | Work | Current evidence and scope | Remaining gate / next action |
 | --- | --- | --- |
-| Project agent team | Local role setup followed by PF-1A coder/tester and independent audit assignments; one commander, at most three children, usage checkpoints. | Continue bounded PF-1 slices; no VPS/production enforcement implied by local team setup. |
-| Time Management | Primary execution-time document and PF-1A checkpoint ledger updated; baseline estimates retained because complete active-work timing is unavailable. | Continue PF-1; record hours prospectively and revise with throughput evidence. No new collection/deployment/monitor started. |
+| Project agent team | Local role setup, bounded QD/QS coder assignments and independent audit; one commander, at most three children, usage checkpoints. | Continue bounded QD/QS gates; team setup does not grant production authority. |
+| Time Management | Primary execution-time document includes the worker integration checkpoint; baseline estimates retained because complete active-work timing is unavailable. | Record measured verification durations separately from engineering hours; no new collection campaign. |
 | R-0 | Baseline inventory and observed schema 14 recorded. | SMTP 550 remediation and confirmed delivery remain operational follow-ups; old observations are not current health checks. |
 | APP-3A | Bridge engineering accepted in isolated staging; [acceptance](APP_3A_ACCEPTANCE_2026-09-26.md). | Broader source/customer support is not implied. |
 | QL-2A / Custom extension | Fixed SPT baseline accepted; Custom baseline plus 16 axis settings matched; 100-observation Custom repaint passed. [Custom evidence](QL_3A_VARIED_INPUT_PARITY.md). | Evidence is source/settings scoped; positive EXIT was absent from the Custom repaint sample. Mixed candidates and new revisions need their own evidence. |
 | QL-3A research | Durable 100-candidate job completed; all candidates have zero validation closed trades. [Result](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | `NO_VALID_CANDIDATE`; original holdout unopened. Engineering acceptance and recommendation acceptance are tracked separately; neither is automatically granted by this update. |
 | SPT Spot EXIT v1 | Separate offline draft and four predeclared development comparisons. Net loss improved to -5.1852783497 USDT but three losing episodes still stop entries; validation remains zero. [Review](QL_3A_SPOT_EXIT_V1_2026-09-27.md). | Failed development preflight. Not activated; no new TradingView collection requested for this draft. |
 | Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. | Review/checkpoint diff; active Bot V2 rollout and metadata producer remain separate. PF-2 engineering may use these contracts; V2 Quant admission stays blocked until evaluator parity. Then PF-3/PF-4. |
-| Historical data capacity (QD-1) | Revised target: 50K Preflight/chunks; timeframe/stage-specific research datasets up to 1M for final 1m validation, including warm-up. Current engine still enforces 10,000 bars and the narrow 1m profile. | Implement versioned dataset storage, capability/range checks and bounded execution before enabling expanded reports. |
-| Quant resource protection (QS-1) | Planned global heavy concurrency 1, durable fair queue, health/resource admission and isolation on the owner-supplied 2-vCPU / 8-GB / 100-GB VPS. | Benchmark and recovery/production-impact acceptance before expanded heavy jobs; no upgrade or limits applied. |
+| Historical data capacity (QD-1) | [Worker integration](QD_QS_WORKER_CHECKPOINT_2026-09-28.md) extends immutable raw storage with a frozen ATR14 sidecar and complete SPT/Paper/metric continuation. Uses existing exposed baseline data for parity; admission remains 10K/1m. | Paged ingestion, timeframe/calendar/UI contracts, storage reservation/retention and expanded-capacity validation remain. |
+| Quant scheduling (QS-1) | Existing research workflow has an opt-in foundation adapter, durable chunk checkpoints and offline executor-mode guard. Physical-stop proof fences late output and slot release. | Full isolated staging rollout and cold-crash recovery remain open; a cold restart preserves STOPPING rather than guessing that an absent unit is safe. Other heavy paths must join the scheduler before expanded admission. |
+| Quant resource protection (QS-1) | Linux transient-service supervisor plus fail-closed DB/API/queue/host health checks implemented. Bounded VPS smoke verified CPU25%, memory128MiB, tasks16, timeout, output cap, OOM and descendant termination. | Default worker CPU50%/512MiB/tasks16 is provisional. Calibrate headroom, disk/I/O budgets and multi-service impact before expanded jobs. No production migration or rollout. |
 | Research Library / Best Performance (QR-1 through QR-4) | Owner-approved plan and target diagrams below; no customer library, comparison ranking or portfolio mark-to-market shipped by this update. | Reuse durable run evidence; add immutable artifacts, portfolio reporting, fair comparison and explicit owner-started follow-up runs. Real recommendations remain validation-gated. |
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
 
-Previous pushed code/evidence checkpoint: `9c5f8f3` (PF-1A and agent setup) on
-`codex/app3a-market-wait-checkpoint`; prior planning checkpoint is `7ca575f`.
-This Git checkpoint packages PF-1B/PF-1C and the Caveman policy; its revision is
-recorded in Git history. PF-1C used isolated staging verification, without
-switching any deployed release. The unrelated untracked diagnostic builder
+Preceding pushed code/evidence checkpoint: `cf8913d` (PF-1B/PF-1C and Caveman policy)
+on `codex/app3a-market-wait-checkpoint`; preceding PF-1A checkpoint is `9c5f8f3`.
+QD-1/QS-1 foundation and worker integration form the current Git checkpoint. PF-1C used isolated
+staging verification; the foundation/worker used local disposable PostgreSQL
+and a bounded Linux supervisor smoke. Full research staging rollout remains open.
+Neither switched a deployed release. The unrelated untracked diagnostic builder
 is not part of this plan's implementation.
 
 ## Approved extension — readiness before Run Bot
@@ -189,21 +191,25 @@ Best Inputs. Real recommendation/apply/mail gates remain unchanged.
 This extension stores reusable Quant data and reports portfolio performance and
 asset-specific strategy comparisons. [The data/report specification](QUANT_RESEARCH_LIBRARY.md)
 defines records, artifacts and report semantics. This Roadmap owns sequencing,
-acceptance, progress and changes. All work in this section is **planned**.
+acceptance, progress and changes. QD-1/QS-1 foundation implementation has started;
+expanded capacity and customer reporting remain gated by the completion evidence below.
 
 ### Work packages and phase placement
 
 | ID | Work and dependency | Completion gate | Status |
 | --- | --- | --- | --- |
-| QD-1 | QL-3A data foundation: paged exchange history/cache, immutable datasets outside job JSON, timeframe capability registry, stage-specific dataset budgets and <=50K stateful chunks. Supports expanded PF-2 and all historical reports. | Server/UI agree on limits; warm-up and calendar boundaries correct; gaps/duplicates/incomplete bars rejected; chunked execution preserves indicator/account state; progress/cancel/recovery/resource ceilings verified. | Planned; current 10,000/1m restriction remains. |
-| QS-1 | QL-3A scheduling/protection foundation: global heavy concurrency 1, durable fair queue, server admission, health gates, CPU/memory/I/O isolation and disk/retention budgets. Uses QD-1 contracts; APP-3B/APP-4 verify concurrent tenant load and quotas. | Atomic global leases/fencing, cancellation/restart, bounded pause latency, fair admission and benchmarked production headroom; unsafe requests reject/queue/pause. | Planned; no configuration change. |
+| QD-1 | QL-3A data foundation: paged exchange history/cache, immutable datasets outside job JSON, timeframe capability registry, stage-specific dataset budgets and <=50K stateful chunks. Supports expanded PF-2 and all historical reports. | Server/UI agree on limits; warm-up and calendar boundaries correct; gaps/duplicates/incomplete bars rejected; chunked execution preserves indicator/account state; progress/cancel/recovery/resource ceilings verified. | Storage and research-worker state integration implemented; see worker checkpoint for scoped parity evidence. Ingestion, range/UI and larger admission remain open. Current 10,000/1m restriction remains. |
+| QS-1 | QL-3A scheduling/protection foundation: global heavy concurrency 1, durable fair queue, server admission, health gates, CPU/memory/I/O isolation and disk/retention budgets. Uses QD-1 contracts; APP-3B/APP-4 verify concurrent tenant load and quotas. | Atomic global leases/fencing, cancellation/restart, bounded pause latency, fair admission and benchmarked production headroom; unsafe requests reject/queue/pause. | Opt-in research adapter, supervisor and health admission implemented; bounded Linux supervisor smoke passed. Full staging, cold-recovery, other heavy paths, disk/retention and calibrated headroom remain open. |
 | QR-1 | QL-3A/QL-4B: versioned Research Library and Quant Data artifacts for every terminal run, including failed/insufficient/cancelled outcomes labelled incomplete where needed. | Owner-scoped immutable identity, checksums, provenance, input/data/engine references and permission checks; no secrets in downloads; unsuccessful runs cannot become actionable Best Inputs. | Planned. |
 | QR-2 | QL-4B reporting: actual Paper Portfolio Performance with market valuation, funding-aware returns and account/capital allocation reconciliation. | Stale/missing prices explicit; no double counting shared capital; ledger and valuation reconcile; historical simulation is never labelled actual Paper execution. | Planned; current equity is book equity. |
 | QR-3 | QL-4B comparison: strategies for the same asset under a declared common evaluation context, alongside a separate actual-Bot comparison. Depends on QR-1 and QD-1 for expanded ranges. | Compatible market/period/capital/cost/valuation/risk assumptions; independent evaluation provenance, sample adequacy and ranking rules fixed before comparison; no qualified winner is a valid result. | Planned. |
 | QR-4 | QL-4B/QL-4C: Best Performance Report and owner-requested replay, new-period backtest or new optimization with lineage. | New run/parent identity, capability/data/privacy/resource checks; no original result overwritten or automatic rerun/apply. Qualified ranking/export is validation-gated. | Planned. |
 
-Completing PF-1 remains the next implementation task and PF-1 through PF-4 retain their
-order. QD-1 and QS-1 admission/isolation are required before expanded heavy PF-2/research/report requests are enabled;
+PF-1 Paper/public-filter engineering is complete at `cf8913d`; active Bot V2
+rollout remains separate. QD-1 storage and QS-1 scheduling foundations proceed
+in parallel after locking their shared contract. PF-2 follows with historical
+V2 evaluator parity; PF-3/PF-4 retain their order. QD-1 and QS-1
+admission/isolation are required before expanded heavy PF-2/research/report requests are enabled;
 it can reuse the data contracts designed for PF-2. QR-1 contracts can be prepared
 alongside those foundations; then QR-2/QR-3 precede QR-4 customer reporting.
 These are work packages within the existing R-0 through APP-5 order, not new
@@ -444,6 +450,8 @@ flowchart TD
 
 | Date | Change / evidence | Scope and current consequence |
 | --- | --- | --- |
+| 2026-09-28 | [QD-1/QS-1 worker integration](QD_QS_WORKER_CHECKPOINT_2026-09-28.md): actual research adapter, complete SPT/Paper continuation, offline migration, Linux supervisor and health admission. | Existing data reused for mechanical parity; bounded Linux resource smoke completed. No new campaign or production rollout. Cold-crash recovery and calibrated staging headroom remain gates; 10K/1m and V1 admission unchanged. |
+| 2026-09-28 | [QD-1/QS-1 foundation](QD_QS_FOUNDATION_CHECKPOINT_2026-09-28.md): shared contract, immutable Spot storage and isolated PostgreSQL scheduler implemented in parallel. | Node 291/291 and PostgreSQL 14/14 passed; two audit findings fixed and rechecked. PF-1 engineering is complete at `cf8913d`. Full QD-1/QS-1 and current-worker integration remain open at this earlier checkpoint; 10K/1m ceiling preserved. Local checkpoint only, no VPS rollout or new research run. |
 | 2026-09-28 | [PF-1C](PF_1C_CHECKPOINT_2026-09-28.md): public venue filters, versioned shared costs, draft/Bridge UI, browser and isolated staging checks completed. | 319 local automated checks passed; 30 staging repeats passed; seven metadata refreshes over 121.7 seconds. Existing services/evidence preserved. Active Bot rollout and V2 Quant parity remain separate gates; no commit/push in this checkpoint. |
 | 2026-09-28 | [PF-1B](PF_1B_CHECKPOINT_2026-09-28.md): parallel local PostgreSQL, Bridge and UI work; 107 focused checks plus 22 real PostgreSQL checks passed. | Read-only server-resolved Bridge costs, consistency/provenance/capacity and saved-policy UI. Local cluster stopped. Complete venue enforcement/draft/Bridge UI and browser/staging gates remain; no new collection or deployment. |
 | 2026-09-28 | Owner requested Caveman for every agent, including compact/handoff. | Updated root instructions, all seven role profiles, packet template and primary docs. Internal memory compression is explicitly allowed; resume facts stay mandatory. Configuration/docs only; savings unmeasured, PF-1 remains in progress. |
