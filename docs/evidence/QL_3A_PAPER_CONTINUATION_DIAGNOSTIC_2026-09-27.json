@@ -1,0 +1,56 @@
+{
+  "recorded_at": "2026-09-27T07:32:03.577Z",
+  "account": {
+    "userId": "2bc0c439-3197-4cfd-8a73-fe7f6c92117e",
+    "broker": "binance-global",
+    "currency": "USDT",
+    "cash": "0.2503601892",
+    "positionCost": "997.3640240564",
+    "bookEquity": "997.6143842456",
+    "configuredEquity": "1000",
+    "configuredBalance": "1000",
+    "valuation": "COST_BASIS_NOT_MARK_TO_MARKET"
+  },
+  "quantity_step": 0.00001,
+  "fee_bps": 10,
+  "latest_rejected_signal": 35,
+  "risk_ok": true,
+  "calculated_quantity": "0.000002957834161724",
+  "calculated_notional": "0.250110079120822088",
+  "sizing_adjustment": {
+    "requestedQuantity": "0.016274296643484502",
+    "quantity": "0.000002957834161724",
+    "reason": "Capped to available equity and notional limits"
+  },
+  "rounded_quantity": "0",
+  "minimum_step_cost": "0.8464307852",
+  "opens": [
+    {
+      "position_id": "pos_26_1790469242320",
+      "entry_ref": "c141d973-9024-4af5-b21a-177d624d7be0:1790469240000:0",
+      "entry_price": "84450.806440000000000000",
+      "remaining_quantity": "0.011810000000000000",
+      "stop_loss": "83626.980000000000000000",
+      "take_profit": "85454.520000000000000000",
+      "opened_at": 1790469242320,
+      "bars_since_entry": 418,
+      "bar_low": 84281.84,
+      "bar_high": 84654.02,
+      "stop_target_touches": [],
+      "native_exit_events_since_entry": 0
+    }
+  ],
+  "available_market_runs": [
+    {
+      "start": 1790234640000,
+      "end": 1790494320000,
+      "count": 4329
+    }
+  ],
+  "policy": {
+    "onePositionPerSymbol": false,
+    "maxDailyLossR": 3,
+    "pauseAfterLossStreak": 3
+  },
+  "research_jobs": 0
+}

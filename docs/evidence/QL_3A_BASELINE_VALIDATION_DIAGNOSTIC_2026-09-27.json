@@ -1,0 +1,16 @@
+{
+  "run_id": "10d7ccc1-7ab5-4bff-8f95-d32f0bcd95a8",
+  "scope": "Baseline diagnostic reproduction only; no new parameter search",
+  "persisted_baseline_exactly_reproduced": true,
+  "validation_decisions": 36,
+  "validation_outcomes": {
+    "REJECTED": 36
+  },
+  "validation_rejections": {
+    "Trading paused after loss streak": 18,
+    "TARGET_NOT_OPEN": 18
+  },
+  "validation_buy_intents": 18,
+  "holdout_supplied": false,
+  "risk_policy_changed": false
+}

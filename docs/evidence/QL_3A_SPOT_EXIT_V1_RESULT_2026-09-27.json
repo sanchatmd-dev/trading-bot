@@ -1,0 +1,490 @@
+{
+  "version": "spt-spot-exit-v1-development-result",
+  "recorded_at": "2026-09-27T07:59:07.200823+00:00",
+  "plan_sha256": "d30f7e59a27906d22883a11720de553b9d26cdc97b1c34c003e8e1470f1a68df",
+  "runner_sha256": "e3f8762d06e7543dfe1eca8ad4168fdaeb2b72f8b7f647e73102ef71f8d2cf8a",
+  "evaluator_sha256": "66324b2cebce12624cb139ab5b0b2cfcd62d718ad783cb8562b46082e8ebeeb1",
+  "holdout_supplied": false,
+  "optimization_runs": 0,
+  "replay_count": 4,
+  "baseline_reproduced_within_1e_minus_12": true,
+  "signal_counts": {
+    "legacy": {
+      "train": {
+        "buy": 56,
+        "exit": 75
+      },
+      "validation": {
+        "buy": 18,
+        "exit": 14
+      }
+    },
+    "spot_exit_v1": {
+      "train": {
+        "buy": 45,
+        "exit": 114
+      },
+      "validation": {
+        "buy": 15,
+        "exit": 49
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "version": "legacy",
+      "cost_factor": 1,
+      "train": {
+        "bars": 4050,
+        "closed_trades": 9,
+        "start_equity": "1000.00000000",
+        "end_equity": "991.23577722060000000000000000",
+        "net_return_percent": "-0.876422277940000000",
+        "max_drawdown_percent": "1.1633841879296422450420941925762141263029747905789",
+        "profit_factor": "0E+18",
+        "gross_profit": "0",
+        "gross_loss": "8.764222779400000000"
+      },
+      "validation": {
+        "bars": 1350,
+        "closed_trades": 0,
+        "start_equity": "991.23577722060000000000000000",
+        "end_equity": "991.23577722060000000000000000",
+        "net_return_percent": "0",
+        "max_drawdown_percent": "0",
+        "profit_factor": null,
+        "gross_profit": "0",
+        "gross_loss": "0"
+      },
+      "periods": {
+        "train": {
+          "closed_allocations": 9,
+          "flat_to_flat_episodes": 3,
+          "winning_episodes": 0,
+          "closed_allocation_costs": {
+            "raw": "-3.54749400000000000000000000",
+            "fees": "4.742220379400000000",
+            "slippage": "0.474508400000000000000000000000000000",
+            "net": "-8.764222779400000000000000000000000000"
+          }
+        },
+        "validation": {
+          "closed_allocations": 0,
+          "flat_to_flat_episodes": 0,
+          "winning_episodes": 0,
+          "closed_allocation_costs": {
+            "raw": "0",
+            "fees": "0",
+            "slippage": "0",
+            "net": "0"
+          }
+        }
+      },
+      "episodes": [
+        {
+          "entry_time": 1790089980000,
+          "exit_time": 1790107620000,
+          "allocations": 5,
+          "net_pnl": "-4.820791542600000000000000000000000000"
+        },
+        {
+          "entry_time": 1790123460000,
+          "exit_time": 1790143680000,
+          "allocations": 3,
+          "net_pnl": "-1.803069101800000000000000000000000000"
+        },
+        {
+          "entry_time": 1790193600000,
+          "exit_time": 1790197380000,
+          "allocations": 1,
+          "net_pnl": "-2.140362135000000000000000000000000000"
+        }
+      ],
+      "exit_fill_reasons": {
+        "NATIVE": 9
+      },
+      "rejections": {
+        "BELOW_QUANTITY_STEP": 15,
+        "TARGET_NOT_OPEN": 75,
+        "Maximum trades per day reached": 1,
+        "Trading paused after loss streak": 49
+      },
+      "final_cash": "991.235777220600000000",
+      "position_quantity": "0E-18",
+      "open_allocations": 0
+    },
+    {
+      "version": "spot_exit_v1",
+      "cost_factor": 1,
+      "train": {
+        "bars": 4050,
+        "closed_trades": 8,
+        "start_equity": "1000.00000000",
+        "end_equity": "994.81472165030000000000000000",
+        "net_return_percent": "-0.518527834970000000",
+        "max_drawdown_percent": "0.64609161776344183457494826055742872901305125253221",
+        "profit_factor": "0E+18",
+        "gross_profit": "0",
+        "gross_loss": "5.185278349700000000"
+      },
+      "validation": {
+        "bars": 1350,
+        "closed_trades": 0,
+        "start_equity": "994.81472165030000000000000000",
+        "end_equity": "994.81472165030000000000000000",
+        "net_return_percent": "0",
+        "max_drawdown_percent": "0",
+        "profit_factor": null,
+        "gross_profit": "0",
+        "gross_loss": "0"
+      },
+      "periods": {
+        "train": {
+          "closed_allocations": 8,
+          "flat_to_flat_episodes": 3,
+          "winning_episodes": 0,
+          "closed_allocation_costs": {
+            "raw": "-0.74896970000000000000000000",
+            "fees": "4.032784249700000000",
+            "slippage": "0.403524400000000000000000000000000000",
+            "net": "-5.185278349700000000000000000000000000"
+          }
+        },
+        "validation": {
+          "closed_allocations": 0,
+          "flat_to_flat_episodes": 0,
+          "winning_episodes": 0,
+          "closed_allocation_costs": {
+            "raw": "0",
+            "fees": "0",
+            "slippage": "0",
+            "net": "0"
+          }
+        }
+      },
+      "episodes": [
+        {
+          "entry_time": 1790089980000,
+          "exit_time": 1790093160000,
+          "allocations": 3,
+          "net_pnl": "-1.287229902400000000000000000000000000"
+        },
+        {
+          "entry_time": 1790096520000,
+          "exit_time": 1790097480000,
+          "allocations": 2,
+          "net_pnl": "-1.980254385200000000000000000000000000"
+        },
+        {
+          "entry_time": 1790123460000,
+          "exit_time": 1790127360000,
+          "allocations": 3,
+          "net_pnl": "-1.917794062100000000000000000000000000"
+        }
+      ],
+      "exit_fill_reasons": {
+        "NATIVE": 8
+      },
+      "rejections": {
+        "Maximum trades per day reached": 6,
+        "TARGET_NOT_OPEN": 51,
+        "BELOW_QUANTITY_STEP": 2,
+        "Trading paused after loss streak": 44
+      },
+      "final_cash": "994.814721650300000000",
+      "position_quantity": "0E-18",
+      "open_allocations": 0
+    },
+    {
+      "version": "legacy",
+      "cost_factor": 2,
+      "train": {
+        "bars": 4050,
+        "closed_trades": 9,
+        "start_equity": "1000.00000000",
+        "end_equity": "986.07225582340000000000000000",
+        "net_return_percent": "-1.392774417660000000",
+        "max_drawdown_percent": "1.4771956151810538049017908850485768421739193718395",
+        "profit_factor": "0E+18",
+        "gross_profit": "0",
+        "gross_loss": "13.927744176600000000"
+      },
+      "validation": {
+        "bars": 1350,
+        "closed_trades": 0,
+        "start_equity": "986.07225582340000000000000000",
+        "end_equity": "986.07225582340000000000000000",
+        "net_return_percent": "0",
+        "max_drawdown_percent": "0",
+        "profit_factor": null,
+        "gross_profit": "0",
+        "gross_loss": "0"
+      },
+      "periods": {
+        "train": {
+          "closed_allocations": 9,
+          "flat_to_flat_episodes": 3,
+          "winning_episodes": 0,
+          "closed_allocation_costs": {
+            "raw": "-3.53224340000000000000000000",
+            "fees": "9.450197476600000000",
+            "slippage": "0.945303300000000000000000000000000000",
+            "net": "-13.927744176600000000000000000000000000"
+          }
+        },
+        "validation": {
+          "closed_allocations": 0,
+          "flat_to_flat_episodes": 0,
+          "winning_episodes": 0,
+          "closed_allocation_costs": {
+            "raw": "0",
+            "fees": "0",
+            "slippage": "0",
+            "net": "0"
+          }
+        }
+      },
+      "episodes": [
+        {
+          "entry_time": 1790089980000,
+          "exit_time": 1790107620000,
+          "allocations": 5,
+          "net_pnl": "-7.003417316200000000000000000000000000"
+        },
+        {
+          "entry_time": 1790123460000,
+          "exit_time": 1790143680000,
+          "allocations": 3,
+          "net_pnl": "-3.975142405200000000000000000000000000"
+        },
+        {
+          "entry_time": 1790193600000,
+          "exit_time": 1790197380000,
+          "allocations": 1,
+          "net_pnl": "-2.949184455200000000000000000000000000"
+        }
+      ],
+      "exit_fill_reasons": {
+        "NATIVE": 9
+      },
+      "rejections": {
+        "BELOW_QUANTITY_STEP": 15,
+        "TARGET_NOT_OPEN": 75,
+        "Maximum trades per day reached": 1,
+        "Trading paused after loss streak": 49
+      },
+      "final_cash": "986.072255823400000000",
+      "position_quantity": "0E-18",
+      "open_allocations": 0
+    },
+    {
+      "version": "spot_exit_v1",
+      "cost_factor": 2,
+      "train": {
+        "bars": 4050,
+        "closed_trades": 8,
+        "start_equity": "1000.00000000",
+        "end_equity": "990.41354096340000000000000000",
+        "net_return_percent": "-0.958645903660000000",
+        "max_drawdown_percent": "1.0434387742386160219066328623201733853072064633099",
+        "profit_factor": "0E+18",
+        "gross_profit": "0",
+        "gross_loss": "9.586459036600000000"
+      },
+      "validation": {
+        "bars": 1350,
+        "closed_trades": 0,
+        "start_equity": "990.41354096340000000000000000",
+        "end_equity": "990.41354096340000000000000000",
+        "net_return_percent": "0",
+        "max_drawdown_percent": "0",
+        "profit_factor": null,
+        "gross_profit": "0",
+        "gross_loss": "0"
+      },
+      "periods": {
+        "train": {
+          "closed_allocations": 8,
+          "flat_to_flat_episodes": 3,
+          "winning_episodes": 0,
+          "closed_allocation_costs": {
+            "raw": "-0.74453400000000000000000000",
+            "fees": "8.037907736600000000",
+            "slippage": "0.804017300000000000000000000000000000",
+            "net": "-9.586459036600000000000000000000000000"
+          }
+        },
+        "validation": {
+          "closed_allocations": 0,
+          "flat_to_flat_episodes": 0,
+          "winning_episodes": 0,
+          "closed_allocation_costs": {
+            "raw": "0",
+            "fees": "0",
+            "slippage": "0",
+            "net": "0"
+          }
+        }
+      },
+      "episodes": [
+        {
+          "entry_time": 1790089980000,
+          "exit_time": 1790093160000,
+          "allocations": 3,
+          "net_pnl": "-2.539743517000000000000000000000000000"
+        },
+        {
+          "entry_time": 1790096520000,
+          "exit_time": 1790097480000,
+          "allocations": 2,
+          "net_pnl": "-2.953336900200000000000000000000000000"
+        },
+        {
+          "entry_time": 1790123460000,
+          "exit_time": 1790127360000,
+          "allocations": 3,
+          "net_pnl": "-4.093378619400000000000000000000000000"
+        }
+      ],
+      "exit_fill_reasons": {
+        "NATIVE": 8
+      },
+      "rejections": {
+        "Maximum trades per day reached": 6,
+        "TARGET_NOT_OPEN": 51,
+        "BELOW_QUANTITY_STEP": 2,
+        "Trading paused after loss streak": 44
+      },
+      "final_cash": "990.413540963400000000",
+      "position_quantity": "0E-18",
+      "open_allocations": 0
+    }
+  ],
+  "input_effectiveness": [
+    {
+      "input": "emaFastInput",
+      "bound": "min",
+      "value": 30,
+      "buy_changed_bars": 26,
+      "exit_changed_bars": 114
+    },
+    {
+      "input": "emaFastInput",
+      "bound": "max",
+      "value": 70,
+      "buy_changed_bars": 17,
+      "exit_changed_bars": 95
+    },
+    {
+      "input": "emaSlowInput",
+      "bound": "min",
+      "value": 150,
+      "buy_changed_bars": 3,
+      "exit_changed_bars": 0
+    },
+    {
+      "input": "emaSlowInput",
+      "bound": "max",
+      "value": 250,
+      "buy_changed_bars": 4,
+      "exit_changed_bars": 0
+    },
+    {
+      "input": "atrLenInput",
+      "bound": "min",
+      "value": 10,
+      "buy_changed_bars": 13,
+      "exit_changed_bars": 38
+    },
+    {
+      "input": "atrLenInput",
+      "bound": "max",
+      "value": 20,
+      "buy_changed_bars": 22,
+      "exit_changed_bars": 45
+    },
+    {
+      "input": "stFactorInput",
+      "bound": "min",
+      "value": 2.4,
+      "buy_changed_bars": 108,
+      "exit_changed_bars": 138
+    },
+    {
+      "input": "stFactorInput",
+      "bound": "max",
+      "value": 4,
+      "buy_changed_bars": 63,
+      "exit_changed_bars": 119
+    },
+    {
+      "input": "zoneAtrMultInput",
+      "bound": "min",
+      "value": 0.75,
+      "buy_changed_bars": 27,
+      "exit_changed_bars": 0
+    },
+    {
+      "input": "zoneAtrMultInput",
+      "bound": "max",
+      "value": 1.55,
+      "buy_changed_bars": 46,
+      "exit_changed_bars": 0
+    },
+    {
+      "input": "setupExpiryInput",
+      "bound": "min",
+      "value": 24,
+      "buy_changed_bars": 0,
+      "exit_changed_bars": 0
+    },
+    {
+      "input": "setupExpiryInput",
+      "bound": "max",
+      "value": 72,
+      "buy_changed_bars": 0,
+      "exit_changed_bars": 0
+    },
+    {
+      "input": "cooldownInput",
+      "bound": "min",
+      "value": 4,
+      "buy_changed_bars": 36,
+      "exit_changed_bars": 0
+    },
+    {
+      "input": "cooldownInput",
+      "bound": "max",
+      "value": 12,
+      "buy_changed_bars": 36,
+      "exit_changed_bars": 0
+    },
+    {
+      "input": "confirmLookback",
+      "bound": "min",
+      "value": 3,
+      "buy_changed_bars": 0,
+      "exit_changed_bars": 0
+    },
+    {
+      "input": "confirmLookback",
+      "bound": "max",
+      "value": 7,
+      "buy_changed_bars": 0,
+      "exit_changed_bars": 0
+    }
+  ],
+  "tradingview_parity": "NOT_CHECKED",
+  "repaint": "NOT_CHECKED",
+  "recommendation_ready": false,
+  "limitation": "Exploratory historical diagnosis of one predeclared exit rule. No independent validation, new search or runtime activation.",
+  "post_run_maintenance": {
+    "change": "Split one combined import for Ruff I001; exact text comparison confirms no other runner change. Frozen plan and executed runner hash retained.",
+    "current_runner_sha256": "25e307af74a6fc704c615edf84f140761f6404519272bf460e0c28230fcf1a6c",
+    "ruff": "PASS",
+    "builder_node_syntax": "PASS",
+    "additional_replays": 0,
+    "evaluator_change": "Removed one extra trailing blank line; evaluated implementation hash retained.",
+    "current_evaluator_sha256": "6c49ce2d35f82840b86dbf3155863be5e685c0d72351d7eafc97848013bf2049"
+  }
+}

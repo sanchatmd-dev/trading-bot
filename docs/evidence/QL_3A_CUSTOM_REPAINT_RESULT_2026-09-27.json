@@ -1,0 +1,36 @@
+{
+  "schema_version": "ql3a-custom-repaint-result-v1",
+  "recorded_at": "2026-09-27T07:21:50.634842+00:00",
+  "status": "PASS",
+  "result": {
+    "recorded_closed_observations": 100,
+    "compared_to_later_history": 100,
+    "not_in_historical_export": 0,
+    "changed": 0,
+    "required": 100,
+    "matched": true,
+    "capture_id": "82686e32-505e-4f58-b8f9-31ace4d39ea0",
+    "capture_exported_at": 1790493641047
+  },
+  "first_closed_bar": 1790487000000,
+  "last_closed_bar": 1790492940000,
+  "gaps": 0,
+  "native_events": {
+    "BUY": 2,
+    "EXIT": 0
+  },
+  "max_delivery_delay_ms": 9832,
+  "rejected_at_freeze": 0,
+  "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "snapshot_hash": "a0f51e033599e8f36e273113bb1701d6a71677220dc6bf7f7909e2b9ad7d48da",
+  "effective_inputs_hash": "e571b4d9d1bd10704c2bc0e480221669987ef1c2bfab22ebd3da2189f0071ec2",
+  "trace_artifact_hash": "940e80ab03a8c7b010677443ee7d3846115ea5b80fc910ec6c08af44f1f8c4c3",
+  "chart_review_sha256": "bf9fc85413653c61eedd7b27a01b1b0c5b3087ebecf4e6372ccd2f0d959c58c3",
+  "frozen_capture_sha256": "1ad7a36c94135221dc36cf4a21022e4d54fd7fdb4d80298d6ce79a8d75198c91",
+  "later_csv_sha256": "c828d8d080410d0f037c4ef9c213e81ff4fa3ad72e88ef55907788fce1455a8e",
+  "historical_exported_at": 1790493524632,
+  "historical_closed_rows": 6198,
+  "scope": "Exact reviewed SPT Custom baseline on standard BINANCE:BTCUSDT 1m; 100 consecutive recorded closed bars. This is not a universal non-repainting guarantee. EXIT was false for every captured bar; positive EXIT-event stability is unobserved in this window.",
+  "full_tradingview_source_bytes_verified": false,
+  "execution_enabled": false
+}

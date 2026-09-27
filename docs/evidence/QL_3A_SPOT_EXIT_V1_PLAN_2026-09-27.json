@@ -1,0 +1,130 @@
+{
+  "version": "spt-spot-exit-v1-development-plan",
+  "recorded_at": "2026-09-27T07:57:11.977771+00:00",
+  "scope": "Existing train/validation development data only; no optimizer or holdout",
+  "source_revision": {
+    "version": "spt-spot-exit-v1-draft",
+    "status": "AWAITING_TRADINGVIEW_PARITY",
+    "original_source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+    "revised_source_hash": "38794b520c01176cd86a30932c2443c544a3dded63e5f5c657e288dd6097f1d2",
+    "artifact_hash": "1426f1fa6147f7e4681503554a7b6f2383410914913b1da8b22696e096327bd6",
+    "effective_inputs_hash": "1184da0b6953a22c57354e7b3f5f88754eaf45c08b0ae6a695dc4d248e802e74",
+    "input_count": 58,
+    "original_input_lock_hash": "9db0f7723ecff6d05ce9c618b1a5798039d2081c83c698a8b3c9c51f3a1cb184",
+    "exit_rule": "confirmed rising edge of (stBear AND close < emaFast)",
+    "priority": "EXIT suppresses BUY",
+    "entry_filters_changed": false,
+    "cooldown_state_note": "New EXIT timing resets the existing shared tradeStartBar and setup state; later BUY timing can change.",
+    "risk_policy_changed": false,
+    "pyramiding_changed": false,
+    "execution_bridge": false,
+    "optimizer_enabled": false,
+    "lines": 2312
+  },
+  "baseline_request_file_sha256": "f0a91435b23a23c665cee1f1e8887854b5a235ed800995b1e5a7b5680e19f74c",
+  "evaluator_sha256": "66324b2cebce12624cb139ab5b0b2cfcd62d718ad783cb8562b46082e8ebeeb1",
+  "parent_run_id": "10d7ccc1-7ab5-4bff-8f95-d32f0bcd95a8",
+  "split": {
+    "warmup": 3250,
+    "test_end": 10000,
+    "train_end": 7300,
+    "validation_end": 8650
+  },
+  "supplied_bar_count": 8650,
+  "supplied_first_close": 1789894260000,
+  "supplied_last_close": 1790413200000,
+  "baseline_parameters": {
+    "rr": 1.5,
+    "atrLenInput": 14,
+    "emaFastInput": 50,
+    "emaSlowInput": 200,
+    "cooldownInput": 8,
+    "stFactorInput": 3.2,
+    "atr_multiplier": 60,
+    "confirmLookback": 5,
+    "setupExpiryInput": 48,
+    "zoneAtrMultInput": 1.15
+  },
+  "policy": {
+    "balances": {
+      "binance-global": 1000
+    },
+    "defaults": {
+      "dailyLossR": 3,
+      "lossStreak": 3,
+      "riskPercent": 1,
+      "tradesPerDay": 10,
+      "dailyNotional": 5000,
+      "openPositions": 3,
+      "orderNotional": 1000,
+      "signalAgeSeconds": 60,
+      "volatilityPercent": 5
+    },
+    "equities": {
+      "binance-global": 1000
+    },
+    "sideMode": "BOTH",
+    "killSwitch": false,
+    "paperTrading": true,
+    "maxDailyLossR": 3,
+    "allowedSymbols": [],
+    "maxRiskPercent": 1,
+    "blockDuringNews": false,
+    "maxTradesPerDay": 10,
+    "maxDailyNotional": 100000,
+    "maxOpenPositions": 3,
+    "maxOrderNotional": 10000,
+    "blockHighVolatility": true,
+    "maxSignalAgeSeconds": 300,
+    "capPercentEquitySize": true,
+    "maxVolatilityPercent": 5,
+    "onePositionPerSymbol": false,
+    "pauseAfterLossStreak": 3,
+    "requireReduceOnlySell": true
+  },
+  "model": {
+    "fee_bps": 10,
+    "version": "paper-close-v1",
+    "price_tick": 0.01,
+    "data_profile": "closed-ohlcv-atr14-v1",
+    "risk_percent": 1,
+    "slippage_bps": 1,
+    "quantity_step": 1e-05
+  },
+  "capital": {
+    "cash": "1000",
+    "equity": "1000"
+  },
+  "comparisons": [
+    "legacy at baseline costs",
+    "Spot EXIT v1 at baseline costs",
+    "legacy at 2x fees/slippage",
+    "Spot EXIT v1 at 2x fees/slippage"
+  ],
+  "maximum_replays": 4,
+  "parameter_search_budget": 0,
+  "effectiveness_audit": "Eight approved source dimensions: baseline versus each approved min/max; signal vectors only, no return ranking.",
+  "report": [
+    "closed allocations and flat-to-flat episodes by exit period",
+    "net return and drawdown",
+    "fees and slippage",
+    "rejections",
+    "native signal counts",
+    "open position at end"
+  ],
+  "decision_rule": "Record all outcomes. Do not tune the exit rule in response to results. No Best Inputs or automatic subsequent run.",
+  "next_acceptance": {
+    "parity_min_bars": 2000,
+    "cold_warmup_min_bars": 3250,
+    "signal_mismatches_max": 0,
+    "state_abs_tolerance": 1e-07,
+    "repaint_min_consecutive_observations": 100,
+    "repaint_changes_max": 0,
+    "ohlcv_mismatches_max": 0,
+    "closed_allocations_min_per_partition": 5,
+    "flat_to_flat_episodes_min_per_partition": 5,
+    "note": "Episode minimum is an additional proposed research check; runtime policy and API screening remain unchanged."
+  },
+  "fresh_research": "Requires separately frozen unseen dataset boundaries/hash, revision parity and versioned registration. Explored periods cannot become independent validation. Original holdout remains unopened.",
+  "runner_sha256": "e3f8762d06e7543dfe1eca8ad4168fdaeb2b72f8b7f647e73102ef71f8d2cf8a"
+}

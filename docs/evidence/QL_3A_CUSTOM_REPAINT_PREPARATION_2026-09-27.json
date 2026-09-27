@@ -1,0 +1,50 @@
+{
+  "schema_version": "ql3a-custom-repaint-preparation-v1",
+  "recorded_at": "2026-09-27T05:17:17.147Z",
+  "status": "PREPARED_AWAITING_COMPILE_INPUT_REVIEW_AND_ALERT",
+  "prior_inventory": [
+    {
+      "capture_id": "292cfaef-3f9a-42c8-a862-d28ea2396f40",
+      "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+      "snapshot_hash": "d61ee4bcbab344c3b547408e70cce9167bbacb79955345fcd14ee7bff2ad59ff",
+      "registered_preset": "Daily/Swing",
+      "native_observations": 1350
+    },
+    {
+      "capture_id": "22e5c53b-c7b2-4fac-b186-78ece3ea52d1",
+      "source_hash": "2f353c49721c8daf24e366409eaf6eac49f945da955a0df8bd52862f2e7e3277",
+      "snapshot_hash": "ea98c0e12e1c7a4c4b9a2c9b836115f374d6bbc193dfd10fb9aed9283eec1de2",
+      "registered_preset": "Daily/Swing",
+      "native_observations": 2225
+    },
+    {
+      "capture_id": "fb3d058a-7e39-491d-a511-edc5d7779f9f",
+      "source_hash": "2f353c49721c8daf24e366409eaf6eac49f945da955a0df8bd52862f2e7e3277",
+      "snapshot_hash": "ea98c0e12e1c7a4c4b9a2c9b836115f374d6bbc193dfd10fb9aed9283eec1de2",
+      "registered_preset": "Daily/Swing",
+      "native_observations": 70
+    },
+    {
+      "capture_id": "92b51801-f074-4150-9688-187e2048a2e6",
+      "source_hash": "2f353c49721c8daf24e366409eaf6eac49f945da955a0df8bd52862f2e7e3277",
+      "snapshot_hash": "ea98c0e12e1c7a4c4b9a2c9b836115f374d6bbc193dfd10fb9aed9283eec1de2",
+      "registered_preset": "Daily/Swing",
+      "native_observations": 1265
+    }
+  ],
+  "capture_id": "82686e32-505e-4f58-b8f9-31ace4d39ea0",
+  "deployment_id": "f7f65b71-b73a-4c26-8928-200e7affbaba",
+  "baseline_deployment_id": "c141d973-9024-4af5-b21a-177d624d7be0",
+  "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "snapshot_hash": "a0f51e033599e8f36e273113bb1701d6a71677220dc6bf7f7909e2b9ad7d48da",
+  "effective_inputs_hash": "e571b4d9d1bd10704c2bc0e480221669987ef1c2bfab22ebd3da2189f0071ec2",
+  "trace_artifact_hash": "940e80ab03a8c7b010677443ee7d3846115ea5b80fc910ec6c08af44f1f8c4c3",
+  "source_bytes_changed": 0,
+  "guard_state_preserved": true,
+  "execution_enabled": false,
+  "alert_created": false,
+  "custom_observations": 0,
+  "repaint_matched": false,
+  "required_observations": 100,
+  "acceptance_note": "Existing native observations are bound to Daily/Swing snapshots and cannot attest the Custom snapshot. Earlier parity-only artifacts have no new capture alert. Custom capture must start after reviewed input setup."
+}

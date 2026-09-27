@@ -1,0 +1,270 @@
+{
+  "schema_version": "ql3a-varied-input-parity-preparation-v1",
+  "status": "PREPARED_NOT_VERIFIED",
+  "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "baseline_snapshot_hash": "1ddf2c2f3ec988a1231785d990e066d7f303ec7403d86c811a2ef4a56620cacc",
+  "input_lock_hash": "9db0f7723ecff6d05ce9c618b1a5798039d2081c83c698a8b3c9c51f3a1cb184",
+  "market": {
+    "symbol": "BINANCE:BTCUSDT",
+    "timeframe": "1",
+    "standard_chart": true
+  },
+  "baseline_source_input_count": 58,
+  "fixed_source_inputs": 50,
+  "bridge": {
+    "atr_multiplier": 60,
+    "rr": 1.5
+  },
+  "criteria": {
+    "measured_closed_bars_min": 2000,
+    "warmup_bars_min": 1250,
+    "signal_mismatches_max": 0,
+    "state_absolute_tolerance": 1e-7,
+    "independent_spot_ohlcv_mismatches_max": 0
+  },
+  "limitations": [
+    "Min/max axis cases cover each selected source input; they do not certify every mixed candidate.",
+    "Changed inputs start a new source state; never restore the baseline checkpoint into a variant.",
+    "A checkpoint comparison must use the same variant and be labeled separately from cold-start convergence.",
+    "Custom 100-observation repaint evidence remains a separate gate.",
+    "No execution Bridge, webhook URL, token or new alert is included."
+  ],
+  "cases": [
+    {
+      "id": "baseline",
+      "plot_prefix": "QL3A baseline",
+      "changes": {},
+      "effective_inputs_hash": "1184da0b6953a22c57354e7b3f5f88754eaf45c08b0ae6a695dc4d248e802e74",
+      "artifact_hash": "082692c7825365d2d9b63c3112ff55633b38f8399a0538357e3f34250a1b9f84",
+      "default_only_source_hash": "f2ffe88ae41e9ef124c4fa914f440551ad5b7da746c6c6f897508d10d9f8728f",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "baseline.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "emaFastInput-min",
+      "plot_prefix": "QL3A emaFastInput-min",
+      "changes": {
+        "emaFastInput": 30
+      },
+      "effective_inputs_hash": "6f8ec473f79027cf43c6a22bd075e59cbedda651987ca1571591e108f536bb97",
+      "artifact_hash": "f3d1df7ae9c31d3a4e55eaa98cdfa07add40cbae416049687e6c1f1832142df5",
+      "default_only_source_hash": "b2aa7e4c46f698de2f531d85503eb5e7f4d24f65a502e225bb3f7980c2e76313",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "emaFastInput-min.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "emaFastInput-max",
+      "plot_prefix": "QL3A emaFastInput-max",
+      "changes": {
+        "emaFastInput": 70
+      },
+      "effective_inputs_hash": "c721b7292b07a0e05d699ff503b56fd9bf9007a6f5b9ab6878b4ca36f2f77a6a",
+      "artifact_hash": "2109437feeecef6c8e96e7e9f854de6866a4c130a03e6636cd9a2fec64d1a4dc",
+      "default_only_source_hash": "8a17570ea761f2c39a915b7fe637892dcbc2f98d1a64ab8d3f4032797e929f87",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "emaFastInput-max.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "emaSlowInput-min",
+      "plot_prefix": "QL3A emaSlowInput-min",
+      "changes": {
+        "emaSlowInput": 150
+      },
+      "effective_inputs_hash": "dc22418d0ec77f621fa4a03337dbf26579a9f962b1ff6ad9de1bd8f768c9198a",
+      "artifact_hash": "11ea6be04766cf50a6c53aafb9b3935bdbbd8b71061f634b601c6f810ac3b7cf",
+      "default_only_source_hash": "5acaa2d713ebc49fe643b9347f892960d4b5ef8861eab491c6105381f65917a7",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "emaSlowInput-min.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "emaSlowInput-max",
+      "plot_prefix": "QL3A emaSlowInput-max",
+      "changes": {
+        "emaSlowInput": 250
+      },
+      "effective_inputs_hash": "9518306804e76c3295b5e5f4ba2858a3cb35548b1bf96eea0bf6534cb0b68dad",
+      "artifact_hash": "f2a9539566ea237ead623b553e707aa1adf22284ba231bdec2691ec612dd08b1",
+      "default_only_source_hash": "042da88b2de471af91b2bf366b1606add3140d37143678e58d16a2c61de0e6f3",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "emaSlowInput-max.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "atrLenInput-min",
+      "plot_prefix": "QL3A atrLenInput-min",
+      "changes": {
+        "atrLenInput": 10
+      },
+      "effective_inputs_hash": "25de5f70d938354f3da256557f7846259da9dbc22b21f02642e877d74c172931",
+      "artifact_hash": "d4d73fbef4e323df141f7daac6f1a2c623a2d2ab05ca1d10b3898271c5616b0b",
+      "default_only_source_hash": "84e7c77bef85a602eb3beea4fa9a2d03e718953cd262fd2c1075cc1a5eda3005",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "atrLenInput-min.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "atrLenInput-max",
+      "plot_prefix": "QL3A atrLenInput-max",
+      "changes": {
+        "atrLenInput": 20
+      },
+      "effective_inputs_hash": "cfb0b5c9c512314daae3ee3ae20909236b307a018284031ac0030b61bb9e1f03",
+      "artifact_hash": "0a3efd2bb829882edf9daef6588dcbf253cc6b618c82d4b8e9eb9718130f99c9",
+      "default_only_source_hash": "acab8fb29b9df645ba0f3a993837904e727cc1d3169d183da0b996fe9351f9b4",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "atrLenInput-max.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "stFactorInput-min",
+      "plot_prefix": "QL3A stFactorInput-min",
+      "changes": {
+        "stFactorInput": 2.4
+      },
+      "effective_inputs_hash": "2eaf7077f52812faf5f6dd9d5fa8d3459ddefe49f2e9228db2df350e4f18d3f0",
+      "artifact_hash": "00ab1bc16651e287931729571076843da4250ac2897e1f731978cfb89a5d8735",
+      "default_only_source_hash": "9694aa74a1636150cb2b4cf5d7285069dea82a0b871ba1b7c22e683931c6f65f",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "stFactorInput-min.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "stFactorInput-max",
+      "plot_prefix": "QL3A stFactorInput-max",
+      "changes": {
+        "stFactorInput": 4
+      },
+      "effective_inputs_hash": "113f77c99d5f3d3716bd5472a6b02f0c1d1f1ef87843084d3fb196eff5b4af1f",
+      "artifact_hash": "c8f391db6b34fb784027e8c250a6b54f8ed0670387298d8d8877d72a002a0be8",
+      "default_only_source_hash": "5ce04b964ed00332416d2ce2227848bb013d29b59dee882c81cd3845aada1cba",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "stFactorInput-max.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "zoneAtrMultInput-min",
+      "plot_prefix": "QL3A zoneAtrMultInput-min",
+      "changes": {
+        "zoneAtrMultInput": 0.75
+      },
+      "effective_inputs_hash": "2bbfb91de0a4a88256a9a2c3fe1874d1ea96d19097078eea4ebd3ac6fe424c3a",
+      "artifact_hash": "a9cd6e168d7d6e8d2797864f76871e3a1760dfd74fe4b0055204aac94cd8233a",
+      "default_only_source_hash": "c3983ac412750de113acac0e06302312349230bb33ba8a34aac5558d981e4f89",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "zoneAtrMultInput-min.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "zoneAtrMultInput-max",
+      "plot_prefix": "QL3A zoneAtrMultInput-max",
+      "changes": {
+        "zoneAtrMultInput": 1.55
+      },
+      "effective_inputs_hash": "dad8b77ba0070888d84b0c7b5eefc96d369136305ae73983f9e6d2dd1131d45b",
+      "artifact_hash": "ba19469f3b3334d65357b843f2fd69b0ebfd4f4aef9312d3c214bfbc365a76aa",
+      "default_only_source_hash": "43fb188583908ca3d3eb15d8319ab16fa9b1337ee487197d7cc2fbbde1aac6ab",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "zoneAtrMultInput-max.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "setupExpiryInput-min",
+      "plot_prefix": "QL3A setupExpiryInput-min",
+      "changes": {
+        "setupExpiryInput": 24
+      },
+      "effective_inputs_hash": "e2d37eafa8029f4e7005fdcd93f14abac3d663a3311af93dee465cc4dd2baba7",
+      "artifact_hash": "5e599ff812964f28fb407eec70a94fe9a0edeb044a1031edb5d8abb06a775e91",
+      "default_only_source_hash": "0f6aee1a6b4566d01b5eaab90d14b6de0fe230b1a2336465c44609ea1bfcc6f5",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "setupExpiryInput-min.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "setupExpiryInput-max",
+      "plot_prefix": "QL3A setupExpiryInput-max",
+      "changes": {
+        "setupExpiryInput": 72
+      },
+      "effective_inputs_hash": "83cb39e8e8199784c92476a212f1ac9d00e396aa3cc33c905fcc11b3912e564f",
+      "artifact_hash": "a45aba1357ca324b1573cce1b5ae7d94af4ad2484944d160c6dfe484a353ea0f",
+      "default_only_source_hash": "daf73d2d646d14b1ae100c21905cd6f4a3528fe3b29de07b931e889ed32548bc",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "setupExpiryInput-max.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "cooldownInput-min",
+      "plot_prefix": "QL3A cooldownInput-min",
+      "changes": {
+        "cooldownInput": 4
+      },
+      "effective_inputs_hash": "ff062e27d4223e6345cead7a8382f21271d0f70c60ceead43dcc9d97175fcdc5",
+      "artifact_hash": "dacaefb94920ed7aa0334181210fc3f6f554a38b9cd60164b8df1e1fe766b520",
+      "default_only_source_hash": "7da3b46aad4481f53c9b36d2666286048f7210ad076bb4f6b4ce7dbe1a3de67f",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "cooldownInput-min.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "cooldownInput-max",
+      "plot_prefix": "QL3A cooldownInput-max",
+      "changes": {
+        "cooldownInput": 12
+      },
+      "effective_inputs_hash": "6464fe54cd0401093e5114045c300345a2788857a898d53beca6be841407cc30",
+      "artifact_hash": "ca6ecee1194a870b35240bf3e0c01861fafd2317d135fcfce9b4905e4d63cc5e",
+      "default_only_source_hash": "f9745be0e6df0832cbda023c33af2ba973e8cce4cbc2393553b1c8d86dd33c2a",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "cooldownInput-max.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "confirmLookback-min",
+      "plot_prefix": "QL3A confirmLookback-min",
+      "changes": {
+        "confirmLookback": 3
+      },
+      "effective_inputs_hash": "022f2939f1b70c773cd5149b557dc964fdabd5dc2f026259169a01095b26aa60",
+      "artifact_hash": "25e1316f53f57a472d0c56fa5918cf150550659c804651c5cdb75c10a593b607",
+      "default_only_source_hash": "9d0523319b32736715cec58713c98bf1ae6d8397bfd6d3894f1ae8332d45752a",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "confirmLookback-min.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    },
+    {
+      "id": "confirmLookback-max",
+      "plot_prefix": "QL3A confirmLookback-max",
+      "changes": {
+        "confirmLookback": 7
+      },
+      "effective_inputs_hash": "cb77c8e880ac108b893d40773caa0566058d2525d352c2241df2c49831b858dd",
+      "artifact_hash": "c3c73976f9cd13c8207142882a1d7880288abea0eee348f6c17c4725b669ec31",
+      "default_only_source_hash": "dff0563142b702669c06605c109ce034cdd13c3b36c8eed16bb363fe932b4ecd",
+      "original_logic_unchanged": true,
+      "lines": 2346,
+      "file": "confirmLookback-max.pine",
+      "status": "AWAITING_TRADINGVIEW_COMPILE_EXPORT"
+    }
+  ]
+}

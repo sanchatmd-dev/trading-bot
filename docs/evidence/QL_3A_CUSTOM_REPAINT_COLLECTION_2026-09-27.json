@@ -1,0 +1,36 @@
+{
+  "schema_version": "ql3a-custom-repaint-collection-v1",
+  "recorded_at": "2026-09-27T05:31:19.605Z",
+  "status": "COLLECTING_CUSTOM_REPAINT",
+  "session": {
+    "capture_id": "82686e32-505e-4f58-b8f9-31ace4d39ea0",
+    "deployment_id": "f7f65b71-b73a-4c26-8928-200e7affbaba",
+    "snapshot_hash": "a0f51e033599e8f36e273113bb1701d6a71677220dc6bf7f7909e2b9ad7d48da",
+    "received": 3,
+    "rejected": 0,
+    "closed": false,
+    "last_error": null
+  },
+  "collection_start": "2026-09-27T05:29:08.236Z",
+  "chart_review_sha256": "bf9fc85413653c61eedd7b27a01b1b0c5b3087ebecf4e6372ccd2f0d959c58c3",
+  "effective_inputs_hash": "e571b4d9d1bd10704c2bc0e480221669987ef1c2bfab22ebd3da2189f0071ec2",
+  "trace_artifact_hash": "940e80ab03a8c7b010677443ee7d3846115ea5b80fc910ec6c08af44f1f8c4c3",
+  "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "inputs_matched": 58,
+  "compiled": true,
+  "compile_errors": 0,
+  "full_tradingview_source_bytes_verified": false,
+  "observations": {
+    "observations": 2,
+    "unique_bars": 2,
+    "first_bar": 1790487000000,
+    "last_bar": 1790487060000,
+    "first_received_at": 1790487006193,
+    "last_received_at": 1790487062205,
+    "max_delivery_delay_ms": 6193
+  },
+  "required_observations": 100,
+  "repaint_matched": false,
+  "execution_enabled": false,
+  "paper_alert_active": true
+}

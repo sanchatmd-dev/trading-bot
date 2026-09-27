@@ -1,0 +1,144 @@
+{
+  "recorded_at": "2026-09-27T07:21:39.817Z",
+  "scope": "ATR60_STAGING_NATURAL_COLLECTION",
+  "dataset_id": "89e58df2-a5e0-440e-8b76-575b6ca39e3e",
+  "deployment_id": "c141d973-9024-4af5-b21a-177d624d7be0",
+  "collection_start": 1790429456818,
+  "policy_hash": "e151fccd990ddd34ee368a410903f6d0edb2e1480c8585c07de5d49456cafff7",
+  "source_hash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "market": {
+    "bars": 1070,
+    "first_bar": 1790429460000,
+    "latest_bar": 1790493600000,
+    "gaps": 0
+  },
+  "events": [
+    {
+      "event_type": "BUY",
+      "reason": null,
+      "outcome": "FILLED",
+      "count": 1
+    },
+    {
+      "event_type": "BUY",
+      "reason": null,
+      "outcome": "REJECTED",
+      "count": 23
+    },
+    {
+      "event_type": "EXIT",
+      "reason": "NATIVE",
+      "outcome": "REJECTED",
+      "count": 6
+    }
+  ],
+  "signals": [
+    {
+      "side": "BUY",
+      "status": "FILLED",
+      "error_message": null,
+      "count": 1
+    },
+    {
+      "side": "BUY",
+      "status": "REJECTED",
+      "error_message": "BELOW_QUANTITY_STEP",
+      "count": 9
+    },
+    {
+      "side": "BUY",
+      "status": "REJECTED",
+      "error_message": "Maximum daily loss reached",
+      "count": 14
+    },
+    {
+      "side": "SELL",
+      "status": "REJECTED",
+      "error_message": "TARGET_NOT_OPEN",
+      "count": 6
+    }
+  ],
+  "pending": [
+    {
+      "status": "QUEUED",
+      "diagnostic": null,
+      "count": 30
+    }
+  ],
+  "allocations": [
+    {
+      "status": "OPEN",
+      "count": 1,
+      "first_open": 1790469242320,
+      "last_close": null
+    }
+  ],
+  "nativeExits": [
+    {
+      "status": "REJECTED",
+      "error_message": "TARGET_NOT_OPEN",
+      "count": 6
+    }
+  ],
+  "latest": [
+    {
+      "bar_time": 1790493360000,
+      "event_type": "BUY",
+      "reason": null,
+      "status": "REJECTED",
+      "error_message": "BELOW_QUANTITY_STEP"
+    },
+    {
+      "bar_time": 1790489280000,
+      "event_type": "BUY",
+      "reason": null,
+      "status": "REJECTED",
+      "error_message": "BELOW_QUANTITY_STEP"
+    },
+    {
+      "bar_time": 1790487480000,
+      "event_type": "BUY",
+      "reason": null,
+      "status": "REJECTED",
+      "error_message": "BELOW_QUANTITY_STEP"
+    },
+    {
+      "bar_time": 1790482080000,
+      "event_type": "BUY",
+      "reason": null,
+      "status": "REJECTED",
+      "error_message": "BELOW_QUANTITY_STEP"
+    },
+    {
+      "bar_time": 1790478240000,
+      "event_type": "BUY",
+      "reason": null,
+      "status": "REJECTED",
+      "error_message": "BELOW_QUANTITY_STEP"
+    }
+  ],
+  "guard": {
+    "day": "2026-09-27",
+    "trades": 1,
+    "realized_r": "0.000000000000000000"
+  },
+  "streak": [
+    {
+      "loss_streak": 1
+    }
+  ],
+  "session": {
+    "state": "RUNNING",
+    "run_id": "138e6721-d893-4ae1-a6d6-2873efb3ba3c"
+  },
+  "deployment": {
+    "state": "READY",
+    "snapshot_hash": "1ddf2c2f3ec988a1231785d990e066d7f303ec7403d86c811a2ef4a56620cacc"
+  },
+  "jobs": [],
+  "receiver_maintenance": {
+    "start": "2026-09-26T17:31:26Z",
+    "end": "2026-09-26T17:31:57Z"
+  },
+  "optimization_started": false
+}

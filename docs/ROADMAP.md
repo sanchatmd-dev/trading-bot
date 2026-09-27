@@ -1,6 +1,32 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+Latest development decision (2026-09-27): a separate
+[Spot EXIT v1 draft](QL_3A_SPOT_EXIT_V1_2026-09-27.md) and evaluator were prepared
+under a frozen diagnostic plan. Historical loss decreased, but three losing
+position episodes still trigger the unchanged guard and validation stays empty.
+Do not begin another live collection or optimization for this failed preflight.
+Next design review concerns entry frequency, repeated entries and transaction
+costs. No new source is activated; QL-3A recommendations and QL-4B remain gated.
+
 Status: proposed implementation plan, revised 2026-09-24. This document is the canonical plan for the new Pine Bridge → Bot → Quant → Export workflow. Earlier planning and phase history are preserved in [the archived roadmap](ROADMAP_ARCHIVE_2026-09-24.md). Nothing in this plan enables Live trading or changes production.
+
+Latest QL-3A checkpoint (2026-09-27): Custom baseline plus sixteen input-axis
+settings passed parity, and the Custom baseline passed the separate
+100-observation repaint check. A fixed historical 10,000-bar Spot dataset then
+supported one durable 100-candidate job with 100% dimension coverage, completed
+in 102.787 seconds. All candidates had zero validation closed trades, so the
+result is `NO_VALID_CANDIDATE` and holdout remains unevaluated. Baseline
+validation BUYs were blocked by the unchanged loss-streak guard. Additional
+live-bar waiting is not required for this completed research run. Review source
+behavior and any explicitly proposed operating revision before a new declared
+experiment; no automatic repeated optimization or guard reset is authorized by
+this result. **QL-3A recommendation acceptance and QL-4B remain gated.** See
+[the continuation record](QL_3A_HISTORY_RESEARCH_2026-09-27.md).
+The [SPT signal/loss review](QL_3A_SPT_SIGNAL_REVIEW_2026-09-27.md) is now
+complete: nine allocations represent three losing position episodes, and native
+EXIT retains bearish entry-style setup dependencies. Next is an owner-reviewed
+Spot exit specification and declared validation plan. No revised source or new
+research run was applied by this review.
 
 Implementation update (2026-09-24): **APP-3A is in progress**. Draft APIs/UI, durable direct-AI jobs, source revisions, evidence-controlled activation, trusted market ingestion and the scoped Paper receiver/worker are implemented locally. Gemini analyze/generate succeeded on the owner SPT source in isolated staging; the unchanged-source draft compiled and displayed on TradingView with native notifications off. Separate SPT capture alerts run on registered BTCUSDT 1D and 1-minute deployments. A capture-only endpoint, restricted public HTTPS proxy route and closed Binance bars for both intervals are staged. The actual 1-minute SPT alert delivered a BUY and a targeted TP EXIT: 2 unique events, 2 duplicate deliveries, 0 rejected and 0 Paper execution events. BUY close/ATR and the next bar's TP/SL ordering matched frozen Binance bars for this pair. The owner approved using SPT's short-entry `sellSignal` only to close Bridge longs, without opening shorts. The owner also specified Spot-only Bot/Quant operation and AI-assisted adaptation of Futures indicators; prompt/guide v3 diagnose Futures dependencies, while separate Spot source adaptation remains to be built. A separate 1-minute TradingView fixture also verified the transport path. Quantitative multi-bar parity, remaining source review and owner activation evidence remain open. Feature defaults off in production; APP-3A is not complete and QL-2A is not unlocked. See [APP-3A implementation record](APP_3A_IMPLEMENTATION.md).
 

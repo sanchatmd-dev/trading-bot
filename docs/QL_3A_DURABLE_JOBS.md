@@ -1,5 +1,15 @@
 # QL-3A durable research jobs
 
+Latest execution (2026-09-27): the staging worker completed the owner-authorized
+100-candidate Custom historical research job in 102.787 seconds, with all ten
+dimensions covered and durable checkpoints for every candidate. It returned
+`NO_VALID_CANDIDATE` because all candidates had zero validation closed trades.
+Holdout, sensitivity and stress were not evaluated. The dataset contains 10,000
+verified bars, including 3,250 warm-up bars; no additional live-bar wait is
+needed for that completed experiment. See the
+[research and continuation record](QL_3A_HISTORY_RESEARCH_2026-09-27.md).
+The historical rollout/checkpoint statements below describe their own dates.
+
 ## Status and scope
 
 Local implementation, checked against a separate PostgreSQL 16 cluster on 2026-09-27. The active Paper collection and production database were not migrated or restarted. The feature is disabled by default and can be enabled only in explicit Paper staging. It is a source-specific engineering API, not accepted customer Quant support or Best Inputs export.

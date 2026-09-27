@@ -1,6 +1,39 @@
 # QL-3A — bounded research started
 
+Latest development follow-up (2026-09-27): the owner-authorized dedicated
+[Spot EXIT v1 draft](QL_3A_SPOT_EXIT_V1_2026-09-27.md) is implemented separately
+from the frozen runtime profile. Four predeclared historical replays compare
+old/new EXIT at baseline/doubled costs, without holdout or optimization. New
+baseline net loss improves to -5.1852783497 USDT, but all three position episodes
+still lose and validation remains at zero closed trades. Setup Expiry and
+Confirmation Lookback min/max changes have no signal-vector effect on this
+development window. The input lock is retained. No new Alert, live collection,
+source activation or guard reset follows this failed development preflight.
+
 Status: **in progress; first offline run returned `NO_VALID_CANDIDATE`**, 2026-09-26. This is a valid fail-closed outcome, not a Best Inputs recommendation. QL-4B remains gated. The original SPT deployment remains DRAFT/capture-only; a separate Custom Paper deployment is now READY and collecting under its own Bot session. Production is unchanged, and runtime Quant remains UNSUPPORTED.
+
+Latest result (2026-09-27): the owner-authorized continuation used a fixed,
+verified historical 10,000-bar dataset with 3,250 warm-up bars. The durable
+staging job completed all 100 approved Custom/Bridge candidates in 102.787
+seconds with 100% dimension coverage. It returned `NO_VALID_CANDIDATE`: seven
+to sixteen train trades and zero validation trades for every candidate. The
+baseline diagnostic reproduced 18 validation BUYs blocked by the loss-streak
+guard. Holdout was not evaluated. Paper sizing was also checked: residual cash
+below one venue quantity step explains the current BUY rejections; the open
+Long had no observed exit trigger. See the
+[continuation record](QL_3A_HISTORY_RESEARCH_2026-09-27.md). Historical research
+no longer needs additional live bars for this completed run. Candidate
+validation still fails; source/operating behavior needs review before a newly
+declared experiment. Custom baseline repaint passed separately. No policy,
+capital, guard reset, Best Inputs or production change was made.
+
+The subsequent [SPT signal review](QL_3A_SPT_SIGNAL_REVIEW_2026-09-27.md)
+reproduced the baseline exactly without holdout data. Nine closed allocations
+belong to three losing position episodes: net -8.7642227794 USDT, including
+4.7422203794 USDT fees and 0.4745084 USDT execution adjustments. Native EXIT
+still requires a bearish entry-style setup. The review proposes a versioned
+Spot exit specification and a declared validation plan; no new source, policy
+or research run has been approved or applied by that review.
 
 2026-09-27 local checkpoint: [durable research jobs](QL_3A_DURABLE_JOBS.md) now implement PostgreSQL persistence, candidate/check progress, explicit cancellation, fenced restart recovery, immutable source/input/dataset/policy contracts and bounded calculation budgets. The owner approved eight source slots plus Bridge ATR/RR; exact IDs and grids are recorded in the [input lock](evidence/QL_3A_APPROVED_INPUT_LOCK_2026-09-27.json). All 47 Node/Bridge/PostgreSQL checks (including ten new grid/job checks) and three Python boundary checks passed against isolated resources. A real-source baseline stdio check had five train trades and zero validation trades without evaluating holdout. These are engineering checks, not natural trade collection or varied-input parity. The API/worker is disabled by default; no active staging/production rollout or owner optimization was performed. Dataset sufficiency, varied-input parity and fresh Custom repaint evidence remain acceptance gates.
 
@@ -9,6 +42,80 @@ The [isolated staging checkpoint](evidence/QL_3A_INPUT_REVIEW_STAGING_2026-09-26
 TradingView `Custom` baseline check: the existing source-bound state trace was set to the reference Custom values on standard BINANCE:BTCUSDT 1m, with Long + Exit, HTF filter off and original notifications off. Its export had 5,415 closed bars. Restoring the Custom trace state after the 1,006-bar warm-up, the parameter-aware evaluator matched all 4,409 later BUY/EXIT flags and all 14 compared state fields within 1e-7 (maximum numeric difference 5.24e-10). The 5,185 bars covered by the frozen independent Binance Spot dataset matched OHLCV exactly. The Custom reference values produced the same BUY/EXIT flags and 15 exported state fields as the former fixed preset over their 5,316-bar overlap. This establishes **baseline parity for that one Custom setting only**; varied parameter values and a Custom-specific 100-observation repaint check remain unverified. The local effective-input hash is a reference audit, not a registered owner attestation. [Sanitized evidence](evidence/QL_3A_CUSTOM_TV_BASELINE_2026-09-26.json) records the scope and hashes; the raw CSV remains private.
 
 ## Roadmap and workflow review
+
+2026-09-27 follow-up: [Custom axis parity](evidence/QL_3A_CUSTOM_AXIS_PARITY_2026-09-27.json)
+now matches the baseline and **16 min/max settings across all eight selected
+source slots** on a common 5,808-bar Spot window. Each case cold-starts with
+3,250 preceding bars and compares 2,558 measured bars: zero BUY/EXIT or state
+mismatches, maximum numeric error 5.09e-10 at tolerance 1e-7. The earlier
+1,250-bar cold-start comparisons failed the Slow EMA numeric criterion and are
+retained. The [procedure](QL_3A_VARIED_INPUT_PARITY.md) separates same-variant
+checkpoint results, GUI input review and expected local artifact hashes from
+full TradingView source-byte verification, which was not performed.
+
+Confirmation Lookback 3/5/7 had identical signal vectors in this dataset with
+mode Any; the approved slot/grid remains unchanged pending usefulness review.
+Any selected mixed candidate still needs exact-input parity. Fresh Custom
+repaint, chronological trade coverage and customer capability gates remain open.
+No optimization or Best Inputs export occurred.
+
+Custom repaint collection is now active. The separate capture-only native trace
+compiled on standard BINANCE:BTCUSDT 1m, and all 58 effective inputs matched the
+registered Custom snapshot. Both its new Alert and the existing ATR60 Paper
+Alert were confirmed Active. The conservative start is 2026-09-27 05:29:08.236
+UTC. At 05:31:19.605 UTC, three observations had arrived with zero rejections;
+two distinct closed bars qualify after the start. See the
+[collection evidence](evidence/QL_3A_CUSTOM_REPAINT_COLLECTION_2026-09-27.json).
+At that collection-start checkpoint, the 100-observation gate and later
+historical repaint comparison remained open.
+This step does not execute orders or change the Paper policy or risk counters.
+
+At **2026-09-27 07:21:50 UTC**, the scoped Custom repaint check passed. The
+first 100 eligible consecutive closed-bar observations (05:30 through 07:09 UTC)
+matched the later TradingView CSV on BUY, EXIT and close with **zero changes,
+zero missing observations and zero bar gaps**. The sample contains two positive
+BUY flags and no positive EXIT flags; positive EXIT-event stability was not
+observed in this window. The largest delivery delay was 9,832 ms, and the capture
+session had zero rejections at freeze. This closes the documented 100-observation
+baseline repaint gate, not a universal non-repainting guarantee or parity for
+new candidate settings. See the
+[repaint result](evidence/QL_3A_CUSTOM_REPAINT_RESULT_2026-09-27.json).
+
+The [Paper readback](evidence/QL_3A_ATR60_COLLECTION_REPAINT_CHECK_2026-09-27.json)
+at 07:21:39 UTC has 1,070 closed market bars with no internal gaps, 24 natural
+BUY events (one filled, 23 rejected), six rejected native EXIT events and one
+OPEN Long allocation. **Zero ATR60 trades have closed.** Fourteen BUY rejections
+were from the prior daily-loss condition; the other nine are
+`BELOW_QUANTITY_STEP`. The session remains RUNNING, deployment READY and no
+research job exists. Chronological closed-trade coverage and candidate
+validation remain unresolved; neither the repaint result nor waiting alone
+qualifies Best Inputs or opens QL-4B. No risk counters or policy were changed.
+
+At **2026-09-27 01:06:41 UTC** (08:06:41 Asia/Bangkok), the
+[latest ATR60 collection](evidence/QL_3A_ATR60_COLLECTION_LATEST_2026-09-27.json)
+has **695 closed bars with zero gaps**. Natural event counts remain 15 BUY and
+six NATIVE EXIT; one BUY filled and its Long allocation remains OPEN, with zero
+closed ATR60 trades. The session is RUNNING, deployment READY, daily realized R
+zero and streak one. The earlier 667-bar snapshot below remains historical.
+
+Fresh read-only collection check at **2026-09-27 00:38:41 UTC** (07:38:41
+Asia/Bangkok): the ATR60 segment has **667 closed bars with zero internal gaps**,
+15 natural BUY events and six natural NATIVE EXIT events. One BUY filled after
+UTC rollover; its Long allocation is still OPEN. Fourteen earlier BUYs were
+rejected by the unchanged daily-loss guard. All six exits were rejected with
+`TARGET_NOT_OPEN`; no ATR60 trade has closed yet. The current UTC day's ledger
+has one trade and realized R zero; loss streak remains one. Session RUNNING,
+deployment READY, all four staging services active and the TradingView ATR60
+alert Active. No research job exists. Historical `QUEUED` pending records are
+receiver handoff records, not proof of an unprocessed worker backlog.
+
+The [collection snapshot](evidence/QL_3A_ATR60_COLLECTION_STATUS_2026-09-27.json)
+keeps this segment distinct from the earlier ATR2 trade. Market continuity does
+not prove webhook continuity across the recorded receiver-maintenance interval.
+The [varied-input parity procedure](QL_3A_VARIED_INPUT_PARITY.md) now has 17
+private artifacts prepared, with exact default bindings and original logic
+preserved. Compilation, exports, cold-start convergence, variant comparisons
+and fresh Custom repaint evidence remain pending. Preparation is not acceptance.
 
 Subsequent staging rollout (2026-09-27): checkpoint `6320169` is pushed and the API/dedicated Quant research worker run from a separate staging release. Quant extension 1 preserves base schema 14 and the Bot's policy, capital, session and daily/streak rows. Restricted-role submission validated the approved eight source slots and 100-candidate plan inside an intentional rollback; no job or optimization was committed. HTTP auth/CSRF/schema readbacks and worker startup passed. A conservative receiver-maintenance interval of 17:31:26–17:31:57 UTC on 2026-09-26 must be accounted for in natural webhook continuity; market stream continued. See [rollout evidence](evidence/QL_3A_DURABLE_JOBS_STAGING_ROLLOUT_2026-09-27.json). Dataset cutoff, trade coverage, varied-input parity and fresh Custom repaint remain open; production is unchanged.
 
