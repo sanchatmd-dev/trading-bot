@@ -17,6 +17,18 @@ Historical backfill, live evidence and actual Paper ledger coverage remain
 distinct. A finite engineering estimate does not guarantee a qualified strategy
 or a collection deadline while a persistent Risk Manager guard blocks entries.
 
+## Project execution team
+
+[AGENTS.md](AGENTS.md) and [Agent Team](docs/AGENT_TEAM.md) define one root
+commander with bounded specialist workers. Requested root default is Astra High;
+role profiles explicitly select Astra Medium, Sol Medium/High or Luna/Sol Low.
+At most three children run concurrently in this session, with no child delegation.
+Usage checks are account-wide observations, not guaranteed per-agent reservations.
+Project configuration does not prove the model of an already active task changed.
+Local development and authorized supervised VPS jobs retain the existing production,
+capability and research gates. Agent concurrency is separate from the planned single
+heavy Quant execution ceiling. No permanent agent daemon is installed by this setup.
+
 ## Purpose
  
 Initial QL-1 through QL-4 deployment (2026-09-23, release `39590f7`): Quant Lab research workspace ran as an offline service using a dedicated Python environment. The authenticated Node.js proxy `/api/quant/*` and 4-tab studio UI (Backtest, Optimizer, Risk Preview; Pine Export unreleased) were deployed alongside Trading Control Panel v2. That release's recorded validation was Node 111/111, Quant 71/71, and `PAPER_ONLY`. The 2026-09-24 observed release and current limitations are recorded under Production below. Live trading remains strictly locked.
@@ -57,7 +69,7 @@ QL-2A accepted for its fixed SPT profile. Custom evaluator baseline and sixteen
 axis settings subsequently matched TradingView, and its scoped 100-observation
 repaint check passed. The Custom sample contains no positive EXIT observation.
 These results do not certify arbitrary Pine or every mixed parameter setting.
-See [current status and evidence](docs/ROADMAP.md#current-status--2026-09-27).
+See [current status and evidence](docs/ROADMAP.md#current-status--2026-09-28).
 
 QL-3A durable research completed 100 candidates on 10,000 verified Spot bars.
 Every candidate had zero validation closed trades. The result remains
@@ -72,6 +84,16 @@ explainable setting proposals. The [PF-1 through PF-4 plan](docs/ROADMAP.md#appr
 is not yet a shipped customer feature. Existing engines and scoped evidence are
 building blocks. Engineering correctness and eligible trading recommendations
 have separate acceptance decisions.
+
+Local implementation update (2026-09-28): [PF-1A](docs/PF_1A_CHECKPOINT_2026-09-28.md)
+adds authenticated `POST /api/risk/readiness?bot_id=...` for generic Paper signals.
+It resolves actual owner/Bot, session policy, ledger capital and reservations on
+the server, reusing the PostgreSQL risk engine inside a coherent transaction.
+Passing calculations remain readiness `UNKNOWN`: venue filters, execution costs
+and Bridge execution are not verified by this slice. Draft policies and Bridge
+references are rejected explicitly. This local checkpoint does not alter trading
+state, start a Bot or replace the existing preview/UI; auth/rate-limit bookkeeping
+can still write. Full PF-1 integration/customer acceptance remains pending.
 
 Historical Preflight fetches matching Spot OHLCV from the exchange and evaluates
 a supported source locally, or replays a validated TradingView signal CSV for

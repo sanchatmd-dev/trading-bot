@@ -15,13 +15,19 @@
 
 สถานะ ณ 2026-09-27: APP-3A ผ่าน engineering acceptance ใน staging และ QL-2A ผ่าน baseline ตาม profile ที่ตรวจแล้ว SPT Custom ผ่าน axis parity และ scoped repaint งานวิจัย 100 candidates เสร็จแล้วแต่คืน `NO_VALID_CANDIDATE` เพราะ validation ไม่มี closed trades ส่วน Spot EXIT v1 เป็น draft ที่ยังไม่ผ่าน development preflight Checkpoint ล่าสุดที่ push คือ `a4e524f`; ไม่ใช่การ deploy production
 
-แผนที่อนุมัติเพิ่มคือ **ตรวจ Risk Manager ก่อน Run Bot**: ตรวจความสอดคล้องของค่า, Historical Preflight, รายงานความพร้อมข้อมูล แล้วจึงเสนอค่าภายในขอบเขตความเสี่ยงของเจ้าของ ฟีเจอร์นี้ยังเป็นแผน ดู [ลำดับ PF-1 ถึง PF-4](docs/ROADMAP.md#approved-extension--readiness-before-run-bot)
+แผนที่อนุมัติเพิ่มคือ **ตรวจ Risk Manager ก่อน Run Bot**: ตรวจความสอดคล้องของค่า, Historical Preflight, รายงานความพร้อมข้อมูล แล้วจึงเสนอค่าภายในขอบเขตความเสี่ยงของเจ้าของ ณ 2026-09-28 เริ่ม [PF-1A backend checkpoint](docs/PF_1A_CHECKPOINT_2026-09-28.md) ในเครื่องแล้ว: API อ่านทุนจริงและ policy/session ของ Bot โดยไม่บันทึกค่า ผลคำนวณผ่านยังเป็น `UNKNOWN` จนตรวจ venue/costs/Bridge ครบ ยังไม่ deploy และยังไม่ผ่าน PF-1 ทั้งหมด ดู [ลำดับ PF-1 ถึง PF-4](docs/ROADMAP.md#approved-extension--readiness-before-run-bot)
 
 Historical Preflight ใช้ราคา Spot จาก exchange API และ evaluator ที่ผ่านการตรวจ หรือ CSV สัญญาณจาก TradingView ที่ผูกกับ source/input snapshot จึงไม่ต้องต่อ TradingView MCP การรองรับ CSV ใช้จำลอง Risk Manager ของสัญญาณชุดเดิม; ไม่ได้ทำให้เปลี่ยน source inputs หรือรองรับ Pine ทุกตัวได้
 
 ลำดับผู้ใช้: เชื่อม Indicator → สร้าง Bridge → ตรวจความพร้อมก่อน Run และรัน Paper → Quant Optimize หนึ่ง run → ส่งผลที่ผ่านเกณฑ์ให้เจ้าของตรวจ → เจ้าของเลือกเริ่ม Bot ใหม่หรือจบ หากไม่พบ candidate ให้รายงานเหตุผลและจบ run โดยไม่ส่ง Best Inputs หรือวน Optimize อัตโนมัติ
 
 รายละเอียด phase และ test counts ด้านล่างเป็นประวัติของแต่ละ release ไม่ใช่สถานะ feature ปัจจุบันทั้งหมด ให้ใช้ Roadmap เป็นหลักในการเลือกงานถัดไป
+
+## ทีม Agent สำหรับเดินโครงการ
+
+ใช้หัวหน้าเดียวตาม [AGENTS.md](AGENTS.md) และ [คู่มือทีม](docs/AGENT_TEAM.md): Astra High คุม workflow/timeline/usage; Astra Medium audit งานยาก; Sol Medium/High พัฒนา/debug/test; Luna Low ดูแลเอกสารและ Sol Low ทำ Git ตามขอบเขตที่หัวหน้าส่งให้ โดยทำงานพร้อมกันไม่เกิน 3 subagents และไม่ให้เขียนไฟล์เดียวกันพร้อมกัน
+
+ตั้ง project defaults และ role profiles ใน `.codex/` แล้ว การเลือก model ของ task ที่เปิดอยู่ยังต้องตรวจจาก app ไม่ถือว่าไฟล์ config เปลี่ยน model ระหว่าง turn อัตโนมัติ ตรวจ quota ก่อนส่งงานและแต่ละ checkpoint พร้อม reserve 20% ตามนโยบาย; ไม่รับประกัน quota เมื่อหน้าต่างบางส่วนไม่มีข้อมูล ใช้ local สำหรับพัฒนาและ VPS เฉพาะงานที่ผ่าน scope/health/capability gates
 
 ## แผน Quant Research Library และ Best Performance
 

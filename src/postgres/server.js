@@ -7,6 +7,7 @@ import { Store } from './store.js';
 import { hashPassword, verifyPassword, randomToken, encryptJson, decryptJson, hashToken } from '../security.js';
 import { normalizeSignal, normalizeSymbol } from './domain.js';
 import { evaluateRisk } from './risk.js';
+import { buildRiskReadiness } from './risk-readiness.js';
 import { analyticsWindow, fifoAnalytics, analyticsCapital, filterClosedPositions, summarizeClosedPositions, breakdownClosedPositions, groupClosedPositions, currencyForBroker } from './analytics.js';
 import { supportedBrokers, capabilities, validateCredentials } from '../adapters/registry.js';
 import {booleanValue, clientIp} from '../http-safety.js';
@@ -605,6 +606,13 @@ async function userRoutes(req, res, url) {
       policy
     });
     return json(res, 200, policy);
+  }
+  if (req.method === 'POST' && url.pathname === '/api/risk/readiness') {
+    const result = await buildRiskReadiness({
+      store, botId: user.id, ownerId: actor.id, defaultRisk: config.defaultRisk,
+      body: await readJson(req)
+    });
+    return json(res, 200, result);
   }
   if (req.method === 'POST' && url.pathname === '/api/risk/preview') {
     const body = await readJson(req),

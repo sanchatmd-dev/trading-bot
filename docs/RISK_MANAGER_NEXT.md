@@ -10,7 +10,9 @@ status and change log. README/Context remain the primary project explanations.
 Add static checks and capability-scoped Historical Preflight before the owner's
 Run Bot action. PF-1 checks consistency, PF-2 performs bounded historical replay,
 PF-3 explains readiness and PF-4 proposes settings inside the owner's limits.
-These are planned features; existing point-in-time previews are not historical
+PF-1A now has a [local backend checkpoint](PF_1A_CHECKPOINT_2026-09-28.md), with
+full PF-1 acceptance still pending. PF-2 through PF-4 remain planned;
+existing point-in-time previews are not historical
 readiness reports. The dated checkpoints below retain their original scope.
 
 ### User contract

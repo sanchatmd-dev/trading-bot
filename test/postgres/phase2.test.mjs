@@ -135,6 +135,21 @@ test('PostgreSQL HTTP keeps cookie/MFA/CSRF, all bot pages and tenant isolation'
     const result=await request(endpoint,'GET',undefined,login.session);assert.equal(result.status,200,endpoint+' '+JSON.stringify(result.body));
   }
   assert.equal((await request('/api/me?bot_id='+other.id,'GET',undefined,login.session)).status,403);
+  // PF-1: authenticate and scope the new diagnostic before any trading mutation.
+  const readinessBody={signal:{trade_id:'readiness-only',broker:'binance-global',symbol:'BTCUSDT',event:'BUY',quantity:'1',entry:'1',sl:'0.99',timestamp:Date.now()}};
+  const beforeReadiness={account:await store.paperAccount(a.id,'binance-global'),policy:await store.risk(a.id,config.defaultRisk),session:await store.getBotSession(a.id),signals:await store.listSignals(a.id)};
+  const readiness=await request('/api/risk/readiness','POST',readinessBody,login.session);
+  assert.equal(readiness.status,200,JSON.stringify(readiness.body));
+  assert.equal(readiness.body.calculation.status,'ACCEPTED');
+  assert.equal(readiness.body.readiness.status,'UNKNOWN');
+  assert.equal(readiness.body.botId,a.id);
+  assert.deepEqual(readiness.body.account,{...beforeReadiness.account,cashAvailable:beforeReadiness.account.cash});
+  assert.deepEqual({account:await store.paperAccount(a.id,'binance-global'),policy:await store.risk(a.id,config.defaultRisk),session:await store.getBotSession(a.id),signals:await store.listSignals(a.id)},beforeReadiness);
+  assert.equal((await request('/api/risk/readiness?bot_id='+other.id,'POST',readinessBody,login.session)).status,403);
+  assert.equal((await request('/api/risk/readiness?bot_id=all','POST',readinessBody,login.session)).status,400);
+  assert.equal((await request('/api/risk/readiness','POST',{...readinessBody,policy:{}},login.session)).status,400);
+  assert.equal((await request('/api/risk/readiness','POST',readinessBody,login.session,{'x-csrf-token':'invalid'})).status,403);
+  assert.equal((await request('/api/risk/readiness','POST',readinessBody)).status,401);
   const webhook='test-'+randomUUID();await store.setWebhookSecret(a.id,webhook,encryptJson({secret:webhook},config.keyring,'webhook:'+a.id));
   const body={trade_id:'http-duplicate',broker:'Binance Global',symbol:'BTCUSD',event:'BUY',quantity:'1',entry:'0.1',sl:'0.09',timestamp:Date.now()};
   const burst=await Promise.all(Array.from({length:12},()=>fetch(base+'/webhooks/tradingview/'+webhook,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})));
