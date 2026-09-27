@@ -29,6 +29,12 @@ Local development and authorized supervised VPS jobs retain the existing product
 capability and research gates. Agent concurrency is separate from the planned single
 heavy Quant execution ceiling. No permanent agent daemon is installed by this setup.
 
+All roles use the project Caveman skill for conversation and agent-authored
+compact summaries/handoffs. The owner extends concise style to internal memory
+files; AGENTS.md requires complete resume facts and preserved uncertainty/gates.
+Product documentation remains normal prose. Runtime automatic compaction is not
+changed; token savings and memory quality have not been benchmarked.
+
 ## Purpose
  
 Initial QL-1 through QL-4 deployment (2026-09-23, release `39590f7`): Quant Lab research workspace ran as an offline service using a dedicated Python environment. The authenticated Node.js proxy `/api/quant/*` and 4-tab studio UI (Backtest, Optimizer, Risk Preview; Pine Export unreleased) were deployed alongside Trading Control Panel v2. That release's recorded validation was Node 111/111, Quant 71/71, and `PAPER_ONLY`. The 2026-09-24 observed release and current limitations are recorded under Production below. Live trading remains strictly locked.
@@ -85,15 +91,27 @@ is not yet a shipped customer feature. Existing engines and scoped evidence are
 building blocks. Engineering correctness and eligible trading recommendations
 have separate acceptance decisions.
 
-Local implementation update (2026-09-28): [PF-1A](docs/PF_1A_CHECKPOINT_2026-09-28.md)
-adds authenticated `POST /api/risk/readiness?bot_id=...` for generic Paper signals.
-It resolves actual owner/Bot, session policy, ledger capital and reservations on
-the server, reusing the PostgreSQL risk engine inside a coherent transaction.
-Passing calculations remain readiness `UNKNOWN`: venue filters, execution costs
-and Bridge execution are not verified by this slice. Draft policies and Bridge
-references are rejected explicitly. This local checkpoint does not alter trading
-state, start a Bot or replace the existing preview/UI; auth/rate-limit bookkeeping
-can still write. Full PF-1 integration/customer acceptance remains pending.
+Implementation update (2026-09-28): [PF-1C](docs/PF_1C_CHECKPOINT_2026-09-28.md)
+completes the scoped Paper engineering checks for authenticated risk readiness.
+Saved and explicitly hypothetical draft modes are separate; draft responses also
+include actual saved-policy guards/hash. Bridge resolves trusted deployment,
+verified bar, policy and allocation data on the server. Complete public Binance
+filters use independently timed 60-second snapshots and sourced reference prices.
+The new `paper-close-cost-v2` finalizer is shared with the worker, includes
+conditional stop costs and pending fees, and rechecks/stores venue evidence.
+V1 deployments and price-distance R accounting remain unchanged. The UI displays
+costs, venue diagnostics and draft provenance; preview never saves policy, starts
+a Bot or creates an order. Auth/rate-limit bookkeeping can still write.
+
+PF-1C passed 319 local automated checks, 30 repeated checks in isolated VPS
+staging, real Chrome verification and a bounded metadata producer run exceeding
+two TTLs. Test databases were removed and local PostgreSQL stopped. No deployed
+release or existing Bot was switched. Active V2 rollout still requires reviewed
+evidence and a metadata producer plan; public Paper filters are not Live venue
+approval. Quant rejects V2 until historical evaluator parity exists. PF-1A
+`9c5f8f3` is the preceding pushed checkpoint. This Git checkpoint packages
+PF-1B/PF-1C and the Caveman policy on the working branch; consult Git history
+for its revision. Deployment remains a separate action.
 
 Historical Preflight fetches matching Spot OHLCV from the exchange and evaluates
 a supported source locally, or replays a validated TradingView signal CSV for

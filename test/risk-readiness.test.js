@@ -172,3 +172,58 @@ test('signal-level trusted fields and deployment references cannot bypass strict
     await assert.rejects(buildRiskReadiness({store:fixture().store,botId,ownerId,defaultRisk:config.defaultRisk,body:{signal:raw({[field]:'untrusted'})},now}),error=>error.status===400);
   }
 });
+
+test('policy provenance and capacity reflect server state and preserve exact snapshot hash',async()=>{
+  const f=fixture(),first=await preview(f);
+  assert.match(first.policy.hash,/^[a-f0-9]{64}$/);assert.equal(first.policy.hypothetical,false);
+  assert.deepEqual(first.policy.effective,f.state.policy);
+  assert.equal(first.consistency.status,'CONSISTENT');assert.equal(first.capacity.remainingDailyExecutions,10);
+  f.state.policy.killSwitch=true;
+  assert.notEqual((await preview(f)).policy.hash,first.policy.hash);
+});
+
+test('policy conflict blocks readiness without rewriting actual worker calculation',async()=>{
+  const f=fixture();f.state.policy.defaults.riskPercent=101;
+  const result=await preview(f);
+  assert.equal(result.calculation.status,'ACCEPTED');assert.equal(result.readiness.status,'BLOCKED');
+  assert.equal(result.consistency.status,'CONFLICT');assert.ok(result.readiness.reasons.includes('DEFAULT_OUTSIDE_POLICY'));
+  assert.equal(f.state.policy.defaults.riskPercent,101);
+});
+
+test('malformed persisted policies return a configuration diagnostic without a server error',async()=>{
+  for(const update of [{maxDailyLossR:'bad'},{allowedSymbols:{length:1}},{allowedSymbols:[null]}]){
+    const f=fixture();Object.assign(f.state.policy,update);
+    const result=await preview(f);
+    assert.equal(result.consistency.status,'CONFLICT');assert.equal(result.readiness.status,'BLOCKED');
+    assert.equal(result.calculation.status,'REJECTED');
+  }
+});
+
+
+test('draft scenario is hypothetical, retains guards and never saves funding or policy',async()=>{
+  const f=fixture(),before=structuredClone(f.state);
+  const result=await preview(f,raw(),{signal:raw(),scenario:{policy:{maxOrderNotional:'50',defaults:{orderNotional:'50'}},capital:{cash:'600',bookEquity:'1000'}}});
+  assert.equal(result.policySource,'HYPOTHETICAL_DRAFT');assert.equal(result.policy.hypothetical,true);
+  assert.equal(result.scenario.hypothetical,true);assert.equal(result.calculation.status,'REJECTED');
+  assert.deepEqual(f.state,before);assert.deepEqual(f.writes,[]);
+});
+test('draft cannot fabricate daily history or remove actual position commitments',async()=>{
+  const f=fixture();
+  for(const scenario of [
+    {policy:{daily:{trades:0}},capital:{cash:'600',bookEquity:'1000'}},
+    {policy:{},capital:{cash:'10',bookEquity:'20'}},
+    {policy:{requireReduceOnlySell:false},capital:{cash:'600',bookEquity:'1000'}},
+    {policy:{},capital:{cash:'600',bookEquity:'1000'},daily:{trades:0}}
+  ])await assert.rejects(preview(f,raw(),{signal:raw(),scenario}));
+  f.state.session.state='STOPPED';
+  const result=await preview(f,raw(),{signal:raw(),scenario:{policy:{},capital:{cash:'600',bookEquity:'1000'}}});
+  assert.equal(result.calculation.status,'REJECTED');assert.equal(result.readiness.reasons[0],'BOT_STOPPED');
+});
+
+test('hypothetical raised loss guard still exposes actual saved-policy pause',async()=>{
+ const f=fixture();f.state.daily.loss_streak=3;
+ const result=await preview(f,raw(),{signal:raw(),scenario:{policy:{pauseAfterLossStreak:5},capital:{cash:'600',bookEquity:'1000'}}});
+ assert.equal(result.calculation.status,'ACCEPTED');assert.equal(result.actual.readiness.status,'BLOCKED');
+ assert.equal(result.actual.calculation.reason,'Trading paused after loss streak');
+ assert.notEqual(result.actual.policyHash,result.policy.hash);
+});

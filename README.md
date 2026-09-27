@@ -15,7 +15,7 @@
 
 สถานะ ณ 2026-09-27: APP-3A ผ่าน engineering acceptance ใน staging และ QL-2A ผ่าน baseline ตาม profile ที่ตรวจแล้ว SPT Custom ผ่าน axis parity และ scoped repaint งานวิจัย 100 candidates เสร็จแล้วแต่คืน `NO_VALID_CANDIDATE` เพราะ validation ไม่มี closed trades ส่วน Spot EXIT v1 เป็น draft ที่ยังไม่ผ่าน development preflight Checkpoint ล่าสุดที่ push คือ `a4e524f`; ไม่ใช่การ deploy production
 
-แผนที่อนุมัติเพิ่มคือ **ตรวจ Risk Manager ก่อน Run Bot**: ตรวจความสอดคล้องของค่า, Historical Preflight, รายงานความพร้อมข้อมูล แล้วจึงเสนอค่าภายในขอบเขตความเสี่ยงของเจ้าของ ณ 2026-09-28 เริ่ม [PF-1A backend checkpoint](docs/PF_1A_CHECKPOINT_2026-09-28.md) ในเครื่องแล้ว: API อ่านทุนจริงและ policy/session ของ Bot โดยไม่บันทึกค่า ผลคำนวณผ่านยังเป็น `UNKNOWN` จนตรวจ venue/costs/Bridge ครบ ยังไม่ deploy และยังไม่ผ่าน PF-1 ทั้งหมด ดู [ลำดับ PF-1 ถึง PF-4](docs/ROADMAP.md#approved-extension--readiness-before-run-bot)
+แผน **ตรวจ Risk Manager ก่อน Run Bot** ทำถึง [PF-1C engineering checkpoint](docs/PF_1C_CHECKPOINT_2026-09-28.md): venue filters, shared cost model V2, pending fees และ UI Saved/Draft/Bridge ผ่าน 319 checks ในเครื่อง, 30 checks ซ้ำบน staging แยก, browser จริง และ metadata refresh ต่อเนื่องเกิน 120 วินาทีแล้ว ยังไม่เปลี่ยน release/Bot เดิม รุ่น V1 คงเดิม; V2 Quant ต้องผ่าน evaluator parity ก่อนใช้งาน ผล preview ไม่ใช่คำอนุมัติ Run Bot ดู [Roadmap](docs/ROADMAP.md#approved-extension--readiness-before-run-bot)
 
 Historical Preflight ใช้ราคา Spot จาก exchange API และ evaluator ที่ผ่านการตรวจ หรือ CSV สัญญาณจาก TradingView ที่ผูกกับ source/input snapshot จึงไม่ต้องต่อ TradingView MCP การรองรับ CSV ใช้จำลอง Risk Manager ของสัญญาณชุดเดิม; ไม่ได้ทำให้เปลี่ยน source inputs หรือรองรับ Pine ทุกตัวได้
 
@@ -29,7 +29,11 @@ Historical Preflight ใช้ราคา Spot จาก exchange API และ
 
 ตั้ง project defaults และ role profiles ใน `.codex/` แล้ว การเลือก model ของ task ที่เปิดอยู่ยังต้องตรวจจาก app ไม่ถือว่าไฟล์ config เปลี่ยน model ระหว่าง turn อัตโนมัติ ตรวจ quota ก่อนส่งงานและแต่ละ checkpoint พร้อม reserve 20% ตามนโยบาย; ไม่รับประกัน quota เมื่อหน้าต่างบางส่วนไม่มีข้อมูล ใช้ local สำหรับพัฒนาและ VPS เฉพาะงานที่ผ่าน scope/health/capability gates
 
+ทุก role รวมหัวหน้าใช้ Caveman สำหรับบทสนทนา, task packets, compact และ handoff ที่ agent เขียนเอง รวมถึงไฟล์ memory ภายใน ตาม [กติกากลาง](AGENTS.md#communication-compact-summaries-and-handoffs) ย่อข้อความซ้ำแต่คงข้อจำกัด หลักฐานและงานถัดไป เอกสารผลิตภัณฑ์ใช้ภาษาปกติ ไม่ถือว่าเปลี่ยนระบบ automatic compaction หรือวัดผลประหยัด token แล้ว
+
 ## แผน Quant Research Library และ Best Performance
+
+Git checkpoint รอบนี้รวม PF-1B/PF-1C และกติกา Caveman บน branch `codex/app3a-market-wait-checkpoint`; ดู revision ใน Git history การ deploy เป็นขั้นตอนแยก
 
 อนุมัติแผนเก็บผล Quant ทุกรอบเป็นข้อมูลวิจัยที่มี version/hash และเพิ่ม `quant-data/` ใน Best Inputs package ส่วน Email Report ยังคงเป็น deliverable หลักรายการที่สอง ผลไม่ผ่านเก็บเป็น diagnostic ที่ตรวจย้อนหลังได้ โดยไม่สร้าง Best Inputs ให้ใช้งาน
 

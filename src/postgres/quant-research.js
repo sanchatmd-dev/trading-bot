@@ -30,6 +30,7 @@ export class QuantResearchService{
   if(hash(canonical(deployment.snapshot))!==deployment.snapshot_hash)throw fail('SNAPSHOT_HASH_MISMATCH',409);
   await freshSnapshot(this.pine,deployment);
   const evidence=await deploymentEvidence(this.db,deployment);
+  if(evidence.execution_model.version!=='paper-close-v1')throw fail('RESEARCH_EXECUTION_MODEL_PARITY_REQUIRED',409);
   const snapshot=deployment.snapshot;
   if(snapshot.membership.length!==1)throw fail('MULTI_PINE_RESEARCH_NOT_SUPPORTED',409);
   if(snapshot.policy.paperTrading!==true||snapshot.policy.requireReduceOnlySell!==true)throw fail('SPOT_PAPER_POLICY_REQUIRED');

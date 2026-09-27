@@ -2,7 +2,9 @@ import {randomUUID} from 'node:crypto';
 import {evaluateRisk} from './risk.js';
 import {D,amount} from '../money.js';
 import {decryptJson} from '../security.js';
-import {prepareBridgeExecution,roundBridgeOrder,completeBridgeExecution} from './pine-bridge-execution.js';
+import {prepareBridgeExecution,completeBridgeExecution} from './pine-bridge-execution.js';
+import {finalizeBridgeOrder,COST_MODEL_VERSION} from './paper-cost-model.js';
+import {checkPaperVenue} from './risk-venue.js';
 
 export class ExecutionWorker {
   constructor({store,config,id=randomUUID(),beforeCommit}){Object.assign(this,{store,config,id,beforeCommit});}
@@ -41,16 +43,24 @@ export class ExecutionWorker {
           if(exposure.uncertain)reason='Unresolved order outcome: operator reconciliation required';
           else{
             const targetAllocation = signal.targetTradeId ? await this.store.ledgerTargetAllocation(job, signal.targetTradeId) : null;
-            const cashBudget=D(account.cash).minus(exposure.reservedNotional).div(bridgeModel&&signal.side==='BUY'?D(1).plus(D(bridgeModel.fee_bps).div(10000)):1);
+            const cashBudget=D(account.cash).minus(exposure.reservedNotional).minus(exposure.reservedFees??0).div(bridgeModel&&signal.side==='BUY'?D(1).plus(D(bridgeModel.fee_bps).div(10000)):1);
             const result=evaluateRisk(signal,{policy,daily:await this.store.ledgerDaily(job),position:await this.store.ledgerPosition(job),targetAllocation,equity:account.bookEquity,balance:account.cash,
               cashAvailable:amount(cashBudget),licensed:main.role==='ADMIN'||await this.store.hasActiveLicense(main.id),globalKill:await this.store.getSetting('globalKill',false),...exposure});
             if(!result.ok)reason=result.reason;
             else{
               let order={...result.order,clientOrderId:job.client_order_id},fee='0';
-              if(bridgeModel){try{({order,fee}=roundBridgeOrder(order,bridgeModel));}catch(error){reason=error.code;}}
+              if(bridgeModel){
+                try{({order,fee}=finalizeBridgeOrder(order,bridgeModel,{policy,account,signal,exposure}));}
+                catch(error){if(!error.code)throw error;reason=error.code;}
+                if(!reason&&bridgeModel.version===COST_MODEL_VERSION){
+                  const venue=await checkPaperVenue(this.store,job,order,bridgeModel);
+                  if(venue.status!=='PASSED')reason=venue.reasons?.[0]??'VENUE_FILTERS_UNVERIFIED';
+                  else order={...order,venue_report:venue};
+                }
+              }
               if(!reason){
                 await this.store.persistIntent(job,order);
-                await this.store.recordExecution(job,{status:'FILLED',orderId:'PAPER-'+job.client_order_id,executedQty:order.quantity,quoteQty:order.notional,deltaFeeQuote:fee,raw:{paper:true,status:'FILLED',feesSimulated:!!bridgeModel,...(bridgeModel?{executionModel:bridgeModel,signalReference:signal.bridge}:{} )}},order);
+                await this.store.recordExecution(job,{status:'FILLED',orderId:'PAPER-'+job.client_order_id,executedQty:order.quantity,quoteQty:order.notional,deltaFeeQuote:fee,raw:{paper:true,status:'FILLED',feesSimulated:!!bridgeModel,...(bridgeModel?{executionModel:bridgeModel,signalReference:signal.bridge}:{} ),...(order.venue_report?{venueReport:order.venue_report}:{})}},order);
                 if(signal.bridge)await completeBridgeExecution(this.store,job,signal,'FILLED');
               }
             }

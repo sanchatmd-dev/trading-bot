@@ -53,10 +53,9 @@ function fillRisk(p){
   f.sideMode.value=p.sideMode;f.allowedSymbols.value=(p.allowedSymbols||[]).join(',');
   for(const[equityInput,balanceInput,broker]of fundFields){const equity=p.equities?.[broker]||0;f[equityInput].value=equity;f[balanceInput].value=p.balances?.[broker]??equity;}
   if(!f.previewRiskPercent.value)f.previewRiskPercent.value=p.defaults?.riskPercent??1;
-  if(!f.previewVolatilityPercent.value)f.previewVolatilityPercent.value=p.defaults?.volatilityPercent??0;
   window._riskDirty=false;
   if(typeof lockRiskForm==='function')lockRiskForm(['RUNNING','PAUSED'].includes(me?.botSession?.state));
-  updatePositionSlots();scheduleRiskPreview();
+  updatePreviewControls();scheduleRiskPreview();if(me.moneyFormat!=='decimal-string')updatePositionSlots();
 }
 function collectRiskPolicy(){
   const f=$('#riskForm').elements,n=k=>me?.moneyFormat==='decimal-string'&&(/^(equity|balance)/.test(k)||['maxOrderNotional','maxDailyNotional','defaultOrderNotional','defaultDailyNotional'].includes(k))?f[k].value:+f[k].value,p={defaults:{},equities:{},balances:{}};
@@ -73,17 +72,89 @@ function updatePositionSlots(){
   $('#previewSlots').textContent=`${open} / ${Math.max(0,max-open)}`;
 }
 let riskPreviewTimer,riskPreviewSequence=0;
-function scheduleRiskPreview(){clearTimeout(riskPreviewTimer);riskPreviewTimer=setTimeout(previewRisk,250);}
+function invalidateRiskPreview(){
+  ++riskPreviewSequence;clearTimeout(riskPreviewTimer);
+  $('#riskPreviewStatus').textContent='Preview needs checking';$('#riskPreviewStatus').className='preview-badge';
+  for(const id of ['previewRisk','previewQuantity','previewNotional','previewBalance','previewSlots','previewCapacity'])$('#'+id).textContent='—';
+  for(const id of ['riskPreviewReason','riskPreviewProvenance','riskPreviewCapital','riskPreviewCosts','riskPreviewVenue'])$('#'+id).textContent='';
+}
+function updatePreviewControls(){
+  const f=$('#riskForm').elements,postgres=me?.moneyFormat==='decimal-string',bridge=f.previewSource.value==='BRIDGE';
+  $('#previewDraftFields').hidden=!postgres||f.previewAuthority.value!=='DRAFT';
+  $('#previewBridgeFields').hidden=!bridge;$('#previewGenericFields').hidden=bridge;
+  f.previewAuthority.disabled=!postgres;f.previewSource.disabled=!postgres;
+  $('#previewRefreshVenue').disabled=!postgres||(!bridge&&f.previewBroker.value!=='binance-global');
+}
+function scheduleRiskPreview(){invalidateRiskPreview();riskPreviewTimer=setTimeout(previewRisk,250);}
+function previewAmount(value){return value==null?'—':fmt(value);}
+function previewVenueText(venue){
+  if(!venue)return 'Venue filters have not been verified.';
+  const status={PASSED:'Cached filters passed for this preview',BLOCKED:'Venue filters blocked this preview',UNKNOWN:'Venue filters are not verified'}[venue.status]||'Venue status unknown';
+  const reasons=(venue.reasons||[]).map(readinessMeaning);
+  const checks=(venue.checks||[]).map(check=>typeof check==='string'?readinessMeaning(check):`${readinessMeaning(check.name||check.filter||check.type||'filter check')}: ${readinessMeaning(check.status||check.code||'unknown')}${check.reason?' ('+readinessMeaning(check.reason)+')':''}`);
+  const retrieved=venue.retrievedAt?new Date(venue.retrievedAt):null;
+  return [status,...reasons,...checks,venue.snapshotHash?'Metadata hash: '+venue.snapshotHash:null,retrieved&&!Number.isNaN(retrieved.getTime())?'Retrieved: '+retrieved.toISOString():null,venue.accountFilterAssumption,venue.liveAccountVerified===false?'This is not Live venue approval.':null,'Metadata cache lasts 60 seconds; execution rechecks filters.'].filter(Boolean).join(' · ');
+}
+function readinessMeaning(code){
+  const meanings={POINT_IN_TIME_ONLY:'This check is a point-in-time snapshot.',PAPER_ONLY:'Paper trading only.',COST_BASIS_NOT_MARK_TO_MARKET:'Capital uses position cost, not live market valuation.',INPUT_MARKET_DATA_UNVERIFIED:'Input market data has not been verified.',VENUE_FILTERS_UNVERIFIED:'Venue quantity and price filters have not been verified.',EXECUTION_COSTS_UNVERIFIED:'Execution costs have not been verified.',BRIDGE_PREFLIGHT_UNSUPPORTED:'Bridge preflight is unsupported in this generic Spot preview.',RUNNING_LOCKED_POLICY_MISSING:'The running session has no locked policy; the saved policy was used.',POLICY_CONFIGURATION_CONFLICT:'Saved policy has conflicting settings.',POLICY_VALUE_OUT_OF_RANGE:'Value is outside the allowed policy range.',POLICY_VALUE_INVALID:'Policy value is invalid.',POLICY_BOOLEAN_REQUIRED:'A policy switch must be true or false.',POLICY_SIDE_MODE_INVALID:'Policy side mode is invalid.',SPOT_PAPER_PROTECTION_REQUIRED:'Spot Paper protections must remain enabled.',DEFAULT_OUTSIDE_POLICY:'Default value exceeds or falls outside the policy limit.',DEFAULT_VALUE_INVALID:'Default value is invalid.',CAPITAL_CONFIGURATION_INVALID:'Configured funding is invalid or balance exceeds equity.',ESTIMATED_STOP_LOSS_EXCEEDS_POLICY:'Estimated stop-loss risk exceeds the saved policy limit.',ACCOUNT_SUSPENDED:'The account or bot is suspended.',BOT_STOPPED:'The bot is stopped.',BOT_PAUSED:'The bot is paused; only reduce-only exits are accepted.',SESSION_STATE_UNSUPPORTED:'The session state is unsupported.',ORDER_OUTCOME_UNCERTAIN:'An order outcome needs operator reconciliation.',RISK_REJECTED:'The saved risk policy rejects this order.',COST_INCLUSIVE_RISK_LIMIT_NOT_ENFORCED:'The risk limit does not enforce all execution costs.',HYPOTHETICAL_BRIDGE_INTENT:'This Bridge intent is hypothetical.',HYPOTHETICAL_POLICY_AND_CAPITAL:'Draft policy and capital are hypothetical; actual positions, reservations and session guards still apply.',PENDING_FEE_RESERVATIONS_UNSUPPORTED:'Pending fee reservations are not supported by this estimate.',VENUE_MARKET_UNSUPPORTED:'Cached venue checks support Binance Global BTCUSDT only.'};
+  return meanings[code]||String(code).toLowerCase().replaceAll('_',' ');
+}
+function renderSavedRiskPreview(result){
+  const calculation=result.calculation||{},order=calculation.order,account=result.account||{},capacity=result.capacity||{};
+  const blocked=result.readiness?.status==='BLOCKED';
+  const hypothetical=result.scenario?.hypothetical===true||result.policy?.hypothetical===true;
+  $('#riskPreviewStatus').textContent=(hypothetical?'Hypothetical draft — ':'')+(blocked?'BLOCKED':'Not verified')+' — '+(calculation.status||'UNKNOWN');
+  $('#riskPreviewStatus').className='preview-badge '+(blocked?'bad':'');
+  $('#previewRisk').textContent=order?.stopLoss!=null?previewAmount(Number(order.quantity)*Math.abs(Number(order.price)-Number(order.stopLoss))):'—';
+  $('#previewQuantity').textContent=previewAmount(order?.quantity);$('#previewNotional').textContent=previewAmount(order?.notional);
+  $('#previewBalance').textContent=previewAmount(account.cashAvailable);
+  $('#previewSlots').textContent=capacity.uniqueSymbolsCommitted!=null&&capacity.remainingUniqueSymbols!=null?`${capacity.uniqueSymbolsCommitted} / ${capacity.remainingUniqueSymbols}`:'—';
+  $('#previewCapacityLabel').textContent='Daily execution allowance';
+  $('#previewCapacity').textContent=previewAmount(capacity.remainingDailyExecutions);
+  const source=result.policy?.source||result.policySource;
+  const provenance=hypothetical?'Hypothetical draft policy':({LOCKED_SESSION:'Locked session policy',SAVED_POLICY:'Saved bot policy',SAVED_POLICY_FALLBACK:'Saved policy fallback'}[source]||'Unknown policy source');
+  $('#riskPreviewProvenance').textContent=`Policy: ${provenance} · Bot: ${result.botId||'UNKNOWN'} · Session: ${result.session?.state||'UNKNOWN'} · As of: ${result.asOf||'UNKNOWN'}${result.policy?.hash?' · Hash: '+result.policy.hash:''}. ${hypothetical?'Draft inputs are hypothetical. Policy, funding and orders are not saved.':'Unsaved policy and funding changes are not used.'}`;
+  const reserved=account.cash!=null&&account.cashAvailable!=null?Number(account.cash)-Number(account.cashAvailable):null;
+  $('#riskPreviewCapital').textContent=`${hypothetical?'Hypothetical capital':'Server capital'} · Cash: ${previewAmount(account.cash)} · Available: ${previewAmount(account.cashAvailable)} · Reserved: ${previewAmount(reserved)} · Book equity: ${previewAmount(account.bookEquity)} · Position cost: ${previewAmount(account.positionCost)}. Book equity uses cost basis.${result.scenario?.note?' '+result.scenario.note:''}`;
+  const costs=result.costs;
+  $('#riskPreviewCosts').textContent=costs?`Execution cost estimates · Fee: ${previewAmount(costs.fee)} · Cash debit: ${previewAmount(costs.cashDebit)} · Cash credit: ${previewAmount(costs.cashCredit)} · Cash after order: ${previewAmount(costs.cashAfterOrder)} · Loss at stop: ${previewAmount(costs.estimatedLossAtStop)} · Profit at target: ${previewAmount(costs.estimatedProfitAtTarget)} · Cost / stop: ${previewAmount(costs.costToStopRatio)} · Cost / target: ${previewAmount(costs.costToTargetRatio)}. ${costs.assumption||'Conditional estimates; execution costs are not guaranteed.'}`:'Execution costs are not verified for this preview.';
+  const market=result.market,deployment=result.deployment;
+  const venue=previewVenueText(result.venue);
+  $('#riskPreviewVenue').textContent=[deployment?`Deployment: ${deployment.id} · State: ${deployment.state} · Snapshot: ${deployment.snapshotHash||'unknown'} · Evidence: ${deployment.evidenceHash||'unknown'}`:null,market?`Market: ${market.broker} ${market.symbol} ${market.timeframe} · Bar: ${market.barTime} · Source hash: ${market.contentHash||'unknown'}`:null,venue].filter(Boolean).join(' · ');
+  const conflicts=(result.consistency?.issues||[]).map(issue=>`Policy conflict (${issue.field}): ${readinessMeaning(issue.code)}`);
+  const limits=[...new Set([...(result.readiness?.reasons||[]),...(result.limitations||[])])].map(readinessMeaning);
+  $('#riskPreviewReason').textContent=[calculation.reason,order?.sizingAdjustment?'Order size is capped by saved limits.':null,...conflicts,...limits,capacity.remainingDailyExecutions!=null?'Daily execution allowance counts entries and exits; it does not guarantee future BUY orders.':null,capacity.allocationLimitEnforced===false?'Separate allocation limits are not enforced.':null].filter(Boolean).join(' · ');
+}
 async function previewRisk(){
   if(!authenticated||!me)return;
   const f=$('#riskForm').elements,entry=me.moneyFormat==='decimal-string'?f.previewEntry.value:+f.previewEntry.value,stopLoss=me.moneyFormat==='decimal-string'?f.previewStopLoss.value:+f.previewStopLoss.value;
-  updatePositionSlots();
-  if(!(entry>0&&stopLoss>0)){ $('#riskPreviewStatus').textContent=translate('Enter price and Stop Loss');$('#riskPreviewReason').textContent='';return; }
-  const sequence=++riskPreviewSequence;$('#riskPreviewStatus').textContent=translate('Checking…');
+  if(me.moneyFormat!=='decimal-string')updatePositionSlots();
+  const saved=me.moneyFormat==='decimal-string',side=f.previewSide.value,bridge=saved&&f.previewSource.value==='BRIDGE';
+  if(!saved&&(side!=='BUY'||f.previewSizeMode.value!=='PERCENT_EQUITY')){invalidateRiskPreview();$('#riskPreviewReason').textContent='Legacy preview supports BUY percent-equity only.';return;}
+  if(!bridge&&(!saved||side==='BUY')&&!(entry>0&&stopLoss>0)){invalidateRiskPreview();$('#riskPreviewStatus').textContent=translate('Enter price and Stop Loss');return;}
+  const sequence=++riskPreviewSequence,botScope=selectedBot;$('#riskPreviewStatus').textContent=translate('Checking…');
   try{
-    const result=await api('/api/risk/preview',{method:'POST',silent:true,body:JSON.stringify({policy:collectRiskPolicy(),calculator:{broker:f.previewBroker.value,symbol:f.previewSymbol.value,entry,stopLoss,riskPercent:+f.previewRiskPercent.value,volatilityPercent:+f.previewVolatilityPercent.value}})});
-    if(sequence!==riskPreviewSequence)return;
-    $('#riskPreviewStatus').textContent=translate(result.ok?'Likely accepted':'Would be rejected');
+    if(saved){
+      const signal={account_type:'SPOT',trade_id:'preview-'+Date.now(),broker:f.previewBroker.value,symbol:f.previewSymbol.value,event:side,order_type:'MARKET',risk_mode:f.previewSizeMode.value,risk_value:f.previewRiskPercent.value,timestamp:Date.now(),reduce_only:side==='SELL'};
+      if(entry!=='')signal.entry=entry;if(stopLoss!=='')signal.sl=stopLoss;
+      if(f.previewSizeMode.value==='QUANTITY')signal.quantity=f.previewRiskPercent.value;
+      if(f.previewTargetTradeId.value.trim())signal.target_trade_id=f.previewTargetTradeId.value.trim();
+      if(f.previewVolatilityPercent.value!=='')signal.volatility_percent=Number(f.previewVolatilityPercent.value);
+      if(f.previewNewsRisk.value!=='')signal.news_risk=f.previewNewsRisk.value==='true';
+      let body={signal};
+      if(bridge){
+        const intent={deployment_id:f.previewDeploymentId.value.trim(),bar_time:Number(f.previewBarTime.value),event_type:f.previewBridgeEvent.value};
+        if(intent.event_type==='EXIT'){intent.entry_ref=f.previewEntryRef.value.trim();intent.reason=f.previewExitReason.value;}
+        body={bridge:intent};
+      }
+      if(f.previewAuthority.value==='DRAFT')body.scenario={policy:collectRiskPolicy(),capital:{cash:f.previewCash.value,bookEquity:f.previewBookEquity.value}};
+      const result=await api('/api/risk/readiness',{method:'POST',silent:true,body:JSON.stringify(body)});
+      if(sequence!==riskPreviewSequence||botScope!==selectedBot)return;
+      renderSavedRiskPreview(result);return;
+    }
+    const result=await api('/api/risk/preview',{method:'POST',silent:true,body:JSON.stringify({policy:collectRiskPolicy(),calculator:{broker:f.previewBroker.value,symbol:f.previewSymbol.value,entry,stopLoss,riskPercent:+f.previewRiskPercent.value,...(f.previewVolatilityPercent.value!==''?{volatilityPercent:+f.previewVolatilityPercent.value}:{})}})});
+    if(sequence!==riskPreviewSequence||botScope!==selectedBot)return;
+    $('#riskPreviewStatus').textContent='Hypothetical draft — '+translate(result.ok?'Likely accepted':'Would be rejected');
     $('#riskPreviewStatus').className='preview-badge '+(result.ok?'ok':'bad');
     $('#previewRisk').textContent=result.ok?fmt(result.order.quantity*Math.abs(result.order.price-result.order.stopLoss)):'—';
     $('#previewQuantity').textContent=result.ok?fmt(result.order.quantity):'—';
@@ -91,8 +162,10 @@ async function previewRisk(){
     $('#previewBalance').textContent=fmt(result.freeBalance);
     $('#previewSlots').textContent=`${result.positionsOpen} / ${result.positionsRemaining}`;
     $('#previewCapacity').textContent=result.ok?fmt(result.positionCapacity):'0';
-    $('#riskPreviewReason').textContent=result.ok?(result.order.sizingAdjustment?translate('Order size will be reduced to remain within available funds and limits.'):translate('All current checks passed.')):explainRejection(result.reason);
-  }catch(error){if(sequence===riskPreviewSequence){$('#riskPreviewStatus').textContent=translate('Check input');$('#riskPreviewStatus').className='preview-badge bad';$('#riskPreviewReason').textContent=error.message;}}
+    $('#previewCapacityLabel').textContent='Hypothetical positions this size';
+    $('#riskPreviewProvenance').textContent='Legacy hypothetical sizing uses unsaved draft inputs. Server readiness is not verified. BUY percent-equity only.';
+    $('#riskPreviewReason').textContent=result.ok?'Sizing estimate only. Venue, costs and Bridge readiness are not verified.':explainRejection(result.reason);
+  }catch(error){if(sequence===riskPreviewSequence&&botScope===selectedBot){$('#riskPreviewStatus').textContent=translate('Check input');$('#riskPreviewStatus').className='preview-badge bad';$('#riskPreviewReason').textContent=error.message;}}
 }
 function renderAdmin(){$('#userCount').textContent=users.length;$('#licenseCount').textContent=licenses.length;$('#globalKillValue').textContent=me.globalKill?'ENTRIES PAUSED':'PAPER RUNNING';$('#userRows').innerHTML=users.map(u=>`<tr><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${esc(u.status)}</td><td>••••••${esc(u.webhook_hint||'-')}</td><td><button class="mini user-status" data-id="${esc(u.id)}" data-status="${u.status==='ACTIVE'?'SUSPENDED':'ACTIVE'}">Toggle</button></td></tr>`).join('');$('#licenseRows').innerHTML=licenses.map(l=>`<tr><td>••••••${esc(l.key_hint)}</td><td>${esc(l.plan)}</td><td>${esc(l.email||'-')}</td><td>${esc(l.status)}</td><td>${new Date(l.expires_at).toLocaleDateString()}</td><td><button class="mini license-status" data-id="${esc(l.id)}" data-status="${l.status==='SUSPENDED'?'ACTIVE':'SUSPENDED'}">Toggle</button></td></tr>`).join('');document.querySelectorAll('.user-status').forEach(b=>b.onclick=()=>changeStatus('users',b));document.querySelectorAll('.license-status').forEach(b=>b.onclick=()=>changeStatus('licenses',b));if(typeof renderAnalyticsUsers==='function')renderAnalyticsUsers();}
 $('#loginBtn').onclick=login;
@@ -106,8 +179,24 @@ $('#password').addEventListener('keydown',event=>{
 $('#logout').onclick=async()=>{try{await api('/api/auth/logout',{method:'POST'});}catch{}authenticated=false;csrfToken='';location.reload();};$('#refresh').onclick=()=>{load();if(!document.querySelector('[data-page="analytics"]').hidden&&typeof loadAnalytics==='function')loadAnalytics();};document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('[data-page]').forEach(x=>x.hidden=x.dataset.page!==b.dataset.view);$('#pageTitle').textContent=b.textContent;if(b.dataset.view==='analytics'&&typeof loadAnalytics==='function'){if(typeof renderAnalyticsUsers==='function')renderAnalyticsUsers();loadAnalytics();}});
 $('#riskForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/risk',{method:'PUT',body:JSON.stringify(collectRiskPolicy())});window._riskDirty=false;$('#riskMessage').textContent=translate('Saved');load();}catch(x){$('#riskMessage').textContent=x.message;}};
 
-$('#riskForm').addEventListener('input',event=>{if(event.target.matches('input,select')){window._riskDirty=true;scheduleRiskPreview();}});
-$('#riskForm').addEventListener('change',event=>{if(event.target.matches('input,select')){window._riskDirty=true;scheduleRiskPreview();}});
+function riskInputChanged(event){if(event.target.matches('input,select')){if(!event.target.name.startsWith('preview'))window._riskDirty=true;updatePreviewControls();scheduleRiskPreview();}}
+$('#riskForm').addEventListener('input',riskInputChanged);
+$('#riskForm').addEventListener('change',riskInputChanged);
+$('#riskForm').addEventListener('keydown',event=>{
+  if(event.key==='Enter'&&event.target.name?.startsWith('preview')){event.preventDefault();previewRisk();}
+});
+$('#botSwitcher').addEventListener('change',()=>{const f=$('#riskForm').elements;f.previewDeploymentId.value='';f.previewEntryRef.value='';f.previewCash.value='';f.previewBookEquity.value='';f.previewAuthority.value='SAVED';updatePreviewControls();invalidateRiskPreview();},true);
+$('#previewRefreshVenue').onclick=async()=>{
+  const f=$('#riskForm').elements,bridge=f.previewSource.value==='BRIDGE';
+  if(!bridge&&f.previewBroker.value!=='binance-global')return;
+  invalidateRiskPreview();const sequence=riskPreviewSequence,botScope=selectedBot;
+  $('#riskPreviewVenue').textContent='Refreshing venue metadata…';
+  try{
+    const result=await api('/api/risk/venue-refresh',{method:'POST',silent:true,body:JSON.stringify({symbol:(bridge?f.previewBridgeSymbol.value:f.previewSymbol.value).trim()})});
+    if(sequence!==riskPreviewSequence||botScope!==selectedBot)return;
+    $('#riskPreviewVenue').textContent=previewVenueText(result.venue||result)+' Preview needs checking again.';
+  }catch(error){if(sequence===riskPreviewSequence&&botScope===selectedBot)$('#riskPreviewVenue').textContent=error.message;}
+};
 // Lock / unlock risk form inputs while bot is active (RUNNING, PAUSED, STOPPED)
 function lockRiskForm(locked){
   const f=$('#riskForm');

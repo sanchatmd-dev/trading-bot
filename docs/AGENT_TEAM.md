@@ -136,7 +136,12 @@ merely to fill a role. Suggested routes:
   the root coordinating the active session and tool availability.
 - Analyze data quality / validate data: dataset gaps/provenance/report arithmetic;
   do not bypass the project's parity/holdout contracts.
-- Caveman: concise conversation if requested; persisted docs remain normal prose.
+- Caveman: required for every role's chat, packets, agent-authored compact summaries
+  and handoffs. Read the project skill once per context. AGENTS.md defines the
+  owner's exception for compressed internal memory/handoff files. Use full by
+  default, lite when clarity requires; product/public docs and code remain normal
+  prose. Preserve constraints, uncertainty, evidence, live-job state and next action.
+  This does not configure automatic runtime compaction or guarantee token savings.
 
 ## Setup checkpoint and next work
 

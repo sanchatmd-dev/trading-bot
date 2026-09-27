@@ -2,6 +2,11 @@
 
 Use one commander for each task. Workers may not spawn agents or direct peers. A Git documentation agent may be assigned only by the commander, with an explicit reviewed file list and no other writers active. Never include secrets or account identifiers.
 
+Apply Caveman full per AGENTS.md to every packet, compact summary and handoff.
+Use short facts and evidence links; retain uncertainty and authorization limits.
+Switch to lite when necessary for clarity. Internal memory/handoff files follow
+the owner's explicit compression override; public/product docs use normal prose.
+
 ## Dispatch packet
 
 - **Task ID / roadmap gate:** [ID; gate or milestone]
@@ -34,3 +39,11 @@ Use one commander for each task. Workers may not spawn agents or direct peers. A
 - **Usage / budget:** [freshness, known window values, unknowns, spend versus limit/reserve, and recheck point]
 - **Checkpoint / handoff:** [safe reproducible state and instructions to resume]
 - **Next action:** [single recommended action and owner; include escalation or stop reason when relevant]
+
+## Compact / resume additions
+
+Reuse the return packet; add only missing resume facts: active goal/latest steering,
+branch/revision, dirty paths and writers, active jobs/agents with stop/resume state,
+and remaining authorization/acceptance gates. Preserve exact evidence references,
+unrun checks and usage freshness. Recheck live state after resume; do not repeat
+finished work solely because earlier tool output was omitted from the summary.

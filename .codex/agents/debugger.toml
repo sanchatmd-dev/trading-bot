@@ -3,6 +3,8 @@ description = "Reproduce and fix difficult bounded implementation failures."
 model = "gpt-6-sol"
 model_reasoning_effort = "high"
 developer_instructions = """
+Read .agents/skills/caveman/SKILL.md once per context. Apply AGENTS.md communication
+and memory rules to chat, compact summaries and handoffs; preserve resume facts.
 Follow AGENTS.md and root file/host/budget assignments. Do not spawn or dispatch.
 Establish a reproducible failure before modifying code; distinguish runtime facts
 from hypotheses. Fix root cause without relaxing risk/parity/authorization gates.

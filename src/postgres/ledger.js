@@ -14,8 +14,10 @@ export async function recordFunding(store,userId,policy){
     const ed=equity.minus(current.configuredEquity),cd=cash.minus(current.configuredBalance);
     if(ed.isZero()&&cd.isZero())continue;
     const exposure=await store.exposure({id:0,user_id:userId,account_id:broker+':primary',execution_mode:'PAPER',symbol:'',broker});
-    if((cd.lt(0)&&D(current.cash).plus(cd).lt(exposure.reservedNotional))||
-      (ed.lt(0)&&D(current.bookEquity).plus(ed).lt(D(current.positionCost).plus(exposure.reservedNotional))))throw new Error('Paper capital withdrawal exceeds unreserved funds');
+    const reservedCash=D(exposure.reservedNotional).plus(exposure.reservedFees??0);
+    if(((cd.lt(0)||ed.lt(0))&&exposure.feeReservationUnknown)||
+      (cd.lt(0)&&D(current.cash).plus(cd).lt(reservedCash))||
+      (ed.lt(0)&&D(current.bookEquity).plus(ed).lt(D(current.positionCost).plus(reservedCash))))throw new Error('Paper capital withdrawal exceeds unreserved funds');
     await store.db.prepare('INSERT INTO paper_funding(user_id,broker,at,equity_delta,cash_delta,kind) VALUES(?,?,?,?,?,?)').run(userId,broker,Date.now(),exact(ed),exact(cd),'CONFIGURATION');
     await store.snapshotPaper(userId,broker,'FUNDING');
   }
@@ -74,9 +76,23 @@ export const ledgerMethods={
   },
   async exposure(row){
     const positions=await this.db.prepare('SELECT symbol,cost_basis FROM ledger_positions WHERE user_id=? AND account_id=? AND execution_mode=? AND quantity>0').all(...scope(row));
-    const orders=await this.db.prepare('SELECT symbol,side,order_intent,applied_quantity,status FROM signals WHERE user_id=? AND account_id=? AND execution_mode=? AND status IN '+pending+' AND id<>?').all(...scope(row),row.id);
+    const orders=await this.db.prepare('SELECT symbol,side,order_intent,applied_quantity,status,payload FROM signals WHERE user_id=? AND account_id=? AND execution_mode=? AND status IN '+pending+' AND id<>?').all(...scope(row),row.id);
     const reserved=sum(orders.filter(o=>o.side==='BUY').map(o=>{const i=o.order_intent&&JSON.parse(o.order_intent);return i?Money.max(0,D(i.quantity).minus(o.applied_quantity)).mul(i.price):'0';}));
-    return {committedNotional:amount(sum(positions.map(p=>p.cost_basis)).plus(reserved)),reservedNotional:amount(reserved),reservedTrades:orders.filter(o=>D(o.applied_quantity).isZero()).length,
+    let reservedFees=D(0),feeReservationUnknown=false;
+    for(const order of orders.filter(o=>o.side==='BUY')){
+      const intent=order.order_intent&&JSON.parse(order.order_intent);
+      let payload;try{payload=JSON.parse(order.payload||'{}');}catch{feeReservationUnknown=true;}
+      if(!intent){feeReservationUnknown=true;continue;}
+      if(intent.execution_model_version==='paper-close-cost-v2'){
+        try{
+          const rate=D(intent.reserved_fee_bps);
+          if(rate.lt(0)||rate.gt(1000))throw new Error('Invalid reserved fee');
+          const remaining=Money.max(0,D(intent.quantity).minus(order.applied_quantity));
+          reservedFees=reservedFees.plus(amount(D(amount(remaining.mul(intent.price))).mul(rate).div(10000)));
+        }catch{feeReservationUnknown=true;}
+      }else if(payload?.bridge||intent.execution_model_version)feeReservationUnknown=true;
+    }
+    return {committedNotional:amount(sum(positions.map(p=>p.cost_basis)).plus(reserved)),reservedNotional:amount(reserved),reservedFees:amount(reservedFees),feeReservationUnknown,reservedTrades:orders.filter(o=>D(o.applied_quantity).isZero()).length,
       openPositions:new Set([...positions.map(p=>p.symbol),...orders.filter(o=>o.side==='BUY').map(o=>o.symbol)]).size,hasPendingOrder:orders.some(o=>o.symbol===row.symbol),uncertain:orders.some(o=>o.status==='UNKNOWN')};
   },
   async persistIntent(row,order){return this.db.prepare("UPDATE signals SET order_intent=?,processed_at=? WHERE id=? AND status='PROCESSING'").run(JSON.stringify(order),Date.now(),row.id);},

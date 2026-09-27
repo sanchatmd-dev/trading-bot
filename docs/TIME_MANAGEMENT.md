@@ -28,7 +28,7 @@ Baseline: 2026-09-27, timezone Asia/Bangkok, documentation only. ยังไม
 
 | งาน | ชั่วโมงหลัก | Dependency / เงื่อนไข |
 | --- | ---: | --- |
-| PF-1 ตรวจ policy และ sizing | 12–20 | Baseline เดิม; PF-1A backend อยู่ใน local checkpoint แล้ว ยังไม่หักชั่วโมงจากหลักฐาน throughput ที่ไม่ครบ |
+| PF-1 ตรวจ policy และ sizing | 12–20 | Baseline เดิม; PF-1C ผ่าน engineering/browser/isolated staging แล้ว; ยังแยก active Bot rollout และ V2 evaluator parity ตารางนี้ยังเป็น baseline ไม่ใช่ estimate งานคงเหลือที่วัดใหม่ |
 | QD-1 shared datasets, staged budgets และ chunks <=50K | 48–80 | เพิ่ม stateful recovery/large-data admission; ก่อนเปิด capacity ใหม่ |
 | QS-1 global scheduler, isolation และ benchmark calibration | 24–48 | ใช้ QD-1 contracts; ก่อนเปิด heavy jobs บน VPS ร่วม |
 | PF-2 Historical Preflight | 24–40 | PF-1; expanded heavy path ต้องผ่าน QD-1/QS-1 |
@@ -130,6 +130,10 @@ Queue ETA ต้องรวมงานที่อยู่ก่อนหน�
 
 ## การจัดเวลาของทีมและ Usage
 
+Git checkpoint PF-1B/PF-1C รวมโค้ดและเอกสารหลังตรวจ diff และผล staging แล้ว ไม่ต้องเก็บแท่งใหม่เพื่อบันทึก checkpoint นี้ การ rollout Bot V2 และ evaluator parity ยังเป็นงานแยก; ไม่มีข้อมูล active hours เพิ่มจากงาน Git
+
+ทุก role ใช้ Caveman ตาม AGENTS.md กับบทสนทนา, compact และ handoff ที่ agent เขียนเอง รวมถึง memory ภายใน เพื่อลดข้อความซ้ำและเก็บพื้นที่ context ให้ข้อมูลที่จำเป็น การย่อต้องคงหลักฐาน ข้อจำกัด งานค้างและจุดเริ่มต่อ ยังไม่มีผลวัด token/throughput จึงไม่ลดงบชั่วโมงหรือเปลี่ยน reserve จากนโยบายนี้
+
 ใช้ [Agent Team](AGENT_TEAM.md) และ AGENTS.md ให้หัวหน้าเดียวเลือก task ที่ dependencies ผ่าน ส่งงานสั้นพร้อม file ownership และจุด checkpoint ใช้ workers 1–2 คนตามปกติ สูงสุด 3 เมื่อมีงานอิสระจริง การทำงานพร้อมกันอาจลด elapsed time แต่ห้ามหารงบ 410–720 ชั่วโมงด้วยจำนวน agents โดยไม่มีข้อมูล throughput
 
 ตรวจ account usage ก่อน dispatch/งานแพงและทุก checkpoint กัน reserve 20 percentage points ตามนโยบาย; 20–30% เหลือทำทีละงานเล็ก, <=20% บันทึก checkpoint และไม่เปิดงานใหม่ ค่าไม่ทราบต้องระบุ unknown ไม่ใช่ 100% การกัน quota เป็นประมาณการ ไม่ใช่ hard lock และต้องเผื่อ account usage จาก task อื่น บันทึก snapshot ส่วนตัวใน `.qa-local/agent-team-usage.json` ไม่เก็บ raw account IDs ลง Git
@@ -154,6 +158,8 @@ Queue ETA ต้องรวมงานที่อยู่ก่อนหน�
 
 | As of | งาน / สถานะ | Actual hours | Remaining estimate | Blocker / next action |
 | --- | --- | --- | --- | --- |
+| 2026-09-28 | [PF-1C](PF_1C_CHECKPOINT_2026-09-28.md): venue/costs/draft/Bridge UI และ browser/staging ผ่าน | Active hours unknown; final Node suite 37.1 วินาที; metadata run 121.697 วินาที ทำระหว่างตรวจ UI/เอกสาร | ยังไม่ลดงบรวมด้วยจำนวน agents หรือเวลาทดสอบ; active Bot rollout และ V2 evaluator parity ต้องประเมินจาก scope ถัดไป | ตรวจ diff/checkpoint; ไม่ต้องรอแท่งใหม่เพื่อบันทึกงานนี้; V2 Quant ยังถูก block ก่อน enqueue |
+| 2026-09-28 | [PF-1B](PF_1B_CHECKPOINT_2026-09-28.md): PostgreSQL, Bridge และ UI ทำคู่ขนาน ผ่าน 129 checks; local cluster หยุดแล้ว | Unknown; ไม่บวกเวลาซ้อนของ agents; final Node check ประมาณ 7.3 วินาที, PostgreSQL suites ประมาณ 8.9 และ 4.4 วินาทีเป็นเวลาตรวจเท่านั้น | ยังไม่ปรับงบรวม 410–720 ชั่วโมงจาก test runtime; ประเมิน PF-1 ใหม่หลังล็อก venue/enforcement model | ปิด venue filters/shared costs, draft/Bridge UI และ HTTP/browser/staging gate; ไม่ต้องรอแท่งตลาดใหม่ |
 | 2026-09-28 | [PF-1A local backend](PF_1A_CHECKPOINT_2026-09-28.md): implementation + focused tests + audit; ไม่มี deployment/collection | Unknown; ไม่มี active-work log ครบทั้ง root และ agents จึงไม่บวกเวลาที่ซ้อนกัน | คง PF-1 baseline 12–20 ชั่วโมงไว้ก่อน re-estimate หลัง integration; ไม่ใช่เวลาที่วัดได้ | ต้องมี isolated PostgreSQL/HTTP/worker evidence; ต่อด้วย venue/Bridge costs, consistency และ UI/draft; ไม่ต้องรอแท่งสดสำหรับ checkpoint นี้ |
 | 2026-09-27 | Project agent team: local setup, three bounded role assignments | Unknown; ไม่มี active-work time log ครบ | ยังไม่ลด product estimate เพราะ agent count | ตรวจ active root model; PF-1 เป็น implementation ถัดไป |
 | 2026-09-27 | PF/QD/QS/QR และ QL-3A ถึง APP-4 ที่เหลือ: planning baseline | Unknown; ไม่มี time log ครบ | 296–500 ชั่วโมงหลัก + contingency 30% | PF-1 เป็นงานถัดไป; engineering และ recommendation แยก gate |
@@ -166,6 +172,9 @@ Queue ETA ต้องรวมงานที่อยู่ก่อนหน�
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-09-28 | PF-1C engineering ครบใน scope Paper/public filters | Node 281, PostgreSQL 38, staging ซ้ำ 30 checks; browser + refresh >2 TTLs; ปิด runtime ทดสอบแล้ว ไม่สลับบริการเดิม; usage เหลือ 71% weekly, short-window unknown, reserve 20pp |
+| 2026-09-28 | ทำ PF-1B ต่อโดยแบ่ง PostgreSQL, Bridge และ UI คู่ขนาน | แก้ข้อจำกัดไม่มี PostgreSQL ด้วย cluster local แยกและหยุดหลังตรวจ; ไม่มี VPS load หรือเวลารอเก็บแท่งใหม่; บันทึก actual development hours เป็น unknown |
+| 2026-09-28 | เพิ่ม Caveman เป็นกติกาทุก agent รวม compact/handoff/internal memory | Configuration/docs only; ตรวจรูปแบบ role profiles และ diff ไม่รัน product tests ซ้ำ งบเวลาเดิมคงอยู่จนมีผลวัด |
 | 2026-09-28 | เริ่ม PF-1 ด้วยทีม coder/tester และ architecture audit | Local backend checkpoint; usage ตรวจต้นงานและก่อนรวมงาน มี reserve 20pp; short-window unknown จึงแบ่งงานสั้น งบรวม 410–720 ชั่วโมงยังไม่ปรับจากจำนวน agents |
 | 2026-09-27 | เพิ่ม single-command team และ usage admission | Role models/profiles, exclusive ownership และ task template; งบ product 410–720 ชั่วโมงคงเป็น forecast ก่อนมี throughput ใหม่ |
 | 2026-09-27 | ขยาย QD-1 และเพิ่ม QS-1 หลังทบทวน capacity handoff | งบ Paper ปัจจุบัน 410–720 ชั่วโมง; hardware เดิม, global heavy concurrency 1 เป็นแผน; compute/queue ETA รอ benchmark ไม่มีการรันงานหรือเปลี่ยนระบบ |

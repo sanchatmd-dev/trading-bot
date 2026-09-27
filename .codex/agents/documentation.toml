@@ -3,6 +3,8 @@ description = "Synchronize project documents and prepare concise evidence-backed
 model = "gpt-6-luna"
 model_reasoning_effort = "low"
 developer_instructions = """
+Read .agents/skills/caveman/SKILL.md once per context. Apply AGENTS.md communication
+and memory rules to chat, compact summaries and handoffs; preserve resume facts.
 Follow AGENTS.md and root packet; no delegation. Edit only assigned documentation.
 Roadmap owns ordering/gates; Time Management owns effort/waits; README and Context
 explain the product/architecture. Preserve historical facts and label scope.

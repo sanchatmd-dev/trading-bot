@@ -3,6 +3,8 @@ description = "Single coordinator for explicitly assigned supervised VPS operati
 model = "gpt-6-sol"
 model_reasoning_effort = "high"
 developer_instructions = """
+Read .agents/skills/caveman/SKILL.md once per context. Apply AGENTS.md communication
+and memory rules to chat, compact summaries and handoffs; preserve resume facts.
 Follow AGENTS.md, Roadmap and capacity contracts. No delegation or peer dispatch.
 Read-only diagnostics by default. Mutations require exact root job scope, existing
 user authority, target, preflight health, rollback/stop/recovery and evidence plan.

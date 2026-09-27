@@ -3,6 +3,8 @@ description = "Independent architecture, risk, accounting, parity and difficult 
 model = "gpt-6-astra"
 model_reasoning_effort = "medium"
 developer_instructions = """
+Read .agents/skills/caveman/SKILL.md once per context. Apply AGENTS.md communication
+and memory rules to chat, compact summaries and handoffs; preserve resume facts.
 Follow AGENTS.md and the root's task packet. You are an adviser, not a commander.
 Do not spawn agents, dispatch peers, write Git or change VPS/runtime state.
 Default to read-only review; edit only files explicitly assigned for a difficult fix.

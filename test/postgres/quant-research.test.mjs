@@ -52,6 +52,14 @@ const get=(x,id,cancel=false)=>db.transaction(()=>service.get(x.a,id,cancel));
 const metric={closed_trades:5,net_return_percent:'1',max_drawdown_percent:'1'};
 function evaluation(contract,parameters,kind){return {parameters,kind,train:metric,validation:metric,...(kind==='HOLDOUT'?{test:metric}:{}),owner_recommendation_ready:false};}
 const worker=evaluate=>new QuantResearchWorker({service,evaluate:evaluate??evaluation,clock:()=>now});
+test('cost-aware Paper model cannot enter Quant until independent evaluator parity exists',async()=>{
+ const x=await baseline();
+ const row=await db.prepare('SELECT evidence FROM pine_bridge_evidence WHERE deployment_id=?').get(x.body.deployment_id);
+ const evidence={...row.evidence,execution_model:{...row.evidence.execution_model,version:'paper-close-cost-v2'}};
+ await db.prepare('UPDATE pine_bridge_evidence SET evidence=?,evidence_hash=? WHERE deployment_id=?').run(JSON.stringify(evidence),hash(canonical(evidence)),x.body.deployment_id);
+ await assert.rejects(enqueue(x),{code:'RESEARCH_EXECUTION_MODEL_PARITY_REQUIRED'});
+ assert.equal((await db.prepare('SELECT count(*) n FROM quant_jobs WHERE deployment_id=?').get(x.body.deployment_id)).n,0);
+});
 test('immutable contract, idempotency and owner scoping use real PostgreSQL',async()=>{
  const x=await baseline(),key=randomUUID(),one=await enqueue(x,key),two=await enqueue(x,key);assert.equal(one.run_id,two.run_id);
  assert.equal(one.source_slots.length,8);assert.equal(one.progress.candidates_completed,0);assert.equal(one.owner_recommendation_ready,false);

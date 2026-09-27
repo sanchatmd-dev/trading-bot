@@ -10,8 +10,9 @@ status and change log. README/Context remain the primary project explanations.
 Add static checks and capability-scoped Historical Preflight before the owner's
 Run Bot action. PF-1 checks consistency, PF-2 performs bounded historical replay,
 PF-3 explains readiness and PF-4 proposes settings inside the owner's limits.
-PF-1A now has a [local backend checkpoint](PF_1A_CHECKPOINT_2026-09-28.md), with
-full PF-1 acceptance still pending. PF-2 through PF-4 remain planned;
+PF-1 now has a [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md) verified
+locally, in Chrome and in isolated staging. Active Bot V2 rollout remains separate;
+PF-2 through PF-4 remain planned, with V2 historical evaluator parity required;
 existing point-in-time previews are not historical
 readiness reports. The dated checkpoints below retain their original scope.
 
@@ -152,7 +153,7 @@ Changing Preview inputs must not mark the Risk Policy as dirty or block the Run 
 Expand preview coverage before presenting it as parity guidance:
 
 - BUY: Percent Equity, fixed notional and explicit quantity;
-- targeted reduce-only SELL: selected allocation, requested/remaining quantity and oversell rejection;
+- targeted reduce-only SELL: selected allocation, requested/remaining quantity and an explicit cap for oversized requests, matching the current worker; missing/closed targets reject;
 - all active caps and reservations, including daily limits and entry allocation capacity when introduced;
 - guard provenance: volatility/news values are either verified source data, supplied signal data, or unavailable. The preview must never silently present unavailable guards as passed.
 

@@ -11,7 +11,7 @@ export function validateEvidence(evidence,snapshotHash) {
   keys(evidence.cases,Object.keys(minimum));for(const [name,min]of Object.entries(minimum))number(evidence.cases[name],{min,integer:true});
   keys(evidence.execution_model,['version','price_tick','quantity_step','fee_bps','slippage_bps','risk_percent','data_profile']);
   const m=evidence.execution_model;
-  if(m.version!=='paper-close-v1'||m.data_profile!=='closed-ohlcv-atr14-v1')throw fail('UNSUPPORTED_EXECUTION_MODEL');
+  if(!['paper-close-v1','paper-close-cost-v2'].includes(m.version)||m.data_profile!=='closed-ohlcv-atr14-v1')throw fail('UNSUPPORTED_EXECUTION_MODEL');
   for(const field of ['price_tick','quantity_step','risk_percent'])number(m[field],{min:0.000000000000000001,max:field==='risk_percent'?100:1e12});
   number(m.fee_bps,{min:0,max:1000});number(m.slippage_bps,{min:0,max:1000});
   keys(evidence.references,['tradingview','source_review','paper_fixture']);

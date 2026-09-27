@@ -29,6 +29,30 @@ Use a concise self-contained brief with an empty/partial history fork for model
 overrides; do not copy the entire conversation to each worker. Report unavailable
 models to the commander rather than silently substituting.
 
+## Communication, compact summaries and handoffs
+
+Every role, including root, reads `.agents/skills/caveman/SKILL.md` once per
+context and uses Caveman full for chat, dispatch/return packets and agent-authored
+compact summaries/handoffs. Use lite or complete sentences whenever compression
+could obscure meaning. Preserve the user's language and exact technical terms.
+Higher-priority progress updates and required explanations still apply.
+
+The owner explicitly extends compression to internal memory/handoff files,
+overriding the skill's normal-prose boundary for those artifacts only. Keep
+product docs, code, comments, commits and public issue/PR text in normal prose.
+Remove repetition and raw logs; link authoritative evidence instead of copying it.
+Never remove uncertainty, negation, authorization limits or acceptance gates.
+
+Before compact/handoff preserve: active goal and latest steering; scope and
+constraints; branch/revision and dirty file ownership; completed work with exact
+evidence; unrun/failed checks and blockers; active jobs/agents and resume/stop
+details; usage freshness/unknowns and reserve; next concrete action and owner.
+Keep secrets and machine locations out of tracked files. Resume by checking
+current Git/runtime state and Roadmap; a summary does not certify live state.
+Only agent-authored summaries are controlled here; automatic runtime compaction
+is not configured by this policy. Shorter output can reduce context use, but
+token savings and memory quality require measurement; no guaranteed percentage.
+
 ## Usage and checkpoint discipline
 
 Before each dispatch wave, expensive tool/research operation and integration

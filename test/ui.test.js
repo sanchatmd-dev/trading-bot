@@ -141,7 +141,7 @@ test('Risk UI renders editable defaults, maxima, Balance and debounced authorita
     f.previewEntry.value='100';f.previewStopLoss.value='90';f.previewEntry.dispatchEvent(new w.Event('input',{bubbles:true}));
     await new Promise(resolve=>setTimeout(resolve,350));
     assert.ok(calls.includes('/api/risk/preview'));
-    assert.equal(d.querySelector('#riskPreviewStatus').textContent,'Likely accepted');
+    assert.equal(d.querySelector('#riskPreviewStatus').textContent,'Hypothetical draft — Likely accepted');
     assert.equal(d.querySelector('#previewCapacity').textContent,'3');
   }finally{w.close();}
 });

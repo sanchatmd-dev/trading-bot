@@ -34,6 +34,11 @@ Three bounded setup agents performed team audit, PF-1 mapping and a dispatch tem
 Team setup is followed by the local PF-1A backend checkpoint below. Production
 resource enforcement remains planned; QD-1/QS-1 and existing gates still apply.
 
+All roles now require the project Caveman skill for conversation, task packets
+and agent-authored compact/handoff/internal memory. Shared instructions preserve
+resume facts, evidence and gates; public/product docs retain normal prose.
+This communication policy does not change phase order or runtime compaction.
+
 ## Current status — 2026-09-28
 
 Owner-confirmed primary collection/research market: **BINANCE:BTCUSDT Spot 1m**.
@@ -49,17 +54,18 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 | QL-2A / Custom extension | Fixed SPT baseline accepted; Custom baseline plus 16 axis settings matched; 100-observation Custom repaint passed. [Custom evidence](QL_3A_VARIED_INPUT_PARITY.md). | Evidence is source/settings scoped; positive EXIT was absent from the Custom repaint sample. Mixed candidates and new revisions need their own evidence. |
 | QL-3A research | Durable 100-candidate job completed; all candidates have zero validation closed trades. [Result](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | `NO_VALID_CANDIDATE`; original holdout unopened. Engineering acceptance and recommendation acceptance are tracked separately; neither is automatically granted by this update. |
 | SPT Spot EXIT v1 | Separate offline draft and four predeclared development comparisons. Net loss improved to -5.1852783497 USDT but three losing episodes still stop entries; validation remains zero. [Review](QL_3A_SPOT_EXIT_V1_2026-09-27.md). | Failed development preflight. Not activated; no new TradingView collection requested for this draft. |
-| Risk Manager readiness / Historical Preflight | [PF-1A local backend checkpoint](PF_1A_CHECKPOINT_2026-09-28.md): additive readiness API, actual server capital/policy/session and focused fixture checks. Not deployed or customer-ready. | Finish PF-1: isolated PostgreSQL/HTTP and worker evidence, verified venue/Bridge costs, policy consistency and UI/draft contracts. Then PF-2, PF-3, PF-4. |
+| Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. | Review/checkpoint diff; active Bot V2 rollout and metadata producer remain separate. PF-2 engineering may use these contracts; V2 Quant admission stays blocked until evaluator parity. Then PF-3/PF-4. |
 | Historical data capacity (QD-1) | Revised target: 50K Preflight/chunks; timeframe/stage-specific research datasets up to 1M for final 1m validation, including warm-up. Current engine still enforces 10,000 bars and the narrow 1m profile. | Implement versioned dataset storage, capability/range checks and bounded execution before enabling expanded reports. |
 | Quant resource protection (QS-1) | Planned global heavy concurrency 1, durable fair queue, health/resource admission and isolation on the owner-supplied 2-vCPU / 8-GB / 100-GB VPS. | Benchmark and recovery/production-impact acceptance before expanded heavy jobs; no upgrade or limits applied. |
 | Research Library / Best Performance (QR-1 through QR-4) | Owner-approved plan and target diagrams below; no customer library, comparison ranking or portfolio mark-to-market shipped by this update. | Reuse durable run evidence; add immutable artifacts, portfolio reporting, fair comparison and explicit owner-started follow-up runs. Real recommendations remain validation-gated. |
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
 
-Last pushed code/evidence checkpoint: `a4e524f` on
-`codex/app3a-market-wait-checkpoint`; last pushed planning checkpoint is `7ca575f`.
-PF-1A is a local implementation checkpoint authorized for commit/push; its revision
-is recorded in Git history. No deployment is implied. The unrelated untracked diagnostic builder
+Previous pushed code/evidence checkpoint: `9c5f8f3` (PF-1A and agent setup) on
+`codex/app3a-market-wait-checkpoint`; prior planning checkpoint is `7ca575f`.
+This Git checkpoint packages PF-1B/PF-1C and the Caveman policy; its revision is
+recorded in Git history. PF-1C used isolated staging verification, without
+switching any deployed release. The unrelated untracked diagnostic builder
 is not part of this plan's implementation.
 
 ## Approved extension — readiness before Run Bot
@@ -74,8 +80,8 @@ inside workflow step 3, not an additional automatic optimization cycle.
 
 | ID | Deliverable | Completion evidence | Current status |
 | --- | --- | --- | --- |
-| PF-1 | Static Risk Manager consistency check and point-in-time sizing preview. Resolve owner/Bot policy and capital on the server; distinguish hypothetical drafts from saved settings. | Accepted/capped/rejected fixtures agree with worker rules; verified venue filters, fees, reservations and reduce-only targets are represented. Unknown data cannot become a pass. Preview causes no policy mutation. | In progress: PF-1A local generic Paper API; remaining gates in [checkpoint](PF_1A_CHECKPOINT_2026-09-28.md). Full PF-1 acceptance pending. |
-| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | Planned; uses PF-1 contracts and existing QL-3A components. |
+| PF-1 | Static Risk Manager consistency check and point-in-time sizing preview. Resolve owner/Bot policy and capital on the server; distinguish hypothetical drafts from saved settings. | Accepted/capped/rejected fixtures agree with worker rules; verified venue filters, fees, reservations and reduce-only targets are represented. Unknown data cannot become a pass. Preview causes no policy mutation. | Paper/public-filter engineering passed in [PF-1C](PF_1C_CHECKPOINT_2026-09-28.md); active Bot rollout acceptance remains gated. V1 is unchanged and V2 requires explicit evidence/producer rollout. No Run approval follows from a hypothetical preview. |
+| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | Planned; uses PF-1 contracts and existing QL-3A components. Implement and prove cost-model V2 historical evaluator parity before admitting V2 research; do not reuse V1 parity as V2 evidence. |
 | PF-3 | Readiness report with signal/intent/fill/episode counts, rejection reasons, cash/exposure, pause periods and collection estimate. | Distinguishes configuration failure, insufficient activity, unavailable capability and readiness to start Paper. Estimates use a declared development window and assumptions; persistent pause gives no finite collection ETA. | Planned; after PF-2. |
 | PF-4 | Explainable setting proposals inside the owner's declared risk/exposure limits, with before/after preview and explicit save. | Deterministic calculations, effective-value provenance, stale-state detection and saved-policy confirmation. AI may explain calculations but is not the authoritative calculator. | Planned; after PF-1 through PF-3. |
 
@@ -438,6 +444,9 @@ flowchart TD
 
 | Date | Change / evidence | Scope and current consequence |
 | --- | --- | --- |
+| 2026-09-28 | [PF-1C](PF_1C_CHECKPOINT_2026-09-28.md): public venue filters, versioned shared costs, draft/Bridge UI, browser and isolated staging checks completed. | 319 local automated checks passed; 30 staging repeats passed; seven metadata refreshes over 121.7 seconds. Existing services/evidence preserved. Active Bot rollout and V2 Quant parity remain separate gates; no commit/push in this checkpoint. |
+| 2026-09-28 | [PF-1B](PF_1B_CHECKPOINT_2026-09-28.md): parallel local PostgreSQL, Bridge and UI work; 107 focused checks plus 22 real PostgreSQL checks passed. | Read-only server-resolved Bridge costs, consistency/provenance/capacity and saved-policy UI. Local cluster stopped. Complete venue enforcement/draft/Bridge UI and browser/staging gates remain; no new collection or deployment. |
+| 2026-09-28 | Owner requested Caveman for every agent, including compact/handoff. | Updated root instructions, all seven role profiles, packet template and primary docs. Internal memory compression is explicitly allowed; resume facts stay mandatory. Configuration/docs only; savings unmeasured, PF-1 remains in progress. |
 | 2026-09-28 | [PF-1A backend checkpoint](PF_1A_CHECKPOINT_2026-09-28.md), Sol implementation/tests and Astra audit; 53/53 focused tests passed. Owner authorized commit/push. | Local readiness API only; real PostgreSQL/HTTP tests added but not run. Continue PF-1 integration, venue/Bridge costs, consistency and UI; no deployment, policy change or new collection. Weekly usage remaining 84% at final checkpoint; short window unknown. |
 | 2026-09-27 | Owner requested project-wide specialist agents with model routing, quota reserve and local/VPS division. | Local team config/instructions and three bounded setup assignments; PF-1 mapped but not implemented. No autonomous campaign, deployment or permanent agents started. |
 | 2026-09-27 | Reviewed capacity handoff: keep current VPS; 50K Preflight/chunks, staged research, QS-1 and infrastructure I–VI. | Documentation only; current 10K/profile and prior outcomes unchanged. QD-1/QS-1 and benchmarks gate capacity. Paper budget revised to 410–720 hours. |
