@@ -14,11 +14,11 @@ Baseline: 2026-09-27, timezone Asia/Bangkok, documentation only. ยังไม
 ## 1. ขอบเขตและสมมติฐาน
 
 1. ผู้พัฒนา 1 คนร่วมกับ Codex ใช้ code/evidence เดิมต่อ ไม่สมมติว่ามีหลายคนทำงานเต็มเวลาพร้อมกัน
-2. Paper scope รวม PF-1 ถึง PF-4, QD-1, QR-1 ถึง QR-4 และงานคงเหลือ QL-3A ถึง APP-4 ตาม Roadmap
+2. Paper scope รวม PF-1 ถึง PF-4, QD-1, QS-1, QR-1 ถึง QR-4 และงานคงเหลือ QL-3A ถึง APP-4 ตาม Roadmap
 3. APP-5 แยกเป็นตัวเลือกสำหรับ Spot Exchange เดียว ต้องมีรายละเอียด broker และการอนุมัติ Live ก่อนลงมือเปิดใช้งาน
 4. ใช้ SPT Custom evaluator ที่มีอยู่ การรองรับ Pine ใหม่หรือ timeframe ใหม่ต้องประเมิน capability/parity เพิ่ม
-5. ผู้ใช้ระบุ BTCUSD 1m แต่หลักฐานเดิมผูกกับ BINANCE:BTCUSDT Spot 1m งบนี้สมมติว่าใช้คู่เดิมต่อ ต้องยืนยันก่อนเริ่ม dataset ใหม่ ห้ามเปลี่ยนชื่อคู่หรือใช้หลักฐานข้ามตลาดโดยปริยาย
-6. หากเปลี่ยนเป็น BTC/USD จริงบน venue อื่น สำรองงานเชื่อมข้อมูลและ parity เพิ่ม 12–32 ชั่วโมงก่อนเผื่อแก้งาน ประเมินใหม่เมื่อทราบ venue
+5. เจ้าของยืนยันให้ใช้ตลาดเดิม **BINANCE:BTCUSDT Spot 1m** เป็นตลาดหลักสำหรับการเก็บข้อมูลและประมาณการเวลา ใช้หลักฐานเดิมต่อเฉพาะ source/settings/เงื่อนไขที่หลักฐานครอบคลุม
+6. ไม่มีงานเปลี่ยนคู่หรือ venue ในงบปัจจุบัน หากเจ้าของขอเปลี่ยนตลาดภายหลัง ให้ประเมิน ingestion/parity และเวลาใหม่ก่อนเริ่ม dataset ของตลาดนั้น
 7. ดึงประวัติราคาจาก Exchange สำหรับ warm-up/research และเก็บสดสำหรับหลักฐานที่ประวัติทดแทนไม่ได้ ไม่รอให้ครบ 50,000 แท่งสดโดยอัตโนมัติ
 8. Engineering acceptance กับ recommendation eligibility แยกกัน ระบบที่รายงาน NO_VALID_CANDIDATE อย่างถูกต้องพัฒนาเสร็จได้ แม้ยังไม่มี strategy ผ่านเกณฑ์
 
@@ -29,8 +29,9 @@ Baseline: 2026-09-27, timezone Asia/Bangkok, documentation only. ยังไม
 | งาน | ชั่วโมงหลัก | Dependency / เงื่อนไข |
 | --- | ---: | --- |
 | PF-1 ตรวจ policy และ sizing | 12–20 | งานถัดไป; ใช้ semantics ของ worker จริง |
-| QD-1 ข้อมูล 50,000 แท่งและ resource/range gates | 24–40 | ก่อนเปิดช่วงข้อมูลที่ขยายจาก runtime ปัจจุบัน |
-| PF-2 Historical Preflight | 24–40 | PF-1; expanded data path ต้องผ่าน QD-1 |
+| QD-1 shared datasets, staged budgets และ chunks <=50K | 48–80 | เพิ่ม stateful recovery/large-data admission; ก่อนเปิด capacity ใหม่ |
+| QS-1 global scheduler, isolation และ benchmark calibration | 24–48 | ใช้ QD-1 contracts; ก่อนเปิด heavy jobs บน VPS ร่วม |
+| PF-2 Historical Preflight | 24–40 | PF-1; expanded heavy path ต้องผ่าน QD-1/QS-1 |
 | PF-3 / PF-4 readiness และข้อเสนอค่าที่อธิบายได้ | 20–32 | ผล PF-2; เจ้าของยืนยันก่อนบันทึกค่า |
 | ปิด engineering QL-3A และ provenance | 16–28 | หลักฐานครบตาม gate; ไม่บังคับให้ candidate ทำกำไร |
 | QR-1 และ QL-4B export package | 24–40 | durable result contract; fixtures ใช้พัฒนาได้ |
@@ -39,29 +40,35 @@ Baseline: 2026-09-27, timezone Asia/Bangkok, documentation only. ยังไม
 | QL-4C package/parity/auth/email validation | 16–28 | export contract; real delivery มี candidate และ SMTP gates |
 | APP-3B multi-Pine/Bot isolation | 24–40 | ผ่าน engineering dependencies และ allocation isolation |
 | APP-4 customer Paper readiness | 32–56 | security, quotas, backup/restore และ lifecycle acceptance |
-| **รวมงานหลัก** | **248–412** | ไม่รวมงานที่เสร็จแล้วก่อน baseline |
-| **เผื่อย้อนแก้ 30%** | **74.4–123.6** | integration, parity, snapshot, migration และ staging defects |
-| **รวมชั่วโมงทำงาน** | **322.4–535.6** | ไม่ใช่เวลาปฏิทิน |
-| เวลารัน/รอผลระบบที่สำรองแยก | 12–36 | ไม่รวมการสะสม episodes สด; บางส่วนซ้อนกับงานพัฒนาได้ |
-| **ผลรวมก่อนหักเวลาซ้อน** | **334.4–571.6** | ใช้ตั้งงบปัดเป็น **340–580 ชั่วโมง** |
+| **รวมงานหลัก** | **296–500** | ไม่รวมงานที่เสร็จแล้วก่อน baseline |
+| **เผื่อย้อนแก้ 30%** | **88.8–150** | integration, parity, snapshot, migration และ staging defects |
+| **รวมชั่วโมงทำงาน** | **384.8–650** | ไม่ใช่เวลาปฏิทิน |
+| เวลารัน/รอผลระบบที่สำรองแยก | 18–60 | ไม่รวมการสะสม episodes สด; บางส่วนซ้อนกับงานพัฒนาได้ |
+| **ผลรวมก่อนหักเวลาซ้อน** | **402.8–710** | ใช้ตั้งงบปัดเป็น **410–720 ชั่วโมง** |
 
-ใช้ 460 ชั่วโมงเป็นค่ากลางสำหรับวางงบ ไม่ใช่ expected value จากสถิติ ความเชื่อมั่นเริ่มต้นปานกลางถึงต่ำ เพราะ PF/QD/QR ยังเป็นแผนและต้องวัด throughput จริง
+ใช้ 565 ชั่วโมงเป็นค่ากลางสำหรับวางงบ ไม่ใช่ expected value จากสถิติ ความเชื่อมั่นเริ่มต้นปานกลางถึงต่ำ เพราะ PF/QD/QS/QR ยังเป็นแผนและต้องวัด throughput จริง
 
-APP-5 สำหรับ Exchange เดียวสำรองเพิ่ม 180–360 ชั่วโมง รวม contingency และการรัน sandbox เบื้องต้นแล้ว ห้ามบวก 30% ซ้ำ งบรวม Paper + Live จึงประมาณ 520–940 ชั่วโมง แต่ยังไม่ใช่กำหนดการ Live ที่ยืนยันแล้ว
+APP-5 สำหรับ Exchange เดียวสำรองเพิ่ม 180–360 ชั่วโมง รวม contingency และการรัน sandbox เบื้องต้นแล้ว ห้ามบวก 30% ซ้ำ งบรวม Paper + Live จึงประมาณ 590–1,080 ชั่วโมง แต่ยังไม่ใช่กำหนดการ Live ที่ยืนยันแล้ว
+
+### ผลของแผน capacity ที่เพิ่ม
+
+งบเดิม 340–580 ชั่วโมงเป็น baseline ก่อนขยาย capacity/scheduler ปัจจุบันเพิ่ม QD-1 อีก 24–40 ชั่วโมงและ QS-1 24–48 ชั่วโมง รวมเพิ่มงานหลัก 48–88 ชั่วโมง และ runtime allowance จาก 12–36 เป็น 18–60 ชั่วโมง ตัวเลขใหม่ 410–720 ชั่วโมงเป็นงบประมาณรวมเผื่อก่อนหักเวลาซ้อน ไม่ใช่ผล benchmark
+
+QS-1 รวม scheduler/admission/isolation และการ calibrate benchmark เบื้องต้น; APP-3B/APP-4 ใช้งบเดิมตรวจ tenant/load/DR เพื่อไม่บวกงานซ้ำ งบนี้ไม่รวมการซื้อ/ย้าย VPS, distributed worker pool/HA หรือ evaluator สำหรับทุก timeframe ตาราง timeframe เป็น target ต้อง estimate เพิ่มเมื่อเปิด capability ใหม่
 
 ## 3. ลำดับใช้เวลาให้คุ้มค่า
 
-ลำดับ phase หลักยังเป็น R-0, APP-3A, QL-2A, QL-3A, QL-4B, QL-4C, APP-3B, APP-4, APP-5 โดยงานที่ผ่านแล้วคงสถานะตาม Roadmap งาน PF/QD/QR เป็นส่วนขยายภายใน phase ไม่ใช่การข้าม gate
+ลำดับ phase หลักยังเป็น R-0, APP-3A, QL-2A, QL-3A, QL-4B, QL-4C, APP-3B, APP-4, APP-5 โดยงานที่ผ่านแล้วคงสถานะตาม Roadmap งาน PF/QD/QS/QR เป็นส่วนขยายภายใน phase ไม่ใช่การข้าม gate
 
 | ช่วงทำงาน | งานหลักที่ลงมือ | งานที่ใช้ช่วงรอเครื่อง/ข้อมูลได้ | เงื่อนไขจบช่วง |
 | --- | --- | --- | --- |
-| A: ลดความเสี่ยงก่อนเก็บใหม่ | PF-1, QD-1, PF-2; แก้ provenance ก่อน replay diagnostic เดิม | เตรียม artifact contracts, fixture datasets และสรุป SMTP blocker | ข้อมูล/engine/policy reproducible และรู้สาเหตุ reject/pause |
+| A: ลดความเสี่ยงก่อนเก็บใหม่ | PF-1, QD-1/QS-1, PF-2; แก้ provenance ก่อน replay diagnostic เดิม | เตรียม artifact contracts, fixture datasets และสรุป SMTP blocker | ข้อมูล/engine/policy reproducible และรู้สาเหตุ reject/pause |
 | B: ล็อกรอบวิจัย | PF-3/PF-4; เจ้าของเลือก snapshot และแผนวิจัย | QR-1 storage/contracts ตาม dependency ที่ผ่านแล้ว | symbol/source/inputs/policy/costs/cutoff/เกณฑ์ครบ; preflight ไม่ติด persistent pause |
 | C: เก็บและพัฒนาไปพร้อมกัน | เริ่ม Paper/evidence ที่จำเป็นหลัง compile/input/webhook gates; รักษา snapshot | QL-4B export fixtures, QR-2 Portfolio, QR-3/4 report/replay engineering หลัง engineering dependencies ผ่าน | evidence ของรอบครบ หรือมี blocker ที่ต้องจบรอบด้วยเหตุผล |
 | D: ตรวจรับการเชื่อมต่อ | QL-3A gates และ QL-4C validation | SMTP delivery remediation, เตรียม APP-3B isolation fixtures | engineering ผ่านแยกจาก recommendation; email ส่งเฉพาะผลที่ผ่าน |
 | E: ความพร้อมใช้งานจริงของ Paper | APP-3B และ APP-4 | งานรัน soak/restore ใช้ช่วงที่ไม่มีการแก้ระบบเดียวกัน | acceptance แต่ละส่วนมีหลักฐานและ rollback/recovery พร้อม |
 
-การทำพร้อมกันหมายถึงให้เครื่องเก็บข้อมูลหรือรัน bounded jobs ระหว่างคนพัฒนางานอื่น ไม่หักชั่วโมงพัฒนาสองงานออกจากกัน ไม่ให้ research jobs แย่งทรัพยากรจน Paper/webhook มีปัญหา กำหนด resource budget ก่อนเปิดงานพร้อมกัน
+การทำพร้อมกันหมายถึงให้เครื่องเก็บข้อมูลหรือรัน bounded jobs ระหว่างคนพัฒนางานอื่น ไม่หักชั่วโมงพัฒนาสองงานออกจากกัน ไม่ให้ research jobs แย่งทรัพยากรจน Paper/webhook มีปัญหา กำหนด resource budget ก่อนเปิดงานพร้อมกัน โดย VPS เดิมให้ heavy Quant รันได้ 1 งานรวมทั้งระบบ; jobs อื่นรอคิวและ production health ต้องผ่านก่อนเริ่ม/กลับมารัน
 
 หากผลวิจัยไม่ผ่าน ให้จบ run พร้อม diagnostic และเดินงาน engineering ที่ไม่ติด recommendation gate ต่อ ห้ามวน optimize เปลี่ยน inputs หรือรีเซ็ต guard อัตโนมัติเพื่อเร่งให้ได้ Best Inputs
 
@@ -75,9 +82,9 @@ APP-5 สำหรับ Exchange เดียวสำรองเพิ่ม 
 | 10,000 | 166 ชั่วโมง 40 นาที |
 | 50,000 | 833 ชั่วโมง 20 นาที |
 
-50,000 เป็นเพดาน primary bars รวม warm-up ต่อ calculation สำหรับ timeframe ที่รองรับ ไม่ใช่ขั้นต่ำ acceptance ปัจจุบัน runtime ยังจำกัด 10,000 แท่ง กติกาจริงอยู่ใน [Roadmap](ROADMAP.md#report-range-and-50000-bar-contract)
+50,000 เป็นเพดาน Historical Preflight รวม warm-up และขนาด processing chunk สูงสุด ส่วน research ใช้ budget ตาม timeframe/stage ไม่ใช่ขั้นต่ำ acceptance ปัจจุบัน runtime ยังจำกัด 10,000 แท่ง กติกาจริงอยู่ใน [Roadmap](ROADMAP.md#report-range-and-50000-bar-contract)
 
-SPT Custom หลักฐานปัจจุบันใช้ warm-up 3,250 แท่ง เทียบเวลา 54 ชั่วโมง 10 นาที แต่ backfill ได้ตาม capability ถ้าใช้เพดาน 50,000 จะเหลือ measured bars 46,750 แท่ง หรือ 779 ชั่วโมง 10 นาที ไม่ต้องรอ warm-up สดใหม่เมื่อมีประวัติที่ตรวจแล้วและ state reconstruction ถูกต้อง
+SPT Custom หลักฐานปัจจุบันใช้ warm-up 3,250 แท่ง เทียบเวลา 54 ชั่วโมง 10 นาที แต่ backfill ได้ตาม capability ถ้าใช้ Preflight เต็ม 50,000 จะเหลือ measured bars 46,750 แท่ง หรือ 779 ชั่วโมง 10 นาที ไม่ต้องรอ warm-up สดใหม่เมื่อมีประวัติที่ตรวจแล้วและ state reconstruction ถูกต้อง
 
 แยกหลักฐานสามประเภท:
 
@@ -85,7 +92,19 @@ SPT Custom หลักฐานปัจจุบันใช้ warm-up 3,250 
 - TradingView parity/capture: ใช้เฉพาะ revision/inputs/market ที่หลักฐานครอบคลุม เก็บใหม่เฉพาะส่วนที่เปลี่ยนและจำเป็นตาม gate
 - Actual Paper ledger: ใช้ผลการรับคำสั่ง/บัญชีจริงใน Paper; ต้องแยกจาก simulated fills ในรายงานเสมอ
 
-รอบเดิม 100 candidates / 10,000 bars ใช้ประมาณ 102.787 วินาทีตาม [หลักฐาน](QL_3A_HISTORY_RESEARCH_2026-09-27.md) ไม่ใช่ benchmark รับประกันเวลา 50,000 แท่งหรือทุก source ให้จับเวลา fetch, validation, replay และ export แยกเมื่อ QD-1 พร้อม
+รอบเดิม 100 candidates / 10,000 bars ใช้ประมาณ 102.787 วินาทีตาม [หลักฐาน](QL_3A_HISTORY_RESEARCH_2026-09-27.md) ไม่ใช่ benchmark รับประกันเวลา 50K–1M หรือทุก source ให้จับเวลา fetch, validation, replay, checkpoint, export และผลกระทบ production แยกเมื่อ QD-1/QS-1 พร้อม
+
+### เวลา history coverage กับเวลา compute
+
+| Primary bars 1m รวม warm-up | ความยาวประวัติเทียบชั่วโมง | Workload ตาม stage ที่วางแผน |
+| --- | ---: | --- |
+| 100K–250K | 1,666.7–4,166.7 | Broad search ภายใน candidate budget |
+| 500K | 8,333.3 | Qualified shortlist เท่านั้น |
+| 750K–1M | 12,500–16,666.7 | Final candidate/ชุดเล็กตามแผนที่ freeze |
+
+ตัวเลข coverage ไม่ใช่เวลาคำนวณหรือจำนวนชั่วโมงที่ต้องรอสด ใช้ historical backfill ที่ตรวจแล้วเมื่อรองรับ แบ่ง chunk ช่วย memory/recovery แต่ไม่ลดงาน bars × candidates × complexity × MTF ต้องใช้ benchmark ภายใต้ resource limits จึงจะตั้ง compute ETA ได้ ไม่คูณเวลารอบ 10K เป็น SLA ของงานใหญ่
+
+Queue ETA ต้องรวมงานที่อยู่ก่อนหน้าและ production-health pauses; เมื่อยังไม่มี benchmark หรือ health ไม่พร้อม ให้แสดง unknown/ช่วงประมาณพร้อมเหตุผล ห้ามรับประกัน deadline จากจำนวนแท่งอย่างเดียว
 
 ## 5. Collection ETA และเกณฑ์หยุดรอ
 
@@ -103,7 +122,7 @@ SPT Custom หลักฐานปัจจุบันใช้ warm-up 3,250 
 
 ## 6. ชั่วโมงงานกับเวลาปฏิทิน
 
-หากทำงาน 8 ชั่วโมง/วัน 5 วัน/สัปดาห์ งบทำงาน 322.4–535.6 ชั่วโมงเทียบประมาณ 8.1–13.4 สัปดาห์ทำงาน ใช้วงวางแผน 9–15 สัปดาห์ หรือประมาณ 1,500–2,500 ชั่วโมงปฏิทิน เพื่อรองรับการประสานงานและรันตรวจระบบ โดยการสะสมข้อมูลส่วนใหญ่ต้องเกิดระหว่างพัฒนา
+หากทำงาน 8 ชั่วโมง/วัน 5 วัน/สัปดาห์ งบทำงาน 384.8–650 ชั่วโมงเทียบประมาณ 9.6–16.25 สัปดาห์ทำงาน ใช้วงวางแผน 11–18 สัปดาห์ หรือประมาณ 1,850–3,025 ชั่วโมงปฏิทิน เพื่อรองรับการประสานงานและรันตรวจระบบ โดยการสะสมข้อมูลส่วนใหญ่ต้องเกิดระหว่างพัฒนา
 
 เวลาจบจริงใช้ dependency chain ที่ช้าที่สุด รวมเวลารอที่ทับซ้อนไม่ได้ ไม่บวกทุกแถวของ live collection เข้ากับ engineering โดยตรง หาก qualifying data ไม่พอหลังงานระบบเสร็จ ให้รายงานเวลาเพิ่มแยก ไม่ซ่อนใน contingency 30%
 
@@ -127,7 +146,7 @@ SPT Custom หลักฐานปัจจุบันใช้ warm-up 3,250 
 
 | As of | งาน / สถานะ | Actual hours | Remaining estimate | Blocker / next action |
 | --- | --- | --- | --- | --- |
-| 2026-09-27 | PF/QD/QR และ QL-3A ถึง APP-4 ที่เหลือ: planning baseline | Unknown; ไม่มี time log ครบ | 248–412 ชั่วโมงหลัก + contingency 30% | PF-1 เป็นงานถัดไป; engineering และ recommendation แยก gate |
+| 2026-09-27 | PF/QD/QS/QR และ QL-3A ถึง APP-4 ที่เหลือ: planning baseline | Unknown; ไม่มี time log ครบ | 296–500 ชั่วโมงหลัก + contingency 30% | PF-1 เป็นงานถัดไป; engineering และ recommendation แยก gate |
 | 2026-09-27 | Data collection: historical status only | Unknown | ไม่มี finite qualifying-data ETA ที่ยืนยันแล้ว | ล่าสุด validation 0; ตรวจ snapshot/guard และ preflight ก่อนตั้งรอบใหม่ |
 | 2026-09-27 | APP-5 optional, not started | Unknown | 180–360 ชั่วโมงรวมเผื่อ สำหรับ venue เดียว | ต้องล็อก broker scope และ Live authorization |
 
@@ -137,4 +156,6 @@ SPT Custom หลักฐานปัจจุบันใช้ warm-up 3,250 
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-09-27 | ขยาย QD-1 และเพิ่ม QS-1 หลังทบทวน capacity handoff | งบ Paper ปัจจุบัน 410–720 ชั่วโมง; hardware เดิม, global heavy concurrency 1 เป็นแผน; compute/queue ETA รอ benchmark ไม่มีการรันงานหรือเปลี่ยนระบบ |
+| 2026-09-27 | เจ้าของยืนยันตลาดหลัก BINANCE:BTCUSDT Spot 1m | ใช้ตลาดเดิมในแผนเวลาและการเก็บข้อมูล นำเงื่อนไขรอยืนยัน BTCUSD และงบเปลี่ยนตลาดออก; ไม่มี runtime action |
 | 2026-09-27 | สร้าง Time Management เป็นเอกสารหลักด้านเวลา เชื่อม README/Context/Roadmap และกำหนด checkpoint update rules | Documentation only; baseline Paper 340–580 ชั่วโมงก่อนหักเวลารอซ้อน ใช้ historical preflight ก่อนเก็บสดรอบใหม่ ไม่เริ่ม run/deploy/automation |

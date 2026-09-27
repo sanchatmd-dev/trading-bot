@@ -1,5 +1,26 @@
 # Deployment and recovery — v2.1 Paper staging
 
+## Current planning overlay — 2026-09-27
+
+The release/schema and SQLite procedures below are historical, not current
+production inventory. Use [Context](../Context.md) and [Roadmap](ROADMAP.md) for
+current scope/evidence. Preserve immutable releases and the current symlink model.
+
+The owner keeps the initial 2-vCPU / 8-GB / 100-GB NVMe VPS for now, with 8 TB
+bandwidth and one provider snapshot. Before expanded heavy Quant or paid multi-user
+use, implement and accept QD-1/QS-1 [resource protection](QUANT_CAPACITY_AND_INFRASTRUCTURE.md):
+one global heavy executor, durable fair queue, server resource/health admission,
+bounded checkpoint/pause/recovery and benchmarked CPU/memory/I/O/disk headroom.
+Bot quotas cannot increase physical concurrency. Trading/Web/PostgreSQL take
+priority. Benchmark suggested limits in isolation before any configuration rollout;
+this planning update applies no systemd, API, database or service changes.
+
+APP-4 still requires off-host backup scheduling, backup-failure alerts, restore
+verification and a full-system recovery drill. The provider snapshot alone does
+not pass this gate. Future scaling follows [measured infrastructure reviews](ROADMAP.md#quant-resource-protection-and-infrastructure-scaling),
+not an immediate hardware upgrade. Portable Quant job/data/result contracts must
+permit later separate compute while retaining server ownership/accounting authority.
+
 ## Deployment decision
 
 - Private Paper staging: supported, subject to the checks below.
@@ -7,7 +28,7 @@
 - Live trading: hard-disabled. Do not remove the gate as an operational workaround.
 - Existing exchange orders/positions: v2.1 does not cancel or protect them. Manage them directly with the broker before upgrading.
 
-Production runs release 0321ae6 on PostgreSQL schema 11 with separate supervised API and worker services. Follow [Phase 1](PHASE1.md) for authentication/origin history and [Phase 2](PHASE2.md) for PostgreSQL backup, runtime-role and rollback rules. The SQLite procedure below is historical and must not be used as a live rollback after new PostgreSQL writes without reconciling the delta.
+Historical Phase 2 deployment recorded release 0321ae6 on PostgreSQL schema 11 with separate supervised API and worker services. Follow [Phase 1](PHASE1.md) for authentication/origin history and [Phase 2](PHASE2.md) for PostgreSQL backup, runtime-role and rollback rules. The SQLite procedure below is historical and must not be used as a live rollback after new PostgreSQL writes without reconciling the delta.
 
 ## Upgrade from v2.0
 

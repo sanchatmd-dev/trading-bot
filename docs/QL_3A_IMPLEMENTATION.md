@@ -53,10 +53,14 @@ TradingView `Custom` baseline check: the existing source-bound state trace was s
 ## Roadmap and workflow review
 
 2026-09-27 approved planning extension: [QD-1 and QR-1 through QR-4](ROADMAP.md#approved-extension--quant-research-library-and-best-performance)
-add 50,000-bar dataset admission, a Research Library, portfolio/strategy reports
+add mode/timeframe/stage dataset admission, <=50K Preflight/chunks, a Research Library, portfolio/strategy reports
 and explicit owner follow-ups. Current research code still enforces 10,000 bars
 and its supported profile. No schema/API/engine or recommendation gate changed
-in this documentation update. PF-1 remains next; expanded ranges depend on QD-1.
+in this documentation update. PF-1 remains next; expanded heavy ranges depend
+on QD-1 and QS-1 admission/isolation/benchmark acceptance. The planned initial
+VPS has one global heavy executor and production takes priority. See
+[capacity contracts](QUANT_CAPACITY_AND_INFRASTRUCTURE.md). The old 100-candidate
+result is unchanged and is not automatically rerun with larger datasets.
 
 2026-09-27 follow-up: [Custom axis parity](evidence/QL_3A_CUSTOM_AXIS_PARITY_2026-09-27.json)
 now matches the baseline and **16 min/max settings across all eight selected

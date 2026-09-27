@@ -34,9 +34,11 @@ activity: historical success cannot clear a current entry pause.
 
 ### Historical capability and evidence
 
-The approved QD-1 target raises primary-series capacity to 50,000 bars including
-warm-up for each supported timeframe; current code remains at 10,000/its narrow
-profile. Use [Roadmap range admission](ROADMAP.md#report-range-and-50000-bar-contract)
+The revised QD-1 target bounds PF-2 Historical Preflight to 50,000 total primary
+bars including warm-up. Research uses separate timeframe/stage budgets and
+<=50K chunks; PF-2 does not inherit the larger search/validation limits. Current
+code remains at 10,000/its narrow profile. Heavy Preflight uses QS-1 global queue,
+resource admission and production-health gates; it may queue/pause/reject safely. Use [Roadmap range admission](ROADMAP.md#report-range-and-50000-bar-contract)
 for selectors and exact calendar/data checks. Preflight records may enter the
 [Research Library](QUANT_RESEARCH_LIBRARY.md) as development diagnostics; they
 are not independent validation or actual portfolio fills. Subsequent research

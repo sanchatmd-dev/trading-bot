@@ -4,9 +4,11 @@
 
 ## Current requirement override
 
+- Owner-confirmed primary market: **BINANCE:BTCUSDT Spot 1m**. Continue the existing market; no BTCUSD/venue clarification remains pending. Evidence reuse is source/settings scoped.
+
 - [Time Management](TIME_MANAGEMENT.md) is the primary effort/wait/collection-ETA document. At handoff or scope/status checkpoints update it with Roadmap and review README/Context together. Do not infer completed work or live collection progress from budgeted hours; PF-1 remains next.
 
-- Additional approved plan: [Quant Research Library / Best Performance](ROADMAP.md#approved-extension--quant-research-library-and-best-performance), Quant Data inside Best Inputs, portfolio valuation, compatible strategy comparison and explicit owner-started follow-ups. QD-1 targets 50,000 primary bars including warm-up with timeframe/period admission; runtime is still 10,000/its supported profile. QR-1 through QR-4 are planned. No automatic optimization/apply loop or new production feature is implied.
+- Additional approved plan: [Quant Research Library / Best Performance](ROADMAP.md#approved-extension--quant-research-library-and-best-performance), Quant Data inside Best Inputs, portfolio valuation, compatible strategy comparison and explicit owner-started follow-ups. QD-1 now targets 50K Preflight/chunks and timeframe/stage-specific research budgets (1m search 100K–250K, shortlist 500K, final up to 1M, including warm-up); runtime is still 10,000/its supported profile. QS-1 adds one global heavy executor, fair durable queue and resource/health admission on the current owner-supplied 2-vCPU/8-GB/100-GB VPS. No upgrade is required now; see [capacity and infrastructure plan](ROADMAP.md#quant-resource-protection-and-infrastructure-scaling). QR-1 through QR-4 are planned. No automatic optimization/apply loop or new production feature is implied.
 
 - Current scope/status is maintained in [Roadmap](ROADMAP.md#current-status--2026-09-27), not this historical handoff. README and Context are the primary project descriptions.
 - As of 2026-09-27, APP-3A staging engineering and QL-2A scoped baseline passed. Custom parity/repaint evidence and the 100-candidate job are recorded; the latter returned `NO_VALID_CANDIDATE`. EXIT v1 remains a failed development draft, with no activation and no holdout evaluation. Checkpoint `a4e524f` was pushed, not deployed by that action.

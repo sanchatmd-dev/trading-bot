@@ -2,7 +2,7 @@
 
 Owner-approved design, 2026-09-27; **planned, not a released capability**.
 [Roadmap](ROADMAP.md#approved-extension--quant-research-library-and-best-performance)
-owns QD-1 / QR-1 through QR-4, ordering, progress, limits and change history.
+owns QD-1 / QR-1 through QR-4 plus QS-1, ordering, progress, limits and change history.
 [README](../README.md) and [Context](../Context.md) are the project explanations.
 Existing durable runs/offline reports are foundations, not this complete feature.
 
@@ -12,6 +12,13 @@ Create an owner-scoped immutable research record for every completed or terminal
 job. Retain failed, cancelled and insufficient-data results with completeness
 flags; absence of a metric must never become zero. Separate engineering
 capability, execution status, evaluation validity and export eligibility.
+
+For every candidate retain parameters, summary metrics/gates, episode/rejection
+summaries and provenance. Shortlist candidates retain required detailed traces;
+final/export candidates retain full required audit artifacts. Record retention
+tier and missing detail explicitly; the fields below describe the record model,
+not mandatory million-bar traces for every candidate. Required immutable
+evidence cannot be removed as ordinary cache.
 
 Record at least:
 
@@ -117,12 +124,23 @@ coverage and evaluation basis. Viewing a report never starts or changes a Bot.
 ## Periods and data admission
 
 Use the [Roadmap range contract](ROADMAP.md#report-range-and-50000-bar-contract)
-for 1W/1M/3M/6M/1Y/YTD/All Time Registered/Custom. The approved target is 50,000
-primary bars including evaluator-specific warm-up for each supported timeframe;
-the currently implemented limit is still 10,000 with the existing narrow profile.
+for 1W/1M/3M/6M/1Y/2Y/3Y/YTD/All Available/Custom research selections; actual
+Bot reports retain All Time Registered. The revised target is <=50K total bars
+for Preflight and <=50K chunks, with stage/timeframe-specific research budgets
+including warm-up. BTCUSDT 1m search targets 100K–250K, shortlist validation 500K
+and final 750K–1M; 30m through 1D targets 50K per supported timeframe. Larger
+studies require explicit Deep Research admission. Runtime remains 10K/profile.
+All Available is bounded by real history, mode/capability, storage and admission,
+with a disclosed confirmed interval; it is not unlimited or silently truncated.
 Do not expose a period/timeframe as supported solely because it fits the count.
 
-Check limits before fetching/queuing, then verify actual coverage before replay.
+Use [QS-1/QD-1 contracts](QUANT_CAPACITY_AND_INFRASTRUCTURE.md) before
+fetching/queuing and recheck actual coverage before execution. Heavy report,
+replay and export work share the global resource budget, with one heavy Quant
+executor on the initial VPS. Bot quotas do not grant compute concurrency.
+Use authenticated portable artifact references for future separate compute.
+Freeze stage partitions and shortlist rules before execution; expanded datasets
+containing search history do not become fresh independent validation.
 Use paged exchange fetch/cache and incremental computation while carrying state
 across chunks. Bound secondary timeframe dependencies and total memory/bytes/CPU,
 candidate work and multi-asset requests separately. Never reset an Indicator or

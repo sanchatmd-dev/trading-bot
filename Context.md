@@ -48,6 +48,10 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 
 ## Architecture
 
+Owner-confirmed primary data collection and research market: **BINANCE:BTCUSDT
+Spot 1m**. Existing evidence remains bound to its source/settings and execution
+scope; this confirmation does not expand evaluator or timeframe support.
+
 Current integration status (2026-09-27): APP-3A engineering accepted in staging;
 QL-2A accepted for its fixed SPT profile. Custom evaluator baseline and sixteen
 axis settings subsequently matched TradingView, and its scoped 100-observation
@@ -101,12 +105,25 @@ Neither may mix synthetic fills into actual portfolio history or double-count
 shared capital. Reporting market valuation does not silently change worker
 book-equity risk calculations.
 
-Target admission is 50,000 primary bars including evaluator-specific warm-up
-for each supported timeframe, with additional bounded MTF/resource budgets.
-Current API/engine still caps the narrow supported 1m profile at 10,000 bars.
-Period choices are 1W/1M/3M/6M/1Y/YTD/All Registered/Custom, checked against actual
-calendar boundaries, registration/data availability and capability. Account
-transaction history has separate retention/paging rules.
+Planned capacity is 50K total bars for Preflight and <=50K processing chunks;
+research budgets depend on timeframe/stage and include warm-up. BTCUSDT Spot 1m
+uses 100K–250K search, 500K shortlist validation and 750K–1M final validation;
+30m through 1D use 50K per supported timeframe. Current runtime remains at 10K
+and its narrow profile. Research period choices add 2Y/3Y/All Available, bounded
+by exact calendar/data/capability/resource admission; actual Bot All Registered
+and ledger retention remain separate. Preserve independent holdout boundaries.
+
+The owner-provided initial envelope remains 2 vCPU / 8 GB / 100 GB NVMe, 8 TB
+bandwidth and one snapshot, without a current upgrade requirement. Planned QS-1
+enforces one global heavy Quant executor, durable fair scheduling, fenced leases,
+production-health gates and measured resource isolation. Bot quotas do not grant
+compute concurrency. Quant yields to Trading/Web/PostgreSQL. QD-1 datasets and
+checkpoints must preserve state across <=50K chunks; smaller chunks bound pause
+latency. No resource settings were applied by this plan. See [capacity contracts](docs/QUANT_CAPACITY_AND_INFRASTRUCTURE.md)
+and [infrastructure review stages](docs/ROADMAP.md#quant-resource-protection-and-infrastructure-scaling).
+Portable job/dataset/result identities allow future separate Quant compute;
+PostgreSQL remains authoritative for owner/policy/trading/job identity. Off-host
+backup and full restore acceptance remain required for paid Paper readiness.
 
 Owner-requested replay, fixed-input new-period backtest and new optimization
 create new run IDs linked to their parent; comparisons reference all participant
@@ -127,7 +144,8 @@ flowchart TD
     S1["1. เชื่อม Pine<br/>ลงทะเบียน source และผูกกับ Bot"] --> S2["2. สร้าง Bridge<br/>เพิ่ม Bridge ATR SL = 2.0 และ RR = 1.5"]
     S2 --> P["ตรวจความพร้อมก่อน Run<br/>Risk Manager + Historical Preflight ตาม capability"]
     P --> S3["3. รัน Bot บน Paper<br/>เก็บ Session, decisions, fills และข้อมูลราคา"]
-    S3 --> S4["4. Quant Lab<br/>ตรวจ parity แล้ว Optimize หนึ่ง run"]
+    S3 --> QA["แผน Admission / durable queue / health gate<br/>1 heavy Quant job รวมระบบ; chunks ไม่เกิน 50K"]
+    QA --> S4["4. Quant Lab<br/>ตรวจ parity แล้ว Optimize หนึ่ง bounded staged run"]
     S4 --> LIB[("Research Library<br/>เก็บทุกผลพร้อม provenance")]
     LIB --> CMP["เปรียบเทียบ Strategy / Best Performance<br/>ตาม asset และเงื่อนไขที่กำหนด"]
     S4 --> G{"ผ่านเกณฑ์ candidate?"}

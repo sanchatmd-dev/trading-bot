@@ -12,8 +12,8 @@ must not define a competing task order or silently supersede this status.
 machine/data waits, execution overlap and remaining-time records. This roadmap
 continues to own task order and gates. Update both at each scope/status/run or
 handoff checkpoint, and review README/Context in the same change set; record
-reviewed-unchanged when their explanations remain accurate. Initial remaining
-Paper budget is 340–580 hours including rework and a runtime allowance before
+reviewed-unchanged when their explanations remain accurate. Revised remaining
+Paper budget is 410–720 hours including rework and a runtime allowance before
 subtracting overlapping waits; profitable-candidate collection has no guaranteed
 deadline. Historical Preflight precedes a new live collection campaign, with
 eligible downstream engineering performed during data waits.
@@ -26,6 +26,10 @@ precedence. Preserve production structure and private operational information.
 
 ## Current status — 2026-09-27
 
+Owner-confirmed primary collection/research market: **BINANCE:BTCUSDT Spot 1m**.
+Continue with the existing market; evidence reuse remains source/settings scoped.
+Time Management uses this market without a pending BTCUSD/venue clarification.
+
 | Work | Current evidence and scope | Remaining gate / next action |
 | --- | --- | --- |
 | Time Management | Primary execution-time document established, with baseline estimates, collection rules and a checkpoint ledger. Documentation only. | PF-1 remains next; record actual hours prospectively and revise estimates with evidence. No new run, deployment or monitoring started. |
@@ -35,7 +39,8 @@ precedence. Preserve production structure and private operational information.
 | QL-3A research | Durable 100-candidate job completed; all candidates have zero validation closed trades. [Result](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | `NO_VALID_CANDIDATE`; original holdout unopened. Engineering acceptance and recommendation acceptance are tracked separately; neither is automatically granted by this update. |
 | SPT Spot EXIT v1 | Separate offline draft and four predeclared development comparisons. Net loss improved to -5.1852783497 USDT but three losing episodes still stop entries; validation remains zero. [Review](QL_3A_SPOT_EXIT_V1_2026-09-27.md). | Failed development preflight. Not activated; no new TradingView collection requested for this draft. |
 | Risk Manager readiness / Historical Preflight | Owner-approved plan recorded below; not implemented as a customer feature. Existing risk/Paper engines and scoped Custom evaluator are reusable components. | Implement PF-1, PF-2, PF-3, then PF-4 within the QL-3A extension. |
-| Historical data capacity (QD-1) | Approved target: at most 50,000 primary bars including warm-up per calculation, for each supported timeframe. Current engine still enforces 10,000 bars and the narrow 1m profile. | Implement versioned dataset storage, capability/range checks and bounded execution before enabling expanded reports. |
+| Historical data capacity (QD-1) | Revised target: 50K Preflight/chunks; timeframe/stage-specific research datasets up to 1M for final 1m validation, including warm-up. Current engine still enforces 10,000 bars and the narrow 1m profile. | Implement versioned dataset storage, capability/range checks and bounded execution before enabling expanded reports. |
+| Quant resource protection (QS-1) | Planned global heavy concurrency 1, durable fair queue, health/resource admission and isolation on the owner-supplied 2-vCPU / 8-GB / 100-GB VPS. | Benchmark and recovery/production-impact acceptance before expanded heavy jobs; no upgrade or limits applied. |
 | Research Library / Best Performance (QR-1 through QR-4) | Owner-approved plan and target diagrams below; no customer library, comparison ranking or portfolio mark-to-market shipped by this update. | Reuse durable run evidence; add immutable artifacts, portfolio reporting, fair comparison and explicit owner-started follow-up runs. Real recommendations remain validation-gated. |
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
@@ -145,7 +150,7 @@ trade count only at the declared final step and retain an insufficient-data
 outcome if necessary. Fix dataset selection/extension rules before performance
 review; no repeated extension or resetting until results pass. The current
 10,000-bar engine limit must be reported while it remains implemented. QD-1
-below approves expansion to 50,000 including warm-up; the planning value must
+below approves mode/timeframe-specific capacity with 50K Preflight/chunks; the planning value must
 not be advertised as available before the implementation and capability gates pass.
 
 Preflight is a recorded diagnostic, not the one Quant optimization run. Record
@@ -172,82 +177,151 @@ acceptance, progress and changes. All work in this section is **planned**.
 
 | ID | Work and dependency | Completion gate | Status |
 | --- | --- | --- | --- |
-| QD-1 | QL-3A data foundation: paged exchange history/cache, immutable datasets outside job JSON, timeframe capability registry and 50,000-bar range checks. Supports expanded PF-2 and all historical reports. | Server/UI agree on limits; warm-up and calendar boundaries correct; gaps/duplicates/incomplete bars rejected; chunked execution preserves indicator/account state; progress/cancel/recovery/resource ceilings verified. | Planned; current 10,000/1m restriction remains. |
+| QD-1 | QL-3A data foundation: paged exchange history/cache, immutable datasets outside job JSON, timeframe capability registry, stage-specific dataset budgets and <=50K stateful chunks. Supports expanded PF-2 and all historical reports. | Server/UI agree on limits; warm-up and calendar boundaries correct; gaps/duplicates/incomplete bars rejected; chunked execution preserves indicator/account state; progress/cancel/recovery/resource ceilings verified. | Planned; current 10,000/1m restriction remains. |
+| QS-1 | QL-3A scheduling/protection foundation: global heavy concurrency 1, durable fair queue, server admission, health gates, CPU/memory/I/O isolation and disk/retention budgets. Uses QD-1 contracts; APP-3B/APP-4 verify concurrent tenant load and quotas. | Atomic global leases/fencing, cancellation/restart, bounded pause latency, fair admission and benchmarked production headroom; unsafe requests reject/queue/pause. | Planned; no configuration change. |
 | QR-1 | QL-3A/QL-4B: versioned Research Library and Quant Data artifacts for every terminal run, including failed/insufficient/cancelled outcomes labelled incomplete where needed. | Owner-scoped immutable identity, checksums, provenance, input/data/engine references and permission checks; no secrets in downloads; unsuccessful runs cannot become actionable Best Inputs. | Planned. |
 | QR-2 | QL-4B reporting: actual Paper Portfolio Performance with market valuation, funding-aware returns and account/capital allocation reconciliation. | Stale/missing prices explicit; no double counting shared capital; ledger and valuation reconcile; historical simulation is never labelled actual Paper execution. | Planned; current equity is book equity. |
 | QR-3 | QL-4B comparison: strategies for the same asset under a declared common evaluation context, alongside a separate actual-Bot comparison. Depends on QR-1 and QD-1 for expanded ranges. | Compatible market/period/capital/cost/valuation/risk assumptions; independent evaluation provenance, sample adequacy and ranking rules fixed before comparison; no qualified winner is a valid result. | Planned. |
 | QR-4 | QL-4B/QL-4C: Best Performance Report and owner-requested replay, new-period backtest or new optimization with lineage. | New run/parent identity, capability/data/privacy/resource checks; no original result overwritten or automatic rerun/apply. Qualified ranking/export is validation-gated. | Planned. |
 
 PF-1 remains the next implementation task and PF-1 through PF-4 retain their
-order. QD-1 is required before expanded-window PF-2/report requests are enabled;
+order. QD-1 and QS-1 admission/isolation are required before expanded heavy PF-2/research/report requests are enabled;
 it can reuse the data contracts designed for PF-2. QR-1 contracts can be prepared
 alongside those foundations; then QR-2/QR-3 precede QR-4 customer reporting.
 These are work packages within the existing R-0 through APP-5 order, not new
 top-level phases or a reason to bypass APP-3B multi-Pine gates.
 
-### Report range and 50,000-bar contract
+<a id="report-range-and-50000-bar-contract"></a>
+### Report range and research capacity contract
 
-The proposed upper bound is **50,000 primary bars per calculation, including
-warm-up, for any supported timeframe**. Count once per shared dataset rather
-than once per candidate; candidate count, CPU, memory, bytes, secondary MTF data
-and aggregate multi-asset workload also require explicit server-enforced budgets.
-Pagination/download chunks cannot bypass a run's range cap. Missing resource
-limits block admission; they are not unlimited allowances.
+This supersedes the earlier universal 50K cap. **50,000 total primary bars is the
+Historical Preflight maximum and processing-chunk ceiling, not the global research
+ceiling.** All dataset budgets below include warm-up; show evaluation + warm-up =
+total. Candidates share data but multiply compute. Bound CPU, RAM, I/O, secondary
+MTF series, result/temp bytes and aggregate work. Missing limits block admission.
+Current runtime remains 10,000 bars/its narrow profile.
 
-The same primary-bar rule covers Historical Preflight, Backtest, Optimize and
-new price-based report calculations. Persisted-result reads do not rerun a job.
-Actual account transaction history uses separate paging/retention limits and
-must not be truncated to match the price-bar cap.
+| Timeframe | Planned standard dataset budget, including warm-up |
+| --- | --- |
+| 1m | Search 100K–250K; shortlisted validation 500K; final 750K–1M |
+| 3m | 200K–400K |
+| 5m | 100K–250K |
+| 10m | 75K–150K |
+| 15m | 50K–100K |
+| 30m / 1h / 2h / 4h / 6h / 8h / 12h / 1D | 50K each |
+| Seconds / 3D / 1W / calendar month / other intervals | No new budget/support granted; require explicit capability and budget design. |
 
-UI selectors: **1 Week / 1 Month / 3 Months / 6 Months / 1 Year / YTD /
-All Time Registered / Custom**. Display requested measured bars, required
-warm-up, total/50,000, actual data availability and the selected source/timeframe
-capability. Define week as seven days and month/year windows by calendar dates
-in the report timezone, clamping invalid month-end dates; YTD starts January 1
-in that timezone. Freeze the resolved UTC interval and use consistent half-open
-boundaries with only completed bars. Treat market sessions and calendar bars
-using venue conventions; never approximate every month as 30 days.
+Ranges are operating targets, not minimum sample requirements, deployed capabilities
+or guaranteed available history. Enable only after market support, verified aggregation
+where required, evaluator support, accepted parity and resource admission.
 
-For a single continuous 24/7 primary series, the following examples show the
-upper time coverage **before warm-up**. Preset examples assume at most 3,250
-warm-up bars only for illustration; the evaluator supplies the actual requirement.
-Entries in this table do not register new supported exchange/evaluator timeframes.
-
-| Timeframe | 50,000-bar coverage before warm-up | Illustrative report selection |
+| Stage for BTCUSDT Spot 1m | Dataset target | Purpose and gate |
 | --- | --- | --- |
-| 1s | 13 h 53 m 20 s | Custom shorter than one day. |
-| 5s | 2 d 21 h 26 m 40 s | Custom; one week exceeds the cap. |
-| 10s | 5 d 18 h 53 m 20 s | Custom; one week exceeds the cap. |
-| 15s | 8 d 16 h 20 m | One week can fit, subject to warm-up. |
-| 30s | 17 d 8 h 40 m | One week; one month exceeds the cap. |
-| 1m | 34 d 17 h 20 m | One week / one calendar month. |
-| 3m | 104 d 4 h | Up to three calendar months. |
-| 5m | 173 d 14 h 40 m | Three months; six months exceeds the cap. |
-| 10m | 347 d 5 h 20 m | Six months; one year exceeds the cap. |
-| 15m | 520 d 20 h | One year can fit. |
-| 30m | 1,041 d 16 h | One year and qualifying Custom intervals. |
-| 1h | 2,083 d 8 h | One year and qualifying Custom intervals. |
-| 2h / 4h / 6h / 8h / 12h | Apply 50,000 × the interval, then subtract actual warm-up coverage. | All presets remain subject to actual history/capability. |
-| 1D / 3D / 1W | At most 50,000 venue-aligned bars, including warm-up. | Venue/asset inception and available history usually constrain the range first. |
-| Calendar month / other registered interval | Count actual calendar/session boundaries; no fixed-minute approximation. | Enable only when exchange/resampling and evaluator support are verified. |
+| A: Parity/debug | 5K–20K | Signal/Bridge/risk/accounting evidence; no performance claim. Existing numeric gates apply. |
+| B: Historical Preflight | <=50K | PF-2 bounded development diagnosis/activity/guard feasibility. |
+| C: Broad search | 100K–250K | Freeze bounded candidate budget before run. |
+| D: Extended validation | 500K | Qualified shortlist only, typically 5–20; predeclared selection rule. |
+| E: Final validation | 750K–1M | Final candidate or small set, typically 1–5; untouched evaluation and declared selection rules. |
+| F: Deep Research | >1M or beyond its standard class | Explicit owner action, study plan, capability/data quality and storage/resource admission. |
 
-Over-limit selections show the required count and available start-date boundary.
-Never silently truncate, downsample or change timeframe. Unsupported/resampled
-intervals stay disabled until their aggregation and evaluator parity are accepted.
-YTD/Custom/All Registered use the same exact admission check, not an exemption.
+Do not default to 1M × 100 candidates. Freeze all conditional stage datasets,
+partitions, shortlist rules, cutoff, warm-up, bounds, objective, costs and risk before
+execution. These stages form one bounded owner-started workflow, not repeated search.
+Expanded history may overlap exposed data; only untouched disjoint periods support
+independent evaluation. Ranking finalists on holdout makes it selection data, not
+independent proof of the selected winner. See [contracts](QUANT_CAPACITY_AND_INFRASTRUCTURE.md).
 
-For actual Bot reporting, All Registered starts at that Bot's registration;
-missing earlier executions remain missing. A longer exchange backtest is labelled
-simulation. For multiple Bots, show each registration/coverage interval and use
-a common covered evaluation window for ranking, rather than filling missing
-history with zero returns. Preserve actual strategy/input/policy version changes;
-replaying latest inputs over old dates is a new hypothetical backtest.
+Period-first UI: **1 Week / 1 Month / 3 Months / 6 Months / 1 Year / 2 Years /
+3 Years / YTD / All Available / Custom** for simulated research; retain **All Time
+Registered** for actual Bot reports. Week is seven days; months/years use calendar
+boundaries and month-end clamping in the report timezone; YTD starts January 1.
+Freeze UTC half-open intervals with completed bars and venue session conventions.
+Show requested period, evaluation/warm-up/total bars, available history, stage limit,
+capability and admission result. Never silently change timeframe or downsample.
+
+All Available is bounded by venue history, evaluator, mode, storage and admission;
+show and confirm its resolved interval. Explicit over-limit ranges require the owner
+to shorten them or request admitted Deep Research. No silent truncation. For example,
+1m one year is about 525,600 evaluation bars before warm-up, beyond broad search but
+potentially within an admitted final stage; two/three years exceed the 1M final limit.
+Exact calendar counts remain authoritative.
+
+Actual Bot All Registered begins at registration with actual coverage; older exchange
+history is simulation, never actual fills. Ledger history has separate paging/retention
+limits. Persisted result reads do not rerun jobs; new price-based calculations use a
+declared admitted job class. Multi-Bot rankings use compatible covered windows without
+zero-filling missing history. Replaying latest inputs on old dates is a new simulation.
+
+## Quant resource protection and infrastructure scaling
+
+Owner decision: keep **2 vCPU / 8 GB RAM / 100 GB NVMe / 8 TB bandwidth / one provider
+snapshot** for now. This owner-provided envelope is not a fresh server inventory.
+No immediate upgrade required. [Capacity specification](QUANT_CAPACITY_AND_INFRASTRUCTURE.md)
+defines QD-1/QS-1 contracts. Target controlled multi-user Paper/Quant, not a claim of
+institutional/high-concurrency capacity.
+
+Trading/reduce-only execution, intake, PostgreSQL and Web/API health take priority
+over Quant; database headroom is necessary for trading. Quant may queue/slow/pause.
+Initial heavy concurrency is **1 globally across users, Bots and subscriptions**.
+Bot count is not compute entitlement. Tier quotas for queued jobs, candidates, storage,
+retention and Deep access remain inside the physical limit.
+
+Admission and a durable fair scheduler precede expanded heavy work. Use fenced leases,
+health gates before start/resume and bounded pause latency; chunks may be smaller than
+50K. Unknown critical health blocks admission. CPU around one vCPU, preferred memory
+2–2.5 GB/about 3 GB candidate hard ceiling and disk 65/75/85% watermarks are benchmark
+candidates only. Absolute DB/WAL/backup/temp headroom and hard process limits also apply.
+
+| Infrastructure stage | Design and review gate | Status |
+| --- | --- | --- |
+| I: Private use | Current VPS with queue, admission, isolation, monitoring and recovery before broader heavy usage. | Hardware decision retained; protections planned. |
+| II: Public/paid Paper beta | APP-3B/APP-4 tenant fairness/quotas, concurrent service-impact tests, off-host backups/alerts and full restore drill. Keep current VPS when measured objectives hold. | Planned release gate. |
+| III: Vertical option | Consider 4 vCPU / 16 GB / 200 GB only after measured pressure/headroom review. | Optional; upgrade not approved. |
+| IV: Separate Quant | Main host retains Web/API, trading, DB; move Quant using portable authenticated job/dataset/result contracts. | Optional when Quant dominates pressure; preferred over contention on trading host. |
+| V: Separate data layer | Dedicated PostgreSQL, shared/object research storage and bounded worker pool. | Future usage-driven option. |
+| VI: Higher availability | Multiple Web nodes, isolated trading, DB HA/DR and external monitoring/storage. | Future business-driven option. |
+
+Stages are review options, not mandatory purchases. Track CPU/load, memory/swap/OOM,
+DB latency, API p95/p99, webhook-to-queue latency, trading queue depth/age, Quant wait/run
+time, disk/cache growth and I/O pressure. Calibrate objectives before upgrade triggers.
+One snapshot does not replace scheduled off-host backups, failure alerts and verified
+full recovery. Benchmark representative 10K/50K/100K/250K/500K/1M datasets and bounded
+1/5/10/25/50/100 candidate cases; not the full matrix on production by default.
+
+```mermaid
+flowchart TD
+    U["Users / HTTPS"] --> API["Web/API"]
+    API --> AUTH["Ownership / capability"]
+    AUTH --> ADM["Planned resource + health admission"]
+    ADM --> Q["Persistent fair queue"]
+    Q --> S["Global scheduler / fenced lease"]
+    S --> W["ONE heavy Quant executor globally"]
+    W --> CH["Chunks <=50K / bounded pause latency"]
+    CH --> R["Checkpoint / immutable result / Library"]
+    CH -->|pressure| PAUSE["Persist and yield; health gate before resume"]
+    PAUSE --> S
+    API --> IN["Webhook intake"]
+    IN --> TW["Trading Worker / Risk / Paper"]
+    TW --> DB[("Authoritative PostgreSQL")]
+    HEALTH["Trading / DB / Web health"] --> ADM
+    HEALTH --> S
+```
+
+```mermaid
+flowchart LR
+    I["I: Same VPS 2 vCPU / 8 GB<br/>planned protection"] --> II["II: Beta after telemetry + DR gates"]
+    II --> III["III: Optional 4 vCPU / 16 GB / 200 GB"]
+    III --> IV["IV: Separate Quant VPS<br/>main keeps trading/Web/DB"]
+    IV --> V["V: Dedicated DB + storage / Quant pool"]
+    V --> VI["VI: HA / multiple Web nodes / DR"]
+```
 
 ### Report and research behavior
 
 Quant Library stores source/effective-input/Bridge/policy/capital/model versions,
-dataset references and hashes, candidate/trial history, metrics, trades,
-decisions/rejections, equity curves and validation status. Large price/signal
+dataset references/hashes, candidate/trial history and summary metrics/gates for
+all candidates. Shortlist/final artifacts retain required trades, decisions, equity
+and validation detail; declare retention tier/completeness explicitly. Large price/signal
 datasets stay in protected immutable artifacts rather than oversized job JSON.
 Incomplete runs retain available evidence without inventing missing metrics.
 
@@ -290,14 +364,16 @@ flowchart TD
     U["User / Web UI"] --> AI["Indicator + direct AI API<br/>Template / Guide; no MCP"]
     AI --> TV["Pine Bridge in TradingView<br/>Compile / Inputs / Alert"]
     U --> RANGE["Asset / Timeframe / Report period"]
-    RANGE --> CAP{"Primary bars + warm-up <= 50,000<br/>Capability and resource budgets pass?"}
+    RANGE --> CAP{"Mode / timeframe / stage budget<br/>Capability + resource admission?"}
     CAP -->|No| BLOCK["Explain limit / unavailable data<br/>Owner changes selection"]
     CAP -->|Yes| DATA["Exchange Spot API / immutable cache<br/>Verified prices + metadata"]
-    DATA --> EVAL["Supported evaluator"]
+    DATA --> EA["Admitted / scheduled historical computation"]
+    EA --> EVAL["Supported evaluator"]
     CSV["Validated TradingView signal CSV<br/>Fixed input snapshot"] --> SIGNALS["Bound native signal history"]
     EVAL --> SIGNALS
     U --> PF1["PF-1 current Risk Manager checks"]
-    PF1 --> PF["PF-2 historical replay<br/>PF-3 readiness / PF-4 proposals"]
+    PF1 --> PQA["Historical admission / shared heavy queue"]
+    PQA --> PF["PF-2 <=50K replay<br/>PF-3 readiness / PF-4 proposals"]
     DATA --> PF
     SIGNALS --> PF
     PF --> OWNER["Owner reviews settings and Run readiness"]
@@ -309,7 +385,9 @@ flowchart TD
     DB --> SNAP["Frozen research context"]
     DATA --> SNAP
     SIGNALS --> SNAP
-    SNAP --> OPT["One bounded Quant optimization"]
+    SNAP --> QA["Server admission / durable fair queue"]
+    QA --> QS["Health-gated scheduler<br/>One heavy executor; chunks <=50K"]
+    QS --> OPT["One bounded staged Quant workflow"]
     OPT --> LIB[("Research Library<br/>All terminal outcomes")]
     OPT --> VALID{"Candidate and export gates pass?"}
     VALID -->|Yes| PACKAGE["Best Inputs + Quant Data<br/>Email Report after SMTP gate"]
@@ -318,7 +396,7 @@ flowchart TD
     LIB --> COMP["Compatible strategy comparison"]
     COMP --> BEST["Best Performance Report<br/>Qualified winner or no winner"]
     classDef planned fill:#fff3cd,stroke:#b8860b,color:#222;
-    class RANGE,CAP,BLOCK,PF1,PF,OWNER,LIB,PACKAGE,PORT,COMP,BEST planned;
+    class RANGE,CAP,BLOCK,EA,PQA,QA,QS,PF1,PF,OWNER,LIB,PACKAGE,PORT,COMP,BEST planned;
 ```
 
 ### Owner-requested follow-up diagram
@@ -332,13 +410,14 @@ flowchart TD
     MODE --> NEW["New optimization<br/>Freeze bounds / budget / validation plan"]
     BACK --> SELECT["Select asset / timeframe / period"]
     NEW --> SELECT
-    SELECT --> GATE{"50,000-bar and capability checks"}
+    SELECT --> GATE{"Stage/TF budget + capability checks"}
     GATE -->|Fail| WHY["Explain limit / missing capability"]
     GATE -->|Pass| DATA["Freeze verified exchange dataset"]
     DATA --> RUN["New run_id + parent_run_id"]
     REPLAY --> CHECK["Verify original scope and resource admission"]
     CHECK --> RUN
-    RUN --> RESULT["Immutable result / evidence<br/>No prior result overwritten"]
+    RUN --> QUEUE["Admission / queue / health gate<br/>One global heavy job; chunks <=50K"]
+    QUEUE --> RESULT["Immutable result / evidence<br/>No prior result overwritten"]
     RESULT --> LIB
     RESULT --> REPORT["Evaluation / comparison report<br/>Rank only after validation gates"]
 ```
@@ -347,13 +426,15 @@ flowchart TD
 
 | Date | Change / evidence | Scope and current consequence |
 | --- | --- | --- |
+| 2026-09-27 | Reviewed capacity handoff: keep current VPS; 50K Preflight/chunks, staged research, QS-1 and infrastructure I–VI. | Documentation only; current 10K/profile and prior outcomes unchanged. QD-1/QS-1 and benchmarks gate capacity. Paper budget revised to 410–720 hours. |
+| 2026-09-27 | Owner confirmed BINANCE:BTCUSDT Spot 1m as the primary market. | Roadmap and Time Management synchronized; no market migration, runtime change or new collection started. |
 | 2026-09-27 | Owner requested [Time Management](TIME_MANAGEMENT.md) as another primary document, synchronized with Roadmap/README/Context. | Documentation-only effort and wait budgets, dependency-based overlap, collection stop/replan rules and an execution ledger. PF-1 remains next; no runtime action. |
 | 2026-09-24 | [R-0 baseline](R0_BASELINE_2026-09-24.md). | Observed infrastructure/schema facts; SMTP follow-up remains. |
 | 2026-09-26 | [APP-3A](APP_3A_ACCEPTANCE_2026-09-26.md) and [QL-2A](QL_2A_IMPLEMENTATION.md) acceptance. | Scoped staging/engineering evidence, not general Pine or Live support. |
 | 2026-09-27 | [Custom parity/repaint](QL_3A_VARIED_INPUT_PARITY.md) and [historical job](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | 100-candidate job completed with no valid candidate; holdout unopened. |
 | 2026-09-27 | [SPT review](QL_3A_SPT_SIGNAL_REVIEW_2026-09-27.md), [EXIT v1 draft](QL_3A_SPOT_EXIT_V1_2026-09-27.md), checkpoint `a4e524f`. | Pushed code/evidence; failed development preflight, no runtime activation. |
 | 2026-09-27 | Owner approved static checks, Historical Preflight without MCP, readiness reporting and calculated proposals. | Documentation-only plan PF-1 through PF-4; no feature implementation or new research run. README/Context are primary project explanations; this file owns sequencing and progress. |
-| 2026-09-27 | Owner approved Quant Research Library, Best Performance Report, explicit owner-started research lineage and a 50,000-bar limit including warm-up for supported timeframes. | Documentation-only QD-1 / QR-1 through QR-4 with target diagrams and period limits. Runtime remains at 10,000 bars/its supported profile; no data fetch, migration, replay, optimization or activation performed by this update. |
+| 2026-09-27 | Owner approved Quant Research Library, Best Performance Report, explicit owner-started research lineage and the earlier universal 50K limit (superseded by the staged-capacity decision). | Documentation-only QD-1 / QR-1 through QR-4 with target diagrams and period limits. Runtime remains at 10,000 bars/its supported profile; no data fetch, migration, replay, optimization or activation performed by this update. |
 
 ## Historical checkpoint narrative
 
@@ -501,7 +582,7 @@ APP-3A market timing uses a bounded v2 intake state: webhook receipt may precede
 | M1 — Identity and risk | Create owner-scoped Pine registry, source versions, Bot membership snapshots, immutable policy/capital resolution, stale evidence and deployment/entry-to-allocation identity rules. Separate Bridge Settings from hard Risk Policy. | Tenant isolation and authenticated Bot scope cover source/job/webhook/allocations; frozen policy and source-change behavior reject client overrides. |
 | M2 — Bridge adapter | Build indicator-only dropdown mapping and durable analyze/generate/status/cancel jobs with owner-scoped idempotency and bounded resources. Assemble block with original bytes; no MCP. Return draft/guide before Quant checks. Implement versioned payload validation and isolated Paper bridge-exit-v1 receiver in APP-3A. | Strict schema/version rejection, scoped identity and retry behavior, Bridge-stage compile/transport/exit evidence, and bounded AI job recovery. Quant unsupported does not imply Bridge unsupported. |
 | M3 — Quant evaluator | Replace demo-only execution path for a supported source with actual market data and a parity-proven evaluator. Implement both Bridge ATR and RR, scoped exits, costs and account constraints. | Matched baseline signals and Node/Paper risk decisions; reproducible source/data hashes. |
-| M4 — Research jobs | Run one-Pine/selected-numeric-inputs-plus-Bridge or multiple-Pine/shared-pair search as a bounded job. Add progress, cancel, restart recovery, chronological validation and candidate gates. QD-1 adds versioned 50,000-bar admission and datasets; PF and QR contracts reuse this foundation. | 100% of selected dimensions participate within recorded bounds/budget; fixed inputs unchanged and silently dropped dimensions 0. |
+| M4 — Research jobs | Run one-Pine/selected-numeric-inputs-plus-Bridge or multiple-Pine/shared-pair search as a bounded job. Add progress, cancel, restart recovery, chronological validation and candidate gates. QD-1 adds stage/timeframe budgets and <=50K chunks; QS-1 adds global admission/isolation; PF and QR contracts reuse this foundation. | 100% of selected dimensions participate within recorded bounds/budget; fixed inputs unchanged and silently dropped dimensions 0. |
 | M5 — Best Inputs and owner review | Generate mode-specific candidate inputs.json, Pine, Setup Guide, Quant Data, manifest and validation evidence. QR-1/QR-3 preserve library/comparison provenance. Build authenticated review/apply interface with explicit owner action, initially disabled until M7 passes. | Candidate values, ownership, freshness and policy lock are checkable; no draft can change settings/start a Bot. |
 | M6 — Email Report | Generate the owner-scoped draft from export_id with bot_id, pine_import_id list, UTC timestamp, recommended values and key Quant metrics. Prepare idempotent outbox/delivery tracking, with enqueue gated on M7 validation and SMTP remediation/receipt. | Draft report matches run/package and contains no credentials. SMTP failure leaves a validated package available with separate mail status. |
 | M7 — Export readiness and owner handoff | Verify package/Pine compilation and source-specific evidence, then enable authenticated one-Pine review/apply, outbox enqueue when mail gate passes and optional owner Bot start. Preserve old allocation exits during alert replacement. | One-Pine export status is VALIDATED/READY before any owner recommendation, apply or email enqueue; multi-Pine remains isolated until APP-3B. No mandatory post-export Paper run or return to Quant. |

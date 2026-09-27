@@ -4,8 +4,13 @@ Current project planning is centralized in [Roadmap](../docs/ROADMAP.md);
 [README](../README.md) and [Context](../Context.md) are the primary project
 explanations. The owner-approved [Research Library / Best Performance specification](../docs/QUANT_RESEARCH_LIBRARY.md)
 is planned, not implemented by the historical offline capabilities below.
-QD-1 targets 50,000 primary bars including warm-up, exchange-backed datasets,
-period/timeframe admission and state-preserving chunked evaluation. Current
+QD-1 targets <=50K Preflight and processing chunks, shared exchange-backed
+datasets and research budgets by timeframe/stage, including warm-up. BTCUSDT 1m
+search targets 100K–250K, shortlist validation 500K, final 750K–1M; 30m through
+1D targets 50K per supported timeframe. QS-1 adds a durable fair queue and
+resource/health admission with one global heavy executor on the initial
+2-vCPU/8-GB/100-GB VPS. Preserve state across chunks and bounded pause latency.
+These are [planned contracts](../docs/QUANT_CAPACITY_AND_INFRASTRUCTURE.md), not applied settings. Current
 research API/engine still enforces 10,000 bars and its source/timeframe profile.
 QR-1 through QR-4 add immutable artifacts, actual Paper portfolio valuation,
 compatible strategy ranking and explicit parent-linked follow-up jobs. PF-1

@@ -4,12 +4,14 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+ตลาดหลักที่เจ้าของยืนยันสำหรับเก็บข้อมูลและวิจัยคือ **BINANCE:BTCUSDT Spot 1m** ใช้ตลาดเดิมต่อ ตามขอบเขต source/settings ที่ตรวจแล้ว
+
 - **README นี้:** ภาพรวมโครงการ วิธีเริ่มใช้งานและขอบเขตผลิตภัณฑ์
 - **[Context.md](Context.md):** สถาปัตยกรรม กติกาและบริบทการดำเนินงาน
 - **[Roadmap](docs/ROADMAP.md):** ศูนย์รวมแผน ลำดับงาน สถานะล่าสุด เงื่อนไขเดินต่อและประวัติการเปลี่ยนแปลง
 - **[Time Management](docs/TIME_MANAGEMENT.md):** งบชั่วโมง งานที่ทำระหว่างรอข้อมูลได้ Collection ETA และบันทึกเวลาคงเหลือ โดยใช้ลำดับและ gates จาก Roadmap
 
-ทุก checkpoint ที่เปลี่ยนแผนหรือสถานะ ให้อัปเดต Roadmap และ Time Management พร้อมกัน และทบทวน README/Context ให้ตรงกับขอบเขตล่าสุด งบ Paper เริ่มต้นรวมเผื่ออยู่ที่ 340–580 ชั่วโมงก่อนหักเวลารอที่ซ้อนกันได้ ไม่ใช่กำหนดเวลารับประกัน Best Inputs ดูสมมติฐานและวิธีติดตามใน Time Management
+ทุก checkpoint ที่เปลี่ยนแผนหรือสถานะ ให้อัปเดต Roadmap และ Time Management พร้อมกัน และทบทวน README/Context ให้ตรงกับขอบเขตล่าสุด งบ Paper ที่ปรับตามงาน capacity/scheduler รวมเผื่ออยู่ที่ 410–720 ชั่วโมงก่อนหักเวลารอที่ซ้อนกันได้ ไม่ใช่กำหนดเวลารับประกัน Best Inputs ดูสมมติฐานและวิธีติดตามใน Time Management
 
 สถานะ ณ 2026-09-27: APP-3A ผ่าน engineering acceptance ใน staging และ QL-2A ผ่าน baseline ตาม profile ที่ตรวจแล้ว SPT Custom ผ่าน axis parity และ scoped repaint งานวิจัย 100 candidates เสร็จแล้วแต่คืน `NO_VALID_CANDIDATE` เพราะ validation ไม่มี closed trades ส่วน Spot EXIT v1 เป็น draft ที่ยังไม่ผ่าน development preflight Checkpoint ล่าสุดที่ push คือ `a4e524f`; ไม่ใช่การ deploy production
 
@@ -27,11 +29,15 @@ Historical Preflight ใช้ราคา Spot จาก exchange API และ
 
 รายงานมีสองมุมมอง: **Portfolio Performance** ใช้บัญชีและการซื้อขาย Paper ที่เกิดขึ้นจริง พร้อมแผนเพิ่มมูลค่าตามราคาตลาดและผลตอบแทนที่คำนึงถึงการฝากถอน; **Strategy Comparison / Best Performance** เปรียบเทียบ strategy ของ asset เดียวกันภายใต้เงื่อนไขที่สอดคล้องกัน จัดอันดับเฉพาะผลที่ผ่านเกณฑ์ และรายงานได้ว่าไม่มีผู้ผ่านเกณฑ์
 
-เป้าหมายข้อมูลคือ **50,000 แท่งรวม warm-up ต่อการคำนวณหนึ่งครั้ง สำหรับทุก timeframe ที่รองรับ** เลือก 1 Week / 1 Month / 3 Months / 6 Months / 1 Year / YTD / All Time Registered / Custom ได้ตามจำนวนแท่งและประวัติที่มีจริง ระบบต้องแจ้งช่วงที่เกินเพดานโดยไม่ตัดข้อมูลหรือเปลี่ยน timeframe เอง **โค้ดปัจจุบันยังจำกัด 10,000 แท่งและ profile 1m ที่รองรับอยู่** ตัวเลือกช่วงยาวไม่ได้เปิดใช้งานจากการแก้เอกสารนี้
+เป้าหมายใหม่: **50,000 แท่งเป็นเพดาน Historical Preflight และขนาด processing chunk** ส่วน Quant Research ใช้ budget ตาม timeframe/stage รวม warm-up สำหรับ BTCUSDT Spot 1m ใช้ 100K–250K ค้นหา, 500K ตรวจ shortlist และ 750K–1M ตรวจขั้นสุดท้าย; 30m ถึง 1D ใช้ 50K ต่อ timeframe ที่รองรับ งานเกินมาตรฐานต้องขอ Deep Research และผ่าน admission ไม่เปิด 1M × 100 candidates เป็นค่าเริ่มต้น **โค้ดปัจจุบันยังจำกัด 10,000 แท่งและ profile 1m ที่รองรับอยู่**
+
+เลือกช่วงวิจัย 1 Week / 1 Month / 3 Months / 6 Months / 1 Year / 2 Years / 3 Years / YTD / All Available / Custom ตามข้อมูลจริงและงบของงาน โดย All Time Registered คงไว้สำหรับประวัติ Bot จริง ระบบไม่ตัดช่วงหรือเปลี่ยน timeframe เอง; จำนวนแท่งเพียงพอไม่ได้รับประกัน candidate ผ่าน
 
 เจ้าของเลือก Replay ผลเดิม, Backtest ช่วงใหม่ หรือ Optimize รอบใหม่ได้ตามแผน โดยเป็นงานใหม่ที่อ้างอิงผลต้นทาง ไม่มีการวนวิจัยหรือเปลี่ยน Bot อัตโนมัติ การเปลี่ยน source inputs ยังต้องมี evaluator ที่รองรับ; CSV สัญญาณใช้ได้เฉพาะ snapshot ที่ตรวจแล้ว
 
-ดู [แผนรวมและ diagram](docs/ROADMAP.md#approved-extension--quant-research-library-and-best-performance), [ตารางช่วงเวลาต่อ timeframe](docs/ROADMAP.md#report-range-and-50000-bar-contract) และ [รายละเอียดข้อมูล/รายงาน](docs/QUANT_RESEARCH_LIBRARY.md) งานถัดไปยังเป็น PF-1; ส่วน QD-1 และ QR-1 ถึง QR-4 เป็นงานที่วางแผนเพิ่มไว้
+ดู [แผนรวมและ diagram](docs/ROADMAP.md#approved-extension--quant-research-library-and-best-performance), [ตารางช่วงเวลาต่อ timeframe](docs/ROADMAP.md#report-range-and-50000-bar-contract) และ [รายละเอียดข้อมูล/รายงาน](docs/QUANT_RESEARCH_LIBRARY.md) งานถัดไปยังเป็น PF-1; QD-1/QS-1 เป็น foundation ก่อนเปิดงานข้อมูลขนาดใหญ่ และ QR-1 ถึง QR-4 ยังเป็นแผน
+
+คง VPS ตามข้อมูลเจ้าของที่ 2 vCPU / 8 GB RAM / 100 GB NVMe / 8 TB bandwidth / 1 snapshot ยังไม่ต้อง upgrade แผนให้ **งาน Quant หนักรันได้ 1 งานรวมทั้งระบบ** ผ่าน durable queue และ resource/health admission โดยให้ Trading/Web/PostgreSQL มีทรัพยากรก่อน จำนวน Bot ไม่ใช่สิทธิ์รัน Quant พร้อมกัน แผน [โครงสร้างพื้นฐาน](docs/ROADMAP.md#quant-resource-protection-and-infrastructure-scaling) รองรับการแยก Quant ไปอีกเครื่องภายหลังตาม telemetry; snapshot เดียวไม่แทน off-host backup และ restore drill
 
 **รุ่นนี้ล็อก Live ทุก Broker ทั้ง UI, API, Worker และ Adapter ไม่ใช่ระบบพร้อมเทรดเงินจริง**
 ไม่ต้องใส่ API key จริงเพื่อทดสอบ Paper และอย่าเปิดบริการสาธารณะก่อนผ่าน deployment checklist

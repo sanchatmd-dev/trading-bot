@@ -5,8 +5,10 @@ Status: proposed M5–M7 customer workflow. Offline export utilities exist in th
 2026-09-27 approved extension: the package includes reusable Quant Data, and a
 Research Library supports scoped Best Performance reporting and explicit owner
 follow-up jobs. [Roadmap](ROADMAP.md#approved-extension--quant-research-library-and-best-performance)
-owns ordering/status and the 50,000-bar target; [the specification](QUANT_RESEARCH_LIBRARY.md)
-defines artifacts and comparison semantics. No library feature or enlarged data
+owns ordering/status and the revised Preflight/chunk/staged-research budgets; [the specification](QUANT_RESEARCH_LIBRARY.md)
+defines artifacts and comparison semantics. Heavy exports/report recomputation
+use QS-1 resource admission; final packages retain required audit detail while
+non-shortlisted candidates may retain summary evidence with explicit completeness. No library feature or enlarged data
 limit is implemented by this documentation update.
 
 Integration: [the revised roadmap](ROADMAP.md) sequences Bridge generation, a Bot Paper run, one source-parity-backed Quant optimization run, mode-specific export and owner review. The owner may apply the reviewed values and start the Bot again; the workflow then ends. No post-export Paper acceptance cycle or automatic return to Quant is required. Historical QL-1 through QL-4 work is recorded in [the archived roadmap](ROADMAP_ARCHIVE_2026-09-24.md).
