@@ -1,5 +1,366 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+## Document authority and update rules
+
+This is the canonical index of all current plans, their sequence, acceptance
+gates, progress and change history. [README](../README.md) is the project entry
+point; [Context](../Context.md) explains architecture, boundaries and operational
+context. Topic documents provide specifications and evidence linked here; they
+must not define a competing task order or silently supersede this status.
+
+[Time Management](TIME_MANAGEMENT.md) is the primary companion for effort,
+machine/data waits, execution overlap and remaining-time records. This roadmap
+continues to own task order and gates. Update both at each scope/status/run or
+handoff checkpoint, and review README/Context in the same change set; record
+reviewed-unchanged when their explanations remain accurate. Initial remaining
+Paper budget is 340–580 hours including rework and a runtime allowance before
+subtracting overlapping waits; profitable-candidate collection has no guaranteed
+deadline. Historical Preflight precedes a new live collection campaign, with
+eligible downstream engineering performed during data waits.
+
+For each completed change, update the current-status table and append a dated
+change entry with evidence, scope (planned/local/staging/production), blockers
+and next action. A Git checkpoint is not deployment or acceptance. Older notes
+below are dated evidence; the current status and plan in this section take
+precedence. Preserve production structure and private operational information.
+
+## Current status — 2026-09-27
+
+| Work | Current evidence and scope | Remaining gate / next action |
+| --- | --- | --- |
+| Time Management | Primary execution-time document established, with baseline estimates, collection rules and a checkpoint ledger. Documentation only. | PF-1 remains next; record actual hours prospectively and revise estimates with evidence. No new run, deployment or monitoring started. |
+| R-0 | Baseline inventory and observed schema 14 recorded. | SMTP 550 remediation and confirmed delivery remain operational follow-ups; old observations are not current health checks. |
+| APP-3A | Bridge engineering accepted in isolated staging; [acceptance](APP_3A_ACCEPTANCE_2026-09-26.md). | Broader source/customer support is not implied. |
+| QL-2A / Custom extension | Fixed SPT baseline accepted; Custom baseline plus 16 axis settings matched; 100-observation Custom repaint passed. [Custom evidence](QL_3A_VARIED_INPUT_PARITY.md). | Evidence is source/settings scoped; positive EXIT was absent from the Custom repaint sample. Mixed candidates and new revisions need their own evidence. |
+| QL-3A research | Durable 100-candidate job completed; all candidates have zero validation closed trades. [Result](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | `NO_VALID_CANDIDATE`; original holdout unopened. Engineering acceptance and recommendation acceptance are tracked separately; neither is automatically granted by this update. |
+| SPT Spot EXIT v1 | Separate offline draft and four predeclared development comparisons. Net loss improved to -5.1852783497 USDT but three losing episodes still stop entries; validation remains zero. [Review](QL_3A_SPOT_EXIT_V1_2026-09-27.md). | Failed development preflight. Not activated; no new TradingView collection requested for this draft. |
+| Risk Manager readiness / Historical Preflight | Owner-approved plan recorded below; not implemented as a customer feature. Existing risk/Paper engines and scoped Custom evaluator are reusable components. | Implement PF-1, PF-2, PF-3, then PF-4 within the QL-3A extension. |
+| Historical data capacity (QD-1) | Approved target: at most 50,000 primary bars including warm-up per calculation, for each supported timeframe. Current engine still enforces 10,000 bars and the narrow 1m profile. | Implement versioned dataset storage, capability/range checks and bounded execution before enabling expanded reports. |
+| Research Library / Best Performance (QR-1 through QR-4) | Owner-approved plan and target diagrams below; no customer library, comparison ranking or portfolio mark-to-market shipped by this update. | Reuse durable run evidence; add immutable artifacts, portfolio reporting, fair comparison and explicit owner-started follow-up runs. Real recommendations remain validation-gated. |
+| QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
+| APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
+
+Last pushed code/evidence checkpoint: `a4e524f` on
+`codex/app3a-market-wait-checkpoint`. This planning update is documentation only;
+it does not deploy that checkpoint. The unrelated untracked diagnostic builder
+is not part of this plan's implementation.
+
+## Approved extension — readiness before Run Bot
+
+Purpose: detect inconsistent Risk Manager settings, explain rejection causes,
+and assess research activity before the owner commits to Paper collection.
+This cannot guarantee zero rejections, enough future trades or a profitable
+candidate. Do not weaken guards to obtain samples. It is a readiness step
+inside workflow step 3, not an additional automatic optimization cycle.
+
+### Delivery order within QL-3A
+
+| ID | Deliverable | Completion evidence | Current status |
+| --- | --- | --- | --- |
+| PF-1 | Static Risk Manager consistency check and point-in-time sizing preview. Resolve owner/Bot policy and capital on the server; distinguish hypothetical drafts from saved settings. | Accepted/capped/rejected fixtures agree with worker rules; verified venue filters, fees, reservations and reduce-only targets are represented. Unknown data cannot become a pass. Preview causes no policy mutation. | Planned; next implementation work. |
+| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | Planned; uses PF-1 contracts and existing QL-3A components. |
+| PF-3 | Readiness report with signal/intent/fill/episode counts, rejection reasons, cash/exposure, pause periods and collection estimate. | Distinguishes configuration failure, insufficient activity, unavailable capability and readiness to start Paper. Estimates use a declared development window and assumptions; persistent pause gives no finite collection ETA. | Planned; after PF-2. |
+| PF-4 | Explainable setting proposals inside the owner's declared risk/exposure limits, with before/after preview and explicit save. | Deterministic calculations, effective-value provenance, stale-state detection and saved-policy confirmation. AI may explain calculations but is not the authoritative calculator. | Planned; after PF-1 through PF-3. |
+
+Before replaying the existing Spot EXIT diagnostic, resolve its recorded
+post-run import/EOF formatting provenance: frozen plan hashes refer to executed
+bytes, while current files have formatting-only changes. Preserve the original
+plan/result and verify the saved executed copies; do not rewrite frozen history
+or bypass hash checks. This is a reproducibility prerequisite, not a new search.
+
+### Historical data and capability contract — no TradingView MCP required
+
+1. Fetch/cache verified Spot OHLCV from the matching venue API, initially
+   Binance Spot. Freeze symbol, timeframe, bar timestamps, warm-up, data hash,
+   cutoff and venue metadata. TradingView price data is not required for every
+   preview, but independent alignment with the accepted source evidence is.
+2. For an evaluator-supported source, bind source hash, effective inputs,
+   implementation/profile version and supported dependencies. Generate native
+   signals locally, then replay the actual Bridge and Risk Manager semantics.
+   SPT Custom has scoped existing evidence; the new EXIT v1 does not inherit it.
+3. For a source without an evaluator, allow a reviewed TradingView CSV containing
+   explicit native BUY/EXIT plots and bar times. Bind it to source/effective
+   inputs, market and export metadata; check continuity, timing and overlapping
+   OHLCV. It supports Risk Manager replay for that fixed signal snapshot only.
+   It does not certify source-input optimization or live non-repainting behavior.
+4. If neither trusted evaluator nor validated signal history exists, offer only
+   PF-1 and report historical capability unavailable. Do not substitute synthetic
+   EMA, infer signals from price alone or claim arbitrary Pine support.
+5. MCP is not a prerequisite. Backend calls exchange APIs and its own engines;
+   CSV is an optional owner input. Chatbot still uses direct AI API/template/guide
+   without MCP into Backend. MCP alone would not supply a Pine execution engine.
+
+Historical simulation is distinct from naturally observed webhook-to-Paper
+execution. A CSV export or backfill never increases the natural fill count.
+Changing source inputs requires a supported evaluator or newly bound signal
+history. Changing only Risk Manager settings can reuse the same native signal
+history, while each preview records its policy/capital snapshot.
+
+### Risk calculation and rejection reporting
+
+The owner defines allocated funds, loss tolerance, exposure ceiling and whether
+repeated entries are allowed. Proposed sizing respects the lowest applicable
+limit from risk including estimated costs, available cash after reserves, order
+notional and aggregate exposure, then applies verified venue rounding/minima.
+Risk percent is a ceiling, not a requirement to consume all cash. Expected stop
+loss is an estimate; gaps and execution costs are not bounded by a nominal SL.
+
+PF-1 must also read current session/ledger guards, cash and reservations. A
+successful independent historical simulation cannot mark the actual Bot runnable
+when its persistent loss streak or other current guard still blocks entries.
+Show current Run readiness separately from historical research feasibility.
+
+Use applicable quantity/minimum-notional/price filters for the selected symbol
+and order type; quantity-step rounding alone is not sufficient. Define each
+counter's actual semantics: current daily trade counts include accepted BUY and
+EXIT executions, while entry guards must not block otherwise valid reduce-only
+exits. Unique-symbol capacity is different from entry-allocation capacity.
+
+Bridge ATR/RR remain independent from source inputs and hard policy. Show
+cost-to-stop and cost-to-target effects without silently changing Bridge values.
+Keep hard loss/streak limits locked during research; no cash top-up, automated
+re-arm or guard reset to manufacture coverage. Multiple Pine previews require
+combined signals against shared cash/reservations and APP-3B capability gating.
+
+Report the funnel from native signals to Bridge intents, accepted/capped entries,
+closed allocations and flat-to-flat position episodes. Separate configuration
+rejects, expected policy skips, loss-protection pauses and genuine execution
+faults. Missing-target EXIT can be an expected consequence of a rejected BUY;
+retain the audit and verify the target relationship before classifying it.
+An unknown target or failed exit of actual inventory must never be hidden.
+
+### Data readiness and candidate outcomes
+
+| Check | Current implementation | Approved planning target / limitation |
+| --- | --- | --- |
+| Closed allocations | Minimum 5 in train, 5 validation, 5 test in current research rules. | Preserve these engineering minimums. Do not treat allocations as independent position episodes. |
+| Position episodes | Additional episode gate not implemented. | Minimum 5 completed flat-to-flat episodes per partition for engineering coverage; implement as a versioned gate. |
+| Research activity target | Not enforced by current API. | Initial planning targets: 30 train / 20 validation / 20 holdout completed episodes. Not a statistical guarantee or a promise all sources can supply them. Final study criteria must be frozen before searching. |
+| Parity / repaint | Existing source-specific evidence and numerical criteria remain applicable. | Bar counts and repaint observations establish different properties from closed-trade coverage. Additional bars alone do not imply readiness. |
+| Recommendation | Requires eligible results, sensitivity, costs, holdout and export gates. | More trades do not guarantee a valid candidate. Repeated or highly correlated episodes reduce effective evidence. |
+
+Assess collection feasibility on development data. Never inspect holdout to
+choose policy, bounds, source revision or collection duration. Evaluate its
+trade count only at the declared final step and retain an insufficient-data
+outcome if necessary. Fix dataset selection/extension rules before performance
+review; no repeated extension or resetting until results pass. The current
+10,000-bar engine limit must be reported while it remains implemented. QD-1
+below approves expansion to 50,000 including warm-up; the planning value must
+not be advertised as available before the implementation and capability gates pass.
+
+Preflight is a recorded diagnostic, not the one Quant optimization run. Record
+all policy previews/settings tried; choosing among many trials still risks
+selection bias. Keep development, validation and final holdout roles explicit.
+Freeze owner-reviewed settings before the bounded Quant job. Its terminal
+result should distinguish insufficient activity, configuration constraints,
+unsupported/data/parity failures and no candidate passing performance gates.
+These are planned reason categories, not claims of new API states already shipped.
+
+Engineering acceptance can include correctly rejecting an unsuitable strategy.
+Do not require SPT profitability to prove job persistence, risk parity or guarded
+export code. Fixture-based QL-4B work must be labelled and cannot create customer
+Best Inputs. Real recommendation/apply/mail gates remain unchanged.
+
+## Approved extension — Quant Research Library and Best Performance
+
+This extension stores reusable Quant data and reports portfolio performance and
+asset-specific strategy comparisons. [The data/report specification](QUANT_RESEARCH_LIBRARY.md)
+defines records, artifacts and report semantics. This Roadmap owns sequencing,
+acceptance, progress and changes. All work in this section is **planned**.
+
+### Work packages and phase placement
+
+| ID | Work and dependency | Completion gate | Status |
+| --- | --- | --- | --- |
+| QD-1 | QL-3A data foundation: paged exchange history/cache, immutable datasets outside job JSON, timeframe capability registry and 50,000-bar range checks. Supports expanded PF-2 and all historical reports. | Server/UI agree on limits; warm-up and calendar boundaries correct; gaps/duplicates/incomplete bars rejected; chunked execution preserves indicator/account state; progress/cancel/recovery/resource ceilings verified. | Planned; current 10,000/1m restriction remains. |
+| QR-1 | QL-3A/QL-4B: versioned Research Library and Quant Data artifacts for every terminal run, including failed/insufficient/cancelled outcomes labelled incomplete where needed. | Owner-scoped immutable identity, checksums, provenance, input/data/engine references and permission checks; no secrets in downloads; unsuccessful runs cannot become actionable Best Inputs. | Planned. |
+| QR-2 | QL-4B reporting: actual Paper Portfolio Performance with market valuation, funding-aware returns and account/capital allocation reconciliation. | Stale/missing prices explicit; no double counting shared capital; ledger and valuation reconcile; historical simulation is never labelled actual Paper execution. | Planned; current equity is book equity. |
+| QR-3 | QL-4B comparison: strategies for the same asset under a declared common evaluation context, alongside a separate actual-Bot comparison. Depends on QR-1 and QD-1 for expanded ranges. | Compatible market/period/capital/cost/valuation/risk assumptions; independent evaluation provenance, sample adequacy and ranking rules fixed before comparison; no qualified winner is a valid result. | Planned. |
+| QR-4 | QL-4B/QL-4C: Best Performance Report and owner-requested replay, new-period backtest or new optimization with lineage. | New run/parent identity, capability/data/privacy/resource checks; no original result overwritten or automatic rerun/apply. Qualified ranking/export is validation-gated. | Planned. |
+
+PF-1 remains the next implementation task and PF-1 through PF-4 retain their
+order. QD-1 is required before expanded-window PF-2/report requests are enabled;
+it can reuse the data contracts designed for PF-2. QR-1 contracts can be prepared
+alongside those foundations; then QR-2/QR-3 precede QR-4 customer reporting.
+These are work packages within the existing R-0 through APP-5 order, not new
+top-level phases or a reason to bypass APP-3B multi-Pine gates.
+
+### Report range and 50,000-bar contract
+
+The proposed upper bound is **50,000 primary bars per calculation, including
+warm-up, for any supported timeframe**. Count once per shared dataset rather
+than once per candidate; candidate count, CPU, memory, bytes, secondary MTF data
+and aggregate multi-asset workload also require explicit server-enforced budgets.
+Pagination/download chunks cannot bypass a run's range cap. Missing resource
+limits block admission; they are not unlimited allowances.
+
+The same primary-bar rule covers Historical Preflight, Backtest, Optimize and
+new price-based report calculations. Persisted-result reads do not rerun a job.
+Actual account transaction history uses separate paging/retention limits and
+must not be truncated to match the price-bar cap.
+
+UI selectors: **1 Week / 1 Month / 3 Months / 6 Months / 1 Year / YTD /
+All Time Registered / Custom**. Display requested measured bars, required
+warm-up, total/50,000, actual data availability and the selected source/timeframe
+capability. Define week as seven days and month/year windows by calendar dates
+in the report timezone, clamping invalid month-end dates; YTD starts January 1
+in that timezone. Freeze the resolved UTC interval and use consistent half-open
+boundaries with only completed bars. Treat market sessions and calendar bars
+using venue conventions; never approximate every month as 30 days.
+
+For a single continuous 24/7 primary series, the following examples show the
+upper time coverage **before warm-up**. Preset examples assume at most 3,250
+warm-up bars only for illustration; the evaluator supplies the actual requirement.
+Entries in this table do not register new supported exchange/evaluator timeframes.
+
+| Timeframe | 50,000-bar coverage before warm-up | Illustrative report selection |
+| --- | --- | --- |
+| 1s | 13 h 53 m 20 s | Custom shorter than one day. |
+| 5s | 2 d 21 h 26 m 40 s | Custom; one week exceeds the cap. |
+| 10s | 5 d 18 h 53 m 20 s | Custom; one week exceeds the cap. |
+| 15s | 8 d 16 h 20 m | One week can fit, subject to warm-up. |
+| 30s | 17 d 8 h 40 m | One week; one month exceeds the cap. |
+| 1m | 34 d 17 h 20 m | One week / one calendar month. |
+| 3m | 104 d 4 h | Up to three calendar months. |
+| 5m | 173 d 14 h 40 m | Three months; six months exceeds the cap. |
+| 10m | 347 d 5 h 20 m | Six months; one year exceeds the cap. |
+| 15m | 520 d 20 h | One year can fit. |
+| 30m | 1,041 d 16 h | One year and qualifying Custom intervals. |
+| 1h | 2,083 d 8 h | One year and qualifying Custom intervals. |
+| 2h / 4h / 6h / 8h / 12h | Apply 50,000 × the interval, then subtract actual warm-up coverage. | All presets remain subject to actual history/capability. |
+| 1D / 3D / 1W | At most 50,000 venue-aligned bars, including warm-up. | Venue/asset inception and available history usually constrain the range first. |
+| Calendar month / other registered interval | Count actual calendar/session boundaries; no fixed-minute approximation. | Enable only when exchange/resampling and evaluator support are verified. |
+
+Over-limit selections show the required count and available start-date boundary.
+Never silently truncate, downsample or change timeframe. Unsupported/resampled
+intervals stay disabled until their aggregation and evaluator parity are accepted.
+YTD/Custom/All Registered use the same exact admission check, not an exemption.
+
+For actual Bot reporting, All Registered starts at that Bot's registration;
+missing earlier executions remain missing. A longer exchange backtest is labelled
+simulation. For multiple Bots, show each registration/coverage interval and use
+a common covered evaluation window for ranking, rather than filling missing
+history with zero returns. Preserve actual strategy/input/policy version changes;
+replaying latest inputs over old dates is a new hypothetical backtest.
+
+### Report and research behavior
+
+Quant Library stores source/effective-input/Bridge/policy/capital/model versions,
+dataset references and hashes, candidate/trial history, metrics, trades,
+decisions/rejections, equity curves and validation status. Large price/signal
+datasets stay in protected immutable artifacts rather than oversized job JSON.
+Incomplete runs retain available evidence without inventing missing metrics.
+
+Best Inputs remains one package with `inputs.json`, Pine, Guide and a
+`quant-data/` folder; Email Report remains the second Step 5 deliverable. Library
+and Best Performance views are additional research screens. A failed run can
+be inspected/downloaded as diagnostic data but has no actionable Best Inputs.
+
+Separate actual Paper Portfolio Performance from simulated Strategy Comparison.
+Portfolio market value requires point-in-time prices, explicit quote/FX basis,
+funding-aware returns and no shared-capital double counting; this is a reporting
+valuation, not a silent change to the risk engine's book-equity basis.
+
+Provide actual-Bot comparison with differences disclosed and standardized
+strategy comparison with common asset/venue, evaluation period, capital, costs,
+risk policy, price/execution conventions and supported timeframes. Rank only
+qualified results on a predeclared objective within owner risk limits, with
+Buy & Hold benchmark, drawdown, episode counts, costs/exposure and uncertainty.
+Label the winner as best **within the selected scope**, never universally best.
+No qualified winner is a valid outcome. Previously exposed holdout becomes
+development evidence for later selection; new claims require independent data.
+
+Owner follow-ups are separate actions: exact replay, fixed-input new-period
+backtest, or new bounded optimization. Each receives a new `run_id`, mode and
+`parent_run_id`; comparisons have their own `comparison_id` referencing all
+participating versions/runs. Preserve the old record. Freeze a new data/validation
+plan before research. There is no automatic optimization, Bot apply, new session
+or email enqueue from a report view. Owner-started follow-ups are new workflows.
+
+### Target system diagram
+
+Yellow nodes are planned or not fully released. Existing components still have
+their scoped acceptance limits. Historical Preflight checks precede owner Run;
+no saved-setting proposal applies itself. The signal input chooses a supported
+evaluator **or** validated fixed-input CSV; CSV is not fed through an arbitrary
+Pine evaluator. Price data is still needed for Bridge protection and execution.
+
+```mermaid
+flowchart TD
+    U["User / Web UI"] --> AI["Indicator + direct AI API<br/>Template / Guide; no MCP"]
+    AI --> TV["Pine Bridge in TradingView<br/>Compile / Inputs / Alert"]
+    U --> RANGE["Asset / Timeframe / Report period"]
+    RANGE --> CAP{"Primary bars + warm-up <= 50,000<br/>Capability and resource budgets pass?"}
+    CAP -->|No| BLOCK["Explain limit / unavailable data<br/>Owner changes selection"]
+    CAP -->|Yes| DATA["Exchange Spot API / immutable cache<br/>Verified prices + metadata"]
+    DATA --> EVAL["Supported evaluator"]
+    CSV["Validated TradingView signal CSV<br/>Fixed input snapshot"] --> SIGNALS["Bound native signal history"]
+    EVAL --> SIGNALS
+    U --> PF1["PF-1 current Risk Manager checks"]
+    PF1 --> PF["PF-2 historical replay<br/>PF-3 readiness / PF-4 proposals"]
+    DATA --> PF
+    SIGNALS --> PF
+    PF --> OWNER["Owner reviews settings and Run readiness"]
+    OWNER --> ENABLE["Owner starts Paper Bot"]
+    TV --> RX["Webhook receiver"]
+    ENABLE --> WORKER["Worker + authoritative risk checks<br/>Paper execution"]
+    RX --> WORKER
+    WORKER --> DB[("PostgreSQL<br/>Cash / Positions / Fills / Audit")]
+    DB --> SNAP["Frozen research context"]
+    DATA --> SNAP
+    SIGNALS --> SNAP
+    SNAP --> OPT["One bounded Quant optimization"]
+    OPT --> LIB[("Research Library<br/>All terminal outcomes")]
+    OPT --> VALID{"Candidate and export gates pass?"}
+    VALID -->|Yes| PACKAGE["Best Inputs + Quant Data<br/>Email Report after SMTP gate"]
+    VALID -->|No| REASON["Reason report; no Best Inputs"]
+    DB --> PORT["Actual Paper Portfolio Performance<br/>Market valuation / funding-aware returns"]
+    LIB --> COMP["Compatible strategy comparison"]
+    COMP --> BEST["Best Performance Report<br/>Qualified winner or no winner"]
+    classDef planned fill:#fff3cd,stroke:#b8860b,color:#222;
+    class RANGE,CAP,BLOCK,PF1,PF,OWNER,LIB,PACKAGE,PORT,COMP,BEST planned;
+```
+
+### Owner-requested follow-up diagram
+
+```mermaid
+flowchart TD
+    LIB[("Research Library")] --> OWNER["Owner requests a new job"]
+    OWNER --> MODE{"Mode"}
+    MODE --> REPLAY["Replay original snapshot<br/>Verify retained data and engine"]
+    MODE --> BACK["Backtest another period<br/>Fixed strategy and inputs"]
+    MODE --> NEW["New optimization<br/>Freeze bounds / budget / validation plan"]
+    BACK --> SELECT["Select asset / timeframe / period"]
+    NEW --> SELECT
+    SELECT --> GATE{"50,000-bar and capability checks"}
+    GATE -->|Fail| WHY["Explain limit / missing capability"]
+    GATE -->|Pass| DATA["Freeze verified exchange dataset"]
+    DATA --> RUN["New run_id + parent_run_id"]
+    REPLAY --> CHECK["Verify original scope and resource admission"]
+    CHECK --> RUN
+    RUN --> RESULT["Immutable result / evidence<br/>No prior result overwritten"]
+    RESULT --> LIB
+    RESULT --> REPORT["Evaluation / comparison report<br/>Rank only after validation gates"]
+```
+
+## Change log
+
+| Date | Change / evidence | Scope and current consequence |
+| --- | --- | --- |
+| 2026-09-27 | Owner requested [Time Management](TIME_MANAGEMENT.md) as another primary document, synchronized with Roadmap/README/Context. | Documentation-only effort and wait budgets, dependency-based overlap, collection stop/replan rules and an execution ledger. PF-1 remains next; no runtime action. |
+| 2026-09-24 | [R-0 baseline](R0_BASELINE_2026-09-24.md). | Observed infrastructure/schema facts; SMTP follow-up remains. |
+| 2026-09-26 | [APP-3A](APP_3A_ACCEPTANCE_2026-09-26.md) and [QL-2A](QL_2A_IMPLEMENTATION.md) acceptance. | Scoped staging/engineering evidence, not general Pine or Live support. |
+| 2026-09-27 | [Custom parity/repaint](QL_3A_VARIED_INPUT_PARITY.md) and [historical job](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | 100-candidate job completed with no valid candidate; holdout unopened. |
+| 2026-09-27 | [SPT review](QL_3A_SPT_SIGNAL_REVIEW_2026-09-27.md), [EXIT v1 draft](QL_3A_SPOT_EXIT_V1_2026-09-27.md), checkpoint `a4e524f`. | Pushed code/evidence; failed development preflight, no runtime activation. |
+| 2026-09-27 | Owner approved static checks, Historical Preflight without MCP, readiness reporting and calculated proposals. | Documentation-only plan PF-1 through PF-4; no feature implementation or new research run. README/Context are primary project explanations; this file owns sequencing and progress. |
+| 2026-09-27 | Owner approved Quant Research Library, Best Performance Report, explicit owner-started research lineage and a 50,000-bar limit including warm-up for supported timeframes. | Documentation-only QD-1 / QR-1 through QR-4 with target diagrams and period limits. Runtime remains at 10,000 bars/its supported profile; no data fetch, migration, replay, optimization or activation performed by this update. |
+
+## Historical checkpoint narrative
+
+The following checkpoint notes preserve earlier scope and unresolved work at
+their recorded dates. Use the current-status table and approved extension above
+for today's next action and capability claims.
+
 Latest development decision (2026-09-27): a separate
 [Spot EXIT v1 draft](QL_3A_SPOT_EXIT_V1_2026-09-27.md) and evaluator were prepared
 under a frozen diagnostic plan. Historical loss decreased, but three losing
@@ -64,9 +425,9 @@ Production execution stays Paper-only. The worker remains authoritative for cash
 | --- | --- | --- |
 | 1. Connect Pine | Register authorized Pine v5/v6 indicator source, hash, effective inputs and Bot membership. Reject strategies before AI use; the user converts externally before resubmission. For Futures-oriented indicators, AI proposes a separate Spot-adapted indicator for owner review; register its approved hash before building the Bridge. | Trading Bot and Quant Lab are Spot-only. Futures dependencies block Spot execution/optimization until the reviewed adaptation capability is implemented and the approved revision passes its gates. |
 | 2. Build Bridge | Use a direct AI API with a versioned Bridge template and AI guide. User maps 0–8 numeric source inputs alongside 2 mandatory Bridge slots. Receive the complete draft and guide without waiting for Quant evidence. | At most 10 slots; structural/compile/binding, Bridge reference and isolated webhook checks before Webhook ready. Quant sample/repaint gates are separate. |
-| 3. Run Bot on Paper | Run the connected Pine through the Bot's Paper risk and execution flow; record sessions, decisions, fills and market data for research. | Accepted/capped/rejected outcomes and targeted reduce-only exits reconcile. |
+| 3. Check readiness and run Paper | Run static Risk Manager checks and capability-scoped Historical Preflight before owner start; then record sessions, decisions, fills and market data. | PF-1/PF-2 report limitations and configuration issues. Preview does not activate a Bot. Actual accepted/capped/rejected outcomes and targeted exits reconcile. |
 | 4. Quant Lab optimization | Run one bounded Quant optimization job against the frozen Bot/capital/source/data snapshot, after baseline parity. Optimize according to the Pine count. | Produce one completed run with data, out-of-sample, sensitivity and cost-stress evidence, or report no eligible candidate. |
-| 5. Export, owner review and optional new run | Deliver Best Inputs and Email Report. Owner reviews best Pine inputs and Bridge settings in Bot Risk Manager, then may apply reviewed values and start the Bot again. | Owner action is required. This workflow ends at the owner's decision/new Bot start; it does not return to Quant for another optimization or require a post-export Paper validation cycle. |
+| 5. Export, owner review and optional new run | Deliver validated Best Inputs including Quant Data and Email Report; retain research records and optional scoped performance views. Owner reviews best Pine inputs and Bridge settings in Bot Risk Manager, then may apply reviewed values and start the Bot again. | Owner action is required. This workflow ends at the owner's decision/new Bot start; it does not return to Quant for another optimization or require a post-export Paper validation cycle. |
 
 Workflow order describes the user journey. Paper activity before Quant supplies the research record. Quant optimization is one run for this workflow. Export and email do not change saved Bot settings or start a Bot; after reviewing both Pine inputs and Bot Risk Manager settings, the owner may explicitly apply eligible values and start the Bot again. That action ends this workflow.
 
@@ -121,8 +482,8 @@ The governing delivery order for this revision is **R-0 → APP-3A → QL-2A →
 | **R-0** | M0: reconcile release/schema, Paper allocation, SMTP and candidate Pine source facts. | Scoped baseline/fixture and direct schema/outbox verification recorded. SMTP 550 remains an operational follow-up before Email Report delivery; deploy readiness still needs its own checks. |
 | **APP-3A** | M1–M2: owner-scoped identities/snapshots; durable direct-AI jobs with versioned template/guide, 2 Bridge numeric slots plus 0–8 selected source slots, and a versioned isolated Paper receiver using bridge-exit-v2 for new artifacts, with legacy v1 fail-fast behavior, scoped IDs and strict payload validation. No MCP connection. | Staging engineering accepted 2026-09-26: minimal webhook/receiver contract and owner/allocation isolation, bounded job recovery/cancellation, strategy rejection, hosted Paper timing and readiness manifest. Owner/production rollout stays separate; Quant evaluator/sample/repaint readiness belongs to QL-2A. |
 | **QL-2A** | M3: actual source/data replay, signal and Node/Paper risk parity, Bridge exit semantics and cost accounting. | Accepted 2026-09-26 for the reviewed fixed SPT Spot v4 profile: 4,179 measured bars, 92 matching decisions and 130/130 unchanged repaint observations. QL-3A engineering may start within this scope; runtime capability remains gated and synthetic EMA remains demo-only. |
-| **QL-3A** | M4: bounded research job. One Pine searches selected numeric inputs (up to 8) and Bridge ATR/RR; multiple Pine scripts freeze source inputs and search the shared Bridge pair. | Recorded coverage of 100% of selected dimensions, plus out-of-sample, sensitivity and cost-stress evidence. |
-| **QL-4B** | M5–M6: build Best Inputs candidate, review/import interface and matching Email Report draft from one run/export identity. | Candidate files/report and guarded apply contract exist; no owner-facing recommendation, outbox enqueue, policy change or Bot activation before QL-4C validation. |
+| **QL-3A** | M4: bounded research job. One Pine searches selected numeric inputs (up to 8) and Bridge ATR/RR; multiple Pine scripts freeze source inputs and search the shared Bridge pair. | Engineering: bounded reproducible jobs, full dimension coverage, parity and correct failure outcomes; add PF-1 through PF-4. Recommendation: sufficient activity plus out-of-sample, sensitivity and cost-stress evidence. Record both statuses separately. |
+| **QL-4B** | M5–M6 plus QR-1/QR-2/QR-3: build Best Inputs with Quant Data, Research Library/reporting and review/import interface with matching Email Report draft. | Candidate files/report and guarded apply contract exist; no owner-facing recommendation, outbox enqueue, policy change or Bot activation before QL-4C validation. |
 | **QL-4C** | M7 validate package, indicator compilation, source/Quant evidence and review/import flow. No post-export Paper trading cycle. | For one Pine, only validated fresh exports become owner-visible/applyable; enqueue Email Report only when validation and SMTP delivery gate pass. Multi-Pine results remain isolated until APP-3B. |
 | **APP-3B** | Operational hardening after the one-Pine proof: multi-Pine isolation, scoped allocations and exits, reservations, measured scaling, recovery and shared-symbol Paper canary. | Multi-Pine owner review/apply/new Bot start unlock only after canary, workload and failure-recovery thresholds pass with no cross-Bot or oversold exits. |
 | **APP-4** | Customer lifecycle, quotas, security and paid Paper readiness. | Bounded customer Paper beta and operational acceptance. |
@@ -140,18 +501,18 @@ APP-3A market timing uses a bounded v2 intake state: webhook receipt may precede
 | M1 — Identity and risk | Create owner-scoped Pine registry, source versions, Bot membership snapshots, immutable policy/capital resolution, stale evidence and deployment/entry-to-allocation identity rules. Separate Bridge Settings from hard Risk Policy. | Tenant isolation and authenticated Bot scope cover source/job/webhook/allocations; frozen policy and source-change behavior reject client overrides. |
 | M2 — Bridge adapter | Build indicator-only dropdown mapping and durable analyze/generate/status/cancel jobs with owner-scoped idempotency and bounded resources. Assemble block with original bytes; no MCP. Return draft/guide before Quant checks. Implement versioned payload validation and isolated Paper bridge-exit-v1 receiver in APP-3A. | Strict schema/version rejection, scoped identity and retry behavior, Bridge-stage compile/transport/exit evidence, and bounded AI job recovery. Quant unsupported does not imply Bridge unsupported. |
 | M3 — Quant evaluator | Replace demo-only execution path for a supported source with actual market data and a parity-proven evaluator. Implement both Bridge ATR and RR, scoped exits, costs and account constraints. | Matched baseline signals and Node/Paper risk decisions; reproducible source/data hashes. |
-| M4 — Research jobs | Run one-Pine/selected-numeric-inputs-plus-Bridge or multiple-Pine/shared-pair search as a bounded job. Add progress, cancel, restart recovery, chronological validation and candidate gates. | 100% of selected dimensions participate within recorded bounds/budget; fixed inputs unchanged and silently dropped dimensions 0. |
-| M5 — Best Inputs and owner review | Generate mode-specific candidate inputs.json, Pine, Setup Guide, manifest and validation evidence. Build authenticated review/apply interface with explicit owner action, initially disabled until M7 passes. | Candidate values, ownership, freshness and policy lock are checkable; no draft can change settings/start a Bot. |
+| M4 — Research jobs | Run one-Pine/selected-numeric-inputs-plus-Bridge or multiple-Pine/shared-pair search as a bounded job. Add progress, cancel, restart recovery, chronological validation and candidate gates. QD-1 adds versioned 50,000-bar admission and datasets; PF and QR contracts reuse this foundation. | 100% of selected dimensions participate within recorded bounds/budget; fixed inputs unchanged and silently dropped dimensions 0. |
+| M5 — Best Inputs and owner review | Generate mode-specific candidate inputs.json, Pine, Setup Guide, Quant Data, manifest and validation evidence. QR-1/QR-3 preserve library/comparison provenance. Build authenticated review/apply interface with explicit owner action, initially disabled until M7 passes. | Candidate values, ownership, freshness and policy lock are checkable; no draft can change settings/start a Bot. |
 | M6 — Email Report | Generate the owner-scoped draft from export_id with bot_id, pine_import_id list, UTC timestamp, recommended values and key Quant metrics. Prepare idempotent outbox/delivery tracking, with enqueue gated on M7 validation and SMTP remediation/receipt. | Draft report matches run/package and contains no credentials. SMTP failure leaves a validated package available with separate mail status. |
 | M7 — Export readiness and owner handoff | Verify package/Pine compilation and source-specific evidence, then enable authenticated one-Pine review/apply, outbox enqueue when mail gate passes and optional owner Bot start. Preserve old allocation exits during alert replacement. | One-Pine export status is VALIDATED/READY before any owner recommendation, apply or email enqueue; multi-Pine remains isolated until APP-3B. No mandatory post-export Paper run or return to Quant. |
 
-M0–M2 may use private fixtures. M3 requires the APP-3A receiver contract and supported source/data semantics; M4 depends on M1 and M3; M5–M7 depend on one eligible M4 result. The initial owner apply/start gate covers only one Pine. APP-3B gates multi-Pine owner-facing rollout. Basic tenant/entry isolation is required in APP-3A; APP-4 adds customer security/quotas. Schema changes require a protected backup and isolated migration/restore rehearsal. Node/risk/schema changes use relevant Node and isolated PostgreSQL checks; Quant changes use contract/parity checks. Production releases use immutable directories and atomic symlink switching.
+M0–M2 may use private fixtures. M3 requires the APP-3A receiver contract and supported source/data semantics; M4 depends on M1 and M3. PF-1 through PF-4 extend M1/M3/M4 within QL-3A in their declared order. M5–M7 may be engineered with labelled isolated fixtures after engineering dependencies pass; real owner recommendations, apply and delivery require one eligible M4 result and M7 validation. The initial owner apply/start gate covers only one Pine. APP-3B gates multi-Pine owner-facing rollout. Basic tenant/entry isolation is required in APP-3A; APP-4 adds customer security/quotas. Schema changes require a protected backup and isolated migration/restore rehearsal. Node/risk/schema changes use relevant Node and isolated PostgreSQL checks; Quant changes use contract/parity checks. Production releases use immutable directories and atomic symlink switching.
 
 ## Step 5 deliverables
 
 Step 5 delivers exactly two user-facing items:
 
-1. **Best Inputs package:** inputs.json, supported indicator Pine Script and Setup Guide. For one Pine it contains up to 8 optimized numeric source inputs, the Bridge pair and all other source inputs explicitly labelled fixed. For multiple Pine scripts, actionable settings contain only the shared Bridge pair; unchanged source snapshots stay in private provenance. Include before/after values, slot mappings, scope, run/export/deployment IDs, checksums and quantitative validation evidence.
+1. **Best Inputs package:** inputs.json, supported indicator Pine Script, Setup Guide and Quant Data (manifest, metrics, equity/trades/decisions, validation and dataset references). For one Pine it contains up to 8 optimized numeric source inputs, the Bridge pair and all other source inputs explicitly labelled fixed. For multiple Pine scripts, actionable settings contain only the shared Bridge pair; unchanged source snapshots stay in private provenance. Include before/after values, slot mappings, scope, run/export/deployment IDs, checksums and quantitative validation evidence.
 2. **Email Report:** summarize Best Inputs, bot_id, pine_import_id or the member list, export_id, UTC timestamp, train/validation/test results, trade/sample counts, drawdown, Win Rate, Profit Factor, costs and stale/validation status. Separate Pine-only source inputs from the Bridge pair displayed in Bot Risk Manager. Send only to the verified owner, with an authenticated review link and no webhook secret.
 
 Report drafting in QL-4B creates no outbox row. QL-4C first checks compilation, parity, ownership and freshness; only a validated one-Pine export is shown as a recommendation or made applyable. Enqueue one matching Email Report by export_id only after this validation and SMTP 550 remediation with confirmed owner receipt. SMTP delivery remains at least once; duplicate deliveries carry the same report ID. Track NO_VALID_CANDIDATE, EXPORT_CANDIDATE, EXPORT_VALIDATED/EXPORT_READY, EMAIL_BLOCKED_SMTP, EMAIL_PENDING, EMAIL_SENT and EMAIL_FAILED separately. Email failure does not invalidate an otherwise validated package. Multiple-Pine results stay internal until APP-3B acceptance.

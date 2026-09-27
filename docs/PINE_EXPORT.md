@@ -2,6 +2,13 @@
 
 Status: proposed M5–M7 customer workflow. Offline export utilities exist in the repository, while authenticated Bot-scoped export, owner review/import and Email Report for this revised workflow remain planned.
 
+2026-09-27 approved extension: the package includes reusable Quant Data, and a
+Research Library supports scoped Best Performance reporting and explicit owner
+follow-up jobs. [Roadmap](ROADMAP.md#approved-extension--quant-research-library-and-best-performance)
+owns ordering/status and the 50,000-bar target; [the specification](QUANT_RESEARCH_LIBRARY.md)
+defines artifacts and comparison semantics. No library feature or enlarged data
+limit is implemented by this documentation update.
+
 Integration: [the revised roadmap](ROADMAP.md) sequences Bridge generation, a Bot Paper run, one source-parity-backed Quant optimization run, mode-specific export and owner review. The owner may apply the reviewed values and start the Bot again; the workflow then ends. No post-export Paper acceptance cycle or automatic return to Quant is required. Historical QL-1 through QL-4 work is recorded in [the archived roadmap](ROADMAP_ARCHIVE_2026-09-24.md).
 
 ## Candidate and risk prerequisites
@@ -31,8 +38,15 @@ Each TradingView deployment uses one alert source. A multiple-Pine Bot package m
 
 Step 5 has exactly two user-facing deliverables:
 
-1. **Best Inputs package** — `inputs.json`, a supported Pine Script output and TradingView `setup.md`.
+1. **Best Inputs package** — `inputs.json`, a supported Pine Script output, TradingView Setup Guide and a `quant-data/` folder containing manifest, metrics, equity/trades/decisions and validation evidence. Large datasets may be separate authorized downloads bound by hashes.
 2. **Email Report** — a concise, owner-scoped summary of the Best Inputs and the Quant evidence needed to review them for the selected Bot's Risk Manager.
+
+The Research Library also keeps unsuccessful/partial terminal runs as diagnostic
+evidence. They cannot produce an actionable Best Inputs package or a qualified
+winner. Portfolio and Best Performance views are additional research screens,
+not extra automatic Step 5 deliveries. Owner-requested Replay, new-period Backtest
+and new Optimize jobs have new run/parent identities and do not overwrite old
+exports or start a Bot. This preserves one optimization per owner-started workflow.
 
 | Bot connections | Best Inputs and Pine edits | Email recommendations |
 | --- | --- | --- |

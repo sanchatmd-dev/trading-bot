@@ -1,5 +1,14 @@
 # QL-3A — bounded research started
 
+Planning update (2026-09-27): the owner approved readiness before Run Bot.
+[Roadmap](ROADMAP.md#approved-extension--readiness-before-run-bot) now owns the
+PF-1 static checks, PF-2 Historical Preflight, PF-3 readiness report and PF-4
+calculated setting proposals, with separate engineering and recommendation
+gates. These features are planned, not delivered by the diagnostic code below.
+Historical replay uses exchange data and a supported evaluator or fixed-input
+signal CSV; no TradingView MCP is required. The next implementation task is
+PF-1. This update does not start a new search, activate EXIT v1 or reset guards.
+
 Latest development follow-up (2026-09-27): the owner-authorized dedicated
 [Spot EXIT v1 draft](QL_3A_SPOT_EXIT_V1_2026-09-27.md) is implemented separately
 from the frozen runtime profile. Four predeclared historical replays compare
@@ -42,6 +51,12 @@ The [isolated staging checkpoint](evidence/QL_3A_INPUT_REVIEW_STAGING_2026-09-26
 TradingView `Custom` baseline check: the existing source-bound state trace was set to the reference Custom values on standard BINANCE:BTCUSDT 1m, with Long + Exit, HTF filter off and original notifications off. Its export had 5,415 closed bars. Restoring the Custom trace state after the 1,006-bar warm-up, the parameter-aware evaluator matched all 4,409 later BUY/EXIT flags and all 14 compared state fields within 1e-7 (maximum numeric difference 5.24e-10). The 5,185 bars covered by the frozen independent Binance Spot dataset matched OHLCV exactly. The Custom reference values produced the same BUY/EXIT flags and 15 exported state fields as the former fixed preset over their 5,316-bar overlap. This establishes **baseline parity for that one Custom setting only**; varied parameter values and a Custom-specific 100-observation repaint check remain unverified. The local effective-input hash is a reference audit, not a registered owner attestation. [Sanitized evidence](evidence/QL_3A_CUSTOM_TV_BASELINE_2026-09-26.json) records the scope and hashes; the raw CSV remains private.
 
 ## Roadmap and workflow review
+
+2026-09-27 approved planning extension: [QD-1 and QR-1 through QR-4](ROADMAP.md#approved-extension--quant-research-library-and-best-performance)
+add 50,000-bar dataset admission, a Research Library, portfolio/strategy reports
+and explicit owner follow-ups. Current research code still enforces 10,000 bars
+and its supported profile. No schema/API/engine or recommendation gate changed
+in this documentation update. PF-1 remains next; expanded ranges depend on QD-1.
 
 2026-09-27 follow-up: [Custom axis parity](evidence/QL_3A_CUSTOM_AXIS_PARITY_2026-09-27.json)
 now matches the baseline and **16 min/max settings across all eight selected

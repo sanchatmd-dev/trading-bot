@@ -1,5 +1,18 @@
 # Quant Lab (QL-1)
 
+Current project planning is centralized in [Roadmap](../docs/ROADMAP.md);
+[README](../README.md) and [Context](../Context.md) are the primary project
+explanations. The owner-approved [Research Library / Best Performance specification](../docs/QUANT_RESEARCH_LIBRARY.md)
+is planned, not implemented by the historical offline capabilities below.
+QD-1 targets 50,000 primary bars including warm-up, exchange-backed datasets,
+period/timeframe admission and state-preserving chunked evaluation. Current
+research API/engine still enforces 10,000 bars and its source/timeframe profile.
+QR-1 through QR-4 add immutable artifacts, actual Paper portfolio valuation,
+compatible strategy ranking and explicit parent-linked follow-up jobs. PF-1
+remains the next implementation task. No price capacity target overrides sample,
+parity, holdout or export validation gates.
+
+
 Private, isolated Python 3.12 research workspace. No production database connection,
 market download, trading, or deployment occurs during imports or tests.
 

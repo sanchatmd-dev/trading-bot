@@ -1,6 +1,37 @@
 # Robot trade VPS 2.2.0 — PostgreSQL Paper staging
 
-รับ Universal Webhook จาก TradingView พร้อมบัญชีผู้ใช้, License, Risk UI, Trade log และ Email outbox
+ระบบรับสัญญาณ TradingView สำหรับ Bot แบบ Spot Paper พร้อมบัญชีผู้ใช้, License, Risk Manager, Trade log และ Quant Lab สำหรับวิจัยย้อนหลัง โดย Worker เป็นผู้ตัดสินคำสั่งและบันทึกบัญชีเงินสด Paper ของระบบ
+
+## เอกสารหลักและสถานะโครงการ
+
+- **README นี้:** ภาพรวมโครงการ วิธีเริ่มใช้งานและขอบเขตผลิตภัณฑ์
+- **[Context.md](Context.md):** สถาปัตยกรรม กติกาและบริบทการดำเนินงาน
+- **[Roadmap](docs/ROADMAP.md):** ศูนย์รวมแผน ลำดับงาน สถานะล่าสุด เงื่อนไขเดินต่อและประวัติการเปลี่ยนแปลง
+- **[Time Management](docs/TIME_MANAGEMENT.md):** งบชั่วโมง งานที่ทำระหว่างรอข้อมูลได้ Collection ETA และบันทึกเวลาคงเหลือ โดยใช้ลำดับและ gates จาก Roadmap
+
+ทุก checkpoint ที่เปลี่ยนแผนหรือสถานะ ให้อัปเดต Roadmap และ Time Management พร้อมกัน และทบทวน README/Context ให้ตรงกับขอบเขตล่าสุด งบ Paper เริ่มต้นรวมเผื่ออยู่ที่ 340–580 ชั่วโมงก่อนหักเวลารอที่ซ้อนกันได้ ไม่ใช่กำหนดเวลารับประกัน Best Inputs ดูสมมติฐานและวิธีติดตามใน Time Management
+
+สถานะ ณ 2026-09-27: APP-3A ผ่าน engineering acceptance ใน staging และ QL-2A ผ่าน baseline ตาม profile ที่ตรวจแล้ว SPT Custom ผ่าน axis parity และ scoped repaint งานวิจัย 100 candidates เสร็จแล้วแต่คืน `NO_VALID_CANDIDATE` เพราะ validation ไม่มี closed trades ส่วน Spot EXIT v1 เป็น draft ที่ยังไม่ผ่าน development preflight Checkpoint ล่าสุดที่ push คือ `a4e524f`; ไม่ใช่การ deploy production
+
+แผนที่อนุมัติเพิ่มคือ **ตรวจ Risk Manager ก่อน Run Bot**: ตรวจความสอดคล้องของค่า, Historical Preflight, รายงานความพร้อมข้อมูล แล้วจึงเสนอค่าภายในขอบเขตความเสี่ยงของเจ้าของ ฟีเจอร์นี้ยังเป็นแผน ดู [ลำดับ PF-1 ถึง PF-4](docs/ROADMAP.md#approved-extension--readiness-before-run-bot)
+
+Historical Preflight ใช้ราคา Spot จาก exchange API และ evaluator ที่ผ่านการตรวจ หรือ CSV สัญญาณจาก TradingView ที่ผูกกับ source/input snapshot จึงไม่ต้องต่อ TradingView MCP การรองรับ CSV ใช้จำลอง Risk Manager ของสัญญาณชุดเดิม; ไม่ได้ทำให้เปลี่ยน source inputs หรือรองรับ Pine ทุกตัวได้
+
+ลำดับผู้ใช้: เชื่อม Indicator → สร้าง Bridge → ตรวจความพร้อมก่อน Run และรัน Paper → Quant Optimize หนึ่ง run → ส่งผลที่ผ่านเกณฑ์ให้เจ้าของตรวจ → เจ้าของเลือกเริ่ม Bot ใหม่หรือจบ หากไม่พบ candidate ให้รายงานเหตุผลและจบ run โดยไม่ส่ง Best Inputs หรือวน Optimize อัตโนมัติ
+
+รายละเอียด phase และ test counts ด้านล่างเป็นประวัติของแต่ละ release ไม่ใช่สถานะ feature ปัจจุบันทั้งหมด ให้ใช้ Roadmap เป็นหลักในการเลือกงานถัดไป
+
+## แผน Quant Research Library และ Best Performance
+
+อนุมัติแผนเก็บผล Quant ทุกรอบเป็นข้อมูลวิจัยที่มี version/hash และเพิ่ม `quant-data/` ใน Best Inputs package ส่วน Email Report ยังคงเป็น deliverable หลักรายการที่สอง ผลไม่ผ่านเก็บเป็น diagnostic ที่ตรวจย้อนหลังได้ โดยไม่สร้าง Best Inputs ให้ใช้งาน
+
+รายงานมีสองมุมมอง: **Portfolio Performance** ใช้บัญชีและการซื้อขาย Paper ที่เกิดขึ้นจริง พร้อมแผนเพิ่มมูลค่าตามราคาตลาดและผลตอบแทนที่คำนึงถึงการฝากถอน; **Strategy Comparison / Best Performance** เปรียบเทียบ strategy ของ asset เดียวกันภายใต้เงื่อนไขที่สอดคล้องกัน จัดอันดับเฉพาะผลที่ผ่านเกณฑ์ และรายงานได้ว่าไม่มีผู้ผ่านเกณฑ์
+
+เป้าหมายข้อมูลคือ **50,000 แท่งรวม warm-up ต่อการคำนวณหนึ่งครั้ง สำหรับทุก timeframe ที่รองรับ** เลือก 1 Week / 1 Month / 3 Months / 6 Months / 1 Year / YTD / All Time Registered / Custom ได้ตามจำนวนแท่งและประวัติที่มีจริง ระบบต้องแจ้งช่วงที่เกินเพดานโดยไม่ตัดข้อมูลหรือเปลี่ยน timeframe เอง **โค้ดปัจจุบันยังจำกัด 10,000 แท่งและ profile 1m ที่รองรับอยู่** ตัวเลือกช่วงยาวไม่ได้เปิดใช้งานจากการแก้เอกสารนี้
+
+เจ้าของเลือก Replay ผลเดิม, Backtest ช่วงใหม่ หรือ Optimize รอบใหม่ได้ตามแผน โดยเป็นงานใหม่ที่อ้างอิงผลต้นทาง ไม่มีการวนวิจัยหรือเปลี่ยน Bot อัตโนมัติ การเปลี่ยน source inputs ยังต้องมี evaluator ที่รองรับ; CSV สัญญาณใช้ได้เฉพาะ snapshot ที่ตรวจแล้ว
+
+ดู [แผนรวมและ diagram](docs/ROADMAP.md#approved-extension--quant-research-library-and-best-performance), [ตารางช่วงเวลาต่อ timeframe](docs/ROADMAP.md#report-range-and-50000-bar-contract) และ [รายละเอียดข้อมูล/รายงาน](docs/QUANT_RESEARCH_LIBRARY.md) งานถัดไปยังเป็น PF-1; ส่วน QD-1 และ QR-1 ถึง QR-4 เป็นงานที่วางแผนเพิ่มไว้
 
 **รุ่นนี้ล็อก Live ทุก Broker ทั้ง UI, API, Worker และ Adapter ไม่ใช่ระบบพร้อมเทรดเงินจริง**
 ไม่ต้องใส่ API key จริงเพื่อทดสอบ Paper และอย่าเปิดบริการสาธารณะก่อนผ่าน deployment checklist
@@ -67,13 +98,13 @@ uv run --no-sync python quant_lab/tests/test_node_direct_parity.py
 
 ผลตรวจ checkout ใน R-0: Node tests 111/111 ผ่าน และ Quant offline pytest 71/71 ผ่าน; Direct Parity 100% เป็นผลจากการตรวจรอบก่อน (ดู [Quant Lab README](quant_lab/README.md))
 
-## QL-2A — ผ่าน baseline เฉพาะ profile ที่ตรวจแล้ว (2026-09-26)
+## Pine / Quant integration ปัจจุบัน
 
-SPT Spot v4 profile ที่ผูก source hash ผ่าน engineering baseline แล้ว Trace compile/อินพุตและ checkpoint initialization ผ่าน ผล 4,179 แท่งหลัง warm-up: BUY 47, EXIT 65, mismatch 0; OHLCV Spot ตรงกันทั้ง 5,185 แท่ง และ Python/Node ตรงกัน 92 decisions รวม cap/rounding/ต้นทุน Observations จาก snapshot เดียวกันตรงกับ history ล่าสุด 130/130 ครั้ง เปลี่ยนย้อนหลัง 0 ครั้ง (ขั้นต่ำ 100) เริ่ม QL-3A เพื่อกำหนด bounds/validation และค้นหา Bridge ATR/RR ได้ ส่วน dynamic source slots ยังไม่ได้รับรอง Runtime Quant ยังคง UNSUPPORTED และยังไม่เริ่ม Optimize จริง ดู [QL-2A](docs/QL_2A_IMPLEMENTATION.md)
+QL-2A fixed SPT Spot profile ผ่าน engineering baseline แล้ว ส่วน SPT Custom มี evaluator สำหรับ numeric source slots ที่รองรับสูงสุด 8 ช่อง และ ATR(14) ของ Bridge แยกจาก ATR ของ Indicator หลักฐาน baseline + 16 axis settings และ Custom repaint อยู่ใน [รายละเอียด parity](docs/QL_3A_VARIED_INPUT_PARITY.md) การรับรองยังจำกัด source/settings และไม่ครอบคลุม arbitrary Pine หรือ Spot EXIT v1 draft ใหม่
 
-**QL-3A เริ่มแล้ว แต่ยังไม่มี Best Inputs:** ค้นหา Bridge ATR/RR แบบ offline ครบ 25 คู่ในข้อมูลที่ตรึงไว้ ทุกคู่มี closed trades ใน train 3 ครั้ง และ validation 0 ครั้ง จึงคืน `NO_VALID_CANDIDATE` โดยไม่ดูผล test เพื่อเลือกค่า ไม่ปรับ Risk Manager และไม่ส่งผลไป QL-4B ดู [QL-3A](docs/QL_3A_IMPLEMENTATION.md)
+QL-3A durable research ประเมินครบ 100 candidates บนข้อมูล Spot 10,000 แท่ง ผลคือ `NO_VALID_CANDIDATE`; holdout ยังไม่ถูกประเมิน ประวัติของ baseline พบ 9 allocations ใน 3 รอบถือสถานะที่ขาดทุนต่อเนื่อง จึงชน loss-streak guard การมีจำนวนแท่งครบอย่างเดียวไม่ทำให้มี Best Inputs ดู [ผลวิจัย](docs/QL_3A_HISTORY_RESEARCH_2026-09-27.md)
 
-งานต่อของ QL-3A: เพิ่ม evaluator เฉพาะ SPT `Custom` สำหรับ source inputs ตัวเลขที่เจ้าของเลือกสูงสุด 8 ช่อง โดยคง ATR(14) ของ Bridge แยกจาก ATR ของ Indicator แล้ว Chatbot มีขั้น Inspect แบบไม่เรียก AI ให้เจ้าของยืนยัน input ทุกค่ากับ TradingView และบันทึก hash ของ source/ค่าที่ใช้จริง ก่อนส่ง Analyze; ยังต้องตรวจ parity ใหม่ก่อนใช้งานจริง อีกส่วนเตรียมทางให้เจ้าของตรวจและ re-arm loss streak ของ Paper Bot ที่หยุดและไม่มีสถานะค้าง เพื่อเก็บข้อมูลรอบใหม่ โดยไม่เปลี่ยนกฎขาดทุนรายวันหรือผล `NO_VALID_CANDIDATE` เดิม โค้ดยังไม่ deploy ดู [รายละเอียด](docs/QL_3A_IMPLEMENTATION.md)
+[Spot EXIT v1 draft](docs/QL_3A_SPOT_EXIT_V1_2026-09-27.md) ลดขาดทุนย้อนหลังแต่ยังมี validation trades เป็นศูนย์ จึงยังไม่ activate งานถัดไปตามแผนคือ PF-1 ตรวจความสอดคล้องของ Risk Manager โดยใช้ขอบเขตที่เจ้าของกำหนด และแยก engineering acceptance ออกจากการพบ candidate ที่เหมาะสมสำหรับแนะนำ
 
 ## Interactive Dashboard Charting — เสร็จสมบูรณ์ใน repo
 
@@ -94,7 +125,7 @@ SPT Spot v4 profile ที่ผูก source hash ผ่าน engineering base
 
 Risk Manager ปัจจุบันยังเป็นผู้คุมเพดานจริงของ Bot: **Max Value** คือเพดานที่ Worker บังคับใช้ ส่วน **Default** ใช้เป็นค่าตั้งต้นของหน้า UI และเครื่องคำนวณเท่านั้น การปรับ Default ไม่เพิ่มสิทธิ์ให้สัญญาณ TradingView หรือ Quant Lab
 
-งานถัดไปจะแยกหน้าเป็น Bot Risk Policy, Capital และ Order Preview ให้ชัดเจน แสดง cash/reserved cash/book equity และจำนวน Symbol/จำนวนไม้แยกกัน Preview จะไม่ทำให้เกิด unsaved risk draft และ Quant Lab จะอ่าน policy snapshot ของ Bot ที่เลือกจาก Server แทนการเชื่อค่าที่ Browser ส่งมา ดูรายละเอียดและเกณฑ์รับงานที่ [Risk Manager next scope](docs/RISK_MANAGER_NEXT.md)
+ตามแผน PF-1 ถึง PF-4 ใน Roadmap จะเพิ่ม static checks, Historical Preflight, readiness report และ calculated proposals พร้อมแยกหน้าเป็น Bot Risk Policy, Capital และ Order Preview ให้ชัดเจน แสดง cash/reserved cash/book equity และจำนวน Symbol/จำนวนไม้แยกกัน Preview จะไม่ทำให้เกิด unsaved risk draft และ Quant Lab จะอ่าน policy snapshot ของ Bot ที่เลือกจาก Server แทนการเชื่อค่าที่ Browser ส่งมา ดูรายละเอียดและเกณฑ์รับงานที่ [Risk Manager next scope](docs/RISK_MANAGER_NEXT.md)
 
 ## Quant Lab Studio & Service Deployment — initial rollout (39590f7)
 
@@ -172,14 +203,19 @@ Live adapters: LOCKED
 
 ## Pine → Bot → Quant → Owner Workflow 5 ขั้นตอนหลัก
 
-Workflow นี้ทำ Quant optimization หนึ่ง run แล้วส่งออกให้เจ้าของตรวจ ไม่มีการวนกลับไป Optimize ซ้ำหลัง Export:
+Workflow เป้าหมายนี้เพิ่ม Preflight ที่ยังอยู่ในแผนก่อน Paper แล้วทำ Quant optimization หนึ่ง run ส่งออกเฉพาะ candidate ที่ผ่านเกณฑ์ ไม่มีการวนกลับไป Optimize ซ้ำหลัง Export:
 
 ```mermaid
 flowchart TD
     S1["1. เชื่อม Pine<br/>ลงทะเบียน source และผูกกับ Bot"] --> S2["2. สร้าง Bridge<br/>เพิ่ม Bridge ATR SL = 2.0 และ RR = 1.5"]
-    S2 --> S3["3. รัน Bot บน Paper<br/>เก็บ Session, decisions, fills และข้อมูลราคา"]
+    S2 --> P["ตรวจความพร้อมก่อน Run<br/>Risk Manager + Historical Preflight ตาม capability"]
+    P --> S3["3. รัน Bot บน Paper<br/>เก็บ Session, decisions, fills และข้อมูลราคา"]
     S3 --> S4["4. Quant Lab<br/>ตรวจ parity แล้ว Optimize หนึ่ง run"]
-    S4 --> S5["5. ส่งออก Best Inputs + Email Report"]
+    S4 --> LIB[("Research Library<br/>เก็บทุกผลพร้อม provenance")]
+    LIB --> CMP["เปรียบเทียบ Strategy / Best Performance<br/>ตาม asset และเงื่อนไขที่กำหนด"]
+    S4 --> G{"ผ่านเกณฑ์ candidate?"}
+    G -->|ผ่าน| S5["5. Best Inputs รวม Quant Data<br/>และ Email Report"]
+    G -->|ไม่ผ่าน| N["รายงานเหตุผล<br/>จบ run"]
     S5 --> S6["เจ้าของตรวจ Best Pine Inputs<br/>และ Best Bot Risk Manager"]
     S6 --> S7{"เจ้าของเลือกเริ่ม Bot ใหม่?"}
     S7 -->|เริ่ม Bot| S8["ใช้ค่าที่ตรวจแล้วเริ่ม Bot<br/>จบกระบวนการ"]

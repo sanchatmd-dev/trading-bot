@@ -1,5 +1,22 @@
 # Robot trade — Project Context
 
+## Document role
+
+This file and [README.md](README.md) are the primary project explanations.
+README covers the product and getting started; Context covers architecture,
+boundaries and operational facts. [docs/ROADMAP.md](docs/ROADMAP.md) is the
+single planning/progress/change-log index. Topic specifications and evidence
+support that roadmap. Dated production observations below are not live status.
+
+[Time Management](docs/TIME_MANAGEMENT.md) is the primary execution-time
+document: effort budgets, overlapping machine/data waits, collection ETA and
+remaining-work records. It follows Roadmap dependencies and acceptance gates.
+Update both at each scope/status checkpoint; review README and Context in the
+same change set, updating them when their product/architecture summaries change.
+Historical backfill, live evidence and actual Paper ledger coverage remain
+distinct. A finite engineering estimate does not guarantee a qualified strategy
+or a collection deadline while a persistent Risk Manager guard blocks entries.
+
 ## Purpose
  
 Initial QL-1 through QL-4 deployment (2026-09-23, release `39590f7`): Quant Lab research workspace ran as an offline service using a dedicated Python environment. The authenticated Node.js proxy `/api/quant/*` and 4-tab studio UI (Backtest, Optimizer, Risk Preview; Pine Export unreleased) were deployed alongside Trading Control Panel v2. That release's recorded validation was Node 111/111, Quant 71/71, and `PAPER_ONLY`. The 2026-09-24 observed release and current limitations are recorded under Production below. Live trading remains strictly locked.
@@ -31,15 +48,71 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 
 ## Architecture
 
-Current phase status (2026-09-26): **APP-3A Bridge engineering accepted in staging; QL-2A fixed-profile baseline accepted; QL-3A research in progress with no eligible candidate**. Exact Spot v4 compile/capture evidence, 24 PostgreSQL checks, 22 focused Node checks and a hosted controlled Paper BUY/targeted EXIT against real collector bars are recorded in [the acceptance record](docs/APP_3A_ACCEPTANCE_2026-09-26.md). Readiness/activation were exercised only on a separate test Bot/database, then stopped and cleaned up. The original SPT deployment remains DRAFT/capture-only, production is unchanged and SPT runtime Quant remains UNSUPPORTED. SMTP remediation and unknown provider accounting remain separate follow-ups.
+Current integration status (2026-09-27): APP-3A engineering accepted in staging;
+QL-2A accepted for its fixed SPT profile. Custom evaluator baseline and sixteen
+axis settings subsequently matched TradingView, and its scoped 100-observation
+repaint check passed. The Custom sample contains no positive EXIT observation.
+These results do not certify arbitrary Pine or every mixed parameter setting.
+See [current status and evidence](docs/ROADMAP.md#current-status--2026-09-27).
 
-QL-2A update (2026-09-26): **engineering baseline accepted for the reviewed fixed SPT Spot v4 profile**. The dedicated state trace compiled, its 58 source inputs plus two Bridge fields match the snapshot, and original notifications are off. Restored checkpoint replay agrees across 4,179 measured bars (47 BUY, 65 EXIT), with zero state/flag changes; all 5,185 closed OHLCV bars agree with independent Spot data. Python and production Node calculations agree on 92 serial decisions including caps, costs and final cash. All 130 recorded native observations match later history with zero changes, exceeding the minimum 100. QL-3A may start with research bounds/validation and the Bridge ATR/RR pair; no dynamic source slots are certified. Runtime Quant remains UNSUPPORTED pending later capability integration. See [QL-2A implementation](docs/QL_2A_IMPLEMENTATION.md).
+QL-3A durable research completed 100 candidates on 10,000 verified Spot bars.
+Every candidate had zero validation closed trades. The result remains
+`NO_VALID_CANDIDATE`, with holdout unopened. The separate Spot EXIT v1 draft
+improved historical loss but still stopped after three losing position episodes;
+it is not activated or TradingView-certified. Last pushed checkpoint is
+`a4e524f`; this is not a production deployment. SMTP remediation remains open.
 
-QL-3A update (2026-09-26): offline bounded research started for the same fixed profile. All 25 Bridge ATR/RR pairs were evaluated through train and validation without changing Bot policy; three closed train trades and zero validation trades per pair mean `NO_VALID_CANDIDATE`. The test partition was not evaluated for performance. No recommendation or QL-4B handoff exists. See [QL-3A implementation](docs/QL_3A_IMPLEMENTATION.md).
+The approved next product addition is readiness before Run Bot: static Risk
+Manager consistency checks, Historical Preflight, data-readiness reporting and
+explainable setting proposals. The [PF-1 through PF-4 plan](docs/ROADMAP.md#approved-extension--readiness-before-run-bot)
+is not yet a shipped customer feature. Existing engines and scoped evidence are
+building blocks. Engineering correctness and eligible trading recommendations
+have separate acceptance decisions.
 
-QL-3A local checkpoint: the owner chose SPT `Custom` with up to eight selected numeric signal inputs. A source-specific parameter-aware evaluator and independent Bridge ATR(14) calculation are implemented. Chatbot now has a local inspect/review step for every effective Pine input and freezes the reviewed values with the source hash before AI analysis; a fresh TradingView Custom snapshot/parity run is still required. An owner-reviewed Paper loss-streak re-arm path was also prepared for stopped, flat Bot accounts; it preserves the locked policy and daily-loss guard. Neither path has produced new validation trades or been deployed. The first run remains `NO_VALID_CANDIDATE`.
+Historical Preflight fetches matching Spot OHLCV from the exchange and evaluates
+a supported source locally, or replays a validated TradingView signal CSV for
+one fixed input snapshot. CSV does not enable source-input optimization. Without
+an evaluator or validated signal history, only static checks are available.
+TradingView MCP is not required; source/parity validation remains necessary.
+Actual historical webhook/fill records and simulated replay results remain
+separate evidence types.
 
-Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md) governs Pine → Bot → Quant → Owner; older phases remain in its archive. The workflow registers an indicator, creates its Bridge, runs Paper, performs one Quant optimization run, delivers validated Best Inputs/Email Report, then ends with owner review and an optional new Bot start. One Pine searches up to 8 user-selected numeric source inputs plus independent Bridge ATR/RR; multiple Pine scripts search only the shared pair. APP-3A fixes webhook/receiver identity and minimal isolation before QL-2A. QL-4B prepares candidate files/report; QL-4C validates before one-Pine owner delivery/apply and SMTP-gated email enqueue. Multi-Pine owner use waits for APP-3B. See [docs/PINE_EXPORT.md](docs/PINE_EXPORT.md). Live trading and production writes are not enabled by this plan.
+The owner workflow registers an indicator, creates a Bridge, checks readiness
+before Paper, runs one bounded Quant optimization and delivers only validated
+Best Inputs/Email Report for owner review and optional new Bot start. Negative
+results end with a reason report. There is no automatic research loop. One Pine
+searches up to eight selected numeric source inputs plus Bridge ATR/RR; multiple
+Pine scripts keep their source inputs fixed and search only the shared pair.
+
+### Planned research archive and reporting architecture
+
+[Roadmap](docs/ROADMAP.md#approved-extension--quant-research-library-and-best-performance)
+owns the approved QD-1 / QR-1 through QR-4 extension and target diagrams.
+[The specification](docs/QUANT_RESEARCH_LIBRARY.md) defines immutable research
+records, Quant Data bundles and comparison rules. These are planned features;
+current durable jobs/offline reports are reusable components.
+
+Store every terminal run with source/inputs/policy/capital/data/engine provenance,
+including unsuccessful results. Best Inputs gains a Quant Data folder; Email
+Report remains the second delivery. Actual Paper Portfolio Performance uses the
+ledger and a planned funding-aware mark-to-market reporting layer. Strategy
+Comparison uses compatible simulations and independent evaluation evidence.
+Neither may mix synthetic fills into actual portfolio history or double-count
+shared capital. Reporting market valuation does not silently change worker
+book-equity risk calculations.
+
+Target admission is 50,000 primary bars including evaluator-specific warm-up
+for each supported timeframe, with additional bounded MTF/resource budgets.
+Current API/engine still caps the narrow supported 1m profile at 10,000 bars.
+Period choices are 1W/1M/3M/6M/1Y/YTD/All Registered/Custom, checked against actual
+calendar boundaries, registration/data availability and capability. Account
+transaction history has separate retention/paging rules.
+
+Owner-requested replay, fixed-input new-period backtest and new optimization
+create new run IDs linked to their parent; comparisons reference all participant
+versions. Prior results stay immutable. An exposed holdout cannot become fresh
+independent evidence for later tuning. No automatic research or deployment loop
+is enabled. MCP is not required for these exchange-data/evaluator paths.
 
 1. **Signal layer**: TradingView indicator sends a Universal Webhook payload with trade_id, broker, symbol, event, sizing data, SL/TP, timestamp, volatility and news fields.
 2. **Bot core**: The Node.js PostgreSQL API validates signals, authenticates each bot's webhook secret and durably queues accepted signals. A separate worker applies execution-time risk controls and commits the Paper fill, position, cash journal, audit and notification outbox atomically. **PostgreSQL schema 14 (supporting per-entry allocations and bot lifecycle state)** and decimal.js preserve monetary precision.
@@ -52,9 +125,14 @@ Forward plan: [docs/ROADMAP.md](docs/ROADMAP.md) governs Pine → Bot → Quant 
 ```mermaid
 flowchart TD
     S1["1. เชื่อม Pine<br/>ลงทะเบียน source และผูกกับ Bot"] --> S2["2. สร้าง Bridge<br/>เพิ่ม Bridge ATR SL = 2.0 และ RR = 1.5"]
-    S2 --> S3["3. รัน Bot บน Paper<br/>เก็บ Session, decisions, fills และข้อมูลราคา"]
+    S2 --> P["ตรวจความพร้อมก่อน Run<br/>Risk Manager + Historical Preflight ตาม capability"]
+    P --> S3["3. รัน Bot บน Paper<br/>เก็บ Session, decisions, fills และข้อมูลราคา"]
     S3 --> S4["4. Quant Lab<br/>ตรวจ parity แล้ว Optimize หนึ่ง run"]
-    S4 --> S5["5. ส่งออก Best Inputs + Email Report"]
+    S4 --> LIB[("Research Library<br/>เก็บทุกผลพร้อม provenance")]
+    LIB --> CMP["เปรียบเทียบ Strategy / Best Performance<br/>ตาม asset และเงื่อนไขที่กำหนด"]
+    S4 --> G{"ผ่านเกณฑ์ candidate?"}
+    G -->|ผ่าน| S5["5. Best Inputs รวม Quant Data<br/>และ Email Report"]
+    G -->|ไม่ผ่าน| N["รายงานเหตุผล<br/>จบ run"]
     S5 --> S6["เจ้าของตรวจ Best Pine Inputs<br/>และ Best Bot Risk Manager"]
     S6 --> S7{"เจ้าของเลือกเริ่ม Bot ใหม่?"}
     S7 -->|เริ่ม Bot| S8["ใช้ค่าที่ตรวจแล้วเริ่ม Bot<br/>จบกระบวนการ"]
@@ -63,7 +141,7 @@ flowchart TD
 
 - **Step 1 (เชื่อม Pine)**: รับเฉพาะ Pine v5/v6 Indicator ที่มี source ให้ตรวจสอบ ลงทะเบียน source/version/inputs และผูกกับ Bot; Strategy ให้ผู้ใช้แปลงภายนอกก่อนส่งเข้า โดยระบบปฏิเสธก่อนเรียก AI
 - **Step 2 (สร้าง Bridge)**: Chatbot ใช้ AI API พร้อม Template/คู่มือให้ AI โดยตรง ไม่เชื่อม MCP เข้า Backend; ช่องตัวเลขสูงสุด 10 ช่อง = Bridge ATR for SL 2.0 และ RR 1.5 จำนวน 2 ช่องบังคับ + Dropdown ให้ผู้ใช้แมป numeric source inputs ได้ 0–8 ช่อง พร้อม Pine และคู่มือตั้ง Webhook ดูขอบเขตและเกณฑ์ parity เชิงตัวเลขใน [Bridge Adapter](docs/PINE_BRIDGE_ADAPTER_API.md)
-- **Step 3 (รัน Bot บน Paper)**: ส่งสัญญาณผ่าน Universal Risk Engine และบันทึก Session, decisions, fills และข้อมูลที่จำเป็นสำหรับ Quant Lab
+- **Step 3 (รัน Bot บน Paper)**: ตามแผนเพิ่มการตรวจ Risk Manager และ Historical Preflight ก่อน Run ตาม capability ที่รองรับ จากนั้นส่งสัญญาณผ่าน Universal Risk Engine และบันทึก Session, decisions, fills และข้อมูลที่จำเป็นสำหรับ Quant Lab
 - **Step 4 (Quant Lab Optimize หนึ่ง run)**: ผ่านเกณฑ์ parity เชิงตัวเลขบน snapshot ที่กำหนดก่อน; Pine เดียว optimize เฉพาะตัวเลขที่ผู้ใช้เลือกไม่เกิน 8 ตัวและ Bridge ATR/RR โดยตรึงค่าอื่นทั้งหมด ส่วนหลาย Pine ตรึง source inputs แล้ว optimize เฉพาะ Bridge ATR/RR คู่ร่วม กติกานี้ใช้แทนการ optimize ทุก source parameter เดิม
 - **Step 5 (ส่งออกและให้เจ้าของตรวจ)**: ส่ง Best Inputs (`inputs.json`, Pine Script, Setup Guide) และ Email Report ที่มี `bot_id`, `pine_import_id`, `export_id`, UTC timestamp และ Metrics สำคัญ เจ้าของตรวจ Best Pine Inputs และค่าที่เข้า Bot Risk Manager แล้วเลือกได้ว่าจะนำค่าไปใช้และเริ่ม Bot ใหม่หรือจบโดยไม่เริ่ม
 
@@ -97,9 +175,17 @@ Planned multi-indicator architecture: [docs/UNIVERSAL_RISK_MANAGER.md](docs/UNIV
 
 ### Planned Risk Manager / Quant Lab alignment
 
+The canonical implementation order and numerical readiness targets are in
+[Roadmap](docs/ROADMAP.md#approved-extension--readiness-before-run-bot).
+[RISK_MANAGER_NEXT](docs/RISK_MANAGER_NEXT.md) specifies the UI/policy contract.
+Preflight and automatic calculation assistance are planned. They preserve
+owner risk limits, show source/data capability, and do not promise zero rejects
+or a valid candidate. Native signals, intents, allocations and flat-to-flat
+position episodes must be reported separately.
+
 The next product scope is documented in [docs/RISK_MANAGER_NEXT.md](docs/RISK_MANAGER_NEXT.md). It preserves the current Bot-owned execution policy and Paper-only worker authority while making three distinctions explicit: policy limits versus calculator defaults, configured funding versus cash/reservations/book equity, and unique-symbol capacity versus independent entry allocations.
 
-Current implementation note: Browser Risk Preview accepts a temporary policy object and supports a BUY Percent-Equity estimate. It is not yet a server-resolved immutable Bot policy snapshot, it does not cover targeted reduce-only exits or all sizing modes, and editing Preview fields currently contributes to the page dirty state. Quant optimization runs are Bot-scoped for ownership/history, but must not be represented as consuming the Bot's saved/locked risk snapshot until server-side resolution and provenance storage are delivered.
+Scope note for the existing general UI (distinct from the later source-bound staging research job): Browser Risk Preview accepts a temporary policy object and supports a BUY Percent-Equity estimate. It is not yet a server-resolved immutable Bot policy snapshot, it does not cover targeted reduce-only exits or all sizing modes, and editing Preview fields currently contributes to the page dirty state. Quant optimization runs are Bot-scoped for ownership/history, but must not be represented as consuming the Bot's saved/locked risk snapshot until server-side resolution and provenance storage are delivered.
 
 Planned policy changes are not deployed capabilities: a per-Bot operational entry-pause control, policy version/hash, allocation-count capacity, preview parity coverage, and stale-validation handling for policy/capital/source changes.
 
@@ -256,4 +342,4 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
     6. *Targeted TP2*: HTTP 202 Accepted, closed target allocation P2, bringing net holdings to flat.
     7. *Reduce-Only SL*: HTTP 202 queued, worker safely verified and rejected excess exit without opening opposite short.
   - Production queue drained immediately to 0; `/healthz` verified `{"ok":true,"version":"2.2.0","mode":"PAPER_ONLY","queued":0}`.
-- **Current Milestone**: **Risk Manager / Quant Lab alignment, SMTP Notification Diagnosis and PostgreSQL Password Rotation** — Schema 14, R-1 Targeted Exits, APP-3 Lifecycle, and APP-4 Quotas are fully deployed and verified live in production Paper forward mode. Next implementation work is the documented Bot policy snapshot, preview parity and operational pause scope; follow-up operations are SMTP diagnosis and scheduled PostgreSQL password rotation.
+- **Historical milestone at the 2026-09-22 release (current work is in Roadmap)**: **Risk Manager / Quant Lab alignment, SMTP Notification Diagnosis and PostgreSQL Password Rotation** — Schema 14, R-1 Targeted Exits, APP-3 Lifecycle, and APP-4 Quotas are fully deployed and verified live in production Paper forward mode. Next implementation work is the documented Bot policy snapshot, preview parity and operational pause scope; follow-up operations are SMTP diagnosis and scheduled PostgreSQL password rotation.

@@ -1,6 +1,83 @@
 # Risk Manager — next implementation scope
 
-Status: planned M1 risk-policy and Bridge-settings scope under [the revised roadmap](ROADMAP.md). Historical release references remain in the archived roadmap. This document does not change the Paper-only execution gate or activate an optimized strategy.
+Status: specification for Risk Manager policy/preview and the approved readiness
+extension, not a claim of deployed functionality. [Roadmap](ROADMAP.md#approved-extension--readiness-before-run-bot)
+owns the delivery order PF-1 through PF-4, numerical readiness targets, current
+status and change log. README/Context remain the primary project explanations.
+
+## Approved readiness extension — 2026-09-27
+
+Add static checks and capability-scoped Historical Preflight before the owner's
+Run Bot action. PF-1 checks consistency, PF-2 performs bounded historical replay,
+PF-3 explains readiness and PF-4 proposes settings inside the owner's limits.
+These are planned features; existing point-in-time previews are not historical
+readiness reports. The dated checkpoints below retain their original scope.
+
+### User contract
+
+Collect allocated capital, maximum tolerable loss, aggregate exposure ceiling
+and repeated-entry preference. Show the resolved Bot policy separately from
+hypothetical draft values. Return estimated quantity, notional, available cash,
+cost-inclusive stop loss, costs relative to SL/TP, venue-minimum feasibility and
+daily capacity. Risk is an upper bound, not a reason to allocate all cash.
+
+Server-side calculations must use actual risk/rounding/fee/reservation semantics
+and applicable venue filters. Resolve owner/Bot authorization independently of
+snapshot hashes. A preview cannot save policy, start a Bot or change Bridge
+ATR/RR. Applying a proposal requires explicit owner save and the existing
+stopped/locked-state rules. Recheck freshness at Run; concurrent orders and new
+market prices can change capacity after a preview.
+
+Read persistent loss-streak/daily/session state as well as policy settings.
+Report actual Run readiness independently from a historical simulation's
+activity: historical success cannot clear a current entry pause.
+
+### Historical capability and evidence
+
+The approved QD-1 target raises primary-series capacity to 50,000 bars including
+warm-up for each supported timeframe; current code remains at 10,000/its narrow
+profile. Use [Roadmap range admission](ROADMAP.md#report-range-and-50000-bar-contract)
+for selectors and exact calendar/data checks. Preflight records may enter the
+[Research Library](QUANT_RESEARCH_LIBRARY.md) as development diagnostics; they
+are not independent validation or actual portfolio fills. Subsequent research
+never silently applies a suggested policy or changes current ledger guards.
+
+Use matching exchange Spot OHLCV plus a parity-proven source evaluator. A
+validated TradingView signal CSV is an alternative for fixed-source-input Risk
+Manager replay. Bind source/effective inputs, time/market, data cutoff/hash,
+engine, execution model and policy/capital basis. CSV must expose native BUY/EXIT
+flags and be checked against independent bars; it does not allow arbitrary
+source-input optimization. Without either capability, show static checks only.
+No TradingView MCP or AI Pine interpreter is required or assumed.
+
+Use an explicit simulation starting account state and preserve all counters
+across its chronological path; do not imply it is the current live ledger.
+Replaying from a historical flat start is labelled simulation and must never
+reset an actual Bot. Missing news/volatility or other active dependencies are
+unknown/unsupported, not automatically passed.
+
+### Report and action semantics
+
+Show signal bars, intents, accepted/capped/rejected entries, closed allocations,
+completed flat-to-flat episodes, costs, exposure/cash, holding time and guard
+pauses. Explain configuration problems separately from normal policy skips,
+loss-protection stops and genuine execution faults. Keep missing-target EXIT
+audit records and investigate failures affecting actual inventory.
+
+Readiness labels are planned UI outcomes: configuration conflict; runnable but
+insufficient research activity; historical capability unavailable; or ready to
+start Paper with stated assumptions. They are not guarantees of a candidate.
+Estimate collection time from development activity with a range and assumptions;
+when a persistent pause prevents further entries, report that no finite estimate
+is available. Historical evidence cannot manufacture natural webhook fills.
+
+Do not increase loss/streak limits, add cash or re-arm accounts automatically to
+reach a trade count. Preserve hard policy during optimization. Numeric sample
+targets and engineering/recommendation gates are centrally maintained in
+[Roadmap](ROADMAP.md#data-readiness-and-candidate-outcomes), not independently
+redefined here. Preflight records are development evidence, never holdout tuning.
+
+## Earlier policy and implementation checkpoints
 
 APP-3A staging acceptance passed on 2026-09-26; [the acceptance record](APP_3A_ACCEPTANCE_2026-09-26.md) selects a canary Paper model of fee 10 bps, slippage 1 bp and risk 1%. These test settings do not modify the owner's policy or production. A 10 bps slippage rehearsal was rejected because the BUY price exceeded frozen TP. QL-2A must reproduce that guard, sizing caps and costs; an optimizer cannot move protection levels or relax Bot limits to force acceptance.
 
