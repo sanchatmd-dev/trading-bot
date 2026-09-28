@@ -170,6 +170,77 @@ Git checkpoint PF-1B/PF-1C รวมโค้ดและเอกสารห�
 
 ### Execution ledger
 
+The [worker-managed lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md)
+reused 4,533 historical bars with one candidate ending at index 3,876. It added no
+live collection wait. The database/scheduler/main/evaluator baseline passed;
+automatic completion and cleanup took 11.4 seconds after ready, with 30 baseline
+and 13 impact samples. Backup-host resolution and seed SQL bindings required
+guarded helper corrections; failed artifacts were retained. These are operational
+durations, not engineering hours. Active work time remains unknown, so the overall
+forecast is unchanged. Remaining stop/recovery cases are separate work; no new
+phase estimate or speedup is inferred from this short baseline. The owner approved
+a 10-point reserve for this staging set only; the usual reserve remains 20 points.
+One active-cancel continuation measured physical stop at 1.429 seconds and preserved
+the slot until stopping, but automatic cleanup returned `STOP_UNCONFIRMED`. The
+attempt remains failed; resolve cleanup proof before a new supervised acceptance
+run. No retry or additional fault case ran. Weekly allowance was 12% remaining at
+integration; the short window was unavailable. These shared-account percentages
+are not exact task costs, and the remaining two points above reserve are not a
+commitment to additional implementation.
+
+The [actual-worker/completion follow-up](QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md)
+reused a retained 1,000-row fixture, adding no live market collection wait.
+Missing startup counters were corrected with bounded readiness; the audit's
+late-read correction passed the final focused I/O suite, 8/8. Completion checks
+passed 15/15. Two staging helper failures required rework: an operation filename
+mismatch and an invalid cross-language hash comparison. Both were retained.
+The final run passed actual main startup, sequential evaluator readback/checkpoint
+verification and automatic completion, with 30 baseline and 36 impact samples.
+This closes that bounded verification task, not the full QD-1/QS-1 phases or a new
+sustained-load gate. Active engineering hours remain unknown, so the overall
+forecast is unchanged; remaining phase acceptance needs separate estimation.
+
+The owner-authorized [physical PROFILE and I/O follow-up](QD_QS_PROFILE_STAGING_IO_2026-09-28.md)
+uses at most 1,000 historical Spot bars and a 15-minute supervised drill budget;
+it does not require waiting for live bars. Runtime delegation needs an administrator
+because the SSH operator lacks noninteractive sudo. Script review and four local
+mocked rollback scenarios are complete. Administrator-run delegation and physical
+PROFILE result recovery passed. The driver done marker arrived 11 seconds after
+the 300-second impact deadline; the monitor stopped the idle worker and reported
+failure. All 296 impact samples were healthy, but that run remains failed evidence.
+The two monitor startup failures and late marker are recorded rework. The first
+bandwidth probe did not prove enforcement (4 MiB write/read in 146/112 ms). The
+owner-approved manager refresh completed, followed by an active scratch unit with
+exact limits. A helper option error wrote zero bytes; the corrected probe completed
+in 16.015 seconds, with direct write/read timings of 7.970/8.007 seconds for 4 MiB
+each. These are verification durations, not engineering hours. The subsequent
+readiness run passed main/evaluator readback and automatic completion in 35.250
+seconds from its ready marker, with 264.750 seconds left before the deadline.
+This bounded measurement does not replace sustained-load calibration. All Bots remain stopped until a
+future deployment; runtime delegation remains applied and is not reboot-persistent.
+Active engineering hours are unknown.
+The total project forecast remains unchanged until measured execution evidence is
+available; the drill time budget is a limit, not a completion estimate.
+
+Steps 2 and 4 started in parallel after `9d06ba0`, with exclusive resource-control
+and data/profile file ownership. Read-only host inspection identified missing
+I/O controller delegation; no load or rollout occurred. Local work now includes
+main/supervisor I/O wiring, a shared calibration deadline, period UI/API and a
+scheduled PROFILE path. The binding mismatch and two audit findings were fixed.
+Final Node 331/331 took 54.565 seconds; PostgreSQL PROFILE 2/2, HTTP 2/2 and
+BACKFILL 2/2 passed. These durations are verification time, not engineering hours.
+Follow-up browser verification passed using isolated Chrome after fixing a stale
+period-preview race. Actual application HTTP PROFILE lifecycle and revocation
+during conversion passed. Follow-up Node 332/332 took 53.857 seconds; physical
+staging and host I/O acceptance remain open. This work uses existing fixtures and needs
+no new live bars. Host acceptance depends on administrator preparation, not a
+market-data waiting period. Active engineering hours and administrator lead time
+remain unknown; the 410–720-hour baseline is unchanged. See the
+[work record](QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md).
+README and Context were updated with local scope and remaining gates. At the
+follow-up integration check, weekly allowance was 37% remaining, the short window
+was unknown and the project reserve remained 20 percentage points.
+
 The owner authorized a Git checkpoint for the verified Data capability/ingestion
 slice. Diff review and publication are release bookkeeping; they add no measured
 engineering hours or capacity acceptance. README and Context were reviewed and

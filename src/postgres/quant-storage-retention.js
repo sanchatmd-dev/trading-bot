@@ -5,6 +5,7 @@ import {canonical,hash,fail} from '../pine-bridge/source.js';
 import {DatasetStore} from '../quant-research/dataset-store.js';
 import {withQuantOfflineGuard,loadQuantRecoveryPolicy} from './quant-foundation-recovery.js';
 import {validateBackfillState,validateBackfillResult,foundationTotalBars,validateDatasetReference} from '../quant-research/foundation-contract.js';
+import {validateProfileResult} from '../quant-research/profile-contract.js';
 
 const markerName='.database-owner.json';
 const artifact=name=>typeof name==='string'&&/^[a-f0-9]{64}$/.test(name);
@@ -61,6 +62,15 @@ export async function maintainQuantStorage({db,budget,apply=false,recoverStaleLo
       retained.add('atr14-'+sha+'.json');
     }
     for(const row of (await query('SELECT contract,checkpoint,next_bar,result,status FROM quant_foundation_jobs')).rows){
+      if(row.contract.kind==='PROFILE'){
+        raw(validateDatasetReference(row.contract.dataset));
+        if(row.status==='SUCCEEDED'){
+          validateProfileResult(row.contract,row.result);
+          raw(row.result.references.raw);
+          retained.add('atr14-'+row.result.references.sidecar.sha256+'.json');
+        }else if(row.result)throw fail('STORAGE_REFERENCE_INVALID');
+        continue;
+      }
       if(row.contract.kind!=='BACKFILL'){raw(row.contract.dataset);continue;}
       if(row.checkpoint){
         const {sha256,...payload}=row.checkpoint;

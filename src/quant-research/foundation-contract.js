@@ -1,4 +1,5 @@
 import {canonical, fail, hash, keys} from '../pine-bridge/source.js';
+import {validateProfileSpec} from './profile-contract.js';
 
 export const FOUNDATION_VERSION = 'quant-foundation-v1';
 export const DATASET_VERSION = 'spot-dataset-v1';
@@ -48,12 +49,17 @@ export function validateDatasetReference(value) {
 
 export function validateFoundationRequest(value) {
   const backfill=value?.kind==='BACKFILL';
-  keys(value, backfill?['version','owner_id','bot_id','kind','range','engine_hash','snapshot_hash','budget']:['version','owner_id','bot_id','kind','dataset','engine_hash','snapshot_hash','budget']);
+  keys(value, backfill?['version','owner_id','bot_id','kind','range','engine_hash','snapshot_hash','budget']:
+    ['version','owner_id','bot_id','kind','dataset','engine_hash','snapshot_hash','budget',...(value?.kind==='PROFILE'?['profile']:[])]);
   if (value.version !== FOUNDATION_VERSION) throw fail('UNSUPPORTED_FOUNDATION_VERSION');
   id(value.owner_id); id(value.bot_id);
-  if (!['PREFLIGHT','BACKTEST','OPTIMIZE','REPORT','BACKFILL'].includes(value.kind)) throw fail('INVALID_FOUNDATION_KIND');
+  if (!['PREFLIGHT','BACKTEST','OPTIMIZE','REPORT','BACKFILL','PROFILE'].includes(value.kind)) throw fail('INVALID_FOUNDATION_KIND');
   if (!sha(value.engine_hash) || !sha(value.snapshot_hash)) throw fail('INVALID_FOUNDATION_HASH');
   const dataset = backfill?null:validateDatasetReference(value.dataset);
+  if(value.kind==='PROFILE'){
+    validateProfileSpec(value.profile,dataset);
+    if(value.snapshot_hash!==value.profile.snapshot_hash)throw fail('INVALID_FOUNDATION_HASH');
+  }
   const totalBars=backfill?backfillBars(value.range):dataset.metadata.total_bars;
   if (totalBars > FOUNDATION_LIMITS.admittedBars) throw fail('FOUNDATION_CAPABILITY_LIMIT');
   const budget = value.budget;

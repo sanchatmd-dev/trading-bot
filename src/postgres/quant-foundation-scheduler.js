@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import {canonical,hash} from '../pine-bridge/source.js';
 import {validateFoundationRequest,foundationTotalBars,validateBackfillState,validateBackfillResult} from '../quant-research/foundation-contract.js';
+import {validateProfileResult} from '../quant-research/profile-contract.js';
 
 const fail = code => Object.assign(new Error(code), {code});
 const activeStatuses = ['QUEUED','PAUSED','RUNNING','STOPPING'];
@@ -196,6 +197,8 @@ export class QuantFoundationScheduler {
   }
   async checkpoint(job,{next_bar,state}) {
     return this.fenced(job,'CHECKPOINT',async row=>{
+      // PROFILE publishes one atomic result and must restart from its raw input.
+      if(row.contract.kind==='PROFILE')throw fail('PROFILE_CHECKPOINT_INVALID');
       if (!Number.isSafeInteger(next_bar) || next_bar<=row.next_bar || next_bar>foundationTotalBars(row.contract))
         throw fail('FOUNDATION_INVALID_CHECKPOINT');
       const bounded=json(state,row.contract.budget.max_state_bytes,'FOUNDATION_STATE_TOO_LARGE');
@@ -212,6 +215,7 @@ export class QuantFoundationScheduler {
     return this.fenced(job,status==='PAUSED'?'PAUSE':'FINISH',async(row,now)=>{
       const bounded=status==='SUCCEEDED'?json(result,row.contract.budget.max_output_bytes,'FOUNDATION_OUTPUT_TOO_LARGE'):null;
       if(row.contract.kind==='BACKFILL'&&status==='SUCCEEDED')validateBackfillResult(row.contract,row.checkpoint,bounded);
+      if(row.contract.kind==='PROFILE'&&status==='SUCCEEDED')validateProfileResult(row.contract,bounded);
       return (await this.db.query(`UPDATE quant_foundation_jobs SET status=$2,result=$3,
         runtime_used_ms=runtime_used_ms+GREATEST(0,$4-run_started_at),run_started_at=NULL,
         lease_token=NULL,lease_until=NULL,worker_id=NULL WHERE job_id=$1 RETURNING *`,[row.job_id,status,JSON.stringify(bounded),now])).rows[0];

@@ -3,21 +3,24 @@ import fs from 'node:fs/promises';
 import {readFileSync} from 'node:fs';
 import {canonical,hash,keys,fail} from '../pine-bridge/source.js';
 import {readJson} from './http.js';
-import {planIngestionRange,INGESTION_CAPABILITY} from '../quant-research/ingestion-range.js';
+import {planIngestionRange,periodPreview,RESEARCH_PERIODS,PLANNED_1M_STAGE_BUDGETS,INGESTION_CAPABILITY} from '../quant-research/ingestion-range.js';
 import {validateFoundationRequest,validateBackfillState,validateBackfillResult} from '../quant-research/foundation-contract.js';
 import {DatasetStore} from '../quant-research/dataset-store.js';
 import {StorageBudget} from '../quant-research/storage-budget.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
+import {rawProfileReadiness} from '../quant-research/data-profile.js';
 
 const active=['QUEUED','PAUSED','RUNNING','STOPPING'];
-const files=['src/postgres/quant-data.js','src/postgres/quant-research-main.js',
+const files=['src/postgres/quant-data.js','src/postgres/quant-profile.js','src/quant-research/profile-contract.js','src/postgres/quant-research-main.js',
   'src/postgres/quant-research-foundation.js','src/postgres/quant-foundation-scheduler.js',
   'src/postgres/quant-foundation-recovery.js','src/postgres/quant-storage-retention.js',
   'src/quant-research/spot-ingestion.js','src/quant-research/ingestion-range.js',
+  'src/quant-research/data-profile.js','src/money.js','src/quant-research/research-dataset-store.js',
+  'src/quant-research/io-controls.js',
   'src/quant-research/foundation-contract.js','src/quant-research/dataset-store.js',
   'src/quant-research/storage-budget.js','src/quant-research/resource-health.js'];
-export async function ingestionEngineHash(){
-  const values=await Promise.all(files.map(async name=>[name,hash(await fs.readFile(new URL('../../'+name,import.meta.url)))]));
+export async function ingestionEngineHash(readFile=fs.readFile){
+  const values=await Promise.all(files.map(async name=>[name,hash(await readFile(new URL('../../'+name,import.meta.url)))]));
   return hash(canonical(Object.fromEntries(values)));
 }
 const normalized=value=>{
@@ -59,7 +62,8 @@ export class QuantDataService{
   async capability(){
     let enabled=false;
     if(this.enabled){try{await this.ready();enabled=true;}catch{/* Fail closed until local foundation readiness holds. */}}
-    return {...INGESTION_CAPABILITY,enabled,verified_execution_profile:false};
+    return {...INGESTION_CAPABILITY,enabled,verified_execution_profile:false,
+      report_timezone:'UTC',periods:RESEARCH_PERIODS,planned_stage_budgets:PLANNED_1M_STAGE_BUDGETS};
   }
   async scope(owner,bot){
     if(!this.db.isTransaction)throw fail('INGESTION_TRANSACTION_REQUIRED');
@@ -75,6 +79,16 @@ export class QuantDataService{
     const request=normalized({...body,cutoff});
     const plan=planIngestionRange(range(request),{now:this.clock()});
     return {capability:await this.capability(),plan,request};
+  }
+  async previewPeriod(owner,body){
+    await this.ready();
+    keys(body,['bot_id','period','end_time','warmup_bars','timezone','custom_start_time'],
+      ['bot_id','period','end_time','warmup_bars','timezone']);
+    await this.scope(owner,body.bot_id);
+    if(body.period==='ALL_AVAILABLE')throw fail('AVAILABLE_HISTORY_UNVERIFIED');
+    const cutoff=Math.floor(this.clock()/60000)*60000;
+    if(!Number.isSafeInteger(body.end_time)||body.end_time>cutoff)throw fail('INVALID_INGESTION_RANGE');
+    return {...periodPreview({...body,available_start_time:undefined}),cutoff};
   }
   async authorize(owner,contract,action,context={}){
     if(contract.kind!=='BACKFILL'||contract.owner_id!==owner)return {ok:false};
@@ -151,6 +165,18 @@ export class QuantDataService{
       run_started_at=NULL WHERE job_id=$1 RETURNING *`,[id,stopping?'STOPPING':'CANCELLED',stopping?'CANCELLED':null,now])).rows[0];
     return this.expose(updated);
   }
+  async profileReadiness(owner,id,queryBotId=null){
+    await this.ready();
+    const row=(await this.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1',[id])).rows[0];
+    if(!row||row.owner_id!==owner||row.contract.kind!=='BACKFILL')throw fail('NOT_FOUND',404);
+    if(queryBotId!==null&&queryBotId!==row.contract.bot_id)throw fail('NOT_FOUND',404);
+    await this.scope(owner,row.contract.bot_id);
+    // expose validates contract, checkpoint and completed-result integrity before disk reads.
+    this.expose(row);
+    if(row.status!=='SUCCEEDED')return {version:'raw-profile-readiness-v1',job_id:id,
+      verified_execution_profile:false,enrollment_ready:false,blockers:['BACKFILL_NOT_SUCCEEDED']};
+    return rawProfileReadiness(row,this.datasetStore);
+  }
 }
 
 export async function quantDataRoutes(req,res,url,actor,service,json,{enabled=false}={}){
@@ -165,10 +191,16 @@ export async function quantDataRoutes(req,res,url,actor,service,json,{enabled=fa
     const body=await readJson(req);if(queryBotId!==null&&queryBotId!==body.bot_id)throw fail('INVALID_FIELDS');
     json(res,200,await service.preview(actor.id,body));return true;
   }
+  if(url.pathname===prefix+'/period-preview'&&req.method==='POST'){
+    const body=await readJson(req);if(queryBotId!==null&&queryBotId!==body.bot_id)throw fail('INVALID_FIELDS');
+    json(res,200,await service.previewPeriod(actor.id,body));return true;
+  }
   if(url.pathname===prefix+'/jobs'&&req.method==='POST'){
     const body=await readJson(req);if(queryBotId!==null&&queryBotId!==body.bot_id)throw fail('INVALID_FIELDS');
     json(res,202,await service.enqueue(actor.id,body,req.headers['idempotency-key']));return true;
   }
+  const profile=url.pathname.match(/^\/api\/quant\/data\/jobs\/([a-f0-9-]{36})\/profile-readiness$/);
+  if(profile&&req.method==='GET'){json(res,200,await service.profileReadiness(actor.id,profile[1],queryBotId));return true;}
   const match=url.pathname.slice((prefix+'/jobs').length).match(/^\/([a-f0-9-]{36})(\/cancel)?$/);
   if(url.pathname.startsWith(prefix+'/jobs/')&&match&&((req.method==='GET'&&!match[2])||(req.method==='POST'&&match[2]))){
     if(match[2])keys(await readJson(req),[]);

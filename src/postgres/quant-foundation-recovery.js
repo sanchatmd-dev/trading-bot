@@ -138,6 +138,13 @@ export async function withQuantOfflineGuard({db,policy,manager=systemd,inventory
 function verifyRows(rows,chunksByRun){
  const units=[];
  for(const row of rows){
+  if(row.contract?.kind==='PROFILE'){
+   if(!row.lease_token||hash(canonical(row.contract))!==row.contract_hash||row.run_id||row.research_contract)
+    throw error('RECOVERY_BINDING_UNVERIFIED');
+   // Profile conversion publishes atomically and restarts from its immutable input.
+   if(row.checkpoint||row.next_bar!==0)throw error('RECOVERY_CHECKPOINT_CORRUPT');
+   continue;
+  }
   if(row.contract?.kind==='BACKFILL'){
    if(!row.lease_token||hash(canonical(row.contract))!==row.contract_hash||row.run_id||row.research_contract)throw error('RECOVERY_BINDING_UNVERIFIED');
    if(row.checkpoint){
@@ -192,7 +199,7 @@ async function snapshot(query){
     FROM quant_foundation_jobs f LEFT JOIN quant_research_foundation r ON r.job_id=f.job_id
     LEFT JOIN quant_jobs q ON q.run_id=r.run_id WHERE f.status IN ('RUNNING','STOPPING') ORDER BY f.job_id`)).rows;
  const chunksByRun=new Map();
- for(const row of rows)if(row.contract?.kind!=='BACKFILL')chunksByRun.set(row.run_id,(await query(
+ for(const row of rows)if(!['BACKFILL','PROFILE'].includes(row.contract?.kind))chunksByRun.set(row.run_id,(await query(
   'SELECT * FROM quant_research_chunks WHERE run_id=$1',[row.run_id])).rows);
  return {rows,chunksByRun,units:verifyRows(rows,chunksByRun)};
 }
@@ -243,7 +250,7 @@ export async function recoverQuantFoundation({db,policy,manager=systemd,inventor
       worker_id=NULL,lease_token=NULL,lease_until=NULL WHERE job_id=$1 AND status='STOPPING' AND lease_token=$3`,
       [row.job_id,status,row.lease_token]);
     if(updated.rowCount!==1)throw error('RECOVERY_LEASE_CHANGED');
-    if(row.contract.kind==='BACKFILL'){done.push({job_id:row.job_id,status});continue;}
+    if(['BACKFILL','PROFILE'].includes(row.contract.kind)){done.push({job_id:row.job_id,status});continue;}
     const cleared=await query(`UPDATE quant_research_chunks SET unit_name=NULL,unit_token=NULL
       WHERE run_id=$1 AND unit_token=$2 AND unit_name IS NOT NULL`,[row.run_id,row.lease_token]);
     if(cleared.rowCount!==second.chunksByRun.get(row.run_id).filter(chunk=>chunk.unit_name).length)

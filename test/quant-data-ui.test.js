@@ -91,6 +91,45 @@ test('preview errors leave fetch disabled and show server message', async () => 
   ui.dom.window.close();
 });
 
+test('period preview reports exact UTC bars, never queues over limit or All Available', async () => {
+  const ui=page(() => ({}));await ready(ui);
+  ui.set('qlDataPeriod','1W');
+  ui.dom.window.api=async (path,options={})=>{
+    ui.calls.push({path,options});
+    assert.equal(path,'/api/quant/data/period-preview');
+    const body=JSON.parse(options.body);
+    assert.equal(body.timezone,'UTC');assert.equal(body.period,'1W');
+    return {period:'1W',start_time:Date.UTC(2023,11,25,1),end_time:body.end_time,evaluation_bars:10080,warmup_bars:0,total_bars:10080,admission:'OVER_RAW_LIMIT'};
+  };
+  await ui.dom.window.qDataPreviewPeriod();
+  assert.match(ui.get('qlDataPeriodResult').textContent,/10,080.*shorten period/);
+  assert.equal(ui.get('qlDataQueue').disabled,true);
+  assert.equal(ui.get('qlDataStart').value,'2024-01-01T00:00');
+  ui.set('qlDataPeriod','ALL_AVAILABLE');
+  ui.dom.window.api=async()=>{throw new Error('AVAILABLE_HISTORY_UNVERIFIED');};
+  await ui.dom.window.qDataPreviewPeriod();
+  assert.match(ui.get('qlDataPeriodResult').textContent,/verified venue history/);
+  ui.dom.window.close();
+});
+
+test('period responses and errors cannot overwrite inputs changed during the request', async () => {
+  const ui=page(()=>({}));await ready(ui);
+  let resolve,reject;
+  ui.dom.window.api=()=>new Promise((yes,no)=>{resolve=yes;reject=no;});
+  const pending=ui.dom.window.qDataPreviewPeriod();
+  ui.set('qlDataWarmup','25');
+  resolve({start_time:Date.UTC(2024,0,1),end_time:Date.UTC(2024,0,1,1),
+    evaluation_bars:60,warmup_bars:0,total_bars:60,admission:'WITHIN_RAW_LIMIT'});
+  await pending;
+  assert.equal(ui.get('qlDataPeriodResult').textContent,'Choose a period and end UTC.');
+  const failed=ui.dom.window.qDataPreviewPeriod();
+  ui.set('qlDataPeriod','1W');reject(new Error('stale error'));
+  await failed;
+  assert.equal(ui.get('qlDataPeriodResult').textContent,'Choose a period and end UTC.');
+  assert.equal(ui.get('qlDataQueue').disabled,true);
+  ui.dom.window.close();
+});
+
 test('repeated Data opens and hide/show keep one status request active; stale reply is ignored', async () => {
   const pending = [];
   let active = 0, maximumActive = 0, statusCalls = 0;

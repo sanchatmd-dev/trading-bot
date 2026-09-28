@@ -178,6 +178,7 @@ function qDataInvalidate() {
   qDataPreview = null;
   qDataKey = null;
   q('qlDataPlan').hidden = true;
+  q('qlDataPeriodResult').textContent = 'Choose a period and end UTC.';
   qDataUpdate();
 }
 function qDataRenderPlan(plan, request) {
@@ -190,6 +191,25 @@ function qDataRenderPlan(plan, request) {
   q('qlDataCutoff').textContent = `${qDataTime(request.cutoff)} (exclusive)`;
   q('qlDataPlan').hidden = false;
 }
+async function qDataPreviewPeriod() {
+  const input=qDataInput(), period=q('qlDataPeriod').value, target=q('qlDataPeriodResult');
+  qDataInvalidate();
+  const generation=qDataGeneration;
+  if (!qDataCapability?.enabled || !input.bot_id || !Number.isSafeInteger(input.end_time) ||
+      !Number.isSafeInteger(input.warmup_bars)) {target.textContent='Select a bot, valid end UTC and warmup.';return;}
+  const body={bot_id:input.bot_id,period,end_time:input.end_time,warmup_bars:input.warmup_bars,
+    timezone:'UTC',...(period==='CUSTOM'?{custom_start_time:input.start_time}:{})};
+  target.textContent='Checking period…';
+  try {
+    const result=await api('/api/quant/data/period-preview',{method:'POST',silent:true,botId:input.bot_id,body:JSON.stringify(body)});
+    if (generation!==qDataGeneration) return;
+    if(result.admission==='WITHIN_RAW_LIMIT'){
+      q('qlDataStart').value=new Date(result.start_time).toISOString().slice(0,16);
+      qDataInvalidate();
+    }
+    target.textContent=`${period} · ${qDataTime(result.start_time)} to ${qDataTime(result.end_time)} (end exclusive) · ${result.evaluation_bars.toLocaleString()} evaluation + ${result.warmup_bars.toLocaleString()} warmup = ${result.total_bars.toLocaleString()} bars. Available history unverified. ${result.admission==='WITHIN_RAW_LIMIT'?'Within 10,000 raw bar limit; profile remains unverified.':'Over 10,000 raw bar limit; shorten period. No automatic truncation.'}`;
+  } catch(error){if(generation!==qDataGeneration)return;target.textContent=period==='ALL_AVAILABLE'?'All Available needs verified venue history and is unavailable.':error.message||'Period preview unavailable.';}
+}
 async function qDataLoadCapability() {
   const generation = ++qDataGeneration;
   qDataCapability = null; qDataPreview = null; q('qlDataPlan').hidden = true; qDataUpdate();
@@ -201,6 +221,8 @@ async function qDataLoadCapability() {
     const profile = capability.broker === 'binance-global' && capability.symbol === 'BTCUSDT' && capability.market === 'SPOT' && capability.timeframe === '1' && capability.raw_only === true && capability.verified_execution_profile === false && capability.max_total_bars <= 10000;
     if (!profile) qDataCapability = {...capability, enabled: false};
     q('qlDataCapability').textContent = qDataCapability.enabled ? `Available · ${capability.max_total_bars.toLocaleString()} bars max` : 'Unavailable';
+    const budgets=capability.planned_stage_budgets;
+    q('qlDataStageBudget').textContent=budgets ? `Planned 1m stage totals, including warmup: ${Object.entries(budgets).map(([stage,limits])=>`${stage} ${limits[0].toLocaleString()}–${limits[1].toLocaleString()}`).join('; ')}. Current raw limit: ${capability.max_total_bars.toLocaleString()}; research profile unverified.` : 'Planned stage budgets do not enable research.';
     qDataStatus(qDataCapability.enabled ? 'Choose a UTC range, then preview before fetching.' : 'Raw history capability is disabled or outside supported Spot 1m profile.', qDataCapability.enabled ? 'info' : 'warn');
   } catch (error) {
     if (generation !== qDataGeneration) return;
@@ -245,6 +267,13 @@ function qDataRenderJob(job) {
   qDataStatus(complete ? `Raw history job ${job.status.toLowerCase()}.` : 'Raw history fetch in progress.', ['FAILED', 'CANCELLED', 'CANCELED', 'TIMED_OUT'].includes(job.status) ? 'err' : complete ? 'ok' : 'info');
   qDataUpdate();
   if (complete) qDataStopPoll();
+  if(job.status==='SUCCEEDED'&&job.job_id)qDataLoadProfileReadiness(job.job_id,qDataJobBotId);
+}
+async function qDataLoadProfileReadiness(id,botId){
+  try{
+    const result=await api(`/api/quant/data/jobs/${encodeURIComponent(id)}/profile-readiness`,{silent:true,botId});
+    if(qDataJob?.job_id===id)q('qlDataProfile').textContent=result.enrollment_ready?'Verified research profile ready.':`Research profile unavailable: ${(result.blockers||[]).join(', ')}. Raw history remains separate.`;
+  }catch(error){if(qDataJob?.job_id===id)q('qlDataProfile').textContent=error.message||'Research profile status unavailable.';}
 }
 async function qDataPoll() {
   if (!qDataJob?.job_id || !qDataVisible() || qDataTerminal(qDataJob.status)) return;
@@ -292,8 +321,9 @@ async function initQuantLab() {
   q('qlResetBacktest').addEventListener('click', () => { Object.entries({qlEmaFast: 10, qlEmaSlow: 30, qlAtrPeriod: 14, qlAtrMult: 2, qlCandles: 2000, qlBalance: 10000}).forEach(([id, value]) => { q(id).value = value; }); qBacktestValid(); });
   document.querySelectorAll('[data-ql-tab]').forEach(tab => tab.addEventListener('click', () => qSetTab(tab))); document.querySelectorAll('[data-ql-basis]').forEach(button => button.addEventListener('click', () => { qBasis = button.dataset.qlBasis; document.querySelectorAll('[data-ql-basis]').forEach(item => { const active = item === button; item.classList.toggle('active', active); item.setAttribute('aria-pressed', String(active)); }); qDrawCurve(); }));
   ['qlEmaFast', 'qlEmaSlow', 'qlAtrPeriod', 'qlAtrMult', 'qlCandles', 'qlBalance'].forEach(id => q(id).addEventListener('input', qBacktestValid));
-  ['qlDataBot', 'qlDataStart', 'qlDataEnd', 'qlDataWarmup'].forEach(id => { q(id).addEventListener('input', qDataInvalidate); q(id).addEventListener('change', qDataInvalidate); });
+  ['qlDataBot', 'qlDataStart', 'qlDataEnd', 'qlDataWarmup', 'qlDataPeriod'].forEach(id => { q(id).addEventListener('input', qDataInvalidate); q(id).addEventListener('change', qDataInvalidate); });
   q('qlDataPreview').addEventListener('click', qDataPreviewRange);
+  q('qlDataPeriodPreview').addEventListener('click', qDataPreviewPeriod);
   q('qlDataQueue').addEventListener('click', qDataQueue);
   q('qlDataCancel').addEventListener('click', qDataCancel);
   document.querySelectorAll('[data-view]').forEach(button => { if (button.dataset.view !== 'quant') button.addEventListener('click', qDataStopPoll); });

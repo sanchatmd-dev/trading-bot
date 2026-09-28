@@ -30,3 +30,14 @@ test('isolated research health also checks the actual trading database queue',as
     probe:async()=>({ok:true}),sample:async()=>({availableMemory:2048,freeDisk:5000,totalDisk:10000,load1:0})});
   assert.equal((await check()).ok,false);assert.equal(calls[0][1],'SELECT 1');assert.equal(calls[1][0],'trading');
 });
+test('I/O opt-in health fails closed on unknown or changed cgroup generation',async()=>{
+  const ioControls={version:'quant-io-v1',device:'8:0',devicePath:'/dev/test-block',main:{readBytesPerSecond:1048576,writeBytesPerSecond:524288},evaluator:{readBytesPerSecond:524288,writeBytesPerSecond:262144}};
+  let io={group:'/user.slice/worker.service',inode:7,readBytes:1,writeBytes:2};
+  const check=createResourceHealth({limits,storageRoot:path.resolve('.'),clock:()=>10000,
+    db:{query:async()=>({rows:[{depth:0,oldest:null}]})},probe:async()=>({ok:true}),
+    sample:async()=>({availableMemory:2048,freeDisk:5000,totalDisk:10000,load1:0}),
+    ioControls,ioIdentity:{group:io.group,inode:7},ioSample:async()=>io});
+  assert.equal((await check()).ok,true);
+  io={...io,readBytes:0};assert.equal((await check()).reason,'UNKNOWN_IO');
+  io={...io,readBytes:2,inode:8};assert.equal((await check()).reason,'UNKNOWN_IO');
+});

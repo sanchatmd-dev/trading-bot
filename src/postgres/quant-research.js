@@ -16,7 +16,8 @@ export const TERMINAL=new Set(['SUCCEEDED','NO_VALID_CANDIDATE','FAILED','CANCEL
 const engineFiles=['src/quant-research/contract.js','src/postgres/quant-research-worker.js','quant_lab/src/robot_quant/research_engine.py','quant_lab/src/robot_quant/spt_custom_evaluator.py','quant_lab/src/robot_quant/spt_evaluator.py','quant_lab/src/robot_quant/bridge_paper.py','quant_lab/src/robot_quant/bridge_replay.py','quant_lab/src/robot_quant/risk_evaluator.py','quant_lab/src/robot_quant/ql3a.py','quant_lab/src/robot_quant/analytics.py'];
 export async function engineHash(foundation=false){
  const files=foundation?[...engineFiles,'src/postgres/quant-research-foundation.js','src/postgres/quant-foundation-scheduler.js','src/quant-research/foundation-contract.js','src/quant-research/dataset-store.js','src/quant-research/research-dataset-store.js','src/quant-research/process-supervisor.js','src/quant-research/resource-health.js','quant_lab/src/robot_quant/research_chunk.py','quant_lab/src/robot_quant/paper_state.py']:engineFiles;
- if(foundation)files.push('src/quant-research/storage-budget.js','src/postgres/quant-storage-retention.js','src/postgres/quant-foundation-recovery.js');
+ if(foundation)files.push('src/quant-research/storage-budget.js','src/postgres/quant-storage-retention.js','src/postgres/quant-foundation-recovery.js',
+   'src/quant-research/io-controls.js','src/quant-research/data-profile.js','src/quant-research/profile-contract.js','src/postgres/quant-profile.js');
  const hashes=await Promise.all(files.map(async name=>[name,hash(await fs.readFile(new URL('../../'+name,import.meta.url)))]));
  return hash(canonical(Object.fromEntries(hashes)));
 }

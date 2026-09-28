@@ -6,7 +6,9 @@ State hashes detect accidental corruption; the scheduler owns authoritative stat
 import hashlib
 import json
 import math
+import os
 import sys
+import time
 from collections import Counter
 from dataclasses import asdict
 from decimal import Decimal, InvalidOperation, localcontext
@@ -18,6 +20,74 @@ from robot_quant.spt_custom_evaluator import CustomOptimizationPlan, SptCustomEv
 IPC_LIMIT = 8 * 1024 * 1024
 STATE_LIMIT = 1024 * 1024
 STATE_VERSION = "research-chunk-v1"
+
+
+def prepare_io_telemetry():
+    """Prime genuine byte counters inside the evaluator unit before reading IPC."""
+    names = ("QUANT_IO_READY_FILE", "QUANT_IO_READY_DEVICE", "QUANT_IO_READY_RBPS", "QUANT_IO_READY_WBPS")
+    values = [os.environ.get(name) for name in names]
+    if not any(values):
+        return
+    if not all(values):
+        raise ValueError("QUANT_IO_READINESS_CONFIGURATION_REQUIRED")
+    filename, device, rbps, wbps = values
+    if not filename.startswith("/") or not device.replace(":", "").isdigit() or device.count(":") != 1:
+        raise ValueError("QUANT_IO_READINESS_CONFIGURATION_REQUIRED")
+    if not rbps.isdecimal() or not wbps.isdecimal() or int(rbps) < 1024 or int(wbps) < 1024:
+        raise ValueError("QUANT_IO_READINESS_CONFIGURATION_REQUIRED")
+    root = os.path.dirname(filename)
+    if not os.path.basename(filename).startswith(".pending-"):
+        raise ValueError("QUANT_IO_READINESS_CONFIGURATION_REQUIRED")
+    storage_device = os.stat(root).st_dev
+    actual = os.path.realpath(f"/sys/dev/block/{os.major(storage_device)}:{os.minor(storage_device)}")
+    approved = os.path.realpath(f"/sys/dev/block/{device}")
+    if not os.path.exists(actual) or not os.path.exists(approved) or not (actual == approved or actual.startswith(approved + "/")):
+        raise ValueError("QUANT_IO_STORAGE_DEVICE_MISMATCH")
+    groups = [line[3:] for line in open("/proc/self/cgroup", encoding="ascii").read().splitlines() if line.startswith("0::")]
+    if len(groups) != 1 or ".." in groups[0] or not groups[0].startswith("/"):
+        raise ValueError("QUANT_IO_TELEMETRY_UNAVAILABLE")
+    location = os.path.join("/sys/fs/cgroup", groups[0].lstrip("/"))
+    identity = os.stat(location).st_ino
+
+    def fields(name):
+        lines = [line.split() for line in open(os.path.join(location, name), encoding="ascii") if line.split() and line.split()[0] == device]
+        if len(lines) != 1:
+            raise ValueError("QUANT_IO_TELEMETRY_UNAVAILABLE")
+        result = {}
+        for token in lines[0][1:]:
+            key, separator, value = token.partition("=")
+            if not separator or key in result:
+                raise ValueError("QUANT_IO_TELEMETRY_UNAVAILABLE")
+            result[key] = value
+        return result
+
+    def limits():
+        if os.stat(location).st_ino != identity:
+            raise ValueError("QUANT_IO_TELEMETRY_UNAVAILABLE")
+        maximum = fields("io.max")
+        if maximum.get("rbps") != rbps or maximum.get("wbps") != wbps:
+            raise ValueError("QUANT_IO_TELEMETRY_UNAVAILABLE")
+
+    deadline = time.monotonic() + 2
+    limits()
+    descriptor = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
+    try:
+        block = b"Q" * 4096
+        if os.write(descriptor, block) != len(block):
+            raise ValueError("QUANT_IO_TELEMETRY_UNAVAILABLE")
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    while time.monotonic() < deadline:
+        limits()
+        try:
+            counters = fields("io.stat")
+        except ValueError:
+            counters = {}
+        if counters.get("rbytes", "").isdecimal() and counters.get("wbytes", "").isdecimal() and time.monotonic() < deadline:
+            return
+        time.sleep(0.025)
+    raise ValueError("QUANT_IO_TELEMETRY_UNAVAILABLE")
 
 
 def canonical(value):
@@ -274,6 +344,7 @@ def evaluate_chunk(request, *, trace=None):
 
 def main():
     try:
+        prepare_io_telemetry()
         raw = sys.stdin.buffer.read(IPC_LIMIT + 1)
         if len(raw) > IPC_LIMIT:
             raise ValueError("RESEARCH_REQUEST_TOO_LARGE")

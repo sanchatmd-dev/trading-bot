@@ -1,0 +1,215 @@
+import {randomUUID} from 'node:crypto';
+import {canonical,fail,hash,keys} from '../pine-bridge/source.js';
+import {D,amount,Money} from '../money.js';
+import {SOURCE_HASH} from '../quant-research/contract.js';
+import {validateBackfillResult,validateFoundationRequest} from '../quant-research/foundation-contract.js';
+import {validateProfileResult} from '../quant-research/profile-contract.js';
+import {verifyEnrollmentBinding} from '../quant-research/data-profile.js';
+import {freshSnapshot,deploymentEvidence} from './pine-bridge-readiness.js';
+import {ingestionEngineHash} from './quant-data.js';
+import {readJson} from './http.js';
+
+const active=['QUEUED','PAUSED','RUNNING','STOPPING'];
+const minute=60000;
+const settings={preset:'Custom',tradeDirectionectionection:'Long + Exit',useSlowFilter:true,
+  useMTF:false,useRSIFilter:false,requireBOS:false,requireSweep:false,slMode:'Zone + ATR',
+  useSession:false,confirmMode:'Any',notifyEnabled:false};
+
+/** Transaction-local service. Caller owns the SERIALIZABLE transaction. */
+export class QuantProfileService{
+  constructor({pineService,dataService,researchStore,clock=Date.now,enabled=false,
+    supportedSourceHash=SOURCE_HASH}={}){
+    this.pine=pineService;this.db=pineService?.db;this.data=dataService;
+    this.researchStore=researchStore;this.clock=clock;this.enabled=enabled;
+    this.supportedSourceHash=supportedSourceHash;
+  }
+  async ready(){
+    if(!this.enabled)throw fail('QUANT_PROFILE_DISABLED',503);
+    await this.data.ready();
+    if(!this.researchStore?.storageBudget||
+       this.researchStore.root!==this.data.datasetStore.root)throw fail('PROFILE_STORAGE_BUDGET_REQUIRED',503);
+  }
+  async scope(owner,bot){await this.data.scope(owner,bot);}
+  async deployment(owner,bot,id){
+    const deployment=await this.db.prepare(
+      'SELECT * FROM pine_deployments WHERE owner_id=? AND bot_id=? AND deployment_id=?').get(owner,bot,id);
+    if(!deployment)throw fail('NOT_FOUND',404);
+    if(deployment.state!=='READY')throw fail('RESEARCH_DEPLOYMENT_NOT_READY',409);
+    if(hash(canonical(deployment.snapshot))!==deployment.snapshot_hash)throw fail('SNAPSHOT_HASH_MISMATCH',409);
+    await freshSnapshot(this.pine,deployment);
+    const evidence=await deploymentEvidence(this.db,deployment);
+    const snapshot=deployment.snapshot;
+    if(snapshot.membership?.length!==1||snapshot.policy?.paperTrading!==true||
+       snapshot.policy?.requireReduceOnlySell!==true||snapshot.market?.broker!=='binance-global'||
+       snapshot.market?.symbol!=='BTCUSDT'||snapshot.market?.timeframe!=='1'||
+       canonical(snapshot.selection?.signals)!==canonical({buy:'buySignal',exit:'sellSignal',timing:'bar_close'}))
+      throw fail('PROFILE_DEPLOYMENT_UNSUPPORTED',409);
+    const source=await this.pine.source(owner,bot,deployment.pine_import_id,deployment.source_version);
+    if(source.source_hash!==this.supportedSourceHash||hash(source.source)!==source.source_hash||
+       snapshot.source_hash!==source.source_hash)throw fail('UNSUPPORTED_SOURCE_HASH',409);
+    const review=source.analysis?.effective_input_review;
+    if(source.analysis?.inputs?.length!==58||!review||review.source_hash!==source.source_hash||
+       review.effective_inputs_hash!==source.analysis.effective_inputs_hash||review.input_count!==58||
+       !review.reviewed_by||!Number.isSafeInteger(review.reviewed_at))
+      throw fail('CUSTOM_EFFECTIVE_INPUT_REVIEW_REQUIRED',409);
+    const effective=Object.fromEntries(source.analysis.inputs.map(input=>[input.pine_variable,input.effective_value]));
+    if(Object.entries(settings).some(([name,value])=>effective[name]!==value))
+      throw fail('UNSUPPORTED_CUSTOM_SETTING',409);
+    return {deployment,evidence,source};
+  }
+  async raw(owner,bot,id){
+    const row=(await this.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1',[id])).rows[0];
+    if(!row||row.owner_id!==owner||row.contract?.bot_id!==bot||row.contract.kind!=='BACKFILL')
+      throw fail('NOT_FOUND',404);
+    if(row.status!=='SUCCEEDED'||hash(canonical(row.contract))!==row.contract_hash)
+      throw fail('BACKFILL_RESULT_UNAVAILABLE',409);
+    validateBackfillResult(row.contract,row.checkpoint,row.result);
+    await this.data.datasetStore.inspect(row.result.dataset);
+    return row;
+  }
+  expose(row){
+    if(hash(canonical(row.contract))!==row.contract_hash||row.contract.kind!=='PROFILE')
+      throw fail('FOUNDATION_INTEGRITY_FAILED');
+    if(row.checkpoint||row.next_bar!==0)throw fail('PROFILE_CHECKPOINT_INVALID');
+    if(row.status==='SUCCEEDED')validateProfileResult(row.contract,row.result);
+    return {job_id:row.job_id,status:row.status,next_bar:row.next_bar,
+      total_bars:row.contract.dataset.metadata.total_bars-500,
+      diagnostic:row.diagnostic??null,result:row.status==='SUCCEEDED'?row.result:null,
+      data_profile_verified:row.status==='SUCCEEDED',evaluator_admission:false};
+  }
+  async enqueue(owner,body,key){
+    await this.ready();
+    keys(body,['bot_id','raw_job_id','deployment_id']);
+    if(typeof key!=='string'||!/^[A-Za-z0-9_-]{8,128}$/.test(key))throw fail('IDEMPOTENCY_KEY_REQUIRED');
+    await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
+    await this.scope(owner,body.bot_id);
+    const previous=(await this.db.query(
+      'SELECT * FROM quant_foundation_jobs WHERE owner_id=$1 AND idempotency_key=$2',[owner,key])).rows[0];
+    if(previous){
+      if(previous.contract?.kind!=='PROFILE'||previous.contract.bot_id!==body.bot_id||
+         previous.contract.profile.raw_job_id!==body.raw_job_id||
+         previous.contract.profile.deployment_id!==body.deployment_id)
+        throw fail('IDEMPOTENCY_CONFLICT',409);
+      return this.expose(previous);
+    }
+    const raw=await this.raw(owner,body.bot_id,body.raw_job_id);
+    const {deployment,evidence,source}=await this.deployment(owner,body.bot_id,body.deployment_id);
+    const model=evidence.execution_model;
+    const profile={raw_job_id:body.raw_job_id,deployment_id:deployment.deployment_id,
+      source_hash:source.source_hash,effective_inputs_hash:source.analysis.effective_inputs_hash,
+      execution_model:model,metadata_hash:hash(canonical({market:deployment.snapshot.market,
+        price_tick:String(model.price_tick),quantity_step:String(model.quantity_step),
+      data_profile:model.data_profile})),raw_provenance_sha256:hash(canonical(raw.result.provenance)),
+      seed_bars:500,snapshot_hash:deployment.snapshot_hash};
+    const count=(await this.db.query("SELECT count(*)::int total,count(*) FILTER(WHERE owner_id=$1)::int owned FROM quant_foundation_jobs WHERE status=ANY($2::text[])",[owner,active])).rows[0];
+    if(count.total>=100||count.owned>=20)throw fail('FOUNDATION_QUEUE_FULL',429);
+    const contract=validateFoundationRequest({version:'quant-foundation-v1',owner_id:owner,
+      bot_id:body.bot_id,kind:'PROFILE',dataset:raw.result.dataset,
+      engine_hash:await ingestionEngineHash(),snapshot_hash:deployment.snapshot_hash,profile,
+      budget:{candidates:1,max_evaluations:1,chunk_bars:Math.min(1000,raw.result.dataset.metadata.total_bars),
+        max_runtime_ms:900000,max_output_bytes:1024*1024,max_state_bytes:1024*1024}});
+    await this.db.query('INSERT INTO quant_foundation_owners(owner_id) VALUES($1) ON CONFLICT DO NOTHING',[owner]);
+    const now=this.clock(),id=randomUUID();
+    const row=(await this.db.query(`INSERT INTO quant_foundation_jobs
+      (job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at)
+      VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7) RETURNING *`,
+      [id,owner,key,JSON.stringify(contract),hash(canonical(contract)),now,now+contract.budget.max_runtime_ms])).rows[0];
+    return this.expose(row);
+  }
+  async authorize(owner,contract,action,context={}){
+    if(contract.kind!=='PROFILE'||contract.owner_id!==owner)return {ok:false};
+    if(action==='ACKNOWLEDGE_STOPPED')return {ok:context.stopped===true};
+    try{
+      await this.scope(owner,contract.bot_id);
+      if(await ingestionEngineHash()!==contract.engine_hash)return {ok:false};
+      const raw=await this.raw(owner,contract.bot_id,contract.profile.raw_job_id);
+      if(canonical(raw.result.dataset)!==canonical(contract.dataset)||
+         hash(canonical(raw.result.provenance))!==contract.profile.raw_provenance_sha256)return {ok:false};
+      const {deployment,source,evidence}=await this.deployment(owner,contract.bot_id,contract.profile.deployment_id);
+      const model=evidence.execution_model;
+      const metadataHash=hash(canonical({market:deployment.snapshot.market,
+        price_tick:String(model.price_tick),quantity_step:String(model.quantity_step),
+        data_profile:model.data_profile}));
+      if(source.source_hash!==contract.profile.source_hash||
+         source.analysis.effective_inputs_hash!==contract.profile.effective_inputs_hash||
+         canonical(model)!==canonical(contract.profile.execution_model)||
+         metadataHash!==contract.profile.metadata_hash||deployment.snapshot_hash!==contract.snapshot_hash)
+        return {ok:false};
+      return {ok:true};
+    }catch{return {ok:false};}
+  }
+  async get(owner,id,cancel=false,queryBotId=null){
+    await this.ready();
+    await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
+    const row=(await this.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[id])).rows[0];
+    if(!row||row.owner_id!==owner||row.contract.kind!=='PROFILE'||
+       (queryBotId!==null&&queryBotId!==row.contract.bot_id))throw fail('NOT_FOUND',404);
+    await this.scope(owner,row.contract.bot_id);
+    if(!cancel||!active.includes(row.status))return this.expose(row);
+    const stopping=['RUNNING','STOPPING'].includes(row.status),now=this.clock();
+    const updated=(await this.db.query(`UPDATE quant_foundation_jobs SET status=$2,stop_reason=$3,lease_until=NULL,
+      runtime_used_ms=runtime_used_ms+CASE WHEN run_started_at IS NULL THEN 0 ELSE GREATEST(0,$4-run_started_at) END,
+      run_started_at=NULL WHERE job_id=$1 RETURNING *`,
+      [id,stopping?'STOPPING':'CANCELLED',stopping?'CANCELLED':null,now])).rows[0];
+    return this.expose(updated);
+  }
+}
+
+/** Runs only under the foundation worker's global lease and fenced finish. */
+export async function buildProfile({rawStore,researchStore,contract,signal,now=Date.now}){
+  if(contract?.kind!=='PROFILE')throw fail('PROFILE_REQUEST_INVALID');
+  const raw=contract.dataset,meta=raw.metadata,model=contract.profile.execution_model;
+  const current=typeof now==='function'?now():now;
+  // Raw end_time is the last bar's close; the derived end is only an index bound.
+  if(!Number.isSafeInteger(current)||current<meta.end_time)throw fail('PROFILE_OPEN_BAR');
+  let priorClose=null,atr=null,seed=D(0),count=0;
+  const rows=[];
+  for await(const bar of rawStore.read(raw,{signal})){
+    const high=D(bar.high),low=D(bar.low),close=D(bar.close);
+    const tr=priorClose===null?high.minus(low):Money.max(high.minus(low),
+      high.minus(priorClose).abs(),low.minus(priorClose).abs());
+    if(count<14){seed=seed.plus(tr);if(count===13)atr=seed.div(14);}
+    else atr=atr.mul(13).plus(tr).div(14);
+    if(count>=500)rows.push({...bar,time:bar.time+minute,atr14:amount(atr),
+      price_tick:String(model.price_tick),quantity_step:String(model.quantity_step)});
+    priorClose=close;count++;
+  }
+  if(count!==meta.total_bars||rows.length!==meta.total_bars-500)throw fail('PROFILE_CONTENT_MISMATCH');
+  const derived={...meta,start_time:meta.start_time+501*minute,
+    end_time:meta.end_time+minute,cutoff:meta.cutoff+minute,
+    warmup_bars:meta.warmup_bars-500,total_bars:meta.total_bars-500};
+  const references=await researchStore.publish(derived,rows,{model,signal});
+  const evidence={source_hash:contract.profile.source_hash,
+    effective_inputs_hash:contract.profile.effective_inputs_hash,
+    evaluator_hash:contract.engine_hash,execution_model_hash:hash(canonical(model)),
+    metadata_hash:contract.profile.metadata_hash,
+    raw_provenance_sha256:contract.profile.raw_provenance_sha256,seed_bars:500};
+  const binding=await verifyEnrollmentBinding({rawReference:raw,researchReference:references,
+    evidence,rawStore,researchStore,signal});
+  return validateProfileResult(contract,{version:'research-profile-enrollment-v1',raw,
+    references,binding,data_profile_verified:true,evaluator_admission:false,
+    acceptance_blockers:['EVALUATOR_PARITY_REQUIRED','SOURCE_SETTINGS_CAPABILITY_REQUIRED']});
+}
+
+export async function quantProfileRoutes(req,res,url,actor,service,json,{enabled=false}={}){
+  const prefix='/api/quant/data/profiles';
+  if(url.pathname!==prefix&&!url.pathname.startsWith(prefix+'/'))return false;
+  const query=[...url.searchParams.entries()];
+  if(query.length>1||query.some(([name,value])=>name!=='bot_id'||!value))
+    throw fail('INVALID_FIELDS');
+  const queryBotId=query[0]?.[1]??null;
+  if(!enabled)throw fail('QUANT_PROFILE_DISABLED',503);
+  if(url.pathname===prefix&&req.method==='POST'){
+    const body=await readJson(req);
+    if(queryBotId!==null&&queryBotId!==body.bot_id)throw fail('INVALID_FIELDS');
+    json(res,202,await service.enqueue(actor.id,body,req.headers['idempotency-key']));
+    return true;
+  }
+  const match=url.pathname.slice(prefix.length).match(/^\/([a-f0-9-]{36})(\/cancel)?$/);
+  if(match&&((req.method==='GET'&&!match[2])||(req.method==='POST'&&match[2]))){
+    if(match[2])keys(await readJson(req),[]);
+    json(res,200,await service.get(actor.id,match[1],!!match[2],queryBotId));
+    return true;
+  }
+  throw fail('NOT_FOUND',404);
+}

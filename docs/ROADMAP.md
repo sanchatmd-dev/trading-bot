@@ -41,6 +41,57 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-28
 
+Latest [worker-managed lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md)
+passed one actual database/scheduler/main/evaluator baseline under the new I/O
+controls. One evaluation reached index 3,876 and returned the expected
+`NO_VALID_CANDIDATE`; foundation completed successfully, checkpoint hashes matched,
+the slot was released and no holdout was evaluated. Automatic completion and
+cleanup took 11.4 seconds after ready; original services remained healthy with
+unchanged PIDs. This is a directly seeded engineering fixture, not HTTP enqueue
+acceptance. Active cancellation retained the slot and stopped the live child in
+1.429 seconds, but automatic cleanup completion failed with `STOP_UNCONFIRMED`.
+Keep that attempt failed and resolve its cleanup proof before repeating acceptance.
+Remaining stop/recovery cases are tracked in the evidence matrix. QD-1/QS-1 remain
+open; capacity stays 10K/1m.
+
+The earlier [actual-worker/completion follow-up](QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md)
+passed bounded staging verification after correcting missing startup telemetry.
+Main/evaluator use owned 4 KiB reservations, device/limit checks, genuine counters
+and deadline checks before admission. Focused I/O checks passed 8/8; completion
+checks passed 15/15. Actual main startup and a sequential 1,000-row evaluator
+through the production supervisor passed strict Linux readback and checkpoint
+verification. Automatic completion was accepted after cleanup, with 30 baseline
+and 36 impact samples healthy. Two earlier helper failures remain failed evidence.
+That earlier run did not exercise a new main-managed database research job or
+establish sustained-load acceptance. The new baseline above adds the database path.
+
+Steps 2 (resource controls) and 4 (data/profile contracts) started in parallel
+after pushed checkpoint `9d06ba0`. The [local work record](QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md)
+now covers opt-in I/O readback, a shared calibration deadline, UTC period UI/API
+and scheduled PROFILE conversion. Follow-up Node 332/332 passed; PROFILE lifecycle,
+membership revocation during conversion and actual application HTTP checks passed.
+Rendered desktop/mobile Data verification passed after fixing stale period replies.
+PROFILE audit corrections were reviewed. The subsequent physical recovery result
+passed in isolated staging and administrator-run I/O delegation was verified.
+Owner-approved manager re-execution and a bounded scratch unit now demonstrate
+kernel bandwidth enforcement. Actual main startup, sequential evaluator readback
+and supervised completion now pass the bounded follow-up above. Review the
+remaining acceptance matrix before closing either step or the full phases.
+
+The owner authorized the [physical PROFILE and host I/O follow-up](QD_QS_PROFILE_STAGING_IO_2026-09-28.md).
+A manifest-verified release completed physical PROFILE crash/restart with matching
+results and original deadlines. The old lease was rejected after terminal completion.
+The monitor completion gate failed because the driver's done marker arrived 11
+seconds late, despite healthy impact observations; do not mark the entire supervised
+run passed. After one owner-approved user-manager re-execution, an active scratch
+unit verified exact read/write limits of 524,288 bytes/second. Its direct 4 MiB
+write/read took 7.970/8.007 seconds; all eight existing service PIDs and health
+remained unchanged. Earlier failed probes are retained. This is scratch kernel
+evidence; application readback and supervised completion were separate open gates,
+subsequently verified by the bounded follow-up above.
+The runtime delegation is not reboot-persistent. The owner has stopped all Bots
+until a future deployment; do not resume them as part of these operations.
+
 Owner-confirmed primary collection/research market: **BINANCE:BTCUSDT Spot 1m**.
 Continue with the existing market; evidence reuse remains source/settings scoped.
 Time Management uses this market without a pending BTCUSD/venue clarification.
@@ -55,14 +106,14 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 | QL-3A research | Durable 100-candidate job completed; all candidates have zero validation closed trades. [Result](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | `NO_VALID_CANDIDATE`; original holdout unopened. Engineering acceptance and recommendation acceptance are tracked separately; neither is automatically granted by this update. |
 | SPT Spot EXIT v1 | Separate offline draft and four predeclared development comparisons. Net loss improved to -5.1852783497 USDT but three losing episodes still stop entries; validation remains zero. [Review](QL_3A_SPOT_EXIT_V1_2026-09-27.md). | Failed development preflight. Not activated; no new TradingView collection requested for this draft. |
 | Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. | Review/checkpoint diff; active Bot V2 rollout and metadata producer remain separate. PF-2 engineering may use these contracts; V2 Quant admission stays blocked until evaluator parity. Then PF-3/PF-4. |
-| Historical data capacity (QD-1) | [Data capability and ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) adds exact UTC preview, raw-history UI/API and BACKFILL in the shared worker. Local HTTP/browser and PostgreSQL recovery/cancellation checks passed. Isolated staging fetched 2,100 real Spot bars across three pages. Admission remains 10K/1m including warm-up. | Validate expanded admission and separate dataset/profile enrollment before increasing capacity. Raw ingestion is not accepted ATR14 enrollment. |
+| Historical data capacity (QD-1) | [Data capability and ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) passed isolated staging with 2,100 Spot bars. The [PROFILE checkpoint](QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md) now passes local lifecycle, revocation, real application HTTP, simulated recovery and rendered period UI on desktop/mobile. Admission remains 10K/1m including warm-up. | Physical PROFILE recovery results match; repeat supervised completion with the done marker before its deadline. Raw ingestion alone is not enrollment; PROFILE results still deny evaluator admission. Expanded capacity remains gated. |
 | Quant scheduling (QS-1) | [Isolated staging recovery](QD_QS_RECOVERY_STAGING_2026-09-28.md) passed: actual main worker, SIGKILL after 1,000 bars with an in-flight unit, verified offline recovery, new lease and exact resumed result at 3,876 bars. One evaluation charged; old token fenced; original deadline and checkpoint preserved. | Connect other heavy paths to the scheduler and validate larger workloads before expanded admission. Manual cold recovery is not automatic restart or full-host disaster recovery. |
-| Quant resource protection (QS-1) | [Bounded calibration](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) passed: 173.210 seconds of nonidle evaluator intervals within 300 seconds; API p95 7.20 ms, DB p95 1.53 ms, queue 0/0. Thirty-two mechanical replays completed; watchdog stopped the final replay when monitoring ended. Cleanup and eight existing services verified. | CPU50%/512MiB/tasks16 remains a per-unit staging setting. I/O counters were unavailable. Validate absolute I/O budgets, larger workloads and other heavy paths; bind future driver deadlines to monitor readiness. No production rollout. |
+| Quant resource protection (QS-1) | Prior bounded calibration and readiness checks passed their measured scopes. [Lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md) now passes a database/scheduler/main/evaluator baseline with strict I/O readback, checkpoint integrity, automatic completion and physical cleanup. | Complete stop/recovery coverage under the new controls and review the remaining phase matrix. Runtime delegation is not reboot-persistent. Cumulative byte caps and all-device coverage are not proved. No expanded capacity or production rollout. |
 | Research Library / Best Performance (QR-1 through QR-4) | Owner-approved plan and target diagrams below; no customer library, comparison ranking or portfolio mark-to-market shipped by this update. | Reuse durable run evidence; add immutable artifacts, portfolio reporting, fair comparison and explicit owner-started follow-up runs. Real recommendations remain validation-gated. |
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
 
-Latest pushed code/evidence checkpoint: `91e7e95` (recovery/storage/staging)
+Latest pushed code/evidence checkpoint: `9d06ba0` (Data capability/ingestion)
 on `codex/app3a-market-wait-checkpoint`. Earlier PF-1B/PF-1C and PF-1A checkpoints
 are `cf8913d` and `9c5f8f3`. The owner authorized the Data capability/ingestion Git
 checkpoint after local and isolated-staging verification; its scope is recorded
@@ -469,6 +520,84 @@ flowchart TD
 ```
 
 ## Change log
+
+### 2026-09-28 — Worker-managed lifecycle baseline
+
+The isolated database/scheduler/main/evaluator baseline passed with one charged
+evaluation, an expected diagnostic result, verified Python checkpoint and released
+slot. Setup backup and seed-helper failures were retained and recovered through
+guarded resumes. No product runtime changes or new market collection were required.
+The active-cancel case passed its database transition and 1.429-second stop bound,
+but failed automatic cleanup completion; no retry ran. Stop/recovery cases remain
+separately gated in the [evidence matrix](QD_QS_LIFECYCLE_STAGING_2026-09-28.md).
+The owner extended the 10-percentage-point reserve to this staging set only;
+the standing project reserve remains 20 points. No production deployment or phase
+closure follows from this checkpoint.
+
+### 2026-09-28 — Bounded telemetry readiness and successful staging completion
+
+Added reserved 4 KiB telemetry preparation in the actual main/evaluator cgroups,
+preserving strict counters, device/limit checks and physical-stop cleanup.
+Audit corrected acceptance of late reads; focused I/O checks passed 8/8.
+The final staging sequence verified actual main startup and a 1,000-row evaluator
+through the production supervisor, with matching Python checkpoint hashes.
+Automatic completion succeeded in 35.250 seconds with healthy baseline/impact
+samples; test units stopped and the override was removed. Two earlier private
+helper failures remain recorded. Full worker-managed research, expanded capacity
+and phase closure are separate gates. No production deployment or Bot resume.
+See the [evidence and limitations](QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md).
+
+### 2026-09-28 — Actual main startup gate and completion protocol
+
+An isolated actual-main attempt failed the strict I/O telemetry gate and was
+cleaned up without job claims or changes to the original services. The completion
+correction passed 15 focused local checks, including duplicate invocation and
+real CLI publication paths. Main/evaluator positive acceptance and a fresh staging
+monitor run remain open. See the [follow-up record](QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md).
+
+### 2026-09-28 — Owner-approved manager refresh and bounded I/O proof
+
+One user-manager re-execution completed with the original service PIDs preserved.
+An active scratch unit read its own exact I/O limits before load, then measured
+4 MiB direct writes and reads at approximately 0.5 MiB/second. The invalid `dd`
+option attempt wrote zero bytes and remains recorded as rework. Scratch cleanup
+and original service health passed. Actual main/evaluator I/O gates and the earlier
+PROFILE monitor completion failure remain open; no phase closure or Bot resume.
+See the [operational record](QD_QS_PROFILE_STAGING_IO_2026-09-28.md).
+
+### 2026-09-28 — Physical PROFILE and I/O staging preparation
+
+Prepared an isolated immutable release for the owner-authorized crash/restart
+drill and a reviewed runtime I/O delegation script. The script preserves existing
+controllers, checks PID continuity and owns its rollback file. Kernel differences
+after restoration are reported explicitly. SSH cannot execute sudo unattended;
+the owner ran the command and controller readback passed. Physical PROFILE results
+match across attempts, but the monitor completion gate failed on a late done marker.
+These outcomes do not close the full resource/profile acceptance.
+See the [operational record](QD_QS_PROFILE_STAGING_IO_2026-09-28.md).
+
+### 2026-09-28 — Browser and PROFILE acceptance follow-up
+
+Rendered Data checks passed in isolated Chrome with the real local application
+and PostgreSQL. A stale period-preview race was reproduced and fixed, with a
+regression for both stale success and error responses. Actual application HTTP
+PROFILE lifecycle and membership revocation during conversion passed; final Node
+regression is 332/332. Existing global chart/inline-style CSP warnings are recorded
+separately in the [evidence](QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md).
+No staging/production rollout occurred. Physical PROFILE recovery and host I/O
+acceptance remain open; no new collection or capacity increase was authorized.
+
+### 2026-09-28 — Resource controls and data/profile integration
+
+Local steps 2 and 4 add opt-in I/O readback to the main worker and supervisor,
+one monitor/driver deadline, period previews and a scheduled PROFILE conversion
+path. The [work record](QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md) separates
+local test evidence from remaining PostgreSQL/browser and host acceptance.
+PROFILE preserves source/provenance binding and explicitly denies evaluator
+admission. A raw ingestion result alone remains insufficient for Quant research.
+Read-only host inspection found missing I/O controller delegation; no host
+configuration, release, campaign or 10K admission limit changed. README and
+Context now describe the local scope. Git publication is still pending.
 
 ### 2026-09-28 — Data capability and scheduler-backed ingestion
 

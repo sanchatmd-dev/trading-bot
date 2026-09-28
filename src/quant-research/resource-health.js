@@ -1,6 +1,7 @@
 import os from 'node:os';
 import {statfs} from 'node:fs/promises';
 import path from 'node:path';
+import {readCurrentCgroupIo,validateIoControls} from './io-controls.js';
 
 const fail=code=>Object.assign(new Error(code),{code});
 const required=['maxDbMs','maxApiMs','maxQueueAgeMs','maxQueueDepth','minMemoryBytes','minDiskBytes','maxLoad1','maxDiskUsedFraction'];
@@ -27,14 +28,18 @@ export function loopbackHealthProbe(url,{fetcher=fetch}={}) {
 /** Fail closed unless current local host, DB, Paper queue and Web/API all pass.
  * Limits are reviewed operator inputs, never inferred or relaxed automatically.
  */
-export function createResourceHealth({db,tradingDb=db,probe,limits,storageRoot,clock=Date.now,sample}={}) {
+export function createResourceHealth({db,tradingDb=db,probe,limits,storageRoot,clock=Date.now,sample,ioControls,ioSample,ioIdentity}={}) {
   const bounds=validateHealthLimits(limits);
+  const ioBounds=ioControls===undefined?null:validateIoControls(ioControls);
+  if(ioSample&&!ioBounds)throw fail('QUANT_IO_CONTROLS_REQUIRED');
   if(!db?.query||!tradingDb?.query||typeof probe!=='function'||typeof storageRoot!=='string'||!path.isAbsolute(storageRoot))throw fail('QUANT_HEALTH_CONFIGURATION_REQUIRED');
   const readHost=sample??(async()=>{
     if(process.platform!=='linux')throw fail('QUANT_OS_ISOLATION_REQUIRED');
     const disk=await statfs(storageRoot);
     return {availableMemory:os.freemem(),freeDisk:disk.bavail*disk.bsize,totalDisk:disk.blocks*disk.bsize,load1:os.loadavg()[0]};
   });
+  const readIo=ioBounds?(ioSample??(()=>readCurrentCgroupIo(ioBounds))):null;
+  let previousIo=null;
   return async()=>{
     try{
       let began=clock();
@@ -43,6 +48,17 @@ export function createResourceHealth({db,tradingDb=db,probe,limits,storageRoot,c
       const dbMs=clock()-began;
       began=clock();const api=await probe();const apiMs=clock()-began;
       const host=await readHost(),now=clock();
+      const io=readIo?await readIo():null;
+      if(readIo){
+        if(!io||typeof io.group!=='string'||!io.group.startsWith('/')||
+          !Number.isSafeInteger(io.inode)||io.inode<=0||
+          !Number.isSafeInteger(io.readBytes)||io.readBytes<0||
+          !Number.isSafeInteger(io.writeBytes)||io.writeBytes<0||
+          (ioIdentity&&(ioIdentity.group!==io.group||ioIdentity.inode!==io.inode))||
+          (previousIo&&(previousIo.group!==io.group||previousIo.inode!==io.inode||io.readBytes<previousIo.readBytes||io.writeBytes<previousIo.writeBytes)))
+          return {ok:false,reason:'UNKNOWN_IO'};
+        previousIo=io;
+      }
       if(!host||['availableMemory','freeDisk','totalDisk','load1'].some(key=>typeof host[key]!=='number'||!Number.isFinite(host[key]))||
         !Number.isSafeInteger(queue.depth)||queue.depth<0||(queue.depth>0&&!Number.isSafeInteger(queue.oldest))||
         (queue.oldest!==null&&(!Number.isSafeInteger(queue.oldest)||queue.oldest<0))||
@@ -56,7 +72,7 @@ export function createResourceHealth({db,tradingDb=db,probe,limits,storageRoot,c
       if(host.availableMemory<bounds.minMemoryBytes)reasons.push('MEMORY_PRESSURE');
       if(host.freeDisk<bounds.minDiskBytes||1-host.freeDisk/host.totalDisk>=bounds.maxDiskUsedFraction)reasons.push('DISK_PRESSURE');
       if(host.load1>bounds.maxLoad1)reasons.push('CPU_PRESSURE');
-      return {ok:reasons.length===0,reasons,observed_at:now,dbMs,apiMs,queueAgeMs,queueDepth:queue.depth,...host};
-    }catch{return {ok:false,reason:'UNKNOWN_HEALTH'};}
+      return {ok:reasons.length===0,reasons,observed_at:now,dbMs,apiMs,queueAgeMs,queueDepth:queue.depth,...host,...(io?{io}: {})};
+    }catch(error){return {ok:false,reason:error?.code==='QUANT_IO_TELEMETRY_UNAVAILABLE'?'UNKNOWN_IO':'UNKNOWN_HEALTH'};}
   };
 }

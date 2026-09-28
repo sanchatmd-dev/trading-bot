@@ -66,6 +66,55 @@ Do not store passwords, webhook URLs, API keys, tokens, or private key material 
 
 ## Architecture
 
+The [worker-managed lifecycle baseline](docs/QD_QS_LIFECYCLE_STAGING_2026-09-28.md)
+now passes the isolated database/scheduler/main/evaluator path under strict I/O
+controls. One candidate completed to index 3,876 with verified checkpoint integrity,
+the expected `NO_VALID_CANDIDATE`, no holdout evaluation and a released slot.
+Automatic completion and physical cleanup passed with original services healthy.
+This directly seeded engineering fixture does not certify HTTP enqueue, the
+remaining stop/recovery cases or expanded capacity. Bots remain stopped.
+The subsequent active-cancel attempt passed state/slot/stop observations but failed
+automatic cleanup completion with `STOP_UNCONFIRMED`; it remains partial evidence.
+
+The [actual-worker follow-up](docs/QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md)
+diagnosed missing startup byte counters and added bounded telemetry preparation.
+Missing counters remain unknown. Main/evaluator prepare telemetry with a
+reserved 4 KiB write in their own cgroups, verify device/limits and require real
+byte counters before work. Late readbacks and cleanup failures reject admission.
+Focused local I/O checks passed 8/8. Bounded staging verified actual main startup
+and a sequential 1,000-row evaluator through the production supervisor, including
+strict readback and Python checkpoint hashes. Exclusive run claims, reserved
+cleanup time and automatic publication produced timely `DRIVER_DONE` with healthy
+baseline/impact samples. This does not certify a new main-managed research job,
+sustained load or larger capacity; earlier helper failures remain recorded.
+
+The local [resource/profile integration](docs/QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md)
+adds opt-in cgroup I/O readback and a shared calibration deadline. The host's
+user-service hierarchy now supports I/O after administrator-run delegation and
+one owner-approved manager re-execution. A bounded active scratch unit verified
+its exact limits and demonstrated approximately 0.5 MiB/second direct reads/writes.
+An idle slice lacking I/O is not a failure by itself: systemd enables requested
+controllers on demand. Actual main/evaluator readback passed the bounded follow-up.
+The owner has intentionally stopped all Bots until a future deployment; system
+service health must not be interpreted as permission to resume Bot trading.
+Scheduled PROFILE jobs bind raw provenance to a server-owned deployment snapshot,
+seed causal ATR14 with 500 bars and map open timestamps to closed timestamps.
+Conversion uses the shared scheduler and publishes immutable dataset/sidecar
+references. Results explicitly retain `evaluator_admission=false`; capability
+and parity remain separate gates. Local lifecycle, actual application HTTP,
+revocation during conversion and desktop/mobile Data checks passed. Physical
+PROFILE recovery results now match in isolated staging. Its monitor completion
+gate failed on a late done marker, so the full supervised run is not accepted.
+There is no production deployment or increase beyond the existing 10K/1m admission.
+
+An owner-authorized [staging follow-up](docs/QD_QS_PROFILE_STAGING_IO_2026-09-28.md)
+used an isolated immutable release for the physical recovery drill. Host
+I/O delegation uses a reviewed runtime drop-in with PID continuity and scoped
+rollback; ancestor readback and scratch kernel throttling passed. Delegation is
+runtime-only; reboot persistence remains open. Main startup and evaluator
+enforcement passed the later bounded follow-up. The subsequent lifecycle baseline
+adds worker-managed research; fault coverage and capacity acceptance remain open.
+
 Owner-confirmed primary data collection and research market: **BINANCE:BTCUSDT
 Spot 1m**. Existing evidence remains bound to its source/settings and execution
 scope; this confirmation does not expand evaluator or timeframe support.

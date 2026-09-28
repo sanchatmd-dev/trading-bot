@@ -33,6 +33,18 @@ Historical Preflight ใช้ราคา Spot จาก exchange API และ
 
 ## แผน Quant Research Library และ Best Performance
 
+ผล [worker-managed lifecycle staging](docs/QD_QS_LIFECYCLE_STAGING_2026-09-28.md) ผ่าน baseline ที่เชื่อมฐานข้อมูล, scheduler, main worker และ evaluator จริงภายใต้ I/O controls แล้ว ใช้ข้อมูลเดิมและหนึ่ง candidate ได้ `NO_VALID_CANDIDATE` ตาม fixture ตรวจ checkpoint ผ่าน คืน slot และหยุด process ครบ บริการเดิมปกติ ยังต้องตรวจ stop/recovery ที่เหลือก่อนปิด QD-1/QS-1; คงเพดาน 10K/1m และ Bot ทั้งหมดหยุดอยู่
+
+รอบ active cancel หยุด process ใน 1.429 วินาทีและรักษา slot จนหยุด แต่ automatic cleanup แจ้ง `STOP_UNCONFIRMED` จึงยังไม่ผ่าน acceptance ครบ ต้องแก้การยืนยัน cleanup ก่อนตรวจซ้ำ
+
+เพิ่มขั้นเตรียม telemetry สำหรับ main/evaluator แล้ว: ใช้ไฟล์ชั่วคราว 4 KiB ผ่าน storage budget ตรวจ device/limits และรอ counters จริงก่อนรับงาน พร้อมปฏิเสธผลที่มาหลัง deadline ชุดทดสอบ I/O ล่าสุดผ่าน 8/8 และผ่าน staging ตามขอบเขตใน [บันทึกการตรวจ](docs/QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md)
+
+ผล [ตรวจ worker จริงและแก้ completion](docs/QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md): main startup และ evaluator 1,000 แท่งผ่าน supervisor จริงแบบเรียงลำดับ ผ่าน I/O readback และตรวจ hash แล้ว Driver ส่ง completion อัตโนมัติหลัง cleanup ใน 35.250 วินาที; monitor รับผลทัน deadline และ health ผ่านครบ บริการเดิมทั้ง 8 ตัวคง PID เดิม หยุด unit ทดสอบและถอน override แล้ว ขอบเขตนี้ยังไม่ใช่การตรวจ research job ใหม่ที่ main จัดการผ่านฐานข้อมูล หรือการเพิ่ม capacity
+
+ผล [physical PROFILE recovery และ I/O เดิม](docs/QD_QS_PROFILE_STAGING_IO_2026-09-28.md): recovery ได้ผลตรง baseline และ deadline เดิมคงอยู่ แต่ monitor รอบนั้นไม่ผ่านเพราะ done marker ช้า 11 วินาที หลักฐานเดิมยังคงสถานะล้มเหลว; รอบใหม่ด้านบนผ่าน completion แล้ว ยังต้องทบทวน acceptance ที่เหลือก่อนปิด QD-1/QS-1 และ Bot ทั้งหมดคงหยุดจนกว่าจะ deploy ใหม่
+
+งาน local ล่าสุดเพิ่ม [resource controls และ data/profile contracts](docs/QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md): ตรวจ I/O limits ของ worker, ใช้ deadline ร่วมในการวัดโหลด และเพิ่มช่วงเวลา UTC กับงาน PROFILE ผ่าน scheduler เดียวกัน PROFILE แปลงข้อมูลเปิดแท่งเป็นเวลาปิดแท่งพร้อม ATR14 แต่ยังไม่อนุญาต evaluator โดยอัตโนมัติ Local lifecycle, HTTP, การถอนสิทธิ์ระหว่าง conversion และ browser desktop/mobile ผ่านแล้ว; ผลทดสอบ staging ล่าสุดและ gates ที่เหลืออยู่ในบันทึกด้านบน ยังคงเพดาน 10K/1m และไม่มี production deployment
+
 Git checkpoint ก่อนงาน recovery/storage คือ `2f6b1be` ซึ่งรวม QD/QS foundation และ worker integration บน branch `codex/app3a-market-wait-checkpoint` การ deploy เป็นขั้นตอนแยก
 
 ต่อยอด [QD-1/QS-1 foundation](docs/QD_QS_FOUNDATION_CHECKPOINT_2026-09-28.md) ด้วย [research worker integration](docs/QD_QS_WORKER_CHECKPOINT_2026-09-28.md): worker แบบ opt-in อ่าน dataset ผ่าน reference, เก็บ SPT/Paper state ข้าม chunk และใช้ scheduler slot เดียว มี supervisor จำกัด process บน Linux และ health admission ที่ปฏิเสธเมื่อข้อมูลสุขภาพไม่ครบ การเปิดใช้ต้อง migration แบบ offline และตรวจ staging/headroom; capacity ยังเป็น 10K/1m และ V1 เดิม กรณี worker ตายขณะทำงานจะกัก slot ไว้จนพิสูจน์การหยุดได้

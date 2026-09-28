@@ -25,6 +25,7 @@ import {receiveCapture} from './pine-capture.js';
 import {keys} from '../pine-bridge/source.js';
 import {QuantResearchService,quantResearchRoutes} from './quant-research.js';
 import {QuantDataService,quantDataRoutes} from './quant-data.js';
+import {QuantProfileService,quantProfileRoutes} from './quant-profile.js';
 assertProductionConfig();
 const database = new PostgresDatabase();
 await database.runtimeLock();
@@ -56,6 +57,8 @@ if(quantResearchEnabled){
 const quantResearchService=new QuantResearchService({pineService:pineBridgeService});
 const quantDataEnabled=quantResearchEnabled&&process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1';
 const quantDataService=new QuantDataService({pineService:pineBridgeService,enabled:quantDataEnabled});
+const quantProfileService=new QuantProfileService({pineService:pineBridgeService,dataService:quantDataService,
+  researchStore:quantResearchService.datasetStore,enabled:quantDataEnabled});
 const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
 await database.transaction(async()=>{
 await database.lock('robot:bootstrap');
@@ -217,6 +220,7 @@ async function userRoutes(req, res, url) {
   });
   if(await pineBridgeRoutes(req,res,url,actor,pineBridgeService,json,{enabled:pineBridgeEnabled,captureEnabled:pineCaptureEnabled,capturePublicOrigin:pineCapturePublicOrigin}))return;
   if(await quantResearchRoutes(req,res,url,actor,quantResearchService,json,{enabled:quantResearchEnabled}))return;
+  if(await quantProfileRoutes(req,res,url,actor,quantProfileService,json,{enabled:quantDataEnabled}))return;
   if(await quantDataRoutes(req,res,url,actor,quantDataService,json,{enabled:quantDataEnabled}))return;
   try { if (await quantBridge(req, res, url, actor, store)) return; }
   catch (error) { return json(res, 503, {error: 'Quant Lab engine is unavailable'}); }
