@@ -10,7 +10,8 @@ maximum three concurrently, within the runtime's available slots.
 
 Read README.md, Context.md, docs/ROADMAP.md and docs/TIME_MANAGEMENT.md for current
 scope. Follow docs/AGENT_TEAM.md and .agents/TASK_PACKET_TEMPLATE.md. Roadmap owns
-the next implementation action; PF-1 is next at the team-setup checkpoint.
+the next implementation action; old team-setup checkpoints do not override its
+current status and gates.
 Do not infer authorization to complete every project phase unattended from this
 standing delegation policy. Work within the active user request and existing gates.
 
@@ -18,9 +19,28 @@ standing delegation policy. Work within the active user request and existing gat
 
 - Root commander: gpt-6-astra, high. This is the sole scheduling authority.
 - Difficult architecture/audit: gpt-6-astra, medium.
+- Routine worker: gpt-6-luna, medium, for one small local code/UI/fixture slice
+  with an explicit contract and observable acceptance. Use gpt-6-luna, low for
+  documentation and mechanical edits with no behavior change.
 - Coding/testing: gpt-6-sol, medium; debugging/high-risk code: gpt-6-sol, high.
-- Documentation: gpt-6-luna, low; Git/release clerical work: gpt-6-sol, low.
+- Git/release clerical work: gpt-6-sol, low.
 - VPS operations: gpt-6-sol, high, only on an explicit bounded commander dispatch.
+
+Route a task to Luna only when the commander can name exact writable paths,
+stable interfaces, a small stopping point and independent checks. Keep database
+migrations, scheduler/fencing, accounting, Risk Manager, evaluator/parity,
+security, production operations and difficult debugging with Sol/Astra roles.
+Escalate unexpected cross-module behavior or a second failed approach to the
+commander; do not silently expand Luna's scope. Commander reviews every return;
+behavior-changing Luna work also needs independent focused Sol verification
+before acceptance. The worker never approves its own result.
+
+Do not start a swarm by default. Use one Luna worker first; add a second child
+only for independent files with enough usage and integration margin. Retain the
+existing maximum of three children and one writer per file. Pilot three to five
+comparable small slices before expanding Luna dispatch. Record task scope,
+observed account usage before/after, elapsed time, rework and defects; shared
+usage percentages are not exact model costs and parallel work can obscure them.
 
 Project defaults/custom agents are in .codex/. Do not claim an active root model
 changed just because a file changed. If the delegation tool has no role selector,
@@ -36,6 +56,14 @@ context and uses Caveman full for chat, dispatch/return packets and agent-author
 compact summaries/handoffs. Use lite or complete sentences whenever compression
 could obscure meaning. Preserve the user's language and exact technical terms.
 Higher-priority progress updates and required explanations still apply.
+
+Every role, including Luna workers, uses the same compact and memory rules.
+Dispatch only the necessary file paths, contract, evidence links and relevant
+recent context; prefer an empty or short history fork when setting a model.
+Avoid repeated full repository reads and repeated handoff text. Keep one concise
+current checkpoint per task in an ignored local memory file when work spans turns;
+reference primary docs and durable evidence rather than copying logs. Do not
+paste secrets, raw usage responses or machine locations into tracked memory.
 
 The owner explicitly extends compression to internal memory/handoff files,
 overriding the skill's normal-prose boundary for those artifacts only. Keep

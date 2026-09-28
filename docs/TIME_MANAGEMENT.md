@@ -170,6 +170,83 @@ Git checkpoint PF-1B/PF-1C รวมโค้ดและเอกสารห�
 
 ### Execution ledger
 
+Health-pressure preparation produced a reviewed design and bounded forwarding
+proxy with five passing local fixtures. It still needs isolated environment,
+policy and unit copies, six-job identity checks, adapter/monitor/launcher and a
+supervised staging run. No pressure runtime or engineering-hour saving is claimed.
+Plan a separate bounded implementation/review/cleanup slice before launching it;
+account usage percentages alone cannot guarantee the cost of that slice.
+The operations estimate for remaining pressure helpers and review is 1–2 hours,
+followed by a 2–4 minute supervised run and delayed readback. This is an estimate,
+not measured work or a guarantee of acceptance. At the checkpoint, weekly usage
+remaining was 7% and the short window was unknown; the current 3-point reserve
+leaves four points of uncertain task capacity. The longer slice was not admitted.
+
+The after-readiness timeout attempt passed with confirmed SIGSTOP and
+`EVALUATION_TIMED_OUT`. Physical stop was observed 111 ms after the estimated
+systemd timeout point; this is not a precise JavaScript timer latency. Automatic
+cleanup succeeded, with unchanged pre-signal checkpoint and deadline. Existing
+data was reused; no market collection wait was added. Two failed setup attempts
+remain recorded. No total engineering-hour saving or capacity increase is claimed.
+
+For the current continuation only, the owner reduced the usage reserve to three
+percentage points. The refreshed available weekly allowance was 11%, with no
+short-window counter reported. The normal 20-point policy remains unchanged.
+The corrected private readiness probe passed six local cases and syntax checks.
+One staging rerun observed readiness but failed before SIGSTOP while seeking
+additional payload-read evidence. Cleanup succeeded; no timeout gate or project
+forecast reduction is credited. A second Luna Low documentation task recorded
+this outcome; per-agent usage savings remain unknown.
+
+The 2026-09-29 evaluator-timeout attempt reused the frozen fixture without new
+market collection. The bounded readiness probe failed before fault injection;
+automatic cleanup succeeded. The recorded preflight-to-final-readback interval
+was 103 seconds (18:23:49–18:25:32 UTC on 2026-09-28), not total engineering time.
+No fault gate or forecast reduction is credited. Diagnose readiness observation
+before another run, then admit the remaining cases sequentially against refreshed
+usage and health. Root reviewed and updated README/Context in this checkpoint.
+Read-only diagnosis supports a private probe that expires before the allowed
+readiness window. No correction or rerun is credited. The closing usage snapshot
+showed 20% remaining in the five-hour window and 57% weekly; the normal 20-point
+reserve stopped additional fault work. Account-wide percentages do not establish
+the cost of this task or of the Luna pilot.
+
+The first Luna Low documentation pilot completed one local evidence review in
+under two minutes as reported by the worker. Root reviewed the gate mapping and
+accepted the finding that the current README summary should explicitly include
+readiness crash cleanup. No runtime checks were delegated to Luna. Its output is
+an ignored local review; exact per-agent cost and savings are unknown because
+account usage is shared with concurrent work. This is one documentation pilot,
+not a measured coding-worker speedup or completion of the three-to-five-task trial.
+
+The 2026-09-29 sequential fault-case request reached local timeout design review
+only. Separate evaluator and scheduler clocks require explicit path-specific
+acceptance. No VPS connection or new job ran; preparation stopped at the usage
+reserve. Timeout, pressure, crash/recovery and readiness cleanup remain pending.
+No measured runtime or engineering-hour reduction is recorded. README/Context
+were reviewed and retain the correct pending-fault scope.
+
+The 2026-09-29 cancellation follow-up reused the frozen historical fixture and
+added no live collection wait. Diagnosis reproduced a missing-transient-unit
+stop exit code 5 in the private staging harness. One corrected supervised attempt
+passed physical cancellation in 1.474 seconds and automatic confirmed cleanup.
+This is a verification duration, not total engineering time. The original failed
+attempt remains recorded; remaining timeout, pressure and crash/recovery gates
+are unchanged. The normal 20-point usage reserve applies to this follow-up.
+Actual engineering hours remain unknown, so no forecast reduction is claimed.
+
+The 2026-09-29 Luna worker policy adds a planned three-to-five-slice pilot for
+small local tasks. No agent was dispatched and no throughput or token saving was
+measured. Keep the existing project-hour forecast until comparable task evidence
+records usage observations, elapsed time, rework and defects; shared account
+percentages are not exact per-agent cost.
+
+The 2026-09-29 target-diagram correction distinguishes current 10K/Spot 1m
+admission from planned 50K Preflight/chunks and research budgets by stage. It is
+documentation only: no new dataset, runtime benchmark or measured engineering
+hours. The forecast remains unchanged, and remaining QD/QS gates retain their
+prior estimates and uncertainty.
+
 The [worker-managed lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md)
 reused 4,533 historical bars with one candidate ending at index 3,876. It added no
 live collection wait. The database/scheduler/main/evaluator baseline passed;

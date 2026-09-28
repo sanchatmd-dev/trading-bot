@@ -39,7 +39,7 @@ and agent-authored compact/handoff/internal memory. Shared instructions preserve
 resume facts, evidence and gates; public/product docs retain normal prose.
 This communication policy does not change phase order or runtime compaction.
 
-## Current status — 2026-09-28
+## Current status — 2026-09-29
 
 Latest [worker-managed lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md)
 passed one actual database/scheduler/main/evaluator baseline under the new I/O
@@ -48,9 +48,23 @@ controls. One evaluation reached index 3,876 and returned the expected
 the slot was released and no holdout was evaluated. Automatic completion and
 cleanup took 11.4 seconds after ready; original services remained healthy with
 unchanged PIDs. This is a directly seeded engineering fixture, not HTTP enqueue
-acceptance. Active cancellation retained the slot and stopped the live child in
-1.429 seconds, but automatic cleanup completion failed with `STOP_UNCONFIRMED`.
-Keep that attempt failed and resolve its cleanup proof before repeating acceptance.
+acceptance. The original active-cancel attempt failed automatic cleanup with
+`STOP_UNCONFIRMED`; that evidence is retained. A corrected staging harness now
+verifies an already-removed transient unit before accepting its stop exit code 5.
+The new cancellation passed with a 1.474-second physical stop, slot retention,
+unchanged delayed checkpoint/result and automatic confirmed cleanup.
+Two timeout setup attempts stopped before injection and remain recorded failures.
+A later after-readiness attempt passed: exact child SIGSTOP was confirmed,
+research returned `FAILED` / `EVALUATION_TIMED_OUT`, foundation reached `CANCELLED`,
+the slot cleared and automatic cleanup succeeded. The original deadline and
+pre-signal cursor/hash/result remained unchanged. This proves the scoped child
+timeout path, not interruption during payload computation or scheduler deadline
+expiry. Next work is bounded health-pressure acceptance, with the other recovery
+cases still open and fresh usage/health admission required.
+Health-pressure preparation now includes a private bounded proxy that forwards
+genuine Paper health and can return a controlled failure. Five local fixtures
+passed. The isolated environment/policy/unit copies and supervised harness are
+not prepared or deployed; pressure acceptance has not run.
 Remaining stop/recovery cases are tracked in the evidence matrix. QD-1/QS-1 remain
 open; capacity stays 10K/1m.
 
@@ -450,50 +464,61 @@ or email enqueue from a report view. Owner-started follow-ups are new workflows.
 
 ### Target system diagram
 
-Yellow nodes are planned or not fully released. Existing components still have
-their scoped acceptance limits. Historical Preflight checks precede owner Run;
-no saved-setting proposal applies itself. The signal input chooses a supported
-evaluator **or** validated fixed-input CSV; CSV is not fed through an arbitrary
-Pine evaluator. Price data is still needed for Bridge protection and execution.
+Green nodes have passed only the scope named in the box; amber nodes have partial
+evidence or an open gate; grey nodes are planned. The deployed research admission
+remains 10K bars including warm-up for the supported Spot 1m profile. The planned
+50K limit applies to Historical Preflight and processing chunks, while planned
+research datasets use timeframe/stage budgets. Historical Preflight precedes owner
+Run; a saved-setting proposal never applies itself. Signal history comes from a
+supported evaluator **or** validated fixed-input CSV. Price data is still required
+for Bridge protection and execution. All Bots are currently stopped by the owner.
 
 ```mermaid
 flowchart TD
-    U["User / Web UI"] --> AI["Indicator + direct AI API<br/>Template / Guide; no MCP"]
-    AI --> TV["Pine Bridge in TradingView<br/>Compile / Inputs / Alert"]
-    U --> RANGE["Asset / Timeframe / Report period"]
-    RANGE --> CAP{"Mode / timeframe / stage budget<br/>Capability + resource admission?"}
-    CAP -->|No| BLOCK["Explain limit / unavailable data<br/>Owner changes selection"]
-    CAP -->|Yes| DATA["Exchange Spot API / immutable cache<br/>Verified prices + metadata"]
-    DATA --> EA["Admitted / scheduled historical computation"]
-    EA --> EVAL["Supported evaluator"]
-    CSV["Validated TradingView signal CSV<br/>Fixed input snapshot"] --> SIGNALS["Bound native signal history"]
+    U["Owner / Web UI"] --> AI["✅ APP-3A staging engineering<br/>Indicator + direct AI API; Template / Guide; no MCP"]
+    AI --> TV["TradingView Pine Bridge<br/>Compile / Inputs / Alert"]
+    TV --> RX["Webhook receiver"]
+
+    U --> RANGE["Choose asset / timeframe / period<br/>Primary market: BINANCE:BTCUSDT Spot 1m"]
+    RANGE --> CAP{"Capability + stage budget<br/>Current: 10K/1m including warm-up<br/>Target: Preflight <=50K; research by TF/stage"}
+    CAP -->|Unavailable| BLOCK["Explain limit / supported range<br/>No automatic truncation or timeframe change"]
+    CAP -->|Admitted| DATA["✅ Scheduler-backed Spot ingestion in staging<br/>Verified raw prices; profile enrollment gated"]
+    DATA --> EVAL["Supported evaluator"]
+    CSV["Validated TradingView signal CSV<br/>Fixed source/input snapshot"] --> SIGNALS["Bound native signal history"]
     EVAL --> SIGNALS
-    U --> PF1["PF-1 current Risk Manager checks"]
-    PF1 --> PQA["Historical admission / shared heavy queue"]
-    PQA --> PF["PF-2 <=50K replay<br/>PF-3 readiness / PF-4 proposals"]
+
+    U --> PF1["✅ PF-1 engineering<br/>Risk Manager venue/cost/consistency and UI"]
+    PF1 --> PF["PF-2 historical replay <=50K<br/>PF-3 readiness; PF-4 owner proposals<br/>V2 evaluator parity gate"]
     DATA --> PF
     SIGNALS --> PF
-    PF --> OWNER["Owner reviews settings and Run readiness"]
-    OWNER --> ENABLE["Owner starts Paper Bot"]
-    TV --> RX["Webhook receiver"]
-    ENABLE --> WORKER["Worker + authoritative risk checks<br/>Paper execution"]
+    PF --> OWNER["Owner reviews settings and starts Paper Bot"]
+    OWNER --> WORKER["Spot Paper worker + current risk checks"]
     RX --> WORKER
     WORKER --> DB[("PostgreSQL<br/>Cash / Positions / Fills / Audit")]
-    DB --> SNAP["Frozen research context"]
+
+    DB --> SNAP["Freeze Bot / strategy / inputs<br/>Policy / capital / dataset / costs"]
     DATA --> SNAP
     SIGNALS --> SNAP
-    SNAP --> QA["Server admission / durable fair queue"]
-    QA --> QS["Health-gated scheduler<br/>One heavy executor; chunks <=50K"]
-    QS --> OPT["One bounded staged Quant workflow"]
-    OPT --> LIB[("Research Library<br/>All terminal outcomes")]
-    OPT --> VALID{"Candidate and export gates pass?"}
-    VALID -->|Yes| PACKAGE["Best Inputs + Quant Data<br/>Email Report after SMTP gate"]
+    SNAP --> QS["✅ QD/QS baseline, cancel and child timeout in staging<br/>One global heavy slot; current 10K/1m<br/>Remaining fault gates open"]
+    QS --> OPT["✅ One 100-candidate QL-3A run completed<br/>NO_VALID_CANDIDATE; holdout unopened"]
+    OPT --> LIB[("QR-1 Research Library planned<br/>Immutable results, including failed runs")]
+    OPT --> VALID{"Candidate + export validation pass?"}
     VALID -->|No| REASON["Reason report; no Best Inputs"]
-    DB --> PORT["Actual Paper Portfolio Performance<br/>Market valuation / funding-aware returns"]
-    LIB --> COMP["Compatible strategy comparison"]
-    COMP --> BEST["Best Performance Report<br/>Qualified winner or no winner"]
-    classDef planned fill:#fff3cd,stroke:#b8860b,color:#222;
-    class RANGE,CAP,BLOCK,EA,PQA,QA,QS,PF1,PF,OWNER,LIB,PACKAGE,PORT,COMP,BEST planned;
+    VALID -->|Yes| PACKAGE["QL-4B/4C planned<br/>Best Inputs + inputs.json + Pine + Guide + Quant Data"]
+    VALID -->|Yes, SMTP gate passes| MAIL["Email Report to owner<br/>SMTP 550 remediation pending"]
+    PACKAGE --> REVIEW["Owner reviews; may start a new Bot"]
+    MAIL --> REVIEW
+    DB --> PORT["QR-2 planned<br/>Actual Paper Portfolio Performance"]
+    LIB --> COMP["QR-3 planned<br/>Comparable strategies for one asset"]
+    COMP --> BEST["QR-4 planned<br/>Best Performance or no qualified winner"]
+    BEST --> REVIEW
+    LIB --> FOLLOW["Owner-requested replay / backtest / new optimize<br/>Separate run; parent_run_id; no automatic loop"]
+    classDef scoped fill:#e1f5e8,stroke:#23844b,color:#143d28;
+    classDef partial fill:#fff1d5,stroke:#b77900,color:#573a00;
+    classDef planned fill:#e9eef7,stroke:#71829d,color:#243348;
+    class AI,PF1,DATA scoped;
+    class CAP,QS,OPT,MAIL partial;
+    class PF,LIB,PACKAGE,PORT,COMP,BEST,FOLLOW planned;
 ```
 
 ### Owner-requested follow-up diagram
@@ -507,19 +532,79 @@ flowchart TD
     MODE --> NEW["New optimization<br/>Freeze bounds / budget / validation plan"]
     BACK --> SELECT["Select asset / timeframe / period"]
     NEW --> SELECT
-    SELECT --> GATE{"Stage/TF budget + capability checks"}
+    SELECT --> GATE{"Capability + stage/TF budget<br/>Current: 10K/1m including warm-up<br/>Target: Preflight <=50K; research by stage"}
     GATE -->|Fail| WHY["Explain limit / missing capability"]
     GATE -->|Pass| DATA["Freeze verified exchange dataset"]
     DATA --> RUN["New run_id + parent_run_id"]
     REPLAY --> CHECK["Verify original scope and resource admission"]
     CHECK --> RUN
-    RUN --> QUEUE["Admission / queue / health gate<br/>One global heavy job; chunks <=50K"]
+    RUN --> QUEUE["Admission / queue / health gate<br/>One global heavy job<br/>Target processing chunks <=50K"]
     QUEUE --> RESULT["Immutable result / evidence<br/>No prior result overwritten"]
     RESULT --> LIB
     RESULT --> REPORT["Evaluation / comparison report<br/>Rank only after validation gates"]
 ```
 
 ## Change log
+
+### 2026-09-29 — Scoped timeout acceptance and pressure preparation
+
+After two preserved setup failures, one after-readiness attempt passed the actual
+worker/evaluator timeout path with confirmed SIGSTOP, `EVALUATION_TIMED_OUT`,
+unchanged deadline/checkpoint, released execution occupancy and automatic cleanup.
+Natural STOPPING was not sampled; no in-payload interruption claim is made.
+Pressure has only a reviewed private design and locally checked health proxy.
+Its harness and supervised run remain pending. The owner allowed a three-point
+reserve for this continuation only; the checkpoint retained 7% weekly allowance,
+with short-window usage unknown. No production rollout or capacity increase.
+
+### 2026-09-29 — Evaluator-timeout attempt and Luna documentation pilot
+
+One isolated engineering attempt found the live child at cursor 2,000 but could
+not observe completed readiness within the probe window. No SIGSTOP was sent;
+automatic cleanup confirmed all test processes stopped and the slot released.
+Original services remained healthy. Timeout, pressure, crash/recovery and
+readiness cleanup acceptance remain open; preserve the failed attempt and
+diagnose the probe before another run. A Luna Low worker completed one bounded
+local documentation review, reviewed by root; runtime operations remained with
+Sol High. No production rollout, capacity increase or new market collection.
+
+### 2026-09-29 — Sequential fault-case preparation checkpoint
+
+The owner requested timeout, pressure, crash/recovery and readiness crash cleanup
+in sequence. Local timeout review identified separate evaluator and scheduler
+timers with possible competing terminal diagnostics. No staging job or VPS action
+ran; preparation stopped at the usage reserve. All four cases remain pending.
+Next action is to refresh usage/health and define the timeout path and expected
+result before injection; do not count a child timeout as scheduler-deadline proof.
+
+### 2026-09-29 — Supervised cancellation acceptance
+
+Reproduced the staging cleanup exit code 5 for an already-removed transient unit.
+The private harness now verifies ownership, manager state, zero PID, cgroup and
+pending jobs before accepting that specific outcome. One new supervised cancel
+passed in 1.474 seconds with automatic confirmed cleanup, unchanged delayed
+checkpoint/results and healthy original services. The original failed attempt
+remains evidence. No production source, capacity, Bot or holdout changed; timeout,
+pressure and crash/recovery checks remain open. See the [lifecycle evidence](QD_QS_LIFECYCLE_STAGING_2026-09-28.md).
+
+### 2026-09-29 — Bounded Luna worker policy
+
+Added a Luna Medium routine-worker role for small local code, UI and fixture
+slices with exact ownership and observable acceptance. Root remains the sole
+commander; Sol independently verifies behavior-changing Luna work, while complex
+and high-risk paths retain their existing roles. All roles keep Caveman compact
+and handoff rules. Start with one Luna worker, pilot three to five comparable
+slices, and evaluate observed usage, elapsed time, rework and defects before
+considering more parallel work. This policy change does not dispatch an agent,
+change production, or close a phase gate.
+
+### 2026-09-29 — Target system diagrams aligned with current capability
+
+Updated the target and owner-follow-up diagrams to distinguish the current
+10K/Spot 1m admission from planned 50K Historical Preflight/chunks and staged
+research budgets. Marked scoped staging evidence, the open QD/QS cancellation
+cleanup and fault gates, `NO_VALID_CANDIDATE`, SMTP 550 and planned report/export
+components. This changes documentation only, with no capacity or phase acceptance.
 
 ### 2026-09-28 — Worker-managed lifecycle baseline
 

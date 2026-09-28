@@ -73,8 +73,17 @@ the expected `NO_VALID_CANDIDATE`, no holdout evaluation and a released slot.
 Automatic completion and physical cleanup passed with original services healthy.
 This directly seeded engineering fixture does not certify HTTP enqueue, the
 remaining stop/recovery cases or expanded capacity. Bots remain stopped.
-The subsequent active-cancel attempt passed state/slot/stop observations but failed
-automatic cleanup completion with `STOP_UNCONFIRMED`; it remains partial evidence.
+The initial active-cancel attempt failed automatic cleanup with `STOP_UNCONFIRMED`.
+A later isolated rerun passed after the private harness verified already-removed
+transient units instead of rejecting their stop exit code 5 without readback.
+Physical stop took 1.474 seconds, with slot retention, unchanged delayed output
+and automatic confirmed cleanup. The original failed evidence is retained;
+remaining fault cases are still open and production runtime was unchanged.
+Two evaluator-timeout setup attempts failed before injection and remain recorded.
+A later after-readiness attempt confirmed SIGSTOP, `EVALUATION_TIMED_OUT`, physical
+stop, released slot and automatic cleanup, with unchanged deadline and pre-signal
+checkpoint/result. This scoped pass does not prove interruption during payload
+computation or scheduler deadline expiry. Pressure and recovery gates remain open.
 
 The [actual-worker follow-up](docs/QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md)
 diagnosed missing startup byte counters and added bounded telemetry preparation.
@@ -273,7 +282,7 @@ flowchart TD
     S1["1. เชื่อม Pine<br/>ลงทะเบียน source และผูกกับ Bot"] --> S2["2. สร้าง Bridge<br/>เพิ่ม Bridge ATR SL = 2.0 และ RR = 1.5"]
     S2 --> P["ตรวจความพร้อมก่อน Run<br/>Risk Manager + Historical Preflight ตาม capability"]
     P --> S3["3. รัน Bot บน Paper<br/>เก็บ Session, decisions, fills และข้อมูลราคา"]
-    S3 --> QA["แผน Admission / durable queue / health gate<br/>1 heavy Quant job รวมระบบ; chunks ไม่เกิน 50K"]
+    S3 --> QA["Admission / durable queue / health gate<br/>1 heavy Quant job รวมระบบ<br/>ปัจจุบัน 10K/1m; เป้าหมาย chunks ไม่เกิน 50K"]
     QA --> S4["4. Quant Lab<br/>ตรวจ parity แล้ว Optimize หนึ่ง bounded staged run"]
     S4 --> LIB[("Research Library<br/>เก็บทุกผลพร้อม provenance")]
     LIB --> CMP["เปรียบเทียบ Strategy / Best Performance<br/>ตาม asset และเงื่อนไขที่กำหนด"]

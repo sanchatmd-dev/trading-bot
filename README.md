@@ -25,17 +25,19 @@ Historical Preflight ใช้ราคา Spot จาก exchange API และ
 
 ## ทีม Agent สำหรับเดินโครงการ
 
-ใช้หัวหน้าเดียวตาม [AGENTS.md](AGENTS.md) และ [คู่มือทีม](docs/AGENT_TEAM.md): Astra High คุม workflow/timeline/usage; Astra Medium audit งานยาก; Sol Medium/High พัฒนา/debug/test; Luna Low ดูแลเอกสารและ Sol Low ทำ Git ตามขอบเขตที่หัวหน้าส่งให้ โดยทำงานพร้อมกันไม่เกิน 3 subagents และไม่ให้เขียนไฟล์เดียวกันพร้อมกัน
+ใช้หัวหน้าเดียวตาม [AGENTS.md](AGENTS.md) และ [คู่มือทีม](docs/AGENT_TEAM.md): Astra High คุม workflow/timeline/usage; Astra Medium audit งานยาก; Luna Medium รับงานโค้ด/UI/fixture ขนาดเล็กที่มีเกณฑ์ตรวจชัด และ Luna Low ดูแลเอกสาร; Sol Medium/High พัฒนา ตรวจงาน Luna ที่เปลี่ยนพฤติกรรม และ debug/test งานซับซ้อน; Sol Low ทำ Git ตามขอบเขตที่หัวหน้าส่งให้ เริ่มด้วย Luna หนึ่งคน ไม่เปิด swarm เป็นค่าเริ่มต้น และทำงานพร้อมกันไม่เกิน 3 subagents โดยไม่ให้เขียนไฟล์เดียวกันพร้อมกัน
 
 ตั้ง project defaults และ role profiles ใน `.codex/` แล้ว การเลือก model ของ task ที่เปิดอยู่ยังต้องตรวจจาก app ไม่ถือว่าไฟล์ config เปลี่ยน model ระหว่าง turn อัตโนมัติ ตรวจ quota ก่อนส่งงานและแต่ละ checkpoint พร้อม reserve 20% ตามนโยบาย; ไม่รับประกัน quota เมื่อหน้าต่างบางส่วนไม่มีข้อมูล ใช้ local สำหรับพัฒนาและ VPS เฉพาะงานที่ผ่าน scope/health/capability gates
 
-ทุก role รวมหัวหน้าใช้ Caveman สำหรับบทสนทนา, task packets, compact และ handoff ที่ agent เขียนเอง รวมถึงไฟล์ memory ภายใน ตาม [กติกากลาง](AGENTS.md#communication-compact-summaries-and-handoffs) ย่อข้อความซ้ำแต่คงข้อจำกัด หลักฐานและงานถัดไป เอกสารผลิตภัณฑ์ใช้ภาษาปกติ ไม่ถือว่าเปลี่ยนระบบ automatic compaction หรือวัดผลประหยัด token แล้ว
+ทุก role รวมหัวหน้าและ Luna worker ใช้ Caveman สำหรับบทสนทนา, task packets, compact และ handoff ที่ agent เขียนเอง รวมถึงไฟล์ memory ภายใน ตาม [กติกากลาง](AGENTS.md#communication-compact-summaries-and-handoffs) ส่งเฉพาะไฟล์/สัญญา/หลักฐานที่จำเป็น ย่อข้อความซ้ำแต่คงข้อจำกัด หลักฐานและงานถัดไป เอกสารผลิตภัณฑ์ใช้ภาษาปกติ ยังไม่ได้วัดผลประหยัด token จากการเพิ่ม Luna
 
 ## แผน Quant Research Library และ Best Performance
 
 ผล [worker-managed lifecycle staging](docs/QD_QS_LIFECYCLE_STAGING_2026-09-28.md) ผ่าน baseline ที่เชื่อมฐานข้อมูล, scheduler, main worker และ evaluator จริงภายใต้ I/O controls แล้ว ใช้ข้อมูลเดิมและหนึ่ง candidate ได้ `NO_VALID_CANDIDATE` ตาม fixture ตรวจ checkpoint ผ่าน คืน slot และหยุด process ครบ บริการเดิมปกติ ยังต้องตรวจ stop/recovery ที่เหลือก่อนปิด QD-1/QS-1; คงเพดาน 10K/1m และ Bot ทั้งหมดหยุดอยู่
 
-รอบ active cancel หยุด process ใน 1.429 วินาทีและรักษา slot จนหยุด แต่ automatic cleanup แจ้ง `STOP_UNCONFIRMED` จึงยังไม่ผ่าน acceptance ครบ ต้องแก้การยืนยัน cleanup ก่อนตรวจซ้ำ
+รอบ active cancel ใหม่ผ่านใน staging แล้ว: หยุด process ภายใน 1.474 วินาที รักษา slot จนหยุด ไม่มี checkpoint/result เขียนเพิ่ม และ automatic cleanup ยืนยันสำเร็จ แก้เฉพาะ helper ที่เคยปฏิเสธ transient unit ซึ่งถูกลบไปแล้ว รอบเดิมที่แจ้ง `STOP_UNCONFIRMED` ยังคงเป็นหลักฐานล้มเหลว; scheduler deadline, pressure, crash/recovery และ readiness crash cleanup ภายใต้ controls ใหม่ยังต้องตรวจต่อ
+
+รอบ evaluator timeout หลัง readiness ผ่านแล้ว: ยืนยัน SIGSTOP ของ child, ได้ `EVALUATION_TIMED_OUT`, คืน slot และ cleanup สำเร็จ โดย deadline และ checkpoint ไม่เปลี่ยน สองรอบเตรียมทดสอบที่ล้มเหลวยังคงเก็บไว้; scheduler deadline, pressure และ crash/recovery ยังต้องตรวจต่อ
 
 เพิ่มขั้นเตรียม telemetry สำหรับ main/evaluator แล้ว: ใช้ไฟล์ชั่วคราว 4 KiB ผ่าน storage budget ตรวจ device/limits และรอ counters จริงก่อนรับงาน พร้อมปฏิเสธผลที่มาหลัง deadline ชุดทดสอบ I/O ล่าสุดผ่าน 8/8 และผ่าน staging ตามขอบเขตใน [บันทึกการตรวจ](docs/QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md)
 

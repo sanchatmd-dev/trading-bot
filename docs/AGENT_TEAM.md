@@ -12,6 +12,7 @@ unattended or authorize a new research study merely because workers are availabl
 | --- | --- | --- | --- |
 | Root commander | gpt-6-astra / high | Task selection, dependency gates, timeline, usage reservations, integration and final acceptance | Exactly one commander; never appoint a competing project manager |
 | Architecture auditor | gpt-6-astra / medium | Independent difficult audit, risk/accounting/parity review, root-cause escalation | Advisory; no peer dispatch, approval of own fixes or independent operations |
+| Routine worker | gpt-6-luna / medium | One small local code, UI or fixture slice with a stable contract and observable acceptance | No database migration, scheduler/fencing, accounting, Risk Manager, evaluator/parity, security, production operations or difficult debugging; escalate scope changes |
 | Coder | gpt-6-sol / medium | Implement assigned code slice using established semantics | Exact file ownership; escalate complex failures |
 | Debugger | gpt-6-sol / high | Reproduce and fix complex bugs/races | Root-defined scope; escalate after two failed approaches |
 | Tester | gpt-6-sol / medium | Independent focused acceptance/regression evidence | Own test paths; application changes need reassignment |
@@ -22,8 +23,14 @@ unattended or authorize a new research study merely because workers are availabl
 The owner's "light" maps to supported effort `low`. Role profiles are in
 `.codex/agents/`; root/default-child settings are in `.codex/config.toml`.
 At most three children run concurrently with the root in this session. Usually
-one or two are sufficient. Roles are reusable definitions, not eight permanently
+one or two are sufficient. Roles are reusable definitions, not permanently
 running agents. Do not spawn a worker without useful independent work for it.
+Start with one Luna routine worker. Add a second child only for independent files
+with enough shared usage and integration margin; a swarm is not the default.
+Root reviews each return. Behavior-changing Luna work requires independent,
+focused Sol verification before acceptance. Pilot three to five comparable small
+slices, recording observed account usage, elapsed time, rework and defects. Shared
+usage percentages cannot identify exact per-agent cost.
 
 Project config sets the requested root default to Astra High. It cannot prove or
 hot-switch the model of an already active desktop turn. Verify the task's model
@@ -44,7 +51,7 @@ the local PC or VPS. This setup creates no recurring automation or new app tasks
 2. Refresh usage and reserve integration/checkpoint capacity before spawning work.
 3. Use [task packet](../.agents/TASK_PACKET_TEMPLATE.md): objective, model, exact
    file ownership, host, allowed actions, acceptance, evidence and stopping point.
-4. Coder owns source. Tester may prepare fixtures after interfaces stabilize;
+4. Routine worker or coder owns assigned source. Tester may prepare fixtures after interfaces stabilize;
    only run against a declared stable snapshot, never a partly written shared file.
 5. Root reviews returned facts and invokes Astra audit for difficult/high-impact
    changes. A worker cannot certify its own fix as independent acceptance.
@@ -58,6 +65,11 @@ the local PC or VPS. This setup creates no recurring automation or new app tasks
 Root alone coordinates browser focus, TradingView edits and user paste/confirmation
 steps. Avoid duplicate expensive test runs, repeated full repository reads and
 unnecessary model escalation. Shared source/lockfile/Git index ownership is exclusive.
+All roles, including the routine worker, follow AGENTS.md Caveman full and compact
+memory/handoff rules. Give workers only the necessary files, contract and evidence
+links; use a short or empty history fork for model overrides. Store a concise
+current checkpoint in ignored local memory when work spans turns, and verify live
+Git/runtime state on resume.
 
 ## Usage admission policy
 
