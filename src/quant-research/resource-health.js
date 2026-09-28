@@ -27,9 +27,9 @@ export function loopbackHealthProbe(url,{fetcher=fetch}={}) {
 /** Fail closed unless current local host, DB, Paper queue and Web/API all pass.
  * Limits are reviewed operator inputs, never inferred or relaxed automatically.
  */
-export function createResourceHealth({db,probe,limits,storageRoot,clock=Date.now,sample}={}) {
+export function createResourceHealth({db,tradingDb=db,probe,limits,storageRoot,clock=Date.now,sample}={}) {
   const bounds=validateHealthLimits(limits);
-  if(!db?.query||typeof probe!=='function'||typeof storageRoot!=='string'||!path.isAbsolute(storageRoot))throw fail('QUANT_HEALTH_CONFIGURATION_REQUIRED');
+  if(!db?.query||!tradingDb?.query||typeof probe!=='function'||typeof storageRoot!=='string'||!path.isAbsolute(storageRoot))throw fail('QUANT_HEALTH_CONFIGURATION_REQUIRED');
   const readHost=sample??(async()=>{
     if(process.platform!=='linux')throw fail('QUANT_OS_ISOLATION_REQUIRED');
     const disk=await statfs(storageRoot);
@@ -38,7 +38,8 @@ export function createResourceHealth({db,probe,limits,storageRoot,clock=Date.now
   return async()=>{
     try{
       let began=clock();
-      const {rows:[queue]}=await db.query("SELECT count(*)::int depth,min(received_at) oldest FROM signals WHERE status IN ('QUEUED','PROCESSING','SUBMITTED','PARTIALLY_FILLED','UNKNOWN')");
+      if(tradingDb!==db)await db.query('SELECT 1');
+      const {rows:[queue]}=await tradingDb.query("SELECT count(*)::int depth,min(received_at) oldest FROM signals WHERE status IN ('QUEUED','PROCESSING','SUBMITTED','PARTIALLY_FILLED','UNKNOWN')");
       const dbMs=clock()-began;
       began=clock();const api=await probe();const apiMs=clock()-began;
       const host=await readHost(),now=clock();

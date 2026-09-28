@@ -34,9 +34,10 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
    const units=(await this.db.query('SELECT unit_name FROM quant_research_chunks WHERE run_id=$1 AND unit_token=$2 AND unit_name IS NOT NULL',[String(row.job_id),row.lease_token])).rows;
    // Stopping a persisted unit cannot prove an old launcher will never register
    // it later. Cold recovery therefore stays quarantined until offline recovery.
-   for(const unit of units){try{await this.stopUnit(unit.unit_name);}catch{/* Keep the slot quarantined. */}}
+   let allStopped=true;
+   for(const unit of units){try{if(await this.stopUnit(unit.unit_name)!==true)allStopped=false;}catch{allStopped=false;}}
    const key=row.job_id+':'+row.lease_token;
-   if(!this.stopped.has(key)||this.activeLaunches.has(key))continue;
+   if(!allStopped||!this.stopped.has(key)||this.activeLaunches.has(key))continue;
    try{await this.scheduler.acknowledgeStopped(row.job_id,row.lease_token);}catch{/* A newer token or another supervisor wins. */}
    finally{this.stopped.delete(key);}
   }

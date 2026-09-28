@@ -33,9 +33,11 @@ Historical Preflight ใช้ราคา Spot จาก exchange API และ
 
 ## แผน Quant Research Library และ Best Performance
 
-Git checkpoint ที่ push แล้วคือ `cf8913d` รวม PF-1B/PF-1C และกติกา Caveman บน branch `codex/app3a-market-wait-checkpoint` การ deploy เป็นขั้นตอนแยก
+Git checkpoint ก่อนงาน recovery/storage คือ `2f6b1be` ซึ่งรวม QD/QS foundation และ worker integration บน branch `codex/app3a-market-wait-checkpoint` การ deploy เป็นขั้นตอนแยก
 
 ต่อยอด [QD-1/QS-1 foundation](docs/QD_QS_FOUNDATION_CHECKPOINT_2026-09-28.md) ด้วย [research worker integration](docs/QD_QS_WORKER_CHECKPOINT_2026-09-28.md): worker แบบ opt-in อ่าน dataset ผ่าน reference, เก็บ SPT/Paper state ข้าม chunk และใช้ scheduler slot เดียว มี supervisor จำกัด process บน Linux และ health admission ที่ปฏิเสธเมื่อข้อมูลสุขภาพไม่ครบ การเปิดใช้ต้อง migration แบบ offline และตรวจ staging/headroom; capacity ยังเป็น 10K/1m และ V1 เดิม กรณี worker ตายขณะทำงานจะกัก slot ไว้จนพิสูจน์การหยุดได้
+
+[งาน recovery/storage/staging](docs/QD_QS_RECOVERY_STAGING_2026-09-28.md) เพิ่มเครื่องมือกู้ slot แบบ offline, disk/temp reservations, retention ที่รักษา reference และสัญญาช่วงข้อมูล UTC ผ่านการรัน worker จริงใน staging แยกและซ้อม SIGKILL หลัง checkpoint 1,000 แท่งแล้ว ผลหลัง resume ตรงกับ baseline เดิมและ token เก่าถูกปฏิเสธ การวัด API/DB ช่วงสั้นผ่าน แต่ยังไม่ใช่การรับรอง sustained load หรือเพิ่ม capacity
 
 อนุมัติแผนเก็บผล Quant ทุกรอบเป็นข้อมูลวิจัยที่มี version/hash และเพิ่ม `quant-data/` ใน Best Inputs package ส่วน Email Report ยังคงเป็น deliverable หลักรายการที่สอง ผลไม่ผ่านเก็บเป็น diagnostic ที่ตรวจย้อนหลังได้ โดยไม่สร้าง Best Inputs ให้ใช้งาน
 

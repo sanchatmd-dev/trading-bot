@@ -22,3 +22,11 @@ test('resource health blocks memory/disk/load boundaries and malformed queue dat
     const {state,check}=fixture();change(state);assert.equal((await check()).ok,false);
   }
 });
+test('isolated research health also checks the actual trading database queue',async()=>{
+  const calls=[];
+  const check=createResourceHealth({limits,storageRoot:path.resolve('.'),clock:()=>10000,
+    db:{query:async sql=>{calls.push(['research',sql]);return {rows:[{}]};}},
+    tradingDb:{query:async sql=>{calls.push(['trading',sql]);return {rows:[{depth:11,oldest:9999}]};}},
+    probe:async()=>({ok:true}),sample:async()=>({availableMemory:2048,freeDisk:5000,totalDisk:10000,load1:0})});
+  assert.equal((await check()).ok,false);assert.equal(calls[0][1],'SELECT 1');assert.equal(calls[1][0],'trading');
+});

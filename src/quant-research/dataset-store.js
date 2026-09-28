@@ -1,5 +1,6 @@
 import {constants} from 'node:fs';
-import {mkdir, mkdtemp, lstat, open, rename, rm} from 'node:fs/promises';
+import {mkdir, lstat, open, rename, rm} from 'node:fs/promises';
+import {randomUUID} from 'node:crypto';
 import path from 'node:path';
 import {canonical, hash, fail, keys} from '../pine-bridge/source.js';
 import {D, exact} from '../money.js';
@@ -57,9 +58,11 @@ function checkedBar(value,metadata,index) {
 
 /** Shared immutable market cache. Trusted callers must authorize access before use. */
 export class DatasetStore {
-  constructor({root}={}) {
+  constructor({root,storageBudget}={}) {
     if(typeof root!=='string'||!path.isAbsolute(root))throw fail('INVALID_DATASET_ROOT');
     this.root=path.resolve(root);
+    if(storageBudget&&storageBudget.root!==this.root)throw fail('STORAGE_BUDGET_CONFIGURATION_REQUIRED');
+    this.storageBudget=storageBudget;
   }
 
   async ready() {
@@ -74,8 +77,12 @@ export class DatasetStore {
     const metadata=validateDatasetMetadata(value);
     if(!integer(chunkBars,1,50000)||Math.ceil(metadata.total_bars/chunkBars)>MAX_CHUNKS)throw fail('INVALID_DATASET_CHUNK_SIZE');
     aborted(signal);await this.ready();aborted(signal);
-    const temporary=await mkdtemp(path.join(this.root,'.pending-'));
+    const pendingName='.pending-'+randomUUID();
+    const temporary=path.join(this.root,pendingName);
+    const estimatedBytes=metadata.total_bars*MAX_BAR_BYTES+MAX_MANIFEST_BYTES;
+    const reservation=this.storageBudget?await this.storageBudget.reserve({diskBytes:estimatedBytes,tempBytes:estimatedBytes,pendingName}):null;
     try {
+      await mkdir(temporary,{mode:0o700});
       const chunks=[];
       let lines=[],count=0,chunkStart=0;
       const flush=async()=>{
@@ -107,7 +114,7 @@ export class DatasetStore {
         for await(const ignored of this.read(reference,{signal})) {void ignored;}
       }
       return reference;
-    } finally {await rm(temporary,{recursive:true,force:true});}
+    } finally {await rm(temporary,{recursive:true,force:true});await reservation?.release();}
   }
 
   async inspect(value) {

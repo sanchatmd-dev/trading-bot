@@ -14,7 +14,7 @@ const aborted=signal=>{if(signal?.aborted)throw fail('DATASET_CANCELLED');};
  * Metadata's half-open index range ends one minute after the last timestamp.
  */
 export class ResearchDatasetStore {
- constructor({root}){this.raw=new DatasetStore({root});this.root=this.raw.root;}
+ constructor({root,storageBudget}){this.raw=new DatasetStore({root,storageBudget});this.root=this.raw.root;this.storageBudget=storageBudget;}
  async sidecar(reference,{signal}={}){
   aborted(signal);
   keys(reference,['sha256','bar_count','first_time','profile','price_tick','quantity_step']);
@@ -53,7 +53,9 @@ export class ResearchDatasetStore {
   const bytes=canonical(value),sha256=hash(bytes),sidecar={sha256,bar_count:bars.length,first_time:bars[0].time,profile:model.data_profile,price_tick:value.price_tick,quantity_step:value.quantity_step};
   const filename=path.join(this.root,'atr14-'+sha256+'.json');
   if(Buffer.byteLength(bytes)>MAX_SIDECAR_BYTES)throw fail('INVALID_RESEARCH_SIDECAR');
-  const temporary=path.join(this.root,'.pending-atr14-'+randomUUID()+'.json');
+  const pendingName='.pending-atr14-'+randomUUID()+'.json';
+  const temporary=path.join(this.root,pendingName);
+  const reservation=this.storageBudget?await this.storageBudget.reserve({diskBytes:MAX_SIDECAR_BYTES,tempBytes:MAX_SIDECAR_BYTES,pendingName}):null;
   let created=false;
   try{
    aborted(signal);
@@ -63,7 +65,7 @@ export class ResearchDatasetStore {
    // A hard link publishes only the fully written, synced file and never replaces a winner.
    try{await link(temporary,filename);}
    catch(error){if(error.code!=='EEXIST')throw error;await this.sidecar(sidecar,{signal});}
-  }finally{if(created)await rm(temporary,{force:true});}
+  }finally{if(created)await rm(temporary,{force:true});await reservation?.release();}
   aborted(signal);
   return {raw,sidecar};
  }

@@ -1,5 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import fs from 'node:fs/promises';
+import {readFileSync} from 'node:fs';
 import {D} from '../money.js';
 import {hash,canonical,keys,number,fail} from '../pine-bridge/source.js';
 import {freshSnapshot,deploymentEvidence} from './pine-bridge-readiness.js';
@@ -8,17 +9,30 @@ import {lockInputs,candidatePlan,coverage,SOURCE_HASH,RULES} from '../quant-rese
 import {readJson} from './http.js';
 import {ResearchDatasetStore} from '../quant-research/research-dataset-store.js';
 import {validateFoundationRequest} from '../quant-research/foundation-contract.js';
+import {StorageBudget} from '../quant-research/storage-budget.js';
+import {assertQuantStorageOwner} from './quant-storage-retention.js';
 
 export const TERMINAL=new Set(['SUCCEEDED','NO_VALID_CANDIDATE','FAILED','CANCELLED','TIMED_OUT']);
 const engineFiles=['src/quant-research/contract.js','src/postgres/quant-research-worker.js','quant_lab/src/robot_quant/research_engine.py','quant_lab/src/robot_quant/spt_custom_evaluator.py','quant_lab/src/robot_quant/spt_evaluator.py','quant_lab/src/robot_quant/bridge_paper.py','quant_lab/src/robot_quant/bridge_replay.py','quant_lab/src/robot_quant/risk_evaluator.py','quant_lab/src/robot_quant/ql3a.py','quant_lab/src/robot_quant/analytics.py'];
 export async function engineHash(foundation=false){
  const files=foundation?[...engineFiles,'src/postgres/quant-research-foundation.js','src/postgres/quant-foundation-scheduler.js','src/quant-research/foundation-contract.js','src/quant-research/dataset-store.js','src/quant-research/research-dataset-store.js','src/quant-research/process-supervisor.js','src/quant-research/resource-health.js','quant_lab/src/robot_quant/research_chunk.py','quant_lab/src/robot_quant/paper_state.py']:engineFiles;
+ if(foundation)files.push('src/quant-research/storage-budget.js','src/postgres/quant-storage-retention.js','src/postgres/quant-foundation-recovery.js');
  const hashes=await Promise.all(files.map(async name=>[name,hash(await fs.readFile(new URL('../../'+name,import.meta.url)))]));
  return hash(canonical(Object.fromEntries(hashes)));
 }
 
 export class QuantResearchService{
- constructor({pineService,clock=Date.now,supportedSourceHash=SOURCE_HASH,foundation=process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1',datasetStore}){this.pine=pineService;this.store=pineService.store;this.db=pineService.db;this.clock=clock;this.supportedSourceHash=supportedSourceHash;this.foundation=foundation;this.datasetStore=datasetStore??(foundation?new ResearchDatasetStore({root:process.env.QUANT_RESEARCH_DATASET_ROOT}):null);}
+ constructor({pineService,clock=Date.now,supportedSourceHash=SOURCE_HASH,foundation=process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1',datasetStore}){
+  this.pine=pineService;this.store=pineService.store;this.db=pineService.db;this.clock=clock;this.supportedSourceHash=supportedSourceHash;this.foundation=foundation;this.managedStorage=foundation&&!datasetStore;
+  if(this.managedStorage){
+   if(!process.env.QUANT_STORAGE_LIMITS_FILE)throw fail('QUANT_STORAGE_LIMITS_REQUIRED');
+   const limits=JSON.parse(readFileSync(process.env.QUANT_STORAGE_LIMITS_FILE,'utf8'));
+   const root=process.env.QUANT_RESEARCH_DATASET_ROOT;
+   this.storageBudget=new StorageBudget({...limits,root});
+   datasetStore=new ResearchDatasetStore({root,storageBudget:this.storageBudget});
+  }
+  this.datasetStore=datasetStore??null;
+ }
  async executorMode(){
   const exists=(await this.db.query("SELECT to_regclass('quant_research_executor_mode') present")).rows[0].present;
   if(!exists){if(this.foundation)throw fail('RESEARCH_FOUNDATION_SCHEMA_REQUIRED');return;}
@@ -30,6 +44,7 @@ export class QuantResearchService{
   if(typeof key!=='string'||!/^[A-Za-z0-9_-]{8,128}$/.test(key))throw fail('IDEMPOTENCY_KEY_REQUIRED');
   await this.pine.authorize(owner,body.bot_id);
   await this.executorMode();
+  if(this.managedStorage)await assertQuantStorageOwner(this.db,this.datasetStore.root);
   if(this.foundation)await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
   await this.db.lock('quant:research:queue');
   const submissionHash=hash(canonical(body));

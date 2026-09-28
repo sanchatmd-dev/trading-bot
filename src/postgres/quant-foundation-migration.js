@@ -1,9 +1,10 @@
 import fs from 'node:fs/promises';
+import {bindQuantStorage} from './quant-storage-retention.js';
 
 /** Offline only: the maintenance lock excludes every participating API/worker.
  * Installation preserves LEGACY mode unless the operator explicitly selects it.
  */
-export async function migrateQuantFoundation(db,{mode}={}) {
+export async function migrateQuantFoundation(db,{mode,storageRoot}={}) {
   if(mode!==undefined&&!['LEGACY','FOUNDATION'].includes(mode))throw Error('Unsupported research executor mode');
   if(db.isTransaction)throw Error('Foundation migration requires its own transaction');
   return db.transaction(async()=>{
@@ -17,6 +18,8 @@ export async function migrateQuantFoundation(db,{mode}={}) {
     if(!await version('pine_bridge_schema')||!await version('quant_job_schema'))throw Error('Pine Bridge and Quant research extensions 1 required');
     if(!await version('quant_foundation_schema'))await db.query(await fs.readFile(new URL('./quant-foundation-schema.sql',import.meta.url),'utf8'));
     if(!await version('quant_research_foundation_schema'))await db.query(await fs.readFile(new URL('./quant-research-foundation-schema.sql',import.meta.url),'utf8'));
+    if(!await version('quant_storage_schema'))await db.query(await fs.readFile(new URL('./quant-storage-schema.sql',import.meta.url),'utf8'));
+    if(storageRoot!==undefined)await bindQuantStorage(db,storageRoot);
     if(mode!==undefined)await db.query('UPDATE quant_research_executor_mode SET mode=$1 WHERE singleton',[mode]);
     return (await db.query('SELECT mode FROM quant_research_executor_mode WHERE singleton')).rows[0].mode;
   });

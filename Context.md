@@ -166,7 +166,17 @@ and supervising each Python chunk through a Linux systemd service. Health checks
 cover the local Paper API, DB, trading queue, memory, disk and load; missing health
 blocks compute. Offline mode switching prevents mixed legacy/foundation research
 workers. A cold worker crash retains STOPPING until verified offline recovery;
-automatic crash recovery and full staging headroom remain open. No production
+an offline recovery command and storage/range safeguards are now implemented in
+the [recovery/staging work](docs/QD_QS_RECOVERY_STAGING_2026-09-28.md). A pinned
+maintenance session, reviewed worker/release identity and physical stop proof
+are required before recovery. Disk/temp reservations and database-bound retention
+protect referenced artifacts; raw paged ingestion does not establish the ATR14
+execution profile. The isolated main worker passed a physical SIGKILL/recovery
+drill: its checkpoint and original deadline survived, the old token was fenced,
+and the resumed result exactly matched the uninterrupted baseline with one
+charged evaluation. Short production API/DB impact probes passed after client
+warm-up; this is not sustained-load calibration or automatic crash recovery.
+No production
 rollout or expanded capacity is implied; the existing 10K/1m and V1 gates remain.
 
 The owner-provided initial envelope remains 2 vCPU / 8 GB / 100 GB NVMe, 8 TB
