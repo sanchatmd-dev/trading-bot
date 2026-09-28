@@ -5,6 +5,7 @@ import {QuantResearchService} from './quant-research.js';
 import {QuantResearchWorker} from './quant-research-worker.js';
 import fs from 'node:fs/promises';
 import {QuantResearchFoundationWorker} from './quant-research-foundation.js';
+import {QuantDataService} from './quant-data.js';
 import {createResourceHealth,loopbackHealthProbe} from '../quant-research/resource-health.js';
 import {assertQuantWorkerUnit} from './quant-foundation-recovery.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
@@ -33,7 +34,8 @@ if(foundation){
  await assertQuantStorageOwner(db,process.env.QUANT_RESEARCH_DATASET_ROOT);
  if(process.env.QUANT_HEALTH_DATABASE_URL)healthDb=new PostgresDatabase({connectionString:process.env.QUANT_HEALTH_DATABASE_URL,max:2});
  const health=createResourceHealth({db,tradingDb:healthDb??db,limits,probe:loopbackHealthProbe(process.env.QUANT_HEALTH_URL),storageRoot:process.env.QUANT_RESEARCH_DATASET_ROOT});
- worker=new QuantResearchFoundationWorker({service,health});
+ const dataService=new QuantDataService({pineService:service.pine,datasetStore:service.datasetStore.raw,enabled:true});
+ worker=new QuantResearchFoundationWorker({service,dataService,health});
 }else worker=new QuantResearchWorker({service});
 worker.start();console.log('Dedicated PostgreSQL Quant research worker started');
 let stopping=false;

@@ -137,12 +137,167 @@ async function qRiskPreview() {
   const button = q('qlRisk'); qSetBusy(button, true, 'Computing…'); qStatus('Computing risk preview…');
   try { const input = {balance: qNum('qlRiskBalance'), max_risk_percent: qNum('qlRiskMax'), requested_risk_percent: qNum('qlRiskRequested'), max_order_notional: qNum('qlRiskOrder'), max_daily_notional: qNum('qlRiskDaily'), reference_price: qNum('qlRiskPrice')}; if (!Object.values(input).every(value => Number.isFinite(value) && value > 0)) throw new Error('All risk inputs must be positive.'); const result = await api('/api/quant/risk-preview', {method: 'POST', body: JSON.stringify({input})}); qShowRisk(result); q('qlRiskMeta').textContent = `Computed · ${qDate()}`; qStatus('Risk preview complete. It does not authorize an order.', 'ok'); } catch (error) { qStatus(error.message || 'Risk preview unavailable.', 'err'); } finally { qSetBusy(button, false); }
 }
-function qSetTab(tab) { document.querySelectorAll('[data-ql-tab]').forEach(item => { const active = item === tab; item.classList.toggle('active', active); item.setAttribute('aria-selected', String(active)); item.tabIndex = active ? 0 : -1; }); document.querySelectorAll('[data-ql-panel]').forEach(item => { item.hidden = item.dataset.qlPanel !== tab.dataset.qlTab; }); }
+function qSetTab(tab) { document.querySelectorAll('[data-ql-tab]').forEach(item => { const active = item === tab; item.classList.toggle('active', active); item.setAttribute('aria-selected', String(active)); item.tabIndex = active ? 0 : -1; }); document.querySelectorAll('[data-ql-panel]').forEach(item => { item.hidden = item.dataset.qlPanel !== tab.dataset.qlTab; }); if (tab.dataset.qlTab === 'data') qDataOpen(); else qDataStopPoll(); }
+
+let qDataCapability = null, qDataPreview = null, qDataGeneration = 0, qDataJob = null, qDataJobBotId = '', qDataTimer = null, qDataPollCount = 0, qDataPollEpoch = 0, qDataPollInFlight = false, qDataPollResume = false, qDataKey = null, qDataBusy = false;
+const qDataTerminal = status => ['COMPLETED', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'CANCELED', 'TIMED_OUT'].includes(status);
+const qDataVisible = () => !document.hidden && !document.querySelector('[data-page="quant"]').hidden && !q('qlPanelData').hidden;
+const qDataUtc = value => {
+  if (!/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(value)) return NaN;
+  const time = Date.parse(`${value}:00.000Z`);
+  return Number.isSafeInteger(time) && new Date(time).toISOString().slice(0, 16) === value ? time : NaN;
+};
+const qDataTime = value => Number.isSafeInteger(value) ? `${new Date(value).toISOString().slice(0, 16).replace('T', ' ')} UTC` : '—';
+function qDataStatus(message, tone = 'info') { q('qlDataStatus').textContent = message; q('qlDataStatus').className = `ql-status ${tone}`; }
+function qDataStopPoll() { qDataPollEpoch++; qDataPollResume = false; if (qDataTimer) clearTimeout(qDataTimer); qDataTimer = null; }
+function qDataInput() {
+  const bot_id = q('qlDataBot').value, start_time = qDataUtc(q('qlDataStart').value), end_time = qDataUtc(q('qlDataEnd').value), warmup_bars = Number(q('qlDataWarmup').value);
+  const cutoff = Math.floor(Date.now() / 60000) * 60000;
+  return {bot_id, start_time, end_time, warmup_bars, cutoff};
+}
+function qDataValidation(input = qDataInput()) {
+  if (!qDataCapability?.enabled) return 'Raw history capability is unavailable.';
+  if (!input.bot_id) return 'Select a bot.';
+  if (!Number.isSafeInteger(input.start_time) || !Number.isSafeInteger(input.end_time)) return 'Enter valid UTC minute start and end times.';
+  if (input.start_time >= input.end_time) return 'End UTC must follow start UTC.';
+  if (input.end_time > input.cutoff) return 'End UTC must exclude the current open minute.';
+  if (q('qlDataWarmup').value === '' || !Number.isSafeInteger(input.warmup_bars) || input.warmup_bars < 0 || input.warmup_bars > 5000) return 'Warmup bars must be an integer from 0 to 5,000.';
+  if (input.start_time - input.warmup_bars * 60000 <= 0) return 'Warmup starts before supported UTC history.';
+  const total = (input.end_time - input.start_time) / 60000 + input.warmup_bars;
+  if (total > Math.min(10000, Number(qDataCapability.max_total_bars) || 0)) return `Requested ${total.toLocaleString()} total bars exceeds the ${qDataCapability.max_total_bars.toLocaleString()} bar cap, including warmup.`;
+  return '';
+}
+function qDataUpdate() {
+  const error = qDataValidation();
+  qSetValidation('qlDataValidation', error);
+  q('qlDataPreview').disabled = !!error || qDataBusy;
+  q('qlDataQueue').disabled = !!error || !qDataPreview || qDataBusy || !!qDataJob && !qDataTerminal(qDataJob.status);
+}
+function qDataInvalidate() {
+  qDataGeneration++;
+  qDataPreview = null;
+  qDataKey = null;
+  q('qlDataPlan').hidden = true;
+  qDataUpdate();
+}
+function qDataRenderPlan(plan, request) {
+  q('qlDataEvaluation').textContent = Number(plan.evaluation_bars).toLocaleString();
+  q('qlDataWarmupCount').textContent = Number(plan.warmup_bars).toLocaleString();
+  q('qlDataTotal').textContent = Number(plan.total_bars).toLocaleString();
+  q('qlDataPages').textContent = Number(plan.page_count).toLocaleString();
+  q('qlDataFirst').textContent = qDataTime(plan.metadata?.start_time);
+  q('qlDataInterval').textContent = `${qDataTime(plan.evaluation_start)} to ${qDataTime(plan.evaluation_end)} (end exclusive)`;
+  q('qlDataCutoff').textContent = `${qDataTime(request.cutoff)} (exclusive)`;
+  q('qlDataPlan').hidden = false;
+}
+async function qDataLoadCapability() {
+  const generation = ++qDataGeneration;
+  qDataCapability = null; qDataPreview = null; q('qlDataPlan').hidden = true; qDataUpdate();
+  qDataStatus('Checking raw history capability…');
+  try {
+    const capability = await api('/api/quant/data/capability', {silent: true, botId: ''});
+    if (generation !== qDataGeneration) return;
+    qDataCapability = capability;
+    const profile = capability.broker === 'binance-global' && capability.symbol === 'BTCUSDT' && capability.market === 'SPOT' && capability.timeframe === '1' && capability.raw_only === true && capability.verified_execution_profile === false && capability.max_total_bars <= 10000;
+    if (!profile) qDataCapability = {...capability, enabled: false};
+    q('qlDataCapability').textContent = qDataCapability.enabled ? `Available · ${capability.max_total_bars.toLocaleString()} bars max` : 'Unavailable';
+    qDataStatus(qDataCapability.enabled ? 'Choose a UTC range, then preview before fetching.' : 'Raw history capability is disabled or outside supported Spot 1m profile.', qDataCapability.enabled ? 'info' : 'warn');
+  } catch (error) {
+    if (generation !== qDataGeneration) return;
+    q('qlDataCapability').textContent = 'Unavailable';
+    qDataStatus(error.message || 'Capability check failed.', 'err');
+  }
+  qDataUpdate();
+}
+async function qDataLoadBots() {
+  try {
+    const response = await api('/api/bots', {silent: true});
+    const select = q('qlDataBot'), previous = select.value;
+    select.replaceChildren(new Option('Select a bot', ''));
+    for (const bot of response.bots || []) select.add(new Option(bot.label, bot.id));
+    select.value = [...select.options].some(option => option.value === previous) ? previous : '';
+    qDataInvalidate();
+  } catch (error) { qDataStatus(error.message || 'Bot list unavailable.', 'err'); }
+}
+async function qDataPreviewRange() {
+  const input = qDataInput(), error = qDataValidation(input);
+  if (error) { qDataUpdate(); return; }
+  const generation = ++qDataGeneration;
+  qDataBusy = true; qDataUpdate(); qDataStatus('Checking exact range…');
+  try {
+    const result = await api('/api/quant/data/range-preview', {method: 'POST', silent: true, botId: input.bot_id, body: JSON.stringify({bot_id: input.bot_id, start_time: input.start_time, end_time: input.end_time, warmup_bars: input.warmup_bars})});
+    if (generation !== qDataGeneration) return;
+    if (!result.capability?.enabled || result.plan?.total_bars > 10000 || result.plan?.total_bars > result.capability.max_total_bars || result.request?.bot_id !== input.bot_id) throw new Error('Server preview does not match the supported range.');
+    qDataPreview = result;
+    qDataKey = null;
+    qDataRenderPlan(result.plan, result.request);
+    qDataStatus('Range preview ready. Fetch starts only when you choose Fetch raw history.', 'ok');
+  } catch (failure) {
+    if (generation === qDataGeneration) { qDataPreview = null; q('qlDataPlan').hidden = true; qDataStatus(failure.message || 'Range preview failed.', 'err'); }
+  } finally { qDataBusy = false; qDataUpdate(); }
+}
+function qDataRenderJob(job) {
+  qDataJob = job; q('qlDataJob').hidden = false;
+  const complete = qDataTerminal(job.status);
+  q('qlDataProgress').textContent = `${job.status || 'UNKNOWN'} · ${Number(job.next_bar) || 0} / ${Number(job.total_bars) || 0} bars${job.diagnostic ? ` · ${typeof job.diagnostic === 'string' ? job.diagnostic : JSON.stringify(job.diagnostic)}` : ''}`;
+  q('qlDataCancel').disabled = complete;
+  q('qlDataResult').textContent = ['COMPLETED', 'SUCCEEDED'].includes(job.status) ? `Raw dataset ready: ${JSON.stringify(job.result || {})}` : '';
+  qDataStatus(complete ? `Raw history job ${job.status.toLowerCase()}.` : 'Raw history fetch in progress.', ['FAILED', 'CANCELLED', 'CANCELED', 'TIMED_OUT'].includes(job.status) ? 'err' : complete ? 'ok' : 'info');
+  qDataUpdate();
+  if (complete) qDataStopPoll();
+}
+async function qDataPoll() {
+  if (!qDataJob?.job_id || !qDataVisible() || qDataTerminal(qDataJob.status)) return;
+  if (qDataPollInFlight) { qDataPollResume = true; return; }
+  if (qDataTimer || qDataPollCount >= 30) return;
+  const id = qDataJob.job_id, epoch = qDataPollEpoch;
+  qDataPollInFlight = true; qDataPollCount++;
+  try {
+    const job = await api(`/api/quant/data/jobs/${encodeURIComponent(id)}`, {silent: true, botId: qDataJobBotId});
+    if (epoch === qDataPollEpoch && qDataJob?.job_id === id && qDataVisible()) qDataRenderJob(job);
+  } catch (error) {
+    if (epoch === qDataPollEpoch && qDataJob?.job_id === id && qDataVisible()) { qDataStatus(error.message || 'Job status unavailable.', 'err'); qDataStopPoll(); }
+  } finally {
+    qDataPollInFlight = false;
+    if (epoch !== qDataPollEpoch) {
+      if (qDataPollResume && qDataVisible()) { qDataPollResume = false; qDataPoll(); }
+    } else {
+      qDataPollResume = false;
+      if (qDataVisible() && qDataJob?.job_id === id && !qDataTerminal(qDataJob.status) && qDataPollCount < 30) {
+        qDataTimer = setTimeout(() => { qDataTimer = null; qDataPoll(); }, 2000);
+      }
+    }
+  }
+}
+async function qDataQueue() {
+  if (!qDataPreview || qDataValidation() || qDataBusy) return;
+  qDataBusy = true; qDataUpdate();
+  qDataKey ||= crypto.randomUUID();
+  const preview = qDataPreview;
+  try {
+    const job = await api('/api/quant/data/jobs', {method: 'POST', silent: true, botId: preview.request.bot_id, headers: {'Idempotency-Key': qDataKey}, body: JSON.stringify(preview.request)});
+    qDataJobBotId = preview.request.bot_id; qDataRenderJob(job); qDataPollCount = 0; qDataPoll();
+  } catch (error) { qDataStatus(`${error.message || 'Fetch request failed.'} Retry keeps the same request key.`, 'err'); }
+  finally { qDataBusy = false; qDataUpdate(); }
+}
+async function qDataCancel() {
+  if (!qDataJob?.job_id || q('qlDataCancel').disabled) return;
+  q('qlDataCancel').disabled = true;
+  try { qDataRenderJob(await api(`/api/quant/data/jobs/${encodeURIComponent(qDataJob.job_id)}/cancel`, {method: 'POST', silent: true, botId: qDataJobBotId})); }
+  catch (error) { qDataStatus(error.message || 'Cancel failed.', 'err'); q('qlDataCancel').disabled = false; }
+}
+function qDataOpen() { qDataLoadBots().then(qDataLoadCapability); if (qDataJob && !qDataTerminal(qDataJob.status) && qDataVisible()) { if (!qDataPollInFlight && !qDataTimer && qDataPollCount >= 30) qDataPollCount = 0; qDataPoll(); } }
 async function initQuantLab() {
   ['qlBacktest', 'qlOptimize', 'qlRisk'].forEach(id => q(id).dataset.label = q(id).textContent); q('qlBacktest').addEventListener('click', qBacktest); q('qlOptimize').addEventListener('click', qOptimize); q('qlRisk').addEventListener('click', qRiskPreview);
   q('qlResetBacktest').addEventListener('click', () => { Object.entries({qlEmaFast: 10, qlEmaSlow: 30, qlAtrPeriod: 14, qlAtrMult: 2, qlCandles: 2000, qlBalance: 10000}).forEach(([id, value]) => { q(id).value = value; }); qBacktestValid(); });
   document.querySelectorAll('[data-ql-tab]').forEach(tab => tab.addEventListener('click', () => qSetTab(tab))); document.querySelectorAll('[data-ql-basis]').forEach(button => button.addEventListener('click', () => { qBasis = button.dataset.qlBasis; document.querySelectorAll('[data-ql-basis]').forEach(item => { const active = item === button; item.classList.toggle('active', active); item.setAttribute('aria-pressed', String(active)); }); qDrawCurve(); }));
   ['qlEmaFast', 'qlEmaSlow', 'qlAtrPeriod', 'qlAtrMult', 'qlCandles', 'qlBalance'].forEach(id => q(id).addEventListener('input', qBacktestValid));
+  ['qlDataBot', 'qlDataStart', 'qlDataEnd', 'qlDataWarmup'].forEach(id => { q(id).addEventListener('input', qDataInvalidate); q(id).addEventListener('change', qDataInvalidate); });
+  q('qlDataPreview').addEventListener('click', qDataPreviewRange);
+  q('qlDataQueue').addEventListener('click', qDataQueue);
+  q('qlDataCancel').addEventListener('click', qDataCancel);
+  document.querySelectorAll('[data-view]').forEach(button => { if (button.dataset.view !== 'quant') button.addEventListener('click', qDataStopPoll); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) qDataStopPoll(); else if (qDataVisible() && qDataJob && !qDataTerminal(qDataJob.status)) { qDataPollCount = 0; qDataPoll(); } });
   
   q('qlAddIndicator').addEventListener('click', () => {
     qIndicators.push({ name: 'CustomIndicator', params: [{name: 'param1', min: 10, max: 20, default: 15, step: 1, unit: 'bars', optimizable: true, locked: false}] });
@@ -150,7 +305,8 @@ async function initQuantLab() {
   });
   
   document.querySelector('[data-view="quant"]').addEventListener('click', async () => { 
-    try { const health = await api('/api/quant/health'); q('qlEngineStatus').textContent = `Ready · ${health.mode}`; q('qlEngineStatus').className = 'ql-engine-state ready'; qStatus(`Quant engine ready · ${health.mode}`, 'ok'); } catch { q('qlEngineStatus').textContent = 'Offline'; q('qlEngineStatus').className = 'ql-engine-state offline'; qStatus('Quant engine offline. Research functions are unavailable.', 'err'); }
+    if (!q('qlPanelData').hidden) qDataOpen();
+    try { const health = await api('/api/quant/health'); q('qlEngineStatus').textContent = `Ready · ${health.mode}`; q('qlEngineStatus').className = 'ql-engine-state ready'; qStatus(`Synthetic research engine ready · ${health.mode}. Data capability is checked separately.`, 'ok'); } catch { q('qlEngineStatus').textContent = 'Offline'; q('qlEngineStatus').className = 'ql-engine-state offline'; qStatus('Synthetic backtest and optimizer unavailable. Data capability is checked separately.', 'warn'); }
     
     // Load bots for selector
     try {

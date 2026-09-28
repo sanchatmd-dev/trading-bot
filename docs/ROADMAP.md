@@ -55,16 +55,19 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 | QL-3A research | Durable 100-candidate job completed; all candidates have zero validation closed trades. [Result](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | `NO_VALID_CANDIDATE`; original holdout unopened. Engineering acceptance and recommendation acceptance are tracked separately; neither is automatically granted by this update. |
 | SPT Spot EXIT v1 | Separate offline draft and four predeclared development comparisons. Net loss improved to -5.1852783497 USDT but three losing episodes still stop entries; validation remains zero. [Review](QL_3A_SPOT_EXIT_V1_2026-09-27.md). | Failed development preflight. Not activated; no new TradingView collection requested for this draft. |
 | Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. | Review/checkpoint diff; active Bot V2 rollout and metadata producer remain separate. PF-2 engineering may use these contracts; V2 Quant admission stays blocked until evaluator parity. Then PF-3/PF-4. |
-| Historical data capacity (QD-1) | [Recovery/storage work](QD_QS_RECOVERY_STAGING_2026-09-28.md) adds disk/temp/free-space reservations, database-bound offline retention and UTC calendar/range contracts. Staging retention dry-run preserved terminal references; oversized reservation rejected without residual files. Admission remains 10K/1m. | Complete UI/API capability agreement, scheduler-backed backfill and expanded-capacity validation. Raw ingestion is not accepted ATR14 enrollment. |
+| Historical data capacity (QD-1) | [Data capability and ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) adds exact UTC preview, raw-history UI/API and BACKFILL in the shared worker. Local HTTP/browser and PostgreSQL recovery/cancellation checks passed. Isolated staging fetched 2,100 real Spot bars across three pages. Admission remains 10K/1m including warm-up. | Validate expanded admission and separate dataset/profile enrollment before increasing capacity. Raw ingestion is not accepted ATR14 enrollment. |
 | Quant scheduling (QS-1) | [Isolated staging recovery](QD_QS_RECOVERY_STAGING_2026-09-28.md) passed: actual main worker, SIGKILL after 1,000 bars with an in-flight unit, verified offline recovery, new lease and exact resumed result at 3,876 bars. One evaluation charged; old token fenced; original deadline and checkpoint preserved. | Connect other heavy paths to the scheduler and validate larger workloads before expanded admission. Manual cold recovery is not automatic restart or full-host disaster recovery. |
-| Quant resource protection (QS-1) | Linux supervisor and fail-closed health checks implemented. Final isolated 60-sample impact window passed: API p95 2.90 ms, DB p95 1.28 ms, queue 0/0. An initial monitor threshold breach stopped the new worker; its evidence is retained separately. | CPU50%/512MiB/tasks16 remains a bounded staging setting. Calibrate sustained headroom and absolute I/O budgets before expanded jobs. No production migration or rollout. |
+| Quant resource protection (QS-1) | [Bounded calibration](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) passed: 173.210 seconds of nonidle evaluator intervals within 300 seconds; API p95 7.20 ms, DB p95 1.53 ms, queue 0/0. Thirty-two mechanical replays completed; watchdog stopped the final replay when monitoring ended. Cleanup and eight existing services verified. | CPU50%/512MiB/tasks16 remains a per-unit staging setting. I/O counters were unavailable. Validate absolute I/O budgets, larger workloads and other heavy paths; bind future driver deadlines to monitor readiness. No production rollout. |
 | Research Library / Best Performance (QR-1 through QR-4) | Owner-approved plan and target diagrams below; no customer library, comparison ranking or portfolio mark-to-market shipped by this update. | Reuse durable run evidence; add immutable artifacts, portfolio reporting, fair comparison and explicit owner-started follow-up runs. Real recommendations remain validation-gated. |
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
 
-Preceding pushed code/evidence checkpoint: `cf8913d` (PF-1B/PF-1C and Caveman policy)
-on `codex/app3a-market-wait-checkpoint`; preceding PF-1A checkpoint is `9c5f8f3`.
-QD-1/QS-1 foundation and worker integration form the current Git checkpoint. PF-1C used isolated
+Latest pushed code/evidence checkpoint: `91e7e95` (recovery/storage/staging)
+on `codex/app3a-market-wait-checkpoint`. Earlier PF-1B/PF-1C and PF-1A checkpoints
+are `cf8913d` and `9c5f8f3`. The owner authorized the Data capability/ingestion Git
+checkpoint after local and isolated-staging verification; its scope is recorded
+in the [evidence document](QD_QS_INGESTION_CALIBRATION_2026-09-28.md).
+PF-1C used isolated
 staging verification; the foundation/worker used local disposable PostgreSQL
 and a bounded Linux supervisor smoke. Subsequent isolated main-worker rollout
 and physical cold recovery passed the mechanical scope recorded below.
@@ -78,11 +81,15 @@ The resumed local checkpoint passed Node 312/312 and the scoped PostgreSQL
 checks, including a simulated-manager cold restart. After continuation, physical
 Linux crash/restart and a bounded production-impact window passed. Recovery/storage
 follow-up tests passed 14/14 and the revised PostgreSQL recovery/retention checks
-passed 1/1 and 3/3. Larger-capacity and sustained-load gates remain open.
+passed 1/1 and 3/3. Larger-capacity and broader workload gates remain open.
 All newly created test processes were stopped after acceptance; private staging
 evidence remains preserved. All eight existing services were active at cleanup.
-Next implementation slice: capability/range agreement and scheduler-backed
-ingestion at the existing 10K limit, followed by bounded capacity calibration.
+The current slice implements capability/range agreement and scheduler-backed
+ingestion at the existing 10K limit. Node 318/318, focused PostgreSQL and real
+local browser checks passed. Isolated staging fetched 2,100 real bars and bounded
+calibration met its observed-window criterion; all new services stopped after
+cleanup verification. Next engineering gates are expanded admission, absolute I/O
+measurement and the remaining heavy paths. See the [current evidence record](QD_QS_INGESTION_CALIBRATION_2026-09-28.md).
 Do not reopen a data-collection campaign or expand admission from these short runs.
 
 ## Approved extension — readiness before Run Bot
@@ -213,8 +220,8 @@ expanded capacity and customer reporting remain gated by the completion evidence
 
 | ID | Work and dependency | Completion gate | Status |
 | --- | --- | --- | --- |
-| QD-1 | QL-3A data foundation: paged exchange history/cache, immutable datasets outside job JSON, timeframe capability registry, stage-specific dataset budgets and <=50K stateful chunks. Supports expanded PF-2 and all historical reports. | Server/UI agree on limits; warm-up and calendar boundaries correct; gaps/duplicates/incomplete bars rejected; chunked execution preserves indicator/account state; progress/cancel/recovery/resource ceilings verified. | Storage, research state, disk/temp reservations and internal ingestion/range contracts implemented; physical recovery passed on exposed baseline data. Scheduler-backed backfill, range/UI and larger admission remain open. Current 10,000/1m restriction remains. |
-| QS-1 | QL-3A scheduling/protection foundation: global heavy concurrency 1, durable fair queue, server admission, health gates, CPU/memory/I/O isolation and disk/retention budgets. Uses QD-1 contracts; APP-3B/APP-4 verify concurrent tenant load and quotas. | Atomic global leases/fencing, cancellation/restart, bounded pause latency, fair admission and benchmarked production headroom; unsafe requests reject/queue/pause. | Isolated main worker and physical cold recovery passed, including old-token fencing and exact resumed state/result. Short impact measurement passed; other heavy paths, sustained headroom calibration, absolute I/O and complete artifact restore remain open. |
+| QD-1 | QL-3A data foundation: paged exchange history/cache, immutable datasets outside job JSON, timeframe capability registry, stage-specific dataset budgets and <=50K stateful chunks. Supports expanded PF-2 and all historical reports. | Server/UI agree on limits; warm-up and calendar boundaries correct; gaps/duplicates/incomplete bars rejected; chunked execution preserves indicator/account state; progress/cancel/recovery/resource ceilings verified. | Storage, research state, disk/temp reservations, exact UTC range UI/API and scheduler-backed raw BACKFILL implemented. Local PostgreSQL recovery/cancellation passed; isolated staging fetched 2,100 actual Spot 1m bars across three pages. Expanded admission, <=50K stateful execution and profile enrollment remain open. Current 10,000/1m limit includes warm-up. |
+| QS-1 | QL-3A scheduling/protection foundation: global heavy concurrency 1, durable fair queue, server admission, health gates, CPU/memory/I/O isolation and disk/retention budgets. Uses QD-1 contracts; APP-3B/APP-4 verify concurrent tenant load and quotas. | Atomic global leases/fencing, cancellation/restart, bounded pause latency, fair admission and benchmarked production headroom; unsafe requests reject/queue/pause. | Isolated main worker and physical cold recovery passed. Bounded sustained calibration met its observed-window criterion: 173.210 seconds of nonidle evaluator intervals within 300 seconds; API p95 7.20 ms, DB p95 1.53 ms, all eight existing services healthy after cleanup. Other heavy paths, larger workloads, absolute I/O budgets and broader restore remain open. No production rollout or capacity increase. |
 | QR-1 | QL-3A/QL-4B: versioned Research Library and Quant Data artifacts for every terminal run, including failed/insufficient/cancelled outcomes labelled incomplete where needed. | Owner-scoped immutable identity, checksums, provenance, input/data/engine references and permission checks; no secrets in downloads; unsuccessful runs cannot become actionable Best Inputs. | Planned. |
 | QR-2 | QL-4B reporting: actual Paper Portfolio Performance with market valuation, funding-aware returns and account/capital allocation reconciliation. | Stale/missing prices explicit; no double counting shared capital; ledger and valuation reconcile; historical simulation is never labelled actual Paper execution. | Planned; current equity is book equity. |
 | QR-3 | QL-4B comparison: strategies for the same asset under a declared common evaluation context, alongside a separate actual-Bot comparison. Depends on QR-1 and QD-1 for expanded ranges. | Compatible market/period/capital/cost/valuation/risk assumptions; independent evaluation provenance, sample adequacy and ranking rules fixed before comparison; no qualified winner is a valid result. | Planned. |
@@ -462,6 +469,22 @@ flowchart TD
 ```
 
 ## Change log
+
+### 2026-09-28 — Data capability and scheduler-backed ingestion
+
+Added authenticated raw-history preview/queue/status/cancel, exact UTC range
+agreement and a Data panel. BACKFILL shares the existing managed worker/global
+slot and persists immutable page references for resume and retention. Local Node
+318/318 passed, along with PostgreSQL HTTP, page recovery/cancellation and research
+adapter regressions. Real Chrome checks found and verified the Bot query-scope
+fix; an independent audit also led to a polling-race regression. Isolated staging
+fetched 2,100 actual bars. Calibration recorded 173.210 seconds of nonidle evaluator
+intervals within 300 seconds, with healthy existing services and verified cleanup.
+Thirty-two mechanical jobs completed; the watchdog stopped the final job after
+monitor completion. I/O counters remain unavailable. No capacity expansion,
+production switch, original holdout access or new research campaign is implied.
+README and Context were updated; Time Management retains measured verification
+durations separately from unmeasured active engineering hours.
 
 | Date | Change / evidence | Scope and current consequence |
 | --- | --- | --- |

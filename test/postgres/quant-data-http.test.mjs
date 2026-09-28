@@ -1,0 +1,54 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {quantDataHttpFixture} from '../helpers/quant-data-http-fixture.mjs';
+
+test('real data HTTP enforces range, auth, ownership, idempotency and queued cancellation',async t=>{
+  assert.ok(process.env.TEST_DATABASE_URL,'Isolated PostgreSQL required');
+  const f=await quantDataHttpFixture(process.env.TEST_DATABASE_URL);t.after(f.close);
+  const login=await f.request('/api/auth/login','POST',{email:f.user.email,password:f.password});
+  assert.equal(login.status,200);const session=login.session;
+  const capability=await f.request('/api/quant/data/capability','GET',undefined,session);
+  assert.equal(capability.status,200);assert.equal(capability.body.enabled,true);
+  assert.equal(capability.body.max_total_bars,10000);assert.equal(capability.body.raw_only,true);
+  const end=Math.floor(Date.now()/60000)*60000;
+  const body={bot_id:f.user.id,start_time:end-120*60000,end_time:end,warmup_bars:20};
+  const route='/api/quant/data/range-preview?bot_id='+f.user.id;
+  assert.equal((await f.request(route,'POST',body)).status,401);
+  assert.equal((await f.request(route,'POST',body,session,{'x-csrf-token':'bad'})).status,403);
+  const foreign=await f.request('/api/quant/data/range-preview?bot_id='+f.foreign.id,'POST',{...body,bot_id:f.foreign.id},session);
+  assert.ok([403,404].includes(foreign.status));
+  const over=await f.request(route,'POST',{...body,start_time:end-10080*60000,warmup_bars:0},session);
+  assert.equal(over.status,400);assert.equal(over.body.code,'INGESTION_CAPABILITY_LIMIT');
+  const preview=await f.request(route,'POST',body,session);
+  assert.equal(preview.status,200,JSON.stringify(preview.body));assert.equal(preview.body.plan.total_bars,140);
+  assert.equal(preview.body.plan.metadata.start_time,body.start_time-20*60000);
+  const headers={'Idempotency-Key':randomUUID()};
+  const jobsRoute='/api/quant/data/jobs?bot_id='+f.user.id;
+  const mismatch=await f.request('/api/quant/data/range-preview?bot_id='+f.foreign.id,'POST',body,session);
+  assert.ok([400,403,404].includes(mismatch.status));
+  const enqueued=await f.request(jobsRoute,'POST',preview.body.request,session,headers);
+  assert.equal(enqueued.status,202,JSON.stringify(enqueued.body));assert.equal(enqueued.body.status,'QUEUED');
+  const retry=await f.request(jobsRoute,'POST',preview.body.request,session,headers);
+  assert.equal(retry.status,202);assert.equal(retry.body.job_id,enqueued.body.job_id);
+  const conflict=await f.request('/api/quant/data/jobs','POST',{...preview.body.request,warmup_bars:21},session,headers);
+  assert.equal(conflict.status,409);
+  const jobRoute='/api/quant/data/jobs/'+enqueued.body.job_id;
+  const status=await f.request(jobRoute+'?bot_id='+f.user.id,'GET',undefined,session);
+  assert.equal(status.status,200);assert.equal(status.body.next_bar,0);assert.equal(status.body.total_bars,140);
+  const wrongScope=await f.request(jobRoute+'/cancel?bot_id='+f.foreign.id,'POST',{},session);
+  assert.ok([400,403,404].includes(wrongScope.status));
+  const cancelled=await f.request(jobRoute+'/cancel?bot_id='+f.user.id,'POST',{},session);
+  assert.equal(cancelled.status,200);assert.equal(cancelled.body.status,'CANCELLED');
+  assert.equal((await f.db.query('SELECT count(*)::int n FROM quant_foundation_jobs')).rows[0].n,1);
+  assert.equal((await f.db.query('SELECT count(*)::int n FROM quant_jobs')).rows[0].n,0);
+});
+
+test('disabled data capability remains readable but cannot preview or enqueue',async t=>{
+  const f=await quantDataHttpFixture(process.env.TEST_DATABASE_URL,{enabled:false});t.after(f.close);
+  const login=await f.request('/api/auth/login','POST',{email:f.user.email,password:f.password});assert.equal(login.status,200);
+  const capability=await f.request('/api/quant/data/capability','GET',undefined,login.session);
+  assert.equal(capability.status,200);assert.equal(capability.body.enabled,false);
+  assert.equal((await f.request('/api/quant/data/range-preview','POST',{},login.session)).status,503);
+  assert.equal((await f.request('/api/quant/data/jobs','POST',{},login.session,{'Idempotency-Key':randomUUID()})).status,503);
+});

@@ -3,6 +3,9 @@ import {D} from '../money.js';
 import {QuantFoundationScheduler} from './quant-foundation-scheduler.js';
 import {QuantResearchWorker} from './quant-research-worker.js';
 import {runQuantProcess,stopQuantUnit} from '../quant-research/process-supervisor.js';
+import {readSpotHistory} from '../quant-research/spot-ingestion.js';
+import {planIngestionRange} from '../quant-research/ingestion-range.js';
+import {validateBackfillState} from '../quant-research/foundation-contract.js';
 
 const identity=(contract,parameters,kind)=>hash(canonical({contract,parameters,kind}));
 
@@ -10,13 +13,15 @@ const identity=(contract,parameters,kind)=>hash(canonical({contract,parameters,k
  * slot; completed research steps retain their original immutable result schema.
  */
 export class QuantResearchFoundationWorker extends QuantResearchWorker {
- constructor({service,health,evaluateChunk,supervisor=runQuantProcess,stopUnit=stopQuantUnit,clock=Date.now,leaseMs=30000,python,limits,allowUnsupportedPlatformForTests=false}){
+ constructor({service,dataService,health,evaluateChunk,fetchHistory=readSpotHistory,supervisor=runQuantProcess,stopUnit=stopQuantUnit,clock=Date.now,leaseMs=30000,python,limits,allowUnsupportedPlatformForTests=false}){
   super({service,clock,leaseMs});
   if(!service.foundation||typeof health!=='function')throw fail('RESEARCH_FOUNDATION_CALLBACKS_REQUIRED');
-  this.supervisor=supervisor;this.stopUnit=stopUnit;this.evaluateChunk=evaluateChunk;this.python=python;this.limits=limits;this.allowUnsupportedPlatformForTests=allowUnsupportedPlatformForTests;this.stopped=new Set();this.activeLaunches=new Set();
+  this.dataService=dataService;this.fetchHistory=fetchHistory;this.supervisor=supervisor;this.stopUnit=stopUnit;this.evaluateChunk=evaluateChunk;this.python=python;this.limits=limits;this.allowUnsupportedPlatformForTests=allowUnsupportedPlatformForTests;this.stopped=new Set();this.activeLaunches=new Set();
   this.scheduler=new QuantFoundationScheduler({db:this.db,clock,leaseMs,health,authorize:(owner,request,action,context)=>this.authorize(owner,request,action,context)});
  }
  async authorize(owner,request,action,context){
+  if(request.kind==='BACKFILL')return this.dataService?.authorize(owner,request,action,
+   {...context,stopped:this.stopped.has(context.job_id+':'+context.lease_token)&&!this.activeLaunches.has(context.job_id+':'+context.lease_token)})??{ok:false};
   const row=(await this.db.query('SELECT q.* FROM quant_jobs q JOIN quant_research_foundation r ON r.run_id=q.run_id JOIN quant_foundation_jobs f ON f.job_id=r.job_id WHERE f.contract_hash=$1 AND q.owner_id=$2',[hash(canonical(request)),owner])).rows[0];
   if(!row||row.contract.execution_backend!=='quant-foundation-v1')return {ok:false};
   if(action==='ACKNOWLEDGE_STOPPED'){const key=context.job_id+':'+context.lease_token;return {ok:this.stopped.has(key)&&!this.activeLaunches.has(key)};}
@@ -29,6 +34,13 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
   try{await this.current(row);if(await this.engineHash()!==request.engine_hash)return {ok:false};return {ok:true};}catch{return {ok:false};}
  }
  async reconcile(){
+  const backfills=(await this.db.query("SELECT * FROM quant_foundation_jobs WHERE contract->>'kind'='BACKFILL' AND status='STOPPING'")).rows;
+  for(const row of backfills){
+   const key=row.job_id+':'+row.lease_token;
+   if(!this.stopped.has(key)||this.activeLaunches.has(key))continue;
+   try{await this.scheduler.acknowledgeStopped(row.job_id,row.lease_token);}catch{/* Cold recovery or newer token owns transition. */}
+   finally{this.stopped.delete(key);}
+  }
   const rows=(await this.db.query("SELECT f.* FROM quant_foundation_jobs f JOIN quant_research_foundation r ON r.job_id=f.job_id WHERE f.status='STOPPING'")).rows;
   for(const row of rows){
    const units=(await this.db.query('SELECT unit_name FROM quant_research_chunks WHERE run_id=$1 AND unit_token=$2 AND unit_name IS NOT NULL',[String(row.job_id),row.lease_token])).rows;
@@ -55,6 +67,7 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
   const foundation=await this.scheduler.claim('research-foundation');await this.syncTerminal();if(!foundation){await this.reconcile();return null;}
   // This live worker owns a new token and has not launched a process for it.
   this.stopped.add(foundation.job_id+':'+foundation.lease_token);
+  if(foundation.contract.kind==='BACKFILL')return {kind:'BACKFILL',foundation};
   const row=(await this.db.query('SELECT * FROM quant_jobs WHERE run_id=$1',[String(foundation.job_id)])).rows[0];
   if(!row)throw fail('RESEARCH_FOUNDATION_BINDING_MISSING');
   await this.scheduler.fenced(foundation,'CHECKPOINT',async()=>{await this.db.query("UPDATE quant_jobs SET status='RUNNING',attempt=$2,lease_token=$3,lease_until=$4,updated_at=$5 WHERE run_id=$1",[row.run_id,foundation.attempts,foundation.lease_token,foundation.lease_until,this.clock()]);return foundation;});
@@ -125,6 +138,41 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
   });
   this.stopped.delete(job.foundation.job_id+':'+job.lease_token);
  }
+ async runBackfill(job,signal){
+  const foundation=job.foundation,contract=foundation.contract,store=this.dataService?.datasetStore;
+  if(!store?.storageBudget)throw fail('INGESTION_STORAGE_BUDGET_REQUIRED');
+  const key=foundation.job_id+':'+foundation.lease_token;
+  let completed=false;
+  this.stopped.delete(key);this.activeLaunches.add(key);
+  try{
+   const plan=planIngestionRange(contract.range,{now:this.clock()});
+   let state=foundation.checkpoint?.state??{version:'backfill-pages-v1',pages:[]};
+   if(foundation.next_bar)validateBackfillState(contract,foundation.next_bar,state);
+   let offset=foundation.next_bar;
+   while(offset<plan.total_bars){
+    if(signal.aborted)throw fail('INGESTION_CANCELLED');
+    const count=Math.min(1000,plan.total_bars-offset),start=plan.metadata.start_time+offset*60000;
+    const pageRange={...contract.range,start_time:start,end_time:start+count*60000,warmup_bars:0};
+    let provenance;
+    const bars=this.fetchHistory(pageRange,{signal,clock:this.clock,
+     beforePage:async()=>{await this.scheduler.fenced(foundation,'CHECKPOINT',async row=>row);return true;},
+     onPage:page=>{provenance={...page,page:state.pages.length};}});
+    const metadata=planIngestionRange(pageRange,{now:this.clock()}).metadata;
+    const reference=await store.publish(metadata,bars,{signal,chunkBars:1000});
+    if(!provenance)throw fail('INGESTION_PROVENANCE_MISSING');
+    const pages=[...state.pages,{reference,provenance}];
+    state={version:'backfill-pages-v1',pages};
+    offset+=count;
+    await this.scheduler.checkpoint(foundation,{next_bar:offset,state});
+   }
+   async function* assembled(){for(const page of state.pages)yield* store.read(page.reference,{signal});}
+   const dataset=await store.publish(plan.metadata,assembled(),{signal,chunkBars:1000});
+   await this.scheduler.finish(foundation,{version:'spot-ingestion-v1',dataset,
+    provenance:{range:plan,pages:state.pages.map(page=>page.provenance)},
+    raw_only:true,verified_execution_profile:false});
+   completed=true;
+  }finally{this.activeLaunches.delete(key);if(completed)this.stopped.delete(key);else this.stopped.add(key);}
+ }
  async tick(){
   // Publish the controller before claim's awaited health/DB operations so stop()
   // also fences a shutdown requested while no subprocess exists yet.
@@ -137,13 +185,13 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
    if(heartbeatTask)return;
    heartbeatTask=this.scheduler.heartbeat(job.foundation).catch(()=>controller.abort()).finally(()=>{heartbeatTask=null;});
   },Math.max(10,Math.min(5000,Math.floor(this.leaseMs/3))));
-  try{if(controller.signal.aborted)throw fail('RESEARCH_INTERRUPTED');await this.run(job);}catch(error){
+  try{if(controller.signal.aborted)throw fail('RESEARCH_INTERRUPTED');if(job.kind==='BACKFILL')await this.runBackfill(job,controller.signal);else await this.run(job);}catch(error){
    // The supervisor settles only after physical exit. An unconfirmed stop keeps
    // STOPPING reserved for reconciliation of the persisted systemd unit.
    await this.db.transaction(async()=>{
     await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
     const row=(await this.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[job.foundation.job_id])).rows[0];
-    if(row.status==='RUNNING'&&row.lease_token===job.lease_token){await this.db.query("UPDATE quant_foundation_jobs SET status='STOPPING',stop_reason='CANCELLED',lease_until=NULL,runtime_used_ms=runtime_used_ms+GREATEST(0,$2-run_started_at),run_started_at=NULL,diagnostic=$3 WHERE job_id=$1",[row.job_id,this.clock(),error.code??'QUANT_WORKER_FAILED']);await this.db.query("UPDATE quant_jobs SET status='FAILED',diagnostic=$2,lease_token=NULL,lease_until=0,updated_at=$3 WHERE run_id=$1 AND status='RUNNING'",[job.run_id,error.code??'QUANT_WORKER_FAILED',this.clock()]);}
+    if(row.status==='RUNNING'&&row.lease_token===job.foundation.lease_token){await this.db.query("UPDATE quant_foundation_jobs SET status='STOPPING',stop_reason='CANCELLED',lease_until=NULL,runtime_used_ms=runtime_used_ms+GREATEST(0,$2-run_started_at),run_started_at=NULL,diagnostic=$3 WHERE job_id=$1",[row.job_id,this.clock(),error.code??'QUANT_WORKER_FAILED']);if(job.kind!=='BACKFILL')await this.db.query("UPDATE quant_jobs SET status='FAILED',diagnostic=$2,lease_token=NULL,lease_until=0,updated_at=$3 WHERE run_id=$1 AND status='RUNNING'",[job.run_id,error.code??'QUANT_WORKER_FAILED',this.clock()]);}
    });
    if(error.stopped!==false)await this.reconcile();
   }finally{clearInterval(heartbeat);await heartbeatTask;if(this.controller===controller)this.controller=null;}

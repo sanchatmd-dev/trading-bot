@@ -130,17 +130,19 @@ Queue ETA ต้องรวมงานที่อยู่ก่อนหน�
 
 ## การจัดเวลาของทีมและ Usage
 
+รอบ Data capability/ingestion วันที่ 2026-09-28 ทำ backend และ UI คู่ขนาน พร้อมตรวจ VPS แบบอ่านอย่างเดียว จากนั้นตรวจ integration ก่อน freeze release ชุด Node ผ่าน 318/318 ใน 53.178 วินาที; focused checks 22/22 ใน 15.532 วินาที; PostgreSQL HTTP 2/2, BACKFILL 2/2 และ research adapter 7 ผ่าน/1 ข้าม fixture ส่วนตัว ผ่านแล้ว Browser ใช้ server และ PostgreSQL local จริง ตรวจ desktop/mobile ผ่าน Staging ดึงข้อมูลจริง 2,100 แท่งสำเร็จ การวัดโหลดผ่านช่วง 300 วินาที (5 นาที หรือประมาณ 0.083 ชั่วโมง) โดยมี nonidle intervals 173.210 วินาที; replay จบ 32 งานและหยุดงานท้ายอย่างปลอดภัยหลัง monitor จบ เก็บหลักฐาน helper failure และ rework รอบแรกไว้ครบ ยังไม่รับรอง I/O budget ตาม [หลักฐานรอบนี้](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) ยังไม่ลดงบ baseline จากจำนวน agents หรือเวลาทดสอบ และไม่ต้องรอแท่งตลาดสดเพื่อทำงานชุดนี้
+
 Git checkpoint PF-1B/PF-1C รวมโค้ดและเอกสารหลังตรวจ diff และผล staging แล้ว ไม่ต้องเก็บแท่งใหม่เพื่อบันทึก checkpoint นี้ การ rollout Bot V2 และ evaluator parity ยังเป็นงานแยก; ไม่มีข้อมูล active hours เพิ่มจากงาน Git
 
 รอบ QD-1/QS-1 foundation ล็อกสัญญาร่วมก่อนแบ่ง storage และ scheduler ให้สอง agent ทำคู่ขนาน หัวหน้าทำ contract/integration และตรวจ PostgreSQL แยกในเครื่อง ตามด้วย audit เฉพาะจุด ทั้งรอบไม่ต้องรอแท่งใหม่ การทำพร้อมกันยังไม่ใช่ผลวัด speedup และไม่ลดงบชั่วโมงจากจำนวน agents
 
 รอบ [worker integration](QD_QS_WORKER_CHECKPOINT_2026-09-28.md) แยกงาน SPT state กับ adapter ให้สอง coder และใช้ auditor ตรวจ race; หัวหน้าทำ supervisor, resource health, migration และ integration ใช้ข้อมูลที่เปิดแล้ว 4,533 แท่ง จึงไม่รอเก็บใหม่ การตรวจจริงพบ JSON checkpoint ข้ามภาษาและ race ที่ต้องแก้ก่อนจบ ยังไม่มี active hours ครบถ้วน จึงไม่หักงบด้วยเวลาทดสอบหรือจำนวน agents
 
-งานถัดไปคือ offline recovery/crash drill และ isolated staging/headroom calibration พร้อมทำ ingestion/range contracts ที่แยกไฟล์ได้ จากนั้น disk/temp/retention และเชื่อม heavy paths ที่เหลือ ก่อนเพิ่ม capacity; PF-2 V2 evaluator parity ทำขนานได้เมื่อใช้ contract ที่ล็อกแล้ว งานเหล่านี้ไม่ต้องรอแท่งใหม่
+งาน offline recovery/crash drill, storage contracts และ bounded staging calibration ผ่านตาม checkpoint ด้านล่างแล้ว งานถัดไปคือ expanded admission, absolute I/O budgets และเชื่อม heavy paths ที่เหลือก่อนเพิ่ม capacity; PF-2 V2 evaluator parity ทำขนานได้เมื่อใช้ contract ที่ล็อกแล้ว งานเหล่านี้ไม่ต้องรอแท่งใหม่
 
 งาน [recovery/storage/staging](QD_QS_RECOVERY_STAGING_2026-09-28.md) ผ่าน worker จริงและ physical crash/restart ใน staging แยกแล้ว โดยใช้ baseline เดิม ไม่รอข้อมูลสดเพิ่ม การแก้ audit สองจุดและ watcher SQL เป็น rework ที่เกิดขึ้นจริง ผล monitor ครั้งแรกไม่ผ่านจึงหยุด worker; รอบที่แยก client warm-up ใช้ baseline 30 samples และ impact 60 samples ผ่าน เก็บทุก attempt โดยไม่รีเซ็ต deadline ของงานเดิม ยังไม่มี active hours ครบถ้วนพอปรับงบ 410–720 ชั่วโมงอย่างน่าเชื่อถือ และการรันสั้นนี้ไม่ใช่ sustained-load benchmark
 
-ปิดบริการทดสอบใหม่ทั้งหมดหลังเก็บหลักฐานแล้ว ไม่มีงานวิจัยใหม่รันค้าง ช่วงวัดสุดท้ายครอบคลุม compute ก่อน crash ประมาณ 3 วินาที ไม่ครอบคลุม resume; อีกช่วงครอบคลุม uninterrupted replay จึงยังต้องสำรองงาน sustained headroom แยก ส่วน retention dry-run และการปฏิเสธ reservation เกิน quota ผ่านบน staging แล้ว งานถัดไปคือ capability/range และ scheduler-backed ingestion ภายใต้ 10K เดิม ไม่ต้องรอแท่งสด
+ปิดบริการทดสอบใหม่ทั้งหมดหลังเก็บหลักฐานแล้ว ไม่มีงานวิจัยใหม่รันค้าง ช่วงวัดสุดท้ายครอบคลุม compute ก่อน crash ประมาณ 3 วินาที ไม่ครอบคลุม resume; อีกช่วงครอบคลุม uninterrupted replay จึงยังต้องสำรองงาน sustained headroom แยก ส่วน retention dry-run และการปฏิเสธ reservation เกิน quota ผ่านบน staging แล้ว งาน capability/range และ scheduler-backed ingestion ภายใต้ 10K เดิมผ่านใน checkpoint ล่าสุดด้านบนแล้ว โดยไม่ต้องรอแท่งสด
 
 หลัง resume ชุด Node ผ่าน 312/312 ใน 79.443 วินาที และ PostgreSQL ตาม checkpoint ผ่าน แต่แตะ usage reserve อีกครั้งก่อนปิด Linux rollout/drill จึงหยุดเปิดงานใหม่ การพัฒนาครั้งถัดไปต้องใช้ขอบเขตสั้นลงและตรวจ allowance ถี่ขึ้น; เวลาทดสอบข้างต้นไม่ใช่ชั่วโมงพัฒนา ไม่เปิด capacity หรือประกาศ staging acceptance จาก local test
 
@@ -168,8 +170,14 @@ Git checkpoint PF-1B/PF-1C รวมโค้ดและเอกสารห�
 
 ### Execution ledger
 
+The owner authorized a Git checkpoint for the verified Data capability/ingestion
+slice. Diff review and publication are release bookkeeping; they add no measured
+engineering hours or capacity acceptance. README and Context were reviewed and
+retain the same local/staging scope.
+
 | As of | งาน / สถานะ | Actual hours | Remaining estimate | Blocker / next action |
 | --- | --- | --- | --- | --- |
+| 2026-09-28 | [Data capability/ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md): local UI/API, shared-worker BACKFILL, page recovery และ retention ผ่าน; staging ดึงจริง 2,100 แท่งและผ่าน bounded calibration | Active hours unknown; Node 318 checks 53.178 วินาที; focused 22 checks 15.532 วินาที; HTTP 2 checks 6.127 วินาที; browser ผ่าน; load window 300 วินาที มี nonidle 173.210 วินาที และเก็บ rework ไว้ | คง baseline เพราะ active hours ยังไม่ครบ; ไม่มีเวลาเก็บแท่งสดเพิ่มสำหรับรอบวิศวกรรมนี้ | ต่อ expanded admission, I/O measurement และ heavy paths ที่เหลือ; คงเพดาน 10K รวม warm-up และยังไม่ปิด QD-1/QS-1 ทั้ง phase |
 | 2026-09-28 | [Recovery/storage/staging](QD_QS_RECOVERY_STAGING_2026-09-28.md): physical crash/restart และ bounded isolated rollout ผ่าน | Active hours unknown; final recovery/storage checks 15.687 วินาที; PG recovery 2.564 วินาที; monitor warm-up 3 + baseline 30 + impact 60 samples; รวม rework ตาม checkpoint | คงงบ baseline; ไม่แปลง test duration หรือเวลารอ quota เป็น engineering hours | ต่อ capability/UI, scheduler-backed backfill, sustained headroom และ expanded-budget validation โดยไม่รอข้อมูลสด; QD-1/QS-1 ยังไม่ปิดทั้ง phase |
 | 2026-09-28 | [QD-1/QS-1 worker](QD_QS_WORKER_CHECKPOINT_2026-09-28.md): adapter จริง, SPT/Paper state, supervisor/health และ offline migration | Active hours unknown; Node 299 ผ่าน 74.385 วินาที; Python 105 ผ่าน 35.21 วินาที; PG adapter 8 ผ่าน 132.004 วินาที; Linux smoke 5 checks ผ่าน | คง baseline QD-1 48–80 / QS-1 24–48 ชั่วโมงเป็นข้อมูลตั้งต้น ไม่ใช่ประมาณการคงเหลือใหม่ | ใช้ข้อมูลเดิม ไม่รอแท่งใหม่; ต่อ cold recovery, staging/headroom และ storage budgets ก่อนเพิ่ม capacity; smoke ไม่ใช่ full staging rollout |
 | 2026-09-28 | [QD-1/QS-1 foundation](QD_QS_FOUNDATION_CHECKPOINT_2026-09-28.md): shared contract, storage และ queue ทำคู่ขนาน; Node 291/291, PostgreSQL 14/14 ผ่าน | Active hours unknown; Node 43.637 วินาที, PG 7.469 และ 4.265 วินาทีเป็นเวลาตรวจ | คง baseline QD-1 48–80 / QS-1 24–48 ชั่วโมงเพื่ออ้างอิง; ยังไม่ใช่ estimate คงเหลือที่วัดใหม่ | ณ checkpoint แรกยังต้องเชื่อม executor/dataset พร้อม state parity, supervisor และ resource admission; รายการ worker ด้านบนเป็นสถานะล่าสุด |

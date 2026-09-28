@@ -4,6 +4,7 @@ import path from 'node:path';
 import {canonical,hash,fail} from '../pine-bridge/source.js';
 import {DatasetStore} from '../quant-research/dataset-store.js';
 import {withQuantOfflineGuard,loadQuantRecoveryPolicy} from './quant-foundation-recovery.js';
+import {validateBackfillState,validateBackfillResult,foundationTotalBars,validateDatasetReference} from '../quant-research/foundation-contract.js';
 
 const markerName='.database-owner.json';
 const artifact=name=>typeof name==='string'&&/^[a-f0-9]{64}$/.test(name);
@@ -59,7 +60,22 @@ export async function maintainQuantStorage({db,budget,apply=false,recoverStaleLo
       const sha=refs?.sidecar?.sha256;if(typeof sha!=='string'||!/^[a-f0-9]{64}$/.test(sha))throw fail('STORAGE_REFERENCE_INVALID');
       retained.add('atr14-'+sha+'.json');
     }
-    for(const {contract} of (await query('SELECT contract FROM quant_foundation_jobs')).rows)raw(contract.dataset);
+    for(const row of (await query('SELECT contract,checkpoint,next_bar,result,status FROM quant_foundation_jobs')).rows){
+      if(row.contract.kind!=='BACKFILL'){raw(row.contract.dataset);continue;}
+      if(row.checkpoint){
+        const {sha256,...payload}=row.checkpoint;
+        if(hash(canonical(payload))!==sha256||payload.next_bar!==row.next_bar||
+          payload.engine_hash!==row.contract.engine_hash||payload.snapshot_hash!==row.contract.snapshot_hash)
+          throw fail('STORAGE_REFERENCE_INVALID');
+        try{validateBackfillState(row.contract,row.next_bar,payload.state);}catch{throw fail('STORAGE_REFERENCE_INVALID');}
+        for(const page of payload.state.pages){validateDatasetReference(page.reference);raw(page.reference);}
+      }else if(row.next_bar!==0)throw fail('STORAGE_REFERENCE_INVALID');
+      if(row.status==='SUCCEEDED'){
+        try{validateBackfillResult(row.contract,row.checkpoint,row.result);}catch{throw fail('STORAGE_REFERENCE_INVALID');}
+        raw(row.result.dataset);
+      }else if(row.result)throw fail('STORAGE_REFERENCE_INVALID');
+      if(row.next_bar>foundationTotalBars(row.contract))throw fail('STORAGE_REFERENCE_INVALID');
+    }
     return budget.maintenance({retainedNames:[...retained],apply,exclusiveOffline:true,recoverStaleLock,assertExclusive});
   });
 }

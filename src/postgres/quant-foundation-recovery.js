@@ -2,6 +2,7 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {canonical,hash} from '../pine-bridge/source.js';
+import {validateBackfillState} from '../quant-research/foundation-contract.js';
 
 const error=code=>Object.assign(new Error(code),{code});
 const unitPattern=/^[a-zA-Z0-9][a-zA-Z0-9_.@-]{0,127}\.service$/;
@@ -137,6 +138,18 @@ export async function withQuantOfflineGuard({db,policy,manager=systemd,inventory
 function verifyRows(rows,chunksByRun){
  const units=[];
  for(const row of rows){
+  if(row.contract?.kind==='BACKFILL'){
+   if(!row.lease_token||hash(canonical(row.contract))!==row.contract_hash||row.run_id||row.research_contract)throw error('RECOVERY_BINDING_UNVERIFIED');
+   if(row.checkpoint){
+    const {sha256,...payload}=row.checkpoint;
+    if(hash(canonical(payload))!==sha256||payload.next_bar!==row.next_bar||
+      payload.engine_hash!==row.contract.engine_hash||payload.snapshot_hash!==row.contract.snapshot_hash||
+      Buffer.byteLength(JSON.stringify(payload.state))>row.contract.budget.max_state_bytes)
+      throw error('RECOVERY_CHECKPOINT_CORRUPT');
+    try{validateBackfillState(row.contract,row.next_bar,payload.state);}catch{throw error('RECOVERY_CHECKPOINT_CORRUPT');}
+   }else if(row.next_bar!==0)throw error('RECOVERY_CHECKPOINT_CORRUPT');
+   continue;
+  }
   if(!row.run_id||row.run_id!==String(row.job_id)||!row.lease_token||
      hash(canonical(row.contract))!==row.contract_hash||
      !row.research_contract||hash(canonical(row.research_contract))!==row.research_job_hash||
@@ -179,7 +192,7 @@ async function snapshot(query){
     FROM quant_foundation_jobs f LEFT JOIN quant_research_foundation r ON r.job_id=f.job_id
     LEFT JOIN quant_jobs q ON q.run_id=r.run_id WHERE f.status IN ('RUNNING','STOPPING') ORDER BY f.job_id`)).rows;
  const chunksByRun=new Map();
- for(const row of rows)chunksByRun.set(row.run_id,(await query(
+ for(const row of rows)if(row.contract?.kind!=='BACKFILL')chunksByRun.set(row.run_id,(await query(
   'SELECT * FROM quant_research_chunks WHERE run_id=$1',[row.run_id])).rows);
  return {rows,chunksByRun,units:verifyRows(rows,chunksByRun)};
 }
@@ -230,6 +243,7 @@ export async function recoverQuantFoundation({db,policy,manager=systemd,inventor
       worker_id=NULL,lease_token=NULL,lease_until=NULL WHERE job_id=$1 AND status='STOPPING' AND lease_token=$3`,
       [row.job_id,status,row.lease_token]);
     if(updated.rowCount!==1)throw error('RECOVERY_LEASE_CHANGED');
+    if(row.contract.kind==='BACKFILL'){done.push({job_id:row.job_id,status});continue;}
     const cleared=await query(`UPDATE quant_research_chunks SET unit_name=NULL,unit_token=NULL
       WHERE run_id=$1 AND unit_token=$2 AND unit_name IS NOT NULL`,[row.run_id,row.lease_token]);
     if(cleared.rowCount!==second.chunksByRun.get(row.run_id).filter(chunk=>chunk.unit_name).length)

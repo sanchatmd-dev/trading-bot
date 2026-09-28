@@ -179,6 +179,20 @@ warm-up; this is not sustained-load calibration or automatic crash recovery.
 No production
 rollout or expanded capacity is implied; the existing 10K/1m and V1 gates remain.
 
+The [Data capability and ingestion work](docs/QD_QS_INGESTION_CALIBRATION_2026-09-28.md)
+adds an authenticated raw-history UI/API and a range-bound BACKFILL variant to
+the same foundation worker. Exact UTC ranges include additional warm-up and reject
+above 10K without truncation. Published pages become durable checkpoints; final
+raw output remains separate from ATR14/profile acceptance and natural Paper trade
+coverage. Local HTTP/browser and PostgreSQL recovery checks passed. An isolated
+managed worker also fetched 2,100 actual Spot bars through the authenticated API
+and shared scheduler, with no ATR sidecar or research enrollment. Bounded
+calibration passed the observed 300-second window with 173.210 seconds of nonidle
+evaluator intervals. Thirty-two mechanical replays completed; a watchdog stopped
+the final replay after the monitor ended. All new services stopped and all eight
+existing services remained healthy. I/O counters were unavailable. Expanded
+capacity and absolute I/O budgets remain open; this is not production acceptance.
+
 The owner-provided initial envelope remains 2 vCPU / 8 GB / 100 GB NVMe, 8 TB
 bandwidth and one snapshot, without a current upgrade requirement. Planned QS-1
 enforces one global heavy Quant executor, durable fair scheduling, fenced leases,

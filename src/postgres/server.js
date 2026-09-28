@@ -24,6 +24,7 @@ import {receiveBridge} from './pine-bridge-receiver.js';
 import {receiveCapture} from './pine-capture.js';
 import {keys} from '../pine-bridge/source.js';
 import {QuantResearchService,quantResearchRoutes} from './quant-research.js';
+import {QuantDataService,quantDataRoutes} from './quant-data.js';
 assertProductionConfig();
 const database = new PostgresDatabase();
 await database.runtimeLock();
@@ -53,6 +54,8 @@ if(quantResearchEnabled){
   if(rows.length!==1||rows[0].version!==1)throw new Error('Initialize Quant research extension 1 offline');
 }
 const quantResearchService=new QuantResearchService({pineService:pineBridgeService});
+const quantDataEnabled=quantResearchEnabled&&process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1';
+const quantDataService=new QuantDataService({pineService:pineBridgeService,enabled:quantDataEnabled});
 const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
 await database.transaction(async()=>{
 await database.lock('robot:bootstrap');
@@ -214,6 +217,7 @@ async function userRoutes(req, res, url) {
   });
   if(await pineBridgeRoutes(req,res,url,actor,pineBridgeService,json,{enabled:pineBridgeEnabled,captureEnabled:pineCaptureEnabled,capturePublicOrigin:pineCapturePublicOrigin}))return;
   if(await quantResearchRoutes(req,res,url,actor,quantResearchService,json,{enabled:quantResearchEnabled}))return;
+  if(await quantDataRoutes(req,res,url,actor,quantDataService,json,{enabled:quantDataEnabled}))return;
   try { if (await quantBridge(req, res, url, actor, store)) return; }
   catch (error) { return json(res, 503, {error: 'Quant Lab engine is unavailable'}); }
   if (req.method !== 'GET' && (url.pathname === '/api/me/webhook-secret' || url.pathname.startsWith('/api/brokers/')) || url.pathname === '/api/me/password') await auth.sensitive(req);

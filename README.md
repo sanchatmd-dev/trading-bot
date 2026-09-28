@@ -39,6 +39,8 @@ Git checkpoint ก่อนงาน recovery/storage คือ `2f6b1be` ซึ
 
 [งาน recovery/storage/staging](docs/QD_QS_RECOVERY_STAGING_2026-09-28.md) เพิ่มเครื่องมือกู้ slot แบบ offline, disk/temp reservations, retention ที่รักษา reference และสัญญาช่วงข้อมูล UTC ผ่านการรัน worker จริงใน staging แยกและซ้อม SIGKILL หลัง checkpoint 1,000 แท่งแล้ว ผลหลัง resume ตรงกับ baseline เดิมและ token เก่าถูกปฏิเสธ การวัด API/DB ช่วงสั้นผ่าน แต่ยังไม่ใช่การรับรอง sustained load หรือเพิ่ม capacity
 
+[งาน Data capability และ ingestion](docs/QD_QS_INGESTION_CALIBRATION_2026-09-28.md) เพิ่มหน้า Data สำหรับตรวจช่วงเวลา UTC และส่งงานดึงประวัติ Spot ผ่าน scheduler เดียวกับ research โดยคงเพดานรวม warm-up 10,000 แท่ง ผ่านการตรวจ HTTP/browser แบบ local และดึงข้อมูลจริง 2,100 แท่งผ่าน managed worker ใน staging แยกแล้ว การวัดโหลดผ่านเกณฑ์เฉพาะช่วงที่ตรวจ: evaluator มี nonidle intervals 173.210 วินาทีภายใน 300 วินาที บริการเดิมปกติและหยุดบริการทดสอบครบแล้ว ยังวัด I/O counters ไม่ได้และยังไม่เพิ่ม capacity ข้อมูลที่ได้เป็น raw history ไม่ได้สร้าง Paper trades หรือเปิดใช้ profile สำหรับ Quant โดยอัตโนมัติ
+
 อนุมัติแผนเก็บผล Quant ทุกรอบเป็นข้อมูลวิจัยที่มี version/hash และเพิ่ม `quant-data/` ใน Best Inputs package ส่วน Email Report ยังคงเป็น deliverable หลักรายการที่สอง ผลไม่ผ่านเก็บเป็น diagnostic ที่ตรวจย้อนหลังได้ โดยไม่สร้าง Best Inputs ให้ใช้งาน
 
 รายงานมีสองมุมมอง: **Portfolio Performance** ใช้บัญชีและการซื้อขาย Paper ที่เกิดขึ้นจริง พร้อมแผนเพิ่มมูลค่าตามราคาตลาดและผลตอบแทนที่คำนึงถึงการฝากถอน; **Strategy Comparison / Best Performance** เปรียบเทียบ strategy ของ asset เดียวกันภายใต้เงื่อนไขที่สอดคล้องกัน จัดอันดับเฉพาะผลที่ผ่านเกณฑ์ และรายงานได้ว่าไม่มีผู้ผ่านเกณฑ์
