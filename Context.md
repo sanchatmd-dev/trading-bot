@@ -25,6 +25,20 @@ admission; cost-inclusive V2 parity remains required. This work runs alongside
 QD-1/QS-1 runtime and I/O acceptance. See the
 [PF-2 checkpoint](docs/PF_2_CONTRACT_CHECKPOINT_2026-09-29.md).
 
+The 2026-09-29 local checkpoint adds a durable PostgreSQL I/O ledger adapter and
+an isolated Python cost-v2 order finalizer. A subsequent
+[runtime checkpoint](docs/QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) connects
+the scheduler and ledger to a fixed diagnostic launcher with durable start
+intent and cancellation guards. It covers held bootstrap only: payload release
+requires trusted initial counter binding that is not implemented yet.
+One isolated staging cancellation passed with `STOP_PROVEN`, conservative
+unknown-final allowance charging, no result/checkpoint and confirmed cleanup.
+The original services and prior evidence were unchanged on delayed readback.
+Worker/public V2 admission, actual PROFILE execution and complete cumulative
+I/O enforcement remain open. Finalizer checks do
+not establish full risk, position or historical replay parity. See the
+[combined checkpoint](docs/QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md).
+
 [AGENTS.md](AGENTS.md) and [Agent Team](docs/AGENT_TEAM.md) define one root
 commander with bounded specialist workers. Requested root default is Astra High;
 role profiles explicitly select Astra Medium, Sol Medium/High or Luna/Sol Low.

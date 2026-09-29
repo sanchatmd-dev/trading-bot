@@ -49,10 +49,24 @@ trusted resolution, cost-model V2 parity and runtime admission remain pending.
 Library/Export work stays limited to contracts and fixtures until dependencies
 pass; no Library/Export implementation was started in this wave.
 
-The I/O ledger now reserves before launch, binds cgroup-lifetime counters and
-quarantines all further compute after unknown-final accounting. Its 15 focused
-tests and independent recheck pass; durable storage and physical enforcement
-remain open. The [terminal handshake staging checkpoint](QD_QS_TERMINAL_HANDSHAKE_2026-09-29.md)
+The earlier in-memory I/O ledger now reserves before launch, binds cgroup-lifetime
+counters and quarantines further compute after unknown-final accounting. Its 15
+focused tests and independent recheck pass. A [new local PostgreSQL adapter](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md)
+persists the V2 ledger with CAS transitions. Ten isolated PostgreSQL checks pass,
+including settlement across scheduler pause/claim; independent source review found
+no blocker within local persistence scope. The subsequent
+[runtime checkpoint](QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) adds durable
+launch intent, fenced start and cancellation guards for a held diagnostic child;
+four PostgreSQL runtime checks pass. One isolated staging case reached
+`CANCELLED`/`STOP_PROVEN`, charged the unknown-final allowance and passed delayed
+cleanup/health checks without changing the prior services or evidence.
+Payload release remains denied pending
+trusted initial counter binding. Actual PROFILE integration, bounded cumulative
+I/O budgets and overshoot calibration, all-device coverage, worker/public V2
+admission and physical enforcement remain open. PF-2 finalizer
+passed Python 12/12, focused cross-language parity 1/1 over 17 vectors and Ruff
+within reviewed scope; this is not full risk/position/replay parity. Hosted CI has
+not run. The [terminal handshake staging checkpoint](QD_QS_TERMINAL_HANDSHAKE_2026-09-29.md)
 passed one actual-worker fixture to cursor 3,876, with confirmed cleanup and
 unchanged old services and jobs. Setup first encountered read-only copied files;
 a reviewed continuation corrected only the new copy. The research outcome is
@@ -183,10 +197,10 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 | QL-2A / Custom extension | Fixed SPT baseline accepted; Custom baseline plus 16 axis settings matched; 100-observation Custom repaint passed. [Custom evidence](QL_3A_VARIED_INPUT_PARITY.md). | Evidence is source/settings scoped; positive EXIT was absent from the Custom repaint sample. Mixed candidates and new revisions need their own evidence. |
 | QL-3A research | Durable 100-candidate job completed; all candidates have zero validation closed trades. [Result](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | `NO_VALID_CANDIDATE`; original holdout unopened. Engineering acceptance and recommendation acceptance are tracked separately; neither is automatically granted by this update. |
 | SPT Spot EXIT v1 | Separate offline draft and four predeclared development comparisons. Net loss improved to -5.1852783497 USDT but three losing episodes still stop entries; validation remains zero. [Review](QL_3A_SPOT_EXIT_V1_2026-09-27.md). | Failed development preflight. Not activated; no new TradingView collection requested for this draft. |
-| Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. | Review/checkpoint diff; active Bot V2 rollout and metadata producer remain separate. PF-2 engineering may use these contracts; V2 Quant admission stays blocked until evaluator parity. Then PF-3/PF-4. |
+| Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. [PF-2 contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and [local finalizer checkpoint](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) record development-only work; reported Python/Node checks pass in stated scope, but finalizer does not prove full replay parity. | Complete PF-2 stateful replay and trusted resolver; order-finalizer source review passed within its stated scope. Hosted CI not run. V2 historical replay/admission remains denied until full evaluator parity. Then PF-3/PF-4. |
 | Historical data capacity (QD-1) | [Data capability and ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) passed isolated staging with 2,100 Spot bars. The [PROFILE checkpoint](QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md) now passes local lifecycle, revocation, real application HTTP, simulated recovery and rendered period UI on desktop/mobile. Admission remains 10K/1m including warm-up. | Physical PROFILE recovery results match; repeat supervised completion with the done marker before its deadline. Raw ingestion alone is not enrollment; PROFILE results still deny evaluator admission. Expanded capacity remains gated. |
 | Quant scheduling (QS-1) | [Isolated staging recovery](QD_QS_RECOVERY_STAGING_2026-09-28.md) passed: actual main worker, SIGKILL after 1,000 bars with an in-flight unit, verified offline recovery, new lease and exact resumed result at 3,876 bars. One evaluation charged; old token fenced; original deadline and checkpoint preserved. | Connect other heavy paths to the scheduler and validate larger workloads before expanded admission. Manual cold recovery is not automatic restart or full-host disaster recovery. |
-| Quant resource protection (QS-1) | Prior bounded calibration and readiness checks passed their measured scopes. [Lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md) now passes a database/scheduler/main/evaluator baseline with strict I/O readback, checkpoint integrity, automatic completion and physical cleanup. | Complete stop/recovery coverage under the new controls and review the remaining phase matrix. Runtime delegation is not reboot-persistent. Cumulative byte caps and all-device coverage are not proved. No expanded capacity or production rollout. |
+| Quant resource protection (QS-1) | Prior bounded calibration and readiness checks passed their measured scopes. [Lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md) passes its recorded database/scheduler/main/evaluator baseline. A [local PostgreSQL I/O ledger](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) now persists accounting/restart/quarantine using CAS, with ten isolated PostgreSQL checks. The [runtime checkpoint](QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) adds held diagnostic launch/cancel guards with four PostgreSQL runtime checks and scoped independent source audit. One isolated held-child staging cancellation passed with conservative full-allowance charging, stale-start denial and delayed health/cleanup proof. Initial counter binding, payload execution and worker/public V2 admission remain open. | Primary next gate: bind trusted initial counters, integrate actual PROFILE runtime and complete the fault matrix. Then verify stop/recovery coverage under controls and review remaining phase gates. Runtime delegation is not reboot-persistent. Physical enforcement, cumulative byte caps and all-device coverage are not proved. No expanded capacity or production rollout. |
 | Research Library / Best Performance (QR-1 through QR-4) | Owner-approved plan and target diagrams below; no customer library, comparison ranking or portfolio mark-to-market shipped by this update. | Reuse durable run evidence; add immutable artifacts, portfolio reporting, fair comparison and explicit owner-started follow-up runs. Real recommendations remain validation-gated. |
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
@@ -234,7 +248,7 @@ inside workflow step 3, not an additional automatic optimization cycle.
 | ID | Deliverable | Completion evidence | Current status |
 | --- | --- | --- | --- |
 | PF-1 | Static Risk Manager consistency check and point-in-time sizing preview. Resolve owner/Bot policy and capital on the server; distinguish hypothetical drafts from saved settings. | Accepted/capped/rejected fixtures agree with worker rules; verified venue filters, fees, reservations and reduce-only targets are represented. Unknown data cannot become a pass. Preview causes no policy mutation. | Paper/public-filter engineering passed in [PF-1C](PF_1C_CHECKPOINT_2026-09-28.md); active Bot rollout acceptance remains gated. V1 is unchanged and V2 requires explicit evidence/producer rollout. No Run approval follows from a hypothetical preview. |
-| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | [Local plan contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and five focused checks completed; current plan uses 10K/V1 scope. Resolver, replay and admission remain pending. Implement and prove cost-model V2 historical evaluator parity before admitting V2 research; do not reuse V1 parity as V2 evidence. |
+| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | [Local plan contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and five focused checks completed; current plan uses 10K/V1 scope. The [isolated cost-v2 order finalizer](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) passed 12 Python checks and 17 Node/Python vectors. Stateful replay, trusted resolver and admission remain pending. Implement and prove cost-model V2 historical evaluator parity before admitting V2 research; do not reuse V1 parity as V2 evidence. |
 | PF-3 | Readiness report with signal/intent/fill/episode counts, rejection reasons, cash/exposure, pause periods and collection estimate. | Distinguishes configuration failure, insufficient activity, unavailable capability and readiness to start Paper. Estimates use a declared development window and assumptions; persistent pause gives no finite collection ETA. | Planned; after PF-2. |
 | PF-4 | Explainable setting proposals inside the owner's declared risk/exposure limits, with before/after preview and explicit save. | Deterministic calculations, effective-value provenance, stale-state detection and saved-policy confirmation. AI may explain calculations but is not the authoritative calculator. | Planned; after PF-1 through PF-3. |
 
@@ -609,6 +623,33 @@ flowchart TD
 ```
 
 ## Change log
+
+### 2026-09-29 — Runtime launch intent and held-child cancellation
+
+The [runtime checkpoint](QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md)
+connects the durable ledger to a diagnostic launcher through immutable start
+intent and scheduler/SQL guards. Four isolated PostgreSQL runtime checks and
+one focused V1 scheduler check passed; independent source audit found no blocker
+within held-bootstrap/cancel scope. Payload release remains denied until trusted
+initial counter binding is implemented. A retained-cgroup probe failed to prove
+post-exit counters; its failure and cleanup remain evidence. This does not close
+QD-1/QS-1 or enable actual PROFILE execution, V2 public admission or larger jobs.
+The one subsequent isolated staging case passed cancellation, full unknown-final
+charging, stale-start denial and delayed cleanup/health checks. The original
+eight service PIDs, nine historical job pairs and retention evidence were unchanged.
+Roadmap, Time Management, README, Context and the phase checklist were updated.
+
+### 2026-09-29 — Local durable I/O and isolated PF-2 order finalizer
+
+The [combined checkpoint](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md)
+adds a PostgreSQL ledger bound to the existing immutable V2 scheduler contract
+and an isolated Python cost-v2 order finalizer. Isolated PostgreSQL passed 10/10;
+Python passed 12/12; one cross-language test matched 17 fixed vectors. Independent
+source review found no blocker within these local scopes. Runtime launch/cancel
+serialization, physical enforcement, full historical replay and trusted enrollment
+remain open. Production admission stays at 10K; no staging rollout, production
+migration or new collection campaign occurred. Roadmap, Time Management,
+README and Context were synchronized. Hosted CI has not run.
 
 ### 2026-09-29 — Full-phase checklist and local recovery/capacity contracts
 

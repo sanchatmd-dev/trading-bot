@@ -19,7 +19,9 @@
 
 Historical Preflight ใช้ราคา Spot จาก exchange API และ evaluator ที่ผ่านการตรวจ หรือ CSV สัญญาณจาก TradingView ที่ผูกกับ source/input snapshot จึงไม่ต้องต่อ TradingView MCP การรองรับ CSV ใช้จำลอง Risk Manager ของสัญญาณชุดเดิม; ไม่ได้ทำให้เปลี่ยน source inputs หรือรองรับ Pine ทุกตัวได้
 
-PF-2 เริ่ม engineering คู่ขนานกับ QD/QS แล้ว: [plan contract ในเครื่อง](docs/PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) ผูก snapshot และจำกัดข้อมูล development ผ่าน 5 checks แต่ยังไม่มี historical replay/API ที่พร้อมใช้งาน และยังไม่เปิด cost-model V2 หรือ capacity เพิ่ม
+PF-2 และ QD/QS มี [local checkpoint วันที่ 2026-09-29](docs/QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md): PostgreSQL I/O ledger ผ่าน 10 checks รวม settlement และการเปลี่ยน lease โดยรักษายอดสะสม ส่วน Python cost-v2 order finalizer ผ่าน 12 checks และเทียบ Node 17 กรณี ผู้ตรวจอิสระไม่พบ blocker ในขอบเขตนี้
+
+[Runtime checkpoint](docs/QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) เชื่อม scheduler/ledger กับ launch intent และการ cancel ของ child ทดสอบที่ยังรอ payload แล้ว ผ่าน PostgreSQL 4 checks, ตรวจ source อิสระ และหนึ่งกรณี staging ที่จบ `CANCELLED`/`STOP_PROVEN` พร้อมคืน slot หลังหยุด process ตรวจซ้ำแล้วบริการและหลักฐานเดิมไม่เปลี่ยน ขั้นส่ง payload ยังปฏิเสธจนกว่าจะผูก I/O counters เริ่มต้นที่เชื่อถือได้ จึงยังไม่ใช่การเชื่อม PROFILE/evaluator ครบ ต้องตรวจ runtime accounting และ stateful replay ต่อก่อนเปิด Historical V2 replay หรือ capacity เพิ่ม
 
 ลำดับผู้ใช้: เชื่อม Indicator → สร้าง Bridge → ตรวจความพร้อมก่อน Run และรัน Paper → Quant Optimize หนึ่ง run → ส่งผลที่ผ่านเกณฑ์ให้เจ้าของตรวจ → เจ้าของเลือกเริ่ม Bot ใหม่หรือจบ หากไม่พบ candidate ให้รายงานเหตุผลและจบ run โดยไม่ส่ง Best Inputs หรือวน Optimize อัตโนมัติ
 

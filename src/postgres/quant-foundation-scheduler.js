@@ -49,7 +49,7 @@ function text(value,code,max=128) {
  * This module supplies no process supervision or OS resource isolation.
  */
 export class QuantFoundationScheduler {
-  constructor({db,authorize,health,clock=Date.now,leaseMs=30000,capacityPolicy}={}) {
+  constructor({db,authorize,health,clock=Date.now,leaseMs=30000,capacityPolicy,canRelease}={}) {
     if (!db?.query || !db?.transaction || typeof authorize!=='function' || typeof health!=='function')
       throw fail('FOUNDATION_TRUSTED_CALLBACKS_REQUIRED');
     if (!Number.isSafeInteger(leaseMs) || leaseMs<1 || leaseMs>900000) throw fail('FOUNDATION_INVALID_LEASE');
@@ -57,6 +57,8 @@ export class QuantFoundationScheduler {
     // Explicit caller-trusted engineering policy only. Default services cannot
     // enqueue or resume expanded contracts. Evidence resolution remains required.
     this.capacityPolicy=capacityPolicy===undefined?null:validateCapacityPolicy(capacityPolicy);
+    if(canRelease!==undefined&&typeof canRelease!=='function')throw fail('FOUNDATION_TRUSTED_CALLBACKS_REQUIRED');
+    this.canRelease=canRelease??null;
   }
   now() {
     const now=this.clock();
@@ -224,6 +226,8 @@ export class QuantFoundationScheduler {
   }
   async release(job,status,result) {
     return this.fenced(job,status==='PAUSED'?'PAUSE':'FINISH',async(row,now)=>{
+      if(this.canRelease&&(await this.canRelease(row,status==='PAUSED'?'PAUSE':'FINISH'))?.ok!==true)
+        throw fail('FOUNDATION_IO_UNRESOLVED');
       if(row.contract.version==='quant-foundation-v2'&&status==='SUCCEEDED')strictJsonV2(result);
       const bounded=status==='SUCCEEDED'?json(result,row.contract.budget.max_output_bytes,'FOUNDATION_OUTPUT_TOO_LARGE'):null;
       if(row.contract.kind==='BACKFILL'&&status==='SUCCEEDED')validateBackfillResult(row.contract,row.checkpoint,bounded);
@@ -258,6 +262,8 @@ export class QuantFoundationScheduler {
       if (!row || row.status!=='STOPPING' || row.lease_token!==token) throw fail('FOUNDATION_LEASE_LOST');
       // Supervisor proof must remain available after owner revocation.
       await this.allowed(row.owner_id,row.contract,'ACKNOWLEDGE_STOPPED',{job_id:jobId,lease_token:token});
+      if(this.canRelease&&(await this.canRelease(row,'ACKNOWLEDGE_STOPPED'))?.ok!==true)
+        throw fail('FOUNDATION_IO_UNRESOLVED');
       const status=['LEASE_EXPIRED','HEALTH_UNAVAILABLE'].includes(row.stop_reason) && row.attempts<3 && row.deadline_at>this.now()?'PAUSED':'CANCELLED';
       return this.expose((await this.db.query(`UPDATE quant_foundation_jobs SET status=$2,stop_reason=NULL,
         worker_id=NULL,lease_token=NULL,lease_until=NULL WHERE job_id=$1 RETURNING *`,[jobId,status])).rows[0]);
