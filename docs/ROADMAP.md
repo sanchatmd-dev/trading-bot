@@ -70,8 +70,9 @@ Actual PROFILE integration, bounded cumulative
 I/O budgets and overshoot calibration, all-device coverage, worker/public V2
 admission and physical enforcement remain open. PF-2 finalizer
 passed Python 12/12, focused cross-language parity 1/1 over 17 vectors and Ruff
-within reviewed scope; this is not full risk/position/replay parity. Hosted CI has
-not run. The [terminal handshake staging checkpoint](QD_QS_TERMINAL_HANDSHAKE_2026-09-29.md)
+within reviewed scope; this is not full risk/position/replay parity. Hosted CI for
+`421ca07` passed Linux, PostgreSQL, container and Quant Lab checks; Windows exposed
+a stale test fixture, tracked in the CI repair entry below. The [terminal handshake staging checkpoint](QD_QS_TERMINAL_HANDSHAKE_2026-09-29.md)
 passed one actual-worker fixture to cursor 3,876, with confirmed cleanup and
 unchanged old services and jobs. Setup first encountered read-only copied files;
 a reviewed continuation corrected only the new copy. The research outcome is
@@ -202,7 +203,7 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 | QL-2A / Custom extension | Fixed SPT baseline accepted; Custom baseline plus 16 axis settings matched; 100-observation Custom repaint passed. [Custom evidence](QL_3A_VARIED_INPUT_PARITY.md). | Evidence is source/settings scoped; positive EXIT was absent from the Custom repaint sample. Mixed candidates and new revisions need their own evidence. |
 | QL-3A research | Durable 100-candidate job completed; all candidates have zero validation closed trades. [Result](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | `NO_VALID_CANDIDATE`; original holdout unopened. Engineering acceptance and recommendation acceptance are tracked separately; neither is automatically granted by this update. |
 | SPT Spot EXIT v1 | Separate offline draft and four predeclared development comparisons. Net loss improved to -5.1852783497 USDT but three losing episodes still stop entries; validation remains zero. [Review](QL_3A_SPOT_EXIT_V1_2026-09-27.md). | Failed development preflight. Not activated; no new TradingView collection requested for this draft. |
-| Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. [PF-2 contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and [local finalizer checkpoint](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) record development-only work; reported Python/Node checks pass in stated scope, but finalizer does not prove full replay parity. | Complete PF-2 stateful replay and trusted resolver; order-finalizer source review passed within its stated scope. Hosted CI not run. V2 historical replay/admission remains denied until full evaluator parity. Then PF-3/PF-4. |
+| Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. [PF-2 contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and [local finalizer checkpoint](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) record development-only work; reported Python/Node checks pass in stated scope, but finalizer does not prove full replay parity. | Complete PF-2 stateful replay and trusted resolver; order-finalizer source review passed within its stated scope. Hosted Quant Lab checks passed for `421ca07`; Windows fixture repair is tracked below. V2 historical replay/admission remains denied until full evaluator parity. Then PF-3/PF-4. |
 | Historical data capacity (QD-1) | [Data capability and ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) passed isolated staging with 2,100 Spot bars. The [PROFILE checkpoint](QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md) now passes local lifecycle, revocation, real application HTTP, simulated recovery and rendered period UI on desktop/mobile. Admission remains 10K/1m including warm-up. | Physical PROFILE recovery results match; repeat supervised completion with the done marker before its deadline. Raw ingestion alone is not enrollment; PROFILE results still deny evaluator admission. Expanded capacity remains gated. |
 | Quant scheduling (QS-1) | [Isolated staging recovery](QD_QS_RECOVERY_STAGING_2026-09-28.md) passed: actual main worker, SIGKILL after 1,000 bars with an in-flight unit, verified offline recovery, new lease and exact resumed result at 3,876 bars. One evaluation charged; old token fenced; original deadline and checkpoint preserved. | Connect other heavy paths to the scheduler and validate larger workloads before expanded admission. Manual cold recovery is not automatic restart or full-host disaster recovery. |
 | Quant resource protection (QS-1) | Prior bounded calibration and readiness checks passed their measured scopes. [Lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md) passes its recorded database/scheduler/main/evaluator baseline. A [local PostgreSQL I/O ledger](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) now persists accounting/restart/quarantine using CAS, with ten isolated PostgreSQL checks. The [runtime checkpoint](QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) adds held diagnostic launch/cancel guards with four PostgreSQL runtime checks and scoped independent source audit. One isolated held-child staging cancellation passed with conservative full-allowance charging, stale-start denial and delayed health/cleanup proof. Local initial binding now passes 14 PostgreSQL and 11 launcher/I/O checks with independent source review; positive Linux binding/release, actual PROFILE execution and worker/public V2 admission remain open. | Primary next gate: prove positive initial binding/release on Linux, integrate actual PROFILE runtime and complete the fault matrix. Then verify stop/recovery coverage under controls and review remaining phase gates. Runtime delegation is not reboot-persistent. Physical enforcement, cumulative byte caps and all-device coverage are not proved. No expanded capacity or production rollout. |
@@ -628,6 +629,23 @@ flowchart TD
 ```
 
 ## Change log
+
+### 2026-09-29 — Windows CI risk fixture clock repair
+
+[Safety checks for `421ca07`](https://github.com/sanchatmd-dev/trading-bot/actions/runs/36563022690)
+reported 426 passes and 13 failures on Windows. All failures came from
+`test/risk.test.js`: its module-load timestamp aged beyond the 60-second limit
+before execution in the shared test process. Linux, PostgreSQL, container and
+[Quant Lab](https://github.com/sanchatmd-dev/trading-bot/actions/runs/36563022585)
+passed. A virtual 61-second delay reproduced all 13 failures.
+
+The fixture now supplies a fixed timestamp and the existing `context.now` clock.
+Focused checks pass 14/14, including acceptance at 60,000 ms and rejection at
+60,001 ms; the virtual delay also passes 14/14. Production risk code and signal
+age policy are unchanged. Full local Windows `npm test` completed in 122.11 seconds:
+439 passed, zero failed and one symlink-privilege test skipped. Hosted repair
+results are pending. README and Context were reviewed unchanged: this repair changes test
+timing only. Positive Linux I/O binding and PROFILE integration remain next gates.
 
 ### 2026-09-29 — Initial I/O binding after the pushed runtime checkpoint
 

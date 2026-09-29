@@ -1,7 +1,12 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {evaluateRisk} from '../src/risk.js';
+const now=Date.UTC(2024,0,1);
 const policy={maxRiskPercent:1,maxOrderNotional:10000,maxDailyNotional:50000,maxTradesPerDay:10,maxDailyLossR:3,maxOpenPositions:3,onePositionPerSymbol:true,pauseAfterLossStreak:3,maxSignalAgeSeconds:60,maxVolatilityPercent:5,blockHighVolatility:true,blockDuringNews:true,sideMode:'BOTH',requireReduceOnlySell:true,allowedSymbols:[]};
-const signal={tradeId:'t',broker:'binance-global',symbol:'BTCUSDT',event:'BUY',side:'BUY',orderType:'MARKET',timestamp:Date.now(),riskMode:'PERCENT_EQUITY',riskValue:1,referencePrice:60000,stopLoss:59000,takeProfit:65000,leverage:1,volatilityPercent:0,newsRisk:false};
-const ctx={policy,daily:{trades:0,notional:0,realized_r:0,loss_streak:0},position:{quantity:0},equity:10000,licensed:true,globalKill:false,openPositions:0,hasPendingOrder:false};
+const signal={tradeId:'t',broker:'binance-global',symbol:'BTCUSDT',event:'BUY',side:'BUY',orderType:'MARKET',timestamp:now,riskMode:'PERCENT_EQUITY',riskValue:1,referencePrice:60000,stopLoss:59000,takeProfit:65000,leverage:1,volatilityPercent:0,newsRisk:false};
+const ctx={policy,daily:{trades:0,notional:0,realized_r:0,loss_streak:0},position:{quantity:0},equity:10000,licensed:true,globalKill:false,openPositions:0,hasPendingOrder:false,now};
+test('signal age accepts 60 seconds and rejects older signals',()=>{
+  assert.equal(evaluateRisk(signal,{...ctx,now:now+60_000}).ok,true);
+  assert.equal(evaluateRisk(signal,{...ctx,now:now+60_001}).reason,'Signal is stale');
+});
 test('calculates percent equity size',()=>{const r=evaluateRisk(signal,ctx);assert.equal(r.ok,true);assert.equal(r.order.quantity,.1);});
 test('explicit quantity and fixed notional cannot bypass max risk',()=>{
   for(const sizing of [{quantity:1},{riskMode:'QUANTITY',riskValue:1},{riskMode:'FIXED_NOTIONAL',riskValue:60000}])
