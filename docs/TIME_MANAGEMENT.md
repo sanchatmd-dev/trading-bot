@@ -547,3 +547,50 @@ for the fallback diagnostic; then the remaining fault matrix and trusted PROFILE
 enrollment. The readiness retention cleanup still waits for real age expiry at
 2026-09-30 13:53:52 Asia/Bangkok. The 410–720-hour baseline and existing
 contingency are unchanged; this slice is not a forecast change.
+
+## PF-2 S3 resolver checkpoint — 2026-09-30
+
+PF-2 S3 (`5006feb`, pushed) is a local, development-only trusted resolver with
+synthetic test sources; it is not wired to any runtime and nothing is deployed. See
+the [record](PF2_S3_RESOLVER_CHECKPOINT_2026-09-30.md). The same record holds the
+FTR-1c design decision, which is proposed and awaiting owner approval.
+
+Measured intervals, all wall-clock and shared 5-hour usage across all models: wave B
+19:03-20:02 UTC, 9% to 27% used (S3 build and first fix round plus the three-agent
+FTR-1c design panel); wave C about 20:07-20:59 UTC, 27% to 40% (S3 fix rounds plus
+the S4 contract draft and review); wave D1 about 21:02-21:17 UTC, 40% to 42% (final
+S3 fix and re-check). Shared counters do not attribute cost to an agent or a step.
+The independent auditor found four blocking-medium defects across rounds and all
+were fixed; the root reran the Node suite at about 21:15 UTC (539 tests, 538 pass,
+1 pre-existing skip, 0 fail). The agents ran under the owner-approved temporary
+elevated tier from 2026-09-29 17:40 UTC to 2026-09-30 03:40 UTC (coder Sonnet 5.5
+xhigh, tester Sonnet 5.5 high, auditor Opus 5.5 xhigh). No engineering hours are
+booked and no speedup is claimed.
+
+Next work: the S4 Node driver, which followed as `9a340af` (next section); an
+owner decision on FTR-1c; then production adapters and
+runtime admission. The readiness retention cleanup still waits for real age expiry
+at 2026-09-30 13:53:52 Asia/Bangkok. The 410–720-hour baseline and existing
+contingency are unchanged; this slice is not a forecast change.
+
+## PF-2 S4 replay driver checkpoint — 2026-09-30
+
+PF-2 S4 (`9a340af`, pushed) is a local, development-only Node replay driver and
+result envelope; it is not wired to a scheduler, database or route, and nothing is
+deployed. See the [record](PF2_S4_REPLAY_DRIVER_CHECKPOINT_2026-09-30.md).
+
+Measured intervals, all wall-clock: wave D2 about 21:21-22:59 UTC (S4 build, tester
+and auditor, one fix round, plus the S3 documentation worker), with the shared
+5-hour usage window going from 42% to 54% used; wave D3 about 23:05-23:33 UTC (a
+second fix round restricting interpreters to absolute paths, and a tester
+re-check), followed by root checks until about 23:40 UTC. The 5-hour window reset
+at 23:30 UTC during wave D3, so the share of that wave is not separable; the weekly
+all-models counter went from 14% to 16% used across both waves. Shared counters do
+not attribute cost to an agent or a step. The agents ran under the owner-approved
+temporary elevated tier. No engineering hours are booked and no speedup is claimed.
+
+Next work: an owner decision on FTR-1c; PF-2 production adapters, runtime admission
+and CI wiring of the real-Python driver tests. The readiness retention cleanup
+still waits for real age expiry at 2026-09-30 13:53:52 Asia/Bangkok. The
+410–720-hour baseline and existing contingency are unchanged; this slice is not a
+forecast change.

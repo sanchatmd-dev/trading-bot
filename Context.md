@@ -22,7 +22,7 @@ or a collection deadline while a persistent Risk Manager guard blocks entries.
 Local PF-2 engineering now has a development-only immutable plan contract,
 using current 10K/V1 limits. A development-only Python stateful replay core (S1,
 V1 only, not full Risk Manager parity) now exists locally, but there is no runtime
-historical replay or admission yet; cost-inclusive V2 parity remains required. This work runs alongside
+historical replay or admission yet; cost-inclusive V2 parity remains required. A development-only trusted resolver (S3, `5006feb`) and Node replay driver with a result envelope (S4, `9a340af`) are pushed and not wired to any runtime ([S3 record](docs/PF2_S3_RESOLVER_CHECKPOINT_2026-09-30.md), [S4 record](docs/PF2_S4_REPLAY_DRIVER_CHECKPOINT_2026-09-30.md)). This work runs alongside
 QD-1/QS-1 runtime and I/O acceptance. See the
 [PF-2 checkpoint](docs/PF_2_CONTRACT_CHECKPOINT_2026-09-29.md).
 
