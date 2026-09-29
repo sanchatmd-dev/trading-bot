@@ -1,12 +1,15 @@
 import {createHash,randomUUID} from 'node:crypto';
 import {constants} from 'node:fs';
-import {mkdir, open, readdir, lstat, readFile, rm, statfs, writeFile} from 'node:fs/promises';
+import {mkdir, open, readdir, lstat, readFile, rm, statfs, unlink, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fail} from '../pine-bridge/source.js';
 import {DatasetStore} from './dataset-store.js';
 
-const safeName=name=>typeof name==='string'&&/^(?:\.database-owner\.json|\.pending-(?:[a-f0-9-]+|atr14-[a-f0-9-]+\.json)|[a-f0-9]{64}|atr14-[a-f0-9]{64}\.json)$/.test(name);
+const safeName=name=>typeof name==='string'&&/^(?:\.database-owner\.json|\.pending-(?:[a-f0-9-]+|atr14-[a-f0-9-]+\.json)|[a-f0-9]{64}|atr14-[a-f0-9]{64}\.json|atr14-v2-[a-f0-9]{64})$/.test(name);
 const safeBytes=n=>Number.isSafeInteger(n)&&n>=0;
+const READINESS_PURPOSE='quant-io-readiness-v1';
+const readinessName=name=>typeof name==='string'&&/^\.pending-[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(name);
+const validPurpose=value=>value.purpose===undefined||(value.purpose===READINESS_PURPOSE&&value.diskBytes===4096&&value.tempBytes===4096&&readinessName(value.pendingName));
 const ledgerName='.storage-reservations', lockName='.storage-lock';
 const MAX_SCAN_ENTRIES=100_000, MAX_SCAN_DEPTH=8;
 
@@ -91,7 +94,7 @@ export class StorageBudget {
       if(!/^[a-f0-9-]+\.json$/.test(name))throw fail('STORAGE_ACCOUNTING_FAILED');
       let value;
       try {value=JSON.parse(await readFile(path.join(this.root,ledgerName,name),'utf8'));} catch {throw fail('STORAGE_ACCOUNTING_FAILED');}
-      if(!safeBytes(value.diskBytes)||!safeBytes(value.tempBytes)||!safeBytes(value.createdAt)||!safeName(value.pendingName)||!value.pendingName.startsWith('.pending-'))throw fail('STORAGE_ACCOUNTING_FAILED');
+      if(!safeBytes(value.diskBytes)||!safeBytes(value.tempBytes)||!safeBytes(value.createdAt)||!safeName(value.pendingName)||!value.pendingName.startsWith('.pending-')||!validPurpose(value))throw fail('STORAGE_ACCOUNTING_FAILED');
       reservations.push(value);
     }
     // Pending bytes already occupy filesystem space. Reserve only unspent estimate.
@@ -108,8 +111,8 @@ export class StorageBudget {
     return {committedBytes:committed,pendingBytes:temp,reservedDiskBytes:reservedDisk,reservedTempBytes:reservedTemp,freeBytes,reservations:reservations.length};
   }
   async inspect(){return this.locked(()=>this.snapshot());}
-  async reserve({diskBytes,tempBytes,pendingName}={}) {
-    if(!safeBytes(diskBytes)||!safeBytes(tempBytes)||!safeName(pendingName)||!pendingName.startsWith('.pending-'))throw fail('STORAGE_BUDGET_CONFIGURATION_REQUIRED');
+  async reserve({diskBytes,tempBytes,pendingName,purpose}={}) {
+    if(!safeBytes(diskBytes)||!safeBytes(tempBytes)||!safeName(pendingName)||!pendingName.startsWith('.pending-')||!validPurpose({diskBytes,tempBytes,pendingName,purpose}))throw fail('STORAGE_BUDGET_CONFIGURATION_REQUIRED');
     const id=randomUUID(),filename=path.join(this.root,ledgerName,id+'.json');
     await this.locked(async()=>{
       const state=await this.snapshot();
@@ -120,7 +123,7 @@ export class StorageBudget {
       if((await entries(this.root,0,{count:0})).includes(pendingName))throw fail('STORAGE_ACCOUNTING_FAILED');
       if(state.committedBytes+state.pendingBytes+state.reservedDiskBytes+diskBytes>this.diskQuotaBytes||state.pendingBytes+state.reservedTempBytes+tempBytes>this.tempQuotaBytes||state.freeBytes-state.reservedDiskBytes-diskBytes<this.freeFloorBytes)throw fail('STORAGE_CAPACITY_EXCEEDED');
       const file=await open(filename,constants.O_CREAT|constants.O_EXCL|constants.O_WRONLY,0o600);
-      try {await file.writeFile(JSON.stringify({diskBytes,tempBytes,pendingName,createdAt:Date.now()}));await file.sync();} finally {await file.close();}
+      try {await file.writeFile(JSON.stringify({diskBytes,tempBytes,pendingName,createdAt:Date.now(),...(purpose?{purpose}:{})}));await file.sync();} finally {await file.close();}
     });
     let released=false;
     return {release:async()=>{if(released)return;await this.locked(async()=>{await rm(filename);});released=true;}};
@@ -144,22 +147,33 @@ export class StorageBudget {
       }
     }
     return this.locked(async()=>{
-      const staleReservations=[];
+      const staleReservations=[],reservationsByPending=new Map();
       for(const name of await entries(path.join(this.root,ledgerName),0,{count:0})) {
         if(!/^[a-f0-9-]+\.json$/.test(name))throw fail('STORAGE_ACCOUNTING_FAILED');
         const filename=path.join(this.root,ledgerName,name);
         let reservation;
         try {reservation=JSON.parse(await readFile(filename,'utf8'));} catch {throw fail('STORAGE_ACCOUNTING_FAILED');}
-        if(!safeBytes(reservation.diskBytes)||!safeBytes(reservation.tempBytes)||!safeBytes(reservation.createdAt)||!safeName(reservation.pendingName))throw fail('STORAGE_ACCOUNTING_FAILED');
+        if(!safeBytes(reservation.diskBytes)||!safeBytes(reservation.tempBytes)||!safeBytes(reservation.createdAt)||!safeName(reservation.pendingName)||!validPurpose(reservation)||reservationsByPending.has(reservation.pendingName))throw fail('STORAGE_ACCOUNTING_FAILED');
         if(Date.now()-reservation.createdAt<minAgeMs)throw fail('STORAGE_MAINTENANCE_GUARD');
-        staleReservations.push(name);
+        reservationsByPending.set(reservation.pendingName,{name,reservation});
       }
-      const retained=new Set(retainedNames),now=Date.now(),candidates=[],scan={count:0};
+      const retained=new Set(retainedNames),now=Date.now(),candidates=[],readinessCandidates=[],scan={count:0};
       for(const name of await entries(this.root,0,scan)) {
         if(name===ledgerName||name===lockName||retained.has(name))continue;
         // Unknown files are preserved and block deletion until separately audited.
         if(!safeName(name))continue;
         const filename=path.join(this.root,name);
+        // Account V2 storage, but preserve all such artifacts until the versioned
+        // enrollment reference resolver and orphan validator are integrated.
+        if(/^atr14-v2-[a-f0-9]{64}$/.test(name))continue;
+        const owned=reservationsByPending.get(name);
+        if(owned?.reservation.purpose===READINESS_PURPOSE){
+          const stat=await lstat(filename);
+          if(!stat.isFile()||stat.isSymbolicLink()||stat.size>4096||now-stat.mtimeMs<minAgeMs)continue;
+          candidates.push({name,bytes:stat.size});
+          readinessCandidates.push({name,recordName:owned.name,identity:stat});
+          continue;
+        }
         if(now-await newestMtime(filename,1,scan)<minAgeMs)continue;
         if(/^[a-f0-9]{64}$/.test(name)) {
           let bytes;
@@ -201,11 +215,35 @@ export class StorageBudget {
         } else continue;
         candidates.push({name,bytes:await sizeOf(filename,1,scan)});
       }
-      if(apply) {
-        for(const name of staleReservations){await prove();await rm(path.join(this.root,ledgerName,name));}
-        for(const item of candidates){await prove();await rm(path.join(this.root,item.name),{recursive:true});}
+      for(const {name,reservation} of reservationsByPending.values()){
+        if(reservation.purpose!==READINESS_PURPOSE){
+          // Legacy regular pending files lack durable type proof. Keep their ledger record for audit.
+          if(/^\.pending-[a-f0-9-]+$/.test(reservation.pendingName)){
+            try {const stat=await lstat(path.join(this.root,reservation.pendingName));if(!stat.isDirectory()||stat.isSymbolicLink())continue;}
+            catch(error){if(error.code!=='ENOENT')throw error;}
+          }
+          staleReservations.push(name);
+          continue;
+        }
+        if(readinessCandidates.some(item=>item.recordName===name))continue;
+        if(retained.has(reservation.pendingName))continue;
+        try {await lstat(path.join(this.root,reservation.pendingName));}
+        catch(error){if(error.code==='ENOENT'){staleReservations.push(name);continue;}throw error;}
       }
-      return {applied:apply,staleReservations:staleReservations.length,candidates};
+      if(apply) {
+        for(const item of readinessCandidates){
+          await prove();
+          const current=await lstat(path.join(this.root,item.name));
+          if(!current.isFile()||current.isSymbolicLink()||current.size!==item.identity.size||current.dev!==item.identity.dev||current.ino!==item.identity.ino||current.mtimeMs!==item.identity.mtimeMs)throw fail('STORAGE_UNSAFE_PATH');
+          await unlink(path.join(this.root,item.name));
+          await prove();
+          await rm(path.join(this.root,ledgerName,item.recordName));
+        }
+        for(const name of staleReservations){await prove();await rm(path.join(this.root,ledgerName,name));}
+        const readinessNames=new Set(readinessCandidates.map(item=>item.name));
+        for(const item of candidates){if(readinessNames.has(item.name))continue;await prove();await rm(path.join(this.root,item.name),{recursive:true});}
+      }
+      return {applied:apply,staleReservations:staleReservations.length+readinessCandidates.length,candidates};
     });
   }
 }

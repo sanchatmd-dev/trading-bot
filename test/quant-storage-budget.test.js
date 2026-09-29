@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,readdir,rm,writeFile,mkdir,utimes} from 'node:fs/promises';
+import {mkdtemp,readFile,readdir,rm,writeFile,mkdir,utimes,unlink,symlink} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {StorageBudget} from '../src/quant-research/storage-budget.js';
@@ -26,6 +26,20 @@ test('quota denies publication before staging and retains prior immutable data',
   const store=new DatasetStore({root,storageBudget:budget});
   await assert.rejects(store.publish(metadata,bars),{code:'STORAGE_CAPACITY_EXCEEDED'});
   assert.deepEqual((await readdir(root)).sort(),['.storage-reservations']);
+});
+
+test('V2 sidecar directories count against quota and remain protected pending reference integration',async t=>{
+  const {root,budget}=await fixture(t,{diskQuotaBytes:100,tempQuotaBytes:100});
+  const artifact='atr14-v2-'+'a'.repeat(64),directory=path.join(root,artifact);
+  await mkdir(directory);await writeFile(path.join(directory,'chunk-00000.jsonl'),'x'.repeat(40));
+  await ageTree(directory,new Date(Date.now()-25*60*60*1000));
+  assert.equal((await budget.inspect()).committedBytes,40);
+  await assert.rejects(budget.reserve({diskBytes:61,tempBytes:61,pendingName:'.pending-abc'}),
+    {code:'STORAGE_CAPACITY_EXCEEDED'});
+  const result=await budget.maintenance({retainedNames:[],exclusiveOffline:true,apply:true,assertExclusive:async()=>true});
+  assert.deepEqual(result.candidates,[]);
+  assert.equal((await readFile(path.join(directory,'chunk-00000.jsonl'))).length,40);
+  assert.deepEqual((await budget.maintenance({retainedNames:[artifact],exclusiveOffline:true})).candidates,[]);
 });
 
 test('concurrent reservations across instances admit only capacity and account pending once',async t=>{
@@ -75,6 +89,98 @@ test('orphan reservation and stale lock fail closed; offline maintenance require
   assert.equal((await readdir(root)).includes('.storage-lock'),true);
   await budget.maintenance({retainedNames:[],exclusiveOffline:true,apply:true,recoverStaleLock:true,assertExclusive:async()=>true});
   assert.equal((await readdir(root)).includes('.storage-lock'),false);
+});
+
+test('aged owned readiness file and reservation are reclaimed together',async t=>{
+  const {root,budget}=await fixture(t);
+  const name='.pending-123e4567-e89b-42d3-a456-426614174000';
+  await budget.reserve({diskBytes:4096,tempBytes:4096,pendingName:name,purpose:'quant-io-readiness-v1'});
+  const ledger=path.join(root,'.storage-reservations');
+  const [recordName]=await readdir(ledger);
+  const recordFile=path.join(ledger,recordName);
+  const record=JSON.parse(await readFile(recordFile,'utf8'));
+  assert.equal(record.purpose,'quant-io-readiness-v1');
+  await writeFile(path.join(root,name),Buffer.alloc(4096));
+  await assert.rejects(budget.maintenance({retainedNames:[],exclusiveOffline:true}),{code:'STORAGE_MAINTENANCE_GUARD'});
+  record.createdAt=Date.now()-25*60*60*1000;
+  await writeFile(recordFile,JSON.stringify(record));
+  const pending=path.join(root,name);
+  await ageTree(pending,new Date(Date.now()-25*60*60*1000));
+  const preview=await budget.maintenance({retainedNames:[],exclusiveOffline:true});
+  assert.deepEqual(preview.candidates.map(item=>item.name),[name]);
+  await budget.maintenance({retainedNames:[],exclusiveOffline:true,apply:true,assertExclusive:async()=>true});
+  assert.equal((await readdir(root)).includes(name),false);
+  assert.deepEqual(await readdir(ledger),[]);
+});
+
+test('aged readiness partial files and missing-file retry keep paired evidence until safe cleanup',async t=>{
+  const {root,budget}=await fixture(t);
+  const ledger=path.join(root,'.storage-reservations');
+  const old=new Date(Date.now()-25*60*60*1000);
+  for(const [index,size] of [0,2048,4096].entries()){
+    const name=`.pending-123e4567-e89b-42d3-a456-42661417400${index}`;
+    await budget.reserve({diskBytes:4096,tempBytes:4096,pendingName:name,purpose:'quant-io-readiness-v1'});
+    const [recordName]=await readdir(ledger);
+    const recordFile=path.join(ledger,recordName);
+    const record=JSON.parse(await readFile(recordFile,'utf8'));
+    record.createdAt=old.getTime();
+    await writeFile(recordFile,JSON.stringify(record));
+    await writeFile(path.join(root,name),Buffer.alloc(size));
+    await ageTree(path.join(root,name),old);
+    let proofs=0;
+    await assert.rejects(budget.maintenance({retainedNames:[],exclusiveOffline:true,apply:true,
+      assertExclusive:async()=>++proofs===1}),{code:'STORAGE_MAINTENANCE_GUARD'});
+    assert.equal((await readdir(root)).includes(name),false);
+    assert.deepEqual(await readdir(ledger),[recordName]);
+    // Exclusive proof failed after file removal. Retry removes the paired reservation.
+    await budget.maintenance({retainedNames:[],exclusiveOffline:true,apply:true,assertExclusive:async()=>true});
+    assert.deepEqual(await readdir(ledger),[]);
+  }
+});
+
+test('typed readiness refuses invalid ownership and preserves untyped regular files',async t=>{
+  const {root,budget}=await fixture(t);
+  const ledger=path.join(root,'.storage-reservations');
+  const old=new Date(Date.now()-25*60*60*1000);
+  const name='.pending-123e4567-e89b-42d3-a456-426614174010';
+  await assert.rejects(budget.reserve({diskBytes:4095,tempBytes:4096,pendingName:name,purpose:'quant-io-readiness-v1'}),
+    {code:'STORAGE_BUDGET_CONFIGURATION_REQUIRED'});
+  await budget.reserve({diskBytes:4096,tempBytes:4096,pendingName:name,purpose:'quant-io-readiness-v1'});
+  const [recordName]=await readdir(ledger);
+  const recordFile=path.join(ledger,recordName);
+  const record=JSON.parse(await readFile(recordFile,'utf8'));
+  record.createdAt=old.getTime();
+  await writeFile(recordFile,JSON.stringify(record));
+  const pending=path.join(root,name);
+  await writeFile(pending,Buffer.alloc(4097));
+  await ageTree(pending,old);
+  let preview=await budget.maintenance({retainedNames:[],exclusiveOffline:true});
+  assert.deepEqual(preview.candidates,[]);
+  assert.equal(preview.staleReservations,0);
+  await budget.maintenance({retainedNames:[],exclusiveOffline:true,apply:true,assertExclusive:async()=>true});
+  assert.deepEqual(await readdir(ledger),[recordName]);
+  await unlink(pending);
+  await writeFile(pending,Buffer.alloc(4096));
+  await ageTree(pending,old);
+  preview=await budget.maintenance({retainedNames:[name],exclusiveOffline:true});
+  assert.deepEqual(preview.candidates,[]);
+  assert.equal(preview.staleReservations,0);
+  await unlink(pending);
+  try{await symlink(recordFile,pending);}catch(error){if(error.code!=='EPERM')throw error;}
+  if((await readdir(root)).includes(name)){
+    preview=await budget.maintenance({retainedNames:[],exclusiveOffline:true});
+    assert.deepEqual(preview.candidates,[]);
+    assert.equal(preview.staleReservations,0);
+    await unlink(pending);
+  }
+  const untyped='.pending-123e4567-e89b-42d3-a456-426614174011';
+  await writeFile(path.join(root,untyped),Buffer.alloc(4096));
+  await ageTree(path.join(root,untyped),old);
+  preview=await budget.maintenance({retainedNames:[],exclusiveOffline:true});
+  assert.deepEqual(preview.candidates,[]);
+  assert.equal(preview.staleReservations,1); // Typed reservation is now missing its file.
+  await budget.maintenance({retainedNames:[],exclusiveOffline:true,apply:true,assertExclusive:async()=>true});
+  assert.equal((await readdir(root)).includes(untyped),true);
 });
 
 test('maintenance dry run retains references and unknown artifacts; apply removes only verified old orphan',async t=>{

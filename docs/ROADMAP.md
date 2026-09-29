@@ -41,6 +41,68 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+The owner approved parallel local PF-2 engineering while QD-1/QS-1 runtime and
+I/O acceptance remain the primary work. The [PF-2 contract checkpoint](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md)
+adds a hashed, development-only replay plan with frozen input/state references,
+one evaluation and the existing 10K/V1 limits. Five focused checks pass; replay,
+trusted resolution, cost-model V2 parity and runtime admission remain pending.
+Library/Export work stays limited to contracts and fixtures until dependencies
+pass; no Library/Export implementation was started in this wave.
+
+The I/O ledger now reserves before launch, binds cgroup-lifetime counters and
+quarantines all further compute after unknown-final accounting. Its 15 focused
+tests and independent recheck pass; durable storage and physical enforcement
+remain open. The [terminal handshake staging checkpoint](QD_QS_TERMINAL_HANDSHAKE_2026-09-29.md)
+passed one actual-worker fixture to cursor 3,876, with confirmed cleanup and
+unchanged old services and jobs. Setup first encountered read-only copied files;
+a reviewed continuation corrected only the new copy. The research outcome is
+`NO_VALID_CANDIDATE`, not a recommendation. Other fault and capacity gates remain.
+
+The owner has requested continuation through full QD-1/QS-1 engineering closure.
+The [phase checklist](QD_QS_PHASE_CLOSURE.md) now records all mandatory gates.
+The [current implementation wave](QD_QS_CLOSURE_PROGRESS_2026-09-29.md) adds local
+opt-in health recovery, managed-mode denial of unscheduled legacy calculations
+and historical analytics, bounded V2 ATR artifacts, and a pure V2 capacity contract.
+The V2 PROFILE pipeline and optional scheduler policy passed local integration;
+actual worker/public-service enrollment remains unavailable. Combined checks passed
+105 with one Windows symlink-privilege skip; isolated PostgreSQL has 25 passes with
+one separate Python parity skip. Focused bounded-probe checks also pass; caller
+timeouts do not certify termination of external database work.
+An isolated direct-evaluator I/O diagnostic passed 1,000 bars in 2.526 seconds,
+with verified cleanup and unchanged original services. It did not reproduce or
+explain the failed actual-main context. A subsequent actual-main diagnostic reached
+checkpoint 3,000 then failed on monitor limits-file `ENOENT`; cleanup and delayed
+readback passed. The subsequent terminal handshake passed the isolated actual
+worker fixture; cgroup teardown remains an unproven cause of the earlier error.
+A genuine typed readiness pair now ages
+after physical SIGKILL; pre-expiry cleanup correctly rejected it. Earliest guarded
+cleanup is 2026-09-30 13:53:52 Asia/Bangkok. Next runtime work is a separately
+reviewed current-control fault case; direct storage-pair creation is not supervisor recovery.
+Streaming artifact integration, trusted PROFILE enrollment, cumulative I/O accounting
+and expanded stateful execution remain open. Existing research enqueue preparation
+still needs managed resource admission. No expanded or production admission.
+
+The next closure wave identified a readiness-storage cleanup defect: maintenance
+could remove an aged reservation while leaving its regular pending readiness
+file. The typed-reservation correction passed independent source audit and 18/18
+focused local checks; staging acceptance and deployment remain pending.
+The existing 24-hour retention and offline ownership guards remain required;
+see [readiness retention evidence](QD_QS_READINESS_RETENTION_2026-09-29.md).
+The first pressure launch failed at proxy startup. Bounded probes subsequently
+proved task-cap exhaustion for wrapped Node at eight tasks; the actual proxy
+passed a separate smoke at sixteen tasks. A separately named pressure rerun then
+started the real worker but failed its first evaluator with `QUANT_IO_GATE_FAILED`
+at cursor zero, before health-fault injection. Automatic cleanup and delayed
+readback passed; the original services and failed evidence remain unchanged.
+The inner I/O assertion was not logged. Diagnose that startup gate before another
+pressure attempt, preserving the three-second gate and resource limits. Full
+QD-1/QS-1 remains open; no pressure-stop acceptance is credited.
+A local diagnostic-only patch now preserves sanitized I/O failure phase, cause,
+timing and accepted observations on the private error object. Combined focused
+checks passed 24/24 at that checkpoint. The isolated Linux direct-evaluator
+diagnostic now passes, but actual-main failure reproduction and pressure
+acceptance remain pending. Production and public responses are unchanged.
+
 Latest [worker-managed lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md)
 passed one actual database/scheduler/main/evaluator baseline under the new I/O
 controls. One evaluation reached index 3,876 and returned the expected
@@ -63,8 +125,10 @@ expiry. Next work is bounded health-pressure acceptance, with the other recovery
 cases still open and fresh usage/health admission required.
 Health-pressure preparation now includes a private bounded proxy that forwards
 genuine Paper health and can return a controlled failure. Five local fixtures
-passed. The isolated environment/policy/unit copies and supervised harness are
-not prepared or deployed; pressure acceptance has not run.
+passed. The isolated environment/policy/unit copies and supervised harness
+now exist in isolated staging. Proxy startup is verified at the new test cap;
+the subsequent evaluator failure still prevented fault injection. Pressure-stop
+acceptance remains pending.
 Remaining stop/recovery cases are tracked in the evidence matrix. QD-1/QS-1 remain
 open; capacity stays 10K/1m.
 
@@ -127,9 +191,9 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
 
-Latest pushed code/evidence checkpoint: `9d06ba0` (Data capability/ingestion)
-on `codex/app3a-market-wait-checkpoint`. Earlier PF-1B/PF-1C and PF-1A checkpoints
-are `cf8913d` and `9c5f8f3`. The owner authorized the Data capability/ingestion Git
+Latest pushed code/evidence checkpoint: `987354d` (lifecycle timeout and agent roles)
+on `codex/app3a-market-wait-checkpoint`. Earlier ingestion, PF-1B/PF-1C and PF-1A checkpoints
+are `9d06ba0`, `cf8913d` and `9c5f8f3`. The owner authorized the Data capability/ingestion Git
 checkpoint after local and isolated-staging verification; its scope is recorded
 in the [evidence document](QD_QS_INGESTION_CALIBRATION_2026-09-28.md).
 PF-1C used isolated
@@ -170,7 +234,7 @@ inside workflow step 3, not an additional automatic optimization cycle.
 | ID | Deliverable | Completion evidence | Current status |
 | --- | --- | --- | --- |
 | PF-1 | Static Risk Manager consistency check and point-in-time sizing preview. Resolve owner/Bot policy and capital on the server; distinguish hypothetical drafts from saved settings. | Accepted/capped/rejected fixtures agree with worker rules; verified venue filters, fees, reservations and reduce-only targets are represented. Unknown data cannot become a pass. Preview causes no policy mutation. | Paper/public-filter engineering passed in [PF-1C](PF_1C_CHECKPOINT_2026-09-28.md); active Bot rollout acceptance remains gated. V1 is unchanged and V2 requires explicit evidence/producer rollout. No Run approval follows from a hypothetical preview. |
-| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | Planned; uses PF-1 contracts and existing QL-3A components. Implement and prove cost-model V2 historical evaluator parity before admitting V2 research; do not reuse V1 parity as V2 evidence. |
+| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | [Local plan contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and five focused checks completed; current plan uses 10K/V1 scope. Resolver, replay and admission remain pending. Implement and prove cost-model V2 historical evaluator parity before admitting V2 research; do not reuse V1 parity as V2 evidence. |
 | PF-3 | Readiness report with signal/intent/fill/episode counts, rejection reasons, cash/exposure, pause periods and collection estimate. | Distinguishes configuration failure, insufficient activity, unavailable capability and readiness to start Paper. Estimates use a declared development window and assumptions; persistent pause gives no finite collection ETA. | Planned; after PF-2. |
 | PF-4 | Explainable setting proposals inside the owner's declared risk/exposure limits, with before/after preview and explicit save. | Deterministic calculations, effective-value provenance, stale-state detection and saved-policy confirmation. AI may explain calculations but is not the authoritative calculator. | Planned; after PF-1 through PF-3. |
 
@@ -545,6 +609,33 @@ flowchart TD
 ```
 
 ## Change log
+
+### 2026-09-29 — Full-phase checklist and local recovery/capacity contracts
+
+Added the [phase checklist](QD_QS_PHASE_CLOSURE.md), preserving separate evidence
+for local implementation, isolated staging and production. The [closure wave](QD_QS_CLOSURE_PROGRESS_2026-09-29.md)
+records a scoped diagnostic pass, opt-in temporal health recovery, strict capacity
+contracts and the 54 local / 23 PostgreSQL passing checks, with one parity skip.
+Normal reserve remains 20 points. Real retention aging, current-control faults,
+enrollment, expanded execution and resource accounting still gate phase closure.
+
+### 2026-09-29 — Proxy diagnosis and pressure rerun checkpoint
+
+Wrapped Node hit `TasksMax=8`; the same probe passed at sixteen tasks. The actual
+proxy also passed startup, genuine health forwarding and physical cleanup at
+sixteen tasks. One separately named pressure rerun preserved the frozen release,
+all main/evaluator limits and prior operation files. Its first evaluator failed
+with `QUANT_IO_GATE_FAILED` before fault injection. Research ended `FAILED`,
+foundation `CANCELLED`, with cursor zero, no result and no active execution slot.
+Automatic cleanup succeeded and original service health remained unchanged.
+Inner failure detail is missing; startup diagnosis is the next action, not another
+blind retry. No capacity, production or full-phase acceptance follows. Luna Low
+updated the diagnostic record; root corrected one failed-versus-inactive state
+description. Runtime operations remained with Sol High.
+The subsequent local diagnostic patch preserves public error codes, stop/cleanup
+precedence and existing limits. Root's combined checks passed 24/24 after correcting
+first-failure capture for output overflow and nonzero process exit. This is local
+evidence only; a separate immutable diagnostic staging package is the next step.
 
 ### 2026-09-29 — Scoped timeout acceptance and pressure preparation
 

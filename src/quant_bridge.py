@@ -201,10 +201,15 @@ def risk_preview(body):
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, _format, *_args): pass
     def do_GET(self):
-        respond(self, 200, {"ok": True, "version": "0.4.0", "mode": "OFFLINE_RESEARCH_ONLY"}) if self.path == "/quant/health" else respond(self, 404, {"error": "Not found"})
+        respond(self, 200, {"ok": True, "version": "0.4.0", "mode": "OFFLINE_RESEARCH_ONLY",
+            "legacy_heavy_enabled": os.environ.get("QUANT_RESEARCH_FOUNDATION_ENABLED") != "1"}) if self.path == "/quant/health" else respond(self, 404, {"error": "Not found"})
     def do_POST(self):
         routes = {"/quant/backtest": backtest, "/quant/optimize": optimize, "/quant/risk-preview": risk_preview}
         try:
+            if self.path in ("/quant/backtest", "/quant/optimize") and os.environ.get("QUANT_RESEARCH_FOUNDATION_ENABLED") == "1":
+                respond(self, 409, {"code": "QUANT_MANAGED_JOB_REQUIRED",
+                    "error": "Submit a Quant research job to run this calculation."})
+                return
             route = routes.get(self.path)
             if route is None: respond(self, 404, {"error": "Not found"})
             else: respond(self, 200, route(payload(self)))

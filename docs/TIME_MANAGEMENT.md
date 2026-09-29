@@ -13,6 +13,10 @@ Baseline: 2026-09-27, timezone Asia/Bangkok, documentation only. ยังไม
 
 ## 1. ขอบเขตและสมมติฐาน
 
+Checkpoint 2026-09-29: เริ่ม PF-2 plan contract ในเครื่องคู่ขนานกับงานหลัก QD/QS runtime/I/O โดยแยกไฟล์และผู้รับผิดชอบ ชุด contract ผ่าน 5 checks ใน 0.277 วินาที ซึ่งเป็นเวลาทดสอบ ไม่ใช่เวลาพัฒนารวม Sol ทำ I/O ledger และเตรียมตรวจ staging; Luna ปรับ checklist ประมาณ 2 นาที ไม่มีการแก้ซ้ำที่รายงาน ยังไม่วัด speedup หรือค่าใช้จ่ายแยกราย model และไม่ลดงบชั่วโมงจากจำนวน agents งาน Library/Export รอบนี้ยังไม่เริ่ม งาน retention ยังคงรออายุจริงถึง 2026-09-30 13:53:52 น. ไทย แต่ไม่ขวาง local engineering ดู [PF-2 checkpoint](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md)
+
+Rework ของรอบเดียวกัน: Root พบกรณีหลาย cgroup ใช้งบร่วมกันและ Sol review พบ unknown-final crash ใช้ overshoot reserve ซ้ำ ทั้งสองแก้พร้อม regression tests แล้ว; ชุด ledger ล่าสุดผ่าน 15 checks ส่วน staging setup หยุดก่อนสร้าง job เพราะสำเนา release คงสิทธิ์อ่านอย่างเดียว ต้องใช้ guarded continuation เฉพาะสำเนาใหม่ บันทึกเวลา engineering รวมเป็น unknown และคง contingency เดิม ไม่ถือว่าผล test local ปิด runtime acceptance
+
 1. ผู้พัฒนา 1 คนร่วมกับ Codex ใช้ code/evidence เดิมต่อ ไม่สมมติว่ามีหลายคนทำงานเต็มเวลาพร้อมกัน
 2. Paper scope รวม PF-1 ถึง PF-4, QD-1, QS-1, QR-1 ถึง QR-4 และงานคงเหลือ QL-3A ถึง APP-4 ตาม Roadmap
 3. APP-5 แยกเป็นตัวเลือกสำหรับ Spot Exchange เดียว ต้องมีรายละเอียด broker และการอนุมัติ Live ก่อนลงมือเปิดใช้งาน
@@ -169,6 +173,85 @@ Git checkpoint PF-1B/PF-1C รวมโค้ดและเอกสารห�
 สูตรติดตาม: `forecast_active_total = recorded_actual_hours + estimated_remaining_hours + unused_rework_allowance` ใช้ contingency กับงานที่เหลือ ไม่บวกเผื่อซ้ำกับ rework ที่บันทึกเป็น actual แล้ว งานที่ไม่เคยจับเวลาให้เป็น `unknown` ห้ามใส่ศูนย์หรือเดาชั่วโมงย้อนหลัง
 
 ### Execution ledger
+
+The full-phase continuation on 2026-09-29 is tracked in the
+[phase checklist](QD_QS_PHASE_CLOSURE.md) and [implementation record](QD_QS_CLOSURE_PROGRESS_2026-09-29.md).
+One isolated direct-evaluator diagnostic completed 1,000 bars in 2.526 seconds;
+this cannot forecast larger jobs or explain the actual-main failure. Combined
+local checks most recently took 16.307 seconds (105 passed, one Windows symlink
+privilege skip), superseding earlier combined subsets. PostgreSQL foundation
+rerun passed 15 in 3.763 seconds and managed-route HTTP passed one in 2.872 seconds;
+the prior data/research suites remain two and seven passes with one Python parity skip.
+Python loopback admission passed two checks separately. Focused health timeout checks
+passed nine in 0.296 seconds; these overlap the combined suite and must not be added
+as a unique total. Local test PostgreSQL was stopped after verification.
+Total active engineering time remains unknown. The latest observed weekly
+allowance moved from 93% to 74% remaining; short-window data is unknown and the
+20-point reserve applies. Shared counters do not identify model costs.
+The genuine readiness retention wait requires at least 24 hours from the later
+file/reservation creation time. Physical pair creation and its pre-expiry guard
+passed; earliest cleanup is 2026-09-30 13:53:52 Asia/Bangkok. No process runs while
+aging. Overlap local enrollment, streaming, I/O accounting and parity work; no market-data wait is
+required for these engineering gates. No full-phase completion time or forecast
+reduction is claimed from the small diagnostic or agent count.
+
+The actual-main diagnostic had a recorded preflight at 07:21:39 UTC and delayed
+postflight at 07:27:53 UTC. Its candidate stopped at checkpoint 3,000 with monitor
+limits-file ENOENT; the bounded harness collected 30 baseline and 11 impact samples
+and cleaned up. This operational window does not certify total engineering hours
+or pressure acceptance. Terminal handshake development and V2 pipeline work run
+locally while the same retention pair ages. The 50K synthetic conversion pipeline
+completed in about 13 seconds in the local combined checks; do not extrapolate
+that duration to candidate research, physical I/O limits or larger admission.
+
+The follow-up diagnostic-only patch passed 24/24 combined local checks in 16.240
+seconds after review corrections. That is test runtime, not total engineering
+time. Review caught delayed first-failure capture for output overflow and nonzero
+exit; both were corrected before the final run. At that earlier checkpoint no
+Linux/systemd reproduction or deployment was credited. The direct-evaluator
+diagnostic above now passes with the unchanged three-second gate; the original
+actual-main failure remains unresolved. Weekly allowance was 94% remaining before final integration, with the short
+window unknown and the normal 20-point reserve retained.
+
+The 2026-09-29 proxy diagnosis and smoke passed within their scopes. One new
+pressure attempt then failed the evaluator I/O startup gate before fault injection;
+automatic cleanup and delayed health/DB checks passed. The recorded diagnostic
+preflight at 05:53:16 UTC through delayed readback at 06:13:04 UTC spans about
+19 minutes 48 seconds of operational wall time, not total active engineering time.
+No market collection wait was added and no pressure acceptance or forecast
+reduction is credited. Next work must isolate the unlogged I/O assertion before
+another bounded attempt. Normal reserve remains 20 points; this continuation's
+observed weekly allowance changed from 99% to 96% remaining, with the short window
+unknown. Shared counters do not measure individual agent cost. Luna documentation
+needed one factual state correction during root review; no speedup is claimed.
+
+Pressure preparation completed and one isolated launch reached proxy startup.
+The proxy exited with status 6/ABRT before monitor, driver or job creation; this
+does not exercise health-pressure behavior. Preserve this failed setup and its
+cleanup evidence. No pressure gate or forecast reduction is credited. During this
+continuation, account usage changed from 98% five-hour / 56% weekly remaining to
+15% / 43%; those shared counters cannot attribute cost to this task or an agent.
+The normal 20-point reserve prevents another attempt in this checkpoint.
+
+The resumed readiness-maintenance fix passed source audit and 18/18 focused local
+checks, repeated independently by root. The earlier single failure was a test
+expectation after the first unlink, corrected to verify the retained reservation
+and successful retry. The measured focused run took 16.14 seconds; this is not
+total engineering time. Staging crash/retention acceptance remains open and must
+use genuine retention age. No forecast reduction or production rollout is credited.
+
+The full QD-1/QS-1 closure wave reviewed the remaining gates and found a readiness
+maintenance leak after a process crash. A typed-reservation fix is local and
+pending acceptance. Pressure setup/seed/monitor/launcher drafts progressed, but
+the adapter remains incomplete and no VPS mutation or run occurred. BACKFILL and
+PROFILE already use the scheduler; their remaining path acceptance must not be
+estimated as new scheduler integration. Larger-profile admission, resource budgets
+and current-controls fault/recovery evidence still need separate acceptance.
+
+Usage changed from 97% five-hour / 53% weekly remaining at admission to 10% / 40%
+at the stopping snapshot. These shared account observations cannot identify task
+or model cost. The normal 20-point reserve applies; no new slice was admitted
+after the low-usage readback. No phase closure or forecast reduction is credited.
 
 Health-pressure preparation produced a reviewed design and bounded forwarding
 proxy with five passing local fixtures. It still needs isolated environment,
@@ -354,3 +437,17 @@ retain the same local/staging scope.
 | 2026-09-27 | ขยาย QD-1 และเพิ่ม QS-1 หลังทบทวน capacity handoff | งบ Paper ปัจจุบัน 410–720 ชั่วโมง; hardware เดิม, global heavy concurrency 1 เป็นแผน; compute/queue ETA รอ benchmark ไม่มีการรันงานหรือเปลี่ยนระบบ |
 | 2026-09-27 | เจ้าของยืนยันตลาดหลัก BINANCE:BTCUSDT Spot 1m | ใช้ตลาดเดิมในแผนเวลาและการเก็บข้อมูล นำเงื่อนไขรอยืนยัน BTCUSD และงบเปลี่ยนตลาดออก; ไม่มี runtime action |
 | 2026-09-27 | สร้าง Time Management เป็นเอกสารหลักด้านเวลา เชื่อม README/Context/Roadmap และกำหนด checkpoint update rules | Documentation only; baseline Paper 340–580 ชั่วโมงก่อนหักเวลารอซ้อน ใช้ historical preflight ก่อนเก็บสดรอบใหม่ ไม่เริ่ม run/deploy/automation |
+
+## Terminal handshake checkpoint — 2026-09-29
+
+The guarded setup continuation and one isolated actual-worker diagnostic passed.
+The automatic completion/cleanup interval was 9.982 seconds; the evaluator was
+nonidle for 5.413 seconds. Delayed readback at 08:57:59 UTC confirmed no residual
+owned workload and unchanged old services/jobs/retention pair. These are measured
+runtime intervals, not total engineering hours or an expanded-capacity estimate.
+The failed initial setup and reviewed correction remain part of rework history.
+Final local preflight/capacity/ledger checks passed 28/28 in 0.430 seconds, with
+independent ledger recheck. No new market-bar collection was needed. PF-2 replay,
+V2 cost parity, durable I/O and other QD/QS gates remain; retain the existing
+engineering contingency and genuine 24-hour retention wait. See
+[terminal staging evidence](QD_QS_TERMINAL_HANDSHAKE_2026-09-29.md).

@@ -238,6 +238,117 @@ slot retention. It proves a live-child timeout after readiness, not interruption
 during payload computation. Scheduler deadline, health pressure and both crash
 cases remain separate open gates. The two setup failures remain immutable.
 
+## Pressure startup checkpoint — 2026-09-29
+
+The completed private pressure harness passed local syntax/proxy checks and
+remote syntax/hash verification. Isolated environment, policy and main/proxy
+units were created; the original runtime and unit hashes remained unchanged.
+One launch failed at proxy startup with `Result=signal`, exit `6/ABRT`, before
+monitor, driver, job intent or fault flag creation. This is setup failure and
+provides no pressure-stop acceptance.
+
+The journal recorded no decisive cause. Observed memory peak was 17.9 MiB under
+the 64 MiB cap; the eight-task limit is a possible cause, but task peak and crash
+detail were unavailable. Do not attribute the abort to memory or task limits
+without further evidence. No retry or configuration relaxation occurred.
+
+The launch trap stopped the new units. Final readback at 05:21:19 UTC on
+2026-09-29 found main inactive, proxy failed with PID zero, driver/monitor absent,
+no pending jobs or child cgroups, and clean storage. All six prior jobs remained
+terminal, execution occupancy was zero, original service PIDs and both Paper
+health endpoints were unchanged, and the signal queue was empty. The failed
+operation remains preserved. Resume with a bounded proxy-startup diagnosis after
+fresh usage and health checks.
+
+## Wrapped Node task-limit diagnosis — 2026-09-29
+
+Two bounded shell-wrapped Node startup probes isolated the task-limit behavior.
+With `TasksMax=8`, Node aborted with status 134 before `FS_READY`; the cgroup
+reached `pids.peak=8` and `pids.events:max` rose from 0 to 1. OOM and kill
+counters remained zero. With `TasksMax=16`, the same `fs.stat` probe emitted
+`FS_READY` and exited 0; `pids.peak=12`, `pids.events:max` stayed 0, and OOM
+counters remained zero. Both exact units were stopped with PID 0; the limit-8
+unit retained its failed state and the limit-16 unit was inactive.
+
+This proves task-cap exhaustion for the wrapped probe at limit 8 and successful
+wrapped startup at limit 16. The original direct proxy `SIGABRT` is consistent
+with task exhaustion, but its cause remains unproven because no direct proxy
+cgroup counter was captured. A trailing CRLF shell parse error occurred after
+both unit stops and made the SSH command exit 1; it does not invalidate the
+recorded unit counters or outcomes. Final health at 05:54:35 UTC on 2026-09-29
+found the six prior jobs terminal, slot and queue at zero, original eight PIDs
+and both Paper endpoints healthy, storage clear, and both diagnostic units at
+PID 0. The actual-proxy smoke remains pending. No proxy cap change or pressure
+retry is authorized by this diagnosis; health evidence is historical.
+
+## Actual proxy smoke — 2026-09-29
+
+A separately authorized transient smoke used the unchanged proxy source with
+`TasksMax=16`, `MemoryMax=64M`, `CPUQuota=10%`, a 20-second runtime cap and core
+dumps disabled. The proxy owned the expected loopback listener and cgroup. Both
+original and forwarded health returned HTTP 200 with `ok:true` and `PAPER_ONLY`.
+Observed task peak was 11, with no task-limit event; memory peak was 18.17 MiB,
+with no OOM event. Exact stop returned inactive/PID zero and closed the listener.
+
+Final readback at 06:00:15 UTC found six prior jobs terminal, slot and queue zero,
+storage clear, and the original eight service PIDs and Paper health unchanged.
+No Quant job or health fault was created. This establishes proxy startup and
+forwarding at the tested cap, not pressure-stop acceptance. The failed original
+operation remains immutable. A separately named rerun must preserve its files,
+use the frozen release and retain all main/evaluator limits.
+
+## Pressure rerun after proxy smoke — 2026-09-29
+
+One new operation used separate units, environment, policy, markers and logs.
+The frozen release, dataset and main/evaluator limits were unchanged. Reviewed
+helper hashes and syntax matched; original runtime, unit and failed-operation
+hashes remained unchanged. Main I/O limits and counters passed readback.
+
+The first evaluator failed with `QUANT_IO_GATE_FAILED` before the adapter caught
+the required live child at cursor 2,000. Its durable cursor stayed zero, checkpoint
+was null, steps were empty and no result was published. No SIGSTOP or health fault
+was injected; neither STOPPING nor PAUSED was sampled for pressure acceptance.
+Child start at 06:10:16 UTC and client-request SIGKILL at 06:10:19 are consistent
+with the three-second startup gate, but the generic catch did not preserve the
+inner assertion. The exact cause remains unproven.
+
+Automatic completion at 06:10:21 UTC reported `FAILED` / `WORK_FAILED` with cleanup
+confirmed. Delayed readback at 06:13:04 found research `FAILED`, foundation
+`CANCELLED`, the original deadline and contract hashes intact, no active execution
+slot, no owned process, pending job, cgroup or storage reservation, and the listener
+closed. Original eight service PIDs and both Paper health endpoints were unchanged;
+the trading queue was empty. The monitor recorded 30 baseline and nine impact
+samples; impact database/API/Web p95 was 3.08/6.74/7.42 ms with healthy original
+services. These short observations do not establish sustained capacity.
+
+Preserve this failed run and the earlier startup failure. The next action is to
+isolate the missing I/O failure detail while keeping the gate and resource limits.
+Do not treat another uninstrumented retry as a diagnosis or a passing fault case.
+
+## Local I/O diagnostics checkpoint — 2026-09-29
+
+Source review confirmed that several I/O failures and premature stdout shared the
+same public code while their inner details were discarded. A local patch adds
+private `error.ioDiagnostic` metadata: first-failure phase, sanitized cause and
+filesystem marker, elapsed time, unit registration, last accepted inode/counters,
+early-stdout flag and a capped stderr byte count. It records no raw stdout, stderr,
+payload, environment or paths and adds no automatic logging or public response.
+
+The first-failure snapshot is captured before physical stop and cleanup. Review
+also identified missing immediate capture for output overflow and nonzero process
+exit; both paths were corrected. Public failure codes, stop/cleanup precedence,
+the three-second gate, physical limits and the prior typed-readiness correction
+remain intact.
+
+The combined command `node --test test/quant-io-diagnostics.test.js
+test/quant-io-controls.test.js test/quant-storage-budget.test.js
+test/integration/process-supervisor.test.mjs` passed 24/24 in 16.240 seconds after
+the corrections. New tests cover low-level sanitized causes and synchronous
+injected callbacks; existing process tests use the explicit local Windows mode.
+They do not exercise the actual Linux/systemd I/O gate. The patch is local only;
+one separately reviewed, immutable staging diagnostic package must collect the
+missing failure detail before any new pressure acceptance attempt.
+
 ## Acceptance matrix
 
 | Case | Required evidence | Current status |
@@ -246,7 +357,7 @@ cases remain separate open gates. The two setup failures remain immutable.
 | Active cancellation | Cancel a live child after durable progress; retain the slot until physical stop and verify no later cursor, step or result publication | Passed on 2026-09-29 in isolated staging: 1.474-second stop, automatic cleanup confirmed; original failed attempt retained |
 | Evaluator timeout | Observe the child timeout path, preserve the original job deadline and verify terminal state with no surviving child | Passed after readiness: confirmed SIGSTOP, `EVALUATION_TIMED_OUT`, unchanged snapshot/deadline and automatic cleanup; intermediate STOPPING was not sampled |
 | Scheduler deadline | Observe normal worker/scheduler deadline expiry separately from the evaluator timer, with no surviving child or deadline extension | Pending |
-| Health-pressure stop | Controlled isolated health failure; measured stop latency without stressing production | Pending |
+| Health-pressure stop | Controlled isolated health failure; measured stop latency without stressing production | Pending; proxy smoke passed, but subsequent evaluator I/O startup failure prevented fault injection; cleanup verified |
 | Crash/resume | Kill the main after a durable checkpoint; guarded recovery, new lease, stale-token rejection and result matching baseline | Pending |
 | Readiness crash cleanup | Account for interrupted pending files/reservations and recover through existing ownership/retention guards | Pending |
 

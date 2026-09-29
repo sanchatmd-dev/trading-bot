@@ -14,8 +14,9 @@ export function validateHealthLimits(limits) {
 export function loopbackHealthProbe(url,{fetcher=fetch}={}) {
   const target=new URL(url);
   if(target.protocol!=='http:'||!['127.0.0.1','[::1]'].includes(target.hostname)||target.pathname!=='/healthz'||target.username||target.password||target.search||target.hash)throw fail('INVALID_QUANT_HEALTH_ENDPOINT');
-  return async()=>{
-    const response=await fetcher(target,{redirect:'error',signal:AbortSignal.timeout(2000)});
+  return async({signal}={})=>{
+    const timeout=AbortSignal.timeout(2000);
+    const response=await fetcher(target,{redirect:'error',signal:signal?AbortSignal.any([signal,timeout]):timeout});
     const reader=response.body?.getReader();if(!reader)return {ok:false};
     let bytes=0,parts=[];
     try{while(true){const chunk=await reader.read();if(chunk.done)break;bytes+=chunk.value.length;if(bytes>4096)throw fail('HEALTH_RESPONSE_TOO_LARGE');parts.push(chunk.value);}}
@@ -40,15 +41,19 @@ export function createResourceHealth({db,tradingDb=db,probe,limits,storageRoot,c
   });
   const readIo=ioBounds?(ioSample??(()=>readCurrentCgroupIo(ioBounds))):null;
   let previousIo=null;
-  return async()=>{
+  return async({signal}={})=>{
+    const cancelled=()=>{if(signal?.aborted)throw fail('HEALTH_PROBE_CANCELLED');};
     try{
+      cancelled();
       let began=clock();
-      if(tradingDb!==db)await db.query('SELECT 1');
+      if(tradingDb!==db){await db.query('SELECT 1');cancelled();}
       const {rows:[queue]}=await tradingDb.query("SELECT count(*)::int depth,min(received_at) oldest FROM signals WHERE status IN ('QUEUED','PROCESSING','SUBMITTED','PARTIALLY_FILLED','UNKNOWN')");
+      cancelled();
       const dbMs=clock()-began;
-      began=clock();const api=await probe();const apiMs=clock()-began;
-      const host=await readHost(),now=clock();
+      began=clock();const api=await probe({signal});cancelled();const apiMs=clock()-began;
+      const host=await readHost();cancelled();const now=clock();
       const io=readIo?await readIo():null;
+      cancelled();
       if(readIo){
         if(!io||typeof io.group!=='string'||!io.group.startsWith('/')||
           !Number.isSafeInteger(io.inode)||io.inode<=0||

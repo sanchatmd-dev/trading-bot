@@ -4,6 +4,8 @@ import fs from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
 import {QuantFoundationScheduler} from '../../src/postgres/quant-foundation-scheduler.js';
+import {createSchedulerHealth} from '../../src/quant-research/scheduler-health.js';
+import {profileV2Fixture} from '../helpers/profile-v2-fixture.js';
 
 let admin,db,second,databaseName,scheduler,other,now,health,denied,supervisor,deniedOwner;
 const digest='a'.repeat(64);
@@ -103,6 +105,34 @@ test('running cancellation keeps slot and fences late results until supervisor a
   assert.equal((await get(old.job_id)).status,'CANCELLED');assert.ok(await other.claim('next'));
 });
 
+test('reviewed recovery delays claims and unhealthy heartbeat commits quarantine before resume',async()=>{
+  const policy={version:'quant-health-recovery-v1',minimumHealthyMs:1000,minimumHealthySamples:2,
+    minimumSampleSpacingMs:500,maximumSampleGapMs:2000,maximumProbeMs:100,maximumObservationAgeMs:100};
+  const makeHealth=()=>createSchedulerHealth({policy,clock:()=>now,wallClock:()=>now,
+    probe:async()=>({...health,observed_at:now})});
+  scheduler.health=makeHealth();scheduler.leaseMs=5000;
+  const queued=await enqueue();
+  assert.equal(await scheduler.claim('worker'),null);
+  assert.equal((await get(queued.job_id)).attempts,0);
+  now+=500;assert.equal(await scheduler.claim('worker'),null);
+  now+=500;const first=await scheduler.claim('worker');assert.ok(first);
+  now+=1;health={ok:false,reason:'MEMORY_PRESSURE'};
+  await assert.rejects(scheduler.heartbeat(first),{code:'FOUNDATION_LEASE_LOST'});
+  const quarantined=await get(queued.job_id);
+  assert.equal(quarantined.status,'STOPPING');assert.equal(quarantined.stop_reason,'HEALTH_UNAVAILABLE');
+  health={ok:true};assert.equal(await scheduler.claim('worker'),null);
+  await scheduler.acknowledgeStopped(first.job_id,first.lease_token);
+  assert.equal((await get(queued.job_id)).status,'PAUSED');
+  assert.equal(await scheduler.claim('worker'),null);
+  now+=1000;const resumed=await scheduler.claim('worker');
+  assert.ok(resumed);assert.notEqual(resumed.lease_token,first.lease_token);
+  assert.equal(resumed.deadline_at,first.deadline_at);
+  await scheduler.pause(resumed);
+  scheduler.health=makeHealth();
+  assert.equal(await scheduler.claim('after-restart'),null);
+  assert.equal((await get(queued.job_id)).attempts,2);
+});
+
 test('bounded monotonic checkpoint resumes with identity, hashes and new token',async()=>{
   await enqueue();const old=await scheduler.claim('worker');
   const saved=await scheduler.checkpoint(old,{next_bar:10,state:{cash:'100',position:null}});
@@ -198,4 +228,33 @@ test('authorization infrastructure failure preserves queued job for retry',async
   await assert.rejects(unavailable.claim('worker'),/authorization unavailable/);
   assert.equal((await get(queued.job_id)).status,'QUEUED');
   assert.equal((await scheduler.claim('worker')).job_id,queued.job_id);
+});
+
+test('expanded PROFILE requires trusted policy and keeps the same global slot and cancellation path',async()=>{
+  const {policy,contract}=profileV2Fixture();
+  let reads=0;const accessor={...contract};Object.defineProperty(accessor,'version',{enumerable:true,get(){reads++;return 'quant-foundation-v2';}});
+  await assert.rejects(scheduler.enqueue('owner-a',accessor,'expanded-accessor'),{code:'INVALID_FOUNDATION_V2'});
+  assert.equal(reads,0);
+  await assert.rejects(scheduler.enqueue('owner-a',contract,'expanded-default-denied'),{code:'INVALID_CAPACITY_CONTRACT'});
+  const expanded=new QuantFoundationScheduler({db,authorize,health:async()=>({ok:true}),clock:()=>now,leaseMs:100,capacityPolicy:policy});
+  const queued=await expanded.enqueue('owner-a',contract,'expanded-profile');
+  assert.equal(queued.contract.dataset.metadata.total_bars,50000);
+  await assert.rejects(scheduler.claim('without-policy'),{code:'INVALID_CAPACITY_CONTRACT'});
+  assert.equal((await get(queued.job_id)).status,'QUEUED');
+  const running=await expanded.claim('expanded-worker');
+  await enqueue('owner-b');
+  assert.equal(await expanded.claim('other-worker'),null);
+  await assert.rejects(expanded.finish(running,{evaluator_admission:true}));
+  const resultAccessor={};Object.defineProperty(resultAccessor,'version',{enumerable:true,get(){reads++;return 'research-profile-enrollment-v2';}});
+  await assert.rejects(expanded.finish(running,resultAccessor),{code:'INVALID_FOUNDATION_V2'});assert.equal(reads,0);
+  assert.equal((await get(queued.job_id)).status,'RUNNING');
+  // Revoked/missing expansion policy cannot trap an executing job in the slot.
+  assert.equal((await scheduler.cancel('owner-a',queued.job_id)).status,'STOPPING');
+  assert.equal(await expanded.claim('other-worker'),null);
+  supervisor=false;
+  await assert.rejects(scheduler.acknowledgeStopped(queued.job_id,running.lease_token),{code:'FOUNDATION_FORBIDDEN'});
+  supervisor=true;
+  const stopped=await scheduler.acknowledgeStopped(queued.job_id,running.lease_token);
+  assert.equal(stopped.status,'CANCELLED');assert.equal(stopped.deadline_at,queued.deadline_at);
+  assert.equal((await scheduler.claim('legacy-worker')).owner_id,'owner-b');
 });

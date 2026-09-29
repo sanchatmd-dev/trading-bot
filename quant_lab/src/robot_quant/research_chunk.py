@@ -343,18 +343,32 @@ def evaluate_chunk(request, *, trace=None):
 
 
 def main():
+    sent_result = False
     try:
+        protocol = os.environ.get("QUANT_IO_TERMINAL_PROTOCOL")
+        if protocol is not None:
+            if protocol != "quant-io-terminal-v1" or not all(os.environ.get(name) for name in
+                    ("QUANT_IO_READY_FILE", "QUANT_IO_READY_DEVICE", "QUANT_IO_READY_RBPS", "QUANT_IO_READY_WBPS")):
+                raise ValueError("QUANT_IO_READINESS_CONFIGURATION_REQUIRED")
         prepare_io_telemetry()
-        raw = sys.stdin.buffer.read(IPC_LIMIT + 1)
-        if len(raw) > IPC_LIMIT:
+        raw = sys.stdin.buffer.readline(IPC_LIMIT + 2) if protocol else sys.stdin.buffer.read(IPC_LIMIT + 1)
+        if len(raw) > IPC_LIMIT + (1 if protocol else 0):
             raise ValueError("RESEARCH_REQUEST_TOO_LARGE")
+        if protocol and (not raw.endswith(b"\n") or len(raw) == 1):
+            raise ValueError("INVALID_RESEARCH_CHUNK_REQUEST")
         result = evaluate_chunk(json.loads(raw))
         encoded = canonical(result)
         if len(encoded) > IPC_LIMIT:
             raise ValueError("RESEARCH_RESPONSE_TOO_LARGE")
         sys.stdout.buffer.write(encoded + b"\n")
+        if protocol:
+            sys.stdout.buffer.flush()
+            sent_result = True
+            if sys.stdin.buffer.readline(64) != b"QUANT_IO_TERMINAL_ACK_V1\n" or sys.stdin.buffer.read(1) != b"":
+                raise ValueError("QUANT_IO_TERMINAL_ACK_REQUIRED")
     except (ValueError, TypeError, KeyError, AttributeError, InvalidOperation, OverflowError, RecursionError):
-        print('{"error":"RESEARCH_CONTRACT_OR_EVALUATION_FAILED"}')
+        if not sent_result:
+            print('{"error":"RESEARCH_CONTRACT_OR_EVALUATION_FAILED"}')
         raise SystemExit(1) from None
 
 

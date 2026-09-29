@@ -19,6 +19,8 @@
 
 Historical Preflight ใช้ราคา Spot จาก exchange API และ evaluator ที่ผ่านการตรวจ หรือ CSV สัญญาณจาก TradingView ที่ผูกกับ source/input snapshot จึงไม่ต้องต่อ TradingView MCP การรองรับ CSV ใช้จำลอง Risk Manager ของสัญญาณชุดเดิม; ไม่ได้ทำให้เปลี่ยน source inputs หรือรองรับ Pine ทุกตัวได้
 
+PF-2 เริ่ม engineering คู่ขนานกับ QD/QS แล้ว: [plan contract ในเครื่อง](docs/PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) ผูก snapshot และจำกัดข้อมูล development ผ่าน 5 checks แต่ยังไม่มี historical replay/API ที่พร้อมใช้งาน และยังไม่เปิด cost-model V2 หรือ capacity เพิ่ม
+
 ลำดับผู้ใช้: เชื่อม Indicator → สร้าง Bridge → ตรวจความพร้อมก่อน Run และรัน Paper → Quant Optimize หนึ่ง run → ส่งผลที่ผ่านเกณฑ์ให้เจ้าของตรวจ → เจ้าของเลือกเริ่ม Bot ใหม่หรือจบ หากไม่พบ candidate ให้รายงานเหตุผลและจบ run โดยไม่ส่ง Best Inputs หรือวน Optimize อัตโนมัติ
 
 รายละเอียด phase และ test counts ด้านล่างเป็นประวัติของแต่ละ release ไม่ใช่สถานะ feature ปัจจุบันทั้งหมด ให้ใช้ Roadmap เป็นหลักในการเลือกงานถัดไป
@@ -38,6 +40,10 @@ Historical Preflight ใช้ราคา Spot จาก exchange API และ
 รอบ active cancel ใหม่ผ่านใน staging แล้ว: หยุด process ภายใน 1.474 วินาที รักษา slot จนหยุด ไม่มี checkpoint/result เขียนเพิ่ม และ automatic cleanup ยืนยันสำเร็จ แก้เฉพาะ helper ที่เคยปฏิเสธ transient unit ซึ่งถูกลบไปแล้ว รอบเดิมที่แจ้ง `STOP_UNCONFIRMED` ยังคงเป็นหลักฐานล้มเหลว; scheduler deadline, pressure, crash/recovery และ readiness crash cleanup ภายใต้ controls ใหม่ยังต้องตรวจต่อ
 
 รอบ evaluator timeout หลัง readiness ผ่านแล้ว: ยืนยัน SIGSTOP ของ child, ได้ `EVALUATION_TIMED_OUT`, คืน slot และ cleanup สำเร็จ โดย deadline และ checkpoint ไม่เปลี่ยน สองรอบเตรียมทดสอบที่ล้มเหลวยังคงเก็บไว้; scheduler deadline, pressure และ crash/recovery ยังต้องตรวจต่อ
+
+แก้ปัญหาไฟล์ readiness ค้างหลัง crash ในเครื่องแล้ว โดยคง retention 24 ชั่วโมง ผ่าน source audit และการตรวจเฉพาะส่วน 18/18 ยังต้องตรวจ staging ก่อนรับรอง runtime ส่วน proxy ทดสอบผ่าน startup ที่ `TasksMax=16` แล้ว แต่ pressure run ใหม่พบ `QUANT_IO_GATE_FAILED` ใน evaluator ที่ cursor 0 ก่อนฉีด fault จึงยังไม่ผ่าน pressure acceptance งานทดสอบหยุดครบ บริการเดิมปกติ ต้องหาสาเหตุ I/O gate ก่อนรันใหม่
+
+ชุด diagnostic แยกบน Linux staging ผ่าน 1,000 แท่งใน 2.526 วินาที ส่วน actual-main รอบต่อมาถึง checkpoint 3,000 แล้วล้มเพราะอ่านไฟล์ I/O ไม่พบ และ cleanup ครบ การแก้ terminal handshake ผ่าน [actual-worker fixture ใน staging](docs/QD_QS_TERMINAL_HANDSHAKE_2026-09-29.md) ถึง 3,876 แท่งและ cleanup ครบแล้ว แต่ยังไม่ผ่าน pressure acceptance ในเครื่องเพิ่ม health recovery แบบ opt-in, PROFILE streaming และ contract V2 ที่ใช้ scheduler policy แบบระบุชัดแล้ว รวมทั้งปฏิเสธ legacy calculation และรายงานประวัติทั้งหมดที่ข้าม scheduler เมื่อเปิด managed mode ชุดตรวจรวมผ่าน 105 กรณี ข้าม symlink บน Windows 1 กรณี; PostgreSQL ผ่าน 25 กรณี ข้าม Python parity 1 กรณี ยังไม่เปิด V2 enrollment, capacity เพิ่ม หรือ deploy production ดู [งานปิด QD-1/QS-1](docs/QD_QS_PHASE_CLOSURE.md) และ [หลักฐานล่าสุด](docs/QD_QS_CLOSURE_PROGRESS_2026-09-29.md)
 
 เพิ่มขั้นเตรียม telemetry สำหรับ main/evaluator แล้ว: ใช้ไฟล์ชั่วคราว 4 KiB ผ่าน storage budget ตรวจ device/limits และรอ counters จริงก่อนรับงาน พร้อมปฏิเสธผลที่มาหลัง deadline ชุดทดสอบ I/O ล่าสุดผ่าน 8/8 และผ่าน staging ตามขอบเขตใน [บันทึกการตรวจ](docs/QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md)
 

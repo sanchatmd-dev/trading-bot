@@ -5,6 +5,7 @@ import path from 'node:path';
 import {DatasetStore} from './dataset-store.js';
 import {canonical,hash,fail,keys} from '../pine-bridge/source.js';
 import {D,exact} from '../money.js';
+import {publishAtr14V2,inspectAtr14V2,readAtr14V2} from './atr14-chunk-store.js';
 
 const MAX_SIDECAR_BYTES=2*1024*1024;
 const aborted=signal=>{if(signal?.aborted)throw fail('DATASET_CANCELLED');};
@@ -14,7 +15,16 @@ const aborted=signal=>{if(signal?.aborted)throw fail('DATASET_CANCELLED');};
  * Metadata's half-open index range ends one minute after the last timestamp.
  */
 export class ResearchDatasetStore {
- constructor({root,storageBudget}){this.raw=new DatasetStore({root,storageBudget});this.root=this.raw.root;this.storageBudget=storageBudget;}
+ constructor({root,storageBudget,allowUnsupportedDirectorySyncForTests=false}){if(typeof allowUnsupportedDirectorySyncForTests!=='boolean')throw fail('INVALID_RESEARCH_SIDECAR');this.raw=new DatasetStore({root,storageBudget});this.root=this.raw.root;this.storageBudget=storageBudget;this.allowUnsupportedDirectorySyncForTests=allowUnsupportedDirectorySyncForTests;}
+ async publishStream(metadata,rows,{model,signal,chunkBars=1000}={}){
+  return publishAtr14V2({rawStore:this.raw,root:this.root,storageBudget:this.storageBudget,metadata,rows,model,signal,chunkBars,allowUnsupportedDirectorySyncForTests:this.allowUnsupportedDirectorySyncForTests});
+ }
+ async inspectSidecarV2(reference,{signal}={}){
+  return inspectAtr14V2(this.raw,this.root,reference,{signal});
+ }
+ async *readV2(reference,{start=0,end,signal}={}){
+  yield* readAtr14V2(this,reference,{start,end,signal});
+ }
  async sidecar(reference,{signal}={}){
   aborted(signal);
   keys(reference,['sha256','bar_count','first_time','profile','price_tick','quantity_step']);

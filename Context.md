@@ -19,6 +19,12 @@ or a collection deadline while a persistent Risk Manager guard blocks entries.
 
 ## Project execution team
 
+Local PF-2 engineering now has a development-only immutable plan contract,
+using current 10K/V1 limits. It does not yet provide historical replay or runtime
+admission; cost-inclusive V2 parity remains required. This work runs alongside
+QD-1/QS-1 runtime and I/O acceptance. See the
+[PF-2 checkpoint](docs/PF_2_CONTRACT_CHECKPOINT_2026-09-29.md).
+
 [AGENTS.md](AGENTS.md) and [Agent Team](docs/AGENT_TEAM.md) define one root
 commander with bounded specialist workers. Requested root default is Astra High;
 role profiles explicitly select Astra Medium, Sol Medium/High or Luna/Sol Low.
@@ -84,6 +90,37 @@ A later after-readiness attempt confirmed SIGSTOP, `EVALUATION_TIMED_OUT`, physi
 stop, released slot and automatic cleanup, with unchanged deadline and pre-signal
 checkpoint/result. This scoped pass does not prove interruption during payload
 computation or scheduler deadline expiry. Pressure and recovery gates remain open.
+The next local audit found that aged readiness reservations could be removed while
+their regular pending files remained. A typed-reservation correction passed source
+audit and 18/18 focused local checks, preserving the 24-hour retention and offline
+ownership guards. Staging acceptance and deployment remain pending. The pressure
+harness initially failed at proxy startup. Diagnostic probes and an actual-proxy
+smoke subsequently passed at sixteen tasks. A separately named rerun reached the
+worker but its first evaluator failed with `QUANT_IO_GATE_FAILED` at cursor zero,
+before fault injection. Cleanup and delayed health checks passed; the inner I/O
+assertion remains unlogged. Pressure acceptance is still pending. Main/evaluator
+limits, the frozen release and original services remain unchanged.
+Local supervisor/I/O diagnostics now retain bounded, sanitized failure metadata
+without raw process output or environment values. Combined local checks pass
+24/24 at that checkpoint; public failure codes and controls are preserved. An
+isolated direct-evaluator Linux diagnostic subsequently passed the actual gate
+and 1,000 bars in 2.526 seconds with confirmed cleanup. The original actual-main
+failure was not reproduced. The [current closure wave](docs/QD_QS_CLOSURE_PROGRESS_2026-09-29.md)
+adds local opt-in temporal health recovery, bounded V2 ATR artifacts, managed-mode
+denial of legacy calculations/full-history analytics and an optional local capacity V2 policy.
+Combined checks passed 105 with one Windows symlink-privilege skip; PostgreSQL has
+25 passes and one separate Python parity skip. The V2 conversion pipeline and
+optional scheduler policy pass local integration; public/worker enrollment stays
+unavailable. Actual-main diagnostics reached checkpoint 3,000, then failed on a
+missing I/O limits file. The subsequent [terminal handshake fixture](docs/QD_QS_TERMINAL_HANDSHAKE_2026-09-29.md)
+passed on the actual isolated worker to cursor 3,876, with cleanup and unchanged
+original services. This is a narrow engineering pass, not broader fault/capacity
+acceptance or proof of the earlier failure's cause.
+Bounded health probes stop waiting
+and prevent overlapping replacement probes, but cannot certify external DB termination.
+The [phase checklist](docs/QD_QS_PHASE_CLOSURE.md) retains enrollment, expanded
+execution, cumulative I/O and genuine retention/crash gates. Production remains
+unchanged. Capacity-contract V2 is distinct from execution-model V2 parity.
 
 The [actual-worker follow-up](docs/QD_QS_RUNTIME_IO_COMPLETION_2026-09-28.md)
 diagnosed missing startup byte counters and added bounded telemetry preparation.

@@ -17,7 +17,11 @@ const engineFiles=['src/quant-research/contract.js','src/postgres/quant-research
 export async function engineHash(foundation=false){
  const files=foundation?[...engineFiles,'src/postgres/quant-research-foundation.js','src/postgres/quant-foundation-scheduler.js','src/quant-research/foundation-contract.js','src/quant-research/dataset-store.js','src/quant-research/research-dataset-store.js','src/quant-research/process-supervisor.js','src/quant-research/resource-health.js','quant_lab/src/robot_quant/research_chunk.py','quant_lab/src/robot_quant/paper_state.py']:engineFiles;
  if(foundation)files.push('src/quant-research/storage-budget.js','src/postgres/quant-storage-retention.js','src/postgres/quant-foundation-recovery.js',
-   'src/quant-research/io-controls.js','src/quant-research/data-profile.js','src/quant-research/profile-contract.js','src/postgres/quant-profile.js');
+   'src/quant-research/io-controls.js','src/quant-research/data-profile.js','src/quant-research/profile-contract.js','src/postgres/quant-profile.js',
+   'src/quant-research/health-recovery-gate.js','src/quant-research/scheduler-health.js','src/quant-research/bounded-health-probe.js','src/postgres/quant-research-main.js',
+   'src/quant-research/atr14-chunk-store.js','src/quant-research/capacity-contract.js',
+   'src/quant-research/foundation-contract-v2.js','src/quant-research/profile-contract-v2.js',
+   'src/quant-research/data-profile-v2.js','src/quant-research/profile-pipeline-v2.js','src/quant-research/io-terminal.js');
  const hashes=await Promise.all(files.map(async name=>[name,hash(await fs.readFile(new URL('../../'+name,import.meta.url)))]));
  return hash(canonical(Object.fromEntries(hashes)));
 }

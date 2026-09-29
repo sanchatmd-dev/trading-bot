@@ -18,7 +18,11 @@ const files=['src/postgres/quant-data.js','src/postgres/quant-profile.js','src/q
   'src/quant-research/data-profile.js','src/money.js','src/quant-research/research-dataset-store.js',
   'src/quant-research/io-controls.js',
   'src/quant-research/foundation-contract.js','src/quant-research/dataset-store.js',
-  'src/quant-research/storage-budget.js','src/quant-research/resource-health.js'];
+  'src/quant-research/storage-budget.js','src/quant-research/resource-health.js',
+  'src/quant-research/health-recovery-gate.js','src/quant-research/scheduler-health.js','src/quant-research/bounded-health-probe.js',
+  'src/quant-research/atr14-chunk-store.js','src/quant-research/capacity-contract.js',
+  'src/quant-research/foundation-contract-v2.js','src/quant-research/profile-contract-v2.js',
+  'src/quant-research/data-profile-v2.js','src/quant-research/profile-pipeline-v2.js','src/quant-research/io-terminal.js'];
 export async function ingestionEngineHash(readFile=fs.readFile){
   const values=await Promise.all(files.map(async name=>[name,hash(await readFile(new URL('../../'+name,import.meta.url)))]));
   return hash(canonical(Object.fromEntries(values)));

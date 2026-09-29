@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {legacyQuantDenied} from '../quant-research/legacy-admission.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -118,6 +119,11 @@ async function quantBridge(req, res, url, actor, store) {
   }
 
   if (!quantPaths.has(url.pathname) || !['GET', 'POST'].includes(req.method)) return false;
+
+  if (await legacyQuantDenied(url.pathname,{db:store.db,foundationEnabled:process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1'})) {
+    json(res,409,{code:'QUANT_MANAGED_JOB_REQUIRED',error:'Submit a Quant research job to run this calculation.'});
+    return true;
+  }
 
   const bodyObj = req.method === 'POST' ? await readJson(req) : null;
   const bodyStr = bodyObj ? JSON.stringify(bodyObj) : '';
@@ -343,6 +349,8 @@ async function userRoutes(req, res, url) {
       });
     }
     if (req.method === 'GET' && ['/api/analytics/summary', '/api/analytics/equity-curve', '/api/analytics/breakdown'].includes(url.pathname)) {
+      if (await legacyQuantDenied(url.pathname,{db:store.db,foundationEnabled:process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1'}))
+        return json(res,409,{code:'QUANT_MANAGED_REPORT_REQUIRED',error:'Historical analytics is unavailable while managed Quant execution is enabled.'});
       const plan = await store.activePlan(actor.id);
       const quota = getQuota(plan);
       

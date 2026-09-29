@@ -109,7 +109,7 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
     await this.fenced(job,async()=>{await this.db.query('UPDATE quant_research_chunks SET unit_name=$3,unit_token=$4 WHERE run_id=$1 AND step_id=$2',[job.run_id,id,unitName,job.lease_token]);});
     if(this.ioControls&&!this.evaluateChunk)await assertQuantStorageOwner(this.db,this.service.datasetStore.root);
     launched=true;
-    answer=this.evaluateChunk?await this.evaluateChunk(payload,this.controller.signal):await this.supervisor({payload,module:'robot_quant.research_chunk',signal:this.controller.signal,python:this.python,timeoutMs:Math.min(30000,Math.max(100,job.deadline-this.clock())),limits:this.limits,ioControls:this.ioControls,storageBudget:this.ioControls?this.service.storageBudget:undefined,unitName,allowUnsupportedPlatformForTests:this.allowUnsupportedPlatformForTests});
+    answer=this.evaluateChunk?await this.evaluateChunk(payload,this.controller.signal):await this.supervisor({payload,module:'robot_quant.research_chunk',signal:this.controller.signal,python:this.python,timeoutMs:Math.min(30000,Math.max(100,job.deadline-this.clock())),limits:this.limits,ioControls:this.ioControls,ioTerminalProtocol:this.ioControls?'quant-io-terminal-v1':undefined,storageBudget:this.ioControls?this.service.storageBudget:undefined,unitName,allowUnsupportedPlatformForTests:this.allowUnsupportedPlatformForTests});
     this.stopped.add(key);
    }catch(error){if(!launched||error.stopped===true)this.stopped.add(key);throw error;}
    finally{this.activeLaunches.delete(key);}

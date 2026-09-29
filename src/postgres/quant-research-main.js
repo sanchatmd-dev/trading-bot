@@ -8,6 +8,7 @@ import {QuantResearchFoundationWorker} from './quant-research-foundation.js';
 import {QuantDataService} from './quant-data.js';
 import {QuantProfileService} from './quant-profile.js';
 import {createResourceHealth,loopbackHealthProbe} from '../quant-research/resource-health.js';
+import {createSchedulerHealth} from '../quant-research/scheduler-health.js';
 import {currentCgroupGroup,prepareCgroupIo,validateIoControls} from '../quant-research/io-controls.js';
 import {assertQuantWorkerUnit} from './quant-foundation-recovery.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
@@ -38,7 +39,19 @@ if(foundation){
  await assertQuantStorageOwner(db,process.env.QUANT_RESEARCH_DATASET_ROOT);
  const ioIdentity=ioControls?await prepareCgroupIo(await currentCgroupGroup(),ioControls,'main',service.storageBudget):undefined;
  if(process.env.QUANT_HEALTH_DATABASE_URL)healthDb=new PostgresDatabase({connectionString:process.env.QUANT_HEALTH_DATABASE_URL,max:2});
- const health=createResourceHealth({db,tradingDb:healthDb??db,limits,probe:loopbackHealthProbe(process.env.QUANT_HEALTH_URL),storageRoot:process.env.QUANT_RESEARCH_DATASET_ROOT,ioControls,ioIdentity});
+ // A timed-out probe may finish later. Keep its read-only SQL outside the
+ // scheduler transaction's AsyncLocalStorage client and stop later probe stages
+ // through cooperative cancellation. Pool/server timeouts still bound DB work.
+ const recoveryEnabled=!!process.env.QUANT_HEALTH_RECOVERY_FILE;
+ if(recoveryEnabled&&db.pool.options.max<3)
+  throw Error('Health recovery requires PG_POOL_SIZE at least 3 for runtime lock, scheduler and independent probe');
+ const researchProbeDb=recoveryEnabled?{query:(...args)=>db.pool.query(...args)}:db;
+ const tradingProbeDb=healthDb?(recoveryEnabled?{query:(...args)=>healthDb.pool.query(...args)}:healthDb):researchProbeDb;
+ const resourceHealth=createResourceHealth({db:researchProbeDb,tradingDb:tradingProbeDb,limits,probe:loopbackHealthProbe(process.env.QUANT_HEALTH_URL),storageRoot:process.env.QUANT_RESEARCH_DATASET_ROOT,ioControls,ioIdentity});
+ // Opt-in until the operator has calibrated a reviewed recovery policy. Existing
+ // V1 services retain their current thresholds and require no configuration edit.
+ const health=process.env.QUANT_HEALTH_RECOVERY_FILE?
+  createSchedulerHealth({probe:resourceHealth,policy:JSON.parse(await fs.readFile(process.env.QUANT_HEALTH_RECOVERY_FILE,'utf8'))}):resourceHealth;
  const dataService=new QuantDataService({pineService:service.pine,datasetStore:service.datasetStore.raw,enabled:true});
  const profileService=new QuantProfileService({pineService:service.pine,dataService,researchStore:service.datasetStore,enabled:true});
  worker=new QuantResearchFoundationWorker({service,dataService,profileService,health,ioControls});

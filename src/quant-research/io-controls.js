@@ -4,6 +4,10 @@ import {constants} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 
 const fail=code=>Object.assign(new Error(code),{code});
+const filesystemMarkers=new Set(['EACCES','EPERM','ENOENT','EIO','ENOTDIR','ESTALE','ELOOP','EBUSY','EMFILE','ENFILE']);
+const ioFail=(phase,cause,error)=>Object.assign(fail('QUANT_IO_TELEMETRY_UNAVAILABLE'),{
+  ioDiagnostic:{phase,cause,...(filesystemMarkers.has(error?.code)?{filesystem_marker:error.code}:{})}
+});
 const cgroupRoot='/sys/fs/cgroup';
 const exactKeys=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&
   Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
@@ -36,17 +40,18 @@ function field(line,key){
 /** Empty io.stat, unlimited or mismatched io.max, and malformed counters are unknown. */
 export function inspectCgroupIo({max,stat,device,limits}){
   const maxLine=deviceLine(max,device),statLine=deviceLine(stat,device);
-  if(!maxLine||!statLine||field(maxLine,'rbps')!==limits.readBytesPerSecond||
-    field(maxLine,'wbps')!==limits.writeBytesPerSecond)throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');
+  if(!maxLine||field(maxLine,'rbps')!==limits.readBytesPerSecond||
+    field(maxLine,'wbps')!==limits.writeBytesPerSecond)throw ioFail('limits','limits_mismatch');
+  if(!statLine)throw ioFail('counters','counter_row_missing');
   const readBytes=field(statLine,'rbytes'),writeBytes=field(statLine,'wbytes');
-  if(readBytes===null||writeBytes===null)throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');
+  if(readBytes===null||writeBytes===null)throw ioFail('counters','counter_parse');
   return {readBytes,writeBytes};
 }
 
 export function inspectCgroupIoLimits({max,device,limits}){
   const line=deviceLine(max,device);
   if(!line||field(line,'rbps')!==limits.readBytesPerSecond||field(line,'wbps')!==limits.writeBytesPerSecond)
-    throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');
+    throw ioFail('limits','limits_mismatch');
 }
 
 function deviceNumbers(device){
@@ -57,24 +62,32 @@ function deviceNumbers(device){
 /** A partition is acceptable only when sysfs proves it belongs to the reviewed block device. */
 export async function assertIoStorageDevice(root,device,{statter=stat,resolver=realpath}={}){
   try{
-    const identity=await statter(root);
-    const actual=await resolver(`/sys/dev/block/${deviceNumbers(identity.dev)}`);
-    const approved=await resolver(`/sys/dev/block/${device}`);
-    if(actual!==approved&&!actual.startsWith(approved+'/'))throw Error('WRONG_DEVICE');
-  }catch{throw fail('QUANT_IO_STORAGE_DEVICE_MISMATCH');}
+    const identity=await Promise.resolve().then(()=>statter(root)).catch(error=>{throw {cause:'filesystem_stat',error};});
+    const actual=await Promise.resolve().then(()=>resolver(`/sys/dev/block/${deviceNumbers(identity.dev)}`)).catch(error=>{throw {cause:'filesystem_resolve',error};});
+    const approved=await Promise.resolve().then(()=>resolver(`/sys/dev/block/${device}`)).catch(error=>{throw {cause:'filesystem_resolve',error};});
+    if(actual!==approved&&!actual.startsWith(approved+'/'))throw {cause:'storage_device_mismatch'};
+  }catch(error){
+    const cause=['filesystem_stat','filesystem_resolve','storage_device_mismatch'].includes(error?.cause)?error.cause:'storage_identity_invalid';
+    const marker=error?.error?.code;
+    throw Object.assign(fail('QUANT_IO_STORAGE_DEVICE_MISMATCH'),{
+      ioDiagnostic:{phase:'storage',cause,...(filesystemMarkers.has(marker)?{filesystem_marker:marker}:{})}
+    });
+  }
 }
 
 export async function readCgroupIoLimits(group,controls,scope='main',{reader=readFile,statter=stat}={}){
   const approved=validateIoControls(controls);
-  if(typeof group!=='string'||!group.startsWith('/')||group.includes('..')||group.includes('\0'))throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');
+  if(typeof group!=='string'||!group.startsWith('/')||group.includes('..')||group.includes('\0'))throw ioFail('limits','invalid_group');
   const location=path.posix.resolve(cgroupRoot,'.'+group);
-  if(!location.startsWith(cgroupRoot+'/'))throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');
+  if(!location.startsWith(cgroupRoot+'/'))throw ioFail('limits','invalid_group');
   try{
-    const [max,identity]=await Promise.all([reader(path.posix.join(location,'io.max'),'utf8'),statter(location)]);
-    if(!Number.isSafeInteger(identity.ino)||identity.ino<=0)throw Error('INVALID_CGROUP');
+    const [max,identity]=await Promise.all([
+      Promise.resolve().then(()=>reader(path.posix.join(location,'io.max'),'utf8')).catch(error=>{throw ioFail('limits','filesystem_read',error);}),
+      Promise.resolve().then(()=>statter(location)).catch(error=>{throw ioFail('inode','filesystem_stat',error);})]);
+    if(!Number.isSafeInteger(identity.ino)||identity.ino<=0)throw ioFail('inode','identity_invalid');
     inspectCgroupIoLimits({max,device:approved.device,limits:approved[scope]});
     return {inode:identity.ino};
-  }catch{throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');}
+  }catch(error){throw error?.ioDiagnostic?error:ioFail('limits','unknown');}
 }
 
 export async function currentCgroupGroup({reader=readFile}={}){
@@ -95,7 +108,7 @@ export async function prepareCgroupIo(group,controls,scope,storageBudget,{reader
   const first=await readCgroupIoLimits(group,approved,scope,{reader,statter});
   await assertIoStorageDevice(storageBudget.root,approved.device,{statter,resolver});
   const pendingName='.pending-'+randomUUID(),filename=path.join(storageBudget.root,pendingName);
-  const reservation=await storageBudget.reserve({diskBytes:writeSize,tempBytes:writeSize,pendingName});
+  const reservation=await storageBudget.reserve({diskBytes:writeSize,tempBytes:writeSize,pendingName,purpose:'quant-io-readiness-v1'});
   let handle=null,identity=null,result=null,error=null;
   try{
     if(Date.now()>=deadline)throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');
@@ -144,16 +157,17 @@ export function systemdIoProperties(controls,scope='evaluator'){
 
 export async function readCgroupIo(group,controls,scope='main',{reader=readFile,statter=stat}={}){
   const approved=validateIoControls(controls);
-  if(typeof group!=='string'||!group.startsWith('/')||group.includes('..')||group.includes('\0'))throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');
+  if(typeof group!=='string'||!group.startsWith('/')||group.includes('..')||group.includes('\0'))throw ioFail('counters','invalid_group');
   const location=path.posix.resolve(cgroupRoot,'.'+group);
-  if(!location.startsWith(cgroupRoot+'/'))throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');
+  if(!location.startsWith(cgroupRoot+'/'))throw ioFail('counters','invalid_group');
   try{
     const [max,counters,identity]=await Promise.all([
-      reader(path.posix.join(location,'io.max'),'utf8'),
-      reader(path.posix.join(location,'io.stat'),'utf8'),statter(location)]);
-    if(!Number.isSafeInteger(identity.ino)||identity.ino<=0)throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');
+      Promise.resolve().then(()=>reader(path.posix.join(location,'io.max'),'utf8')).catch(error=>{throw ioFail('limits','filesystem_read',error);}),
+      Promise.resolve().then(()=>reader(path.posix.join(location,'io.stat'),'utf8')).catch(error=>{throw ioFail('counters','filesystem_read',error);}),
+      Promise.resolve().then(()=>statter(location)).catch(error=>{throw ioFail('inode','filesystem_stat',error);})]);
+    if(!Number.isSafeInteger(identity.ino)||identity.ino<=0)throw ioFail('inode','identity_invalid');
     return {inode:identity.ino,...inspectCgroupIo({max,stat:counters,device:approved.device,limits:approved[scope]})};
-  }catch{throw fail('QUANT_IO_TELEMETRY_UNAVAILABLE');}
+  }catch(error){throw error?.ioDiagnostic?error:ioFail('counters','unknown');}
 }
 
 export async function readCurrentCgroupIo(controls,options={}){

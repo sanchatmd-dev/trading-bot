@@ -61,6 +61,9 @@ test('bounded readiness waits for real byte fields and cleans its owned reservat
   const root=await mkdtemp(path.join(os.tmpdir(),'quant-io-ready-'));
   try{
     const budget=new StorageBudget({root,diskQuotaBytes:8192,tempQuotaBytes:8192,freeFloorBytes:0});
+    const reserve=budget.reserve.bind(budget);
+    let readinessPurpose;
+    budget.reserve=async options=>{readinessPurpose=options.purpose;return reserve(options);};
     let reads=0;
     const reader=async file=>file.endsWith('io.max')?'8:0 rbps=1048576 wbps=524288':
       file.endsWith('io.stat')?(++reads<2?'8:0 \n':'8:0 rbytes=0 wbytes=4096'):'0::/test.service';
@@ -68,6 +71,7 @@ test('bounded readiness waits for real byte fields and cleans its owned reservat
     const resolver=async file=>file.endsWith('/8:0')?'/sys/devices/block/sda':'/sys/devices/block/sda/sda1';
     assert.deepEqual(await prepareCgroupIo('/test.service',controls,'main',budget,{reader,statter,resolver,timeoutMs:500}),
       {group:'/test.service',inode:123,readBytes:0,writeBytes:4096});
+    assert.equal(readinessPurpose,'quant-io-readiness-v1');
     assert.deepEqual(await readdir(root),['.storage-reservations']);
     assert.equal((await budget.inspect()).reservations,0);
   }finally{await rm(root,{recursive:true,force:true});}

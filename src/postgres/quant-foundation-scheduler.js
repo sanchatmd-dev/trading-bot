@@ -2,6 +2,9 @@ import {randomUUID} from 'node:crypto';
 import {canonical,hash} from '../pine-bridge/source.js';
 import {validateFoundationRequest,foundationTotalBars,validateBackfillState,validateBackfillResult} from '../quant-research/foundation-contract.js';
 import {validateProfileResult} from '../quant-research/profile-contract.js';
+import {validateFoundationRequestV2,strictJsonV2} from '../quant-research/foundation-contract-v2.js';
+import {validateProfileResultV2} from '../quant-research/profile-contract-v2.js';
+import {validateCapacityPolicy} from '../quant-research/capacity-contract.js';
 
 const fail = code => Object.assign(new Error(code), {code});
 const activeStatuses = ['QUEUED','PAUSED','RUNNING','STOPPING'];
@@ -46,11 +49,14 @@ function text(value,code,max=128) {
  * This module supplies no process supervision or OS resource isolation.
  */
 export class QuantFoundationScheduler {
-  constructor({db,authorize,health,clock=Date.now,leaseMs=30000}) {
+  constructor({db,authorize,health,clock=Date.now,leaseMs=30000,capacityPolicy}={}) {
     if (!db?.query || !db?.transaction || typeof authorize!=='function' || typeof health!=='function')
       throw fail('FOUNDATION_TRUSTED_CALLBACKS_REQUIRED');
     if (!Number.isSafeInteger(leaseMs) || leaseMs<1 || leaseMs>900000) throw fail('FOUNDATION_INVALID_LEASE');
     this.db=db;this.authorize=authorize;this.health=health;this.clock=clock;this.leaseMs=leaseMs;
+    // Explicit caller-trusted engineering policy only. Default services cannot
+    // enqueue or resume expanded contracts. Evidence resolution remains required.
+    this.capacityPolicy=capacityPolicy===undefined?null:validateCapacityPolicy(capacityPolicy);
   }
   now() {
     const now=this.clock();
@@ -58,6 +64,9 @@ export class QuantFoundationScheduler {
     return now;
   }
   async allowed(owner,contract,action,context={}) {
+    // Revoking capacity cannot disable cancellation or supervised physical stop.
+    if(contract.version==='quant-foundation-v2'&&!['CANCEL','ACKNOWLEDGE_STOPPED','PAUSE'].includes(action))
+      validateFoundationRequestV2(contract,{policy:this.capacityPolicy});
     if ((await this.authorize(owner,freeze(structuredClone(contract)),action,context))?.ok!==true)
       throw fail('FOUNDATION_FORBIDDEN');
   }
@@ -88,7 +97,9 @@ export class QuantFoundationScheduler {
     return (await this.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[id])).rows[0];
   }
   async enqueue(owner,request,idempotencyKey) {
-    const contract=validateFoundationRequest(request);
+    strictJsonV2(request);
+    const contract=request?.version==='quant-foundation-v2'?
+      validateFoundationRequestV2(request,{policy:this.capacityPolicy}):validateFoundationRequest(request);
     if (owner!==contract.owner_id) throw fail('FOUNDATION_FORBIDDEN');
     text(idempotencyKey,'FOUNDATION_INVALID_IDEMPOTENCY_KEY');
     await this.allowed(owner,contract,'ENQUEUE');
@@ -131,7 +142,7 @@ export class QuantFoundationScheduler {
         return null;
       }
       let health;
-      try { health=await this.health(); } catch { return null; }
+      try { health=await this.health({action:'CLAIM'}); } catch { return null; }
       if (health?.ok!==true) return null;
       now=this.now();
       const expired=(await this.db.query(`SELECT * FROM quant_foundation_jobs WHERE status IN ('QUEUED','PAUSED')
@@ -177,7 +188,7 @@ export class QuantFoundationScheduler {
       if (await this.quarantine(row,now)) return {lost:true};
       if (action==='HEARTBEAT') {
         let health;
-        try { health=await this.health(); } catch { health=null; }
+        try { health=await this.health({action:'HEARTBEAT'}); } catch { health=null; }
         if (health?.ok!==true) {
           await this.quarantine(row,now,'HEALTH_UNAVAILABLE');
           return {lost:true};
@@ -213,9 +224,13 @@ export class QuantFoundationScheduler {
   }
   async release(job,status,result) {
     return this.fenced(job,status==='PAUSED'?'PAUSE':'FINISH',async(row,now)=>{
+      if(row.contract.version==='quant-foundation-v2'&&status==='SUCCEEDED')strictJsonV2(result);
       const bounded=status==='SUCCEEDED'?json(result,row.contract.budget.max_output_bytes,'FOUNDATION_OUTPUT_TOO_LARGE'):null;
       if(row.contract.kind==='BACKFILL'&&status==='SUCCEEDED')validateBackfillResult(row.contract,row.checkpoint,bounded);
-      if(row.contract.kind==='PROFILE'&&status==='SUCCEEDED')validateProfileResult(row.contract,bounded);
+      if(row.contract.kind==='PROFILE'&&status==='SUCCEEDED'){
+        if(row.contract.version==='quant-foundation-v2')validateProfileResultV2(row.contract,bounded,{policy:this.capacityPolicy});
+        else validateProfileResult(row.contract,bounded);
+      }
       return (await this.db.query(`UPDATE quant_foundation_jobs SET status=$2,result=$3,
         runtime_used_ms=runtime_used_ms+GREATEST(0,$4-run_started_at),run_started_at=NULL,
         lease_token=NULL,lease_until=NULL,worker_id=NULL WHERE job_id=$1 RETURNING *`,[row.job_id,status,JSON.stringify(bounded),now])).rows[0];

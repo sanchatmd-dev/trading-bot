@@ -12,6 +12,17 @@ test('resource health requires fresh complete known telemetry and reviewed limit
   assert.throws(()=>validateHealthLimits({}),{code:'QUANT_HEALTH_LIMITS_REQUIRED'});
   assert.throws(()=>loopbackHealthProbe('https://example.com/healthz'),{code:'INVALID_QUANT_HEALTH_ENDPOINT'});
 });
+
+test('cooperative cancellation prevents later probe stages after pending database work',async()=>{
+  const controller=new AbortController();let finish,apiCalls=0,hostCalls=0;
+  const check=createResourceHealth({limits,storageRoot:path.resolve('.'),
+    db:{query:()=>new Promise(resolve=>{finish=resolve;})},
+    probe:async()=>{apiCalls++;return {ok:true};},sample:async()=>{hostCalls++;return {};}});
+  const pending=check({signal:controller.signal});controller.abort();
+  finish({rows:[{depth:0,oldest:null}]});
+  assert.deepEqual(await pending,{ok:false,reason:'UNKNOWN_HEALTH'});
+  assert.equal(apiCalls,0);assert.equal(hostCalls,0);
+});
 test('resource health rejects DB/API lag and trading pressure before Quant starts',async()=>{
   for(const change of [s=>s.dbDelay=101,s=>s.apiDelay=101,s=>s.queue={depth:1,oldest:7000},s=>s.queue={depth:11,oldest:9999}]){
     const {state,check}=fixture();change(state);assert.equal((await check()).ok,false);
