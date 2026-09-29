@@ -2,6 +2,7 @@ import {canonical,hash,fail} from '../pine-bridge/source.js';
 import path from 'node:path';
 import {reserveIoOperation,bindIoOperation,observeIoOperation,getIoStopDecision} from '../quant-research/io-budget-ledger.js';
 import {validateFoundationRequestV2} from '../quant-research/foundation-contract-v2.js';
+import {terminalReadbackDigest,POST_EXIT_MEASURED} from '../quant-research/io-terminal.js';
 
 const unavailable=()=>fail('QUANT_IO_ACCOUNTING_UNAVAILABLE');
 const lost=()=>fail('QUANT_IO_LEASE_LOST');
@@ -33,6 +34,8 @@ function trustedSample(value,ready,unitName,devices){
 const sameBound=(sample,bound)=>bound&&
   ['unitName','group','pid','procStartTicks','cgroupInode','deviceId','deviceInode','invocationId']
     .every(field=>sample[field]===bound[field]);
+const trustedStop=(proof,unitName)=>proof?.unitName===unitName&&proof.launcherClosed===true&&
+  proof.startRegistered===true&&proof.pendingStartsExcluded===true&&proof.unitStopped===true;
 
 /** Runs inside the scheduler's existing transaction and singleton/job lock.
  * The SQL trigger independently protects every scheduler instance.
@@ -56,10 +59,14 @@ export class QuantIoRuntime {
       typeof profile.authorizeRelease!=='function'||typeof profile.health!=='function'||
       typeof profile.root!=='string'||!path.isAbsolute(profile.root)||
       !profile.storageBudget||profile.storageBudget.root!==profile.root))throw unavailable();
+    // Measured settlement runs ledger.settleLocked inside this runtime's transaction. That only
+    // works on the same PostgresDatabase instance (per-instance isTransaction); fail at build time.
+    if(ledger.db!==db)throw unavailable();
     this.db=db;this.ledger=ledger;this.scheduler=scheduler;this.launcher=launcher;
     this.profile=profile;this.payloads=new Map();
     this.clock=clock;this.handles=new Map();this.boundIdentity=new Map();
     this.releaseAllowed=new Set();this.releaseDisabled=new Set();
+    this.terminals=new Map();
   }
 
   async locked(jobId,leaseToken,callback,{active=true}={}){
@@ -317,19 +324,122 @@ export class QuantIoRuntime {
     catch(error){await handle.stop().catch(()=>{});throw error;}
   }
 
+  /** Single terminal per operation. Concurrent cancels join the running terminal. */
   async cancel({ownerId,jobId,leaseToken,operationId}){
+    const id=key(jobId,operationId);
     const stoppedJob=await this.scheduler.cancel(ownerId,jobId);
     if(stoppedJob.status!=='STOPPING'||stoppedJob.lease_token!==leaseToken)throw lost();
-    const handle=this.handles.get(key(jobId,operationId));
-    let digest;
+    const running=this.terminals.get(id);
+    if(running)return running;
+    const terminal=this.terminal({jobId,leaseToken,operationId});
+    this.terminals.set(id,terminal);
+    try{return await terminal;}
+    finally{if(this.terminals.get(id)===terminal)this.terminals.delete(id);}
+  }
+
+  /** T2: persist the frozen sample as an ordinary observation. It runs before the unit is killed. */
+  async commitFrozen({jobId,leaseToken,operationId,handle,bound},sample){
+    const ready=await handle.ready;
+    await this.locked(jobId,leaseToken,async({intent,ledgerRow})=>{
+      const row=intent.find(item=>item.operation_id===operationId);
+      const operation=ledgerRow.state.operations.find(item=>item.operation_id===operationId);
+      if(!row||!['SPAWNED','RELEASED'].includes(row.state)||row.payload_hash!==handle.payloadHash||
+        !operation||!['ACTIVE','STOP_REQUIRED'].includes(operation.status)||
+        operation.cgroup_id!==row.unit_name||!sameBound(sample,bound))throw uncertain();
+      const trusted=trustedSample(sample,ready,row.unit_name,ledgerRow.state.devices);
+      const next=observeIoOperation(ledgerRow.state,{operation_id:operationId,lease_token:leaseToken,
+        cgroup_id:row.unit_name,cgroup_inode:operation.cgroup_inode,sample:trusted});
+      if(next.revision!==ledgerRow.revision){
+        const saved=await this.db.query(`UPDATE quant_io_ledgers SET revision=$2,state=$3,state_hash=$4
+          WHERE job_id=$1 AND revision=$5`,[jobId,next.revision,JSON.stringify(next),
+          hash(canonical(next)),ledgerRow.revision]);
+        if(saved.rowCount!==1)throw uncertain();
+      }
+    },{active:false});
+  }
+
+  /** T4a: measured settlement and launch STOP_PROVEN in one transaction, through the terminal
+   * authorization hook. Returns false when the operation is not eligible or the settle did not
+   * commit (caller uses the unknown-final fallback). Throws when the outcome cannot be resolved.
+   */
+  async settleMeasured({jobId,leaseToken,operationId,handle,bound,frozen,evidence,postExit,stopDigest}){
+    let readbackDigest;
+    try{
+      readbackDigest=terminalReadbackDigest({jobId,operationId,unitName:frozen.unitName,group:frozen.group,
+        cgroupInode:frozen.cgroupInode,invocationId:frozen.invocationId,pid:frozen.pid,
+        procStartTicks:frozen.procStartTicks,deviceId:frozen.deviceId,deviceInode:frozen.deviceInode,
+        reads:evidence.reads.map(read=>({readBytes:read.readBytes,writeBytes:read.writeBytes})),
+        windowMs:evidence.windowMs,fileDirty:evidence.fileDirty,fileWriteback:evidence.fileWriteback,
+        freezer:evidence.freezer,postExit});
+      if(evidence.reads.some(read=>read.readBytes!==frozen.readBytes||read.writeBytes!==frozen.writeBytes))
+        return false;
+    }catch{return false;}
+    let expected=null;
+    try{
+      const ready=await handle.ready;
+      return await this.locked(jobId,leaseToken,async({job,ledgerRow,intent})=>{
+        const row=intent.find(item=>item.operation_id===operationId);
+        const operation=ledgerRow.state.operations.find(item=>item.operation_id===operationId);
+        if(!row||!operation||row.payload_hash!==handle.payloadHash||row.unit_name!==bound.unitName||
+          operation.cgroup_id!==row.unit_name||operation.cgroup_inode!==bound.cgroupInode||
+          !sameBound(frozen,bound))return false;
+        const sample=trustedSample(frozen,ready,row.unit_name,ledgerRow.state.devices);
+        expected={operation_id:operationId,lease_token:leaseToken,cgroup_id:operation.cgroup_id,
+          cgroup_inode:operation.cgroup_inode,stopped:true,stop_proof_sha256:stopDigest,
+          final_readback:true,readback_proof_sha256:readbackDigest,sample};
+        if(operation.status==='SETTLED'){
+          if(canonical(operation.terminal_proof)!==canonical(expected))throw uncertain();
+        }else if(!['SPAWNED','RELEASED'].includes(row.state)||
+          !['ACTIVE','STOP_REQUIRED'].includes(operation.status)||
+          canonical(operation.last)!==canonical(sample))return false;
+        await this.ledger.settleLocked({job,row:ledgerRow,leaseToken,
+          expectedRevision:ledgerRow.revision,input:expected});
+        if(row.state!=='STOP_PROVEN')await this.db.query("UPDATE quant_io_launches SET state='STOP_PROVEN' WHERE job_id=$1 AND operation_id=$2",[jobId,operationId]);
+        return true;
+      },{active:false});
+    }catch(error){
+      // Commit outcome may be unknown. Reread before any fallback; never crash-charge a committed settle.
+      let observed;
+      try{
+        observed=await this.locked(jobId,leaseToken,async({ledgerRow,intent})=>({
+          operation:ledgerRow.state.operations.find(item=>item.operation_id===operationId),
+          row:intent.find(item=>item.operation_id===operationId)}),{active:false});
+      }catch{throw error;}
+      if(observed.operation?.status==='SETTLED'){
+        if(expected&&canonical(observed.operation.terminal_proof)===canonical(expected)&&
+          observed.row?.state==='STOP_PROVEN')return true;
+        throw uncertain();
+      }
+      return false;
+    }
+  }
+
+  async terminal({jobId,leaseToken,operationId}){
+    const id=key(jobId,operationId),handle=this.handles.get(id);
+    let digest,outcome=null,committed=null;
     if(handle){
-      const proof=await handle.stop();
-      if(proof?.unitName!==quantIoUnitName(jobId,operationId)||proof.launcherClosed!==true||
-        proof.startRegistered!==true||proof.pendingStartsExcluded!==true||proof.unitStopped!==true)
+      const bound=this.boundIdentity.get(id)??null;
+      let proof;
+      if(typeof handle.terminate==='function'&&bound){
+        outcome=await handle.terminate({bound,commit:async sample=>{
+          await this.commitFrozen({jobId,leaseToken,operationId,handle,bound},sample);
+          committed=canonical(sample);
+        }});
+        proof=outcome?.stopProof;
+      }else proof=await handle.stop();
+      if(!trustedStop(proof,quantIoUnitName(jobId,operationId)))
         return {status:'STOPPING',proof:'UNCONFIRMED'};
       digest=hash(canonical({version:'quant-io-stop-proof-v1',jobId,operationId,
         unitName:proof.unitName,launcherClosed:true,startRegistered:true,
         pendingStartsExcluded:true,unitStopped:true}));
+      if(outcome?.measured===true&&committed!==null&&outcome.frozenSample&&
+        committed===canonical(outcome.frozenSample)&&POST_EXIT_MEASURED.includes(outcome.postExit)&&
+        await this.settleMeasured({jobId,leaseToken,operationId,handle,bound,frozen:outcome.frozenSample,
+          evidence:outcome.readbackEvidence,postExit:outcome.postExit,stopDigest:digest})){
+        this.handles.delete(id);
+        const completed=await this.scheduler.acknowledgeStopped(jobId,leaseToken);
+        return {status:completed.status,proof:'MEASURED_FINAL_SETTLED'};
+      }
     }else{
       // An INTENT_RECORDED row proves no start claim occurred. STARTING without
       // a live owned handle may represent an issued but unobserved start.
@@ -344,7 +454,7 @@ export class QuantIoRuntime {
       if(!excluded)return {status:'STOPPING',proof:'UNCONFIRMED'};
       digest=hash(canonical({version:'quant-io-no-start-v1',jobId,operationId}));
     }
-    // No post-exit cgroup readback exists yet. Burn allowance and quarantine job.
+    // Fallback: no trusted final readback. Burn allowance and quarantine job.
     const state=await this.ledger.read({jobId,leaseToken});
     const operation=state.operations.find(item=>item.operation_id===operationId);
     if(!operation)throw uncertain();

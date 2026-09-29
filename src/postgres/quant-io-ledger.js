@@ -44,17 +44,7 @@ export class QuantIoLedger {
         validateFoundationRequestV2(job.contract,{policy:this.policy});
       }
       const row=(await this.db.query('SELECT * FROM quant_io_ledgers WHERE job_id=$1 FOR UPDATE',[jobId])).rows[0];
-      if(mode==='terminal'){
-        const io=job.contract.capacity?.io,limits=row?.state?.limits;
-        if(!io||!limits||row.policy_hash!==job.contract.capacity.policy_hash||
-          ['read','write'].some(direction=>
-            limits[direction+'_bytes']!==io[direction+'_bytes']||
-            limits['overshoot_'+direction+'_bytes']!==io['overshoot_'+direction+'_bytes']||
-            limits['cleanup_'+direction+'_bytes']!==io['cleanup_'+direction+'_bytes']||
-            limits['compute_'+direction+'_bytes']!==io[direction+'_bytes']-
-              io['overshoot_'+direction+'_bytes']-io['cleanup_'+direction+'_bytes']))
-          throw accountingUnavailable();
-      }
+      if(mode==='terminal')this.terminalCheck(job,row);
       return callback(job,row);
     });}
     catch(error){
@@ -62,6 +52,19 @@ export class QuantIoLedger {
         'INVALID_IO_BUDGET_LEDGER','INVALID_CAPACITY_CONTRACT','QUANT_IO_ACCOUNTING_UNAVAILABLE'].includes(error?.code))throw error;
       throw accountingUnavailable();
     }
+  }
+
+  /** Terminal accounting needs ledger limits identical to the job's V2 capacity contract. */
+  terminalCheck(job,row){
+    const io=job.contract.capacity?.io,limits=row?.state?.limits;
+    if(!io||!limits||row.policy_hash!==job.contract.capacity.policy_hash||
+      ['read','write'].some(direction=>
+        limits[direction+'_bytes']!==io[direction+'_bytes']||
+        limits['overshoot_'+direction+'_bytes']!==io['overshoot_'+direction+'_bytes']||
+        limits['cleanup_'+direction+'_bytes']!==io['cleanup_'+direction+'_bytes']||
+        limits['compute_'+direction+'_bytes']!==io[direction+'_bytes']-
+          io['overshoot_'+direction+'_bytes']-io['cleanup_'+direction+'_bytes']))
+      throw accountingUnavailable();
   }
 
   check(row,jobId){
@@ -121,6 +124,28 @@ export class QuantIoLedger {
       if(next===state)return state;
       return this.write(jobId,state.revision,next);
     });
+  }
+
+  /** Measured settlement inside a transaction the caller already holds: scheduler singleton, job row
+   * and this job's ledger row locked FOR UPDATE, in that order. It applies the same terminal checks and
+   * authorizeTerminal hook as transition(), so the caller can commit the launch STOP_PROVEN update
+   * atomically with the settlement. Any throw must roll back the caller's whole transaction.
+   */
+  async settleLocked({job,row,leaseToken,expectedRevision,input}){
+    if(!this.db.isTransaction||!job||!row||!Number.isSafeInteger(expectedRevision)||expectedRevision<0)
+      throw accountingUnavailable();
+    if(job.lease_token!==leaseToken||!['RUNNING','STOPPING'].includes(job.status))throw leaseLost();
+    if(hash(canonical(job.contract))!==job.contract_hash||job.contract.version!=='quant-foundation-v2')
+      throw accountingUnavailable();
+    this.terminalCheck(job,row);
+    if(typeof this.authorizeTerminal!=='function'||
+      (await this.authorizeTerminal({job,action:'settle',input}))?.ok!==true)throw accountingUnavailable();
+    const state=this.check(row,job.job_id);
+    if(state.lease_token!==leaseToken)throw leaseLost();
+    if(state.revision!==expectedRevision)throw conflict();
+    const next=settleIoOperation(state,input);
+    if(next===state)return state;
+    return this.write(job.job_id,state.revision,next);
   }
 
   async reserveBeforeLaunch({jobId,leaseToken,expectedRevision,input}){

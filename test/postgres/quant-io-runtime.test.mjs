@@ -5,28 +5,70 @@ import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
 import {QuantFoundationScheduler} from '../../src/postgres/quant-foundation-scheduler.js';
 import {QuantIoLedger} from '../../src/postgres/quant-io-ledger.js';
-import {QuantIoRuntime,canReleaseQuantIo,QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH} from '../../src/postgres/quant-io-runtime.js';
+import {QuantIoRuntime,canReleaseQuantIo,QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH,quantIoUnitName} from '../../src/postgres/quant-io-runtime.js';
+import {terminalReadbackDigest} from '../../src/quant-research/io-terminal.js';
+import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {profileV2Fixture} from '../helpers/profile-v2-fixture.js';
 
 const now=1800010000000,operationId='operation-00001';
-let admin,db,second,name,ledger,scheduler,claimed,runtime,launcher,spawned;
+let admin,db,second,name,ledger,scheduler,claimed,runtime,launcher,spawned,authorizations,denyTerminal,script;
 const allowance={read_bytes:30,write_bytes:30};
 const args=()=>({jobId:claimed.job_id,leaseToken:claimed.lease_token,operationId});
-const fixtureLauncher=(sampleOverride,readyOverride)=>({spawnPrepared({unitName}){
+const evidenceFor=frozen=>({freezer:'frozen',windowMs:2500,
+  reads:[{readBytes:frozen.readBytes,writeBytes:frozen.writeBytes},{readBytes:frozen.readBytes,writeBytes:frozen.writeBytes}],
+  fileDirty:0,fileWriteback:0,maxBioBytes:1310720,rates:{readBytesPerSecond:524288,writeBytesPerSecond:524288}});
+/** `terminal` scripts handle.terminate(): frozen counters, commit hook, gate, stop proof, verdict. */
+const fixtureLauncher=(sampleOverride,readyOverride,terminal=null)=>({spawnPrepared({unitName}){
   spawned++;
   let released=false,stops=0;
   const group='/user.slice/'+unitName;
   const sample={unitName,group,cgroupInode:23,deviceId:'8:0',deviceInode:17,
     pid:4242,procStartTicks:'12345',invocationId:'1'.repeat(32),
     readBytes:3,writeBytes:4};
-  return {payloadHash:QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH,
+  const handle={payloadHash:QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH,
     ready:Promise.resolve(readyOverride?readyOverride({unitName,group,cgroupInode:23,
       invocationId:'1'.repeat(32)}):{unitName,group,cgroupInode:23,invocationId:'1'.repeat(32)}),
     async sample(){return sampleOverride?sampleOverride(sample):sample;},
     release(){assert.equal(released,false);released=true;},
-    async stop(){stops++;return {unitName,launcherClosed:true,startRegistered:true,
+    async stop(){stops++;terminal?.events.push('stop');return {unitName,launcherClosed:true,startRegistered:true,
       pendingStartsExcluded:true,unitStopped:true,stops};}};
+  if(terminal)handle.terminate=request=>{
+    terminal.calls++;
+    terminal.promise??=(async()=>{
+      terminal.events.push('terminate');
+      const frozen={...sample,readBytes:terminal.read??7,writeBytes:terminal.write??9,...terminal.patch};
+      let committed=false;
+      if(terminal.commit!==false)try{await request.commit(frozen,evidenceFor(frozen));committed=true;}
+      catch(error){terminal.commitError=error;}
+      terminal.events.push('committed');
+      await terminal.gate;
+      const proof=await handle.stop();
+      return Object.freeze({stopProof:terminal.stopProof??proof,measured:terminal.measured??committed,
+        postExit:terminal.postExit??'REMOVED',frozenSample:frozen,readbackEvidence:evidenceFor(frozen)});
+    })();
+    return terminal.promise;
+  };
+  return handle;
 }});
+const ledgerState=async(connection=db)=>(await connection.query('SELECT state FROM quant_io_ledgers')).rows[0].state;
+const launchState=async(connection=db)=>(await connection.query('SELECT state FROM quant_io_launches')).rows[0].state;
+/** Reserve, start, bind, release. The operation is ACTIVE and the launch RELEASED. */
+async function armTerminal(overrides={}){
+  script={calls:0,events:[],...overrides};
+  launcher=fixtureLauncher(undefined,undefined,script);
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});
+  await runtime.start(args());await runtime.ready(args());
+  await runtime.bind(args());await runtime.release(args());
+}
+const stopDigest=()=>hash(canonical({version:'quant-io-stop-proof-v1',jobId:claimed.job_id,operationId,
+  unitName:quantIoUnitName(claimed.job_id,operationId),launcherClosed:true,startRegistered:true,
+  pendingStartsExcluded:true,unitStopped:true}));
+const readbackDigest=(read,write,postExit='REMOVED')=>terminalReadbackDigest({jobId:claimed.job_id,operationId,
+  unitName:quantIoUnitName(claimed.job_id,operationId),group:'/user.slice/'+quantIoUnitName(claimed.job_id,operationId),
+  cgroupInode:23,invocationId:'1'.repeat(32),pid:4242,procStartTicks:'12345',deviceId:'8:0',deviceInode:17,
+  reads:[{readBytes:read,writeBytes:write},{readBytes:read,writeBytes:write}],windowMs:2500,
+  fileDirty:0,fileWriteback:0,freezer:'frozen',postExit});
 
 before(async()=>{
   assert.ok(process.env.TEST_DATABASE_URL,'Isolated PostgreSQL required');
@@ -47,8 +89,9 @@ beforeEach(async()=>{
     canRelease:row=>canReleaseQuantIo(db,row)});
   const queued=await scheduler.enqueue('owner-a',contract,randomUUID());
   claimed=await scheduler.claim('io-runtime-test');assert.equal(claimed.job_id,queued.job_id);
+  authorizations=[];denyTerminal=false;script=null;
   ledger=new QuantIoLedger({db,policy,devices:[{device_id:'8:0',device_inode:17}],
-    authorizeTerminal:async()=>({ok:true}),clock:()=>now});
+    authorizeTerminal:async({action})=>{authorizations.push(action);return {ok:!denyTerminal};},clock:()=>now});
   spawned=0;launcher=fixtureLauncher();runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
 });
 after(async()=>{
@@ -149,7 +192,10 @@ test('postspawn transaction rollback stops owned handle; STARTING intent can clo
       if(inject&&spawned>0){inject=false;throw Error('postspawn transaction rolled back');}
       return value;
     })};
-  const uncertainRuntime=new QuantIoRuntime({db:rollbackDb,ledger,scheduler,launcher,clock:()=>now});
+  // The ledger must share the runtime's database object, so it is rebuilt on the same wrapper.
+  const rollbackLedger=new QuantIoLedger({db:rollbackDb,policy:ledger.policy,devices:ledger.devices,
+    authorizeTerminal:ledger.authorizeTerminal,clock:()=>now});
+  const uncertainRuntime=new QuantIoRuntime({db:rollbackDb,ledger:rollbackLedger,scheduler,launcher,clock:()=>now});
   await assert.rejects(uncertainRuntime.start(args()),{code:'QUANT_IO_ACCOUNTING_UNAVAILABLE'});
   assert.equal(spawned,1);
   assert.equal((await db.query('SELECT state FROM quant_io_launches')).rows[0].state,'STARTING');
@@ -280,4 +326,268 @@ test('nested owned quant unit path denies binding',async()=>{
   await assert.rejects(runtime.bind(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
   await assert.rejects(runtime.release(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
   await runtime.cancel({ownerId:'owner-a',...args()});
+});
+
+// ---- FTR-1 measured terminal (fake handles; no Linux) ----
+
+test('measured terminal settles exact frozen deltas with STOP_PROVEN, no quarantine, null SQL result',async()=>{
+  await armTerminal();
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(cancelled.status,'CANCELLED');assert.equal(cancelled.proof,'MEASURED_FINAL_SETTLED');
+  assert.equal(script.calls,1);
+  const stored=await ledgerState(),operation=stored.operations[0];
+  assert.equal(operation.status,'SETTLED');
+  assert.deepEqual(operation.charge,{read_bytes:7,write_bytes:9});
+  assert.deepEqual(stored.charged,{read_bytes:7,write_bytes:9});
+  assert.deepEqual(operation.last,{devices:[{device_id:'8:0',device_inode:17,read_bytes:7,write_bytes:9}]});
+  assert.equal(operation.stop_reason,null);
+  assert.equal(stored.operations.some(item=>['CRASHED','CRASHED_UNCONFIRMED'].includes(item.status)||
+    item.stop_reason==='UNKNOWN_FINAL_ACCOUNTING'),false);
+  assert.equal(operation.terminal_proof.stopped,true);assert.equal(operation.terminal_proof.final_readback,true);
+  assert.equal(operation.terminal_proof.stop_proof_sha256,stopDigest());
+  assert.equal(operation.terminal_proof.readback_proof_sha256,readbackDigest(7,9));
+  assert.equal(operation.stop_confirmation,stopDigest());
+  assert.equal(await launchState(),'STOP_PROVEN');
+  const job=(await db.query('SELECT status,result,checkpoint FROM quant_foundation_jobs')).rows[0];
+  assert.equal(job.status,'CANCELLED');assert.equal(job.result,null);assert.equal(job.checkpoint,null);
+  assert.deepEqual(authorizations,['settle']);
+  assert.deepEqual(script.events,['terminate','committed','stop']);
+});
+
+test('frozen sample is committed and visible to another connection before the unit is stopped',async()=>{
+  let openGate;
+  await armTerminal({gate:new Promise(resolve=>{openGate=resolve;})});
+  const cancelling=runtime.cancel({ownerId:'owner-a',...args()});
+  const deadline=Date.now()+5000;
+  let visible=null;
+  while(Date.now()<deadline&&!visible){
+    const state=await ledgerState(second);
+    if(state.operations[0].last.devices[0].read_bytes===7)visible=state;
+    else await new Promise(resolve=>setTimeout(resolve,10));
+  }
+  assert.ok(visible,'frozen observation not visible');
+  assert.equal(visible.operations[0].status,'ACTIVE');
+  assert.deepEqual(visible.operations[0].last.devices[0],{device_id:'8:0',device_inode:17,read_bytes:7,write_bytes:9});
+  assert.equal(script.events.includes('stop'),false);
+  assert.equal(await launchState(second),'RELEASED');
+  openGate();
+  assert.equal((await cancelling).proof,'MEASURED_FINAL_SETTLED');
+  assert.equal(script.events.at(-1),'stop');
+});
+
+test('measured overshoot beyond allowance is charged exactly through STOP_REQUIRED without quarantine',async()=>{
+  await armTerminal({read:31,write:9});
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(cancelled.proof,'MEASURED_FINAL_SETTLED');
+  const stored=await ledgerState();
+  assert.equal(stored.operations[0].status,'SETTLED');
+  assert.equal(stored.operations[0].stop_reason,'ALLOWANCE_EXHAUSTED');
+  assert.deepEqual(stored.charged,{read_bytes:31,write_bytes:9});
+  assert.equal(stored.operations.some(item=>item.status==='CRASHED'),false);
+});
+
+async function freshJob(label){
+  await db.query('TRUNCATE quant_io_launches,quant_io_ledgers,quant_foundation_jobs,quant_foundation_owners');
+  const {policy,contract}=profileV2Fixture(2000);
+  const fresh=new QuantFoundationScheduler({db,capacityPolicy:policy,clock:()=>now,leaseMs:30000,
+    authorize:async()=>({ok:true}),health:async()=>({ok:true}),canRelease:row=>canReleaseQuantIo(db,row)});
+  await fresh.enqueue('owner-a',contract,randomUUID());claimed=await fresh.claim(label);
+  scheduler=fresh;authorizations.length=0;
+}
+
+test('not measured terminal uses the unknown-final fallback and burns the allowance',async()=>{
+  for(const overrides of [{measured:false},{measured:false,commit:false},{measured:false,postExit:'UNKNOWN'}]){
+    await freshJob('io-runtime-fallback');
+    await armTerminal(overrides);
+    const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+    assert.equal(cancelled.status,'CANCELLED');assert.equal(cancelled.proof,'UNKNOWN_FINAL_CHARGED');
+    const stored=await ledgerState();
+    assert.equal(stored.operations[0].status,'CRASHED');
+    assert.deepEqual(stored.charged,allowance);
+    assert.equal(await launchState(),'STOP_PROVEN');
+    assert.equal(authorizations.includes('settle'),false);
+    assert.equal(authorizations.includes('crash'),true);
+  }
+});
+
+test('tail observed after exit is never charged as measured',async()=>{
+  // Honest launcher: not measured. Dishonest launcher: measured true with a rejected disposition.
+  for(const overrides of [{measured:false,postExit:'TAIL_OBSERVED'},{measured:true,postExit:'TAIL_OBSERVED'},
+    {measured:true,postExit:'UNKNOWN'}]){
+    await freshJob('io-runtime-tail');
+    await armTerminal(overrides);
+    const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+    assert.equal(cancelled.proof,'UNKNOWN_FINAL_CHARGED');
+    const stored=await ledgerState();
+    assert.equal(stored.operations[0].status,'CRASHED');
+    assert.deepEqual(stored.charged,allowance);
+    assert.equal(stored.operations[0].last.devices[0].write_bytes,9);
+  }
+});
+
+test('stop unconfirmed after the frozen read neither settles nor crash-charges and keeps the SQL guard',async()=>{
+  await armTerminal({stopProof:{unitName:quantIoUnitName(claimed.job_id,operationId),launcherClosed:true,
+    startRegistered:true,pendingStartsExcluded:true,unitStopped:false}});
+  const blocked=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(blocked.status,'STOPPING');assert.equal(blocked.proof,'UNCONFIRMED');
+  const stored=await ledgerState();
+  assert.equal(stored.operations[0].status,'ACTIVE');
+  assert.equal(stored.operations[0].last.devices[0].read_bytes,7);
+  assert.equal(await launchState(),'RELEASED');
+  assert.deepEqual(authorizations,[]);
+  const alternate=new QuantFoundationScheduler({db:second,capacityPolicy:profileV2Fixture(2000).policy,
+    clock:()=>now,authorize:async()=>({ok:true}),health:async()=>({ok:true})});
+  await assert.rejects(alternate.acknowledgeStopped(claimed.job_id,claimed.lease_token),
+    /Foundation I\/O launch unresolved/);
+  await assert.rejects(db.query('UPDATE quant_foundation_jobs SET lease_token=$2 WHERE job_id=$1',
+    [claimed.job_id,randomUUID()]),/Foundation I\/O launch unresolved/);
+  assert.equal((await db.query('SELECT status FROM quant_foundation_jobs')).rows[0].status,'STOPPING');
+});
+
+test('concurrent cancels run one terminal with a deterministic ledger revision sequence',async()=>{
+  let openGate;
+  await armTerminal({gate:new Promise(resolve=>{openGate=resolve;})});
+  // Wait for both scheduler.cancel calls to return STOPPING, so the second cancel has joined the
+  // terminal held open by the gate. A fixed sleep is racy against real connection latency.
+  const originalCancel=scheduler.cancel.bind(scheduler);let returned=0;
+  scheduler.cancel=async(...values)=>{
+    const stopping=await originalCancel(...values);
+    if(stopping.status==='STOPPING')returned++;
+    return stopping;
+  };
+  const first=runtime.cancel({ownerId:'owner-a',...args()});
+  const joined=runtime.cancel({ownerId:'owner-a',...args()});
+  const deadline=Date.now()+10000;
+  while(returned<2&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,5));
+  assert.equal(returned,2,'both cancels must reach the running terminal');
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(script.events.includes('stop'),false);
+  openGate();
+  const [one,two]=await Promise.all([first,joined]);
+  assert.equal(script.calls,1);
+  assert.equal(one.proof,'MEASURED_FINAL_SETTLED');assert.deepEqual(two,one);
+  const stored=await ledgerState();
+  assert.equal(stored.revision,4);// reserve, bind, frozen observation, settle
+  assert.equal(stored.operations[0].status,'SETTLED');
+  assert.equal(script.events.filter(event=>event==='stop').length,1);
+  assert.deepEqual(authorizations,['settle']);
+  // Once the job is CANCELLED, a repeat cancel changes nothing and is rejected as before.
+  await assert.rejects(runtime.cancel({ownerId:'owner-a',...args()}),{code:'QUANT_IO_LEASE_LOST'});
+  assert.equal((await ledgerState()).revision,4);
+});
+
+test('lost settle acknowledgement rereads the committed settlement and never crash-charges',async()=>{
+  await armTerminal();
+  let inject=true;
+  runtime.db={get isTransaction(){return db.isTransaction;},query:(...values)=>db.query(...values),
+    transaction:async callback=>{
+      const value=await db.transaction(callback);
+      if(inject&&(await ledgerState()).operations[0].status==='SETTLED'){
+        inject=false;throw Error('commit acknowledgement lost');
+      }
+      return value;
+    }};
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(inject,false);
+  assert.equal(cancelled.status,'CANCELLED');assert.equal(cancelled.proof,'MEASURED_FINAL_SETTLED');
+  const stored=await ledgerState();
+  assert.equal(stored.operations[0].status,'SETTLED');assert.equal(stored.revision,4);
+  assert.deepEqual(stored.charged,{read_bytes:7,write_bytes:9});
+  assert.equal(await launchState(),'STOP_PROVEN');
+  assert.deepEqual(authorizations,['settle']);
+});
+
+test('settle and launch STOP_PROVEN are atomic; a rolled back settle falls back to the crash charge',async()=>{
+  await armTerminal();
+  let inject=true;const seen=[];
+  runtime.db={get isTransaction(){return db.isTransaction;},query:(...values)=>db.query(...values),
+    transaction:async callback=>{
+      try{
+        return await db.transaction(async()=>{
+          const value=await callback();
+          if(inject&&(await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state.operations[0].status==='SETTLED'){
+            inject=false;throw Error('failure after the ledger write');
+          }
+          return value;
+        });
+      }catch(error){
+        if(!inject&&!seen.length)seen.push({ledger:(await ledgerState(second)).operations[0].status,launch:await launchState(second)});
+        throw error;
+      }
+    }};
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.deepEqual(seen,[{ledger:'ACTIVE',launch:'RELEASED'}]);
+  assert.equal(cancelled.proof,'UNKNOWN_FINAL_CHARGED');
+  const stored=await ledgerState();
+  assert.equal(stored.operations[0].status,'CRASHED');assert.deepEqual(stored.charged,allowance);
+  assert.equal(await launchState(),'STOP_PROVEN');
+});
+
+test('terminal authorization denial blocks settle and crash and leaves the operation unresolved',async()=>{
+  await armTerminal();
+  denyTerminal=true;
+  await assert.rejects(runtime.cancel({ownerId:'owner-a',...args()}),{code:'QUANT_IO_ACCOUNTING_UNAVAILABLE'});
+  assert.equal(authorizations[0],'settle');
+  const stored=await ledgerState();
+  assert.equal(stored.operations[0].status,'ACTIVE');assert.deepEqual(stored.charged,{read_bytes:0,write_bytes:0});
+  assert.equal(await launchState(),'RELEASED');
+  assert.equal((await db.query('SELECT status FROM quant_foundation_jobs')).rows[0].status,'STOPPING');
+  await assert.rejects(scheduler.acknowledgeStopped(claimed.job_id,claimed.lease_token),
+    {code:'FOUNDATION_IO_UNRESOLVED'});
+});
+
+test('job already STOPPING under the same token still settles; a stale token is denied before any terminal',async()=>{
+  await armTerminal();
+  await scheduler.cancel('owner-a',claimed.job_id);
+  await assert.rejects(runtime.cancel({ownerId:'owner-a',...args(),leaseToken:randomUUID()}),
+    {code:'QUANT_IO_LEASE_LOST'});
+  assert.equal(script.calls,0);
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(cancelled.status,'CANCELLED');assert.equal(cancelled.proof,'MEASURED_FINAL_SETTLED');
+  assert.equal((await ledgerState()).operations[0].status,'SETTLED');
+});
+
+test('an instance without the handle cannot settle or crash a released operation',async()=>{
+  await armTerminal();
+  const orphan=new QuantIoRuntime({db,ledger,scheduler,launcher:fixtureLauncher(),clock:()=>now});
+  const before=await ledgerState();
+  const blocked=await orphan.cancel({ownerId:'owner-a',...args()});
+  assert.equal(blocked.status,'STOPPING');assert.equal(blocked.proof,'UNCONFIRMED');
+  assert.deepEqual(await ledgerState(),before);
+  assert.equal(await launchState(),'RELEASED');
+  assert.equal(script.calls,0);assert.deepEqual(authorizations,[]);
+});
+
+test('runtime requires the ledger to share its database object',()=>{
+  const shared={db,ledger,scheduler,launcher:fixtureLauncher(),clock:()=>now};
+  assert.doesNotThrow(()=>new QuantIoRuntime(shared));
+  assert.throws(()=>new QuantIoRuntime({...shared,db:second}),{code:'QUANT_IO_ACCOUNTING_UNAVAILABLE'});
+  const wrapper={get isTransaction(){return db.isTransaction;},query:(...values)=>db.query(...values),
+    transaction:callback=>db.transaction(callback)};
+  assert.throws(()=>new QuantIoRuntime({...shared,db:wrapper}),{code:'QUANT_IO_ACCOUNTING_UNAVAILABLE'});
+  assert.doesNotThrow(()=>new QuantIoRuntime({...shared,db:wrapper,
+    ledger:new QuantIoLedger({db:wrapper,policy:ledger.policy,devices:ledger.devices,
+      authorizeTerminal:ledger.authorizeTerminal,clock:()=>now})}));
+});
+
+for(const [field,value] of [['cgroupInode',24],['invocationId','2'.repeat(32)],['pid',4243],['deviceId','8:1'],
+  ['deviceInode',18],['procStartTicks','99999'],['group','/user.slice/other.service']]){
+  test(`frozen sample with a different ${field} is never settled`,async()=>{
+    // Honest launcher reports not measured after the commit hook rejects the sample.
+    await armTerminal({patch:{[field]:value}});
+    const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+    assert.equal(cancelled.proof,'UNKNOWN_FINAL_CHARGED');
+    const stored=await ledgerState();
+    assert.equal(stored.operations[0].status,'CRASHED');assert.deepEqual(stored.charged,allowance);
+    assert.deepEqual(stored.operations[0].last.devices[0],{device_id:'8:0',device_inode:17,read_bytes:3,write_bytes:4});
+    assert.equal(authorizations.includes('settle'),false);
+  });
+}
+
+test('a launcher that claims measured after a rejected commit still cannot settle',async()=>{
+  await armTerminal({patch:{pid:4243},measured:true});
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(cancelled.proof,'UNKNOWN_FINAL_CHARGED');
+  assert.equal((await ledgerState()).operations[0].status,'CRASHED');
+  assert.ok(script.commitError);
 });

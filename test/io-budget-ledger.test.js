@@ -137,6 +137,40 @@ test('settlement needs stop and terminal readback, refunds only observed unused 
   assert.equal(reserveIoOperation(settled,op('operation-00002',58,61)).operations.length,2);
 });
 
+test('measured settle from STOP_REQUIRED charges exact overshoot deltas and leaves the ledger unquarantined',()=>{
+  const input=op(),bound=bind(reserveIoOperation(start(),input),input);
+  const stopped=observeIoOperation(bound,{...key(input),sample:sample(31,0)});
+  assert.equal(stopped.operations[0].status,'STOP_REQUIRED');
+  assert.equal(stopped.operations[0].stop_reason,'ALLOWANCE_EXHAUSTED');
+  const final=proof(input,35,12),settled=settleIoOperation(stopped,final);
+  assert.equal(settled.operations[0].status,'SETTLED');
+  assert.deepEqual(settled.operations[0].charge,{read_bytes:35,write_bytes:12});
+  assert.deepEqual(settled.charged,{read_bytes:35,write_bytes:12});
+  assert.equal(settled.operations[0].stop_reason,'ALLOWANCE_EXHAUSTED');
+  // no unknown-final quarantine: later compute admission and lease fencing stay possible
+  assert.equal(reserveIoOperation(settled,op('operation-00002',30,30)).operations.length,2);
+  assert.equal(fenceIoLedgerLease(settled,{previous_lease_token:'lease-00001',new_lease_token:'lease-00002'})
+    .lease_token,'lease-00002');
+  // the unknown-final fallback for the same evidence burns the full allowance and quarantines
+  const crashed=crashIoOperation(stopped,{...key(input),crash_evidence_sha256:'c'.repeat(64)});
+  assert.deepEqual(crashed.charged,{read_bytes:31,write_bytes:30});
+  denied(()=>reserveIoOperation(crashed,op('operation-00002',1,1)));
+  // measured settle cannot go below the last committed observation
+  denied(()=>settleIoOperation(stopped,proof(input,30,12)));
+});
+
+test('crash after settle and settle after crash are both denied',()=>{
+  const input=op(),bound=bind(reserveIoOperation(start(),input),input);
+  const settled=settleIoOperation(bound,proof(input,5,6));
+  denied(()=>crashIoOperation(settled,{...key(input),crash_evidence_sha256:'c'.repeat(64)}));
+  denied(()=>acknowledgeIoCrashStop(settled,{...key(input),stop_proof_sha256:'d'.repeat(64)}));
+  const crashed=crashIoOperation(bound,{...key(input),crash_evidence_sha256:'c'.repeat(64)});
+  denied(()=>settleIoOperation(crashed,proof(input,5,6)));
+  const acknowledged=acknowledgeIoCrashStop(crashed,{...key(input),stop_proof_sha256:'d'.repeat(64)});
+  denied(()=>settleIoOperation(acknowledged,proof(input,5,6)));
+  assert.deepEqual(acknowledged.charged,{read_bytes:30,write_bytes:30});
+});
+
 test('unknown crash burns full allowance, survives lease change, and never resets charged history',()=>{
   const input=op(),reserved=reserveIoOperation(start(),input);
   const crash={...key(input),cgroup_inode:null,crash_evidence_sha256:'c'.repeat(64)};

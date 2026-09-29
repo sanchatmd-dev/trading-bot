@@ -19,7 +19,7 @@ import {profileV2Fixture} from '../helpers/profile-v2-fixture.js';
 const now=1800010000000,operationId='operation-00001';
 let admin,db,name,root,store,budget,policy,contract,result,scheduler,ledger,claimed;
 let revoked,malformed,overshootAfterRelease,revokeAfterRelease,growthDuringAuthorization,
-  grown,launches,stops,adapter;
+  grown,launches,stops,adapter,terminal,events;
 const args=()=>({jobId:claimed.job_id,leaseToken:claimed.lease_token,operationId,
   ownerId:claimed.owner_id,expectedRevision:0});
 
@@ -52,7 +52,7 @@ beforeEach(async()=>{
   await db.query('TRUNCATE quant_io_launches,quant_io_ledgers,quant_foundation_jobs,quant_foundation_owners');
   revoked=false;malformed=false;overshootAfterRelease=false;revokeAfterRelease=false;
   growthDuringAuthorization=false;grown=false;
-  launches=0;stops=0;
+  launches=0;stops=0;terminal=null;events=[];
   scheduler=new QuantFoundationScheduler({db,capacityPolicy:policy,clock:()=>now,leaseMs:30000,
     authorize:async(_owner,_contract,action)=>({ok:action==='CANCEL'||action==='ACKNOWLEDGE_STOPPED'||!revoked}),
     health:async()=>({ok:true}),canRelease:row=>canReleaseQuantIo(db,row)});
@@ -70,7 +70,7 @@ beforeEach(async()=>{
         const group='/user.slice/'+unitName,invocationId='1'.repeat(32);
         let released=false,stopResult=null;
         const proof={unitName,group,cgroupInode:23,invocationId};
-        return {payloadHash:hash(payload),ready:Promise.resolve(proof),
+        const handle={payloadHash:hash(payload),ready:Promise.resolve(proof),
           accepted:Promise.resolve({unitName,payloadHash:hash(payload)}),
           profileResult:new Promise(resolve=>{launcher.resolveResult=resolve;}),
           async sample(){return {...proof,deviceId:'8:0',deviceInode:17,pid:4242,
@@ -82,10 +82,32 @@ beforeEach(async()=>{
               payloadHash:hash(payload),resultHash:hash(canonical(result)),result};
             launcher.resolveResult(value);},
           async stop(){
-            if(!stopResult){stops++;stopResult={unitName,launcherClosed:true,startRegistered:true,
-              pendingStartsExcluded:true,unitStopped:true};}
+            if(!stopResult){stops++;events.push('stop');stopResult={unitName,launcherClosed:true,
+              startRegistered:true,pendingStartsExcluded:true,unitStopped:true};}
             return stopResult;
           }};
+        // FTR-1: scripted frozen terminal. Absent unless a test sets `terminal`.
+        if(terminal){
+          const script=terminal;let promise=null;
+          handle.terminate=request=>{
+            events.push('terminate');
+            promise??=(async()=>{
+              const frozen={...proof,deviceId:'8:0',deviceInode:17,pid:4242,procStartTicks:'12345',
+                readBytes:script.read??8192,writeBytes:script.write??12288};
+              const evidence={freezer:'frozen',windowMs:2500,reads:[{readBytes:frozen.readBytes,
+                writeBytes:frozen.writeBytes},{readBytes:frozen.readBytes,writeBytes:frozen.writeBytes}],
+                fileDirty:0,fileWriteback:0,maxBioBytes:1310720,
+                rates:{readBytesPerSecond:524288,writeBytesPerSecond:524288}};
+              let committed=false;
+              try{await request.commit(frozen,evidence);committed=true;}catch{}
+              const stopProof=await handle.stop();
+              return Object.freeze({stopProof,measured:script.measured??committed,
+                postExit:script.postExit??'REMOVED',frozenSample:frozen,readbackEvidence:evidence});
+            })();
+            return promise;
+          };
+        }
+        return handle;
       },async abort(){}};
     }};
   adapter=new QuantProfileRuntimeV2({db,ledger,scheduler,launcher,storageBudget:budget,clock:()=>now,
@@ -170,5 +192,66 @@ test('revocation after release stops child before accepting provisional result',
   await assert.rejects(adapter.run(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
   assert.equal(stops>=1,true);
   assert.equal((await db.query('SELECT status,result FROM quant_foundation_jobs')).rows[0].status,'CANCELLED');
+  assert.equal((await db.query('SELECT result FROM quant_foundation_jobs')).rows[0].result,null);
+});
+
+// ---- FTR-1: measured terminal. `terminal` scripts handle.terminate(); default runs keep the fallback ----
+
+test('measured frozen terminal settles exact deltas; result stays provisional and SQL result null',async()=>{
+  terminal={};
+  const outcome=await adapter.run(args());
+  assert.equal(outcome.status,'CANCELLED');assert.equal(outcome.proof,'MEASURED_FINAL_SETTLED');
+  assert.equal(outcome.provisional.evaluator_admission,false);
+  assert.equal(outcome.provisional.resultHash,hash(canonical(result)));
+  assert.equal(launches,1);assert.equal(stops,1);
+  assert.deepEqual(events,['terminate','stop']);// no raw stop before the terminal
+  const job=(await db.query('SELECT status,result,checkpoint FROM quant_foundation_jobs WHERE job_id=$1',[claimed.job_id])).rows[0];
+  assert.equal(job.status,'CANCELLED');assert.equal(job.result,null);assert.equal(job.checkpoint,null);
+  assert.equal((await db.query('SELECT state FROM quant_io_launches')).rows[0].state,'STOP_PROVEN');
+  const stored=(await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state,operation=stored.operations[0];
+  assert.equal(operation.status,'SETTLED');
+  assert.deepEqual(operation.charge,{read_bytes:8192,write_bytes:12288});
+  assert.deepEqual(stored.charged,{read_bytes:8192,write_bytes:12288});
+  assert.equal(stored.operations.some(item=>item.status==='CRASHED'||item.stop_reason==='UNKNOWN_FINAL_ACCOUNTING'),false);
+});
+
+test('terminal not measured keeps unknown-final charge and provisional result',async()=>{
+  terminal={measured:false};
+  const outcome=await adapter.run(args());
+  assert.equal(outcome.proof,'UNKNOWN_FINAL_CHARGED');assert.equal(outcome.provisional.evaluator_admission,false);
+  const stored=(await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state;
+  assert.equal(stored.operations[0].status,'CRASHED');
+  assert.deepEqual(stored.charged,{read_bytes:97000000,write_bytes:97000000});
+  assert.equal((await db.query('SELECT status,result FROM quant_foundation_jobs')).rows[0].result,null);
+  assert.equal((await db.query('SELECT state FROM quant_io_launches')).rows[0].state,'STOP_PROVEN');
+});
+
+test('measured overshoot observed by the poll loop is settled exactly, never admitted as a result',async()=>{
+  overshootAfterRelease=true;terminal={read:100000500,write:5000};
+  await assert.rejects(adapter.run(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  const stored=(await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state;
+  assert.equal(stored.operations[0].status,'SETTLED');
+  assert.equal(stored.operations[0].stop_reason,'CLEANUP_RESERVE_AT_RISK');
+  assert.deepEqual(stored.charged,{read_bytes:100000500,write_bytes:5000});
+  const job=(await db.query('SELECT status,result FROM quant_foundation_jobs')).rows[0];
+  assert.equal(job.status,'CANCELLED');assert.equal(job.result,null);
+});
+
+test('terminal below the last observation is rejected and falls back',async()=>{
+  overshootAfterRelease=true;terminal={read:8192,write:12288};
+  await assert.rejects(adapter.run(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  const stored=(await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state;
+  assert.equal(stored.operations[0].status,'CRASHED');
+  assert.equal(stored.operations[0].last.devices[0].read_bytes,100000000);
+});
+
+test('terminal failure before a proven stop still stops the child and stays unresolved',async()=>{
+  terminal={};
+  scheduler.cancel=async()=>{throw Error('cancel unavailable');};
+  await assert.rejects(adapter.run(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  assert.equal(stops,1);assert.deepEqual(events,['stop']);
+  assert.equal((await db.query('SELECT state FROM quant_io_launches')).rows[0].state,'RELEASED');
+  const stored=(await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state;
+  assert.equal(stored.operations[0].status,'ACTIVE');
   assert.equal((await db.query('SELECT result FROM quant_foundation_jobs')).rows[0].result,null);
 });

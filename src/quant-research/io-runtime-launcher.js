@@ -8,9 +8,25 @@ import {assertIoStorageDevice,readCgroupIo,readCgroupIoLimits,systemdIoPropertie
 import {stopQuantUnit} from './process-supervisor.js';
 import {StorageBudget} from './storage-budget.js';
 import {validateFoundationRequestV2} from './foundation-contract-v2.js';
+import {parseCgroupEvents,inspectCgroupFrozen,inspectMemoryWriteback,quiescenceWindowMs,
+  evaluateQuiescence,reconcilePostExit,POST_EXIT_MEASURED} from './io-terminal.js';
 
 const rootDefault=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const fail=code=>Object.assign(new Error(code),{code});
+const TERMINAL_BUDGET_MS=5000,FREEZE_BUDGET_MS=2000,MAX_TERMINAL_READS=32;
+const BOUND_FIELDS=['unitName','group','pid','procStartTicks','cgroupInode','deviceId','deviceInode','invocationId'];
+const SEAM_NAMES=['spawn','command','readFile','stat','lstat','unlink','stopUnit','clock','sleep'];
+// Terminal readback failures never throw past terminate(); they select the unknown-final fallback.
+const terminalFail=reason=>Object.assign(fail('QUANT_IO_TELEMETRY_UNAVAILABLE'),{reason});
+const failureReason=error=>typeof error?.reason==='string'?error.reason:
+  typeof error?.ioDiagnostic?.cause==='string'?error.ioDiagnostic.cause:
+  typeof error?.code==='string'?error.code:'UNKNOWN';
+const cgroupBase=group=>{
+  const base=path.posix.resolve('/sys/fs/cgroup','.'+group);
+  if(!base.startsWith('/sys/fs/cgroup/'))throw terminalFail('INVALID_GROUP');
+  return base;
+};
+const sameBoundSnapshot=(snapshot,bound)=>BOUND_FIELDS.every(field=>snapshot[field]!==undefined&&snapshot[field]===bound[field]);
 const payload='{"mode":"sleep"}\n';
 const payloadHash=hash(canonical({mode:'sleep'}));
 const receipt=`QUANT_IO_DIAGNOSTIC_ACCEPTED_V1 ${payloadHash}\n`;
@@ -77,10 +93,131 @@ function command(file,args,timeoutMs=2000){
   });
 }
 
-/** Fixed, bounded diagnostic. This never evaluates or completes a PROFILE job. */
+async function readMaxSectorsKb({io,approved}){
+  let source;
+  try{source=await io.readFile(`/sys/dev/block/${approved.device}/queue/max_sectors_kb`,'utf8');}
+  catch{return undefined;}
+  const value=String(source).trim();
+  if(!/^[1-9]\d{0,7}$/.test(value))throw terminalFail('MAX_SECTORS_INVALID');
+  return Number(value);
+}
+
+/** FTR-1 steps 1-6: identity, freeze, quiescence, writeback gate, identity again, durable commit.
+ * Returns the frozen measurement or throws with a reason. The unit stays frozen; the caller stops it.
+ */
+async function frozenReadback(ctx,{bound,commit,budgetMs}){
+  const {io,approved,unitName}=ctx;
+  const started=io.clock(),deadline=started+budgetMs;
+  const live=ctx.state();
+  if(!Number.isSafeInteger(budgetMs)||budgetMs<1000||budgetMs>10000)throw terminalFail('INVALID_BUDGET');
+  if(!bound||typeof bound!=='object'||BOUND_FIELDS.some(field=>bound[field]===undefined))
+    throw terminalFail('NO_BOUND_IDENTITY');
+  if(live.closed||!live.ready||live.unexpectedOutput)throw terminalFail('NOT_LIVE');
+  if(ctx.runtimeMs-(started-ctx.spawnedAt)<=budgetMs)throw terminalFail('RUNTIME_LIMIT_NEAR');
+  const rates={readBytesPerSecond:approved.evaluator.readBytesPerSecond,
+    writeBytesPerSecond:approved.evaluator.writeBytesPerSecond};
+  const maxSectorsKb=await readMaxSectorsKb(ctx);
+  if(quiescenceWindowMs({maxSectorsKb,rates,budgetMs}).overBudget)throw terminalFail('WINDOW_OVER_BUDGET');
+  const snapshot=async()=>{
+    const identity=await ctx.liveIdentity();
+    const device=await io.stat(approved.devicePath);
+    const block=inspectIoRuntimeDevice(device,approved.device);
+    return {identity,block,device:{ino:device.ino,rdev:device.rdev,dev:device.dev},
+      merged:{...identity,deviceId:block.deviceId,deviceInode:block.deviceInode}};
+  };
+  const before=await snapshot();
+  if(!sameBoundSnapshot(before.merged,bound))throw terminalFail('IDENTITY_CHANGED');
+  const base=cgroupBase(before.identity.group);
+  const eventsFile=path.posix.join(base,'cgroup.events');
+  const freezeStarted=io.clock();
+  const freezeCommand=await io.command('systemctl',['--user','freeze',unitName],FREEZE_BUDGET_MS);
+  if(freezeCommand.code!==0)throw terminalFail('FREEZE_FAILED');
+  for(;;){
+    let events;
+    try{events=parseCgroupEvents(await io.readFile(eventsFile,'utf8'));}
+    catch{throw terminalFail('FREEZE_UNVERIFIED');}
+    if(events.populated!==1)throw terminalFail('CGROUP_EMPTY');
+    if(events.frozen===1)break;
+    if(io.clock()-freezeStarted>=FREEZE_BUDGET_MS)throw terminalFail('FREEZE_TIMEOUT');
+    await io.sleep(10);
+  }
+  const freezeMs=io.clock()-freezeStarted;
+  const freezer=await io.command('systemctl',['--user','show',unitName,'--property=FreezerState'],1000);
+  if(freezer.code!==0||!/^FreezerState=frozen$/m.test(freezer.output))throw terminalFail('FREEZER_STATE_MISMATCH');
+  const plan=quiescenceWindowMs({maxSectorsKb,rates,budgetMs:Math.max(0,deadline-io.clock())});
+  if(plan.overBudget)throw terminalFail('WINDOW_OVER_BUDGET');
+  const readOnce=async()=>{
+    const atMs=io.clock();
+    const [counters,events,memory]=await Promise.all([
+      readCgroupIo(before.identity.group,approved,'evaluator',{reader:io.readFile,statter:io.stat}),
+      io.readFile(eventsFile,'utf8'),io.readFile(path.posix.join(base,'memory.stat'),'utf8')]);
+    try{inspectCgroupFrozen(events);}catch{throw terminalFail('NOT_FROZEN');}
+    try{inspectMemoryWriteback(memory);}catch{throw terminalFail('WRITEBACK_PENDING');}
+    return {atMs,inode:counters.inode,readBytes:counters.readBytes,writeBytes:counters.writeBytes};
+  };
+  const reads=[];
+  let verdict=null;
+  while(!verdict?.stable){
+    if(reads.length>=MAX_TERMINAL_READS)throw terminalFail('NO_QUIESCENCE');
+    const read=await readOnce();
+    if(read.inode!==bound.cgroupInode)throw terminalFail('IDENTITY_CHANGED');
+    reads.push(read);
+    const previous=ctx.last();
+    try{
+      verdict=evaluateQuiescence({reads,windowMs:plan.windowMs,deadlineMs:deadline,
+        last:previous?{readBytes:previous.readBytes,writeBytes:previous.writeBytes}:null});
+    }catch{throw terminalFail('NO_QUIESCENCE');}
+    if(!verdict.stable)await io.sleep(Math.max(1,Math.ceil(verdict.nextReadAtMs-io.clock())));
+  }
+  const after=await snapshot();
+  if(canonical(before.identity)!==canonical(after.identity)||canonical(before.device)!==canonical(after.device)||
+    !sameBoundSnapshot(after.merged,bound))throw terminalFail('IDENTITY_CHANGED');
+  const {first,second}=verdict;
+  const frozenSample=Object.freeze({...after.merged,readBytes:second.readBytes,writeBytes:second.writeBytes});
+  const readbackEvidence=Object.freeze({freezer:'frozen',windowMs:plan.windowMs,
+    reads:[{readBytes:first.readBytes,writeBytes:first.writeBytes},
+      {readBytes:second.readBytes,writeBytes:second.writeBytes}],
+    fileDirty:0,fileWriteback:0,maxBioBytes:plan.maxBioBytes,rates,
+    freezeMs:Math.round(freezeMs),elapsedMs:Math.round(io.clock()-started)});
+  // Frozen counters must be durable before the unit is killed. Failure means fallback.
+  if(commit){try{await commit(frozenSample,readbackEvidence);}catch{throw terminalFail('COMMIT_FAILED');}}
+  return {frozenSample,readbackEvidence,group:after.identity.group};
+}
+
+/** Step 8. ENOENT/ENODEV: REMOVED. Equal retained counters: RETAINED_EQUAL. Anything else is not measured. */
+async function readPostExit({io,approved},frozen,group){
+  let code;
+  const track=operation=>async(...args)=>{
+    try{return await operation(...args);}catch(error){code??=error?.code;throw error;}
+  };
+  const reader=track(io.readFile),statter=track(io.stat);
+  try{
+    const base=cgroupBase(group);
+    const events=parseCgroupEvents(await reader(path.posix.join(base,'cgroup.events'),'utf8'));
+    const counters=await readCgroupIo(group,approved,'evaluator',{reader,statter});
+    return reconcilePostExit({frozen:{inode:frozen.cgroupInode,readBytes:frozen.readBytes,
+      writeBytes:frozen.writeBytes},read:{populated:events.populated,inode:counters.inode,
+      readBytes:counters.readBytes,writeBytes:counters.writeBytes}});
+  }catch{
+    try{return reconcilePostExit({frozen:{inode:frozen.cgroupInode,readBytes:frozen.readBytes,
+      writeBytes:frozen.writeBytes},read:{error:{code}}});}
+    catch{return 'UNKNOWN';}
+  }
+}
+
+/** Fixed, bounded diagnostic. This never evaluates or completes a PROFILE job.
+ * `seams` replace process, filesystem, systemd and clock access for isolated tests only.
+ */
 export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHON||'python3',
-  root=rootDefault,ioControls,storageBudget,timeoutMs=30000,protocol=null}={}){
-  if(process.platform!=='linux')throw fail('QUANT_IO_ISOLATION_REQUIRED');
+  root=rootDefault,ioControls,storageBudget,timeoutMs=30000,protocol=null,
+  allowUnsupportedPlatformForTests=false,seams={}}={}){
+  if(process.platform!=='linux'&&!allowUnsupportedPlatformForTests)throw fail('QUANT_IO_ISOLATION_REQUIRED');
+  if(!seams||typeof seams!=='object'||Object.keys(seams).some(name=>!SEAM_NAMES.includes(name)||
+    typeof seams[name]!=='function'))throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
+  const host={spawn:seams.spawn??spawn,command:seams.command??command,readFile:seams.readFile??readFile,
+    stat:seams.stat??stat,lstat:seams.lstat??lstat,unlink:seams.unlink??unlink,
+    stopUnit:seams.stopUnit??stopQuantUnit,clock:seams.clock??(()=>performance.now()),
+    sleep:seams.sleep??(ms=>new Promise(resolve=>setTimeout(resolve,ms)))};
   const approved=validateIoControls(ioControls);
   if(typeof python!=='string'||!python||typeof root!=='string'||!path.isAbsolute(root)||
     !Number.isSafeInteger(timeoutMs)||timeoutMs<100||timeoutMs>30000)
@@ -118,7 +255,7 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
       const env={PATH:process.env.PATH||'/usr/bin:/bin',
         ...(process.env.XDG_RUNTIME_DIR?{XDG_RUNTIME_DIR:process.env.XDG_RUNTIME_DIR}:{}),
         ...(process.env.DBUS_SESSION_BUS_ADDRESS?{DBUS_SESSION_BUS_ADDRESS:process.env.DBUS_SESSION_BUS_ADDRESS}:{})};
-      const child=spawn('systemd-run',args,{cwd:root,env,stdio:['pipe','pipe','pipe'],windowsHide:true});
+      const child=host.spawn('systemd-run',args,{cwd:root,env,stdio:['pipe','pipe','pipe'],windowsHide:true});
       child.stdin.on('error',()=>{});
       let closed=false,closeCode=null,outputBytes=0,released=false,stopPromise=null;
       let stdout='',unexpectedOutput=false,acceptResolved=false,resultResolved=false;
@@ -139,10 +276,10 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
         if(!readiness||cleanupDone)return true;
         try{
           let current;
-          try{current=await lstat(readiness.filename);}catch(error){if(error.code!=='ENOENT')throw error;}
+          try{current=await host.lstat(readiness.filename);}catch(error){if(error.code!=='ENOENT')throw error;}
           if(!readinessIdentity)throw fail('QUANT_IO_READINESS_CLEANUP_FAILED');
           inspectIoRuntimeScratch(current,readinessIdentity);
-          await unlink(readiness.filename);
+          await host.unlink(readiness.filename);
           await readiness.reservation.release();
           cleanupDone=true;
           return true;
@@ -193,7 +330,7 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
       const ready=(async()=>{
         const deadline=Date.now()+3000;
         while(!closed&&Date.now()<deadline){
-          const state=await command('systemctl',['--user','show',unitName,
+          const state=await host.command('systemctl',['--user','show',unitName,
             '--property=LoadState,ActiveState,MainPID,ControlGroup,InvocationID'],1000);
           let unit=null;
           if(state.code===0)try{unit=inspectIoRuntimeUnit(state.output,unitName);}catch{}
@@ -202,9 +339,9 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
             startRegistered=true;
             const base=path.posix.resolve('/sys/fs/cgroup','.'+group);
             if(!base.startsWith('/sys/fs/cgroup/'))throw fail('QUANT_IO_GATE_FAILED');
-            const io=await readCgroupIoLimits(group,approved,'evaluator');
+            const io=await readCgroupIoLimits(group,approved,'evaluator',{reader:host.readFile,statter:host.stat});
             const [cpu,memory,tasks]=await Promise.all(['cpu.max','memory.max','pids.max'].map(name=>
-              readFile(path.posix.join(base,name),'utf8')));
+              host.readFile(path.posix.join(base,name),'utf8')));
             const [quota,period]=cpu.trim().split(/\s+/).map(Number);
             const memoryMax=Number(memory.trim()),tasksMax=Number(tasks.trim());
             if(!Number.isSafeInteger(quota)||!Number.isSafeInteger(period)||period<=0||
@@ -213,10 +350,10 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
               tasksMax>16||!Number.isSafeInteger(io.inode))throw fail('QUANT_IO_GATE_FAILED');
             if(readiness){
               let file=null,counters=null;
-              try{file=await lstat(readiness.filename);}catch(error){if(error.code!=='ENOENT')throw error;}
+              try{file=await host.lstat(readiness.filename);}catch(error){if(error.code!=='ENOENT')throw error;}
               if(file){
                 const scratch=inspectIoRuntimeScratch(file);
-                try{counters=await readCgroupIo(group,approved,'evaluator');}
+                try{counters=await readCgroupIo(group,approved,'evaluator',{reader:host.readFile,statter:host.stat});}
                 catch(error){if(error.code!=='QUANT_IO_TELEMETRY_UNAVAILABLE')throw error;}
                 if(counters){
                   if(counters.inode!==io.inode)throw fail('QUANT_IO_GATE_FAILED');
@@ -236,27 +373,54 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
       ready.catch(()=>{});
       const liveIdentity=async()=>{
         if(closed||!readyState||unexpectedOutput)throw fail('QUANT_IO_IDENTITY_UNAVAILABLE');
-        const state=await command('systemctl',['--user','show',unitName,
+        const state=await host.command('systemctl',['--user','show',unitName,
           '--property=LoadState,ActiveState,MainPID,ControlGroup,InvocationID'],1000);
         if(state.code!==0)throw fail('QUANT_IO_IDENTITY_UNAVAILABLE');
         const {group,pid,invocationId}=inspectIoRuntimeUnit(state.output,unitName);
         const [processState,membership,limits]=await Promise.all([
-          readFile(`/proc/${pid}/stat`,'utf8'),readFile(`/proc/${pid}/cgroup`,'utf8'),
-          readCgroupIoLimits(group,approved,'evaluator')]);
+          host.readFile(`/proc/${pid}/stat`,'utf8'),host.readFile(`/proc/${pid}/cgroup`,'utf8'),
+          readCgroupIoLimits(group,approved,'evaluator',{reader:host.readFile,statter:host.stat})]);
         inspectIoRuntimeMembership(membership,group);
         if(!Number.isSafeInteger(limits.inode)||limits.inode<=0)
           throw fail('QUANT_IO_IDENTITY_UNAVAILABLE');
         return {unitName,group,pid,invocationId,procStartTicks:inspectIoRuntimeProc(processState,pid),
           cgroupInode:limits.inode};
       };
+      const spawnedAt=host.clock(),runtimeMs=Math.ceil(timeoutMs/1000)*1000;
+      let terminatePromise=null;
+      const stopUnitOnce=()=>{
+        if(stopPromise)return stopPromise;
+        stopPromise=(async()=>{
+          const deadline=Date.now()+3000;
+          while(!closed&&Date.now()<deadline){
+            const state=await host.command('systemctl',['--user','show',unitName,
+              '--property=LoadState,ActiveState,MainPID,ControlGroup,InvocationID'],1000);
+            if(state.code===0)try{inspectIoRuntimeUnit(state.output,unitName);
+              startRegistered=true;break;}catch{}
+            await new Promise(resolve=>setTimeout(resolve,25));
+          }
+          const unitStopped=await host.stopUnit(unitName);
+          if(!closed)child.kill('SIGKILL');
+          let closeTimer;
+          await Promise.race([closure,new Promise(resolve=>{closeTimer=setTimeout(resolve,5000);})]);
+          clearTimeout(closeTimer);
+          const pending=await host.command('systemctl',['--user','list-jobs','--no-legend','--no-pager'],2000);
+          const stopped=startRegistered&&unitStopped===true&&closed&&pending.code===0&&!pending.output.includes(unitName);
+          const cleaned=stopped?await cleanupReadiness():false;
+          return Object.freeze({unitName,launcherClosed:closed,startRegistered,
+            pendingStartsExcluded:closed&&pending.code===0&&!pending.output.includes(unitName),
+            unitStopped:stopped&&cleaned,launcherCode:closeCode});
+        })();
+        return stopPromise;
+      };
       const handle={payloadHash:expectedHash,...(accepted?{accepted}:{}),
         ...(profileResult?{profileResult}:{}),
         async sample(){
           const before=await liveIdentity();
-          const deviceBefore=await stat(approved.devicePath);
+          const deviceBefore=await host.stat(approved.devicePath);
           const block=inspectIoRuntimeDevice(deviceBefore,approved.device);
-          const counters=await readCgroupIo(before.group,approved,'evaluator');
-          const [after,deviceAfter]=await Promise.all([liveIdentity(),stat(approved.devicePath)]);
+          const counters=await readCgroupIo(before.group,approved,'evaluator',{reader:host.readFile,statter:host.stat});
+          const [after,deviceAfter]=await Promise.all([liveIdentity(),host.stat(approved.devicePath)]);
           if(canonical(before)!==canonical(after)||counters.inode!==before.cgroupInode||
             !deviceAfter.isBlockDevice()||deviceAfter.ino!==deviceBefore.ino||
             deviceAfter.rdev!==deviceBefore.rdev||deviceAfter.dev!==deviceBefore.dev||closed||
@@ -272,28 +436,40 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
           released=true;
           child.stdin.end(inputPayload);
         },
+        /** A stop requested while terminate() runs waits for it and shares its stop proof. */
         async stop(){
-          if(stopPromise)return stopPromise;
-          stopPromise=(async()=>{
-            const deadline=Date.now()+3000;
-            while(!closed&&Date.now()<deadline){
-              const state=await command('systemctl',['--user','show',unitName,
-                '--property=LoadState,ActiveState,MainPID,ControlGroup,InvocationID'],1000);
-              if(state.code===0)try{inspectIoRuntimeUnit(state.output,unitName);
-                startRegistered=true;break;}catch{}
-              await new Promise(resolve=>setTimeout(resolve,25));
-            }
-            const unitStopped=await stopQuantUnit(unitName);
-            if(!closed)child.kill('SIGKILL');
-            await Promise.race([closure,new Promise(resolve=>setTimeout(resolve,5000))]);
-            const pending=await command('systemctl',['--user','list-jobs','--no-legend','--no-pager'],2000);
-            const stopped=startRegistered&&unitStopped===true&&closed&&pending.code===0&&!pending.output.includes(unitName);
-            const cleaned=stopped?await cleanupReadiness():false;
-            return Object.freeze({unitName,launcherClosed:closed,startRegistered,
-              pendingStartsExcluded:closed&&pending.code===0&&!pending.output.includes(unitName),
-              unitStopped:stopped&&cleaned,launcherCode:closeCode});
+          if(terminatePromise)return (await terminatePromise).stopProof;
+          return stopUnitOnce();
+        },
+        /** Single-flight FTR-1 terminal: frozen readback, durable commit, then the ordinary stop.
+         * Always stops the unit. `measured` is true only for a complete frozen readback with a
+         * REMOVED or RETAINED_EQUAL post-exit cgroup. Any other outcome is the unknown-final fallback.
+         * Stop rc 5 (unit already collected after SIGKILL) and systemd-run exit 255 are not failures.
+         */
+        terminate({bound=null,commit=null,budgetMs=TERMINAL_BUDGET_MS}={}){
+          if(terminatePromise)return terminatePromise;
+          terminatePromise=(async()=>{
+            let measurement=null,reason=null;
+            if(stopPromise)reason='ALREADY_STOPPING';
+            else if(commit!==null&&typeof commit!=='function')reason='INVALID_COMMIT';
+            else try{
+              measurement=await frozenReadback({io:host,approved,unitName,spawnedAt,runtimeMs,
+                state:()=>({closed,ready:readyState,unexpectedOutput}),
+                liveIdentity,last:()=>previousSample},{bound,commit,budgetMs});
+            }catch(error){reason=failureReason(error);}
+            const stopProof=await stopUnitOnce();
+            let postExit=null;
+            if(measurement&&stopProof.unitStopped===true)
+              postExit=await readPostExit({io:host,approved},measurement.frozenSample,measurement.group);
+            const measured=measurement!==null&&POST_EXIT_MEASURED.includes(postExit);
+            if(!measured&&reason===null)
+              reason=measurement===null?'UNKNOWN':stopProof.unitStopped!==true?'STOP_UNCONFIRMED':'POST_EXIT_'+postExit;
+            return Object.freeze({stopProof,measured,postExit,
+              ...(measurement?{frozenSample:measurement.frozenSample,
+                readbackEvidence:measurement.readbackEvidence}:{}),
+              ...(measured?{}:{reason})});
           })();
-          return stopPromise;
+          return terminatePromise;
         },
         closed:closure,ready
       };

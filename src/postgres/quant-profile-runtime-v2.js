@@ -3,6 +3,8 @@ import {validateProfileResultV2} from '../quant-research/profile-contract-v2.js'
 import {QuantIoRuntime,QUANT_PROFILE_RUNTIME_PROTOCOL,quantIoUnitName} from './quant-io-runtime.js';
 
 const uncertain=()=>fail('QUANT_IO_LAUNCH_UNCERTAIN');
+// Measured frozen readback or the unknown-final fallback. Neither admits an evaluator result.
+const TERMINAL_PROOFS=Object.freeze(['MEASURED_FINAL_SETTLED','UNKNOWN_FINAL_CHARGED']);
 
 /** Internal staging adapter. Constructor callbacks resolve current trusted state. */
 export class QuantProfileRuntimeV2 {
@@ -81,13 +83,17 @@ export class QuantProfileRuntimeV2 {
       if(frame.result.evaluator_admission!==false)throw uncertain();
     }finally{
       if(reserved){
-        const handle=this.io.handles.get(jobId+':'+operationId);
-        if(handle)await handle.stop().catch(()=>{});
+        // The terminal owns the stop so it can freeze and read the unit before the kill.
         try{stop=await this.io.cancel({...request,ownerId});}
-        catch{stop={status:'STOPPING',proof:'UNCONFIRMED'};}
+        catch{
+          // Terminal failed before the stop was proven. Never leave the child running.
+          const handle=this.io.handles.get(jobId+':'+operationId);
+          if(handle)await handle.stop().catch(()=>{});
+          stop={status:'STOPPING',proof:'UNCONFIRMED'};
+        }
       }
     }
-    if(stop?.status!=='CANCELLED'||stop?.proof!=='UNKNOWN_FINAL_CHARGED')throw uncertain();
+    if(stop?.status!=='CANCELLED'||!TERMINAL_PROOFS.includes(stop?.proof))throw uncertain();
     return Object.freeze({status:'CANCELLED',proof:stop.proof,
       provisional:Object.freeze({jobId,operationId,payloadHash:frame.payloadHash,
         resultHash:frame.resultHash,result:frame.result,evaluator_admission:false})});
