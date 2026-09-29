@@ -218,8 +218,9 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
 
-Latest pushed code/evidence checkpoint: `987354d` (lifecycle timeout and agent roles)
-on `codex/app3a-market-wait-checkpoint`. Earlier ingestion, PF-1B/PF-1C and PF-1A checkpoints
+Latest pushed implementation/evidence checkpoint: `ceda8da` (Linux binding and
+provisional PROFILE runtime) on `codex/app3a-market-wait-checkpoint`;
+`ce27166` corrected checkpoint text encoding. Earlier ingestion, PF-1B/PF-1C and PF-1A checkpoints
 are `9d06ba0`, `cf8913d` and `9c5f8f3`. The owner authorized the Data capability/ingestion Git
 checkpoint after local and isolated-staging verification; its scope is recorded
 in the [evidence document](QD_QS_INGESTION_CALIBRATION_2026-09-28.md).
