@@ -12,8 +12,9 @@ The owner authorizes a project-wide subagent team. Exactly one root commander
 dispatches work, owns integration, prioritizes Roadmap gates and reports status.
 Only one root, on one platform, commands this checkout at a time. Before switching
 between Codex and Claude, the outgoing root saves a checkpoint; the incoming root
-re-verifies Git, runtime and usage state before dispatching. Children run on the
-root's platform.
+re-verifies the handoff, Git state, file ownership, runtime and usage state before
+dispatching. Verify runtime state only through authorized access, and report
+anything that remains unknown. Children run on the root's platform.
 Children do not spawn children, dispatch peers, change scope or approve their own
 acceptance. Use bounded independent assignments only; default one or two children,
 maximum three concurrently, within the runtime's available slots.
@@ -24,6 +25,8 @@ the next implementation action; old team-setup checkpoints do not override its
 current status and gates.
 Do not infer authorization to complete every project phase unattended from this
 standing delegation policy. Work within the active user request and existing gates.
+A planning-only request permits read-only analysis and proposals, not file changes
+or runtime actions.
 
 ## Models and dispatch
 
@@ -77,7 +80,9 @@ role file and pass model, effort and instructions explicitly; if effort cannot b
 set, state the intended effort in the brief. Use a concise self-contained brief
 with an empty/partial history fork for model overrides; do not copy the entire
 conversation to each worker. Report unavailable models to the commander rather
-than silently substituting.
+than silently substituting. Use only models, effort levels and tools available in
+the running client; the root reports unsupported configuration, such as an effort
+level the delegation tool cannot set, to the owner before dispatching.
 
 ## Communication, compact summaries and handoffs
 
