@@ -7,7 +7,6 @@ import stat
 import sys
 import time
 
-
 PAYLOAD = b'{"mode":"sleep"}\n'
 ACCEPTED = b'QUANT_IO_DIAGNOSTIC_ACCEPTED_V1 ' + hashlib.sha256(PAYLOAD.rstrip(b'\n')).hexdigest().encode() + b'\n'
 PENDING = re.compile(r"\.pending-[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\Z")
