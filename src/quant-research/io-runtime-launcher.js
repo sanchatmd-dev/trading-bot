@@ -8,16 +8,20 @@ import {assertIoStorageDevice,readCgroupIo,readCgroupIoLimits,systemdIoPropertie
 import {stopQuantUnit} from './process-supervisor.js';
 import {StorageBudget} from './storage-budget.js';
 import {validateFoundationRequestV2} from './foundation-contract-v2.js';
-import {parseCgroupEvents,inspectCgroupFrozen,inspectMemoryWriteback,quiescenceWindowMs,
-  evaluateQuiescence,reconcilePostExit,POST_EXIT_MEASURED} from './io-terminal.js';
+import {parseCgroupEvents,inspectCgroupFrozen,parseMemoryWriteback,quiescenceWindowMs,
+  evaluateQuiescence,reconcilePostExit,POST_EXIT_MEASURED,DRAIN_SETTLE_MS,DRAIN_POLL_MS,MAX_DRAIN_MS,
+  STAT_FRESH_MS,TERMINAL_DIAGNOSTIC_VERSION,createDrainRecorder,buildTerminalDiagnostic} from './io-terminal.js';
 
 const rootDefault=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const fail=code=>Object.assign(new Error(code),{code});
-const TERMINAL_BUDGET_MS=5000,FREEZE_BUDGET_MS=2000,MAX_TERMINAL_READS=32;
+const TERMINAL_BUDGET_MS=5000,FREEZE_BUDGET_MS=2000,MAX_TERMINAL_READS=32,SPAWN_MARGIN_MS=5000;
 const BOUND_FIELDS=['unitName','group','pid','procStartTicks','cgroupInode','deviceId','deviceInode','invocationId'];
 const SEAM_NAMES=['spawn','command','readFile','stat','lstat','unlink','stopUnit','clock','sleep'];
 // Terminal readback failures never throw past terminate(); they select the unknown-final fallback.
-const terminalFail=reason=>Object.assign(fail('QUANT_IO_TELEMETRY_UNAVAILABLE'),{reason});
+// `diagnostic` is fallback evidence only (integers, booleans, enums). It is never digested or stored.
+const terminalFail=(reason,diagnostic)=>Object.assign(fail('QUANT_IO_TELEMETRY_UNAVAILABLE'),{reason},
+  diagnostic?{diagnostic}:{});
+const failureDiagnostic=error=>error?.diagnostic?.version===TERMINAL_DIAGNOSTIC_VERSION?error.diagnostic:null;
 const failureReason=error=>typeof error?.reason==='string'?error.reason:
   typeof error?.ioDiagnostic?.cause==='string'?error.ioDiagnostic.cause:
   typeof error?.code==='string'?error.code:'UNKNOWN';
@@ -103,17 +107,22 @@ async function readMaxSectorsKb({io,approved}){
 }
 
 /** FTR-1 steps 1-6: identity, freeze, quiescence, writeback gate, identity again, durable commit.
+ * FTR-1b: when `terminalDrainMs` > 0, a frozen writeback drain runs after freeze confirmation and before
+ * quiescence. The gate itself is unchanged and still demands file_dirty 0 and file_writeback 0.
+ * The drain ends at frozenAt + terminalDrainMs but never after the overall deadline. Quiescence then gets
+ * at most budgetMs, so unused drain allowance never lengthens it. With the drain on, a stop request also
+ * aborts quiescence (STOP_REQUESTED); with the drain off the FTR-1 flow ignores it.
  * Returns the frozen measurement or throws with a reason. The unit stays frozen; the caller stops it.
  */
 async function frozenReadback(ctx,{bound,commit,budgetMs}){
-  const {io,approved,unitName}=ctx;
-  const started=io.clock(),deadline=started+budgetMs;
+  const {io,approved,unitName,terminalDrainMs}=ctx;
+  const started=io.clock(),deadline=started+budgetMs+terminalDrainMs;
   const live=ctx.state();
   if(!Number.isSafeInteger(budgetMs)||budgetMs<1000||budgetMs>10000)throw terminalFail('INVALID_BUDGET');
   if(!bound||typeof bound!=='object'||BOUND_FIELDS.some(field=>bound[field]===undefined))
     throw terminalFail('NO_BOUND_IDENTITY');
   if(live.closed||!live.ready||live.unexpectedOutput)throw terminalFail('NOT_LIVE');
-  if(ctx.runtimeMs-(started-ctx.spawnedAt)<=budgetMs)throw terminalFail('RUNTIME_LIMIT_NEAR');
+  if(ctx.runtimeMs-(started-ctx.spawnedAt)<=budgetMs+terminalDrainMs)throw terminalFail('RUNTIME_LIMIT_NEAR');
   const rates={readBytesPerSecond:approved.evaluator.readBytesPerSecond,
     writeBytesPerSecond:approved.evaluator.writeBytesPerSecond};
   const maxSectorsKb=await readMaxSectorsKb(ctx);
@@ -128,7 +137,7 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
   const before=await snapshot();
   if(!sameBoundSnapshot(before.merged,bound))throw terminalFail('IDENTITY_CHANGED');
   const base=cgroupBase(before.identity.group);
-  const eventsFile=path.posix.join(base,'cgroup.events');
+  const eventsFile=path.posix.join(base,'cgroup.events'),memoryFile=path.posix.join(base,'memory.stat');
   const freezeStarted=io.clock();
   const freezeCommand=await io.command('systemctl',['--user','freeze',unitName],FREEZE_BUDGET_MS);
   if(freezeCommand.code!==0)throw terminalFail('FREEZE_FAILED');
@@ -144,44 +153,101 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
   const freezeMs=io.clock()-freezeStarted;
   const freezer=await io.command('systemctl',['--user','show',unitName,'--property=FreezerState'],1000);
   if(freezer.code!==0||!/^FreezerState=frozen$/m.test(freezer.output))throw terminalFail('FREEZER_STATE_MISMATCH');
-  const plan=quiescenceWindowMs({maxSectorsKb,rates,budgetMs:Math.max(0,deadline-io.clock())});
-  if(plan.overBudget)throw terminalFail('WINDOW_OVER_BUDGET');
-  const readOnce=async()=>{
-    const atMs=io.clock();
-    const [counters,events,memory]=await Promise.all([
-      readCgroupIo(before.identity.group,approved,'evaluator',{reader:io.readFile,statter:io.stat}),
-      io.readFile(eventsFile,'utf8'),io.readFile(path.posix.join(base,'memory.stat'),'utf8')]);
-    try{inspectCgroupFrozen(events);}catch{throw terminalFail('NOT_FROZEN');}
-    try{inspectMemoryWriteback(memory);}catch{throw terminalFail('WRITEBACK_PENDING');}
-    return {atMs,inode:counters.inode,readBytes:counters.readBytes,writeBytes:counters.writeBytes};
-  };
-  const reads=[];
-  let verdict=null;
-  while(!verdict?.stable){
-    if(reads.length>=MAX_TERMINAL_READS)throw terminalFail('NO_QUIESCENCE');
-    const read=await readOnce();
-    if(read.inode!==bound.cgroupInode)throw terminalFail('IDENTITY_CHANGED');
-    reads.push(read);
-    const previous=ctx.last();
-    try{
-      verdict=evaluateQuiescence({reads,windowMs:plan.windowMs,deadlineMs:deadline,
-        last:previous?{readBytes:previous.readBytes,writeBytes:previous.writeBytes}:null});
-    }catch{throw terminalFail('NO_QUIESCENCE');}
-    if(!verdict.stable)await io.sleep(Math.max(1,Math.ceil(verdict.nextReadAtMs-io.clock())));
+  // Freeze is confirmed. `frozenAt` anchors the drain settle floor and the stat-freshness floor.
+  const frozenAt=io.clock();
+  const drain=createDrainRecorder();
+  const unseen=Object.freeze({fileDirty:null,fileWriteback:null});
+  let stage='DRAIN',memoryReads=0,drainMs=0,seen=unseen;
+  const diagnostic=()=>terminalDrainMs>0?buildTerminalDiagnostic({stage,...seen,memoryReads,
+    sinceFreezeMs:io.clock()-frozenAt,
+    drain:{enabled:true,durationMs:stage==='DRAIN'?io.clock()-frozenAt:drainMs,...drain.snapshot()}}):undefined;
+  try{
+    if(terminalDrainMs>0){
+      // FTR-1b step 3: while frozen, wait for child-owned dirty/writeback page cache to clean.
+      const drainFail=reason=>terminalFail(reason,diagnostic());
+      const drainEnd=Math.min(frozenAt+terminalDrainMs,deadline);
+      const readText=async(file,invalid)=>{
+        try{return await io.readFile(file,'utf8');}
+        catch(error){throw drainFail(['ENOENT','ENODEV'].includes(error?.code)?'CGROUP_EMPTY':invalid);}
+      };
+      for(;;){
+        if(ctx.stopRequested())throw drainFail('STOP_REQUESTED');
+        const atMs=io.clock();
+        let events;
+        const eventsText=await readText(eventsFile,'FREEZE_UNVERIFIED');
+        try{events=parseCgroupEvents(eventsText);}catch{throw drainFail('FREEZE_UNVERIFIED');}
+        if(events.populated!==1)throw drainFail('CGROUP_EMPTY');
+        if(events.frozen!==1)throw drainFail('NOT_FROZEN');
+        seen=unseen;
+        const memoryText=await readText(memoryFile,'MEMORY_STAT_INVALID');
+        try{seen=parseMemoryWriteback(memoryText);}catch{throw drainFail('MEMORY_STAT_INVALID');}
+        memoryReads+=1;
+        drain.record(atMs-frozenAt,seen.fileDirty,seen.fileWriteback);
+        if(seen.fileDirty===0&&seen.fileWriteback===0&&atMs-frozenAt>=DRAIN_SETTLE_MS)break;
+        if(atMs>=drainEnd)throw drainFail('WRITEBACK_PENDING');
+        await io.sleep(Math.max(1,Math.min(DRAIN_POLL_MS,Math.ceil(drainEnd-io.clock()))));
+      }
+      drainMs=Math.round(io.clock()-frozenAt);
+    }
+    stage='QUIESCENCE';
+    const quiescenceStart=io.clock(),quiescenceEnd=Math.min(deadline,quiescenceStart+budgetMs);
+    const plan=quiescenceWindowMs({maxSectorsKb,rates,budgetMs:Math.max(0,quiescenceEnd-quiescenceStart)});
+    if(plan.overBudget)throw terminalFail('WINDOW_OVER_BUDGET');
+    const readOnce=async()=>{
+      const atMs=io.clock();
+      const [counters,events,memory]=await Promise.all([
+        readCgroupIo(before.identity.group,approved,'evaluator',{reader:io.readFile,statter:io.stat}),
+        io.readFile(eventsFile,'utf8'),io.readFile(memoryFile,'utf8')]);
+      try{inspectCgroupFrozen(events);}catch{throw terminalFail('NOT_FROZEN');}
+      seen=unseen;
+      try{seen=parseMemoryWriteback(memory);memoryReads+=1;}
+      catch{throw terminalFail(terminalDrainMs>0?'MEMORY_STAT_INVALID':'WRITEBACK_PENDING',diagnostic());}
+      if(seen.fileDirty!==0||seen.fileWriteback!==0)throw terminalFail('WRITEBACK_PENDING',diagnostic());
+      return {atMs,inode:counters.inode,readBytes:counters.readBytes,writeBytes:counters.writeBytes};
+    };
+    const reads=[];
+    let verdict=null;
+    for(;;){
+      if(terminalDrainMs>0&&ctx.stopRequested())throw terminalFail('STOP_REQUESTED');
+      if(reads.length>=MAX_TERMINAL_READS)throw terminalFail('NO_QUIESCENCE');
+      const read=await readOnce();
+      if(read.inode!==bound.cgroupInode)throw terminalFail('IDENTITY_CHANGED');
+      reads.push(read);
+      const previous=ctx.last();
+      try{
+        verdict=evaluateQuiescence({reads,windowMs:plan.windowMs,deadlineMs:quiescenceEnd,
+          last:previous?{readBytes:previous.readBytes,writeBytes:previous.writeBytes}:null});
+      }catch{throw terminalFail('NO_QUIESCENCE');}
+      let waitUntilMs=verdict.nextReadAtMs;
+      if(verdict.stable){
+        if(verdict.second.atMs-frozenAt>=STAT_FRESH_MS)break;
+        // Stable but too soon after freeze for memcg stats to be fresh: read again once they are.
+        waitUntilMs=frozenAt+STAT_FRESH_MS;
+        if(waitUntilMs>quiescenceEnd)throw terminalFail('NO_QUIESCENCE');
+      }
+      await io.sleep(Math.max(1,Math.ceil(waitUntilMs-io.clock())));
+    }
+    const after=await snapshot();
+    if(canonical(before.identity)!==canonical(after.identity)||canonical(before.device)!==canonical(after.device)||
+      !sameBoundSnapshot(after.merged,bound))throw terminalFail('IDENTITY_CHANGED');
+    const {first,second}=verdict;
+    const frozenSample=Object.freeze({...after.merged,readBytes:second.readBytes,writeBytes:second.writeBytes});
+    const readbackEvidence=Object.freeze({freezer:'frozen',windowMs:plan.windowMs,
+      reads:[{readBytes:first.readBytes,writeBytes:first.writeBytes},
+        {readBytes:second.readBytes,writeBytes:second.writeBytes}],
+      fileDirty:0,fileWriteback:0,maxBioBytes:plan.maxBioBytes,rates,
+      freezeMs:Math.round(freezeMs),elapsedMs:Math.round(io.clock()-started),
+      drainMs,drainPolls:drain.snapshot().polls,statFreshMs:Math.round(second.atMs-frozenAt)});
+    // Frozen counters must be durable before the unit is killed. Failure means fallback.
+    if(commit){try{await commit(frozenSample,readbackEvidence);}catch{throw terminalFail('COMMIT_FAILED');}}
+    return {frozenSample,readbackEvidence,group:after.identity.group};
+  }catch(error){
+    // Backstop: every post-freeze failure carries the drain series when the drain is enabled.
+    if(terminalDrainMs>0&&error&&typeof error==='object'&&!error.diagnostic){
+      try{error.diagnostic=diagnostic();}catch{}
+    }
+    throw error;
   }
-  const after=await snapshot();
-  if(canonical(before.identity)!==canonical(after.identity)||canonical(before.device)!==canonical(after.device)||
-    !sameBoundSnapshot(after.merged,bound))throw terminalFail('IDENTITY_CHANGED');
-  const {first,second}=verdict;
-  const frozenSample=Object.freeze({...after.merged,readBytes:second.readBytes,writeBytes:second.writeBytes});
-  const readbackEvidence=Object.freeze({freezer:'frozen',windowMs:plan.windowMs,
-    reads:[{readBytes:first.readBytes,writeBytes:first.writeBytes},
-      {readBytes:second.readBytes,writeBytes:second.writeBytes}],
-    fileDirty:0,fileWriteback:0,maxBioBytes:plan.maxBioBytes,rates,
-    freezeMs:Math.round(freezeMs),elapsedMs:Math.round(io.clock()-started)});
-  // Frozen counters must be durable before the unit is killed. Failure means fallback.
-  if(commit){try{await commit(frozenSample,readbackEvidence);}catch{throw terminalFail('COMMIT_FAILED');}}
-  return {frozenSample,readbackEvidence,group:after.identity.group};
 }
 
 /** Step 8. ENOENT/ENODEV: REMOVED. Equal retained counters: RETAINED_EQUAL. Anything else is not measured. */
@@ -209,7 +275,7 @@ async function readPostExit({io,approved},frozen,group){
  * `seams` replace process, filesystem, systemd and clock access for isolated tests only.
  */
 export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHON||'python3',
-  root=rootDefault,ioControls,storageBudget,timeoutMs=30000,protocol=null,
+  root=rootDefault,ioControls,storageBudget,timeoutMs=30000,terminalDrainMs=0,protocol=null,
   allowUnsupportedPlatformForTests=false,seams={}}={}){
   if(process.platform!=='linux'&&!allowUnsupportedPlatformForTests)throw fail('QUANT_IO_ISOLATION_REQUIRED');
   if(!seams||typeof seams!=='object'||Object.keys(seams).some(name=>!SEAM_NAMES.includes(name)||
@@ -220,7 +286,11 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
     sleep:seams.sleep??(ms=>new Promise(resolve=>setTimeout(resolve,ms)))};
   const approved=validateIoControls(ioControls);
   if(typeof python!=='string'||!python||typeof root!=='string'||!path.isAbsolute(root)||
-    !Number.isSafeInteger(timeoutMs)||timeoutMs<100||timeoutMs>30000)
+    !Number.isSafeInteger(timeoutMs)||timeoutMs<100||timeoutMs>60000||
+    terminalDrainMs!==0&&(!Number.isSafeInteger(terminalDrainMs)||terminalDrainMs<DRAIN_SETTLE_MS||
+      terminalDrainMs>MAX_DRAIN_MS)||
+    // The runtime must hold the terminal budget, the drain and a spawn-to-frame margin.
+    terminalDrainMs>0&&Math.ceil(timeoutMs/1000)*1000<=TERMINAL_BUDGET_MS+terminalDrainMs+SPAWN_MARGIN_MS)
     throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
   if(storageBudget&&!(storageBudget instanceof StorageBudget))
     throw fail('QUANT_IO_READINESS_CONFIGURATION_REQUIRED');
@@ -387,7 +457,7 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
           cgroupInode:limits.inode};
       };
       const spawnedAt=host.clock(),runtimeMs=Math.ceil(timeoutMs/1000)*1000;
-      let terminatePromise=null;
+      let terminatePromise=null,stopRequested=false;
       const stopUnitOnce=()=>{
         if(stopPromise)return stopPromise;
         stopPromise=(async()=>{
@@ -436,9 +506,11 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
           released=true;
           child.stdin.end(inputPayload);
         },
-        /** A stop requested while terminate() runs waits for it and shares its stop proof. */
+        /** A stop requested while terminate() runs waits for it and shares its stop proof.
+         * It also aborts a running writeback drain within one poll, so emergency stop stays fast.
+         */
         async stop(){
-          if(terminatePromise)return (await terminatePromise).stopProof;
+          if(terminatePromise){stopRequested=true;return (await terminatePromise).stopProof;}
           return stopUnitOnce();
         },
         /** Single-flight FTR-1 terminal: frozen readback, durable commit, then the ordinary stop.
@@ -449,14 +521,14 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
         terminate({bound=null,commit=null,budgetMs=TERMINAL_BUDGET_MS}={}){
           if(terminatePromise)return terminatePromise;
           terminatePromise=(async()=>{
-            let measurement=null,reason=null;
+            let measurement=null,reason=null,diagnostic=null;
             if(stopPromise)reason='ALREADY_STOPPING';
             else if(commit!==null&&typeof commit!=='function')reason='INVALID_COMMIT';
             else try{
-              measurement=await frozenReadback({io:host,approved,unitName,spawnedAt,runtimeMs,
-                state:()=>({closed,ready:readyState,unexpectedOutput}),
+              measurement=await frozenReadback({io:host,approved,unitName,spawnedAt,runtimeMs,terminalDrainMs,
+                state:()=>({closed,ready:readyState,unexpectedOutput}),stopRequested:()=>stopRequested,
                 liveIdentity,last:()=>previousSample},{bound,commit,budgetMs});
-            }catch(error){reason=failureReason(error);}
+            }catch(error){reason=failureReason(error);diagnostic=failureDiagnostic(error);}
             const stopProof=await stopUnitOnce();
             let postExit=null;
             if(measurement&&stopProof.unitStopped===true)
@@ -467,7 +539,7 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
             return Object.freeze({stopProof,measured,postExit,
               ...(measurement?{frozenSample:measurement.frozenSample,
                 readbackEvidence:measurement.readbackEvidence}:{}),
-              ...(measured?{}:{reason})});
+              ...(measured?{}:{reason}),...(!measured&&diagnostic?{diagnostic}:{})});
           })();
           return terminatePromise;
         },

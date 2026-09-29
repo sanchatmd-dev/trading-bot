@@ -77,20 +77,73 @@ export function inspectCgroupFrozen(source){
   return events;
 }
 
-/** memory.stat must prove no page cache is dirty or under writeback for the unit. */
-export function inspectMemoryWriteback(source){
+/** memory.stat: exactly one decimal file_dirty and one file_writeback row. Values may be nonzero. */
+export function parseMemoryWriteback(source){
   if(typeof source!=='string')throw unavailable();
   const found={file_dirty:[],file_writeback:[]};
   for(const line of source.split('\n')){
     const [name,...rest]=line.trim().split(/\s+/);
     if(Object.hasOwn(found,name)){
       if(rest.length!==1||!decimal.test(rest[0]))throw unavailable();
-      found[name].push(Number(rest[0]));
+      const value=Number(rest[0]);
+      if(!Number.isSafeInteger(value))throw unavailable();
+      found[name].push(value);
     }
   }
-  if(found.file_dirty.length!==1||found.file_writeback.length!==1||
-    found.file_dirty[0]!==0||found.file_writeback[0]!==0)throw unavailable();
+  if(found.file_dirty.length!==1||found.file_writeback.length!==1)throw unavailable();
+  return {fileDirty:found.file_dirty[0],fileWriteback:found.file_writeback[0]};
+}
+
+/** memory.stat must prove no page cache is dirty or under writeback for the unit. */
+export function inspectMemoryWriteback(source){
+  const {fileDirty,fileWriteback}=parseMemoryWriteback(source);
+  if(fileDirty!==0||fileWriteback!==0)throw unavailable();
   return {fileDirty:0,fileWriteback:0};
+}
+
+/** FTR-1b frozen drain. Poll while frozen until page cache is clean and DRAIN_SETTLE_MS have passed.
+ * DRAIN_SETTLE_MS = jbd2 commit 5,000 + memcg stat flush 2,000 + 500 margin. STAT_FRESH_MS is the
+ * minimum age of the final stable read after freeze. MAX_DRAIN_MS caps the launcher option.
+ */
+export const DRAIN_SETTLE_MS=7500;
+export const DRAIN_POLL_MS=500;
+export const MAX_DRAIN_MS=45000;
+export const STAT_FRESH_MS=2500;
+export const TERMINAL_DIAGNOSTIC_VERSION='quant-io-terminal-diagnostic-v1';
+const SERIES_EDGE=16;
+const wholeMs=value=>Number.isFinite(value)?Math.max(0,Math.round(value)):0;
+
+/** Bounded drain sample recorder. Keeps the first and last SERIES_EDGE points, so 32 at most. */
+export function createDrainRecorder(){
+  const head=[],tail=[];
+  const state={polls:0,maxDirty:0,maxWriteback:0,firstZeroMs:null};
+  return {
+    record(ms,fileDirty,fileWriteback){
+      if(!isCount(fileDirty)||!isCount(fileWriteback))throw unavailable();
+      const at=wholeMs(ms);
+      state.polls+=1;
+      state.maxDirty=Math.max(state.maxDirty,fileDirty);
+      state.maxWriteback=Math.max(state.maxWriteback,fileWriteback);
+      if(state.firstZeroMs===null&&fileDirty===0&&fileWriteback===0)state.firstZeroMs=at;
+      (head.length<SERIES_EDGE?head:tail).push([at,fileDirty,fileWriteback]);
+      if(tail.length>SERIES_EDGE)tail.shift();
+    },
+    snapshot(){return {...state,series:[...head,...tail]};}
+  };
+}
+
+/** Fallback-only evidence. Integers, booleans and fixed enum strings only. Never digested or stored in SQL. */
+export function buildTerminalDiagnostic({stage,fileDirty=null,fileWriteback=null,memoryReads=0,sinceFreezeMs=0,
+  drain={}}={}){
+  const count=value=>isCount(value)?value:null;
+  const series=(Array.isArray(drain.series)?drain.series:[]).slice(0,2*SERIES_EDGE).map(point=>
+    Object.freeze([0,1,2].map(index=>count(Array.isArray(point)?point[index]:null)??0)));
+  return Object.freeze({version:TERMINAL_DIAGNOSTIC_VERSION,stage:stage==='QUIESCENCE'?'QUIESCENCE':'DRAIN',
+    fileDirty:count(fileDirty),fileWriteback:count(fileWriteback),
+    memoryReads:count(memoryReads)??0,sinceFreezeMs:wholeMs(sinceFreezeMs),
+    drain:Object.freeze({enabled:drain.enabled!==false,durationMs:wholeMs(drain.durationMs),
+      polls:count(drain.polls)??0,maxDirty:count(drain.maxDirty)??0,maxWriteback:count(drain.maxWriteback)??0,
+      firstZeroMs:count(drain.firstZeroMs),series:Object.freeze(series)})});
 }
 
 /** W = max(250 ms, ceil(maxBioBytes / min(rbps,wbps))). Fallback bio size is 1,280 KiB. */

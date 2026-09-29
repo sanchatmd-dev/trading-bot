@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TerminalFrame,verifyTerminalIo,inspectCgroupFrozen,inspectMemoryWriteback,quiescenceWindowMs,
   evaluateQuiescence,reconcilePostExit,terminalReadbackDigest,parseCgroupEvents,
-  FROZEN_TERMINAL_VERSION} from '../src/quant-research/io-terminal.js';
+  FROZEN_TERMINAL_VERSION,parseMemoryWriteback,createDrainRecorder,buildTerminalDiagnostic,
+  DRAIN_SETTLE_MS,DRAIN_POLL_MS,MAX_DRAIN_MS,STAT_FRESH_MS,TERMINAL_DIAGNOSTIC_VERSION} from '../src/quant-research/io-terminal.js';
 import {inspectCgroupIo} from '../src/quant-research/io-controls.js';
 
 test('terminal frame accepts fragmented single JSON result',()=>{
@@ -103,6 +104,74 @@ test('memory writeback gate needs exactly one zero file_dirty and file_writeback
     'anon 1\nfile_writeback 0\n','anon 1\nfile_dirty 0\n',stat(0,0,'file_dirty 0\n'),
     stat(0,0,'file_writeback 0\n'),'file_dirty\nfile_writeback 0\n','file_dirty 0 0\nfile_writeback 0\n','',null,7])
     assert.throws(()=>inspectMemoryWriteback(bad),unavailable);
+});
+
+test('memory.stat parser returns nonzero values and needs exactly one decimal row per key',()=>{
+  const stat=(dirty,writeback,extra='')=>`anon 4096\nfile 8192\nfile_dirty ${dirty}\nfile_writeback ${writeback}\n${extra}`;
+  assert.deepEqual(parseMemoryWriteback(stat(0,0)),{fileDirty:0,fileWriteback:0});
+  assert.deepEqual(parseMemoryWriteback(stat(8192,4096)),{fileDirty:8192,fileWriteback:4096});
+  assert.deepEqual(parseMemoryWriteback(stat(65536,0,'workingset_refault_file 7\n')),{fileDirty:65536,fileWriteback:0});
+  assert.deepEqual(parseMemoryWriteback(stat(9007199254740991,0)),{fileDirty:9007199254740991,fileWriteback:0});
+  for(const bad of [stat('abc',0),stat(0,'-1'),stat('00',0),stat('0x10',0),stat('1.5',0),stat('9007199254740993',0),
+    'anon 1\nfile_writeback 0\n','anon 1\nfile_dirty 0\n',stat(8192,0,'file_dirty 0\n'),
+    stat(0,0,'file_writeback 0\n'),'file_dirty\nfile_writeback 0\n','file_dirty 0 0\nfile_writeback 0\n','',null,7,undefined])
+    assert.throws(()=>parseMemoryWriteback(bad),unavailable);
+  // The gate keeps the same API: any nonzero value still fails closed.
+  assert.throws(()=>inspectMemoryWriteback(stat(8192,0)),unavailable);
+  assert.throws(()=>inspectMemoryWriteback(stat(0,4096)),unavailable);
+});
+
+test('drain constants match the FTR-1b design',()=>{
+  assert.deepEqual([DRAIN_SETTLE_MS,DRAIN_POLL_MS,MAX_DRAIN_MS,STAT_FRESH_MS],[7500,500,45000,2500]);
+  assert.equal(FROZEN_TERMINAL_VERSION,'quant-io-frozen-terminal-v1');
+  assert.equal(TERMINAL_DIAGNOSTIC_VERSION,'quant-io-terminal-diagnostic-v1');
+});
+
+test('drain recorder keeps counts, maxima, first clean time, and the first and last 16 points',()=>{
+  const recorder=createDrainRecorder();
+  assert.deepEqual(recorder.snapshot(),{polls:0,maxDirty:0,maxWriteback:0,firstZeroMs:null,series:[]});
+  recorder.record(0,4096,0);recorder.record(500.4,0,8192);recorder.record(1000,0,0);recorder.record(1500,0,0);
+  assert.deepEqual(recorder.snapshot(),{polls:4,maxDirty:4096,maxWriteback:8192,firstZeroMs:1000,
+    series:[[0,4096,0],[500,0,8192],[1000,0,0],[1500,0,0]]});
+  const long=createDrainRecorder();
+  for(let index=0;index<90;index++)long.record(index*500,4096,0);
+  const snapshot=long.snapshot();
+  assert.equal(snapshot.polls,90);assert.equal(snapshot.series.length,32);
+  assert.deepEqual(snapshot.series.map(point=>point[0]),
+    [...Array.from({length:16},(_,index)=>index*500),...Array.from({length:16},(_,index)=>(74+index)*500)]);
+  const exact=createDrainRecorder();
+  for(let index=0;index<32;index++)exact.record(index,0,4096);
+  assert.deepEqual(exact.snapshot().series.map(point=>point[0]),Array.from({length:32},(_,index)=>index));
+  assert.throws(()=>recorder.record(0,-1,0),unavailable);assert.throws(()=>recorder.record(0,0,1.5),unavailable);
+  assert.throws(()=>recorder.record(0,null,0),unavailable);
+  assert.equal(recorder.snapshot().polls,4);
+});
+
+test('terminal diagnostic is a frozen integer, boolean and enum record with an exact key set',()=>{
+  const drain={enabled:true,durationMs:10000,polls:21,maxDirty:8192,maxWriteback:0,firstZeroMs:null,
+    series:[[0,8192,0],[500,8192,0]]};
+  const diagnostic=buildTerminalDiagnostic({stage:'DRAIN',fileDirty:8192,fileWriteback:0,memoryReads:21,
+    sinceFreezeMs:10000.4,drain});
+  assert.deepEqual(diagnostic,{version:'quant-io-terminal-diagnostic-v1',stage:'DRAIN',fileDirty:8192,
+    fileWriteback:0,memoryReads:21,sinceFreezeMs:10000,drain});
+  assert.deepEqual(Object.keys(diagnostic),['version','stage','fileDirty','fileWriteback','memoryReads',
+    'sinceFreezeMs','drain']);
+  assert.ok(Object.isFrozen(diagnostic)&&Object.isFrozen(diagnostic.drain)&&Object.isFrozen(diagnostic.drain.series)&&
+    Object.isFrozen(diagnostic.drain.series[0]));
+  // Nothing outside the fixed shape survives: extras, strings in number slots, negatives, floats, over-long series.
+  const hostile=buildTerminalDiagnostic({stage:'/sys/fs/cgroup/x',fileDirty:'8192',fileWriteback:-1,
+    memoryReads:'robot-quant-1',sinceFreezeMs:'12',unitName:'robot-quant-1.service',pid:4242,
+    drain:{enabled:true,durationMs:'x',polls:1.5,maxDirty:-2,maxWriteback:null,firstZeroMs:'0',path:'/tmp/x',
+      series:Array.from({length:50},(_,index)=>[index,'/etc/passwd',{unit:'x'}])}});
+  assert.equal(hostile.stage,'DRAIN');assert.equal(hostile.fileDirty,null);assert.equal(hostile.fileWriteback,null);
+  assert.equal(hostile.memoryReads,0);assert.equal(hostile.sinceFreezeMs,0);
+  assert.deepEqual(Object.keys(hostile),Object.keys(diagnostic));
+  assert.deepEqual(Object.keys(hostile.drain),Object.keys(diagnostic.drain));
+  assert.equal(hostile.drain.series.length,32);
+  assert.ok(hostile.drain.series.every(point=>point.length===3&&point.every(Number.isSafeInteger)));
+  assert.equal(JSON.stringify(hostile).includes('/'),false);
+  assert.equal(buildTerminalDiagnostic({stage:'QUIESCENCE'}).stage,'QUIESCENCE');
+  assert.equal(buildTerminalDiagnostic().drain.series.length,0);
 });
 
 test('quiescence window uses bio size over slowest rate, 250 ms floor, and flags budget overrun',()=>{
