@@ -521,3 +521,29 @@ PF-2 slices and the genuine 24-hour readiness retention wait (earliest cleanup
 2026-09-30 13:53:52 Asia/Bangkok) are unchanged. The 410–720-hour baseline and
 existing contingency are unchanged; this case adds evidence for the terminal I/O
 gate and is not a forecast change.
+
+## FTR-1b writeback drain checkpoint — 2026-09-29
+
+FTR-1b (`54a9fde`, pushed) is a local code slice that adds an opt-in writeback
+drain and a fallback diagnostic in response to the FTR-1 case. It has fake-host
+tests only; Linux behavior is not proven. See the
+[record](QD_QS_FTR1B_WRITEBACK_DRAIN_2026-09-29.md).
+
+Measured intervals, all wall-clock and for this slice only: coder 17:34-17:50 UTC,
+first verification 17:54-18:06 UTC and fix round 18:08-18:22 UTC. The independent
+audit found one blocking-medium defect (stop during quiescence could wait up to 35
+s) and the fix round resolved it. The 5-hour usage window went from 48% to 59%
+used over this work; shared counters do not attribute cost to a model, an agent or
+a step. The agents ran under an owner-approved temporary elevated tier from
+2026-09-29 17:40 UTC to 2026-09-30 03:40 UTC (coder Sonnet 5.5 xhigh, tester Sonnet
+5.5 high, auditor Opus 5.5 xhigh, verifier Opus 5.5 high), dispatched through
+workflows with explicit model and effort. No engineering hours are booked and no
+speedup is claimed.
+
+Next work: an owner-approved Linux case with new names (FTR-1b-INT), where the
+owner runs setup and launch; then product wiring through a hashed policy, a
+scheduler review of a STOPPING slot held about 50 s and a PostgreSQL regression
+for the fallback diagnostic; then the remaining fault matrix and trusted PROFILE
+enrollment. The readiness retention cleanup still waits for real age expiry at
+2026-09-30 13:53:52 Asia/Bangkok. The 410–720-hour baseline and existing
+contingency are unchanged; this slice is not a forecast change.

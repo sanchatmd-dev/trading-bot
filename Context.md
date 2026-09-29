@@ -53,7 +53,9 @@ A later local slice adds frozen terminal readback so a measured final counter ca
 settle the ledger when every gate passes; otherwise the unknown-final charge
 remains. One supervised Linux case then ran that stop path on the real PROFILE
 child; the first frozen read failed the writeback gate, so the unknown-final
-charge was kept and measured settlement on Linux is not yet proven. See the
+charge was kept and measured settlement on Linux is not yet proven. A local
+follow-up (FTR-1b, `54a9fde`) adds an opt-in writeback drain, off by default and
+untested on Linux; see the [writeback drain record](docs/QD_QS_FTR1B_WRITEBACK_DRAIN_2026-09-29.md). See the
 [FTR-1 and PF-2 S1 checkpoint](docs/QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md)
 and the [Linux integration record](docs/QD_QS_FTR1_LINUX_INTEGRATION_2026-09-29.md).
 Worker/public V2 admission and complete cumulative I/O enforcement remain open. Finalizer checks do

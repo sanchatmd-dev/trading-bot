@@ -122,6 +122,21 @@ implement pending-writeback handling before the frozen read, record the dirty an
 writeback values on fallback, then run a new owner-approved case with new names.
 Nothing is deployed; scope is unchanged.
 
+A local follow-up, FTR-1b (`54a9fde`, pushed; [record](QD_QS_FTR1B_WRITEBACK_DRAIN_2026-09-29.md)), adds an
+opt-in writeback drain: with `terminalDrainMs` set, the launcher keeps the unit
+frozen and polls `memory.stat` every 500 ms until dirty and writeback are both
+zero and at least 7.5 s have passed since the freeze, bounded by the overall
+deadline (maximum 45 s), and fallback results carry an integer-only diagnostic
+outside the digest, ledger and SQL. The drain is off by default and no product
+code enables it; behavior at the current rate matches the previous commit. The
+design review ranked child-owned dirty ext4 metadata as the likely source, which is
+kernel knowledge and not proven on the host. An independent tester ran real
+isolated PostgreSQL suites (37/37, 13/13, 10/10), focused tests 73/73 and the full
+Node suite (491 pass, 1 pre-existing skip, 0 fail); an independent xhigh audit
+found one blocking-medium defect (stop during quiescence could wait up to 35 s),
+which was fixed and re-checked. All tests use a fake host and clock, so Linux
+behavior of the drain is not proven and nothing is deployed.
+
 The owner has requested continuation through full QD-1/QS-1 engineering closure.
 The [phase checklist](QD_QS_PHASE_CLOSURE.md) now records all mandatory gates.
 The [current implementation wave](QD_QS_CLOSURE_PROGRESS_2026-09-29.md) adds local
@@ -250,7 +265,7 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 | Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. [PF-2 contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and [local finalizer checkpoint](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) record development-only work; reported Python/Node checks pass in stated scope, but finalizer does not prove full replay parity. The [S1 stateful replay core](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md) (`cda2857`) adds a development-only Python replay for V1 with 51 new tests, 182 `quant_lab` passes and Node oracle parity on 12 cases; it is not full Risk Manager or position parity. | Complete the trusted resolver (S3), Node driver/result envelope (S4) and runtime admission around the S1 core; order-finalizer source review passed within its stated scope. Hosted Quant Lab checks passed for `421ca07`; Windows fixture repair is tracked below. V2 historical replay/admission remains denied until full evaluator parity. Then PF-3/PF-4. |
 | Historical data capacity (QD-1) | [Data capability and ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) passed isolated staging with 2,100 Spot bars. The [PROFILE checkpoint](QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md) now passes local lifecycle, revocation, real application HTTP, simulated recovery and rendered period UI on desktop/mobile. Admission remains 10K/1m including warm-up. | Physical PROFILE recovery results match; repeat supervised completion with the done marker before its deadline. Raw ingestion alone is not enrollment; PROFILE results still deny evaluator admission. Expanded capacity remains gated. |
 | Quant scheduling (QS-1) | [Isolated staging recovery](QD_QS_RECOVERY_STAGING_2026-09-28.md) passed: actual main worker, SIGKILL after 1,000 bars with an in-flight unit, verified offline recovery, new lease and exact resumed result at 3,876 bars. One evaluation charged; old token fenced; original deadline and checkpoint preserved. | Connect other heavy paths to the scheduler and validate larger workloads before expanded admission. Manual cold recovery is not automatic restart or full-host disaster recovery. |
-| Quant resource protection (QS-1) | Prior bounded calibration and readiness checks passed their measured scopes. [Lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md) passes its recorded database/scheduler/main/evaluator baseline. A [local PostgreSQL I/O ledger](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) now persists accounting/restart/quarantine using CAS, with ten isolated PostgreSQL checks. The [runtime checkpoint](QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) adds held diagnostic launch/cancel guards with four PostgreSQL runtime checks and scoped independent source audit. One isolated held-child staging cancellation passed with conservative full-allowance charging, stale-start denial and delayed health/cleanup proof. Local initial binding now passes 14 PostgreSQL and 11 launcher/I/O checks with independent source review; the [Linux diagnostic](QD_QS_LINUX_BINDING_CHECKPOINT_2026-09-29.md) now proves positive write counters, binding/release and cleanup. The [internal PROFILE case](QD_QS_PROFILE_BINDING_CHECKPOINT_2026-09-29.md) now passes one Linux run with a provisional result and trusted cleanup. [FTR-1](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md) (`292a4b3`) adds local frozen terminal readback: 466 Node passes with one pre-existing skip, PostgreSQL runtime 37/37, independent tester review, and a Linux mechanism proof on two transient units (a mechanism proof, not a proof of the code). One supervised Linux [integration case](QD_QS_FTR1_LINUX_INTEGRATION_2026-09-29.md) (`dda8f44a`, code at `3f191ef`) then ran the real `terminate()` on the PROFILE child and fell back safely: the first frozen read failed the writeback gate (`WRITEBACK_PENDING`), no frozen sample was committed, and the unknown-final charge was kept (`STOP_PROVEN`, `CANCELLED`, null SQL result); prior services and evidence were unchanged. General worker/public V2 admission remains open. | Primary next gate: design and implement handling of pending writeback before the frozen read and record the `memory.stat` dirty/writeback values on fallback (auditor design in progress), then run a new owner-approved Linux case with new names. Measured settlement on Linux is not proven, so all Linux PROFILE evidence so far, including the FTR-1 integration case, still shows unknown-final charging; the source of the dirty pages is unproven. Then complete the remaining fault matrix and trusted PROFILE enrollment, verify stop/recovery coverage under controls and review remaining phase gates. Runtime delegation is not reboot-persistent. Physical enforcement, cumulative byte caps and overshoot calibration, all-device coverage, a positive physical read and the post-exit writeback tail are not proved. FTR-1 rotates the ingestion and research engine source hashes; re-check hash-bound evidence before any deploy. No expanded capacity or production rollout. |
+| Quant resource protection (QS-1) | Prior bounded calibration and readiness checks passed their measured scopes. [Lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md) passes its recorded database/scheduler/main/evaluator baseline. A [local PostgreSQL I/O ledger](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) now persists accounting/restart/quarantine using CAS, with ten isolated PostgreSQL checks. The [runtime checkpoint](QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) adds held diagnostic launch/cancel guards with four PostgreSQL runtime checks and scoped independent source audit. One isolated held-child staging cancellation passed with conservative full-allowance charging, stale-start denial and delayed health/cleanup proof. Local initial binding now passes 14 PostgreSQL and 11 launcher/I/O checks with independent source review; the [Linux diagnostic](QD_QS_LINUX_BINDING_CHECKPOINT_2026-09-29.md) now proves positive write counters, binding/release and cleanup. The [internal PROFILE case](QD_QS_PROFILE_BINDING_CHECKPOINT_2026-09-29.md) now passes one Linux run with a provisional result and trusted cleanup. [FTR-1](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md) (`292a4b3`) adds local frozen terminal readback: 466 Node passes with one pre-existing skip, PostgreSQL runtime 37/37, independent tester review, and a Linux mechanism proof on two transient units (a mechanism proof, not a proof of the code). One supervised Linux [integration case](QD_QS_FTR1_LINUX_INTEGRATION_2026-09-29.md) (`dda8f44a`, code at `3f191ef`) then ran the real `terminate()` on the PROFILE child and fell back safely: the first frozen read failed the writeback gate (`WRITEBACK_PENDING`), no frozen sample was committed, and the unknown-final charge was kept (`STOP_PROVEN`, `CANCELLED`, null SQL result); prior services and evidence were unchanged. General worker/public V2 admission remains open. | FTR-1b ([writeback drain](QD_QS_FTR1B_WRITEBACK_DRAIN_2026-09-29.md), `54a9fde`, pushed) adds an opt-in drain and a fallback diagnostic, off by default and enabled by no product code; local fake-host evidence only (PostgreSQL 37/37, 13/13, 10/10; Node 491 pass, 1 pre-existing skip, 0 fail; independent audit fixes accepted), Linux behavior unproven. Primary next gate: an owner-approved Linux case with new names (FTR-1b-INT; the owner runs setup and launch because the agent permission classifier blocks them). A read-only host check found an ext4 journal commit interval of 30 s, above the case's 5 s design gate, so the case is blocked until the drain design is revised for this host; then product wiring through a hashed policy, a scheduler review of a STOPPING slot held about 50 s and a PostgreSQL regression for the fallback diagnostic. Measured settlement on Linux is not proven, so all Linux PROFILE evidence so far, including the FTR-1 integration case, still shows unknown-final charging; the source of the dirty pages is unproven. Then complete the remaining fault matrix and trusted PROFILE enrollment, verify stop/recovery coverage under controls and review remaining phase gates. Runtime delegation is not reboot-persistent. Physical enforcement, cumulative byte caps and overshoot calibration, all-device coverage, a positive physical read and the post-exit writeback tail are not proved. FTR-1 rotates the ingestion and research engine source hashes; re-check hash-bound evidence before any deploy. No expanded capacity or production rollout. |
 | Research Library / Best Performance (QR-1 through QR-4) | Owner-approved plan and target diagrams below; no customer library, comparison ranking or portfolio mark-to-market shipped by this update. | Reuse durable run evidence; add immutable artifacts, portfolio reporting, fair comparison and explicit owner-started follow-up runs. Real recommendations remain validation-gated. |
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
@@ -676,6 +691,51 @@ flowchart TD
 ```
 
 ## Change log
+
+### 2026-09-29 — FTR-1b writeback drain (local)
+
+[Scoped record](QD_QS_FTR1B_WRITEBACK_DRAIN_2026-09-29.md) for commit `54a9fde`, pushed. It answers the FTR-1 Linux
+case (`dda8f44a`), which fell back with `WRITEBACK_PENDING` at the first frozen
+read. The design review ranked child-owned dirty ext4 metadata, from directories
+the PROFILE child creates, as the most likely source; this is kernel knowledge and
+is not proven on the host.
+
+With `terminalDrainMs` set, the launcher keeps the unit frozen and polls
+`memory.stat` every 500 ms until `file_dirty` and `file_writeback` are both zero
+and at least 7.5 s have passed since the freeze was confirmed, bounded by the
+overall deadline (maximum drain 45 s). The final stable read must be at least 2.5 s
+after the freeze. `stop()` aborts the drain and quiescence promptly. Fallback
+results carry an integer-only diagnostic (stage, dirty and writeback values, read
+counts, at most 32 points) that stays out of the digest, the ledger and SQL. The
+launcher rejects configurations whose timeout cannot hold the drain; the
+`timeoutMs` cap is 60 s. The drain is off by default and no product code enables
+it; only a staging driver will. With it off, behavior at the current rate (window
+2,500 ms) matches the previous commit and the readback digest is unchanged; at fast
+rates (window 250 ms) the new freshness floor is intentionally stricter.
+
+Evidence: an independent tester ran real isolated PostgreSQL suites (quant-io-runtime
+37/37, quant-profile-runtime-v2 13/13, quant-io-ledger 10/10), focused tests 73/73,
+the full Node suite (491 pass, 1 pre-existing skip, 0 fail) and the launcher and
+terminal tests of the previous commit, unchanged, against the new code (31/31). An
+independent xhigh audit found one blocking-medium defect (stop during quiescence
+could wait up to 35 s with the drain on), confirmed by a separate verifier; after
+the fix the probe stopped in about 2 s and the re-check accepted all fixes.
+Remaining audit notes are informational, for example the pre-existing systemd thaw
+on stop and memory-stat flush timing.
+
+Not proved: Linux behavior of the drain; all tests use a fake host and clock.
+Next: an owner-approved Linux case with new names (FTR-1b-INT), in which the owner
+runs setup and launch because the agent permission classifier blocks those steps;
+then product wiring through a hashed policy, a scheduler review of a STOPPING slot
+held about 50 s and a PostgreSQL regression for the fallback diagnostic; then the
+remaining fault matrix and trusted PROFILE enrollment. The owner approved a
+temporary elevated agent tier from 2026-09-29 17:40 UTC to 2026-09-30 03:40 UTC
+(coder Sonnet 5.5 xhigh, tester Sonnet 5.5 high, auditor Opus 5.5 xhigh, verifier
+Opus 5.5 high). Coder 17:34-17:50 UTC, first verification 17:54-18:06 UTC and fix
+round 18:08-18:22 UTC; the 5-hour usage window went from 48% to 59% used. No hours
+booked and no speedup claimed. Scope unchanged: Spot/Paper only, 10K bars including
+warm-up, independent holdout, no production rollout, no Live. Readiness retention
+cleanup still waits for real age expiry at 2026-09-30 13:53:52 Asia/Bangkok.
 
 ### 2026-09-29 — FTR-1 Linux integration case: fallback-safe
 
