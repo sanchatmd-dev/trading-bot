@@ -71,7 +71,11 @@ const fakeDataset=(metadata={},id=sha('a'))=>({dataset_id:id,sha256:id,metadata:
   total_bars:RAW_BARS,cutoff:START+RAW_BARS*MINUTE,source:'binance-spot-klines-v1',...metadata}});
 
 const localPython=resolve(root,'quant_lab','.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python');
-const python=process.env.QUANT_RESEARCH_PYTHON||(existsSync(localPython)?localPython:'python');
+// Only an absolute interpreter is spawned: a bare name can resolve through an installer alias that
+// downloads a runtime. A non-absolute QUANT_RESEARCH_PYTHON means no interpreter.
+const configuredPython=process.env.QUANT_RESEARCH_PYTHON;
+const python=configuredPython?(path.isAbsolute(configuredPython)?configuredPython:null):
+  (existsSync(localPython)?localPython:null);
 
 test('PF-2 S3 trusted resolver',async t=>{
   const base=await createPf2Base(t);
@@ -1372,9 +1376,15 @@ test('PF-2 S3 trusted resolver',async t=>{
     const script='import json,sys\nfrom robot_quant.pf2_replay import _parse_contract\n'+
       'for item in json.loads(sys.stdin.read()):\n    job=_parse_contract(item)\n    print(job.total_bars,job.evaluation_start)\n';
     assert.ok(resolvedVariants.length>=4);
+    if(python===null){
+      assert.notEqual(process.env.PF2_REQUIRE_PYTHON,'1','PF2_REQUIRE_PYTHON=1: no absolute python interpreter');
+      st.skip('no absolute python interpreter here; S4 covers the S1 validator');
+      return;
+    }
     const child=spawnSync(python,['-c',script],{input:JSON.stringify(resolvedVariants.map(([,contract])=>contract)),
       encoding:'utf8',timeout:60000,env:{...process.env,PYTHONPATH:[resolve(root,'quant_lab','src'),process.env.PYTHONPATH].filter(Boolean).join(delimiter)}});
     if(child.error||/ModuleNotFoundError|No module named/.test(child.stderr??'')){
+      assert.notEqual(process.env.PF2_REQUIRE_PYTHON,'1','PF2_REQUIRE_PYTHON=1: python runtime unavailable');
       st.skip('python runtime unavailable here; S4 covers the S1 validator');
       return;
     }

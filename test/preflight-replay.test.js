@@ -157,7 +157,13 @@ test('PF-2 S4 replay driver',async t=>{
   const readsOf=ctx=>ctx.world.reads.slice(ctx.mark);
   const baseScenario=await scenarioOf();
   let baseline=null;
-  const needPython=st=>{if(pythonReady)return false;st.skip(NO_PYTHON);return true;};
+  // PF2_REQUIRE_PYTHON=1 (the Quant Lab CI job) turns a would-be skip into a failure.
+  const needPython=st=>{
+    if(pythonReady)return false;
+    assert.notEqual(process.env.PF2_REQUIRE_PYTHON,'1','PF2_REQUIRE_PYTHON=1: '+NO_PYTHON);
+    st.skip(NO_PYTHON);
+    return true;
+  };
 
   await t.test('test interpreter: an absolute path or none, never a bare command name',()=>{
     assert.ok(python===null||(typeof python==='string'&&path.isAbsolute(python)));
