@@ -25,7 +25,7 @@ PF-2 และ QD/QS มี [local checkpoint วันที่ 2026-09-29](doc
 
 ลำดับผู้ใช้: เชื่อม Indicator → สร้าง Bridge → ตรวจความพร้อมก่อน Run และรัน Paper → Quant Optimize หนึ่ง run → ส่งผลที่ผ่านเกณฑ์ให้เจ้าของตรวจ → เจ้าของเลือกเริ่ม Bot ใหม่หรือจบ หากไม่พบ candidate ให้รายงานเหตุผลและจบ run โดยไม่ส่ง Best Inputs หรือวน Optimize อัตโนมัติ
 
-[Initial I/O binding ในเครื่อง](docs/QD_QS_INITIAL_IO_BINDING_CHECKPOINT_2026-09-29.md) เพิ่มขั้นอ่าน counters และตรวจตัวตน unit/process/cgroup/device ก่อนบันทึก `ACTIVE` แล้วจึงปล่อย payload ผ่าน PostgreSQL 14 checks และ launcher/I/O controls 11 checks พร้อมตรวจ source อิสระ ขอบเขตนี้จำกัด diagnostic child หนึ่งตัวต่อ job ยังต้องพิสูจน์ binding/release บน Linux จริงและเชื่อม PROFILE ต่อ หลักฐาน staging เดิมไม่ครอบคลุมโค้ดใหม่นี้
+[Initial I/O binding ในเครื่อง](docs/QD_QS_INITIAL_IO_BINDING_CHECKPOINT_2026-09-29.md) เพิ่มขั้นอ่าน counters และตรวจตัวตน unit/process/cgroup/device ก่อนบันทึก `ACTIVE` แล้วจึงปล่อย payload ผ่าน PostgreSQL 14 checks และ launcher/I/O controls 11 checks พร้อมตรวจ source อิสระ ขอบเขตนี้จำกัด diagnostic child หนึ่งตัวต่อ job [หลักฐาน Linux ล่าสุด](docs/QD_QS_LINUX_BINDING_CHECKPOINT_2026-09-29.md) ผ่าน binding/release ด้วย counters จริง read 0/write 4,096 bytes พร้อม marker รับ payload และ cleanup แล้ว [PROFILE runtime ภายใน](docs/QD_QS_PROFILE_BINDING_CHECKPOINT_2026-09-29.md) ผ่าน local checks/ตรวจ source อิสระ และ staging Linux หนึ่งกรณีแล้ว: 600 แท่งได้ผล 100 แท่งหลัง warm-up มี binding ก่อน release และหยุด child ครบ ผลยังเป็น provisional; counters หลังหยุดยังไม่ผ่าน measured settlement
 
 รายละเอียด phase และ test counts ด้านล่างเป็นประวัติของแต่ละ release ไม่ใช่สถานะ feature ปัจจุบันทั้งหมด ให้ใช้ Roadmap เป็นหลักในการเลือกงานถัดไป
 

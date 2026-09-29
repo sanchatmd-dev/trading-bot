@@ -77,6 +77,35 @@ test('atomic reservation and intent, one start, held payload, then cancel charge
   assert.equal((await db.query('SELECT result FROM quant_foundation_jobs')).rows[0].result,null);
 });
 
+test('prepared diagnostic spawn occurs only after final live lease check',async()=>{
+  const original=fixtureLauncher();
+  let prepared=0,aborted=0;
+  launcher={spawnPrepared:original.spawnPrepared,
+    async prepare({unitName}){
+      prepared++;
+      return {spawnPrepared:()=>original.spawnPrepared({unitName}),async abort(){aborted++;}};
+    }};
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});
+  await runtime.start(args());
+  assert.equal(prepared,1);assert.equal(spawned,1);assert.equal(aborted,0);
+  await runtime.cancel({ownerId:'owner-a',...args()});
+});
+
+test('lease lost during async preparation aborts reservation without spawning',async()=>{
+  let aborted=0;
+  launcher={spawnPrepared(){throw Error('unexpected spawn');},
+    async prepare(){
+      await scheduler.cancel('owner-a',claimed.job_id);
+      return {spawnPrepared(){throw Error('unexpected spawn');},async abort(){aborted++;}};
+    }};
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});
+  await assert.rejects(runtime.start(args()),{code:'QUANT_IO_LEASE_LOST'});
+  assert.equal(spawned,0);assert.equal(aborted,1);
+  assert.equal((await db.query('SELECT state FROM quant_io_launches')).rows[0].state,'STARTING');
+});
+
 test('SQL guard blocks alternate scheduler release and lease replacement',async()=>{
   await runtime.reserve({...args(),expectedRevision:0,allowance});
   const alternate=new QuantFoundationScheduler({db:second,capacityPolicy:profileV2Fixture(2000).policy,

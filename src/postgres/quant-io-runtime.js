@@ -8,6 +8,7 @@ const lost=()=>fail('QUANT_IO_LEASE_LOST');
 const uncertain=()=>fail('QUANT_IO_LAUNCH_UNCERTAIN');
 const key=(jobId,operationId)=>jobId+':'+operationId;
 export const QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH=hash(canonical({mode:'sleep'}));
+export const QUANT_PROFILE_RUNTIME_PROTOCOL='profile-v2-provisional';
 export const quantIoUnitName=(jobId,operationId)=>
   'robot-quant-'+hash(canonical({jobId,operationId}))+'.service';
 const safe=value=>Number.isSafeInteger(value)&&value>=0;
@@ -48,10 +49,15 @@ export async function canReleaseQuantIo(db,row){
  * Lost commit or process restart leaves durable intent quarantined.
  */
 export class QuantIoRuntime {
-  constructor({db,ledger,scheduler,launcher,clock=Date.now}){
+  constructor({db,ledger,scheduler,launcher,clock=Date.now,profile=null}){
     if(!db?.transaction||!ledger?.open||!scheduler?.cancel||
       !launcher?.spawnPrepared||typeof clock!=='function')throw unavailable();
+    if(profile&&(profile.protocol!==QUANT_PROFILE_RUNTIME_PROTOCOL||
+      typeof profile.authorizeRelease!=='function'||typeof profile.health!=='function'||
+      typeof profile.root!=='string'||!path.isAbsolute(profile.root)||
+      !profile.storageBudget||profile.storageBudget.root!==profile.root))throw unavailable();
     this.db=db;this.ledger=ledger;this.scheduler=scheduler;this.launcher=launcher;
+    this.profile=profile;this.payloads=new Map();
     this.clock=clock;this.handles=new Map();this.boundIdentity=new Map();
     this.releaseAllowed=new Set();this.releaseDisabled=new Set();
   }
@@ -88,23 +94,38 @@ export class QuantIoRuntime {
   async reserve({jobId,leaseToken,expectedRevision,operationId,allowance}){
     // Initialization has no launch intent. Reserve and intent then commit together.
     await this.ledger.open({jobId,leaseToken});
-    return this.locked(jobId,leaseToken,async({ledgerRow,intent,now})=>{
+    const reserved=await this.locked(jobId,leaseToken,async({job,ledgerRow,intent,now})=>{
       if(ledgerRow.revision!==expectedRevision||intent.length!==0||
         ledgerRow.state.operations.length!==0)throw uncertain();
       const unitName=quantIoUnitName(jobId,operationId);
+      const io=job.contract.capacity.io;
+      const reservedAllowance=this.profile?{
+        read_bytes:io.read_bytes-io.overshoot_read_bytes-io.cleanup_read_bytes,
+        write_bytes:io.write_bytes-io.overshoot_write_bytes-io.cleanup_write_bytes}:allowance;
       const input={operation_id:operationId,lease_token:leaseToken,
         domain_id:'domain-'+hash(canonical({jobId,operationId})).slice(0,64),
-        cgroup_id:unitName,allowance};
+        cgroup_id:unitName,allowance:reservedAllowance};
       const next=reserveIoOperation(ledgerRow.state,input);
       const update=await this.db.query(`UPDATE quant_io_ledgers SET revision=$2,state=$3,state_hash=$4
         WHERE job_id=$1 AND revision=$5`,[jobId,next.revision,JSON.stringify(next),hash(canonical(next)),expectedRevision]);
       if(update.rowCount!==1)throw uncertain();
+      const profilePayload=this.profile?{
+        version:QUANT_PROFILE_RUNTIME_PROTOCOL,jobId,operationId,
+        contract:job.contract,policy:this.ledger.policy,
+        storage:{root:this.profile.root,diskQuotaBytes:this.profile.storageBudget.diskQuotaBytes,
+          tempQuotaBytes:this.profile.storageBudget.tempQuotaBytes,
+          freeFloorBytes:this.profile.storageBudget.freeFloorBytes}}:null;
+      const payloadText=profilePayload?canonical(profilePayload):null;
+      if(payloadText&&Buffer.byteLength(payloadText)>65536)throw uncertain();
+      const payloadDigest=payloadText?hash(payloadText):QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH;
       await this.db.query(`INSERT INTO quant_io_launches
         (job_id,operation_id,lease_token,unit_name,payload_hash,state,created_at)
         VALUES($1,$2,$3,$4,$5,'INTENT_RECORDED',$6)`,
-        [jobId,operationId,leaseToken,unitName,QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH,now]);
-      return {state:next,unitName};
+        [jobId,operationId,leaseToken,unitName,payloadDigest,now]);
+      return {state:next,unitName,payloadText};
     });
+    if(reserved.payloadText)this.payloads.set(key(jobId,operationId),reserved.payloadText);
+    return {state:reserved.state,unitName:reserved.unitName};
   }
 
   async start({jobId,leaseToken,operationId}){
@@ -114,16 +135,18 @@ export class QuantIoRuntime {
       await this.db.query("UPDATE quant_io_launches SET state='STARTING' WHERE job_id=$1 AND operation_id=$2",[jobId,operationId]);
       return row;
     });
-    let handle=null;
+    let handle=null,preparation=null;
     try{
+      if(this.launcher.prepare)preparation=await this.launcher.prepare({unitName:intent.unit_name,
+        payload:this.payloads.get(key(jobId,operationId))});
       await this.locked(jobId,leaseToken,async({intent:rows,job})=>{
         const row=rows.find(item=>item.operation_id===operationId);
         if(!row||row.state!=='STARTING'||row.unit_name!==intent.unit_name||
-          row.payload_hash!==QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH)throw uncertain();
+          row.payload_hash!==(this.profile?hash(this.payloads.get(key(jobId,operationId))):QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH))throw uncertain();
         const current=this.clock();
         if(!Number.isSafeInteger(current)||job.lease_until<=current||job.deadline_at<=current)throw lost();
         // No await between final scheduler check and this synchronous spawn.
-        handle=this.launcher.spawnPrepared({unitName:row.unit_name});
+        handle=preparation?preparation.spawnPrepared():this.launcher.spawnPrepared({unitName:row.unit_name});
         if(!handle||handle.payloadHash!==row.payload_hash||
           typeof handle.release!=='function'||typeof handle.stop!=='function')throw uncertain();
         this.handles.set(key(jobId,operationId),handle);
@@ -132,6 +155,7 @@ export class QuantIoRuntime {
       return {unitName:intent.unit_name};
     }catch(error){
       if(handle)await handle.stop().catch(()=>{});
+      else if(preparation)try{await preparation.abort();}catch{throw uncertain();}
       throw error;
     }
   }
@@ -224,6 +248,23 @@ export class QuantIoRuntime {
         if(getIoStopDecision(ledgerRow.state,{operation_id:operationId,lease_token:leaseToken,
           cgroup_id:row.unit_name,cgroup_inode:operation.cgroup_inode}).stop_required)
           return {denied:true};
+        if(this.profile){
+          if((await this.profile.authorizeRelease(job))!==true||
+            (await this.profile.health({action:'PROFILE_RELEASE'}))?.ok!==true)throw uncertain();
+          const afterAuthorization=await handle.sample();
+          if(!sameBound(afterAuthorization,this.boundIdentity.get(id)))return {denied:true};
+          const finalSample=trustedSample(afterAuthorization,ready,row.unit_name,ledgerRow.state.devices);
+          if(canonical(finalSample)!==canonical(sample)){
+            const next=observeIoOperation(ledgerRow.state,{operation_id:operationId,
+              lease_token:leaseToken,cgroup_id:row.unit_name,
+              cgroup_inode:operation.cgroup_inode,sample:finalSample});
+            const saved=await this.db.query(`UPDATE quant_io_ledgers SET revision=$2,state=$3,state_hash=$4
+              WHERE job_id=$1 AND revision=$5`,[jobId,next.revision,JSON.stringify(next),
+              hash(canonical(next)),ledgerRow.revision]);
+            if(saved.rowCount!==1)throw uncertain();
+            return {denied:true};
+          }
+        }
         const current=this.clock();
         if(!Number.isSafeInteger(current)||job.lease_until<=current||job.deadline_at<=current)throw lost();
         // No await between final identity/lease check and fixed payload release.
@@ -236,6 +277,37 @@ export class QuantIoRuntime {
       return result;
     }catch(error){this.releaseAllowed.delete(id);this.releaseDisabled.add(id);
       await handle.stop().catch(()=>{});throw error;}
+  }
+
+  async observe({jobId,leaseToken,operationId}){
+    if(!this.profile)throw uncertain();
+    const id=key(jobId,operationId),handle=this.handles.get(id);
+    if(!handle||!this.boundIdentity.has(id))throw uncertain();
+    const ready=await handle.ready;
+    const identity=await handle.sample();
+    if(!sameBound(identity,this.boundIdentity.get(id)))throw uncertain();
+    const observed=await this.locked(jobId,leaseToken,async({job,ledgerRow,intent})=>{
+      const row=intent.find(item=>item.operation_id===operationId);
+      const operation=ledgerRow.state.operations.find(item=>item.operation_id===operationId);
+      if(!row||row.state!=='RELEASED'||!operation||operation.status!=='ACTIVE')throw uncertain();
+      const sample=trustedSample(identity,ready,row.unit_name,ledgerRow.state.devices);
+      const next=observeIoOperation(ledgerRow.state,{operation_id:operationId,
+        lease_token:leaseToken,cgroup_id:row.unit_name,cgroup_inode:operation.cgroup_inode,sample});
+      if(next.revision!==ledgerRow.revision){
+        const saved=await this.db.query(`UPDATE quant_io_ledgers SET revision=$2,state=$3,state_hash=$4
+          WHERE job_id=$1 AND revision=$5`,[jobId,next.revision,JSON.stringify(next),
+          hash(canonical(next)),ledgerRow.revision]);
+        if(saved.rowCount!==1)throw uncertain();
+      }
+      const stop=getIoStopDecision(next,{operation_id:operationId,lease_token:leaseToken,
+        cgroup_id:row.unit_name,cgroup_inode:operation.cgroup_inode}).stop_required;
+      let permitted=false;
+      if(!stop)try{permitted=(await this.profile.health({action:'PROFILE_OBSERVE'}))?.ok===true&&
+        (await this.profile.authorizeRelease(job))===true;}catch{}
+      return {sample,stop:stop||!permitted};
+    });
+    if(observed.stop)throw uncertain();
+    return observed.sample;
   }
 
   async ready({jobId,operationId}){

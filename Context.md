@@ -38,10 +38,17 @@ adds trusted sampling and persisted ACTIVE accounting before payload release.
 It verifies unit/process/cgroup/device identity, preserves bootstrap counters
 and stops on uncertainty. Local PostgreSQL passed 14 checks; launcher helpers
 and existing I/O controls passed 11. Independent source review found no blocker
-for this single-child scope. Positive Linux binding/release is not yet verified;
-the older staging evidence does not certify this new code.
-Worker/public V2 admission, actual PROFILE execution and complete cumulative
-I/O enforcement remain open. Finalizer checks do
+for this single-child scope. The subsequent [Linux binding checkpoint](docs/QD_QS_LINUX_BINDING_CHECKPOINT_2026-09-29.md)
+proves one diagnostic child with real kernel counters (read 0, write 4,096 bytes),
+persisted ACTIVE before release and a receipt from the child after it consumed
+the payload. Trusted cancellation and scratch cleanup passed; final accounting
+remains conservative unknown-final charging, not measured settlement.
+The internal [PROFILE runtime](docs/QD_QS_PROFILE_BINDING_CHECKPOINT_2026-09-29.md)
+now has a fixed Node child, provisional result protocol and scoped independent
+source review. One Linux staging case passed with 600 raw bars and 100 derived
+bars, committed ACTIVE before release, real write counters and trusted stop.
+The result remains provisional with null SQL result and unknown-final charging.
+Worker/public V2 admission and complete cumulative I/O enforcement remain open. Finalizer checks do
 not establish full risk, position or historical replay parity. See the
 [combined checkpoint](docs/QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md).
 
