@@ -12,10 +12,17 @@ const now=1800010000000,operationId='operation-00001';
 let admin,db,second,name,ledger,scheduler,claimed,runtime,launcher,spawned;
 const allowance={read_bytes:30,write_bytes:30};
 const args=()=>({jobId:claimed.job_id,leaseToken:claimed.lease_token,operationId});
-const fixtureLauncher=()=>({spawnPrepared({unitName}){
+const fixtureLauncher=(sampleOverride,readyOverride)=>({spawnPrepared({unitName}){
   spawned++;
   let released=false,stops=0;
-  return {payloadHash:QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH,ready:Promise.resolve({unitName}),
+  const group='/user.slice/'+unitName;
+  const sample={unitName,group,cgroupInode:23,deviceId:'8:0',deviceInode:17,
+    pid:4242,procStartTicks:'12345',invocationId:'1'.repeat(32),
+    readBytes:3,writeBytes:4};
+  return {payloadHash:QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH,
+    ready:Promise.resolve(readyOverride?readyOverride({unitName,group,cgroupInode:23,
+      invocationId:'1'.repeat(32)}):{unitName,group,cgroupInode:23,invocationId:'1'.repeat(32)}),
+    async sample(){return sampleOverride?sampleOverride(sample):sample;},
     release(){assert.equal(released,false);released=true;},
     async stop(){stops++;return {unitName,launcherClosed:true,startRegistered:true,
       pendingStartsExcluded:true,unitStopped:true,stops};}};
@@ -120,4 +127,128 @@ test('postspawn transaction rollback stops owned handle; STARTING intent can clo
   const completed=await uncertainRuntime.cancel({ownerId:'owner-a',...args()});
   assert.equal(completed.status,'CANCELLED');
   assert.equal((await db.query('SELECT state FROM quant_io_launches')).rows[0].state,'STOP_PROVEN');
+});
+
+test('synthetic trusted sample binds birth counters from zero before release; bound cancel burns allowance',async()=>{
+  await runtime.reserve({...args(),expectedRevision:0,allowance});
+  await runtime.start(args());await runtime.ready(args());
+  const bound=await runtime.bind(args());
+  const operation=bound.operations[0];
+  assert.equal(operation.status,'ACTIVE');
+  assert.deepEqual(operation.baseline,{devices:[{device_id:'8:0',device_inode:17,read_bytes:0,write_bytes:0}]});
+  assert.deepEqual(operation.last,{devices:[{device_id:'8:0',device_inode:17,read_bytes:3,write_bytes:4}]});
+  await runtime.release(args());
+  assert.equal((await db.query('SELECT state FROM quant_io_launches')).rows[0].state,'RELEASED');
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(cancelled.status,'CANCELLED');
+  const stored=(await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state;
+  assert.deepEqual(stored.charged,allowance);
+  assert.equal(stored.operations[0].cgroup_inode,23);
+  assert.equal(stored.operations[0].status,'CRASHED');
+});
+
+test('missing kernel counter row denies bind and payload',async()=>{
+  launcher=fixtureLauncher(()=>{throw Object.assign(Error('no io.stat row'),{code:'QUANT_IO_TELEMETRY_UNAVAILABLE'});});
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});await runtime.start(args());
+  await assert.rejects(runtime.bind(args()),{code:'QUANT_IO_TELEMETRY_UNAVAILABLE'});
+  await assert.rejects(runtime.release(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  assert.equal((await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state.operations[0].status,'RESERVED');
+  await runtime.cancel({ownerId:'owner-a',...args()});
+});
+
+test('wrong enrolled device denies trusted binding',async()=>{
+  launcher=fixtureLauncher(sample=>({...sample,deviceId:'8:1'}));
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});await runtime.start(args());
+  await assert.rejects(runtime.bind(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  await assert.rejects(runtime.release(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  await runtime.cancel({ownerId:'owner-a',...args()});
+});
+
+test('changed cgroup inode denies trusted binding',async()=>{
+  launcher=fixtureLauncher(sample=>({...sample,cgroupInode:24}));
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});await runtime.start(args());
+  await assert.rejects(runtime.bind(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  await runtime.cancel({ownerId:'owner-a',...args()});
+});
+
+test('bound overshoot persists STOP_REQUIRED before stop and charges observed bytes',async()=>{
+  launcher=fixtureLauncher(sample=>({...sample,readBytes:31}));
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});await runtime.start(args());
+  await assert.rejects(runtime.bind(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  const pending=(await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state;
+  assert.equal(pending.operations[0].status,'STOP_REQUIRED');
+  assert.equal(pending.operations[0].last.devices[0].read_bytes,31);
+  await assert.rejects(runtime.release(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.deepEqual((await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state.charged,
+    {read_bytes:31,write_bytes:30});
+});
+
+test('cancel between sampled identity and bind commit leaves reservation, no payload',async()=>{
+  launcher=fixtureLauncher(async sample=>{await scheduler.cancel('owner-a',claimed.job_id);return sample;});
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});await runtime.start(args());
+  await assert.rejects(runtime.bind(args()),{code:'QUANT_IO_LEASE_LOST'});
+  assert.equal((await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state.operations[0].status,'RESERVED');
+  await assert.rejects(runtime.release(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(cancelled.status,'CANCELLED');
+});
+
+test('lost bind commit acknowledgement stops the owned handle and forbids release',async()=>{
+  await runtime.reserve({...args(),expectedRevision:0,allowance});
+  await runtime.start(args());await runtime.ready(args());
+  let inject=true;
+  const committedDb={get isTransaction(){return db.isTransaction;},query:(...values)=>db.query(...values),
+    transaction:async callback=>{
+      const value=await db.transaction(callback);
+      if(inject){inject=false;throw Error('commit acknowledgement lost');}
+      return value;
+    }};
+  runtime.db=committedDb;
+  await assert.rejects(runtime.bind(args()),{code:'QUANT_IO_ACCOUNTING_UNAVAILABLE'});
+  assert.equal((await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state.operations[0].status,'ACTIVE');
+  await assert.rejects(runtime.release(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(cancelled.status,'CANCELLED');
+});
+
+test('last fresh overshoot is persisted before payload denial and final charge',async()=>{
+  let samples=0;
+  launcher=fixtureLauncher(sample=>({...sample,readBytes:++samples===3?40:3}));
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});
+  await runtime.start(args());await runtime.bind(args());
+  await assert.rejects(runtime.release(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  const pending=(await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state;
+  assert.equal(pending.operations[0].status,'STOP_REQUIRED');
+  assert.equal(pending.operations[0].last.devices[0].read_bytes,40);
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(cancelled.status,'CANCELLED');
+  assert.equal((await db.query('SELECT state FROM quant_io_ledgers')).rows[0].state.charged.read_bytes,40);
+});
+
+test('diagnostic enrollment denies a second operation for the same job',async()=>{
+  const {state}=await runtime.reserve({...args(),expectedRevision:0,allowance});
+  await assert.rejects(runtime.reserve({...args(),operationId:'operation-00002',
+    expectedRevision:state.revision,allowance}),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  assert.equal((await db.query('SELECT count(*)::int AS n FROM quant_io_launches')).rows[0].n,1);
+  await runtime.cancel({ownerId:'owner-a',...args()});
+});
+
+test('nested owned quant unit path denies binding',async()=>{
+  const ancestor='robot-quant-'+'f'.repeat(64)+'.service';
+  const nested=unitName=>'/user.slice/'+ancestor+'/'+unitName;
+  launcher=fixtureLauncher(sample=>({...sample,group:nested(sample.unitName)}),
+    ready=>({...ready,group:nested(ready.unitName)}));
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});
+  await runtime.start(args());
+  await assert.rejects(runtime.bind(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  await assert.rejects(runtime.release(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  await runtime.cancel({ownerId:'owner-a',...args()});
 });

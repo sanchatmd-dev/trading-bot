@@ -29,11 +29,17 @@ The 2026-09-29 local checkpoint adds a durable PostgreSQL I/O ledger adapter and
 an isolated Python cost-v2 order finalizer. A subsequent
 [runtime checkpoint](docs/QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) connects
 the scheduler and ledger to a fixed diagnostic launcher with durable start
-intent and cancellation guards. It covers held bootstrap only: payload release
-requires trusted initial counter binding that is not implemented yet.
+intent and cancellation guards. Its staging evidence covers held bootstrap only.
 One isolated staging cancellation passed with `STOP_PROVEN`, conservative
 unknown-final allowance charging, no result/checkpoint and confirmed cleanup.
 The original services and prior evidence were unchanged on delayed readback.
+A subsequent [local initial-binding checkpoint](docs/QD_QS_INITIAL_IO_BINDING_CHECKPOINT_2026-09-29.md)
+adds trusted sampling and persisted ACTIVE accounting before payload release.
+It verifies unit/process/cgroup/device identity, preserves bootstrap counters
+and stops on uncertainty. Local PostgreSQL passed 14 checks; launcher helpers
+and existing I/O controls passed 11. Independent source review found no blocker
+for this single-child scope. Positive Linux binding/release is not yet verified;
+the older staging evidence does not certify this new code.
 Worker/public V2 admission, actual PROFILE execution and complete cumulative
 I/O enforcement remain open. Finalizer checks do
 not establish full risk, position or historical replay parity. See the

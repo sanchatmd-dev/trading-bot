@@ -60,8 +60,13 @@ launch intent, fenced start and cancellation guards for a held diagnostic child;
 four PostgreSQL runtime checks pass. One isolated staging case reached
 `CANCELLED`/`STOP_PROVEN`, charged the unknown-final allowance and passed delayed
 cleanup/health checks without changing the prior services or evidence.
-Payload release remains denied pending
-trusted initial counter binding. Actual PROFILE integration, bounded cumulative
+The subsequent [local initial-binding checkpoint](QD_QS_INITIAL_IO_BINDING_CHECKPOINT_2026-09-29.md)
+adds trusted unit/process/cgroup/device sampling, persisted ACTIVE accounting and
+one-shot payload release for a single diagnostic child. PostgreSQL passed 14/14;
+launcher helpers and existing I/O controls passed 11/11. Independent source
+review found no blocker within local scope. Positive Linux binding/release is
+still unverified; the prior held-child staging case does not certify it.
+Actual PROFILE integration, bounded cumulative
 I/O budgets and overshoot calibration, all-device coverage, worker/public V2
 admission and physical enforcement remain open. PF-2 finalizer
 passed Python 12/12, focused cross-language parity 1/1 over 17 vectors and Ruff
@@ -200,7 +205,7 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 | Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. [PF-2 contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and [local finalizer checkpoint](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) record development-only work; reported Python/Node checks pass in stated scope, but finalizer does not prove full replay parity. | Complete PF-2 stateful replay and trusted resolver; order-finalizer source review passed within its stated scope. Hosted CI not run. V2 historical replay/admission remains denied until full evaluator parity. Then PF-3/PF-4. |
 | Historical data capacity (QD-1) | [Data capability and ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) passed isolated staging with 2,100 Spot bars. The [PROFILE checkpoint](QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md) now passes local lifecycle, revocation, real application HTTP, simulated recovery and rendered period UI on desktop/mobile. Admission remains 10K/1m including warm-up. | Physical PROFILE recovery results match; repeat supervised completion with the done marker before its deadline. Raw ingestion alone is not enrollment; PROFILE results still deny evaluator admission. Expanded capacity remains gated. |
 | Quant scheduling (QS-1) | [Isolated staging recovery](QD_QS_RECOVERY_STAGING_2026-09-28.md) passed: actual main worker, SIGKILL after 1,000 bars with an in-flight unit, verified offline recovery, new lease and exact resumed result at 3,876 bars. One evaluation charged; old token fenced; original deadline and checkpoint preserved. | Connect other heavy paths to the scheduler and validate larger workloads before expanded admission. Manual cold recovery is not automatic restart or full-host disaster recovery. |
-| Quant resource protection (QS-1) | Prior bounded calibration and readiness checks passed their measured scopes. [Lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md) passes its recorded database/scheduler/main/evaluator baseline. A [local PostgreSQL I/O ledger](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) now persists accounting/restart/quarantine using CAS, with ten isolated PostgreSQL checks. The [runtime checkpoint](QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) adds held diagnostic launch/cancel guards with four PostgreSQL runtime checks and scoped independent source audit. One isolated held-child staging cancellation passed with conservative full-allowance charging, stale-start denial and delayed health/cleanup proof. Initial counter binding, payload execution and worker/public V2 admission remain open. | Primary next gate: bind trusted initial counters, integrate actual PROFILE runtime and complete the fault matrix. Then verify stop/recovery coverage under controls and review remaining phase gates. Runtime delegation is not reboot-persistent. Physical enforcement, cumulative byte caps and all-device coverage are not proved. No expanded capacity or production rollout. |
+| Quant resource protection (QS-1) | Prior bounded calibration and readiness checks passed their measured scopes. [Lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md) passes its recorded database/scheduler/main/evaluator baseline. A [local PostgreSQL I/O ledger](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) now persists accounting/restart/quarantine using CAS, with ten isolated PostgreSQL checks. The [runtime checkpoint](QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) adds held diagnostic launch/cancel guards with four PostgreSQL runtime checks and scoped independent source audit. One isolated held-child staging cancellation passed with conservative full-allowance charging, stale-start denial and delayed health/cleanup proof. Local initial binding now passes 14 PostgreSQL and 11 launcher/I/O checks with independent source review; positive Linux binding/release, actual PROFILE execution and worker/public V2 admission remain open. | Primary next gate: prove positive initial binding/release on Linux, integrate actual PROFILE runtime and complete the fault matrix. Then verify stop/recovery coverage under controls and review remaining phase gates. Runtime delegation is not reboot-persistent. Physical enforcement, cumulative byte caps and all-device coverage are not proved. No expanded capacity or production rollout. |
 | Research Library / Best Performance (QR-1 through QR-4) | Owner-approved plan and target diagrams below; no customer library, comparison ranking or portfolio mark-to-market shipped by this update. | Reuse durable run evidence; add immutable artifacts, portfolio reporting, fair comparison and explicit owner-started follow-up runs. Real recommendations remain validation-gated. |
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
@@ -623,6 +628,20 @@ flowchart TD
 ```
 
 ## Change log
+
+### 2026-09-29 — Initial I/O binding after the pushed runtime checkpoint
+
+Reviewed and pushed the preceding 20-file checkpoint as `d31b42a` on
+`codex/app3a-market-wait-checkpoint`; the remote revision matched. Subsequent
+[initial-binding work](QD_QS_INITIAL_IO_BINDING_CHECKPOINT_2026-09-29.md) was
+developed locally and remains separate from that commit. It persists trusted counters before
+release, fences identity/lease changes and retains bound cancellation accounting.
+Audit corrected three issues: a discarded final observation, a synthetic
+invocation identifier and an unsupported disjoint-domain claim. The final
+source review found no blocker for one diagnostic child per job, with 14/14
+PostgreSQL and 11/11 launcher/I/O checks. Linux positive binding, actual PROFILE
+execution and full accounting remain open. No new staging or production rollout
+occurred. Main documents and the phase checklist were synchronized.
 
 ### 2026-09-29 — Runtime launch intent and held-child cancellation
 
