@@ -492,3 +492,32 @@ not depend on new market bars. The remaining PF-2 slices (S3 trusted resolver,
 S4 Node driver, optional S2 CSV) remain open alongside the genuine 24-hour
 readiness retention wait (earliest cleanup 2026-09-30 13:53:52 Asia/Bangkok).
 The 410–720-hour baseline and existing contingency are unchanged.
+
+## FTR-1 Linux integration checkpoint — 2026-09-29
+
+One supervised Linux staging case (suffix `dda8f44a`) ran the real FTR-1
+`terminate()` path on the actual PROFILE child. It ended in the safe fallback,
+not in measured settlement: the first frozen read failed the writeback gate, so
+the unknown-final charge was kept and the integration goal is not met. See the
+[integration record](QD_QS_FTR1_LINUX_INTEGRATION_2026-09-29.md).
+
+Measured intervals only, all for this one case: preflight began at about 16:29
+UTC and the 10-minute recheck ran at 17:01 UTC. Launch was 16:51:00 UTC, the
+terminal path took 218 ms, the driver was done 10.291 seconds after launch and
+the monitor 12.875 seconds after launch. The 218 ms is the fallback path only; it
+is not a measurement of the success path, which by design adds at least about 2.5
+seconds. The 5-hour usage window went from 39% to 44% used across preparation,
+independent pre-run audit and the run; shared counters do not attribute cost to a
+model, an agent or a step. The owner ran database setup and launch personally
+after a permission block, which is a coordination step, not a measured duration.
+No engineering hours are booked and no speedup is claimed. The database p95 values
+(1.34 ms baseline, 1.02 ms during the case) are not a capacity benchmark.
+
+The next work is local engineering: design and implement pending-writeback
+handling before the frozen read and record the dirty and writeback memory values
+on fallback (an auditor design is in progress). A new owner-approved Linux case
+with new names follows, and it does not depend on new market bars. The remaining
+PF-2 slices and the genuine 24-hour readiness retention wait (earliest cleanup
+2026-09-30 13:53:52 Asia/Bangkok) are unchanged. The 410–720-hour baseline and
+existing contingency are unchanged; this case adds evidence for the terminal I/O
+gate and is not a forecast change.

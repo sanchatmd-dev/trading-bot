@@ -51,8 +51,11 @@ bars, committed ACTIVE before release, real write counters and trusted stop.
 The result remains provisional with null SQL result and unknown-final charging.
 A later local slice adds frozen terminal readback so a measured final counter can
 settle the ledger when every gate passes; otherwise the unknown-final charge
-remains. Its stop path has not yet run on real Linux. See the
-[FTR-1 and PF-2 S1 checkpoint](docs/QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md).
+remains. One supervised Linux case then ran that stop path on the real PROFILE
+child; the first frozen read failed the writeback gate, so the unknown-final
+charge was kept and measured settlement on Linux is not yet proven. See the
+[FTR-1 and PF-2 S1 checkpoint](docs/QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md)
+and the [Linux integration record](docs/QD_QS_FTR1_LINUX_INTEGRATION_2026-09-29.md).
 Worker/public V2 admission and complete cumulative I/O enforcement remain open. Finalizer checks do
 not establish full risk, position or historical replay parity. See the
 [combined checkpoint](docs/QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md).
