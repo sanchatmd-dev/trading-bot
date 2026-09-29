@@ -117,18 +117,18 @@ const rawMetadata=(total=RAW_BARS,warmup=RAW_WARMUP)=>({version:'spot-dataset-v1
   cutoff:START+total*MINUTE,source:'binance-spot-klines-v1'});
 const bar=index=>({time:START+index*MINUTE,open:String(100+index%13),high:String(102+index%13),
   low:String(99+index%13),close:String(101+index%13),volume:'2'});
-async function* bars(count){for(let index=0;index<count;index++)yield bar(index);}
+async function* bars(count,make=bar){for(let index=0;index<count;index++)yield make(index);}
 
 const storesFor=root=>({root,rawStore:new DatasetStore({root}),
   researchStore:new ResearchDatasetStore({root,allowUnsupportedDirectorySyncForTests:true})});
 
 /** Real raw, closed and ATR datasets on a temporary root. Shared by many worlds. */
-export async function createPf2Base(t){
+export async function createPf2Base(t,{bar:makeBar=bar}={}){
   const root=await mkdtemp(path.join(os.tmpdir(),'pf2-resolver-'));
   t.after(()=>rm(root,{recursive:true,force:true}));
   const stores=storesFor(root);
   const model=modelRecord();
-  const rawReference=await stores.rawStore.publish(rawMetadata(),bars(RAW_BARS),{chunkBars:1000});
+  const rawReference=await stores.rawStore.publish(rawMetadata(),bars(RAW_BARS,makeBar),{chunkBars:1000});
   const derived=deriveClosedMetadataV2(rawReference);
   const researchReference=await stores.researchStore.publishStream(derived,
     streamClosedProfileRowsV2({rawReference,rawStore:stores.rawStore,model}),{model});

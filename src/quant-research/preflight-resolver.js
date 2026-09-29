@@ -45,6 +45,7 @@ export const PF2_ENGINE_FILES=Object.freeze([
   'src/quant-research/contract.js','src/quant-research/data-profile-v2.js',
   'src/quant-research/dataset-store.js','src/quant-research/foundation-contract-v2.js',
   'src/quant-research/foundation-contract.js','src/quant-research/preflight-contract.js',
+  'src/quant-research/preflight-replay.js',
   'src/quant-research/preflight-resolver.js','src/quant-research/profile-contract-v2.js',
   'src/quant-research/profile-contract.js','src/quant-research/research-dataset-store.js']);
 

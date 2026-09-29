@@ -438,7 +438,8 @@ test('PF-2 S3 trusted resolver',async t=>{
       return [...seen].sort();
     };
     assert.deepEqual(await closure(['src/quant-research/preflight-resolver.js','src/quant-research/dataset-store.js',
-      'src/quant-research/research-dataset-store.js'],jsImports),PF2_ENGINE_FILES.filter(file=>file.endsWith('.js')));
+      'src/quant-research/research-dataset-store.js','src/quant-research/preflight-replay.js'],jsImports),
+      PF2_ENGINE_FILES.filter(file=>file.endsWith('.js')));
     assert.deepEqual(await closure([dir+'pf2_replay.py'],pyImports),PF2_ENGINE_FILES.filter(file=>file.endsWith('.py')));
     assert.deepEqual(await closure([dir+'spt_custom_evaluator.py'],pyImports),[...PF2_EVALUATOR_FILES]);
     for(const file of PF2_ENGINE_FILES){
