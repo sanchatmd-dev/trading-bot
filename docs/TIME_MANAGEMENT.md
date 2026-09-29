@@ -468,3 +468,27 @@ independent ledger recheck. No new market-bar collection was needed. PF-2 replay
 V2 cost parity, durable I/O and other QD/QS gates remain; retain the existing
 engineering contingency and genuine 24-hour retention wait. See
 [terminal staging evidence](QD_QS_TERMINAL_HANDSHAKE_2026-09-29.md).
+
+## FTR-1 and PF-2 S1 checkpoint — 2026-09-29
+
+Two local slices were accepted: FTR-1 frozen terminal readback (`292a4b3`) and
+the PF-2 S1 Python stateful replay core (`cda2857`). See the
+[checkpoint record](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md). The root moved
+from Codex to Claude (Opus 5.5) at about 13:55 UTC. The work ran about
+14:10 to 15:45 UTC with up to three concurrent children, with independent
+tester and auditor review and fixes before acceptance. Account usage on the
+5-hour window went from 4% to 27% used; shared counters do not attribute cost to
+a model, an agent or a slice. Per-model cost and exact engineering hours are not
+measured, so no engineering hours are booked and no speedup is claimed from
+agent count or from the platform change.
+
+Measured runtime intervals only: a frozen readback adds at least about 2.5
+seconds (the quiescence window) to each PROFILE run, and the launcher skips it
+when 5 seconds or less of unit runtime remain. The Linux mechanism proof froze
+two transient units in about 10 ms each. These are per-run costs, not total
+engineering time and not a capacity or forecast change. The next step, running
+`terminate()` on real Linux, needs an owner-approved operations step; it does
+not depend on new market bars. The remaining PF-2 slices (S3 trusted resolver,
+S4 Node driver, optional S2 CSV) remain open alongside the genuine 24-hour
+readiness retention wait (earliest cleanup 2026-09-30 13:53:52 Asia/Bangkok).
+The 410–720-hour baseline and existing contingency are unchanged.

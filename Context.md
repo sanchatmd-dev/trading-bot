@@ -20,8 +20,9 @@ or a collection deadline while a persistent Risk Manager guard blocks entries.
 ## Project execution team
 
 Local PF-2 engineering now has a development-only immutable plan contract,
-using current 10K/V1 limits. It does not yet provide historical replay or runtime
-admission; cost-inclusive V2 parity remains required. This work runs alongside
+using current 10K/V1 limits. A development-only Python stateful replay core (S1,
+V1 only, not full Risk Manager parity) now exists locally, but there is no runtime
+historical replay or admission yet; cost-inclusive V2 parity remains required. This work runs alongside
 QD-1/QS-1 runtime and I/O acceptance. See the
 [PF-2 checkpoint](docs/PF_2_CONTRACT_CHECKPOINT_2026-09-29.md).
 
@@ -48,6 +49,10 @@ now has a fixed Node child, provisional result protocol and scoped independent
 source review. One Linux staging case passed with 600 raw bars and 100 derived
 bars, committed ACTIVE before release, real write counters and trusted stop.
 The result remains provisional with null SQL result and unknown-final charging.
+A later local slice adds frozen terminal readback so a measured final counter can
+settle the ledger when every gate passes; otherwise the unknown-final charge
+remains. Its stop path has not yet run on real Linux. See the
+[FTR-1 and PF-2 S1 checkpoint](docs/QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md).
 Worker/public V2 admission and complete cumulative I/O enforcement remain open. Finalizer checks do
 not establish full risk, position or historical replay parity. See the
 [combined checkpoint](docs/QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md).

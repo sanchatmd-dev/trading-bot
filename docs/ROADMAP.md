@@ -45,8 +45,10 @@ This communication policy does not change phase order or runtime compaction.
 The owner approved parallel local PF-2 engineering while QD-1/QS-1 runtime and
 I/O acceptance remain the primary work. The [PF-2 contract checkpoint](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md)
 adds a hashed, development-only replay plan with frozen input/state references,
-one evaluation and the existing 10K/V1 limits. Five focused checks pass; replay,
-trusted resolution, cost-model V2 parity and runtime admission remain pending.
+one evaluation and the existing 10K/V1 limits. Five focused checks pass; trusted
+resolution, cost-model V2 parity and runtime admission remain pending. A later
+development-only Python replay core (S1, described below) now exists locally but
+is not wired to any runtime.
 Library/Export work stays limited to contracts and fixtures until dependencies
 pass; no Library/Export implementation was started in this wave.
 
@@ -84,6 +86,26 @@ passed one actual-worker fixture to cursor 3,876, with confirmed cleanup and
 unchanged old services and jobs. Setup first encountered read-only copied files;
 a reviewed continuation corrected only the new copy. The research outcome is
 `NO_VALID_CANDIDATE`, not a recommendation. Other fault and capacity gates remain.
+
+Two further local slices are accepted, recorded in the
+[FTR-1 and PF-2 S1 checkpoint](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md).
+FTR-1 (`292a4b3`) freezes an owned diagnostic unit before stop, requires a
+quiescence window with zero dirty and writeback memory, re-checks bound identity
+and commits the frozen `io.stat` sample so the ledger can settle measured final
+I/O; any failed gate keeps the unknown-final charge. The full Node suite passed
+466 with one pre-existing skip and isolated PostgreSQL runtime checks passed
+37/37. A separate Linux mechanism proof on staging (two transient units) showed
+stable frozen counters, but `terminate()` itself has not run on real Linux, and
+PROFILE remains provisional with `evaluator_admission=false` and null SQL result.
+The commit also rotates the ingestion and research engine source hashes, so
+hash-bound evidence must be re-checked before any deploy. PF-2 S1 (`cda2857`) adds
+a development-only Python stateful replay core for V1 `paper-close-v1` with fresh
+initial state and at most 10,000 bars; 51 new tests, the full `quant_lab` suite
+(182 pass) and Node oracle parity on 12 cases pass, with an independent audit
+accepting after fixes. It is not full Risk Manager or position parity, V2 is
+refused, and the trusted resolver, Node driver and runtime admission remain
+pending. Neither slice is deployed; scope stays Spot/Paper, 10K bars including
+warm-up, with holdout gates unchanged.
 
 The owner has requested continuation through full QD-1/QS-1 engineering closure.
 The [phase checklist](QD_QS_PHASE_CLOSURE.md) now records all mandatory gates.
@@ -210,17 +232,19 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 | QL-2A / Custom extension | Fixed SPT baseline accepted; Custom baseline plus 16 axis settings matched; 100-observation Custom repaint passed. [Custom evidence](QL_3A_VARIED_INPUT_PARITY.md). | Evidence is source/settings scoped; positive EXIT was absent from the Custom repaint sample. Mixed candidates and new revisions need their own evidence. |
 | QL-3A research | Durable 100-candidate job completed; all candidates have zero validation closed trades. [Result](QL_3A_HISTORY_RESEARCH_2026-09-27.md). | `NO_VALID_CANDIDATE`; original holdout unopened. Engineering acceptance and recommendation acceptance are tracked separately; neither is automatically granted by this update. |
 | SPT Spot EXIT v1 | Separate offline draft and four predeclared development comparisons. Net loss improved to -5.1852783497 USDT but three losing episodes still stop entries; validation remains zero. [Review](QL_3A_SPOT_EXIT_V1_2026-09-27.md). | Failed development preflight. Not activated; no new TradingView collection requested for this draft. |
-| Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. [PF-2 contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and [local finalizer checkpoint](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) record development-only work; reported Python/Node checks pass in stated scope, but finalizer does not prove full replay parity. | Complete PF-2 stateful replay and trusted resolver; order-finalizer source review passed within its stated scope. Hosted Quant Lab checks passed for `421ca07`; Windows fixture repair is tracked below. V2 historical replay/admission remains denied until full evaluator parity. Then PF-3/PF-4. |
+| Risk Manager readiness / Historical Preflight | [PF-1C engineering checkpoint](PF_1C_CHECKPOINT_2026-09-28.md): full public venue filters, shared V2 costs/reservations, saved/draft and Bridge UI; 319 local checks, 30 repeated staging checks, browser verification and 121.7-second metadata producer proof passed. [PF-2 contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and [local finalizer checkpoint](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) record development-only work; reported Python/Node checks pass in stated scope, but finalizer does not prove full replay parity. The [S1 stateful replay core](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md) (`cda2857`) adds a development-only Python replay for V1 with 51 new tests, 182 `quant_lab` passes and Node oracle parity on 12 cases; it is not full Risk Manager or position parity. | Complete the trusted resolver (S3), Node driver/result envelope (S4) and runtime admission around the S1 core; order-finalizer source review passed within its stated scope. Hosted Quant Lab checks passed for `421ca07`; Windows fixture repair is tracked below. V2 historical replay/admission remains denied until full evaluator parity. Then PF-3/PF-4. |
 | Historical data capacity (QD-1) | [Data capability and ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md) passed isolated staging with 2,100 Spot bars. The [PROFILE checkpoint](QD_QS_RESOURCE_PROFILE_CHECKPOINT_2026-09-28.md) now passes local lifecycle, revocation, real application HTTP, simulated recovery and rendered period UI on desktop/mobile. Admission remains 10K/1m including warm-up. | Physical PROFILE recovery results match; repeat supervised completion with the done marker before its deadline. Raw ingestion alone is not enrollment; PROFILE results still deny evaluator admission. Expanded capacity remains gated. |
 | Quant scheduling (QS-1) | [Isolated staging recovery](QD_QS_RECOVERY_STAGING_2026-09-28.md) passed: actual main worker, SIGKILL after 1,000 bars with an in-flight unit, verified offline recovery, new lease and exact resumed result at 3,876 bars. One evaluation charged; old token fenced; original deadline and checkpoint preserved. | Connect other heavy paths to the scheduler and validate larger workloads before expanded admission. Manual cold recovery is not automatic restart or full-host disaster recovery. |
-| Quant resource protection (QS-1) | Prior bounded calibration and readiness checks passed their measured scopes. [Lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md) passes its recorded database/scheduler/main/evaluator baseline. A [local PostgreSQL I/O ledger](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) now persists accounting/restart/quarantine using CAS, with ten isolated PostgreSQL checks. The [runtime checkpoint](QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) adds held diagnostic launch/cancel guards with four PostgreSQL runtime checks and scoped independent source audit. One isolated held-child staging cancellation passed with conservative full-allowance charging, stale-start denial and delayed health/cleanup proof. Local initial binding now passes 14 PostgreSQL and 11 launcher/I/O checks with independent source review; the [Linux diagnostic](QD_QS_LINUX_BINDING_CHECKPOINT_2026-09-29.md) now proves positive write counters, binding/release and cleanup. The [internal PROFILE case](QD_QS_PROFILE_BINDING_CHECKPOINT_2026-09-29.md) now passes one Linux run with a provisional result and trusted cleanup. General worker/public V2 admission remains open. | Primary next gate: establish audited terminal I/O accounting, then complete the remaining fault matrix and trusted PROFILE enrollment. Then verify stop/recovery coverage under controls and review remaining phase gates. Runtime delegation is not reboot-persistent. Physical enforcement, cumulative byte caps and all-device coverage are not proved. No expanded capacity or production rollout. |
+| Quant resource protection (QS-1) | Prior bounded calibration and readiness checks passed their measured scopes. [Lifecycle staging](QD_QS_LIFECYCLE_STAGING_2026-09-28.md) passes its recorded database/scheduler/main/evaluator baseline. A [local PostgreSQL I/O ledger](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) now persists accounting/restart/quarantine using CAS, with ten isolated PostgreSQL checks. The [runtime checkpoint](QD_QS_RUNTIME_CANCEL_CHECKPOINT_2026-09-29.md) adds held diagnostic launch/cancel guards with four PostgreSQL runtime checks and scoped independent source audit. One isolated held-child staging cancellation passed with conservative full-allowance charging, stale-start denial and delayed health/cleanup proof. Local initial binding now passes 14 PostgreSQL and 11 launcher/I/O checks with independent source review; the [Linux diagnostic](QD_QS_LINUX_BINDING_CHECKPOINT_2026-09-29.md) now proves positive write counters, binding/release and cleanup. The [internal PROFILE case](QD_QS_PROFILE_BINDING_CHECKPOINT_2026-09-29.md) now passes one Linux run with a provisional result and trusted cleanup. [FTR-1](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md) (`292a4b3`) adds local frozen terminal readback: 466 Node passes with one pre-existing skip, PostgreSQL runtime 37/37, independent tester review, and a Linux mechanism proof on two transient units (a mechanism proof, not a proof of the code). General worker/public V2 admission remains open. | Primary next gate: run the FTR-1 `terminate()` integration case on real Linux (next owner-approved operations step); the only Linux PROFILE evidence so far still shows unknown-final charging. Then complete the remaining fault matrix and trusted PROFILE enrollment, verify stop/recovery coverage under controls and review remaining phase gates. Runtime delegation is not reboot-persistent. Physical enforcement, cumulative byte caps and overshoot calibration, all-device coverage, a positive physical read and the post-exit writeback tail are not proved. FTR-1 rotates the ingestion and research engine source hashes; re-check hash-bound evidence before any deploy. No expanded capacity or production rollout. |
 | Research Library / Best Performance (QR-1 through QR-4) | Owner-approved plan and target diagrams below; no customer library, comparison ranking or portfolio mark-to-market shipped by this update. | Reuse durable run evidence; add immutable artifacts, portfolio reporting, fair comparison and explicit owner-started follow-up runs. Real recommendations remain validation-gated. |
 | QL-4B / QL-4C | Best Inputs delivery remains gated because no eligible candidate exists. | Fixture-based package/report engineering can proceed after its engineering dependencies pass; real recommendations/apply/email require a qualified run and export validation. |
 | APP-3B / APP-4 / APP-5 | Multi-Pine rollout, paid Paper readiness and optional Live remain later phases. | Preserve their isolation, security and broker-specific acceptance gates. Live stays locked. |
 
 Latest pushed implementation/evidence checkpoint: `ceda8da` (Linux binding and
 provisional PROFILE runtime) on `codex/app3a-market-wait-checkpoint`;
-`ce27166` corrected checkpoint text encoding. Earlier ingestion, PF-1B/PF-1C and PF-1A checkpoints
+`ce27166` corrected checkpoint text encoding. Commits `292a4b3` (FTR-1) and
+`cda2857` (PF-2 S1) follow `8ce2c67` on the same branch and are pushed with this
+checkpoint entry. Earlier ingestion, PF-1B/PF-1C and PF-1A checkpoints
 are `9d06ba0`, `cf8913d` and `9c5f8f3`. The owner authorized the Data capability/ingestion Git
 checkpoint after local and isolated-staging verification; its scope is recorded
 in the [evidence document](QD_QS_INGESTION_CALIBRATION_2026-09-28.md).
@@ -262,7 +286,7 @@ inside workflow step 3, not an additional automatic optimization cycle.
 | ID | Deliverable | Completion evidence | Current status |
 | --- | --- | --- | --- |
 | PF-1 | Static Risk Manager consistency check and point-in-time sizing preview. Resolve owner/Bot policy and capital on the server; distinguish hypothetical drafts from saved settings. | Accepted/capped/rejected fixtures agree with worker rules; verified venue filters, fees, reservations and reduce-only targets are represented. Unknown data cannot become a pass. Preview causes no policy mutation. | Paper/public-filter engineering passed in [PF-1C](PF_1C_CHECKPOINT_2026-09-28.md); active Bot rollout acceptance remains gated. V1 is unchanged and V2 requires explicit evidence/producer rollout. No Run approval follows from a hypothetical preview. |
-| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | [Local plan contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and five focused checks completed; current plan uses 10K/V1 scope. The [isolated cost-v2 order finalizer](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) passed 12 Python checks and 17 Node/Python vectors. Stateful replay, trusted resolver and admission remain pending. Implement and prove cost-model V2 historical evaluator parity before admitting V2 research; do not reuse V1 parity as V2 evidence. |
+| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | [Local plan contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and five focused checks completed; current plan uses 10K/V1 scope. The [isolated cost-v2 order finalizer](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) passed 12 Python checks and 17 Node/Python vectors. The [S1 Python stateful replay core](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md) (`cda2857`, development-only, V1 `paper-close-v1`, fresh state, 10K bars including warm-up) passed 51 new tests, the full `quant_lab` suite (182) and Node oracle parity on 9 scripted, 1 daily-loss lift and 2 real-SPT cases, with an independent audit accepting after fixes; it is not full Risk Manager or position parity and V2 is refused. Trusted resolver (S3, needs hash preimage schemas decided), Node driver/result envelope (S4), optional CSV (S2), engine-hash list integration, runtime admission and the 50K maximum remain pending. Implement and prove cost-model V2 historical evaluator parity before admitting V2 research; do not reuse V1 parity as V2 evidence. |
 | PF-3 | Readiness report with signal/intent/fill/episode counts, rejection reasons, cash/exposure, pause periods and collection estimate. | Distinguishes configuration failure, insufficient activity, unavailable capability and readiness to start Paper. Estimates use a declared development window and assumptions; persistent pause gives no finite collection ETA. | Planned; after PF-2. |
 | PF-4 | Explainable setting proposals inside the owner's declared risk/exposure limits, with before/after preview and explicit save. | Deterministic calculations, effective-value provenance, stale-state detection and saved-policy confirmation. AI may explain calculations but is not the authoritative calculator. | Planned; after PF-1 through PF-3. |
 
@@ -637,6 +661,47 @@ flowchart TD
 ```
 
 ## Change log
+
+### 2026-09-29 — FTR-1 frozen terminal readback and PF-2 S1 replay core
+
+[Scoped evidence](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md) for two accepted
+local slices. FTR-1 (`292a4b3`): before stopping an owned diagnostic child the
+launcher freezes its unit, requires a quiescence window with zero dirty and
+writeback memory, re-checks bound identity, commits the frozen `io.stat` sample
+before the kill and accepts only a removed or retained-equal cgroup afterwards.
+The runtime settles the ledger and marks `STOP_PROVEN` in one transaction, still
+gated by `authorizeTerminal`; any failed gate keeps the unknown-final charge.
+PROFILE stays provisional with `evaluator_admission=false` and a `CANCELLED` job
+with null SQL result. Each PROFILE run gains at least about 2.5 seconds, and the
+path is skipped when the unit has 5 seconds or less of runtime left. Local checks:
+I/O 48/48, full Node 466 pass with one pre-existing skip, isolated PostgreSQL
+runtime 37/37, PROFILE runtime 13/13, ledger 10/10. A Linux mechanism proof on
+staging (kernel 6.8, systemd 255, two transient units, one run per case at
+64 KiB) showed a freeze of about 10 ms, stable counters and identity across 2.5
+seconds, exactly 65,536 write bytes for the fsync unit and a correctly rejected
+buffered unit. It is not a proof of the code: `terminate()` has not run on real
+Linux, and that integration case is the next owner-approved operations step.
+Cleanup and delayed health were unchanged; the 23 old failed transient units were
+left untouched by owner decision. All-device coverage, positive physical read,
+cumulative caps and overshoot calibration, public V2 admission and the writeback
+tail after exit remain open. The commit rotates the ingestion and research
+engine source hashes; re-check hash-bound evidence before any deploy.
+
+PF-2 S1 (`cda2857`): `evaluate_pf2_chunk` in `pf2_replay.py` is a
+development-only Python stateful replay core for V1 `paper-close-v1`, with fresh
+initial state, at most 10,000 bars including warm-up, causal closed bars and a
+canonical checkpoint with tested restart equality. The 51 new tests, the full
+`quant_lab` suite (182) and Ruff pass, with Node oracle parity on 9 scripted, 1
+daily-loss lift and 2 real-SPT cases. An independent audit accepted after fixes.
+It is not full Risk Manager or position parity, V2 is refused, and the checkpoint
+integrity hash is not authentication, so the future driver must use trusted
+storage. Remaining: S3 trusted resolver, S4 Node driver/result envelope, optional
+S2 CSV, engine-hash list integration, runtime admission, V2 parity and 50K.
+
+Both commits are pushed with this checkpoint and remain undeployed. Scope stays Spot/Paper,
+BINANCE:BTCUSDT Spot 1m, 10K bars including warm-up and independent holdout
+gates; no production rollout, no Live. Readiness retention cleanup still waits
+for real age expiry at 2026-09-30 13:53:52 Asia/Bangkok.
 
 ### 2026-09-29: internal PROFILE binding and release on Linux
 
