@@ -91,13 +91,15 @@ changes are account-wide observations, not exact per-agent billing.
 | Remaining known allowance | Admission behavior |
 | --- | --- |
 | Above 30% | Short checkpointable work; default 1–2 workers. Third worker only for independent useful work within aggregate budget. |
-| Above 20%, at most 30% | One tiny task; preserve integration/handoff margin. |
-| At most 20% | No new substantive task; finish the smallest safe checkpoint and yield. |
+| Above 15%, at most 30% | One tiny task; preserve integration/handoff margin. |
+| At most 15% | Stop admitting work; no new substantive task; finish the smallest safe checkpoint and yield. |
 | Short window unavailable | Mark unknown, permit only provisional small slices; no long unattended model work or promised completion. |
 | All usage unavailable or refresh fails | Save checkpoint / local read-only planning; retry visibility before substantive dispatch. |
 
-Protect a planning reserve of 20 percentage points in each known relevant window.
-Before launch, check `sum(active reservations) + next reservation < R - 20`.
+Protect a planning reserve of 15 percentage points in each known relevant window.
+The same reserve applies on Codex and Claude; each platform's usage is tracked
+separately against its own account.
+Before launch, check `sum(active reservations) + next reservation < R - 15`.
 Provisional reservations: 3 points for a short mapping/docs slice, 5 for a bounded
 implementation/test slice, 10 for a difficult audit/debug slice. These are cautious
 allowances, not measured prices. Split larger tasks; if no safe reservation fits,

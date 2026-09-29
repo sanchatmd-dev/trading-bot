@@ -171,7 +171,7 @@ Git checkpoint PF-1B/PF-1C รวมโค้ดและเอกสารห�
 
 ใช้ [Agent Team](AGENT_TEAM.md) และ AGENTS.md ให้หัวหน้าเดียวเลือก task ที่ dependencies ผ่าน ส่งงานสั้นพร้อม file ownership และจุด checkpoint ใช้ workers 1–2 คนตามปกติ สูงสุด 3 เมื่อมีงานอิสระจริง การทำงานพร้อมกันอาจลด elapsed time แต่ห้ามหารงบ 410–720 ชั่วโมงด้วยจำนวน agents โดยไม่มีข้อมูล throughput
 
-ตรวจ account usage ก่อน dispatch/งานแพงและทุก checkpoint กัน reserve 20 percentage points ตามนโยบาย; 20–30% เหลือทำทีละงานเล็ก, <=20% บันทึก checkpoint และไม่เปิดงานใหม่ ค่าไม่ทราบต้องระบุ unknown ไม่ใช่ 100% การกัน quota เป็นประมาณการ ไม่ใช่ hard lock และต้องเผื่อ account usage จาก task อื่น บันทึก snapshot ส่วนตัวใน `.qa-local/agent-team-usage.json` ไม่เก็บ raw account IDs ลง Git
+ตรวจ account usage ก่อน dispatch/งานแพงและทุก checkpoint กัน reserve 15 percentage points ตามนโยบาย ใช้ทั้ง Codex และ Claude โดยนับ usage ของแต่ละแพลตฟอร์มแยกกัน; มากกว่า 15% ถึง 30% ทำทีละงานเล็ก, <=15% หยุดรับงานใหม่ บันทึก checkpoint และไม่เปิดงานใหม่ ค่าไม่ทราบต้องระบุ unknown ไม่ใช่ 100% การกัน quota เป็นประมาณการ ไม่ใช่ hard lock และต้องเผื่อ account usage จาก task อื่น บันทึก snapshot ส่วนตัวใน `.qa-local/agent-team-usage.json` ไม่เก็บ raw account IDs ลง Git
 
 เมื่อรอข้อมูล VPS ให้ทำ local coding/docs/test ที่ dependencies ผ่าน แต่ heavy Quant บน VPS ใช้เพดานปฏิบัติงานหนึ่งงานและต้องผ่าน health/capability ปัจจุบันก่อน Scheduler QD-1/QS-1 ยังไม่ใช่ความสามารถที่ setup agents ทำให้พร้อมใช้
 
