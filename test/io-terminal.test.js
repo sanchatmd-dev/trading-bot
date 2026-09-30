@@ -166,6 +166,14 @@ test('writebackDrainPlan derives the drain need from the two vm sysctls',()=>{
   assert.throws(()=>writebackDrainPlan(),unavailable);
 });
 
+test('MIN_DRAIN_MS is below the smallest host-required drain: a drain under 5,020 ms never fits (I4)',()=>{
+  // Expire 0 and the smallest non-zero writeback (10 ms) need 2000 + 0 + 2 x 10 + 2500 + 500 = 5,020 ms.
+  const plan=terminalDrainMs=>writebackDrainPlan({expireSource:'0\n',writebackSource:'1\n',terminalDrainMs});
+  assert.deepEqual(plan(MIN_DRAIN_MS),{expireMs:0,writebackMs:10,requiredMs:5020,fits:false});
+  assert.equal(plan(5019).fits,false);assert.equal(plan(5020).fits,true);
+  assert.ok(MIN_DRAIN_MS<5020);
+});
+
 test('drain recorder keeps counts, maxima, first clean time, and the first and last 16 points',()=>{
   const recorder=createDrainRecorder();
   assert.deepEqual(recorder.snapshot(),{polls:0,maxDirty:0,maxWriteback:0,firstZeroMs:null,series:[]});

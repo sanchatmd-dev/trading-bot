@@ -3,7 +3,7 @@ import {randomUUID} from 'node:crypto';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {constants} from 'node:fs';
-import {readFile,stat,lstat,unlink,open,realpath} from 'node:fs/promises';
+import {readFile,stat,lstat,unlink,open,realpath,statfs} from 'node:fs/promises';
 import {hash,canonical} from '../pine-bridge/source.js';
 import {assertIoStorageDevice,readCgroupIo,readCgroupIoLimits,systemdIoProperties,validateIoControls} from './io-controls.js';
 import {stopQuantUnit} from './process-supervisor.js';
@@ -18,9 +18,10 @@ const rootDefault=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../
 const fail=code=>Object.assign(new Error(code),{code});
 const FREEZE_BUDGET_MS=2000,MAX_TERMINAL_READS=32;
 const VM_EXPIRE_FILE='/proc/sys/vm/dirty_expire_centisecs',VM_WRITEBACK_FILE='/proc/sys/vm/dirty_writeback_centisecs';
+const EXT4_SUPER_MAGIC=0xEF53;
 const BOUND_FIELDS=['unitName','group','pid','procStartTicks','cgroupInode','deviceId','deviceInode','invocationId'];
 const SEAM_NAMES=['spawn','command','readFile','stat','lstat','unlink','stopUnit','clock','sleep',
-  'syncDirectory','realpath'];
+  'syncDirectory','realpath','statfs'];
 // Terminal readback failures never throw past terminate(); they select the unknown-final fallback.
 // `diagnostic` is fallback evidence only (integers, booleans, enums). It is never digested or stored.
 const terminalFail=(reason,diagnostic)=>Object.assign(fail('QUANT_IO_TELEMETRY_UNAVAILABLE'),{reason},
@@ -103,7 +104,8 @@ function command(file,args,timeoutMs=2000){
 
 /** FTR-1c commit barrier. Parent-owned: opens the StorageBudget root read-only, checks it is still the directory
  * identified before the freeze, and fsyncs that descriptor. On ext4 this forces the running jbd2 transaction.
- * Linux only. The launcher races it against BARRIER_BUDGET_MS and never waits for a late settle.
+ * Linux only. The launcher races it against BARRIER_BUDGET_MS and never waits for a late settle. It relies on
+ * ext4, so a drained launch also requires the storage root to be ext4 (requireExt4Root).
  */
 export async function syncStorageDirectory(root,expected){
   const handle=await open(root,constants.O_RDONLY|constants.O_DIRECTORY|constants.O_NOFOLLOW);
@@ -137,6 +139,25 @@ async function readStorageRoot(io,storageRoot){
   return {dev:identity.dev,ino:identity.ino};
 }
 
+/** The barrier only means "journal commit forced" on ext4 (jbd2). Requires statfs(storage root).type to be
+ * EXT4_SUPER_MAGIC; a statfs error or any other filesystem fails closed with COMMIT_BARRIER_FAILED. Drained
+ * launches only: prepare() applies it before any reservation or spawn, and the terminal repeats it before the freeze.
+ */
+async function requireExt4Root(io,storageRoot){
+  let stats;
+  try{stats=await io.statfs(storageRoot);}catch{throw terminalFail('COMMIT_BARRIER_FAILED');}
+  if(stats?.type!==EXT4_SUPER_MAGIC)throw terminalFail('COMMIT_BARRIER_FAILED');
+}
+
+/** prepare() gate for a drained launch. Sysctls the drain option cannot cover, or a storage root that is not ext4,
+ * are host facts: refuse before the reservation and the spawn instead of burning the allowance at terminate time.
+ * The terminal still re-checks both because the host can drift after the launch.
+ */
+async function assertDrainHost(io,terminalDrainMs,storageRoot){
+  try{await readDrainPlan(io,terminalDrainMs);await requireExt4Root(io,storageRoot);}
+  catch{throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');}
+}
+
 /** Race the barrier against its budget. Resolves DONE, FAILED or TIMEOUT and never rejects; a late settle is swallowed. */
 function commitBarrier(io,storageRoot,identity){
   const work=(async()=>{await io.syncDirectory(storageRoot,identity);return 'DONE';})().catch(()=>'FAILED');
@@ -160,7 +181,7 @@ async function readMaxSectorsKb({io,approved}){
  * at most budgetMs, so unused drain allowance never lengthens it. With the drain on, a stop request also
  * aborts quiescence (STOP_REQUESTED); with the drain off the FTR-1 flow ignores it.
  * FTR-1c (drain only): before the freeze, the host writeback model must fit the drain option and the storage
- * root must be a real directory (none of these freezes); a stop request before the freeze wins. After the
+ * root must be a real directory on ext4 (none of these freezes); a stop request before the freeze wins. After the
  * freeze a parent-side directory fsync (commit barrier, BARRIER_BUDGET_MS at most) exposes child-owned
  * metadata, and the drain then needs 0/0 at least STAT_FRESH_MS after the barrier finished.
  * Returns the frozen measurement or throws with a reason. The unit stays frozen; the caller stops it.
@@ -195,6 +216,7 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
   if(terminalDrainMs>0){
     requiredDrainMs=(await readDrainPlan(io,terminalDrainMs)).requiredMs;
     rootIdentity=await readStorageRoot(io,storageRoot);
+    await requireExt4Root(io,storageRoot);
     // RD-4: a stop requested during the pre-freeze steps must never start a freeze.
     if(ctx.stopRequested())throw terminalFail('STOP_REQUESTED');
   }
@@ -312,6 +334,8 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
         {readBytes:second.readBytes,writeBytes:second.writeBytes}],
       fileDirty:0,fileWriteback:0,maxBioBytes:plan.maxBioBytes,rates,
       freezeMs:Math.round(freezeMs),elapsedMs:Math.round(io.clock()-started),
+      // statFreshMs is measured from frozenAt. The drained freshness floor runs from barrierDoneAt instead, so with
+      // the drain on statFreshMs is at least STAT_FRESH_MS plus barrierMs. It is conservative, never optimistic.
       drainMs,drainPolls:drain.snapshot().polls,statFreshMs:Math.round(second.atMs-frozenAt),
       // Not digested. Drained flow only, so the drain-off evidence keeps its exact key set.
       ...(terminalDrainMs>0?{barrierMs,requiredDrainMs}:{})});
@@ -361,7 +385,8 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
     stat:seams.stat??stat,lstat:seams.lstat??lstat,unlink:seams.unlink??unlink,
     stopUnit:seams.stopUnit??stopQuantUnit,clock:seams.clock??(()=>performance.now()),
     sleep:seams.sleep??(ms=>new Promise(resolve=>setTimeout(resolve,ms))),
-    syncDirectory:seams.syncDirectory??syncStorageDirectory,realpath:seams.realpath??realpath};
+    syncDirectory:seams.syncDirectory??syncStorageDirectory,realpath:seams.realpath??realpath,
+    statfs:seams.statfs??statfs};
   const approved=validateIoControls(ioControls);
   if(typeof python!=='string'||!python||typeof root!=='string'||!path.isAbsolute(root)||
     !Number.isSafeInteger(timeoutMs)||timeoutMs<100||timeoutMs>MAX_RUNTIME_MS||
@@ -390,7 +415,9 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
         '--property=TasksMax=16','--property=IOWeight=10',...systemdIoProperties(approved),
         '--property=Nice=10','--property=KillMode=control-group',
         // Drained units stay frozen after the deadline. If systemd thaws one first, it must SIGKILL, never SIGTERM.
-        ...(terminalDrainMs>0?['--property=KillSignal=SIGKILL']:[]),
+        // MemorySwapMax=0 keeps the long frozen window from swapping child pages out: swap I/O is charged to the
+        // child cgroup but is invisible to file_dirty and file_writeback.
+        ...(terminalDrainMs>0?['--property=KillSignal=SIGKILL','--property=MemorySwapMax=0']:[]),
         '--property=TimeoutStopSec=3','--property=RuntimeMaxSec='+Math.ceil(timeoutMs/1000),
         '--property=LimitCORE=0','--property=LimitNOFILE=64',
         '--setenv=OMP_NUM_THREADS=1','--setenv=OPENBLAS_NUM_THREADS=1',
@@ -590,7 +617,9 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
           child.stdin.end(inputPayload);
         },
         /** A stop requested while terminate() runs waits for it and shares its stop proof.
-         * It also aborts a running writeback drain within one poll, so emergency stop stays fast.
+         * It also aborts a running writeback drain, so emergency stop stays fast. During the drain it is seen within
+         * one poll (DRAIN_POLL_MS). During the commit barrier it is seen when the barrier ends, so a stop can take up
+         * to BARRIER_BUDGET_MS plus one poll. Before the freeze it wins and nothing is frozen.
          */
         async stop(){
           if(terminatePromise){stopRequested=true;return (await terminatePromise).stopProof;}
@@ -650,6 +679,7 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
         validateFoundationRequestV2(parsed.contract,{policy:parsed.policy});
       }else if(preparedPayload!==undefined)throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
       await assertIoStorageDevice(storageBudget.root,approved.device,{statter:host.stat,resolver:host.realpath});
+      if(terminalDrainMs>0)await assertDrainHost(host,terminalDrainMs,storageBudget.root);
       const pendingName='.pending-'+randomUUID();
       const reservation=await storageBudget.reserve({diskBytes:4096,tempBytes:4096,
         pendingName,purpose:'quant-io-readiness-v1'});

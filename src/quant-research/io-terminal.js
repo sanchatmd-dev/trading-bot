@@ -107,6 +107,10 @@ export function inspectMemoryWriteback(source){
  * The fixed terminal constants below are engine-hashed policy inputs (RD-2): capacity policy code imports them.
  */
 export const DRAIN_POLL_MS=500;
+// MIN_DRAIN_MS stays 5,000 because the capacity policy boundaries depend on it. The host-required drain is
+// BARRIER_BUDGET_MS + expire + 2 x writeback + STAT_FRESH_MS + DRAIN_POLL_MS, at least 5,020 ms (expire 0, writeback
+// 10 ms). Any drain below the host-required value ends DRAIN_UNDERSIZED at terminate time and, because the launcher
+// checks the same plan in prepare(), is refused before any reservation or spawn.
 export const MIN_DRAIN_MS=5000;
 export const MAX_DRAIN_MS=45000;
 export const STAT_FRESH_MS=2500;

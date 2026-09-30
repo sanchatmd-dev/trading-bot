@@ -13,6 +13,16 @@ export const QUANT_PROFILE_RUNTIME_PROTOCOL='profile-v2-provisional';
 export const quantIoUnitName=(jobId,operationId)=>
   'robot-quant-'+hash(canonical({jobId,operationId}))+'.service';
 const safe=value=>Number.isSafeInteger(value)&&value>=0;
+// Frozen commit age limits (server clock, transaction_timestamp() is the BEGIN). The terminal tail floor is
+// after-snapshot 1,000 + commit COMMIT_BOUND_MS 3,000 + kill slack 1,000. lock_timeout limits one wait but the
+// transaction takes four row locks in a row (singleton, job, ledger, launches), so waits of just under
+// COMMIT_LOCK_TIMEOUT_MS each could add up to 4 x 2,000. The transaction therefore also checks its own age:
+//   once the four locks are held: <= 3,000 - 1,000 = 2,000 ms (1,000 ms remain for the read, the UPDATE and COMMIT)
+//   right before COMMIT:          <= 3,000 -   500 = 2,500 ms (500 ms remain for the COMMIT flush)
+// An older transaction throws and rolls back, so a slow commit never lands late and the terminal falls back to the
+// crash charge. Only the COMMIT flush itself has no check; it is single-digit milliseconds on a healthy server.
+const COMMIT_LOCKS_HELD_MS=COMMIT_BOUND_MS-1000;
+const COMMIT_BEFORE_COMMIT_MS=COMMIT_BOUND_MS-500;
 function trustedSample(value,ready,unitName,devices){
   const group=value?.group;
   const segments=typeof group==='string'?group.split('/').slice(1):[];
@@ -78,6 +88,10 @@ export class QuantIoRuntime {
         await this.db.query(`SET LOCAL lock_timeout='${COMMIT_LOCK_TIMEOUT_MS}ms'`);
         await this.db.query(`SET LOCAL statement_timeout='${COMMIT_BOUND_MS}ms'`);
       }
+      // Server-side age check, never a JavaScript timer: a late COMMIT could race the crash CAS.
+      const withinAge=async limitMs=>(await this.db.query(
+        "SELECT clock_timestamp()-transaction_timestamp()<=$1::int*interval '1 millisecond' AS within",
+        [limitMs])).rows[0]?.within===true;
       const singleton=await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
       if(singleton.rowCount!==1)throw unavailable();
       const job=(await this.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[jobId])).rows[0];
@@ -96,7 +110,10 @@ export class QuantIoRuntime {
         ledgerRow.state.lease_token!==leaseToken)throw unavailable();
       if(active&&canonical(ledgerRow.state.devices)!==canonical(this.ledger.devices))throw unavailable();
       const intent=(await this.db.query('SELECT * FROM quant_io_launches WHERE job_id=$1 FOR UPDATE',[jobId])).rows;
-      return callback({job,ledgerRow,intent,now});
+      if(bounded&&!await withinAge(COMMIT_LOCKS_HELD_MS))throw unavailable();
+      const value=await callback({job,ledgerRow,intent,now});
+      if(bounded&&!await withinAge(COMMIT_BEFORE_COMMIT_MS))throw unavailable();
+      return value;
     });}catch(error){
       if(['QUANT_IO_LEASE_LOST','QUANT_IO_LAUNCH_UNCERTAIN','QUANT_IO_ACCOUNTING_UNAVAILABLE',
         'INVALID_IO_BUDGET_LEDGER'].includes(error?.code))throw error;

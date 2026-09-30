@@ -650,3 +650,117 @@ test('a held ledger row lock fails the frozen commit within about 2-3 s: COMMIT_
   assert.deepEqual(script.events,['terminate','committed','stop']);
   assert.equal(await launchState(),'STOP_PROVEN');
 });
+
+// ---- FTR-1c-D F5: the whole frozen commit transaction fits COMMIT_BOUND_MS, not only each statement ----
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+/** Waits until some backend is blocked on a row lock taken by the given FOR UPDATE statement on `table`. */
+async function lockWaiter(table,limitMs=8000){
+  const started=Date.now();
+  for(;;){
+    const {rows}=await second.query(`SELECT count(*)::int AS waiting FROM pg_stat_activity
+      WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE $1`,['%FROM '+table+' %FOR UPDATE%']);
+    if(rows[0].waiting>0)return;
+    if(Date.now()-started>limitMs)throw new Error('no backend waits for '+table);
+    await pause(10);
+  }
+}
+/** Holds a row lock in its own transaction until release() is called. */
+function holdRow(sql){
+  let release,held;
+  const acquired=new Promise(resolve=>{held=resolve;});
+  const released=new Promise(resolve=>{release=resolve;});
+  const done=second.transaction(async()=>{await second.query(sql);held();await released;});
+  return {acquired,release,done};
+}
+/** Waits for the frozen commit to fail. Returns the elapsed ms since `started`. */
+async function commitFailure(started,limitMs=9000){
+  while(!script.commitError&&Date.now()-started<limitMs)await pause(20);
+  assert.ok(script.commitError,'the frozen commit did not fail');
+  return Date.now()-started;
+}
+async function assertFrozenCommitFellBack(before,openGate,cancelling){
+  // Nothing was written by the failed commit: the ledger is exactly as before and the launch is still RELEASED.
+  assert.equal(script.commitError.code,'QUANT_IO_ACCOUNTING_UNAVAILABLE');
+  assert.equal(canonical(await ledgerState()),canonical(before));
+  assert.equal(await launchState(),'RELEASED');
+  assert.equal(script.events.includes('stop'),false);
+  openGate();
+  const cancelled=await cancelling;
+  assert.equal(cancelled.status,'CANCELLED');assert.equal(cancelled.proof,'UNKNOWN_FINAL_CHARGED');
+  const stored=await ledgerState();
+  assert.equal(stored.operations[0].status,'CRASHED');assert.deepEqual(stored.charged,allowance);
+  assert.equal(authorizations.filter(action=>action==='crash').length,1);
+  assert.equal(authorizations.includes('settle'),false);
+  assert.deepEqual(script.events,['terminate','committed','stop']);
+  assert.equal(await launchState(),'STOP_PROVEN');
+}
+
+test('two lock waits, each under lock_timeout, that together pass the age bound end unavailable with no ledger change',async()=>{
+  let openGate;
+  await armTerminal({gate:new Promise(resolve=>{openGate=resolve;})});
+  const before=await ledgerState();
+  // The frozen commit takes singleton, job, ledger, then launches. It waits about 1,150 ms for the ledger row and
+  // about 1,150 ms for the launch row: both under lock_timeout 2,000, but 2,300 ms of age passes the 2,000 limit.
+  const ledgerHolder=holdRow('SELECT 1 FROM quant_io_ledgers FOR UPDATE');
+  const launchHolder=holdRow('SELECT 1 FROM quant_io_launches FOR UPDATE');
+  await Promise.all([ledgerHolder.acquired,launchHolder.acquired]);
+  const started=Date.now();
+  const cancelling=runtime.cancel({ownerId:'owner-a',...args()});
+  let ledgerWait,launchWait;
+  try{
+    await lockWaiter('quant_io_ledgers');
+    const ledgerStarted=Date.now();
+    await pause(1150);ledgerHolder.release();
+    await lockWaiter('quant_io_launches');
+    ledgerWait=Date.now()-ledgerStarted;
+    const launchStarted=Date.now();
+    await pause(1150);launchHolder.release();
+    const elapsed=await commitFailure(started);
+    launchWait=Date.now()-launchStarted;
+    assert.ok(ledgerWait<2000&&launchWait<2000,'each lock wait stayed under lock_timeout: '+ledgerWait+' '+launchWait);
+    assert.ok(elapsed>=2300&&elapsed<4500,'commit failed after '+elapsed+' ms');
+  }finally{
+    ledgerHolder.release();launchHolder.release();await Promise.all([ledgerHolder.done,launchHolder.done]);
+  }
+  await assertFrozenCommitFellBack(before,openGate,cancelling);
+});
+
+test('a write phase that pushes the frozen commit past the age bound before COMMIT rolls back with no ledger change',async()=>{
+  let openGate;
+  await armTerminal({gate:new Promise(resolve=>{openGate=resolve;})});
+  const before=await ledgerState();
+  // Locks are free and the age check after them passes. The ledger UPDATE then stalls 2,700 ms (client side), so the
+  // transaction is 2,700 ms old right before COMMIT and must not commit late.
+  const query=db.query.bind(db);let stalled=0;
+  db.query=async(sql,params)=>{
+    if(String(sql).includes('UPDATE quant_io_ledgers')){stalled+=1;await pause(2700);}
+    return query(sql,params);
+  };
+  let cancelling;
+  try{
+    const started=Date.now();
+    cancelling=runtime.cancel({ownerId:'owner-a',...args()});
+    const elapsed=await commitFailure(started);
+    assert.ok(elapsed>=2700&&elapsed<6000,'commit failed after '+elapsed+' ms');
+    assert.equal(stalled,1);
+  }finally{db.query=query;}
+  await assertFrozenCommitFellBack(before,openGate,cancelling);
+});
+
+test('a frozen commit that finishes inside the age bound still settles; the age checks are frozen-commit only',async()=>{
+  const statements=[];
+  const query=db.query.bind(db);
+  db.query=(sql,params)=>{statements.push(String(sql));return query(sql,params);};
+  try{
+    await armTerminal();
+    statements.length=0;
+    const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+    assert.equal(cancelled.proof,'MEASURED_FINAL_SETTLED');
+  }finally{db.query=query;}
+  const checks=statements.map((sql,index)=>sql.includes('transaction_timestamp()')?index:-1).filter(index=>index>=0);
+  assert.equal(checks.length,2,'one check after the four locks, one right before COMMIT');
+  // First check sits right after the launches lock; the second right after the ledger UPDATE.
+  assert.equal(checks[0],statements.findIndex(sql=>sql.startsWith('SELECT * FROM quant_io_launches'))+1);
+  assert.equal(checks[1],statements.findIndex(sql=>sql.includes('UPDATE quant_io_ledgers'))+1);
+  assert.equal((await ledgerState()).operations[0].status,'SETTLED');
+});
