@@ -474,19 +474,22 @@ export class QuantPreflightService{
       created_at:row?.created_at??null};
   }
   /**
-   * Earliest legacy research holdout start for one owner and bot, on the open-time axis of the spot datasets.
+   * Earliest legacy research holdout start over every bot of one owner, on the open-time axis of the spot datasets.
+   * The scan is owner wide, not per bot: the BTCUSDT 1m bars are shared by all bots of an owner, so the legacy
+   * holdout of a sibling bot covers the same bars a boundary of this bot would open to development.
    * Legacy (QL-3A) bars are stamped with their close time (kline close plus one millisecond), the split indexes
    * that series, and the first holdout bar is index split.validation_end. Its open time is therefore
    * dataset.start_time + (validation_end - 1) minutes. A legacy row whose split cannot be read makes the check
-   * fail closed (usable differs from total).
+   * fail closed (usable differs from total), for a sibling bot too. Rows of other owners are never read: the
+   * query is parameterized and filtered by owner.
    */
-  legacyHoldout(owner,bot){
+  legacyHoldout(owner){
     return one(this.db,`SELECT count(*)::int total,count(*) FILTER(WHERE usable)::int usable,
       min(holdout) FILTER(WHERE usable) earliest FROM (
         SELECT COALESCE(s ~ '^[0-9]{1,6}$' AND t ~ '^[0-9]{1,15}$',FALSE) usable,
           CASE WHEN s ~ '^[0-9]{1,6}$' AND t ~ '^[0-9]{1,15}$' THEN t::bigint+(s::bigint-1)*60000 END holdout
         FROM (SELECT contract->'split'->>'validation_end' s,contract->'dataset'->>'start_time' t FROM quant_jobs
-          WHERE owner_id=$1 AND bot_id=$2 AND contract ? 'split') q) r`,[owner,bot]);
+          WHERE owner_id=$1 AND contract ? 'split') q) r`,[owner]);
   }
   /** Current registry entry for one of the owner's bots: a timestamp only, or a null value when none is registered. */
   getHoldoutBoundary(owner,botId){return guarded(async()=>{
@@ -496,15 +499,21 @@ export class QuantPreflightService{
     return this.holdoutView(bot,await readBoundary(this.db,owner,bot));
   });}
   /**
-   * Owner-only, write-once registration of the development/holdout boundary for one bot. The same value again is
-   * idempotent, a different value is refused, and a value later than the earliest existing legacy research holdout
-   * start for that bot is refused so that holdout stays unexposed. Nothing ever moves a boundary in V1.
+   * Owner-only, write-once registration of the development/holdout boundary for one bot (one row per owner, bot and
+   * market key). The same value again is idempotent and a different value is refused. Two more refusals keep the
+   * holdout unexposed. A value later than the current minute (the service clock, floored to the minute) is
+   * HOLDOUT_BOUNDARY_INVALID: the row is permanent, so a far-future value or a unit typo would remove the holdout
+   * for good. A value later than the earliest legacy research holdout start of any bot of the same owner is
+   * HOLDOUT_BOUNDARY_CONFLICT (an equal value is allowed), because the bars are shared across the owner's bots.
+   * Nothing ever moves a boundary in V1.
    */
   registerHoldoutBoundary(owner,body){return guarded(async()=>{
     keys(body,['bot_id','holdout_start_time']);
     const bot=this.account(body.bot_id);
     if(!isTime(body.holdout_start_time))throw fail('HOLDOUT_BOUNDARY_INVALID');
     const value=body.holdout_start_time;
+    // Checked with the other request validation, before any read or write. The clock is the service seam.
+    if(value>Math.floor(this.now()/MINUTE)*MINUTE)throw fail('HOLDOUT_BOUNDARY_INVALID');
     await this.ready();
     if(!this.db.isTransaction)throw fail('INGESTION_TRANSACTION_REQUIRED');
     await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
@@ -514,7 +523,7 @@ export class QuantPreflightService{
       if(existing.holdout_start_time!==value)throw fail('HOLDOUT_BOUNDARY_EXISTS',409);
       return {...this.holdoutView(bot,existing),registered:false};
     }
-    const legacy=await this.legacyHoldout(owner,bot);
+    const legacy=await this.legacyHoldout(owner);
     if(legacy.usable!==legacy.total||(legacy.earliest!==null&&value>legacy.earliest))
       throw fail('HOLDOUT_BOUNDARY_CONFLICT',409);
     const row=await one(this.db,`INSERT INTO quant_holdout_boundaries

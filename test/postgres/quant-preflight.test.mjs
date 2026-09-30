@@ -605,6 +605,11 @@ test('holdout boundary at enqueue: missing, later than the dataset end, or tampe
 
 const MAX_ALIGNED=253402300740000;
 const register=(owner,body,h=main)=>h.tx(()=>h.service.registerHoldoutBoundary(owner,body));
+/** An expected success: a refusal fails the test with an assertion that names the code. */
+const accepts=async(promise,name='registration')=>{
+  try{return await promise;}
+  catch(error){assert.fail(name+' was refused with '+error.code);}
+};
 const stored=(world)=>main.db.query('SELECT * FROM quant_holdout_boundaries WHERE owner_id=$1 AND bot_id=$2',[world.owner,world.bot]).then(result=>result.rows);
 
 test('holdout registry: owner-only, write-once, idempotent for the same value, minute aligned',async()=>{
@@ -638,16 +643,18 @@ test('holdout registry: owner-only, write-once, idempotent for the same value, m
   assert.deepEqual(audit.map(row=>JSON.parse(row.details)),[{bot_id:world.bot,holdout_start_time:value}]);
   // Same value again: idempotent, the original row (and creation time) is returned. Another value: refused, nothing moves.
   assert.deepEqual(await register(world.owner,body),{...first,registered:false});
-  for(const other of [value+MINUTE,value-MINUTE,MAX_ALIGNED])
+  for(const other of [value+MINUTE,value-MINUTE,START+MINUTE])
     await refuses(register(world.owner,{...body,holdout_start_time:other}),'HOLDOUT_BOUNDARY_EXISTS',409);
+  // The upper bound is checked with the request validation, ahead of the write-once rule.
+  await refuses(register(world.owner,{...body,holdout_start_time:MAX_ALIGNED}),'HOLDOUT_BOUNDARY_INVALID',400);
   assert.deepEqual(await stored(world),rows);
   assert.equal((await main.db.query("SELECT count(*)::int n FROM audit WHERE event='quant.holdout.registered' AND user_id=$1",[world.owner])).rows[0].n,1);
   const {registered,...view}=first;
   assert.equal(registered,true);
   assert.deepEqual(await main.tx(()=>main.service.getHoldoutBoundary(world.owner,world.bot)),view);
-  // Each bot has its own boundary; the top aligned value is valid.
-  const second=await register(world.owner,{bot_id:owned.bots[1],holdout_start_time:MAX_ALIGNED});
-  assert.equal(second.holdout_start_time,MAX_ALIGNED);
+  // Each bot has its own boundary: a sibling bot of the same owner registers its own value.
+  const second=await register(world.owner,{bot_id:owned.bots[1],holdout_start_time:value+60*MINUTE});
+  assert.equal(second.holdout_start_time,value+60*MINUTE);
   assert.deepEqual((await stored(world)).map(row=>row.holdout_start_time),[value]);
 });
 
@@ -673,7 +680,7 @@ test('holdout registry refuses a boundary later than a legacy research holdout s
   await refuses(register(world.owner,body(legacyStart(3000)+100*MINUTE)),'HOLDOUT_BOUNDARY_CONFLICT',409);
   assert.deepEqual(await stored(world),[]);
   // Equal to the legacy holdout start is allowed: the legacy holdout stays unexposed.
-  assert.equal((await register(world.owner,body(legacyStart(3000)))).holdout_start_time,legacyStart(3000));
+  assert.equal((await accepts(register(world.owner,body(legacyStart(3000))))).holdout_start_time,legacyStart(3000));
 
   // Several legacy rows: the earliest holdout start rules, whatever their status.
   const many=await fixtureWorld();
@@ -681,18 +688,18 @@ test('holdout registry refuses a boundary later than a legacy research holdout s
   await legacyJob(many,split(2800),{status:'FAILED'});
   await legacyJob(many,split(4000));
   await refuses(register(many.owner,{bot_id:many.bot,holdout_start_time:legacyStart(2800)+MINUTE}),'HOLDOUT_BOUNDARY_CONFLICT',409);
-  await register(many.owner,{bot_id:many.bot,holdout_start_time:legacyStart(2800)});
+  await accepts(register(many.owner,{bot_id:many.bot,holdout_start_time:legacyStart(2800)}));
 
   // A legacy dataset that starts later moves its holdout later.
   const later=await fixtureWorld();
   await legacyJob(later,split(3000,{start_time:START+5000*MINUTE}));
-  await register(later.owner,{bot_id:later.bot,holdout_start_time:START+7900*MINUTE});
+  await accepts(register(later.owner,{bot_id:later.bot,holdout_start_time:START+7900*MINUTE}));
   await refuses(register(later.owner,{bot_id:later.bot,holdout_start_time:START+8000*MINUTE}),'HOLDOUT_BOUNDARY_EXISTS',409);
   const laterOne=await fixtureWorld();
   await legacyJob(laterOne,split(3000,{start_time:START+5000*MINUTE}));
   await refuses(register(laterOne.owner,{bot_id:laterOne.bot,holdout_start_time:START+8000*MINUTE}),'HOLDOUT_BOUNDARY_CONFLICT',409);
 
-  // An unreadable split fails closed; a legacy row without a split, or of another bot or owner, is ignored.
+  // An unreadable split fails closed.
   for(const [name,contract] of [['text',split('x')],['missing index',{split:{warmup:1},dataset:{start_time:START}}],
     ['fraction',split(3000.5)],['no start',{split:split(3000).split,dataset:{}}],['null split',{split:null}],
     ['negative',split(-5)]]){
@@ -701,19 +708,130 @@ test('holdout registry refuses a boundary later than a legacy research holdout s
     await refuses(register(broken.owner,{bot_id:broken.bot,holdout_start_time:START+100*MINUTE}),'HOLDOUT_BOUNDARY_CONFLICT',409);
     assert.deepEqual(await stored(broken),[],name);
   }
-  const owned=await createAccounts(main.db,{botCount:2});
-  const first=await createWorld(main,{accounts:{owner:owned.owner,bot:owned.bots[0]},boundary:null});
-  const second=await createWorld(main,{accounts:{owner:owned.owner,bot:owned.bots[1]},boundary:null});
-  const foreign=await fixtureWorld();
-  await legacyJob(first,{version:'ql3a-research-job-v1',dataset:{start_time:START}});
-  await legacyJob(first,split(3000),{bot:owned.bots[1],deployment:second.deploymentId});
-  await legacyJob(foreign,split(2000));
-  // Even a legacy row that names this bot under another owner does not restrict it (rows are matched on owner and bot).
-  await legacyJob(first,split(2000),{owner:foreign.owner});
-  await register(first.owner,{bot_id:first.bot,holdout_start_time:START+9000*MINUTE});
-  await refuses(register(second.owner,{bot_id:second.bot,holdout_start_time:legacyStart(3000)+MINUTE}),'HOLDOUT_BOUNDARY_CONFLICT',409);
+  // A legacy row without a split is ignored.
+  const noSplit=await fixtureWorld();
+  await legacyJob(noSplit,{version:'ql3a-research-job-v1',dataset:{start_time:START}});
+  await accepts(register(noSplit.owner,{bot_id:noSplit.bot,holdout_start_time:START+9000*MINUTE}));
   const untouched=await fixtureWorld();
-  assert.equal((await register(untouched.owner,{bot_id:untouched.bot,holdout_start_time:START+9000*MINUTE})).registered,true);
+  assert.equal((await accepts(register(untouched.owner,{bot_id:untouched.bot,holdout_start_time:START+9000*MINUTE}))).registered,true);
+});
+
+/** A registration through a service whose clock the test sets (the service's only time seam). */
+const registerAt=(clock,owner,body)=>main.tx(()=>main.serviceWith({clock:()=>clock}).registerHoldoutBoundary(owner,body));
+const auditRows=owner=>main.db.query("SELECT count(*)::int n FROM audit WHERE event='quant.holdout.registered' AND user_id=$1",[owner])
+  .then(result=>result.rows[0].n);
+
+test('legacy holdout conflict is owner wide: a legacy split of any bot of the owner limits every bot, other owners never do',async()=>{
+  const legacyStart=validationEnd=>START+(validationEnd-1)*MINUTE;
+  const owned=await createAccounts(main.db,{botCount:3});
+  const worlds=[];
+  for(const bot of owned.bots)worlds.push(await createWorld(main,{accounts:{owner:owned.owner,bot},boundary:null}));
+  const [a,b,c]=worlds;
+  const foreign=await createWorld(main,{boundary:null});
+  const body=(world,value)=>({bot_id:world.bot,holdout_start_time:value});
+  // Legacy rows of two sibling bots (the status does not matter), one without a split (ignored). Bot c has none of its own.
+  await legacyJob(a,split(3000));
+  await legacyJob(b,split(2800),{status:'FAILED'});
+  await legacyJob(a,{version:'ql3a-research-job-v1',dataset:{start_time:START}});
+  // Rows of another owner are never read, whatever their holdout start or split, and even when they name a bot of this owner.
+  await legacyJob(foreign,split(1000));
+  await legacyJob(foreign,split('x'));
+  await legacyJob(a,split(500),{owner:foreign.owner});
+  // Bot c has no legacy row: the earliest start of its siblings rules, and nothing is written by a refusal.
+  for(const later of [legacyStart(2800)+MINUTE,legacyStart(3000),legacyStart(3000)+100*MINUTE,START+9000*MINUTE])
+    await refuses(register(c.owner,body(c,later)),'HOLDOUT_BOUNDARY_CONFLICT',409);
+  // Bot a has an own legacy row (3000) but its sibling b holds an earlier one (2800): the earlier start rules.
+  for(const later of [legacyStart(2800)+MINUTE,legacyStart(3000),START+9000*MINUTE])
+    await refuses(register(a.owner,body(a,later)),'HOLDOUT_BOUNDARY_CONFLICT',409);
+  assert.equal((await main.db.query('SELECT count(*)::int n FROM quant_holdout_boundaries WHERE owner_id=$1',[owned.owner])).rows[0].n,0);
+  assert.equal(await auditRows(owned.owner),0);
+  // Equal to the earliest legacy start is allowed, earlier too. Registration stays per bot: one row for each bot.
+  assert.equal((await accepts(register(c.owner,body(c,legacyStart(2800))))).holdout_start_time,legacyStart(2800));
+  assert.equal((await accepts(register(a.owner,body(a,legacyStart(2800)-10*MINUTE)))).registered,true);
+  assert.equal((await accepts(register(b.owner,body(b,legacyStart(2800))))).registered,true);
+  const rows=(await main.db.query('SELECT bot_id,holdout_start_time FROM quant_holdout_boundaries WHERE owner_id=$1 ORDER BY bot_id',[owned.owner])).rows;
+  assert.deepEqual(rows,[[a,legacyStart(2800)-10*MINUTE],[b,legacyStart(2800)],[c,legacyStart(2800)]]
+    .map(([world,value])=>({bot_id:world.bot,holdout_start_time:value})));
+
+  // An unreadable split of a sibling bot fails closed for every bot of the owner, and only for that owner.
+  const pair=await createAccounts(main.db,{botCount:2});
+  const pairWorlds=[];
+  for(const bot of pair.bots)pairWorlds.push(await createWorld(main,{accounts:{owner:pair.owner,bot},boundary:null}));
+  const [first,second]=pairWorlds;
+  await legacyJob(second,split('x'));
+  await refuses(register(first.owner,body(first,START+100*MINUTE)),'HOLDOUT_BOUNDARY_CONFLICT',409);
+  assert.deepEqual(await stored(first),[]);
+  const clear=await createWorld(main,{boundary:null});
+  assert.equal((await accepts(register(clear.owner,body(clear,START+9000*MINUTE)))).registered,true);
+});
+
+test('holdout registry refuses a boundary later than the current minute of the service clock, ahead of every write',async()=>{
+  const minute=START+5000*MINUTE;
+  const world=await createWorld(main,{boundary:null});
+  const body=value=>({bot_id:world.bot,holdout_start_time:value});
+  const untouched=async()=>{
+    assert.deepEqual(await stored(world),[]);
+    assert.equal(await auditRows(world.owner),0);
+  };
+  // Later than the current minute: refused at any instant inside that minute, near or far, with no row and no audit record.
+  for(const clock of [minute,minute+1,minute+30000,minute+MINUTE-1])
+    for(const later of [minute+MINUTE,minute+2*MINUTE,minute+1000*MINUTE,MAX_ALIGNED])
+      await refuses(registerAt(clock,world.owner,body(later)),'HOLDOUT_BOUNDARY_INVALID',400);
+  await untouched();
+  // The default service clock (the real time) refuses the far future and the minute after next as well.
+  await refuses(register(world.owner,body(MAX_ALIGNED)),'HOLDOUT_BOUNDARY_INVALID',400);
+  await refuses(register(world.owner,body(Math.floor(Date.now()/MINUTE)*MINUTE+2*MINUTE)),'HOLDOUT_BOUNDARY_INVALID',400);
+  await untouched();
+  // A clock that runs behind the request: the same rule, so a boundary from the future is never stored.
+  await refuses(registerAt(minute-MINUTE,world.owner,body(minute)),'HOLDOUT_BOUNDARY_INVALID',400);
+  await untouched();
+
+  // The current minute itself is accepted whether the clock sits on it, 30 s into it or in its last millisecond;
+  // the next minute stays refused at the same instant and is accepted once the clock reaches it.
+  for(const [name,clock] of [['on the minute',minute],['30 s into the minute',minute+30000],['last millisecond',minute+MINUTE-1]]){
+    const each=await createWorld(main,{boundary:null});
+    const request=value=>({bot_id:each.bot,holdout_start_time:value});
+    await refuses(registerAt(clock,each.owner,request(minute+MINUTE)),'HOLDOUT_BOUNDARY_INVALID',400);
+    assert.deepEqual(await stored(each),[],name);
+    const first=await accepts(registerAt(clock,each.owner,request(minute)),name);
+    assert.equal(first.registered,true,name);
+    assert.equal(first.holdout_start_time,minute,name);
+    const rows=await stored(each);
+    assert.deepEqual(rows.map(row=>row.holdout_start_time),[minute],name);
+    assert.equal(await auditRows(each.owner),1,name);
+    // Same value again: idempotent at the same instant and later. Later than the clock: refused, and the row is untouched.
+    assert.deepEqual(await accepts(registerAt(clock,each.owner,request(minute)),name),{...first,registered:false},name);
+    assert.deepEqual(await accepts(registerAt(clock+MINUTE,each.owner,request(minute)),name),{...first,registered:false},name);
+    await refuses(registerAt(clock,each.owner,request(minute+MINUTE)),'HOLDOUT_BOUNDARY_INVALID',400);
+    await refuses(registerAt(clock+MINUTE,each.owner,request(minute+MINUTE)),'HOLDOUT_BOUNDARY_EXISTS',409);
+    assert.deepEqual(await stored(each),rows,name);
+    assert.equal(await auditRows(each.owner),1,name);
+  }
+  // Once the clock has moved on, the next minute is a valid first registration.
+  assert.equal((await accepts(registerAt(minute+MINUTE+30000,world.owner,body(minute+MINUTE)))).registered,true);
+  assert.deepEqual((await stored(world)).map(row=>row.holdout_start_time),[minute+MINUTE]);
+});
+
+test('holdout registry upper bound is checked before the readiness, transaction and scope checks',async()=>{
+  const owned=await createAccounts(main.db,{botCount:1});
+  const world=await createWorld(main,{accounts:{owner:owned.owner,bot:owned.bots[0]},boundary:null});
+  const stranger=await createAccounts(main.db);
+  const future=Math.floor(Date.now()/MINUTE)*MINUTE+2*MINUTE;
+  const body={bot_id:world.bot,holdout_start_time:future};
+  const untouched=async()=>{
+    assert.deepEqual(await stored(world),[]);
+    assert.equal(await auditRows(world.owner),0);
+  };
+  // Outside a transaction a future value is INVALID, not INGESTION_TRANSACTION_REQUIRED; the same value in range still needs the transaction.
+  await refuses(main.service.registerHoldoutBoundary(world.owner,body),'HOLDOUT_BOUNDARY_INVALID',400);
+  await refuses(main.service.registerHoldoutBoundary(world.owner,{...body,holdout_start_time:START+2700*MINUTE}),'INGESTION_TRANSACTION_REQUIRED');
+  // A bot the caller does not own: a future value is INVALID, not NOT_FOUND, so the bound is no bot existence oracle.
+  await refuses(register(stranger.owner,body),'HOLDOUT_BOUNDARY_INVALID',400);
+  await refuses(register(world.owner,{...body,bot_id:stranger.bot}),'HOLDOUT_BOUNDARY_INVALID',400);
+  await refuses(main.service.registerHoldoutBoundary(world.owner,{...body,bot_id:stranger.bot}),'HOLDOUT_BOUNDARY_INVALID',400);
+  await untouched();
+  assert.deepEqual(await stored({owner:stranger.owner,bot:stranger.bot}),[]);
+  assert.equal(await auditRows(stranger.owner),0);
 });
 
 /** Moves a fixture job between statuses with the lease columns each status requires (one RUNNING or STOPPING row per database). */
@@ -1227,6 +1345,11 @@ test('an unexpected failure is one fixed code without any message, and rolls the
   assert.equal((await enqueue(main,world)).status,'QUEUED');
   // The registry write is rolled back with its audit row too: nothing is registered when the audit write fails.
   const open=await createWorld(main,{boundary:null});
+  // The registry reads the clock for its upper bound: a throwing or unusable clock is the same fixed code, nothing is written.
+  for(const name of ['clock','badClock'])
+    await assert.rejects(main.tx(()=>cases[name].registerHoldoutBoundary(open.owner,{bot_id:open.bot,holdout_start_time:START+90*MINUTE})),
+      error=>hygiene(error,{code:'PREFLIGHT_UNAVAILABLE',status:503}),name);
+  assert.deepEqual(await stored(open),[]);
   await assert.rejects(main.tx(()=>cases.audit.registerHoldoutBoundary(open.owner,{bot_id:open.bot,holdout_start_time:START+90*MINUTE})),
     error=>hygiene(error,{code:'PREFLIGHT_UNAVAILABLE',status:503}));
   assert.deepEqual(await stored(open),[]);
