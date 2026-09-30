@@ -155,9 +155,17 @@ test('holdout boundary foreign keys reject unknown owner or bot and protect refe
 const PLAN_CHECK='quant_preflight_jobs_plan_sha_check';
 test('plan_json CHECK accepts the exact canonical UTF-8 bytes',async()=>{
   const {ids,deploymentId}=await fixture();
+  // One literal backslash (two in this source, one in the value) that canonical JSON writes as two. Nothing else in
+  // the text needs a backslash escape, so a ::bytea cast would not fail on the text but would hash other bytes.
+  const backslashOnly=canonical({version:'historical-preflight-v1',path:'a\\b'});
+  assert.equal([...backslashOnly].filter(character=>character==='\\').length,2);
   const plans=[
     canonical({version:'historical-preflight-v1',foundation:{kind:'PREFLIGHT',budget:{candidates:1}},snapshot:{signal:{mode:'EVALUATOR'}}}),
     canonical({note:'caf\u00e9 \u4e2d\u6587 \ud83d\ude00',version:'historical-preflight-v1'}),
+    // The canonical bytes hold a double quote, a backslash and an escaped control character. The CHECK hashes
+    // convert_to(plan_json,'UTF8'), the exact stored text bytes; a ::bytea cast would reject or reinterpret them (R2 audit A1).
+    canonical({version:'historical-preflight-v1',title:'say "hi"',path:'a\\b',note:'a\nb'}),
+    backslashOnly,
     '{}',
     canonical({padding:'x'.repeat(300000)})
   ];
