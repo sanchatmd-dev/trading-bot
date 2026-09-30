@@ -425,6 +425,7 @@ retain the same local/staging scope.
 
 | As of | งาน / สถานะ | Actual hours | Remaining estimate | Blocker / next action |
 | --- | --- | --- | --- | --- |
+| 2026-09-30 | Wave M: PF-2 R3 (`25f2ff0`) และ R4 (`872a36a`) ผ่าน local review และ push; S3a prepare-under-lease design เสร็จ (design only); W2 กำลังทำในเครื่อง ยังไม่ commit | Active hours unknown; wall-clock: R4 coder + audit 3,168 วินาที (ประมาณ 53 นาที), R4 tester 484 วินาที, lane 3 (R3 test fixes + S3a design panel สาม agent) 6,284 วินาที (ประมาณ 1 ชั่วโมง 45 นาที); เวลาเหล่านี้เป็นเวลา agent ไม่ใช่ชั่วโมงพัฒนา | คง baseline 410–720 ชั่วโมง; ไม่ลดงบจากจำนวน agents; observed throughput: สาม lane xhigh พร้อมกันใช้ 5-hour window ประมาณ 24 points ต่อชั่วโมง | R5 รอ W3; R6 รอ owner decisions สองข้อเรื่อง holdout registry; R7 รอ PROFILE v2 enrollment และ operations packet; S3b-1 ต่อด้วย S3b-2/S3b-3 และ S3c; retention apply step ยังไม่ได้รัน; root หยุด dispatch จน window reset 14:30Z |
 | 2026-09-28 | [Data capability/ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md): local UI/API, shared-worker BACKFILL, page recovery และ retention ผ่าน; staging ดึงจริง 2,100 แท่งและผ่าน bounded calibration | Active hours unknown; Node 318 checks 53.178 วินาที; focused 22 checks 15.532 วินาที; HTTP 2 checks 6.127 วินาที; browser ผ่าน; load window 300 วินาที มี nonidle 173.210 วินาที และเก็บ rework ไว้ | คง baseline เพราะ active hours ยังไม่ครบ; ไม่มีเวลาเก็บแท่งสดเพิ่มสำหรับรอบวิศวกรรมนี้ | ต่อ expanded admission, I/O measurement และ heavy paths ที่เหลือ; คงเพดาน 10K รวม warm-up และยังไม่ปิด QD-1/QS-1 ทั้ง phase |
 | 2026-09-28 | [Recovery/storage/staging](QD_QS_RECOVERY_STAGING_2026-09-28.md): physical crash/restart และ bounded isolated rollout ผ่าน | Active hours unknown; final recovery/storage checks 15.687 วินาที; PG recovery 2.564 วินาที; monitor warm-up 3 + baseline 30 + impact 60 samples; รวม rework ตาม checkpoint | คงงบ baseline; ไม่แปลง test duration หรือเวลารอ quota เป็น engineering hours | ต่อ capability/UI, scheduler-backed backfill, sustained headroom และ expanded-budget validation โดยไม่รอข้อมูลสด; QD-1/QS-1 ยังไม่ปิดทั้ง phase |
 | 2026-09-28 | [QD-1/QS-1 worker](QD_QS_WORKER_CHECKPOINT_2026-09-28.md): adapter จริง, SPT/Paper state, supervisor/health และ offline migration | Active hours unknown; Node 299 ผ่าน 74.385 วินาที; Python 105 ผ่าน 35.21 วินาที; PG adapter 8 ผ่าน 132.004 วินาที; Linux smoke 5 checks ผ่าน | คง baseline QD-1 48–80 / QS-1 24–48 ชั่วโมงเป็นข้อมูลตั้งต้น ไม่ใช่ประมาณการคงเหลือใหม่ | ใช้ข้อมูลเดิม ไม่รอแท่งใหม่; ต่อ cold recovery, staging/headroom และ storage budgets ก่อนเพิ่ม capacity; smoke ไม่ใช่ full staging rollout |
@@ -443,6 +444,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-09-30 | PF-2 R3/R4 push, S3a design panel (Fable pilot ครั้งที่สอง) และบันทึก wave M | Local code + CI เท่านั้น ไม่มี deploy/migration/staging; 5-hour window 6% ใช้แล้ว ณ 10:34Z เป็น 54% ณ 12:32Z, weekly all-models 2% เป็น 8%, weekly Fable 0% เป็น 4%; ไม่ปรับงบชั่วโมงและไม่อ้าง speedup |
 | 2026-09-28 | ปิด physical cold-recovery drill ของ isolated worker และตรวจผลกระทบช่วงสั้น | ใช้ frozen baseline เดิม; resume หลัง SIGKILL ตรงกับผลเดิมและคิด evaluation ครั้งเดียว ไม่เปิด holdout หรือ campaign ใหม่ เก็บ initial monitor breach/watcher failure เป็น rework; capacity คงเดิม และยังไม่ปรับชั่วโมงรวมจากข้อมูลเวลาไม่ครบ |
 | 2026-09-28 | เชื่อม research worker และพิสูจน์ state/resource controls | ใช้ข้อมูลเดิมและ bounded Linux smoke; weekly remaining 68% ก่อนเริ่ม / 61% หลัง cleanup, short window unknown, reserve 20pp; ลบ test DB และหยุด local PG แล้ว; ไม่เปิด capacity, campaign หรือ production rollout |
 | 2026-09-28 | เริ่ม QD-1/QS-1 foundation หลัง PF-1 engineering `cf8913d` | ล็อก contract แล้วให้สอง coder ทำคู่ขนานพร้อม audit; ตรวจ local PG และปิด runtime หลังจบ; weekly remaining 71% ก่อนเริ่ม / 68% ตอน integration, short window unknown, reserve 20pp; ไม่หักชั่วโมงจากจำนวน agents |
@@ -671,3 +673,40 @@ its own audit; PF-2 R3 (the service and holdout registry, in progress), then R4 
 R6; wiring step W2, then W3 to W6 and the W7 Linux proof, which carries the
 FTR-1c-D Linux coverage; heavy-path S3 and S3c. The 410–720-hour baseline and
 existing contingency are unchanged; this slice is not a forecast change.
+
+## PF-2 R3 and R4, S3a design and wave M checkpoint — 2026-09-30
+
+Local slices `25f2ff0` (PF-2 R3: the preflight service, holdout boundary registry,
+trusted-source adapters and scheduler authorize callback) and `872a36a` (PF-2 R4:
+the `pf2_replay` protocol mode, widened supervisor I/O allowlist and supervised
+runner glue) are pushed; both are library code with no route, worker or process
+wiring, and nothing is deployed. R3 passed isolated PostgreSQL 42/42, 16/16 and
+1/1, and R4 passed pytest 104 and focused Node 141 (1 Linux-only skip); the full
+unit suite is 684 tests with 681 pass, 0 fail and 3 skipped for both. Independent
+audits and testers accepted both slices (R3 with test-only fixes, applied). CI is
+9/9 green for `872a36a` and for `25f2ff0`. The QS
+heavy-path S3a prepare-under-lease design is complete as a design only, with four
+owner decisions pending; wiring step W2 is in progress locally and not committed;
+the owner-run apply step for the aged readiness pair is prepared and audited but
+not run, so the storage retention gate stays open.
+
+Measured intervals, all wall-clock: wave M was dispatched about 10:50-11:00 UTC in
+three lanes. The R4 coder plus audit took 3,168 s (about 53 min) and the R4 tester
+484 s; lane 3 (the R3 test fixes plus the S3a design panel of three agents) took
+6,284 s (about 1 h 45 min). The shared 5-hour usage window went from 6% used at
+10:34 UTC to 54% used at 12:32 UTC; the weekly all-models counter went from 2% to
+8% and the weekly counter of the second-opinion model (Fable) from 0% to 4%.
+Observed throughput: three concurrent xhigh lanes consumed about 24 points of the
+5-hour window per hour, so root held further dispatch until the window resets at
+14:30 UTC. The S3a design panel was the second Fable pilot task (the alternative
+designer; the judge scored it 18 of 25 against 21 of 25 and adopted ten of its
+ideas). Shared counters do not attribute cost to an agent or a step. No engineering
+hours are booked and no speedup is claimed.
+
+Next work: PF-2 R5 (worker, scheduler and recovery wiring) after wiring slice W3;
+R6 (routes) after the two owner decisions on the holdout registry; R7 (staging)
+after a durable trusted PROFILE v2 enrollment and the owner-authorized operations
+packet; heavy-path S3b-1, then S3b-2 and S3b-3 in one commit, then S3c; W2 to W6
+and the W7 Linux proof; the owner-run retention apply step. The 410–720-hour
+baseline and existing contingency are unchanged; this slice is not a forecast
+change.
