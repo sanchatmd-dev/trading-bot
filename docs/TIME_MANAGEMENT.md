@@ -594,3 +594,25 @@ and CI wiring of the real-Python driver tests. The readiness retention cleanup
 still waits for real age expiry at 2026-09-30 13:53:52 Asia/Bangkok. The
 410–720-hour baseline and existing contingency are unchanged; this slice is not a
 forecast change.
+
+## QS-1 B1 recovery and PF-2 R1 checkpoint — 2026-09-30
+
+Local slices `4b7d174` (CI), `e8e1920` and `bce4015` (QS-1 B1 recovery) and
+`516b624` (PF-2 R1) are pushed; nothing is deployed. See the
+[record](QD_QS_B1_RECOVERY_PF2_R1_CHECKPOINT_2026-09-30.md).
+
+Measured intervals, all wall-clock: read-only scheduler and PF-2 runtime reviews
+about 23:48-00:06 UTC; wave F (B1 and R1 build, verification and fix rounds) about
+00:14-01:17 UTC; wave G (R1 hardening and B1 follow-up) about 01:18-01:50 UTC, then
+root checks until about 01:55 UTC. The shared 5-hour usage window went from 1% to
+8% used over the reviews, 8% to 23% over wave F and 23% to 29% over wave G and the
+root checks; the weekly all-models counter went from 16% to 19%. Shared counters do
+not attribute cost to an agent or a step. The agents ran under the owner-approved
+temporary elevated tier. No engineering hours are booked and no speedup is claimed.
+
+Next work: owner decisions on FTR-1c (with the B3 tail margin and a 70 s cap) and
+PF-2 OD-1 to OD-5; then the B2 abort path and B4 policy-pinned terminal parameters
+before product wiring, and PF-2 R2 and R3 after OD-2 and OD-3. The readiness
+retention cleanup still waits for real age expiry at 2026-09-30 13:53:52
+Asia/Bangkok. The 410–720-hour baseline and existing contingency are unchanged;
+this slice is not a forecast change.

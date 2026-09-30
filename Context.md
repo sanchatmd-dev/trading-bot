@@ -22,7 +22,7 @@ or a collection deadline while a persistent Risk Manager guard blocks entries.
 Local PF-2 engineering now has a development-only immutable plan contract,
 using current 10K/V1 limits. A development-only Python stateful replay core (S1,
 V1 only, not full Risk Manager parity) now exists locally, but there is no runtime
-historical replay or admission yet; cost-inclusive V2 parity remains required. A development-only trusted resolver (S3, `5006feb`) and Node replay driver with a result envelope (S4, `9a340af`) are pushed and not wired to any runtime ([S3 record](docs/PF2_S3_RESOLVER_CHECKPOINT_2026-09-30.md), [S4 record](docs/PF2_S4_REPLAY_DRIVER_CHECKPOINT_2026-09-30.md)). This work runs alongside
+historical replay or admission yet; cost-inclusive V2 parity remains required. A development-only trusted resolver (S3, `5006feb`) and Node replay driver with a result envelope (S4, `9a340af`) are pushed and not wired to any runtime ([S3 record](docs/PF2_S3_RESOLVER_CHECKPOINT_2026-09-30.md), [S4 record](docs/PF2_S4_REPLAY_DRIVER_CHECKPOINT_2026-09-30.md)). A pure plan builder and envelope validator (R1, `516b624`) follow; PF-2 staging waits for trusted PROFILE v2 enrollment. This work runs alongside
 QD-1/QS-1 runtime and I/O acceptance. See the
 [PF-2 checkpoint](docs/PF_2_CONTRACT_CHECKPOINT_2026-09-29.md).
 
@@ -55,7 +55,8 @@ remains. One supervised Linux case then ran that stop path on the real PROFILE
 child; the first frozen read failed the writeback gate, so the unknown-final
 charge was kept and measured settlement on Linux is not yet proven. A local
 follow-up (FTR-1b, `54a9fde`) adds an opt-in writeback drain, off by default and
-untested on Linux; see the [writeback drain record](docs/QD_QS_FTR1B_WRITEBACK_DRAIN_2026-09-29.md). See the
+untested on Linux; see the [writeback drain record](docs/QD_QS_FTR1B_WRITEBACK_DRAIN_2026-09-29.md). Offline recovery now
+handles a parent crash mid-terminal instead of wedging the queue (`e8e1920`; [record](docs/QD_QS_B1_RECOVERY_PF2_R1_CHECKPOINT_2026-09-30.md)). See the
 [FTR-1 and PF-2 S1 checkpoint](docs/QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md)
 and the [Linux integration record](docs/QD_QS_FTR1_LINUX_INTEGRATION_2026-09-29.md).
 Worker/public V2 admission and complete cumulative I/O enforcement remain open. Finalizer checks do
