@@ -648,6 +648,8 @@ research datasets use timeframe/stage budgets. Historical Preflight precedes own
 Run; a saved-setting proposal never applies itself. Signal history comes from a
 supported evaluator **or** validated fixed-input CSV. Price data is still required
 for Bridge protection and execution. All Bots are currently stopped by the owner.
+PF-2 is amber because development-only local slices exist; they are not wired to
+any runtime, and nothing new is deployed.
 
 ```mermaid
 flowchart TD
@@ -664,7 +666,7 @@ flowchart TD
     EVAL --> SIGNALS
 
     U --> PF1["✅ PF-1 engineering<br/>Risk Manager venue/cost/consistency and UI"]
-    PF1 --> PF["PF-2 historical replay <=50K<br/>PF-3 readiness; PF-4 owner proposals<br/>V2 evaluator parity gate"]
+    PF1 --> PF["PF-2 historical replay: local S1/S3/S4/R1 done, not wired<br/>Staging waits for PROFILE v2 enrollment; target <=50K<br/>PF-3 readiness; PF-4 owner proposals; V2 parity gate"]
     DATA --> PF
     SIGNALS --> PF
     PF --> OWNER["Owner reviews settings and starts Paper Bot"]
@@ -675,7 +677,7 @@ flowchart TD
     DB --> SNAP["Freeze Bot / strategy / inputs<br/>Policy / capital / dataset / costs"]
     DATA --> SNAP
     SIGNALS --> SNAP
-    SNAP --> QS["✅ QD/QS baseline, cancel and child timeout in staging<br/>One global heavy slot; current 10K/1m<br/>Remaining fault gates open"]
+    SNAP --> QS["✅ QD/QS baseline, cancel and child timeout in staging<br/>One global heavy slot; current 10K/1m<br/>Local: mid-terminal crash recovery; FTR-1c in progress<br/>Remaining fault gates open"]
     QS --> OPT["✅ One 100-candidate QL-3A run completed<br/>NO_VALID_CANDIDATE; holdout unopened"]
     OPT --> LIB[("QR-1 Research Library planned<br/>Immutable results, including failed runs")]
     OPT --> VALID{"Candidate + export validation pass?"}
@@ -693,8 +695,8 @@ flowchart TD
     classDef partial fill:#fff1d5,stroke:#b77900,color:#573a00;
     classDef planned fill:#e9eef7,stroke:#71829d,color:#243348;
     class AI,PF1,DATA scoped;
-    class CAP,QS,OPT,MAIL partial;
-    class PF,LIB,PACKAGE,PORT,COMP,BEST,FOLLOW planned;
+    class CAP,QS,OPT,MAIL,PF partial;
+    class LIB,PACKAGE,PORT,COMP,BEST,FOLLOW planned;
 ```
 
 ### Owner-requested follow-up diagram
@@ -721,6 +723,16 @@ flowchart TD
 ```
 
 ## Change log
+
+### 2026-09-30 — Target system diagram status refresh
+
+Documentation only. In the target system diagram, the PF-2 node is now amber
+because development-only local slices exist (S1 `cda2857`, S3 `5006feb`, S4
+`9a340af`, R1 `516b624`); they are not wired to any runtime, and PF-2 staging waits
+for trusted PROFILE v2 enrollment. The QD/QS node now names the local recovery
+after a crash mid-terminal (`e8e1920`) and the owner-approved FTR-1c work in
+progress; remaining fault gates stay open. No structure, gate or estimate changed;
+nothing is deployed.
 
 ### 2026-09-30 — QS-1 B1 recovery, scheduler review and PF-2 R1 (local)
 
