@@ -333,7 +333,7 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 
 | Work | Current evidence and scope | Remaining gate / next action |
 | --- | --- | --- |
-| PF-2 staging continuation | [Local holdout and W3 checkpoint](PF2_W3_LOCAL_CHECKPOINT_2026-09-30.md): owner approved staging-only activation after gates and strictest shared sibling holdout. Holdout service suite passes 47/47; W3 runtime passes 43/43, W5 authority passes 4/4, and full Node passes 728 with three skipped. Independent source audits found no remaining blocker. No deploy or activation. | Close the precise stale-engine queue regression; S3b-2/S3b-3 implementation is active, followed by independent S3c and existing W/R dependencies; add durable trusted PROFILE V2 completion/persistence before R7, because provisional CANCELLED output cannot satisfy enrollment. |
+| PF-2 staging continuation | [Local holdout and W3 checkpoint](PF2_W3_LOCAL_CHECKPOINT_2026-09-30.md): owner approved staging-only activation after gates and strictest shared sibling holdout. Holdout service suite passes 47/47; W3 runtime passes 43/43, W5 authority passes 4/4, and full Node passed 728 with three skipped at that checkpoint. Independent source audits found no remaining blocker. The [enrollment checkpoint](PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md) then wired API, worker and measured PROFILE enrollment locally, and the PROFILE authority and stale-engine queue checks pass five in the [S3/W6 checkpoint](PF2_S3_W6_LOCAL_CHECKPOINT_2026-10-01.md). The WIP commit `f52d4be` failed CI; `258e865` repairs it, `3742961` fixes the E2 measured settlement race and `338d91b` shares one V2 PROFILE stop acknowledgement authority (CI 9/9 at `3ce7e32`, `3742961` and `338d91b`; full local Node 764 pass, 0 fail, 3 skipped before the E2 fix). No deploy or activation. | E2 follow-up (veto enrollment when a settled I/O operation has a stop reason, charge terminal runtime in the unknown-final fallback, unsafe clock totals); measure the D6 prepare+BEGIN p99 under contention on Linux, which blocks W-INT and staging; grant the staging role table UPDATE privilege for `LOCK TABLE`; add the missing proof tests (R6-14, R5-19, R5-21, R5-23, S3b-9, W3-4); finish and test the W7 diagnostic helper; then the reviewed [Linux/staging packet](PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md). Durable trusted PROFILE V2 enrollment has local measured-settlement code and still needs Linux proof before R7; provisional CANCELLED output cannot satisfy enrollment. |
 | Project agent team | Local role setup, bounded QD/QS coder assignments and independent audit; one commander, at most three children, usage checkpoints. | Continue bounded QD/QS gates; team setup does not grant production authority. |
 | Time Management | Primary execution-time document includes the worker integration checkpoint; baseline estimates retained because complete active-work timing is unavailable. | Record measured verification durations separately from engineering hours; no new collection campaign. |
 | R-0 | Baseline inventory and observed schema 14 recorded. | SMTP 550 remediation and confirmed delivery remain operational follow-ups; old observations are not current health checks. |
@@ -395,7 +395,7 @@ inside workflow step 3, not an additional automatic optimization cycle.
 | ID | Deliverable | Completion evidence | Current status |
 | --- | --- | --- | --- |
 | PF-1 | Static Risk Manager consistency check and point-in-time sizing preview. Resolve owner/Bot policy and capital on the server; distinguish hypothetical drafts from saved settings. | Accepted/capped/rejected fixtures agree with worker rules; verified venue filters, fees, reservations and reduce-only targets are represented. Unknown data cannot become a pass. Preview causes no policy mutation. | Paper/public-filter engineering passed in [PF-1C](PF_1C_CHECKPOINT_2026-09-28.md); active Bot rollout acceptance remains gated. V1 is unchanged and V2 requires explicit evidence/producer rollout. No Run approval follows from a hypothetical preview. |
-| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | [Local plan contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and five focused checks completed; current plan uses 10K/V1 scope. The [isolated cost-v2 order finalizer](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) passed 12 Python checks and 17 Node/Python vectors. The [S1 Python stateful replay core](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md) (`cda2857`, development-only, V1 `paper-close-v1`, fresh state, 10K bars including warm-up) passed 51 new tests, the full `quant_lab` suite (182) and Node oracle parity on 9 scripted, 1 daily-loss lift and 2 real-SPT cases, with an independent audit accepting after fixes; it is not full Risk Manager or position parity and V2 is refused. Trusted resolver (S3) done at `5006feb` and Node driver/result envelope (S4) done at `9a340af` (both pushed, development-only, not wired to any runtime; [S3 record](PF2_S3_RESOLVER_CHECKPOINT_2026-09-30.md), [S4 record](PF2_S4_REPLAY_DRIVER_CHECKPOINT_2026-09-30.md)); the R1 plan builder and envelope validator is done at `516b624` and CI runs the real-Python tests (`4b7d174`); the R2 preflight schema and migration hook is done at `07728ad` ([record](QS_FTR1C_INT_LINUX_PROOF_2026-09-30.md)) and owner decisions OD-1 to OD-5 are approved; R3 (`25f2ff0`: the preflight service, the owner-registered write-once holdout boundary registry, job-scoped read-only trusted-source adapters and the scheduler authorize callback) and R4 (`872a36a`: the `pf2_replay` protocol mode, the widened supervisor I/O allowlist and the supervised runner glue) are done as pushed, development-only library code with no route, worker or process wiring; the PF-2 and foundation engine hashes rotate at the next deploy. R3b (`ad93d7e`, pushed) implements the two owner-approved holdout rules: the legacy-holdout conflict check covers every legacy research job of the owner across all bots (equal allowed; a malformed split of any sibling bot fails closed; other owners never read; registration stays per bot) and a boundary later than the current minute is refused with `HOLDOUT_BOUNDARY_INVALID` before any read or write (isolated PostgreSQL 45/45, 16/16, 1/1; independent audit accepted; CI 9/9 green at `a40aa51`). Remaining: wiring slice W3 first; R6 (routes) after W3 because the API needs the capacity-policy loader, with the owner-approved strictest shared sibling boundary implemented locally; R5 (worker, scheduler and recovery wiring) after W3, with S3b-2/S3b-3 and S3c before it; R7 (staging) waits for a durable trusted PROFILE v2 enrollment and the owner-authorized operations packet; the Linux I/O-controls terminal path for `pf2_replay` is not proved; optional CSV (S2), research engine-hash list integration and the 50K maximum remain pending. Implement and prove cost-model V2 historical evaluator parity before admitting V2 research; do not reuse V1 parity as V2 evidence. |
+| PF-2 | Bounded Historical Preflight for a supported evaluator or bound signal CSV. Replay Bridge, policy, costs and capital over development data. | Reproducible immutable inputs, causal closed-bar replay, account/guard continuity, cancellation/resource limits and auditable results; no holdout access or order execution. | [Local plan contract](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md) and five focused checks completed; current plan uses 10K/V1 scope. The [isolated cost-v2 order finalizer](QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md) passed 12 Python checks and 17 Node/Python vectors. The [S1 Python stateful replay core](QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md) (`cda2857`, development-only, V1 `paper-close-v1`, fresh state, 10K bars including warm-up) passed 51 new tests, the full `quant_lab` suite (182) and Node oracle parity on 9 scripted, 1 daily-loss lift and 2 real-SPT cases, with an independent audit accepting after fixes; it is not full Risk Manager or position parity and V2 is refused. Trusted resolver (S3) done at `5006feb` and Node driver/result envelope (S4) done at `9a340af` (both pushed, development-only, not wired to any runtime; [S3 record](PF2_S3_RESOLVER_CHECKPOINT_2026-09-30.md), [S4 record](PF2_S4_REPLAY_DRIVER_CHECKPOINT_2026-09-30.md)); the R1 plan builder and envelope validator is done at `516b624` and CI runs the real-Python tests (`4b7d174`); the R2 preflight schema and migration hook is done at `07728ad` ([record](QS_FTR1C_INT_LINUX_PROOF_2026-09-30.md)) and owner decisions OD-1 to OD-5 are approved; R3 (`25f2ff0`: the preflight service, the owner-registered write-once holdout boundary registry, job-scoped read-only trusted-source adapters and the scheduler authorize callback) and R4 (`872a36a`: the `pf2_replay` protocol mode, the widened supervisor I/O allowlist and the supervised runner glue) are done as pushed, development-only library code with no route, worker or process wiring; the PF-2 and foundation engine hashes rotate at the next deploy. R3b (`ad93d7e`, pushed) implements the two owner-approved holdout rules: the legacy-holdout conflict check covers every legacy research job of the owner across all bots (equal allowed; a malformed split of any sibling bot fails closed; other owners never read; registration stays per bot) and a boundary later than the current minute is refused with `HOLDOUT_BOUNDARY_INVALID` before any read or write (isolated PostgreSQL 45/45, 16/16, 1/1; independent audit accepted; CI 9/9 green at `a40aa51`). Remaining: wiring slice W3 first; R6 (routes) after W3 because the API needs the capacity-policy loader, with the owner-approved strictest shared sibling boundary implemented locally; R5 (worker, scheduler and recovery wiring) after W3, with S3b-2/S3b-3 and S3c before it; R7 (staging) waits for a durable trusted PROFILE v2 enrollment and the owner-authorized operations packet; the Linux I/O-controls terminal path for `pf2_replay` is not proved; optional CSV (S2), research engine-hash list integration and the 50K maximum remain pending. Implement and prove cost-model V2 historical evaluator parity before admitting V2 research; do not reuse V1 parity as V2 evidence. As of 2026-10-01 the entries at the end of this document record local W3, W4, W5, W6, R5, R6 and E1 to E4 evidence, the CI failure of the WIP commit `f52d4be` and its repair (`258e865`, `3742961`, `338d91b`; CI 9/9 at `3ce7e32`, `3742961` and `338d91b`); the remaining gates are listed in the 2026-10-01 CI repair entry. |
 | PF-3 | Readiness report with signal/intent/fill/episode counts, rejection reasons, cash/exposure, pause periods and collection estimate. | Distinguishes configuration failure, insufficient activity, unavailable capability and readiness to start Paper. Estimates use a declared development window and assumptions; persistent pause gives no finite collection ETA. | Planned; after PF-2. |
 | PF-4 | Explainable setting proposals inside the owner's declared risk/exposure limits, with before/after preview and explicit save. | Deterministic calculations, effective-value provenance, stale-state detection and saved-policy confirmation. AI may explain calculations but is not the authoritative calculator. | Planned; after PF-1 through PF-3. |
 
@@ -1685,3 +1685,62 @@ Scope is policy and documentation only. One documentation lookup confirmed the
 role-file keys; no project worker, product code change, test, runtime action or
 deployment occurred. PF-2 work stays stopped at the owner's request; the CI
 repair plan and all existing gates are unchanged.
+
+## 2026-10-01 — PF-2 CI repair, E2 settlement fix and shared stop acknowledgement
+
+The owner resumed PF-2 work on the Claude root after the Codex handoff. The wave
+ran from about 20:30Z to 22:20Z on 2026-09-30 UTC (2026-10-01 in Thailand) and
+pushed `96b0e15` (Fable 5.1 permanent Claude roles, documentation), `258e865`
+(CI repair), `3ce7e32` (CI annotation of failing PostgreSQL tests), `3742961`
+(E2 enrollment settlement fix) and `338d91b` (shared V2 PROFILE stop
+acknowledgement authority plus a deadline test). No deploy, migration, staging
+activation or VPS action occurred; the PF-2 staging API stays off.
+
+CI: the WIP checkpoint `f52d4be` failed (Quant and Safety resolver sort, 19
+PostgreSQL tests). For `258e865`, Quant Windows/Ubuntu, Safety Windows/Ubuntu,
+container and gate passed; the PostgreSQL job failed once for an unknown cause,
+because its job logs need a signed-in viewer, and the next runs passed.
+`3ce7e32` and `3742961` pass 9/9 checks, including Windows and PostgreSQL. The
+result for `338d91b` is also 9/9.
+
+Root causes fixed in `258e865`: (1) a product regression: PF-2 wiring passed
+unusable dataset stores when the data capability was off, so the server did not
+start (`PREFLIGHT_CONFIGURATION_INVALID`, ten HTTP suites); stores now pass only
+when PF-2 is enabled, and enabled PF-2 without usable stores still fails closed.
+(2) `PF2_ENGINE_FILES` is sorted, the resolver closure checks align with the
+shared runtime manifest, the PF-2 21-file closure is pinned and one shared
+application boundary list is used. (3) The legacy synthetic foundation test used
+kind `PREFLIGHT` and now uses `BACKTEST`. (4) The Linux stop-proof failures came
+from a hard-coded Windows venv path and no Python in the CI PostgreSQL job;
+platform paths and `uv sync` in CI fix them. (5) The I/O guard and schema
+inventory tests were updated; each guard is still covered (mutants killed).
+
+E2 audit: an Opus auditor and a Fable second-opinion auditor independently found
+the same defect. The SERIALIZABLE settle took its snapshot before waiting for the
+scheduler lock, so a concurrent owner cancel discarded the measured settlement.
+`3742961` takes `LOCK TABLE` first (no retry), returns `UNSETTLED` from the
+durable re-read only when nothing settled, keeps clock high-water marks with a
+monotonic floor, binds authority at runtime construction and checks launch
+identity at finalize. The Opus re-audit accepted. Carry-note verification of
+`f52d4be` closed 20 of 23 items: R6-15 (startup) is fixed; W3-4 is accepted per
+contract F11 (a PAUSED V2 row cannot relaunch and is cancelled at claim) with its
+proof test pending; S3b-8 is closed because the deadline is enforced at every
+lease action before the runtime cap (test P13). `338d91b` removes the duplicate
+acknowledgement authority.
+
+Local evidence (CI flags, isolated local PostgreSQL): full Node 767 tests, 764
+pass, 0 fail, 3 skipped in 287 s, run before the E2 fix; enrollment PostgreSQL
+38/38; runtime-v2, foundation and recovery 106/106; producer and worker 11/11;
+io-runtime 57/57; io-ledger 10/10; preflight-schema 16/16. These are test
+durations, not engineering hours.
+
+Open: the E2 follow-up (veto enrollment when a settled I/O operation has a stop
+reason; charge terminal runtime in the unknown-final fallback; unsafe clock
+totals); the D6 prepare+BEGIN p99 under contention must be measured on Linux and
+blocks W-INT and staging; the staging role needs table UPDATE privilege for
+`LOCK TABLE`; proof tests R6-14, R5-19, R5-21, R5-23, S3b-9 and W3-4 are missing;
+the W7 diagnostic helper is still incomplete and untested; SQL receipt
+defense-in-depth (a schema change) is deferred; one PostgreSQL CI failure on
+`258e865` is unexplained. Claude usage: at resume 5-hour 6%, weekly all models
+13%, weekly Fable 7%; at 22:16Z 5-hour 66%, weekly 21%, weekly Fable 13%. No
+speedup or cost claim is made and the forecast is unchanged.

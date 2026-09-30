@@ -107,6 +107,11 @@ final envelope. Source evidence, OS telemetry and Python enrollment are syntheti
 test dependencies; this does not establish native Linux or private-source parity.
 PF-2 remains disabled on staging until final local acceptance and the
 [Linux/staging packet](docs/PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md) pass.
+The 2026-10-01 Claude root wave then repaired the CI failures of that checkpoint
+(`258e865`) and the E2 measured settlement race (`3742961`); CI passes 9/9 at
+`3ce7e32`, `3742961` and `338d91b`. The D6 prepare+BEGIN p99
+measurement on Linux still blocks W-INT and staging; the E2 follow-up and the
+missing proof tests remain open.
  
 Initial QL-1 through QL-4 deployment (2026-09-23, release `39590f7`): Quant Lab research workspace ran as an offline service using a dedicated Python environment. The authenticated Node.js proxy `/api/quant/*` and 4-tab studio UI (Backtest, Optimizer, Risk Preview; Pine Export unreleased) were deployed alongside Trading Control Panel v2. That release's recorded validation was Node 111/111, Quant 71/71, and `PAPER_ONLY`. The 2026-09-24 observed release and current limitations are recorded under Production below. Live trading remains strictly locked.
 
@@ -603,6 +608,11 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 - **Historical milestone at the 2026-09-22 release (current work is in Roadmap)**: **Risk Manager / Quant Lab alignment, SMTP Notification Diagnosis and PostgreSQL Password Rotation** — Schema 14, R-1 Targeted Exits, APP-3 Lifecycle, and APP-4 Quotas are fully deployed and verified live in production Paper forward mode. Next implementation work is the documented Bot policy snapshot, preview parity and operational pause scope; follow-up operations are SMTP diagnosis and scheduled PostgreSQL password rotation.
 
 PF-2 local update (2026-10-01): W3 runtime passes 43/43, W5 authority passes
-4/4 and the complete Node suite passes 728 with three skips. S3 prepare-under-lease
-and retention integration are in progress. Native Linux proof, durable PROFILE V2
-enrollment and staging activation remain separate gates; PF-2 API is still off.
+4/4 and the complete Node suite passed 728 with three skips at that checkpoint.
+Later on 2026-10-01 the Claude root repaired the CI failures of the `f52d4be` WIP
+checkpoint (`258e865`) and the E2 measured settlement race (`3742961`); the full
+local Node suite reports 764 pass, 0 fail and 3 skipped of 767 tests (run before
+the E2 fix), and CI passes 9/9 at `3ce7e32`, `3742961` and `338d91b`.
+Native Linux proof, the D6 prepare+BEGIN p99 measurement, durable PROFILE V2
+enrollment on Linux and staging activation remain separate gates; PF-2 API is
+still off.

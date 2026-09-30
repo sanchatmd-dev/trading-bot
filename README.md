@@ -17,7 +17,7 @@
 
 แผน **ตรวจ Risk Manager ก่อน Run Bot** ทำถึง [PF-1C engineering checkpoint](docs/PF_1C_CHECKPOINT_2026-09-28.md): venue filters, shared cost model V2, pending fees และ UI Saved/Draft/Bridge ผ่าน 319 checks ในเครื่อง, 30 checks ซ้ำบน staging แยก, browser จริง และ metadata refresh ต่อเนื่องเกิน 120 วินาทีแล้ว ยังไม่เปลี่ยน release/Bot เดิม รุ่น V1 คงเดิม; V2 Quant ต้องผ่าน evaluator parity ก่อนใช้งาน ผล preview ไม่ใช่คำอนุมัติ Run Bot ดู [Roadmap](docs/ROADMAP.md#approved-extension--readiness-before-run-bot)
 
-PF-2 ณ 2026-10-01 เชื่อม API, worker และ PROFILE enrollment พร้อม receipt แล้ว การทดสอบ local 10,000 แท่งผ่านตั้งแต่ BACKFILL จนได้ผล PF-2 โดยใช้ source/OS จำลองและ Python shim สำหรับ source ทดสอบ ยังไม่เปิดบน staging; รอ final regression และ Linux acceptance ตาม [checkpoint](docs/PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md) และ [ขั้นตอน staging](docs/PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md) ขอบเขตยังเป็น Spot/Paper 1m รวม warm-up ไม่ใช่ 50,000 แท่ง
+PF-2 ณ 2026-10-01 เชื่อม API, worker และ PROFILE enrollment พร้อม receipt แล้ว การทดสอบ local 10,000 แท่งผ่านตั้งแต่ BACKFILL จนได้ผล PF-2 โดยใช้ source/OS จำลองและ Python shim สำหรับ source ทดสอบ ยังไม่เปิดบน staging; รอ final regression และ Linux acceptance ตาม [checkpoint](docs/PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md) และ [ขั้นตอน staging](docs/PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md) ขอบเขตยังเป็น Spot/Paper 1m รวม warm-up ไม่ใช่ 50,000 แท่ง รอบ Claude root ในวันเดียวกันแก้ CI ของ WIP checkpoint `f52d4be` (`258e865`) และ E2 measured settlement race (`3742961`); CI ผ่าน 9/9 ที่ `3ce7e32`, `3742961` และ `338d91b` และ full Node local ผ่าน 764 ล้ม 0 ข้าม 3 ก่อนแก้ E2 งานค้างคือ E2 follow-up, proof tests ที่ขาด และการวัด D6 p99 บน Linux ซึ่ง block W-INT/staging
 
 Historical Preflight ใช้ราคา Spot จาก exchange API และ evaluator ที่ผ่านการตรวจ หรือ CSV สัญญาณจาก TradingView ที่ผูกกับ source/input snapshot จึงไม่ต้องต่อ TradingView MCP การรองรับ CSV ใช้จำลอง Risk Manager ของสัญญาณชุดเดิม; ไม่ได้ทำให้เปลี่ยน source inputs หรือรองรับ Pine ทุกตัวได้
 
@@ -424,7 +424,10 @@ License/subscription ยังควบคุมด้วย Admin ไม่ใ�
 fee-aware live ledger, broker-specific contract/sandbox tests, และขั้นตอน cancel/close/reconcile จริง
 ก่อนออก release ที่เปิด Live ได้ การล็อก Live เป็นมาตรการป้องกัน ไม่ได้หมายความว่างานเหล่านี้เสร็จแล้ว
 
-PF-2 local update (2026-10-01): W3 runtime passes 43/43, W5 authority passes
-4/4 and the complete Node suite passes 728 with three skips. S3 prepare-under-lease
-and retention integration are in progress. Native Linux proof, durable PROFILE V2
-enrollment and staging activation remain separate gates; PF-2 API is still off.
+PF-2 local update (2026-10-01): W3 runtime ผ่าน 43/43, W5 authority ผ่าน 4/4 และ
+full Node ผ่าน 728 ข้าม 3 ณ checkpoint นั้น ต่อมา Claude root แก้ CI ของ WIP
+checkpoint `f52d4be` (`258e865`) และ E2 measured settlement race (`3742961`); full
+Node local ล่าสุด 767 tests ผ่าน 764 ล้ม 0 ข้าม 3 (ก่อนแก้ E2) และ CI ผ่าน 9/9 ที่
+`3ce7e32`, `3742961` และ `338d91b` Native Linux proof, การวัด D6 p99 บน
+Linux, durable PROFILE V2 enrollment บน Linux และ staging activation ยังเป็น gate
+แยก; PF-2 API ยังปิด
