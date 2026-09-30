@@ -75,4 +75,11 @@ jobs:
       - run: uv sync --locked --all-extras
         working-directory: quant_lab
       - run: npm ci
-      - run: npm run test:postgres
+      - run: npm run test:postgres 2>&1 | tee postgres-test.log
+        shell: bash
+      # Job logs need a signed-in viewer; an annotation keeps the failing test names readable through the public API.
+      - if: failure()
+        shell: bash
+        run: |
+          summary=$(awk '/failing tests:/{found=1} found' postgres-test.log | grep -v -E '^[[:space:]]+at |^[[:space:]]*$' | head -80 | cut -c1-200 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
+          echo "::error title=PostgreSQL failing tests::${summary:-no failing test summary found}"
