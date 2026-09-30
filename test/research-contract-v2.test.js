@@ -467,13 +467,15 @@ function boundaryProblems(text){
  for(const pattern of FORBIDDEN)if(pattern.test(code))problems.push('forbidden '+pattern);
  return problems;
 }
+// A Windows checkout can turn line endings into CRLF; the boundary checks and their negative controls read LF text.
+const moduleText=async()=>(await fs.readFile(moduleFile,'utf8')).replace(/\r\n/g,'\n');
 test('import boundary: only source.js, foundation-contract.js and foundation-contract-v2.js (strictJsonV2) are imported',async()=>{
- const text=await fs.readFile(moduleFile,'utf8');
+ const text=await moduleText();
  assert.deepEqual(boundaryProblems(text),[]);
  assert.deepEqual(Object.keys(ALLOWED_IMPORTS).sort(),['../pine-bridge/source.js','./foundation-contract-v2.js','./foundation-contract.js']);
 });
 test('import boundary checker detects an extra import, a node builtin, a wider binding, and clock, random or process use',async()=>{
- const text=await fs.readFile(moduleFile,'utf8'),tail="import {strictJsonV2} from './foundation-contract-v2.js';\n";
+ const text=await moduleText(),tail="import {strictJsonV2} from './foundation-contract-v2.js';\n";
  assert.ok(text.includes(tail));
  const cases={
   'extra import':text.replace(tail,tail+"import {D} from '../money.js';\n"),
