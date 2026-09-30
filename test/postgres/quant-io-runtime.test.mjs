@@ -30,19 +30,34 @@ const fixtureLauncher=(sampleOverride,readyOverride,terminal=null)=>({spawnPrepa
       invocationId:'1'.repeat(32)}):{unitName,group,cgroupInode:23,invocationId:'1'.repeat(32)}),
     async sample(){return sampleOverride?sampleOverride(sample):sample;},
     release(){assert.equal(released,false);released=true;},
-    async stop(){stops++;terminal?.events.push('stop');return {unitName,launcherClosed:true,startRegistered:true,
-      pendingStartsExcluded:true,unitStopped:true,stops};}};
+    // terminal.join models the real handle: a stop during terminate() joins it and shares its stop proof.
+    async stop(){
+      if(terminal?.join&&terminal.promise&&!terminal.settled){
+        terminal.stopRequested=true;return (await terminal.promise).stopProof;
+      }
+      return rawStop();
+    }};
+  const rawStop=()=>{stops++;terminal?.events.push('stop');return {unitName,launcherClosed:true,startRegistered:true,
+    pendingStartsExcluded:true,unitStopped:true,stops};};
   if(terminal)handle.terminate=request=>{
     terminal.calls++;
     terminal.promise??=(async()=>{
       terminal.events.push('terminate');
+      if(terminal.join){
+        // A drain that polls until the test lets it end (drainOver) or a stop request arrives. It gives up after 8 s so a
+        // missing stop shows as a failed assertion, never as a hung test run.
+        const giveUp=Date.now()+8000;
+        while(!terminal.stopRequested&&!terminal.drainOver&&Date.now()<giveUp)await new Promise(resolve=>setTimeout(resolve,5));
+        if(terminal.stopRequested){terminal.settled=true;return Object.freeze({stopProof:rawStop(),measured:false,reason:'STOP_REQUESTED'});}
+      }
       const frozen={...sample,readBytes:terminal.read??7,writeBytes:terminal.write??9,...terminal.patch};
       let committed=false;
       if(terminal.commit!==false)try{await request.commit(frozen,evidenceFor(frozen));committed=true;}
       catch(error){terminal.commitError=error;}
       terminal.events.push('committed');
       await terminal.gate;
-      const proof=await handle.stop();
+      const proof=terminal.join?rawStop():await handle.stop();
+      terminal.settled=true;
       return Object.freeze({stopProof:terminal.stopProof??proof,measured:terminal.measured??committed,
         postExit:terminal.postExit??'REMOVED',frozenSample:frozen,readbackEvidence:evidenceFor(frozen)});
     })();
@@ -763,4 +778,290 @@ test('a frozen commit that finishes inside the age bound still settles; the age 
   assert.equal(checks[0],statements.findIndex(sql=>sql.startsWith('SELECT * FROM quant_io_launches'))+1);
   assert.equal(checks[1],statements.findIndex(sql=>sql.includes('UPDATE quant_io_ledgers'))+1);
   assert.equal((await ledgerState()).operations[0].status,'SETTLED');
+});
+
+// ---- W2: pre-reserve host gate (L1), emergency stop, client-side age bound (L2), no-start terminal for an empty job ----
+const ledgerCount=async()=>(await db.query('SELECT count(*)::int AS n FROM quant_io_ledgers')).rows[0].n;
+const launchCount=async()=>(await db.query('SELECT count(*)::int AS n FROM quant_io_launches')).rows[0].n;
+const hostRefusal=cause=>Object.assign(Error('refused'),{code:'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED',
+  ioDiagnostic:Object.freeze({phase:'PRE_RESERVE',cause})});
+/** Runtime whose launcher answers the drain host gate. `gate` is called for every check. */
+function gatedRuntime(gate){
+  const base=fixtureLauncher();
+  launcher={spawnPrepared:base.spawnPrepared,assertDrainHost:gate};
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+}
+
+test('the drain host gate runs before the first write: a refusal leaves no ledger row and no launch row (L1)',async()=>{
+  let gates=0;
+  gatedRuntime(async()=>{gates++;throw hostRefusal('HOST_WRITEBACK_UNAVAILABLE');});
+  await assert.rejects(runtime.reserve({...args(),expectedRevision:0,allowance}),error=>{
+    assert.equal(error.code,'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
+    assert.deepEqual(error.ioDiagnostic,{phase:'PRE_RESERVE',cause:'HOST_WRITEBACK_UNAVAILABLE'});return true;
+  });
+  assert.equal(gates,1);assert.equal(await ledgerCount(),0);assert.equal(await launchCount(),0);assert.equal(spawned,0);
+  assert.equal((await db.query('SELECT status FROM quant_foundation_jobs')).rows[0].status,'RUNNING');
+  // Another failure of the gate has the same fixed code and no detail of its own.
+  gatedRuntime(async()=>{throw Object.assign(Error('secret /srv/path'),{code:'EIO'});});
+  await assert.rejects(runtime.reserve({...args(),expectedRevision:0,allowance}),error=>{
+    assert.equal(error.code,'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
+    assert.equal(error.ioDiagnostic,undefined);assert.equal(String(error.message).includes('secret'),false);return true;
+  });
+  assert.equal(await ledgerCount(),0);assert.equal(await launchCount(),0);
+  // Nothing was reserved, so the job can be cancelled with a no-start proof: ACK, no charge, no ledger row.
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.deepEqual(cancelled,{status:'CANCELLED',proof:'NO_START_PROVEN'});
+  assert.equal(await ledgerCount(),0);assert.equal(await launchCount(),0);
+  // A passing gate changes nothing: the reserve then runs exactly as before.
+  await freshJob('io-runtime-gate');
+  gatedRuntime(async()=>{gates++;});
+  const {state}=await runtime.reserve({...args(),expectedRevision:0,allowance});
+  assert.equal(state.operations[0].status,'RESERVED');assert.equal(gates,2);
+  await runtime.cancel({ownerId:'owner-a',...args()});
+});
+
+test('a launcher with a drain policy but no drain host gate is refused before any write; drain 0 and a raw launcher pass (I4)',async()=>{
+  const base=fixtureLauncher();
+  const block=drain=>Object.freeze({version:'quant-io-terminal-policy-v1',runtime_max_ms:70000,terminal_drain_ms:drain,
+    tail_margin_ms:5000});
+  const build=terminalConfig=>{
+    launcher={spawnPrepared:base.spawnPrepared,...(terminalConfig?{terminalConfig}:{})};
+    runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  };
+  build(block(20000));
+  await assert.rejects(runtime.assertHost(),error=>{
+    assert.equal(error.code,'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');assert.equal(error.ioDiagnostic,undefined);return true;
+  });
+  await assert.rejects(runtime.reserve({...args(),expectedRevision:0,allowance}),
+    {code:'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED'});
+  assert.equal(await ledgerCount(),0);assert.equal(await launchCount(),0);assert.equal(spawned,0);
+  assert.equal((await db.query('SELECT status FROM quant_foundation_jobs')).rows[0].status,'RUNNING');
+  // Without a drain there is no host gate to owe; a launcher with no terminal block is the raw FTR-1 flow.
+  for(const terminalConfig of [block(0),null]){
+    build(terminalConfig);
+    assert.equal(await runtime.assertHost(),undefined,JSON.stringify(terminalConfig));
+  }
+  // A launcher that owes the gate and has it is asked exactly once per check.
+  let gates=0;
+  launcher={spawnPrepared:base.spawnPrepared,terminalConfig:block(20000),assertDrainHost:async()=>{gates++;}};
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.assertHost();assert.equal(gates,1);
+});
+
+test('a job with no launch row and no operation ends with the no-start proof; any other launch row keeps the quarantine',async()=>{
+  // A ledger row without operations (ledger.open committed, the reserve never did): no-start proof and ACK.
+  await ledger.open({jobId:claimed.job_id,leaseToken:claimed.lease_token});
+  assert.equal((await ledgerState()).operations.length,0);
+  const empty=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.deepEqual(empty,{status:'CANCELLED',proof:'NO_START_PROVEN'});
+  assert.equal((await ledgerState()).operations.length,0);assert.deepEqual((await ledgerState()).charged,{read_bytes:0,write_bytes:0});
+  // Another operation's launch row is not proof about this operation: STOPPING, unresolved, nothing acknowledged.
+  await freshJob('io-runtime-other-op');
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});
+  const other=await runtime.cancel({ownerId:'owner-a',...args(),operationId:'operation-00002'});
+  assert.deepEqual(other,{status:'STOPPING',proof:'UNCONFIRMED'});
+  assert.equal(await launchState(),'INTENT_RECORDED');
+  assert.equal((await db.query('SELECT status FROM quant_foundation_jobs')).rows[0].status,'STOPPING');
+});
+
+test('emergencyStop without a handle only records the id; with a handle it stops at once and the terminal never freezes',async()=>{
+  assert.equal(await runtime.emergencyStop({...args()}),null);
+  assert.equal(runtime.emergency.has(claimed.job_id+':'+operationId),true);
+  assert.equal(await ledgerCount(),0);assert.equal(await launchCount(),0);
+  runtime.emergency.clear();
+  await armTerminal({join:true});
+  const proof=await runtime.emergencyStop(args());
+  assert.equal(proof.unitStopped,true);assert.deepEqual(script.events,['stop']);
+  await runtime.emergencyStop(args());// repeatable
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.deepEqual(cancelled,{status:'CANCELLED',proof:'UNKNOWN_FINAL_CHARGED'});
+  assert.equal(script.calls,0,'terminate() is never called after an emergency');
+  assert.equal(script.events.includes('terminate'),false);assert.equal(script.events.includes('committed'),false);
+  const stored=await ledgerState();
+  assert.equal(stored.operations[0].status,'CRASHED');assert.deepEqual(stored.charged,allowance);
+  assert.equal(stored.operations[0].last.devices[0].read_bytes,3,'no frozen observation was committed');
+  assert.equal(await launchState(),'STOP_PROVEN');
+  assert.equal(runtime.emergency.size,0);
+});
+
+test('an emergency during the terminal joins terminate(): one stop, no frozen commit, unknown-final charge (T-L4)',async()=>{
+  await armTerminal({join:true});
+  const cancelling=runtime.cancel({ownerId:'owner-a',...args()});
+  const deadline=Date.now()+8000;
+  while(!script.events.includes('terminate')&&Date.now()<deadline)await pause(5);
+  assert.deepEqual(script.events,['terminate']);
+  await pause(40);
+  const at=Date.now();
+  const proof=await runtime.emergencyStop(args());
+  assert.equal(proof.unitStopped,true);
+  const cancelled=await cancelling;
+  assert.ok(Date.now()-at<1500,'ended within a poll and the fallback transactions');
+  assert.deepEqual(cancelled,{status:'CANCELLED',proof:'UNKNOWN_FINAL_CHARGED'});
+  assert.equal(script.calls,1);assert.deepEqual(script.events,['terminate','stop']);
+  const stored=await ledgerState();
+  assert.equal(stored.operations[0].status,'CRASHED');assert.deepEqual(stored.charged,allowance);
+  assert.equal(stored.operations[0].last.devices[0].read_bytes,3);
+  assert.equal(await launchState(),'STOP_PROVEN');
+  assert.equal((await db.query('SELECT status FROM quant_foundation_jobs')).rows[0].status,'CANCELLED');
+  assert.equal(runtime.emergency.size,0);
+});
+
+test('a drain that finishes normally is unaffected by the join model: measured settle (T-L4 control)',async()=>{
+  await armTerminal({join:true,drainOver:true});
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.deepEqual(cancelled,{status:'CANCELLED',proof:'MEASURED_FINAL_SETTLED'});
+  assert.deepEqual(script.events,['terminate','committed','stop']);
+  assert.deepEqual((await ledgerState()).charged,{read_bytes:7,write_bytes:9});
+});
+
+// ---- W2 L2: the frozen commit also counts the client clock (pool checkout, BEGIN round trip) ----
+/** Runtime database that delays the first transaction (a slow pool checkout) and the first ledger UPDATE, and counts the
+ * server-side age checks. Armed after armTerminal(), so the first transaction is the frozen commit's. */
+function slowClientDb({checkoutMs=0,updateStallMs=0}){
+  const seen={ageChecks:0,transactions:0};
+  let stalled=false;
+  runtime.db={get isTransaction(){return db.isTransaction;},
+    async query(sql,params){
+      const text=String(sql);
+      if(text.includes('transaction_timestamp()'))seen.ageChecks++;
+      if(updateStallMs&&!stalled&&text.includes('UPDATE quant_io_ledgers')){stalled=true;await pause(updateStallMs);}
+      return db.query(sql,params);
+    },
+    async transaction(callback){
+      seen.transactions++;
+      if(seen.transactions===1&&checkoutMs)await pause(checkoutMs);
+      return db.transaction(callback);
+    }};
+  return seen;
+}
+
+test('a slow pool checkout before BEGIN fails the frozen commit at the first age check: no server check, no ledger change (L2)',async()=>{
+  let openGate;
+  await armTerminal({gate:new Promise(resolve=>{openGate=resolve;})});
+  const before=await ledgerState();
+  // The transaction starts 2,100 ms late on the client clock: the server-side age is still tiny, so only the client
+  // clock can catch it. It is over the 2,000 ms limit at the first check.
+  const seen=slowClientDb({checkoutMs:2100});
+  const started=Date.now();
+  const cancelling=runtime.cancel({ownerId:'owner-a',...args()});
+  const elapsed=await commitFailure(started);
+  assert.ok(elapsed>=2100&&elapsed<5000,'commit failed after '+elapsed+' ms');
+  assert.equal(seen.ageChecks,0,'the client check fails before any server check');
+  await assertFrozenCommitFellBack(before,openGate,cancelling);
+});
+
+test('a pool checkout that passes the first check but not the pre-COMMIT limit still rolls back (L2)',async()=>{
+  let openGate;
+  await armTerminal({gate:new Promise(resolve=>{openGate=resolve;})});
+  const before=await ledgerState();
+  // 1,800 ms of checkout leaves the first check (2,000 ms) satisfied; the 800 ms UPDATE stall then puts the client
+  // clock at about 2,650 ms, over the 2,500 ms pre-COMMIT limit, while the server clock only reads about 830 ms.
+  const seen=slowClientDb({checkoutMs:1800,updateStallMs:800});
+  const started=Date.now();
+  const cancelling=runtime.cancel({ownerId:'owner-a',...args()});
+  const elapsed=await commitFailure(started);
+  assert.ok(elapsed>=2600&&elapsed<6000,'commit failed after '+elapsed+' ms');
+  assert.equal(seen.ageChecks,1,'the first check passed on both clocks; the second failed on the client clock alone');
+  await assertFrozenCommitFellBack(before,openGate,cancelling);
+});
+
+test('a checkout well inside the limits still settles; both clocks are checked twice (L2 control)',async()=>{
+  await armTerminal();
+  const seen=slowClientDb({checkoutMs:600});
+  const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.equal(cancelled.proof,'MEASURED_FINAL_SETTLED');
+  assert.equal(seen.ageChecks,2);
+  assert.equal((await ledgerState()).operations[0].status,'SETTLED');
+});
+
+test('a bounded transaction without an entry timestamp fails closed before any statement (L2)',async()=>{
+  const statements=[];
+  const query=db.query.bind(db);
+  db.query=(sql,params)=>{statements.push(String(sql));return query(sql,params);};
+  try{
+    await assert.rejects(runtime.locked(claimed.job_id,claimed.lease_token,async()=>{},{active:false,bounded:true}),
+      {code:'QUANT_IO_ACCOUNTING_UNAVAILABLE'});
+    await assert.rejects(runtime.locked(claimed.job_id,claimed.lease_token,async()=>{},
+      {active:false,bounded:true,enteredAt:Number.NaN}),{code:'QUANT_IO_ACCOUNTING_UNAVAILABLE'});
+  }finally{db.query=query;}
+  assert.deepEqual(statements,[]);
+});
+
+// ---- W2 T-P8: a held job row lock fails the frozen commit by lock_timeout, no late commit ----
+test('a held job row lock fails the frozen commit within about 2-3.5 s; the fallback follows the release; no late commit (T-P8)',async()=>{
+  let openGate;
+  await armTerminal({gate:new Promise(resolve=>{openGate=resolve;})});
+  // STOPPING first: runtime.cancel() would queue behind the holder on the job row before it ever reached the terminal.
+  await scheduler.cancel('owner-a',claimed.job_id);
+  const before=await ledgerState();
+  const holder=holdRow('SELECT 1 FROM quant_foundation_jobs FOR UPDATE');
+  await holder.acquired;
+  const started=Date.now();
+  const terminating=runtime.terminal(args());
+  let elapsed;
+  try{
+    elapsed=await commitFailure(started);
+    assert.ok(elapsed>=1500&&elapsed<3500,'commit failed after '+elapsed+' ms');
+    assert.equal(canonical(await ledgerState()),canonical(before));
+    assert.equal(await launchState(),'RELEASED');
+    assert.equal(script.events.includes('stop'),false);
+  }finally{
+    holder.release();await holder.done;
+  }
+  await assertFrozenCommitFellBack(before,openGate,terminating);
+  const stored=await ledgerState();
+  assert.equal(stored.revision,4,'reserve, bind, crash, crash acknowledgement: the failed commit added no revision');
+  assert.equal(stored.operations[0].last.devices[0].read_bytes,3,'the frozen sample never landed');
+});
+
+test('the server-side age check still catches a slow transaction when the client clock reads fast (L2)',async()=>{
+  let openGate;
+  await armTerminal({gate:new Promise(resolve=>{openGate=resolve;})});
+  const before=await ledgerState();
+  // The client clock is frozen for this test, so only clock_timestamp() - transaction_timestamp() can see the delay.
+  // The ledger UPDATE stalls 2,700 ms: the transaction is over the 2,500 ms limit right before COMMIT.
+  const realNow=performance.now.bind(performance);
+  const frozen=realNow();
+  Object.defineProperty(performance,'now',{value:()=>frozen,configurable:true,writable:true});
+  const query=db.query.bind(db);let stalled=0;
+  db.query=async(sql,params)=>{
+    if(String(sql).includes('UPDATE quant_io_ledgers')){stalled+=1;await pause(2700);}
+    return query(sql,params);
+  };
+  let cancelling;
+  try{
+    const started=Date.now();
+    cancelling=runtime.cancel({ownerId:'owner-a',...args()});
+    const elapsed=await commitFailure(started);
+    assert.ok(elapsed>=2700&&elapsed<6000,'commit failed after '+elapsed+' ms');
+    assert.equal(stalled,1);
+  }finally{
+    db.query=query;
+    Object.defineProperty(performance,'now',{value:realNow,configurable:true,writable:true});
+  }
+  await assertFrozenCommitFellBack(before,openGate,cancelling);
+});
+
+test('an inconsistent job (a launch row without an operation, or an operation without a launch row) is never a no-start proof',async()=>{
+  // Ledger open, no operation, but another operation has a launch row: not "nothing reserved".
+  await ledger.open({jobId:claimed.job_id,leaseToken:claimed.lease_token});
+  await db.query(`INSERT INTO quant_io_launches (job_id,operation_id,lease_token,unit_name,payload_hash,state,created_at)
+    VALUES ($1,'operation-00002',$2,$3,$4,'STARTING',$5)`,
+    [claimed.job_id,claimed.lease_token,quantIoUnitName(claimed.job_id,'operation-00002'),QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH,now]);
+  const stray=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.deepEqual(stray,{status:'STOPPING',proof:'UNCONFIRMED'});
+  assert.equal((await db.query('SELECT status FROM quant_foundation_jobs')).rows[0].status,'STOPPING');
+  // An operation in the ledger without its launch row: the ledger holds an unresolved operation, so nothing is acknowledged.
+  await freshJob('io-runtime-orphan-op');
+  runtime=new QuantIoRuntime({db,ledger,scheduler,launcher,clock:()=>now});
+  await runtime.reserve({...args(),expectedRevision:0,allowance});
+  await db.query('ALTER TABLE quant_io_launches DISABLE TRIGGER USER');
+  try{await db.query('DELETE FROM quant_io_launches');}finally{await db.query('ALTER TABLE quant_io_launches ENABLE TRIGGER USER');}
+  assert.equal(await launchCount(),0);
+  // The runtime itself refuses (UNCONFIRMED); it does not rely on the SQL guard to reject an acknowledgement.
+  const orphan=await runtime.cancel({ownerId:'owner-a',...args()});
+  assert.deepEqual(orphan,{status:'STOPPING',proof:'UNCONFIRMED'});
+  assert.equal((await ledgerState()).operations[0].status,'RESERVED');
+  assert.equal((await db.query('SELECT status FROM quant_foundation_jobs')).rows[0].status,'STOPPING');
 });

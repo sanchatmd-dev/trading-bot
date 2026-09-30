@@ -13,16 +13,27 @@ export const QUANT_PROFILE_RUNTIME_PROTOCOL='profile-v2-provisional';
 export const quantIoUnitName=(jobId,operationId)=>
   'robot-quant-'+hash(canonical({jobId,operationId}))+'.service';
 const safe=value=>Number.isSafeInteger(value)&&value>=0;
-// Frozen commit age limits (server clock, transaction_timestamp() is the BEGIN). The terminal tail floor is
-// after-snapshot 1,000 + commit COMMIT_BOUND_MS 3,000 + kill slack 1,000. lock_timeout limits one wait but the
-// transaction takes four row locks in a row (singleton, job, ledger, launches), so waits of just under
-// COMMIT_LOCK_TIMEOUT_MS each could add up to 4 x 2,000. The transaction therefore also checks its own age:
+// Frozen commit age limits. The terminal tail floor is after-snapshot 1,000 + commit COMMIT_BOUND_MS 3,000 + kill
+// slack 1,000. lock_timeout limits one wait but the transaction takes four row locks in a row (singleton, job,
+// ledger, launches), so waits of just under COMMIT_LOCK_TIMEOUT_MS each could add up to 4 x 2,000. The transaction
+// therefore checks its own age twice, and each check needs both clocks to pass:
+//   server: clock_timestamp() - transaction_timestamp() (the BEGIN): lock waits and statement time count;
+//   client: performance.now() minus the moment commitFrozen was entered (monotonic): the pool checkout and the BEGIN
+//           round trip count too. The pool alone can wait connectionTimeoutMillis (5,000 ms) before the BEGIN.
+// Limits:
 //   once the four locks are held: <= 3,000 - 1,000 = 2,000 ms (1,000 ms remain for the read, the UPDATE and COMMIT)
 //   right before COMMIT:          <= 3,000 -   500 = 2,500 ms (500 ms remain for the COMMIT flush)
-// An older transaction throws and rolls back, so a slow commit never lands late and the terminal falls back to the
-// crash charge. Only the COMMIT flush itself has no check; it is single-digit milliseconds on a healthy server.
+// An older transaction throws and rolls back and the terminal falls back to the crash charge. There is no JavaScript
+// timer: a timer that fired late could race the crash CAS.
+// The real bound: a commit that passes the last check was at most 2,500 ms old on both clocks when the check ran. The
+// COMMIT round trip, its flush and any event loop stall between the check and the COMMIT are not measured, so a commit
+// can land later than 2,500 ms after entry by that extra time (single-digit milliseconds on a healthy server), never
+// unboundedly. A commit that fails is not held to these limits either: four lock waits of up to 2,000 ms can pass before
+// the first check rolls it back (about 8 s). That is safe because a failed commit only selects the unmeasured fallback.
 const COMMIT_LOCKS_HELD_MS=COMMIT_BOUND_MS-1000;
 const COMMIT_BEFORE_COMMIT_MS=COMMIT_BOUND_MS-500;
+// Any other failure of the launcher host gate is reported with the same fixed code and no detail.
+const hostRefused=()=>fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
 function trustedSample(value,ready,unitName,devices){
   const group=value?.group;
   const segments=typeof group==='string'?group.split('/').slice(1):[];
@@ -77,10 +88,41 @@ export class QuantIoRuntime {
     this.clock=clock;this.handles=new Map();this.boundIdentity=new Map();
     this.releaseAllowed=new Set();this.releaseDisabled=new Set();
     this.terminals=new Map();
+    this.emergency=new Set();
   }
 
-  async locked(jobId,leaseToken,callback,{active=true,bounded=false}={}){
+  /** Drain host gate (FTR-1c-D L1). When the launcher has a configured drain above 0 it checks the writeback plan and the
+   * ext4 storage root here, before any ledger reservation or launch row is written. A refusal throws
+   * QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED (with the launcher's enum-only ioDiagnostic) and writes nothing. prepare()
+   * keeps the same gate as the backstop, so a host change after this check still fails closed there.
+   * A launcher that carries a terminal block with a drain above 0 must expose the gate. Without it the reserve would
+   * run unchecked and only prepare() could refuse, after the ledger was written, so this fails closed here (I4).
+   */
+  async assertHost(){
+    if(typeof this.launcher.assertDrainHost!=='function'){
+      if(this.launcher?.terminalConfig?.terminal_drain_ms>0)throw hostRefused();
+      return;
+    }
+    try{await this.launcher.assertDrainHost();}
+    catch(error){throw error?.code==='QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED'?error:hostRefused();}
+  }
+
+  /** Emergency stop (worker SIGTERM, operator). Idempotent. The id joins the emergency set first, so no freeze starts
+   * for this operation afterwards, whichever phase it is in. With a handle it calls handle.stop(): that joins a running
+   * terminate() and makes a drain end within one poll, or stops the unit at once before a terminal begins. Without a
+   * handle only the set entry is made and terminal() honors it. It never touches the database.
+   */
+  async emergencyStop({jobId,operationId}){
+    const id=key(jobId,operationId);
+    this.emergency.add(id);
+    const handle=this.handles.get(id);
+    if(handle)return handle.stop();
+    return null;
+  }
+
+  async locked(jobId,leaseToken,callback,{active=true,bounded=false,ledgerOptional=false,enteredAt=null}={}){
     if(this.db.isTransaction)throw unavailable();
+    if(bounded&&!Number.isFinite(enteredAt))throw unavailable();
     try{return await this.db.transaction(async()=>{
       // Commit bound (RD-3): the server aborts a stuck lock wait or statement inside this transaction, so a
       // frozen commit that cannot finish fails at once and can never commit late. No JavaScript timer.
@@ -88,8 +130,9 @@ export class QuantIoRuntime {
         await this.db.query(`SET LOCAL lock_timeout='${COMMIT_LOCK_TIMEOUT_MS}ms'`);
         await this.db.query(`SET LOCAL statement_timeout='${COMMIT_BOUND_MS}ms'`);
       }
-      // Server-side age check, never a JavaScript timer: a late COMMIT could race the crash CAS.
-      const withinAge=async limitMs=>(await this.db.query(
+      // Age check, never a JavaScript timer: a late COMMIT could race the crash CAS. Client clock first (it covers the
+      // pool checkout and BEGIN before the transaction exists), then the server clock (BEGIN to now).
+      const withinAge=async limitMs=>performance.now()-enteredAt<=limitMs&&(await this.db.query(
         "SELECT clock_timestamp()-transaction_timestamp()<=$1::int*interval '1 millisecond' AS within",
         [limitMs])).rows[0]?.within===true;
       const singleton=await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
@@ -104,11 +147,15 @@ export class QuantIoRuntime {
         validateFoundationRequestV2(job.contract,{policy:this.ledger.policy});
       }
       const ledgerRow=(await this.db.query('SELECT * FROM quant_io_ledgers WHERE job_id=$1 FOR UPDATE',[jobId])).rows[0];
-      if(!ledgerRow||ledgerRow.state_hash!==hash(canonical(ledgerRow.state))||
-        ledgerRow.revision!==ledgerRow.state.revision||ledgerRow.lease_token!==leaseToken||
-        ledgerRow.policy_hash!==job.contract.capacity.policy_hash||
-        ledgerRow.state.lease_token!==leaseToken)throw unavailable();
-      if(active&&canonical(ledgerRow.state.devices)!==canonical(this.ledger.devices))throw unavailable();
+      // ledgerOptional (the terminal without a handle) accepts a job that never got a ledger row; an existing row is
+      // checked exactly as before.
+      if(ledgerRow||!ledgerOptional){
+        if(!ledgerRow||ledgerRow.state_hash!==hash(canonical(ledgerRow.state))||
+          ledgerRow.revision!==ledgerRow.state.revision||ledgerRow.lease_token!==leaseToken||
+          ledgerRow.policy_hash!==job.contract.capacity.policy_hash||
+          ledgerRow.state.lease_token!==leaseToken)throw unavailable();
+        if(active&&canonical(ledgerRow.state.devices)!==canonical(this.ledger.devices))throw unavailable();
+      }
       const intent=(await this.db.query('SELECT * FROM quant_io_launches WHERE job_id=$1 FOR UPDATE',[jobId])).rows;
       if(bounded&&!await withinAge(COMMIT_LOCKS_HELD_MS))throw unavailable();
       const value=await callback({job,ledgerRow,intent,now});
@@ -122,6 +169,8 @@ export class QuantIoRuntime {
   }
 
   async reserve({jobId,leaseToken,expectedRevision,operationId,allowance}){
+    // L1: the drain host gate runs before the first database write (ledger open, reservation, launch intent).
+    await this.assertHost();
     // Initialization has no launch intent. Reserve and intent then commit together.
     await this.ledger.open({jobId,leaseToken});
     const reserved=await this.locked(jobId,leaseToken,async({job,ledgerRow,intent,now})=>{
@@ -362,6 +411,8 @@ export class QuantIoRuntime {
 
   /** T2: persist the frozen sample as an ordinary observation. It runs before the unit is killed. */
   async commitFrozen({jobId,leaseToken,operationId,handle,bound},sample){
+    // L2: the client-side age limit counts from here, so a pool checkout wait is part of the bound.
+    const enteredAt=performance.now();
     const ready=await handle.ready;
     await this.locked(jobId,leaseToken,async({intent,ledgerRow})=>{
       const row=intent.find(item=>item.operation_id===operationId);
@@ -378,7 +429,7 @@ export class QuantIoRuntime {
           hash(canonical(next)),ledgerRow.revision]);
         if(saved.rowCount!==1)throw uncertain();
       }
-    },{active:false,bounded:true});
+    },{active:false,bounded:true,enteredAt});
   }
 
   /** T4a: measured settlement and launch STOP_PROVEN in one transaction, through the terminal
@@ -443,7 +494,9 @@ export class QuantIoRuntime {
     if(handle){
       const bound=this.boundIdentity.get(id)??null;
       let proof;
-      if(typeof handle.terminate==='function'&&bound){
+      // An emergency stop never freezes: the unit is stopped at once and the terminal takes the unknown-final fallback.
+      // The check and the terminate() call have no await between them, so a later emergencyStop() joins terminate().
+      if(typeof handle.terminate==='function'&&bound&&!this.emergency.has(id)){
         outcome=await handle.terminate({bound,commit:async sample=>{
           await this.commitFrozen({jobId,leaseToken,operationId,handle,bound},sample);
           committed=canonical(sample);
@@ -459,23 +512,34 @@ export class QuantIoRuntime {
         committed===canonical(outcome.frozenSample)&&POST_EXIT_MEASURED.includes(outcome.postExit)&&
         await this.settleMeasured({jobId,leaseToken,operationId,handle,bound,frozen:outcome.frozenSample,
           evidence:outcome.readbackEvidence,postExit:outcome.postExit,stopDigest:digest})){
-        this.handles.delete(id);
+        this.handles.delete(id);this.emergency.delete(id);
         const completed=await this.scheduler.acknowledgeStopped(jobId,leaseToken);
         return {status:completed.status,proof:'MEASURED_FINAL_SETTLED'};
       }
     }else{
       // An INTENT_RECORDED row proves no start claim occurred. STARTING without
       // a live owned handle may represent an issued but unobserved start.
-      const excluded=await this.locked(jobId,leaseToken,async({intent})=>{
+      // No launch row at all and no ledger operation (or no ledger row) also proves no start: the reserve never
+      // committed, or the host gate refused before any write. Nothing was reserved, so nothing is charged.
+      let nothingReserved=false;
+      const excluded=await this.locked(jobId,leaseToken,async({intent,ledgerRow})=>{
         const row=intent.find(item=>item.operation_id===operationId);
-        if(!row)return false;
+        if(!row){
+          nothingReserved=intent.length===0&&(!ledgerRow||ledgerRow.state.operations.length===0);
+          return nothingReserved;
+        }
         if(row.state==='STOP_PROVEN')return true;
         if(row.state!=='INTENT_RECORDED')return false;
         await this.db.query("UPDATE quant_io_launches SET state='STOP_PROVEN' WHERE job_id=$1 AND operation_id=$2",[jobId,operationId]);
         return true;
-      },{active:false});
+      },{active:false,ledgerOptional:true});
       if(!excluded)return {status:'STOPPING',proof:'UNCONFIRMED'};
       digest=hash(canonical({version:'quant-io-no-start-v1',jobId,operationId}));
+      if(nothingReserved){
+        this.emergency.delete(id);
+        const completed=await this.scheduler.acknowledgeStopped(jobId,leaseToken);
+        return {status:completed.status,proof:'NO_START_PROVEN'};
+      }
     }
     // Fallback: no trusted final readback. Burn allowance and quarantine job.
     const state=await this.ledger.read({jobId,leaseToken});
@@ -497,7 +561,7 @@ export class QuantIoRuntime {
       if(!row||!['STARTING','SPAWNED','RELEASED','STOP_PROVEN'].includes(row.state))throw uncertain();
       if(row.state!=='STOP_PROVEN')await this.db.query("UPDATE quant_io_launches SET state='STOP_PROVEN' WHERE job_id=$1 AND operation_id=$2",[jobId,operationId]);
     },{active:false});
-    this.handles.delete(key(jobId,operationId));
+    this.handles.delete(id);this.emergency.delete(id);
     const completed=await this.scheduler.acknowledgeStopped(jobId,leaseToken);
     return {status:completed.status,proof:'UNKNOWN_FINAL_CHARGED'};
   }

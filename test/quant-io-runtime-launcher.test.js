@@ -11,6 +11,9 @@ import {
   inspectIoRuntimeReceipt,inspectIoRuntimeScratch,createIoRuntimeLauncher,syncStorageDirectory,
 } from '../src/quant-research/io-runtime-launcher.js';
 import {terminalReadbackDigest} from '../src/quant-research/io-terminal.js';
+import {validateTerminalPolicy,capacityPolicyHash} from '../src/quant-research/capacity-contract.js';
+import {canonical} from '../src/pine-bridge/source.js';
+import {profileV2Fixture} from './helpers/profile-v2-fixture.js';
 import {StorageBudget} from '../src/quant-research/storage-budget.js';
 
 const unitName='robot-quant-'+'a'.repeat(64)+'.service';
@@ -100,7 +103,8 @@ function fakeHost(options={}){
     retained:null,afterSleep:null,rate:524288,memoryStat:null,events:null,
     vmExpire:'100\n',vmWriteback:'50\n',rootStat:'dir',barrier:{mode:'settle',ms:0},
     syncCalls:[],barrierOpen:false,barrierStartedAt:null,barrierDoneAt:null,barrierLate:null,onBarrier:null,
-    beforeRead:null,postReady:null,fsType:0xEF53,statfsError:null,onFreezerState:null,...options};
+    beforeRead:null,postReady:null,fsType:0xEF53,statfsError:null,onFreezerState:null,
+    swapMax:'0\n',meminfo:'MemTotal:        8000000 kB\nSwapTotal:             0 kB\nSwapFree:              0 kB\n',...options};
   const child=Object.assign(new EventEmitter(),{stdin:new PassThrough(),
     stdout:new PassThrough(),stderr:new PassThrough(),
     kill(signal){host.log.push('child.kill '+signal);host.closeChild();return true;}});
@@ -126,6 +130,9 @@ function fakeHost(options={}){
     },
     [cgroupBase+'/cpu.max']:()=>'50000 100000\n',[cgroupBase+'/memory.max']:()=>'536870912\n',
     [cgroupBase+'/pids.max']:()=>'16\n',
+    // W2 L3: the drained ready gate reads memory.swap.max (null: no such file), then /proc/meminfo when it is missing.
+    [cgroupBase+'/memory.swap.max']:()=>{if(host.swapMax===null)throw enoent('memory.swap.max');return at(host.swapMax);},
+    '/proc/meminfo':()=>{if(host.meminfo===null)throw enoent('meminfo');return at(host.meminfo);},
     '/proc/sys/vm/dirty_expire_centisecs':()=>{
       if(host.vmExpire===null)throw enoent('dirty_expire_centisecs');return at(host.vmExpire);},
     '/proc/sys/vm/dirty_writeback_centisecs':()=>{
@@ -1351,4 +1358,339 @@ test('a full-length drain from the latest permitted terminate start commits befo
     assert.ok(committedAt<=timeoutMs-5000,name+': commit at '+committedAt);
     assert.ok(host.now<=timeoutMs-5000,name);assert.equal(stopCount(host.log),1,name);
   }
+});
+
+// ---- W2: terminalPolicy, policy tail margin, terminalLimitMs, drained swap gate, pre-reserve host gate ----
+const policyBlock=(runtime,drain,tail)=>({version:'quant-io-terminal-policy-v1',runtime_max_ms:runtime,
+  terminal_drain_ms:drain,tail_margin_ms:tail});
+/** Launcher built from a terminal policy block. It always gets the fake StorageBudget, drain 0 included. */
+function policyLauncher(host,terminal,extra={}){
+  return createIoRuntimeLauncher({ioControls:controls,terminalPolicy:terminal,storageBudget:fakeBudget(host),
+    allowUnsupportedPlatformForTests:true,seams:host.seams,...extra});
+}
+async function policyHandle(host,terminal){
+  const handle=(await policyLauncher(host,terminal).prepare({unitName})).spawnPrepared();
+  await handle.ready;
+  host.log.length=0;
+  return handle;
+}
+
+test('terminalPolicy derives the runtime cap, drain and tail; raw options beside it are refused (T-L2)',async()=>{
+  const terminal=policyBlock(70000,45000,5000);
+  const host=fakeHost();let args=null;
+  const launcher=policyLauncher(host,terminal,{seams:{...host.seams,spawn:(file,spawnArgs)=>{args=spawnArgs;return host.child;}}});
+  (await launcher.prepare({unitName})).spawnPrepared();
+  assert.ok(args.includes('--property=RuntimeMaxSec=70'));
+  assert.equal(args.filter(argument=>argument==='--property=KillSignal=SIGKILL').length,1);
+  assert.equal(args.filter(argument=>argument==='--property=MemorySwapMax=0').length,1);
+  // The launcher exposes its own frozen, detached copy of the validated block.
+  assert.deepEqual(launcher.terminalConfig,terminal);
+  assert.ok(Object.isFrozen(launcher.terminalConfig));assert.notEqual(launcher.terminalConfig,terminal);
+  // A launcher without a policy exposes none, so the runtime cannot mistake it for a pinned one.
+  const legacy=createIoRuntimeLauncher({ioControls:controls,allowUnsupportedPlatformForTests:true,seams:host.seams});
+  assert.equal(Object.hasOwn(legacy,'terminalConfig'),false);
+  // Raw timing options beside a policy are refused, whatever their value; undefined means absent.
+  for(const raw of [{timeoutMs:70000},{timeoutMs:30000},{terminalDrainMs:45000},{terminalDrainMs:0},{tailMarginMs:5000},
+    {timeoutMs:70000,terminalDrainMs:45000}])
+    assert.throws(()=>policyLauncher(fakeHost(),terminal,raw),configurationRefused,JSON.stringify(raw));
+  assert.doesNotThrow(()=>policyLauncher(fakeHost(),terminal,{timeoutMs:undefined,terminalDrainMs:undefined}));
+  // The launcher validates the block itself; any invalid block gets the launcher's own refusal code.
+  const bad=[null,'x',{},{...terminal,version:'quant-io-terminal-policy-v0'},{...terminal,extra:1},
+    {...terminal,runtime_max_ms:69999},policyBlock(60000,45000,5000),policyBlock(70000,4999,5000),
+    policyBlock(70000,45001,5000),policyBlock(70000,45000,4999),policyBlock(70001,0,5000),policyBlock(9000,0,5000)];
+  for(const value of bad)assert.throws(()=>policyLauncher(fakeHost(),value),configurationRefused,JSON.stringify(value));
+  // Drain 0 policy: same RuntimeMaxSec rule, and the drained-only argv stays out.
+  const zero=[];
+  const zeroLauncher=policyLauncher(host,policyBlock(30000,0,5000),
+    {seams:{...host.seams,spawn:(file,spawnArgs)=>{zero.push(spawnArgs);return host.child;}}});
+  (await zeroLauncher.prepare({unitName})).spawnPrepared();
+  assert.ok(zero[0].includes('--property=RuntimeMaxSec=30'));
+  assert.equal(zero[0].some(argument=>argument.startsWith('--property=KillSignal')||argument.startsWith('--property=MemorySwap')),false);
+});
+
+test('a launcher built from any accepted policy passes its own constructor rule; rejected blocks never build (TAIL)',()=>{
+  let accepted=0,rejected=0;
+  for(const runtime of [9000,10000,15000,16000,20000,31000,45000,50000,55000,56000,60000,65000,65001,70000,70001])
+    for(const drain of [0,4999,5000,7500,20000,40000,45000,45001])
+      for(const tail of [4999,5000,7500,10000,14999,15000,15001]){
+        const block=policyBlock(runtime,drain,tail);
+        let valid=true;
+        try{validateTerminalPolicy(block);}catch{valid=false;}
+        const build=()=>policyLauncher(fakeHost(),block);
+        if(valid){accepted++;assert.doesNotThrow(build,JSON.stringify(block));}
+        else{rejected++;assert.throws(build,configurationRefused,JSON.stringify(block));}
+      }
+  assert.ok(accepted>100&&rejected>100,accepted+' accepted, '+rejected+' rejected');
+});
+
+test('with a policy the tail margin comes from the block, also for drain 0, never from a default (TAIL)',async()=>{
+  // Policy 70,000 / 40,000 / 15,000 reserves 5,000 + 40,000 + 15,000 = 60,000 ms, so terminate may start within 10,000 ms
+  // of spawn. A raw launcher with the same runtime and drain keeps the default 5,000 tail: its window is 20,000 ms.
+  for(const [name,make,startedAt,near] of [
+    ['policy tail 15,000, latest start',host=>policyHandle(host,policyBlock(70000,40000,15000)),9999,false],
+    ['policy tail 15,000, one ms later',host=>policyHandle(host,policyBlock(70000,40000,15000)),10000,true],
+    ['default tail 5,000 at the same instant',host=>spawnHandle(host,{timeoutMs:70000,launcher:{terminalDrainMs:40000}}),10000,false]]){
+    const host=fakeHost();
+    const handle=await make(host);
+    host.now=startedAt;
+    const result=await handle.terminate({bound,commit:async()=>{host.log.push('commit');}});
+    assert.equal(result.reason==='RUNTIME_LIMIT_NEAR',near,name);assert.equal(result.measured,!near,name);
+    assert.equal(stopCount(host.log),1,name);
+    if(near)assert.equal(host.log.some(line=>line.includes('--user freeze')),false,name);
+  }
+  // Drain 0 with a policy still owes the policy tail: 30,000 - budget 5,000 - tail 7,000 leaves 18,000 ms after spawn.
+  for(const [startedAt,near] of [[17999,false],[18000,true]]){
+    const host=fakeHost();
+    const handle=await policyHandle(host,policyBlock(30000,0,7000));
+    host.now=startedAt;
+    const result=await handle.terminate({bound});
+    assert.equal(result.reason==='RUNTIME_LIMIT_NEAR',near,String(startedAt));assert.equal(result.measured,!near);
+    assert.equal(stopCount(host.log),1);
+  }
+  // A drain-0 launcher without a policy keeps the FTR-1 precheck: no tail margin.
+  const plain=fakeHost();
+  const handle=await spawnHandle(plain,{timeoutMs:6000});
+  plain.now=999;
+  assert.equal((await handle.terminate({bound})).reason,undefined);
+});
+
+test('terminalLimitMs is the precheck margin on the precheck clock; at 0 terminate refuses RUNTIME_LIMIT_NEAR (T-L3)',async()=>{
+  const slow={vmExpire:'3000\n',vmWriteback:'500\n'};
+  const cases=[
+    ['policy 70/45/5',(host)=>policyHandle(host,policyBlock(70000,45000,5000)),15000,slow],
+    ['policy 30/0/7',(host)=>policyHandle(host,policyBlock(30000,0,7000)),18000,{}],
+    ['raw 56/40, default tail',(host)=>spawnHandle(host,{timeoutMs:56000,launcher:{terminalDrainMs:40000}}),6000,{}],
+    ['raw drain 0, no tail',(host)=>spawnHandle(host,{timeoutMs:6000}),1000,{}]];
+  for(const [name,make,window,options] of cases){
+    const probe=fakeHost(options);
+    const handle=await make(probe);
+    for(const startedAt of [0,1234,window-2,window-1,window,window+1,window+500]){
+      probe.now=startedAt;
+      assert.equal(handle.terminalLimitMs(),window-startedAt,name+' at '+startedAt);
+    }
+    // The same number decides terminate(): above 0 it measures, at 0 it refuses with no freeze and one stop.
+    for(const [startedAt,near] of [[window-1,false],[window,true]]){
+      const host=fakeHost(options);
+      const runner=await make(host);
+      host.now=startedAt;
+      assert.equal(runner.terminalLimitMs()<=0,near,name+' limit at '+startedAt);
+      const result=await runner.terminate({bound,commit:async()=>{host.log.push('commit');}});
+      assert.equal(result.reason==='RUNTIME_LIMIT_NEAR',near,name+' terminate at '+startedAt);
+      assert.equal(result.measured,!near,name);assert.equal(stopCount(host.log),1,name);
+      if(near)assert.equal(host.log.some(line=>line.includes('--user freeze')),false,name);
+    }
+  }
+});
+
+const swapLine='read '+cgroupBase+'/memory.swap.max',meminfoLine='read /proc/meminfo';
+const deniedRead=code=>()=>{throw Object.assign(new Error(code),{code});};
+/** Spawns a drained unit and reports how its readiness gate ended. */
+async function drainedReady(options){
+  const host=fakeHost(options);
+  const launcher=createIoRuntimeLauncher({ioControls:controls,timeoutMs:70000,terminalDrainMs:20000,
+    storageBudget:fakeBudget(host),allowUnsupportedPlatformForTests:true,seams:host.seams});
+  const handle=(await launcher.prepare({unitName})).spawnPrepared();
+  const outcome=await handle.ready.then(value=>value,error=>error);
+  return {host,handle,outcome};
+}
+
+test('the drained ready gate needs memory.swap.max exactly 0, or SwapTotal 0 kB when the file does not exist (L3)',async()=>{
+  for(const swapMax of ['0\n','0']){
+    const {host,outcome}=await drainedReady({swapMax});
+    assert.equal(outcome.swapProof,'SWAP_MAX_ZERO',JSON.stringify(swapMax));
+    assert.ok(host.log.includes(swapLine));assert.equal(host.log.includes(meminfoLine),false);
+    assert.equal(outcome.unitName,unitName);assert.equal(Object.isFrozen(outcome),true);
+  }
+  // No such file (no swap accounting): only a host without swap proves it. The file read comes first.
+  for(const meminfo of ['SwapTotal:             0 kB\n','MemTotal: 8 kB\nSwapTotal: 0 kB\nSwapFree: 0 kB\n','SwapTotal:\t0 kB']){
+    const {host,outcome}=await drainedReady({swapMax:null,meminfo});
+    assert.equal(outcome.swapProof,'SWAP_TOTAL_ZERO',JSON.stringify(meminfo));
+    assert.ok(host.log.indexOf(swapLine)<host.log.indexOf(meminfoLine));
+  }
+  // Anything else fails closed with the gate code, and the unit can still be stopped by the caller.
+  const refused=[];
+  for(const swapMax of ['max\n','1\n','4096\n','0 \n',' 0\n','00\n','0\n0\n','0\n\n','','-0\n','0x0\n','0.0\n'])
+    refused.push([JSON.stringify(swapMax),{swapMax}]);
+  for(const meminfo of ['SwapTotal: 2097148 kB\n','MemTotal: 8 kB\n','SwapTotal: 0 kB extra\n','SwapTotal: 00 kB\n','SwapTotal: 0 MB\n',
+    'swaptotal: 0 kB\n','SwapTotal:0 kB\n','',null,deniedRead('EIO')])
+    refused.push(['missing file, meminfo '+String(meminfo),{swapMax:null,meminfo}]);
+  // Only ENOENT means "no such file". Any other read error is a refusal, even when meminfo says no swap.
+  for(const code of ['EACCES','EIO','EISDIR','ENODEV'])
+    refused.push(['swap file '+code,{swapMax:deniedRead(code),meminfo:'SwapTotal: 0 kB\n'}]);
+  for(const [name,options] of refused){
+    const {host,handle,outcome}=await drainedReady(options);
+    assert.equal(outcome.code,'QUANT_IO_GATE_FAILED',name);
+    const proof=await handle.stop();
+    assert.equal(proof.unitStopped,true,name);assert.equal(stopCount(host.log),1,name);
+  }
+});
+
+test('an undrained unit never reads memory.swap.max or /proc/meminfo, and its ready result has no swap proof (L3)',async()=>{
+  const host=fakeHost({swapMax:'max\n',meminfo:'SwapTotal: 999 kB\n'});
+  const launcher=createIoRuntimeLauncher({ioControls:controls,timeoutMs:30000,terminalDrainMs:0,
+    storageBudget:fakeBudget(host),allowUnsupportedPlatformForTests:true,seams:host.seams});
+  const handle=(await launcher.prepare({unitName})).spawnPrepared();
+  const ready=await handle.ready;
+  assert.equal(Object.hasOwn(ready,'swapProof'),false);
+  assert.equal(host.log.includes(swapLine)||host.log.includes(meminfoLine),false);
+  const plainHost=fakeHost({swapMax:null,meminfo:null});
+  const plain=createIoRuntimeLauncher({ioControls:controls,allowUnsupportedPlatformForTests:true,seams:plainHost.seams})
+    .spawnPrepared({unitName});
+  await plain.ready;
+  assert.equal(plainHost.log.includes(swapLine)||plainHost.log.includes(meminfoLine),false);
+});
+
+/** A drained launcher with counters, so a refusal can prove no reservation and no spawn happened. */
+function gatedLauncher(host,{timeoutMs=70000,terminalDrainMs=20000}={}){
+  const counts={reserve:0,spawn:0};
+  const budget=fakeBudget(host),reserve=budget.reserve;
+  budget.reserve=async(...values)=>{counts.reserve+=1;return reserve(...values);};
+  const seams={...host.seams,spawn:(...values)=>{counts.spawn+=1;return host.seams.spawn(...values);}};
+  const launcher=createIoRuntimeLauncher({ioControls:controls,timeoutMs,terminalDrainMs,storageBudget:budget,
+    allowUnsupportedPlatformForTests:true,seams});
+  return {counts,launcher};
+}
+
+test('assertDrainHost() refuses with an enum-only cause before anything is reserved; prepare() keeps the same gate (L1, I2)',async()=>{
+  const eio=Object.assign(new Error('EIO'),{code:'EIO'});
+  const cases=[['DRAIN_UNDERSIZED',{vmExpire:'3000\n',vmWriteback:'500\n'}],['HOST_WRITEBACK_UNAVAILABLE',{vmExpire:null}],
+    ['HOST_WRITEBACK_UNAVAILABLE',{vmWriteback:'abc\n'}],['FS_NOT_EXT4',{fsType:0x58465342}],
+    ['FS_NOT_EXT4',{fsType:undefined}],['COMMIT_BARRIER_FAILED',{statfsError:eio}]];
+  for(const [cause,options] of cases){
+    const host=fakeHost(options);
+    const {counts,launcher}=gatedLauncher(host);
+    await assert.rejects(launcher.assertDrainHost(),error=>{
+      assert.equal(error.code,'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
+      assert.deepEqual(error.ioDiagnostic,{phase:'PRE_RESERVE',cause});assert.ok(Object.isFrozen(error.ioDiagnostic));
+      const text=JSON.stringify(error.ioDiagnostic)+error.message;
+      for(const secret of ['/',unitName,'srv','quant-storage-root','sysctl','vm'])assert.equal(text.includes(secret),false,secret);
+      return true;
+    },cause);
+    // Side effect free: sysctl and statfs reads only. No lstat, reservation, spawn, freeze or stop.
+    assert.equal(counts.reserve,0,cause);assert.equal(counts.spawn,0,cause);
+    assert.equal(host.log.every(line=>line.startsWith('read /proc/sys/vm/')||line.startsWith('statfs ')),true,cause+' '+host.log);
+    // prepare() runs the same checks as the backstop and names its own phase.
+    await assert.rejects(launcher.prepare({unitName}),error=>{
+      assert.equal(error.code,'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
+      assert.deepEqual(error.ioDiagnostic,{phase:'PREPARE',cause});return true;
+    },cause);
+    assert.equal(counts.reserve,0,cause);assert.equal(counts.spawn,0,cause);
+  }
+  // A healthy host passes and nothing was reserved or spawned: two sysctl reads and one statfs.
+  const fine=fakeHost({vmExpire:'3000\n',vmWriteback:'500\n'});
+  const ok=gatedLauncher(fine,{terminalDrainMs:45000});
+  assert.equal(await ok.launcher.assertDrainHost(),undefined);
+  assert.deepEqual(fine.log,['read /proc/sys/vm/dirty_expire_centisecs','read /proc/sys/vm/dirty_writeback_centisecs','statfs '+storageRoot]);
+  assert.equal(ok.counts.reserve,0);assert.equal(ok.counts.spawn,0);
+  // Drain 0 has no host gate: the method reads nothing, whatever the host looks like.
+  const zero=fakeHost({fsType:0x58465342,vmExpire:null,vmWriteback:null,statfsError:eio});
+  const idle=gatedLauncher(zero,{terminalDrainMs:0,timeoutMs:30000});
+  assert.equal(await idle.launcher.assertDrainHost(),undefined);assert.deepEqual(zero.log,[]);
+  // A launcher without a StorageBudget cannot drain, so it has no host gate to run.
+  const bare=createIoRuntimeLauncher({ioControls:controls,allowUnsupportedPlatformForTests:true,seams:fakeHost().seams});
+  assert.equal(bare.assertDrainHost,undefined);
+});
+
+test('a host that changes between the pre-reserve gate and prepare() is refused by prepare() (L1 backstop)',async()=>{
+  const host=fakeHost();
+  const {counts,launcher}=gatedLauncher(host);
+  await launcher.assertDrainHost();
+  host.fsType=0x58465342;
+  await assert.rejects(launcher.prepare({unitName}),error=>{
+    assert.equal(error.code,'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
+    assert.deepEqual(error.ioDiagnostic,{phase:'PREPARE',cause:'FS_NOT_EXT4'});return true;
+  });
+  assert.equal(counts.reserve,0);assert.equal(counts.spawn,0);
+});
+
+test('a policy launcher: prepare of a PROFILE payload needs the terminal block the launcher enforces (W2 3.6)',async()=>{
+  const terminal=policyBlock(70000,20000,5000);
+  const payloadFor=block=>{
+    const {policy,contract}=profileV2Fixture(600);
+    policy.environment='staging';contract.capacity.environment='staging';
+    if(block)policy.terminal=block;
+    contract.capacity.policy_hash=capacityPolicyHash(policy);
+    return canonical({version:'profile-v2-provisional',jobId:'11111111-2222-4333-8444-555555555555',operationId:'operation-00001',
+      contract,policy,storage:{root:storageRoot,diskQuotaBytes:1048576,tempQuotaBytes:1048576,freeFloorBytes:0}});
+  };
+  const build=(host,extra)=>createIoRuntimeLauncher({ioControls:controls,protocol:'profile-v2-provisional',
+    storageBudget:fakeBudget(host),allowUnsupportedPlatformForTests:true,seams:host.seams,...extra});
+  const host=fakeHost();
+  const launcher=build(host,{terminalPolicy:terminal});
+  const preparation=await launcher.prepare({unitName,payload:payloadFor(terminal)});
+  assert.equal(typeof preparation.spawnPrepared,'function');await preparation.abort();
+  for(const [name,block] of [['no terminal block',null],['other drain',policyBlock(70000,25000,5000)],
+    ['other tail',policyBlock(70000,20000,7500)],['other runtime',policyBlock(69000,20000,5000)]])
+    await assert.rejects(launcher.prepare({unitName,payload:payloadFor(block)}),configurationRefused,name);
+  // A launcher without a policy keeps its old behavior for a payload with or without a block (drain 20 s, raw).
+  const raw=build(fakeHost(),{timeoutMs:70000,terminalDrainMs:20000});
+  for(const block of [null,terminal])await (await raw.prepare({unitName,payload:payloadFor(block)})).abort();
+});
+
+test('stop() during any pre-freeze read ends STOP_REQUESTED with no freeze and one stop; also for drain 0 with a policy, not for a raw FTR-1 launcher (T-L1)',async()=>{
+  // The stop lands in each pre-freeze read of the drained flow (RD-4 stop-before-freeze) that runs after terminate()
+  // returned: the identity snapshot, then the two vm sysctls. Whatever read it lands in, nothing is frozen or fsynced.
+  const reads=['/proc/4242/stat','dirty_expire_centisecs','dirty_writeback_centisecs'];
+  for(const target of reads){
+    const host=fakeHost({dirty:8192});
+    const handle=await policyHandle(host,policyBlock(70000,20000,5000));
+    let stopping=null;
+    host.beforeRead=file=>{if(file.endsWith(target)&&stopping===null)stopping=handle.stop();};
+    const terminal=await handle.terminate({bound,commit:async()=>{host.log.push('commit');}});
+    assert.notEqual(stopping,null,target);
+    assert.equal(terminal.reason,'STOP_REQUESTED',target);assert.equal(terminal.measured,false,target);
+    assert.equal(await stopping,terminal.stopProof,target);
+    assert.equal(host.log.some(line=>line.includes('--user freeze')),false,target);
+    assert.equal(host.syncCalls.length,0,target);assert.equal(host.log.includes('commit'),false,target);
+    assert.equal(host.log.filter(line=>line===memoryLine).length,0,target);
+    assert.equal(stopCount(host.log),1,target);assert.equal(terminal.diagnostic,undefined,target);
+  }
+  // A policy-bound launcher with drain 0 refuses a stop that arrives before the freeze too (W2-L1): nothing is frozen,
+  // committed or fsynced. The policy validator accepts drain 0, and the wiring contract makes no drain exception.
+  const plain=fakeHost();
+  const handle=await policyHandle(plain,policyBlock(30000,0,5000));
+  let stopping=null;
+  plain.beforeRead=file=>{if(file.endsWith('/proc/4242/stat')&&stopping===null)stopping=handle.stop();};
+  const done=await handle.terminate({bound,commit:async()=>{plain.log.push('commit');}});
+  assert.notEqual(stopping,null);
+  assert.equal(done.reason,'STOP_REQUESTED');assert.equal(done.measured,false);
+  assert.equal(await stopping,done.stopProof);
+  assert.equal(plain.log.some(line=>line.includes('--user freeze')),false);
+  assert.equal(plain.syncCalls.length,0);assert.equal(plain.log.includes('commit'),false);
+  assert.equal(stopCount(plain.log),1);assert.equal(done.diagnostic,undefined);
+  // A raw FTR-1 launcher (no policy, drain 0) keeps its flow: it ignores the stop before the freeze and still measures.
+  const rawHost=fakeHost();
+  const raw=createIoRuntimeLauncher({ioControls:controls,allowUnsupportedPlatformForTests:true,seams:rawHost.seams})
+    .spawnPrepared({unitName});
+  await raw.ready;rawHost.log.length=0;
+  let rawStop=null;
+  rawHost.beforeRead=file=>{if(file.endsWith('/proc/4242/stat')&&rawStop===null)rawStop=raw.stop();};
+  const rawDone=await raw.terminate({bound});
+  assert.notEqual(rawStop,null);
+  assert.equal(rawDone.measured,true);assert.equal(await rawStop,rawDone.stopProof);
+  assert.equal(rawHost.log.filter(line=>line===freezeLine).length,1);assert.equal(stopCount(rawHost.log),1);
+});
+
+test('emergency stop through a policy launcher: mid-drain within one poll, mid-barrier within the budget and one poll (T-L4)',async()=>{
+  const drained=fakeHost({dirty:8192});
+  const handle=await policyHandle(drained,policyBlock(70000,40000,5000));
+  let requestedAt=null,stopping=null;
+  drained.afterSleep=()=>{if(requestedAt===null&&drained.now>=2000){requestedAt=drained.now;stopping=handle.stop();}};
+  const terminal=await handle.terminate({bound,commit:async()=>{drained.log.push('commit');}});
+  assert.notEqual(requestedAt,null);
+  assert.equal(terminal.reason,'STOP_REQUESTED');assert.equal(terminal.measured,false);
+  assert.equal(await stopping,terminal.stopProof);
+  assert.ok(drained.now-requestedAt<=500,'one poll: '+(drained.now-requestedAt));assert.ok(drained.now<40000);
+  assert.equal(stopCount(drained.log),1);assert.equal(drained.log.includes('commit'),false);
+  assert.equal(terminal.diagnostic.stage,'DRAIN');
+  const barrier=fakeHost({barrier:{mode:'settle',ms:1500}});
+  const other=await policyHandle(barrier,policyBlock(70000,20000,5000));
+  let barrierStop=null;
+  barrier.onBarrier=()=>{barrierStop=other.stop();};
+  const ended=await other.terminate({bound,commit:async()=>{barrier.log.push('commit');}});
+  assert.notEqual(barrierStop,null);
+  assert.equal(ended.reason,'STOP_REQUESTED');assert.equal(await barrierStop,ended.stopProof);
+  assert.ok(barrier.now<=2000+500,'ended within barrier budget + one poll');
+  assert.equal(barrier.log.filter(line=>line===memoryLine).length,0);assert.equal(stopCount(barrier.log),1);
+  assert.equal(barrier.log.includes('commit'),false);
 });

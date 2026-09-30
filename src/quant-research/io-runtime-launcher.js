@@ -9,6 +9,7 @@ import {assertIoStorageDevice,readCgroupIo,readCgroupIoLimits,systemdIoPropertie
 import {stopQuantUnit} from './process-supervisor.js';
 import {StorageBudget} from './storage-budget.js';
 import {validateFoundationRequestV2} from './foundation-contract-v2.js';
+import {validateTerminalPolicy} from './capacity-contract.js';
 import {parseCgroupEvents,inspectCgroupFrozen,parseMemoryWriteback,quiescenceWindowMs,
   evaluateQuiescence,reconcilePostExit,writebackDrainPlan,POST_EXIT_MEASURED,DRAIN_POLL_MS,MIN_DRAIN_MS,
   MAX_DRAIN_MS,STAT_FRESH_MS,BARRIER_BUDGET_MS,TAIL_MARGIN_MS,TERMINAL_BUDGET_MS,SPAWN_MARGIN_MS,MAX_RUNTIME_MS,
@@ -19,6 +20,8 @@ const fail=code=>Object.assign(new Error(code),{code});
 const FREEZE_BUDGET_MS=2000,MAX_TERMINAL_READS=32;
 const VM_EXPIRE_FILE='/proc/sys/vm/dirty_expire_centisecs',VM_WRITEBACK_FILE='/proc/sys/vm/dirty_writeback_centisecs';
 const EXT4_SUPER_MAGIC=0xEF53;
+const MEMINFO_FILE='/proc/meminfo';
+const SWAP_TOTAL_ZERO=/^SwapTotal:[ \t]+0 kB$/m;
 const BOUND_FIELDS=['unitName','group','pid','procStartTicks','cgroupInode','deviceId','deviceInode','invocationId'];
 const SEAM_NAMES=['spawn','command','readFile','stat','lstat','unlink','stopUnit','clock','sleep',
   'syncDirectory','realpath','statfs'];
@@ -146,16 +149,46 @@ async function readStorageRoot(io,storageRoot){
 async function requireExt4Root(io,storageRoot){
   let stats;
   try{stats=await io.statfs(storageRoot);}catch{throw terminalFail('COMMIT_BARRIER_FAILED');}
-  if(stats?.type!==EXT4_SUPER_MAGIC)throw terminalFail('COMMIT_BARRIER_FAILED');
+  // The terminal reason stays COMMIT_BARRIER_FAILED; hostCause only tells the host gate why it refused.
+  if(stats?.type!==EXT4_SUPER_MAGIC)throw Object.assign(terminalFail('COMMIT_BARRIER_FAILED'),{hostCause:'FS_NOT_EXT4'});
 }
 
-/** prepare() gate for a drained launch. Sysctls the drain option cannot cover, or a storage root that is not ext4,
- * are host facts: refuse before the reservation and the spawn instead of burning the allowance at terminate time.
- * The terminal still re-checks both because the host can drift after the launch.
+/** Fixed causes of a drain host refusal. Enum strings only: no paths, host names or sysctl values. */
+const HOST_GATE_CAUSES=Object.freeze(['DRAIN_UNDERSIZED','HOST_WRITEBACK_UNAVAILABLE','COMMIT_BARRIER_FAILED',
+  'FS_NOT_EXT4']);
+
+/** Drain host gate. Sysctls the drain option cannot cover, or a storage root that is not ext4, are host facts:
+ * refuse before any ledger reservation, launch row, storage reservation or spawn instead of burning the allowance at
+ * terminate time. QuantIoRuntime runs it first (phase PRE_RESERVE, through assertDrainHost() of the launcher) and
+ * prepare() runs it again as the backstop (phase PREPARE), so a host change between the two checks still fails closed.
+ * The terminal re-checks both again because the host can drift after the launch. The refusal code is fixed;
+ * ioDiagnostic {phase, cause} carries the reason as enums.
  */
-async function assertDrainHost(io,terminalDrainMs,storageRoot){
+async function assertDrainHost(io,terminalDrainMs,storageRoot,phase){
   try{await readDrainPlan(io,terminalDrainMs);await requireExt4Root(io,storageRoot);}
-  catch{throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');}
+  catch(error){
+    const cause=[error?.hostCause,error?.reason].find(value=>HOST_GATE_CAUSES.includes(value))??'UNKNOWN';
+    throw Object.assign(fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED'),{ioDiagnostic:Object.freeze({phase,cause})});
+  }
+}
+
+/** Drained ready gate: the unit must not be able to swap. MemorySwapMax=0 is requested in argv, so the cgroup must
+ * read exactly "0" in memory.swap.max. A kernel without swap accounting has no such file; then only a host without
+ * any swap (SwapTotal 0 kB) proves it. Anything else fails closed. Returns the proof that applied (fixed enum).
+ * Swap I/O is charged to the child cgroup but is invisible to file_dirty and file_writeback.
+ */
+async function readSwapProof(io,base){
+  let source;
+  try{source=await io.readFile(path.posix.join(base,'memory.swap.max'),'utf8');}
+  catch(error){
+    if(error?.code!=='ENOENT')throw fail('QUANT_IO_GATE_FAILED');
+    let meminfo;
+    try{meminfo=await io.readFile(MEMINFO_FILE,'utf8');}catch{throw fail('QUANT_IO_GATE_FAILED');}
+    if(typeof meminfo!=='string'||!SWAP_TOTAL_ZERO.test(meminfo))throw fail('QUANT_IO_GATE_FAILED');
+    return 'SWAP_TOTAL_ZERO';
+  }
+  if(typeof source!=='string'||source.replace(/\n$/,'')!=='0')throw fail('QUANT_IO_GATE_FAILED');
+  return 'SWAP_MAX_ZERO';
 }
 
 /** Race the barrier against its budget. Resolves DONE, FAILED or TIMEOUT and never rejects; a late settle is swallowed. */
@@ -181,7 +214,8 @@ async function readMaxSectorsKb({io,approved}){
  * at most budgetMs, so unused drain allowance never lengthens it. With the drain on, a stop request also
  * aborts quiescence (STOP_REQUESTED); with the drain off the FTR-1 flow ignores it.
  * FTR-1c (drain only): before the freeze, the host writeback model must fit the drain option and the storage
- * root must be a real directory on ext4 (none of these freezes); a stop request before the freeze wins. After the
+ * root must be a real directory on ext4 (none of these freezes). A stop request before the freeze wins for a drained
+ * launch and for every policy-bound launcher (ctx.policyBound, also drain 0); a raw FTR-1 launcher ignores it. After the
  * freeze a parent-side directory fsync (commit barrier, BARRIER_BUDGET_MS at most) exposes child-owned
  * metadata, and the drain then needs 0/0 at least STAT_FRESH_MS after the barrier finished.
  * Returns the frozen measurement or throws with a reason. The unit stays frozen; the caller stops it.
@@ -194,8 +228,9 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
   if(!bound||typeof bound!=='object'||BOUND_FIELDS.some(field=>bound[field]===undefined))
     throw terminalFail('NO_BOUND_IDENTITY');
   if(live.closed||!live.ready||live.unexpectedOutput)throw terminalFail('NOT_LIVE');
-  // The drained flow also owes the tail after the deadline: snapshot, commit and kill (TAIL_MARGIN_MS).
-  if(ctx.runtimeMs-(started-ctx.spawnedAt)<=budgetMs+terminalDrainMs+(terminalDrainMs>0?TAIL_MARGIN_MS:0))
+  // The drained flow also owes the tail after the deadline: snapshot, commit and kill. ctx.tailMs is the policy tail
+  // margin with a terminal policy (also for drain 0), else TAIL_MARGIN_MS for a drained launch and 0 for the FTR-1 flow.
+  if(ctx.runtimeMs-(started-ctx.spawnedAt)<=budgetMs+terminalDrainMs+ctx.tailMs)
     throw terminalFail('RUNTIME_LIMIT_NEAR');
   const rates={readBytesPerSecond:approved.evaluator.readBytesPerSecond,
     writeBytesPerSecond:approved.evaluator.writeBytesPerSecond};
@@ -217,9 +252,10 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
     requiredDrainMs=(await readDrainPlan(io,terminalDrainMs)).requiredMs;
     rootIdentity=await readStorageRoot(io,storageRoot);
     await requireExt4Root(io,storageRoot);
-    // RD-4: a stop requested during the pre-freeze steps must never start a freeze.
-    if(ctx.stopRequested())throw terminalFail('STOP_REQUESTED');
   }
+  // RD-4: a stop requested during the pre-freeze steps must never start a freeze. It applies to a drained launch and to
+  // every policy-bound launcher, drain 0 included; a raw FTR-1 launcher (no policy, no drain) keeps its old flow.
+  if((terminalDrainMs>0||ctx.policyBound)&&ctx.stopRequested())throw terminalFail('STOP_REQUESTED');
   const freezeStarted=io.clock();
   const freezeCommand=await io.command('systemctl',['--user','freeze',unitName],FREEZE_BUDGET_MS);
   if(freezeCommand.code!==0)throw terminalFail('FREEZE_FAILED');
@@ -374,11 +410,28 @@ async function readPostExit({io,approved},frozen,group){
 
 /** Fixed, bounded diagnostic. This never evaluates or completes a PROFILE job.
  * `seams` replace process, filesystem, systemd and clock access for isolated tests only.
+ * `terminalPolicy` (W2, PROFILE protocol) is the terminal block of an accepted capacity policy. It derives the
+ * runtime cap, the drain and the tail margin and replaces the raw `timeoutMs` and `terminalDrainMs` options, which are
+ * then refused beside it. The launcher validates the block itself (validateTerminalPolicy) and exposes the frozen copy
+ * as `terminalConfig`, so QuantProfileRuntimeV2 can require it to equal the policy that binds the job. With a policy
+ * the tail margin is never a default: the terminal precheck and the constructor apply the same runtime rule as
+ * validateTerminalPolicy (runtime > budget + drain + spawn margin + tail margin), including when the drain is 0.
  */
-export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHON||'python3',
-  root=rootDefault,ioControls,storageBudget,timeoutMs=30000,terminalDrainMs=0,protocol=null,
-  allowUnsupportedPlatformForTests=false,seams={}}={}){
+export function createIoRuntimeLauncher(options={}){
+  const {python=process.env.QUANT_RESEARCH_PYTHON||'python3',root=rootDefault,ioControls,storageBudget,
+    terminalPolicy,protocol=null,allowUnsupportedPlatformForTests=false,seams={}}=options;
+  let {timeoutMs=30000,terminalDrainMs=0}=options;
   if(process.platform!=='linux'&&!allowUnsupportedPlatformForTests)throw fail('QUANT_IO_ISOLATION_REQUIRED');
+  let terminal=null;
+  if(terminalPolicy!==undefined){
+    if(options.timeoutMs!==undefined||options.terminalDrainMs!==undefined||options.tailMarginMs!==undefined)
+      throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
+    try{terminal=validateTerminalPolicy(terminalPolicy);}catch{throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');}
+    timeoutMs=terminal.runtime_max_ms;terminalDrainMs=terminal.terminal_drain_ms;
+  }
+  // Tail margin owed after the deadline. A policy pins it (any drain); without one only a drained launch owes it.
+  const tailMarginMs=terminal?terminal.tail_margin_ms:TAIL_MARGIN_MS;
+  const tailMs=terminal||terminalDrainMs>0?tailMarginMs:0;
   if(!seams||typeof seams!=='object'||Object.keys(seams).some(name=>!SEAM_NAMES.includes(name)||
     typeof seams[name]!=='function'))throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
   const host={spawn:seams.spawn??spawn,command:seams.command??command,readFile:seams.readFile??readFile,
@@ -394,8 +447,9 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
       terminalDrainMs>MAX_DRAIN_MS)||
     // The drain needs the StorageBudget root for its commit barrier. The runtime must hold the terminal budget,
     // the drain, a spawn-to-frame margin and the tail margin (snapshot, commit and kill after the deadline).
-    terminalDrainMs>0&&(!storageBudget||Math.ceil(timeoutMs/1000)*1000<=
-      TERMINAL_BUDGET_MS+terminalDrainMs+SPAWN_MARGIN_MS+TAIL_MARGIN_MS))
+    terminalDrainMs>0&&!storageBudget||
+    (terminal||terminalDrainMs>0)&&Math.ceil(timeoutMs/1000)*1000<=
+      TERMINAL_BUDGET_MS+terminalDrainMs+SPAWN_MARGIN_MS+tailMarginMs)
     throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
   if(storageBudget&&!(storageBudget instanceof StorageBudget))
     throw fail('QUANT_IO_READINESS_CONFIGURATION_REQUIRED');
@@ -542,9 +596,12 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
               }
               if(!readinessIdentity){await new Promise(resolve=>setTimeout(resolve,25));continue;}
             }
+            // Drained units only (MemorySwapMax=0 is requested only there). Fixed enum, never digested. It runs after
+            // the readiness scratch file is identified, so a refusal still leaves a provable stop and cleanup.
+            const swapProof=terminalDrainMs>0?await readSwapProof(host,base):null;
             readyState=true;
             return Object.freeze({unitName,group,invocationId,cgroupInode:io.inode,
-              cpuQuota:quota,cpuPeriod:period,memoryMax,tasksMax});
+              cpuQuota:quota,cpuPeriod:period,memoryMax,tasksMax,...(swapProof?{swapProof}:{})});
           }
           await new Promise(resolve=>setTimeout(resolve,25));
         }
@@ -616,6 +673,13 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
           released=true;
           child.stdin.end(inputPayload);
         },
+        /** Milliseconds until the terminal precheck refuses (RUNTIME_LIMIT_NEAR): the runtime cap minus the time since
+         * spawn minus the terminal budget, the drain and the tail margin. Same clock and same formula as the precheck, so
+         * a value <= 0 means terminate() would refuse now. Callers end compute a little before it reaches 0.
+         */
+        terminalLimitMs(){
+          return runtimeMs-(host.clock()-spawnedAt)-(TERMINAL_BUDGET_MS+terminalDrainMs+tailMs);
+        },
         /** A stop requested while terminate() runs waits for it and shares its stop proof.
          * It also aborts a running writeback drain, so emergency stop stays fast. During the drain it is seen within
          * one poll (DRAIN_POLL_MS). During the commit barrier it is seen when the barrier ends, so a stop can take up
@@ -637,8 +701,8 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
             if(stopPromise)reason='ALREADY_STOPPING';
             else if(commit!==null&&typeof commit!=='function')reason='INVALID_COMMIT';
             else try{
-              measurement=await frozenReadback({io:host,approved,unitName,spawnedAt,runtimeMs,terminalDrainMs,storageRoot,
-                state:()=>({closed,ready:readyState,unexpectedOutput}),stopRequested:()=>stopRequested,
+              measurement=await frozenReadback({io:host,approved,unitName,spawnedAt,runtimeMs,terminalDrainMs,tailMs,storageRoot,
+                policyBound:terminal!==null,state:()=>({closed,ready:readyState,unexpectedOutput}),stopRequested:()=>stopRequested,
                 liveIdentity,last:()=>previousSample},{bound,commit,budgetMs});
             }catch(error){reason=failureReason(error);diagnostic=failureDiagnostic(error);}
             const stopProof=await stopUnitOnce();
@@ -659,8 +723,17 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
       };
       return Object.freeze(handle);
   };
-  if(!storageBudget)return Object.freeze({spawnPrepared});
+  const terminalConfig=terminal?{terminalConfig:terminal}:{};
+  if(!storageBudget)return Object.freeze({spawnPrepared,...terminalConfig});
   return Object.freeze({
+    ...terminalConfig,
+    /** Drain host gate without any side effect. QuantIoRuntime calls it before any ledger reservation or launch row.
+     * Drain 0 has no host gate: nothing is read. A refusal is QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED with an
+     * ioDiagnostic {phase:'PRE_RESERVE', cause}. prepare() repeats the same checks as the backstop.
+     */
+    async assertDrainHost(){
+      if(terminalDrainMs>0)await assertDrainHost(host,terminalDrainMs,storageBudget.root,'PRE_RESERVE');
+    },
     async prepare({unitName,payload:preparedPayload}){
       if(!validUnit(unitName))throw fail('INVALID_QUANT_PROCESS_REQUEST');
       if(protocol===PROFILE){
@@ -677,9 +750,12 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
           parsed.storage?.freeFloorBytes!==storageBudget.freeFloorBytes)
           throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
         validateFoundationRequestV2(parsed.contract,{policy:parsed.policy});
+        // The child gets exactly the terminal block this launcher enforces; never a different one from the payload.
+        if(terminal&&canonical(parsed.policy.terminal??null)!==canonical(terminal))
+          throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
       }else if(preparedPayload!==undefined)throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
       await assertIoStorageDevice(storageBudget.root,approved.device,{statter:host.stat,resolver:host.realpath});
-      if(terminalDrainMs>0)await assertDrainHost(host,terminalDrainMs,storageBudget.root);
+      if(terminalDrainMs>0)await assertDrainHost(host,terminalDrainMs,storageBudget.root,'PREPARE');
       const pendingName='.pending-'+randomUUID();
       const reservation=await storageBudget.reserve({diskBytes:4096,tempBytes:4096,
         pendingName,purpose:'quant-io-readiness-v1'});
