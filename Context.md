@@ -59,8 +59,12 @@ untested on Linux; see the [writeback drain record](docs/QD_QS_FTR1B_WRITEBACK_D
 handles a parent crash mid-terminal instead of wedging the queue (`e8e1920`; [record](docs/QD_QS_B1_RECOVERY_PF2_R1_CHECKPOINT_2026-09-30.md)). The owner-approved
 FTR-1c commit barrier and drain plan are done locally (`f5616f2`) and the research
 enqueue route now checks queue limits and bar coverage before loading bars
-(`ff1805d`), containment only; the Linux barrier proof is pending and nothing is
-deployed ([record](docs/QS_FTR1C_C_HEAVY_PATH_S1S2_CHECKPOINT_2026-09-30.md)). See the
+(`ff1805d`), containment only ([record](docs/QS_FTR1C_C_HEAVY_PATH_S1S2_CHECKPOINT_2026-09-30.md)). The Linux
+barrier proof FTR-1c-INT passed as one owner-run PASS-MEASURED case on the FTR-1c-C
+code, the first Linux PROFILE case with measured settlement; FTR-1c-D hardening
+(`30620ec`), wiring step W1 (`dedf834`), RC-1 (`f00053b`) and PF-2 R2 (`07728ad`)
+are local, owner decisions OD-1 to OD-5 are approved, product wiring W2 to W7 is
+not done and nothing is deployed ([record](docs/QS_FTR1C_INT_LINUX_PROOF_2026-09-30.md)). See the
 [FTR-1 and PF-2 S1 checkpoint](docs/QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md)
 and the [Linux integration record](docs/QD_QS_FTR1_LINUX_INTEGRATION_2026-09-29.md).
 Worker/public V2 admission and complete cumulative I/O enforcement remain open. Finalizer checks do

@@ -644,3 +644,30 @@ path and B4 policy-pinned terminal parameters before product wiring; heavy-path 
 S3c and staging evidence plus the small `server.js` fix packet; PF-2 R2 and R3
 after OD-2 and OD-3. The 410–720-hour baseline and existing contingency are
 unchanged; this slice is not a forecast change.
+
+## FTR-1c-INT Linux proof, hardening and PF-2 R2 checkpoint — 2026-09-30
+
+The FTR-1c-INT Linux proof ran once, owner-run, no retry, on the FTR-1c-C code
+`f5616f2` and returned PASS-MEASURED; local slices `30620ec` (FTR-1c-D hardening),
+`dedf834` (wiring step W1), `f00053b` (RC-1) and `07728ad` (PF-2 R2) are pushed;
+nothing is deployed. See the [record](QS_FTR1C_INT_LINUX_PROOF_2026-09-30.md). The 24-hour readiness retention
+check passed on the aged pair with nothing deleted. Owner decisions OD-1 to OD-5
+are approved as recommended.
+
+Measured intervals, all wall-clock: the INT packet build, audit, fix round and
+re-audit about 03:34-04:36 UTC; the hardening, W1, RC-1 and R2 wave about
+04:33-06:24 UTC (ten agents); root checks, four commits and push about 06:24-06:38
+UTC, with CI green by about 06:53 UTC; the INT window about 06:54-07:45 UTC
+(retention check 06:54, preflight 06:58, upload 07:00, owner setup 07:33, owner
+launch 07:34, result 07:35, postflight 07:36, recheck 07:44). The shared 5-hour
+usage window reset at 04:30 UTC and went from 0% to 19% used over the wave and to
+24% by 07:46 UTC, when the next wave had started; the weekly all-models counter
+went from 26% to 29%. Shared counters do not attribute cost to an agent or a step.
+The agents ran under the owner-approved temporary elevated tier. No engineering
+hours are booked and no speedup is claimed.
+
+Next work: the retention deletion of the aged readiness pair, owner-run, after
+its own audit; PF-2 R3 (the service and holdout registry, in progress), then R4 to
+R6; wiring step W2, then W3 to W6 and the W7 Linux proof, which carries the
+FTR-1c-D Linux coverage; heavy-path S3 and S3c. The 410–720-hour baseline and
+existing contingency are unchanged; this slice is not a forecast change.
