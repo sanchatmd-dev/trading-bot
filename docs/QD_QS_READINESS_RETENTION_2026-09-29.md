@@ -5,9 +5,26 @@
 A genuine typed file/reservation pair was created through StorageBudget and
 left by a physical SIGKILL on 2026-09-29. Exact writer stop and unchanged artifact
 identities were verified. Pre-expiry maintenance rejected the young pair.
-Earliest guarded cleanup is 2026-09-30 13:53:52 Asia/Bangkok; actual 24-hour
-cleanup remains pending. This storage fixture does not replace supervisor crash
-recovery. See the [closure progress record](QD_QS_CLOSURE_PROGRESS_2026-09-29.md).
+Earliest guarded cleanup was 2026-09-30 13:53:52 Asia/Bangkok; the actual
+cleanup ran later that day (next section). This storage fixture does not replace
+supervisor crash recovery. See the [closure progress record](QD_QS_CLOSURE_PROGRESS_2026-09-29.md).
+
+## Guarded cleanup of the aged pair — 2026-09-30
+
+On 2026-09-30 at 13:14:05 UTC (20:14 Asia/Bangkok) the owner ran the audited
+apply step once, and it passed. Exactly the aged typed readiness pair (one
+4,096-byte pending file and its reservation record) was deleted through
+StorageBudget maintenance after about 30.3 hours of real age, with the writer
+stopped and three exclusive proofs before and between the deletes. A read-only
+postflight at about 13:15 UTC found storage accounting back to zero; only the
+retention state hash changed, to the predicted value; the original services,
+restart counts, Paper health, queues, failed units, protected evidence hashes and
+the writer unit were unchanged. The storage retention gate is therefore closed for
+this pair.
+
+This cleanup does not prove actual supervisor crash recovery, a database-side
+maintenance lock, dataset or ATR artifact retention, behavior under concurrent
+writers, or full QD-1/QS-1 acceptance.
 
 ## Defect and correction
 

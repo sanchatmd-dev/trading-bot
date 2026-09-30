@@ -22,7 +22,7 @@ or a collection deadline while a persistent Risk Manager guard blocks entries.
 Local PF-2 engineering now has a development-only immutable plan contract,
 using current 10K/V1 limits. A development-only Python stateful replay core (S1,
 V1 only, not full Risk Manager parity) now exists locally, but there is no runtime
-historical replay or admission yet; cost-inclusive V2 parity remains required. A development-only trusted resolver (S3, `5006feb`) and Node replay driver with a result envelope (S4, `9a340af`) are pushed and not wired to any runtime ([S3 record](docs/PF2_S3_RESOLVER_CHECKPOINT_2026-09-30.md), [S4 record](docs/PF2_S4_REPLAY_DRIVER_CHECKPOINT_2026-09-30.md)). A pure plan builder and envelope validator (R1, `516b624`), the preflight schema and migration hook (R2, `07728ad`), the preflight service, holdout boundary registry, trusted-source adapters and scheduler authorize callback (R3, `25f2ff0`) and the `pf2_replay` protocol mode with supervised runner glue (R4, `872a36a`) follow; all are library code with no route, worker or process wiring. R5 waits for wiring slice W3, R6 waits for two owner decisions on the holdout registry, and PF-2 staging (R7) waits for trusted PROFILE v2 enrollment and an owner-authorized operations packet. This work runs alongside
+historical replay or admission yet; cost-inclusive V2 parity remains required. A development-only trusted resolver (S3, `5006feb`) and Node replay driver with a result envelope (S4, `9a340af`) are pushed and not wired to any runtime ([S3 record](docs/PF2_S3_RESOLVER_CHECKPOINT_2026-09-30.md), [S4 record](docs/PF2_S4_REPLAY_DRIVER_CHECKPOINT_2026-09-30.md)). A pure plan builder and envelope validator (R1, `516b624`), the preflight schema and migration hook (R2, `07728ad`), the preflight service, holdout boundary registry, trusted-source adapters and scheduler authorize callback (R3, `25f2ff0`) and the `pf2_replay` protocol mode with supervised runner glue (R4, `872a36a`) follow; all are library code with no route, worker or process wiring. R3b (`ad93d7e`) implements the two owner-approved holdout rules (an owner-wide legacy-holdout conflict check and refusal of a boundary later than the current minute). Wiring slice W3 is next; R6 (routes) follows W3 because the API needs the capacity-policy loader, R5 follows W3, and PF-2 staging (R7) waits for trusted PROFILE v2 enrollment and an owner-authorized operations packet. This work runs alongside
 QD-1/QS-1 runtime and I/O acceptance. See the
 [PF-2 checkpoint](docs/PF_2_CONTRACT_CHECKPOINT_2026-09-29.md).
 
@@ -63,13 +63,16 @@ enqueue route now checks queue limits and bar coverage before loading bars
 barrier proof FTR-1c-INT passed as one owner-run PASS-MEASURED case on the FTR-1c-C
 code, the first Linux PROFILE case with measured settlement; FTR-1c-D hardening
 (`30620ec`), wiring step W1 (`dedf834`), RC-1 (`f00053b`) and PF-2 R2 (`07728ad`)
-are local, owner decisions OD-1 to OD-5 are approved, product wiring W2 to W7 is
-not done and nothing is deployed ([record](docs/QS_FTR1C_INT_LINUX_PROOF_2026-09-30.md)).
-Wiring step W2 is in progress locally and not committed. The heavy-path S3a
-prepare-under-lease design is complete as a design only, with four owner decisions
-pending; the heavy-path gate stays open until S3c and staging evidence. The
-owner-run apply step for the aged readiness pair is prepared and audited but not
-run, so the storage retention gate stays open. See the
+are local, owner decisions OD-1 to OD-5 are approved and nothing is deployed
+([record](docs/QS_FTR1C_INT_LINUX_PROOF_2026-09-30.md)). Wiring step W2
+(`a8dcf6e`) binds the PROFILE V2 launcher and runtime to the policy terminal block;
+no product code constructs them until W3, so product wiring W3 to W7 is not done.
+The heavy-path S3a prepare-under-lease design is complete and its four owner
+decisions are approved; S3b-1 (`7a488d4`) adds the pure V2 research contract
+module, not wired; the heavy-path gate stays open until S3c and staging evidence.
+The owner ran the audited apply step for the aged readiness pair once on
+2026-09-30 and it passed, so the storage retention gate is closed for that pair;
+supervisor crash recovery and full QD-1/QS-1 acceptance are not proven by it. See the
 [FTR-1 and PF-2 S1 checkpoint](docs/QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md)
 and the [Linux integration record](docs/QD_QS_FTR1_LINUX_INTEGRATION_2026-09-29.md).
 Worker/public V2 admission and complete cumulative I/O enforcement remain open. Finalizer checks do

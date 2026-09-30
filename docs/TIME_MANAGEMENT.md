@@ -425,6 +425,7 @@ retain the same local/staging scope.
 
 | As of | งาน / สถานะ | Actual hours | Remaining estimate | Blocker / next action |
 | --- | --- | --- | --- | --- |
+| 2026-09-30 | Wave N: wiring step W2 (`a8dcf6e`), PF-2 R3b (`ad93d7e`) และ heavy-path S3b-1 (`7a488d4` + `a40aa51`) ผ่าน local review และ push; owner รัน retention apply step หนึ่งครั้งและผ่าน; หยุดงานตามคำสั่ง owner ประมาณ 15:00Z | Active hours unknown; wall-clock: W2 coder + audit 7,028 วินาที, W2 fix + tester 2,428 วินาที, R3b coder + audit 5,880 วินาที, R3b test pin 196 วินาที, S3b-1 coder + audit 3,821 วินาที, S3b-1 fix + re-audit 1,303 วินาที; root วินิจฉัยและแก้ CI line-ending ประมาณ 15 นาที; เวลาเหล่านี้เป็นเวลา agent ไม่ใช่ชั่วโมงพัฒนา | คง baseline 410–720 ชั่วโมง; ไม่ลดงบจากจำนวน agents; observed throughput: หนึ่งถึงสอง lane ที่ elevated effort ใช้ 5-hour window ประมาณ 7 points ต่อ lane-hour | W3 เป็นงานถัดไป; R6 ย้ายไปหลัง W3; R5 หลัง W3; S3b-2/S3b-3 และ S3c หลัง W3 ก่อน R5; W4 หลัง S3b-2; W6 หลัง W3; W7 ต้องมี swap host fact; owner question ใหม่เรื่อง sibling-bot PF-2 boundary ก่อน R6/R7; retention gate ปิดแล้วสำหรับ aged pair; ไม่มี agent ทำงาน local test PostgreSQL หยุดแล้ว |
 | 2026-09-30 | Wave M: PF-2 R3 (`25f2ff0`) และ R4 (`872a36a`) ผ่าน local review และ push; S3a prepare-under-lease design เสร็จ (design only); W2 กำลังทำในเครื่อง ยังไม่ commit | Active hours unknown; wall-clock: R4 coder + audit 3,168 วินาที (ประมาณ 53 นาที), R4 tester 484 วินาที, lane 3 (R3 test fixes + S3a design panel สาม agent) 6,284 วินาที (ประมาณ 1 ชั่วโมง 45 นาที); เวลาเหล่านี้เป็นเวลา agent ไม่ใช่ชั่วโมงพัฒนา | คง baseline 410–720 ชั่วโมง; ไม่ลดงบจากจำนวน agents; observed throughput: สาม lane xhigh พร้อมกันใช้ 5-hour window ประมาณ 24 points ต่อชั่วโมง | R5 รอ W3; R6 รอ owner decisions สองข้อเรื่อง holdout registry; R7 รอ PROFILE v2 enrollment และ operations packet; S3b-1 ต่อด้วย S3b-2/S3b-3 และ S3c; retention apply step ยังไม่ได้รัน; root หยุด dispatch จน window reset 14:30Z |
 | 2026-09-28 | [Data capability/ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md): local UI/API, shared-worker BACKFILL, page recovery และ retention ผ่าน; staging ดึงจริง 2,100 แท่งและผ่าน bounded calibration | Active hours unknown; Node 318 checks 53.178 วินาที; focused 22 checks 15.532 วินาที; HTTP 2 checks 6.127 วินาที; browser ผ่าน; load window 300 วินาที มี nonidle 173.210 วินาที และเก็บ rework ไว้ | คง baseline เพราะ active hours ยังไม่ครบ; ไม่มีเวลาเก็บแท่งสดเพิ่มสำหรับรอบวิศวกรรมนี้ | ต่อ expanded admission, I/O measurement และ heavy paths ที่เหลือ; คงเพดาน 10K รวม warm-up และยังไม่ปิด QD-1/QS-1 ทั้ง phase |
 | 2026-09-28 | [Recovery/storage/staging](QD_QS_RECOVERY_STAGING_2026-09-28.md): physical crash/restart และ bounded isolated rollout ผ่าน | Active hours unknown; final recovery/storage checks 15.687 วินาที; PG recovery 2.564 วินาที; monitor warm-up 3 + baseline 30 + impact 60 samples; รวม rework ตาม checkpoint | คงงบ baseline; ไม่แปลง test duration หรือเวลารอ quota เป็น engineering hours | ต่อ capability/UI, scheduler-backed backfill, sustained headroom และ expanded-budget validation โดยไม่รอข้อมูลสด; QD-1/QS-1 ยังไม่ปิดทั้ง phase |
@@ -444,6 +445,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-09-30 | W2, PF-2 R3b, S3b-1 push และ retention apply step ผ่าน; บันทึก wave N และหยุดงาน 15:00Z | Local code + CI และ owner-run cleanup หนึ่งครั้งเท่านั้น ไม่มี deploy/migration; 5-hour window 54% ณ 12:32Z เป็น 73% ณ 14:26Z, reset 14:30Z แล้ว 4% ณ 14:53Z; weekly all-models 8% เป็น 11%, weekly Fable 4% เป็น 5%; temporary elevated agent tier สิ้นสุด 15:00Z กลับใช้ตาราง AGENTS.md; ไม่ปรับงบชั่วโมงและไม่อ้าง speedup |
 | 2026-09-30 | PF-2 R3/R4 push, S3a design panel (Fable pilot ครั้งที่สอง) และบันทึก wave M | Local code + CI เท่านั้น ไม่มี deploy/migration/staging; 5-hour window 6% ใช้แล้ว ณ 10:34Z เป็น 54% ณ 12:32Z, weekly all-models 2% เป็น 8%, weekly Fable 0% เป็น 4%; ไม่ปรับงบชั่วโมงและไม่อ้าง speedup |
 | 2026-09-28 | ปิด physical cold-recovery drill ของ isolated worker และตรวจผลกระทบช่วงสั้น | ใช้ frozen baseline เดิม; resume หลัง SIGKILL ตรงกับผลเดิมและคิด evaluation ครั้งเดียว ไม่เปิด holdout หรือ campaign ใหม่ เก็บ initial monitor breach/watcher failure เป็น rework; capacity คงเดิม และยังไม่ปรับชั่วโมงรวมจากข้อมูลเวลาไม่ครบ |
 | 2026-09-28 | เชื่อม research worker และพิสูจน์ state/resource controls | ใช้ข้อมูลเดิมและ bounded Linux smoke; weekly remaining 68% ก่อนเริ่ม / 61% หลัง cleanup, short window unknown, reserve 20pp; ลบ test DB และหยุด local PG แล้ว; ไม่เปิด capacity, campaign หรือ production rollout |
@@ -710,3 +712,50 @@ packet; heavy-path S3b-1, then S3b-2 and S3b-3 in one commit, then S3c; W2 to W6
 and the W7 Linux proof; the owner-run retention apply step. The 410–720-hour
 baseline and existing contingency are unchanged; this slice is not a forecast
 change.
+
+## Wiring step W2, PF-2 R3b, heavy-path S3b-1 and the retention apply step — 2026-09-30
+
+Local slices `a8dcf6e` (wiring step W2: the PROFILE V2 launcher and runtime bound
+to the policy terminal block, the abort path and the FTR-1c-D follow-ups),
+`ad93d7e` (PF-2 R3b: the two owner-approved holdout rules) and `7a488d4` plus the
+test-only `a40aa51` (heavy-path S3b-1: the pure V2 research contract module) are
+pushed; no product code constructs the W2 launcher or runtime yet, R3b has no
+route, S3b-1 is not wired, and nothing is deployed. W2 passed focused unit 109 (1
+Linux-only skip), six isolated PostgreSQL files 161/161 and the full unit suite 684
+with 0 fail, with an independent audit and an independent tester accepting; CI is
+9/9 green. R3b passed isolated PostgreSQL 45/45, 16/16 and 1/1 with an independent
+audit accepting (CI 8/9 at `ad93d7e` from the S3b-1 line-ending failure below, 9/9 at `a40aa51`). S3b-1 passed 30 tests and the full unit suite
+714 with 0 fail, with an independent audit accepting after one fix; CI for
+`7a488d4` was 8/9 because the Windows unit job failed on line endings, and
+`a40aa51` normalizes them (CI 9/9 green). The owner approved the two PF-2
+holdout rules and the four S3 prepare-under-lease decisions at about 12:45 UTC.
+The owner ran the audited retention apply step once at 13:14:05 UTC; it deleted
+exactly the aged typed readiness pair after about 30.3 hours of real age, and
+root's read-only postflight found only the predicted retention state hash changed,
+so the storage retention gate is closed for that pair. Work stopped on owner
+instruction at about 15:00 UTC; no agent is running and the local test PostgreSQL
+is stopped.
+
+Measured intervals, all wall-clock: W2 coder plus audit 7,028 s (about 1 h 57
+min); W2 fix plus tester 2,428 s (about 40 min); R3b coder plus audit 5,880 s
+(about 1 h 38 min); R3b test pin 196 s; S3b-1 coder plus audit 3,821 s (about
+1 h 4 min); S3b-1 fix plus re-audit 1,303 s (about 22 min); root diagnosed and
+fixed the CI line-ending failure in about 15 minutes. The shared 5-hour usage
+window went from 54% used at 12:32 UTC to 59% at 12:41, 62% at 13:08, 64% at 13:21
+and 73% at 14:26, reset at 14:30 and stood at 4% at 14:53 UTC; the weekly
+all-models counter went from 8% to 11% and the weekly Fable counter from 4% to 5%.
+Observed throughput: one or two concurrent lanes at the elevated effort consumed
+about 7 points of the 5-hour window per lane-hour. The owner's temporary elevated
+agent tier ended at 15:00 UTC; the AGENTS.md table applies again. Shared counters
+do not attribute cost to an agent or a step. No engineering hours are booked and
+no speedup is claimed.
+
+Next work: W3 (worker, scheduler, main and the capacity-policy loader); then PF-2
+R6 (routes), moved after W3 because the API needs that loader, with one new owner
+question first (whether a bot's PF-2 holdout boundary must also not be later than
+the earliest registered PF-2 boundary of any sibling bot of the same owner; root
+recommends yes); PF-2 R5 after W3; heavy-path S3b-2 and S3b-3 in one commit and
+S3c after W3 and before R5; W4 after S3b-2; W6 after W3; the W7 Linux proof then
+needs an explicit swap host fact; R7 after a durable trusted PROFILE v2 enrollment
+and the owner-authorized operations packet. The 410–720-hour baseline and existing
+contingency are unchanged; this slice is not a forecast change.
