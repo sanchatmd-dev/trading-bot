@@ -2,21 +2,25 @@ import {spawn} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {readFile,stat,lstat,unlink} from 'node:fs/promises';
+import {constants} from 'node:fs';
+import {readFile,stat,lstat,unlink,open,realpath} from 'node:fs/promises';
 import {hash,canonical} from '../pine-bridge/source.js';
 import {assertIoStorageDevice,readCgroupIo,readCgroupIoLimits,systemdIoProperties,validateIoControls} from './io-controls.js';
 import {stopQuantUnit} from './process-supervisor.js';
 import {StorageBudget} from './storage-budget.js';
 import {validateFoundationRequestV2} from './foundation-contract-v2.js';
 import {parseCgroupEvents,inspectCgroupFrozen,parseMemoryWriteback,quiescenceWindowMs,
-  evaluateQuiescence,reconcilePostExit,POST_EXIT_MEASURED,DRAIN_SETTLE_MS,DRAIN_POLL_MS,MAX_DRAIN_MS,
-  STAT_FRESH_MS,TERMINAL_DIAGNOSTIC_VERSION,createDrainRecorder,buildTerminalDiagnostic} from './io-terminal.js';
+  evaluateQuiescence,reconcilePostExit,writebackDrainPlan,POST_EXIT_MEASURED,DRAIN_POLL_MS,MIN_DRAIN_MS,
+  MAX_DRAIN_MS,STAT_FRESH_MS,BARRIER_BUDGET_MS,TAIL_MARGIN_MS,TERMINAL_BUDGET_MS,SPAWN_MARGIN_MS,MAX_RUNTIME_MS,
+  TERMINAL_DIAGNOSTIC_VERSION,createDrainRecorder,buildTerminalDiagnostic} from './io-terminal.js';
 
 const rootDefault=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const fail=code=>Object.assign(new Error(code),{code});
-const TERMINAL_BUDGET_MS=5000,FREEZE_BUDGET_MS=2000,MAX_TERMINAL_READS=32,SPAWN_MARGIN_MS=5000;
+const FREEZE_BUDGET_MS=2000,MAX_TERMINAL_READS=32;
+const VM_EXPIRE_FILE='/proc/sys/vm/dirty_expire_centisecs',VM_WRITEBACK_FILE='/proc/sys/vm/dirty_writeback_centisecs';
 const BOUND_FIELDS=['unitName','group','pid','procStartTicks','cgroupInode','deviceId','deviceInode','invocationId'];
-const SEAM_NAMES=['spawn','command','readFile','stat','lstat','unlink','stopUnit','clock','sleep'];
+const SEAM_NAMES=['spawn','command','readFile','stat','lstat','unlink','stopUnit','clock','sleep',
+  'syncDirectory','realpath'];
 // Terminal readback failures never throw past terminate(); they select the unknown-final fallback.
 // `diagnostic` is fallback evidence only (integers, booleans, enums). It is never digested or stored.
 const terminalFail=(reason,diagnostic)=>Object.assign(fail('QUANT_IO_TELEMETRY_UNAVAILABLE'),{reason},
@@ -97,6 +101,49 @@ function command(file,args,timeoutMs=2000){
   });
 }
 
+/** FTR-1c commit barrier. Parent-owned: opens the StorageBudget root read-only, checks it is still the directory
+ * identified before the freeze, and fsyncs that descriptor. On ext4 this forces the running jbd2 transaction.
+ * Linux only. The launcher races it against BARRIER_BUDGET_MS and never waits for a late settle.
+ */
+export async function syncStorageDirectory(root,expected){
+  const handle=await open(root,constants.O_RDONLY|constants.O_DIRECTORY|constants.O_NOFOLLOW);
+  try{
+    const identity=await handle.stat();
+    if(!expected||!identity.isDirectory()||identity.dev!==expected.dev||identity.ino!==expected.ino)
+      throw fail('COMMIT_BARRIER_FAILED');
+    await handle.sync();
+  }finally{await handle.close();}
+}
+
+/** Host writeback model gate. Reads the two vm sysctls and requires the drain option to cover the derived need. */
+async function readDrainPlan(io,terminalDrainMs){
+  let plan;
+  try{
+    const expireSource=await io.readFile(VM_EXPIRE_FILE,'utf8');
+    const writebackSource=await io.readFile(VM_WRITEBACK_FILE,'utf8');
+    plan=writebackDrainPlan({expireSource,writebackSource,terminalDrainMs});
+  }catch{throw terminalFail('HOST_WRITEBACK_UNAVAILABLE');}
+  if(!plan.fits)throw terminalFail('DRAIN_UNDERSIZED');
+  return plan;
+}
+
+/** The storage root must be a real directory, not a symlink. Its identity is checked again by the barrier. */
+async function readStorageRoot(io,storageRoot){
+  let identity;
+  try{identity=await io.lstat(storageRoot);}catch{throw terminalFail('COMMIT_BARRIER_FAILED');}
+  if(!identity||typeof storageRoot!=='string'||!identity.isDirectory?.()||identity.isSymbolicLink?.()||
+    !Number.isSafeInteger(identity.dev)||!Number.isSafeInteger(identity.ino)||identity.ino<=0)
+    throw terminalFail('COMMIT_BARRIER_FAILED');
+  return {dev:identity.dev,ino:identity.ino};
+}
+
+/** Race the barrier against its budget. Resolves DONE, FAILED or TIMEOUT and never rejects; a late settle is swallowed. */
+function commitBarrier(io,storageRoot,identity){
+  const work=(async()=>{await io.syncDirectory(storageRoot,identity);return 'DONE';})().catch(()=>'FAILED');
+  const timer=io.sleep(BARRIER_BUDGET_MS).then(()=>'TIMEOUT');
+  return Promise.race([work,timer]);
+}
+
 async function readMaxSectorsKb({io,approved}){
   let source;
   try{source=await io.readFile(`/sys/dev/block/${approved.device}/queue/max_sectors_kb`,'utf8');}
@@ -112,17 +159,23 @@ async function readMaxSectorsKb({io,approved}){
  * The drain ends at frozenAt + terminalDrainMs but never after the overall deadline. Quiescence then gets
  * at most budgetMs, so unused drain allowance never lengthens it. With the drain on, a stop request also
  * aborts quiescence (STOP_REQUESTED); with the drain off the FTR-1 flow ignores it.
+ * FTR-1c (drain only): before the freeze, the host writeback model must fit the drain option and the storage
+ * root must be a real directory (none of these freezes); a stop request before the freeze wins. After the
+ * freeze a parent-side directory fsync (commit barrier, BARRIER_BUDGET_MS at most) exposes child-owned
+ * metadata, and the drain then needs 0/0 at least STAT_FRESH_MS after the barrier finished.
  * Returns the frozen measurement or throws with a reason. The unit stays frozen; the caller stops it.
  */
 async function frozenReadback(ctx,{bound,commit,budgetMs}){
-  const {io,approved,unitName,terminalDrainMs}=ctx;
+  const {io,approved,unitName,terminalDrainMs,storageRoot}=ctx;
   const started=io.clock(),deadline=started+budgetMs+terminalDrainMs;
   const live=ctx.state();
   if(!Number.isSafeInteger(budgetMs)||budgetMs<1000||budgetMs>10000)throw terminalFail('INVALID_BUDGET');
   if(!bound||typeof bound!=='object'||BOUND_FIELDS.some(field=>bound[field]===undefined))
     throw terminalFail('NO_BOUND_IDENTITY');
   if(live.closed||!live.ready||live.unexpectedOutput)throw terminalFail('NOT_LIVE');
-  if(ctx.runtimeMs-(started-ctx.spawnedAt)<=budgetMs+terminalDrainMs)throw terminalFail('RUNTIME_LIMIT_NEAR');
+  // The drained flow also owes the tail after the deadline: snapshot, commit and kill (TAIL_MARGIN_MS).
+  if(ctx.runtimeMs-(started-ctx.spawnedAt)<=budgetMs+terminalDrainMs+(terminalDrainMs>0?TAIL_MARGIN_MS:0))
+    throw terminalFail('RUNTIME_LIMIT_NEAR');
   const rates={readBytesPerSecond:approved.evaluator.readBytesPerSecond,
     writeBytesPerSecond:approved.evaluator.writeBytesPerSecond};
   const maxSectorsKb=await readMaxSectorsKb(ctx);
@@ -138,6 +191,13 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
   if(!sameBoundSnapshot(before.merged,bound))throw terminalFail('IDENTITY_CHANGED');
   const base=cgroupBase(before.identity.group);
   const eventsFile=path.posix.join(base,'cgroup.events'),memoryFile=path.posix.join(base,'memory.stat');
+  let requiredDrainMs=null,rootIdentity=null;
+  if(terminalDrainMs>0){
+    requiredDrainMs=(await readDrainPlan(io,terminalDrainMs)).requiredMs;
+    rootIdentity=await readStorageRoot(io,storageRoot);
+    // RD-4: a stop requested during the pre-freeze steps must never start a freeze.
+    if(ctx.stopRequested())throw terminalFail('STOP_REQUESTED');
+  }
   const freezeStarted=io.clock();
   const freezeCommand=await io.command('systemctl',['--user','freeze',unitName],FREEZE_BUDGET_MS);
   if(freezeCommand.code!==0)throw terminalFail('FREEZE_FAILED');
@@ -153,19 +213,27 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
   const freezeMs=io.clock()-freezeStarted;
   const freezer=await io.command('systemctl',['--user','show',unitName,'--property=FreezerState'],1000);
   if(freezer.code!==0||!/^FreezerState=frozen$/m.test(freezer.output))throw terminalFail('FREEZER_STATE_MISMATCH');
-  // Freeze is confirmed. `frozenAt` anchors the drain settle floor and the stat-freshness floor.
+  // Freeze is confirmed. `frozenAt` anchors the drain end and the stat-freshness floor of the no-drain flow.
   const frozenAt=io.clock();
   const drain=createDrainRecorder();
   const unseen=Object.freeze({fileDirty:null,fileWriteback:null});
-  let stage='DRAIN',memoryReads=0,drainMs=0,seen=unseen;
+  let stage='DRAIN',memoryReads=0,drainMs=0,seen=unseen,barrierMs=null,barrierDoneAt=null;
   const diagnostic=()=>terminalDrainMs>0?buildTerminalDiagnostic({stage,...seen,memoryReads,
-    sinceFreezeMs:io.clock()-frozenAt,
+    sinceFreezeMs:io.clock()-frozenAt,barrierMs,requiredDrainMs,
     drain:{enabled:true,durationMs:stage==='DRAIN'?io.clock()-frozenAt:drainMs,...drain.snapshot()}}):undefined;
   try{
     if(terminalDrainMs>0){
       // FTR-1b step 3: while frozen, wait for child-owned dirty/writeback page cache to clean.
       const drainFail=reason=>terminalFail(reason,diagnostic());
       const drainEnd=Math.min(frozenAt+terminalDrainMs,deadline);
+      // FTR-1c commit barrier: force the running journal commit so late child-owned metadata is exposed now.
+      if(ctx.stopRequested())throw drainFail('STOP_REQUESTED');
+      const barrierStartedAt=io.clock();
+      const barrier=await commitBarrier(io,storageRoot,rootIdentity);
+      if(barrier==='FAILED')throw drainFail('COMMIT_BARRIER_FAILED');
+      if(barrier==='TIMEOUT')throw drainFail('COMMIT_BARRIER_TIMEOUT');
+      barrierDoneAt=io.clock();barrierMs=Math.round(barrierDoneAt-barrierStartedAt);
+      // The loop below checks stopRequested first, so a stop that arrived during the barrier ends the drain now.
       const readText=async(file,invalid)=>{
         try{return await io.readFile(file,'utf8');}
         catch(error){throw drainFail(['ENOENT','ENODEV'].includes(error?.code)?'CGROUP_EMPTY':invalid);}
@@ -183,7 +251,7 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
         try{seen=parseMemoryWriteback(memoryText);}catch{throw drainFail('MEMORY_STAT_INVALID');}
         memoryReads+=1;
         drain.record(atMs-frozenAt,seen.fileDirty,seen.fileWriteback);
-        if(seen.fileDirty===0&&seen.fileWriteback===0&&atMs-frozenAt>=DRAIN_SETTLE_MS)break;
+        if(seen.fileDirty===0&&seen.fileWriteback===0&&atMs>=barrierDoneAt+STAT_FRESH_MS)break;
         if(atMs>=drainEnd)throw drainFail('WRITEBACK_PENDING');
         await io.sleep(Math.max(1,Math.min(DRAIN_POLL_MS,Math.ceil(drainEnd-io.clock()))));
       }
@@ -195,9 +263,16 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
     if(plan.overBudget)throw terminalFail('WINDOW_OVER_BUDGET');
     const readOnce=async()=>{
       const atMs=io.clock();
-      const [counters,events,memory]=await Promise.all([
-        readCgroupIo(before.identity.group,approved,'evaluator',{reader:io.readFile,statter:io.stat}),
-        io.readFile(eventsFile,'utf8'),io.readFile(memoryFile,'utf8')]);
+      const readIo=()=>readCgroupIo(before.identity.group,approved,'evaluator',{reader:io.readFile,statter:io.stat});
+      let counters,events,memory;
+      if(terminalDrainMs>0){
+        // FTR-1c: events, then memory.stat, then io.stat, strictly in sequence. A parallel read could let the
+        // io.stat read finish before a dirty-page transition becomes visible in memory.stat.
+        events=await io.readFile(eventsFile,'utf8');
+        memory=await io.readFile(memoryFile,'utf8');
+        counters=await readIo();
+      }else [counters,events,memory]=await Promise.all([readIo(),io.readFile(eventsFile,'utf8'),
+        io.readFile(memoryFile,'utf8')]);
       try{inspectCgroupFrozen(events);}catch{throw terminalFail('NOT_FROZEN');}
       seen=unseen;
       try{seen=parseMemoryWriteback(memory);memoryReads+=1;}
@@ -237,7 +312,9 @@ async function frozenReadback(ctx,{bound,commit,budgetMs}){
         {readBytes:second.readBytes,writeBytes:second.writeBytes}],
       fileDirty:0,fileWriteback:0,maxBioBytes:plan.maxBioBytes,rates,
       freezeMs:Math.round(freezeMs),elapsedMs:Math.round(io.clock()-started),
-      drainMs,drainPolls:drain.snapshot().polls,statFreshMs:Math.round(second.atMs-frozenAt)});
+      drainMs,drainPolls:drain.snapshot().polls,statFreshMs:Math.round(second.atMs-frozenAt),
+      // Not digested. Drained flow only, so the drain-off evidence keeps its exact key set.
+      ...(terminalDrainMs>0?{barrierMs,requiredDrainMs}:{})});
     // Frozen counters must be durable before the unit is killed. Failure means fallback.
     if(commit){try{await commit(frozenSample,readbackEvidence);}catch{throw terminalFail('COMMIT_FAILED');}}
     return {frozenSample,readbackEvidence,group:after.identity.group};
@@ -283,17 +360,21 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
   const host={spawn:seams.spawn??spawn,command:seams.command??command,readFile:seams.readFile??readFile,
     stat:seams.stat??stat,lstat:seams.lstat??lstat,unlink:seams.unlink??unlink,
     stopUnit:seams.stopUnit??stopQuantUnit,clock:seams.clock??(()=>performance.now()),
-    sleep:seams.sleep??(ms=>new Promise(resolve=>setTimeout(resolve,ms)))};
+    sleep:seams.sleep??(ms=>new Promise(resolve=>setTimeout(resolve,ms))),
+    syncDirectory:seams.syncDirectory??syncStorageDirectory,realpath:seams.realpath??realpath};
   const approved=validateIoControls(ioControls);
   if(typeof python!=='string'||!python||typeof root!=='string'||!path.isAbsolute(root)||
-    !Number.isSafeInteger(timeoutMs)||timeoutMs<100||timeoutMs>60000||
-    terminalDrainMs!==0&&(!Number.isSafeInteger(terminalDrainMs)||terminalDrainMs<DRAIN_SETTLE_MS||
+    !Number.isSafeInteger(timeoutMs)||timeoutMs<100||timeoutMs>MAX_RUNTIME_MS||
+    terminalDrainMs!==0&&(!Number.isSafeInteger(terminalDrainMs)||terminalDrainMs<MIN_DRAIN_MS||
       terminalDrainMs>MAX_DRAIN_MS)||
-    // The runtime must hold the terminal budget, the drain and a spawn-to-frame margin.
-    terminalDrainMs>0&&Math.ceil(timeoutMs/1000)*1000<=TERMINAL_BUDGET_MS+terminalDrainMs+SPAWN_MARGIN_MS)
+    // The drain needs the StorageBudget root for its commit barrier. The runtime must hold the terminal budget,
+    // the drain, a spawn-to-frame margin and the tail margin (snapshot, commit and kill after the deadline).
+    terminalDrainMs>0&&(!storageBudget||Math.ceil(timeoutMs/1000)*1000<=
+      TERMINAL_BUDGET_MS+terminalDrainMs+SPAWN_MARGIN_MS+TAIL_MARGIN_MS))
     throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
   if(storageBudget&&!(storageBudget instanceof StorageBudget))
     throw fail('QUANT_IO_READINESS_CONFIGURATION_REQUIRED');
+  const storageRoot=storageBudget?storageBudget.root:null;
   if(protocol!==null&&protocol!==PROFILE||protocol===PROFILE&&!storageBudget)
     throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
   const spawnPrepared=({unitName},readiness=null,profilePayload=null)=>{
@@ -308,6 +389,8 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
         '--property=CPUQuota=50%','--property=MemoryMax='+512*1024*1024,
         '--property=TasksMax=16','--property=IOWeight=10',...systemdIoProperties(approved),
         '--property=Nice=10','--property=KillMode=control-group',
+        // Drained units stay frozen after the deadline. If systemd thaws one first, it must SIGKILL, never SIGTERM.
+        ...(terminalDrainMs>0?['--property=KillSignal=SIGKILL']:[]),
         '--property=TimeoutStopSec=3','--property=RuntimeMaxSec='+Math.ceil(timeoutMs/1000),
         '--property=LimitCORE=0','--property=LimitNOFILE=64',
         '--setenv=OMP_NUM_THREADS=1','--setenv=OPENBLAS_NUM_THREADS=1',
@@ -525,7 +608,7 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
             if(stopPromise)reason='ALREADY_STOPPING';
             else if(commit!==null&&typeof commit!=='function')reason='INVALID_COMMIT';
             else try{
-              measurement=await frozenReadback({io:host,approved,unitName,spawnedAt,runtimeMs,terminalDrainMs,
+              measurement=await frozenReadback({io:host,approved,unitName,spawnedAt,runtimeMs,terminalDrainMs,storageRoot,
                 state:()=>({closed,ready:readyState,unexpectedOutput}),stopRequested:()=>stopRequested,
                 liveIdentity,last:()=>previousSample},{bound,commit,budgetMs});
             }catch(error){reason=failureReason(error);diagnostic=failureDiagnostic(error);}
@@ -566,7 +649,7 @@ export function createIoRuntimeLauncher({python=process.env.QUANT_RESEARCH_PYTHO
           throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
         validateFoundationRequestV2(parsed.contract,{policy:parsed.policy});
       }else if(preparedPayload!==undefined)throw fail('QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
-      await assertIoStorageDevice(storageBudget.root,approved.device);
+      await assertIoStorageDevice(storageBudget.root,approved.device,{statter:host.stat,resolver:host.realpath});
       const pendingName='.pending-'+randomUUID();
       const reservation=await storageBudget.reserve({diskBytes:4096,tempBytes:4096,
         pendingName,purpose:'quant-io-readiness-v1'});

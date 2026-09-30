@@ -101,15 +101,46 @@ export function inspectMemoryWriteback(source){
   return {fileDirty:0,fileWriteback:0};
 }
 
-/** FTR-1b frozen drain. Poll while frozen until page cache is clean and DRAIN_SETTLE_MS have passed.
- * DRAIN_SETTLE_MS = jbd2 commit 5,000 + memcg stat flush 2,000 + 500 margin. STAT_FRESH_MS is the
- * minimum age of the final stable read after freeze. MAX_DRAIN_MS caps the launcher option.
+/** FTR-1b/1c frozen drain. While frozen, the parent forces a directory-fsync commit barrier (BARRIER_BUDGET_MS
+ * at most), then polls until page cache is clean and at least STAT_FRESH_MS have passed since the barrier
+ * finished (memcg stat flush freshness). MIN_DRAIN_MS and MAX_DRAIN_MS bound the launcher option.
+ * The fixed terminal constants below are engine-hashed policy inputs (RD-2): capacity policy code imports them.
  */
-export const DRAIN_SETTLE_MS=7500;
 export const DRAIN_POLL_MS=500;
+export const MIN_DRAIN_MS=5000;
 export const MAX_DRAIN_MS=45000;
 export const STAT_FRESH_MS=2500;
-export const TERMINAL_DIAGNOSTIC_VERSION='quant-io-terminal-diagnostic-v1';
+export const BARRIER_BUDGET_MS=2000;
+export const TAIL_MARGIN_MS=5000;
+export const TERMINAL_BUDGET_MS=5000;
+export const SPAWN_MARGIN_MS=5000;
+export const MAX_RUNTIME_MS=70000;
+export const COMMIT_LOCK_TIMEOUT_MS=2000;
+export const COMMIT_BOUND_MS=3000;
+export const TERMINAL_DIAGNOSTIC_VERSION='quant-io-terminal-diagnostic-v2';
+const CENTISECS_MAX=8640000;
+const CENTISECS_LINE=/^(0|[1-9][0-9]{0,6})\n?$/;
+
+/** One /proc/sys/vm centisecs value: one decimal line, optional single trailing LF, at most one day. */
+export function parseCentisecs(source){
+  if(typeof source!=='string')throw unavailable();
+  const match=CENTISECS_LINE.exec(source);
+  if(!match)throw unavailable();
+  const value=Number(match[1]);
+  if(value>CENTISECS_MAX)throw unavailable();
+  return value;
+}
+
+/** Host-derived drain need. requiredMs = barrier + expire + 2 x writeback + stat freshness + one poll.
+ * A zero writeback interval means the flusher never wakes on its own: requiredMs null, fits false.
+ */
+export function writebackDrainPlan({expireSource,writebackSource,terminalDrainMs}={}){
+  if(!isCount(terminalDrainMs))throw unavailable();
+  const expireMs=parseCentisecs(expireSource)*10,writebackMs=parseCentisecs(writebackSource)*10;
+  const requiredMs=writebackMs===0?null:
+    BARRIER_BUDGET_MS+expireMs+2*writebackMs+STAT_FRESH_MS+DRAIN_POLL_MS;
+  return {expireMs,writebackMs,requiredMs,fits:requiredMs!==null&&requiredMs<=terminalDrainMs};
+}
 const SERIES_EDGE=16;
 const wholeMs=value=>Number.isFinite(value)?Math.max(0,Math.round(value)):0;
 
@@ -134,13 +165,14 @@ export function createDrainRecorder(){
 
 /** Fallback-only evidence. Integers, booleans and fixed enum strings only. Never digested or stored in SQL. */
 export function buildTerminalDiagnostic({stage,fileDirty=null,fileWriteback=null,memoryReads=0,sinceFreezeMs=0,
-  drain={}}={}){
+  barrierMs=null,requiredDrainMs=null,drain={}}={}){
   const count=value=>isCount(value)?value:null;
   const series=(Array.isArray(drain.series)?drain.series:[]).slice(0,2*SERIES_EDGE).map(point=>
     Object.freeze([0,1,2].map(index=>count(Array.isArray(point)?point[index]:null)??0)));
   return Object.freeze({version:TERMINAL_DIAGNOSTIC_VERSION,stage:stage==='QUIESCENCE'?'QUIESCENCE':'DRAIN',
     fileDirty:count(fileDirty),fileWriteback:count(fileWriteback),
     memoryReads:count(memoryReads)??0,sinceFreezeMs:wholeMs(sinceFreezeMs),
+    barrierMs:count(barrierMs),requiredDrainMs:count(requiredDrainMs),
     drain:Object.freeze({enabled:drain.enabled!==false,durationMs:wholeMs(drain.durationMs),
       polls:count(drain.polls)??0,maxDirty:count(drain.maxDirty)??0,maxWriteback:count(drain.maxWriteback)??0,
       firstZeroMs:count(drain.firstZeroMs),series:Object.freeze(series)})});

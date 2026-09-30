@@ -2,12 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import {PassThrough} from 'node:stream';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import os from 'node:os';
 import {
   inspectIoRuntimeUnit,inspectIoRuntimeDevice,inspectIoRuntimeProc,
   inspectIoRuntimeMembership,
-  inspectIoRuntimeReceipt,inspectIoRuntimeScratch,createIoRuntimeLauncher,
+  inspectIoRuntimeReceipt,inspectIoRuntimeScratch,createIoRuntimeLauncher,syncStorageDirectory,
 } from '../src/quant-research/io-runtime-launcher.js';
 import {terminalReadbackDigest} from '../src/quant-research/io-terminal.js';
+import {StorageBudget} from '../src/quant-research/storage-budget.js';
 
 const unitName='robot-quant-'+'a'.repeat(64)+'.service';
 const group='/user.slice/'+unitName;
@@ -71,14 +75,30 @@ const controls={version:'quant-io-v1',device:'8:0',devicePath:'/dev/sda',
   evaluator:{readBytesPerSecond:524288,writeBytesPerSecond:524288}};
 const cgroupGroup='/user.slice/user-1000.slice/user@1000.service/app.slice/'+unitName;
 const cgroupBase='/sys/fs/cgroup'+cgroupGroup;
-const enoent=path=>Object.assign(new Error('ENOENT '+path),{code:'ENOENT'});
+const enoent=file=>Object.assign(new Error('ENOENT '+file),{code:'ENOENT'});
+const storageRoot=path.resolve('/srv/quant-storage-root');
+const rootIdentity={dev:2049,ino:2};
+const rootStats={
+  dir:()=>({isDirectory:()=>true,isSymbolicLink:()=>false,...rootIdentity}),
+  symlink:()=>({isDirectory:()=>false,isSymbolicLink:()=>true,...rootIdentity}),
+  file:()=>({isDirectory:()=>false,isSymbolicLink:()=>false,...rootIdentity}),
+  missing:()=>{throw enoent('storage root');}};
+const scratchStats={isFile:()=>true,isSymbolicLink:()=>false,size:4096,dev:9,ino:77};
 
-/** Scriptable Linux host. phase: live, frozen, stopped. */
+/** Scriptable Linux host. phase: live, frozen, stopped.
+ * FTR-1c fields: vmExpire and vmWriteback are the two vm sysctl sources (null: unreadable), rootStat picks the
+ * lstat answer for the StorageBudget root, and barrier scripts the directory fsync: settle after `ms` fake
+ * milliseconds, reject, or never settle. The barrier timer (the first sleep of 2000 after syncDirectory) is
+ * virtual: it fires only when the barrier never settles, so a fast barrier costs no fake time.
+ */
 function fakeHost(options={}){
   const host={phase:'live',now:0,log:[],removed:true,
     counters:{read:0,write:65536},dirty:0,writeback:0,inode:304778,startTicks:'12345',
     freezeCode:0,freezerReported:null,eventsStuck:false,maxSectors:'1280\n',stopResult:true,
-    retained:null,afterSleep:null,rate:524288,memoryStat:null,events:null,...options};
+    retained:null,afterSleep:null,rate:524288,memoryStat:null,events:null,
+    vmExpire:'100\n',vmWriteback:'50\n',rootStat:'dir',barrier:{mode:'settle',ms:0},
+    syncCalls:[],barrierOpen:false,barrierStartedAt:null,barrierDoneAt:null,barrierLate:null,onBarrier:null,
+    beforeRead:null,postReady:null,...options};
   const child=Object.assign(new EventEmitter(),{stdin:new PassThrough(),
     stdout:new PassThrough(),stderr:new PassThrough(),
     kill(signal){host.log.push('child.kill '+signal);host.closeChild();return true;}});
@@ -103,10 +123,42 @@ function fakeHost(options={}){
       return `anon 4096\nfile 8192\nfile_dirty ${at(host.dirty)}\nfile_writeback ${at(host.writeback)}\n`;
     },
     [cgroupBase+'/cpu.max']:()=>'50000 100000\n',[cgroupBase+'/memory.max']:()=>'536870912\n',
-    [cgroupBase+'/pids.max']:()=>'16\n'};
+    [cgroupBase+'/pids.max']:()=>'16\n',
+    '/proc/sys/vm/dirty_expire_centisecs':()=>{
+      if(host.vmExpire===null)throw enoent('dirty_expire_centisecs');return at(host.vmExpire);},
+    '/proc/sys/vm/dirty_writeback_centisecs':()=>{
+      if(host.vmWriteback===null)throw enoent('dirty_writeback_centisecs');return at(host.vmWriteback);}};
   host.seams={
     clock:()=>host.now,
-    async sleep(ms){host.log.push('sleep '+ms);host.now+=ms;host.afterSleep?.(ms);},
+    async sleep(ms){
+      host.log.push('sleep '+ms);
+      if(host.barrierOpen&&ms===2000){
+        // The barrier timer. It fires only if the barrier never settles; otherwise it stays pending.
+        host.barrierOpen=false;
+        if(host.barrier.mode==='never'){host.now=host.barrierStartedAt+ms;return;}
+        await new Promise(()=>{});
+      }
+      host.now+=ms;host.afterSleep?.(ms);
+    },
+    async syncDirectory(root,identity){
+      host.log.push('syncDirectory '+root+' '+identity.dev+':'+identity.ino);
+      host.syncCalls.push({root,identity:{...identity},phase:host.phase});
+      host.barrierOpen=true;host.barrierStartedAt=host.now;
+      host.onBarrier?.();
+      if(host.barrier.mode==='never'){
+        return new Promise((resolve,reject)=>{host.barrierLate={resolve,reject};});
+      }
+      host.now+=host.barrier.ms??0;host.barrierDoneAt=host.now;
+      if(host.barrier.mode==='reject')throw Object.assign(new Error('EIO barrier'),{code:'EIO'});
+    },
+    async lstat(file){
+      host.log.push('lstat '+file);
+      if(file===storageRoot)return rootStats[host.rootStat]();
+      if(file.startsWith(storageRoot))return scratchStats;
+      throw enoent(file);
+    },
+    async unlink(file){host.log.push('unlink '+file);},
+    async realpath(file){return file;},
     spawn:()=>child,
     async command(file,args){
       const text=file+' '+args.join(' ');host.log.push('command '+text);
@@ -122,6 +174,7 @@ function fakeHost(options={}){
     },
     async readFile(path){
       host.log.push('read '+path);
+      host.beforeRead?.(path);
       if(gone(path)||!Object.hasOwn(files,path)&&!host.retained)throw enoent(path);
       if(host.phase==='stopped'&&host.retained&&path.startsWith(cgroupBase)){
         if(path.endsWith('/io.stat'))return `8:0 rbytes=${host.retained.read} wbytes=${host.retained.write} rios=0 wios=1 dbytes=0 dios=0\n`;
@@ -131,6 +184,7 @@ function fakeHost(options={}){
     },
     async stat(path){
       host.log.push('stat '+path);
+      if(path===storageRoot)return {dev:2048,ino:2};
       if(path==='/dev/sda')return {isBlockDevice:()=>true,ino:156,rdev:2048,dev:9};
       if(gone(path))throw enoent(path);
       return {ino:host.phase==='stopped'&&host.retained?host.retained.inode:host.inode};
@@ -143,12 +197,25 @@ function fakeHost(options={}){
 }
 const bound={unitName,group:cgroupGroup,pid:4242,procStartTicks:'12345',cgroupInode:304778,deviceId:'8:0',
   deviceInode:156,invocationId};
-async function terminateWith(host,{timeoutMs=30000,terminate={},launcher:launcherOptions={},ioControls=controls}={}){
+/** A StorageBudget whose reservations are fake. The launcher only reads its root and reserves 4 KiB. */
+function fakeBudget(host){
+  const budget=new StorageBudget({root:storageRoot,diskQuotaBytes:1048576,tempQuotaBytes:1048576,freeFloorBytes:0});
+  budget.reserve=async()=>({release:async()=>{host.log.push('release');}});
+  return budget;
+}
+/** Spawns through the readiness path when the drain is on (it needs the StorageBudget root), else the plain path. */
+async function spawnHandle(host,{timeoutMs=30000,launcher:launcherOptions={},ioControls=controls}={}){
+  const drained=launcherOptions.terminalDrainMs>0;
   const launcher=createIoRuntimeLauncher({ioControls,timeoutMs,allowUnsupportedPlatformForTests:true,
-    seams:host.seams,...launcherOptions});
-  const handle=launcher.spawnPrepared({unitName});
+    seams:host.seams,...(drained?{storageBudget:fakeBudget(host)}:{}),...launcherOptions});
+  const handle=drained?(await launcher.prepare({unitName})).spawnPrepared():launcher.spawnPrepared({unitName});
   await handle.ready;
   host.log.length=0;
+  host.postReady?.();
+  return handle;
+}
+async function terminateWith(host,{timeoutMs=30000,terminate={},launcher:launcherOptions={},ioControls=controls}={}){
+  const handle=await spawnHandle(host,{timeoutMs,launcher:launcherOptions,ioControls});
   return {handle,result:await handle.terminate({bound,commit:async()=>{host.log.push('commit');},...terminate})};
 }
 const before=(log,first,second)=>log.findIndex(line=>line.startsWith(first))<log.findIndex(line=>line.startsWith(second));
@@ -340,7 +407,7 @@ test('seams and platform gate are validated',()=>{
 });
 
 // ---- FTR-1b frozen writeback drain: same injected host, fake clock, no Linux access ----
-const drainOptions=(terminalDrainMs=20000)=>({timeoutMs:60000,launcher:{terminalDrainMs}});
+const drainOptions=(terminalDrainMs=20000)=>({timeoutMs:70000,launcher:{terminalDrainMs}});
 const memoryLine='read '+cgroupBase+'/memory.stat';
 const ioLine='read '+cgroupBase+'/io.stat';
 const sleepCount=(log,ms)=>log.filter(line=>line==='sleep '+ms).length;
@@ -398,22 +465,57 @@ test('drain waits while frozen for dirty pages to clean, then quiesces, commits,
   assert.equal(digestOf(result),digestOf(plain.result));
 });
 
-test('drain floor: a clean cgroup still waits DRAIN_SETTLE_MS before the quiescence reads',async()=>{
-  const host=fakeHost();
+test('drain floor: a clean cgroup waits STAT_FRESH_MS after the barrier finished, not after the freeze',async()=>{
+  // Barrier 40 ms: polls at 40, 540, ... The first poll >= 40 + 2500 is 2540, and that is where the drain exits.
+  const host=fakeHost({barrier:{mode:'settle',ms:40}});
   const {result}=await terminateWith(host,drainOptions(7500));
   assert.equal(result.measured,true);
-  assert.equal(result.readbackEvidence.drainMs,7500);assert.equal(result.readbackEvidence.drainPolls,16);
-  assert.equal(sleepCount(host.log,500),15);
+  const evidence=result.readbackEvidence;
+  assert.equal(evidence.drainMs,2540);assert.equal(evidence.drainPolls,6);
+  assert.equal(evidence.barrierMs,40);assert.equal(evidence.requiredDrainMs,7000);
+  assert.equal(sleepCount(host.log,500),5);
   assert.ok(host.log.lastIndexOf('sleep 500')<host.log.indexOf(ioLine));
+  // A slower barrier moves the floor with it: done at 1000, so the floor is 3500. A floor measured from the
+  // freeze (2500) would already have exited at 2500.
+  const slow=fakeHost({barrier:{mode:'settle',ms:1000}});
+  const {result:late}=await terminateWith(slow,drainOptions(7500));
+  assert.equal(late.measured,true);
+  assert.equal(late.readbackEvidence.drainMs,3500);assert.equal(late.readbackEvidence.drainPolls,6);
+  assert.equal(late.readbackEvidence.barrierMs,1000);
 });
 
-test('drain does not exit at the floor while late dirty pages are present; it exits on the first settled clean read',async()=>{
-  // Clean before 3 s, dirty from 3 s to 9 s, clean again. 7.5 s is reached while dirty, so exit waits for 9 s.
-  const host=fakeHost({dirty:now=>now>=3000&&now<9000?4096:0});
+test('drain does not exit at the floor while dirty pages are present; it exits on the first settled clean read',async()=>{
+  // Clean at freeze, dirty from 1 s to 9 s, clean again. The 2.5 s floor is reached while dirty, so exit waits for 9 s.
+  const host=fakeHost({dirty:now=>now>=1000&&now<9000?4096:0});
   const {result}=await terminateWith(host,drainOptions());
   assert.equal(result.measured,true);
-  assert.equal(result.readbackEvidence.drainMs,9000);assert.notEqual(result.readbackEvidence.drainMs,7500);
+  assert.equal(result.readbackEvidence.drainMs,9000);assert.notEqual(result.readbackEvidence.drainMs,2500);
   assert.equal(result.readbackEvidence.drainPolls,19);
+});
+
+test('barrier exposure: pages the fsync exposes are waited out, so the drain outlasts the exposure',async()=>{
+  // The cgroup is clean until the barrier finishes; the barrier then exposes 8192 dirty bytes for 31 s.
+  // Without the barrier the drain would have exited at its floor with the dirty bytes still hidden.
+  const host=fakeHost({barrier:{mode:'settle',ms:40},
+    dirty:now=>host.barrierDoneAt!==null&&now<host.barrierDoneAt+31000?8192:0});
+  const {result}=await terminateWith(host,drainOptions(45000));
+  assert.equal(result.measured,true);
+  assert.equal(result.readbackEvidence.drainMs,31040);assert.ok(result.readbackEvidence.drainMs>=31000);
+  assert.equal(host.syncCalls.length,1);
+  const hidden=fakeHost({dirty:0});
+  const {result:quick}=await terminateWith(hidden,drainOptions(45000));
+  assert.equal(quick.readbackEvidence.drainMs,2500);
+});
+
+test('host model: 3000/500 sysctls need the whole 45 s and a drain that clears at 35 s is measured',async()=>{
+  const host=fakeHost({vmExpire:'3000\n',vmWriteback:'500\n',dirty:now=>now<35000?12288:0});
+  const {result}=await terminateWith(host,drainOptions(45000));
+  assert.equal(result.measured,true);
+  const evidence=result.readbackEvidence;
+  assert.equal(evidence.requiredDrainMs,45000);assert.equal(evidence.drainMs,35000);
+  assert.ok(evidence.drainMs<=38000);assert.equal(evidence.barrierMs,0);
+  assert.equal(evidence.fileDirty,0);assert.equal(evidence.fileWriteback,0);
+  assert.equal(stopCount(host.log),1);
 });
 
 test('drain timeout with dirty or writeback pages falls back with a DRAIN diagnostic and one stop',async()=>{
@@ -426,8 +528,8 @@ test('drain timeout with dirty or writeback pages falls back with a DRAIN diagno
     assert.equal(host.log.includes('commit'),false);assert.equal(stopCount(host.log),1);
     assert.equal(host.log.includes(ioLine),false);
     assert.ok(host.now<=10000+500);
-    assert.deepEqual(result.diagnostic,{version:'quant-io-terminal-diagnostic-v1',stage:'DRAIN',
-      fileDirty:dirty,fileWriteback:writeback,memoryReads:21,sinceFreezeMs:10000,
+    assert.deepEqual(result.diagnostic,{version:'quant-io-terminal-diagnostic-v2',stage:'DRAIN',
+      fileDirty:dirty,fileWriteback:writeback,memoryReads:21,sinceFreezeMs:10000,barrierMs:0,requiredDrainMs:7000,
       drain:{enabled:true,durationMs:10000,polls:21,maxDirty:dirty,maxWriteback:writeback,firstZeroMs:null,
         series:range(21,500,ms=>[ms,dirty,writeback])}});
   }
@@ -452,25 +554,34 @@ test('malformed, unreadable or vanished memory.stat during the drain fails close
 });
 
 test('dirty pages that reappear during quiescence fail WRITEBACK_PENDING with a QUIESCENCE diagnostic',async()=>{
-  const host=fakeHost({dirty:now=>now>=8000?4096:0});
+  const host=fakeHost({dirty:now=>now>=3000?4096:0});
   const {result}=await terminateWith(host,drainOptions());
   assert.equal(result.measured,false);assert.equal(result.reason,'WRITEBACK_PENDING');
   assert.equal(host.log.includes('commit'),false);assert.equal(stopCount(host.log),1);
   const {diagnostic}=result;
   assert.equal(diagnostic.stage,'QUIESCENCE');
   assert.equal(diagnostic.fileDirty,4096);assert.equal(diagnostic.fileWriteback,0);
-  // 16 drain polls, then quiescence read 1 (clean) and read 2 (dirty).
-  assert.equal(diagnostic.memoryReads,18);assert.equal(diagnostic.sinceFreezeMs,10000);
-  assert.equal(diagnostic.drain.durationMs,7500);assert.equal(diagnostic.drain.polls,16);
+  // 6 drain polls, then quiescence read 1 (clean, 2500 ms) and read 2 (dirty, 5000 ms).
+  assert.equal(diagnostic.memoryReads,8);assert.equal(diagnostic.sinceFreezeMs,5000);
+  assert.equal(diagnostic.drain.durationMs,2500);assert.equal(diagnostic.drain.polls,6);
   assert.equal(diagnostic.drain.firstZeroMs,0);
+  assert.equal(diagnostic.barrierMs,0);assert.equal(diagnostic.requiredDrainMs,7000);
+});
+
+test('dirty pages that never clear fall back WRITEBACK_PENDING at freeze + drain, at most one poll late',async()=>{
+  const host=fakeHost({barrier:{mode:'settle',ms:40},dirty:12288});
+  const {result}=await terminateWith(host,drainOptions(9000));
+  assert.equal(result.measured,false);assert.equal(result.reason,'WRITEBACK_PENDING');
+  assert.ok(host.now>=9000&&host.now<=9000+500);
+  assert.equal(host.log.includes('commit'),false);assert.equal(host.log.includes(ioLine),false);
+  assert.equal(stopCount(host.log),1);assert.equal(result.stopProof.unitStopped,true);
+  assert.equal(result.diagnostic.stage,'DRAIN');assert.equal(result.diagnostic.barrierMs,40);
+  assert.equal(result.diagnostic.maxDirty,undefined);assert.equal(result.diagnostic.drain.maxDirty,12288);
 });
 
 test('stop() during the drain aborts it within one poll and shares the single stop proof',async()=>{
   const host=fakeHost({dirty:8192});
-  const launcher=createIoRuntimeLauncher({ioControls:controls,timeoutMs:60000,terminalDrainMs:40000,
-    allowUnsupportedPlatformForTests:true,seams:host.seams});
-  const handle=launcher.spawnPrepared({unitName});
-  await handle.ready;host.log.length=0;
+  const handle=await spawnHandle(host,{timeoutMs:70000,launcher:{terminalDrainMs:40000}});
   let requestedAt=null,stopping=null;
   host.afterSleep=()=>{if(requestedAt===null&&host.now>=2000){requestedAt=host.now;stopping=handle.stop();}};
   const terminal=await handle.terminate({bound,commit:async()=>{host.log.push('commit');}});
@@ -498,41 +609,87 @@ test('thaw, emptied, removed or unreadable cgroup.events during the drain fails 
   }
 });
 
-test('terminalDrainMs and timeoutMs are validated; drain is charged against the runtime limit',async()=>{
+test('terminalDrainMs and timeoutMs are validated; the drain and the tail margin are charged against the runtime',async()=>{
   const make=options=>createIoRuntimeLauncher({ioControls:controls,allowUnsupportedPlatformForTests:true,
-    seams:fakeHost().seams,...options});
-  for(const bad of [1000,7499,45001,50000,-1,'40000',NaN,null,7500.5,Infinity])
-    assert.throws(()=>make({timeoutMs:60000,terminalDrainMs:bad}),{code:'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED'},String(bad));
-  for(const good of [0,7500,40000,45000])assert.doesNotThrow(()=>make({timeoutMs:60000,terminalDrainMs:good}));
-  assert.doesNotThrow(()=>make({timeoutMs:60000}));
-  assert.throws(()=>make({timeoutMs:60001}),{code:'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED'});
-  assert.throws(()=>make({timeoutMs:99}),{code:'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED'});
-  // RuntimeMaxSec follows the raised cap.
-  const host=fakeHost();let args=null;
-  const launcher=createIoRuntimeLauncher({ioControls:controls,timeoutMs:60000,allowUnsupportedPlatformForTests:true,
-    seams:{...host.seams,spawn:(file,spawnArgs)=>{args=spawnArgs;return host.child;}}});
-  launcher.spawnPrepared({unitName});
-  assert.ok(args.includes('--property=RuntimeMaxSec=60'));
-  // F3: with the drain on, ceil(timeoutMs/1000)*1000 must exceed 5 s budget + drain + 5 s spawn margin.
-  for(const [timeoutMs,terminalDrainMs] of [[30000,40000],[45000,40000],[50000,40000],[17000,7500],[55000,45000]])
-    assert.throws(()=>make({timeoutMs,terminalDrainMs}),{code:'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED'},
-      timeoutMs+'/'+terminalDrainMs);
-  for(const [timeoutMs,terminalDrainMs] of [[50001,40000],[51000,40000],[17001,7500],[55001,45000],[60000,45000],
-    [5000,0],[30000,0]])
+    seams:fakeHost().seams,...(options.terminalDrainMs>0?{storageBudget:fakeBudget(fakeHost())}:{}),...options});
+  const rejected={code:'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED'};
+  for(const bad of [1000,4999,45001,50000,-1,'40000',NaN,null,5000.5,Infinity])
+    assert.throws(()=>make({timeoutMs:70000,terminalDrainMs:bad}),rejected,String(bad));
+  for(const good of [0,5000,7500,40000,45000])assert.doesNotThrow(()=>make({timeoutMs:70000,terminalDrainMs:good}));
+  assert.doesNotThrow(()=>make({timeoutMs:70000}));
+  // The runtime cap is 70,000 ms so the host-required 45 s drain still fits. Drain 0 keeps its old freedom.
+  assert.doesNotThrow(()=>make({timeoutMs:70000,terminalDrainMs:45000}));
+  assert.doesNotThrow(()=>make({timeoutMs:60001}));
+  for(const timeoutMs of [70001,75000,99])assert.throws(()=>make({timeoutMs}),rejected,String(timeoutMs));
+  assert.throws(()=>make({timeoutMs:70001,terminalDrainMs:45000}),rejected);
+  // The drain needs a StorageBudget for its commit barrier.
+  assert.throws(()=>createIoRuntimeLauncher({ioControls:controls,allowUnsupportedPlatformForTests:true,
+    seams:fakeHost().seams,timeoutMs:70000,terminalDrainMs:40000}),rejected);
+  assert.throws(()=>createIoRuntimeLauncher({ioControls:controls,allowUnsupportedPlatformForTests:true,
+    seams:fakeHost().seams,timeoutMs:70000,terminalDrainMs:40000,storageBudget:{root:storageRoot}}),
+    {code:'QUANT_IO_READINESS_CONFIGURATION_REQUIRED'});
+  // Constructor rule: ceil(timeoutMs to 1 s) must exceed 5 s budget + drain + 5 s spawn margin + 5 s tail margin.
+  for(const [timeoutMs,terminalDrainMs] of [[30000,40000],[45000,40000],[50000,40000],[55000,40000],[22000,7500],
+    [55000,45000],[56000,45000],[58000,45000],[60000,45000]])
+    assert.throws(()=>make({timeoutMs,terminalDrainMs}),rejected,timeoutMs+'/'+terminalDrainMs);
+  for(const [timeoutMs,terminalDrainMs] of [[55001,40000],[56000,40000],[22001,7500],[60001,45000],[61000,45000],
+    [70000,45000],[5000,0],[30000,0]])
     assert.doesNotThrow(()=>make({timeoutMs,terminalDrainMs}),timeoutMs+'/'+terminalDrainMs);
-  // A runtime that fits at construction can still be too old by terminate time: no freeze, one stop, no diagnostic.
-  const near=fakeHost();
-  const nearLauncher=createIoRuntimeLauncher({ioControls:controls,timeoutMs:51000,terminalDrainMs:40000,
-    allowUnsupportedPlatformForTests:true,seams:near.seams});
-  const nearHandle=nearLauncher.spawnPrepared({unitName});
-  await nearHandle.ready;near.now=6000;near.log.length=0;
-  const nearResult=await nearHandle.terminate({bound,commit:async()=>{near.log.push('commit');}});
-  assert.equal(nearResult.reason,'RUNTIME_LIMIT_NEAR');assert.equal(nearResult.measured,false);
-  assert.equal(near.log.some(line=>line.includes('--user freeze')),false);
-  assert.equal(stopCount(near.log),1);assert.equal(nearResult.diagnostic,undefined);
-  const fits=fakeHost();
-  const {result}=await terminateWith(fits,{timeoutMs:51000,launcher:{terminalDrainMs:40000}});
-  assert.equal(result.measured,true);assert.equal(result.readbackEvidence.drainMs,7500);
+});
+
+test('terminate refuses RUNTIME_LIMIT_NEAR when budget + drain + tail margin no longer fit; no freeze, one stop',async()=>{
+  // 56,000 ms holds 5 s budget + 40 s drain + 5 s tail only for the first 6 s after spawn.
+  for(const [startedAt,near] of [[6000,true],[5999,false]]){
+    const host=fakeHost();
+    const handle=await spawnHandle(host,{timeoutMs:56000,launcher:{terminalDrainMs:40000}});
+    host.now=startedAt;
+    const result=await handle.terminate({bound,commit:async()=>{host.log.push('commit');}});
+    if(near){
+      assert.equal(result.reason,'RUNTIME_LIMIT_NEAR');assert.equal(result.measured,false);
+      assert.equal(host.log.some(line=>line.includes('--user freeze')),false);
+      assert.equal(host.log.some(line=>line.includes('dirty_expire_centisecs')),false);
+      assert.equal(host.syncCalls.length,0);assert.equal(host.log.includes('commit'),false);
+      assert.equal(stopCount(host.log),1);assert.equal(result.diagnostic,undefined);
+    }else{
+      assert.equal(result.measured,true,'one millisecond earlier still fits');assert.equal(result.reason,undefined);
+    }
+  }
+  // At the 70,000 ms cap with the 45 s drain the spawn-to-terminate window is 15 s.
+  for(const [startedAt,near] of [[15000,true],[14999,false]]){
+    const host=fakeHost({vmExpire:'3000\n',vmWriteback:'500\n'});
+    const handle=await spawnHandle(host,{timeoutMs:70000,launcher:{terminalDrainMs:45000}});
+    host.now=startedAt;
+    const result=await handle.terminate({bound,commit:async()=>{host.log.push('commit');}});
+    assert.equal(result.reason==='RUNTIME_LIMIT_NEAR',near,String(startedAt));
+    assert.equal(result.measured,!near);assert.equal(stopCount(host.log),1);
+  }
+  // Drain 0 keeps the FTR-1 precheck: no tail margin.
+  const plain=fakeHost();
+  const handle=await spawnHandle(plain,{timeoutMs:6000});
+  plain.now=999;
+  assert.equal((await handle.terminate({bound})).reason,undefined);
+});
+
+test('systemd-run arguments: RuntimeMaxSec follows the cap; KillSignal=SIGKILL is present for drained units only',async()=>{
+  const argsFor=async(timeoutMs,launcherOptions)=>{
+    const host=fakeHost();let args=null;
+    const spawnCapture=(file,spawnArgs)=>{args=spawnArgs;return host.child;};
+    const drained=launcherOptions.terminalDrainMs>0;
+    const launcher=createIoRuntimeLauncher({ioControls:controls,timeoutMs,allowUnsupportedPlatformForTests:true,
+      seams:{...host.seams,spawn:spawnCapture},...(drained?{storageBudget:fakeBudget(host)}:{}),...launcherOptions});
+    if(drained)(await launcher.prepare({unitName})).spawnPrepared();else launcher.spawnPrepared({unitName});
+    return args;
+  };
+  const plain=await argsFor(60000,{});
+  assert.ok(plain.includes('--property=RuntimeMaxSec=60'));
+  assert.equal(plain.some(argument=>argument.startsWith('--property=KillSignal')),false);
+  assert.ok(plain.includes('--property=KillMode=control-group'));
+  const zero=await argsFor(60000,{terminalDrainMs:0});
+  assert.deepEqual(zero,plain);
+  const drained=await argsFor(70000,{terminalDrainMs:45000});
+  assert.ok(drained.includes('--property=RuntimeMaxSec=70'));
+  assert.equal(drained.filter(argument=>argument==='--property=KillSignal=SIGKILL').length,1);
+  assert.ok(drained.includes('--property=KillMode=control-group'));
 });
 
 test('diagnostic key set is exact and holds only integers, booleans, null and fixed enums',async()=>{
@@ -540,10 +697,12 @@ test('diagnostic key set is exact and holds only integers, booleans, null and fi
   const {result}=await terminateWith(host,drainOptions(10000));
   const {diagnostic}=result;
   assert.deepEqual(Object.keys(diagnostic),['version','stage','fileDirty','fileWriteback','memoryReads',
-    'sinceFreezeMs','drain']);
+    'sinceFreezeMs','barrierMs','requiredDrainMs','drain']);
+  assert.equal(diagnostic.version,'quant-io-terminal-diagnostic-v2');
+  assert.equal(diagnostic.barrierMs,0);assert.equal(diagnostic.requiredDrainMs,7000);
   assert.deepEqual(Object.keys(diagnostic.drain),['enabled','durationMs','polls','maxDirty','maxWriteback',
     'firstZeroMs','series']);
-  const enums=new Set(['quant-io-terminal-diagnostic-v1','DRAIN','QUIESCENCE']);
+  const enums=new Set(['quant-io-terminal-diagnostic-v2','DRAIN','QUIESCENCE']);
   const walk=value=>{
     if(Array.isArray(value)){assert.ok(Object.isFrozen(value));value.forEach(walk);return;}
     if(value&&typeof value==='object'){assert.ok(Object.isFrozen(value));Object.values(value).forEach(walk);return;}
@@ -583,10 +742,11 @@ test('stat-freshness floor: with a 250 ms window the final stable read is still 
   assert.equal(host.log.filter(line=>line===ioLine).length,3);
   assert.equal(sleepCount(host.log,250),1);assert.equal(sleepCount(host.log,2250),1);
   assert.deepEqual(result.readbackEvidence.reads[0],result.readbackEvidence.reads[1]);
-  // With the drain on, the drain already supplies freshness.
+  // With the drain on, the drain already supplies freshness (2500 ms after the barrier finished).
   host=fakeHost({rate:5242880});
   ({result}=await terminateWith(host,{ioControls:fast,...drainOptions(7500)}));
-  assert.equal(result.measured,true);assert.ok(result.readbackEvidence.statFreshMs>=7500);
+  assert.equal(result.measured,true);assert.ok(result.readbackEvidence.statFreshMs>=2500);
+  assert.equal(result.readbackEvidence.drainMs,2500);assert.equal(result.readbackEvidence.statFreshMs,2750);
   assert.equal(host.log.filter(line=>line===ioLine).length,2);
   // Not enough budget to reach the floor: fail closed instead of accepting a possibly stale read.
   host=fakeHost({rate:5242880});
@@ -600,15 +760,18 @@ test('other failures after the drain carry the diagnostic in the QUIESCENCE stag
   growing.afterSleep=()=>{growing.counters.write+=4096;};
   const startTicks=fakeHost();
   startTicks.afterSleep=()=>{startTicks.startTicks='99999';};
+  // The all-zero io.stat row only appears after the readiness gate, which needs a readable counter row.
+  const zeroRow=fakeHost({counters:{read:0,write:0}});
+  zeroRow.postReady=()=>{zeroRow.zeroRow=true;};
   const cases=[['NO_QUIESCENCE',growing,{}],
     ['IDENTITY_CHANGED',startTicks,{}],
     ['COMMIT_FAILED',fakeHost(),{terminate:{commit:async()=>{throw Error('db down');}}}],
-    ['counter_parse',fakeHost({zeroRow:true,counters:{read:0,write:0}}),{}]];
+    ['counter_parse',zeroRow,{}]];
   for(const [reason,host,extra] of cases){
     const {result}=await terminateWith(host,{...drainOptions(),...extra});
     assert.equal(result.measured,false,reason);assert.equal(result.reason,reason);
     assert.equal(result.diagnostic.stage,'QUIESCENCE',reason);
-    assert.equal(result.diagnostic.drain.polls,16,reason);assert.equal(result.diagnostic.drain.durationMs,7500,reason);
+    assert.equal(result.diagnostic.drain.polls,6,reason);assert.equal(result.diagnostic.drain.durationMs,2500,reason);
     assert.equal(result.diagnostic.fileDirty,0,reason);assert.equal(result.diagnostic.fileWriteback,0,reason);
     assert.equal(stopCount(host.log),1,reason);
   }
@@ -735,15 +898,12 @@ test('golden default-off flow: log, result keys and evidence equal the recorded 
 
 test('stop() during quiescence with the drain on aborts within one window (F1); drain off keeps the FTR-1 flow',async()=>{
   const host=fakeHost();
-  const launcher=createIoRuntimeLauncher({ioControls:controls,timeoutMs:60000,terminalDrainMs:40000,
-    allowUnsupportedPlatformForTests:true,seams:host.seams});
-  const handle=launcher.spawnPrepared({unitName});
-  await handle.ready;host.log.length=0;
+  const handle=await spawnHandle(host,{timeoutMs:70000,launcher:{terminalDrainMs:40000}});
   let requestedAt=null,stopping=null;
   // Counters keep growing after the drain, so quiescence cannot settle. The stop arrives at the first quiescence sleep.
   host.afterSleep=()=>{
-    if(host.now>7500)host.counters.write+=4096;
-    if(requestedAt===null&&host.now>=8000){requestedAt=host.now;stopping=handle.stop();}
+    if(host.now>2500)host.counters.write+=4096;
+    if(requestedAt===null&&host.now>=3000){requestedAt=host.now;stopping=handle.stop();}
   };
   const terminal=await handle.terminate({bound,commit:async()=>{host.log.push('commit');}});
   assert.notEqual(requestedAt,null);
@@ -770,12 +930,12 @@ test('stop() during quiescence with the drain on aborts within one window (F1); 
 
 test('unused drain allowance never lengthens quiescence (F1)',async()=>{
   const host=fakeHost();
-  host.afterSleep=()=>{if(host.now>7500)host.counters.write+=4096;};
+  host.afterSleep=()=>{if(host.now>2500)host.counters.write+=4096;};
   const {result}=await terminateWith(host,drainOptions(40000));
   assert.equal(result.measured,false);assert.equal(result.reason,'NO_QUIESCENCE');
   assert.equal(result.diagnostic.stage,'QUIESCENCE');
-  // The drain leaves at 7500. Quiescence gets budgetMs (5000): reads at 7500, 10000 and 12500, never later.
-  assert.equal(host.log.filter(line=>line===ioLine).length,3);assert.ok(host.now<=7500+5000);
+  // The drain leaves at 2500. Quiescence gets budgetMs (5000): reads at 2500, 5000 and 7500, never later.
+  assert.equal(host.log.filter(line=>line===ioLine).length,3);assert.ok(host.now<=2500+5000);
   assert.equal(host.log.includes('commit'),false);assert.equal(stopCount(host.log),1);
 });
 
@@ -793,51 +953,241 @@ test('drain end is bounded by the overall deadline when pre-freeze steps are slo
   assert.equal(host.log.includes(ioLine),false);
 });
 
-test('stop requested before the freeze is confirmed aborts the drain with no memory reads (F4)',async()=>{
+test('stop requested before the freeze aborts with no freeze, no barrier and no memory reads (RD-4)',async()=>{
+  // Case 1: the stop lands right after terminate() starts. The pre-freeze steps still await, so it is seen
+  // before the freeze command.
   const host=fakeHost({dirty:8192});
-  const launcher=createIoRuntimeLauncher({ioControls:controls,timeoutMs:60000,terminalDrainMs:20000,
-    allowUnsupportedPlatformForTests:true,seams:host.seams});
-  const handle=launcher.spawnPrepared({unitName});
-  await handle.ready;host.log.length=0;
+  const handle=await spawnHandle(host,{timeoutMs:70000,launcher:{terminalDrainMs:20000}});
   const pending=handle.terminate({bound,commit:async()=>{host.log.push('commit');}});
   const stopping=handle.stop();
   const terminal=await pending;
   assert.equal(terminal.reason,'STOP_REQUESTED');assert.equal(terminal.measured,false);
   assert.equal(await stopping,terminal.stopProof);
-  assert.equal(host.log.filter(line=>line===memoryLine).length,0);
-  assert.equal(host.log.includes(ioLine),false);assert.equal(sleepCount(host.log,500),0);
+  assert.equal(host.log.some(line=>line.includes('--user freeze')),false);
+  assert.equal(host.syncCalls.length,0);assert.equal(host.log.includes(ioLine),false);
+  assert.equal(host.log.filter(line=>line===memoryLine).length,0);assert.equal(sleepCount(host.log,500),0);
   assert.equal(host.log.includes('commit'),false);assert.equal(stopCount(host.log),1);
-  assert.equal(terminal.diagnostic.stage,'DRAIN');assert.equal(terminal.diagnostic.memoryReads,0);
-  assert.equal(terminal.diagnostic.drain.polls,0);
+  // Nothing was frozen, so there is no drain series to report.
+  assert.equal(terminal.diagnostic,undefined);
+  // Case 2: the stop lands while the last pre-freeze read is in flight, after the plan and the root were read.
+  const late=fakeHost();
+  const lateHandle=await spawnHandle(late,{timeoutMs:70000,launcher:{terminalDrainMs:20000}});
+  let lateStop=null;
+  late.beforeRead=file=>{if(file.endsWith('dirty_writeback_centisecs')&&lateStop===null)lateStop=lateHandle.stop();};
+  const lateTerminal=await lateHandle.terminate({bound,commit:async()=>{late.log.push('commit');}});
+  assert.equal(lateTerminal.reason,'STOP_REQUESTED');assert.equal(await lateStop,lateTerminal.stopProof);
+  assert.equal(late.log.some(line=>line.includes('--user freeze')),false);assert.equal(late.syncCalls.length,0);
+  assert.equal(stopCount(late.log),1);assert.equal(lateTerminal.diagnostic,undefined);
 });
 
 test('thaw during quiescence fails NOT_FROZEN with a QUIESCENCE-stage diagnostic (F4)',async()=>{
   const host=fakeHost();
-  // The drain leaves at 7500; the unit thaws before the second quiescence read at 10000.
-  host.afterSleep=()=>{if(host.now>=8000)host.phase='live';};
+  // The drain leaves at 2500; the unit thaws before the second quiescence read at 5000.
+  host.afterSleep=()=>{if(host.now>=3000)host.phase='live';};
   const {result}=await terminateWith(host,drainOptions());
   assert.equal(result.measured,false);assert.equal(result.reason,'NOT_FROZEN');
   assert.equal(host.log.includes('commit'),false);assert.equal(stopCount(host.log),1);
   const {diagnostic}=result;
   assert.equal(diagnostic.stage,'QUIESCENCE');
   assert.equal(diagnostic.fileDirty,0);assert.equal(diagnostic.fileWriteback,0);
-  // 16 drain polls plus the clean first quiescence read; the thawed second read is rejected before parsing.
-  assert.equal(diagnostic.memoryReads,17);assert.equal(diagnostic.drain.polls,16);
-  assert.equal(diagnostic.drain.durationMs,7500);
+  // 6 drain polls plus the clean first quiescence read; the thawed second read is rejected before parsing.
+  assert.equal(diagnostic.memoryReads,7);assert.equal(diagnostic.drain.polls,6);
+  assert.equal(diagnostic.drain.durationMs,2500);
 });
 
 test('malformed memory.stat during quiescence reports MEMORY_STAT_INVALID only with the drain on (F7)',async()=>{
-  const memoryStat=now=>now>=8000?'anon 1\n':'file_dirty 0\nfile_writeback 0\n';
+  const memoryStat=now=>now>=3000?'anon 1\n':'file_dirty 0\nfile_writeback 0\n';
   const host=fakeHost({memoryStat});
   const {result}=await terminateWith(host,drainOptions());
   assert.equal(result.measured,false);assert.equal(result.reason,'MEMORY_STAT_INVALID');
   assert.equal(host.log.includes('commit'),false);assert.equal(stopCount(host.log),1);
   assert.equal(result.diagnostic.stage,'QUIESCENCE');
   assert.equal(result.diagnostic.fileDirty,null);assert.equal(result.diagnostic.fileWriteback,null);
-  assert.equal(result.diagnostic.memoryReads,17);
+  assert.equal(result.diagnostic.memoryReads,7);
   // Drain off keeps the FTR-1 reason and the FTR-1 shape (no diagnostic).
   const plain=fakeHost({memoryStat:'anon 1\n'});
   const {result:legacy}=await terminateWith(plain);
   assert.equal(legacy.reason,'WRITEBACK_PENDING');assert.equal(legacy.diagnostic,undefined);
   assert.deepEqual(Object.keys(legacy).sort(),['measured','postExit','reason','stopProof']);
 });
+
+// ---- FTR-1c commit barrier, host-derived drain bound and the tail margin ----
+const eventsLine='read '+cgroupBase+'/cgroup.events';
+const freezeLine='command systemctl --user freeze '+unitName;
+const freezerLine='command systemctl --user show '+unitName+' --property=FreezerState';
+const syncLine='syncDirectory '+storageRoot+' '+rootIdentity.dev+':'+rootIdentity.ino;
+
+test('drained call order: vm sysctls, root lstat, freeze, frozen 1, barrier, polls, phase-5 reads, commit, stop',async()=>{
+  const host=fakeHost({barrier:{mode:'settle',ms:40}});
+  const {result}=await terminateWith(host,drainOptions(20000));
+  assert.equal(result.measured,true);
+  const log=host.log,index=line=>{const found=log.indexOf(line);assert.ok(found>=0,line);return found;};
+  const order=[index('read /proc/sys/vm/dirty_expire_centisecs'),index('read /proc/sys/vm/dirty_writeback_centisecs'),
+    index('lstat '+storageRoot),index(freezeLine),index(eventsLine),index(freezerLine),index(syncLine),
+    log.indexOf(memoryLine),log.indexOf(ioLine),index('commit'),log.findIndex(line=>line.startsWith('stopUnit'))];
+  assert.deepEqual([...order].sort((a,b)=>a-b),order,'strictly ordered');
+  assert.equal(new Set(order).size,order.length);
+  // One barrier, on the storage root, with the identity read before the freeze, and only once the unit is frozen.
+  assert.equal(host.syncCalls.length,1);assert.equal(log.filter(line=>line.startsWith('syncDirectory')).length,1);
+  assert.deepEqual(host.syncCalls[0],{root:storageRoot,identity:rootIdentity,phase:'frozen'});
+  assert.equal(stopCount(log),1);assert.equal(log.filter(line=>line===freezeLine).length,1);
+  // The digest input has no barrier field: same digest as the drain-off terminal.
+  const plain=await terminateWith(fakeHost());
+  assert.equal(digestOf(result),digestOf(plain.result));
+  assert.deepEqual(Object.keys(result.readbackEvidence).slice(-5),
+    ['drainMs','drainPolls','statFreshMs','barrierMs','requiredDrainMs']);
+  assert.equal(JSON.stringify(plain.result.readbackEvidence).includes('barrierMs'),false);
+});
+
+test('every drained phase-5 read takes cgroup.events, then memory.stat to completion, then io.stat',async()=>{
+  const host=fakeHost({dirty:now=>now<1000?4096:0});
+  const original=host.seams.readFile,doneMemory='done '+memoryLine;
+  // memory.stat resolves a macrotask late: a parallel io.stat read would start, and even finish, before it.
+  host.seams.readFile=async(file,encoding)=>{
+    const value=await original(file,encoding);
+    if(file===cgroupBase+'/memory.stat'){await new Promise(resolve=>setImmediate(resolve));host.log.push(doneMemory);}
+    return value;
+  };
+  const {result}=await terminateWith(host,drainOptions());
+  assert.equal(result.measured,true);
+  const ioReads=host.log.map((line,index)=>line===ioLine?index:-1).filter(index=>index>=0);
+  assert.equal(ioReads.length,2);
+  for(const at of ioReads){
+    const done=host.log.lastIndexOf(doneMemory,at);
+    assert.ok(done>=2,'memory.stat completed before io.stat');
+    assert.equal(host.log[done-1],memoryLine);assert.equal(host.log[done-2],eventsLine);
+    assert.deepEqual(host.log.slice(done+1,at),['read '+cgroupBase+'/io.max']);
+  }
+  // Drain polls are events then memory.stat with no io.stat at all.
+  const firstIo=ioReads[0];
+  assert.equal(host.log.slice(0,firstIo).filter(line=>line===doneMemory).length,host.log.slice(0,firstIo).filter(line=>line===memoryLine).length);
+});
+
+test('commit barrier failure or timeout ends the drain before any memory.stat poll, commit or thaw',async()=>{
+  const rejecting=fakeHost({barrier:{mode:'reject',ms:30}});
+  const {result:failed}=await terminateWith(rejecting,drainOptions());
+  assert.equal(failed.measured,false);assert.equal(failed.reason,'COMMIT_BARRIER_FAILED');
+  assert.equal(rejecting.log.filter(line=>line===memoryLine).length,0);
+  assert.equal(rejecting.log.includes('commit'),false);assert.equal(stopCount(rejecting.log),1);
+  assert.equal(failed.stopProof.unitStopped,true);assert.equal(rejecting.log.includes(ioLine),false);
+  assert.equal(failed.diagnostic.stage,'DRAIN');assert.equal(failed.diagnostic.barrierMs,null);
+  assert.equal(failed.diagnostic.requiredDrainMs,7000);assert.equal(failed.diagnostic.memoryReads,0);
+  assert.equal(failed.diagnostic.drain.polls,0);
+  // A barrier that never settles is cut at 2000 ms, within one poll, and its late outcome is swallowed.
+  for(const late of ['resolve','reject']){
+    const hanging=fakeHost({barrier:{mode:'never'}});
+    const {result:timedOut}=await terminateWith(hanging,drainOptions());
+    assert.equal(timedOut.measured,false);assert.equal(timedOut.reason,'COMMIT_BARRIER_TIMEOUT');
+    assert.ok(hanging.now>=2000&&hanging.now<=2000+500);
+    assert.equal(hanging.log.filter(line=>line===memoryLine).length,0);
+    assert.equal(hanging.log.includes('commit'),false);assert.equal(stopCount(hanging.log),1);
+    assert.equal(timedOut.stopProof.unitStopped,true);
+    assert.equal(timedOut.diagnostic.stage,'DRAIN');assert.equal(timedOut.diagnostic.barrierMs,null);
+    hanging.barrierLate[late](Object.assign(new Error('late'),{code:'EIO'}));
+    await new Promise(resolve=>setImmediate(resolve));
+  }
+});
+
+test('a storage root that is a symlink, not a directory or unreadable never freezes',async()=>{
+  for(const rootStat of ['symlink','file','missing']){
+    const host=fakeHost({rootStat});
+    const {result}=await terminateWith(host,drainOptions());
+    assert.equal(result.measured,false,rootStat);assert.equal(result.reason,'COMMIT_BARRIER_FAILED',rootStat);
+    assert.equal(host.log.some(line=>line.includes('--user freeze')),false,rootStat);
+    assert.equal(host.syncCalls.length,0,rootStat);assert.equal(host.log.includes('commit'),false,rootStat);
+    assert.equal(stopCount(host.log),1,rootStat);assert.equal(result.stopProof.unitStopped,true,rootStat);
+    assert.equal(result.diagnostic,undefined,rootStat);
+  }
+});
+
+test('a drain shorter than the host writeback model needs falls back DRAIN_UNDERSIZED with no freeze or barrier',async()=>{
+  const cases=[
+    ['3000/500 needs 45000, drain 40000',{vmExpire:'3000\n',vmWriteback:'500\n'},40000],
+    ['3000/500 needs 45000, drain 44999',{vmExpire:'3000\n',vmWriteback:'500\n'},44999],
+    ['writeback 0 has no bound',{vmExpire:'3000\n',vmWriteback:'0\n'},45000],
+    ['writeback 0 and expire 0',{vmExpire:'0',vmWriteback:'0'},45000]];
+  for(const [name,options,drain] of cases){
+    const host=fakeHost(options);
+    const {result}=await terminateWith(host,drainOptions(drain));
+    assert.equal(result.measured,false,name);assert.equal(result.reason,'DRAIN_UNDERSIZED',name);
+    assert.equal(host.log.some(line=>line.includes('--user freeze')),false,name);
+    assert.equal(host.syncCalls.length,0,name);assert.equal(host.log.includes('lstat '+storageRoot),false,name);
+    assert.equal(host.log.includes('commit'),false,name);assert.equal(stopCount(host.log),1,name);
+    assert.equal(result.stopProof.unitStopped,true,name);assert.equal(result.stopProof.launcherClosed,true,name);
+    assert.equal(result.diagnostic,undefined,name);assert.equal(result.frozenSample,undefined,name);
+  }
+  // The same host at exactly the required drain is measured.
+  const fits=fakeHost({vmExpire:'3000\n',vmWriteback:'500\n'});
+  assert.equal((await terminateWith(fits,drainOptions(45000))).result.measured,true);
+});
+
+test('unreadable or malformed vm sysctls fall back HOST_WRITEBACK_UNAVAILABLE before any freeze',async()=>{
+  const eio=()=>{throw Object.assign(new Error('EIO'),{code:'EIO'});};
+  const cases=[['expire missing',{vmExpire:null}],['writeback missing',{vmWriteback:null}],
+    ['expire unreadable',{vmExpire:eio}],['writeback empty',{vmWriteback:''}],['expire garbage',{vmExpire:'abc\n'}],
+    ['expire negative',{vmExpire:'-5\n'}],['writeback two lines',{vmWriteback:'500\n500\n'}],
+    ['expire scientific',{vmExpire:'1e3\n'}],['expire over a day',{vmExpire:'8640001\n'}],
+    ['writeback leading zero',{vmWriteback:'05\n'}]];
+  for(const [name,options] of cases){
+    const host=fakeHost(options);
+    const {result}=await terminateWith(host,drainOptions());
+    assert.equal(result.measured,false,name);assert.equal(result.reason,'HOST_WRITEBACK_UNAVAILABLE',name);
+    assert.equal(host.log.some(line=>line.includes('--user freeze')),false,name);
+    assert.equal(host.syncCalls.length,0,name);assert.equal(host.log.includes('commit'),false,name);
+    assert.equal(stopCount(host.log),1,name);assert.equal(result.diagnostic,undefined,name);
+  }
+});
+
+test('stop() while the barrier is pending ends the drain within the barrier budget and one poll',async()=>{
+  const host=fakeHost({barrier:{mode:'settle',ms:1500}});
+  const handle=await spawnHandle(host,{timeoutMs:70000,launcher:{terminalDrainMs:20000}});
+  let stopping=null;
+  host.onBarrier=()=>{stopping=handle.stop();};
+  const terminal=await handle.terminate({bound,commit:async()=>{host.log.push('commit');}});
+  assert.notEqual(stopping,null);
+  assert.equal(terminal.reason,'STOP_REQUESTED');assert.equal(terminal.measured,false);
+  assert.equal(await stopping,terminal.stopProof);assert.equal(await handle.stop(),terminal.stopProof);
+  assert.ok(host.now<=2000+500,'ended within barrier budget + one poll');
+  assert.equal(host.log.filter(line=>line===memoryLine).length,0);
+  assert.equal(host.log.includes('commit'),false);assert.equal(stopCount(host.log),1);
+  assert.equal(host.log.filter(line=>line===freezeLine).length,1);
+  assert.equal(terminal.diagnostic.stage,'DRAIN');assert.equal(terminal.diagnostic.barrierMs,1500);
+});
+
+test('drain 0 never reads the vm sysctls, the storage root or the barrier; its phase-5 reads stay parallel',async()=>{
+  const host=fakeHost();
+  const {result}=await terminateWith(host);
+  assert.equal(result.measured,true);
+  assert.equal(host.syncCalls.length,0);
+  assert.equal(host.log.some(line=>line.includes('/proc/sys/vm')||line.startsWith('lstat')||
+    line.startsWith('syncDirectory')||line==='sleep 2000'),false);
+  assert.deepEqual(Object.keys(result.readbackEvidence).slice(-3),['drainMs','drainPolls','statFreshMs']);
+  // The whole call log equals the recorded pre-FTR-1b flow, including the Promise.all read order of phase 5.
+  assert.deepEqual(host.log,expandGolden(GOLDEN_MEASURED));
+  // A drain-off launcher works without a StorageBudget and ignores a missing root or sysctls entirely.
+  const bare=fakeHost({vmExpire:null,vmWriteback:null,rootStat:'missing'});
+  assert.equal((await terminateWith(bare)).result.measured,true);
+  assert.equal(bare.syncCalls.length,0);
+});
+
+// The default barrier opens a directory descriptor, so it only runs on Linux (the fake host covers the flow).
+test('default commit barrier fsyncs the exact storage root directory and refuses any other target',
+  {skip:process.platform!=='linux'&&'directory fsync by descriptor needs Linux'},async()=>{
+    const directory=await fs.mkdtemp(path.join(os.tmpdir(),'ftr1c-sync-'));
+    const link=directory+'-link';
+    try{
+      const {dev,ino}=await fs.lstat(directory);
+      await syncStorageDirectory(directory,{dev,ino});
+      for(const expected of [{dev,ino:ino+1},{dev:dev+1,ino},{dev:0,ino:0},null,undefined])
+        await assert.rejects(syncStorageDirectory(directory,expected),{code:'COMMIT_BARRIER_FAILED'});
+      await fs.symlink(directory,link);
+      await assert.rejects(syncStorageDirectory(link,{dev,ino}),error=>['ELOOP','ENOTDIR'].includes(error.code));
+      const file=path.join(directory,'plain');
+      await fs.writeFile(file,'x');
+      await assert.rejects(syncStorageDirectory(file,{dev,ino}),{code:'ENOTDIR'});
+      await assert.rejects(syncStorageDirectory(path.join(directory,'missing'),{dev,ino}),{code:'ENOENT'});
+    }finally{
+      await fs.rm(link,{force:true});
+      await fs.rm(directory,{recursive:true,force:true});
+    }
+  });

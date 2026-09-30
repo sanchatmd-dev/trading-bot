@@ -2,7 +2,7 @@ import {canonical,hash,fail} from '../pine-bridge/source.js';
 import path from 'node:path';
 import {reserveIoOperation,bindIoOperation,observeIoOperation,getIoStopDecision} from '../quant-research/io-budget-ledger.js';
 import {validateFoundationRequestV2} from '../quant-research/foundation-contract-v2.js';
-import {terminalReadbackDigest,POST_EXIT_MEASURED} from '../quant-research/io-terminal.js';
+import {terminalReadbackDigest,POST_EXIT_MEASURED,COMMIT_LOCK_TIMEOUT_MS,COMMIT_BOUND_MS} from '../quant-research/io-terminal.js';
 
 const unavailable=()=>fail('QUANT_IO_ACCOUNTING_UNAVAILABLE');
 const lost=()=>fail('QUANT_IO_LEASE_LOST');
@@ -69,9 +69,15 @@ export class QuantIoRuntime {
     this.terminals=new Map();
   }
 
-  async locked(jobId,leaseToken,callback,{active=true}={}){
+  async locked(jobId,leaseToken,callback,{active=true,bounded=false}={}){
     if(this.db.isTransaction)throw unavailable();
     try{return await this.db.transaction(async()=>{
+      // Commit bound (RD-3): the server aborts a stuck lock wait or statement inside this transaction, so a
+      // frozen commit that cannot finish fails at once and can never commit late. No JavaScript timer.
+      if(bounded){
+        await this.db.query(`SET LOCAL lock_timeout='${COMMIT_LOCK_TIMEOUT_MS}ms'`);
+        await this.db.query(`SET LOCAL statement_timeout='${COMMIT_BOUND_MS}ms'`);
+      }
       const singleton=await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
       if(singleton.rowCount!==1)throw unavailable();
       const job=(await this.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[jobId])).rows[0];
@@ -355,7 +361,7 @@ export class QuantIoRuntime {
           hash(canonical(next)),ledgerRow.revision]);
         if(saved.rowCount!==1)throw uncertain();
       }
-    },{active:false});
+    },{active:false,bounded:true});
   }
 
   /** T4a: measured settlement and launch STOP_PROVEN in one transaction, through the terminal

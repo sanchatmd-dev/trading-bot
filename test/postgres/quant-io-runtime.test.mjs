@@ -591,3 +591,62 @@ test('a launcher that claims measured after a rejected commit still cannot settl
   assert.equal((await ledgerState()).operations[0].status,'CRASHED');
   assert.ok(script.commitError);
 });
+
+// ---- FTR-1c commit bound (RD-3): SET LOCAL lock_timeout 2 s and statement_timeout 3 s, no JavaScript timer ----
+test('the frozen commit sets its server-side bounds first; no other runtime transaction is bounded',async()=>{
+  const statements=[];
+  const query=db.query.bind(db);
+  db.query=(sql,params)=>{statements.push(String(sql));return query(sql,params);};
+  try{
+    await armTerminal();
+    const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
+    assert.equal(cancelled.proof,'MEASURED_FINAL_SETTLED');
+  }finally{db.query=query;}
+  const lockTimeouts=statements.filter(sql=>sql.startsWith('SET LOCAL lock_timeout'));
+  const statementTimeouts=statements.filter(sql=>sql.startsWith('SET LOCAL statement_timeout'));
+  assert.deepEqual(lockTimeouts,["SET LOCAL lock_timeout='2000ms'"]);
+  assert.deepEqual(statementTimeouts,["SET LOCAL statement_timeout='3000ms'"]);
+  // Both come first in the frozen commit transaction, before its singleton lock.
+  const at=statements.indexOf(lockTimeouts[0]);
+  assert.equal(statements[at+1],statementTimeouts[0]);
+  assert.match(statements[at+2],/^SELECT singleton FROM quant_foundation_scheduler FOR UPDATE/);
+  assert.equal((await ledgerState()).operations[0].status,'SETTLED');
+});
+
+test('a held ledger row lock fails the frozen commit within about 2-3 s: COMMIT_FAILED fallback, one crash charge',async()=>{
+  let openGate,release,holding;
+  const held=new Promise(resolve=>{release=resolve;});
+  const locked=new Promise(resolve=>{holding=resolve;});
+  await armTerminal({gate:new Promise(resolve=>{openGate=resolve;})});
+  const before=await ledgerState();
+  // Another connection keeps the ledger row locked; only the frozen commit is bounded, so it must give up.
+  const holder=second.transaction(async()=>{
+    await second.query('SELECT 1 FROM quant_io_ledgers FOR UPDATE');
+    holding();await held;
+  });
+  await locked;
+  const started=Date.now();
+  const cancelling=runtime.cancel({ownerId:'owner-a',...args()});
+  while(!script.commitError&&Date.now()-started<9000)await new Promise(resolve=>setTimeout(resolve,20));
+  const elapsed=Date.now()-started;
+  try{
+    assert.ok(script.commitError,'the frozen commit did not fail');
+    assert.ok(elapsed>=1500&&elapsed<4500,'commit failed after '+elapsed+' ms');
+    // Nothing was written by the failed commit: the ledger is exactly as before and the launch is still RELEASED.
+    assert.equal(canonical(await ledgerState()),canonical(before));
+    assert.equal(await launchState(),'RELEASED');
+    assert.equal(script.events.includes('stop'),false);
+  }finally{
+    release();await holder;openGate();
+  }
+  const cancelled=await cancelling;
+  assert.equal(cancelled.status,'CANCELLED');assert.equal(cancelled.proof,'UNKNOWN_FINAL_CHARGED');
+  const stored=await ledgerState();
+  assert.equal(stored.operations[0].status,'CRASHED');
+  assert.deepEqual(stored.charged,allowance);
+  assert.equal(stored.operations[0].last.devices[0].read_bytes,3);
+  assert.equal(authorizations.filter(action=>action==='crash').length,1);
+  assert.equal(authorizations.includes('settle'),false);
+  assert.deepEqual(script.events,['terminate','committed','stop']);
+  assert.equal(await launchState(),'STOP_PROVEN');
+});

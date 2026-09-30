@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {TerminalFrame,verifyTerminalIo,inspectCgroupFrozen,inspectMemoryWriteback,quiescenceWindowMs,
   evaluateQuiescence,reconcilePostExit,terminalReadbackDigest,parseCgroupEvents,
   FROZEN_TERMINAL_VERSION,parseMemoryWriteback,createDrainRecorder,buildTerminalDiagnostic,
-  DRAIN_SETTLE_MS,DRAIN_POLL_MS,MAX_DRAIN_MS,STAT_FRESH_MS,TERMINAL_DIAGNOSTIC_VERSION} from '../src/quant-research/io-terminal.js';
+  parseCentisecs,writebackDrainPlan,DRAIN_POLL_MS,MIN_DRAIN_MS,MAX_DRAIN_MS,STAT_FRESH_MS,BARRIER_BUDGET_MS,
+  TAIL_MARGIN_MS,TERMINAL_BUDGET_MS,SPAWN_MARGIN_MS,MAX_RUNTIME_MS,COMMIT_LOCK_TIMEOUT_MS,COMMIT_BOUND_MS,
+  TERMINAL_DIAGNOSTIC_VERSION} from '../src/quant-research/io-terminal.js';
 import {inspectCgroupIo} from '../src/quant-research/io-controls.js';
 
 test('terminal frame accepts fragmented single JSON result',()=>{
@@ -121,10 +123,47 @@ test('memory.stat parser returns nonzero values and needs exactly one decimal ro
   assert.throws(()=>inspectMemoryWriteback(stat(0,4096)),unavailable);
 });
 
-test('drain constants match the FTR-1b design',()=>{
-  assert.deepEqual([DRAIN_SETTLE_MS,DRAIN_POLL_MS,MAX_DRAIN_MS,STAT_FRESH_MS],[7500,500,45000,2500]);
+test('drain constants match the FTR-1c design and the exported terminal constants (RD-2)',async()=>{
+  assert.deepEqual([DRAIN_POLL_MS,MIN_DRAIN_MS,MAX_DRAIN_MS,STAT_FRESH_MS,BARRIER_BUDGET_MS],
+    [500,5000,45000,2500,2000]);
+  assert.deepEqual([TAIL_MARGIN_MS,TERMINAL_BUDGET_MS,SPAWN_MARGIN_MS,MAX_RUNTIME_MS,COMMIT_LOCK_TIMEOUT_MS,
+    COMMIT_BOUND_MS],[5000,5000,5000,70000,2000,3000]);
+  // The jbd2-based settle floor is gone: the drain floor is now the barrier plus STAT_FRESH_MS.
+  assert.equal((await import('../src/quant-research/io-terminal.js')).DRAIN_SETTLE_MS,undefined);
   assert.equal(FROZEN_TERMINAL_VERSION,'quant-io-frozen-terminal-v1');
-  assert.equal(TERMINAL_DIAGNOSTIC_VERSION,'quant-io-terminal-diagnostic-v1');
+  assert.equal(TERMINAL_DIAGNOSTIC_VERSION,'quant-io-terminal-diagnostic-v2');
+});
+
+test('parseCentisecs takes one decimal line with an optional single LF and at most one day',()=>{
+  for(const [source,value] of [['0',0],['0\n',0],['1',1],['500\n',500],['3000\n',3000],['3000',3000],
+    ['1234567\n',1234567],['8640000\n',8640000],['8640000',8640000]])
+    assert.equal(parseCentisecs(source),value,JSON.stringify(source));
+  for(const bad of ['','\n','-1','-1\n','1e3','30 00','30 00\n','3000\n\n','3000\n3000\n','3000\r\n','08','00','0x10',
+    ' 3000','3000 ','+3000','1.5','12345678','8640001\n','9007199254740993','abc',null,undefined,3000,{},[]])
+    assert.throws(()=>parseCentisecs(bad),unavailable,JSON.stringify(bad));
+});
+
+test('writebackDrainPlan derives the drain need from the two vm sysctls',()=>{
+  const plan=(expire,writeback,drain)=>writebackDrainPlan({expireSource:expire,writebackSource:writeback,
+    terminalDrainMs:drain});
+  // The recorded host: expire 3000, writeback 500 give barrier 2000 + 30000 + 2 x 5000 + 2500 + 500.
+  assert.deepEqual(plan('3000\n','500\n',45000),{expireMs:30000,writebackMs:5000,requiredMs:45000,fits:true});
+  assert.equal(plan('3000\n','500\n',44999).fits,false);assert.equal(plan('3000\n','500\n',44999).requiredMs,45000);
+  assert.equal(plan('3000\n','500\n',45001).fits,true);
+  assert.deepEqual(plan('500\n','100\n',12000),{expireMs:5000,writebackMs:1000,requiredMs:12000,fits:true});
+  assert.equal(plan('500','100',11999).fits,false);
+  assert.deepEqual(plan('0\n','1\n',5100),{expireMs:0,writebackMs:10,requiredMs:5020,fits:true});
+  // A zero writeback interval never wakes the flusher by itself: no bound, never fits.
+  assert.deepEqual(plan('3000\n','0\n',45000),{expireMs:30000,writebackMs:0,requiredMs:null,fits:false});
+  assert.equal(plan('0','0',45000).fits,false);
+  for(const bad of [{expireSource:'',writebackSource:'500\n'},{expireSource:'3000\n',writebackSource:'-1\n'},
+    {expireSource:'3000\n',writebackSource:'5 00\n'},{expireSource:null,writebackSource:'500\n'},
+    {expireSource:'3000\n'},{writebackSource:'500\n'},{expireSource:'8640001',writebackSource:'500'},
+    {expireSource:'3000\n\n',writebackSource:'500\n'}])
+    assert.throws(()=>writebackDrainPlan({terminalDrainMs:45000,...bad}),unavailable,JSON.stringify(bad));
+  for(const drain of [-1,1.5,'45000',NaN,undefined,null])
+    assert.throws(()=>plan('3000\n','500\n',drain),unavailable,String(drain));
+  assert.throws(()=>writebackDrainPlan(),unavailable);
 });
 
 test('drain recorder keeps counts, maxima, first clean time, and the first and last 16 points',()=>{
@@ -151,11 +190,18 @@ test('terminal diagnostic is a frozen integer, boolean and enum record with an e
   const drain={enabled:true,durationMs:10000,polls:21,maxDirty:8192,maxWriteback:0,firstZeroMs:null,
     series:[[0,8192,0],[500,8192,0]]};
   const diagnostic=buildTerminalDiagnostic({stage:'DRAIN',fileDirty:8192,fileWriteback:0,memoryReads:21,
-    sinceFreezeMs:10000.4,drain});
-  assert.deepEqual(diagnostic,{version:'quant-io-terminal-diagnostic-v1',stage:'DRAIN',fileDirty:8192,
-    fileWriteback:0,memoryReads:21,sinceFreezeMs:10000,drain});
+    sinceFreezeMs:10000.4,barrierMs:40,requiredDrainMs:45000,drain});
+  assert.deepEqual(diagnostic,{version:'quant-io-terminal-diagnostic-v2',stage:'DRAIN',fileDirty:8192,
+    fileWriteback:0,memoryReads:21,sinceFreezeMs:10000,barrierMs:40,requiredDrainMs:45000,drain});
   assert.deepEqual(Object.keys(diagnostic),['version','stage','fileDirty','fileWriteback','memoryReads',
-    'sinceFreezeMs','drain']);
+    'sinceFreezeMs','barrierMs','requiredDrainMs','drain']);
+  // Barrier and requirement are counts or null: an unfinished barrier or an unknown need reads null.
+  const unfinished=buildTerminalDiagnostic({stage:'DRAIN',drain});
+  assert.equal(unfinished.barrierMs,null);assert.equal(unfinished.requiredDrainMs,null);
+  for(const bad of [-1,1.5,'40','/sys/x',NaN,{}]){
+    const hostileBarrier=buildTerminalDiagnostic({stage:'DRAIN',barrierMs:bad,requiredDrainMs:bad,drain});
+    assert.equal(hostileBarrier.barrierMs,null);assert.equal(hostileBarrier.requiredDrainMs,null);
+  }
   assert.ok(Object.isFrozen(diagnostic)&&Object.isFrozen(diagnostic.drain)&&Object.isFrozen(diagnostic.drain.series)&&
     Object.isFrozen(diagnostic.drain.series[0]));
   // Nothing outside the fixed shape survives: extras, strings in number slots, negatives, floats, over-long series.
@@ -264,6 +310,8 @@ test('terminal readback digest is canonical over the exact required fields',()=>
   const digest=terminalReadbackDigest(input);
   assert.match(digest,/^[a-f0-9]{64}$/);
   assert.equal(FROZEN_TERMINAL_VERSION,'quant-io-frozen-terminal-v1');
+  // Regression vector recorded at HEAD 366e456 before FTR-1c: the digest bytes and version must not move.
+  assert.equal(digest,'5aed3ce0238f37738ec17be617e339eba1d4eca7611ed8366717075c0381f742');
   assert.equal(terminalReadbackDigest(Object.fromEntries(Object.entries(input).reverse())),digest);
   const changes={jobId:'job-00002',operationId:'operation-00002',unitName:'robot-quant-'+'b'.repeat(64)+'.service',
     group:'/user.slice/other',cgroupInode:304779,invocationId:'2'.repeat(32),pid:4243,procStartTicks:'12346',
