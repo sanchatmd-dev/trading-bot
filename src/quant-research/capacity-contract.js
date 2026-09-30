@@ -1,6 +1,12 @@
 import {canonical,fail,hash} from '../pine-bridge/source.js';
+import {TERMINAL_BUDGET_MS,SPAWN_MARGIN_MS,MIN_DRAIN_MS,MAX_DRAIN_MS,MAX_RUNTIME_MS,TAIL_MARGIN_MS} from './io-terminal.js';
 
 const VERSION='quant-capacity-v2';
+// The optional terminal block pins the host-tunable drain values. The fixed constants live in io-terminal.js.
+const TERMINAL_VERSION='quant-io-terminal-policy-v1';
+const terminalFields=['version','runtime_max_ms','terminal_drain_ms','tail_margin_ms'];
+const MIN_RUNTIME_MS=10000;
+const MAX_TAIL_MARGIN_MS=15000;
 const stages=Object.freeze({PARITY_DEBUG:20000,HISTORICAL_PREFLIGHT:50000,
   BROAD_SEARCH:250000,EXTENDED_VALIDATION:500000,FINAL_VALIDATION:1000000});
 const budgets=Object.freeze({candidates:100,max_evaluations:125,max_runtime_ms:900000,
@@ -11,13 +17,13 @@ const scopeFields=['venue','market','symbol','timeframe','source_profile','execu
   'source_hash','settings_hash','evaluator_hash'];
 const invalid=()=>{throw fail('INVALID_CAPACITY_CONTRACT');};
 
-function fields(value,names){
+function fields(value,names,optional=[]){
   if(!value||typeof value!=='object'||Array.isArray(value)||
     ![Object.prototype,null].includes(Object.getPrototypeOf(value)))invalid();
   const own=Reflect.ownKeys(value);
-  if(own.length!==names.length||own.some(key=>!names.includes(key)))invalid();
+  if(own.some(key=>!names.includes(key)&&!optional.includes(key))||names.some(name=>!own.includes(name)))invalid();
   // Only JSON data fields are accepted; getters must not change validated input.
-  for(const name of names){
+  for(const name of own){
     const descriptor=Object.getOwnPropertyDescriptor(value,name);
     if(!descriptor||!descriptor.enumerable||!Object.hasOwn(descriptor,'value'))invalid();
   }
@@ -51,14 +57,33 @@ function immutable(value){
   return freeze(copy);
 }
 
+/** Validate the optional terminal block of a capacity policy: the runtime cap, the terminal drain and the tail margin
+ * that the terminal flow needs. Fixed constants come from io-terminal.js (engine-hashed code); the values here
+ * are host-tunable and rotate the policy hash. The runtime must hold the terminal budget, the drain, a
+ * spawn-to-frame margin and the tail margin with room left for compute. Returns a detached frozen copy.
+ */
+export function validateTerminalPolicy(terminal){
+  fields(terminal,terminalFields);
+  if(terminal.version!==TERMINAL_VERSION)invalid();
+  integer(terminal.runtime_max_ms,MIN_RUNTIME_MS,MAX_RUNTIME_MS);
+  if(terminal.runtime_max_ms%1000!==0)invalid();
+  // Zero disables the drain (Object.is also rejects negative zero); otherwise the launcher drain bounds apply.
+  if(!Object.is(terminal.terminal_drain_ms,0))integer(terminal.terminal_drain_ms,MIN_DRAIN_MS,MAX_DRAIN_MS);
+  integer(terminal.tail_margin_ms,TAIL_MARGIN_MS,MAX_TAIL_MARGIN_MS);
+  if(terminal.runtime_max_ms<=TERMINAL_BUDGET_MS+terminal.terminal_drain_ms+SPAWN_MARGIN_MS+terminal.tail_margin_ms)invalid();
+  return immutable(terminal);
+}
+
 /** Validate caller-trusted configuration, not the validity of its evidence.
  * The caller must resolve genuine calibration/parity records and current scope,
  * enforce enrollment, ownership and runtime gates, and keep production at V1.
  * Evidence references are SHA-256 artifact identities, never paths or URLs.
  */
 export function validateCapacityPolicy(policy){
-  fields(policy,['version','environment','scope','evidence','max_raw_bars','max_chunk_bars','budget','io']);
+  // The terminal block is optional: a policy without it keeps its legacy eight-key shape and hash.
+  fields(policy,['version','environment','scope','evidence','max_raw_bars','max_chunk_bars','budget','io'],['terminal']);
   if(policy.version!==VERSION||!['local','staging'].includes(policy.environment))invalid();
+  if(Object.hasOwn(policy,'terminal'))validateTerminalPolicy(policy.terminal);
   scope(policy.scope);
   fields(policy.evidence,['calibration_sha256','parity_sha256']);
   sha(policy.evidence.calibration_sha256);sha(policy.evidence.parity_sha256);
