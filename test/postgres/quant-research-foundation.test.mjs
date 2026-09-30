@@ -72,7 +72,7 @@ function continuation(payload){
  const checkpoint={version:'research-chunk-v1',identity:hash(canonical({contract,parameters,kind})),integrity:'a'.repeat(64),next_bar:next,last_time:rows.at(-1).time,paper:{cash:'1000'},evaluator:{index:next-1}};
  return {checkpoint,result:next===end?{parameters,kind,train:metric,validation:metric,...(kind==='HOLDOUT'?{test:metric}:{})}:null};
 }
-const worker=evaluateChunk=>new QuantResearchFoundationWorker({service,clock:()=>now,health:async()=>({ok:true}),evaluateChunk,stopUnit:async()=>true});
+const worker=(evaluateChunk,leaseMs)=>new QuantResearchFoundationWorker({service,clock:()=>now,health:async()=>({ok:true}),evaluateChunk,stopUnit:async()=>true,leaseMs});
 async function preparedClaim(first){
  const job=await first.claim();first.controller=new AbortController();
  return first.prepareResearch(job);
@@ -396,6 +396,64 @@ test('P12 capacity policy does not classify research V2 as PROFILE V2',async()=>
  const job=await first.claim();assert.equal(job.run_id,queued.run_id);
  assert.equal(job.foundation.contract.version,'quant-foundation-research-v2');
  await db.transaction(()=>service.get(x.a,queued.run_id,true));await first.reconcile();
+});
+
+test('P13 research V2 deadline, not the runtime cap, refuses heartbeat, checkpoint, finish and a paused reclaim',async()=>{
+ // S3b-8. Enqueue writes one deadline to the research row and to the foundation row, and the request cap equals
+ // that window. A job claimed part way through the window can therefore reach the deadline with its cap unspent,
+ // so the deadline has to be refused by the scheduler fence itself and cannot rely on the cap.
+ const x=await baseline(),body={...x.body,deadline_seconds:60};
+ const foundationRow=async id=>(await db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1',[id])).rows[0];
+ const researchRow=async id=>(await db.query('SELECT * FROM quant_jobs WHERE run_id=$1',[id])).rows[0];
+ const claimHalfway=async()=>{
+  const queued=await enqueue({a:x.a,body}),created=await foundationRow(queued.run_id);
+  assert.equal(created.contract.budget.max_runtime_ms,60000);
+  assert.equal(created.deadline_at-created.created_at,created.contract.budget.max_runtime_ms);
+  assert.equal((await researchRow(queued.run_id)).deadline,created.deadline_at);
+  // A lease longer than the window keeps lease expiry from being the reason a job stops.
+  const first=worker(continuation,120000);
+  now=created.created_at+30000;
+  const job=await first.claim();first.controller=new AbortController();
+  assert.equal(job.run_id,queued.run_id);
+  return {first,job,created};
+ };
+ const settle=async(first,job,created)=>{
+  const stopped=await foundationRow(job.run_id);
+  assert.equal(stopped.status,'STOPPING');assert.equal(stopped.stop_reason,'RUNTIME_EXCEEDED');
+  assert.equal(stopped.runtime_used_ms,30000);
+  assert.ok(stopped.runtime_used_ms<created.contract.budget.max_runtime_ms,'the runtime cap was not reached');
+  await first.reconcile();
+  assert.equal((await foundationRow(job.run_id)).status,'CANCELLED');
+  const summary=await db.transaction(()=>service.get(x.a,job.run_id));
+  assert.equal(summary.status,'TIMED_OUT');assert.equal(summary.diagnostic,'JOB_DEADLINE_EXCEEDED');
+ };
+ for(const action of ['HEARTBEAT','CHECKPOINT','FINISH']){
+  const {first,job,created}=await claimHalfway();
+  // One millisecond before the deadline the same fence still accepts the job.
+  now=created.deadline_at-1;
+  await first.fenced(job,async()=>{});
+  now=created.deadline_at;
+  let ran=false;
+  const attempt={HEARTBEAT:()=>first.scheduler.heartbeat(job.foundation),
+   CHECKPOINT:()=>first.fenced(job,async()=>{ran=true;}),
+   FINISH:()=>first.finish(job,'NO_VALID_CANDIDATE',{fixture:true})}[action];
+  await assert.rejects(attempt(),{code:'FOUNDATION_LEASE_LOST'},action);
+  assert.equal(ran,false,action);
+  const research=await researchRow(job.run_id);
+  assert.equal(research.status,'RUNNING',action);assert.equal(research.result,null,action);
+  assert.equal((await foundationRow(job.run_id)).result,null,action);
+  await settle(first,job,created);
+ }
+ // A paused job past its deadline is cancelled at the next claim, although its runtime is far below the cap.
+ const {first,job,created}=await claimHalfway();
+ await first.scheduler.pause(job.foundation);
+ assert.equal((await foundationRow(job.run_id)).status,'PAUSED');
+ now=created.deadline_at;
+ assert.equal(await first.claim(),null);
+ assert.equal((await foundationRow(job.run_id)).status,'CANCELLED');
+ assert.equal((await foundationRow(job.run_id)).runtime_used_ms,0);
+ const summary=await db.transaction(()=>service.get(x.a,job.run_id));
+ assert.equal(summary.status,'TIMED_OUT');assert.equal(summary.diagnostic,'JOB_DEADLINE_EXCEEDED');
 });
 
 // QS heavy-path S1: cheap rejections happen before the JSON bar load and before any dataset publication.

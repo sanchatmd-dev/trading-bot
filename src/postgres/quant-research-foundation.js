@@ -6,7 +6,7 @@ import {runQuantProcess,stopQuantUnit} from '../quant-research/process-superviso
 import {readSpotHistory} from '../quant-research/spot-ingestion.js';
 import {planIngestionRange} from '../quant-research/ingestion-range.js';
 import {validateBackfillState} from '../quant-research/foundation-contract.js';
-import {buildProfile} from './quant-profile.js';
+import {buildProfile,authorizeProfileV2Stop} from './quant-profile.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
 import {canReleaseQuantIo} from './quant-io-runtime.js';
 import {validateBar} from './pine-bridge-market.js';
@@ -40,12 +40,10 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
  async authorize(owner,request,action,context){
   if(request.kind==='PREFLIGHT')return this.preflightService?.authorize(owner,request,action,
    {...context,stopped:this.stopped.has(context.job_id+':'+context.lease_token)&&!this.activeLaunches.has(context.job_id+':'+context.lease_token)})??{ok:false};
-  if(request.kind==='PROFILE'&&request.version==='quant-foundation-v2'&&action==='ACKNOWLEDGE_STOPPED'){
-   if(!this.db.isTransaction)return {ok:false};
-   const row=(await this.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[context.job_id])).rows[0];
-   if(!row||row.owner_id!==owner||row.status!=='STOPPING'||row.lease_token!==context.lease_token)return {ok:false};
-   return canReleaseQuantIo(this.db,row);
-  }
+  // The stop acknowledgement needs durable proof only, so it never depends on the profile service being wired.
+  // It shares the service's single authority, which also checks the stored contract and its hash.
+  if(request.kind==='PROFILE'&&request.version==='quant-foundation-v2'&&action==='ACKNOWLEDGE_STOPPED')
+   return authorizeProfileV2Stop(this.db,owner,request,context);
   if(request.kind==='PROFILE')return this.profileService?.authorize(owner,request,action,
    {...context,stopped:this.stopped.has(context.job_id+':'+context.lease_token)&&!this.activeLaunches.has(context.job_id+':'+context.lease_token)})??{ok:false};
   if(request.kind==='BACKFILL')return this.dataService?.authorize(owner,request,action,

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {QuantProfileService} from '../src/postgres/quant-profile.js';
+import {QuantResearchFoundationWorker} from '../src/postgres/quant-research-foundation.js';
 import {ingestionEngineHash} from '../src/postgres/quant-data.js';
 import {canonical,hash} from '../src/pine-bridge/source.js';
 import {profileV2Fixture} from './helpers/profile-v2-fixture.js';
@@ -110,4 +111,52 @@ test('V1 authority preserves existing trusted checks and stopped-context behavio
   assert.deepEqual(await service.authorize(v1.owner_id,v1,'CLAIM'),{ok:false});
   assert.deepEqual(await service.authorize(v1.owner_id,v1,'ACKNOWLEDGE_STOPPED',{stopped:true}),{ok:true});
   assert.deepEqual(await service.authorize(v1.owner_id,v1,'ACKNOWLEDGE_STOPPED',{stopped:false}),{ok:false});
+});
+
+// One authority answers the stop acknowledgement for both callers, so each case below runs against the service and
+// against the foundation worker. The worker used to answer first, without the contract and hash checks.
+async function stopAuthorities(){
+  const built=await fixture(),{service,contract,db}=built;
+  // The worker builds a scheduler, which needs a transaction function although the acknowledgement only reads.
+  db.transaction=async callback=>callback();
+  const worker=new QuantResearchFoundationWorker({service:{db,foundation:true},profileService:service,
+    health:async()=>({ok:true}),profileV2Enabled:true,capacityPolicy:service.capacityPolicy});
+  const context={job_id:'job-1',lease_token:'lease-1'};
+  const ask=(target,{request=contract,owner=contract.owner_id,given=context}={})=>
+    target.authorize(owner,request,'ACKNOWLEDGE_STOPPED',given);
+  return {...built,context,worker,ask:{service:options=>ask(service,options),worker:options=>ask(worker,options)}};
+}
+
+test('V2 stop acknowledgement has one authority: worker and service refuse a changed contract or hash alike',async()=>{
+  const cases=[
+    ['matching durable row',()=>({}),true],
+    ['presented contract differs from the durable row',({contract})=>{
+      const request=structuredClone(contract);request.budget.chunk_bars++;return {request};},false],
+    ['another owner',()=>({owner:'foreign'}),false],
+    ['stored hash does not match the stored contract',({state})=>{state.row.contract_hash='9'.repeat(64);return {};},false],
+    ['stored contract changed and re-hashed',({state})=>{
+      state.row.contract.bot_id='foreign';state.row.contract_hash=hash(canonical(state.row.contract));return {};},false],
+    ['outside a transaction',({db})=>{db.isTransaction=false;return {};},false],
+    ['foreign lease',({context})=>({given:{...context,lease_token:'foreign'}}),false],
+    ['durable row no longer STOPPING',({state})=>{state.row.status='RUNNING';return {};},false],
+    ['unresolved launch',({state})=>{state.launches=1;return {};},false],
+    ['unresolved ledger operation',({state})=>{state.operations=[{status:'ACTIVE'}];return {};},false]
+  ];
+  for(const [label,arrange,ok] of cases){
+    for(const name of ['service','worker']){
+      const built=await stopAuthorities();
+      assert.deepEqual(await built.ask[name](arrange(built)),{ok},name+': '+label);
+    }
+  }
+});
+
+test('V2 worker stop acknowledgement needs durable proof only, not a wired profile service',async()=>{
+  const {contract,context,db,state}=await stopAuthorities();
+  const build=profileService=>new QuantResearchFoundationWorker({service:{db,foundation:true},profileService,
+    health:async()=>({ok:true}),profileV2Enabled:true});
+  const ack=worker=>worker.authorize(contract.owner_id,contract,'ACKNOWLEDGE_STOPPED',context);
+  assert.deepEqual(await ack(build(undefined)),{ok:true});
+  assert.deepEqual(await ack(build({authorize:async()=>({ok:false})})),{ok:true});
+  state.row.contract_hash='9'.repeat(64);
+  assert.deepEqual(await ack(build({authorize:async()=>({ok:true})})),{ok:false});
 });

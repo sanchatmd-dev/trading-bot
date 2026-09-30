@@ -296,3 +296,39 @@ test('membership revocation during held PROFILE conversion blocks fenced FINISH 
   assert.equal(result.next_bar,0);
   assert.equal(result.checkpoint,null);
 });
+
+test('V2 PROFILE stop acknowledgement has one authority: a changed contract or stored hash is refused, a matching row is released',async()=>{
+  // Residue 5. The worker used to answer this acknowledgement before the service and without the contract checks.
+  const {contract}=profileV2Fixture(600);contract.owner_id=owner;
+  await db.query('INSERT INTO quant_foundation_owners(owner_id) VALUES($1) ON CONFLICT DO NOTHING',[owner]);
+  const ackWorker=new QuantResearchFoundationWorker({service:worker.service,dataService:data,profileService:profile,
+    health:async()=>({ok:true}),clock:()=>now,profileV2Enabled:true});
+  const stopping=async storedHash=>{
+    const jobId=randomUUID(),leaseToken=randomUUID();
+    await db.query(`INSERT INTO quant_foundation_jobs
+      (job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at,lease_token,stop_reason)
+      VALUES($1,$2,$3,$4,$5,'STOPPING',$6,$7,$8,'CANCELLED')`,
+      [jobId,owner,randomUUID(),JSON.stringify(contract),storedHash,now,now+900000,leaseToken]);
+    return {job_id:jobId,lease_token:leaseToken};
+  };
+  const ack=(target,request,context)=>
+    db.transaction(()=>target.authorize(owner,request,'ACKNOWLEDGE_STOPPED',context));
+  // The stored hash does not match the stored contract. The service and the worker both refuse, and
+  // reconciliation keeps the global slot reserved instead of releasing it.
+  const forged=await stopping(hash('not-the-stored-contract'));
+  for(const target of [ackWorker,profile])assert.deepEqual(await ack(target,contract,forged),{ok:false});
+  await ackWorker.reconcile();
+  assert.equal((await row(forged.job_id)).status,'STOPPING');
+  await db.query("UPDATE quant_foundation_jobs SET status='CANCELLED',lease_token=NULL,stop_reason=NULL WHERE job_id=$1",
+    [forged.job_id]);
+  // The stored row is consistent. A presented contract that differs from it is refused, the exact one is accepted,
+  // and reconciliation releases the slot.
+  const good=await stopping(hash(canonical(contract)));
+  const changed=structuredClone(contract);changed.budget.chunk_bars++;
+  for(const target of [ackWorker,profile]){
+    assert.deepEqual(await ack(target,changed,good),{ok:false});
+    assert.deepEqual(await ack(target,contract,good),{ok:true});
+  }
+  await ackWorker.reconcile();
+  assert.equal((await row(good.job_id)).status,'CANCELLED');
+});

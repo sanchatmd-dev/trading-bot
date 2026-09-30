@@ -22,6 +22,21 @@ const settings={preset:'Custom',tradeDirectionectionection:'Long + Exit',useSlow
   useMTF:false,useRSIFilter:false,requireBOS:false,requireSweep:false,slMode:'Zone + ATR',
   useSession:false,confirmMode:'Any',notifyEnabled:false};
 
+/** The one stop-acknowledgement authority for PROFILE V2. The service and the foundation worker both call it, so
+ * neither can accept a stop that the other refuses. It re-reads the durable row under lock, requires the stored
+ * contract to match its hash and the contract the caller presents, and then defers to resolved I/O proof.
+ * Every mismatch is a refusal. It throws only when the database itself fails, and each caller keeps its own
+ * handling of that failure.
+ */
+export async function authorizeProfileV2Stop(db,owner,contract,context={}){
+  if(contract?.version!=='quant-foundation-v2'||contract.kind!=='PROFILE'||contract.owner_id!==owner)return {ok:false};
+  if(!db?.isTransaction||typeof context?.job_id!=='string'||typeof context.lease_token!=='string')return {ok:false};
+  const row=(await db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[context.job_id])).rows[0];
+  if(!row||row.owner_id!==owner||row.status!=='STOPPING'||row.lease_token!==context.lease_token||
+     hash(canonical(row.contract))!==row.contract_hash||canonical(row.contract)!==canonical(contract))return {ok:false};
+  return canReleaseQuantIo(db,row);
+}
+
 /** Transaction-local service. Caller owns the SERIALIZABLE transaction. */
 export class QuantProfileService{
   constructor({pineService,dataService,researchStore,clock=Date.now,enabled=false,
@@ -213,17 +228,7 @@ export class QuantProfileService{
     // Revoked execution permission must never prevent the owner from stopping work.
     if(action==='CANCEL')return {ok:true};
     try{
-      if(action==='ACKNOWLEDGE_STOPPED'){
-        if(!this.db?.isTransaction||typeof context.job_id!=='string'||
-           typeof context.lease_token!=='string')return {ok:false};
-        const row=(await this.db.query(
-          'SELECT * FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[context.job_id])).rows[0];
-        if(!row||row.owner_id!==owner||row.status!=='STOPPING'||
-           row.lease_token!==context.lease_token||
-           hash(canonical(row.contract))!==row.contract_hash||
-           canonical(row.contract)!==canonical(contract))return {ok:false};
-        return await canReleaseQuantIo(this.db,row);
-      }
+      if(action==='ACKNOWLEDGE_STOPPED')return await authorizeProfileV2Stop(this.db,owner,contract,context);
       if(contract.completion_mode===PROFILE_ENROLLMENT_MODE&&(!this.profileV2Enabled||!this.enrollmentEnabled))
         return {ok:false};
       const approved=validateFoundationRequestV2(contract,{policy:this.capacityPolicy});
