@@ -616,3 +616,31 @@ before product wiring, and PF-2 R2 and R3 after OD-2 and OD-3. The readiness
 retention cleanup still waits for real age expiry at 2026-09-30 13:53:52
 Asia/Bangkok. The 410–720-hour baseline and existing contingency are unchanged;
 this slice is not a forecast change.
+
+## FTR-1c-C commit barrier and heavy-path S1/S2 checkpoint — 2026-09-30
+
+Local slices `f5616f2` (FTR-1c-C commit barrier and writeback drain plan) and
+`ff1805d` (heavy-path S1/S2 containment) are pushed; nothing is deployed. See the
+[record](QS_FTR1C_C_HEAVY_PATH_S1S2_CHECKPOINT_2026-09-30.md). The owner approved FTR-1c
+with the scheduler-review amendment; three independent reviews accepted the local
+slice and CI passed 9/9. The heavy-path slice is containment only and does not
+close the heavy-path gate.
+
+Measured intervals, all wall-clock: the heavy-path S1/S2 wave (build, audit, one
+fix round and re-audit) about 02:14-03:18 UTC; the FTR-1c-C build and verification
+about 02:20-02:55 UTC, in parallel; the independent second audit about 02:54-03:10
+UTC; root checks, commits and push about 03:10-03:22 UTC, with CI green by about
+03:30 UTC. The shared 5-hour usage window went from 35% to 64% used over the
+overlapping waves and the weekly all-models counter from 20% to 24%; the second
+audit's model has its own weekly counter, which went from 0% to 4%. Shared counters
+do not attribute cost to an agent or a step. The agents ran under the
+owner-approved temporary elevated tier. No engineering hours are booked and no
+speedup is claimed.
+
+Next work: the FTR-1c-INT Linux proof (independent packet audit, then owner-run
+setup and launch after the readiness retention check at 2026-09-30 13:53:52
+Asia/Bangkok; one run, no retry); the FTR-1c-D hardening packet; then the B2 abort
+path and B4 policy-pinned terminal parameters before product wiring; heavy-path S3,
+S3c and staging evidence plus the small `server.js` fix packet; PF-2 R2 and R3
+after OD-2 and OD-3. The 410–720-hour baseline and existing contingency are
+unchanged; this slice is not a forecast change.

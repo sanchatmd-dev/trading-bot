@@ -56,7 +56,11 @@ child; the first frozen read failed the writeback gate, so the unknown-final
 charge was kept and measured settlement on Linux is not yet proven. A local
 follow-up (FTR-1b, `54a9fde`) adds an opt-in writeback drain, off by default and
 untested on Linux; see the [writeback drain record](docs/QD_QS_FTR1B_WRITEBACK_DRAIN_2026-09-29.md). Offline recovery now
-handles a parent crash mid-terminal instead of wedging the queue (`e8e1920`; [record](docs/QD_QS_B1_RECOVERY_PF2_R1_CHECKPOINT_2026-09-30.md)). See the
+handles a parent crash mid-terminal instead of wedging the queue (`e8e1920`; [record](docs/QD_QS_B1_RECOVERY_PF2_R1_CHECKPOINT_2026-09-30.md)). The owner-approved
+FTR-1c commit barrier and drain plan are done locally (`f5616f2`) and the research
+enqueue route now checks queue limits and bar coverage before loading bars
+(`ff1805d`), containment only; the Linux barrier proof is pending and nothing is
+deployed ([record](docs/QS_FTR1C_C_HEAVY_PATH_S1S2_CHECKPOINT_2026-09-30.md)). See the
 [FTR-1 and PF-2 S1 checkpoint](docs/QD_QS_FTR1_PF2_S1_CHECKPOINT_2026-09-29.md)
 and the [Linux integration record](docs/QD_QS_FTR1_LINUX_INTEGRATION_2026-09-29.md).
 Worker/public V2 admission and complete cumulative I/O enforcement remain open. Finalizer checks do
