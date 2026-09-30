@@ -73,6 +73,7 @@ PF2_DEADLINE_EXCEEDED, PF2_EVALUATOR_UNAVAILABLE, PF2_EVALUATION_FAILED.
 
 import json
 import math
+import os
 import re
 import sys
 import time
@@ -90,6 +91,7 @@ from robot_quant.research_chunk import (
     digest,
     export_evaluator,
     import_evaluator,
+    prepare_io_telemetry,
 )
 from robot_quant.spt_custom_evaluator import CustomOptimizationPlan, SptCustomEvaluator
 
@@ -1080,29 +1082,78 @@ def _emit_error(code):
     raise SystemExit(1)
 
 
+_TERMINAL_PROTOCOL = "quant-io-terminal-v1"
+_TERMINAL_ACK = b"QUANT_IO_TERMINAL_ACK_V1\n"
+_READINESS_NAMES = (
+    "QUANT_IO_READY_FILE",
+    "QUANT_IO_READY_DEVICE",
+    "QUANT_IO_READY_RBPS",
+    "QUANT_IO_READY_WBPS",
+)
+
+
+def _fail(code, sent):
+    """One error line before the result line went out; nothing but exit 1 after it."""
+    if sent:
+        raise SystemExit(1) from None
+    _emit_error(code)
+
+
+def _read_protocol_request():
+    """Prime the I/O telemetry, then read exactly one newline-terminated request line."""
+    if not all(os.environ.get(name) for name in _READINESS_NAMES):
+        _bad()
+    prepare_io_telemetry()  # Import only: research_chunk owns the readiness proof.
+    raw = sys.stdin.buffer.readline(IPC_LIMIT + 2)
+    if len(raw) > IPC_LIMIT + 1:
+        _bad("PF2_LIMIT_EXCEEDED")
+    if not raw.endswith(b"\n") or len(raw) == 1:
+        _bad()
+    return raw
+
+
+def _require_terminal_ack():
+    """The parent writes the ACK line and closes stdin. Anything else is a failure."""
+    if sys.stdin.buffer.readline(64) != _TERMINAL_ACK or sys.stdin.buffer.read(1) != b"":
+        _bad()
+
+
 def main():
     """Chunk entry point: one JSON request on stdin, one canonical JSON line on stdout.
 
-    No I/O-terminal handshake: runtime coupling is a later, separately audited slice.
+    Without QUANT_IO_TERMINAL_PROTOCOL this is the local-runner path: read stdin to EOF,
+    write the line, exit. With it (supervised runtime) the request is one newline-terminated
+    line, the result line is written and flushed once, and the parent must then answer with
+    exactly the ACK line and close stdin. No second stdout line follows the result line.
     """
+    sent = False
     try:
-        raw = sys.stdin.buffer.read(IPC_LIMIT + 1)
-        if len(raw) > IPC_LIMIT:
-            _bad("PF2_LIMIT_EXCEEDED")
+        protocol = os.environ.get("QUANT_IO_TERMINAL_PROTOCOL")
+        if protocol is None:
+            raw = sys.stdin.buffer.read(IPC_LIMIT + 1)
+            if len(raw) > IPC_LIMIT:
+                _bad("PF2_LIMIT_EXCEEDED")
+        else:
+            if protocol != _TERMINAL_PROTOCOL:
+                _bad()
+            raw = _read_protocol_request()
         request = json.loads(
             raw, object_pairs_hook=_no_duplicate_keys, parse_constant=_reject_constant
         )
         encoded = canonical(evaluate_pf2_chunk(request))
         if len(encoded) > IPC_LIMIT:
             _bad("PF2_LIMIT_EXCEEDED")
+        sent = protocol is not None  # Set before the first byte: no error line may follow it.
         sys.stdout.buffer.write(encoded + b"\n")
         sys.stdout.buffer.flush()
+        if sent:
+            _require_terminal_ack()
     except PF2Error as error:
-        _emit_error(error.code)
+        _fail(error.code, sent)
     except (ValueError, TypeError, KeyError, AttributeError, ArithmeticError, RecursionError):
-        _emit_error("PF2_REQUEST_INVALID")
+        _fail("PF2_REQUEST_INVALID", sent)
     except Exception:  # Never leak a traceback that could carry request content.
-        _emit_error("PF2_EVALUATION_FAILED")
+        _fail("PF2_EVALUATION_FAILED", sent)
 
 
 if __name__ == "__main__":

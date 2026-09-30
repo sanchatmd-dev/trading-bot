@@ -18,6 +18,12 @@ const safeIoInner=inner=>inner&&typeof inner==='object'?{
 }:null;
 const validUnit=name=>typeof name==='string'&&/^robot-quant-[a-z0-9-]{1,100}\.service$/.test(name);
 export const DEFAULT_PROCESS_LIMITS=Object.freeze({cpuPercent:50,memoryBytes:512*1024*1024,tasks:16});
+const readOnlyModules=()=>{throw new TypeError('QUANT_IO_MODULES is read-only');};
+/** Python modules that implement the readiness plus terminal I/O protocol. Object.freeze alone does
+ * not stop Set mutation, so the mutators are replaced with throwing ones before the freeze.
+ */
+export const QUANT_IO_MODULES=Object.freeze(Object.assign(new Set(['robot_quant.research_chunk','robot_quant.pf2_replay']),
+  {add:readOnlyModules,delete:readOnlyModules,clear:readOnlyModules}));
 
 function command(file,args,timeoutMs=10000) {
   return new Promise(resolve=>{
@@ -71,7 +77,7 @@ export async function runQuantProcess({payload,module='robot_quant.research_engi
   const linux=process.platform==='linux';
   if(ioControls&&(!linux||allowUnsupportedPlatformForTests))throw failure('QUANT_IO_ISOLATION_REQUIRED',true);
   const approvedIo=ioControls?validateIoControls(ioControls):null;
-  if(approvedIo&&(module!=='robot_quant.research_chunk'||!storageBudget))throw failure('QUANT_IO_READINESS_CONFIGURATION_REQUIRED',true);
+  if(approvedIo&&(!QUANT_IO_MODULES.has(module)||!storageBudget))throw failure('QUANT_IO_READINESS_CONFIGURATION_REQUIRED',true);
   if(ioTerminalProtocol!==undefined&&(ioTerminalProtocol!=='quant-io-terminal-v1'||!approvedIo))
     throw failure('QUANT_IO_READINESS_CONFIGURATION_REQUIRED',true);
   const terminal=ioTerminalProtocol==='quant-io-terminal-v1';

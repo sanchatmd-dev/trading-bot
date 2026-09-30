@@ -10,6 +10,7 @@ import copy
 import io
 import json
 import math
+import os
 import subprocess
 import sys
 import traceback
@@ -1366,3 +1367,225 @@ def test_19_pins_for_helpers_imported_from_research_chunk():
     restored = SptCustomEvaluator(CustomSignalInputs())
     pf2_replay.import_evaluator(restored, frozen, 1)
     assert pf2_replay.export_evaluator(restored) == frozen
+
+
+# --- terminal protocol (supervised runtime, slice R4) -----------------------------------
+
+PROTOCOL = "quant-io-terminal-v1"
+TERMINAL_ACK = b"QUANT_IO_TERMINAL_ACK_V1\n"
+READINESS = {
+    "QUANT_IO_READY_FILE": "/nonexistent-dir/.pending-fixture",
+    "QUANT_IO_READY_DEVICE": "8:0",
+    "QUANT_IO_READY_RBPS": "1048576",
+    "QUANT_IO_READY_WBPS": "1048576",
+}
+
+
+class BrokenAfterRequest:
+    """Stdin double: hands out the request line once, then fails like a broken pipe."""
+
+    def __init__(self, line):
+        self.buffer = self
+        self.line, self.reads = line, 0
+
+    def tell(self):
+        return 0
+
+    def readline(self, limit=-1):
+        self.reads += 1
+        if self.reads == 1:
+            return self.line
+        raise OSError("secret-pipe")
+
+    def read(self, size=-1):
+        raise OSError("secret-pipe")
+
+
+def protocol_env(monkeypatch, protocol=PROTOCOL, **changes):
+    if protocol is None:
+        monkeypatch.delenv("QUANT_IO_TERMINAL_PROTOCOL", raising=False)
+    else:
+        monkeypatch.setenv("QUANT_IO_TERMINAL_PROTOCOL", protocol)
+    for name, value in {**READINESS, **changes}.items():
+        if value is None:
+            monkeypatch.delenv(name, raising=False)
+        else:
+            monkeypatch.setenv(name, value)
+
+
+def call_protocol(monkeypatch, payload, *, probe=None, stdin=None):
+    """Runs main() with the readiness probe replaced; returns (code, stdout, stdin, probe calls)."""
+    stdin = Streams(payload) if stdin is None else stdin
+    stdout, calls = Streams(), []
+
+    def prepare():
+        calls.append(stdin.buffer.tell())  # Position of stdin when the probe ran.
+        if probe is not None:
+            probe()
+
+    monkeypatch.setattr(pf2_replay, "prepare_io_telemetry", prepare)
+    monkeypatch.setattr(sys, "stdin", stdin)
+    monkeypatch.setattr(sys, "stdout", stdout)
+    try:
+        pf2_replay.main()
+        code = 0
+    except SystemExit as exit_:
+        code = exit_.code
+    return code, stdout.buffer.getvalue(), stdin, calls
+
+
+def protocol_case(scripted):
+    scripted(S3_BUYS, S3_EXITS)
+    request = make_request(make_contract(NOON, 12, warmup=S3_WARMUP), s3_rows(NOON))
+    line = json.dumps(request).encode() + b"\n"
+    return request, line, pf2_replay.canonical(pf2_replay.evaluate_pf2_chunk(request)) + b"\n"
+
+
+def error_line(code):
+    return b'{"error":"' + code.encode() + b'"}\n'
+
+
+def test_20_protocol_round_trip_probes_first_then_one_line_then_ack(scripted, monkeypatch):
+    _, line, expected = protocol_case(scripted)
+    protocol_env(monkeypatch)
+    code, out, stdin, calls = call_protocol(monkeypatch, line + TERMINAL_ACK)
+    assert code == 0
+    assert out == expected and out.count(b"\n") == 1
+    assert calls == [0]  # The readiness probe ran once, before any stdin byte was read.
+    assert stdin.buffer.read() == b""  # Request line and ACK line were both consumed.
+
+
+def test_20_without_protocol_env_behaviour_is_unchanged(scripted, monkeypatch):
+    request, line, expected = protocol_case(scripted)
+    protocol_env(monkeypatch, protocol=None)  # Readiness variables alone select nothing.
+
+    def forbidden():
+        raise AssertionError("readiness probe must not run without the protocol variable")
+
+    monkeypatch.setattr(pf2_replay, "prepare_io_telemetry", forbidden)
+    code, out = call_main(monkeypatch, json.dumps(request).encode())
+    assert code == 0 and out == expected
+    # The request is read to EOF, not as one line: the protocol's ACK is just trailing junk here.
+    code, out = call_main(monkeypatch, line + TERMINAL_ACK)
+    assert code == 1 and out == error_line("PF2_REQUEST_INVALID")
+
+
+def test_20_bad_protocol_environment_is_a_request_error_before_probe_and_stdin(scripted, monkeypatch):
+    _, line, _ = protocol_case(scripted)
+    cases = [dict(protocol=p) for p in ("quant-io-terminal-v2", "", "QUANT-IO-TERMINAL-V1", "1")]
+    cases += [{name: None} for name in READINESS]
+    cases += [{name: ""} for name in READINESS]
+    for changes in cases:
+        protocol_env(monkeypatch, **changes)
+        code, out, stdin, calls = call_protocol(monkeypatch, line + TERMINAL_ACK)
+        assert code == 1, changes
+        assert out == error_line("PF2_REQUEST_INVALID"), changes
+        assert calls == [] and stdin.buffer.tell() == 0, changes
+
+
+def test_20_probe_failure_is_one_code_line_without_echo_and_stdin_stays_unread(scripted, monkeypatch):
+    _, line, _ = protocol_case(scripted)
+    protocol_env(monkeypatch)
+    for failure, expected in ((ValueError("secret-probe"), "PF2_REQUEST_INVALID"),
+                              (OSError("secret-probe"), "PF2_EVALUATION_FAILED"),
+                              (RuntimeError("secret-probe"), "PF2_EVALUATION_FAILED")):
+        def probe(failure=failure):
+            raise failure
+
+        code, out, stdin, calls = call_protocol(monkeypatch, line + TERMINAL_ACK, probe=probe)
+        assert code == 1 and out == error_line(expected)
+        assert calls == [0] and stdin.buffer.tell() == 0
+        assert b"secret" not in out
+
+
+def test_20_request_line_must_be_one_bounded_newline_terminated_line(scripted, monkeypatch):
+    request, line, _ = protocol_case(scripted)
+    protocol_env(monkeypatch)
+    limit = pf2_replay.IPC_LIMIT
+    cases = (
+        (line[:-1], "PF2_REQUEST_INVALID"),  # No terminator before EOF.
+        (b"", "PF2_REQUEST_INVALID"),
+        (b"\n" + TERMINAL_ACK, "PF2_REQUEST_INVALID"),  # Empty request line.
+        (b"not json\n", "PF2_REQUEST_INVALID"),
+        (b'{"a":1,"a":2}\n', "PF2_REQUEST_INVALID"),
+        (b'{"a":NaN}\n', "PF2_REQUEST_INVALID"),
+        (b" " * (limit + 1) + b"\n", "PF2_LIMIT_EXCEEDED"),
+        (b" " * (limit + 2), "PF2_LIMIT_EXCEEDED"),
+        (json.dumps({**request, "rows": rows_beyond(request)}).encode() + b"\n" + TERMINAL_ACK,
+         "PF2_HOLDOUT_BOUNDARY_VIOLATION"),
+    )
+    for payload, expected in cases:
+        code, out, stdin, calls = call_protocol(monkeypatch, payload)
+        assert code == 1 and out == error_line(expected), expected
+        assert calls == [0]
+    # A failure before the result line leaves the ACK unread: no handshake for an error frame.
+    code, out, stdin, _ = call_protocol(monkeypatch, b"not json\n" + TERMINAL_ACK)
+    assert stdin.buffer.read() == TERMINAL_ACK
+
+
+def test_20_ack_line_and_eof_are_required_and_no_second_line_follows_the_result(scripted, monkeypatch):
+    _, line, expected = protocol_case(scripted)
+    protocol_env(monkeypatch)
+    cases = (
+        b"",  # The parent closed stdin without an ACK.
+        b"\n",
+        TERMINAL_ACK[:-1],  # No line terminator.
+        b"QUANT_IO_TERMINAL_ACK_V2\n",
+        b"quant_io_terminal_ack_v1\n",
+        b" " + TERMINAL_ACK,
+        TERMINAL_ACK + b"x",  # Extra byte after the ACK.
+        TERMINAL_ACK + TERMINAL_ACK,  # A second ACK line is extra input too.
+        TERMINAL_ACK + b"\n",
+        b"x" * 200 + b"\n",
+    )
+    for tail in cases:
+        code, out, _, _ = call_protocol(monkeypatch, line + tail)
+        assert code == 1, tail
+        assert out == expected, tail  # Exactly the result line; no error line after it.
+
+
+def test_20_failure_after_the_result_line_never_writes_a_second_line(scripted, monkeypatch):
+    _, line, expected = protocol_case(scripted)
+    protocol_env(monkeypatch)
+    broken = BrokenAfterRequest(line)
+    code, out, _, _ = call_protocol(monkeypatch, b"", stdin=broken)
+    assert code == 1 and out == expected and broken.reads == 2
+    assert b"secret" not in out
+
+    class WriteFails:
+        def __init__(self):
+            self.buffer = self
+            self.attempts = 0
+
+        def write(self, data):
+            self.attempts += 1
+            raise OSError("secret-pipe")
+
+        def flush(self):
+            raise AssertionError("no flush after a failed write")
+
+    failing = WriteFails()
+    monkeypatch.setattr(pf2_replay, "prepare_io_telemetry", lambda: None)
+    monkeypatch.setattr(sys, "stdin", Streams(line + TERMINAL_ACK))
+    monkeypatch.setattr(sys, "stdout", failing)
+    with pytest.raises(SystemExit) as raised:
+        pf2_replay.main()
+    assert raised.value.code == 1 and failing.attempts == 1  # One attempt, no error line after.
+
+
+def test_20_module_entry_point_rejects_bad_protocol_environment_without_a_result():
+    base = {key: value for key, value in os.environ.items() if not key.startswith("QUANT_IO_")}
+    missing = {name: value for name, value in READINESS.items() if name != "QUANT_IO_READY_WBPS"}
+    cases = (
+        ({"QUANT_IO_TERMINAL_PROTOCOL": "quant-io-terminal-v2", **READINESS}, "PF2_REQUEST_INVALID"),
+        ({"QUANT_IO_TERMINAL_PROTOCOL": PROTOCOL}, "PF2_REQUEST_INVALID"),
+        ({"QUANT_IO_TERMINAL_PROTOCOL": PROTOCOL, **missing}, "PF2_REQUEST_INVALID"),
+        # All four present and well formed, but the readiness directory does not exist: the real
+        # probe fails before stdin is read, as one code line.
+        ({"QUANT_IO_TERMINAL_PROTOCOL": PROTOCOL, **READINESS}, "PF2_EVALUATION_FAILED"),
+    )
+    for extra, expected in cases:
+        done = subprocess.run([sys.executable, "-m", "robot_quant.pf2_replay"], input=b"",
+                              env={**base, **extra}, capture_output=True, timeout=120)
+        assert done.returncode == 1, extra
+        assert done.stdout == error_line(expected), extra
