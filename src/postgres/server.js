@@ -229,7 +229,10 @@ async function userRoutes(req, res, url) {
   if(await quantProfileRoutes(req,res,url,actor,quantProfileService,json,{enabled:quantDataEnabled}))return;
   if(await quantDataRoutes(req,res,url,actor,quantDataService,json,{enabled:quantDataEnabled}))return;
   try { if (await quantBridge(req, res, url, actor, store)) return; }
-  catch (error) { return json(res, 503, {error: 'Quant Lab engine is unavailable'}); }
+  catch (error) {
+    if (error?.code === 'QUANT_EXECUTOR_MODE_UNAVAILABLE') return json(res, 503, {code: error.code, error: 'Quant executor mode is unavailable'});
+    return json(res, 503, {error: 'Quant Lab engine is unavailable'});
+  }
   if (req.method !== 'GET' && (url.pathname === '/api/me/webhook-secret' || url.pathname.startsWith('/api/brokers/')) || url.pathname === '/api/me/password') await auth.sensitive(req);
   if (req.method === 'GET' && url.pathname === '/api/bots') {
     const plan = await store.activePlan(actor.id);

@@ -118,12 +118,7 @@ test('unreadable executor mode reports QUANT_EXECUTOR_MODE_UNAVAILABLE on analyt
   }
 });
 
-// KNOWN PRODUCT DEFECT (audit S2-2, root decides): src/postgres/server.js wraps quantBridge in a catch that
-// answers 503 {error:'Quant Lab engine is unavailable'} and drops error.code, so backtest and optimize never
-// expose QUANT_EXECUTOR_MODE_UNAVAILABLE. Status 503 is correct; only the code is lost. The route still fails closed.
-// The todo option keeps npm run test:postgres green: node:test still runs the body and reports TODO, and a failure
-// does not fail the run. Remove the todo option in the same change that passes error.code through in server.js.
-test('KNOWN-DEFECT unreadable executor mode reports QUANT_EXECUTOR_MODE_UNAVAILABLE on backtest and optimize',{todo:'server.js quantBridge catch drops QUANT_EXECUTOR_MODE_UNAVAILABLE (audit S2-2)'},async t=>{
+test('unreadable executor mode reports QUANT_EXECUTOR_MODE_UNAVAILABLE on backtest and optimize',async t=>{
   const app=await staleFlagApp(t),{f,session}=app;
   await f.db.query('DELETE FROM quant_research_executor_mode');
   for(const [route,method] of DENIED_QUANT){
