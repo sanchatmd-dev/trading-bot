@@ -37,13 +37,18 @@ the platform running the root.
 | --- | --- | --- | --- |
 | Root commander | Sole scheduling authority, integration, acceptance | gpt-6-astra / high | Opus 5.5 / xhigh |
 | Architecture auditor | Difficult architecture, audit, risk/accounting/parity review, escalated root cause | gpt-6-astra / medium | Opus 5.5 / high |
-| Debugger | Difficult debugging and high-risk code fixes | gpt-6-sol / high | Opus 5.5 / medium |
-| Operations | VPS operations, only on an explicit bounded commander dispatch | gpt-6-sol / high | Opus 5.5 / medium |
-| Coder | Bounded implementation, including high-risk modules under review | gpt-6-sol / medium | Sonnet 5.5 / high |
-| Tester | Independent focused acceptance and regression evidence | gpt-6-sol / medium | Sonnet 5.5 / medium |
-| Routine worker | One small local code/UI/fixture slice with an explicit contract and observable acceptance | gpt-6-luna / medium | Sonnet 5.5 / medium |
-| Documentation | Documentation and mechanical edits with no behavior change | gpt-6-luna / low | Sonnet 5.5 / low |
-| Release clerk | Git/release clerical work | gpt-6-sol / low | Sonnet 5.5 / low |
+| Debugger | Difficult debugging and high-risk code fixes | gpt-6.1-sol / high | Opus 5.5 / medium |
+| Operations | VPS operations, only on an explicit bounded commander dispatch | gpt-6.1-sol / high | Opus 5.5 / medium |
+| Coder | Bounded implementation, including high-risk modules under review | gpt-6.1-sol / medium | Sonnet 5.5 / high |
+| Tester | Independent focused acceptance and regression evidence | gpt-6.1-sol / medium | Sonnet 5.5 / medium |
+| Routine worker | One small local code/UI/fixture slice with an explicit contract and observable acceptance | gpt-6.1-sol / medium | Sonnet 5.5 / medium |
+| Documentation | Documentation and mechanical edits with no behavior change | gpt-6.1-sol / low | Sonnet 5.5 / low |
+| Release clerk | Git/release clerical work | gpt-6.1-sol / low | Sonnet 5.5 / low |
+
+All non-Astra Codex roles use GPT-6.1 Sol. Role boundaries and independent review
+still apply even when implementer and reviewer use the same model. High effort
+is reserved for debugger/operations work; bounded implementation, testing and
+routine work use medium; documentation and release clerical work use low.
 
 Claude effort order is low < medium < high < xhigh < max. Opus 5.5 carries the
 judgement-heavy roles; Sonnet 5.5 carries volume work. Do not use max effort or

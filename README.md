@@ -17,6 +17,8 @@
 
 แผน **ตรวจ Risk Manager ก่อน Run Bot** ทำถึง [PF-1C engineering checkpoint](docs/PF_1C_CHECKPOINT_2026-09-28.md): venue filters, shared cost model V2, pending fees และ UI Saved/Draft/Bridge ผ่าน 319 checks ในเครื่อง, 30 checks ซ้ำบน staging แยก, browser จริง และ metadata refresh ต่อเนื่องเกิน 120 วินาทีแล้ว ยังไม่เปลี่ยน release/Bot เดิม รุ่น V1 คงเดิม; V2 Quant ต้องผ่าน evaluator parity ก่อนใช้งาน ผล preview ไม่ใช่คำอนุมัติ Run Bot ดู [Roadmap](docs/ROADMAP.md#approved-extension--readiness-before-run-bot)
 
+PF-2 ณ 2026-10-01 เชื่อม API, worker และ PROFILE enrollment พร้อม receipt แล้ว การทดสอบ local 10,000 แท่งผ่านตั้งแต่ BACKFILL จนได้ผล PF-2 โดยใช้ source/OS จำลองและ Python shim สำหรับ source ทดสอบ ยังไม่เปิดบน staging; รอ final regression และ Linux acceptance ตาม [checkpoint](docs/PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md) และ [ขั้นตอน staging](docs/PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md) ขอบเขตยังเป็น Spot/Paper 1m รวม warm-up ไม่ใช่ 50,000 แท่ง
+
 Historical Preflight ใช้ราคา Spot จาก exchange API และ evaluator ที่ผ่านการตรวจ หรือ CSV สัญญาณจาก TradingView ที่ผูกกับ source/input snapshot จึงไม่ต้องต่อ TradingView MCP การรองรับ CSV ใช้จำลอง Risk Manager ของสัญญาณชุดเดิม; ไม่ได้ทำให้เปลี่ยน source inputs หรือรองรับ Pine ทุกตัวได้
 
 PF-2 และ QD/QS มี [local checkpoint วันที่ 2026-09-29](docs/QD_QS_DURABLE_IO_PF2_CHECKPOINT_2026-09-29.md): PostgreSQL I/O ledger ผ่าน 10 checks รวม settlement และการเปลี่ยน lease โดยรักษายอดสะสม ส่วน Python cost-v2 order finalizer ผ่าน 12 checks และเทียบ Node 17 กรณี ผู้ตรวจอิสระไม่พบ blocker ในขอบเขตนี้
@@ -31,11 +33,16 @@ PF-2 และ QD/QS มี [local checkpoint วันที่ 2026-09-29](doc
 
 ## ทีม Agent สำหรับเดินโครงการ
 
-ใช้หัวหน้าเดียวตาม [AGENTS.md](AGENTS.md) และ [คู่มือทีม](docs/AGENT_TEAM.md): Astra High คุม workflow/timeline/usage; Astra Medium audit งานยาก; Luna Medium รับงานโค้ด/UI/fixture ขนาดเล็กที่มีเกณฑ์ตรวจชัด และ Luna Low ดูแลเอกสาร; Sol Medium/High พัฒนา ตรวจงาน Luna ที่เปลี่ยนพฤติกรรม และ debug/test งานซับซ้อน; Sol Low ทำ Git ตามขอบเขตที่หัวหน้าส่งให้ เริ่มด้วย Luna หนึ่งคน ไม่เปิด swarm เป็นค่าเริ่มต้น และทำงานพร้อมกันไม่เกิน 3 subagents โดยไม่ให้เขียนไฟล์เดียวกันพร้อมกัน ถ้าหัวหน้ารันบน Claude ให้ใช้ model/effort ตามคอลัมน์ Claude ใน AGENTS.md (Opus 5.5 และ Sonnet 5.5)
+อัปเดตงาน PF-2 วันที่ 2026-09-30: [holdout และ W3 local checkpoint](docs/PF2_W3_LOCAL_CHECKPOINT_2026-09-30.md)
+เพิ่มขอบเขต holdout ร่วมที่เข้มที่สุดของเจ้าของเดียวกัน ผ่าน service tests 47/47
+ส่วน W3 มีโค้ดเชื่อมในเครื่องแล้ว แต่ยังไม่ผ่าน acceptance ครบ และยังไม่ได้เปิด API บน staging
+ต้องทำ durable trusted PROFILE V2 enrollment เพิ่มก่อน R7; ผล provisional ที่จบ CANCELLED ใช้แทนไม่ได้
+
+ใช้หัวหน้าเดียวตาม [AGENTS.md](AGENTS.md) และ [คู่มือทีม](docs/AGENT_TEAM.md): Astra High คุม workflow/timeline/usage; Astra Medium audit งานยาก; บทบาท Codex ที่เหลือใช้ `gpt-6.1-sol` ทั้งหมด โดย Debugger/Operations ใช้ High, Coder/Tester/Routine worker ใช้ Medium และ Documentation/Release clerk ใช้ Low เริ่มด้วย routine worker หนึ่งคนสำหรับงานเล็กที่เข้าเกณฑ์ ไม่เปิด swarm เป็นค่าเริ่มต้น และทำงานพร้อมกันไม่เกิน 3 subagents โดยไม่ให้เขียนไฟล์เดียวกันพร้อมกัน งาน routine worker ที่เปลี่ยนพฤติกรรมต้องมี coder/tester/debugger ตรวจอิสระก่อน root รับงาน ถ้าหัวหน้ารันบน Claude ให้ใช้ model/effort ตามคอลัมน์ Claude ใน AGENTS.md (Opus 5.5 และ Sonnet 5.5)
 
 ตั้ง project defaults และ role profiles ใน `.codex/` แล้ว การเลือก model ของ task ที่เปิดอยู่ยังต้องตรวจจาก app ไม่ถือว่าไฟล์ config เปลี่ยน model ระหว่าง turn อัตโนมัติ ตรวจ quota ก่อนส่งงานและแต่ละ checkpoint พร้อม reserve 15 percentage points ตาม AGENTS.md; ไม่รับประกัน quota เมื่อหน้าต่างบางส่วนไม่มีข้อมูล ใช้ local สำหรับพัฒนาและ VPS เฉพาะงานที่ผ่าน scope/health/capability gates
 
-ทุก role รวมหัวหน้าและ Luna worker ใช้ Caveman สำหรับบทสนทนา, task packets, compact และ handoff ที่ agent เขียนเอง รวมถึงไฟล์ memory ภายใน ตาม [กติกากลาง](AGENTS.md#communication-compact-summaries-and-handoffs) ส่งเฉพาะไฟล์/สัญญา/หลักฐานที่จำเป็น ย่อข้อความซ้ำแต่คงข้อจำกัด หลักฐานและงานถัดไป เอกสารผลิตภัณฑ์ใช้ภาษาปกติ ยังไม่ได้วัดผลประหยัด token จากการเพิ่ม Luna
+ทุก role รวมหัวหน้าและ routine worker ใช้ Caveman สำหรับบทสนทนา, task packets, compact และ handoff ที่ agent เขียนเอง รวมถึงไฟล์ memory ภายใน ตาม [กติกากลาง](AGENTS.md#communication-compact-summaries-and-handoffs) ส่งเฉพาะไฟล์/สัญญา/หลักฐานที่จำเป็น ย่อข้อความซ้ำแต่คงข้อจำกัด หลักฐานและงานถัดไป เอกสารผลิตภัณฑ์ใช้ภาษาปกติ ยังไม่ได้วัดผลประหยัด token หรือ throughput จากการเปลี่ยน model
 
 ## แผน Quant Research Library และ Best Performance
 
@@ -416,3 +423,8 @@ License/subscription ยังควบคุมด้วย Admin ไม่ใ�
 ยังต้องทำ native protective orders, authoritative balances/prices, exchange precision/filter verification,
 fee-aware live ledger, broker-specific contract/sandbox tests, และขั้นตอน cancel/close/reconcile จริง
 ก่อนออก release ที่เปิด Live ได้ การล็อก Live เป็นมาตรการป้องกัน ไม่ได้หมายความว่างานเหล่านี้เสร็จแล้ว
+
+PF-2 local update (2026-10-01): W3 runtime passes 43/43, W5 authority passes
+4/4 and the complete Node suite passes 728 with three skips. S3 prepare-under-lease
+and retention integration are in progress. Native Linux proof, durable PROFILE V2
+enrollment and staging activation remain separate gates; PF-2 API is still off.

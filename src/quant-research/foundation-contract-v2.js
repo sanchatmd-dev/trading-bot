@@ -5,6 +5,7 @@ import {validateProfileSpecV2} from './profile-contract-v2.js';
 
 const invalid=()=>{throw fail('INVALID_FOUNDATION_V2');};
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+export const PROFILE_ENROLLMENT_MODE='pf2-enrollment-v1';
 
 /** Reject accessors, symbols, holes, special prototypes, and non-JSON leaves. */
 export function strictJsonV2(value,seen=new Set()){
@@ -51,8 +52,10 @@ export function frozenV2(value){
 
 export function validateFoundationRequestV2(value,{policy}={}){
  strictJsonV2(value);
+ const enrollment=Object.hasOwn(value,'completion_mode');
  fieldsV2(value,['version','owner_id','bot_id','kind','dataset','engine_hash',
-  'snapshot_hash','budget','profile','capacity']);
+  'snapshot_hash','budget','profile','capacity',...(enrollment?['completion_mode']:[])]);
+ if(enrollment&&value.completion_mode!==PROFILE_ENROLLMENT_MODE)invalid();
  if(value.version!=='quant-foundation-v2'||value.kind!=='PROFILE'||
     !['owner_id','bot_id'].every(name=>typeof value[name]==='string'&&
       /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(value[name]))||
@@ -60,6 +63,8 @@ export function validateFoundationRequestV2(value,{policy}={}){
  const dataset=validateDatasetReference(value.dataset);
  const capacity=validateCapacityRequest(value.capacity,{policy});
  const profile=validateProfileSpecV2(value.profile,dataset);
+ if(enrollment&&(capacity.environment!=='staging'||dataset.metadata.total_bars>10000||
+    !policy.terminal||value.budget.candidates!==1||value.budget.max_evaluations!==1))invalid();
  if(value.engine_hash===capacity.scope.evaluator_hash||
     value.snapshot_hash!==profile.snapshot_hash||
     profile.source_hash!==capacity.scope.source_hash||

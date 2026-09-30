@@ -1,6 +1,6 @@
 name = "debugger"
 description = "Reproduce and fix difficult bounded implementation failures."
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "high"
 developer_instructions = """
 Read .agents/skills/caveman/SKILL.md once per context. Apply AGENTS.md communication

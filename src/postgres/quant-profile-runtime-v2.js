@@ -1,6 +1,7 @@
 import {canonical,hash,fail} from '../pine-bridge/source.js';
 import {validateProfileResultV2} from '../quant-research/profile-contract-v2.js';
 import {QuantIoRuntime,QUANT_PROFILE_RUNTIME_PROTOCOL,quantIoUnitName} from './quant-io-runtime.js';
+import {prepareEnrollmentAttempt,profileCompletionVeto} from './quant-profile-enrollment.js';
 
 const uncertain=()=>fail('QUANT_IO_LAUNCH_UNCERTAIN');
 // Graceful stop (signal) and compute deadline both end the frame loop; the drained terminal still runs (W2 3.3).
@@ -19,11 +20,12 @@ const DEADLINE_SLACK_MS=1000;
 /** Internal staging adapter. Constructor callbacks resolve current trusted state. */
 export class QuantProfileRuntimeV2 {
   constructor({db,ledger,scheduler,launcher,storageBudget,authorizeRelease,health,clock=Date.now,
-    pollMs=100}={}){
+    pollMs=100,enrollment=null}={}){
     if(!db?.transaction||ledger?.policy?.environment!=='staging'||!scheduler?.cancel||!storageBudget?.root||
       typeof authorizeRelease!=='function'||typeof health!=='function'||
       !Number.isSafeInteger(pollMs)||pollMs<25||pollMs>1000)throw uncertain();
     this.db=db;this.ledger=ledger;this.scheduler=scheduler;this.launcher=launcher;this.clock=clock;this.pollMs=pollMs;
+    this.enrollment=enrollment;
     this.io=new QuantIoRuntime({db,ledger,scheduler,launcher,clock,
       profile:{protocol:QUANT_PROFILE_RUNTIME_PROTOCOL,root:storageBudget.root,storageBudget,
         authorizeRelease:async job=>{
@@ -37,7 +39,8 @@ export class QuantProfileRuntimeV2 {
         },health}});
   }
 
-  /** Runs one PROFILE operation. The job always ends CANCELLED: the provisional result is never admitted.
+  /** Runs one PROFILE operation. Diagnostics keep a provisional result and end CANCELLED. Explicit
+   * enrollment may end SUCCEEDED only after measured settlement and atomic receipt publication.
    * signal: graceful stop (the worker sets it on lease or health loss). Ends the frame wait with
    *   PROFILE_STOP_REQUESTED, then beforeTerminal runs once and the drained terminal follows.
    * The frame loop also ends by itself with PROFILE_COMPUTE_DEADLINE when handle.terminalLimitMs() is not above one
@@ -50,11 +53,12 @@ export class QuantProfileRuntimeV2 {
    * A thrown stop or deadline error carries terminal {status, proof} when the terminal finished.
    */
   async run({jobId,leaseToken,operationId,expectedRevision=0,ownerId,signal=null,emergency=null,
-    beforeTerminal=null}){
+    beforeTerminal=null,onTerminalDiagnostic=null}){
     if(!signalLike(signal)||!signalLike(emergency)||
-      beforeTerminal!==null&&typeof beforeTerminal!=='function')throw uncertain();
+      beforeTerminal!==null&&typeof beforeTerminal!=='function'||
+      onTerminalDiagnostic!==null&&typeof onTerminalDiagnostic!=='function')throw uncertain();
     const request={jobId,leaseToken,operationId};
-    let reserveAttempted=false,stop=null,frame=null,failure=null,hooked=false;
+    let reserveAttempted=false,stop=null,frame=null,failure=null,hooked=false,attempt=null,marked=false;
     const checkStop=()=>{if(signal?.aborted||emergency?.aborted)throw stopRequested();};
     const onEmergency=()=>{if(reserveAttempted)this.io.emergencyStop(request).catch(()=>{});};
     let raiseAbort;
@@ -75,6 +79,9 @@ export class QuantProfileRuntimeV2 {
           row.contract?.version==='quant-foundation-v2'&&row.contract?.kind==='PROFILE'&&
           hash(canonical(row.contract))===row.contract_hash;
         if(ok&&hash(canonical(this.ledger.policy))!==row.contract.capacity?.policy_hash)throw policyMismatch();
+        if(ok&&row.contract.completion_mode==='pf2-enrollment-v1'){
+          marked=true;if(this.enrollment?.enabled!==true)throw fail('PROFILE_ENROLLMENT_DISABLED');
+        }
         return ok;
       });
       if(!owned)throw uncertain();
@@ -141,16 +148,25 @@ export class QuantProfileRuntimeV2 {
         throw uncertain();
       validateProfileResultV2(row.contract,frame.result,{policy:this.ledger.policy});
       if(frame.result.evaluator_admission!==false)throw uncertain();
+      if(marked)attempt=await prepareEnrollmentAttempt({job:row,frame,leaseToken,operationId,
+        policy:this.ledger.policy,signal,emergency,enrollment:this.enrollment});
     }catch(error){
       failure=error;throw error;
     }finally{
       try{
         if(reserveAttempted){
           // The heartbeat must be quiet before the terminal: cancel makes the job STOPPING, which holds no lease to renew.
-          if(beforeTerminal&&!hooked){hooked=true;try{await beforeTerminal();}catch{}}
+          if(beforeTerminal&&!hooked){hooked=true;try{await beforeTerminal();}
+            catch{if(marked&&!failure)failure=fail('PROFILE_ENROLLMENT_DENIED');}}
           // The terminal owns the stop so it can freeze and read the unit before the kill. The emergency listener
           // stays attached until it is done: an emergency during the drain must still reach io.emergencyStop.
-          try{stop=await this.io.cancel({...request,ownerId});}
+          let completion=null;
+          if(attempt&&!failure&&!profileCompletionVeto(attempt)){
+            try{completion=await this.scheduler.beginProfileCompletion({job_id:jobId,lease_token:leaseToken,attempt});}
+            catch{failure=fail('PROFILE_ENROLLMENT_DENIED');}
+          }
+          try{stop=completion?await this.io.completeProfile({...request,completion,onTerminalDiagnostic}):
+            await this.io.cancel({...request,ownerId,onTerminalDiagnostic});}
           catch{
             // Terminal failed before the stop was proven. Never leave the child running.
             const handle=this.io.handles.get(jobId+':'+operationId);
@@ -167,6 +183,9 @@ export class QuantProfileRuntimeV2 {
         signal?.removeEventListener('abort',raiseAbort);
       }
     }
+    if(failure)throw failure;
+    if(marked&&stop?.status==='SUCCEEDED'&&stop.proof==='MEASURED_FINAL_SETTLED')
+      return Object.freeze({status:'SUCCEEDED',proof:stop.proof});
     if(stop?.status!=='CANCELLED'||!TERMINAL_PROOFS.includes(stop?.proof))throw uncertain();
     return Object.freeze({status:'CANCELLED',proof:stop.proof,
       provisional:Object.freeze({jobId,operationId,payloadHash:frame.payloadHash,

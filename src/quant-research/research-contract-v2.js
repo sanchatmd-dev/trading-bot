@@ -21,6 +21,7 @@ export const DATASET_BINDING_KIND='PREPARE';
 export const CONTENT_DIGEST_SQL=`SELECT count(*)::int n,min(bar_time) first_time,max(bar_time) last_time,
  count(*) FILTER (WHERE provenance->>'profile' IS DISTINCT FROM $3::text
   OR bar->'time' IS DISTINCT FROM to_jsonb(bar_time)
+  OR bar_time % 60000 <> 0
   OR content_hash !~ '^[a-f0-9]{64}$')::int bad,
  encode(sha256(convert_to(string_agg(bar_time::text||':'||content_hash,chr(10) ORDER BY bar_time),'UTF8')),'hex') digest
 FROM pine_market_bars WHERE broker='binance-global' AND symbol='BTCUSDT' AND timeframe='1'

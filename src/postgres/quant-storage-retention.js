@@ -6,6 +6,11 @@ import {DatasetStore} from '../quant-research/dataset-store.js';
 import {withQuantOfflineGuard,loadQuantRecoveryPolicy} from './quant-foundation-recovery.js';
 import {validateBackfillState,validateBackfillResult,foundationTotalBars,validateDatasetReference} from '../quant-research/foundation-contract.js';
 import {validateProfileResult} from '../quant-research/profile-contract.js';
+import {validateProfileEnrollmentReceipt} from '../quant-research/profile-contract-v2.js';
+import {readProfileEnrollmentEvidence} from './quant-profile-enrollment-evidence.js';
+import {RESEARCH_V2_VERSIONS,DATASET_BINDING_STEP_ID,DATASET_BINDING_KIND,
+  validateResearchContractV2,validateFoundationResearchRequestV2,validateDatasetBindingV1,
+  datasetBindingIdentity} from '../quant-research/research-contract-v2.js';
 
 const markerName='.database-owner.json';
 const artifact=name=>typeof name==='string'&&/^[a-f0-9]{64}$/.test(name);
@@ -55,19 +60,63 @@ export async function maintainQuantStorage({db,budget,apply=false,recoverStaleLo
       if(!value||!artifact(value.dataset_id)||value.dataset_id!==value.sha256)throw fail('STORAGE_REFERENCE_INVALID');
       retained.add(value.dataset_id);
     };
-    const research=(await query("SELECT contract FROM quant_jobs WHERE contract->>'execution_backend'='quant-foundation-v1'")).rows;
-    for(const {contract} of research){
+    const research=(await query("SELECT run_id,contract,status,evaluations_started FROM quant_jobs WHERE contract->>'execution_backend'='quant-foundation-v1'")).rows;
+    const chunks=(await query('SELECT * FROM quant_research_chunks')).rows;
+    const chunksByRun=new Map();
+    for(const chunk of chunks){
+      if(!chunksByRun.has(chunk.run_id))chunksByRun.set(chunk.run_id,[]);
+      chunksByRun.get(chunk.run_id).push(chunk);
+    }
+    const completed=(await query('SELECT DISTINCT run_id FROM quant_job_steps')).rows;
+    const completedRuns=new Set(completed.map(row=>row.run_id));
+    const v2=new Map();
+    for(const row of research){
+      const {contract}=row;
+      if(contract.version===RESEARCH_V2_VERSIONS.contract){
+        try{
+          validateResearchContractV2(contract);
+          const own=chunksByRun.get(row.run_id)??[];
+          const binding=own.find(chunk=>chunk.step_id===DATASET_BINDING_STEP_ID);
+          if(binding){
+            if(binding.kind!==DATASET_BINDING_KIND||binding.next_bar!==0||binding.checkpoint!==null||
+               binding.checkpoint_hash!==null||binding.unit_name!==null||binding.unit_token!==null||
+               binding.identity_hash!==datasetBindingIdentity(contract,binding.parameters))throw fail('STORAGE_REFERENCE_INVALID');
+            const checked=validateDatasetBindingV1(contract,binding.parameters);
+            raw(checked.references.raw);
+            retained.add('atr14-'+checked.references.sidecar.sha256+'.json');
+          }else if(own.length||completedRuns.has(row.run_id)||row.evaluations_started!==0||
+                   ['SUCCEEDED','NO_VALID_CANDIDATE'].includes(row.status))throw fail('STORAGE_REFERENCE_INVALID');
+          v2.set(row.run_id,contract);
+        }catch{throw fail('STORAGE_REFERENCE_INVALID');}
+        continue;
+      }
+      if(contract.version!=='ql3a-research-job-v1')throw fail('STORAGE_REFERENCE_INVALID');
       const refs=contract.dataset?.references;raw(refs?.raw);
       const sha=refs?.sidecar?.sha256;if(typeof sha!=='string'||!/^[a-f0-9]{64}$/.test(sha))throw fail('STORAGE_REFERENCE_INVALID');
       retained.add('atr14-'+sha+'.json');
     }
-    for(const row of (await query('SELECT contract,checkpoint,next_bar,result,status FROM quant_foundation_jobs')).rows){
+    for(const chunk of chunks)if((chunk.step_id===DATASET_BINDING_STEP_ID||chunk.kind===DATASET_BINDING_KIND)&&
+      (!v2.has(chunk.run_id)||chunk.step_id!==DATASET_BINDING_STEP_ID))throw fail('STORAGE_REFERENCE_INVALID');
+    for(const row of (await query('SELECT job_id,contract,contract_hash,checkpoint,next_bar,result,status FROM quant_foundation_jobs')).rows){
+      if(row.contract.version===RESEARCH_V2_VERSIONS.request){
+        try{validateFoundationResearchRequestV2(row.contract);}catch{throw fail('STORAGE_REFERENCE_INVALID');}
+        if(row.checkpoint!==null||row.next_bar!==0)throw fail('STORAGE_REFERENCE_INVALID');
+        continue;
+      }
       if(row.contract.kind==='PROFILE'){
         raw(validateDatasetReference(row.contract.dataset));
         if(row.status==='SUCCEEDED'){
-          validateProfileResult(row.contract,row.result);
+          if(row.contract.version==='quant-foundation-v2'){
+            try{
+              const evidence=await readProfileEnrollmentEvidence({query},row.job_id);
+              validateProfileEnrollmentReceipt(evidence??{});
+              if(evidence.job.contract_hash!==row.contract_hash||canonical(evidence.job.contract)!==canonical(row.contract)||
+                canonical(evidence.job.result)!==canonical(row.result))throw fail('STORAGE_REFERENCE_INVALID');
+            }catch{throw fail('STORAGE_REFERENCE_INVALID');}
+          }else validateProfileResult(row.contract,row.result);
           raw(row.result.references.raw);
-          retained.add('atr14-'+row.result.references.sidecar.sha256+'.json');
+          retained.add(row.contract.version==='quant-foundation-v2'?'atr14-v2-'+row.result.references.sidecar.sha256:
+            'atr14-'+row.result.references.sidecar.sha256+'.json');
         }else if(row.result)throw fail('STORAGE_REFERENCE_INVALID');
         continue;
       }

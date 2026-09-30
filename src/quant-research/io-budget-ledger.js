@@ -190,6 +190,8 @@ function validateState(state){
   return state;
 }
 function update(state){return detached(validateState(state));}
+/** Validate persisted accounting without selecting a compute-only transition. */
+export function validateIoBudgetLedgerState(state){return detached(validateState(state));}
 function next(state){if(state.revision===Number.MAX_SAFE_INTEGER)invalid();return {...copy(state),revision:state.revision+1};}
 function target(state,input,keys){
   validateState(state);names(input,keys);

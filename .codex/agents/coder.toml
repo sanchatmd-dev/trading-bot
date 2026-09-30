@@ -1,6 +1,6 @@
 name = "coder"
 description = "Implement one bounded Roadmap slice with explicit file ownership."
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"
 developer_instructions = """
 Read .agents/skills/caveman/SKILL.md once per context. Apply AGENTS.md communication

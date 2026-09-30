@@ -9,6 +9,7 @@ import {DatasetStore} from '../quant-research/dataset-store.js';
 import {StorageBudget} from '../quant-research/storage-budget.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
 import {rawProfileReadiness} from '../quant-research/data-profile.js';
+import {QUANT_RUNTIME_ENGINE_FILES} from '../quant-research/runtime-engine-files.js';
 
 const active=['QUEUED','PAUSED','RUNNING','STOPPING'];
 const files=['src/postgres/quant-data.js','src/postgres/quant-profile.js','src/quant-research/profile-contract.js','src/postgres/quant-research-main.js',
@@ -22,9 +23,11 @@ const files=['src/postgres/quant-data.js','src/postgres/quant-profile.js','src/q
   'src/quant-research/health-recovery-gate.js','src/quant-research/scheduler-health.js','src/quant-research/bounded-health-probe.js',
   'src/quant-research/atr14-chunk-store.js','src/quant-research/capacity-contract.js',
   'src/quant-research/foundation-contract-v2.js','src/quant-research/profile-contract-v2.js',
-  'src/quant-research/data-profile-v2.js','src/quant-research/profile-pipeline-v2.js','src/quant-research/io-terminal.js'];
+  'src/quant-research/data-profile-v2.js','src/quant-research/profile-pipeline-v2.js','src/quant-research/io-terminal.js',
+  'src/quant-research/research-contract-v2.js'];
+export const INGESTION_ENGINE_FILES=Object.freeze([...new Set([...files,...QUANT_RUNTIME_ENGINE_FILES])]);
 export async function ingestionEngineHash(readFile=fs.readFile){
-  const values=await Promise.all(files.map(async name=>[name,hash(await readFile(new URL('../../'+name,import.meta.url)))]));
+  const values=await Promise.all(INGESTION_ENGINE_FILES.map(async name=>[name,hash(await readFile(new URL('../../'+name,import.meta.url)))]));
   return hash(canonical(Object.fromEntries(values)));
 }
 const normalized=value=>{

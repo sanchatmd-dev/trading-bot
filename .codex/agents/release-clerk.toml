@@ -1,6 +1,6 @@
 name = "release_clerk"
 description = "Serial reviewed Git checkpoint and documentation integration operator."
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "low"
 developer_instructions = """
 Read .agents/skills/caveman/SKILL.md once per context. Apply AGENTS.md communication

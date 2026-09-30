@@ -26,7 +26,7 @@ function command(file,args,timeoutMs=10000){
 
 const systemd={
  show:async unit=>{
-  const output=await command('systemctl',['--user','show',unit,'--property=LoadState,ActiveState,SubState,ControlGroup,Job,MainPID,KillMode']);
+  const output=await command('systemctl',['--user','show',unit,'--property=LoadState,ActiveState,SubState,ControlGroup,Job,MainPID,KillMode,TimeoutStopUSec']);
   return Object.fromEntries(output.split(/\r?\n/).filter(Boolean).map(line=>{const at=line.indexOf('=');return [line.slice(0,at),line.slice(at+1)];}));
  },
  jobs:()=>command('systemctl',['--user','list-jobs','--all','--no-legend','--plain']),
@@ -73,7 +73,16 @@ export async function loadQuantRecoveryPolicy(filename=process.env.QUANT_RECOVER
 }
 
 /** Startup guard: only the reviewed user service may own the Quant launcher. */
-export async function assertQuantWorkerUnit(unitName,{policy,manager=systemd,selfCgroup}={}){
+export function parseQuantStopTimeout(value){
+ if(typeof value!=='string'||!/^\d+(?:us|ms|s|min|h)(?: \d+(?:us|ms|s|min|h))*$/.test(value))
+  throw error('QUANT_WORKER_UNIT_UNVERIFIED');
+ const scales={us:0.001,ms:1,s:1000,min:60000,h:3600000};
+ const total=value.split(' ').reduce((sum,part)=>{const [,n,unit]=part.match(/^(\d+)(us|ms|s|min|h)$/);return sum+Number(n)*scales[unit];},0);
+ if(!Number.isFinite(total)||total>Number.MAX_SAFE_INTEGER)throw error('QUANT_WORKER_UNIT_UNVERIFIED');
+ return total;
+}
+
+export async function assertQuantWorkerUnit(unitName,{policy,manager=systemd,selfCgroup,profileV2Enabled=false}={}){
  if(process.platform!=='linux'&&manager===systemd)throw error('RECOVERY_LINUX_REQUIRED');
  policy??=await loadQuantRecoveryPolicy();
  if(unitName!==policy.workerUnit)throw error('QUANT_WORKER_UNIT_MISMATCH');
@@ -83,9 +92,10 @@ export async function assertQuantWorkerUnit(unitName,{policy,manager=systemd,sel
  }
  const state=await manager.show(unitName);
  const cgroup=selfCgroup??(await fs.readFile('/proc/self/cgroup','utf8')).match(/^0::(.+)$/m)?.[1];
- if(state.LoadState!=='loaded'||state.ActiveState!=='active'||state.KillMode!=='control-group'||
+ if(state.LoadState!=='loaded'||state.ActiveState!=='active'||state.KillMode!==(profileV2Enabled?'mixed':'control-group')||
     Number(state.MainPID)!==process.pid||!state.ControlGroup||cgroup!==state.ControlGroup)
   throw error('QUANT_WORKER_UNIT_UNVERIFIED');
+ if(profileV2Enabled&&parseQuantStopTimeout(state.TimeoutStopUSec)<90000)throw error('QUANT_WORKER_UNIT_UNVERIFIED');
  return true;
 }
 
@@ -215,6 +225,32 @@ function verifyProfile(row){
 function verifyRows(rows,chunksByRun){
  const units=[];
  for(const row of rows){
+  if(row.contract?.kind==='PREFLIGHT'){
+   const bound=row.preflight_binding;
+   if(!row.lease_token||hash(canonical(row.contract))!==row.contract_hash||row.run_id||row.research_contract||
+      !bound||bound.job_id!==row.job_id||bound.owner_id!==row.owner_id||bound.bot_id!==row.contract.bot_id)
+    throw error('RECOVERY_BINDING_UNVERIFIED');
+   try{
+    const plan=JSON.parse(bound.plan_json);
+    if(hash(bound.plan_json)!==bound.plan_hash||canonical(plan)!==bound.plan_json||
+       canonical(plan.foundation)!==canonical(row.contract))throw error('RECOVERY_BINDING_UNVERIFIED');
+   }catch{throw error('RECOVERY_BINDING_UNVERIFIED');}
+   if(row.checkpoint){
+    const {sha256,...payload}=row.checkpoint;
+    if(hash(canonical(payload))!==sha256||payload.next_bar!==row.next_bar||
+       payload.dataset_id!==row.contract.dataset.dataset_id||payload.dataset_sha256!==row.contract.dataset.sha256||
+       payload.engine_hash!==row.contract.engine_hash||payload.snapshot_hash!==row.contract.snapshot_hash||
+       !Number.isSafeInteger(payload.next_bar)||payload.next_bar<1||payload.next_bar>row.contract.dataset.metadata.total_bars||
+       payload.state?.version!=='pf2-replay-resume-v1'||payload.state.next_bar!==payload.next_bar||
+       Buffer.byteLength(JSON.stringify(payload.state))>row.contract.budget.max_state_bytes)
+     throw error('RECOVERY_CHECKPOINT_CORRUPT');
+   }else if(row.next_bar!==0)throw error('RECOVERY_CHECKPOINT_CORRUPT');
+   if(bound.unit_name){
+    if(!transientPattern.test(bound.unit_name)||bound.unit_token!==row.lease_token)throw error('RECOVERY_UNIT_INVALID');
+    units.push(bound.unit_name);
+   }else if(bound.unit_token)throw error('RECOVERY_UNIT_INVALID');
+   continue;
+  }
   if(row.contract?.kind==='PROFILE'){verifyProfile(row);continue;}
   if(row.contract?.kind==='BACKFILL'){
    if(!row.lease_token||hash(canonical(row.contract))!==row.contract_hash||row.run_id||row.research_contract)throw error('RECOVERY_BINDING_UNVERIFIED');
@@ -280,8 +316,11 @@ async function snapshot(query){
   plain.push(row);
  }
  const chunksByRun=new Map();
- for(const row of plain)if(!['BACKFILL','PROFILE'].includes(row.contract?.kind))chunksByRun.set(row.run_id,(await query(
-  'SELECT * FROM quant_research_chunks WHERE run_id=$1',[row.run_id])).rows);
+ for(const row of plain){
+  if(row.contract?.kind==='PREFLIGHT')row.preflight_binding=(await query('SELECT * FROM quant_preflight_jobs WHERE job_id=$1',[row.job_id])).rows[0];
+  else if(!['BACKFILL','PROFILE'].includes(row.contract?.kind))chunksByRun.set(row.run_id,(await query(
+   'SELECT * FROM quant_research_chunks WHERE run_id=$1',[row.run_id])).rows);
+ }
  return {rows,plain,io,chunksByRun,units:verifyRows(plain,chunksByRun)};
 }
 
@@ -435,6 +474,12 @@ export async function recoverQuantFoundation({db,policy,manager=systemd,inventor
       [row.job_id,status,row.lease_token]);
     if(updated.rowCount!==1)throw error('RECOVERY_LEASE_CHANGED');
     if(['BACKFILL','PROFILE'].includes(row.contract.kind)){done.push({job_id:row.job_id,status});continue;}
+    if(row.contract.kind==='PREFLIGHT'){
+     const cleared=await query('UPDATE quant_preflight_jobs SET unit_name=NULL,unit_token=NULL WHERE job_id=$1 AND unit_name=$2 AND unit_token=$3',
+      [row.job_id,row.preflight_binding.unit_name,row.lease_token]);
+     if(cleared.rowCount!==(row.preflight_binding.unit_name?1:0))throw error('RECOVERY_UNIT_STATE_CHANGED');
+     done.push({job_id:row.job_id,status});continue;
+    }
     const cleared=await query(`UPDATE quant_research_chunks SET unit_name=NULL,unit_token=NULL
       WHERE run_id=$1 AND unit_token=$2 AND unit_name IS NOT NULL`,[row.run_id,row.lease_token]);
     if(cleared.rowCount!==second.chunksByRun.get(row.run_id).filter(chunk=>chunk.unit_name).length)

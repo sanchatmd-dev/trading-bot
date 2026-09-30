@@ -2,6 +2,7 @@ import {cp,mkdtemp,readFile,rm} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
+import {profileEnrollmentEvidenceFixture,insertProfileEnrollmentEvidenceFixture} from './profile-enrollment-evidence-fixture.js';
 import {PostgresDatabase} from '../../src/postgres/db.js';
 import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
@@ -164,6 +165,10 @@ export async function createWorld(harness,{edits={},boundary,accounts,risk={}}={
     checkpoint:backfill.checkpoint,nextBar:scenario.enrollment.contract.dataset.metadata.total_bars});
   await insertFoundationJob(db,{jobId:profileJobId,owner,contract:scenario.enrollment.contract,
     result:scenario.enrollment.result});
+  const enrollmentEvidence=profileEnrollmentEvidenceFixture({contract:scenario.enrollment.contract,
+    result:scenario.enrollment.result,policy:scenario.enrollment.capacity_policy,jobId:profileJobId,now});
+  await insertProfileEnrollmentEvidenceFixture(db,enrollmentEvidence);
+  scenario.enrollment.enrollment_evidence=enrollmentEvidence;
   const registered=boundary===null?null:boundary??defaultBoundary(scenario);
   if(registered!==null)await insertBoundary(db,{owner,bot,value:registered});
   return {...owned,scenario,importId,deploymentId,rawJobId,profileJobId,backfill,boundary:registered,

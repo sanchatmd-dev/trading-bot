@@ -4,10 +4,17 @@ import {D,amount,Money} from '../money.js';
 import {SOURCE_HASH} from '../quant-research/contract.js';
 import {validateBackfillResult,validateFoundationRequest} from '../quant-research/foundation-contract.js';
 import {validateProfileResult} from '../quant-research/profile-contract.js';
+import {validateProfileEnrollmentReceipt} from '../quant-research/profile-contract-v2.js';
+import {readProfileEnrollmentEvidence} from './quant-profile-enrollment-evidence.js';
+import {validateFoundationRequestV2,PROFILE_ENROLLMENT_MODE} from '../quant-research/foundation-contract-v2.js';
+import {validateCapacityPolicy,capacityPolicyHash} from '../quant-research/capacity-contract.js';
 import {verifyEnrollmentBinding} from '../quant-research/data-profile.js';
 import {freshSnapshot,deploymentEvidence} from './pine-bridge-readiness.js';
 import {ingestionEngineHash} from './quant-data.js';
 import {readJson} from './http.js';
+import {canReleaseQuantIo} from './quant-io-runtime.js';
+import {validateQuantCapacityPolicy} from './quant-capacity-policy.js';
+import {assertQuantProfileEnrollmentSchema} from './quant-profile-enrollment-migration.js';
 
 const active=['QUEUED','PAUSED','RUNNING','STOPPING'];
 const minute=60000;
@@ -18,10 +25,14 @@ const settings={preset:'Custom',tradeDirectionectionection:'Long + Exit',useSlow
 /** Transaction-local service. Caller owns the SERIALIZABLE transaction. */
 export class QuantProfileService{
   constructor({pineService,dataService,researchStore,clock=Date.now,enabled=false,
-    supportedSourceHash=SOURCE_HASH}={}){
+    supportedSourceHash=SOURCE_HASH,capacityPolicy,profileV2Enabled=false,enrollmentEnabled=false,
+    enrollmentTicketVerifier}={}){
     this.pine=pineService;this.db=pineService?.db;this.data=dataService;
     this.researchStore=researchStore;this.clock=clock;this.enabled=enabled;
     this.supportedSourceHash=supportedSourceHash;
+    this.capacityPolicy=capacityPolicy===undefined?null:validateCapacityPolicy(capacityPolicy);
+    this.profileV2Enabled=profileV2Enabled===true;this.enrollmentEnabled=enrollmentEnabled===true;
+    this.enrollmentTicketVerifier=enrollmentTicketVerifier;
   }
   async ready(){
     if(!this.enabled)throw fail('QUANT_PROFILE_DISABLED',503);
@@ -57,21 +68,32 @@ export class QuantProfileService{
       throw fail('UNSUPPORTED_CUSTOM_SETTING',409);
     return {deployment,evidence,source};
   }
-  async raw(owner,bot,id){
+  async rawRow(owner,bot,id){
     const row=(await this.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1',[id])).rows[0];
     if(!row||row.owner_id!==owner||row.contract?.bot_id!==bot||row.contract.kind!=='BACKFILL')
       throw fail('NOT_FOUND',404);
     if(row.status!=='SUCCEEDED'||hash(canonical(row.contract))!==row.contract_hash)
       throw fail('BACKFILL_RESULT_UNAVAILABLE',409);
     validateBackfillResult(row.contract,row.checkpoint,row.result);
+    return row;
+  }
+  async raw(owner,bot,id){
+    const row=await this.rawRow(owner,bot,id);
     await this.data.datasetStore.inspect(row.result.dataset);
     return row;
   }
-  expose(row){
+  async expose(row){
     if(hash(canonical(row.contract))!==row.contract_hash||row.contract.kind!=='PROFILE')
       throw fail('FOUNDATION_INTEGRITY_FAILED');
     if(row.checkpoint||row.next_bar!==0)throw fail('PROFILE_CHECKPOINT_INVALID');
-    if(row.status==='SUCCEEDED')validateProfileResult(row.contract,row.result);
+    if(row.status==='SUCCEEDED'){
+      if(row.contract.version==='quant-foundation-v2'){
+        const evidence=await readProfileEnrollmentEvidence(this.db,row.job_id);
+        validateProfileEnrollmentReceipt(evidence??{});
+        if(evidence.job.contract_hash!==row.contract_hash||canonical(evidence.job.contract)!==canonical(row.contract)||
+          canonical(evidence.job.result)!==canonical(row.result))throw fail('PROFILE_ENROLLMENT_RECEIPT_INVALID');
+      }else validateProfileResult(row.contract,row.result);
+    }
     return {job_id:row.job_id,status:row.status,next_bar:row.next_bar,
       total_bars:row.contract.dataset.metadata.total_bars-500,
       diagnostic:row.diagnostic??null,result:row.status==='SUCCEEDED'?row.result:null,
@@ -86,7 +108,7 @@ export class QuantProfileService{
     const previous=(await this.db.query(
       'SELECT * FROM quant_foundation_jobs WHERE owner_id=$1 AND idempotency_key=$2',[owner,key])).rows[0];
     if(previous){
-      if(previous.contract?.kind!=='PROFILE'||previous.contract.bot_id!==body.bot_id||
+      if(previous.contract?.version!=='quant-foundation-v1'||previous.contract.kind!=='PROFILE'||previous.contract.bot_id!==body.bot_id||
          previous.contract.profile.raw_job_id!==body.raw_job_id||
          previous.contract.profile.deployment_id!==body.deployment_id)
         throw fail('IDEMPOTENCY_CONFLICT',409);
@@ -117,8 +139,98 @@ export class QuantProfileService{
     return this.expose(row);
   }
   async authorize(owner,contract,action,context={}){
+    if(contract?.version==='quant-foundation-v2')return this.authorizeV2(owner,contract,action,context);
     if(contract.kind!=='PROFILE'||contract.owner_id!==owner)return {ok:false};
     if(action==='ACKNOWLEDGE_STOPPED')return {ok:context.stopped===true};
+    return this.authorizeBindings(owner,contract);
+  }
+  /** Explicit owner enrollment admission. The server chooses every execution field. */
+  async enqueueEnrollment(owner,body,key){
+    if(!this.profileV2Enabled||!this.enrollmentEnabled)throw fail('PROFILE_ENROLLMENT_DISABLED',503);
+    if(!this.db?.isTransaction)throw fail('PROFILE_ENROLLMENT_TRANSACTION_REQUIRED');
+    if((await this.db.query('SHOW transaction_isolation')).rows[0]?.transaction_isolation!=='serializable')
+      throw fail('PROFILE_ENROLLMENT_TRANSACTION_REQUIRED');
+    await this.ready();
+    await assertQuantProfileEnrollmentSchema(this.db);
+    keys(body,['bot_id','raw_job_id','deployment_id']);
+    if(typeof key!=='string'||!/^[A-Za-z0-9_-]{8,128}$/.test(key))throw fail('IDEMPOTENCY_KEY_REQUIRED');
+    await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
+    await this.scope(owner,body.bot_id);
+    const previous=(await this.db.query(
+      'SELECT * FROM quant_foundation_jobs WHERE owner_id=$1 AND idempotency_key=$2',[owner,key])).rows[0];
+    if(previous){
+      if(previous.owner_id!==owner||previous.contract?.version!=='quant-foundation-v2'||
+         previous.contract.kind!=='PROFILE'||previous.contract.completion_mode!==PROFILE_ENROLLMENT_MODE||
+         previous.contract.owner_id!==owner||previous.contract.bot_id!==body.bot_id||
+         previous.contract.profile.raw_job_id!==body.raw_job_id||
+         previous.contract.profile.deployment_id!==body.deployment_id)throw fail('IDEMPOTENCY_CONFLICT',409);
+      return this.expose(previous);
+    }
+    const policy=validateQuantCapacityPolicy(this.capacityPolicy);
+    const raw=await this.raw(owner,body.bot_id,body.raw_job_id);
+    const {deployment,evidence,source}=await this.deployment(owner,body.bot_id,body.deployment_id);
+    const model=evidence.execution_model,metadata=raw.result.dataset.metadata,total=metadata.total_bars;
+    if(total>10000)throw fail('PROFILE_ENROLLMENT_CAPACITY_UNSUPPORTED',409);
+    const profile={raw_job_id:body.raw_job_id,deployment_id:deployment.deployment_id,
+      source_hash:source.source_hash,effective_inputs_hash:source.analysis.effective_inputs_hash,
+      execution_model:model,metadata_hash:hash(canonical({market:deployment.snapshot.market,
+        price_tick:String(model.price_tick),quantity_step:String(model.quantity_step),data_profile:model.data_profile})),
+      raw_provenance_sha256:hash(canonical(raw.result.provenance)),seed_bars:500,snapshot_hash:deployment.snapshot_hash};
+    const budget={candidates:1,max_evaluations:1,max_runtime_ms:Math.min(900000,policy.budget.max_runtime_ms),
+      max_output_bytes:Math.min(1048576,policy.budget.max_output_bytes),
+      max_state_bytes:Math.min(1048576,policy.budget.max_state_bytes)};
+    if(budget.max_runtime_ms<policy.terminal.runtime_max_ms+5000)
+      throw fail('PROFILE_ENROLLMENT_CAPACITY_UNSUPPORTED',409);
+    const chunkBars=Math.min(1000,policy.max_chunk_bars,total-500);
+    const capacity={version:'quant-capacity-v2',environment:'staging',policy_hash:capacityPolicyHash(policy),
+      stage:'HISTORICAL_PREFLIGHT',scope:policy.scope,dataset:{raw_bars:total,seed_bars:500,
+        warmup_bars:metadata.warmup_bars,evaluation_bars:total-metadata.warmup_bars,processed_bars:total-500},
+      chunk_bars:chunkBars,budget,io:policy.io};
+    const contract=validateFoundationRequestV2({version:'quant-foundation-v2',completion_mode:PROFILE_ENROLLMENT_MODE,
+      owner_id:owner,bot_id:body.bot_id,kind:'PROFILE',dataset:raw.result.dataset,
+      engine_hash:await ingestionEngineHash(),snapshot_hash:deployment.snapshot_hash,profile,capacity,
+      budget:{...budget,chunk_bars:chunkBars}},{policy});
+    if((await this.authorizeV2(owner,contract,'ENQUEUE'))?.ok!==true)throw fail('FOUNDATION_FORBIDDEN',403);
+    const count=(await this.db.query("SELECT count(*)::int total,count(*) FILTER(WHERE owner_id=$1)::int owned FROM quant_foundation_jobs WHERE status=ANY($2::text[])",
+      [owner,active])).rows[0];
+    if(count.total>=100||count.owned>=20)throw fail('FOUNDATION_QUEUE_FULL',429);
+    const now=this.clock();
+    if(!Number.isSafeInteger(now)||now<0||!Number.isSafeInteger(now+budget.max_runtime_ms))
+      throw fail('FOUNDATION_INVALID_CLOCK');
+    await this.db.query('INSERT INTO quant_foundation_owners(owner_id) VALUES($1) ON CONFLICT DO NOTHING',[owner]);
+    const row=(await this.db.query(`INSERT INTO quant_foundation_jobs
+      (job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at)
+      VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7) RETURNING *`,
+      [randomUUID(),owner,key,JSON.stringify(contract),hash(canonical(contract)),now,now+budget.max_runtime_ms])).rows[0];
+    return this.expose(row);
+  }
+  /** Authorizes execution only; provisional V2 results are not enrolled here.
+   * Runtime release calls the same authority inside its fenced transaction.
+   */
+  async authorizeV2(owner,contract,action,context={}){
+    if(contract?.version!=='quant-foundation-v2'||contract.kind!=='PROFILE'||
+       contract.owner_id!==owner)return {ok:false};
+    // Revoked execution permission must never prevent the owner from stopping work.
+    if(action==='CANCEL')return {ok:true};
+    try{
+      if(action==='ACKNOWLEDGE_STOPPED'){
+        if(!this.db?.isTransaction||typeof context.job_id!=='string'||
+           typeof context.lease_token!=='string')return {ok:false};
+        const row=(await this.db.query(
+          'SELECT * FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[context.job_id])).rows[0];
+        if(!row||row.owner_id!==owner||row.status!=='STOPPING'||
+           row.lease_token!==context.lease_token||
+           hash(canonical(row.contract))!==row.contract_hash||
+           canonical(row.contract)!==canonical(contract))return {ok:false};
+        return await canReleaseQuantIo(this.db,row);
+      }
+      if(contract.completion_mode===PROFILE_ENROLLMENT_MODE&&(!this.profileV2Enabled||!this.enrollmentEnabled))
+        return {ok:false};
+      const approved=validateFoundationRequestV2(contract,{policy:this.capacityPolicy});
+      return await this.authorizeBindings(owner,approved);
+    }catch{return {ok:false};}
+  }
+  async authorizeBindings(owner,contract){
     try{
       await this.scope(owner,contract.bot_id);
       if(await ingestionEngineHash()!==contract.engine_hash)return {ok:false};
@@ -137,6 +249,55 @@ export class QuantProfileService{
         return {ok:false};
       return {ok:true};
     }catch{return {ok:false};}
+  }
+  /** Completion authority uses persisted evidence only. The caller owns schema and runtime locks.
+   * Ordinary execution authority above still inspects artifacts and hashes the executable closure.
+   */
+  async authorizeEnrollmentLocked(owner,contract,{jobId,leaseToken,executionTicket,phase}={}){
+    if(!this.db?.isTransaction||!this.profileV2Enabled||!this.enrollmentEnabled||
+       typeof this.enrollmentTicketVerifier!=='function'||!['BEGIN','FINALIZE'].includes(phase))return {ok:false};
+    if((await this.db.query('SHOW transaction_isolation')).rows[0]?.transaction_isolation!=='serializable')
+      return {ok:false};
+    try{
+      const policy=validateQuantCapacityPolicy(this.capacityPolicy);
+      const approved=validateFoundationRequestV2(contract,{policy});
+      if(approved.owner_id!==owner||approved.completion_mode!==PROFILE_ENROLLMENT_MODE)return {ok:false};
+      const contractHash=hash(canonical(approved));
+      this.enrollmentTicketVerifier(executionTicket,{phase,jobId,leaseToken,contractHash,
+        policyHash:capacityPolicyHash(policy),engineHash:approved.engine_hash});
+      const job=(await this.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[jobId])).rows[0];
+      if(!job||job.owner_id!==owner||job.lease_token!==leaseToken||job.contract_hash!==contractHash||
+         canonical(job.contract)!==canonical(approved)||job.checkpoint!==null||job.next_bar!==0||job.result!==null||
+         (phase==='BEGIN'?(job.status!=='RUNNING'||job.stop_reason!==null):
+          (job.status!=='STOPPING'||job.stop_reason!=='PROFILE_COMPLETING')))return {ok:false};
+      await this.scope(owner,approved.bot_id);
+      const raw=await this.rawRow(owner,approved.bot_id,approved.profile.raw_job_id);
+      if(canonical(raw.result.dataset)!==canonical(approved.dataset)||
+         hash(canonical(raw.result.provenance))!==approved.profile.raw_provenance_sha256)return {ok:false};
+      const locked=(await this.db.query(`SELECT deployment_id FROM pine_deployments
+        WHERE owner_id=$1 AND bot_id=$2 AND deployment_id=$3 FOR SHARE`,
+        [owner,approved.bot_id,approved.profile.deployment_id])).rows[0];
+      if(!locked)return {ok:false};
+      const {deployment,source,evidence}=await this.deployment(owner,approved.bot_id,approved.profile.deployment_id);
+      const model=evidence.execution_model;
+      const member=deployment.snapshot.membership[0];
+      const metadataHash=hash(canonical({market:deployment.snapshot.market,price_tick:String(model.price_tick),
+        quantity_step:String(model.quantity_step),data_profile:model.data_profile}));
+      if(member.pine_import_id!==deployment.pine_import_id||member.source_version!==deployment.source_version||
+         member.source_hash!==source.source_hash||canonical(member.analysis)!==canonical(source.analysis)||
+         source.source_hash!==approved.profile.source_hash||
+         source.analysis.effective_inputs_hash!==approved.profile.effective_inputs_hash||
+         canonical(model)!==canonical(approved.profile.execution_model)||metadataHash!==approved.profile.metadata_hash||
+         deployment.snapshot_hash!==approved.snapshot_hash)return {ok:false};
+      // Recheck the private lifetime guard after asynchronous SQL authority work.
+      this.enrollmentTicketVerifier(executionTicket,{phase,jobId,leaseToken,contractHash,
+        policyHash:capacityPolicyHash(this.capacityPolicy),engineHash:approved.engine_hash});
+      return {ok:true};
+    }catch(error){
+      // Domain revocation is controlled denial. Database/integrity failures must roll back publication.
+      if(typeof error.code==='string'&&Number.isInteger(error.status)&&error.status<500)return {ok:false};
+      throw error;
+    }
   }
   async get(owner,id,cancel=false,queryBotId=null){
     await this.ready();

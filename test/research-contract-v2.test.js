@@ -79,6 +79,16 @@ test('U2 digest SQL shape: ordered aggregate, cast-free NULL-safe row filters, t
  assert.equal(/->>'time'|::bigint|::int8|::numeric|SELECT \*/.test(sql),false,'no cast of untrusted text and no full row load');
  assert.equal(sql.includes(String.fromCharCode(92)),false,'no string-escape dependent separator');
 });
+test('U2 enqueue precheck flags off-grid interior and first bars without dropping range rows',()=>{
+ const badFilter=CONTENT_DIGEST_SQL.match(/count\(\*\) FILTER \(WHERE([\s\S]*?)\)::int bad/)[1];
+ assert.match(badFilter,/\bOR bar_time % 60000 <> 0\b/,
+  'full-count interior timestamp shifts must contribute to bad, even when min/max match');
+ const rangeFilter=CONTENT_DIGEST_SQL.slice(CONTENT_DIGEST_SQL.indexOf('FROM pine_market_bars'));
+ assert.equal(rangeFilter.includes('%'),false,
+  'off-grid first bars remain in count/min/max and must not be hidden by the range filter');
+ assert.ok(rangeFilter.includes('bar_time>=$1 AND bar_time<=$2'));
+});
+
 test('versions, step id and kind carry the accepted names',()=>{
  assert.deepEqual(RESEARCH_V2_VERSIONS,{contract:'ql3a-research-job-v2',execution:'ql3a-research-job-v1',request:'quant-foundation-research-v2',binding:'quant-research-dataset-binding-v1',digest:'pine-bar-content-digest-v1'});
  assert.equal(Object.isFrozen(RESEARCH_V2_VERSIONS),true);
@@ -86,42 +96,6 @@ test('versions, step id and kind carry the accepted names',()=>{
  assert.deepEqual(Object.keys(contractV2).sort(),['CONTENT_DIGEST_SQL','DATASET_BINDING_KIND','DATASET_BINDING_STEP_ID','RESEARCH_V2_VERSIONS','buildResearchContractV2','contentDigest','datasetBindingIdentity','datasetBindingParameters','expectedFoundationRequestV2','materializeExecutionContract','pendingMetadata','validateDatasetBindingV1','validateFoundationResearchRequestV2','validateResearchContractV2'],'export surface is exactly the design list');
 });
 
-// U1 runs HEAD's own managed FOUNDATION enqueue against in-memory answers, so the expected V1 contract is built
-// by the repository, not by this module. Only the SQL the enqueue issues is answered; any other statement fails.
-// The managed V1 enqueue is retired when the V2 enqueue lands. That change deletes the live U1 test and headEnqueue;
-// the golden test below then keeps the parity with the recorded V1 bytes.
-async function headEnqueue(env,datasetStore){
- const stop=new Error('captured'),captured={};
- const answers=[
-  ["to_regclass('quant_research_executor_mode')",()=>[{present:'quant_research_executor_mode'}]],
-  ['SELECT mode FROM quant_research_executor_mode',()=>[{mode:'FOUNDATION'}]],
-  ['FROM quant_foundation_scheduler',()=>[]],
-  ['FROM quant_jobs WHERE owner_id=? AND bot_id=? AND idempotency_key=?',()=>[]],
-  ['FROM pine_deployments WHERE owner_id=? AND bot_id=? AND deployment_id=?',()=>[env.deployment]],
-  ['FROM pine_memberships m',()=>env.snapshot.membership.map(row=>({...row}))],
-  ['FROM paper_funding WHERE user_id=?',()=>[{cutoff:0}]],
-  ['FROM pine_bridge_evidence WHERE deployment_id=?',()=>[{deployment_id:DEPLOYMENT_ID,snapshot_hash:env.deployment.snapshot_hash,evidence:env.evidence,evidence_hash:hash(canonical(env.evidence))}]],
-  ["FROM quant_jobs WHERE status IN ('QUEUED','RUNNING')",()=>[{total:0,own:0}]],
-  ['FROM quant_foundation_jobs WHERE status IN',()=>[{total:0,owned:0}]],
-  ['SELECT count(*) n,min(bar_time) first_time',()=>[{n:env.rows.length,first_time:env.rows[0].bar_time,last_time:env.rows.at(-1).bar_time}]],
-  ['SELECT * FROM pine_market_bars',()=>env.rows],
-  ['INSERT INTO quant_jobs(',(sql,params)=>{captured.contract=params[7];return [];}],
-  ['INSERT INTO quant_foundation_owners',()=>[]],
-  ['INSERT INTO quant_foundation_jobs',(sql,params)=>{captured.request=params[3];return [];}],
-  ['INSERT INTO quant_research_foundation',()=>[]],
- ];
- const answer=async(sql,params=[])=>{
-  const match=answers.find(([part])=>sql.includes(part));
-  if(!match)throw new Error('unexpected SQL: '+sql.slice(0,90));
-  return match[1](sql,params);
- };
- const db={isTransaction:true,lock:async()=>{},query:async(sql,params)=>({rows:await answer(sql,params)}),prepare:sql=>({get:async(...params)=>(await answer(sql,params))[0],all:(...params)=>answer(sql,params),run:async(...params)=>{await answer(sql,params);return {changes:1};}})};
- const store={audit:async()=>{throw stop;},getBotSession:async()=>({locked_policy:JSON.stringify(env.policy)}),paperAccounts:async()=>env.capital.map(row=>({...row})),risk:async()=>env.policy};
- const pine={db,store,defaultRisk:env.policy,authorize:async()=>{},source:async()=>env.sourceRow};
- const service=new QuantResearchService({pineService:pine,clock:()=>env.now,supportedSourceHash:hash(source),foundation:true,datasetStore});
- await assert.rejects(service.enqueue(OWNER,env.body,'idempotency-key-1'),error=>error===stop);
- return {contract:JSON.parse(captured.contract),request:JSON.parse(captured.request)};
-}
 // What the PREPARE step will do with a V2 contract: publish the pending dataset, hash the rows with the V1 formula, bind.
 async function prepareLikeWorker(env,contract,root){
  const store=new ResearchDatasetStore({root});
@@ -132,24 +106,6 @@ async function prepareLikeWorker(env,contract,root){
 }
 const scratch=async t=>{const root=await fs.mkdtemp(path.join(os.tmpdir(),'research-contract-v2-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));return root;};
 
-test('U1 parity: materialized V2 contract equals the V1 managed contract HEAD enqueue builds',async t=>{
- const env=environment(),head=await headEnqueue(env,new ResearchDatasetStore({root:await scratch(t)}));
- assert.equal(head.contract.version,'ql3a-research-job-v1');assert.equal(head.contract.execution_backend,'quant-foundation-v1');
- assert.notEqual(head.contract.engine_hash,ENGINE,'HEAD hashes the real engine files; normalize before comparing');
- const v1={...head.contract,engine_hash:ENGINE},v2=buildV2(env);
- const prepared=await prepareLikeWorker(env,v2,await scratch(t));
- assert.deepEqual(prepared.references,head.contract.dataset.references,'PREPARE publish yields the references HEAD enqueue published');
- assert.equal(prepared.datasetSha256,head.contract.dataset.sha256,'file digest follows the V1 formula');
- assert.equal(canonical(prepared.execution),canonical(v1));assert.equal(hash(canonical(v1)),GOLDEN_V1_SHA256,'golden value stays tied to the HEAD capture');
- assert.deepEqual(Object.keys(prepared.execution).sort(),Object.keys(v1).sort());
- assert.notEqual(v2.version,v1.version);assert.equal(hash(canonical(v2))!==hash(canonical(v1)),true,'stored V2 identity differs from the V1 identity');
- const request=expectedFoundationRequestV2(v2,900000);
- const {version:requestVersion,pending_dataset:pending,...requestRest}=request,{version:headVersion,dataset:headDataset,...headRest}=head.request;
- assert.equal(requestVersion,RESEARCH_V2_VERSIONS.request);assert.equal(headVersion,'quant-foundation-v1');
- assert.deepEqual(requestRest,{...headRest,engine_hash:ENGINE},'owner, bot, kind, hashes and budget match the V1 request');
- assert.deepEqual(pending.metadata,headDataset.metadata,'pending metadata equals the V1 dataset metadata');
- assert.equal(validateFoundationResearchRequestV2(request,v2).version,RESEARCH_V2_VERSIONS.request);
-});
 test('U1 golden: prepared V2 execution contract keeps the V1 managed bytes (survives the V1 enqueue retirement)',async t=>{
  const env=environment(),v2=buildV2(env),prepared=await prepareLikeWorker(env,v2,await scratch(t));
  assert.equal(hash(canonical(prepared.execution)),GOLDEN_V1_SHA256);

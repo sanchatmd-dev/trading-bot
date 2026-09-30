@@ -27,7 +27,7 @@ async function assertNoWrite(label,before,answer,status,code) {
   assert.equal(answer.status,status,label+' '+JSON.stringify(answer.body));assert.equal(answer.body.code,code,label);
 }
 
-test('idle owner is queued with published references; the per-owner research limit rejects before any write',async()=>{
+test('idle owner is queued with range/digest and no files; the per-owner research limit rejects before any write',async()=>{
   const owner=await f.newOwner(),session=await owner.login(),body=f.researchBody(owner,{start:blocks.main});
   const empty=await f.listing();
   const first=await f.enqueue(owner,session,body);
@@ -35,11 +35,14 @@ test('idle owner is queued with published references; the per-owner research lim
   const row=(await f.db.query('SELECT status,contract FROM quant_jobs WHERE run_id=$1',[first.body.run_id])).rows[0];
   assert.equal(row.status,'QUEUED');assert.equal(row.contract.execution_backend,'quant-foundation-v1');
   assert.equal(Object.hasOwn(row.contract.dataset,'bars'),false);
-  assert.ok(row.contract.dataset.references.raw&&row.contract.dataset.references.sidecar,'dataset references recorded');
+  assert.equal(row.contract.version,'ql3a-research-job-v2');
+  assert.equal(Object.hasOwn(row.contract.dataset,'references'),false);
+  assert.equal(first.body.dataset_hash,null);assert.equal(first.body.dataset_prepared,false);
+  assert.match(first.body.dataset_content_digest,/^[a-f0-9]{64}$/);
   assert.equal(row.contract.dataset.first_time,blocks.main);
   const binding=(await f.db.query('SELECT job_id FROM quant_research_foundation WHERE run_id=$1',[first.body.run_id])).rows[0];
   assert.equal((await f.db.query('SELECT status FROM quant_foundation_jobs WHERE job_id=$1',[binding.job_id])).rows[0].status,'QUEUED');
-  assert.ok((await f.listing()).length>empty.length,'idle path publishes the dataset');
+  assert.deepEqual(await f.listing(),empty,'enqueue never publishes a dataset');
   const second=await f.enqueue(owner,session,body);
   assert.equal(second.status,202,JSON.stringify(second.body));assert.notEqual(second.body.run_id,first.body.run_id);
   const before={files:await f.listing(),state:await state()};

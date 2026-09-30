@@ -305,3 +305,14 @@ test('operation count bound rejects without deleting charged history',()=>{
   denied(()=>reserveIoOperation(full,op('operation-new01',1,1)));
   assert.equal(full.operations.length,1024);
 });
+
+ test('persisted state validator accepts settled accounting without compute transition and detaches state',async()=>{
+ const {validateIoBudgetLedgerState}=await import('../src/quant-research/io-budget-ledger.js');
+ const input=op();const settled=settleIoOperation(bind(reserveIoOperation(start(),input),input),proof(input,10,20));
+ const checked=validateIoBudgetLedgerState(settled);assert.deepEqual(checked,settled);
+ assert.notEqual(checked,settled);assert.equal(Object.isFrozen(checked.operations[0].terminal_proof.sample),true);
+ denied(()=>getIoStopDecision(settled,key(input)));
+ for(const mutate of [s=>s.charged.read_bytes++,s=>s.operations[0].charge.read_bytes++,s=>s.operations[0].terminal_proof.cgroup_inode++]){
+  const bad=structuredClone(settled);mutate(bad);denied(()=>validateIoBudgetLedgerState(bad));
+ }
+ });

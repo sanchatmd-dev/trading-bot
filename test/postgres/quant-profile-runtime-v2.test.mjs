@@ -9,14 +9,17 @@ import {QuantFoundationScheduler} from '../../src/postgres/quant-foundation-sche
 import {QuantIoLedger} from '../../src/postgres/quant-io-ledger.js';
 import {canReleaseQuantIo,quantIoUnitName} from '../../src/postgres/quant-io-runtime.js';
 import {QuantProfileRuntimeV2} from '../../src/postgres/quant-profile-runtime-v2.js';
+import {QuantResearchFoundationWorker} from '../../src/postgres/quant-research-foundation.js';
+import {createProfileRuntimeHealth} from '../../src/postgres/quant-capacity-policy.js';
 import {ResearchDatasetStore} from '../../src/quant-research/research-dataset-store.js';
 import {StorageBudget} from '../../src/quant-research/storage-budget.js';
 import {buildProfileV2} from '../../src/quant-research/profile-pipeline-v2.js';
-import {capacityPolicyHash} from '../../src/quant-research/capacity-contract.js';
+import {capacityPolicyHash,validateCapacityPolicy} from '../../src/quant-research/capacity-contract.js';
 import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {profileV2Fixture} from '../helpers/profile-v2-fixture.js';
 
-const now=1800010000000,operationId='operation-00001';
+const now=1800010000000;
+let operationId='operation-00001';
 let admin,db,name,root,store,budget,policy,contract,result,scheduler,ledger,claimed;
 let revoked,malformed,overshootAfterRelease,revokeAfterRelease,growthDuringAuthorization,
   grown,launches,stops,adapter,terminal,events;
@@ -44,6 +47,11 @@ before(async()=>{
   db=new PostgresDatabase({connectionString:url.toString(),max:4});
   for(const file of ['quant-foundation-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql'])
     await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
+  // Empty research adapter tables let the actual worker reconcile its other lane without research execution.
+  await db.query(`CREATE TABLE quant_jobs(run_id TEXT PRIMARY KEY,status TEXT,diagnostic TEXT,
+    lease_token UUID,lease_until BIGINT,updated_at BIGINT);
+    CREATE TABLE quant_research_foundation(run_id TEXT,job_id UUID);
+    CREATE TABLE quant_research_chunks(run_id TEXT,unit_token UUID,unit_name TEXT);`);
   root=await fs.mkdtemp(path.join(os.tmpdir(),'profile-runtime-pg-'));
   budget=new StorageBudget({root,diskQuotaBytes:32*1024*1024,tempQuotaBytes:16*1024*1024,freeFloorBytes:0});
   store=new ResearchDatasetStore({root,storageBudget:budget,allowUnsupportedDirectorySyncForTests:true});
@@ -61,6 +69,8 @@ after(async()=>{
   if(root)await fs.rm(root,{recursive:true,force:true});
 });
 beforeEach(async()=>{
+  operationId='operation-00001';
+  if(policy.terminal){delete policy.terminal;contract.capacity.policy_hash=capacityPolicyHash(policy);}
   await db.query('TRUNCATE quant_io_launches,quant_io_ledgers,quant_foundation_jobs,quant_foundation_owners');
   revoked=false;malformed=false;overshootAfterRelease=false;revokeAfterRelease=false;
   growthDuringAuthorization=false;grown=false;
@@ -129,12 +139,13 @@ beforeEach(async()=>{
               const evidence={freezer:'frozen',windowMs:2500,reads:[{readBytes:frozen.readBytes,
                 writeBytes:frozen.writeBytes},{readBytes:frozen.readBytes,writeBytes:frozen.writeBytes}],
                 fileDirty:0,fileWriteback:0,maxBioBytes:1310720,
-                rates:{readBytesPerSecond:524288,writeBytesPerSecond:524288}};
+                rates:{readBytesPerSecond:524288,writeBytesPerSecond:524288},
+                ...(script.timings??{})};
               let committed=false;
               try{await request.commit(frozen,evidence);committed=true;}catch{}
               const stopProof=script.join?stopOnce():await handle.stop();
               return Object.freeze({stopProof,measured:script.measured??committed,
-                postExit:script.postExit??'REMOVED',frozenSample:frozen,readbackEvidence:evidence,
+                postExit:script.postExit??'REMOVED',...(script.noMeasurement?{}:{frozenSample:frozen,readbackEvidence:evidence}),
                 ...(script.diagnostic&&!(script.measured??committed)?{diagnostic:script.diagnostic}:{})});
             })();
             terminatePromise=promise;
@@ -694,4 +705,126 @@ test('a graceful stop is seen at once by the frame wait, not at the next poll (W
   await assert.rejects(running,{code:'PROFILE_STOP_REQUESTED'});
   assert.ok(Date.now()-at<700,'stop took '+(Date.now()-at)+' ms');
   assert.equal((await jobRow()).status,'CANCELLED');
+});
+
+async function productWorker({health=async()=>({ok:true}),leaseMs=60}={}){
+  // The initial legacy-shaped row has not launched. Cancel it under trusted no-start proof,
+  // then enqueue the policy-bound product contract before claiming; never mutate immutable contracts.
+  await scheduler.cancel(claimed.owner_id,claimed.job_id);
+  await scheduler.acknowledgeStopped(claimed.job_id,claimed.lease_token);
+  policy.terminal={version:'quant-io-terminal-policy-v1',runtime_max_ms:30000,terminal_drain_ms:0,tail_margin_ms:5000};
+  contract.capacity.policy_hash=capacityPolicyHash(policy);
+  scheduler.capacityPolicy=validateCapacityPolicy(policy);
+  const queued=await scheduler.enqueue(contract.owner_id,contract,randomUUID());
+  claimed=await scheduler.claim('product-profile-worker-test');assert.equal(claimed.job_id,queued.job_id);
+  operationId='op-'+claimed.lease_token;
+  ledger.policy=validateCapacityPolicy(policy);adapter.launcher.terminalConfig=ledger.policy.terminal;
+  const logs=[],worker=new QuantResearchFoundationWorker({service:{db,foundation:true,storageBudget:budget},
+    profileService:{authorize:async()=>({ok:true})},health,clock:()=>now,leaseMs,capacityPolicy:policy,
+    profileV2Enabled:true,profileRuntimeV2:adapter,terminalLog:line=>logs.push(JSON.parse(line))});
+  scheduler=worker.scheduler;adapter.scheduler=scheduler;adapter.io.scheduler=scheduler;
+  adapter.io.profile.health=createProfileRuntimeHealth(health);
+  worker.claim=async()=>({kind:'PROFILE',foundation:claimed});
+  let heartbeats=0;
+  const heartbeat=scheduler.heartbeat.bind(scheduler);
+  scheduler.heartbeat=async(...values)=>{heartbeats++;return heartbeat(...values);};
+  return {worker,logs,heartbeats:()=>heartbeats};
+}
+
+test('product worker happy path quiets heartbeat throughout a long terminal and logs bounded timings (T-W3)',{timeout:15000},async()=>{
+  const f=await productWorker();terminal={join:true,timings:{drainMs:80,barrierMs:7}};holdResult=true;
+  const tick=f.worker.tick();await until(()=>deliverFrame!==null);await pause(55);deliverFrame();
+  await until(()=>events.includes('terminate'));const atTerminal=f.heartbeats();
+  await pause(180);assert.equal(f.heartbeats(),atTerminal,'no heartbeat during STOPPING drain');
+  terminal.drainOver=true;assert.equal(await tick,true);
+  assert.equal((await jobRow()).status,'CANCELLED');assert.equal(stops,1);
+  assert.equal(f.logs.length,1);assert.equal(f.logs[0].proof,'MEASURED_FINAL_SETTLED');
+  assert.equal(f.logs[0].drainMs,80);assert.equal(f.logs[0].barrierMs,7);
+  assert.ok(Number.isSafeInteger(f.logs[0].elapsedMs));assert.ok(f.logs[0].elapsedMs>=180);
+  assert.deepEqual(Object.keys(f.logs[0]).sort(),['barrierMs','drainMs','elapsedMs','jobId','proof','reason']);
+});
+
+test('product worker health loss mid-frame drains and cancels one attempt (T-W4)',{timeout:15000},async()=>{
+  let healthy=true;
+  const f=await productWorker({health:async()=>({ok:healthy})});terminal={};holdResult=true;
+  const tick=f.worker.tick();await until(()=>deliverFrame!==null);healthy=false;
+  assert.equal(await tick,true);const job=await jobRow();assert.equal(job.status,'CANCELLED');
+  assert.equal(job.result,null);assert.equal(stops,1);assert.equal(f.logs[0].proof,'MEASURED_FINAL_SETTLED');
+  assert.equal((await db.query('SELECT attempts FROM quant_foundation_jobs WHERE job_id=$1',[claimed.job_id])).rows[0].attempts,1);
+});
+
+test('product worker stop mid-frame uses emergency fallback and proves stop (T-W5)',{timeout:15000},async()=>{
+  const f=await productWorker();terminal={};holdResult=true;
+  const tick=f.worker.tick();await until(()=>deliverFrame!==null);
+  const at=Date.now();await f.worker.stop();await tick;
+  assert.ok(Date.now()-at<2000);assert.equal(stops,1);
+  assert.equal(events.includes('terminate'),false,'emergency does not freeze');
+  assert.equal((await launchRows())[0].state,'STOP_PROVEN');assert.equal((await jobRow()).status,'CANCELLED');
+  assert.equal(f.logs[0].proof,'UNKNOWN_FINAL_CHARGED');assert.equal(f.worker.profileOperations.size,0);
+});
+
+test('production start/stop loop waits for terminal proof before stop resolves (T-W5 loop)',{timeout:15000},async()=>{
+  const f=await productWorker();terminal={};holdResult=true;
+  let admitted=false,loopDone=false;
+  f.worker.claim=async()=>{if(admitted)return null;admitted=true;return {kind:'PROFILE',foundation:claimed};};
+  f.worker.start();f.worker.loop.then(()=>{loopDone=true;});
+  await until(()=>deliverFrame!==null);assert.equal(loopDone,false);
+  await f.worker.stop();
+  assert.equal(loopDone,true);assert.equal(f.worker.running,false);assert.equal(stops,1);
+  assert.equal((await launchRows())[0].state,'STOP_PROVEN');assert.equal((await jobRow()).status,'CANCELLED');
+  assert.equal(f.worker.controller,null);assert.equal(f.worker.emergencyController,null);
+});
+
+test('product worker stop mid-drain joins one physical stop and charges fallback (T-W6)',{timeout:15000},async()=>{
+  const f=await productWorker();terminal={join:true};
+  const tick=f.worker.tick();await until(()=>events.includes('terminate'));
+  await f.worker.stop();await tick;
+  assert.equal(stops,1);assert.equal(events.filter(event=>event==='terminate').length,1);
+  assert.equal((await launchRows())[0].state,'STOP_PROVEN');assert.equal((await jobRow()).status,'CANCELLED');
+  assert.equal(f.logs[0].proof,'UNKNOWN_FINAL_CHARGED');assert.equal(adapter.io.emergency.size,0);
+});
+
+test('empty-memory product reconciliation keeps unresolved I/O STOPPING then acknowledges durable proof (T-W7)',{timeout:15000},async()=>{
+  const f=await productWorker();await adapter.io.reserve(args());await scheduler.cancel(claimed.owner_id,claimed.job_id);
+  assert.equal(f.worker.stopped.size,0);assert.equal(f.worker.profileOperations.size,0);
+  await f.worker.reconcile();assert.equal((await jobRow()).status,'STOPPING');
+  await adapter.io.cancel(args());assert.equal((await jobRow()).status,'CANCELLED');
+  // Model a parent crash after durable terminal proof, before the ACK mutation. No in-memory stop set is retained.
+  await db.query("UPDATE quant_foundation_jobs SET status='STOPPING',lease_token=$2,stop_reason='HEALTH_UNAVAILABLE' WHERE job_id=$1",[claimed.job_id,claimed.lease_token]);
+  await f.worker.reconcile();assert.equal((await jobRow()).status,'CANCELLED');
+});
+
+test('product worker pre-reserve host refusal tears down heartbeat and reconciles no-start proof (T-W10 carry)',{timeout:15000},async()=>{
+  const f=await productWorker();adapter.launcher.assertDrainHost=async()=>{throw hostRefusal('FS_NOT_EXT4');};
+  await f.worker.tick();const count=f.heartbeats();await pause(70);assert.equal(f.heartbeats(),count);
+  assert.equal(launches,0);assert.equal((await ledgerRows()).length,0);assert.equal((await launchRows()).length,0);
+  assert.equal((await jobRow()).status,'CANCELLED');assert.equal(f.logs[0].reason,'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED');
+});
+
+test('product worker unconfirmed stop retains durable quarantine for offline recovery (T-W8)',{timeout:15000},async()=>{
+  const f=await productWorker();holdResult=true;
+  const tick=f.worker.tick();await until(()=>launcherHandle&&deliverFrame!==null);
+  launcherHandle.stop=async()=>({unitName:quantIoUnitName(claimed.job_id,operationId),launcherClosed:true,
+    startRegistered:true,pendingStartsExcluded:true,unitStopped:false});
+  await f.worker.stop();await tick;
+  assert.equal((await jobRow()).status,'STOPPING');assert.equal((await launchRows())[0].state,'RELEASED');
+  assert.equal((await ledgerRows())[0].state.operations[0].status,'ACTIVE');
+  await f.worker.reconcile();assert.equal((await jobRow()).status,'STOPPING');
+  assert.equal(f.logs.length,1);assert.equal(f.logs[0].proof,'UNCONFIRMED');
+});
+
+test('measured readback without a committed settle does not log COMPLETE',async()=>{
+  const logs=[];terminal={};adapter.io.settleMeasured=async()=>false;
+  const answer=await adapter.run({...args(),onTerminalDiagnostic:value=>logs.push(value)});
+  assert.equal(answer.proof,'UNKNOWN_FINAL_CHARGED');assert.equal(logs[0].reason,'UNKNOWN');
+});
+
+test('terminal diagnostic callback omits arbitrary metadata and cannot change result or accounting',async()=>{
+  const logs=[];terminal={measured:false,noMeasurement:true,diagnostic:{drain:{durationMs:19},barrierMs:3,
+    source:'/private/source',result:'secret',elapsedMs:-1}};
+  const answer=await adapter.run({...args(),onTerminalDiagnostic:record=>{logs.push(record);throw Error('log unavailable');}});
+  assert.equal(answer.proof,'UNKNOWN_FINAL_CHARGED');assert.equal(logs.length,1);
+  assert.deepEqual(Object.keys(logs[0]).sort(),['barrierMs','drainMs','elapsedMs','proof','reason']);
+  assert.equal(logs[0].drainMs,19);assert.equal(logs[0].barrierMs,3);assert.ok(logs[0].elapsedMs>=0);
+  assert.equal((await jobRow()).status,'CANCELLED');assert.equal((await ledgerRows())[0].state.operations[0].status,'CRASHED');
 });

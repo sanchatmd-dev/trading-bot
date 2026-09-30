@@ -4,9 +4,10 @@ import {D,exact} from '../money.js';
 import {validateHistoricalPreflightRequest} from './preflight-contract.js';
 import {FOUNDATION_LIMITS} from './foundation-contract.js';
 import {strictJsonV2,frozenV2} from './foundation-contract-v2.js';
-import {validateProfileResultV2} from './profile-contract-v2.js';
+import {validateProfileResultV2,validateProfileEnrollmentReceipt} from './profile-contract-v2.js';
 import {deriveClosedMetadataV2,verifyEnrollmentBindingV2} from './data-profile-v2.js';
 import {SOURCE_HASH} from './contract.js';
+import {QUANT_RUNTIME_ENGINE_FILES} from './runtime-engine-files.js';
 
 /**
  * PF-2 trusted resolver (slice S3). Development only, V1 only, EVALUATOR mode only.
@@ -30,7 +31,7 @@ export const PF2_EVALUATOR_FILES=Object.freeze([
   'quant_lab/src/robot_quant/spt_custom_evaluator.py','quant_lab/src/robot_quant/spt_evaluator.py',
   'quant_lab/src/robot_quant/strategy.py','quant_lab/src/robot_quant/validation.py']);
 
-export const PF2_ENGINE_FILES=Object.freeze([
+export const PF2_ENGINE_FILES=Object.freeze([...new Set([
   'quant_lab/src/robot_quant/__init__.py','quant_lab/src/robot_quant/analytics.py',
   'quant_lab/src/robot_quant/backtest.py','quant_lab/src/robot_quant/bridge_replay.py',
   'quant_lab/src/robot_quant/contracts.py','quant_lab/src/robot_quant/market_data.py',
@@ -44,12 +45,12 @@ export const PF2_ENGINE_FILES=Object.freeze([
   'src/quant-research/atr14-chunk-store.js','src/quant-research/capacity-contract.js',
   'src/quant-research/contract.js','src/quant-research/data-profile-v2.js',
   'src/quant-research/dataset-store.js','src/quant-research/foundation-contract-v2.js',
-  'src/quant-research/foundation-contract.js','src/quant-research/io-controls.js',
+  'src/quant-research/foundation-contract.js','src/quant-research/io-budget-ledger.js','src/quant-research/io-controls.js',
   'src/quant-research/io-terminal.js','src/quant-research/preflight-contract.js',
   'src/quant-research/preflight-replay.js','src/quant-research/preflight-resolver.js',
   'src/quant-research/preflight-runtime.js','src/quant-research/process-supervisor.js',
   'src/quant-research/profile-contract-v2.js','src/quant-research/profile-contract.js',
-  'src/quant-research/research-dataset-store.js']);
+  'src/quant-research/research-dataset-store.js',...QUANT_RUNTIME_ENGINE_FILES])]);
 
 export const PF2_RESOLVER_ERRORS=Object.freeze(['PF2_RESOLVER_CONFIG_INVALID','PF2_CANCELLED',
   'PF2_UNSUPPORTED_SIGNAL_MODE','PF2_EVALUATOR_UNAVAILABLE','PF2_BUDGET_UNSUPPORTED',
@@ -571,8 +572,12 @@ async function resolve(planValue,trusted,{now,supportedSourceHash,readFile},canc
     if(value===null||value===undefined)throw new Error('missing');
     return detach(value);
   });
-  if(!exactKeys(found,['contract','result','capacity_policy']))enrollmentFail();
-  const {contract:enrolled,result:enrollment,capacity_policy}=found;
+  if(!exactKeys(found,['contract','result','capacity_policy','enrollment_evidence']))enrollmentFail();
+  const {contract:enrolled,result:enrollment,capacity_policy,enrollment_evidence}=found;
+  if(!attempt(()=>validateProfileEnrollmentReceipt(enrollment_evidence))||
+    canonical(enrollment_evidence.job.contract)!==canonical(enrolled)||
+    canonical(enrollment_evidence.job.result)!==canonical(enrollment)||
+    canonical(enrollment_evidence.receipt.policy)!==canonical(capacity_policy))enrollmentFail();
   if(!attempt(()=>validateProfileResultV2(enrolled,enrollment,{policy:capacity_policy})))enrollmentFail();
   const profile=enrolled.profile,binding=enrollment.binding;
   if(enrolled.owner_id!==owner_id||enrolled.bot_id!==bot_id||

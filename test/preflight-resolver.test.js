@@ -14,6 +14,7 @@ import {SOURCE_HASH} from '../src/quant-research/contract.js';
 import {PF2_ENGINE_FILES,PF2_EVALUATOR_FILES,PF2_LIMITATIONS,PF2_RECORD_KINDS,PF2_RESOLVED_VERSION,
   PF2_RESOLVER_ERRORS,pf2ExecutableHashes,resolveHistoricalPreflight} from '../src/quant-research/preflight-resolver.js';
 import {canonical,hash} from '../src/pine-bridge/source.js';
+import {QUANT_RUNTIME_ENGINE_FILES} from '../src/quant-research/runtime-engine-files.js';
 import {DEPLOYMENT,MINUTE,OWNER,BOT,PLAN_FIELD,START,RAW_BARS,createPf2Base,isDeepFrozen,makeWorld,modelRecord,
   planHash,policyRecord,syntheticSource} from './helpers/pf2-fixture.js';
 
@@ -444,7 +445,9 @@ test('PF-2 S3 trusted resolver',async t=>{
     assert.deepEqual(await closure(['src/quant-research/preflight-resolver.js','src/quant-research/dataset-store.js',
       'src/quant-research/research-dataset-store.js','src/quant-research/preflight-replay.js','src/quant-research/preflight-runtime.js'],jsImports),
       PF2_ENGINE_FILES.filter(file=>file.endsWith('.js')));
-    assert.deepEqual(await closure([dir+'pf2_replay.py'],pyImports),PF2_ENGINE_FILES.filter(file=>file.endsWith('.py')));
+    const replayPython=await closure([dir+'pf2_replay.py'],pyImports);
+    assert.deepEqual([...new Set([...replayPython,...QUANT_RUNTIME_ENGINE_FILES.filter(file=>file.endsWith('.py'))])].sort(),
+      PF2_ENGINE_FILES.filter(file=>file.endsWith('.py')));
     assert.deepEqual(await closure([dir+'spt_custom_evaluator.py'],pyImports),[...PF2_EVALUATOR_FILES]);
     for(const file of PF2_ENGINE_FILES){
       const listed=await (file.endsWith('.js')?jsImports:pyImports)(file);
@@ -455,6 +458,7 @@ test('PF-2 S3 trusted resolver',async t=>{
     const imports=[...own.matchAll(/^import\s.*?from\s*'([^']+)'/gm)].map(match=>match[1]).sort();
     assert.deepEqual(imports,['../money.js','../pine-bridge/source.js','./contract.js','./data-profile-v2.js',
       './foundation-contract-v2.js','./foundation-contract.js','./preflight-contract.js','./profile-contract-v2.js',
+      './runtime-engine-files.js',
       'node:fs/promises']);
   });
 
@@ -547,6 +551,13 @@ test('PF-2 S3 trusted resolver',async t=>{
       w=>{for(const value of w.enrollments.values())value.capacity_policy.max_chunk_bars=999;},
       w=>{for(const value of w.enrollments.values())value.result.version='research-profile-enrollment-v1';},
       w=>{for(const value of w.enrollments.values())value.contract.dataset.sha256=sha('e');},
+      w=>{for(const value of w.enrollments.values())delete value.enrollment_evidence;},
+      w=>{for(const value of w.enrollments.values())value.enrollment_evidence.receipt=null;},
+      w=>{for(const value of w.enrollments.values())delete value.contract.completion_mode;},
+      w=>{for(const value of w.enrollments.values())delete value.enrollment_evidence.job.contract.completion_mode;},
+      w=>{for(const value of w.enrollments.values())value.enrollment_evidence.launch.unit_name='different-unit';},
+      w=>{for(const value of w.enrollments.values())value.enrollment_evidence.receipt.result_hash=sha('9');},
+      w=>{for(const value of w.enrollments.values())value.enrollment_evidence.ledger.state.operations[0].terminal_proof.readback_proof_sha256=sha('9');},
       w=>{for(const value of w.enrollments.values())value.extra=1;},
       w=>{for(const value of w.enrollments.values())value.result.references.sidecar.sha256=sha('e');},
       w=>{for(const [key,value] of [...w.enrollments]){

@@ -9,6 +9,7 @@ import {pf2ExecutableHashes,resolveHistoricalPreflight} from '../../src/quant-re
 import {reviewedInputs} from '../../src/pine-bridge/input-review.js';
 import {canonical,hash,inspectSource} from '../../src/pine-bridge/source.js';
 import {validateRisk} from '../../src/postgres/risk-policy-validation.js';
+import {profileEnrollmentEvidenceFixture} from './profile-enrollment-evidence-fixture.js';
 
 // Engineering fixture only: synthetic Pine source, synthetic bars, in-memory trusted sources.
 export const MINUTE=60000;
@@ -148,20 +149,21 @@ export async function createPf2Base(t,{bar:makeBar=bar}={}){
     owner=OWNER,bot=BOT,deploymentId=venue.market.deployment_id,edit})=>{
     const scope={venue:'binance-global',market:'SPOT',symbol:'BTCUSDT',timeframe:'1',source_profile:'SPT_CUSTOM',
       execution_model:'paper-close-v1',source_hash:sourceHash,settings_hash:settingsHash,evaluator_hash:sha('c')};
-    const policy={version:'quant-capacity-v2',environment:'local',scope,
+    const policy={version:'quant-capacity-v2',environment:'staging',scope,
       evidence:{calibration_sha256:sha('d'),parity_sha256:sha('e')},max_raw_bars:50000,max_chunk_bars:1000,
       budget:{candidates:1,max_evaluations:1,max_runtime_ms:900000,max_output_bytes:8388608,max_state_bytes:1048576},
       io:{read_bytes:100000000,write_bytes:100000000,overshoot_read_bytes:1000000,overshoot_write_bytes:1000000,
-        cleanup_read_bytes:2000000,cleanup_write_bytes:2000000}};
+        cleanup_read_bytes:2000000,cleanup_write_bytes:2000000},
+      terminal:{version:'quant-io-terminal-policy-v1',runtime_max_ms:30000,terminal_drain_ms:0,tail_margin_ms:5000}};
     const raw=rawReference.metadata;
-    const capacity={version:'quant-capacity-v2',environment:'local',policy_hash:capacityPolicyHash(policy),
+    const capacity={version:'quant-capacity-v2',environment:'staging',policy_hash:capacityPolicyHash(policy),
       stage:'HISTORICAL_PREFLIGHT',scope:clone(scope),dataset:{raw_bars:raw.total_bars,seed_bars:500,
         warmup_bars:raw.warmup_bars,evaluation_bars:raw.total_bars-raw.warmup_bars,processed_bars:raw.total_bars-500},
       chunk_bars:Math.min(1000,raw.total_bars-500),budget:clone(policy.budget),io:clone(policy.io)};
     const profile={raw_job_id:'11111111-1111-4111-8111-111111111111',deployment_id:deploymentId,
       source_hash:sourceHash,effective_inputs_hash:settingsHash,execution_model:enrolledModel,
       metadata_hash:hash(canonical(venue)),raw_provenance_sha256:provenanceSha,seed_bars:500,snapshot_hash:snapshotHash};
-    const contract={version:'quant-foundation-v2',owner_id:owner,bot_id:bot,kind:'PROFILE',dataset:clone(rawReference),
+    const contract={version:'quant-foundation-v2',completion_mode:'pf2-enrollment-v1',owner_id:owner,bot_id:bot,kind:'PROFILE',dataset:clone(rawReference),
       engine_hash:sha('f'),snapshot_hash:snapshotHash,budget:{...capacity.budget,chunk_bars:capacity.chunk_bars},
       capacity,profile};
     const evidence={source_hash:sourceHash,effective_inputs_hash:settingsHash,evaluator_hash:sha('c'),
@@ -174,6 +176,8 @@ export async function createPf2Base(t,{bar:makeBar=bar}={}){
       acceptance_blockers:['EVALUATOR_PARITY_REQUIRED','SOURCE_SETTINGS_CAPABILITY_REQUIRED']};
     const enrollment={contract,result,capacity_policy:policy};
     edit?.(enrollment);
+    enrollment.enrollment_evidence=profileEnrollmentEvidenceFixture({contract:enrollment.contract,result:enrollment.result,
+      policy:enrollment.capacity_policy,now:base.now});
     return enrollment;
   };
 

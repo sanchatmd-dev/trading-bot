@@ -55,6 +55,52 @@ function fixture({unit=true,reason='LEASE_EXPIRED',deadline=Date.now()+60000,loc
  return {db,client,manager,row,chunks,transient,stats:()=>({locks,quantUpdates,inventoryCalls}),inventory:async()=>{inventoryCalls++;}};
 }
 
+function preflightRecoveryFixture({unit=true,checkpoint=true}={}){
+ const f=fixture({unit}),row=f.row;
+ row.owner_id='fixture-owner';row.contract.kind='PREFLIGHT';row.contract.bot_id='fixture-bot';
+ row.contract_hash=hash(canonical(row.contract));row.run_id=null;row.research_contract=null;
+ if(checkpoint){row.checkpoint.state={version:'pf2-replay-resume-v1',next_bar:row.next_bar};
+  const {sha256,...payload}=row.checkpoint;row.checkpoint.sha256=hash(canonical(payload));
+ }else{row.checkpoint=null;row.next_bar=0;}
+ const plan={foundation:structuredClone(row.contract)},plan_json=canonical(plan);
+ const bound={job_id:row.job_id,owner_id:row.owner_id,bot_id:row.contract.bot_id,plan_json,plan_hash:hash(plan_json),
+  unit_name:unit?f.transient:null,unit_token:unit?row.lease_token:null};
+ const query=f.client.query;
+ f.client.query=async(sql,params=[])=>{
+  if(sql.startsWith('SELECT * FROM quant_preflight_jobs'))return {rows:bound?[structuredClone(bound)]:[]};
+  if(sql.startsWith('UPDATE quant_preflight_jobs')){
+   assert.equal(params[0],row.job_id);
+   if(bound.unit_name===params[1]&&bound.unit_token===params[2]&&bound.unit_name!==null){
+    bound.unit_name=null;bound.unit_token=null;return {rowCount:1};
+   }return {rowCount:0};
+  }
+  return query(sql,params);
+ };
+ return {...f,bound};
+}
+
+test('PREFLIGHT offline recovery verifies plan and resume binding; no research writes',async()=>{
+ const f=preflightRecoveryFixture(),before=structuredClone(f.row.checkpoint),deadline=f.row.deadline_at;
+ const result=await recoverQuantFoundation({db:f.db,policy,manager:f.manager,inventory:f.inventory,settleMs:0});
+ assert.deepEqual(result.recovered,[{job_id:f.row.job_id,status:'PAUSED'}]);
+ assert.deepEqual(result.maskedUnits,[f.transient]);assert.equal(f.bound.unit_name,null);
+ assert.equal(f.stats().quantUpdates,0);assert.deepEqual(f.row.checkpoint,before);assert.equal(f.row.deadline_at,deadline);
+});
+
+test('PREFLIGHT offline recovery rejects corrupt plan, resume version and mismatched unit token',async()=>{
+ for(const [edit,code] of [
+  [f=>{f.bound.plan_hash='0'.repeat(64);},'RECOVERY_BINDING_UNVERIFIED'],
+  [f=>{f.row.checkpoint.state.version='wrong';const {sha256,...payload}=f.row.checkpoint;f.row.checkpoint.sha256=hash(canonical(payload));},'RECOVERY_CHECKPOINT_CORRUPT'],
+  [f=>{f.bound.unit_token=randomUUID();},'RECOVERY_UNIT_INVALID']]){
+  const f=preflightRecoveryFixture();edit(f);
+  await assert.rejects(recoverQuantFoundation({db:f.db,policy,manager:f.manager,inventory:f.inventory,settleMs:0}),{code});
+  assert.equal(f.row.status,'STOPPING');assert.equal(f.stats().quantUpdates,0);
+ }
+ const f=preflightRecoveryFixture({unit:false,checkpoint:false});
+ const recovered=await recoverQuantFoundation({db:f.db,policy,manager:f.manager,inventory:f.inventory,settleMs:0});
+ assert.deepEqual(recovered.maskedUnits,[]);assert.equal(recovered.recovered[0].status,'PAUSED');
+});
+
 test('maintenance lock loss during final OS inventory rejects before mutation',async()=>{
  const f=fixture();let inventoryCalls=0,mutated=false;
  await assert.rejects(withQuantOfflineGuard({db:f.db,policy,manager:f.manager,settleMs:0,
@@ -119,6 +165,21 @@ test('worker startup requires reviewed unit identity, main PID, cgroup and contr
  await assert.rejects(assertQuantWorkerUnit('different.service',{policy,manager,selfCgroup:'/test/worker.service'}),{code:'QUANT_WORKER_UNIT_MISMATCH'});
  const bad={show:async()=>({...await manager.show(),KillMode:'process'})};
  await assert.rejects(assertQuantWorkerUnit(workerUnit,{policy,manager:bad,selfCgroup:'/test/worker.service'}),{code:'QUANT_WORKER_UNIT_UNVERIFIED'});
+});
+
+test('PROFILE V2 worker startup requires mixed kill mode and at least 90 seconds',async()=>{
+ const state={LoadState:'loaded',ActiveState:'active',KillMode:'mixed',MainPID:String(process.pid),ControlGroup:'/test/worker.service',TimeoutStopUSec:'1min 30s'};
+ const options={policy,manager:{show:async()=>state},selfCgroup:state.ControlGroup,profileV2Enabled:true};
+ assert.equal(await assertQuantWorkerUnit(workerUnit,options),true);
+ for(const timeout of ['89s','infinity','','90','1min  30s','90s trailing','900000000000000000h']){
+  state.TimeoutStopUSec=timeout;
+  await assert.rejects(assertQuantWorkerUnit(workerUnit,options),{code:'QUANT_WORKER_UNIT_UNVERIFIED'});
+ }
+ for(const timeout of ['90000000us','90000ms','90s','2min','1h']){
+  state.TimeoutStopUSec=timeout;assert.equal(await assertQuantWorkerUnit(workerUnit,options),true);
+ }
+ state.KillMode='control-group';
+ await assert.rejects(assertQuantWorkerUnit(workerUnit,options),{code:'QUANT_WORKER_UNIT_UNVERIFIED'});
 });
 
 /** Real PostgreSQL, real QuantIoRuntime and QuantIoLedger. Each crash is reproduced by abandoning the

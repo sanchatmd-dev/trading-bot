@@ -759,3 +759,75 @@ S3c after W3 and before R5; W4 after S3b-2; W6 after W3; the W7 Linux proof then
 needs an explicit swap host fact; R7 after a durable trusted PROFILE v2 enrollment
 and the owner-authorized operations packet. The 410–720-hour baseline and existing
 contingency are unchanged; this slice is not a forecast change.
+
+## Codex specialist model refresh — 2026-09-30
+
+Local configuration and documentation now use GPT-6.1 Sol for all seven non-Astra
+Codex specialist roles. Debugger/operations retain high effort; coder/tester/
+routine worker retain medium; documentation/release clerk retain low. Root and
+auditor remain Astra. The default child model is GPT-6.1 Sol at medium effort.
+Historical Sol/Luna work records remain historical evidence, not current routing.
+
+The owner authorized the usage-threshold exception only for this configuration
+and documentation update. No worker or runtime job is started. Static profile
+consistency and diff checks validate this scope; product tests are not applicable.
+Active engineering hours are unknown; no measured speedup or cost saving is
+claimed. The 410–720-hour baseline and standing 15-point reserve are unchanged.
+W3 remains next; substantive work requires refreshed usage or separate owner
+exception for that named continuation.
+
+## PF-2 staging continuation — 2026-09-30
+
+The owner requested PF-2 staging activation after acceptance and approved the
+strictest shared sibling holdout boundary. The local service change passes 47/47
+PostgreSQL tests, including concurrent registration/enqueue. W3 integration has
+local code and independent source review, but full acceptance remains open.
+Root serial PostgreSQL checks total 154 passed and 1 skipped across service,
+foundation scheduler/worker/recovery, PROFILE and PROFILE V2 runtime suites.
+The full Node suite exceeded its 180-second process budget and remains unverified.
+The isolated local PostgreSQL cluster was stopped and the stop verified.
+See [local checkpoint](PF2_W3_LOCAL_CHECKPOINT_2026-09-30.md) for exact scope.
+
+The owner explicitly permits remaining usage down to 1% for this named continuation
+only. This does not alter the standing 15-point reserve. Work uses one debugger
+with sequential bounded auditor reviews; no throughput or model-cost claim is
+made. Active engineering hours remain unknown; the 410–720-hour forecast is not
+reduced. No market-data wait, VPS operation, migration or deployment occurred.
+
+Next: finish W3 acceptance/diagnostics, then the existing S3/W/R dependencies.
+Durable trusted PROFILE V2 enrollment is an explicit additional prerequisite for
+R7; W3/W5 provisional CANCELLED output cannot satisfy it. PF-2 staging remains off.
+
+### 2026-10-01 — PF-2 continuation local checkpoint
+
+W3 runtime ผ่าน 43/43; W5 authority ผ่าน PostgreSQL 4/4; รวม PG 167 ผ่านและ 1 skip. Full Node ผ่าน 728 และ 3 skip ใช้ 242.9 วินาที; เป็นเวลาทดสอบ ไม่ใช่เวลา engineering. ผู้ตรวจพบและแก้ diagnostic reason; fixture ใหม่ 9 กรณีแก้แล้วโดยไม่ลด guard. Usage ล่าสุดเหลือ 94% รายสัปดาห์; short window ไม่ทราบ และใช้ floor 1% เฉพาะ continuation ตาม owner. ไม่อ้างต้นทุนแยก model หรือ speedup. S3b-2/S3b-3 เริ่มแบบแยกไฟล์; S3c ตามหลัง. Staging/production ยังไม่เปลี่ยน; README/Context ตรวจและอัปเดตขอบเขต local.
+
+S3/W6 local update 2026-10-01: migration 9/9 และ retention 9/9 ผ่าน; HTTP precheck พบ off-grid regression แล้วแก้ โดย recheck ผ่าน 4/4. Independent S3c และ final regression ยังทำอยู่. Retention test packet ประมาณ 8 นาที และ W6 test packet ประมาณ 10 นาทีเป็นเวลา agent ที่รายงาน ไม่ใช่ active engineering รวม. Usage ล่าสุดเหลือ 90% รายสัปดาห์; short window ไม่ทราบ. ไม่ปรับ forecast จากจำนวน agents. ดู [checkpoint](PF2_S3_W6_LOCAL_CHECKPOINT_2026-10-01.md).
+
+S3c baseline ผ่าน 8/8 บน snapshot ที่ hash ไม่เปลี่ยน ใช้ 57.3 วินาที; รอบแรกมี fixture decimal error และแก้ test หลังแจ้งพร้อม จึงไม่นับรอบนั้นเป็น acceptance. Full Node ล่าสุด 731 ผ่าน/3 skip ใน 247.7 วินาที. Mutation checks ยังทำอยู่. Usage ล่าสุดเหลือ 87% รายสัปดาห์; ตัวเลขบัญชีร่วมและ short window ไม่ทราบ.
+
+Checkpoint 2026-10-01: S3c baseline ผ่าน 12/12 (73.224 วินาที) และ mutation 8 variants ถูกตรวจจับครบใน 7 หมวด Source จริงไม่เปลี่ยนระหว่างทดสอบ เป็น local synthetic/fake OS evidence ไม่ใช่ Linux proof เริ่ม R5 worker/recovery, E1 enrollment admission และ R6 API แยกเจ้าของไฟล์ Usage ล่าสุดใช้ 17% เหลือ 83% weekly; short window ไม่ทราบ ใช้ floor 1% เฉพาะ PF-2 ตามเจ้าของอนุญาต เวลาทดสอบไม่ใช่เวลาพัฒนารวม ไม่มี commit/push/deploy ดู PF2_S3_W6_LOCAL_CHECKPOINT_2026-10-01.md; README/Context ทบทวน ขอบเขต 10K staging/Paper คงเดิม
+
+Checkpoint 2026-10-01: E1 PostgreSQL ผ่าน 3/3 และ migration 9/9; E3 resolver 47/47, preflight PostgreSQL 48/48, historical consumers 1/1 และ independent review ผ่านตามขอบเขต R5 worker รอบแก้ fixture ผ่าน 10/10 ใน 36.3 วินาที; HTTP ผ่าน 8 และยังข้าม positive flow 1 ข้อ E2 authority/runtime แยกเจ้าของไฟล์เริ่มแล้ว Usage ล่าสุดใช้ 25% เหลือ 75% weekly; short window ไม่ทราบ, floor 1% เฉพาะ continuation นี้ ตัวเลขเวลาเป็นเวลาทดสอบ ไม่ใช่เวลาพัฒนารวม ไม่ปรับ forecast หรืออ้าง speedup จากจำนวน agents ไม่มี commit/push/deploy
+
+E2 integration checkpoint: diagnostic regression ผ่าน 43/43 ใน 55.3 วินาที,
+migration 9/9 ใน 15.5 วินาที, HTTP 9/9 ใน 123.9 วินาที และ SQL authority 4/4
+ใน 9.3 วินาที ยังไม่รับ E2 runtime fault matrix หรือ E4 producer chain
+Usage ล่าสุดเหลือ 69% weekly; short window ไม่ทราบ ใช้ floor 1% ตาม continuation
+เดิม เวลาทดสอบไม่ใช่เวลาพัฒนารวม ดู [checkpoint](PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md)
+
+
+Owner stop checkpoint 2026-10-01: ไม่เริ่มงานหรือทดสอบเพิ่มตามคำสั่งเจ้าของ
+E2 faults ผ่าน 16/16 ใน 77.2 วินาที; E4 worker chain ผ่าน 1/1 ใน 80.3 วินาที
+Full Node ใช้ 463.1 วินาที ได้ 760 pass/2 fail/3 skip; focused closure ยังไม่ผ่าน
+I/O runtime 53 pass/2 fail และ I/O ledger 9 pass/1 fail จึงยังไม่รับ final regression
+หยุด local PostgreSQL แล้ว ไม่มี staging activation หรือ commit/push/deploy
+Usage ล่าสุดใช้ 37% เหลือ 63% weekly; short window ไม่ทราบ สิทธิ floor 1% ของ
+PF-2 ไม่ใช่คำสั่งให้ทำต่อหลังเจ้าของขอหยุด เวลาเหล่านี้เป็นเวลาทดสอบ ไม่ใช่
+เวลาพัฒนารวม ไม่ปรับ forecast จากจำนวน agents ดู checkpoint ล่าสุด
+PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md และ resume จาก failures ที่ระบุ
+
+
+Git-only continuation: เจ้าของสั่ง commit/push checkpoint ที่หยุดไว้ อนุญาตเฉพาะ
+การบันทึกและส่ง Git รอบนี้ ไม่เริ่ม implementation หรือทดสอบใหม่ ไม่เปลี่ยน
+สถานะ acceptance/staging Usage ล่าสุดเหลือ 62% weekly; short window ไม่ทราบ

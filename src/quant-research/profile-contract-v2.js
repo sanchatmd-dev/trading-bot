@@ -2,7 +2,12 @@ import {canonical,fail,hash} from '../pine-bridge/source.js';
 import {D,exact} from '../money.js';
 import {validateDatasetReference} from './foundation-contract.js';
 import {deriveClosedMetadataV2} from './data-profile-v2.js';
-import {validateFoundationRequestV2,strictJsonV2,fieldsV2,frozenV2} from './foundation-contract-v2.js';
+import {validateFoundationRequestV2,strictJsonV2,fieldsV2,frozenV2,PROFILE_ENROLLMENT_MODE} from './foundation-contract-v2.js';
+import {validateCapacityPolicy,capacityPolicyHash} from './capacity-contract.js';
+import {validateIoBudgetLedgerState} from './io-budget-ledger.js';
+
+export {PROFILE_ENROLLMENT_MODE};
+export const PROFILE_ENROLLMENT_RECEIPT_VERSION='profile-enrollment-receipt-v1';
 
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const invalid=code=>{throw fail(code);};
@@ -77,4 +82,73 @@ export function validateProfileResultV2(contract,result,{policy}={}){
     binding.data_profile_verified!==true||binding.evaluator_admission!==false)
   invalid('PROFILE_RESULT_INVALID');
  return frozenV2(result);
+}
+
+const receiptFields=['version','job_id','operation_id','lease_token','contract_hash','payload_hash',
+ 'result_hash','policy_hash','policy','stop_proof_sha256','readback_proof_sha256','completed_at','receipt_hash'];
+const uuid=value=>typeof value==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(value);
+const receiptInvalid=()=>invalid('PROFILE_ENROLLMENT_RECEIPT_INVALID');
+
+/** Historical evidence validation. New admission must also compare the current reviewed policy.
+ * This proves exact persisted relationships, including settled charges, rather than hashes alone.
+ */
+export function validateProfileEnrollmentReceipt({job,receipt,launch,ledger}){
+ try{
+  strictJsonV2(receipt);fieldsV2(receipt,receiptFields);
+  strictJsonV2(job);strictJsonV2(launch);strictJsonV2(ledger);
+  if(receipt.version!==PROFILE_ENROLLMENT_RECEIPT_VERSION||!uuid(receipt.job_id)||!uuid(receipt.lease_token)||
+     typeof receipt.operation_id!=='string'||!/^[A-Za-z0-9._:-]{8,128}$/.test(receipt.operation_id)||
+     !Number.isSafeInteger(receipt.completed_at)||receipt.completed_at<0||
+     !['contract_hash','payload_hash','result_hash','policy_hash','stop_proof_sha256',
+       'readback_proof_sha256','receipt_hash'].every(name=>sha(receipt[name])))receiptInvalid();
+  const {receipt_hash,...payload}=receipt;
+  if(hash(canonical(payload))!==receipt_hash)receiptInvalid();
+  const policy=validateCapacityPolicy(receipt.policy);
+  if(canonical(policy)!==canonical(receipt.policy)||capacityPolicyHash(policy)!==receipt.policy_hash||
+     job?.job_id!==receipt.job_id||job.status!=='SUCCEEDED'||job.owner_id!==job.contract?.owner_id||
+     job.contract?.completion_mode!==PROFILE_ENROLLMENT_MODE||job.checkpoint!==null||job.next_bar!==0||
+     job.lease_token!==null||job.lease_until!==null||job.run_started_at!==null||job.stop_reason!==null||
+     job.contract_hash!==receipt.contract_hash||hash(canonical(job.contract))!==receipt.contract_hash||
+     job.contract.capacity.policy_hash!==receipt.policy_hash||hash(canonical(job.result))!==receipt.result_hash)
+   receiptInvalid();
+  validateProfileResultV2(job.contract,job.result,{policy});
+  if(launch?.job_id!==receipt.job_id||launch.operation_id!==receipt.operation_id||
+     launch.lease_token!==receipt.lease_token||launch.payload_hash!==receipt.payload_hash||
+     launch.state!=='STOP_PROVEN'||ledger?.job_id!==receipt.job_id||
+     ledger.policy_hash!==receipt.policy_hash||ledger.lease_token!==receipt.lease_token||
+     ledger.state_hash!==hash(canonical(ledger.state))||ledger.revision!==ledger.state?.revision)
+   receiptInvalid();
+  const state=validateIoBudgetLedgerState(ledger.state);
+  if(state.job_id!==receipt.job_id||state.policy_hash!==receipt.policy_hash||state.lease_token!==receipt.lease_token||
+     state.operations.some(operation=>operation.status!=='SETTLED'))receiptInvalid();
+  const operation=state.operations.find(value=>value.operation_id===receipt.operation_id);
+  if(!operation||operation.lease_token!==receipt.lease_token||
+     launch.unit_name!==operation.cgroup_id||launch.unit_name!==
+      'robot-quant-'+hash(canonical({jobId:receipt.job_id,operationId:receipt.operation_id}))+'.service'||
+     operation.terminal_proof.stop_proof_sha256!==receipt.stop_proof_sha256||
+     operation.terminal_proof.readback_proof_sha256!==receipt.readback_proof_sha256)receiptInvalid();
+  const limits=state.limits;
+  for(const direction of ['read','write']){
+   if(limits[direction+'_bytes']!==job.contract.capacity.io[direction+'_bytes']||
+      limits['overshoot_'+direction+'_bytes']!==job.contract.capacity.io['overshoot_'+direction+'_bytes']||
+      limits['cleanup_'+direction+'_bytes']!==job.contract.capacity.io['cleanup_'+direction+'_bytes'])receiptInvalid();
+  }
+  return frozenV2(receipt);
+ }catch{receiptInvalid();}
+}
+
+/** Build evidence only. The caller owns measured settlement and the atomic success transaction. */
+export function buildProfileEnrollmentReceipt({job,policy,launch,ledger,completed_at}){
+ try{
+  const snapshot=validateCapacityPolicy(policy);
+  const state=validateIoBudgetLedgerState(ledger.state);
+  const operation=state.operations.find(value=>value.operation_id===launch.operation_id);
+  if(operation?.status!=='SETTLED')receiptInvalid();
+  const payload={version:PROFILE_ENROLLMENT_RECEIPT_VERSION,job_id:job.job_id,
+   operation_id:launch.operation_id,lease_token:launch.lease_token,contract_hash:job.contract_hash,
+   payload_hash:launch.payload_hash,result_hash:hash(canonical(job.result)),policy_hash:capacityPolicyHash(snapshot),
+   policy:snapshot,stop_proof_sha256:operation.terminal_proof.stop_proof_sha256,
+   readback_proof_sha256:operation.terminal_proof.readback_proof_sha256,completed_at};
+  return validateProfileEnrollmentReceipt({job,launch,ledger,receipt:{...payload,receipt_hash:hash(canonical(payload))}});
+ }catch{receiptInvalid();}
 }

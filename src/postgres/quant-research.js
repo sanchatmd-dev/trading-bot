@@ -8,20 +8,30 @@ import {validateBar} from './pine-bridge-market.js';
 import {lockInputs,candidatePlan,coverage,SOURCE_HASH,RULES} from '../quant-research/contract.js';
 import {readJson} from './http.js';
 import {ResearchDatasetStore} from '../quant-research/research-dataset-store.js';
-import {validateFoundationRequest} from '../quant-research/foundation-contract.js';
+import {CONTENT_DIGEST_SQL,buildResearchContractV2,expectedFoundationRequestV2,
+ validateFoundationResearchRequestV2,RESEARCH_V2_VERSIONS,DATASET_BINDING_STEP_ID,
+ DATASET_BINDING_KIND,validateDatasetBindingV1,datasetBindingIdentity} from '../quant-research/research-contract-v2.js';
 import {StorageBudget} from '../quant-research/storage-budget.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
+import {QUANT_RUNTIME_ENGINE_FILES} from '../quant-research/runtime-engine-files.js';
 
 export const TERMINAL=new Set(['SUCCEEDED','NO_VALID_CANDIDATE','FAILED','CANCELLED','TIMED_OUT']);
 const engineFiles=['src/quant-research/contract.js','src/postgres/quant-research-worker.js','quant_lab/src/robot_quant/research_engine.py','quant_lab/src/robot_quant/spt_custom_evaluator.py','quant_lab/src/robot_quant/spt_evaluator.py','quant_lab/src/robot_quant/bridge_paper.py','quant_lab/src/robot_quant/bridge_replay.py','quant_lab/src/robot_quant/risk_evaluator.py','quant_lab/src/robot_quant/ql3a.py','quant_lab/src/robot_quant/analytics.py'];
-export async function engineHash(foundation=false){
+function engineFileList(foundation=false){
  const files=foundation?[...engineFiles,'src/postgres/quant-research-foundation.js','src/postgres/quant-foundation-scheduler.js','src/quant-research/foundation-contract.js','src/quant-research/dataset-store.js','src/quant-research/research-dataset-store.js','src/quant-research/process-supervisor.js','src/quant-research/resource-health.js','quant_lab/src/robot_quant/research_chunk.py','quant_lab/src/robot_quant/paper_state.py']:engineFiles;
  if(foundation)files.push('src/quant-research/storage-budget.js','src/postgres/quant-storage-retention.js','src/postgres/quant-foundation-recovery.js',
    'src/quant-research/io-controls.js','src/quant-research/data-profile.js','src/quant-research/profile-contract.js','src/postgres/quant-profile.js',
    'src/quant-research/health-recovery-gate.js','src/quant-research/scheduler-health.js','src/quant-research/bounded-health-probe.js','src/postgres/quant-research-main.js',
    'src/quant-research/atr14-chunk-store.js','src/quant-research/capacity-contract.js',
    'src/quant-research/foundation-contract-v2.js','src/quant-research/profile-contract-v2.js',
-   'src/quant-research/data-profile-v2.js','src/quant-research/profile-pipeline-v2.js','src/quant-research/io-terminal.js');
+   'src/quant-research/data-profile-v2.js','src/quant-research/profile-pipeline-v2.js','src/quant-research/io-terminal.js',
+   'src/quant-research/research-contract-v2.js');
+ return foundation?[...new Set([...files,...QUANT_RUNTIME_ENGINE_FILES])]:files;
+}
+export const LEGACY_ENGINE_FILES=Object.freeze([...engineFiles]);
+export const FOUNDATION_ENGINE_FILES=Object.freeze(engineFileList(true));
+export async function engineHash(foundation=false){
+ const files=foundation?FOUNDATION_ENGINE_FILES:LEGACY_ENGINE_FILES;
  const hashes=await Promise.all(files.map(async name=>[name,hash(await fs.readFile(new URL('../../'+name,import.meta.url)))]));
  return hash(canonical(Object.fromEntries(hashes)));
 }
@@ -93,6 +103,20 @@ export class QuantResearchService{
    if(queued.total>=100||queued.owned>=20)throw fail('FOUNDATION_QUEUE_FULL',429);
   }
   const expected=1+(end-start)/60000;
+  let contract,request;
+  if(this.foundation){
+   const model=evidence.execution_model;
+   const span=(await this.db.query(CONTENT_DIGEST_SQL,[start,end,model.data_profile])).rows[0];
+   if(span.n!==expected||expected-warmup<2000)throw fail('INSUFFICIENT_OR_GAPPED_RESEARCH_DATASET');
+   if(span.first_time!==start||span.last_time!==end||span.bad!==0||
+      typeof span.digest!=='string'||!/^[a-f0-9]{64}$/.test(span.digest))throw fail('VERIFIED_MARKET_DATA_REQUIRED');
+   const capital=snapshot.capital.find(c=>c.broker===snapshot.market.broker);
+   if(!capital||!D(capital.configuredEquity).gt(0)||!D(capital.configuredBalance).gt(0))throw fail('RESEARCH_CAPITAL_REQUIRED');
+   contract=buildResearchContractV2({owner_id:owner,bot_id:body.bot_id,deployment,source,snapshot,
+    lock,plan,model,rules:RULES,capital,engine_hash:await engineHash(true),
+    dataset:{...body.dataset,content_digest:span.digest}});
+   request=validateFoundationResearchRequestV2(expectedFoundationRequestV2(contract,seconds*1000),contract);
+  }else{
   const span=await this.db.prepare("SELECT count(*) n,min(bar_time) first_time,max(bar_time) last_time FROM pine_market_bars WHERE broker='binance-global' AND symbol='BTCUSDT' AND timeframe='1' AND bar_time>=? AND bar_time<=?").get(start,end);
   if(span.n!==expected||expected-warmup<2000)throw fail('INSUFFICIENT_OR_GAPPED_RESEARCH_DATASET');
   if(span.first_time!==start||span.last_time!==end)throw fail('VERIFIED_MARKET_DATA_REQUIRED');
@@ -108,28 +132,37 @@ export class QuantResearchService{
   const capital=snapshot.capital.find(c=>c.broker===snapshot.market.broker);
   if(!capital||!D(capital.configuredEquity).gt(0)||!D(capital.configuredBalance).gt(0))throw fail('RESEARCH_CAPITAL_REQUIRED');
   const count=rows.length-warmup;
-  const contract={version:'ql3a-research-job-v1',scope:'SPT_CUSTOM_ENGINEERING_ONLY',owner_id:owner,bot_id:body.bot_id,deployment_id:deployment.deployment_id,pine_import_id:deployment.pine_import_id,source_version:deployment.source_version,source:source.source,source_hash:source.source_hash,baseline_snapshot_hash:deployment.snapshot_hash,snapshot:{...snapshot,selection:lock.selection},input_lock:lock,plan,model,rules:RULES,engine_hash:await engineHash(),dataset:{...body.dataset,bar_count:rows.length,bars:rows.map(r=>r.bar),sha256:hash(canonical(rows.map(r=>({bar:r.bar,content_hash:r.content_hash,provenance:r.provenance}))))},split:{warmup,train_end:warmup+Math.floor(count*.6),validation_end:warmup+Math.floor(count*.8),test_end:rows.length},capital:{equity:capital.configuredEquity,cash:capital.configuredBalance},ledger_initialization:'Independent historical flat Paper simulation; live daily/streak counters are neither consumed nor reset.',max_evaluations:plan.planned_candidates+2*Object.keys(lock.domains).length+2+3,acceptance_blockers:['VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED','CUSTOM_REPAINT_EVIDENCE_REQUIRED','CUSTOMER_QUANT_CAPABILITY_NOT_REGISTERED']};
-  if(this.foundation){
-   const refs=await this.datasetStore.publish({version:'spot-dataset-v1',venue:'binance-global',market:'SPOT',symbol:'BTCUSDT',timeframe:'1',start_time:start,end_time:end+60000,warmup_bars:warmup,total_bars:rows.length,cutoff:end+60000,source:'binance-spot-klines-v1'},rows.map(r=>r.bar),{model});
-   delete contract.dataset.bars;contract.dataset.first_time=start;contract.dataset.references=refs;
-   contract.dataset.timestamp_semantics='verified closed-bar timestamps; half-open index end is last timestamp plus one minute';
-   contract.execution_backend='quant-foundation-v1';contract.engine_hash=await engineHash(true);
+  contract={version:'ql3a-research-job-v1',scope:'SPT_CUSTOM_ENGINEERING_ONLY',owner_id:owner,bot_id:body.bot_id,deployment_id:deployment.deployment_id,pine_import_id:deployment.pine_import_id,source_version:deployment.source_version,source:source.source,source_hash:source.source_hash,baseline_snapshot_hash:deployment.snapshot_hash,snapshot:{...snapshot,selection:lock.selection},input_lock:lock,plan,model,rules:RULES,engine_hash:await engineHash(),dataset:{...body.dataset,bar_count:rows.length,bars:rows.map(r=>r.bar),sha256:hash(canonical(rows.map(r=>({bar:r.bar,content_hash:r.content_hash,provenance:r.provenance}))))},split:{warmup,train_end:warmup+Math.floor(count*.6),validation_end:warmup+Math.floor(count*.8),test_end:rows.length},capital:{equity:capital.configuredEquity,cash:capital.configuredBalance},ledger_initialization:'Independent historical flat Paper simulation; live daily/streak counters are neither consumed nor reset.',max_evaluations:plan.planned_candidates+2*Object.keys(lock.domains).length+2+3,acceptance_blockers:['VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED','CUSTOM_REPAINT_EVIDENCE_REQUIRED','CUSTOMER_QUANT_CAPABILITY_NOT_REGISTERED']};
   }
   const now=this.clock(),id=randomUUID();
   await this.db.prepare("INSERT INTO quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,status,created_at,updated_at,deadline) VALUES(?,?,?,?,?,?,?,?,'QUEUED',?,?,?)").run(id,owner,body.bot_id,deployment.deployment_id,key,submissionHash,hash(canonical(contract)),JSON.stringify(contract),now,now,now+seconds*1000);
   if(this.foundation){
-   const request=validateFoundationRequest({version:'quant-foundation-v1',owner_id:owner,bot_id:body.bot_id,kind:'OPTIMIZE',dataset:contract.dataset.references.raw,engine_hash:contract.engine_hash,snapshot_hash:contract.baseline_snapshot_hash,budget:{candidates:plan.planned_candidates,max_evaluations:contract.max_evaluations,chunk_bars:Math.min(1000,rows.length),max_runtime_ms:seconds*1000,max_output_bytes:8*1024*1024,max_state_bytes:1024*1024}});
    await this.db.query('INSERT INTO quant_foundation_owners(owner_id) VALUES($1) ON CONFLICT DO NOTHING',[owner]);
    await this.db.query("INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at) VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)",[id,owner,'research:'+id,JSON.stringify(request),hash(canonical(request)),now,now+seconds*1000]);
    await this.db.query('INSERT INTO quant_research_foundation VALUES($1,$2,$3)',[id,id,hash(canonical(contract))]);
   }
-  await this.store.audit(owner,'quant.research.queued',id,{bot_id:body.bot_id,input_lock_hash:lock.lock_hash,dataset_hash:contract.dataset.sha256,budget:plan.planned_candidates,source_slots:lock.selection.bindings.length});
+  await this.store.audit(owner,'quant.research.queued',id,{bot_id:body.bot_id,input_lock_hash:lock.lock_hash,
+   ...(this.foundation?{dataset_content_digest:contract.dataset.content_digest}:{dataset_hash:contract.dataset.sha256}),
+   budget:plan.planned_candidates,source_slots:lock.selection.bindings.length});
   return this.get(owner,id);
  }
  async summary(row){
   const steps=await this.db.prepare('SELECT step_id,kind,parameters,result,completed_at FROM quant_job_steps WHERE run_id=? ORDER BY completed_at,step_id').all(row.run_id);
   const candidates=steps.filter(s=>s.kind==='CANDIDATE');
-  return {run_id:row.run_id,bot_id:row.bot_id,deployment_id:row.deployment_id,status:row.status,phase:row.phase,created_at:row.created_at,updated_at:row.updated_at,deadline:row.deadline,attempts:row.attempt,evaluations_started:row.evaluations_started,contract_hash:row.contract_hash,source_hash:row.contract.source_hash,baseline_snapshot_hash:row.contract.baseline_snapshot_hash,input_lock_hash:row.contract.input_lock.lock_hash,dataset_hash:row.contract.dataset.sha256,source_slots:row.contract.input_lock.selection.bindings.map(i=>({slot:i.slot,input_id:i.input_id,pine_variable:i.pine_variable,effective_value:i.effective_value,search_domain:i.search_domain})),bridge_domains:{atr_multiplier:row.contract.input_lock.domains.atr_multiplier,rr:row.contract.input_lock.domains.rr},progress:{candidates_completed:candidates.length,candidates_planned:row.contract.plan.planned_candidates,percent:Math.floor(100*candidates.length/row.contract.plan.planned_candidates),checks_completed:steps.length-candidates.length,...coverage(candidates,row.contract.input_lock.domains)},result:row.result,diagnostic:row.diagnostic,owner_recommendation_ready:false,acceptance_blockers:row.contract.acceptance_blockers};
+  let datasetStatus={dataset_hash:row.contract.dataset.sha256};
+  if(row.contract.version===RESEARCH_V2_VERSIONS.contract){
+   const binding=(await this.db.query('SELECT * FROM quant_research_chunks WHERE run_id=$1 AND step_id=$2',
+    [row.run_id,DATASET_BINDING_STEP_ID])).rows[0];
+   if(binding){
+    validateDatasetBindingV1(row.contract,binding.parameters);
+    if(binding.kind!==DATASET_BINDING_KIND||binding.identity_hash!==datasetBindingIdentity(row.contract,binding.parameters)||
+       binding.next_bar!==0||binding.checkpoint!==null||binding.checkpoint_hash!==null||
+       binding.unit_name!==null||binding.unit_token!==null)throw fail('RESEARCH_DATASET_BINDING_INVALID');
+   }
+   datasetStatus={dataset_hash:binding?.parameters.dataset_sha256??null,
+    dataset_content_digest:row.contract.dataset.content_digest,dataset_prepared:!!binding};
+  }
+  return {run_id:row.run_id,bot_id:row.bot_id,deployment_id:row.deployment_id,status:row.status,phase:row.phase,created_at:row.created_at,updated_at:row.updated_at,deadline:row.deadline,attempts:row.attempt,evaluations_started:row.evaluations_started,contract_hash:row.contract_hash,source_hash:row.contract.source_hash,baseline_snapshot_hash:row.contract.baseline_snapshot_hash,input_lock_hash:row.contract.input_lock.lock_hash,...datasetStatus,source_slots:row.contract.input_lock.selection.bindings.map(i=>({slot:i.slot,input_id:i.input_id,pine_variable:i.pine_variable,effective_value:i.effective_value,search_domain:i.search_domain})),bridge_domains:{atr_multiplier:row.contract.input_lock.domains.atr_multiplier,rr:row.contract.input_lock.domains.rr},progress:{candidates_completed:candidates.length,candidates_planned:row.contract.plan.planned_candidates,percent:Math.floor(100*candidates.length/row.contract.plan.planned_candidates),checks_completed:steps.length-candidates.length,...coverage(candidates,row.contract.input_lock.domains)},result:row.result,diagnostic:row.diagnostic,owner_recommendation_ready:false,acceptance_blockers:row.contract.acceptance_blockers};
  }
  async get(owner,id,cancel=false){
   await this.executorMode();

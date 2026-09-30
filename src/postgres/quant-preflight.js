@@ -3,7 +3,9 @@ import {canonical,fail,hash,keys} from '../pine-bridge/source.js';
 import {validateBackfillResult} from '../quant-research/foundation-contract.js';
 import {capacityPolicyHash,validateCapacityPolicy} from '../quant-research/capacity-contract.js';
 import {deriveClosedMetadataV2} from '../quant-research/data-profile-v2.js';
-import {validateProfileResultV2} from '../quant-research/profile-contract-v2.js';
+import {validateProfileResultV2,validateProfileEnrollmentReceipt} from '../quant-research/profile-contract-v2.js';
+import {readProfileEnrollmentEvidence} from './quant-profile-enrollment-evidence.js';
+import {assertQuantProfileEnrollmentSchema} from './quant-profile-enrollment-migration.js';
 import {PREFLIGHT_RECORD_FIELDS,buildPreflightPlan,derivePreflightRecords,
   validatePreflightEnvelope} from '../quant-research/preflight-plan.js';
 import {pf2ExecutableHashes} from '../quant-research/preflight-resolver.js';
@@ -31,6 +33,7 @@ export const PREFLIGHT_SERVICE_ERRORS=Object.freeze(['PREFLIGHT_DISABLED','PREFL
   'FOUNDATION_CAPABILITY_LIMIT','PREFLIGHT_EXECUTION_MODEL_PARITY_REQUIRED','INVALID_PREFLIGHT_CONTRACT',
   'FOUNDATION_INTEGRITY_FAILED','HOLDOUT_BOUNDARY_INVALID','HOLDOUT_BOUNDARY_EXISTS','HOLDOUT_BOUNDARY_CONFLICT',
   'PREFLIGHT_UNAVAILABLE','PREFLIGHT_CONFIGURATION_INVALID',
+  'QUANT_PROFILE_ENROLLMENT_SCHEMA_UNSUPPORTED',
   // The one error an adapter throws for any failure; the resolver never reads it and maps the outcome itself.
   'PREFLIGHT_ADAPTER_UNAVAILABLE',
   // Raised by the existing quant data service that gates readiness and scope.
@@ -65,7 +68,6 @@ async function guarded(operation){
 
 // --- shared row readers (SELECT only, bounded by primary key) --------------------------------
 
-const ENROLLMENT_COLUMNS='job_id,owner_id,status,contract,contract_hash,result';
 const DEPLOYMENT_COLUMNS='deployment_id,owner_id,bot_id,pine_import_id,source_version,state,snapshot,snapshot_hash';
 
 const rows=async(db,sql,params)=>(await db.query(sql,params)).rows;
@@ -73,12 +75,12 @@ const one=async(db,sql,params)=>(await rows(db,sql,params))[0];
 
 /** The one PROFILE job the plan names, owner scoped. Loose shape only: full validation is validateEnrollment. */
 async function readEnrollment(db,owner,bot,deploymentId,profileJobId,{share=false}={}){
-  const row=await one(db,'SELECT '+ENROLLMENT_COLUMNS+' FROM quant_foundation_jobs WHERE job_id=$1'+
-    (share?' FOR SHARE':''),[profileJobId]);
+  const evidence=await readProfileEnrollmentEvidence(db,profileJobId,{share});
+  const row=evidence?.job;
   const contract=row?.contract;
   if(!row||row.owner_id!==owner||!isObject(contract)||contract.kind!=='PROFILE'||contract.bot_id!==bot||
      contract.owner_id!==owner||contract.profile?.deployment_id!==deploymentId)return null;
-  return row;
+  return {...row,enrollment_evidence:evidence};
 }
 
 /** Full enrollment validation of section 4.3: null unless the row is a valid, current PROFILE v2 result. */
@@ -89,16 +91,31 @@ function validateEnrollment(row,{owner,bot,deploymentId,policy}){
      contract.profile?.deployment_id!==deploymentId||row.status!=='SUCCEEDED'||!isObject(row.result)||
      policy===null||policy===undefined)return null;
   try{
+    validateProfileEnrollmentReceipt(row.enrollment_evidence);
+    if(canonical(row.enrollment_evidence.job.contract)!==canonical(contract)||
+      canonical(row.enrollment_evidence.job.result)!==canonical(row.result))return null;
     if(hash(canonical(contract))!==row.contract_hash)return null;
     validateProfileResultV2(contract,row.result,{policy});
     if(capacityPolicyHash(policy)!==contract.capacity.policy_hash)return null;
   }catch{return null;}
-  return {contract,result:row.result};
+  return {contract,result:row.result,enrollment_evidence:row.enrollment_evidence};
 }
 
 const readBoundary=(db,owner,bot)=>one(db,'SELECT holdout_start_time,created_at FROM quant_holdout_boundaries '+
   'WHERE owner_id=$1 AND bot_id=$2 AND venue=$3 AND market=$4 AND symbol=$5 AND timeframe=$6',
 [owner,bot,...Object.values(PREFLIGHT_HOLDOUT_SCOPE)]);
+
+// Registration remains write-once per bot. Admission uses the strictest boundary
+// for the owner's shared market, including a sibling registered after this bot.
+// The outer row deliberately requires this bot's own explicit registration.
+const EFFECTIVE_BOUNDARY_SQL=`SELECT (SELECT min(sibling.holdout_start_time)
+  FROM quant_holdout_boundaries sibling WHERE sibling.owner_id=own.owner_id
+  AND sibling.venue=own.venue AND sibling.market=own.market
+  AND sibling.symbol=own.symbol AND sibling.timeframe=own.timeframe) holdout_start_time
+  FROM quant_holdout_boundaries own WHERE own.owner_id=$1 AND own.bot_id=$2
+  AND own.venue=$3 AND own.market=$4 AND own.symbol=$5 AND own.timeframe=$6`;
+const readEffectiveBoundary=(db,owner,bot)=>one(db,EFFECTIVE_BOUNDARY_SQL,
+  [owner,bot,...Object.values(PREFLIGHT_HOLDOUT_SCOPE)]);
 
 const readSource=(db,owner,bot,importId,version)=>one(db,
   'SELECT r.source,r.source_hash FROM pine_source_revisions r JOIN pine_sources s ON s.pine_import_id=r.pine_import_id '+
@@ -150,14 +167,15 @@ export function trustedSources({db,pine,job_id,owner_id,bot_id,stores,capacityPo
   // One context per resolve: the rows this job names, read once, all scoped to this owner and bot.
   let loaded=null;
   const load=async signal=>{
+    await assertQuantProfileEnrollmentSchema({query:(sql,params)=>read(signal,sql,params).then(rows=>({rows}))});
     const [bound]=await read(signal,'SELECT job_id,owner_id,bot_id,plan_hash,deployment_id,profile_job_id '+
       'FROM quant_preflight_jobs WHERE job_id=$1',[job_id]);
     if(!bound||bound.owner_id!==owner_id||bound.bot_id!==bot_id)return null;
     const [deployment]=await read(signal,'SELECT '+DEPLOYMENT_COLUMNS+' FROM pine_deployments '+
       'WHERE deployment_id=$1 AND owner_id=$2 AND bot_id=$3',[bound.deployment_id,owner_id,bot_id]);
-    const [profile]=await read(signal,'SELECT '+ENROLLMENT_COLUMNS+' FROM quant_foundation_jobs '+
-      'WHERE job_id=$1 AND owner_id=$2',[bound.profile_job_id,owner_id]);
-    const enrolled=profile&&isObject(profile.contract)&&profile.contract.kind==='PROFILE'&&
+    const evidence=await readProfileEnrollmentEvidence({query:(sql,params)=>read(signal,sql,params).then(rows=>({rows}))},bound.profile_job_id);
+    const profile=evidence?.job?{...evidence.job,enrollment_evidence:evidence}:null;
+    const enrolled=profile&&profile.owner_id===owner_id&&isObject(profile.contract)&&profile.contract.kind==='PROFILE'&&
       profile.contract.owner_id===owner_id&&profile.contract.bot_id===bot_id&&
       profile.contract.profile?.deployment_id===bound.deployment_id?profile:null;
     let source=null;
@@ -218,7 +236,7 @@ export function trustedSources({db,pine,job_id,owner_id,bot_id,stores,capacityPo
        hash(canonical(contract.profile.execution_model))!==query.execution_model_hash||
        contract.profile.metadata_hash!==query.venue_metadata_hash)return null;
     return {contract:structuredClone(contract),result:structuredClone(valid.result),
-      capacity_policy:structuredClone(policy)};
+      capacity_policy:structuredClone(policy),enrollment_evidence:structuredClone(valid.enrollment_evidence)};
   });
 
   const provenance=adapter(async(sha,ids)=>{
@@ -246,8 +264,7 @@ export function trustedSources({db,pine,job_id,owner_id,bot_id,stores,capacityPo
   const boundary=adapter(async(query,options)=>{
     alive(options?.signal);
     if(!inScope(query)||Object.entries(PREFLIGHT_HOLDOUT_SCOPE).some(([name,value])=>query[name]!==value))return null;
-    const [row]=await read(options?.signal,'SELECT holdout_start_time FROM quant_holdout_boundaries '+
-      'WHERE owner_id=$1 AND bot_id=$2 AND venue=$3 AND market=$4 AND symbol=$5 AND timeframe=$6',
+    const [row]=await read(options?.signal,EFFECTIVE_BOUNDARY_SQL,
     [owner_id,bot_id,...Object.values(PREFLIGHT_HOLDOUT_SCOPE)]);
     return row?{holdout_start_time:row.holdout_start_time}:null;
   });
@@ -267,6 +284,14 @@ export function trustedSources({db,pine,job_id,owner_id,bot_id,stores,capacityPo
 // --- service ---------------------------------------------------------------------------------
 
 /** Transaction-local service. The caller owns the SERIALIZABLE transaction. */
+export async function assertQuantPreflightSchema(db){
+  const present=await one(db,"SELECT to_regclass('public.quant_preflight_schema') version_table,"+
+    "to_regclass('public.quant_preflight_jobs') jobs_table,to_regclass('public.quant_holdout_boundaries') boundary_table",[]);
+  if(!present?.version_table||!present.jobs_table||!present.boundary_table)throw fail('PREFLIGHT_SCHEMA_REQUIRED',503);
+  const version=await rows(db,'SELECT version FROM public.quant_preflight_schema',[]);
+  if(version.length!==1||version[0].version!==1)throw fail('PREFLIGHT_SCHEMA_REQUIRED',503);
+}
+
 export class QuantPreflightService{
   /**
    * capacityPolicy is the scheduler's configured policy (RD-11). supportedSourceHash and executableHashes are test
@@ -288,12 +313,8 @@ export class QuantPreflightService{
   async ready(){
     if(!this.enabled||!this.capacityPolicy)throw fail('PREFLIGHT_DISABLED',503);
     await this.data.ready();
-    // All three relations, not only the version row (R2 audit A5).
-    const present=await one(this.db,"SELECT to_regclass('quant_preflight_schema') version_table,"+
-      "to_regclass('quant_preflight_jobs') jobs_table,to_regclass('quant_holdout_boundaries') boundary_table",[]);
-    if(!present?.version_table||!present.jobs_table||!present.boundary_table)throw fail('PREFLIGHT_SCHEMA_REQUIRED',503);
-    const version=await rows(this.db,'SELECT version FROM quant_preflight_schema',[]);
-    if(version.length!==1||version[0].version!==1)throw fail('PREFLIGHT_SCHEMA_REQUIRED',503);
+    await assertQuantProfileEnrollmentSchema(this.db);
+    await assertQuantPreflightSchema(this.db);
   }
   async scope(owner,bot){await this.data.scope(owner,bot);}
   now(){
@@ -355,8 +376,10 @@ export class QuantPreflightService{
    * gate (OD-3) runs: deployment READY, membership, policy, capital and funding cutoff unchanged.
    */
   async assemble(owner,{bot_id:bot,deployment_id:deploymentId,profile_job_id:profileJobId},{share=false}={}){
+    await assertQuantProfileEnrollmentSchema(this.db);
     const enrollment=await readEnrollment(this.db,owner,bot,deploymentId,profileJobId,{share});
-    if(!enrollment)throw fail('PREFLIGHT_ENROLLMENT_REQUIRED',409);
+    if(!validateEnrollment(enrollment,{owner,bot,deploymentId,policy:this.capacityPolicy}))
+      throw fail('PREFLIGHT_ENROLLMENT_REQUIRED',409);
     const deployment=await one(this.db,'SELECT '+DEPLOYMENT_COLUMNS+' FROM pine_deployments '+
       'WHERE owner_id=$1 AND bot_id=$2 AND deployment_id=$3',[owner,bot,deploymentId]);
     if(!deployment)throw fail('NOT_FOUND',404);
@@ -368,7 +391,7 @@ export class QuantPreflightService{
       throw fail('PREFLIGHT_DEPLOYMENT_UNSUPPORTED',409);
     const source=await readSource(this.db,owner,bot,deployment.pine_import_id,deployment.source_version);
     if(!source)throw fail('UNSUPPORTED_SOURCE_HASH',409);
-    const boundary=await readBoundary(this.db,owner,bot);
+    const boundary=await readEffectiveBoundary(this.db,owner,bot);
     if(!boundary)throw fail('PREFLIGHT_HOLDOUT_BOUNDARY_REQUIRED',409);
     const executables=await this.executables();
     const built=buildPreflightPlan({owner_id:owner,bot_id:bot,deployment_id:deploymentId,
@@ -503,7 +526,7 @@ export class QuantPreflightService{
    * market key). The same value again is idempotent and a different value is refused. Two more refusals keep the
    * holdout unexposed. A value later than the current minute (the service clock, floored to the minute) is
    * HOLDOUT_BOUNDARY_INVALID: the row is permanent, so a far-future value or a unit typo would remove the holdout
-   * for good. A value later than the earliest legacy research holdout start of any bot of the same owner is
+   * for good. A value later than the earliest legacy research or registered PF-2 holdout of the same owner is
    * HOLDOUT_BOUNDARY_CONFLICT (an equal value is allowed), because the bars are shared across the owner's bots.
    * Nothing ever moves a boundary in V1.
    */
@@ -526,6 +549,10 @@ export class QuantPreflightService{
     const legacy=await this.legacyHoldout(owner);
     if(legacy.usable!==legacy.total||(legacy.earliest!==null&&value>legacy.earliest))
       throw fail('HOLDOUT_BOUNDARY_CONFLICT',409);
+    const sibling=await one(this.db,`SELECT min(holdout_start_time) earliest FROM quant_holdout_boundaries
+      WHERE owner_id=$1 AND venue=$2 AND market=$3 AND symbol=$4 AND timeframe=$5`,
+    [owner,...Object.values(PREFLIGHT_HOLDOUT_SCOPE)]);
+    if(sibling.earliest!==null&&value>sibling.earliest)throw fail('HOLDOUT_BOUNDARY_CONFLICT',409);
     const row=await one(this.db,`INSERT INTO quant_holdout_boundaries
       (owner_id,bot_id,venue,market,symbol,timeframe,holdout_start_time,created_by,created_at)
       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING holdout_start_time,created_at`,

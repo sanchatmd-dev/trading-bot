@@ -237,16 +237,18 @@ test('expanded PROFILE requires trusted policy and keeps the same global slot an
   assert.equal(reads,0);
   await assert.rejects(scheduler.enqueue('owner-a',contract,'expanded-default-denied'),{code:'INVALID_CAPACITY_CONTRACT'});
   const expanded=new QuantFoundationScheduler({db,authorize,health:async()=>({ok:true}),clock:()=>now,leaseMs:100,capacityPolicy:policy});
+  const invalid=await expanded.enqueue('owner-a',contract,'expanded-profile-invalidated');
+  assert.equal(invalid.contract.dataset.metadata.total_bars,50000);
+  assert.equal(await scheduler.claim('without-policy'),null);
+  assert.equal((await get(invalid.job_id)).status,'CANCELLED');
+  assert.equal((await get(invalid.job_id)).diagnostic,'CAPACITY_POLICY_MISMATCH');
   const queued=await expanded.enqueue('owner-a',contract,'expanded-profile');
-  assert.equal(queued.contract.dataset.metadata.total_bars,50000);
-  await assert.rejects(scheduler.claim('without-policy'),{code:'INVALID_CAPACITY_CONTRACT'});
-  assert.equal((await get(queued.job_id)).status,'QUEUED');
   const running=await expanded.claim('expanded-worker');
   await enqueue('owner-b');
   assert.equal(await expanded.claim('other-worker'),null);
   await assert.rejects(expanded.finish(running,{evaluator_admission:true}));
   const resultAccessor={};Object.defineProperty(resultAccessor,'version',{enumerable:true,get(){reads++;return 'research-profile-enrollment-v2';}});
-  await assert.rejects(expanded.finish(running,resultAccessor),{code:'INVALID_FOUNDATION_V2'});assert.equal(reads,0);
+  await assert.rejects(expanded.finish(running,resultAccessor),{code:'PROFILE_V2_TERMINAL_REQUIRED'});assert.equal(reads,0);
   assert.equal((await get(queued.job_id)).status,'RUNNING');
   // Revoked/missing expansion policy cannot trap an executing job in the slot.
   assert.equal((await scheduler.cancel('owner-a',queued.job_id)).status,'STOPPING');

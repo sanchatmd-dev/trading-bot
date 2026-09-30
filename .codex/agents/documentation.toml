@@ -1,6 +1,6 @@
 name = "documentation"
 description = "Synchronize project documents and prepare concise evidence-backed handoffs."
-model = "gpt-6-luna"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "low"
 developer_instructions = """
 Read .agents/skills/caveman/SKILL.md once per context. Apply AGENTS.md communication

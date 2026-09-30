@@ -81,7 +81,9 @@ not establish full risk, position or historical replay parity. See the
 
 [AGENTS.md](AGENTS.md) and [Agent Team](docs/AGENT_TEAM.md) define one root
 commander with bounded specialist workers. Requested root default is Astra High;
-role profiles explicitly select Astra Medium, Sol Medium/High or Luna/Sol Low.
+role profiles explicitly select Astra Medium or GPT-6.1 Sol: High for debugger
+and operations, Medium for coder/tester/routine worker, and Low for documentation
+and release clerk. The default child model is gpt-6.1-sol at Medium effort.
 At most three children run concurrently in this session, with no child delegation.
 Usage checks are account-wide observations, not guaranteed per-agent reservations.
 Project configuration does not prove the model of an already active task changed.
@@ -96,6 +98,15 @@ Product documentation remains normal prose. Runtime automatic compaction is not
 changed; token savings and memory quality have not been benchmarked.
 
 ## Purpose
+
+The [2026-10-01 PF-2 continuation](docs/PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md)
+implements effective owner-wide holdout admission, worker/API wiring and measured
+PROFILE V2 enrollment with an immutable receipt. A local 10,000-bar test now runs
+BACKFILL, PROFILE enrollment and PF-2 replay through the product workers to the
+final envelope. Source evidence, OS telemetry and Python enrollment are synthetic
+test dependencies; this does not establish native Linux or private-source parity.
+PF-2 remains disabled on staging until final local acceptance and the
+[Linux/staging packet](docs/PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md) pass.
  
 Initial QL-1 through QL-4 deployment (2026-09-23, release `39590f7`): Quant Lab research workspace ran as an offline service using a dedicated Python environment. The authenticated Node.js proxy `/api/quant/*` and 4-tab studio UI (Backtest, Optimizer, Risk Preview; Pine Export unreleased) were deployed alongside Trading Control Panel v2. That release's recorded validation was Node 111/111, Quant 71/71, and `PAPER_ONLY`. The 2026-09-24 observed release and current limitations are recorded under Production below. Live trading remains strictly locked.
 
@@ -590,3 +601,8 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
     7. *Reduce-Only SL*: HTTP 202 queued, worker safely verified and rejected excess exit without opening opposite short.
   - Production queue drained immediately to 0; `/healthz` verified `{"ok":true,"version":"2.2.0","mode":"PAPER_ONLY","queued":0}`.
 - **Historical milestone at the 2026-09-22 release (current work is in Roadmap)**: **Risk Manager / Quant Lab alignment, SMTP Notification Diagnosis and PostgreSQL Password Rotation** — Schema 14, R-1 Targeted Exits, APP-3 Lifecycle, and APP-4 Quotas are fully deployed and verified live in production Paper forward mode. Next implementation work is the documented Bot policy snapshot, preview parity and operational pause scope; follow-up operations are SMTP diagnosis and scheduled PostgreSQL password rotation.
+
+PF-2 local update (2026-10-01): W3 runtime passes 43/43, W5 authority passes
+4/4 and the complete Node suite passes 728 with three skips. S3 prepare-under-lease
+and retention integration are in progress. Native Linux proof, durable PROFILE V2
+enrollment and staging activation remain separate gates; PF-2 API is still off.

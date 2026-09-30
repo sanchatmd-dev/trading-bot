@@ -351,10 +351,15 @@ test('PF-2 R1 plan builder, record derivation and envelope validator',async t=>{
     assert.equal(ceiling.plan.foundation.dataset.metadata.total_bars,10000);
     assert.equal(ceiling.plan.foundation.budget.chunk_bars,1000);
     assert.equal(ceiling.plan.snapshot.development.end_time,ceiling.plan.foundation.dataset.metadata.end_time);
-    refuses(()=>buildPreflightPlan(scaledInput(10001)),'FOUNDATION_CAPABILITY_LIMIT',409);
-    refuses(()=>buildPreflightPlan(scaledInput(50000)),'FOUNDATION_CAPABILITY_LIMIT',409);
-    // Warm-up is part of the count: 8,500 evaluation bars plus 1,600 warm-up bars is over the ceiling.
-    refuses(()=>buildPreflightPlan(scaledInput(8500+1600,1600)),'FOUNDATION_CAPABILITY_LIMIT',409);
+    // Marked enrollment now rejects oversized datasets before the plan's own ceiling.
+    // Keep the historical unmarked contract check to exercise that independent ceiling.
+    for(const total of [10001,50000,8500+1600]){
+      const oversized=scaledInput(total);
+      refuses(()=>buildPreflightPlan(oversized),'PREFLIGHT_ENROLLMENT_REQUIRED',409);
+      delete oversized.enrollment.contract.completion_mode;
+      oversized.enrollment.contract_hash=hash(canonical(oversized.enrollment.contract));
+      refuses(()=>buildPreflightPlan(oversized),'FOUNDATION_CAPABILITY_LIMIT',409);
+    }
     const small=buildPreflightPlan(scaledInput(900,500));
     assert.equal(small.plan.foundation.budget.chunk_bars,900);
     assert.equal(small.plan.foundation.dataset.metadata.total_bars,900);

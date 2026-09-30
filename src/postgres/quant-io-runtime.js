@@ -3,6 +3,8 @@ import path from 'node:path';
 import {reserveIoOperation,bindIoOperation,observeIoOperation,getIoStopDecision} from '../quant-research/io-budget-ledger.js';
 import {validateFoundationRequestV2} from '../quant-research/foundation-contract-v2.js';
 import {terminalReadbackDigest,POST_EXIT_MEASURED,COMMIT_LOCK_TIMEOUT_MS,COMMIT_BOUND_MS} from '../quant-research/io-terminal.js';
+import {finalizeProfileEnrollmentLocked,readProfileCompletionOutcome,refreshProfileCompletionTicket,
+ profileCompletionAttempt,profileCompletionVeto,recordProfileCompletionProof} from './quant-profile-enrollment.js';
 
 const unavailable=()=>fail('QUANT_IO_ACCOUNTING_UNAVAILABLE');
 const lost=()=>fail('QUANT_IO_LEASE_LOST');
@@ -13,6 +15,9 @@ export const QUANT_PROFILE_RUNTIME_PROTOCOL='profile-v2-provisional';
 export const quantIoUnitName=(jobId,operationId)=>
   'robot-quant-'+hash(canonical({jobId,operationId}))+'.service';
 const safe=value=>Number.isSafeInteger(value)&&value>=0;
+const diagnosticReasons=new Set(['COMPLETE','STOP_REQUESTED','ALREADY_STOPPING','STOP_UNCONFIRMED','UNKNOWN',
+ 'WRITEBACK_PENDING','COMMIT_BARRIER_FAILED','COMMIT_BARRIER_TIMEOUT','MEMORY_STAT_INVALID','FREEZE_UNVERIFIED',
+ 'NOT_FROZEN','CGROUP_EMPTY','QUANT_IO_TELEMETRY_UNAVAILABLE','POST_EXIT_UNKNOWN','POST_EXIT_TAIL_OBSERVED']);
 // Frozen commit age limits. The terminal tail floor is after-snapshot 1,000 + commit COMMIT_BOUND_MS 3,000 + kill
 // slack 1,000. lock_timeout limits one wait but the transaction takes four row locks in a row (singleton, job,
 // ledger, launches), so waits of just under COMMIT_LOCK_TIMEOUT_MS each could add up to 4 x 2,000. The transaction
@@ -120,7 +125,7 @@ export class QuantIoRuntime {
     return null;
   }
 
-  async locked(jobId,leaseToken,callback,{active=true,bounded=false,ledgerOptional=false,enteredAt=null}={}){
+  async locked(jobId,leaseToken,callback,{active=true,bounded=false,ledgerOptional=false,enteredAt=null,isolation='READ COMMITTED'}={}){
     if(this.db.isTransaction)throw unavailable();
     if(bounded&&!Number.isFinite(enteredAt))throw unavailable();
     try{return await this.db.transaction(async()=>{
@@ -161,7 +166,7 @@ export class QuantIoRuntime {
       const value=await callback({job,ledgerRow,intent,now});
       if(bounded&&!await withinAge(COMMIT_BEFORE_COMMIT_MS))throw unavailable();
       return value;
-    });}catch(error){
+    },{isolation});}catch(error){
       if(['QUANT_IO_LEASE_LOST','QUANT_IO_LAUNCH_UNCERTAIN','QUANT_IO_ACCOUNTING_UNAVAILABLE',
         'INVALID_IO_BUDGET_LEDGER'].includes(error?.code))throw error;
       throw unavailable();
@@ -397,13 +402,40 @@ export class QuantIoRuntime {
   }
 
   /** Single terminal per operation. Concurrent cancels join the running terminal. */
-  async cancel({ownerId,jobId,leaseToken,operationId}){
+  async cancel({ownerId,jobId,leaseToken,operationId,onTerminalDiagnostic=null}){
     const id=key(jobId,operationId);
     const stoppedJob=await this.scheduler.cancel(ownerId,jobId);
     if(stoppedJob.status!=='STOPPING'||stoppedJob.lease_token!==leaseToken)throw lost();
     const running=this.terminals.get(id);
     if(running)return running;
-    const terminal=this.terminal({jobId,leaseToken,operationId});
+    const terminal=this.terminal({jobId,leaseToken,operationId,onTerminalDiagnostic});
+    this.terminals.set(id,terminal);
+    try{return await terminal;}
+    finally{if(this.terminals.get(id)===terminal)this.terminals.delete(id);}
+  }
+
+  /** Shares the cancellation terminal; beginning completion has already retained the global slot. */
+  async completeProfile({jobId,leaseToken,operationId,completion,onTerminalDiagnostic=null}){
+    const attempt=profileCompletionAttempt(completion);
+    if(!attempt||attempt.jobId!==jobId||attempt.leaseToken!==leaseToken||attempt.operationId!==operationId)throw uncertain();
+    const id=key(jobId,operationId),running=this.terminals.get(id);
+    if(running)return running;
+    const terminal=(async()=>{
+    if(!this.handles.has(id)){
+      const observed=await readProfileCompletionOutcome({db:this.db,jobId,completion});
+      if(observed.kind==='ENROLLED')return {status:'SUCCEEDED',proof:'MEASURED_FINAL_SETTLED'};
+      if(observed.kind==='SETTLED_ONLY'&&observed.job.status==='CANCELLED')return {status:'CANCELLED',proof:'MEASURED_FINAL_SETTLED'};
+      if(observed.kind==='SETTLED_ONLY'&&observed.job.status==='STOPPING'){
+        try{
+          await this.scheduler.cancel(attempt.contract.owner_id,jobId);
+          const stopped=await this.scheduler.acknowledgeStopped(jobId,leaseToken);
+          return {status:stopped.status,proof:'MEASURED_FINAL_SETTLED'};
+        }catch{return {status:'STOPPING',proof:'UNCONFIRMED'};}
+      }
+      if(observed.kind==='UNCERTAIN')return {status:'STOPPING',proof:'UNCONFIRMED'};
+    }
+    return this.terminal({jobId,leaseToken,operationId,completion,onTerminalDiagnostic});
+    })();
     this.terminals.set(id,terminal);
     try{return await terminal;}
     finally{if(this.terminals.get(id)===terminal)this.terminals.delete(id);}
@@ -433,10 +465,10 @@ export class QuantIoRuntime {
   }
 
   /** T4a: measured settlement and launch STOP_PROVEN in one transaction, through the terminal
-   * authorization hook. Returns false when the operation is not eligible or the settle did not
-   * commit (caller uses the unknown-final fallback). Throws when the outcome cannot be resolved.
+   * authorization hook. Returns ENROLLED, SETTLED_ONLY, DENIED, UNSETTLED or UNCERTAIN.
+   * Only UNSETTLED permits the unknown-final fallback; an uncertain enrollment stays quarantined.
    */
-  async settleMeasured({jobId,leaseToken,operationId,handle,bound,frozen,evidence,postExit,stopDigest}){
+  async settleMeasured({jobId,leaseToken,operationId,handle,bound,frozen,evidence,postExit,stopDigest,completion=null}){
     let readbackDigest;
     try{
       readbackDigest=terminalReadbackDigest({jobId,operationId,unitName:frozen.unitName,group:frozen.group,
@@ -446,9 +478,15 @@ export class QuantIoRuntime {
         windowMs:evidence.windowMs,fileDirty:evidence.fileDirty,fileWriteback:evidence.fileWriteback,
         freezer:evidence.freezer,postExit});
       if(evidence.reads.some(read=>read.readBytes!==frozen.readBytes||read.writeBytes!==frozen.writeBytes))
-        return false;
-    }catch{return false;}
+        return {kind:'UNSETTLED'};
+    }catch{return {kind:'UNSETTLED'};}
     let expected=null;
+    let executionTicket=null,healthObservation=null;
+    // These observations happen only after trusted physical stop, outside all accounting locks.
+    if(completion){
+      try{executionTicket=await refreshProfileCompletionTicket(completion);}catch{}
+      try{healthObservation=await this.profile.health({action:'PROFILE_OBSERVE'});}catch{}
+    }
     try{
       const ready=await handle.ready;
       return await this.locked(jobId,leaseToken,async({job,ledgerRow,intent})=>{
@@ -456,23 +494,34 @@ export class QuantIoRuntime {
         const operation=ledgerRow.state.operations.find(item=>item.operation_id===operationId);
         if(!row||!operation||row.payload_hash!==handle.payloadHash||row.unit_name!==bound.unitName||
           operation.cgroup_id!==row.unit_name||operation.cgroup_inode!==bound.cgroupInode||
-          !sameBound(frozen,bound))return false;
+          !sameBound(frozen,bound))return {kind:'UNSETTLED'};
         const sample=trustedSample(frozen,ready,row.unit_name,ledgerRow.state.devices);
         expected={operation_id:operationId,lease_token:leaseToken,cgroup_id:operation.cgroup_id,
           cgroup_inode:operation.cgroup_inode,stopped:true,stop_proof_sha256:stopDigest,
           final_readback:true,readback_proof_sha256:readbackDigest,sample};
+        if(completion)recordProfileCompletionProof(completion,expected);
         if(operation.status==='SETTLED'){
           if(canonical(operation.terminal_proof)!==canonical(expected))throw uncertain();
         }else if(!['SPAWNED','RELEASED'].includes(row.state)||
           !['ACTIVE','STOP_REQUIRED'].includes(operation.status)||
-          canonical(operation.last)!==canonical(sample))return false;
-        await this.ledger.settleLocked({job,row:ledgerRow,leaseToken,
+          canonical(operation.last)!==canonical(sample))return {kind:'UNSETTLED'};
+        const settledState=await this.ledger.settleLocked({job,row:ledgerRow,leaseToken,
           expectedRevision:ledgerRow.revision,input:expected});
         if(row.state!=='STOP_PROVEN')await this.db.query("UPDATE quant_io_launches SET state='STOP_PROVEN' WHERE job_id=$1 AND operation_id=$2",[jobId,operationId]);
-        return true;
-      },{active:false});
+        if(!completion)return {kind:'SETTLED_ONLY'};
+        const settledLedger={...ledgerRow,revision:settledState.revision,state:settledState,state_hash:hash(canonical(settledState))};
+        return finalizeProfileEnrollmentLocked({db:this.db,job,settledLedger,launch:{...row,state:'STOP_PROVEN'},
+          completion,executionTicket,healthObservation,currentPolicy:this.ledger.policy,shouldVeto:()=>this.emergency.has(key(jobId,operationId))||
+            profileCompletionVeto(profileCompletionAttempt(completion))});
+      },{active:false,isolation:completion?'SERIALIZABLE':'READ COMMITTED'});
     }catch(error){
       // Commit outcome may be unknown. Reread before any fallback; never crash-charge a committed settle.
+      if(completion){
+        const observed=await readProfileCompletionOutcome({db:this.db,jobId,completion,expectedTerminalProof:expected});
+        if(observed.kind==='ENROLLED'||observed.kind==='SETTLED_ONLY')return observed;
+        if(observed.kind==='UNSETTLED')return observed;
+        return {kind:'UNCERTAIN'};
+      }
       let observed;
       try{
         observed=await this.locked(jobId,leaseToken,async({ledgerRow,intent})=>({
@@ -481,16 +530,28 @@ export class QuantIoRuntime {
       }catch{throw error;}
       if(observed.operation?.status==='SETTLED'){
         if(expected&&canonical(observed.operation.terminal_proof)===canonical(expected)&&
-          observed.row?.state==='STOP_PROVEN')return true;
+          observed.row?.state==='STOP_PROVEN')return {kind:'SETTLED_ONLY'};
         throw uncertain();
       }
-      return false;
+      return {kind:'UNSETTLED'};
     }
   }
 
-  async terminal({jobId,leaseToken,operationId}){
+  async terminal({jobId,leaseToken,operationId,onTerminalDiagnostic=null,completion=null}){
     const id=key(jobId,operationId),handle=this.handles.get(id);
     let digest,outcome=null,committed=null;
+    const started=performance.now();
+    const complete=(status,proof)=>{
+      if(typeof onTerminalDiagnostic==='function'){
+        const timing=outcome?.readbackEvidence??outcome?.diagnostic;
+        const drainMs=timing?.drainMs??timing?.drain?.durationMs,barrierMs=timing?.barrierMs;
+        const reason=diagnosticReasons.has(outcome?.reason)?outcome.reason:
+          proof==='UNCONFIRMED'?'STOP_UNCONFIRMED':proof==='MEASURED_FINAL_SETTLED'?'COMPLETE':'UNKNOWN';
+        try{onTerminalDiagnostic(Object.freeze({proof,reason,elapsedMs:Math.max(0,Math.round(performance.now()-started)),
+          ...(safe(drainMs)?{drainMs}:{}),...(safe(barrierMs)?{barrierMs}:{})}));}catch{}
+      }
+      return {status,proof};
+    };
     if(handle){
       const bound=this.boundIdentity.get(id)??null;
       let proof;
@@ -504,17 +565,22 @@ export class QuantIoRuntime {
         proof=outcome?.stopProof;
       }else proof=await handle.stop();
       if(!trustedStop(proof,quantIoUnitName(jobId,operationId)))
-        return {status:'STOPPING',proof:'UNCONFIRMED'};
+        return complete('STOPPING','UNCONFIRMED');
       digest=hash(canonical({version:'quant-io-stop-proof-v1',jobId,operationId,
         unitName:proof.unitName,launcherClosed:true,startRegistered:true,
         pendingStartsExcluded:true,unitStopped:true}));
       if(outcome?.measured===true&&committed!==null&&outcome.frozenSample&&
-        committed===canonical(outcome.frozenSample)&&POST_EXIT_MEASURED.includes(outcome.postExit)&&
-        await this.settleMeasured({jobId,leaseToken,operationId,handle,bound,frozen:outcome.frozenSample,
-          evidence:outcome.readbackEvidence,postExit:outcome.postExit,stopDigest:digest})){
-        this.handles.delete(id);this.emergency.delete(id);
-        const completed=await this.scheduler.acknowledgeStopped(jobId,leaseToken);
-        return {status:completed.status,proof:'MEASURED_FINAL_SETTLED'};
+        committed===canonical(outcome.frozenSample)&&POST_EXIT_MEASURED.includes(outcome.postExit)){
+        const settlement=await this.settleMeasured({jobId,leaseToken,operationId,handle,bound,frozen:outcome.frozenSample,
+          evidence:outcome.readbackEvidence,postExit:outcome.postExit,stopDigest:digest,completion});
+        if(settlement?.kind==='UNCERTAIN')return complete('STOPPING','UNCONFIRMED');
+        if(['ENROLLED','SETTLED_ONLY','DENIED'].includes(settlement?.kind)){
+          this.handles.delete(id);this.emergency.delete(id);
+          if(settlement.kind==='ENROLLED')return complete('SUCCEEDED','MEASURED_FINAL_SETTLED');
+          if(completion)await this.scheduler.cancel(profileCompletionAttempt(completion).contract.owner_id,jobId);
+          const completed=await this.scheduler.acknowledgeStopped(jobId,leaseToken);
+          return complete(completed.status,'MEASURED_FINAL_SETTLED');
+        }
       }
     }else{
       // An INTENT_RECORDED row proves no start claim occurred. STARTING without
@@ -533,12 +599,12 @@ export class QuantIoRuntime {
         await this.db.query("UPDATE quant_io_launches SET state='STOP_PROVEN' WHERE job_id=$1 AND operation_id=$2",[jobId,operationId]);
         return true;
       },{active:false,ledgerOptional:true});
-      if(!excluded)return {status:'STOPPING',proof:'UNCONFIRMED'};
+      if(!excluded)return complete('STOPPING','UNCONFIRMED');
       digest=hash(canonical({version:'quant-io-no-start-v1',jobId,operationId}));
       if(nothingReserved){
         this.emergency.delete(id);
         const completed=await this.scheduler.acknowledgeStopped(jobId,leaseToken);
-        return {status:completed.status,proof:'NO_START_PROVEN'};
+        return complete(completed.status,'NO_START_PROVEN');
       }
     }
     // Fallback: no trusted final readback. Burn allowance and quarantine job.
@@ -562,7 +628,8 @@ export class QuantIoRuntime {
       if(row.state!=='STOP_PROVEN')await this.db.query("UPDATE quant_io_launches SET state='STOP_PROVEN' WHERE job_id=$1 AND operation_id=$2",[jobId,operationId]);
     },{active:false});
     this.handles.delete(id);this.emergency.delete(id);
+    if(completion)await this.scheduler.cancel(profileCompletionAttempt(completion).contract.owner_id,jobId);
     const completed=await this.scheduler.acknowledgeStopped(jobId,leaseToken);
-    return {status:completed.status,proof:'UNKNOWN_FINAL_CHARGED'};
+    return complete(completed.status,'UNKNOWN_FINAL_CHARGED');
   }
 }

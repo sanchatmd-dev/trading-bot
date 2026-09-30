@@ -14,6 +14,9 @@ import {ResearchDatasetStore} from '../../src/quant-research/research-dataset-st
 import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {config} from '../../src/config.js';
 import {fixture,source} from '../helpers/quant-research-fixture.mjs';
+import {CONTENT_DIGEST_SQL,contentDigest,DATASET_BINDING_STEP_ID,datasetBindingIdentity,
+ materializeExecutionContract} from '../../src/quant-research/research-contract-v2.js';
+import {profileV2Fixture} from '../helpers/profile-v2-fixture.js';
 let admin,db,store,pine,service,databaseName,datasetRoot,now=Date.now();
 before(async()=>{
  assert.ok(process.env.TEST_DATABASE_URL,'Isolated PostgreSQL required');
@@ -70,6 +73,10 @@ function continuation(payload){
  return {checkpoint,result:next===end?{parameters,kind,train:metric,validation:metric,...(kind==='HOLDOUT'?{test:metric}:{})}:null};
 }
 const worker=evaluateChunk=>new QuantResearchFoundationWorker({service,clock:()=>now,health:async()=>({ok:true}),evaluateChunk,stopUnit:async()=>true});
+async function preparedClaim(first){
+ const job=await first.claim();first.controller=new AbortController();
+ return first.prepareResearch(job);
+}
 test('default legacy mode accepts contracts without execution_backend and rejects foundation jobs',async()=>{
  await db.query("UPDATE quant_research_executor_mode SET mode='LEGACY'");
  const x=await baseline(),legacy=new QuantResearchService({pineService:pine,clock:()=>now,supportedSourceHash:hash(source),foundation:false});
@@ -81,27 +88,49 @@ test('default legacy mode accepts contracts without execution_backend and reject
  await db.transaction(()=>legacy.get(x.a,queued.run_id,true));
  await db.query("UPDATE quant_research_executor_mode SET mode='FOUNDATION'");
 });
-test('real research enqueue publishes references and persists one shared scheduler binding',async()=>{
- const x=await baseline(),queued=await enqueue(x),row=(await db.query('SELECT * FROM quant_jobs WHERE run_id=$1',[queued.run_id])).rows[0];
+test('real research enqueue stores range/digest without files; claim prepares immutable references',async()=>{
+ const x=await baseline(),files=await datasetListing();
+ let publications=0;const publish=service.datasetStore.publish.bind(service.datasetStore);
+ service.datasetStore.publish=async(...args)=>{publications++;return publish(...args);};
+ let queued,statements;
+ try{statements=await recordSql(async()=>{queued=await enqueue(x);});}
+ finally{service.datasetStore.publish=publish;}
+ assert.equal(publications,0);assert.deepEqual(await datasetListing(),files);
+ assert.equal(statements.some(sql=>sql.includes('SELECT * FROM pine_market_bars')),false);
+ const row=(await db.query('SELECT * FROM quant_jobs WHERE run_id=$1',[queued.run_id])).rows[0];
  assert.equal(row.contract.execution_backend,'quant-foundation-v1');assert.equal(Object.hasOwn(row.contract.dataset,'bars'),false);
- assert.equal(row.contract.dataset.first_time,x.body.dataset.start_time);assert.equal(row.contract.dataset.references.sidecar.profile,'closed-ohlcv-atr14-v1');
- const refs=row.contract.dataset.references;const stream=service.datasetStore.read(refs,{start:0,end:1});assert.equal((await stream.next()).value.atr14,'2');
+ assert.equal(row.contract.version,'ql3a-research-job-v2');assert.equal(Object.hasOwn(row.contract.dataset,'references'),false);
+ assert.equal(queued.dataset_hash,null);assert.equal(queued.dataset_prepared,false);
+ assert.equal(row.contract.dataset.first_time,x.body.dataset.start_time);
  const binding=(await db.query('SELECT * FROM quant_research_foundation WHERE run_id=$1',[queued.run_id])).rows[0];assert.equal(binding.contract_hash,row.contract_hash);
  assert.equal((await db.query('SELECT status FROM quant_foundation_jobs WHERE job_id=$1',[binding.job_id])).rows[0].status,'QUEUED');
  await assert.rejects(new QuantResearchWorker({service}).claim(),{code:'RESEARCH_FOUNDATION_WORKER_REQUIRED'});
  await assert.rejects(db.query("UPDATE quant_research_executor_mode SET mode='LEGACY'"),/drain/);
+ const first=worker(continuation),claimed=await first.claim();first.controller=new AbortController();
+ assert.equal(claimed.phase,'PREPARE');
+ await assert.rejects(first.step(claimed,'candidate:000','CANDIDATE',claimed.contract.plan.candidates[0]),
+  {code:'RESEARCH_DATASET_BINDING_REQUIRED'});
+ const prepared=await first.prepareResearch(claimed),refs=prepared.contract.dataset.references;
+ assert.equal(refs.sidecar.profile,'closed-ohlcv-atr14-v1');
+ const stream=service.datasetStore.read(refs,{start:0,end:1});assert.equal((await stream.next()).value.atr14,'2');
+ const datasetBinding=(await db.query('SELECT * FROM quant_research_chunks WHERE run_id=$1 AND step_id=$2',
+  [queued.run_id,DATASET_BINDING_STEP_ID])).rows[0];
+ assert.equal(datasetBinding.identity_hash,datasetBindingIdentity(row.contract,datasetBinding.parameters));
+ const summary=await db.transaction(()=>service.get(x.a,queued.run_id));
+ assert.equal(summary.dataset_prepared,true);assert.equal(summary.dataset_hash,datasetBinding.parameters.dataset_sha256);
  await db.transaction(()=>service.get(x.a,queued.run_id,true));
+ await first.reconcile();
 });
 test('durable real step checkpoint resumes without prefix replay; old lease cannot publish',async()=>{
  const x=await baseline(),queued=await enqueue(x);let calls=0;
  const first=worker(payload=>{if(++calls===2)throw Object.assign(Error('fixture interruption'),{stopped:true});return continuation(payload);});
- const old=await first.claim();first.controller=new AbortController();
+ const old=await preparedClaim(first);
  await assert.rejects(first.step(old,'candidate:000','CANDIDATE',old.contract.plan.candidates[0]),/fixture interruption/);
- const chunk=(await db.query('SELECT * FROM quant_research_chunks WHERE run_id=$1',[queued.run_id])).rows[0];assert.equal(chunk.next_bar,1000);assert.equal(chunk.checkpoint.paper.cash,'1000');
+ const chunk=(await db.query("SELECT * FROM quant_research_chunks WHERE run_id=$1 AND kind='CANDIDATE'",[queued.run_id])).rows[0];assert.equal(chunk.next_bar,1000);assert.equal(chunk.checkpoint.paper.cash,'1000');
  assert.equal((await db.query('SELECT evaluations_started FROM quant_jobs WHERE run_id=$1',[queued.run_id])).rows[0].evaluations_started,1);
  await first.scheduler.pause(old.foundation);
  const starts=[],second=worker(payload=>{starts.push(payload.rows[0].time);return continuation(payload);});
- const resumed=await second.claim();second.controller=new AbortController();assert.notEqual(resumed.lease_token,old.lease_token);
+ const resumed=await preparedClaim(second);assert.notEqual(resumed.lease_token,old.lease_token);
  await assert.rejects(first.fenced(old,()=>{}),{code:'FOUNDATION_LEASE_LOST'});
  const result=await second.step(resumed,'candidate:000','CANDIDATE',resumed.contract.plan.candidates[0]);
  assert.equal(starts[0],old.contract.dataset.first_time+1000*60000);assert.equal(result.validation.closed_trades,5);
@@ -113,7 +142,7 @@ test('cancel reserves shared slot until physical stop; late output cannot checkp
  const x=await baseline(),queued=await enqueue(x);let release,started;
  const ready=new Promise(resolve=>{started=resolve;});
  const first=worker(async payload=>{started();await new Promise(resolve=>{release=resolve;});return continuation(payload);});
- const job=await first.claim();first.controller=new AbortController();
+ const job=await preparedClaim(first);
  const pending=first.step(job,'candidate:000','CANDIDATE',job.contract.plan.candidates[0]);await ready;
  await db.transaction(()=>service.get(x.a,queued.run_id,true));
  assert.equal((await db.query('SELECT status FROM quant_foundation_jobs WHERE job_id=$1',[job.foundation.job_id])).rows[0].status,'STOPPING');
@@ -142,7 +171,7 @@ test('stop during awaited claim never launches an evaluator or leaves a reserved
  assert.equal((await db.query('SELECT count(*)::int total FROM quant_research_chunks WHERE run_id=$1',[queued.run_id])).rows[0].total,0);
 });
 test('finish holds owner lock across current baseline check and result publication',async()=>{
- const x=await baseline();await enqueue(x);const first=worker(continuation),job=await first.claim();
+ const x=await baseline();await enqueue(x);const first=worker(continuation),job=await preparedClaim(first);
  let entered,release;const ready=new Promise(resolve=>{entered=resolve;}),gate=new Promise(resolve=>{release=resolve;});
  const current=first.current.bind(first);first.current=async row=>{await current(row);entered();await gate;};
  const finish=first.finish(job,'NO_VALID_CANDIDATE',{fixture:true});await ready;
@@ -177,7 +206,7 @@ test('private baseline Python step matches original evaluator exactly without se
  const queued=await db.transaction(()=>actualService.enqueue(x.a,x.body,randomUUID()));
  const python=process.env.QUANT_TEST_PYTHON??path.resolve('quant_lab/.venv/Scripts/python.exe');
  const actual=new QuantResearchFoundationWorker({service:actualService,clock:()=>now,health:async()=>({ok:true}),python,allowUnsupportedPlatformForTests:true});
- const job=await actual.claim();actual.controller=new AbortController();
+ const job=await preparedClaim(actual);
  assert.equal(job.contract.dataset.bar_count,4533);assert.equal(Object.hasOwn(job.contract.dataset,'bars'),false);
  assert.deepEqual(job.contract.input_lock.baseline,approved.input_lock.baseline);
  const parameters=job.contract.input_lock.baseline;
@@ -185,11 +214,190 @@ test('private baseline Python step matches original evaluator exactly without se
  const result=await actual.step(job,'candidate:000','CANDIDATE',parameters);
  assert.deepEqual(result,expected);assert.equal(Object.hasOwn(result,'test'),false);
  const steps=await actual.steps(job);assert.equal(steps.length,1);assert.equal(steps[0].kind,'CANDIDATE');
- const chunk=(await db.query('SELECT next_bar,unit_name,checkpoint FROM quant_research_chunks WHERE run_id=$1',[queued.run_id])).rows[0];
+ const chunk=(await db.query("SELECT next_bar,unit_name,checkpoint FROM quant_research_chunks WHERE run_id=$1 AND kind='CANDIDATE'",[queued.run_id])).rows[0];
  assert.equal(chunk.next_bar,job.contract.split.validation_end);assert.equal(chunk.unit_name,null);assert.equal(chunk.checkpoint.next_bar,job.contract.split.validation_end);
  assert.equal((await db.query('SELECT evaluations_started FROM quant_jobs WHERE run_id=$1',[queued.run_id])).rows[0].evaluations_started,1);
  await actual.finish(job,'NO_VALID_CANDIDATE',{scope:'BASELINE_ADAPTER_ENGINEERING_CHECK_ONLY',holdout_evaluated:false,owner_recommendation_ready:false});
 });
+test('P0 ordered PostgreSQL digest equals JS; empty range returns null',async()=>{
+ const x=await baseline(),d=x.body.dataset;
+ const rows=(await db.query("SELECT * FROM pine_market_bars WHERE bar_time>=$1 AND bar_time<=$2 ORDER BY bar_time",[d.start_time,d.end_time])).rows;
+ const aggregate=(await db.query(CONTENT_DIGEST_SQL,[d.start_time,d.end_time,'closed-ohlcv-atr14-v1'])).rows[0];
+ assert.equal(aggregate.digest,contentDigest(rows));assert.equal(aggregate.n,3250);assert.equal(aggregate.bad,0);
+ const empty=(await db.query(CONTENT_DIGEST_SQL,[d.end_time+1,d.end_time+2,'closed-ohlcv-atr14-v1'])).rows[0];
+ assert.equal(empty.n,0);assert.equal(empty.digest,null);
+});
+
+test('P1b NULL-safe profile/time/hash filters reject before publication',async()=>{
+ const x=await baseline(),time=x.body.dataset.start_time;
+ const original=(await db.query('SELECT * FROM pine_market_bars WHERE bar_time=$1',[time])).rows[0];
+ const files=await datasetListing();
+ const mutations=[{...original,provenance:{}},
+  {...original,bar:{...original.bar,time:time+1}}, {...original,content_hash:'INVALID'}];
+ try{
+  for(const changed of mutations){
+   await db.query('UPDATE pine_market_bars SET bar=$2,provenance=$3,content_hash=$4 WHERE bar_time=$1',
+    [time,JSON.stringify(changed.bar),JSON.stringify(changed.provenance),changed.content_hash]);
+   await assert.rejects(enqueue(x),{code:'VERIFIED_MARKET_DATA_REQUIRED'});
+   assert.deepEqual(await datasetListing(),files);
+  }
+ }finally{await db.query('UPDATE pine_market_bars SET bar=$2,provenance=$3,content_hash=$4 WHERE bar_time=$1',
+  [time,JSON.stringify(original.bar),JSON.stringify(original.provenance),original.content_hash]);}
+});
+
+test('P2 busy global slot still queues research without files',async()=>{
+ const x=await baseline(),queued=await enqueue(x),first=worker(continuation);
+ const running=await first.claim(),files=await datasetListing();
+ const other=await baseline(),waiting=await enqueue(other);
+ assert.equal(waiting.status,'QUEUED');assert.deepEqual(await datasetListing(),files);
+ assert.equal(await first.scheduler.claim('busy'),null);
+ await db.transaction(()=>service.get(other.a,waiting.run_id,true));
+ await db.transaction(()=>service.get(x.a,queued.run_id,true));await first.reconcile();
+ assert.equal(running.phase,'PREPARE');
+});
+
+test('P3 tick sends V1 payloads while keeping stored V2 identity and bound report digest',async()=>{
+ const x=await baseline(),queued=await enqueue(x);let evaluations=0;
+ const first=worker(payload=>{
+  evaluations++;assert.equal(payload.contract.version,'ql3a-research-job-v1');
+  assert.ok(payload.contract.dataset.references);assert.match(payload.contract.dataset.sha256,/^[a-f0-9]{64}$/);
+  return continuation(payload);
+ });
+ assert.equal(await first.tick(),true);assert.ok(evaluations>0);
+ const row=(await db.query('SELECT * FROM quant_jobs WHERE run_id=$1',[queued.run_id])).rows[0];
+ assert.ok(['SUCCEEDED','NO_VALID_CANDIDATE'].includes(row.status),row.diagnostic);
+ assert.equal(row.contract.version,'ql3a-research-job-v2');assert.equal(row.result.contract_hash,row.contract_hash);
+ const binding=(await db.query('SELECT parameters FROM quant_research_chunks WHERE run_id=$1 AND step_id=$2',
+  [queued.run_id,DATASET_BINDING_STEP_ID])).rows[0].parameters;
+ assert.equal(row.result.dataset_hash,binding.dataset_sha256);
+ assert.equal(hash(canonical(materializeExecutionContract(row.contract,binding))),binding.execution_contract_hash);
+});
+
+test('P4 market mutation after enqueue refuses before publish or binding',async()=>{
+ const x=await baseline(),queued=await enqueue(x),time=x.body.dataset.start_time;
+ const original=(await db.query('SELECT * FROM pine_market_bars WHERE bar_time=$1',[time])).rows[0];
+ const changed={...original.bar,volume:'2'},files=await datasetListing();
+ try{
+  await db.query('UPDATE pine_market_bars SET bar=$2,content_hash=$3 WHERE bar_time=$1',
+   [time,JSON.stringify(changed),hash(canonical(changed))]);
+  assert.equal(await worker(continuation).tick(),true);
+  const row=(await db.query('SELECT status,diagnostic FROM quant_jobs WHERE run_id=$1',[queued.run_id])).rows[0];
+  assert.equal(row.status,'FAILED');assert.equal(row.diagnostic,'RESEARCH_DATASET_CHANGED');
+  assert.equal((await db.query('SELECT count(*)::int n FROM quant_research_chunks WHERE run_id=$1',[queued.run_id])).rows[0].n,0);
+  assert.deepEqual(await datasetListing(),files);
+ }finally{await db.query('UPDATE pine_market_bars SET bar=$2,content_hash=$3 WHERE bar_time=$1',
+  [time,JSON.stringify(original.bar),original.content_hash]);}
+});
+
+test('P5 stale token cannot bind; successor republishes identical references',async()=>{
+ const x=await baseline(),queued=await enqueue(x),first=worker(continuation),second=worker(continuation);
+ const old=await first.claim();first.controller=new AbortController();second.controller=new AbortController();
+ const publish=service.datasetStore.publish.bind(service.datasetStore);let refs,successor;
+ service.datasetStore.publish=async(...args)=>{
+  refs=await publish(...args);await first.scheduler.pause(old.foundation);successor=await second.claim();return refs;
+ };
+ try{await assert.rejects(first.prepareResearch(old),{code:'FOUNDATION_LEASE_LOST'});}
+ finally{service.datasetStore.publish=publish;}
+ assert.equal((await db.query('SELECT count(*)::int n FROM quant_research_chunks WHERE run_id=$1',[queued.run_id])).rows[0].n,0);
+ const prepared=await second.prepareResearch(successor);assert.deepEqual(prepared.dataset_binding.references,refs);
+ await db.transaction(()=>service.get(x.a,queued.run_id,true));await second.reconcile();
+});
+
+test('P6 owner cancel after publish forbids binding and releases after proof',async()=>{
+ const x=await baseline(),queued=await enqueue(x),first=worker(continuation),job=await first.claim();
+ first.controller=new AbortController();const publish=service.datasetStore.publish.bind(service.datasetStore);
+ service.datasetStore.publish=async(...args)=>{
+  const refs=await publish(...args);await db.transaction(()=>service.get(x.a,queued.run_id,true));return refs;
+ };
+ try{await assert.rejects(first.prepareResearch(job),{code:'FOUNDATION_LEASE_LOST'});}
+ finally{service.datasetStore.publish=publish;}
+ assert.equal((await db.query('SELECT count(*)::int n FROM quant_research_chunks WHERE run_id=$1',[queued.run_id])).rows[0].n,0);
+ await first.reconcile();assert.equal((await db.query('SELECT status FROM quant_foundation_jobs WHERE job_id=$1',[queued.run_id])).rows[0].status,'CANCELLED');
+});
+
+test('P7/P8 reprepare is deterministic; bound resume never republishes and missing sidecar refuses',async()=>{
+ const x=await baseline(),queued=await enqueue(x),first=worker(continuation),old=await first.claim();
+ first.controller=new AbortController();const publish=service.datasetStore.publish.bind(service.datasetStore);let published;
+ service.datasetStore.publish=async(...args)=>{published=await publish(...args);throw Error('crash-after-publish');};
+ try{await assert.rejects(first.prepareResearch(old),/crash-after-publish/);}
+ finally{service.datasetStore.publish=publish;}
+ const files=await datasetListing();await first.scheduler.pause(old.foundation);
+ const second=worker(continuation),prepared=await preparedClaim(second);
+ assert.deepEqual(prepared.dataset_binding.references,published);assert.deepEqual(await datasetListing(),files);
+ await second.scheduler.pause(prepared.foundation);
+ const third=worker(continuation),resumed=await third.claim();third.controller=new AbortController();
+ service.datasetStore.publish=async()=>{throw Error('must-not-republish');};
+ try{
+  const reused=await third.prepareResearch(resumed);
+  assert.deepEqual(reused.dataset_binding,prepared.dataset_binding);
+  const filename=path.join(datasetRoot,'atr14-'+published.sidecar.sha256+'.json'),bytes=await fs.readFile(filename);
+  await fs.unlink(filename);
+  try{await assert.rejects(third.prepareResearch(resumed),{code:'RESEARCH_DATASET_BINDING_INVALID'});}
+  finally{await fs.writeFile(filename,bytes);}
+ }finally{service.datasetStore.publish=publish;}
+ await db.transaction(()=>service.get(x.a,queued.run_id,true));await third.reconcile();
+});
+
+test('P9 revoked engine cancels cleanly and next valid research row claims',async()=>{
+ const x=await baseline(),queued=await enqueue(x),other=await baseline(),next=await enqueue(other);
+ const first=worker(continuation),engine=first.engineHash.bind(first);
+ first.engineHash=async()=> '0'.repeat(64);
+ assert.equal(await first.claim(),null);
+ assert.equal((await db.query('SELECT diagnostic FROM quant_foundation_jobs WHERE job_id=$1',[queued.run_id])).rows[0].diagnostic,'AUTHORIZATION_REVOKED');
+ assert.equal((await db.query('SELECT diagnostic FROM quant_foundation_jobs WHERE job_id=$1',[next.run_id])).rows[0].diagnostic,'AUTHORIZATION_REVOKED');
+ first.engineHash=engine;
+ const valid=await enqueue(other);assert.equal((await first.claim()).run_id,valid.run_id);
+ await db.transaction(()=>service.get(other.a,valid.run_id,true));await first.reconcile();
+});
+
+test('P9 managed V1 rows refuse without wedging; request field mutation cannot authorize',async()=>{
+ const x=await baseline(),queued=await enqueue(x),first=worker(continuation),prepared=await preparedClaim(first);
+ const request=prepared.foundation.contract;
+ for(const change of [r=>{r.bot_id='foreign';},r=>{r.pending_dataset.content_digest='0'.repeat(64);},
+  r=>{r.engine_hash='0'.repeat(64);},r=>{r.budget.candidates++;}]){
+  const changed=structuredClone(request);change(changed);
+  assert.deepEqual(await db.transaction(()=>first.authorize(x.a,changed,'CLAIM',{})),{ok:false});
+ }
+ await db.transaction(()=>service.get(x.a,queued.run_id,true));await first.reconcile();
+ const id=randomUUID(),contract=prepared.contract,contractHash=hash(canonical(contract));
+ const {pending_dataset,...rest}=request;
+ const oldRequest={...rest,version:'quant-foundation-v1',dataset:contract.dataset.references.raw};
+ await db.transaction(async()=>{
+  await db.query(`INSERT INTO quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,
+   submission_hash,contract_hash,contract,status,created_at,updated_at,deadline)
+   VALUES($1,$2,$2,$3,$4,$5,$6,$7,'QUEUED',$8,$8,$9)`,
+   [id,x.a,contract.deployment_id,randomUUID(),hash('managed-v1'),contractHash,JSON.stringify(contract),now-1,now+900000]);
+  await db.query(`INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,
+   status,created_at,deadline_at) VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)`,
+   [id,x.a,randomUUID(),JSON.stringify(oldRequest),hash(canonical(oldRequest)),now-1,now+900000]);
+  await db.query('INSERT INTO quant_research_foundation VALUES($1,$2,$3)',[id,id,contractHash]);
+ });
+ const valid=await enqueue(x),claimed=await first.claim();assert.equal(claimed.run_id,valid.run_id);
+ const refused=(await db.query('SELECT status,diagnostic FROM quant_foundation_jobs WHERE job_id=$1',[id])).rows[0];
+ assert.equal(refused.status,'CANCELLED');assert.equal(refused.diagnostic,'AUTHORIZATION_REVOKED');
+ await db.transaction(()=>service.get(x.a,valid.run_id,true));await first.reconcile();
+});
+
+test('P10 abort after raw publication leaves no binding or pending temporary files',async()=>{
+ const x=await baseline(),queued=await enqueue(x),first=worker(continuation),job=await first.claim();
+ first.controller=new AbortController();const publish=service.datasetStore.raw.publish.bind(service.datasetStore.raw);
+ service.datasetStore.raw.publish=async(...args)=>{const refs=await publish(...args);first.controller.abort();return refs;};
+ try{await assert.rejects(first.prepareResearch(job),{code:'DATASET_CANCELLED'});}
+ finally{service.datasetStore.raw.publish=publish;}
+ assert.equal((await db.query('SELECT count(*)::int n FROM quant_research_chunks WHERE run_id=$1',[queued.run_id])).rows[0].n,0);
+ assert.equal((await datasetListing()).some(name=>name.split(/[\\/]/).some(part=>part.startsWith('.pending-'))),false);
+ await db.transaction(()=>service.get(x.a,queued.run_id,true));await first.reconcile();
+});
+
+test('P12 capacity policy does not classify research V2 as PROFILE V2',async()=>{
+ const x=await baseline(),queued=await enqueue(x),{policy}=profileV2Fixture();
+ const first=new QuantResearchFoundationWorker({service,clock:()=>now,health:async()=>({ok:true}),
+  evaluateChunk:continuation,stopUnit:async()=>true,capacityPolicy:policy});
+ const job=await first.claim();assert.equal(job.run_id,queued.run_id);
+ assert.equal(job.foundation.contract.version,'quant-foundation-research-v2');
+ await db.transaction(()=>service.get(x.a,queued.run_id,true));await first.reconcile();
+});
+
 // QS heavy-path S1: cheap rejections happen before the JSON bar load and before any dataset publication.
 const recordSql=async fn=>{
  const sql=[],query=db.query.bind(db);db.query=(text,...rest)=>{sql.push(String(text));return query(text,...rest);};

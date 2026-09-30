@@ -108,3 +108,24 @@ test('V2 rejects extra, accessor, symbol and non-JSON fields before reads',()=>{
  assert.throws(()=>validateProfileResultV2(r,resultAccessor,{policy:p}),{code:'INVALID_FOUNDATION_V2'});
  assert.equal(validateProfileSpecV2(r.profile,r.dataset).seed_bars,500);
 });
+
+function enrollmentRequest(){
+ const p=policy();p.environment='staging';p.terminal={version:'quant-io-terminal-policy-v1',runtime_max_ms:70000,terminal_drain_ms:45000,tail_margin_ms:5000};
+ p.budget.candidates=1;p.budget.max_evaluations=1;
+ const r=request(p,10000);r.completion_mode='pf2-enrollment-v1';return {p,r};
+}
+test('optional enrollment mode preserves canonical diagnostic bytes and requires exact staging construction',()=>{
+ const p=policy(),r=request(p),before=canonical(r);
+ assert.equal(canonical(validateFoundationRequestV2(r,{policy:p})),before);
+ const good=enrollmentRequest();assert.equal(validateFoundationRequestV2(good.r,{policy:good.p}).completion_mode,'pf2-enrollment-v1');
+ for(const value of [null,undefined,'',true,'PF2-ENROLLMENT-V1']){
+  const bad=clone(good.r);bad.completion_mode=value;assert.throws(()=>validateFoundationRequestV2(bad,{policy:good.p}));
+ }
+ for(const mutate of [r=>r.kind='RESEARCH',r=>r.capacity.dataset.raw_bars=10001,r=>r.budget.candidates=2]){
+  const bad=clone(good.r);mutate(bad);assert.throws(()=>validateFoundationRequestV2(bad,{policy:good.p}));
+ }
+ const local=clone(good.p);local.environment='local';const localRequest=request(local,10000);localRequest.completion_mode='pf2-enrollment-v1';
+ assert.throws(()=>validateFoundationRequestV2(localRequest,{policy:local}));
+ const noTerminal=clone(good.p);delete noTerminal.terminal;const missing=request(noTerminal,10000);missing.completion_mode='pf2-enrollment-v1';
+ assert.throws(()=>validateFoundationRequestV2(missing,{policy:noTerminal}));
+});

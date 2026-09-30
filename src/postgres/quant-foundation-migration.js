@@ -1,5 +1,7 @@
 import fs from 'node:fs/promises';
 import {bindQuantStorage} from './quant-storage-retention.js';
+import {ensureQuantIoSchema} from './quant-io-schema-install.js';
+import {ensureQuantProfileEnrollmentSchema} from './quant-profile-enrollment-migration.js';
 
 /** Offline only: the maintenance lock excludes every participating API/worker.
  * Installation preserves LEGACY mode unless the operator explicitly selects it.
@@ -20,6 +22,8 @@ export async function migrateQuantFoundation(db,{mode,storageRoot}={}) {
     if(!await version('quant_research_foundation_schema'))await db.query(await fs.readFile(new URL('./quant-research-foundation-schema.sql',import.meta.url),'utf8'));
     if(!await version('quant_storage_schema'))await db.query(await fs.readFile(new URL('./quant-storage-schema.sql',import.meta.url),'utf8'));
     if(!await version('quant_preflight_schema'))await db.query(await fs.readFile(new URL('./quant-preflight-schema.sql',import.meta.url),'utf8'));
+    await ensureQuantIoSchema(db);
+    await ensureQuantProfileEnrollmentSchema(db);
     if(storageRoot!==undefined)await bindQuantStorage(db,storageRoot);
     if(mode!==undefined)await db.query('UPDATE quant_research_executor_mode SET mode=$1 WHERE singleton',[mode]);
     return (await db.query('SELECT mode FROM quant_research_executor_mode WHERE singleton')).rows[0].mode;

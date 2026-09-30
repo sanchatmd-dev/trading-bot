@@ -8,6 +8,7 @@ import {config} from '../../src/config.js';
 import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {resolveHistoricalPreflight} from '../../src/quant-research/preflight-resolver.js';
 import {createPf2Base,MINUTE,START} from '../helpers/pf2-fixture.js';
+import {profileEnrollmentEvidenceFixture,insertProfileEnrollmentEvidenceFixture} from '../helpers/profile-enrollment-evidence-fixture.js';
 import {FIXTURE_LABEL,createAccounts,createHarness,createWorld,fixtureEnvelope,insertFoundationJob,
   insertPreflightPair,insertV1Profile,sha,tamperBoundary} from '../helpers/preflight-pg-fixture.mjs';
 
@@ -365,7 +366,7 @@ test('an enrollment that is PROFILE v1, not SUCCEEDED, without a result or tampe
   const v1=await insertV1Profile(main.db,world);
   await refuses(main.tx(()=>main.service.enqueue(world.owner,{...world.request,profile_job_id:v1},key())),'PREFLIGHT_ENROLLMENT_REQUIRED',409);
   const v2Model=await insertV1Profile(main.db,world,{modelVersion:'paper-close-cost-v2'});
-  await refuses(main.tx(()=>main.service.enqueue(world.owner,{...world.request,profile_job_id:v2Model},key())),'PREFLIGHT_EXECUTION_MODEL_PARITY_REQUIRED',409);
+  await refuses(main.tx(()=>main.service.enqueue(world.owner,{...world.request,profile_job_id:v2Model},key())),'PREFLIGHT_ENROLLMENT_REQUIRED',409);
   // Positive control: with every row restored the same request is accepted.
   assert.equal((await enqueue(main,world)).status,'QUEUED');
 });
@@ -390,6 +391,29 @@ test('an enrollment that turns invalid after enqueue stops the resolver (PF2_DAT
     assert.deepEqual(await authorize(main,world,pairJob.contract,'CLAIM',{job_id:pair}),{ok:false});
   }
   assert.deepEqual(await authorize(main,world,job.contract,'CLAIM',{job_id:summary.job_id}),{ok:true});
+});
+
+test('explicit mode and matching durable receipt are mandatory for enqueue, authorization and trusted resolve',async()=>{
+  const world=await createWorld(main),planned=await main.service.assemble(world.owner,world.request);
+  for(const variant of ['unmarked-no-receipt','unmarked-with-receipt','marked-no-receipt','wrong-result-receipt','wrong-unit-proof']){
+    const contract=clone(world.scenario.enrollment.contract),result=clone(world.scenario.enrollment.result),profileJobId=randomUUID();
+    if(variant.startsWith('unmarked'))delete contract.completion_mode;
+    await insertFoundationJob(main.db,{jobId:profileJobId,owner:world.owner,contract,result});
+    if(!variant.endsWith('no-receipt')){
+      const evidence=profileEnrollmentEvidenceFixture({contract,result,policy:world.scenario.enrollment.capacity_policy,jobId:profileJobId});
+      if(variant==='wrong-result-receipt')evidence.receipt.result_hash=sha('9');
+      if(variant==='wrong-unit-proof')evidence.launch.unit_name='robot-quant-'+sha('9')+'.service';
+      await insertProfileEnrollmentEvidenceFixture(main.db,evidence);
+    }
+    await refuses(main.tx(()=>main.service.enqueue(world.owner,{...world.request,profile_job_id:profileJobId},key())),
+      'PREFLIGHT_ENROLLMENT_REQUIRED',409);
+    const pair=await insertPreflightPair(main.db,{planned,owner:world.owner,bot:world.bot,deploymentId:world.deploymentId,profileJobId});
+    const {job}=await rowsOf(main,pair);
+    assert.deepEqual(await authorize(main,world,job.contract,'CLAIM',{job_id:pair}),{ok:false},variant);
+    await resolverCode(resolveHistoricalPreflight(planned.plan,main.service.trusted(job),
+      {now:world.now,supportedSourceHash:world.supportedSourceHash}),'PF2_DATASET_ENROLLMENT_REQUIRED');
+    await main.db.query("UPDATE quant_foundation_jobs SET status='CANCELLED' WHERE job_id=$1",[pair]);
+  }
 });
 
 test('a rotated capacity policy invalidates the enrollment for enqueue, resolve and authorize',async()=>{
@@ -652,9 +676,10 @@ test('holdout registry: owner-only, write-once, idempotent for the same value, m
   const {registered,...view}=first;
   assert.equal(registered,true);
   assert.deepEqual(await main.tx(()=>main.service.getHoldoutBoundary(world.owner,world.bot)),view);
-  // Each bot has its own boundary: a sibling bot of the same owner registers its own value.
-  const second=await register(world.owner,{bot_id:owned.bots[1],holdout_start_time:value+60*MINUTE});
-  assert.equal(second.holdout_start_time,value+60*MINUTE);
+  // Registration remains per bot, but a sibling cannot open an existing holdout to development.
+  await refuses(register(world.owner,{bot_id:owned.bots[1],holdout_start_time:value+MINUTE}),'HOLDOUT_BOUNDARY_CONFLICT',409);
+  const second=await register(world.owner,{bot_id:owned.bots[1],holdout_start_time:value});
+  assert.equal(second.holdout_start_time,value);
   assert.deepEqual((await stored(world)).map(row=>row.holdout_start_time),[value]);
 });
 
@@ -748,9 +773,10 @@ test('legacy holdout conflict is owner wide: a legacy split of any bot of the ow
   // Equal to the earliest legacy start is allowed, earlier too. Registration stays per bot: one row for each bot.
   assert.equal((await accepts(register(c.owner,body(c,legacyStart(2800))))).holdout_start_time,legacyStart(2800));
   assert.equal((await accepts(register(a.owner,body(a,legacyStart(2800)-10*MINUTE)))).registered,true);
-  assert.equal((await accepts(register(b.owner,body(b,legacyStart(2800))))).registered,true);
+  await refuses(register(b.owner,body(b,legacyStart(2800))),'HOLDOUT_BOUNDARY_CONFLICT',409);
+  assert.equal((await accepts(register(b.owner,body(b,legacyStart(2800)-10*MINUTE)))).registered,true);
   const rows=(await main.db.query('SELECT bot_id,holdout_start_time FROM quant_holdout_boundaries WHERE owner_id=$1 ORDER BY bot_id',[owned.owner])).rows;
-  assert.deepEqual(rows,[[a,legacyStart(2800)-10*MINUTE],[b,legacyStart(2800)],[c,legacyStart(2800)]]
+  assert.deepEqual(rows,[[a,legacyStart(2800)-10*MINUTE],[b,legacyStart(2800)-10*MINUTE],[c,legacyStart(2800)]]
     .map(([world,value])=>({bot_id:world.bot,holdout_start_time:value})));
 
   // An unreadable split of a sibling bot fails closed for every bot of the owner, and only for that owner.
@@ -763,6 +789,66 @@ test('legacy holdout conflict is owner wide: a legacy split of any bot of the ow
   assert.deepEqual(await stored(first),[]);
   const clear=await createWorld(main,{boundary:null});
   assert.equal((await accepts(register(clear.owner,body(clear,START+9000*MINUTE)))).registered,true);
+});
+
+test('sibling PF-2 holdout tightens effective admission and revokes old plans without rewriting registrations',async()=>{
+  const accounts=await createAccounts(main.db,{botCount:3});
+  const first=await createWorld(main,{accounts:{owner:accounts.owner,bot:accounts.bots[0]}});
+  const sibling=await createWorld(main,{accounts:{owner:accounts.owner,bot:accounts.bots[1]},boundary:null});
+  const missing=await createWorld(main,{accounts:{owner:accounts.owner,bot:accounts.bots[2]},boundary:null});
+  const summary=await enqueue(main,first);
+  const {job}=await rowsOf(main,summary.job_id);
+  const original=await stored(first);
+  const earlier=first.boundary-10*MINUTE;
+  await register(sibling.owner,{bot_id:sibling.bot,holdout_start_time:earlier});
+  assert.deepEqual(await stored(first),original);
+  assert.equal((await register(first.owner,{bot_id:first.bot,holdout_start_time:first.boundary})).registered,false);
+  assert.equal((await main.tx(()=>main.service.getHoldoutBoundary(first.owner,first.bot))).holdout_start_time,first.boundary);
+  await refuses(enqueue(main,missing),'PREFLIGHT_HOLDOUT_BOUNDARY_REQUIRED',409);
+  for(const action of ['CLAIM','HEARTBEAT','CHECKPOINT','FINISH'])
+    assert.deepEqual(await authorize(main,first,job.contract,action,{job_id:summary.job_id}),{ok:false},action);
+  await resolverCode(resolveJob(main,first,summary.job_id),'PF2_HOLDOUT_BOUNDARY_MISMATCH');
+  assert.deepEqual(await authorize(main,first,job.contract,'CANCEL',{job_id:summary.job_id}),{ok:true});
+  await main.tx(()=>main.service.get(first.owner,summary.job_id,true));
+  const replacement=await enqueue(main,first);
+  const {bound}=await rowsOf(main,replacement.job_id);
+  assert.equal(JSON.parse(bound.plan_json).snapshot.development.holdout_start_time,earlier);
+  assert.equal((await resolveJob(main,first,replacement.job_id)).dataset.holdout_start_time,earlier);
+  // Another owner's earlier boundary cannot change this owner's effective boundary.
+  await createWorld(main,{boundary:earlier-MINUTE});
+  assert.equal((await resolveJob(main,first,replacement.job_id)).dataset.holdout_start_time,earlier);
+  // Tightening into the dataset refuses new admission, not just old frozen plans.
+  const end=first.scenario.enrollment.contract.dataset.metadata.end_time;
+  await register(missing.owner,{bot_id:missing.bot,holdout_start_time:end-MINUTE});
+  await main.tx(()=>main.service.get(first.owner,replacement.job_id,true));
+  await refuses(enqueue(main,first),'PREFLIGHT_DEVELOPMENT_RANGE_REQUIRED',409);
+});
+
+test('sibling holdout registration racing enqueue cannot authorize a stale plan in a fresh transaction',async()=>{
+  for(const isolation of ['SERIALIZABLE','READ COMMITTED']){
+    const accounts=await createAccounts(main.db,{botCount:2});
+    const first=await createWorld(main,{accounts:{owner:accounts.owner,bot:accounts.bots[0]}});
+    const sibling=await createWorld(main,{accounts:{owner:accounts.owner,bot:accounts.bots[1]},boundary:null});
+    const earlier=first.boundary-10*MINUTE;
+    const tx=operation=>main.db.transaction(operation,{isolation});
+    const registerSibling=()=>tx(()=>main.service.registerHoldoutBoundary(first.owner,
+      {bot_id:sibling.bot,holdout_start_time:earlier}));
+    const enqueueFirst=()=>tx(()=>main.service.enqueue(first.owner,first.request,key()));
+    const [registration,admission]=await Promise.allSettled([registerSibling(),enqueueFirst()]);
+    for(const outcome of [registration,admission])
+      if(outcome.status==='rejected')assert.equal(outcome.reason.code,'40001',isolation);
+    if(registration.status==='rejected')await registerSibling();
+    const summary=admission.status==='fulfilled'?admission.value:await enqueueFirst();
+    const {job,bound}=await rowsOf(main,summary.job_id);
+    const planBoundary=JSON.parse(bound.plan_json).snapshot.development.holdout_start_time;
+    assert.ok([first.boundary,earlier].includes(planBoundary));
+    // A serializable enqueue can precede registration logically. Its old plan
+    // must fail the next fence; a new plan must carry the effective minimum.
+    assert.deepEqual(await authorize(main,first,job.contract,'CLAIM',{job_id:summary.job_id}),
+      {ok:planBoundary===earlier},isolation);
+    assert.deepEqual((await stored(first)).map(row=>row.holdout_start_time),[first.boundary]);
+    assert.deepEqual((await stored(sibling)).map(row=>row.holdout_start_time),[earlier]);
+  }
 });
 
 test('holdout registry refuses a boundary later than the current minute of the service clock, ahead of every write',async()=>{
@@ -1205,8 +1291,8 @@ test('adapters check the received signal before every query and only ever read i
   const log=await recordSql(main.db,()=>assert.rejects(adapterCalls(main.service.trusted(job),world,plan,counting).authorize()));
   assert.equal(reads,4);
   assert.equal(log.length,2);
-  assert.match(log[0],/FROM quant_preflight_jobs/);
-  assert.match(log[1],/FROM pine_deployments/);
+  assert.match(log[0],/FROM pg_catalog\.pg_class/);
+  assert.match(log[1],/FROM pg_catalog\.pg_proc/);
   // A signal-like object is only read: frozen, without listener support, it still works while aborted is exactly false.
   const inert=Object.freeze({aborted:false,addEventListener(){throw new Error(MARKER);},removeEventListener(){throw new Error(MARKER);},
     dispatchEvent(){throw new Error(MARKER);}});
@@ -1224,8 +1310,8 @@ test('adapters check the received signal before every query and only ever read i
 test('the signal is checked once more just before the ownership check: an abort there sends no user query',async()=>{
   const {world,job}=await fresh();
   const scope={owner_id:world.owner,bot_id:world.bot};
-  // authorize reads the aborted flag on entry, before each of the four context queries (binding, deployment,
-  // enrollment, source revision) and once more just before pine.authorize: the sixth read is the one under test.
+  // Schema inspection also checks the signal. The final context read is the source revision;
+  // an additional signal check must still occur immediately before pine.authorize.
   const attempt=async limit=>{
     const state={reads:0};
     const signal={get aborted(){state.reads++;return state.reads>limit;}};
@@ -1236,19 +1322,19 @@ test('the signal is checked once more just before the ownership check: an abort 
     });
     return {reads:state.reads,log,outcome};
   };
-  const aborted=await attempt(5);
-  assert.equal(aborted.reads,6);
-  assert.ok(aborted.outcome.error,'the sixth read aborts');
+  const passed=await attempt(Number.MAX_SAFE_INTEGER);
+  assert.deepEqual(passed.outcome,{value:true});
+  const contextQueries=passed.log.filter(sql=>!/FROM users/i.test(sql));
+  assert.match(contextQueries.at(-1),/FROM pine_source_revisions/);
+  const aborted=await attempt(passed.reads-1);
+  assert.equal(aborted.reads,passed.reads);
+  assert.ok(aborted.outcome.error,'the final signal read aborts before owner queries');
   hygiene(aborted.outcome.error,{code:'PREFLIGHT_ADAPTER_UNAVAILABLE',status:503});
-  assert.deepEqual(aborted.log.map(sql=>/FROM (\w+)/.exec(sql)[1]),
-    ['quant_preflight_jobs','pine_deployments','quant_foundation_jobs','pine_source_revisions']);
+  assert.deepEqual(aborted.log,contextQueries);
   assert.equal(aborted.log.some(sql=>/FROM users/i.test(sql)),false);
   // One read later the check passes and pine.authorize runs its user queries.
-  const passed=await attempt(6);
-  assert.equal(passed.reads,6);
-  assert.deepEqual(passed.outcome,{value:true});
-  assert.ok(passed.log.length>4);
-  assert.equal(passed.log.slice(4).every(sql=>/FROM users/i.test(sql)),true);
+  assert.ok(passed.log.length>contextQueries.length);
+  assert.equal(passed.log.slice(contextQueries.length).every(sql=>/FROM users/i.test(sql)),true);
 });
 
 test('adapters and the resolver run without any write: only plain SELECT statements, no lock, no row changes',async()=>{

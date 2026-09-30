@@ -17,6 +17,8 @@ import {bindQuantStorage,maintainQuantStorage} from '../../src/postgres/quant-st
 import {recoverQuantFoundation} from '../../src/postgres/quant-foundation-recovery.js';
 import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {config} from '../../src/config.js';
+import {capacityPolicyHash} from '../../src/quant-research/capacity-contract.js';
+import {profileV2Fixture} from '../helpers/profile-v2-fixture.js';
 import {fixture,source} from '../helpers/quant-research-fixture.mjs';
 
 const minute=60000;
@@ -33,7 +35,8 @@ before(async()=>{
   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+name;
   db=new PostgresDatabase({connectionString:url.toString()});await db.migrate();
   for(const file of ['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql',
-    'quant-research-foundation-schema.sql','quant-storage-schema.sql'])
+    'quant-research-foundation-schema.sql','quant-storage-schema.sql',
+    'quant-io-ledger-schema.sql','quant-io-runtime-schema.sql'])
     await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
   await db.query("UPDATE quant_research_executor_mode SET mode='FOUNDATION'");
   root=await fs.mkdtemp(path.join(os.tmpdir(),'quant-profile-pg-'));
@@ -170,6 +173,105 @@ test('PROFILE cancellation retains the slot until work settles; offline recovery
   assert.equal(await worker.tick(),true);
   assert.equal((await row(old.job_id)).status,'SUCCEEDED');
   assert.equal((await row(old.job_id)).attempts,2);
+});
+
+test('V2 PROFILE authority uses real raw/deployment bindings and durable stop evidence',async()=>{
+  const raw=(await db.query("SELECT * FROM quant_foundation_jobs WHERE contract->>'kind'='BACKFILL' AND status='SUCCEEDED'")).rows[0];
+  const queued=await db.transaction(()=>profile.enqueue(owner,
+    {bot_id:owner,raw_job_id:raw.job_id,deployment_id:deploymentId},randomUUID()));
+  const v1=(await row(queued.job_id)).contract;
+  await db.transaction(()=>profile.get(owner,queued.job_id,true));
+  const count=v1.dataset.metadata.total_bars;
+  const {policy:capacityPolicy,contract:sample}=profileV2Fixture(count);
+  Object.assign(capacityPolicy.scope,{source_hash:v1.profile.source_hash,
+    settings_hash:v1.profile.effective_inputs_hash});
+  const capacity={...sample.capacity,scope:structuredClone(capacityPolicy.scope),
+    policy_hash:capacityPolicyHash(capacityPolicy)};
+  const contract={...v1,version:'quant-foundation-v2',capacity,
+    budget:{...capacity.budget,chunk_bars:capacity.chunk_bars}};
+  const authority=new QuantProfileService({pineService:pine,dataService:data,researchStore,
+    clock:()=>now,enabled:true,supportedSourceHash:hash(source),capacityPolicy});
+  const check=(value=contract,actor=owner,action='CLAIM',context={})=>
+    db.transaction(()=>authority.authorize(actor,value,action,context));
+  assert.deepEqual(await check(),{ok:true});
+  assert.deepEqual(await check(contract,foreign),{ok:false});
+  assert.deepEqual(await check({...contract,bot_id:foreign}),{ok:false});
+  for(const name of ['source_hash','effective_inputs_hash','metadata_hash','raw_provenance_sha256']){
+    const changed=structuredClone(contract);changed.profile[name]=hash('mutated-'+name);
+    assert.deepEqual(await check(changed),{ok:false},name);
+  }
+  const changed=structuredClone(contract);changed.profile.execution_model.fee_bps=11;
+  assert.deepEqual(await check(changed),{ok:false});
+  await db.query("UPDATE pine_deployments SET state='EXIT_ONLY' WHERE deployment_id=$1",[deploymentId]);
+  assert.deepEqual(await check(),{ok:false});
+  await db.query("UPDATE pine_deployments SET state='READY' WHERE deployment_id=$1",[deploymentId]);
+  await db.query('UPDATE pine_memberships SET connected=FALSE WHERE owner_id=$1 AND bot_id=$1',[owner]);
+  assert.deepEqual(await check(),{ok:false});
+  assert.deepEqual(await check(contract,owner,'CANCEL'),{ok:true});
+  await db.query('UPDATE pine_memberships SET connected=TRUE WHERE owner_id=$1 AND bot_id=$1',[owner]);
+  const jobId=randomUUID(),leaseToken=randomUUID();
+  await db.query(`INSERT INTO quant_foundation_jobs
+    (job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at,lease_token,stop_reason)
+    VALUES($1,$2,$3,$4,$5,'STOPPING',$6,$7,$8,'CANCELLED')`,
+    [jobId,owner,randomUUID(),JSON.stringify(contract),hash(canonical(contract)),now,now+900000,leaseToken]);
+  const context={job_id:jobId,lease_token:leaseToken,stopped:true};
+  const ack=()=>check(contract,owner,'ACKNOWLEDGE_STOPPED',context);
+  assert.deepEqual(await authority.authorize(owner,contract,'ACKNOWLEDGE_STOPPED',context),{ok:false});
+  assert.deepEqual(await ack(),{ok:true});
+  const ledgerState={job_id:jobId,policy_hash:capacity.policy_hash,lease_token:leaseToken,
+    revision:0,operations:[{status:'ACTIVE'}]};
+  await db.query('INSERT INTO quant_io_ledgers VALUES($1,$2,$3,0,$4,$5)',
+    [jobId,capacity.policy_hash,leaseToken,JSON.stringify(ledgerState),hash(canonical(ledgerState))]);
+  assert.deepEqual(await ack(),{ok:false});
+  ledgerState.revision=1;ledgerState.operations=[{status:'SETTLED'}];
+  await db.query('UPDATE quant_io_ledgers SET revision=1,state=$2,state_hash=$3 WHERE job_id=$1',
+    [jobId,JSON.stringify(ledgerState),hash(canonical(ledgerState))]);
+  await db.query('INSERT INTO quant_io_launches VALUES($1,$2,$3,$4,$5,$6,$7)',
+    [jobId,'authority-operation',leaseToken,'authority-'+jobId+'.service',hash('payload'),'INTENT_RECORDED',now]);
+  assert.deepEqual(await ack(),{ok:false});
+  await db.query("UPDATE quant_io_launches SET state='STOP_PROVEN' WHERE job_id=$1",[jobId]);
+  assert.deepEqual(await ack(),{ok:true});
+  await db.query("UPDATE quant_foundation_jobs SET status='CANCELLED',lease_token=NULL,stop_reason=NULL WHERE job_id=$1",[jobId]);
+});
+
+test('queued V2 PROFILE with stale engine is revoked at claim and current engine still claims (T-W9)',async()=>{
+  const raw=(await db.query("SELECT * FROM quant_foundation_jobs WHERE contract->>'kind'='BACKFILL' AND status='SUCCEEDED'")).rows[0];
+  const baseline=await db.transaction(()=>profile.enqueue(owner,
+    {bot_id:owner,raw_job_id:raw.job_id,deployment_id:deploymentId},randomUUID()));
+  const v1=(await row(baseline.job_id)).contract;
+  await db.transaction(()=>profile.get(owner,baseline.job_id,true));
+  const {policy:capacityPolicy,contract:sample}=profileV2Fixture(v1.dataset.metadata.total_bars);
+  Object.assign(capacityPolicy.scope,{source_hash:v1.profile.source_hash,
+    settings_hash:v1.profile.effective_inputs_hash});
+  const capacity={...sample.capacity,scope:structuredClone(capacityPolicy.scope),policy_hash:capacityPolicyHash(capacityPolicy)};
+  const currentContract={...v1,version:'quant-foundation-v2',capacity,
+    budget:{...capacity.budget,chunk_bars:capacity.chunk_bars}};
+  const authority=new QuantProfileService({pineService:pine,dataService:data,researchStore,
+    clock:()=>now,enabled:true,supportedSourceHash:hash(source),capacityPolicy});
+  const currentWorker=new QuantResearchFoundationWorker({service:worker.service,dataService:data,
+    profileService:authority,health:async()=>({ok:true}),clock:()=>now,profileV2Enabled:true,capacityPolicy});
+  assert.deepEqual(await db.transaction(()=>authority.authorize(owner,currentContract,'CLAIM')),{ok:true});
+  // Model an already queued historical engine identity. Freeze it before INSERT;
+  // the actual W5 authority reads the current engine, with no file or immutable-row mutation.
+  const staleContract={...structuredClone(currentContract),engine_hash:hash('historical-PROFILE-engine-test-fixture')};
+  assert.notEqual(staleContract.engine_hash,currentContract.engine_hash);
+  const staleId=randomUUID(),currentId=randomUUID(),staleDigest=hash(canonical(staleContract));
+  for(const [id,contract,created] of [[staleId,staleContract,now],[currentId,currentContract,now+1]]){
+    await db.query(`INSERT INTO quant_foundation_jobs
+      (job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at)
+      VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)`,
+      [id,owner,randomUUID(),JSON.stringify(contract),hash(canonical(contract)),created,now+900000]);
+  }
+  assert.deepEqual(await db.transaction(()=>authority.authorize(owner,staleContract,'CLAIM')),{ok:false});
+  const claimed=await currentWorker.scheduler.claim('current-profile-engine-worker');
+  assert.equal(claimed.job_id,currentId);assert.equal(claimed.contract.engine_hash,currentContract.engine_hash);
+  assert.equal(claimed.status,'RUNNING');assert.equal(claimed.attempts,1);
+  const stale=await row(staleId);
+  assert.equal(stale.status,'CANCELLED');assert.equal(stale.diagnostic,'AUTHORIZATION_REVOKED');
+  assert.equal(stale.attempts,0);assert.deepEqual(stale.contract,staleContract);assert.equal(stale.contract_hash,staleDigest);
+  await currentWorker.scheduler.cancel(owner,currentId);
+  await currentWorker.scheduler.acknowledgeStopped(currentId,claimed.lease_token);
+  assert.equal((await row(currentId)).status,'CANCELLED');
 });
 
 test('membership revocation during held PROFILE conversion blocks fenced FINISH and result',async()=>{

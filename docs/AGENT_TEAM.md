@@ -12,24 +12,25 @@ unattended or authorize a new research study merely because workers are availabl
 | --- | --- | --- | --- |
 | Root commander | gpt-6-astra / high | Task selection, dependency gates, timeline, usage reservations, integration and final acceptance | Exactly one commander; never appoint a competing project manager |
 | Architecture auditor | gpt-6-astra / medium | Independent difficult audit, risk/accounting/parity review, root-cause escalation | Advisory; no peer dispatch, approval of own fixes or independent operations |
-| Routine worker | gpt-6-luna / medium | One small local code, UI or fixture slice with a stable contract and observable acceptance | No database migration, scheduler/fencing, accounting, Risk Manager, evaluator/parity, security, production operations or difficult debugging; escalate scope changes |
-| Coder | gpt-6-sol / medium | Implement assigned code slice using established semantics | Exact file ownership; escalate complex failures |
-| Debugger | gpt-6-sol / high | Reproduce and fix complex bugs/races | Root-defined scope; escalate after two failed approaches |
-| Tester | gpt-6-sol / medium | Independent focused acceptance/regression evidence | Own test paths; application changes need reassignment |
-| Documentation | gpt-6-luna / low | Synchronize docs, evidence summaries, links, arithmetic and handoffs | No invention of passing gates, time spent or technical decisions |
-| Release clerk | gpt-6-sol / low | Execute reviewed Git checkpoint/push serially | Root handoff + actual user authority; no independent merge/deploy |
-| Operations | gpt-6-sol / high | Designated executor of scoped local/VPS operational packets | Read-only default; mutations limited to existing user authority and readiness gates |
+| Routine worker | gpt-6.1-sol / medium | One small local code, UI or fixture slice with a stable contract and observable acceptance | No database migration, scheduler/fencing, accounting, Risk Manager, evaluator/parity, security, production operations or difficult debugging; escalate scope changes |
+| Coder | gpt-6.1-sol / medium | Implement assigned code slice using established semantics | Exact file ownership; escalate complex failures |
+| Debugger | gpt-6.1-sol / high | Reproduce and fix complex bugs/races | Root-defined scope; escalate after two failed approaches |
+| Tester | gpt-6.1-sol / medium | Independent focused acceptance/regression evidence | Own test paths; application changes need reassignment |
+| Documentation | gpt-6.1-sol / low | Synchronize docs, evidence summaries, links, arithmetic and handoffs | No invention of passing gates, time spent or technical decisions |
+| Release clerk | gpt-6.1-sol / low | Execute reviewed Git checkpoint/push serially | Root handoff + actual user authority; no independent merge/deploy |
+| Operations | gpt-6.1-sol / high | Designated executor of scoped local/VPS operational packets | Read-only default; mutations limited to existing user authority and readiness gates |
 
 The owner's "light" maps to supported effort `low`. Role profiles are in
 `.codex/agents/`; root/default-child settings are in `.codex/config.toml`.
 At most three children run concurrently with the root in this session. Usually
 one or two are sufficient. Roles are reusable definitions, not permanently
 running agents. Do not spawn a worker without useful independent work for it.
-Start with one Luna routine worker. Add a second child only for independent files
+Start with one routine worker. Add a second child only for independent files
 with enough shared usage and integration margin; a swarm is not the default.
-Root reviews each return. Behavior-changing Luna work requires independent,
-focused Sol verification before acceptance. Pilot three to five comparable small
-slices, recording observed account usage, elapsed time, rework and defects. Shared
+Root reviews each return. Behavior-changing routine-worker output requires independent,
+focused verification by a coder, tester or debugger before acceptance. Pilot
+three to five comparable small slices, recording observed account usage,
+elapsed time, rework and defects. Shared
 usage percentages cannot identify exact per-agent cost.
 
 Project config sets the requested root default to Astra High. It cannot prove or
@@ -37,9 +38,12 @@ hot-switch the model of an already active desktop turn. Verify the task's model
 selection in the app; if it overrides project defaults, select Astra/High there.
 Record requested/configured/observed model separately. No silent fallback when a
 model is unavailable. The current collaboration API accepts explicit model/effort
-and a task brief rather than a custom role selector: root reads the role profile
-and includes those instructions in the dispatch with `fork_turns=none` or a small
-history fork. A full-history fork does not support explicit model overrides here.
+and a task brief; it also exposes custom role selectors. Use a selector only when
+its model and effort match AGENTS.md. If a loaded selector retains an older model,
+read the current role profile and pass its instructions with explicit model/effort
+using the default agent type and `fork_turns=none` or a small history fork.
+A full-history fork does not support explicit model overrides here. Editing role
+files does not prove that loaded selectors or running agents have changed.
 
 Custom profiles persist in the repository; running child sessions are task-scoped
 and can finish. Ending a chat does not leave a permanent team daemon running on

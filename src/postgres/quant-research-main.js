@@ -7,16 +7,27 @@ import fs from 'node:fs/promises';
 import {QuantResearchFoundationWorker} from './quant-research-foundation.js';
 import {QuantDataService} from './quant-data.js';
 import {QuantProfileService} from './quant-profile.js';
+import {QuantPreflightService} from './quant-preflight.js';
+import {assertQuantProfileEnrollmentSchema} from './quant-profile-enrollment-migration.js';
 import {createResourceHealth,loopbackHealthProbe} from '../quant-research/resource-health.js';
 import {createSchedulerHealth} from '../quant-research/scheduler-health.js';
 import {currentCgroupGroup,prepareCgroupIo,validateIoControls} from '../quant-research/io-controls.js';
-import {assertQuantWorkerUnit} from './quant-foundation-recovery.js';
+import {assertQuantWorkerUnit,loadQuantRecoveryPolicy} from './quant-foundation-recovery.js';
+import {loadQuantCapacityPolicy} from './quant-capacity-policy.js';
+import {assertProfileV2Configuration,wireQuantProfileV2} from './quant-profile-wiring.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
 import {config,assertProductionConfig} from '../config.js';
 assertProductionConfig();
 if(process.env.QUANT_RESEARCH_ENABLED!=='1'||process.env.PINE_BRIDGE_ENV!=='staging'||!config.paperTrading)throw Error('Dedicated Quant research worker requires Paper staging');
 const foundation=process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1';
-if(foundation)await assertQuantWorkerUnit(process.env.QUANT_WORKER_UNIT);
+const profileV2Enabled=assertProfileV2Configuration();
+const preflightEnabled=process.env.QUANT_PREFLIGHT_ENABLED==='1';
+const enrollmentEnabled=process.env.QUANT_PROFILE_V2_ENROLLMENT_ENABLED==='1';
+if(preflightEnabled&&!foundation)throw Error('PREFLIGHT requires foundation mode');
+if(enrollmentEnabled&&!profileV2Enabled)throw Error('PROFILE enrollment requires PROFILE V2');
+const recoveryPolicy=profileV2Enabled?await loadQuantRecoveryPolicy():undefined;
+const capacityPolicy=profileV2Enabled||preflightEnabled?await loadQuantCapacityPolicy():undefined;
+if(foundation)await assertQuantWorkerUnit(process.env.QUANT_WORKER_UNIT,{policy:recoveryPolicy,profileV2Enabled});
 const db=new PostgresDatabase();await db.runtimeLock();await db.verifySchema();
 const rows=(await db.query('SELECT version FROM quant_job_schema')).rows;
 if(rows.length!==1||rows[0].version!==1)throw Error('Initialize Quant research extension 1 offline');
@@ -36,6 +47,8 @@ if(foundation){
  const limits=JSON.parse(await fs.readFile(process.env.QUANT_HEALTH_LIMITS_FILE,'utf8'));
  const ioControls=process.env.QUANT_IO_CONTROLS_FILE?
   validateIoControls(JSON.parse(await fs.readFile(process.env.QUANT_IO_CONTROLS_FILE,'utf8'))):undefined;
+ if((profileV2Enabled||preflightEnabled)&&!ioControls)throw Error('PROFILE V2 and PREFLIGHT require reviewed I/O controls');
+ if(enrollmentEnabled||preflightEnabled)await assertQuantProfileEnrollmentSchema(db);
  await assertQuantStorageOwner(db,process.env.QUANT_RESEARCH_DATASET_ROOT);
  const ioIdentity=ioControls?await prepareCgroupIo(await currentCgroupGroup(),ioControls,'main',service.storageBudget):undefined;
  if(process.env.QUANT_HEALTH_DATABASE_URL)healthDb=new PostgresDatabase({connectionString:process.env.QUANT_HEALTH_DATABASE_URL,max:2});
@@ -53,8 +66,13 @@ if(foundation){
  const health=process.env.QUANT_HEALTH_RECOVERY_FILE?
   createSchedulerHealth({probe:resourceHealth,policy:JSON.parse(await fs.readFile(process.env.QUANT_HEALTH_RECOVERY_FILE,'utf8'))}):resourceHealth;
  const dataService=new QuantDataService({pineService:service.pine,datasetStore:service.datasetStore.raw,enabled:true});
- const profileService=new QuantProfileService({pineService:service.pine,dataService,researchStore:service.datasetStore,enabled:true});
- worker=new QuantResearchFoundationWorker({service,dataService,profileService,health,ioControls});
+ const profileService=new QuantProfileService({pineService:service.pine,dataService,researchStore:service.datasetStore,enabled:true,capacityPolicy,profileV2Enabled,enrollmentEnabled});
+ if(enrollmentEnabled)await profileService.ready();
+ const preflightService=preflightEnabled?new QuantPreflightService({pineService:service.pine,dataService,
+  stores:{raw:dataService.datasetStore,research:service.datasetStore},capacityPolicy,enabled:true}):undefined;
+ if(preflightEnabled)await preflightService.ready();
+ worker=new QuantResearchFoundationWorker({service,dataService,profileService,preflightService,health,ioControls,profileV2Enabled,capacityPolicy});
+ if(profileV2Enabled)await wireQuantProfileV2({worker,db,capacityPolicy,recoveryPolicy,ioControls,health});
 }else worker=new QuantResearchWorker({service});
 worker.start();console.log('Dedicated PostgreSQL Quant research worker started');
 let stopping=false;
