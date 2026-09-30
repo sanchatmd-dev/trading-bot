@@ -104,13 +104,16 @@ async function assertNoJobs(manager,units){
 
 /** Kill and stop a live or loaded unit, mask it for this boot, then prove it inactive, masked and cgroup-free.
  * A masked unit that is still active (a partial earlier run) is killed too. Returns whether the unit was live.
+ * onMasked runs right after the mask command returns and before the stop proof, so a unit that stays masked
+ * but fails the proof is still reported to the operator.
  */
-async function retireUnit(manager,unit){
+async function retireUnit(manager,unit,onMasked=()=>{}){
  const state=await manager.show(unit);
  const live=['active','activating','deactivating'].includes(state.ActiveState);
  if(live)await manager.kill(unit);
  if(live||state.LoadState==='loaded')await manager.stop(unit);
  await manager.mask(unit);
+ onMasked(unit);
  await assertStopped(manager,unit,{masked:true});
  return live;
 }
@@ -350,7 +353,7 @@ async function recoverIoRows({query,assertExclusive,manager,settleMs,items}){
   try{
    item.plan=planIo(item,ioLedger(query));
    for(const step of item.plan.operations){operationId=step.operationId;await assertNoJobs(manager,[step.unitName]);}
-   for(const step of item.plan.operations){operationId=step.operationId;step.unitWasLive=await retireUnit(manager,step.unitName);masked.push(step.unitName);}
+   for(const step of item.plan.operations){operationId=step.operationId;step.unitWasLive=await retireUnit(manager,step.unitName,unit=>masked.push(unit));}
    live.push(item);
   }catch(failure){block(item,failure,operationId);}
  }

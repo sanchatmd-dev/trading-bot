@@ -399,6 +399,8 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
    const failure=await blockedError(recover(manager),'RECOVERY_IO_ROW_BLOCKED');
    assert.deepEqual(failure.blocked,[{job_id:claimed.job_id,operation_id:operationId,code}]);
    assert.deepEqual(failure.recovered,[]);
+   // Every mask command that ran is reported, even when the stop proof failed after it.
+   assert.deepEqual(failure.maskedUnits,acted.includes('mask')?[unit]:[]);
    assert.deepEqual(manager.calls,acted.map(action=>action+' '+unit));
    assert.deepEqual(await ledgerRow(),before);
    assert.equal((await launchRow()).state,'RELEASED');assert.equal((await jobRow()).status,'STOPPING');
@@ -469,6 +471,21 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
    const failure=await blockedError(recover(manager),'RECOVERY_IO_ROW_BLOCKED');
    assert.deepEqual(failure.blocked,[{job_id:first.job_id,operation_id:null,code:'QUANT_IO_ACCOUNTING_UNAVAILABLE'}]);
    assert.ok(manager.calls.every(call=>call.endsWith(unitOf(second))),'no action on the unverified row unit');
+   assert.equal((await jobRow(first)).status,'STOPPING');assert.equal((await jobRow(second)).status,'CANCELLED');
+  });
+ });
+
+ test('a unit masked by a blocked row is reported next to the units of recovered rows',async()=>{
+  await withTwoRows(async(first,second)=>{
+   await stages.RELEASED(first);await stages.RELEASED(second);
+   await scheduler.cancel('owner-a',first.job_id);await scheduler.cancel('owner-a',second.job_id);
+   // Kill and stop leave the first unit active. It is masked, fails the stop proof and its row stays blocked.
+   const manager=fakeManager({alive:[unitOf(first),unitOf(second)],stubborn:unitOf(first)});
+   const failure=await blockedError(recover(manager),'RECOVERY_IO_ROW_BLOCKED');
+   assert.deepEqual(failure.blocked,[{job_id:first.job_id,operation_id:operationId,code:'RECOVERY_UNIT_ACTIVE'}]);
+   assert.deepEqual(failure.recovered.map(item=>item.job_id),[second.job_id]);
+   assert.deepEqual([...failure.maskedUnits].sort(),[unitOf(first),unitOf(second)].sort());
+   assert.ok(manager.calls.includes('mask '+unitOf(first)));
    assert.equal((await jobRow(first)).status,'STOPPING');assert.equal((await jobRow(second)).status,'CANCELLED');
   });
  });
@@ -593,6 +610,7 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
    const failure=await blockedError(recover(manager),'RECOVERY_IO_ROW_BLOCKED');
    assert.deepEqual(failure.blocked,[{job_id:claimed.job_id,operation_id:operationId,code:'RECOVERY_CGROUP_POPULATED'}]);
    assert.deepEqual(failure.recovered,[]);
+   assert.deepEqual(failure.maskedUnits,[unit]);
    assert.deepEqual(manager.calls,['kill '+unit,'stop '+unit,'mask '+unit]);
    assert.deepEqual(await ledgerRow(),before);
    assert.equal((await launchRow()).state,'RELEASED');assert.equal((await jobRow()).status,'STOPPING');
