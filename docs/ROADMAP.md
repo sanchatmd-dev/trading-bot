@@ -35,6 +35,9 @@ Current Codex specialists use GPT-6.1 Sol except the Astra Medium auditor:
 debugger/operations use high effort, coder/tester/routine worker use medium,
 and documentation/release clerk use low. This is a local configuration update;
 historical model assignments below remain evidence of earlier work.
+A Claude root follows the AGENTS.md Claude column, including three Claude-only
+Fable 5.1 roles: second-opinion auditor and alternative designer at high effort,
+and checkpoint drafter at medium.
 Three bounded setup agents performed team audit, PF-1 mapping and a dispatch template.
 Team setup is followed by the local PF-1A backend checkpoint below. Production
 resource enforcement remains planned; QD-1/QS-1 and existing gates still apply.
@@ -1664,3 +1667,21 @@ Git-only continuation: the owner authorized committing and pushing the saved
 PF-2 WIP checkpoint. This does not resume implementation, accept the remaining
 regression failures or enable staging. The diagnostic enqueue helper remains
 incomplete and untested. Resume requirements above remain in force.
+
+## 2026-10-01 — Claude Fable 5.1 permanent roles
+
+The owner made Fable 5.1 a permanent part of the Claude agent team in the three
+roles from the 2026-09-30 pilot. AGENTS.md maps them as Claude-only rows: a
+second-opinion auditor for accounting, fencing, recovery, security and parity
+slices beside the Opus auditor; an alternative designer in design panels judged
+by an Opus auditor; and a checkpoint drafter for checkpoint records and Thai owner
+summaries that root reviews before commit. The auditor and designer run at high
+effort and the drafter at medium; the temporary xhigh tier ended on 2026-09-30.
+Fable runs one child at a time and checks its separate weekly usage bucket before
+dispatch. Three Claude role files in `.claude/agents/` pin model and effort.
+Codex mappings are unchanged.
+
+Scope is policy and documentation only. One documentation lookup confirmed the
+role-file keys; no project worker, product code change, test, runtime action or
+deployment occurred. PF-2 work stays stopped at the owner's request; the CI
+repair plan and all existing gates are unchanged.

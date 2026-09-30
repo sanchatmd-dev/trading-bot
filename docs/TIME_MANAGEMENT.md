@@ -445,6 +445,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-10-01 | ตั้ง Fable 5.1 เป็นบทบาทถาวรของ Claude ตาม 3 งานเดิม: auditor ความเห็นที่สองและผู้ออกแบบทางเลือก (high) กับผู้ร่าง checkpoint และสรุปภาษาไทย (medium) | Policy/docs เท่านั้น ไม่มีงานโค้ด ทดสอบ runtime หรือ deploy; usage 5-hour 3%, weekly all-models 13%, weekly Fable 7%; ไม่อ้าง speedup และไม่ปรับ forecast |
 | 2026-09-30 | W2, PF-2 R3b, S3b-1 push และ retention apply step ผ่าน; บันทึก wave N และหยุดงาน 15:00Z | Local code + CI และ owner-run cleanup หนึ่งครั้งเท่านั้น ไม่มี deploy/migration; 5-hour window 54% ณ 12:32Z เป็น 73% ณ 14:26Z, reset 14:30Z แล้ว 4% ณ 14:53Z; weekly all-models 8% เป็น 11%, weekly Fable 4% เป็น 5%; temporary elevated agent tier สิ้นสุด 15:00Z กลับใช้ตาราง AGENTS.md; ไม่ปรับงบชั่วโมงและไม่อ้าง speedup |
 | 2026-09-30 | PF-2 R3/R4 push, S3a design panel (Fable pilot ครั้งที่สอง) และบันทึก wave M | Local code + CI เท่านั้น ไม่มี deploy/migration/staging; 5-hour window 6% ใช้แล้ว ณ 10:34Z เป็น 54% ณ 12:32Z, weekly all-models 2% เป็น 8%, weekly Fable 0% เป็น 4%; ไม่ปรับงบชั่วโมงและไม่อ้าง speedup |
 | 2026-09-28 | ปิด physical cold-recovery drill ของ isolated worker และตรวจผลกระทบช่วงสั้น | ใช้ frozen baseline เดิม; resume หลัง SIGKILL ตรงกับผลเดิมและคิด evaluation ครั้งเดียว ไม่เปิด holdout หรือ campaign ใหม่ เก็บ initial monitor breach/watcher failure เป็น rework; capacity คงเดิม และยังไม่ปรับชั่วโมงรวมจากข้อมูลเวลาไม่ครบ |
@@ -831,3 +832,19 @@ PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md และ resume จาก failure
 Git-only continuation: เจ้าของสั่ง commit/push checkpoint ที่หยุดไว้ อนุญาตเฉพาะ
 การบันทึกและส่ง Git รอบนี้ ไม่เริ่ม implementation หรือทดสอบใหม่ ไม่เปลี่ยน
 สถานะ acceptance/staging Usage ล่าสุดเหลือ 62% weekly; short window ไม่ทราบ
+
+## Claude Fable 5.1 permanent roles — 2026-10-01
+
+The owner made Fable 5.1 a permanent part of the Claude agent team in the three
+pilot roles: second-opinion auditor, alternative designer and checkpoint drafter.
+The 2026-09-30 pilot supports each role. The second-opinion audit found issues the
+Opus audit missed, the design panel adopted ten Fable ideas, and three docs drafts
+needed only small root fixes. That audit ran at xhigh effort and used about 227K
+tokens in 990 seconds. The xhigh tier ended on 2026-09-30, so the auditor and
+designer now run at high and the drafter at medium; root may raise one packet by
+one level under the AGENTS.md rule.
+
+Scope is policy and documentation only; no project worker, test, runtime job or
+VPS action ran. Usage at the change: 5-hour window 3%, weekly all models 13%,
+weekly Fable 7%. No speedup or cost saving is claimed and the forecast is
+unchanged. PF-2 work stays stopped at the owner's request.
