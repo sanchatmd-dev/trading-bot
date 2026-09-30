@@ -15,6 +15,7 @@ import {PF2_ENGINE_FILES,PF2_EVALUATOR_FILES,PF2_LIMITATIONS,PF2_RECORD_KINDS,PF
   PF2_RESOLVER_ERRORS,pf2ExecutableHashes,resolveHistoricalPreflight} from '../src/quant-research/preflight-resolver.js';
 import {canonical,hash} from '../src/pine-bridge/source.js';
 import {QUANT_RUNTIME_ENGINE_FILES} from '../src/quant-research/runtime-engine-files.js';
+import {SHARED_APPLICATION_FILES} from './helpers/runtime-shared-boundary.js';
 import {DEPLOYMENT,MINUTE,OWNER,BOT,PLAN_FIELD,START,RAW_BARS,createPf2Base,isDeepFrozen,makeWorld,modelRecord,
   planHash,policyRecord,syntheticSource} from './helpers/pf2-fixture.js';
 
@@ -442,16 +443,30 @@ test('PF-2 S3 trusted resolver',async t=>{
       }
       return [...seen].sort();
     };
-    assert.deepEqual(await closure(['src/quant-research/preflight-resolver.js','src/quant-research/dataset-store.js',
-      'src/quant-research/research-dataset-store.js','src/quant-research/preflight-replay.js','src/quant-research/preflight-runtime.js'],jsImports),
+    // PF-2's own import closure plus the shared runtime manifest; quant-engine-files.test.js walks that
+    // manifest from the worker and API roots, like the Python check below.
+    const pf2Js=await closure(['src/quant-research/preflight-resolver.js','src/quant-research/dataset-store.js',
+      'src/quant-research/research-dataset-store.js','src/quant-research/preflight-replay.js','src/quant-research/preflight-runtime.js'],jsImports);
+    // PF-2's own closure stays pinned: a PF-2 module may not reach hashed runtime or database modules either.
+    assert.deepEqual(pf2Js,[
+      'src/money.js','src/pine-bridge/source.js','src/quant-research/atr14-chunk-store.js',
+      'src/quant-research/capacity-contract.js','src/quant-research/contract.js','src/quant-research/data-profile-v2.js',
+      'src/quant-research/dataset-store.js','src/quant-research/foundation-contract-v2.js','src/quant-research/foundation-contract.js',
+      'src/quant-research/io-budget-ledger.js','src/quant-research/io-controls.js','src/quant-research/io-terminal.js',
+      'src/quant-research/preflight-contract.js','src/quant-research/preflight-replay.js','src/quant-research/preflight-resolver.js',
+      'src/quant-research/preflight-runtime.js','src/quant-research/process-supervisor.js','src/quant-research/profile-contract-v2.js',
+      'src/quant-research/profile-contract.js','src/quant-research/research-dataset-store.js','src/quant-research/runtime-engine-files.js']);
+    assert.deepEqual([...new Set([...pf2Js,...QUANT_RUNTIME_ENGINE_FILES.filter(file=>file.endsWith('.js'))])].sort(),
       PF2_ENGINE_FILES.filter(file=>file.endsWith('.js')));
     const replayPython=await closure([dir+'pf2_replay.py'],pyImports);
     assert.deepEqual([...new Set([...replayPython,...QUANT_RUNTIME_ENGINE_FILES.filter(file=>file.endsWith('.py'))])].sort(),
       PF2_ENGINE_FILES.filter(file=>file.endsWith('.py')));
     assert.deepEqual(await closure([dir+'spt_custom_evaluator.py'],pyImports),[...PF2_EVALUATOR_FILES]);
+    // Runtime manifest modules may import the reviewed shared-application boundary without hashing it.
+    const shared=new Set(SHARED_APPLICATION_FILES);
     for(const file of PF2_ENGINE_FILES){
       const listed=await (file.endsWith('.js')?jsImports:pyImports)(file);
-      for(const item of listed)assert.ok(PF2_ENGINE_FILES.includes(item),`${file} imports unlisted ${item}`);
+      for(const item of listed)assert.ok(PF2_ENGINE_FILES.includes(item)||shared.has(item),`${file} imports unlisted ${item}`);
     }
     // The resolver itself may only import the reviewed modules.
     const own=await readFile(path.join(root,'src/quant-research/preflight-resolver.js'),'utf8');

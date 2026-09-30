@@ -7,30 +7,9 @@ import {QUANT_RUNTIME_ENGINE_FILES} from '../src/quant-research/runtime-engine-f
 import {INGESTION_ENGINE_FILES,ingestionEngineHash} from '../src/postgres/quant-data.js';
 import {FOUNDATION_ENGINE_FILES,LEGACY_ENGINE_FILES,engineHash} from '../src/postgres/quant-research.js';
 import {PF2_ENGINE_FILES,PF2_EVALUATOR_FILES,pf2ExecutableHashes} from '../src/quant-research/preflight-resolver.js';
+import {SHARED_APPLICATION_FILES} from './helpers/runtime-shared-boundary.js';
 
-// Deliberate shared-application boundary. No directory-wide exemptions.
-const shared=new Set([
-  "src/config.js",
-  "src/http-safety.js",
-  "src/money.js",
-  "src/pine-bridge/ai-source.js",
-  "src/pine-bridge/contract.js",
-  "src/pine-bridge/input-review.js",
-  "src/pine-bridge/provider.js",
-  "src/pine-bridge/source.js",
-  "src/pine-bridge/template.js",
-  "src/postgres/auth-store.js",
-  "src/postgres/db.js",
-  "src/postgres/http.js",
-  "src/postgres/ledger.js",
-  "src/postgres/pine-bridge-market.js",
-  "src/postgres/pine-bridge-readiness.js",
-  "src/postgres/pine-bridge-registry.js",
-  "src/postgres/pine-bridge.js",
-  "src/postgres/pine-capture.js",
-  "src/postgres/store.js",
-  "src/security.js"
-]);
+const shared=new Set(SHARED_APPLICATION_FILES);
 const roots=['src/postgres/quant-research-main.js','src/quant-research/io-profile-worker.js',
  'src/postgres/quant-preflight-wiring.js','src/postgres/quant-preflight-routes.js'];
 async function closure(){

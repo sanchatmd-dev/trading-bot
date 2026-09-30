@@ -65,3 +65,17 @@ test('API refuses a local capacity policy even if supplied by its trusted loader
   await assert.rejects(createQuantPreflightApi(f.options),{code:'QUANT_CAPACITY_POLICY_INVALID'});
   assert.deepEqual(f.calls,['policy']);
 });
+test('disabled data capability starts without dataset stores',async()=>{
+  const f=fixture();delete f.options.dataService.datasetStore;f.options.researchStore=null;f.options.dataEnabled=false;
+  const value=await createQuantPreflightApi(f.options);
+  assert.equal(value.preflightEnabled,false);assert.equal(value.preflightService.stores,null);assert.deepEqual(f.calls,[]);
+});
+test('data capability on with PF-2 off never hands stores to the disabled service',async()=>{
+  const f=fixture();f.options.researchStore=null;
+  const value=await createQuantPreflightApi(f.options);
+  assert.equal(value.preflightEnabled,false);assert.equal(value.preflightService.stores,null);
+});
+test('requested PF-2 without usable dataset stores fails closed at startup',async()=>{
+  const f=fixture();f.options.environment.QUANT_PREFLIGHT_ENABLED='1';f.options.researchStore=null;
+  await assert.rejects(createQuantPreflightApi(f.options),{code:'PREFLIGHT_CONFIGURATION_INVALID'});
+});

@@ -66,5 +66,13 @@ jobs:
         with:
           node-version: '24'
       - run: sudo apt-get update && sudo apt-get install -y postgresql-client-16
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.17'
+      - run: uv sync --locked --all-extras
+        working-directory: quant_lab
       - run: npm ci
       - run: npm run test:postgres

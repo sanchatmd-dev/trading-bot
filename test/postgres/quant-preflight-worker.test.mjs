@@ -1,6 +1,7 @@
 import test,{before,after,beforeEach,afterEach} from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import {existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
@@ -15,7 +16,8 @@ import {createHarness,createWorld,fixtureEnvelope} from '../helpers/preflight-pg
 // Real isolated PostgreSQL, real resolver and replay driver. The supervisor adapter below runs
 // local Python only; it is not evidence of Linux systemd or production I/O isolation.
 const root=fileURLToPath(new URL('../../',import.meta.url));
-const python=path.resolve(root,'quant_lab/.venv/Scripts/python.exe');
+// The uv-synced quant_lab/.venv interpreter: Scripts on Windows, bin elsewhere.
+const python=process.env.QUANT_TEST_PYTHON??path.resolve(root,'quant_lab/.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python');
 const local=createLocalPythonRunner({python,developmentOnly:true,
  shim:path.resolve(root,'test/helpers/pf2_replay_shim.py')});
 let admin,base,h;
@@ -23,6 +25,7 @@ const dispose=[];
 let workers,queuedIds,releaseGates;
 before(async()=>{
  assert.ok(process.env.TEST_DATABASE_URL,'Isolated PostgreSQL required');
+ assert.ok(existsSync(python),'PF-2 worker test needs the quant_lab/.venv interpreter (uv sync) or QUANT_TEST_PYTHON');
  admin=new PostgresDatabase({connectionString:process.env.TEST_DATABASE_URL});
  base=await createPf2Base({after:cleanup=>dispose.push(cleanup)});
  h=await createHarness({admin,base});dispose.push(()=>h.dispose());

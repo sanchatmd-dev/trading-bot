@@ -31,6 +31,7 @@ export const PF2_EVALUATOR_FILES=Object.freeze([
   'quant_lab/src/robot_quant/spt_custom_evaluator.py','quant_lab/src/robot_quant/spt_evaluator.py',
   'quant_lab/src/robot_quant/strategy.py','quant_lab/src/robot_quant/validation.py']);
 
+// Sorted after the runtime files merge in, so the list stays in canonical order.
 export const PF2_ENGINE_FILES=Object.freeze([...new Set([
   'quant_lab/src/robot_quant/__init__.py','quant_lab/src/robot_quant/analytics.py',
   'quant_lab/src/robot_quant/backtest.py','quant_lab/src/robot_quant/bridge_replay.py',
@@ -50,7 +51,7 @@ export const PF2_ENGINE_FILES=Object.freeze([...new Set([
   'src/quant-research/preflight-replay.js','src/quant-research/preflight-resolver.js',
   'src/quant-research/preflight-runtime.js','src/quant-research/process-supervisor.js',
   'src/quant-research/profile-contract-v2.js','src/quant-research/profile-contract.js',
-  'src/quant-research/research-dataset-store.js',...QUANT_RUNTIME_ENGINE_FILES])]);
+  'src/quant-research/research-dataset-store.js',...QUANT_RUNTIME_ENGINE_FILES])].sort());
 
 export const PF2_RESOLVER_ERRORS=Object.freeze(['PF2_RESOLVER_CONFIG_INVALID','PF2_CANCELLED',
   'PF2_UNSUPPORTED_SIGNAL_MODE','PF2_EVALUATOR_UNAVAILABLE','PF2_BUDGET_UNSUPPORTED',

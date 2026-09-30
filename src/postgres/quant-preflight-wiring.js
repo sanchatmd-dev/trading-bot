@@ -25,8 +25,9 @@ export async function createQuantPreflightApi({pineService,dataService,researchS
   const profileService=new QuantProfileService({pineService,dataService,researchStore,enabled:dataEnabled,
     capacityPolicy,profileV2Enabled,enrollmentEnabled});
   if(enrollmentEnabled)await profileService.ready();
+  // Only an enabled PF-2 reads dataset stores. With the data capability off there are none, and the server must still start.
   const preflightService=new QuantPreflightService({pineService,dataService,
-    stores:{raw:dataService.datasetStore,research:researchStore},capacityPolicy,enabled:preflightEnabled});
+    stores:preflightEnabled?{raw:dataService.datasetStore,research:researchStore}:undefined,capacityPolicy,enabled:preflightEnabled});
   if(preflightEnabled)await assertQuantPreflightSchema(pineService.db);
   return {profileService,preflightService,enrollmentEnabled,preflightEnabled,capacityPolicy};
 }

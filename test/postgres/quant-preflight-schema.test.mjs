@@ -10,8 +10,17 @@ import {canonical} from '../../src/pine-bridge/source.js';
 const sha256=text=>createHash('sha256').update(text,'utf8').digest('hex');
 const BASE_FILES=['pine-bridge-schema.sql','quant-research-schema.sql'];
 const FOUNDATION_FILES=['quant-foundation-schema.sql','quant-research-foundation-schema.sql','quant-storage-schema.sql'];
-const NEW_TABLES=['quant_holdout_boundaries','quant_preflight_jobs','quant_preflight_schema'];
-const NEW_FUNCTIONS=['quant_holdout_boundary_write_once','quant_preflight_jobs_guard'];
+const PREFLIGHT_TABLES=['quant_holdout_boundaries','quant_preflight_jobs','quant_preflight_schema'];
+const PREFLIGHT_FUNCTIONS=['quant_holdout_boundary_write_once','quant_preflight_jobs_guard'];
+// migrateQuantFoundation installs two more offline extensions after the preflight schema: the I/O ledger and launch
+// tables with their three guards (W6 installer), and the PROFILE enrollment receipts with their version marker and
+// immutability guard (E1). The full install scope is the union of the three.
+const IO_TABLES=['quant_io_launches','quant_io_ledgers'];
+const IO_FUNCTIONS=['quant_io_foundation_release_guard','quant_io_launch_guard','quant_io_ledger_guard'];
+const ENROLLMENT_TABLES=['quant_profile_enrollment_receipts','quant_profile_enrollment_schema'];
+const ENROLLMENT_FUNCTIONS=['quant_profile_enrollment_receipt_guard'];
+const NEW_TABLES=[...PREFLIGHT_TABLES,...IO_TABLES,...ENROLLMENT_TABLES];
+const NEW_FUNCTIONS=[...PREFLIGHT_FUNCTIONS,...IO_FUNCTIONS,...ENROLLMENT_FUNCTIONS];
 const MAX_TIME=253402300799999,MAX_ALIGNED=253402300740000;
 
 let admin,shared;
@@ -288,7 +297,7 @@ test('column types and the owner/bot/created_at index match the contract',async(
 
 const relationOids=async(db)=>Object.fromEntries((await db.query(
   "SELECT c.relname,c.oid::text oid FROM pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relname = ANY($1) ORDER BY 1",
-  [[...NEW_TABLES,'quant_preflight_jobs_bot','quant_preflight_jobs_pkey','quant_holdout_boundaries_pkey']])).rows.map(r=>[r.relname,r.oid]));
+  [[...PREFLIGHT_TABLES,'quant_preflight_jobs_bot','quant_preflight_jobs_pkey','quant_holdout_boundaries_pkey']])).rows.map(r=>[r.relname,r.oid]));
 const preflightTriggers=async(db)=>(await db.query(
   "SELECT tgname,tgrelid::regclass::text relation,pg_get_triggerdef(oid) def FROM pg_trigger WHERE NOT tgisinternal AND tgrelid = ANY($1::regclass[]) ORDER BY tgname",
   [['quant_holdout_boundaries','quant_preflight_jobs']])).rows;
@@ -350,7 +359,13 @@ async function catalogSnapshot(db){
   return {tables,functions};
 }
 
-test('migration adds only the three preflight tables and two functions; existing tables are untouched',async()=>{
+// Two intended changes reach the existing quant_foundation_jobs table and no other existing table: the enrollment
+// extension widens its named stop_reason CHECK with PROFILE_COMPLETING, and the I/O installer adds the release guard.
+const STOP_REASON_CHECK='quant_foundation_jobs_stop_reason_check',RELEASE_GUARD='quant_io_foundation_release_guard';
+const STOP_REASONS="'LEASE_EXPIRED'::text, 'CANCELLED'::text, 'RUNTIME_EXCEEDED'::text, 'HEALTH_UNAVAILABLE'::text";
+const stopReasonCheck=(completing)=>'CHECK ((stop_reason = ANY (ARRAY['+STOP_REASONS+(completing?", 'PROFILE_COMPLETING'::text":'')+'])))';
+
+test('migration adds only the preflight, I/O and enrollment tables and functions; existing tables are untouched except two intended quant_foundation_jobs extensions',async()=>{
   const db=await createDatabase();
   const ids=await identity(db);
   await deployment(db,ids);
@@ -362,8 +377,22 @@ test('migration adds only the three preflight tables and two functions; existing
   const after=await catalogSnapshot(db);
   const added=Object.keys(after.tables).filter(name=>!before.tables[name]).sort();
   assert.deepEqual(added,[...NEW_TABLES].sort());
-  for(const [name,snapshot] of Object.entries(before.tables))assert.deepEqual(after.tables[name],snapshot,'existing table changed: '+name);
+  for(const [name,snapshot] of Object.entries(before.tables))
+    if(name!=='quant_foundation_jobs')assert.deepEqual(after.tables[name],snapshot,'existing table changed: '+name);
+  // quant_foundation_jobs keeps its columns, indexes and rows, and every constraint and trigger except the two extensions.
+  const jobs={before:before.tables.quant_foundation_jobs,after:after.tables.quant_foundation_jobs};
+  for(const part of ['columns','indexes','content'])assert.deepEqual(jobs.after[part],jobs.before[part],'quant_foundation_jobs '+part+' changed');
+  const others=(rows)=>rows.filter(row=>row.conname!==STOP_REASON_CHECK);
+  assert.deepEqual(others(jobs.after.constraints),others(jobs.before.constraints));
+  assert.deepEqual(jobs.before.constraints.filter(row=>row.conname===STOP_REASON_CHECK).map(row=>row.def),[stopReasonCheck(false)]);
+  assert.deepEqual(jobs.after.constraints.filter(row=>row.conname===STOP_REASON_CHECK).map(row=>row.def),[stopReasonCheck(true)]);
+  const unchanged=(rows)=>rows.filter(row=>row.tgname!==RELEASE_GUARD);
+  assert.deepEqual(unchanged(jobs.after.triggers),jobs.before.triggers);
+  const guards=jobs.after.triggers.filter(row=>row.tgname===RELEASE_GUARD);
+  assert.equal(guards.length,1);
+  assert.match(guards[0].def,/BEFORE UPDATE ON public\.quant_foundation_jobs FOR EACH ROW EXECUTE FUNCTION (public\.)?quant_io_foundation_release_guard\(\)$/);
   assert.deepEqual(after.functions.filter(f=>!NEW_FUNCTIONS.includes(f.proname)),before.functions);
-  assert.deepEqual(after.functions.filter(f=>NEW_FUNCTIONS.includes(f.proname)).map(f=>f.proname),[...NEW_FUNCTIONS].sort());
+  // Sorted in JavaScript: the database collation may order underscores differently from code unit order.
+  assert.deepEqual(after.functions.filter(f=>NEW_FUNCTIONS.includes(f.proname)).map(f=>f.proname).sort(),[...NEW_FUNCTIONS].sort());
   assert.equal((await db.query('SELECT version FROM schema_version')).rows[0].version,14);
 });

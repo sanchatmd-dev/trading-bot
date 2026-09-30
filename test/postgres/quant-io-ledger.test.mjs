@@ -149,7 +149,7 @@ test('revoked policy does not block trusted STOPPING terminal accounting',async(
   await assert.rejects(terminal.open({jobId,leaseToken}),{code:'QUANT_IO_LEASE_LOST'});
 });
 
-test('persisted bind, observe and settle carry exact charge into next scheduler lease',async()=>{
+test('persisted bind, observe and settle carry exact charge into the next lease',async()=>{
   const initial=await ledger.open({jobId,leaseToken});
   const reserved=await reserve(initial);
   const identity={operation_id:'operation-00001',lease_token:leaseToken,
@@ -166,17 +166,20 @@ test('persisted bind, observe and settle carry exact charge into next scheduler 
   const settled=await transition(observed,'settle',proof);
   assert.deepEqual(settled.charged,{read_bytes:5,write_bytes:6});
   assert.equal((await transition(settled,'settle',proof)).revision,settled.revision);
-  await scheduler.pause(claimed);
-  const resumed=await scheduler.claim('io-test-worker-next');
-  assert.equal(resumed.job_id,jobId);
-  assert.notEqual(resumed.lease_token,leaseToken);
+  // A PROFILE V2 job has one attempt and leaves RUNNING only through the terminal path. The scheduler refuses to pause
+  // it even with every operation settled, so it can no longer hand the job a second lease. The next lease is written
+  // directly, as in the crash test above: the ledger fence under test does not depend on who issued the token.
+  await assert.rejects(scheduler.pause(claimed),{code:'PROFILE_V2_TERMINAL_REQUIRED'});
+  const nextLease=randomUUID();
+  await db.query('UPDATE quant_foundation_jobs SET lease_token=$2,lease_until=$3 WHERE job_id=$1',
+    [jobId,nextLease,now+30000]);
   const newLedger=new QuantIoLedger({db:other,policy:profileV2Fixture(2000).policy,...enrolled()});
-  const reopened=await newLedger.open({jobId,leaseToken:resumed.lease_token});
+  const reopened=await newLedger.open({jobId,leaseToken:nextLease});
   assert.equal(reopened.revision,settled.revision+1);
   assert.deepEqual(reopened.charged,{read_bytes:5,write_bytes:6});
   await assert.rejects(ledger.read({jobId,leaseToken}),{code:'QUANT_IO_LEASE_LOST'});
-  const next=await newLedger.reserveBeforeLaunch({jobId,leaseToken:resumed.lease_token,
-    expectedRevision:reopened.revision,input:{operation_id:'operation-00002',lease_token:resumed.lease_token,
+  const next=await newLedger.reserveBeforeLaunch({jobId,leaseToken:nextLease,
+    expectedRevision:reopened.revision,input:{operation_id:'operation-00002',lease_token:nextLease,
       domain_id:'domain-operation-00002',cgroup_id:'cgroup-operation-00002',
       allowance:{read_bytes:30,write_bytes:30}}});
   assert.deepEqual(next.charged,{read_bytes:5,write_bytes:6});

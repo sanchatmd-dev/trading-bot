@@ -32,7 +32,7 @@ test('shared dataset plus fenced restart reproduces an uninterrupted synthetic f
   const metadata={version:'spot-dataset-v1',venue:'binance-global',market:'SPOT',symbol:'BTCUSDT',timeframe:'1',start_time:60000,end_time:(count+1)*60000,warmup_bars:4,total_bars:count,cutoff:(count+1)*60000,source:'binance-spot-klines-v1'};
   const bars=Array.from({length:count},(_,i)=>({time:(i+1)*60000,open:String(100+i),high:String(102+i),low:String(99+i),close:String(101+i),volume:'1'}));
   const reference=await store.publish(metadata,bars,{chunkBars:5});
-  const contract={version:'quant-foundation-v1',owner_id:'integration-owner',bot_id:'integration-bot',kind:'PREFLIGHT',dataset:reference,engine_hash:'e'.repeat(64),snapshot_hash:'f'.repeat(64),budget:{candidates:1,max_evaluations:1,chunk_bars:4,max_runtime_ms:60000,max_output_bytes:4096,max_state_bytes:4096}};
+  const contract={version:'quant-foundation-v1',owner_id:'integration-owner',bot_id:'integration-bot',kind:'BACKTEST',dataset:reference,engine_hash:'e'.repeat(64),snapshot_hash:'f'.repeat(64),budget:{candidates:1,max_evaluations:1,chunk_bars:4,max_runtime_ms:60000,max_output_bytes:4096,max_state_bytes:4096}};
   let now=metadata.cutoff;
   const authorize=async(owner,frozen,action)=>{
     if(owner!==contract.owner_id||frozen.bot_id!==contract.bot_id)return {ok:false};

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
@@ -113,7 +114,8 @@ export async function createProducerWorld(admin){
   const key=randomUUID(),queued=await tx(()=>profile.enqueueEnrollment(owner,body,key));
   const profileJob=(await db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1',[queued.job_id])).rows[0];
   let builds=0,releases=0,stops=0,replayLaunches=0,replayActive=0,maxReplayActive=0,checkpoints=0;
-  const python=path.resolve('quant_lab/.venv/Scripts/python.exe');
+  const python=process.env.QUANT_TEST_PYTHON??path.resolve('quant_lab/.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python');
+  assert.ok(existsSync(python),'PF-2 producer fixture needs the quant_lab/.venv interpreter (uv sync) or QUANT_TEST_PYTHON');
   // The existing shim substitutes source enrollment only; evaluator, Risk, Paper and IPC stay real.
   const local=createLocalPythonRunner({python,developmentOnly:true,shim:path.resolve('test/helpers/pf2_replay_shim.py')});
   const service=new QuantPreflightService({pineService:pine,dataService:data,stores:{raw:rawStore,research:researchStore},capacityPolicy:policy,clock:()=>now,enabled:true,supportedSourceHash:hash(source)});

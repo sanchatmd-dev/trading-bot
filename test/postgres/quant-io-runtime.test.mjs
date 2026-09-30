@@ -67,6 +67,7 @@ const fixtureLauncher=(sampleOverride,readyOverride,terminal=null)=>({spawnPrepa
 }});
 const ledgerState=async(connection=db)=>(await connection.query('SELECT state FROM quant_io_ledgers')).rows[0].state;
 const launchState=async(connection=db)=>(await connection.query('SELECT state FROM quant_io_launches')).rows[0].state;
+const jobRow=async(connection=db)=>(await connection.query('SELECT * FROM quant_foundation_jobs')).rows[0];
 /** Reserve, start, bind, release. The operation is ACTIVE and the launch RELEASED. */
 async function armTerminal(overrides={}){
   script={calls:0,events:[],...overrides};
@@ -124,7 +125,14 @@ test('atomic reservation and intent, one start, held payload, then cancel charge
   await assert.rejects(runtime.start(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
   await runtime.ready(args());
   await assert.rejects(runtime.release(args()),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
-  await assert.rejects(scheduler.pause(claimed),{code:'FOUNDATION_IO_UNRESOLVED'});
+  // A PROFILE V2 job leaves RUNNING only through the terminal path, so the scheduler refuses pause and finish before it
+  // reaches the I/O release hook. The refusal writes nothing.
+  const running=await jobRow();
+  await assert.rejects(scheduler.pause(claimed),{code:'PROFILE_V2_TERMINAL_REQUIRED'});
+  await assert.rejects(scheduler.finish(claimed,{}),{code:'PROFILE_V2_TERMINAL_REQUIRED'});
+  assert.deepEqual(await jobRow(),running);
+  // The release hook still reports the live launch as unresolved, independent of that refusal.
+  assert.deepEqual(await scheduler.canRelease(running,'PAUSE'),{ok:false});
   const cancelled=await runtime.cancel({ownerId:'owner-a',...args()});
   assert.equal(cancelled.status,'CANCELLED');
   assert.equal(cancelled.proof,'UNKNOWN_FINAL_CHARGED');
@@ -168,7 +176,14 @@ test('SQL guard blocks alternate scheduler release and lease replacement',async(
   await runtime.reserve({...args(),expectedRevision:0,allowance});
   const alternate=new QuantFoundationScheduler({db:second,capacityPolicy:profileV2Fixture(2000).policy,
     clock:()=>now,authorize:async()=>({ok:true}),health:async()=>({ok:true})});
-  await assert.rejects(alternate.pause(claimed),/Foundation I\/O launch unresolved/);
+  // No scheduler instance pauses a PROFILE V2 job, with or without the release hook.
+  await assert.rejects(alternate.pause(claimed),{code:'PROFILE_V2_TERMINAL_REQUIRED'});
+  // The trigger guards every writer: it refuses the statement release() would issue, whatever the target status.
+  for(const status of ['PAUSED','SUCCEEDED','CANCELLED'])
+    await assert.rejects(second.query(`UPDATE quant_foundation_jobs SET status=$2,result=$3,
+      runtime_used_ms=runtime_used_ms+GREATEST(0,$4-run_started_at),run_started_at=NULL,
+      lease_token=NULL,lease_until=NULL,worker_id=NULL WHERE job_id=$1`,[claimed.job_id,status,null,now]),
+    /Foundation I\/O launch unresolved/);
   await assert.rejects(db.query('UPDATE quant_foundation_jobs SET lease_token=$2 WHERE job_id=$1',
     [claimed.job_id,randomUUID()]),/Foundation I\/O launch unresolved/);
   await alternate.cancel('owner-a',claimed.job_id);
@@ -176,6 +191,54 @@ test('SQL guard blocks alternate scheduler release and lease replacement',async(
     /Foundation I\/O launch unresolved/);
   assert.equal((await db.query('SELECT status FROM quant_foundation_jobs')).rows[0].status,'STOPPING');
 });
+
+// QuantIoRuntime serves PROFILE V2 only, and the scheduler refuses to release that kind before any I/O check. A legacy
+// job with a directly seeded launch row is therefore the one way to reach the release hook inside release() and an
+// alternate scheduler's pause, so this keeps both guards covered on their own.
+const legacyRequest=owner=>{
+  const start=1800000000000,total=100,digest='a'.repeat(64);
+  return {version:'quant-foundation-v1',owner_id:owner,bot_id:'fixture-bot',kind:'BACKTEST',
+    dataset:{dataset_id:digest,sha256:digest,metadata:{version:'spot-dataset-v1',venue:'binance-global',market:'SPOT',
+      symbol:'BTCUSDT',timeframe:'1',start_time:start,end_time:start+total*60000,warmup_bars:10,total_bars:total,
+      cutoff:start+total*60000,source:'binance-spot-klines-v1'}},engine_hash:'b'.repeat(64),snapshot_hash:'c'.repeat(64),
+    budget:{candidates:1,max_evaluations:1,chunk_bars:100,max_runtime_ms:900000,max_output_bytes:1024,max_state_bytes:1024}};
+};
+
+// Each seed blocks through one condition only, so the hook and the trigger are each checked on both of their conditions.
+const unresolvedSeeds=[
+  {name:'launch row',launch:'INTENT_RECORDED',operations:[],
+    resolve:async(job)=>{await db.query("UPDATE quant_io_launches SET state='STOP_PROVEN' WHERE job_id=$1",[job.job_id]);}},
+  {name:'ledger operation',launch:'STOP_PROVEN',operations:[{operation_id:operationId,status:'CRASHED_UNCONFIRMED'}],
+    resolve:async(job,state)=>{
+      const next={...state,revision:1,operations:[{operation_id:operationId,status:'CRASHED'}]};
+      await db.query('UPDATE quant_io_ledgers SET revision=1,state=$2,state_hash=$3 WHERE job_id=$1',
+        [job.job_id,JSON.stringify(next),hash(canonical(next))]);
+    }}
+];
+for(const seed of unresolvedSeeds)
+  test(`release hook and SQL guard also stop another job kind that holds an unresolved ${seed.name}`,async()=>{
+    await db.query('TRUNCATE quant_io_launches,quant_io_ledgers,quant_foundation_jobs,quant_foundation_owners');
+    const {policy}=profileV2Fixture(2000);
+    const build=(database,canRelease)=>new QuantFoundationScheduler({db:database,capacityPolicy:policy,clock:()=>now,
+      leaseMs:30000,authorize:async()=>({ok:true}),health:async()=>({ok:true}),canRelease});
+    const hooked=build(db,row=>canReleaseQuantIo(db,row)),alternate=build(second);
+    await hooked.enqueue('owner-a',legacyRequest('owner-a'),randomUUID());
+    const job=await hooked.claim('io-runtime-legacy');
+    const state={job_id:job.job_id,policy_hash:hash('legacy-policy'),lease_token:job.lease_token,revision:0,
+      operations:seed.operations};
+    await db.query(`INSERT INTO quant_io_ledgers(job_id,policy_hash,lease_token,revision,state,state_hash)
+      VALUES($1,$2,$3,0,$4,$5)`,[job.job_id,state.policy_hash,job.lease_token,JSON.stringify(state),hash(canonical(state))]);
+    await db.query(`INSERT INTO quant_io_launches(job_id,operation_id,lease_token,unit_name,payload_hash,state,created_at)
+      VALUES($1,$2,$3,$4,$5,$6,$7)`,[job.job_id,operationId,job.lease_token,quantIoUnitName(job.job_id,operationId),
+      QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH,seed.launch,now]);
+    await assert.rejects(hooked.pause(job),{code:'FOUNDATION_IO_UNRESOLVED'});
+    await assert.rejects(hooked.finish(job,{done:true}),{code:'FOUNDATION_IO_UNRESOLVED'});
+    await assert.rejects(alternate.pause(job),/Foundation I\/O launch unresolved/);
+    assert.equal((await jobRow()).status,'RUNNING');
+    // Control: the same release goes through once that one condition is resolved, so it was the only blocker.
+    await seed.resolve(job,state);
+    assert.equal((await hooked.pause(job)).status,'PAUSED');
+  });
 
 test('cancel before start claim proves no launch; STARTING without handle remains quarantined',async()=>{
   await runtime.reserve({...args(),expectedRevision:0,allowance});
