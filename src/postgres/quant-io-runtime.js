@@ -4,7 +4,8 @@ import {reserveIoOperation,bindIoOperation,observeIoOperation,getIoStopDecision}
 import {validateFoundationRequestV2} from '../quant-research/foundation-contract-v2.js';
 import {terminalReadbackDigest,POST_EXIT_MEASURED,COMMIT_LOCK_TIMEOUT_MS,COMMIT_BOUND_MS} from '../quant-research/io-terminal.js';
 import {finalizeProfileEnrollmentLocked,readProfileCompletionOutcome,refreshProfileCompletionTicket,
- profileCompletionAttempt,profileCompletionVeto,recordProfileCompletionProof} from './quant-profile-enrollment.js';
+ profileCompletionAttempt,profileCompletionVeto,recordProfileCompletionProof,prepareEnrollmentAttempt,
+ profileCompletionBoundTo,profileCompletionProofRecorded} from './quant-profile-enrollment.js';
 
 const unavailable=()=>fail('QUANT_IO_ACCOUNTING_UNAVAILABLE');
 const lost=()=>fail('QUANT_IO_LEASE_LOST');
@@ -78,9 +79,13 @@ export async function canReleaseQuantIo(db,row){
  * Lost commit or process restart leaves durable intent quarantined.
  */
 export class QuantIoRuntime {
-  constructor({db,ledger,scheduler,launcher,clock=Date.now,profile=null}){
+  constructor({db,ledger,scheduler,launcher,clock=Date.now,profile=null,enrollment=null}){
     if(!db?.transaction||!ledger?.open||!scheduler?.cancel||
       !launcher?.spawnPrepared||typeof clock!=='function')throw unavailable();
+    // The trusted enrollment authority (root wiring) is bound here once. Attempts are prepared only with it, and a
+    // completion whose attempt carries any other authority object is refused before terminal or accounting work.
+    if(enrollment!==null&&(typeof enrollment!=='object'||typeof enrollment.authorizeLocked!=='function'||
+      typeof enrollment.assertSchemaLocked!=='function'||typeof enrollment.tickets?.prepare!=='function'))throw unavailable();
     if(profile&&(profile.protocol!==QUANT_PROFILE_RUNTIME_PROTOCOL||
       typeof profile.authorizeRelease!=='function'||typeof profile.health!=='function'||
       typeof profile.root!=='string'||!path.isAbsolute(profile.root)||
@@ -89,7 +94,7 @@ export class QuantIoRuntime {
     // works on the same PostgresDatabase instance (per-instance isTransaction); fail at build time.
     if(ledger.db!==db)throw unavailable();
     this.db=db;this.ledger=ledger;this.scheduler=scheduler;this.launcher=launcher;
-    this.profile=profile;this.payloads=new Map();
+    this.profile=profile;this.payloads=new Map();this.enrollment=enrollment;
     this.clock=clock;this.handles=new Map();this.boundIdentity=new Map();
     this.releaseAllowed=new Set();this.releaseDisabled=new Set();
     this.terminals=new Map();
@@ -135,6 +140,12 @@ export class QuantIoRuntime {
         await this.db.query(`SET LOCAL lock_timeout='${COMMIT_LOCK_TIMEOUT_MS}ms'`);
         await this.db.query(`SET LOCAL statement_timeout='${COMMIT_BOUND_MS}ms'`);
       }
+      // SERIALIZABLE takes its snapshot at the first query, not at BEGIN (SET above takes none either). Waiting for the
+      // scheduler with LOCK TABLE, which takes no snapshot, puts a transaction that commits during the wait (an owner
+      // cancel) inside the snapshot, so the job row lock below cannot raise a serialization failure because of it.
+      // EXCLUSIVE conflicts with the ROW SHARE lock of every SELECT singleton ... FOR UPDATE, so the order stays
+      // scheduler first, then job, ledger and launches, as in every other scheduler, worker and recovery path.
+      if(isolation!=='READ COMMITTED')await this.db.query('LOCK TABLE quant_foundation_scheduler IN EXCLUSIVE MODE');
       // Age check, never a JavaScript timer: a late COMMIT could race the crash CAS. Client clock first (it covers the
       // pool checkout and BEGIN before the transaction exists), then the server clock (BEGIN to now).
       const withinAge=async limitMs=>performance.now()-enteredAt<=limitMs&&(await this.db.query(
@@ -414,10 +425,19 @@ export class QuantIoRuntime {
     finally{if(this.terminals.get(id)===terminal)this.terminals.delete(id);}
   }
 
+  /** Prepares the private enrollment attempt with the authority bound at construction. The caller supplies the
+   * frame and signals, never the authority.
+   */
+  prepareEnrollment({job,frame,leaseToken,operationId,signal=null,emergency=null}){
+    return prepareEnrollmentAttempt({job,frame,leaseToken,operationId,policy:this.ledger.policy,signal,emergency,
+      enrollment:this.enrollment});
+  }
+
   /** Shares the cancellation terminal; beginning completion has already retained the global slot. */
   async completeProfile({jobId,leaseToken,operationId,completion,onTerminalDiagnostic=null}){
     const attempt=profileCompletionAttempt(completion);
-    if(!attempt||attempt.jobId!==jobId||attempt.leaseToken!==leaseToken||attempt.operationId!==operationId)throw uncertain();
+    if(!attempt||!profileCompletionBoundTo(completion,this.enrollment)||
+      attempt.jobId!==jobId||attempt.leaseToken!==leaseToken||attempt.operationId!==operationId)throw uncertain();
     const id=key(jobId,operationId),running=this.terminals.get(id);
     if(running)return running;
     const terminal=(async()=>{
@@ -469,6 +489,7 @@ export class QuantIoRuntime {
    * Only UNSETTLED permits the unknown-final fallback; an uncertain enrollment stays quarantined.
    */
   async settleMeasured({jobId,leaseToken,operationId,handle,bound,frozen,evidence,postExit,stopDigest,completion=null}){
+    if(completion&&!profileCompletionBoundTo(completion,this.enrollment))return {kind:'UNCERTAIN'};
     let readbackDigest;
     try{
       readbackDigest=terminalReadbackDigest({jobId,operationId,unitName:frozen.unitName,group:frozen.group,
@@ -517,6 +538,20 @@ export class QuantIoRuntime {
     }catch(error){
       // Commit outcome may be unknown. Reread before any fallback; never crash-charge a committed settle.
       if(completion){
+        // No proof was ever recorded, so no settle body ran: this transaction wrote nothing (pool or lock wait
+        // timeout, a failure before the body). A durable re-read that finds the operation and its launch still
+        // unresolved proves nothing settled and selects the fallback. A read failure or any settled or proven
+        // state stays uncertain, because it cannot be compared without a proof.
+        if(expected===null&&!profileCompletionProofRecorded(completion)){
+          try{
+            const observed=await this.locked(jobId,leaseToken,async({job,ledgerRow,intent})=>({job,
+              operation:ledgerRow.state.operations.find(item=>item.operation_id===operationId),
+              row:intent.find(item=>item.operation_id===operationId)}),{active:false});
+            return observed.job.status==='STOPPING'&&
+              ['RESERVED','ACTIVE','STOP_REQUIRED'].includes(observed.operation?.status)&&
+              !!observed.row&&observed.row.state!=='STOP_PROVEN'?{kind:'UNSETTLED'}:{kind:'UNCERTAIN'};
+          }catch{return {kind:'UNCERTAIN'};}
+        }
         const observed=await readProfileCompletionOutcome({db:this.db,jobId,completion,expectedTerminalProof:expected});
         if(observed.kind==='ENROLLED'||observed.kind==='SETTLED_ONLY')return observed;
         if(observed.kind==='UNSETTLED')return observed;

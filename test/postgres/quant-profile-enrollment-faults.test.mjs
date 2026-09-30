@@ -108,6 +108,8 @@ test('wall clock reversal during terminal denies enrollment while measured accou
  const answer=await bounded(f.runtime.run(f.args),'clock reversal'),evidence=await f.evidence();
  assert.equal(answer.status,'CANCELLED');assert.equal(answer.proof,'MEASURED_FINAL_SETTLED');
  assert.equal(evidence.receipt,null);assert.equal(evidence.job.result,null);assert.equal(evidence.ledger.state.operations[0].status,'SETTLED');
+ // The fixture wall clock never advanced before the reversal, so only the monotonic terminal runtime can be charged.
+ assert.ok(evidence.job.runtime_used_ms>0,'denied terminal runtime is charged from the monotonic clock');
 });
 
 test('extra valid reserved operation retains measured settlement and prevents receipt and slot release',async t=>{

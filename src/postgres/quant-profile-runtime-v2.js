@@ -1,7 +1,7 @@
 import {canonical,hash,fail} from '../pine-bridge/source.js';
 import {validateProfileResultV2} from '../quant-research/profile-contract-v2.js';
 import {QuantIoRuntime,QUANT_PROFILE_RUNTIME_PROTOCOL,quantIoUnitName} from './quant-io-runtime.js';
-import {prepareEnrollmentAttempt,profileCompletionVeto} from './quant-profile-enrollment.js';
+import {profileCompletionVeto} from './quant-profile-enrollment.js';
 
 const uncertain=()=>fail('QUANT_IO_LAUNCH_UNCERTAIN');
 // Graceful stop (signal) and compute deadline both end the frame loop; the drained terminal still runs (W2 3.3).
@@ -26,7 +26,7 @@ export class QuantProfileRuntimeV2 {
       !Number.isSafeInteger(pollMs)||pollMs<25||pollMs>1000)throw uncertain();
     this.db=db;this.ledger=ledger;this.scheduler=scheduler;this.launcher=launcher;this.clock=clock;this.pollMs=pollMs;
     this.enrollment=enrollment;
-    this.io=new QuantIoRuntime({db,ledger,scheduler,launcher,clock,
+    this.io=new QuantIoRuntime({db,ledger,scheduler,launcher,clock,enrollment,
       profile:{protocol:QUANT_PROFILE_RUNTIME_PROTOCOL,root:storageBudget.root,storageBudget,
         authorizeRelease:async job=>{
           if(!db.isTransaction||hash(canonical(job.contract))!==job.contract_hash||
@@ -148,8 +148,8 @@ export class QuantProfileRuntimeV2 {
         throw uncertain();
       validateProfileResultV2(row.contract,frame.result,{policy:this.ledger.policy});
       if(frame.result.evaluator_admission!==false)throw uncertain();
-      if(marked)attempt=await prepareEnrollmentAttempt({job:row,frame,leaseToken,operationId,
-        policy:this.ledger.policy,signal,emergency,enrollment:this.enrollment});
+      // The I/O runtime supplies its construction-bound enrollment authority; this adapter never chooses one.
+      if(marked)attempt=await this.io.prepareEnrollment({job:row,frame,leaseToken,operationId,signal,emergency});
     }catch(error){
       failure=error;throw error;
     }finally{

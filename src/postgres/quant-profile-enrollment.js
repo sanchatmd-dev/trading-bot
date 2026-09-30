@@ -25,7 +25,7 @@ export async function prepareEnrollmentAttempt({job,frame,leaseToken,operationId
  const attempt=Object.freeze({jobId:job.job_id,leaseToken,operationId,contractHash:job.contract_hash,
   payloadHash:frame.payloadHash,resultHash:frame.resultHash,policyHash:contract.capacity.policy_hash,
   engineHash:contract.engine_hash,contract,result,policy:snapshot,executionTicket:ticket});
- attempts.set(attempt,{enrollment,signal,emergency});
+ attempts.set(attempt,{enrollment,signal,emergency,time:{wall:null,mono:null,anomaly:false}});
  if(profileCompletionVeto(attempt))throw refused();
  return attempt;
 }
@@ -35,6 +35,15 @@ export function profileCompletionVeto(attempt){
  return !state||state.signal?.aborted===true||state.emergency?.aborted===true;
 }
 export function profileCompletionAttempt(completion){return completions.get(completion)?.attempt??null;}
+/** Identity check only: true when the completion's attempt was prepared with exactly this trusted authority object.
+ * It never hands the authority out, so holding a completion grants no ticket or authorization capability.
+ */
+export function profileCompletionBoundTo(completion,enrollment){
+ const state=attempts.get(profileCompletionAttempt(completion));
+ return !!state&&!!enrollment&&state.enrollment===enrollment;
+}
+/** True once a settle body recorded its expected terminal proof for this completion. */
+export function profileCompletionProofRecorded(completion){return !!completions.get(completion)?.expectedTerminalProof;}
 export function recordProfileCompletionProof(completion,proof){
  const context=completions.get(completion);
  if(!context||context.expectedTerminalProof&&canonical(context.expectedTerminalProof)!==canonical(proof))throw refused();
@@ -52,10 +61,28 @@ function ticketAccepted(attempt,ticket,phase){
  catch{return false;}
 }
 
+/** One high-water mark per attempt for each clock, from the first BEGIN read to the last FINALIZE read. A wall read
+ * below an earlier wall read, a monotonic read below an earlier one, or an unusable read sets a sticky anomaly: the
+ * attempt can no longer enroll. The marks never move down, so a later reading is never lower than a charged one.
+ */
+function readClock(state,clock,monotonic){
+ const time=state.time,wall=clock(),mono=monotonic();
+ if(safe(wall)){
+  if(time.wall!==null&&wall<time.wall)time.anomaly=true;
+  if(time.wall===null||wall>time.wall)time.wall=wall;
+ }else time.anomaly=true;
+ if(Number.isFinite(mono)){
+  if(time.mono!==null&&mono<time.mono)time.anomaly=true;
+  if(time.mono===null||mono>time.mono)time.mono=mono;
+ }else time.anomaly=true;
+ return time;
+}
+
 /** Caller holds the scheduler/job locks in a new SERIALIZABLE transaction. */
 export async function beginProfileCompletionLocked({db,job,attempt,clock,monotonic=()=>performance.now()}){
  const state=attempts.get(attempt);
- if(!db.isTransaction||!state||profileCompletionVeto(attempt)||!ticketAccepted(attempt,attempt.executionTicket,'BEGIN')||
+ if(!db.isTransaction||!state||typeof clock!=='function'||typeof monotonic!=='function'||
+    profileCompletionVeto(attempt)||!ticketAccepted(attempt,attempt.executionTicket,'BEGIN')||
     job?.job_id!==attempt.jobId||job.lease_token!==attempt.leaseToken||job.status!=='RUNNING'||
     job.checkpoint!==null||job.next_bar!==0||job.contract_hash!==attempt.contractHash||
     canonical(job.contract)!==canonical(attempt.contract))throw refused();
@@ -64,32 +91,43 @@ export async function beginProfileCompletionLocked({db,job,attempt,clock,monoton
   const elapsed=now-job.run_started_at,total=job.runtime_used_ms+elapsed;
   return safe(elapsed)&&safe(total)?total:null;
  };
- const alive=()=>{const now=clock(),used=usedAt(now);return used!==null&&
-  job.lease_until>now&&job.deadline_at>now&&
-  used<job.contract.budget.max_runtime_ms&&!profileCompletionVeto(attempt);};
- if(!alive())throw refused();
+ // Each check compares one reading: the runtime total at that wall time and the wall time itself. Returns the
+ // total, or null when the reading does not fit or any read of this attempt was anomalous.
+ const fitsAt=time=>{
+  const used=time.anomaly?null:usedAt(time.wall);
+  return used!==null&&job.lease_until>time.wall&&job.deadline_at>time.wall&&
+   used<job.contract.budget.max_runtime_ms&&!profileCompletionVeto(attempt)?used:null;
+ };
+ if(fitsAt(readClock(state,clock,monotonic))===null)throw refused();
  await state.enrollment.assertSchemaLocked(db);
- if(!alive())throw refused();
+ if(fitsAt(readClock(state,clock,monotonic))===null)throw refused();
  const authorized=await state.enrollment.authorizeLocked(job.owner_id,job.contract,{jobId:job.job_id,
   leaseToken:attempt.leaseToken,executionTicket:attempt.executionTicket,phase:'BEGIN'});
- if(authorized?.ok!==true||!alive())throw refused();
- const beginAt=clock(),beginMonotonic=monotonic(),runtimeUsed=usedAt(beginAt);
- if(!safe(beginAt)||!Number.isFinite(beginMonotonic)||!safe(runtimeUsed)||!alive())throw refused();
+ if(authorized?.ok!==true)throw refused();
+ // The persisted reading is the compared reading: no fresh clock read decides the transition.
+ const time=readClock(state,clock,monotonic),runtimeUsed=fitsAt(time);
+ if(runtimeUsed===null)throw refused();
+ const beginAt=time.wall,beginMonotonic=time.mono;
  const changed=await db.query(`UPDATE quant_foundation_jobs SET status='STOPPING',stop_reason='PROFILE_COMPLETING',
   runtime_used_ms=$3,lease_until=NULL,run_started_at=NULL WHERE job_id=$1 AND lease_token=$2 AND status='RUNNING' RETURNING *`,
  [job.job_id,attempt.leaseToken,runtimeUsed]);
  if(changed.rowCount!==1)throw refused();
  const completion=Object.freeze({jobId:job.job_id,leaseToken:attempt.leaseToken,operationId:attempt.operationId});
- completions.set(completion,{attempt,beginAt,beginMonotonic,runtimeUsed,clock,monotonic});
+ completions.set(completion,{attempt,beginAt,beginMonotonic,runtimeUsed,clock,monotonic,elapsed:0});
  return completion;
 }
 
+/** Terminal runtime on the attempt's high-water clock. Monotonic elapsed is the floor of every charge. Wall elapsed
+ * also counts while the wall clock never stepped back in this attempt, so a forward wall step raises the charge
+ * (conservative) and a backward step can neither lower it nor enroll. A charge never drops below an earlier one.
+ */
 function runtimeTotal(context){
- const now=context.clock(),mono=context.monotonic();
- if(!safe(now)||now<context.beginAt||!Number.isFinite(mono)||mono<context.beginMonotonic)return null;
- const elapsed=Math.max(now-context.beginAt,Math.ceil(mono-context.beginMonotonic));
+ const time=readClock(attempts.get(context.attempt),context.clock,context.monotonic);
+ const elapsed=Math.max(context.elapsed,Math.ceil(time.mono-context.beginMonotonic),
+  time.anomaly?0:time.wall-context.beginAt);
+ if(safe(elapsed))context.elapsed=elapsed;
  const total=context.runtimeUsed+elapsed;
- return safe(total)?{now,total}:null;
+ return {now:time.wall,total,valid:!time.anomaly&&safe(elapsed)&&safe(total)};
 }
 
 /** SQL-only publication; accounting and launch proof are already updated in the same transaction. */
@@ -98,15 +136,20 @@ export async function finalizeProfileEnrollmentLocked({db,job,settledLedger,laun
  const context=completions.get(completion),attempt=context?.attempt,state=attempts.get(attempt);
  if(!db.isTransaction||!state)throw refused();
  const veto=()=>profileCompletionVeto(attempt)||shouldVeto()===true;
- const fits=()=>{const time=runtimeTotal(context);return time&&time.now<job.deadline_at&&
-  time.total<job.contract.budget.max_runtime_ms&&!veto()?time:null;};
- const charge=async()=>{const time=runtimeTotal(context);if(time)await db.query(
+ // A reading fits when no clock anomaly occurred and its own values are inside the deadline and runtime budget.
+ const within=time=>time.valid&&time.now<job.deadline_at&&time.total<job.contract.budget.max_runtime_ms;
+ const fits=()=>{const time=runtimeTotal(context);return within(time)&&!veto()?time:null;};
+ // Every charge is persisted, a denial and a clock anomaly included (the monotonic floor still counts).
+ const charge=async()=>{const time=runtimeTotal(context);if(safe(time.total))await db.query(
   'UPDATE quant_foundation_jobs SET runtime_used_ms=GREATEST(runtime_used_ms,$3) WHERE job_id=$1 AND lease_token=$2',
   [job.job_id,attempt.leaseToken,time.total]);return time;};
  const denied=async reason=>{await charge();return {kind:'DENIED',reason};};
  if(job.job_id!==attempt.jobId||job.status!=='STOPPING'||job.stop_reason!=='PROFILE_COMPLETING'||
     job.lease_token!==attempt.leaseToken||job.contract_hash!==attempt.contractHash||
     canonical(job.contract)!==canonical(attempt.contract)||job.checkpoint!==null||job.next_bar!==0||
+    // The receipt takes its operation, token and payload from the launch row, so it must be the attempt's own launch.
+    launch?.job_id!==attempt.jobId||launch.operation_id!==attempt.operationId||
+    launch.lease_token!==attempt.leaseToken||launch.payload_hash!==attempt.payloadHash||launch.state!=='STOP_PROVEN'||
     healthObservation?.ok!==true||canonical(currentPolicy)!==canonical(attempt.policy)||
     !fits()||!ticketAccepted(attempt,executionTicket,'FINALIZE'))return denied('AUTHORITY');
  await state.enrollment.assertSchemaLocked(db);
@@ -117,7 +160,8 @@ export async function finalizeProfileEnrollmentLocked({db,job,settledLedger,laun
  const unresolved=(await db.query("SELECT 1 FROM quant_io_launches WHERE job_id=$1 AND state<>'STOP_PROVEN' LIMIT 1",[job.job_id])).rowCount;
  if(unresolved!==0||settledLedger.state.operations.some(operation=>operation.status!=='SETTLED')||!fits())return denied('UNRESOLVED');
  const time=await charge();
- if(!time||!fits())return denied('BUDGET');
+ // The charged reading itself must fit. Later readings are never lower (high-water) and are compared again below.
+ if(!within(time)||veto())return denied('BUDGET');
  const proposed={...job,status:'SUCCEEDED',result:attempt.result,worker_id:null,lease_token:null,lease_until:null,
   run_started_at:null,stop_reason:null,runtime_used_ms:Math.max(job.runtime_used_ms,time.total)};
  const receipt=buildProfileEnrollmentReceipt({job:proposed,policy:attempt.policy,launch,ledger:settledLedger,completed_at:time.now});
@@ -146,6 +190,9 @@ export async function readProfileCompletionOutcome({db,jobId,completion,expected
  try{
   if(db.isTransaction)return {kind:'UNCERTAIN'};
   return await db.transaction(async()=>{
+  // SERIALIZABLE takes its snapshot at the first query. LOCK TABLE takes none, so a transaction that commits while
+  // this read waits for the scheduler is inside the snapshot and cannot abort the read with a serialization error.
+  await db.query('LOCK TABLE quant_foundation_scheduler IN EXCLUSIVE MODE');
   await db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
   await db.query('SELECT job_id FROM quant_foundation_jobs WHERE job_id=$1 FOR UPDATE',[jobId]);
   const evidence=(await db.query(`SELECT to_jsonb(j) job,to_jsonb(r) receipt,to_jsonb(l) ledger,to_jsonb(x) launch

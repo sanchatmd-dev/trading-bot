@@ -264,6 +264,9 @@ export class QuantFoundationScheduler {
   async beginProfileCompletion({job_id,lease_token,attempt}) {
     if(this.db.isTransaction)throw fail('FOUNDATION_EXTERNAL_TRANSACTION_FORBIDDEN');
     return this.db.transaction(async()=>{
+      // SERIALIZABLE snapshots at the first query. LOCK TABLE takes no snapshot, so a transaction that commits while
+      // this one waits for the scheduler (an owner cancel) is inside the snapshot instead of a serialization failure.
+      await this.db.query('LOCK TABLE quant_foundation_scheduler IN EXCLUSIVE MODE');
       await this.lock();const job=await this.row(job_id);
       if(!job||job.lease_token!==lease_token)throw fail('FOUNDATION_LEASE_LOST');
       return beginProfileCompletionLocked({db:this.db,job,attempt,clock:this.clock});
