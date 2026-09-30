@@ -190,3 +190,39 @@ test('private baseline Python step matches original evaluator exactly without se
  assert.equal((await db.query('SELECT evaluations_started FROM quant_jobs WHERE run_id=$1',[queued.run_id])).rows[0].evaluations_started,1);
  await actual.finish(job,'NO_VALID_CANDIDATE',{scope:'BASELINE_ADAPTER_ENGINEERING_CHECK_ONLY',holdout_evaluated:false,owner_recommendation_ready:false});
 });
+// QS heavy-path S1: cheap rejections happen before the JSON bar load and before any dataset publication.
+const recordSql=async fn=>{
+ const sql=[],query=db.query.bind(db);db.query=(text,...rest)=>{sql.push(String(text));return query(text,...rest);};
+ try{await fn();}finally{delete db.query;}
+ return sql;
+};
+const datasetListing=async()=>(await fs.readdir(datasetRoot,{recursive:true})).sort();
+test('gapped range is rejected by the SQL precheck before bar rows load or files publish',async()=>{
+ const start=1800000000000+40000*60000,times=[...Array(3300).keys()].filter(i=>i!==1600);
+ const marketBars=times.map(i=>({time:start+i*60000,open:'100',high:'101',low:'99',close:'100',volume:'1',atr14:'2',price_tick:'0.01',quantity_step:'0.001'}));
+ const x=await baseline({marketBars}),files=await datasetListing();
+ const sql=await recordSql(()=>assert.rejects(enqueue(x),{code:'INSUFFICIENT_OR_GAPPED_RESEARCH_DATASET'}));
+ assert.ok(sql.some(text=>text.includes('min(bar_time)')),'range precheck ran');
+ assert.ok(!sql.some(text=>text.includes('SELECT * FROM pine_market_bars')),'no bar row was loaded');
+ assert.deepEqual(await datasetListing(),files);
+ assert.equal((await db.query('SELECT count(*)::int n FROM quant_jobs WHERE owner_id=$1',[x.a])).rows[0].n,0);
+});
+test('foundation queue full is 429 and precedes every bar read and dataset publication',async()=>{
+ const x=await baseline(),files=await datasetListing();
+ await db.query('INSERT INTO quant_foundation_owners(owner_id) VALUES($1) ON CONFLICT DO NOTHING',[x.a]);
+ for(let i=0;i<20;i++){
+  const contract=JSON.stringify({placeholder:i});
+  await db.query("INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at) VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)",[randomUUID(),x.a,'seed:'+i,contract,hash(contract),now,now+900000]);
+ }
+ try{
+  const sql=await recordSql(()=>assert.rejects(enqueue(x),{code:'FOUNDATION_QUEUE_FULL',status:429}));
+  assert.ok(!sql.some(text=>text.includes('pine_market_bars')),'no bar was read');
+  assert.deepEqual(await datasetListing(),files);
+  assert.equal((await db.query('SELECT count(*)::int n FROM quant_jobs WHERE owner_id=$1',[x.a])).rows[0].n,0);
+ }finally{await db.query('DELETE FROM quant_foundation_jobs WHERE owner_id=$1',[x.a]);}
+});
+test('per-owner research limit precedes every bar read',async()=>{
+ const x=await baseline();await enqueue(x);await enqueue(x);
+ const sql=await recordSql(()=>assert.rejects(enqueue(x),{code:'QUANT_QUEUE_FULL',status:429}));
+ assert.ok(!sql.some(text=>text.includes('pine_market_bars')),'no bar was read');
+});

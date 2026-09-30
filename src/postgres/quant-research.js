@@ -82,8 +82,22 @@ export class QuantResearchService{
   number(body.dataset.warmup_bars,{min:Math.max(1006,slowMaximum*5),max:5000,integer:true});
   const {start_time:start,end_time:end,warmup_bars:warmup}=body.dataset;
   if(start>=end||(end-start)%60000!==0||start%60000!==0||end%60000!==0||1+(end-start)/60000>10000)throw fail('INVALID_RESEARCH_DATASET');
+  const seconds=body.deadline_seconds??900;number(seconds,{min:60,max:900,integer:true});
+  // Queue limits and the range precheck run before any bar row is loaded or any dataset file is published.
+  // The queue lock (and, in FOUNDATION mode, the scheduler lock) stays held. The limits hold through that lock plus
+  // SERIALIZABLE conflict detection: a concurrent committed enqueue surfaces as 40001, answered 409 RETRY_TRANSACTION.
+  const running=await this.db.prepare("SELECT count(*) total,count(*) FILTER(WHERE owner_id=?) own FROM quant_jobs WHERE status IN ('QUEUED','RUNNING')").get(owner);
+  if(running.total>=10||running.own>=2)throw fail('QUANT_QUEUE_FULL',429);
+  if(this.foundation){
+   const queued=(await this.db.query("SELECT count(*)::int total,count(*) FILTER(WHERE owner_id=$1)::int owned FROM quant_foundation_jobs WHERE status IN ('QUEUED','PAUSED','RUNNING','STOPPING')",[owner])).rows[0];
+   if(queued.total>=100||queued.owned>=20)throw fail('FOUNDATION_QUEUE_FULL',429);
+  }
+  const expected=1+(end-start)/60000;
+  const span=await this.db.prepare("SELECT count(*) n,min(bar_time) first_time,max(bar_time) last_time FROM pine_market_bars WHERE broker='binance-global' AND symbol='BTCUSDT' AND timeframe='1' AND bar_time>=? AND bar_time<=?").get(start,end);
+  if(span.n!==expected||expected-warmup<2000)throw fail('INSUFFICIENT_OR_GAPPED_RESEARCH_DATASET');
+  if(span.first_time!==start||span.last_time!==end)throw fail('VERIFIED_MARKET_DATA_REQUIRED');
   const rows=await this.db.prepare("SELECT * FROM pine_market_bars WHERE broker='binance-global' AND symbol='BTCUSDT' AND timeframe='1' AND bar_time>=? AND bar_time<=? ORDER BY bar_time").all(start,end);
-  if(rows.length!==1+(end-start)/60000||rows.length-warmup<2000)throw fail('INSUFFICIENT_OR_GAPPED_RESEARCH_DATASET');
+  if(rows.length!==expected)throw fail('INSUFFICIENT_OR_GAPPED_RESEARCH_DATASET');
   const model=evidence.execution_model;
   for(let i=0;i<rows.length;i++){
    const row=rows[i];
@@ -91,9 +105,6 @@ export class QuantResearchService{
    validateBar(row.bar);
    if(!D(row.bar.price_tick).eq(model.price_tick)||!D(row.bar.quantity_step).eq(model.quantity_step))throw fail('MARKET_METADATA_MISMATCH');
   }
-  const seconds=body.deadline_seconds??900;number(seconds,{min:60,max:900,integer:true});
-  const running=await this.db.prepare("SELECT count(*) total,count(*) FILTER(WHERE owner_id=?) own FROM quant_jobs WHERE status IN ('QUEUED','RUNNING')").get(owner);
-  if(running.total>=10||running.own>=2)throw fail('QUANT_QUEUE_FULL',429);
   const capital=snapshot.capital.find(c=>c.broker===snapshot.market.broker);
   if(!capital||!D(capital.configuredEquity).gt(0)||!D(capital.configuredBalance).gt(0))throw fail('RESEARCH_CAPITAL_REQUIRED');
   const count=rows.length-warmup;
@@ -108,8 +119,6 @@ export class QuantResearchService{
   await this.db.prepare("INSERT INTO quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,status,created_at,updated_at,deadline) VALUES(?,?,?,?,?,?,?,?,'QUEUED',?,?,?)").run(id,owner,body.bot_id,deployment.deployment_id,key,submissionHash,hash(canonical(contract)),JSON.stringify(contract),now,now,now+seconds*1000);
   if(this.foundation){
    const request=validateFoundationRequest({version:'quant-foundation-v1',owner_id:owner,bot_id:body.bot_id,kind:'OPTIMIZE',dataset:contract.dataset.references.raw,engine_hash:contract.engine_hash,snapshot_hash:contract.baseline_snapshot_hash,budget:{candidates:plan.planned_candidates,max_evaluations:contract.max_evaluations,chunk_bars:Math.min(1000,rows.length),max_runtime_ms:seconds*1000,max_output_bytes:8*1024*1024,max_state_bytes:1024*1024}});
-   const count=(await this.db.query("SELECT count(*)::int total,count(*) FILTER(WHERE owner_id=$1)::int owned FROM quant_foundation_jobs WHERE status IN ('QUEUED','PAUSED','RUNNING','STOPPING')",[owner])).rows[0];
-   if(count.total>=100||count.owned>=20)throw fail('FOUNDATION_QUEUE_FULL');
    await this.db.query('INSERT INTO quant_foundation_owners(owner_id) VALUES($1) ON CONFLICT DO NOTHING',[owner]);
    await this.db.query("INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at) VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)",[id,owner,'research:'+id,JSON.stringify(request),hash(canonical(request)),now,now+seconds*1000]);
    await this.db.query('INSERT INTO quant_research_foundation VALUES($1,$2,$3)',[id,id,hash(canonical(contract))]);
