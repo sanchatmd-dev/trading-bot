@@ -1,5 +1,22 @@
 # Time Management — Project execution and data collection
 
+## Latest B2 recovery discovery — 2026-10-01
+
+The first read-only recovery observation took 5.368 seconds and retained a
+partial `READ_FAILED` result after collecting activation and PostgreSQL facts.
+Its targeted follow-up reached its preparation deadline without making a host
+call. Two smaller prepared observations then completed in 0.221 and 0.296
+seconds: PostgreSQL durability settings, followed by timer/scope/tool metadata.
+The failed and unrun attempts remain recorded; none was retried in place.
+
+The five-minute fallback timer adds a source/target and recovery-coverage check
+before the offline packet. Backup/restore and automatic database recovery remain
+unproved. No new overall duration estimate is justified by these findings.
+Weekly usage at checkpoint preparation is 84% used and 16% remaining, short
+window unknown, against a 15-percentage-point reserve. Preserve the remaining
+margin for review, documentation and handoff; do not admit migration work in
+this continuation. README and Context include the new scope limitation.
+
 ## Latest B2 Linux artifact checkpoint — 2026-10-01 13:58 UTC
 
 One exclusive upload took 4.930 seconds, and its exact-environment read-only

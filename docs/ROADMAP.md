@@ -49,6 +49,17 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Latest B2 recovery discovery, 2026-10-01: a five-minute fallback timer references
+the market collector in addition to the four known long-running services.
+Its host source identity and effective database target remain unverified.
+Next action: resolve that timer/service's source, target and recovery coverage,
+then complete the backup/restore and PostgreSQL lifecycle contract before the
+offline packet. The dormant Linux release acceptance remains valid. PostgreSQL
+durability settings were on in the sampled admin session and version-matched
+tools are present, but no backup, restore, automatic restart, dataset creation,
+migration or foundation startup is accepted. See the
+[recovery discovery record](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-recovery-and-activation-discovery).
+
 Latest B2 Linux artifact checkpoint, 2026-10-01 13:58 UTC: root accepted the
 new dormant pinned release after exclusive upload, native process-group timeout
 proof and one extraction/import run. Its 714 files, 71 directories, 17 package

@@ -1,5 +1,16 @@
 # Robot trade — Project Context
 
+Later read-only recovery discovery found an additional five-minute fallback
+timer referencing the market collector. Its service was inactive when sampled;
+the host source bytes and effective database target remain unverified. The four
+published fallback definitions therefore do not yet cover the complete offline
+quiescence plan. PostgreSQL runs in a transient session scope with a temporary
+data-directory location. The observed read-only admin session reported `fsync`,
+`synchronous_commit` and `full_page_writes` on, and the PostgreSQL 16.15 tools
+are available. These facts do not prove every runtime session's settings,
+automatic server recovery or successful backup/restore. No database lifecycle
+change was made. See the [remaining recovery gates](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-recovery-and-activation-discovery).
+
 Root accepted the dormant W7 release on staging at 13:58 UTC on 2026-10-01.
 Exclusive upload and exact-environment read-only preflight passed, followed by
 a native timeout fixture with no remaining child, grandchild, group member or

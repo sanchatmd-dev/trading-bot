@@ -455,3 +455,56 @@ service configuration, dataset, schema, grant or research job changed. Remaining
 activation/database recovery inventory, exact policy bindings, an independently
 reviewed offline packet and separate foundation startup acceptance still precede
 B3 and W7. This result closes Linux artifact/import preparation only.
+
+## B2 recovery and activation discovery
+
+Read-only discovery at 14:03 UTC retained a partial `READ_FAILED` receipt after
+capturing the existing six-process/B1 proof, four service definitions, visible
+activation mechanisms and staging database facts. A later follow-up reached
+its preparation deadline without a host call. Both results remain evidence;
+neither is presented as complete recovery acceptance.
+
+An active transient fallback timer triggers its matching service every five
+minutes. At 14:14 UTC the service was inactive with no main PID and referenced
+`scripts/collect-pine-bars.mjs` in the staging working directory. The local
+repository script is a market-data writer, but the host source hash and the
+service's effective database target have not been verified. Treat this as an
+additional potential writer and activation source until resolved. The original
+four complete fallback definitions remain accepted for their own scope; they
+do not establish recovery or quiescence coverage for this timer/service pair.
+
+The observed staging database remains at schema 14, approximately 51.6 MB,
+with no prepared transactions. Its postmaster is in an active, abandoned
+transient session scope and uses a temporary data-directory location on the
+observed disk filesystem. User lingering is enabled; that observation does
+not establish a PostgreSQL restart or recreation mechanism. No server was
+stopped, moved, reconfigured or restarted.
+
+A separate read-only admin observation at 14:11 UTC confirmed the same database
+and postmaster start time, with `fsync=on`, `synchronous_commit=on`,
+`full_page_writes=on`, `wal_level=replica` and `data_checksums=off`. This records
+the sampled settings, not every runtime session's overrides or a complete
+durability/restore qualification. The existing `pg_ctl`, `pg_dump`, `pg_restore`
+and `psql` binaries each reported PostgreSQL 16.15. The proposed new backup
+directory was absent and its parent had approximately 98.3 GB free. No backup
+was created or restored. Other users' crontabs and unavailable `at` tooling
+remain outside the verified inventory.
+
+The durability-settings receipt SHA256 is
+`0d006ec03f6441a47f763d215b16efd5154017a0dec772882bdc3cb0aed3070b`.
+The activation/tool receipt SHA256 is
+`df344619fcff6763da95690b210fa568b06989348e803f65ba3d5df8b5bddb20`.
+Private RO3, RO3B, database-durability and activation-tool records preserve the
+full scoped observations, unknowns and stopped execution state.
+
+Next: verify the timer/service source and effective target, extend the reviewed
+stop/recovery contract as needed, and finish backup/restore and database
+lifecycle evidence before preparing offline execution. Do not infer authority
+to move a running data directory, restart the database or change durability
+settings from these observations. Final policy bindings, the offline packet
+and foundation startup remain separate gates. The dormant release stays
+accepted and unused by active services.
+
+Independent architecture review retained the existing artifact and four-service
+publication acceptance while confirming this next-gate order. It did not accept
+all-consumer quiescence or authorize migration from the partial discovery.
