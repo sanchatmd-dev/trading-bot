@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต B2 Linux release proof เมื่อ 2026-10-01 13:58 UTC: upload, native timeout proof และ extraction/import ผ่านแล้ว มี candidate แยก 714 ไฟล์ / 17 packages ที่ยังไม่ถูกใช้งาน ตรวจ CJS/ESM ครบ 4 entrypoints และสถานะบริการก่อน–หลังตรงเดิม ยังไม่สลับ release, migration หรือเปิด foundation ขั้นต่อไปตรวจ activation/database recovery และผูก policy ก่อน B2 offline ตาม [หลักฐาน](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-dormant-release-linux-acceptance)
+
 อัปเดต B2 release preparation เมื่อ 2026-10-01 13:31 UTC: ตรวจ host แบบอ่านอย่างเดียวผ่าน และชุดแตกไฟล์ release แยก 714 ไฟล์ผ่าน parser tests 18 ข้อกับ control tests 7 ข้อในเครื่อง ผู้ตรวจปิดข้อแก้ environment สำหรับ systemd แล้ว ยังไม่ upload หรือแตกไฟล์บน VPS ขั้นต่อไปคือ upload ไปยังพื้นที่ใหม่ ตรวจ timeout และ preflight บน Linux ก่อนอนุญาต extraction แยก ตาม [checkpoint](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-release-preparation-and-host-observations)
 
 อัปเดต B2 dependencies เมื่อ 2026-10-01 12:36 UTC: bundle แยก 17 packages ผ่านการตรวจ local แล้ว รวม import closure, source ตรง Git, CJS/ESM functional checks และ archive 182 ไฟล์ ยังไม่ส่งขึ้น VPS; ขั้นต่อไปตรวจ host แบบ read-only แล้วพิสูจน์ extraction/import บน Linux ก่อน B2 offline ตาม [checkpoint](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-local-dependency-bundle)

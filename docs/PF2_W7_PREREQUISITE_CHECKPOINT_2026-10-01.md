@@ -405,3 +405,53 @@ extraction dispatch. This gate does not authorize an active release switch,
 dataset creation, migration, foundation startup or a research job. The later
 offline packet still requires consumer/activation inventory, database recovery
 facts and independent review.
+
+## B2 dormant release Linux acceptance
+
+Root accepted the dormant release at 13:58 UTC. One exclusive upload placed the
+14 frozen payload files and their manifest in a new private staging directory.
+Fresh runtime/health checks passed before creation; every uploaded hash and
+the new directory identity matched afterward. Exact-environment read-only
+preflight passed without creating the release candidate or consuming once-locks.
+The upload took 4.930 seconds; preflight took 7.697 seconds.
+
+A separately authorized native fixture forced a child and grandchild through
+the timeout process group. The timeout returned 137, the observer and outer
+runner returned zero, and both recorded process identities were absent. The
+group had no remaining members or zombies. The frozen payload and candidate
+absence checks remained unchanged. This 2.494-second fixture establishes the
+bounded timeout path; it is not an application or research workload.
+
+One extraction/import run completed at 13:56:51 UTC after 18.769 seconds.
+The supervisor's actual exit and receipt were zero, its finish marker was
+present, and both extraction and controller journals ended in `COMPLETE`.
+The final inventory independently matched all 714 regular files, 71 directories
+and 17 package versions. Source bytes remained bound to the pinned Git blobs;
+dependency bytes matched the accepted archive. Candidate identity matched the
+extraction and inventory receipts. Root permissions, file modes, single-link
+files and private payload identity passed the reviewed checks.
+
+On Linux Node 24.21.0, `pg`, `decimal.js`, `js-tiktoken/lite` and
+`js-tiktoken/ranks/o200k_base` resolved inside the new isolated dependencies
+and passed both CJS and ESM checks. Decimal arithmetic and tokenizer round-trip
+checks passed without starting application services or connecting a database
+from the dependency probe. The controller's separate database checks were
+read-only. Pre/post observations retained all six service process identities,
+B1 flags and I/O controls, fallback definitions and the research fingerprint.
+The queue was empty in both observations; post-check database/API latency was
+1.326/2.005 ms.
+
+The private extraction receipt SHA256 is
+`ae43afb47d788aac791f3f619d2af927279f09dff7f7b6bebd0585d78a8dfc4a`.
+The native timeout receipt SHA256 is
+`a387cbbea11772e1098b60e74540bf4c9e274e437093c7c1ed6289a81732c562`.
+Evidence remains in the private B2 release upload, toy and execute records and
+their immutable run directories. No run was retried and no partial evidence
+was deleted. Two local wrapper comparison defects were corrected before this
+host execution; the frozen extraction payload was unchanged.
+
+The candidate is present but unused by the active services. No runtime reference,
+service configuration, dataset, schema, grant or research job changed. Remaining
+activation/database recovery inventory, exact policy bindings, an independently
+reviewed offline packet and separate foundation startup acceptance still precede
+B3 and W7. This result closes Linux artifact/import preparation only.

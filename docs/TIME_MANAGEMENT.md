@@ -1,5 +1,23 @@
 # Time Management — Project execution and data collection
 
+## Latest B2 Linux artifact checkpoint — 2026-10-01 13:58 UTC
+
+One exclusive upload took 4.930 seconds, and its exact-environment read-only
+preflight took 7.697 seconds. A separate native process-group timeout fixture
+took 2.494 seconds and left no child, grandchild, group member or zombie. One
+extraction/import packet took 18.769 seconds, including pre/post runtime and
+health checks and final inventory. These are measured host packet durations,
+not total engineering time or a throughput forecast. Root caught and corrected
+two wrapper receipt comparisons locally before execution: optional dependency
+size metadata and the expected directory-link increase caused by lock creation.
+
+The dormant release is accepted; no active runtime switch, migration or
+foundation startup occurred. Next is a small read-only inventory of remaining
+activation/database recovery facts and final policy bindings. Weekly usage is
+81% used and 19% remaining, short window unknown, reserve 15 percentage points.
+Continue one tiny task at a time and preserve integration capacity. README and
+Context reflect the scoped Linux result; the overall forecast is unchanged.
+
 ## Latest B2 release preparation checkpoint — 2026-10-01 13:31 UTC
 
 Read-only host checks at 12:44–12:48 UTC confirmed the scoped runtime, numeric

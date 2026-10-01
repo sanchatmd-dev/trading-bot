@@ -1,5 +1,17 @@
 # Robot trade — Project Context
 
+Root accepted the dormant W7 release on staging at 13:58 UTC on 2026-10-01.
+Exclusive upload and exact-environment read-only preflight passed, followed by
+a native timeout fixture with no remaining child, grandchild, group member or
+zombie. One extraction/import run verified 714 files, 71 directories and all
+17 package versions on Linux Node 24.21.0. Four entrypoints passed both CJS and
+ESM import checks. The existing services still use their original releases;
+their identities, B1 controls and research fingerprint were unchanged in the
+pre/post observations. No migration, dataset creation or foundation startup
+occurred. Next: remaining activation/database recovery facts and exact policy
+bindings before an independently reviewed offline packet. See the
+[Linux acceptance record](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-dormant-release-linux-acceptance).
+
 At 13:31 UTC on 2026-10-01, the isolated release extraction package is prepared
 and independently reviewed locally. Its 714-file archive contract passed 18
 parser tests and seven control tests. The controller's explicit user-session

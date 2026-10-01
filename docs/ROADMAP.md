@@ -49,6 +49,17 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Latest B2 Linux artifact checkpoint, 2026-10-01 13:58 UTC: root accepted the
+new dormant pinned release after exclusive upload, native process-group timeout
+proof and one extraction/import run. Its 714 files, 71 directories, 17 package
+versions and four CJS/ESM dependency entrypoints passed. Actual supervisor exit,
+finish marker, both completion journals and pre/post runtime/health proofs
+passed; the existing runtime references and B1 controls remain unchanged.
+Next: read-only activation/database recovery inventory and exact policy bindings,
+then prepare and independently review B2 offline migration and foundation startup.
+No dataset, migration, foundation startup, B3, W7 or later gate is accepted by
+this artifact proof. See the [Linux acceptance record](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-dormant-release-linux-acceptance).
+
 Latest B2 release preparation checkpoint, 2026-10-01 13:31 UTC: read-only host
 observations passed the existing runtime, health and device ancestry checks.
 The isolated 714-file extraction package passed 18 local parser tests and seven
