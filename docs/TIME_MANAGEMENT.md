@@ -1,5 +1,22 @@
 # Time Management — Project execution and data collection
 
+## Latest B2 release preparation checkpoint — 2026-10-01 13:31 UTC
+
+Read-only host checks at 12:44–12:48 UTC confirmed the scoped runtime, numeric
+health and storage-device facts. Local parser acceptance passed 18 tests in
+1.239 seconds; control acceptance passed seven tests in 3.702 seconds after one
+Windows harness correction. The original five-pass/two-failure harness result
+is preserved. The control-test packet exceeded its four-minute allocation and
+stopped at the root's boundary reminder; check durations are not engineering
+time or evidence of faster throughput. Independent review closed the corrected
+controller environment blocker.
+
+Native Linux timeout, exact-environment preflight and extraction/import proof
+remain unrun. The next task prepares exclusive upload before separate bounded
+host dispatches. Weekly Codex usage is 78% used and 22% remaining, short window
+unknown, with a 15-percentage-point reserve. Continue one tiny task at a time;
+the project forecast is unchanged. README and Context include this local scope.
+
 ## Latest B2 dependency checkpoint — 2026-10-01 12:36 UTC
 
 One isolated local npm install completed in 11.805 seconds. Its conservative

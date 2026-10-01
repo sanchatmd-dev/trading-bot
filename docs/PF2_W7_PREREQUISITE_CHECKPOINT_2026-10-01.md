@@ -364,3 +364,44 @@ host release/storage candidates, runtime health and consumer/activation facts
 read-only. A separate exclusive extraction/import packet must pass before the
 offline migration and foundation-start gates. No host service, database or
 research job changed during this dependency preparation.
+
+## B2 release preparation and host observations
+
+At 13:31 UTC, root accepted the local preparation evidence for a new, dormant
+release containing 532 pinned source files and 182 isolated dependency files.
+The original archives remain unchanged. The source manifest verifies every
+source file against its Git blob; five executable archive modes are explicitly
+normalized to the non-executable Git modes during future extraction. The
+extractor validates both complete archives before creating the candidate,
+uses exclusive file creation, verifies all 714 files and 71 directories, and
+retains partial failures for review without automatic deletion or retry.
+
+Eighteen independent parser tests passed. Seven independent control tests
+passed after one Windows harness correction; the original failed harness
+result is retained. They cover environment separation, a read-only preflight
+trace, direct-child timeout and the distinction between the controller's exit
+receipt and the supervisor's actual finish result. Independent review closed
+the controller environment defect: runtime checks use the reviewed user-session
+environment while dependency probes retain a private, credential-free environment.
+These local checks do not prove native Linux process-group death, filesystem
+durability, user-bus access or actual dependency imports on Linux.
+
+The frozen 14-file payload manifest SHA256 is
+`66425fcb34a8fea3e9b8819497f30d008218cefdbd32e0133a313de10c59542b`.
+Private evidence is retained in the B2 release parser/control test records,
+release extraction audit, implementation record and host read-only A2/B records.
+At 12:44 UTC, all six observed process identities, B1 flags and I/O controls,
+four fallback definitions and the research fingerprint were unchanged. The
+queue was empty; API latency was 4.502 ms and database latency 12.124 ms. At
+12:48 UTC, the filesystem partition was verified beneath the approved I/O
+device. ACL presence was not established; the reviewed private directory-mode
+boundary remains required and does not protect against the same user or root.
+
+No release upload or extraction has occurred at this checkpoint. Next is an
+exclusive upload helper with fixed payload hashes, fresh parent checks, new
+directory identity binding and bounded failure handling. A native timeout
+fixture and exact-environment read-only preflight must pass before a separate
+extraction dispatch. This gate does not authorize an active release switch,
+dataset creation, migration, foundation startup or a research job. The later
+offline packet still requires consumer/activation inventory, database recovery
+facts and independent review.

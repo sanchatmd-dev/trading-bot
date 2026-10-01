@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต B2 release preparation เมื่อ 2026-10-01 13:31 UTC: ตรวจ host แบบอ่านอย่างเดียวผ่าน และชุดแตกไฟล์ release แยก 714 ไฟล์ผ่าน parser tests 18 ข้อกับ control tests 7 ข้อในเครื่อง ผู้ตรวจปิดข้อแก้ environment สำหรับ systemd แล้ว ยังไม่ upload หรือแตกไฟล์บน VPS ขั้นต่อไปคือ upload ไปยังพื้นที่ใหม่ ตรวจ timeout และ preflight บน Linux ก่อนอนุญาต extraction แยก ตาม [checkpoint](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-release-preparation-and-host-observations)
+
 อัปเดต B2 dependencies เมื่อ 2026-10-01 12:36 UTC: bundle แยก 17 packages ผ่านการตรวจ local แล้ว รวม import closure, source ตรง Git, CJS/ESM functional checks และ archive 182 ไฟล์ ยังไม่ส่งขึ้น VPS; ขั้นต่อไปตรวจ host แบบ read-only แล้วพิสูจน์ extraction/import บน Linux ก่อน B2 offline ตาม [checkpoint](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-local-dependency-bundle)
 
 อัปเดต B2-R วันที่ 2026-10-01: เตรียม fallback service files ครบ 4 บริการและ reload manager ครั้งเดียวแล้ว ไม่มี stop/restart รอบนี้ Root รับผลจาก read-only reconciliation และการทดสอบ 21 ข้อ โดยเก็บ runner เดิมที่ exit 2 เพราะลำดับแสดง dependency ไว้ครบ B1 controls ยังเดิม; ยังไม่พิสูจน์ fallback stop/start และยังไม่ migration หรือเปิด foundation งานถัดไปคือ dependency bundle แยกในเครื่อง แล้วตรวจ release/policy bindings ก่อน B2 offline ดู [หลักฐาน](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-r-recovery-publication-and-read-only-reconciliation)

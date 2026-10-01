@@ -1,5 +1,16 @@
 # Robot trade — Project Context
 
+At 13:31 UTC on 2026-10-01, the isolated release extraction package is prepared
+and independently reviewed locally. Its 714-file archive contract passed 18
+parser tests and seven control tests. The controller's explicit user-session
+environment correction passed static review. Read-only host observations at
+12:44–12:48 UTC retained the six process identities, B1 controls and empty queue,
+and verified the proposed storage device ancestry. These observations are dated,
+not continuous health guarantees. No release upload or extraction has occurred.
+The next action prepares exclusive upload, a bounded native timeout proof and
+exact-environment read-only preflight before a separate extraction decision.
+See the [release preparation record](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-release-preparation-and-host-observations).
+
 The pinned W7 dependency bundle passed local acceptance at 12:36 UTC on
 2026-10-01: 17 production packages, selected application import closure,
 independent source/parser checks, CJS/ESM probes and an independent 182-file

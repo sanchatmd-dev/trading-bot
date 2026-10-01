@@ -49,6 +49,16 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Latest B2 release preparation checkpoint, 2026-10-01 13:31 UTC: read-only host
+observations passed the existing runtime, health and device ancestry checks.
+The isolated 714-file extraction package passed 18 local parser tests and seven
+local control tests; independent review closed the user-session environment
+correction. No upload, extraction, runtime switch, migration or job occurred.
+Next: prepare and review exclusive upload, then run a bounded native timeout
+proof and exact-environment read-only preflight. Extraction requires a separate
+root dispatch after those results; B2 offline/startup and later gates remain open.
+See the [release preparation record](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-release-preparation-and-host-observations).
+
 Latest B2 dependency checkpoint, 2026-10-01 12:36 UTC: root accepted the local
 17-package bundle for the pinned W7 release. Selected application import
 closure, independent source/parser checks, CJS/ESM functional imports and an
