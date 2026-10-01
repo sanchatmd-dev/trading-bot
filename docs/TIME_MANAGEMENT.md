@@ -1,5 +1,15 @@
 # Time Management — Project execution and data collection
 
+## B2 Window 1 — 2026-10-01 23:04 UTC (Claude root)
+
+- **Host proof:** about 6 minutes, 8 connections.
+- **Preflight revision and fresh read-only preflight:** about 10 minutes.
+- **Live window:** 22:48 to 22:54 UTC, including two pre-downtime holds that were resolved with recorded evidence.
+- **Post-window checks:** at 23:04 UTC.
+- **Downtime:** the database was down about 9 seconds and the API at most 3 minutes 29 seconds, against an estimate of 8–15 minutes.
+- **Usage:** about 60% of the 5-hour window and 54% of the weekly window, with no reserve breach.
+- **P1-A estimate:** about 7 of its 12–24 hours used. Window 2 (migration rehearsal, migration, grants, foundation start) is next in P1-A; its estimate is unchanged.
+
 ## P1 staging release — 2026-10-01 22:35 UTC (Claude root)
 
 After the usage reset at 19:50 UTC, the root ran in parallel:
@@ -721,6 +731,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-10-01 | B2 Window 1: ย้ายฐานข้อมูล PostgreSQL ของ staging ออกจาก /tmp ไปไว้ในโฟลเดอร์ถาวรภายใต้ service ของตัวเอง (enabled); ฐานข้อมูลดับราว 9 วินาที, API ดับไม่เกิน 3 นาที 29 วินาที; system id, checkpoint และจำนวนแถว 49 ตารางตรงกับก่อนหยุด; socket จำกัดสิทธิ์เป็นเจ้าของเท่านั้น; waive 3 ข้อของเครื่องมือพร้อมหลักฐาน; ตรวจหลัง 10 นาทีผ่าน | Staging เท่านั้น; ยังไม่มี migration, grant, foundation หรือ production; หลัง reboot มีแค่ฐานข้อมูลที่ขึ้นเอง
 | 2026-10-01 | staging release `3309d07` (แผง PF-3 readiness + wizard ของ Bridge UX รอบ 1) ขึ้น staging API และ trading worker ด้วยเครื่องมือสลับที่ผ่าน mock 61 assertions; precheck ครั้งแรก HOLD เพราะเช็ก port production ผิดแบบ (production ใช้ unix socket) แก้ 3 บรรทัดแล้วผ่านทุกขั้น; root ตรวจซ้ำว่าไฟล์ที่เสิร์ฟตรงกับ commit; เครื่องมือ W1 แก้ v3/v4 หลัง audit และ tester 2 รอบ กำลังทำ host proof | Staging เท่านั้น; ไม่มีการย้ายฐานข้อมูลจริง, migration หรือ production
 | 2026-10-01 | P1 wave 1 โดย Claude root: หลักฐานขั้นที่ 1 กับ AI จริง (analyze ล้มเหลวที่มองเห็นได้ 1 ครั้งแล้วสำเร็จ, Generate 2 ครั้ง, รวมราว USD 0.03); PF-3 ผ่านการรับงานระดับ local ที่ `0aabe14` (CI 9/9, ยังไม่ deploy); B2: สำเนากู้คืน fallback, backup + restore rehearsal ตรง 49/49 ตาราง, runbook แบบแยก 2 window, ซ้อมเครื่องมือ Window-1 ครบบน unit/port ทดสอบ (พบว่าหยุด transient unit แล้วต้อง reload ก่อน start); fallback timer หยุด 45 วินาทีระหว่าง micro-test โดยไม่พลาดรอบ | Staging: ยังไม่มีการย้ายฐานข้อมูลจริง, migration, grant, foundation start หรือ production; Window 1 จริงรอ audit และแจ้งเจ้าของก่อน (ภายใน 2026-10-10)
 | 2026-10-01 | P0 staging preview โดย Claude root: release `533755b` (หน้า Prototype journey + read-only history/overview APIs) สลับ staging API และ trading worker ผ่าน drop-in ใหม่ ไม่มี rollback; CI 9/9; P1 ประมาณ 41–80 ชั่วโมงงานไม่รวมเวลารอตลาด | Staging deployment ของ preview; ไม่มี migration, foundation, research job, AI job, signal หรือ production change |

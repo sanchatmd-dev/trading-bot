@@ -52,6 +52,20 @@ unavailable because PF-2 stays off, so Step 3 is visible but not accepted. The
 PostgreSQL relocation tools were revised twice after an independent audit and two
 tester passes and are now in a host proof on throwaway units.
 
+**B2 Window 1 done, 2026-10-01 23:04 UTC.** The staging PostgreSQL cluster now
+runs from a persistent data directory under its own enabled user service instead
+of a temporary directory that a reboot would erase. The database was down for
+about 9 seconds and the staging API for at most 3 minutes 29 seconds. System
+identity, the checkpoint position and the row counts of all 49 tables matched
+the pre-stop record; the socket directory and socket are now owner-only. A
+protected backup and a cold archive were taken inside the window, and the old
+directory is kept. All five writers restarted from their persistent unit copies.
+Checks ten minutes later found no restarts or error lines, a successful fallback
+run and flowing bars. Three tool defects were waived with recorded evidence and
+are queued for the next tool version. After a reboot only the database starts
+automatically; the five writers still need a manual start. Window 2 (migration,
+grants and foundation start) remains gated on its own rehearsal and owner notice.
+
 ## Document authority and update rules
 
 This is the canonical index of all current plans, their sequence, acceptance
@@ -100,6 +114,10 @@ resume facts, evidence and gates; public/product docs retain normal prose.
 This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
+
+Latest B2 progress, 2026-10-01 23:04 UTC: Window 1 is complete; the staging
+database now runs from a persistent directory under its own service. See the
+staging prototype priority section above.
 
 Latest staging release, 2026-10-01 22:35 UTC: release `3309d07` (PF-3 readiness
 panel and guided Bridge wizard) runs on the staging API and trading worker. See
@@ -2202,3 +2220,32 @@ P1-F. See the [P0 preview record](STAGING_PREVIEW_P0_2026-10-01.md).
   in depth. A host proof on throwaway units is running.
 - **Scope:** staging only. No live relocation, migration, grant, foundation
   start, research job, Live or production change.
+
+## 2026-10-01 — B2 Window 1: staging PostgreSQL moved out of /tmp (Claude root)
+
+- **Preparation:** an independent audit returned accept-with-fixes. Two fix
+  rounds and two tester passes followed (stub hosts, more than 200 assertions
+  in total). A host proof on throwaway units showed four things: stopping a
+  transient unit unloads it; one gated manager reload restores it from its
+  persistent copy, including after a failed stop; a dropped SSH session does not
+  stop a step; and a killed database restarts by itself. A fresh read-only
+  preflight then passed with no issues, and every database client mapped to a
+  known writer.
+- **Live window (22:48–22:54 UTC):** stage the new unit; stop the five writers
+  in order; take a backup with no clients connected; stop the old cluster with
+  a checkpoint; take a cold archive and a verified copy; start under the new
+  unit; check identity and row counts; enable the unit; restart the writers from
+  their persistent copies. The database was down about 9 seconds and the API at
+  most 3 minutes 29 seconds, well under the 8–15-minute estimate.
+- **Waivers, all with evidence:** the backup's configuration scan counted six
+  replaced relative env paths as missing, while the effective files were hashed;
+  the client check counted an empty result as one phantom client, while SQL
+  showed none; restore checked API health before the trading worker was up,
+  which the API needs for a healthy answer. All three are tool defects for the
+  next version; none changed data.
+- **After the window:** no restarts or error lines in the database, API,
+  trading, research or stream journals; the fallback collector ran successfully;
+  bars kept arriving; production processes were unchanged.
+- **Scope:** staging only. No migration, grant, foundation start, research job,
+  Live or production change. Old data directory, backup, archive and rehearsal
+  directories are kept for the owner's cleanup decision.

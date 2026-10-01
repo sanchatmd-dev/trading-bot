@@ -7,6 +7,12 @@ preview from functional acceptance; the [Claude handoff](docs/CODEX_TO_CLAUDE_PR
 preserves runtime gates and ownership. The plan itself retains Spot/Paper-only and
 10K/1m limits.
 
+B2 update, 2026-10-01 23:04 UTC: the staging PostgreSQL cluster now runs from a
+persistent directory under its own enabled service. The database was down about
+9 seconds and the API at most 3 minutes 29 seconds; identity and row counts
+matched. After a reboot the database starts automatically, while the five
+staging writers still need a manual start.
+
 Staging release update, 2026-10-01 22:35 UTC: the staging API and trading worker
 run release `3309d07`, adding the PF-3 readiness panel on the Risk manager page
 and the guided Bridge wizard. The database, research worker, market stream,
