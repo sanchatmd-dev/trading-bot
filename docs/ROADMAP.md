@@ -9,9 +9,15 @@ with Paper execution, bounded optimization and Quant Library selection. The
 and P1 functional acceptance without changing phase gates. P0 may use a reviewed
 compatible UI release while foundation remains off; changes requiring migration
 or foundation startup still wait for B2. PF-3/PF-4 and library/comparison work
-remain unfinished. The next operational action remains the B2 timer/source/DB
-target and recovery inventory. This turn creates a plan and
-[Claude handoff](CODEX_TO_CLAUDE_PROTOTYPE_HANDOFF_2026-10-01.md), not a deployment.
+remain unfinished. The plan was handed to Claude through the
+[Claude handoff](CODEX_TO_CLAUDE_PROTOTYPE_HANDOFF_2026-10-01.md).
+
+**P0 status, 2026-10-01 16:16 UTC: visible preview deployed on staging.** Release
+`533755b` adds a Prototype journey page and two read-only status endpoints. The
+staging API and trading worker run it; research worker, market stream, fallback
+timer, database and production are unchanged, and research admission stays
+closed. The owner's signed-in walkthrough is pending. This is not six-step
+acceptance. See the [P0 preview record](STAGING_PREVIEW_P0_2026-10-01.md).
 
 ## Document authority and update rules
 
@@ -61,6 +67,18 @@ resume facts, evidence and gates; public/product docs retain normal prose.
 This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
+
+Latest P0 staging preview, 2026-10-01 16:16 UTC: Claude, as sole root, deployed
+release `533755b` to the staging API and trading worker through reviewed unit
+drop-ins with per-unit rollback. Verified: 722-file extraction, served page and
+script bytes, 401 without a session, Paper-only health, unchanged research
+admission flag and unchanged identities of the other staging and production
+processes. A read-only inventory confirmed that the fallback collector timer is
+a fifth staging writer and that legacy synthetic Quant Lab routes call the
+production Quant bridge. Next: the owner's signed-in walkthrough, then P1 in plan
+order, starting with B2 recovery for all five writers and a re-decided single
+release pin for API and research worker. See the
+[P0 preview record](STAGING_PREVIEW_P0_2026-10-01.md).
 
 Latest B2 recovery discovery, 2026-10-01: a five-minute fallback timer references
 the market collector in addition to the four known long-running services.
@@ -2043,3 +2061,33 @@ and G3 (owner GO) are open, and the owner's answers to the W7 questions are pend
 The W7 release commit stays `28d6f7e`; HEAD carries the fail-closed defaults and the E2
 follow-ups for a later release. No deploy, migration, staging activation or VPS action
 occurred, and the PF-2 staging API stays off.
+
+## 2026-10-01 — P0 staging preview deployed (Claude root)
+
+The owner switched the sole root back to Claude through the
+[Codex handoff](CODEX_TO_CLAUDE_PROTOTYPE_HANDOFF_2026-10-01.md) and asked for the
+staging preview first, then the six steps. Claude usage at takeover: 5-hour window
+2% used, weekly 37% used; the 15-point reserve applies.
+
+- **Read-only inventory (P0-A/P0-B, one operations agent, two SSH sessions):** no
+  deviation from the Codex baseline. The API and research worker ran release
+  `6320169`; the trading worker ran a mixed tree with four modules older than that
+  release, including the AI request builder without the non-numeric input filter.
+  Research admission is closed by the B1 drop-in. The fallback collector timer is
+  a confirmed fifth staging writer with the stream's database role. Legacy
+  synthetic Quant Lab routes call the production Quant bridge on loopback.
+- **Code (`533755b`):** Prototype journey page, owner-scoped read-only research
+  history and Bridge overview endpoints, tests. Node suite 846 passed, 0 failed;
+  independent focused reruns 44/44 UI and 13/13 PostgreSQL; hosted CI 9/9.
+- **Deployment (P0-D):** exact Git-blob source plus the accepted 17-package bundle,
+  722 files verified on the host. New `95-p0-release.conf` drop-ins switched the
+  staging API and trading worker; daemon reload changed no process; both restarts
+  passed their checks without rollback. Research worker, stream, fallback timer,
+  database and production are unchanged.
+- **Scope:** staging deployment of a preview. No migration, grant, foundation
+  start, research job, AI job, signal, Live or production change.
+
+Open items: the owner's signed-in walkthrough; B2 recovery coverage for all five
+writers; one re-decided release pin for API and research worker before B2 offline
+work (the dormant `28d6f7e` candidate no longer matches the running API); P1-A to
+P1-F. See the [P0 preview record](STAGING_PREVIEW_P0_2026-10-01.md).

@@ -1,5 +1,33 @@
 # Time Management — Project execution and data collection
 
+## P0 staging preview — 2026-10-01
+
+Claude took over as sole root at about 14:59 UTC and deployed the P0 preview at
+16:16 UTC, about 1 hour 17 minutes of wall time. Measured parts: two read-only
+staging inventories (1.7 s and 1.3 s of SSH, about 28 and 5 minutes of agent
+time), the journey page and endpoints with tests (about 44 minutes of coder
+time), root review and independent reruns (about 15 minutes), release export
+(3 minutes), hosted CI (about 13 minutes, overlapped) and the deployment
+(about 15 minutes, eight SSH sessions, no rollback). Claude usage moved from 2%
+to 27% of the 5-hour window and from 37% to 40% of the weekly window; the
+15-point reserve was never approached. Agent count is not used as a speedup
+claim.
+
+Re-estimate of the remaining P1 engineering, from this throughput and the open
+gates, excluding natural-signal and research-outcome waits (no guaranteed date):
+
+| Packet | Engineering estimate | Main uncertainty |
+| --- | --- | --- |
+| P1-A B2 recovery for five writers, backup/restore, release re-pin, offline migration, foundation start, B3, W7, D6, R7 | 12–24 h plus machine waits | first stop/start of the transient units, restore rehearsal, Linux p99 |
+| P1-B PF-3 report and minimal PF-4 recommendation/preview/save | 8–16 h | Risk/accounting review depth |
+| P1-C TradingView compile, input and alert workflow with a bounded Paper observation | 3–6 h plus market wait | natural signals have no deadline |
+| P1-D one bounded optimizer run for the selected source and ten dimensions | 8–16 h plus compute | varied-input parity and repaint evidence |
+| P1-E library storage/view with minimal comparison and qualification | 8–14 h | comparability rules |
+| P1-F acceptance, browser checks, restart readback and documents | 2–4 h | defects found late |
+
+Total: about 41–80 engineering hours. This replaces no earlier full-project range
+and does not shorten the 410–720-hour plan.
+
 ## Staging prototype planning and Claude handoff — 2026-10-01
 
 The owner requests an early staging preview followed by six-step functional
@@ -655,6 +683,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-10-01 | P0 staging preview โดย Claude root: release `533755b` (หน้า Prototype journey + read-only history/overview APIs) สลับ staging API และ trading worker ผ่าน drop-in ใหม่ ไม่มี rollback; CI 9/9; P1 ประมาณ 41–80 ชั่วโมงงานไม่รวมเวลารอตลาด | Staging deployment ของ preview; ไม่มี migration, foundation, research job, AI job, signal หรือ production change |
 | 2026-10-01 | E2 optional accounting follow-ups บน HEAD (F1 charge runtime แบบ best effort ที่ UNCONFIRMED exits ทั้งสอง, F3 guard monotonic total, F4 test bounds เข้มขึ้น; Opus review ยอมรับ) แล้ว Claude root หยุดตามคำสั่งเจ้าของและเตรียม handoff ส่งต่อ Codex | Code และ tests บน HEAD; W7 ยัง pin `28d6f7e`; ไม่มี deploy/migration/VPS; ไม่กระทบ forecast |
 | 2026-10-01 | Fail-closed defaults บน HEAD: worker ที่เปิด health recovery ต้องมี `PG_POOL_SIZE` อย่างน้อย 4 ทุกชนิดงาน (ทดลองซ้ำบน PostgreSQL local: pool 3 ทำให้ probe อดและ heartbeat quarantine job), scheduler ปิด PROFILE V2 เป็นค่าเริ่มต้น และ worker สร้าง reason list จาก I/O list ชุดเดียว; Opus review ยอมรับหลังแก้ | Code และ tests บน HEAD เท่านั้น; W7 ยัง pin `28d6f7e`; engine hashes ของ ingestion, foundation และ PF-2 เปลี่ยนที่ HEAD (release ถัดไปต้องคำนวณใหม่, drain queued jobs และตรวจ pool); raw datasets และ enrollments เดิมยังใช้ได้; ไม่กระทบ forecast |
 | 2026-10-01 | Final pre-staging code audit ของ W7 path ที่ `28d6f7e` (Opus): ไม่พบ code defect และไม่พบทางที่ charge หายหรือซ้ำ; Medium 3 ข้อและ Low 3 ข้อแก้เป็น checks ใน W7 owner packet revision 4 และ staging acceptance packet (DB pool อย่างน้อย 4, ตรวจ I/O controls ก่อน offline window, ใช้ BACKFILL ที่เล็กที่สุดอย่างน้อย 501 แท่ง และ compute deadline นับเป็น inconclusive) | Packet และเอกสารเท่านั้น; release commit ยังเป็น `28d6f7e`; ไม่มี deploy/migration/VPS; ไม่กระทบ forecast |

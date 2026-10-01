@@ -4,8 +4,18 @@ The owner now prioritizes a visible staging prototype, followed by the complete
 six-step Bridge/Preflight/Paper/Quant/Library workflow. The
 [P0/P1 plan](docs/STAGING_PROTOTYPE_PLAN_2026-10-01.md) distinguishes an early
 preview from functional acceptance; the [Claude handoff](docs/CODEX_TO_CLAUDE_PROTOTYPE_HANDOFF_2026-10-01.md)
-preserves runtime gates and ownership. This documentation checkpoint performs no
-deployment or implementation and retains Spot/Paper-only and 10K/1m limits.
+preserves runtime gates and ownership. The plan itself retains Spot/Paper-only and
+10K/1m limits.
+
+P0 update, 2026-10-01 16:16 UTC: the staging API and staging trading worker now
+run release `533755b`, which adds a Prototype journey page and read-only,
+owner-scoped research-history and Bridge-overview endpoints. The research worker,
+market stream, fallback collector timer, database and production are unchanged;
+research admission stays closed and foundation stays off. The fallback timer is
+now a confirmed fifth staging database writer, and legacy synthetic Quant Lab
+routes on staging call the production Quant bridge on loopback. The staging web
+interface remains reachable only through an SSH tunnel. See the
+[P0 preview record](docs/STAGING_PREVIEW_P0_2026-10-01.md).
 
 Later read-only recovery discovery found an additional five-minute fallback
 timer referencing the market collector. Its service was inactive when sampled;

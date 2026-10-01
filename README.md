@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต P0 วันที่ 2026-10-01 16:16 UTC: staging API และ trading worker ของ staging เปลี่ยนเป็น release `533755b` แล้ว มีหน้า **Prototype journey** แสดง 6 ขั้นพร้อมสถานะจริงและสิ่งที่ยังต้องทำ และ API อ่านอย่างเดียวสำหรับประวัติ research และภาพรวม Bridge ส่วน research worker, market stream, fallback timer, ฐานข้อมูล และ production ไม่เปลี่ยน การรับงาน research ยังปิด และ foundation ยังไม่เปิด นี่คือ preview ไม่ใช่การรับรองครบ 6 ขั้น ดู [บันทึก P0](docs/STAGING_PREVIEW_P0_2026-10-01.md)
+
 แผนล่าสุด 2026-10-01: ส่งมอบ prototype บน staging ให้เห็นก่อน แล้วเติมครบ 6 ขั้นตั้งแต่ AI Bridge, numeric inputs 10 ช่อง, Preflight และค่าแนะนำ Risk, สัญญาณจริงแบบ Paper, Optimizer และ Quant Library ดู [แผน P0/P1](docs/STAGING_PROTOTYPE_PLAN_2026-10-01.md) และ [handoff สำหรับ Claude](docs/CODEX_TO_CLAUDE_PROTOTYPE_HANDOFF_2026-10-01.md) รอบนี้เป็นการวางแผน ยังไม่ได้ deploy และไม่เปลี่ยน acceptance gates เดิม
 
 อัปเดต B2 recovery discovery วันที่ 2026-10-01: พบ fallback timer ทุก 5 นาทีที่เรียก collector เพิ่มจาก 4 บริการเดิม ต้องตรวจ source/ฐานข้อมูลเป้าหมายและ recovery ของ timer ก่อน offline ค่า `fsync`, `synchronous_commit`, `full_page_writes` ที่อ่านจาก PostgreSQL เป็น `on` แต่ยังไม่มี backup/restore proof หรือ automatic restart proof จึงยังไม่ migration ดู [gate ล่าสุด](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-recovery-and-activation-discovery)
