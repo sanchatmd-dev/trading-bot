@@ -108,8 +108,14 @@ export async function quantResearchHttpFixture(connection) {
         await db.query("INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at) VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)",[randomUUID(),ownerId,'seed:'+randomUUID(),contract,hash(contract),now,now+900000]);
       }
     }
-    // Stops only the forked server; the database stays for later assertions.
-    async function stopHttp(){ if(server&&!exited){ const done=once(server,'exit'); server.kill('SIGTERM'); await done; } }
+    // Stops only the forked server; the database stays for later assertions. The server's sessions share the
+    // maintenance lock, and PostgreSQL can end them a moment after the process exits, so wait until the lock is free.
+    async function stopHttp(){
+      if(server&&!exited){ const done=once(server,'exit'); server.kill('SIGTERM'); await done; }
+      const probe="SELECT CASE WHEN pg_try_advisory_lock(hashtextextended('robot:maintenance',0)) THEN pg_advisory_unlock(hashtextextended('robot:maintenance',0)) ELSE false END AS free";
+      for(let attempt=0;attempt<100;attempt++){ if((await db.query(probe)).rows[0].free)return; await delay(50); }
+      throw new Error('stopped server sessions still hold the maintenance lock');
+    }
     return {db,store,base,root,request,close,stopHttp,listing,seedBars,newOwner,researchBody,enqueue,seedFoundationJobs,minute:MINUTE};
   }catch(error){await close();throw error;}
 }

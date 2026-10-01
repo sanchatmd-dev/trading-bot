@@ -32,7 +32,14 @@ jobs:
         with:
           python-version: '3.12'
       - run: npm ci
-      - run: npm test
+      - run: npm test 2>&1 | tee unit-test.log
+        shell: bash
+      # Job logs need a signed-in viewer; an annotation keeps the failing test names readable through the public API.
+      - if: failure()
+        shell: bash
+        run: |
+          summary=$(awk '/failing tests:/{found=1} found' unit-test.log | grep -v -E '^[[:space:]]+at |^[[:space:]]*$' | head -80 | cut -c1-200 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
+          echo "::error title=Node failing tests::${summary:-no failing test summary found}"
       - run: git diff --check
   container:
     needs: scope
