@@ -77,12 +77,20 @@ test('failure before the settlement body takes the unknown-final fallback and re
     return query(sql,params);
    };
   }
-  const running=f.runtime.run(f.args);running.catch(()=>{});
+  const startedAt=performance.now(),running=f.runtime.run(f.args);running.catch(()=>{});
   try{
-   await until(async()=>(await f.job()).stop_reason==='PROFILE_COMPLETING');
-   armed=true;terminal.resolve();
+   let began;
+   await until(async()=>{began=await f.job();return began.stop_reason==='PROFILE_COMPLETING';});
+   // The terminal waits at its gate for a known time, and that time is the least terminal runtime that can be charged.
+   const heldAt=performance.now();await new Promise(resolve=>setTimeout(resolve,30));
+   armed=true;terminal.resolve();const heldMs=performance.now()-heldAt;
    const answer=await bounded(running,kind),evidence=await f.evidence();
    assert.equal(hits,1);
+   // BEGIN stopped the runtime clock and cancel adds nothing after it, so the fallback itself charges the terminal
+   // runtime: at least the time held, and once, never more than the whole run took.
+   const charged=evidence.job.runtime_used_ms-began.runtime_used_ms;
+   assert.ok(charged>=Math.floor(heldMs),'terminal runtime charged: '+charged+' ms, held '+heldMs+' ms');
+   assert.ok(charged<=Math.ceil(performance.now()-startedAt),'terminal runtime charged once: '+charged+' ms');
    assert.equal(answer.status,'CANCELLED');assert.equal(answer.proof,'UNKNOWN_FINAL_CHARGED');
    assert.equal(evidence.job.status,'CANCELLED');assert.equal(evidence.job.result,null);assert.equal(evidence.receipt,null);
    assert.equal(evidence.launch.state,'STOP_PROVEN');

@@ -120,14 +120,33 @@ export async function beginProfileCompletionLocked({db,job,attempt,clock,monoton
 /** Terminal runtime on the attempt's high-water clock. Monotonic elapsed is the floor of every charge. Wall elapsed
  * also counts while the wall clock never stepped back in this attempt, so a forward wall step raises the charge
  * (conservative) and a backward step can neither lower it nor enroll. A charge never drops below an earlier one.
+ * A wall reading whose elapsed total would not be a safe integer is a clock anomaly too. It is never stored, so the
+ * monotonic floor still charges and no later charge is lost to one absurd reading.
  */
 function runtimeTotal(context){
  const time=readClock(attempts.get(context.attempt),context.clock,context.monotonic);
- const elapsed=Math.max(context.elapsed,Math.ceil(time.mono-context.beginMonotonic),
-  time.anomaly?0:time.wall-context.beginAt);
- if(safe(elapsed))context.elapsed=elapsed;
+ const wallElapsed=time.wall-context.beginAt;
+ if(!time.anomaly&&!safe(context.runtimeUsed+wallElapsed))time.anomaly=true;
+ const elapsed=Math.max(context.elapsed,Math.ceil(time.mono-context.beginMonotonic),time.anomaly?0:wallElapsed);
  const total=context.runtimeUsed+elapsed;
- return {now:time.wall,total,valid:!time.anomaly&&safe(elapsed)&&safe(total)};
+ if(safe(total))context.elapsed=elapsed;
+ return {now:time.wall,total,valid:!time.anomaly&&safe(total)};
+}
+
+// Absolute total with GREATEST: a repeat, or a charge that an earlier step already persisted, never counts twice.
+const CHARGE_RUNTIME_SQL='UPDATE quant_foundation_jobs SET runtime_used_ms=GREATEST(runtime_used_ms,$3) WHERE job_id=$1 AND lease_token=$2';
+
+/** Charges the terminal runtime of a completion that never reached publication (the unknown-final fallback). BEGIN
+ * cleared run_started_at, so cancel and acknowledge add nothing: without this step the terminal time is not charged
+ * at all. It uses the finalizer's own high-water clock and monotonic floor. Call it before the lease token clears.
+ */
+export async function chargeProfileCompletionRuntime({db,completion}){
+ const context=completions.get(completion);
+ if(!context)throw refused();
+ const time=runtimeTotal(context);
+ if(!safe(time.total))return null;
+ await db.query(CHARGE_RUNTIME_SQL,[context.attempt.jobId,context.attempt.leaseToken,time.total]);
+ return time.total;
 }
 
 /** SQL-only publication; accounting and launch proof are already updated in the same transaction. */
@@ -140,8 +159,7 @@ export async function finalizeProfileEnrollmentLocked({db,job,settledLedger,laun
  const within=time=>time.valid&&time.now<job.deadline_at&&time.total<job.contract.budget.max_runtime_ms;
  const fits=()=>{const time=runtimeTotal(context);return within(time)&&!veto()?time:null;};
  // Every charge is persisted, a denial and a clock anomaly included (the monotonic floor still counts).
- const charge=async()=>{const time=runtimeTotal(context);if(safe(time.total))await db.query(
-  'UPDATE quant_foundation_jobs SET runtime_used_ms=GREATEST(runtime_used_ms,$3) WHERE job_id=$1 AND lease_token=$2',
+ const charge=async()=>{const time=runtimeTotal(context);if(safe(time.total))await db.query(CHARGE_RUNTIME_SQL,
   [job.job_id,attempt.leaseToken,time.total]);return time;};
  const denied=async reason=>{await charge();return {kind:'DENIED',reason};};
  if(job.job_id!==attempt.jobId||job.status!=='STOPPING'||job.stop_reason!=='PROFILE_COMPLETING'||
@@ -158,7 +176,12 @@ export async function finalizeProfileEnrollmentLocked({db,job,settledLedger,laun
   leaseToken:attempt.leaseToken,executionTicket,phase:'FINALIZE'});
  if(authority?.ok!==true||!fits())return denied('AUTHORITY');
  const unresolved=(await db.query("SELECT 1 FROM quant_io_launches WHERE job_id=$1 AND state<>'STOP_PROVEN' LIMIT 1",[job.job_id])).rowCount;
- if(unresolved!==0||settledLedger.state.operations.some(operation=>operation.status!=='SETTLED')||!fits())return denied('UNRESOLVED');
+ const operations=settledLedger.state.operations;
+ if(unresolved!==0||operations.some(operation=>operation.status!=='SETTLED')||!fits())return denied('UNRESOLVED');
+ // A settled operation that still carries a latched stop reason (allowance exhausted, cleanup reserve at risk) used the
+ // overshoot or cleanup reserve. That reserve funds the stop tail, not admitted evidence, so the measured settlement and
+ // the runtime charge stand but the result is never enrolled.
+ if(operations.some(operation=>operation.stop_reason!==null))return denied('IO_BUDGET');
  const time=await charge();
  // The charged reading itself must fit. Later readings are never lower (high-water) and are compared again below.
  if(!within(time)||veto())return denied('BUDGET');

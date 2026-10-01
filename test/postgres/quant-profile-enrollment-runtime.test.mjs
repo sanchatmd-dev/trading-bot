@@ -87,3 +87,45 @@ test('duplicate settled-only completion joins cancellation retry without a secon
  const after=(await f.evidence()).ledger.state;assert.deepEqual(after.charged,before.charged);
  assert.equal(after.revision,before.revision);assert.equal(f.stats().stops,1);assert.equal(attempts,2);
 });
+
+function countCrashes(f){let crashes=0;const transition=f.ledger.transition.bind(f.ledger);
+ f.ledger.transition=async request=>{if(request.action==='crash')crashes++;return transition(request);};return ()=>crashes;}
+// The synthetic unit freezes at the given counters instead of its constant 4,096 bytes, so the frozen observation latches
+// the stop reason through the real ledger transition. Preparation, release and stop stay the fixture's own.
+function freezeAt(f,{readBytes,writeBytes}){
+ const launcher=f.runtime.io.launcher,prepare=launcher.prepare.bind(launcher);
+ launcher.prepare=async request=>{
+  const preparation=await prepare(request);
+  return {...preparation,spawnPrepared(){
+   const handle=preparation.spawnPrepared();
+   return {...handle,async terminate({commit}){
+    const frozen={...await handle.sample(),readBytes,writeBytes};
+    await commit(frozen);
+    return {stopProof:await handle.stop(),measured:true,frozenSample:frozen,postExit:'REMOVED',
+     readbackEvidence:{freezer:'frozen',windowMs:2500,reads:[{readBytes,writeBytes},{readBytes,writeBytes}],fileDirty:0,
+      fileWriteback:0,maxBioBytes:1310720,rates:{readBytesPerSecond:524288,writeBytesPerSecond:524288}}};
+   }};
+  }};
+ };
+}
+
+test('settled operation that latched a stop reason is never enrolled; measured settlement and runtime stay committed',async t=>{
+ // Reading exactly the compute allowance exhausts it; one byte past the total minus the cleanup reserve puts that reserve at risk.
+ const readFor={
+  ALLOWANCE_EXHAUSTED:io=>io.read_bytes-io.overshoot_read_bytes-io.cleanup_read_bytes,
+  CLEANUP_RESERVE_AT_RISK:io=>io.read_bytes-io.cleanup_read_bytes+1
+ };
+ for(const reason of Object.keys(readFor))await t.test(reason,async st=>{
+  const f=await fixture(st),crashes=countCrashes(f),readBytes=readFor[reason](f.claimed.contract.capacity.io);
+  freezeAt(f,{readBytes,writeBytes:4096});
+  const answer=await f.runtime.run(f.args);
+  assert.equal(answer.status,'CANCELLED');assert.equal(answer.proof,'MEASURED_FINAL_SETTLED');
+  await settledOnly(f);
+  const evidence=await f.evidence(),operation=evidence.ledger.state.operations[0];
+  assert.equal(operation.stop_reason,reason);assert.equal(operation.charge.read_bytes,readBytes);
+  assert.deepEqual(evidence.ledger.state.charged,operation.charge);
+  // A measured denial, never a crash charge: one stop, no crash transition, and the terminal runtime stays charged.
+  assert.equal(crashes(),0);assert.equal(f.stats().stops,1);assert.deepEqual(f.authorityCalls,['BEGIN','FINALIZE']);
+  assert.ok(evidence.job.runtime_used_ms>0);
+ });
+});

@@ -5,7 +5,7 @@ import {validateFoundationRequestV2} from '../quant-research/foundation-contract
 import {terminalReadbackDigest,POST_EXIT_MEASURED,COMMIT_LOCK_TIMEOUT_MS,COMMIT_BOUND_MS} from '../quant-research/io-terminal.js';
 import {finalizeProfileEnrollmentLocked,readProfileCompletionOutcome,refreshProfileCompletionTicket,
  profileCompletionAttempt,profileCompletionVeto,recordProfileCompletionProof,prepareEnrollmentAttempt,
- profileCompletionBoundTo,profileCompletionProofRecorded} from './quant-profile-enrollment.js';
+ profileCompletionBoundTo,profileCompletionProofRecorded,chargeProfileCompletionRuntime} from './quant-profile-enrollment.js';
 
 const unavailable=()=>fail('QUANT_IO_ACCOUNTING_UNAVAILABLE');
 const lost=()=>fail('QUANT_IO_LEASE_LOST');
@@ -663,7 +663,12 @@ export class QuantIoRuntime {
       if(row.state!=='STOP_PROVEN')await this.db.query("UPDATE quant_io_launches SET state='STOP_PROVEN' WHERE job_id=$1 AND operation_id=$2",[jobId,operationId]);
     },{active:false});
     this.handles.delete(id);this.emergency.delete(id);
-    if(completion)await this.scheduler.cancel(profileCompletionAttempt(completion).contract.owner_id,jobId);
+    if(completion){
+      // BEGIN stopped the runtime clock, so cancel and acknowledge add no runtime. Charge the terminal here, before the
+      // lease token clears. The charge is an absolute total, so a charge that was already persisted never counts twice.
+      await chargeProfileCompletionRuntime({db:this.db,completion});
+      await this.scheduler.cancel(profileCompletionAttempt(completion).contract.owner_id,jobId);
+    }
     const completed=await this.scheduler.acknowledgeStopped(jobId,leaseToken);
     return complete(completed.status,'UNKNOWN_FINAL_CHARGED');
   }

@@ -42,8 +42,11 @@ test('unexpected failure after each publication write rolls back all enrollment 
   const f=await fixture(st),hit=injectAfterWrite(f,stage),actions=[];
   const transition=f.ledger.transition.bind(f.ledger);
   f.ledger.transition=async request=>{actions.push(request.action);return transition(request);};
-  const answer=await bounded(f.runtime.run(f.args),stage),evidence=await f.evidence();
+  const startedAt=performance.now(),answer=await bounded(f.runtime.run(f.args),stage),evidence=await f.evidence();
   assert.equal(hit(),true);assert.equal(answer.status,'CANCELLED');assert.equal(answer.proof,'UNKNOWN_FINAL_CHARGED');
+  // The rolled-back transaction charged nothing. The fallback charges the terminal runtime once (BEGIN stopped the
+  // clock, so cancel and acknowledge add none): the fixture wall clock does not move, so this is the monotonic floor.
+  assert.ok(evidence.job.runtime_used_ms>0&&evidence.job.runtime_used_ms<=Math.ceil(performance.now()-startedAt));
   assert.equal(evidence.job.result,null);assert.equal(evidence.receipt,null);assert.equal(evidence.launch.state,'STOP_PROVEN');
   const state=evidence.ledger.state,operation=state.operations[0];assert.equal(operation.status,'CRASHED');
   assert.deepEqual(state.charged,operation.charge);
