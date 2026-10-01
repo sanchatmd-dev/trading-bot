@@ -4,7 +4,7 @@ import {PineBridgeService} from './pine-bridge.js';
 import {QuantResearchService} from './quant-research.js';
 import {QuantResearchWorker} from './quant-research-worker.js';
 import fs from 'node:fs/promises';
-import {QuantResearchFoundationWorker} from './quant-research-foundation.js';
+import {QuantResearchFoundationWorker,assertQuantHealthRecoveryPool} from './quant-research-foundation.js';
 import {QuantDataService} from './quant-data.js';
 import {QuantProfileService} from './quant-profile.js';
 import {QuantPreflightService} from './quant-preflight.js';
@@ -56,8 +56,7 @@ if(foundation){
  // scheduler transaction's AsyncLocalStorage client and stop later probe stages
  // through cooperative cancellation. Pool/server timeouts still bound DB work.
  const recoveryEnabled=!!process.env.QUANT_HEALTH_RECOVERY_FILE;
- if(recoveryEnabled&&db.pool.options.max<3)
-  throw Error('Health recovery requires PG_POOL_SIZE at least 3 for runtime lock, scheduler and independent probe');
+ assertQuantHealthRecoveryPool({recoveryEnabled,poolMax:db.pool.options.max});
  const researchProbeDb=recoveryEnabled?{query:(...args)=>db.pool.query(...args)}:db;
  const tradingProbeDb=healthDb?(recoveryEnabled?{query:(...args)=>healthDb.pool.query(...args)}:healthDb):researchProbeDb;
  const resourceHealth=createResourceHealth({db:researchProbeDb,tradingDb:tradingProbeDb,limits,probe:loopbackHealthProbe(process.env.QUANT_HEALTH_URL),storageRoot:process.env.QUANT_RESEARCH_DATASET_ROOT,ioControls,ioIdentity});

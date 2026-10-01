@@ -8,7 +8,7 @@ import {planIngestionRange} from '../quant-research/ingestion-range.js';
 import {validateBackfillState} from '../quant-research/foundation-contract.js';
 import {buildProfile,authorizeProfileV2Stop} from './quant-profile.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
-import {canReleaseQuantIo} from './quant-io-runtime.js';
+import {canReleaseQuantIo,QUANT_IO_DIAGNOSTIC_REASONS} from './quant-io-runtime.js';
 import {validateBar} from './pine-bridge-market.js';
 import {resolveHistoricalPreflight} from '../quant-research/preflight-resolver.js';
 import {runHistoricalPreflight} from '../quant-research/preflight-replay.js';
@@ -19,6 +19,25 @@ import {RESEARCH_V2_VERSIONS,DATASET_BINDING_STEP_ID,DATASET_BINDING_KIND,
  datasetBindingIdentity} from '../quant-research/research-contract-v2.js';
 
 const identity=(contract,parameters,kind)=>hash(canonical({contract,parameters,kind}));
+
+/** Reason allowlist of the PROFILE V2 terminal log: the I/O diagnostic reasons plus the worker's own PROFILE reasons. */
+export const QUANT_PROFILE_TERMINAL_LOG_REASONS=Object.freeze([...QUANT_IO_DIAGNOSTIC_REASONS,'PROFILE_STOP_REQUESTED',
+ 'PROFILE_COMPUTE_DEADLINE','QUANT_PROFILE_POLICY_MISMATCH','QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED','PROFILE_DEADLINE_NEAR',
+ 'PROFILE_V2_DISABLED']);
+
+/** Smallest PG_POOL_SIZE of a worker with health recovery, for every job kind. The recovery probe runs through
+ * db.pool.query, so it needs a connection outside the scheduler transaction that called health. Peak demand of a running
+ * job: the runtime lock (1); a scheduler transaction that holds the scheduler lock while it awaits the probe, the tick
+ * heartbeat or, in PROFILE V2, observe and the frame-loop heartbeat (2); one more scheduler transaction that waits for that
+ * lock on its own connection, such as BACKFILL beforePage, checkpoint and finish, PREFLIGHT persistUnit, checkpoint and
+ * finish, PROFILE V1 finish, legacy research steps, or the V2 heartbeat itself (3); the probe connection (4). With 3 the
+ * probe starves and health reads UNKNOWN: the heartbeat quarantines the job (HEALTH_UNAVAILABLE) or the V2 observe fails. */
+export const QUANT_HEALTH_RECOVERY_MINIMUM_POOL=4;
+export function assertQuantHealthRecoveryPool({recoveryEnabled,poolMax}={}){
+ if(recoveryEnabled===false)return;
+ if(!(poolMax>=QUANT_HEALTH_RECOVERY_MINIMUM_POOL))throw Error('Health recovery requires PG_POOL_SIZE at least '+
+  QUANT_HEALTH_RECOVERY_MINIMUM_POOL+' for runtime lock, two scheduler transactions and independent probe');
+}
 
 /** Opt-in adapter for the existing research workflow. Scheduler owns the global
  * slot; completed research steps retain their original immutable result schema.
@@ -307,12 +326,7 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
   const log=diagnostic=>{
    if(logged)return;
    const proof=['MEASURED_FINAL_SETTLED','UNKNOWN_FINAL_CHARGED','NO_START_PROVEN','UNCONFIRMED'].includes(diagnostic?.proof)?diagnostic.proof:'UNCONFIRMED';
-   const reasons=['COMPLETE','STOP_REQUESTED','ALREADY_STOPPING','STOP_UNCONFIRMED','UNKNOWN','WRITEBACK_PENDING',
-    'COMMIT_BARRIER_FAILED','COMMIT_BARRIER_TIMEOUT','MEMORY_STAT_INVALID','FREEZE_UNVERIFIED','NOT_FROZEN','CGROUP_EMPTY',
-    'QUANT_IO_TELEMETRY_UNAVAILABLE','POST_EXIT_UNKNOWN','POST_EXIT_TAIL_OBSERVED','PROFILE_STOP_REQUESTED',
-    'PROFILE_COMPUTE_DEADLINE','QUANT_PROFILE_POLICY_MISMATCH','QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED',
-    'PROFILE_DEADLINE_NEAR','PROFILE_V2_DISABLED'];
-   const reason=reasons.includes(diagnostic?.reason)?diagnostic.reason:'UNKNOWN';
+   const reason=QUANT_PROFILE_TERMINAL_LOG_REASONS.includes(diagnostic?.reason)?diagnostic.reason:'UNKNOWN';
    const record={jobId:foundation.job_id,proof,reason:reason==='COMPLETE'&&proof!=='MEASURED_FINAL_SETTLED'?'UNKNOWN':reason};
    for(const field of ['drainMs','elapsedMs','barrierMs'])if(Number.isSafeInteger(diagnostic?.[field])&&diagnostic[field]>=0)record[field]=diagnostic[field];
    logged=true;try{this.terminalLog(JSON.stringify(record));}catch{}

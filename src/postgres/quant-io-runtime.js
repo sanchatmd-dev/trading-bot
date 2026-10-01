@@ -16,9 +16,11 @@ export const QUANT_PROFILE_RUNTIME_PROTOCOL='profile-v2-provisional';
 export const quantIoUnitName=(jobId,operationId)=>
   'robot-quant-'+hash(canonical({jobId,operationId}))+'.service';
 const safe=value=>Number.isSafeInteger(value)&&value>=0;
-const diagnosticReasons=new Set(['COMPLETE','STOP_REQUESTED','ALREADY_STOPPING','STOP_UNCONFIRMED','UNKNOWN',
+// The I/O diagnostic reasons. The worker builds its longer PROFILE terminal log list from this one.
+export const QUANT_IO_DIAGNOSTIC_REASONS=Object.freeze(['COMPLETE','STOP_REQUESTED','ALREADY_STOPPING','STOP_UNCONFIRMED','UNKNOWN',
  'WRITEBACK_PENDING','COMMIT_BARRIER_FAILED','COMMIT_BARRIER_TIMEOUT','MEMORY_STAT_INVALID','FREEZE_UNVERIFIED',
  'NOT_FROZEN','CGROUP_EMPTY','QUANT_IO_TELEMETRY_UNAVAILABLE','POST_EXIT_UNKNOWN','POST_EXIT_TAIL_OBSERVED']);
+const diagnosticReasons=new Set(QUANT_IO_DIAGNOSTIC_REASONS);
 // Frozen commit age limits. The terminal tail floor is after-snapshot 1,000 + commit COMMIT_BOUND_MS 3,000 + kill
 // slack 1,000. lock_timeout limits one wait but the transaction takes four row locks in a row (singleton, job,
 // ledger, launches), so waits of just under COMMIT_LOCK_TIMEOUT_MS each could add up to 4 x 2,000. The transaction

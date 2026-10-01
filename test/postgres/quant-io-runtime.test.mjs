@@ -100,7 +100,7 @@ before(async()=>{
 beforeEach(async()=>{
   await db.query('TRUNCATE quant_io_launches,quant_io_ledgers,quant_foundation_jobs,quant_foundation_owners');
   const {policy,contract}=profileV2Fixture(2000);
-  scheduler=new QuantFoundationScheduler({db,capacityPolicy:policy,clock:()=>now,leaseMs:30000,
+  scheduler=new QuantFoundationScheduler({db,capacityPolicy:policy,profileV2Enabled:true,clock:()=>now,leaseMs:30000,
     authorize:async()=>({ok:true}),health:async()=>({ok:true}),
     canRelease:row=>canReleaseQuantIo(db,row)});
   const queued=await scheduler.enqueue('owner-a',contract,randomUUID());
@@ -247,7 +247,7 @@ test('cancel before start claim proves no launch; STARTING without handle remain
   assert.equal((await db.query('SELECT state FROM quant_io_launches')).rows[0].state,'STOP_PROVEN');
   await db.query('TRUNCATE quant_io_launches,quant_io_ledgers,quant_foundation_jobs,quant_foundation_owners');
   const {policy,contract}=profileV2Fixture(2000);
-  const next=new QuantFoundationScheduler({db,capacityPolicy:policy,clock:()=>now,leaseMs:30000,
+  const next=new QuantFoundationScheduler({db,capacityPolicy:policy,profileV2Enabled:true,clock:()=>now,leaseMs:30000,
     authorize:async()=>({ok:true}),health:async()=>({ok:true})});
   await next.enqueue('owner-a',contract,randomUUID());claimed=await next.claim('io-runtime-next');
   ledger=new QuantIoLedger({db,policy,devices:[{device_id:'8:0',device_inode:17}],
@@ -467,7 +467,7 @@ test('measured overshoot beyond allowance is charged exactly through STOP_REQUIR
 async function freshJob(label){
   await db.query('TRUNCATE quant_io_launches,quant_io_ledgers,quant_foundation_jobs,quant_foundation_owners');
   const {policy,contract}=profileV2Fixture(2000);
-  const fresh=new QuantFoundationScheduler({db,capacityPolicy:policy,clock:()=>now,leaseMs:30000,
+  const fresh=new QuantFoundationScheduler({db,capacityPolicy:policy,profileV2Enabled:true,clock:()=>now,leaseMs:30000,
     authorize:async()=>({ok:true}),health:async()=>({ok:true}),canRelease:row=>canReleaseQuantIo(db,row)});
   await fresh.enqueue('owner-a',contract,randomUUID());claimed=await fresh.claim(label);
   scheduler=fresh;authorizations.length=0;

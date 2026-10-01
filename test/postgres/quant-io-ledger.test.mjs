@@ -32,7 +32,7 @@ before(async()=>{
 beforeEach(async()=>{
   await db.query('TRUNCATE quant_io_ledgers,quant_foundation_jobs,quant_foundation_owners');
   const {policy,contract}=profileV2Fixture(2000);
-  scheduler=new QuantFoundationScheduler({db,capacityPolicy:policy,clock:()=>now,leaseMs:30000,
+  scheduler=new QuantFoundationScheduler({db,capacityPolicy:policy,profileV2Enabled:true,clock:()=>now,leaseMs:30000,
     authorize:async()=>({ok:true}),health:async()=>({ok:true})});
   const queued=await scheduler.enqueue('owner-a',contract,randomUUID());
   claimed=await scheduler.claim('io-test-worker');

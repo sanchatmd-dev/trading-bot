@@ -257,7 +257,7 @@ describe('W3-4 a V2 PROFILE row recovered offline as PAUSED',()=>{
  test('W3-4 the next claim cancels it (PROFILE_ATTEMPT_EXHAUSTED) and the runtime never relaunches it',async()=>{
   const ioNow=4102444800000,workerUnit='robot-quant-research-staging.service';
   const {policy:capacityPolicy,contract}=profileV2Fixture(2000);
-  const launcher=new QuantFoundationScheduler({db,capacityPolicy,clock:()=>ioNow,leaseMs:30000,
+  const launcher=new QuantFoundationScheduler({db,capacityPolicy,profileV2Enabled:true,clock:()=>ioNow,leaseMs:30000,
    authorize:async()=>({ok:true}),health:async()=>({ok:true})});
   const queued=await launcher.enqueue('owner-a',contract,randomUUID());
   const claimed=await launcher.claim('w34-first-launch');

@@ -42,7 +42,7 @@ export async function createEnrollmentRuntimeFixture(admin){
  let now=Date.now(),stops=0,hashReads=0,claimed;
  const knobs={healthy:true,revoked:false,hashMismatch:false,authorityGate:null,terminalGate:null,
   advanceTerminal:0,dropSuccessCommit:false};
- const scheduler=new QuantFoundationScheduler({db,capacityPolicy:policy,clock:()=>now,leaseMs:30000,
+ const scheduler=new QuantFoundationScheduler({db,capacityPolicy:policy,profileV2Enabled:true,clock:()=>now,leaseMs:30000,
   authorize:async()=>({ok:true}),health:async()=>({ok:true}),canRelease:job=>canReleaseQuantIo(db,job)});
  const queued=await scheduler.enqueue(contract.owner_id,contract,randomUUID());claimed=await scheduler.claim('enrollment-runtime-test');
  const ledger=new QuantIoLedger({db,policy,devices:[{device_id:'8:0',device_inode:17}],clock:()=>now,

@@ -291,7 +291,7 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
  beforeEach(async()=>{
   await db.query(resetTables);
   ({policy:capacityPolicy,contract}=profileV2Fixture(2000));
-  scheduler=new QuantFoundationScheduler({db,capacityPolicy,clock:()=>ioNow,leaseMs:30000,
+  scheduler=new QuantFoundationScheduler({db,capacityPolicy,profileV2Enabled:true,clock:()=>ioNow,leaseMs:30000,
    authorize:async()=>({ok:true}),health:async()=>({ok:true}),canRelease:row=>canReleaseQuantIo(db,row)});
   const queued=await scheduler.enqueue('owner-a',contract,randomUUID());
   claimed=await scheduler.claim('io-recovery-test');assert.equal(claimed.job_id,queued.job_id);
@@ -752,7 +752,7 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
    await bareDb.migrate();
    for(const file of baseSchemas)
     await bareDb.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
-   const bareScheduler=new QuantFoundationScheduler({db:bareDb,capacityPolicy,clock:()=>ioNow,leaseMs:30000,
+   const bareScheduler=new QuantFoundationScheduler({db:bareDb,capacityPolicy,profileV2Enabled:true,clock:()=>ioNow,leaseMs:30000,
     authorize:async()=>({ok:true}),health:async()=>({ok:true})});
    await bareScheduler.enqueue('owner-a',contract,randomUUID());
    const job=await bareScheduler.claim('bare-worker');

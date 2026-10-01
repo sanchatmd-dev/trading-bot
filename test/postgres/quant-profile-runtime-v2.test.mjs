@@ -76,7 +76,7 @@ beforeEach(async()=>{
   growthDuringAuthorization=false;grown=false;
   launches=0;stops=0;terminal=null;events=[];
   holdResult=false;deliverFrame=null;limitMs=null;readyGate=null;authorizeGate=null;launcherHandle=null;
-  scheduler=new QuantFoundationScheduler({db,capacityPolicy:policy,clock:()=>now,leaseMs:30000,
+  scheduler=new QuantFoundationScheduler({db,capacityPolicy:policy,profileV2Enabled:true,clock:()=>now,leaseMs:30000,
     authorize:async(_owner,_contract,action)=>({ok:action==='CANCEL'||action==='ACKNOWLEDGE_STOPPED'||!revoked}),
     health:async()=>({ok:true}),canRelease:row=>canReleaseQuantIo(db,row)});
   const queued=await scheduler.enqueue('owner-a',contract,randomUUID());

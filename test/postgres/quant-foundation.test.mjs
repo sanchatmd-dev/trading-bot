@@ -236,10 +236,11 @@ test('expanded PROFILE requires trusted policy and keeps the same global slot an
   await assert.rejects(scheduler.enqueue('owner-a',accessor,'expanded-accessor'),{code:'INVALID_FOUNDATION_V2'});
   assert.equal(reads,0);
   await assert.rejects(scheduler.enqueue('owner-a',contract,'expanded-default-denied'),{code:'INVALID_CAPACITY_CONTRACT'});
-  const expanded=new QuantFoundationScheduler({db,authorize,health:async()=>({ok:true}),clock:()=>now,leaseMs:100,capacityPolicy:policy});
+  const expanded=new QuantFoundationScheduler({db,authorize,health:async()=>({ok:true}),clock:()=>now,leaseMs:100,capacityPolicy:policy,profileV2Enabled:true});
   const invalid=await expanded.enqueue('owner-a',contract,'expanded-profile-invalidated');
   assert.equal(invalid.contract.dataset.metadata.total_bars,50000);
-  assert.equal(await scheduler.claim('without-policy'),null);
+  const unpoliced=new QuantFoundationScheduler({db,authorize,health:async()=>({ok:true}),clock:()=>now,leaseMs:100,profileV2Enabled:true});
+  assert.equal(await unpoliced.claim('without-policy'),null);
   assert.equal((await get(invalid.job_id)).status,'CANCELLED');
   assert.equal((await get(invalid.job_id)).diagnostic,'CAPACITY_POLICY_MISMATCH');
   const queued=await expanded.enqueue('owner-a',contract,'expanded-profile');
@@ -259,4 +260,15 @@ test('expanded PROFILE requires trusted policy and keeps the same global slot an
   const stopped=await scheduler.acknowledgeStopped(queued.job_id,running.lease_token);
   assert.equal(stopped.status,'CANCELLED');assert.equal(stopped.deadline_at,queued.deadline_at);
   assert.equal((await scheduler.claim('legacy-worker')).owner_id,'owner-b');
+});
+
+test('a scheduler built without the PROFILE V2 flag cancels a V2 PROFILE claim as PROFILE_V2_DISABLED and still serves other rows',async()=>{
+  const {policy,contract}=profileV2Fixture();
+  const defaulted=new QuantFoundationScheduler({db,authorize,health:async()=>({ok:true}),clock:()=>now,leaseMs:100,capacityPolicy:policy});
+  assert.equal(defaulted.profileV2Enabled,false);
+  const queued=await defaulted.enqueue('owner-a',contract,'expanded-profile-flag-omitted');
+  await enqueue('owner-b');
+  assert.equal((await defaulted.claim('flag-omitted-worker')).owner_id,'owner-b');
+  const refused=await get(queued.job_id);
+  assert.equal(refused.status,'CANCELLED');assert.equal(refused.diagnostic,'PROFILE_V2_DISABLED');assert.equal(refused.attempts,0);
 });

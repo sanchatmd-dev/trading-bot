@@ -51,7 +51,7 @@ function text(value,code,max=128) {
  * This module supplies no process supervision or OS resource isolation.
  */
 export class QuantFoundationScheduler {
-  constructor({db,authorize,health,clock=Date.now,leaseMs=30000,capacityPolicy,canRelease,profileV2Enabled=true}={}) {
+  constructor({db,authorize,health,clock=Date.now,leaseMs=30000,capacityPolicy,canRelease,profileV2Enabled=false}={}) {
     if (!db?.query || !db?.transaction || typeof authorize!=='function' || typeof health!=='function')
       throw fail('FOUNDATION_TRUSTED_CALLBACKS_REQUIRED');
     if (!Number.isSafeInteger(leaseMs) || leaseMs<1 || leaseMs>900000) throw fail('FOUNDATION_INVALID_LEASE');
@@ -61,6 +61,8 @@ export class QuantFoundationScheduler {
     this.capacityPolicy=capacityPolicy===undefined?null:validateCapacityPolicy(capacityPolicy);
     if(canRelease!==undefined&&typeof canRelease!=='function')throw fail('FOUNDATION_TRUSTED_CALLBACKS_REQUIRED');
     this.canRelease=canRelease??null;
+    // Fail closed: a PROFILE V2 claim needs an explicit true (the worker passes its own flag); otherwise the row is
+    // cancelled at claim with PROFILE_V2_DISABLED.
     this.profileV2Enabled=profileV2Enabled===true;
   }
   now() {
