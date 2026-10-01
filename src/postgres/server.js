@@ -21,10 +21,12 @@ import {D,Money,amount,exact} from '../money.js';
 import { hasPermission, adminPermission } from '../permissions.js';
 import { getQuota } from './quotas.js';
 import {PineBridgeService,pineBridgeRoutes} from './pine-bridge.js';
+import {pineBridgeOverviewRoutes} from './pine-bridge-overview.js';
 import {receiveBridge} from './pine-bridge-receiver.js';
 import {receiveCapture} from './pine-capture.js';
 import {keys} from '../pine-bridge/source.js';
 import {QuantResearchService,quantResearchRoutes} from './quant-research.js';
+import {quantResearchHistoryRoutes} from './quant-research-history.js';
 import {QuantDataService,quantDataRoutes} from './quant-data.js';
 import {quantProfileRoutes} from './quant-profile.js';
 import {createQuantPreflightApi} from './quant-preflight-wiring.js';
@@ -228,7 +230,9 @@ async function userRoutes(req, res, url) {
   if (!hasPermission(actor, req.method === 'GET' ? 'own:read' : 'own:write')) return json(res, 403, {
     error: 'Permission denied'
   });
+  if(await pineBridgeOverviewRoutes(req,res,url,actor,pineBridgeService,json,{enabled:pineBridgeEnabled,captureEnabled:pineCaptureEnabled}))return;
   if(await pineBridgeRoutes(req,res,url,actor,pineBridgeService,json,{enabled:pineBridgeEnabled,captureEnabled:pineCaptureEnabled,capturePublicOrigin:pineCapturePublicOrigin}))return;
+  if(await quantResearchHistoryRoutes(req,res,url,actor,database,json,{admissionEnabled:quantResearchEnabled}))return;
   if(await quantResearchRoutes(req,res,url,actor,quantResearchService,json,{enabled:quantResearchEnabled}))return;
   if(await quantPreflightRoutes(req,res,url,actor,quantPreflightService,json,{enabled:quantPreflightEnabled}))return;
   if(await quantProfileEnrollmentRoutes(req,res,url,actor,quantProfileService,json,{enabled:quantEnrollmentEnabled}))return;

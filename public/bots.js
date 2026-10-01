@@ -497,7 +497,7 @@ async function switchBot(id) {
 // ─── Nav hooks ────────────────────────────────────────────────────────────────
 document.querySelectorAll('nav button').forEach(button => button.addEventListener('click', () => {
   if (button.dataset.view === 'bots') refreshBots();
-  if (selectedBot === 'all' && !['bots', 'overview', 'signals'].includes(button.dataset.view)) {
+  if (selectedBot === 'all' && !['bots', 'overview', 'signals', 'journey'].includes(button.dataset.view)) {
     $('#botMessage').textContent = translate('Select one bot for this operation');
     document.querySelector('[data-view="bots"]').click();
   }

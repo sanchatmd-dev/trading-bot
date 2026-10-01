@@ -134,6 +134,47 @@ uiPairs.push(
   ['Read-Only','อ่านอย่างเดียว'],
   ['All Bots: overview and trade log only. Select a bot to edit settings.','ทุก Bot: ดูภาพรวมและประวัติ เลือก Bot ก่อนแก้การตั้งค่า']
 );
+// Prototype journey (P0 staging preview). One named block so a test can prove these pairs stay unique and complete.
+const journeyPairs=[
+  ['Prototype journey','เส้นทางต้นแบบ'],
+  ['Staging preview (P0). This page shows what runs on this staging release now and what each step still needs. It is not six-step acceptance. Paper only; Live is locked.','พรีวิวบน Staging (P0) หน้านี้แสดงสิ่งที่ทำงานอยู่บน Staging รุ่นนี้ในตอนนี้ และสิ่งที่แต่ละขั้นตอนยังต้องมีเพิ่ม ไม่ใช่การรับรองครบทั้งหกขั้นตอน ใช้ Paper เท่านั้น ส่วน Live ถูกล็อก'],
+  ['Available now','ใช้งานได้ตอนนี้'],['Evidence','หลักฐาน'],['Next dependency','สิ่งที่ต้องมีขั้นถัดไป'],['Open','เปิดดู'],
+  ['Live on staging','ใช้งานได้บน Staging'],['Unavailable','ไม่พร้อมใช้งาน'],['Partial','ทำได้บางส่วน'],['Preview available','ดูตัวอย่างได้'],
+  ['Receiving','กำลังรับสัญญาณ'],['Idle','ไม่มีสัญญาณเข้า'],['Admission open','เปิดรับงาน'],['Paused — admission closed','หยุดชั่วคราว — ปิดรับงาน'],['Planned','วางแผนไว้'],
+  ['Ten numeric inputs','Input ตัวเลขสิบตัว'],['Preflight and Risk settings','Preflight และการตั้งค่า Risk'],['Real signals and Paper execution','สัญญาณจริงและการทำงานแบบ Paper'],
+  ['Quant optimizer','ตัวปรับค่าเหมาะสม Quant'],['Quant Library and selection','Quant Library และการคัดเลือก'],
+  ['Not available','ไม่มีข้อมูล'],['Not configured','ยังไม่ได้กำหนดค่า'],['Not recorded','ไม่ได้บันทึกไว้'],['None yet','ยังไม่มี'],['Yes','ใช่'],['No','ไม่ใช่'],
+  ['Main Bot','Bot หลัก'],['draft returned','ได้รับฉบับร่างแล้ว'],['Status checked: {time}','ตรวจสถานะเมื่อ: {time}'],
+  ['Bridge is disabled on this release.','Bridge ถูกปิดในรุ่นนี้'],
+  ['AI provider','ผู้ให้บริการ AI'],['Analyzed sources','ซอร์สที่วิเคราะห์แล้ว'],['Latest source','ซอร์สล่าสุด'],['Source hash','Hash ของซอร์ส'],
+  ['AI jobs','งาน AI'],['Latest job','งานล่าสุด'],['AI usage (latest job)','การใช้ AI (งานล่าสุด)'],
+  ['{input} in / {output} out tokens · USD {cost}','Token เข้า {input} / ออก {output} · USD {cost}'],['Diagnostic','ข้อมูลวินิจฉัย'],
+  ['Latest research run','การรันวิจัยล่าสุด'],['Source slots in run','Slot ซอร์สในการรัน'],['ATR multiplier grid','ตารางค่า ATR multiplier'],['RR grid','ตารางค่า RR'],
+  ['{min}–{max} ({count} values)','{min}–{max} ({count} ค่า)'],
+  ['Numeric inputs','Input ตัวเลข'],['Eligible numeric inputs','Input ตัวเลขที่ใช้ได้'],['Input review confirmed','ยืนยันการตรวจ Input แล้ว'],['Selected source slots','Slot ซอร์สที่เลือก'],
+  ['Input details are not available for the latest source.','ไม่มีรายละเอียด Input ของซอร์สล่าสุด'],
+  ['No analyzed source or research run yet.','ยังไม่มีซอร์สที่วิเคราะห์หรือการรันวิจัย'],
+  ['Bot session','Session ของ Bot'],['Paper accounts','บัญชี Paper'],['Bots','จำนวน Bot'],['Ready Bridge deployments','Bridge deployment ที่พร้อมใช้'],
+  ['Latest ready deployment','Deployment ที่พร้อมล่าสุด'],['Snapshot hash','Hash ของ Snapshot'],
+  ['Bot scope','ขอบเขต Bot'],['Signals received (24 h)','สัญญาณที่รับ (24 ชม.)'],['Filled (24 h)','จับคู่แล้ว (24 ชม.)'],['Rejected (24 h)','ถูกปฏิเสธ (24 ชม.)'],
+  ['Latest signal received','สัญญาณล่าสุดที่รับ'],['Counts cover the latest 200 loaded signals.','จำนวนนับครอบคลุมสัญญาณล่าสุด 200 รายการที่โหลดไว้'],
+  ['No research runs recorded yet.','ยังไม่มีการรันวิจัยที่บันทึกไว้'],['Latest run status','สถานะการรันล่าสุด'],['Candidates','Candidate (เสร็จ / ตามแผน)'],
+  ['Run ID','รหัสรัน'],['Dataset hash','Hash ของ Dataset'],['Created (UTC)','สร้างเมื่อ (UTC)'],['Completion reason','เหตุผลที่จบการรัน'],
+  ['{n} preserved research runs (history only)','{n} การรันวิจัยที่เก็บรักษาไว้ (เฉพาะประวัติ)'],['{done}/{planned} Candidates','{done}/{planned} Candidate'],
+  ['Quant Lab → Build Pine Bridge: inspect inputs locally (no AI), then Analyze/Generate sends the authorized indicator to the configured AI provider and returns a draft Pine with a guide.','Quant Lab → Build Pine Bridge: ตรวจ Input ในเครื่องก่อน (ไม่ใช้ AI) แล้วกด Analyze/Generate เพื่อส่ง Indicator ที่ได้รับอนุญาตไปยัง AI provider ที่ตั้งค่าไว้ และรับ Pine ฉบับร่างพร้อมคู่มือกลับมา'],
+  ['Re-verify one fresh end-to-end AI job on this release.','ทดสอบงาน AI แบบครบวงจรใหม่หนึ่งงานบนรุ่นนี้อีกครั้ง'],
+  ['Contract supports 2–10 slots: up to eight selected numeric source inputs plus Bridge ATR Multiplier and RR.','Contract รองรับ 2–10 slot: Input ตัวเลขจากซอร์สที่เลือกได้สูงสุดแปดตัว บวก Bridge ATR Multiplier และ RR'],
+  ['Select a supported source with eight eligible numeric inputs and round-trip all ten through UI, generated Pine and stored snapshot.','เลือกซอร์สที่รองรับและมี Input ตัวเลขที่ใช้ได้แปดตัว แล้วตรวจให้ครบทั้งสิบตัวผ่าน UI, Pine ที่สร้างขึ้น และ Snapshot ที่บันทึกไว้'],
+  ['Risk manager → Order Preview: saved or hypothetical Draft authority, Generic or Bridge mode, venue filters and cost estimates. A preview saves nothing.','Risk manager → Order Preview: ใช้สิทธิ์ตามที่บันทึกไว้หรือแบบ Draft สมมติ โหมด Generic หรือ Bridge พร้อม venue filter และประมาณการต้นทุน การ Preview ไม่บันทึกอะไรทั้งสิ้น'],
+  ['Historical Preflight on staging (PF-2/R7), PF-3 report and PF-4 deterministic recommendations with before/after values and explicit save.','Historical Preflight บน Staging (PF-2/R7), รายงาน PF-3 และข้อเสนอแนะแบบกำหนดผลได้ PF-4 พร้อมค่าก่อน/หลัง และการบันทึกที่ผู้ใช้ยืนยันเอง'],
+  ['Trade log shows each signal from receipt through the Risk decision to the simulated Paper fill. Live trading stays locked.','Trade log แสดงแต่ละสัญญาณตั้งแต่รับสัญญาณ ผ่านการตัดสินใจของ Risk จนถึงการจับคู่จำลองของ Paper ส่วนการเทรดจริง (Live) ยังคงถูกล็อก'],
+  ['Trace one real TradingView BUY and targeted EXIT with ledger evidence in a bounded observation window.','ติดตาม BUY จริงจาก TradingView หนึ่งรายการและ EXIT ที่ระบุเป้าหมาย พร้อมหลักฐานใน ledger ภายในช่วงสังเกตการณ์ที่จำกัด'],
+  ['Historical runs appear with their original run identity. New research jobs stay closed until the foundation gates pass.','การรันในอดีตแสดงพร้อมรหัสรันเดิม งานวิจัยใหม่ยังปิดอยู่จนกว่าจะผ่าน foundation gate'],
+  ['Foundation migration and startup (B2), one bounded dataset (B3), diagnostics (W7), D6/R7, then one admitted bounded job with declared budget and holdout rules.','Foundation migration และ startup (B2), dataset แบบจำกัดหนึ่งชุด (B3), diagnostics (W7), D6/R7 จากนั้นรับงานแบบจำกัดหนึ่งงานพร้อมงบประมาณและกฎ holdout ที่ประกาศไว้'],
+  ['History lists preserved runs, including failures. It is not a qualified recommendation; no qualified winner exists.','ประวัติแสดงการรันที่เก็บรักษาไว้ รวมถึงรายการที่ล้มเหลว ไม่ใช่คำแนะนำที่ผ่านเกณฑ์ และยังไม่มีผู้ชนะที่ผ่านเกณฑ์'],
+  ['QR-1 durable library storage and view, QR-3 comparison and QR-4 qualification.','QR-1 การจัดเก็บและแสดง Library แบบถาวร, QR-3 การเปรียบเทียบ และ QR-4 การคัดกรองคุณสมบัติ']
+];
+uiPairs.push(...journeyPairs);
 for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}
