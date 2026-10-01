@@ -324,3 +324,43 @@ dependency bundle in a fresh local directory. Later Linux extraction/import
 proof and exact release, storage, health and recovery bindings precede a
 separately reviewed B2 offline packet. No B2 offline or foundation-start gate
 is closed by this recovery-publication acceptance.
+
+## B2 local dependency bundle
+
+Root accepted the local production dependency artifact at 12:36 UTC. A fresh,
+isolated install used the pinned release's unchanged package and lock files,
+with scripts and development dependencies disabled, private configuration/cache
+and an explicit environment allowlist. All 17 installed versions and downloaded
+tarball SHA512 values matched the lock. No existing runtime dependency directory
+was modified, and no install was repeated.
+
+The initial verifier returned `RELATIVE_CLOSURE` after installation. Three
+references point to absent fixtures in shipped dependency tests; four use
+directory resolution that its conservative resolver did not implement. Audit
+and a separate Node-resolution/AST verifier established the selected runtime
+closure: 96 application source files, four dependency entrypoints, 45 reachable
+dependency files and 84 edges, with no unknown or nonliteral imports. Four
+independent tests confirmed zero parser diagnostics, exact Git blob identity
+for all selected application files, and no evidence of selected application
+use of the unsupported native PostgreSQL branch. The original failed receipt
+and all shipped files were preserved.
+
+A credential-free CJS/ESM probe passed PostgreSQL export checks, exact decimal
+arithmetic and tokenizer encode/decode equivalence without application startup,
+database connection or network calls. The final regular-file POSIX archive
+contains 182 files, including shipped tests, data and licenses. Only npm's
+generated hidden lock metadata is omitted under an explicit recorded rule.
+Root independently parsed it with Python's standard tar reader and verified
+the complete entry set, file types, modes, sizes and content hashes against the
+original inventory. The archive is 23,338,496 bytes; SHA256:
+`c0bd614e9cb3ad1d17e51ac14bab20c0d8b4258f888cc24855684e64566e1214`.
+The per-file manifest SHA256 is
+`54e3943a0fca2d747bb86511ca93b3fa5a1ccc21a3b1ae46881efc7919264895`.
+
+This is local artifact acceptance on Windows Node 24.19.0, not deployment or
+Linux Node 24.21.0 proof. Native PostgreSQL and custom Cloudflare conditions
+remain unsupported in this selected path. The next bounded action verifies
+host release/storage candidates, runtime health and consumer/activation facts
+read-only. A separate exclusive extraction/import packet must pass before the
+offline migration and foundation-start gates. No host service, database or
+research job changed during this dependency preparation.

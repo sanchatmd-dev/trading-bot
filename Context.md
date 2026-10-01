@@ -1,5 +1,13 @@
 # Robot trade — Project Context
 
+The pinned W7 dependency bundle passed local acceptance at 12:36 UTC on
+2026-10-01: 17 production packages, selected application import closure,
+independent source/parser checks, CJS/ESM probes and an independent 182-file
+archive check. It remains separate from the source export and all existing
+runtime dependencies. Linux extraction/import proof and final release/storage
+bindings are still required before the B2 offline packet. See the
+[dependency record](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-local-dependency-bundle).
+
 Latest staging recovery checkpoint, 2026-10-01: four complete fallback service
 definitions are published, while the original transient definitions remain
 loaded. One manager reload changed dependency-list display order; root accepted

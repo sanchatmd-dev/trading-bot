@@ -49,6 +49,16 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Latest B2 dependency checkpoint, 2026-10-01 12:36 UTC: root accepted the local
+17-package bundle for the pinned W7 release. Selected application import
+closure, independent source/parser checks, CJS/ESM functional imports and an
+independent archive check passed. The first verifier's test-fixture closure
+failure remains recorded; no install was repeated. The archive contains 182
+shipped files and is not deployed. Next: bounded read-only host preflight for
+release/storage bindings and current runtime facts, then separately reviewed
+extraction and Linux import proof. B2 offline migration/startup remain gated.
+See the [dependency record](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-local-dependency-bundle).
+
 Latest B2-R checkpoint, 2026-10-01: root accepted recovery-file publication
 through independently reviewed read-only reconciliation. Four complete fallback
 definitions were published and the manager reloaded once; no process stopped

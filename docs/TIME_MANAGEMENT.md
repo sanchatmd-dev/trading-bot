@@ -1,5 +1,24 @@
 # Time Management — Project execution and data collection
 
+## Latest B2 dependency checkpoint — 2026-10-01 12:36 UTC
+
+One isolated local npm install completed in 11.805 seconds. Its conservative
+all-file closure check then held on seven references in shipped tests and
+benchmarks. Audit distinguished three absent test fixtures from four directory
+resolution limitations; the original failure was preserved and no install was
+repeated. A separate selected-runtime verifier took 1.494 seconds. Four
+independent source/parser tests passed in 1.017 seconds; the CJS/ESM functional
+probe passed in 1.449 seconds. Root independently checked the 182-file archive
+with Python's standard tar reader. These are scoped check durations, not total
+engineering time or throughput claims.
+
+The local bundle is accepted; Windows Node 24.19.0 results still require Linux
+Node 24.21.0 extraction/import proof. No VPS action occurred in this dependency
+slice. Next is a bounded read-only host preflight. Weekly Codex usage is 71%
+used and 29% remaining, short window unknown, reserve 15 percentage points.
+Continue one tiny task at a time. The forecast remains unchanged; README and
+Context are synchronized with this local-only result.
+
 ## Latest B2-R recovery checkpoint — 2026-10-01
 
 One staging runner took 12.559 seconds at 11:58 UTC. It published four complete
