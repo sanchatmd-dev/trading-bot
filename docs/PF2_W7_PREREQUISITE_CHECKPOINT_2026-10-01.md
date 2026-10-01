@@ -4,7 +4,7 @@ Status: B1 accepted on staging after one supervised run and read-only
 reconciliation at 11:08 UTC. API research admission is off and the research
 worker is active and idle with verified physical I/O limits. Foundation
 bootstrap and W7 have not started. Earlier sections retain discovery evidence;
-the final B1 acceptance section below owns current execution status.
+the B2-R acceptance section below owns the latest recovery-publication status.
 
 ## Owner authority and execution scope
 
@@ -282,3 +282,45 @@ preflight are off. Bind the empty dataset root before startup creates storage
 reservations: even an idle foundation startup performs a bounded 4096-byte
 I/O readiness write. No migration, foundation startup, BACKFILL or W7 attempt
 has been admitted by this preparation checkpoint.
+
+## B2-R recovery publication and read-only reconciliation
+
+Root accepted the bounded publication outcome after independent audit and
+focused reconciliation tests. One supervised run at 11:58:11–11:58:23 UTC
+published four complete, hash-matched fallback definitions atomically without
+replacement and performed one successful manager reload. Private native systemd
+verification had passed before publication. The files have the reviewed owner,
+0600 permissions and expected hardlink identities; their bytes remain immutable.
+
+The runner returned exit 2 at its post check (`UNIT`) and its journal ends in
+HOLD, not COMPLETE. This original evidence is retained unchanged. A separate
+read-only observation at 11:59:53–11:59:57 UTC found eight changes, all involving
+display order in `Requires`, `Before` or `After`. Their members were identical.
+An offline derivative normalizes only those three unordered token lists and
+rejects duplicates. All other fields retain strict comparison. Independent
+testing passed 21 tests with no failures or skips: the captured snapshot passes
+the corrected comparison and fails the original; dependency additions, removals,
+replacements and duplicates fail, as do changes to ordered command/drop-in
+fields, process identities, source hashes and feature flags.
+
+All six observed staging/production processes retained their identities. B1
+admission, I/O controls, health, empty queue and research fingerprint remained
+unchanged. No service stopped or restarted; no migration, grant, release switch
+or job ran. The original transient fragments still take precedence. This proves
+publication and current invariants, not that fallback loading, subsequent
+stop/start recovery or full stream dependency closure has been exercised.
+
+Private evidence is retained under the B2-R forward, reconciliation, audit and
+test records. The forward receipt SHA256 is
+`f859f4cfacfbc0efa4ea59332a70fa95b2497b29280927141b71616da1fd7f2a`;
+the read-only snapshot is
+`202bcdec38676f206ea6b5f16a9c6a5830c4f2b6f4ac4b118993904706cfc97f`;
+the corrected offline contract is
+`b6d4b6a1314685e3ef1a4f712ef26adc2bf76009e381b320969ad9139b333ccd`.
+The host payload, original checker and failed result were not rewritten.
+
+Next: prepare and independently verify the pinned 17-package production
+dependency bundle in a fresh local directory. Later Linux extraction/import
+proof and exact release, storage, health and recovery bindings precede a
+separately reviewed B2 offline packet. No B2 offline or foundation-start gate
+is closed by this recovery-publication acceptance.

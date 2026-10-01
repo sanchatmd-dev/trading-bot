@@ -1,5 +1,15 @@
 # Robot trade — Project Context
 
+Latest staging recovery checkpoint, 2026-10-01: four complete fallback service
+definitions are published, while the original transient definitions remain
+loaded. One manager reload changed dependency-list display order; root accepted
+the outcome through independent read-only reconciliation and 21 focused tests,
+preserving the original exit-2 runner evidence. B1 controls and observed process
+identities remain unchanged. This is not stop/start recovery proof, foundation
+startup or W7 acceptance. The next bounded work prepares isolated dependencies
+and release/policy bindings; all four staging writers must be accounted for in
+the later offline packet. See the [record](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-r-recovery-publication-and-read-only-reconciliation).
+
 ## Document role
 
 This file and [README.md](README.md) are the primary project explanations.

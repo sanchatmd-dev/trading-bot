@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต B2-R วันที่ 2026-10-01: เตรียม fallback service files ครบ 4 บริการและ reload manager ครั้งเดียวแล้ว ไม่มี stop/restart รอบนี้ Root รับผลจาก read-only reconciliation และการทดสอบ 21 ข้อ โดยเก็บ runner เดิมที่ exit 2 เพราะลำดับแสดง dependency ไว้ครบ B1 controls ยังเดิม; ยังไม่พิสูจน์ fallback stop/start และยังไม่ migration หรือเปิด foundation งานถัดไปคือ dependency bundle แยกในเครื่อง แล้วตรวจ release/policy bindings ก่อน B2 offline ดู [หลักฐาน](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-r-recovery-publication-and-read-only-reconciliation)
+
 อัปเดต W7 วันที่ 2026-10-01: B1 ผ่าน staging แล้วและตรวจซ้ำเมื่อ 11:08 UTC โดย API ปิดรับงาน research และ research worker ยังเปิดแต่ไม่มีงาน พร้อม I/O limits จริง 512 KiB/s ทั้งอ่านและเขียน มีเพียง staging API/research worker ที่ restart; production และ trading worker คงเดิม ยังไม่เปิด FOUNDATION/V2/enrollment/preflight หรือรัน W7 งานถัดไปคือ B2: เตรียมบริการที่กู้คืนได้ ตรวจผู้ใช้ฐานข้อมูล/locks และ bootstrap foundation แบบไม่มีงาน ตามสิทธิ์ downtime/ผลกระทบ/commit/push ที่เจ้าของให้ไว้ ดู [checkpoint ล่าสุด](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md)
 
 ตลาดหลักที่เจ้าของยืนยันสำหรับเก็บข้อมูลและวิจัยคือ **BINANCE:BTCUSDT Spot 1m** ใช้ตลาดเดิมต่อ ตามขอบเขต source/settings ที่ตรวจแล้ว

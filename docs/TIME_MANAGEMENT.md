@@ -1,5 +1,23 @@
 # Time Management — Project execution and data collection
 
+## Latest B2-R recovery checkpoint — 2026-10-01
+
+One staging runner took 12.559 seconds at 11:58 UTC. It published four complete
+fallback service files and reloaded the manager once, then returned exit 2 at
+the strict post comparison. A separate read-only observation at 11:59:53–57 UTC
+found only eight reordered dependency lists. Independent audit and 21 focused
+offline tests (67.583 ms, no failures or skips) support root acceptance through
+reconciliation; the failed runner evidence is retained unchanged. There was no
+rerun, stop, restart, migration or research job. Fallback loading is still a
+later operational gate. These measured intervals exclude preparation and review.
+
+Next is one isolated local dependency build, followed by independent artifact
+review and later Linux import proof. Codex weekly usage is 69% used and 31%
+remaining; the short window is unknown and the reserve remains 15 percentage
+points. Shared usage is not an exact task cost. Keep the existing forecast.
+README and Context now distinguish accepted file publication from unproved
+stop/start recovery and foundation startup.
+
 ## Latest B2 preparation checkpoint — 2026-10-01
 
 Read-only staging inventory took approximately 11 minutes, including two short

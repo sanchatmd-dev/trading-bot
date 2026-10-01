@@ -49,6 +49,18 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Latest B2-R checkpoint, 2026-10-01: root accepted recovery-file publication
+through independently reviewed read-only reconciliation. Four complete fallback
+definitions were published and the manager reloaded once; no process stopped
+or restarted. The original runner remains recorded as exit 2 at its post check:
+eight unordered dependency lists changed display order, without member changes.
+The corrected offline comparison passed 21 independent tests. B1 runtime
+controls and all six observed process identities were unchanged at 11:59 UTC.
+Fallback loading and stop/start recovery remain unproved. Next: prepare the
+isolated pinned dependency bundle locally, then review release and policy
+bindings before a separate B2 offline packet. No migration or research job ran.
+See the [recovery acceptance record](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md#b2-r-recovery-publication-and-read-only-reconciliation).
+
 Latest B2 preparation, 2026-10-01: read-only mapping identified four staging
 writers, including a market-stream service that does not hold the maintenance
 lock. The next bounded action prepares recoverable definitions for all four
