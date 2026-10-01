@@ -107,3 +107,49 @@ The order remains: prerequisites, W7, D6 prepare+BEGIN p99 on Linux, durable
 enrollment proof in Roadmap R7, then separately gated staging activation.
 D6 does not block W7. No new local test suite was run for this read-only and
 release-preparation checkpoint.
+
+## B0 and private grant validation follow-up
+
+Read-only B0 observations from 09:56:24 to 10:02:55 UTC captured 193 allowlisted
+runtime/source files with their raw hashes. All 115 captured API/research files
+match the named old revision after CRLF normalization; raw bytes are retained
+as the rollback identity. Seven trading-root files differ in content. An
+independent review found no additional incompatible old query within the
+proposed bootstrap/W7 scope, subject to preserving each service's exact old
+root, working directory and environment-file order.
+
+Rollback after foundation installation requires a fully idle system and
+restoring LEGACY mode before the old research worker starts. It must retain
+the new executor-mode SELECT/UPDATE privileges required by the mode trigger,
+as well as I/O table SELECT privileges. Restoring every old ACL indiscriminately
+would remove these requirements. Shared staging dependencies must remain
+untouched; new releases need isolated dependency installation. Full unit,
+configuration, asset and dependency backup/provenance gates remain open.
+
+Twelve pinned-release deployment checks pass on narrowly materialized real
+staging records, including source/settings/evidence, current membership and
+the full freshSnapshot capital comparison. This is read-only evidence, not
+an enqueue or a complete service-authorization acceptance. The environment
+file modification times precede service startup and their hashes were stable
+across observations, but no claim is made about a direct live process.env read.
+
+A private staging-role grant derivative was independently reviewed. Its second
+revision fixes the search path, preserves the existing legacy version marker's
+SELECT-only access and verifies effective privileges after applying grants.
+The frozen artifact SHA256 is
+`e67f1ccffaacfbc9bb09fd905629cb4db1e50735b767acf45227246d1d889885`.
+An independent local PostgreSQL fixture passed ten scenarios within one Node
+test in 16.251 seconds, covering expected privileges, protected markers,
+wrong-target/role rejection, a busy maintenance lock, PUBLIC/inherited grants,
+transaction rollback and an ambient shadow search path. An initial harness
+timeout was corrected before the successful run; no SQL defect was reported.
+Both disposable clusters were stopped and the shared local test cluster was
+not modified. No staging grant was applied.
+
+The fixture does not replace full-schema, actual owner/role, column ACL,
+TRUNCATE/ownership, backup or operational identity checks. Private evidence is
+retained in the B0, bootstrap-review and grant-test records under `.qa-local/`.
+Next is completion and independent review of the bounded B1 physical-controls
+packet; B2 migration and B3 BACKFILL remain separately gated. README and Context
+were reviewed unchanged for this follow-up because the overall readiness and
+product scope remain the same.

@@ -62,6 +62,17 @@ W7. The local 532-file blob export is verified; G1 is still open. No host
 mutation, W7 case, migration or deployment occurred in this discovery slice.
 This update supersedes earlier statements that only owner answers remain.
 
+The subsequent B0 follow-up resolves the sampled API/research source mismatch
+as CRLF differences, preserves raw per-service source evidence and records
+twelve pinned deployment checks. The private staging-role grant derivative
+passes independent static review and ten local PostgreSQL fixture scenarios.
+These close preparation subchecks, not the foundation or W7 runtime gates.
+The next bounded packet is B1 physical I/O controls and API admission pause,
+after its remaining isolation/backup checks and independent review; B2 installs
+foundation without jobs, B3 supplies one prerequisite BACKFILL, then W7 is
+re-admitted. Per-service rollback must restore LEGACY before the old research
+worker starts and retain the new executor/I/O privileges it needs.
+
 The owner approved parallel local PF-2 engineering while QD-1/QS-1 runtime and
 I/O acceptance remain the primary work. The [PF-2 contract checkpoint](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md)
 adds a hashed, development-only replay plan with frozen input/state references,

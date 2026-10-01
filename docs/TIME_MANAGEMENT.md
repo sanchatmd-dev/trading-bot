@@ -22,6 +22,15 @@ availability question is closed, but current technical readiness is not.
 At integration, weekly usage was 42% used, 58% remaining; the short window
 remains unknown. The one-point shared change is not an exact agent cost.
 
+B0 fact collection ran from 09:56:24 to 10:02:55 UTC (6 minutes 31 seconds).
+The grant fixture's first harness run failed on a PostgreSQL startup-output
+timeout; after the harness correction, ten scenarios passed in one Node test
+in 16.251 seconds. Both owned clusters were stopped. These are collection/test
+durations, not total engineering hours. A later usage refresh showed 45% used,
+55% remaining, with the short window still unknown. The current slice prepares
+and reviews B1; no host mutation or W7 attempt is implied. README/Context were
+reviewed unchanged for this follow-up; keep the existing overall forecast.
+
 ## หน้าที่ของเอกสาร
 
 เอกสารหลักด้านเวลาและการจัดสรรงานของโครงการ ใช้ร่วมกับ [README](../README.md), [Context](../Context.md) และ [Roadmap](ROADMAP.md)
