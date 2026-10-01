@@ -73,6 +73,16 @@ foundation without jobs, B3 supplies one prerequisite BACKFILL, then W7 is
 re-admitted. Per-service rollback must restore LEGACY before the old research
 worker starts and retain the new executor/I/O privileges it needs.
 
+B1 remains unadmitted after independent packet review. Seven findings cover
+effective unit settings, the effective database target, complete process-stop
+proof, canonical paths, bounded sanitized diagnostics, job-state fingerprints
+and partial-phase rollback. Local corrections and five helper assertions are
+preliminary, not closure of those findings. A read-only observation at
+10:30:50–10:30:52 UTC records all five baseline units and confirms that the API
+and research worker use the same staging database, distinct from production.
+The next implementation action is the B1 phase/unit/cgroup checker and rollback
+procedure, followed by independent verification. No B1 runtime change occurred.
+
 The owner approved parallel local PF-2 engineering while QD-1/QS-1 runtime and
 I/O acceptance remain the primary work. The [PF-2 contract checkpoint](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md)
 adds a hashed, development-only replay plan with frozen input/state references,

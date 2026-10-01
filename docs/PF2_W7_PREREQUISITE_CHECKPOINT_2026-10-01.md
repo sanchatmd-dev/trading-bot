@@ -153,3 +153,30 @@ Next is completion and independent review of the bounded B1 physical-controls
 packet; B2 migration and B3 BACKFILL remain separately gated. README and Context
 were reviewed unchanged for this follow-up because the overall readiness and
 product scope remain the same.
+
+## B1 review and current baseline
+
+The independent B1 review requires seven corrections before execution:
+effective unit/drop-in validation, effective database identity, complete worker
+and child-stop proof, canonical path/absence checks, sanitized diagnostics with
+deadlines, stable job-state fingerprints, and rollback for partial execution.
+Preliminary local changes cover parts of four findings and pass five helper
+assertions. None of the seven findings is accepted as closed. The draft refuses
+stopped/rollback certification and requires an approved baseline; its historical
+shell examples are not an executable packet.
+
+A read-only host observation at 10:30:50–10:30:52 UTC captures effective settings
+and process/cgroup identities for five baseline units. Their manager Environment
+properties are empty. The proposed packet and drop-in targets are absent,
+including symlinks. API and research effective database targets match and are
+distinct from production. The staging research tables contain one job, 100
+steps and no research-run rows; the fingerprint query succeeds. Seven staging
+database clients include the diagnostic connection, and three shared maintenance
+locks are present. Mapping every backend to its owning OS service remains open
+before B2; these counts do not prove a complete lock-holder inventory.
+
+Private evidence is retained in the B1 audit, draft, baseline and helper-test
+records under `.qa-local/`. No host mutation or W7 attempt occurred. Next is the
+phase/unit/cgroup checker and partial-phase rollback procedure, then independent
+review and fresh root admission. Git publication does not authorize execution
+or constitute runtime acceptance.

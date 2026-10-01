@@ -1,5 +1,21 @@
 # Time Management — Project execution and data collection
 
+## B1 packet review checkpoint — 2026-10-01
+
+Independent review found seven B1 execution-proof gaps. A bounded local
+correction slice adds preliminary effective-database, canonical-file,
+sanitized-error/deadline and job-fingerprint checks; five helper assertions
+pass, but no finding is accepted as fully closed. A subsequent read-only host
+sample ran at 10:30:50–10:30:52 UTC. Its two-second observation interval is not
+the total engineering duration. Phase/unit/cgroup validation and rollback
+implementation remain next; no restart, migration, W7 attempt or deployment
+occurred. See the [prerequisite checkpoint](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md).
+
+Account usage at integration is weekly 49% used, 51% remaining; the short window
+is unknown and the reserve remains 15 percentage points. The shared increase
+from 47% used before this slice is not a per-agent cost measurement. Keep the
+existing forecast and contingency. README and Context were reviewed unchanged.
+
 ## Latest checkpoint — 2026-10-01: W7 prerequisite discovery
 
 The owner allows staging downtime at any time, accepts the mode/database/grant/
