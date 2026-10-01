@@ -7,6 +7,11 @@ preview from functional acceptance; the [Claude handoff](docs/CODEX_TO_CLAUDE_PR
 preserves runtime gates and ownership. The plan itself retains Spot/Paper-only and
 10K/1m limits.
 
+Staging release update, 2026-10-01 22:35 UTC: the staging API and trading worker
+run release `3309d07`, adding the PF-3 readiness panel on the Risk manager page
+and the guided Bridge wizard. The database, research worker, market stream,
+fallback timer and production are unchanged.
+
 P1 update, 2026-10-01 19:50 UTC: Step 1 has real-provider evidence (one visible
 analysis failure and a successful retry, then two complete Bridge drafts, about
 USD 0.03 in total); the TradingView compile is pending with the owner. PF-3

@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต staging วันที่ 2026-10-01 22:35 UTC: staging API และ trading worker เปลี่ยนเป็น release `3309d07` แล้ว มีแผง Readiness report ในหน้า Risk manager และ wizard ของ Bridge ที่ปลดล็อกทีละขั้นพร้อม pop-up บอกขั้นถัดไป ส่วนฐานข้อมูล, research worker, market stream และ production ไม่เปลี่ยน
+
 อัปเดต P1 วันที่ 2026-10-01 19:50 UTC: ขั้นที่ 1 มีหลักฐานกับ AI จริงแล้ว (วิเคราะห์ล้มเหลวที่มองเห็นได้ 1 ครั้งแล้วลองใหม่สำเร็จ และ Generate draft ได้ 2 ครั้ง รวมราว USD 0.03) ส่วนการ compile ใน TradingView รอเจ้าของ PF-3 รายงานความพร้อมก่อนเริ่ม Paper ผ่านการรับงานระดับ local ที่ commit `0aabe14` (CI 9/9) แต่ยังไม่ขึ้น staging และจะขึ้นพร้อม wizard ของ Bridge ในรอบเดียว PF-3 พบว่าค่า Risk ตั้งต้นที่เปิด block during news จะปฏิเสธทุก BUY จาก Bridge เพราะ alert ไม่มีข้อมูลข่าว ต้องปิดก่อนทดสอบสัญญาณจริง ฝั่ง B2 สำรองฐานข้อมูล staging และซ้อมกู้คืนได้ตรงครบ 49 ตาราง และซ้อมเครื่องมือย้ายฐานข้อมูลออกจากโฟลเดอร์ชั่วคราวครบวงจรบน unit และ port ทดสอบแล้ว ตอนนี้ให้ auditor ตรวจอยู่ การย้ายจริงจะแจ้งเจ้าของก่อนและทำก่อน 2026-10-10
 
 อัปเดต P0 วันที่ 2026-10-01 16:16 UTC: staging API และ trading worker ของ staging เปลี่ยนเป็น release `533755b` แล้ว มีหน้า **Prototype journey** แสดง 6 ขั้นพร้อมสถานะจริงและสิ่งที่ยังต้องทำ และ API อ่านอย่างเดียวสำหรับประวัติ research และภาพรวม Bridge ส่วน research worker, market stream, fallback timer, ฐานข้อมูล และ production ไม่เปลี่ยน การรับงาน research ยังปิด และ foundation ยังไม่เปิด นี่คือ preview ไม่ใช่การรับรองครบ 6 ขั้น ดู [บันทึก P0](docs/STAGING_PREVIEW_P0_2026-10-01.md)

@@ -41,6 +41,17 @@ missed run. An independent tool audit is running. The live relocation (about
 planned before 2026-10-10. Migration, grants and foundation startup (Window 2)
 remain gated.
 
+**P1 staging release, 2026-10-01 22:35 UTC.** The staging API and trading worker
+now run release `3309d07`, which adds the PF-3 readiness report (Risk manager
+panel) and the guided Bridge wizard (UX round 1) to the P0 preview. The switch
+used new reviewed drop-ins with per-unit rollback, a gated manager reload and
+read-only database gates; all five steps passed, and the served page and script
+bytes match the commit. The research worker, market stream, fallback timer,
+database and production are unchanged. On staging, PF-3 reports PF-2 evidence as
+unavailable because PF-2 stays off, so Step 3 is visible but not accepted. The
+PostgreSQL relocation tools were revised twice after an independent audit and two
+tester passes and are now in a host proof on throwaway units.
+
 ## Document authority and update rules
 
 This is the canonical index of all current plans, their sequence, acceptance
@@ -89,6 +100,10 @@ resume facts, evidence and gates; public/product docs retain normal prose.
 This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
+
+Latest staging release, 2026-10-01 22:35 UTC: release `3309d07` (PF-3 readiness
+panel and guided Bridge wizard) runs on the staging API and trading worker. See
+the staging prototype priority section above.
 
 Latest P1 progress, 2026-10-01 19:50 UTC: Step 1 real-provider evidence is
 recorded; PF-3 is committed and locally accepted (`0aabe14`, not deployed); the
@@ -2157,3 +2172,33 @@ P1-F. See the [P0 preview record](STAGING_PREVIEW_P0_2026-10-01.md).
   job, Live or production change. Open: independent tool audit, owner notice and
   the live Window 1 (planned before 2026-10-10), PF-3 plus wizard staging
   release, PF-4, Steps 4–6 and Window 2.
+
+## 2026-10-01 — Staging release `3309d07`: PF-3 panel and guided Bridge wizard (Claude root)
+
+- **UX round 1 (`3309d07`):** the Build Pine Bridge panel is a six-step wizard.
+  Locked steps are inert, a coach mark points at the next required control, and
+  motion respects reduced-motion settings. The analysis JSON is labelled as a
+  report, not Pine code. Timeframe defaults to 1 minute. The install checklist
+  says to replace the whole script. Generate warns about Risk saves and news
+  blocking. Node suite 927 tests, 922 passed, 0 failed, 5 skipped. A local browser
+  check at 1280 px (English) and 375 px (Thai) showed no horizontal overflow.
+  Hosted CI: 7 of 9 checks passed. The Ubuntu Node job failed on a pre-existing
+  TOTP step-boundary flake in `test/phase1.test.js`, unrelated to the change and
+  tracked as a separate fix, and fail-fast cancelled the Windows job.
+- **Deployment:** release export of 554 source files plus 182 dependency files
+  (736). Engine-hashed files are byte-identical to release `533755b`. The switch
+  tool passed 61 mock-host assertions. The first precheck held on a false
+  production-port check (that cluster listens on a Unix socket only); a
+  three-line tool revision fixed it. Precheck, prepare, API switch, worker switch
+  and postcheck then passed. An independent read-only check matched all five
+  served files to the commit.
+- **Window-1 tools:** the independent audit returned accept-with-fixes. Its two
+  high findings were no restart path between stopping the old cluster and
+  renaming it, and the reload ordering on restore; both are fixed. A tester then
+  found four low issues, including a reload gate that passed on empty systemd
+  output; all are fixed, and the tester passed both revisions. The audit also
+  found that the database socket's parent directory is already owner-only, so no
+  other local user can reach the database today; Window-1 hardening is defence
+  in depth. A host proof on throwaway units is running.
+- **Scope:** staging only. No live relocation, migration, grant, foundation
+  start, research job, Live or production change.
