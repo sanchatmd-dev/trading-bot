@@ -172,7 +172,9 @@ therefore refused. Use a fresh idempotency key for every case.
    immutability and the I/O release guard. Do not install extensions from an API
    request. If the staging database is in LEGACY mode today, `--mode=FOUNDATION`
    is a staging executor switch, which needs its own owner authorization
-   (heavy-path decision O1) recorded before execution. Binding storage to a
+   (heavy-path decision O1) recorded before execution. In FOUNDATION mode the staging
+   API answers 409 on the legacy backtest, optimizer and analytics routes until a
+   rollback restores LEGACY. Binding storage to a
    database without a storage namespace requires an empty dataset root; if a
    failed installation leaves only the storage marker file in an otherwise empty
    root with no namespace row, only a separate root-authorized step may move that
@@ -231,15 +233,22 @@ therefore refused. Use a fresh idempotency key for every case.
 The private environment must identify real reviewed policy, recovery, health and
 I/O control files. Startup checks require `QUANT_CAPACITY_POLICY_FILE`,
 `QUANT_RECOVERY_POLICY_FILE`, `QUANT_HEALTH_RECOVERY_FILE` and
-`QUANT_IO_CONTROLS_FILE`. Verify the existing `QUANT_HEALTH_LIMITS_FILE`,
+`QUANT_IO_CONTROLS_FILE`. The running worker must already use the reviewed I/O
+controls file, and its cgroup `io.max` must carry the reviewed main rates before the
+offline window: the worker checks this at startup, so a gap would otherwise show only
+after the irreversible steps. Verify the existing `QUANT_HEALTH_LIMITS_FILE`,
 `QUANT_HEALTH_URL`, `QUANT_WORKER_UNIT` and `QUANT_RESEARCH_DATASET_ROOT` values,
 the release/storage bindings of the recovery policy, the absolute Python
-interpreter and `PG_POOL_SIZE` of at least 3 for health recovery. The helper also
+interpreter and `PG_POOL_SIZE` absent (default 5) or at least 4: a running PROFILE V2
+job holds the runtime lock, an observe transaction and the tick heartbeat transaction,
+and health recovery needs one more connection for its probe. The helper also
 requires `PINE_BRIDGE_ENABLED=1`, `QUANT_RESEARCH_ENABLED=1`,
 `QUANT_RESEARCH_FOUNDATION_ENABLED=1` and `QUANT_STORAGE_LIMITS_FILE` in the
 environment it loads. The recovery policy names the new release root, which must
 be a real path. The minimum healthy period of the health recovery policy must lie
-between 1,000 and 60,000 ms (the code bound) and must let the restarted worker
+between 1,000 and 60,000 ms (the code bound). Its maximum sample gap (5,000 ms when
+absent) must be at least 10,000 ms, because the release health check reuses the claim
+admission gate. The minimum healthy period must also let the restarted worker
 claim inside the claim window: start the worker only while the time left before
 the claim deadline exceeds that period plus two minutes. These are checks of
 reviewed staging configuration, not instructions to invent replacement values.
@@ -258,7 +267,11 @@ owner-only diagnostic enqueue helper (see the release record) creates the
 unmarked V2 contract from trusted raw/deployment records. It needs an existing
 SUCCEEDED BACKFILL raw job of the same owner and bot with at most 10,000 bars
 including warm-up, and a READY, fresh deployment. If no such raw job exists, a
-separate bounded BACKFILL step must come first.
+separate bounded BACKFILL step must come first. Use the smallest eligible raw job (at
+least 501 raw bars): the compute window after spawn is about 13 seconds, and a
+10,000-bar compute is not measured on this host. A compute deadline with safe
+accounting is inconclusive, not a pass or a failure; C2 does not follow it, and a new
+attempt needs a root decision.
 
 Per case: worker stopped, API admission off, idle line `ok:true` with an empty
 queue, helper dry run, helper write, worker start, observation. Keep API
