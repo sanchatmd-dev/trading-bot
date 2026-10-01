@@ -119,6 +119,9 @@ migration or VPS action has occurred. The D6 prepare+BEGIN p99 measurement on
 Linux blocks the durable enrollment proof (Roadmap R7) and staging activation,
 not the W7 diagnostic, because only jobs marked
 `completion_mode: 'pf2-enrollment-v1'` run the enrollment prepare and BEGIN.
+HEAD later adds fail-closed defaults (`89d8e8c`) and the optional E2 accounting
+follow-ups for a later release; W7 stays on `28d6f7e`. The Claude root stopped on
+2026-10-01 and prepared a handoff to Codex.
  
 Initial QL-1 through QL-4 deployment (2026-09-23, release `39590f7`): Quant Lab research workspace ran as an offline service using a dedicated Python environment. The authenticated Node.js proxy `/api/quant/*` and 4-tab studio UI (Backtest, Optimizer, Risk Preview; Pine Export unreleased) were deployed alongside Trading Control Panel v2. That release's recorded validation was Node 111/111, Quant 71/71, and `PAPER_ONLY`. The 2026-09-24 observed release and current limitations are recorded under Production below. Live trading remains strictly locked.
 

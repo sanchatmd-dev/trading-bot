@@ -121,13 +121,17 @@ export async function beginProfileCompletionLocked({db,job,attempt,clock,monoton
  * also counts while the wall clock never stepped back in this attempt, so a forward wall step raises the charge
  * (conservative) and a backward step can neither lower it nor enroll. A charge never drops below an earlier one.
  * A wall reading whose elapsed total would not be a safe integer is a clock anomaly too. It is never stored, so the
- * monotonic floor still charges and no later charge is lost to one absurd reading.
+ * monotonic floor still charges and no later charge is lost to one absurd reading. A finite monotonic reading whose
+ * elapsed total is not a safe integer is the same anomaly: its term is dropped and the elapsed already charged stays,
+ * because the monotonic high-water mark never moves down and would otherwise make every later total unsafe.
  */
 function runtimeTotal(context){
  const time=readClock(attempts.get(context.attempt),context.clock,context.monotonic);
- const wallElapsed=time.wall-context.beginAt;
+ const wallElapsed=time.wall-context.beginAt,monoElapsed=Math.ceil(time.mono-context.beginMonotonic);
  if(!time.anomaly&&!safe(context.runtimeUsed+wallElapsed))time.anomaly=true;
- const elapsed=Math.max(context.elapsed,Math.ceil(time.mono-context.beginMonotonic),time.anomaly?0:wallElapsed);
+ const monoUsable=safe(context.runtimeUsed+monoElapsed);
+ if(!monoUsable)time.anomaly=true;
+ const elapsed=Math.max(context.elapsed,monoUsable?monoElapsed:0,time.anomaly?0:wallElapsed);
  const total=context.runtimeUsed+elapsed;
  if(safe(total))context.elapsed=elapsed;
  return {now:time.wall,total,valid:!time.anomaly&&safe(total)};
@@ -136,9 +140,10 @@ function runtimeTotal(context){
 // Absolute total with GREATEST: a repeat, or a charge that an earlier step already persisted, never counts twice.
 const CHARGE_RUNTIME_SQL='UPDATE quant_foundation_jobs SET runtime_used_ms=GREATEST(runtime_used_ms,$3) WHERE job_id=$1 AND lease_token=$2';
 
-/** Charges the terminal runtime of a completion that never reached publication (the unknown-final fallback). BEGIN
- * cleared run_started_at, so cancel and acknowledge add nothing: without this step the terminal time is not charged
- * at all. It uses the finalizer's own high-water clock and monotonic floor. Call it before the lease token clears.
+/** Charges the terminal runtime of a completion that never reached publication: the unknown-final fallback and the
+ * UNCONFIRMED terminal exits. BEGIN cleared run_started_at, so cancel and acknowledge add nothing: without this step the
+ * terminal time is not charged at all. It uses the finalizer's own high-water clock and monotonic floor. Call it before
+ * the lease token clears. Every caller writes the same kind of absolute total, so repeated or interleaved charges never add up.
  */
 export async function chargeProfileCompletionRuntime({db,completion}){
  const context=completions.get(completion);

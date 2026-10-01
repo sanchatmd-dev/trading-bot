@@ -17,6 +17,14 @@ async function until(predicate){const end=Date.now()+15000;
  while(!await predicate()){if(Date.now()>=end)throw Error('condition timed out');await new Promise(resolve=>setTimeout(resolve,10));}}
 function countCrashes(f){let crashes=0;const transition=f.ledger.transition.bind(f.ledger);
  f.ledger.transition=async request=>{if(request.action==='crash')crashes++;return transition(request);};return ()=>crashes;}
+// BEGIN reads the monotonic clock inside beginProfileCompletion, right after authorizeLocked('BEGIN') starts, and every charge
+// counts from that reading. The marks are that authority call and the last charge statement. No honest charge exceeds the time
+// between them, while a doubled charge does once the terminal has run for a while.
+function markCharge(f){const marks={},push=f.authorityCalls.push.bind(f.authorityCalls),query=f.db.query.bind(f.db);
+ f.authorityCalls.push=phase=>{if(phase==='BEGIN')marks.begin=performance.now();return push(phase);};
+ f.db.query=async(sql,params)=>{if(sql.startsWith('UPDATE quant_foundation_jobs SET runtime_used_ms=GREATEST'))marks.charge=performance.now();
+  return query(sql,params);};
+ return marks;}
 // Another backend of this fixture database waits on a lock of the scheduler table (the settlement's first statement).
 const schedulerWaiters=async f=>(await f.db.query(`SELECT count(*)::int n FROM pg_stat_activity
  WHERE datname=current_database() AND pid<>pg_backend_pid() AND wait_event_type='Lock'
@@ -77,7 +85,7 @@ test('failure before the settlement body takes the unknown-final fallback and re
     return query(sql,params);
    };
   }
-  const startedAt=performance.now(),running=f.runtime.run(f.args);running.catch(()=>{});
+  const marks=markCharge(f),running=f.runtime.run(f.args);running.catch(()=>{});
   try{
    let began;
    await until(async()=>{began=await f.job();return began.stop_reason==='PROFILE_COMPLETING';});
@@ -87,10 +95,10 @@ test('failure before the settlement body takes the unknown-final fallback and re
    const answer=await bounded(running,kind),evidence=await f.evidence();
    assert.equal(hits,1);
    // BEGIN stopped the runtime clock and cancel adds nothing after it, so the fallback itself charges the terminal
-   // runtime: at least the time held, and once, never more than the whole run took.
+   // runtime: at least the time held, and once, never more than the time from BEGIN to that charge.
    const charged=evidence.job.runtime_used_ms-began.runtime_used_ms;
    assert.ok(charged>=Math.floor(heldMs),'terminal runtime charged: '+charged+' ms, held '+heldMs+' ms');
-   assert.ok(charged<=Math.ceil(performance.now()-startedAt),'terminal runtime charged once: '+charged+' ms');
+   assert.ok(charged<=Math.ceil(marks.charge-marks.begin),'terminal runtime charged once: '+charged+' ms');
    assert.equal(answer.status,'CANCELLED');assert.equal(answer.proof,'UNKNOWN_FINAL_CHARGED');
    assert.equal(evidence.job.status,'CANCELLED');assert.equal(evidence.job.result,null);assert.equal(evidence.receipt,null);
    assert.equal(evidence.launch.state,'STOP_PROVEN');

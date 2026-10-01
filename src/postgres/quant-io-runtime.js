@@ -589,6 +589,11 @@ export class QuantIoRuntime {
       }
       return {status,proof};
     };
+    // An UNCONFIRMED terminal with a completion leaves the job STOPPING with its token. BEGIN stopped the runtime clock and
+    // offline recovery charges only RUNNING, so the runtime since BEGIN would stay uncharged. Charge it here, best effort: a
+    // failed charge keeps the UNCONFIRMED result. The total is absolute (GREATEST, job and lease token key), so the
+    // finalizer charge and the fallback charge below never add to it.
+    const chargeUnconfirmed=async()=>{if(completion)try{await chargeProfileCompletionRuntime({db:this.db,completion});}catch{}};
     if(handle){
       const bound=this.boundIdentity.get(id)??null;
       let proof;
@@ -601,8 +606,10 @@ export class QuantIoRuntime {
         }});
         proof=outcome?.stopProof;
       }else proof=await handle.stop();
-      if(!trustedStop(proof,quantIoUnitName(jobId,operationId)))
+      if(!trustedStop(proof,quantIoUnitName(jobId,operationId))){
+        await chargeUnconfirmed();
         return complete('STOPPING','UNCONFIRMED');
+      }
       digest=hash(canonical({version:'quant-io-stop-proof-v1',jobId,operationId,
         unitName:proof.unitName,launcherClosed:true,startRegistered:true,
         pendingStartsExcluded:true,unitStopped:true}));
@@ -610,7 +617,10 @@ export class QuantIoRuntime {
         committed===canonical(outcome.frozenSample)&&POST_EXIT_MEASURED.includes(outcome.postExit)){
         const settlement=await this.settleMeasured({jobId,leaseToken,operationId,handle,bound,frozen:outcome.frozenSample,
           evidence:outcome.readbackEvidence,postExit:outcome.postExit,stopDigest:digest,completion});
-        if(settlement?.kind==='UNCERTAIN')return complete('STOPPING','UNCONFIRMED');
+        if(settlement?.kind==='UNCERTAIN'){
+          await chargeUnconfirmed();
+          return complete('STOPPING','UNCONFIRMED');
+        }
         if(['ENROLLED','SETTLED_ONLY','DENIED'].includes(settlement?.kind)){
           this.handles.delete(id);this.emergency.delete(id);
           if(settlement.kind==='ENROLLED')return complete('SUCCEEDED','MEASURED_FINAL_SETTLED');

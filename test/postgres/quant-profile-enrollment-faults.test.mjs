@@ -20,6 +20,14 @@ async function bounded(promise,label,ms=20000){let timer;
 async function until(predicate){const end=Date.now()+15000;
  while(!await predicate()){if(Date.now()>=end)throw Error('condition timed out');await new Promise(resolve=>setTimeout(resolve,10));}}
 const coherentRead=sql=>sql.includes('LEFT JOIN public.quant_profile_enrollment_receipts')&&sql.includes('x.operation_id=$2');
+// BEGIN reads the monotonic clock inside beginProfileCompletion, right after authorizeLocked('BEGIN') starts, and every charge
+// counts from that reading. The marks are that authority call and the last charge statement. No honest charge exceeds the time
+// between them, while a doubled charge does once the terminal has run for a while.
+function markCharge(f){const marks={},push=f.authorityCalls.push.bind(f.authorityCalls),query=f.db.query.bind(f.db);
+ f.authorityCalls.push=phase=>{if(phase==='BEGIN')marks.begin=performance.now();return push(phase);};
+ f.db.query=async(sql,params)=>{if(sql.startsWith('UPDATE quant_foundation_jobs SET runtime_used_ms=GREATEST'))marks.charge=performance.now();
+  return query(sql,params);};
+ return marks;}
 function captureCompletion(f){let completion;const begin=f.scheduler.beginProfileCompletion.bind(f.scheduler);
  f.scheduler.beginProfileCompletion=async request=>{completion=await begin(request);return completion;};return ()=>completion;}
 function settledPayload(params){for(const value of params??[]){if(typeof value!=='string'||!value.startsWith('{'))continue;
@@ -42,11 +50,12 @@ test('unexpected failure after each publication write rolls back all enrollment 
   const f=await fixture(st),hit=injectAfterWrite(f,stage),actions=[];
   const transition=f.ledger.transition.bind(f.ledger);
   f.ledger.transition=async request=>{actions.push(request.action);return transition(request);};
-  const startedAt=performance.now(),answer=await bounded(f.runtime.run(f.args),stage),evidence=await f.evidence();
+  const marks=markCharge(f),answer=await bounded(f.runtime.run(f.args),stage),evidence=await f.evidence();
   assert.equal(hit(),true);assert.equal(answer.status,'CANCELLED');assert.equal(answer.proof,'UNKNOWN_FINAL_CHARGED');
   // The rolled-back transaction charged nothing. The fallback charges the terminal runtime once (BEGIN stopped the
-  // clock, so cancel and acknowledge add none): the fixture wall clock does not move, so this is the monotonic floor.
-  assert.ok(evidence.job.runtime_used_ms>0&&evidence.job.runtime_used_ms<=Math.ceil(performance.now()-startedAt));
+  // clock, so cancel and acknowledge add none): the fixture wall clock does not move, so this is the monotonic floor,
+  // and it stays within the time from BEGIN to that charge. A doubled charge does not.
+  assert.ok(evidence.job.runtime_used_ms>0&&evidence.job.runtime_used_ms<=Math.ceil(marks.charge-marks.begin));
   assert.equal(evidence.job.result,null);assert.equal(evidence.receipt,null);assert.equal(evidence.launch.state,'STOP_PROVEN');
   const state=evidence.ledger.state,operation=state.operations[0];assert.equal(operation.status,'CRASHED');
   assert.deepEqual(state.charged,operation.charge);
