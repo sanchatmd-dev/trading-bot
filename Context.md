@@ -7,6 +7,18 @@ preview from functional acceptance; the [Claude handoff](docs/CODEX_TO_CLAUDE_PR
 preserves runtime gates and ownership. The plan itself retains Spot/Paper-only and
 10K/1m limits.
 
+P1 update, 2026-10-01 19:50 UTC: Step 1 has real-provider evidence (one visible
+analysis failure and a successful retry, then two complete Bridge drafts, about
+USD 0.03 in total); the TradingView compile is pending with the owner. PF-3
+readiness reporting is committed and locally accepted (`0aabe14`, CI 9/9) but not
+deployed; it ships with the guided Bridge wizard in one staging release. PF-3
+shows that the default Risk policy rejects every Bridge BUY while news blocking
+is on, because Bridge alerts carry no news flag. For B2, the staging database was
+backed up and restored in isolation (49 of 49 tables matching), and the tools that
+move it out of the temporary directory were rehearsed on a separate unit and port.
+An independent audit is running; the live move, announced to the owner first, is
+planned before 2026-10-10.
+
 P0 update, 2026-10-01 16:16 UTC: the staging API and staging trading worker now
 run release `533755b`, which adds a Prototype journey page and read-only,
 owner-scoped research-history and Bridge-overview endpoints. The research worker,

@@ -1,5 +1,30 @@
 # Time Management — Project execution and data collection
 
+## P1 wave 1 — 2026-10-01 (Claude root)
+
+From about 17:05 to 19:50 UTC (2 hours 45 minutes of wall time, including about
+55 minutes waiting for the 5-hour usage window), the root ran two short
+operations packets (fallback recovery copies; protected backup with an isolated
+restore rehearsal), a runbook design (about 33 minutes, no host access), the
+Window-1 tool build and rehearsal (about 30 minutes, eight SSH sessions) and the
+PF-3 coder packet (about 76 minutes), mostly in parallel. Root review and
+independent reruns of PF-3 took about 10 minutes of attention plus about
+6 minutes of test machine time; hosted CI passed 9/9. Step 1 real-provider
+evidence came from the owner's own session.
+
+Claude usage moved from 27% to 76% of the 5-hour window before its reset and
+from 40% to 46% of the weekly window. Most of the 5-hour step came from root
+turns with a very large context before compaction, not from the children; the
+root now compacts earlier. The 15-point reserve was not crossed, and new
+dispatch waited for the reset.
+
+Progress against the P1 estimate: P1-A has used about 2 of its 12–24 hours
+(preparation only; no live relocation, migration or foundation start). P1-B has
+used about 2 of its 8–16 hours (PF-3 local; PF-4 not started). The 41–80-hour
+total is unchanged. Next measured items: the Window-1 tool audit, the live
+relocation (planned before 2026-10-10 after owner notice, about 10–15 minutes of
+API downtime), the guided Bridge wizard and the PF-3 plus wizard staging release.
+
 ## P0 staging preview — 2026-10-01
 
 Claude took over as sole root at about 14:59 UTC and deployed the P0 preview at
@@ -683,6 +708,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-10-01 | P1 wave 1 โดย Claude root: หลักฐานขั้นที่ 1 กับ AI จริง (analyze ล้มเหลวที่มองเห็นได้ 1 ครั้งแล้วสำเร็จ, Generate 2 ครั้ง, รวมราว USD 0.03); PF-3 ผ่านการรับงานระดับ local ที่ `0aabe14` (CI 9/9, ยังไม่ deploy); B2: สำเนากู้คืน fallback, backup + restore rehearsal ตรง 49/49 ตาราง, runbook แบบแยก 2 window, ซ้อมเครื่องมือ Window-1 ครบบน unit/port ทดสอบ (พบว่าหยุด transient unit แล้วต้อง reload ก่อน start); fallback timer หยุด 45 วินาทีระหว่าง micro-test โดยไม่พลาดรอบ | Staging: ยังไม่มีการย้ายฐานข้อมูลจริง, migration, grant, foundation start หรือ production; Window 1 จริงรอ audit และแจ้งเจ้าของก่อน (ภายใน 2026-10-10)
 | 2026-10-01 | P0 staging preview โดย Claude root: release `533755b` (หน้า Prototype journey + read-only history/overview APIs) สลับ staging API และ trading worker ผ่าน drop-in ใหม่ ไม่มี rollback; CI 9/9; P1 ประมาณ 41–80 ชั่วโมงงานไม่รวมเวลารอตลาด | Staging deployment ของ preview; ไม่มี migration, foundation, research job, AI job, signal หรือ production change |
 | 2026-10-01 | E2 optional accounting follow-ups บน HEAD (F1 charge runtime แบบ best effort ที่ UNCONFIRMED exits ทั้งสอง, F3 guard monotonic total, F4 test bounds เข้มขึ้น; Opus review ยอมรับ) แล้ว Claude root หยุดตามคำสั่งเจ้าของและเตรียม handoff ส่งต่อ Codex | Code และ tests บน HEAD; W7 ยัง pin `28d6f7e`; ไม่มี deploy/migration/VPS; ไม่กระทบ forecast |
 | 2026-10-01 | Fail-closed defaults บน HEAD: worker ที่เปิด health recovery ต้องมี `PG_POOL_SIZE` อย่างน้อย 4 ทุกชนิดงาน (ทดลองซ้ำบน PostgreSQL local: pool 3 ทำให้ probe อดและ heartbeat quarantine job), scheduler ปิด PROFILE V2 เป็นค่าเริ่มต้น และ worker สร้าง reason list จาก I/O list ชุดเดียว; Opus review ยอมรับหลังแก้ | Code และ tests บน HEAD เท่านั้น; W7 ยัง pin `28d6f7e`; engine hashes ของ ingestion, foundation และ PF-2 เปลี่ยนที่ HEAD (release ถัดไปต้องคำนวณใหม่, drain queued jobs และตรวจ pool); raw datasets และ enrollments เดิมยังใช้ได้; ไม่กระทบ forecast |

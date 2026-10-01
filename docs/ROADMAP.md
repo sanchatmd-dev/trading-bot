@@ -19,6 +19,28 @@ timer, database and production are unchanged, and research admission stays
 closed. The owner's signed-in walkthrough is pending. This is not six-step
 acceptance. See the [P0 preview record](STAGING_PREVIEW_P0_2026-10-01.md).
 
+**P1 progress, 2026-10-01 19:50 UTC.** Step 1 has real-provider evidence on
+release `533755b`: one AI analysis failed visibly with `INVALID_AI_OUTPUT`, the
+retry succeeded in 4.2 s, and two Generate jobs produced complete Bridge drafts,
+for about USD 0.03 in total. The owner's TradingView compile of the draft is
+pending. PF-3 readiness reporting passed local engineering acceptance in commit
+`0aabe14` (hosted CI 9/9) and is not deployed yet; it will ship together with the
+guided Bridge wizard (UX round 1, in progress) in one staging release switch.
+PF-3 found that the default Risk policy rejects every Bridge BUY, because news
+blocking is enabled and Bridge alerts carry no news flag; the owner must turn
+news blocking off before the real-signal Paper demonstration. For B2, the
+staging database still runs from a temporary directory that a reboot would
+erase. A protected backup was taken and restored in isolation with all 49 tables
+matching, and the Window-1 relocation tools were rehearsed end to end on a
+separate test unit and port. The rehearsal showed that stopping any of the five
+transient staging writers unloads it, so the tools now reload the persistent
+copies before restarting. One live side effect occurred: the fallback collector
+timer was down for 45 seconds during an optional test and recovered without a
+missed run. An independent tool audit is running. The live relocation (about
+10–15 minutes of API downtime) will be announced to the owner first and is
+planned before 2026-10-10. Migration, grants and foundation startup (Window 2)
+remain gated.
+
 ## Document authority and update rules
 
 This is the canonical index of all current plans, their sequence, acceptance
@@ -67,6 +89,12 @@ resume facts, evidence and gates; public/product docs retain normal prose.
 This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
+
+Latest P1 progress, 2026-10-01 19:50 UTC: Step 1 real-provider evidence is
+recorded; PF-3 is committed and locally accepted (`0aabe14`, not deployed); the
+B2 Window-1 database relocation tools are rehearsed and under independent audit,
+with the live window planned before 2026-10-10 after owner notice. See the
+staging prototype priority section above.
 
 Latest P0 staging preview, 2026-10-01 16:16 UTC: Claude, as sole root, deployed
 release `533755b` to the staging API and trading worker through reviewed unit
@@ -2091,3 +2119,41 @@ Open items: the owner's signed-in walkthrough; B2 recovery coverage for all five
 writers; one re-decided release pin for API and research worker before B2 offline
 work (the dormant `28d6f7e` candidate no longer matches the running API); P1-A to
 P1-F. See the [P0 preview record](STAGING_PREVIEW_P0_2026-10-01.md).
+
+## 2026-10-01 — P1 wave 1: Step 1 evidence, PF-3 and B2 Window-1 preparation (Claude root)
+
+- **Step 1 evidence (owner session, release `533755b`, real provider):** one
+  analysis failed visibly with `INVALID_AI_OUTPUT` and was recovered; the retry
+  succeeded in 4.2 s; two Generate jobs produced complete drafts with a setup
+  guide and bindings; total cost about USD 0.03. The owner's indicator uses
+  arrays, matrices and imports, so it is unsupported for Quant replay. The
+  TradingView compile of the draft is pending with the owner.
+- **PF-3 (`0aabe14`, local acceptance, not deployed):** read-only
+  `GET /api/risk/readiness-report` for one owned Bot, with verdicts in the order
+  configuration failure, execution fault review, capability unavailable,
+  insufficient activity and ready to start Paper, every blocker listed, PF-2
+  evidence funnel and rejection classes, pauses and an activity projection. It
+  runs in a read-only transaction, re-checks ownership and saves, starts and asks
+  nothing. Evidence: Node suite 901 tests, 896 passed, 0 failed, 5 skipped;
+  independent PostgreSQL reruns 63/63; hosted CI 9/9. Follow-up: log unexpected
+  PF-2 read errors server-side instead of only reporting them as unavailable.
+- **Finding:** the default policy enables `blockDuringNews`, and Bridge intents
+  carry no news flag, so the Risk Manager rejects every Bridge BUY with
+  "Missing news risk data". PF-3 reports this as a configuration blocker; the
+  owner must turn news blocking off (then generate again) before Step 4.
+- **B2 preparation (staging):** recovery copies of the fallback collector timer
+  and service were published with one manager reload; a protected backup and an
+  isolated restore rehearsal matched all 49 tables; the offline and relocation
+  runbook was designed with split windows (Window 1 relocation and socket
+  hardening, Window 2 migration, grants and foundation start). The Window-1
+  tools were rehearsed end to end on a separate unit and port: identity, row
+  counts, reboot simulation, rollback and physical rollback all passed. The
+  rehearsal found that stopping a transient writer unloads it, so restarts need
+  one manager reload of the persistent copies first; the tools now enforce this.
+  Side effect: the fallback collector timer was down for 45 seconds during an
+  optional test and now runs from its persistent copy; no collection run was
+  missed.
+- **Scope:** no live relocation, migration, grant, foundation start, research
+  job, Live or production change. Open: independent tool audit, owner notice and
+  the live Window 1 (planned before 2026-10-10), PF-3 plus wizard staging
+  release, PF-4, Steps 4–6 and Window 2.
