@@ -1,3 +1,4 @@
+import {realpathSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {PostgresDatabase} from '../src/postgres/db.js';
 
@@ -41,7 +42,15 @@ export async function checkQuantFoundationIdle(db){
   }catch{return {ok:false,codes:['QUANT_IDLE_CHECK_FAILED'],queuedPolicies:[]};}
 }
 
-if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
+// import.meta.url is the real path of this file. process.argv[1] keeps a symbolic link or junction as typed, so it is
+// resolved first. Without that, a start through a link such as a current-release link would do nothing, print nothing
+// and exit 0, which reads as an idle system. A path that cannot be resolved is not this file.
+const startedAsCommand=()=>{
+  try{return Boolean(process.argv[1])&&import.meta.url===pathToFileURL(realpathSync(process.argv[1])).href;}
+  catch{return false;}
+};
+
+if(startedAsCommand()){
   let db,result;
   try{
     if(process.argv.length!==2||process.env.PAPER_TRADING!=='true'||process.env.PINE_BRIDGE_ENV!=='staging'||
