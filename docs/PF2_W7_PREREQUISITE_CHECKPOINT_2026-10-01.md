@@ -231,3 +231,54 @@ were not overwritten. The next root packet is B2 preparation: recoverable
 definitions, all staging database consumers/locks, reviewed policies and an
 offline foundation bootstrap without jobs. B1 acceptance does not admit B2,
 B3, W7, D6, R7 or enrollment automatically.
+
+## B2 preparation — database consumers and grants
+
+A fresh read-only observation at 11:18 UTC reconfirmed the accepted B1 state,
+Paper health, no active research jobs and the unchanged research fingerprint.
+Unix socket peer identities map all seven observed runtime database connections
+to the staging API, research worker and trading worker. Those three services
+also hold the three shared maintenance locks.
+
+A separate observation at 11:21 UTC identified a fourth staging writer: the
+market-stream service targets the same database but its deployed code does not
+acquire the shared maintenance lock. Its connection can disappear between
+writes. Therefore neither an empty client snapshot nor an exclusive maintenance
+lock alone proves that staging is offline. The B2 stop and recovery inventory
+must include all four services and reject any additional unexplained consumer.
+All four current service definitions are transient. No service was stopped or
+changed during this investigation.
+
+Independent design review separates B2 into recovery preparation, offline
+installation and startup without jobs. The first packet prepares durable
+fallback service definitions while retaining the running processes. It must
+publish complete files atomically without replacing existing targets and verify
+the candidate definitions directly: transient definitions have higher load
+precedence, so unchanged properties after a manager reload would not prove that
+the fallback was loaded. A later stop/start remains a separate acceptance step.
+
+The real pinned schema fixture exposed limits of the earlier minimal grants
+fixture. On 66 public tables, the frozen v2 grant artifact permits the runtime
+role to delete five new extension version markers. It also fails to reject
+column grants, TRUNCATE and a reachable owner role with inheritance disabled.
+The fixture rolled back destructive probes and stopped its isolated database.
+No staging privileges were changed, and v2 is not accepted for B2 execution.
+
+A private v3 derivative preserves the original artifact and gives those five
+markers SELECT-only access. In the same grant transaction it refuses surviving
+column writes, TRUNCATE, unexpected role memberships, runtime ownership and
+schema CREATE privileges. Independent static review and the focused real-schema
+fixture passed: 10 tests, no failures, 32.286 seconds. Both non-superuser owner
+and superuser administration succeeded; required row/table locks remained usable,
+27 marker-write probes were denied, and all 13 refusal trials rolled back the
+whole grant transaction. Root accepted this local artifact contract. It has not
+been applied to staging. The production grant script and the
+pinned release remain unchanged. The private artifact's SHA256 is
+`54102ccabcbb64d45d8130ddc783010a6aef8958201f0cbe50d76977b207514d`.
+
+B2 requires reviewed recovery, storage, resource-health and I/O policies.
+Capacity and health-recovery policies can remain disabled while V2 and
+preflight are off. Bind the empty dataset root before startup creates storage
+reservations: even an idle foundation startup performs a bounded 4096-byte
+I/O readiness write. No migration, foundation startup, BACKFILL or W7 attempt
+has been admitted by this preparation checkpoint.

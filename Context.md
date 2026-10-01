@@ -109,7 +109,11 @@ and preflight remain disabled. Production and the trading worker preserve
 their recorded identities. This is not a stop-proven or foundation checkpoint.
 Transient service definitions can disappear after a deliberate stop, so B2
 must first establish reviewed recovery/replacement definitions and inventory
-staging database consumers and maintenance locks. Foundation tables/data and
+staging database consumers and maintenance locks. Read-only mapping identified
+four staging writers, including a market-stream service without the maintenance
+lock; all four must be quiescent for migration. A private grant v3 passed
+independent review and 10 real-schema tests after v2 failed new-marker protection.
+It has not been applied to staging. Foundation tables/data and
 the remaining resource policies are still prerequisites. The W7 release is
 prepared locally but has not been deployed; see the [current checkpoint](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md).
 

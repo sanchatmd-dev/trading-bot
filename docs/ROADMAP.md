@@ -49,6 +49,16 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Latest B2 preparation, 2026-10-01: read-only mapping identified four staging
+writers, including a market-stream service that does not hold the maintenance
+lock. The next bounded action prepares recoverable definitions for all four
+before any deliberate stop. A full-schema local fixture rejected grant v2;
+the reviewed private v3 protects five additional version markers and adds
+effective privilege refusals. Its focused real-schema acceptance passed 10 tests
+with no failures, and root accepted the local artifact contract. B1 remains
+the accepted runtime state; no B2 migration or job has run. See the
+[prerequisite checkpoint](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md).
+
 Latest execution checkpoint, 2026-10-01 11:08 UTC: B1 is accepted on staging.
 The API closes research admission and the legacy research worker remains
 active and idle with verified physical read/write limits of 512 KiB/s.

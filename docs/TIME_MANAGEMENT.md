@@ -1,5 +1,33 @@
 # Time Management — Project execution and data collection
 
+## Latest B2 preparation checkpoint — 2026-10-01
+
+Read-only staging inventory took approximately 11 minutes, including two short
+SSH observations. All seven observed runtime DB connections map to three known
+services. A fourth service, the market stream, also writes staging but does not
+hold the shared maintenance lock. Its stop/recovery requirements are now explicit.
+No service or database mutation occurred during this inventory.
+
+The first real-schema grants fixture ran for 26.532 seconds: 11 Node tests,
+eight passes and three failures including the parent. It exposed the v2 marker
+privilege defect; a second child failure was an overly specific ownership-error
+assertion. The original failure evidence is retained. A separate v3-only fixture
+then passed 10 tests with no failures in 32.286 seconds on the pinned 66-table
+schema, including required locks, marker protection and 13 transaction-rollback
+refusal trials. Independent static review and root acceptance cover this private
+artifact contract only; no staging grant or migration has run.
+
+Recovery preparation now covers all four transient staging services, with atomic
+publication and explicit fallback validation required. Health/storage policy
+provenance was found in earlier operational helpers; actual runtime metrics and
+new release/storage bindings remain necessary before foundation startup. These
+are preparation results, not B2 runtime acceptance or expanded capacity.
+
+Latest Codex weekly usage is 62% used, 38% remaining; the short window remains
+unknown and the reserve stays 15 percentage points. Shared account changes are
+not per-agent cost. Keep the existing forecast; no throughput or speedup claim.
+README and Context retain B1 as the accepted runtime state and record B2 next.
+
 ## Latest B1 staging checkpoint — 2026-10-01 11:08 UTC
 
 B1 passed one supervised staging run from approximately 11:05:41 to 11:05:50
