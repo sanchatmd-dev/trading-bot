@@ -101,11 +101,17 @@ changed; token savings and memory quality have not been benchmarked.
 
 Latest continuation, 2026-10-01: the owner accepts staging downtime and the
 mode/database/privilege/admission effects and authorizes Codex to continue with
-checkpoint commits/pushes. Read-only staging discovery found missing foundation
-tables/data and resource policies, no physical worker I/O limit, and different
-previous code roots for the staging services. A reviewed prerequisite packet
-must precede W7; see the [current checkpoint](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md).
-The blob release is prepared locally, but no new staging mutation has occurred.
+checkpoint commits/pushes. B1 is accepted on staging after its single supervised
+run and read-only reconciliation at 11:08 UTC: API research admission is off;
+the legacy research worker is active and idle with physical read/write limits
+of 512 KiB/s. Both controlled units use Restart=no; foundation, V2, enrollment
+and preflight remain disabled. Production and the trading worker preserve
+their recorded identities. This is not a stop-proven or foundation checkpoint.
+Transient service definitions can disappear after a deliberate stop, so B2
+must first establish reviewed recovery/replacement definitions and inventory
+staging database consumers and maintenance locks. Foundation tables/data and
+the remaining resource policies are still prerequisites. The W7 release is
+prepared locally but has not been deployed; see the [current checkpoint](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md).
 
 The [2026-10-01 PF-2 continuation](docs/PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md)
 implements effective owner-wide holdout admission, worker/API wiring and measured

@@ -1,5 +1,31 @@
 # Time Management — Project execution and data collection
 
+## Latest B1 staging checkpoint — 2026-10-01 11:08 UTC
+
+B1 passed one supervised staging run from approximately 11:05:41 to 11:05:50
+UTC. The API closes research admission; the research worker remains active and
+idle with verified 512 KiB/s read/write limits. Read-only reconciliation at
+11:08:22.950–11:08:23.272 UTC confirms stable process identities, unchanged job
+fingerprints, no active research jobs and no pending manager jobs. A supplemental
+observer initially failed while hashing a JavaScript row object; the runner
+and its five accepted phase checks had succeeded. The corrected read-only
+observation passed without rerunning forward or changing runtime state.
+
+Local evidence includes 72 checker assertions and 12 runner/supervisor tests;
+the root's 12-test run took 3.407 seconds. These are focused fixtures and a
+scaled timeout check, not a full Linux fault matrix. Independent review closed
+the seven B1 findings for the active/idle terminal state. Deliberate stop moves
+to B2 after service recovery definitions are reviewed because transient units
+can be collected when inactive. B2 preparation is next; no migration, BACKFILL
+or W7 attempt occurred. See the [checkpoint](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md).
+
+Account usage is weekly 56% used, 44% remaining; the short window is unknown
+and the reserve remains 15 percentage points. The increase from 49% used at
+continuation includes shared account activity and is not a per-agent cost.
+The nine-second runner interval excludes preparation, review and reconciliation;
+it is not a performance benchmark or total engineering time. Keep the existing
+forecast and contingency. README, Context and the staging packet are synchronized.
+
 ## B1 packet review checkpoint — 2026-10-01
 
 Independent review found seven B1 execution-proof gaps. A bounded local

@@ -49,6 +49,18 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Latest execution checkpoint, 2026-10-01 11:08 UTC: B1 is accepted on staging.
+The API closes research admission and the legacy research worker remains
+active and idle with verified physical read/write limits of 512 KiB/s.
+Foundation/V2/enrollment/preflight remain off. One supervised forward run
+completed successfully; production and trading identities and research-job
+fingerprints are unchanged. The seven earlier B1 audit findings are closed
+for this bounded path. The next implementation action is B2 preparation:
+review recoverable service definitions before deliberate stops, inventory
+staging database consumers/locks, and prepare the independently reviewed
+foundation bootstrap without jobs. B3 and W7 remain later gates. The following
+discovery and initial-review paragraphs retain earlier preparation evidence.
+
 Latest checkpoint, 2026-10-01: the owner accepts staging downtime and the
 mode/database/privilege/admission effects, and authorizes Codex continuation
 with commit/push at significant checkpoints. The technical questions are no

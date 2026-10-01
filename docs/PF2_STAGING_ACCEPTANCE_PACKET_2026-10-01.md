@@ -9,9 +9,16 @@ supersedes the owner-typed-host-steps restriction in the original packet below.
 The root records the existing owner authority at each bounded dispatch; the
 accepted choices do not need to be requested again.
 
+B1 passed one supervised staging run and read-only reconciliation at 11:08 UTC.
+Research admission is now disabled at the API; the legacy research worker is
+active and idle with physical 512 KiB/s read/write limits. Foundation/V2/
+enrollment/preflight remain off. Its transient unit must not be deliberately
+stopped until B2 has reviewed recoverable definitions. B2 preparation is next;
+no foundation migration, BACKFILL or W7 attempt has occurred.
+
 Do not execute the original packet directly on the currently observed host.
 The [prerequisite checkpoint](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md)
-records missing foundation data and physical I/O controls, a different runtime
+records missing foundation data, the now-established B1 physical controls, a different runtime
 role, different code roots per service, and Node argument-loaded environment
 files instead of the assumed systemd EnvironmentFile arrangement. Establish
 reviewed per-service rollback/configuration evidence and complete separate

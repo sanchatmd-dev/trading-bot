@@ -1,7 +1,10 @@
 # PF-2 W7 prerequisite checkpoint — 2026-10-01
 
-Status: read-only staging discovery and local release preparation. W7 has not
-started. No service, database, grant, configuration or deployment was changed.
+Status: B1 accepted on staging after one supervised run and read-only
+reconciliation at 11:08 UTC. API research admission is off and the research
+worker is active and idle with verified physical I/O limits. Foundation
+bootstrap and W7 have not started. Earlier sections retain discovery evidence;
+the final B1 acceptance section below owns current execution status.
 
 ## Owner authority and execution scope
 
@@ -180,3 +183,51 @@ records under `.qa-local/`. No host mutation or W7 attempt occurred. Next is the
 phase/unit/cgroup checker and partial-phase rollback procedure, then independent
 review and fresh root admission. Git publication does not authorize execution
 or constitute runtime acceptance.
+
+## B1 staging acceptance — 11:08 UTC
+
+Independent review closed all seven original B1 findings for the frozen forward
+path. The lifecycle review changed its terminal state to active/idle: a stopped
+transient unit can lose its definition through garbage collection. A permanent
+drop-in does not preserve that transient definition. B2 must have reviewed
+recovery/replacement definitions before deliberate stops. This decision preserves
+the requirement to prove physical I/O controls before migration and does not
+claim stop proof. See the [systemd unit lifecycle documentation](https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html).
+
+Local verification passed 72 checker assertions and 12 focused runner/supervisor
+tests. A frozen payload was uploaded to a new private directory; its bounded
+direct preflight passed before the separate root execution dispatch. One
+supervised forward invocation completed with exit0 at approximately
+11:05:41–11:05:50 UTC. All five phase JSON records pass their evidence-hash chain
+and preserve the same research-job fingerprint.
+
+The resulting staging state is:
+
+- API active with research admission disabled and Paper/capture preserved.
+- Legacy research worker active and idle; foundation, V2, enrollment and
+  preflight disabled; both controlled units use Restart=no.
+- Actual worker device limits are 524288 bytes/second for both reads and writes.
+- Production and trading process/cgroup identities remain unchanged, as do
+  their raw I/O settings and the recorded source/configuration/dependency inputs.
+- No active research jobs or pending manager jobs; no operational SQL writes, migration,
+  BACKFILL, W7 case or application-release deployment occurred.
+
+A supplemental observer failed after the successful runner because its hashing
+helper received a JavaScript row object instead of bytes/string. The original
+failure receipt is retained. A corrected read-only reconciliation at
+11:08:22.950–11:08:23.272 UTC confirms current identities, owned-file metadata,
+frozen hashes, queue0 and the unchanged fingerprint. Forward was not repeated.
+
+Durable artifact identities, without private machine locations:
+
+- Frozen payload manifest: `9e45e142d7df48950ec0ddb5a21efd36e02c0333e610e653fa298e8a459a2d05`.
+- Successful upload/preflight receipt: `bf41c1422d3b28948953ebffffc149018054863791979b85f1fe281fafe3a0ba`.
+- Successful post-run reconciliation: `290a4d971471757fab0f30c0fdb7c5f6a839a9959f20fcb821dbe02827fae2d2`.
+
+Private audit, helper-test, runner-test, forward and reconciliation records are
+retained under `.qa-local/`. The owned private payload and two drop-ins remain
+in place; original environment files, service fragments and application roots
+were not overwritten. The next root packet is B2 preparation: recoverable
+definitions, all staging database consumers/locks, reviewed policies and an
+offline foundation bootstrap without jobs. B1 acceptance does not admit B2,
+B3, W7, D6, R7 or enrollment automatically.
