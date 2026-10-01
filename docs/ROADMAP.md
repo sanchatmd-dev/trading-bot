@@ -35,9 +35,9 @@ Current Codex specialists use GPT-6.1 Sol except the Astra Medium auditor:
 debugger/operations use high effort, coder/tester/routine worker use medium,
 and documentation/release clerk use low. This is a local configuration update;
 historical model assignments below remain evidence of earlier work.
-A Claude root follows the AGENTS.md Claude column, including three Claude-only
-Fable 5.1 roles: second-opinion auditor and alternative designer at high effort,
-and checkpoint drafter at medium.
+A Claude root follows the AGENTS.md Claude column (Opus 5.5 and Sonnet 5.5). The
+owner removed the three Claude-only Fable 5.1 roles on 2026-10-01; earlier Fable
+work stays recorded below as history.
 Three bounded setup agents performed team audit, PF-1 mapping and a dispatch template.
 Team setup is followed by the local PF-1A backend checkpoint below. Production
 resource enforcement remains planned; QD-1/QS-1 and existing gates still apply.
@@ -1843,3 +1843,14 @@ start 5-hour 0%, weekly all models 23%, weekly Fable 16%; at 05:30Z 5-hour 74%,
 weekly 32%, weekly Fable 19%; after the 06:00Z reset 5-hour 0%, weekly 33%.
 Active engineering hours remain unknown; no speedup or cost claim is made and the
 forecast is unchanged.
+
+## 2026-10-01 — Fable 5.1 roles removed
+
+After the W7 packet checkpoint the owner removed Fable 5.1 from the Claude agent
+team. AGENTS.md no longer lists the three Claude-only Fable roles (second-opinion
+auditor, alternative designer and checkpoint drafter) or the Fable usage-bucket
+rule, and the three `.claude/agents/fable-*.md` role files are deleted. The Opus
+architecture auditor covers reviews and design panels alone, and Sonnet
+documentation covers checkpoint drafts. Fable is not dispatched again unless the
+owner asks. Earlier Fable results stay in this file and in Time Management as
+history. No product code, test, deploy or VPS state changed.

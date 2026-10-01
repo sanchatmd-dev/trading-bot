@@ -20,9 +20,8 @@ unattended or authorize a new research study merely because workers are availabl
 | Release clerk | gpt-6.1-sol / low | Execute reviewed Git checkpoint/push serially | Root handoff + actual user authority; no independent merge/deploy |
 | Operations | gpt-6.1-sol / high | Designated executor of scoped local/VPS operational packets | Read-only default; mutations limited to existing user authority and readiness gates |
 
-A Claude root also uses three Claude-only Fable 5.1 roles: second-opinion auditor,
-alternative designer and checkpoint drafter. [AGENTS.md](../AGENTS.md) defines their
-scope, effort and usage limits; a Codex root does not dispatch them.
+A Claude root uses the Claude column of [AGENTS.md](../AGENTS.md) (Opus 5.5 and
+Sonnet 5.5). The owner removed the Claude-only Fable 5.1 roles on 2026-10-01.
 
 The owner's "light" maps to supported effort `low`. Role profiles are in
 `.codex/agents/`; root/default-child settings are in `.codex/config.toml`.

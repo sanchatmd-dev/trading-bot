@@ -37,15 +37,12 @@ the platform running the root.
 | --- | --- | --- | --- |
 | Root commander | Sole scheduling authority, integration, acceptance | gpt-6-astra / high | Opus 5.5 / xhigh |
 | Architecture auditor | Difficult architecture, audit, risk/accounting/parity review, escalated root cause | gpt-6-astra / medium | Opus 5.5 / high |
-| Second-opinion auditor | Claude only: independent review of accounting, fencing, recovery, security and parity slices beside the architecture auditor | Not mapped | Fable 5.1 / high |
-| Alternative designer | Claude only: one independent approach in a design panel judged by an Opus auditor | Not mapped | Fable 5.1 / high |
 | Debugger | Difficult debugging and high-risk code fixes | gpt-6.1-sol / high | Opus 5.5 / medium |
 | Operations | VPS operations, only on an explicit bounded commander dispatch | gpt-6.1-sol / high | Opus 5.5 / medium |
 | Coder | Bounded implementation, including high-risk modules under review | gpt-6.1-sol / medium | Sonnet 5.5 / high |
 | Tester | Independent focused acceptance and regression evidence | gpt-6.1-sol / medium | Sonnet 5.5 / medium |
 | Routine worker | One small local code/UI/fixture slice with an explicit contract and observable acceptance | gpt-6.1-sol / medium | Sonnet 5.5 / medium |
 | Documentation | Documentation and mechanical edits with no behavior change | gpt-6.1-sol / low | Sonnet 5.5 / low |
-| Checkpoint drafter | Claude only: checkpoint records and Thai owner summaries, reviewed by root before commit | Not mapped | Fable 5.1 / medium |
 | Release clerk | Git/release clerical work | gpt-6.1-sol / low | Sonnet 5.5 / low |
 
 All non-Astra Codex roles use GPT-6.1 Sol. Role boundaries and independent review
@@ -54,38 +51,13 @@ is reserved for debugger/operations work; bounded implementation, testing and
 routine work use medium; documentation and release clerical work use low.
 
 Claude effort order is low < medium < high < xhigh < max. Opus 5.5 carries the
-judgement-heavy roles; Sonnet 5.5 carries volume work; Fable 5.1 carries only the
-three Claude-only rows. Do not use max effort or any other Claude model by default.
+judgement-heavy roles; Sonnet 5.5 carries volume work. Do not use max effort or any
+other Claude model by default. The owner removed the Claude-only Fable 5.1 roles on
+2026-10-01; do not dispatch Fable 5.1 unless the owner asks for it again.
 The root may deviate for one packet only (raise one effort level, move a Sonnet
 role to Opus 5.5 after a second failed approach, or lower effort for a clearly
 trivial packet), recording the reason in the packet; the next packet returns to
 the table.
-
-Fable 5.1 rows are Claude only; a Codex root skips them. Fable 5.1 is the most
-capable Claude model, but its list price per token is 2.5 times Opus 5.5 and five
-times Sonnet 5.5 (September 2026), and the account meters it in its own weekly
-bucket. Use it only in these three roles:
-
-- Second-opinion auditor: reviews accounting, fencing, recovery, security and
-  parity slices beside the architecture auditor, never instead of it. Root checks
-  every Fable finding before counting it as blocking.
-- Alternative designer: in a design panel, Opus designs one approach and Fable
-  another. An Opus auditor judges and root decides.
-- Checkpoint drafter: drafts checkpoint records and Thai summaries for the owner.
-  Root reviews each draft before commit. Mechanical documentation edits stay with
-  the Documentation role.
-
-The auditor and designer follow the architecture-auditor developer_instructions
-and write only one assigned report or design file under `.qa-local/`. The drafter
-follows the documentation developer_instructions and edits only assigned
-documents. Their role files in `.claude/agents/` pin model `fable` and effort. No
-Fable role changes product code or tests, writes Git, runs operations, acts as
-root or approves acceptance. Run at most one Fable child at a time; it counts
-toward the three-child maximum. The auditor and designer run at high effort,
-because lower Fable effort often matches higher effort on other models; the
-drafter runs at medium. The one-packet rule above may raise one packet by one
-level. Brief Fable with the goal, constraints, evidence paths, acceptance bar,
-budget and stop condition, not a step-by-step script.
 
 Route a task to the routine worker only when the commander can name exact writable
 paths, stable interfaces, a small stopping point and independent checks. Keep
@@ -191,13 +163,6 @@ or guaranteed completion. Unknown all usage means local read-only
 planning/checkpoint only until refreshed.
 Workers report progress at their budget boundary; root refreshes before continuing.
 Never automatically redeem reset credits, buy credits or switch accounts.
-
-Claude meters Fable 5.1 in its own weekly bucket as well as the shared windows.
-Read that bucket before each Fable dispatch and apply the same thresholds to it.
-At or below the reserve, dispatch no Fable role: the Opus architecture auditor
-covers review and design alone, Sonnet documentation covers drafts, and root
-records the skipped Fable step. Never present another model's output as a Fable
-result.
 
 ## File, Git and browser ownership
 
