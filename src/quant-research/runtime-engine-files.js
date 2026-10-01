@@ -82,4 +82,3 @@ export const QUANT_RUNTIME_ENGINE_FILES=Object.freeze([
   'src/quant-research/spot-ingestion.js',
   'src/quant-research/storage-budget.js',
 ]);
-

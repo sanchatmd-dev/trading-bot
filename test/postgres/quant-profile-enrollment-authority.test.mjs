@@ -13,11 +13,9 @@ import {QuantResearchFoundationWorker} from '../../src/postgres/quant-research-f
 import {DatasetStore} from '../../src/quant-research/dataset-store.js';
 import {ResearchDatasetStore} from '../../src/quant-research/research-dataset-store.js';
 import {StorageBudget} from '../../src/quant-research/storage-budget.js';
-import {bindQuantStorage,maintainQuantStorage} from '../../src/postgres/quant-storage-retention.js';
-import {recoverQuantFoundation} from '../../src/postgres/quant-foundation-recovery.js';
+import {bindQuantStorage} from '../../src/postgres/quant-storage-retention.js';
 import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {config} from '../../src/config.js';
-import {capacityPolicyHash} from '../../src/quant-research/capacity-contract.js';
 import {profileV2Fixture} from '../helpers/profile-v2-fixture.js';
 import {fixture,source} from '../helpers/quant-research-fixture.mjs';
 

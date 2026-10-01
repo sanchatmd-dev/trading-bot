@@ -108,6 +108,8 @@ export async function quantResearchHttpFixture(connection) {
         await db.query("INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at) VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)",[randomUUID(),ownerId,'seed:'+randomUUID(),contract,hash(contract),now,now+900000]);
       }
     }
-    return {db,store,base,root,request,close,listing,seedBars,newOwner,researchBody,enqueue,seedFoundationJobs,minute:MINUTE};
+    // Stops only the forked server; the database stays for later assertions.
+    async function stopHttp(){ if(server&&!exited){ const done=once(server,'exit'); server.kill('SIGTERM'); await done; } }
+    return {db,store,base,root,request,close,stopHttp,listing,seedBars,newOwner,researchBody,enqueue,seedFoundationJobs,minute:MINUTE};
   }catch(error){await close();throw error;}
 }

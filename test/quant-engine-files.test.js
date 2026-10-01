@@ -72,4 +72,3 @@ test('W4 preserves legacy and evaluator byte identities from the reviewed base r
  assert.equal(await engineHash(false),await originalHash(legacy));
  assert.equal((await pf2ExecutableHashes()).evaluator_hash,await originalHash(evaluator));
 });
-

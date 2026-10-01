@@ -7,7 +7,6 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {canonical,hash} from '../src/pine-bridge/source.js';
 import {D} from '../src/money.js';
-import {QuantResearchService} from '../src/postgres/quant-research.js';
 import {ResearchDatasetStore} from '../src/quant-research/research-dataset-store.js';
 import {lockInputs,candidatePlan,RULES} from '../src/quant-research/contract.js';
 import {fixture,source} from './helpers/quant-research-fixture.mjs';

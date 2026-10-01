@@ -52,7 +52,7 @@ test('native actual app: flags default off, authenticated routes refuse, auth re
 });
 
 test('native Windows enabled startup refuses real Linux-only policy loader before listener',
-  {skip:process.platform!=='win32'},async t=>{
+  {skip:process.platform!=='win32'&&'native Windows case: asserts QUANT_CAPACITY_POLICY_LINUX_REQUIRED, which the real policy loader raises only off Linux'},async t=>{
     const f=await fixture(t,{mode:'native-enabled',expectStartupFailure:true});
     assert.equal(f.startup.ready,false);assert.equal(f.startup.exited,true);assert.notEqual(f.startup.exitCode,0);
     assert.match(f.startup.output,/QUANT_CAPACITY_POLICY_LINUX_REQUIRED/);
