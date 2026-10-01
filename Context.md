@@ -105,13 +105,20 @@ PROFILE V2 enrollment with an immutable receipt. A local 10,000-bar test now run
 BACKFILL, PROFILE enrollment and PF-2 replay through the product workers to the
 final envelope. Source evidence, OS telemetry and Python enrollment are synthetic
 test dependencies; this does not establish native Linux or private-source parity.
-PF-2 remains disabled on staging until final local acceptance and the
-[Linux/staging packet](docs/PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md) pass.
+PF-2 remains disabled on staging until the owner-run
+[Linux/staging packet](docs/PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md) passes.
 The 2026-10-01 Claude root wave then repaired the CI failures of that checkpoint
-(`258e865`) and the E2 measured settlement race (`3742961`); CI passes 9/9 at
-`3ce7e32`, `3742961` and `338d91b`. The D6 prepare+BEGIN p99
-measurement on Linux still blocks W-INT and staging; the E2 follow-up and the
-missing proof tests remain open.
+(`258e865`) and the E2 measured settlement race (`3742961`). A second wave
+(`5b1641f` to `28d6f7e`) added the remaining proof tests, the E2 follow-up
+(enrollment veto when a settled I/O operation carries a stop reason, terminal
+runtime charged in the unknown-final fallback, unsafe clock totals) and the
+owner-only W7 diagnostic PROFILE enqueue helper; CI passes 9/9 at `28d6f7e`, the
+planned W7 release commit. The W7 owner packet is ready after independent audits;
+it waits for the owner's answers and the owner-run W7 cases, and no deploy,
+migration or VPS action has occurred. The D6 prepare+BEGIN p99 measurement on
+Linux blocks the durable enrollment proof (Roadmap R7) and staging activation,
+not the W7 diagnostic, because only jobs marked
+`completion_mode: 'pf2-enrollment-v1'` run the enrollment prepare and BEGIN.
  
 Initial QL-1 through QL-4 deployment (2026-09-23, release `39590f7`): Quant Lab research workspace ran as an offline service using a dedicated Python environment. The authenticated Node.js proxy `/api/quant/*` and 4-tab studio UI (Backtest, Optimizer, Risk Preview; Pine Export unreleased) were deployed alongside Trading Control Panel v2. That release's recorded validation was Node 111/111, Quant 71/71, and `PAPER_ONLY`. The 2026-09-24 observed release and current limitations are recorded under Production below. Live trading remains strictly locked.
 
@@ -610,9 +617,10 @@ Other safeguards include max trades per day, maximum daily loss, maximum open po
 PF-2 local update (2026-10-01): W3 runtime passes 43/43, W5 authority passes
 4/4 and the complete Node suite passed 728 with three skips at that checkpoint.
 Later on 2026-10-01 the Claude root repaired the CI failures of the `f52d4be` WIP
-checkpoint (`258e865`) and the E2 measured settlement race (`3742961`); the full
-local Node suite reports 764 pass, 0 fail and 3 skipped of 767 tests (run before
-the E2 fix), and CI passes 9/9 at `3ce7e32`, `3742961` and `338d91b`.
+checkpoint (`258e865`) and the E2 measured settlement race (`3742961`). The
+latest full local regression, at `7b8a08d`, reports Node 780 pass, 0 fail and 3
+skipped of 783 tests and PostgreSQL 448 pass, 0 fail and 2 skipped of 450 tests;
+the second wave (`5b1641f` to `28d6f7e`) passes CI 9/9 at `28d6f7e`.
 Native Linux proof, the D6 prepare+BEGIN p99 measurement, durable PROFILE V2
 enrollment on Linux and staging activation remain separate gates; PF-2 API is
 still off.

@@ -425,7 +425,8 @@ retain the same local/staging scope.
 
 | As of | งาน / สถานะ | Actual hours | Remaining estimate | Blocker / next action |
 | --- | --- | --- | --- | --- |
-| 2026-10-01 | Claude root wave หลัง handoff จาก Codex: แก้ CI ของ WIP checkpoint `f52d4be` (`258e865`, `3ce7e32`), แก้ E2 measured settlement race (`3742961`), รวม V2 PROFILE stop acknowledgement authority เดียวพร้อม deadline test (`338d91b`) และเอกสารบทบาท Fable 5.1 (`96b0e15`); push ทั้งหมดแล้ว ไม่มี deploy/migration/staging activation/VPS | Active hours unknown; wall-clock รอบงานประมาณ 20:30Z–22:20Z ของ 2026-09-30 UTC (ประมาณ 1 ชั่วโมง 50 นาที); full Node 767 tests ผ่าน 764 ล้ม 0 ข้าม 3 ใน 287 วินาที ก่อนแก้ E2; PostgreSQL local แยก: enrollment 38/38, runtime-v2/foundation/recovery 106/106, producer/worker 11/11, io-runtime 57/57, io-ledger 10/10, preflight-schema 16/16; เวลาเหล่านี้เป็นเวลาทดสอบ ไม่ใช่ชั่วโมงพัฒนา | คง baseline 410–720 ชั่วโมง; ไม่อ้าง speedup หรือต้นทุนและไม่ปรับ forecast; usage 5-hour 6% ตอน resume เป็น 66% ณ 22:16Z, weekly all-models 13% เป็น 21%, weekly Fable 7% เป็น 13% | CI: `f52d4be` ล้ม; `258e865` ผ่าน Quant Windows/Ubuntu, Safety Windows/Ubuntu, container และ gate แต่ PostgreSQL ล้มหนึ่งครั้งไม่ทราบสาเหตุ (job logs ต้องลงชื่อเข้าใช้) และรอบถัดไปผ่าน; `3ce7e32` และ `3742961` ผ่าน 9/9; `338d91b` ผ่าน 9/9; งานถัดไป: E2 follow-up, วัด D6 prepare+BEGIN p99 บน Linux (block W-INT/staging), สิทธิ์ UPDATE ระดับ table ของ staging role สำหรับ `LOCK TABLE`, proof tests ที่ขาด (R6-14, R5-19, R5-21, R5-23, S3b-9, W3-4), W7 diagnostic helper; SQL receipt defense-in-depth เลื่อน; PF-2 staging API ยังปิด |
+| 2026-10-01 | Claude root wave 2: proof tests ที่ขาด (`5b1641f`), E2 follow-up (`06a0f0f`), test residue tidy (`4eb041a`), W7 diagnostic PROFILE enqueue helper สำหรับเจ้าของ (`e6f0dff`), แก้ CI PostgreSQL race (`2b7915f`) และ uid test ของ helper แบบ portable (`28d6f7e`); push ทั้งหมดแล้ว; W7 owner packet (private) และ [staging acceptance packet](PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md) ที่ track ไว้สร้างโดยไม่มี VPS access และผ่านการตรวจ; ไม่มี deploy/migration/staging activation/VPS | Active hours unknown; wall-clock รอบงานประมาณ 01:06Z–06:40Z ของ 2026-10-01 UTC (ประมาณ 5 ชั่วโมง 34 นาที; 08:06–13:40 เวลาไทย) รวมการรอ 5-hour usage window; local: helper unit tests 27 ผ่านพร้อม 2 Linux-only skips, PostgreSQL helper 14/14, migration 9/9; regression สุดท้ายที่ `7b8a08d` (ปลายรอบก่อน 2026-09-30 22:52Z, CI flags, isolated local PostgreSQL): PostgreSQL 450 tests ผ่าน 448 ล้ม 0 ข้าม 2 ใน 724 วินาที, Node 783 tests ผ่าน 780 ล้ม 0 ข้าม 3 ใน 224 วินาที; เวลาเหล่านี้เป็นเวลา wall-clock หรือเวลาทดสอบ ไม่ใช่ชั่วโมงพัฒนา | คง baseline 410–720 ชั่วโมง; ไม่อ้าง speedup หรือต้นทุนและไม่ปรับ forecast; usage 5-hour 0% ตอนเริ่มเป็น 74% ณ 05:30Z และ 0% หลัง reset 06:00Z, weekly all-models 23% เป็น 32% และ 33% หลัง reset, weekly Fable 16% เป็น 19% ณ 05:30Z | CI: `06a0f0f` ผ่าน 9/9; `e6f0dff` ล้ม (PostgreSQL race และ Ubuntu uid test); `2b7915f` ผ่าน PostgreSQL แต่ Ubuntu unit ล้ม (uid test); `28d6f7e` ผ่าน 9/9 รวม PostgreSQL, Windows และ Ubuntu และเป็น W7 release commit ตามแผน; gates ที่เหลือ: G1 release record, G3 เจ้าของ GO ต่อ mutating effect, G4 usage, G5 window; คำถามเจ้าของที่ยังเปิด 10 ข้อ; งานถัดไป: เจ้าของตอบและทำ release record, GO, รัน W7 cases C1 และ C2 เอง แล้ววัด D6 และ Roadmap R7 (D6 block durable enrollment proof/R7 และ staging activation ไม่ block W7 diagnostic); backlog: E2 optional F1/F3/F4, R5-21 test seam, design deviations, ให้ grant script มี DELETE revoke, final pre-staging code audit ก่อน G3; SQL receipt defense-in-depth เลื่อน; PF-2 staging API ยังปิด |
+| 2026-10-01 | Claude root wave หลัง handoff จาก Codex: แก้ CI ของ WIP checkpoint `f52d4be` (`258e865`, `3ce7e32`), แก้ E2 measured settlement race (`3742961`), รวม V2 PROFILE stop acknowledgement authority เดียวพร้อม deadline test (`338d91b`) และเอกสารบทบาท Fable 5.1 (`96b0e15`); push ทั้งหมดแล้ว ไม่มี deploy/migration/staging activation/VPS | Active hours unknown; wall-clock รอบงานประมาณ 20:30Z–22:20Z ของ 2026-09-30 UTC (ประมาณ 1 ชั่วโมง 50 นาที); full Node 767 tests ผ่าน 764 ล้ม 0 ข้าม 3 ใน 287 วินาที ก่อนแก้ E2; PostgreSQL local แยก: enrollment 38/38, runtime-v2/foundation/recovery 106/106, producer/worker 11/11, io-runtime 57/57, io-ledger 10/10, preflight-schema 16/16; เวลาเหล่านี้เป็นเวลาทดสอบ ไม่ใช่ชั่วโมงพัฒนา | คง baseline 410–720 ชั่วโมง; ไม่อ้าง speedup หรือต้นทุนและไม่ปรับ forecast; usage 5-hour 6% ตอน resume เป็น 66% ณ 22:16Z, weekly all-models 13% เป็น 21%, weekly Fable 7% เป็น 13% | CI: `f52d4be` ล้ม; `258e865` ผ่าน Quant Windows/Ubuntu, Safety Windows/Ubuntu, container และ gate แต่ PostgreSQL ล้มหนึ่งครั้งไม่ทราบสาเหตุ (job logs ต้องลงชื่อเข้าใช้) และรอบถัดไปผ่าน; `3ce7e32` และ `3742961` ผ่าน 9/9; `338d91b` ผ่าน 9/9; งานถัดไป: E2 follow-up, วัด D6 prepare+BEGIN p99 บน Linux (block durable enrollment proof/Roadmap R7 และ staging activation ไม่ block W7 diagnostic), สิทธิ์ UPDATE ระดับ table ของ staging role สำหรับ `LOCK TABLE`, proof tests ที่ขาด (R6-14, R5-19, R5-21, R5-23, S3b-9, W3-4), W7 diagnostic helper; SQL receipt defense-in-depth เลื่อน; PF-2 staging API ยังปิด |
 | 2026-09-30 | Wave N: wiring step W2 (`a8dcf6e`), PF-2 R3b (`ad93d7e`) และ heavy-path S3b-1 (`7a488d4` + `a40aa51`) ผ่าน local review และ push; owner รัน retention apply step หนึ่งครั้งและผ่าน; หยุดงานตามคำสั่ง owner ประมาณ 15:00Z | Active hours unknown; wall-clock: W2 coder + audit 7,028 วินาที, W2 fix + tester 2,428 วินาที, R3b coder + audit 5,880 วินาที, R3b test pin 196 วินาที, S3b-1 coder + audit 3,821 วินาที, S3b-1 fix + re-audit 1,303 วินาที; root วินิจฉัยและแก้ CI line-ending ประมาณ 15 นาที; เวลาเหล่านี้เป็นเวลา agent ไม่ใช่ชั่วโมงพัฒนา | คง baseline 410–720 ชั่วโมง; ไม่ลดงบจากจำนวน agents; observed throughput: หนึ่งถึงสอง lane ที่ elevated effort ใช้ 5-hour window ประมาณ 7 points ต่อ lane-hour | W3 เป็นงานถัดไป; R6 ย้ายไปหลัง W3; R5 หลัง W3; S3b-2/S3b-3 และ S3c หลัง W3 ก่อน R5; W4 หลัง S3b-2; W6 หลัง W3; W7 ต้องมี swap host fact; owner question ใหม่เรื่อง sibling-bot PF-2 boundary ก่อน R6/R7; retention gate ปิดแล้วสำหรับ aged pair; ไม่มี agent ทำงาน local test PostgreSQL หยุดแล้ว |
 | 2026-09-30 | Wave M: PF-2 R3 (`25f2ff0`) และ R4 (`872a36a`) ผ่าน local review และ push; S3a prepare-under-lease design เสร็จ (design only); W2 กำลังทำในเครื่อง ยังไม่ commit | Active hours unknown; wall-clock: R4 coder + audit 3,168 วินาที (ประมาณ 53 นาที), R4 tester 484 วินาที, lane 3 (R3 test fixes + S3a design panel สาม agent) 6,284 วินาที (ประมาณ 1 ชั่วโมง 45 นาที); เวลาเหล่านี้เป็นเวลา agent ไม่ใช่ชั่วโมงพัฒนา | คง baseline 410–720 ชั่วโมง; ไม่ลดงบจากจำนวน agents; observed throughput: สาม lane xhigh พร้อมกันใช้ 5-hour window ประมาณ 24 points ต่อชั่วโมง | R5 รอ W3; R6 รอ owner decisions สองข้อเรื่อง holdout registry; R7 รอ PROFILE v2 enrollment และ operations packet; S3b-1 ต่อด้วย S3b-2/S3b-3 และ S3c; retention apply step ยังไม่ได้รัน; root หยุด dispatch จน window reset 14:30Z |
 | 2026-09-28 | [Data capability/ingestion](QD_QS_INGESTION_CALIBRATION_2026-09-28.md): local UI/API, shared-worker BACKFILL, page recovery และ retention ผ่าน; staging ดึงจริง 2,100 แท่งและผ่าน bounded calibration | Active hours unknown; Node 318 checks 53.178 วินาที; focused 22 checks 15.532 วินาที; HTTP 2 checks 6.127 วินาที; browser ผ่าน; load window 300 วินาที มี nonidle 173.210 วินาที และเก็บ rework ไว้ | คง baseline เพราะ active hours ยังไม่ครบ; ไม่มีเวลาเก็บแท่งสดเพิ่มสำหรับรอบวิศวกรรมนี้ | ต่อ expanded admission, I/O measurement และ heavy paths ที่เหลือ; คงเพดาน 10K รวม warm-up และยังไม่ปิด QD-1/QS-1 ทั้ง phase |
@@ -446,6 +447,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-10-01 | Claude root wave 2: proof tests ที่ขาด (`5b1641f`), E2 follow-up (`06a0f0f`), test tidy (`4eb041a`), W7 diagnostic PROFILE enqueue helper (`e6f0dff`) และแก้ CI (`2b7915f`, `28d6f7e`); W7 owner packet พร้อมหลังผ่านการตรวจ; แก้ถ้อยคำ D6 ใน README/Context/Roadmap/Time Management | Local code + CI + เอกสารเท่านั้น ไม่มี deploy/migration/staging activation/VPS; CI 9/9 ที่ `06a0f0f` และ `28d6f7e`; D6 block durable enrollment proof (Roadmap R7) และ staging activation ไม่ block W7 diagnostic เพราะมีเฉพาะ job ที่ marked `completion_mode: 'pf2-enrollment-v1'` เท่านั้นที่รัน enrollment prepare และ BEGIN; usage 5-hour 0% ตอนเริ่มเป็น 74% ณ 05:30Z และ 0% หลัง reset 06:00Z, weekly all-models 23% เป็น 32% และ 33% หลัง reset, weekly Fable 16% เป็น 19% ณ 05:30Z; active hours unknown; ไม่อ้าง speedup และไม่ปรับ forecast |
 | 2026-10-01 | Claude root แก้ CI ของ WIP checkpoint `f52d4be` (`258e865`, `3ce7e32`), แก้ E2 measured settlement race (`3742961`) และรวม V2 PROFILE stop acknowledgement authority (`338d91b`) | Local code + CI เท่านั้น ไม่มี deploy/migration/staging activation/VPS; CI 9/9 ที่ `3ce7e32`, `3742961` และ `338d91b`, PostgreSQL ล้มหนึ่งครั้งที่ `258e865` ไม่ทราบสาเหตุ; usage 5-hour 6% ตอน resume เป็น 66% ณ 22:16Z, weekly all-models 13% เป็น 21%, weekly Fable 7% เป็น 13%; ไม่อ้าง speedup และไม่ปรับ forecast |
 | 2026-10-01 | ตั้ง Fable 5.1 เป็นบทบาทถาวรของ Claude ตาม 3 งานเดิม: auditor ความเห็นที่สองและผู้ออกแบบทางเลือก (high) กับผู้ร่าง checkpoint และสรุปภาษาไทย (medium) | Policy/docs เท่านั้น ไม่มีงานโค้ด ทดสอบ runtime หรือ deploy; usage 5-hour 3%, weekly all-models 13%, weekly Fable 7%; ไม่อ้าง speedup และไม่ปรับ forecast |
 | 2026-09-30 | W2, PF-2 R3b, S3b-1 push และ retention apply step ผ่าน; บันทึก wave N และหยุดงาน 15:00Z | Local code + CI และ owner-run cleanup หนึ่งครั้งเท่านั้น ไม่มี deploy/migration; 5-hour window 54% ณ 12:32Z เป็น 73% ณ 14:26Z, reset 14:30Z แล้ว 4% ณ 14:53Z; weekly all-models 8% เป็น 11%, weekly Fable 4% เป็น 5%; temporary elevated agent tier สิ้นสุด 15:00Z กลับใช้ตาราง AGENTS.md; ไม่ปรับงบชั่วโมงและไม่อ้าง speedup |
@@ -897,8 +899,97 @@ all-models 13%, weekly Fable 7%; ณ 22:16Z 5-hour 66%, weekly 21%, weekly Fable
 
 งานค้าง: E2 follow-up (veto enrollment เมื่อ settled I/O operation มี stop reason;
 คิด terminal runtime ใน unknown-final fallback; unsafe clock totals); D6
-prepare+BEGIN p99 ภายใต้ contention ต้องวัดบน Linux และ block W-INT/staging;
+prepare+BEGIN p99 ภายใต้ contention ต้องวัดบน Linux และ block durable enrollment
+proof (Roadmap R7) กับ staging activation แต่ไม่ block W7 diagnostic;
 staging role ต้องมีสิทธิ์ UPDATE ระดับ table สำหรับ `LOCK TABLE`; proof tests ที่ยัง
 ขาด R6-14, R5-19, R5-21, R5-23, S3b-9, W3-4; W7 diagnostic helper ยังไม่เสร็จและ
 ไม่ได้ทดสอบ; SQL receipt defense-in-depth (schema change) เลื่อนไว้; PostgreSQL CI
 ล้มหนึ่งครั้งที่ `258e865` ยังไม่ทราบสาเหตุ
+
+## PF-2 wave 2: E2 follow-up, proof tests, W7 helper และ owner packet — 2026-10-01
+
+Claude root ทำงาน PF-2 ต่อ รอบงานประมาณ 01:06Z–06:40Z ของ 2026-10-01 UTC
+(08:06–13:40 เวลาไทย) รวมการรอ 5-hour usage window push 6 commits: `5b1641f`,
+`06a0f0f`, `4eb041a`, `e6f0dff`, `2b7915f` และ `28d6f7e` ไม่มี deploy, migration,
+staging activation หรืองาน VPS; PF-2 staging API ยังปิด ขอบเขตเดิม: Spot/Paper
+เท่านั้น, BINANCE:BTCUSDT 1m, 10,000 แท่งดิบรวม warm-up, ไม่มี Live, ไม่มี
+optimizer loop และไม่ reset guard
+
+โค้ดและ tests: `5b1641f` พิสูจน์ carry notes ที่เหลือ R6-14, R5-19 (fake systemd
+เท่านั้น), R5-21, R5-23, S3b-9 และ W3-4 (แถว V2 ที่ PAUSED ถูก cancel ตอน claim)
+โดยแต่ละข้อมี mutants ที่ถูก kill; R5-21 จับ private function ผ่าน prototype
+accessor ชั่วคราว จึงมี test-only seam เป็นงานตามหลัง `06a0f0f` คือ E2 follow-up:
+veto enrollment (IO_BUDGET) เมื่อ settled I/O operation มี stop reason โดย measured
+DENIED ยังคิด charge เดิม, unknown-final fallback คิด terminal runtime และ unsafe
+wall-clock totals นับเป็น anomaly ยอมรับ residual R3 เพราะเข้าถึงไม่ได้กับ wiring
+ปัจจุบัน; Opus review ยอมรับ ส่วน backlog ที่ไม่บังคับคือ F1 (charge ก่อน return
+UNCONFIRMED), F3 (unsafe total แบบ monotonic) และ F4 (PostgreSQL bounds ที่หลวม)
+`4eb041a` เก็บ test residue (unused imports, บรรทัดว่างท้ายไฟล์, skip reasons และ
+HTTP fixture stop helper ที่ใช้ร่วมกัน)
+
+W7 helper: `e6f0dff` เพิ่ม owner-only W7 diagnostic PROFILE enqueue helper
+`scripts/enqueue-quant-profile-diagnostic.mjs` (dry run เป็นค่าเริ่มต้น; หนึ่ง
+SERIALIZABLE transaction ที่ขอ scheduler lock ก่อนโดยจำกัดการรอ lock 1,000 ms;
+ตรวจ idle gate ก่อน; การเขียนต้องมี `--enqueue --expect-contract-hash`; idempotent;
+refusals มี code; ตรวจ private request file) และ start guard แบบ symlink-safe ของ
+`scripts/check-quant-foundation-idle.mjs` Opus review ยอมรับพร้อม fixes ที่แก้ก่อน
+commit; local: helper unit tests 27 ผ่านพร้อม 2 Linux-only skips, PostgreSQL helper
+14/14, migration 9/9
+
+CI: `06a0f0f` ผ่าน 9/9 `e6f0dff` ล้ม (PostgreSQL race และ Ubuntu uid test)
+`2b7915f` ทำให้ HTTP test fixture รอจน server sessions ที่หยุดแล้วปล่อย maintenance
+lock ซึ่งแก้ race (`RECOVERY_RUNTIME_ACTIVE`) และน่าจะเป็นสาเหตุของความล้มที่ไม่
+ทราบสาเหตุของ `258e865` ด้วย (ยังพิสูจน์ไม่ได้ เพราะ job logs ต้องใช้ผู้ดูที่ลงชื่อ
+เข้าใช้); ที่ `2b7915f` PostgreSQL ผ่านแต่ Ubuntu unit ล้มที่ uid test และ `28d6f7e`
+ให้ helper test จำลอง uid ที่หายไปแบบ portable `28d6f7e` ผ่าน 9/9 รวม PostgreSQL,
+Windows และ Ubuntu และเป็น W7 release commit ตามแผน CI unit job ตอนนี้ annotate
+tests ที่ล้ม
+
+W7 owner packet (private และถูก Git ignore) กับ
+[staging acceptance packet](PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md) ที่ track
+ไว้สร้างโดยไม่มี VPS access จริง เจ้าของรันทุกขั้นตอนบน host เอง หนึ่งครั้งต่อหนึ่ง
+กรณีและไม่ retry อัตโนมัติ ต้อง export release จาก git blob bytes เพราะ
+`git archive` บน Windows checkout นี้เขียน CRLF และ `.gitattributes` export-ignore
+`quant_lab/**` (63 ไฟล์ ซึ่ง 24 ไฟล์อยู่ใน engine hashes) engine hashes ที่คำนวณจาก
+blob ที่ `e6f0dff` และ `28d6f7e`: ingestion `d7097b8a...` (79 ไฟล์) และ foundation
+`d865692f...` (78 ไฟล์) ประวัติการตรวจ: revision 1 ได้ "go with fixes" จาก audit
+อิสระสองชุด (Opus และ second-opinion auditor); revision 2 (operations role) ปิดทุก
+finding หรือปฏิเสธพร้อมเหตุผล; Opus re-audit ของ revision 2 ไม่พบ High และพบ Medium
+สองข้อ (ต้องรัน static grant-role และ psql checks ก่อนติดตั้ง schema ที่ย้อนกลับ
+ไม่ได้; early rollback ต้องตรวจ SELECT ของ runtime role บน I/O tables ก่อน restart
+release เดิม) กับ Low หลายข้อ; root revision 3 แก้ครบและ auditor คนเดิมปิด gate G2
+การตัดสินใจของ root: C2 หยุด worker 1,000 ms หลังเห็น job เป็น STOPPING ครั้งแรก;
+stop ที่ LATE ถือว่าสรุปไม่ได้และไม่ retry; เกณฑ์ host คือ disk ว่างอย่างน้อย
+20 GiB, memory available อย่างน้อย 4 GiB, load หนึ่งนาทีต่ำกว่า 1.0 และ claim
+ภายใน 10 นาที
+
+Gates ที่เหลือ: G1 release record (รวม previous staging release commit และ
+configuration digests ที่ตรวจแล้ว), G3 เจ้าของ GO ต่อ mutating effect แต่ละอย่าง,
+G4 usage และ G5 window คำถามเจ้าของที่ยังเปิด 10 ข้อ: executor mode; BACKFILL ที่
+SUCCEEDED ไม่เกิน 10,000 แท่งและ deployment ที่ READY ที่มีอยู่; ปิด API admission
+ระหว่าง W7; offline window; runtime role และ DELETE revoke; การอนุมัติ blob export;
+configuration digests; release ก่อนหน้า; end state; psql/tmux บน host
+
+แก้ถ้อยคำ D6: รายการก่อนหน้าเขียนว่า D6 prepare+BEGIN p99 ภายใต้ contention บน Linux
+block W-INT และ staging ซึ่งกว้างเกินไป เฉพาะ job ที่ marked
+`completion_mode: 'pf2-enrollment-v1'` เท่านั้นที่รัน enrollment prepare และ BEGIN
+(`src/postgres/quant-profile-runtime-v2.js` บรรทัด 82-84, 152 และ 164-167); W7
+diagnostic jobs ไม่ marked ดังนั้น D6 block durable enrollment proof (Roadmap R7)
+และ staging activation ไม่ block W7 diagnostic
+
+หลักฐาน local (CI flags, isolated local PostgreSQL): regression สุดท้ายบันทึกที่
+`7b8a08d` ซึ่งเป็นปลายรอบก่อน (2026-09-30 22:52Z): PostgreSQL 450 tests ผ่าน 448
+ล้ม 0 ข้าม 2 (724 วินาที); Node 783 tests ผ่าน 780 ล้ม 0 ข้าม 3 (224 วินาที)
+commits ของ wave 2 มี focused local runs ข้างต้นและ CI 9/9 ที่ `06a0f0f` และ
+`28d6f7e` ตัวเลขเหล่านี้เป็นเวลาทดสอบ ไม่ใช่ชั่วโมง engineering; active hours ยัง
+ไม่ทราบ คงงบ 410–720 ชั่วโมง ไม่อ้าง speedup หรือต้นทุน และไม่ปรับ forecast
+Usage บน Claude root: ตอนเริ่ม 5-hour 0%, weekly all-models 23%, weekly Fable 16%;
+ณ 05:30Z 5-hour 74%, weekly 32%, weekly Fable 19%; หลัง reset 06:00Z 5-hour 0%,
+weekly 33%
+
+งานถัดไป: เจ้าของตอบคำถามและทำ G1 release record; เจ้าของ GO; เจ้าของรัน W7 cases C1
+และ C2; แล้ววัด D6 และ Roadmap R7 Backlog: E2 optional items F1, F3, F4; test-only
+seam ของ R5-21; design deviations (default `profileV2Enabled=true` ของ scheduler
+constructor เทียบกับ worker default false และ reason allowlists สองชุด); ให้ grant
+script มี DELETE revoke (การรัน grant ครั้งหลังจะ grant DELETE ซ้ำ); SQL receipt
+defense-in-depth (schema change) ยังเลื่อน; และ final pre-staging code audit ก่อน G3

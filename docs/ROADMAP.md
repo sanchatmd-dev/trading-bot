@@ -333,7 +333,7 @@ Time Management uses this market without a pending BTCUSD/venue clarification.
 
 | Work | Current evidence and scope | Remaining gate / next action |
 | --- | --- | --- |
-| PF-2 staging continuation | [Local holdout and W3 checkpoint](PF2_W3_LOCAL_CHECKPOINT_2026-09-30.md): owner approved staging-only activation after gates and strictest shared sibling holdout. Holdout service suite passes 47/47; W3 runtime passes 43/43, W5 authority passes 4/4, and full Node passed 728 with three skipped at that checkpoint. Independent source audits found no remaining blocker. The [enrollment checkpoint](PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md) then wired API, worker and measured PROFILE enrollment locally, and the PROFILE authority and stale-engine queue checks pass five in the [S3/W6 checkpoint](PF2_S3_W6_LOCAL_CHECKPOINT_2026-10-01.md). The WIP commit `f52d4be` failed CI; `258e865` repairs it, `3742961` fixes the E2 measured settlement race and `338d91b` shares one V2 PROFILE stop acknowledgement authority (CI 9/9 at `3ce7e32`, `3742961` and `338d91b`; full local Node 764 pass, 0 fail, 3 skipped before the E2 fix). No deploy or activation. | E2 follow-up (veto enrollment when a settled I/O operation has a stop reason, charge terminal runtime in the unknown-final fallback, unsafe clock totals); measure the D6 prepare+BEGIN p99 under contention on Linux, which blocks W-INT and staging; grant the staging role table UPDATE privilege for `LOCK TABLE`; add the missing proof tests (R6-14, R5-19, R5-21, R5-23, S3b-9, W3-4); finish and test the W7 diagnostic helper; then the reviewed [Linux/staging packet](PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md). Durable trusted PROFILE V2 enrollment has local measured-settlement code and still needs Linux proof before R7; provisional CANCELLED output cannot satisfy enrollment. |
+| PF-2 staging continuation | [Local holdout and W3 checkpoint](PF2_W3_LOCAL_CHECKPOINT_2026-09-30.md): owner approved staging-only activation after gates and strictest shared sibling holdout. Holdout service suite passes 47/47; W3 runtime passes 43/43, W5 authority passes 4/4, and full Node passed 728 with three skipped at that checkpoint. Independent source audits found no remaining blocker. The [enrollment checkpoint](PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md) then wired API, worker and measured PROFILE enrollment locally, and the PROFILE authority and stale-engine queue checks pass five in the [S3/W6 checkpoint](PF2_S3_W6_LOCAL_CHECKPOINT_2026-10-01.md). The WIP commit `f52d4be` failed CI; `258e865` repairs it, `3742961` fixes the E2 measured settlement race and `338d91b` shares one V2 PROFILE stop acknowledgement authority (CI 9/9 at `3ce7e32`, `3742961` and `338d91b`). Wave 2 on 2026-10-01 pushed `5b1641f` (proof tests for the remaining carry notes), `06a0f0f` (E2 follow-up: IO_BUDGET veto, terminal runtime charged in the unknown-final fallback, unsafe clock totals), `4eb041a` (test residue tidy), `e6f0dff` (owner-only W7 diagnostic PROFILE enqueue helper), `2b7915f` (CI PostgreSQL race fix) and `28d6f7e` (portable uid test); CI is 9/9 at `06a0f0f` and `28d6f7e`, the planned W7 release commit. Final local regression at `7b8a08d`: Node 783 tests, 780 pass, 0 fail, 3 skipped; PostgreSQL 450 tests, 448 pass, 0 fail, 2 skipped. The private W7 owner packet and its tracked companion, the [staging acceptance packet](PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md), are ready after two independent audits, a re-audit and root revision 3 (gate G2 closed); see the wave 2 section at the end of this file. No deploy, migration, staging activation or VPS action; the PF-2 staging API stays off. | The owner answers the ten open questions and the G1 release record is completed (previous staging release commit, reviewed configuration digests); then owner GO for each mutating effect (G3), usage (G4) and window (G5); then the owner runs W7 cases C1 and C2, one attempt each and no automatic retry. Then measure the D6 prepare+BEGIN p99 under contention on Linux. Only a job marked `completion_mode: 'pf2-enrollment-v1'` runs the enrollment prepare and BEGIN, so D6 blocks the durable enrollment proof (R7) and staging activation, not the W7 diagnostic. The packet's offline prerequisites record the runtime role's table UPDATE privilege for `LOCK TABLE` and the DELETE revoke before W7. Backlog: E2 optional items F1, F3 and F4; a test-only seam for R5-21; design deviations (scheduler constructor default `profileV2Enabled=true` versus worker default false; two reason allowlists); the grant script should carry the DELETE revoke; a final pre-staging code audit before G3; SQL receipt defense-in-depth stays deferred. Durable trusted PROFILE V2 enrollment has local measured-settlement code and still needs Linux proof before R7; provisional CANCELLED output cannot satisfy enrollment. |
 | Project agent team | Local role setup, bounded QD/QS coder assignments and independent audit; one commander, at most three children, usage checkpoints. | Continue bounded QD/QS gates; team setup does not grant production authority. |
 | Time Management | Primary execution-time document includes the worker integration checkpoint; baseline estimates retained because complete active-work timing is unavailable. | Record measured verification durations separately from engineering hours; no new collection campaign. |
 | R-0 | Baseline inventory and observed schema 14 recorded. | SMTP 550 remediation and confirmed delivery remain operational follow-ups; old observations are not current health checks. |
@@ -1737,10 +1737,109 @@ durations, not engineering hours.
 Open: the E2 follow-up (veto enrollment when a settled I/O operation has a stop
 reason; charge terminal runtime in the unknown-final fallback; unsafe clock
 totals); the D6 prepare+BEGIN p99 under contention must be measured on Linux and
-blocks W-INT and staging; the staging role needs table UPDATE privilege for
+blocks the durable enrollment proof (Roadmap R7) and staging activation, not the
+W7 diagnostic; the staging role needs table UPDATE privilege for
 `LOCK TABLE`; proof tests R6-14, R5-19, R5-21, R5-23, S3b-9 and W3-4 are missing;
 the W7 diagnostic helper is still incomplete and untested; SQL receipt
 defense-in-depth (a schema change) is deferred; one PostgreSQL CI failure on
 `258e865` is unexplained. Claude usage: at resume 5-hour 6%, weekly all models
 13%, weekly Fable 7%; at 22:16Z 5-hour 66%, weekly 21%, weekly Fable 13%. No
 speedup or cost claim is made and the forecast is unchanged.
+
+## 2026-10-01 — PF-2 wave 2: E2 follow-up, proof tests, W7 helper and owner packet
+
+The Claude root continued PF-2 work. The wave ran from about 01:06Z to 06:40Z on
+2026-10-01 UTC (08:06-13:40 in Thailand), including waits for the 5-hour usage
+window, and pushed `5b1641f`, `06a0f0f`, `4eb041a`, `e6f0dff`, `2b7915f` and
+`28d6f7e`. No deploy, migration, staging activation or VPS action occurred; the
+PF-2 staging API stays off. Scope is unchanged: Spot/Paper only,
+BINANCE:BTCUSDT 1m, 10,000 raw bars including warm-up, no Live, no optimizer
+loop and no guard reset.
+
+Code and tests: `5b1641f` proves the remaining PF-2 carry notes R6-14, R5-19
+(fake systemd only), R5-21, R5-23, S3b-9 and W3-4 (a PAUSED V2 row is cancelled
+at claim), each with killed mutants; R5-21 captures a private function through a
+temporary prototype accessor, and a test-only seam is a follow-up. `06a0f0f` is
+the E2 follow-up: enrollment is vetoed (IO_BUDGET) when a settled I/O operation
+carries a stop reason, while a measured DENIED keeps its charge; the
+unknown-final fallback now charges terminal runtime; unsafe wall-clock totals
+count as an anomaly. Residual R3 is accepted because it is unreachable with the
+current wiring. The Opus review accepted; optional backlog items are F1 (charge
+before UNCONFIRMED returns), F3 (monotonic unsafe total) and F4 (loose PostgreSQL
+bounds). `4eb041a` tidies test residue (unused imports, end-of-file blank lines,
+skip reasons and one shared HTTP fixture stop helper).
+
+W7 helper: `e6f0dff` adds the owner-only W7 diagnostic PROFILE enqueue helper
+`scripts/enqueue-quant-profile-diagnostic.mjs`. It is a dry run by default and
+runs one SERIALIZABLE transaction that takes the scheduler lock first with a
+1,000 ms lock wait bound; the idle gate runs first; a write needs `--enqueue
+--expect-contract-hash`; it is idempotent, refuses with codes and checks private
+request files. The commit also adds a symlink-safe start guard to
+`scripts/check-quant-foundation-idle.mjs`. The Opus review accepted with fixes,
+applied before the commit. Local: helper unit tests 27 pass with 2 Linux-only
+skips, PostgreSQL helper 14/14, migration 9/9.
+
+CI: `06a0f0f` passes 9/9. `e6f0dff` failed on a PostgreSQL race and on the
+Ubuntu helper uid test. `2b7915f` makes the HTTP test fixture wait until stopped
+server sessions release the maintenance lock, which fixes the race
+(`RECOVERY_RUNTIME_ACTIVE`); it probably also caused the earlier unexplained
+`258e865` failure, which is not proven because job logs need a signed-in viewer.
+For `2b7915f` the PostgreSQL job passed and the Ubuntu unit job failed on the uid
+test, so `28d6f7e` makes the helper test simulate a missing uid portably.
+`28d6f7e` passes 9/9, including PostgreSQL, Windows and Ubuntu, and is the
+planned W7 release commit. The CI unit job now annotates failing tests.
+
+W7 owner packet: a private, ignored owner packet and the tracked companion
+[staging acceptance packet](PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md) were
+built without live VPS access. The owner runs every host step, with one attempt
+per case and no automatic retry. The release must be exported from git blob
+bytes, because `git archive` on this Windows checkout writes CRLF and
+`.gitattributes` export-ignores `quant_lab/**` (63 files, 24 of them in the
+engine hashes). Blob-based engine hashes at `e6f0dff` and `28d6f7e`: ingestion
+`d7097b8a...` (79 files) and foundation `d865692f...` (78 files). Review:
+revision 1 got "go with fixes" from two independent audits (Opus and a
+second-opinion auditor); revision 2 (operations role) closed every finding or
+rejected it with a reason; the Opus re-audit of revision 2 found no High item and
+two Medium items (static grant-role and psql checks must run before the
+irreversible schema installation; the early rollback must check the runtime
+role's SELECT on the I/O tables before restarting the previous release) plus Low
+items; root revision 3 fixed them and the same auditor closed gate G2. Root
+decisions: C2 stops the worker 1,000 ms after the job is first seen STOPPING; a
+LATE stop is inconclusive and not retried; host thresholds are at least 20 GiB
+free disk, at least 4 GiB available memory, one-minute load below 1.0 and a claim
+within 10 minutes.
+
+Remaining gates: G1 release record (including the previous staging release
+commit and reviewed configuration digests), G3 owner GO for each mutating effect,
+G4 usage and G5 window. Ten owner questions are open: executor mode; the existing
+SUCCEEDED BACKFILL of at most 10,000 bars and READY deployment; API admission off
+during W7; the offline window; the runtime role and DELETE revoke; blob export
+approval; configuration digests; the previous release; the end state; and
+psql/tmux on the host.
+
+D6 correction: earlier entries said the D6 prepare+BEGIN p99 under contention on
+Linux blocks W-INT and staging. That was too broad. Only a job marked
+`completion_mode: 'pf2-enrollment-v1'` runs the enrollment prepare and BEGIN
+(`src/postgres/quant-profile-runtime-v2.js`, lines 82-84, 152 and 164-167); W7
+diagnostic jobs are unmarked. D6 therefore blocks the durable enrollment proof
+(Roadmap R7) and staging activation, not the W7 diagnostic. The earlier entries
+and the README, Context and Time Management status text now say so.
+
+Local evidence (CI flags, isolated local PostgreSQL): the final local regression
+is recorded at `7b8a08d`, the end of the previous wave (2026-09-30 22:52Z):
+PostgreSQL 450 tests, 448 pass, 0 fail, 2 skipped (724 s); Node 783 tests, 780
+pass, 0 fail, 3 skipped (224 s). The wave 2 commits carry the focused local runs
+above and CI 9/9 at `06a0f0f` and `28d6f7e`. These are test durations, not
+engineering hours.
+
+Next: the owner answers and the G1 release record; owner GO; owner-run W7 cases
+C1 and C2; then the D6 measurement and Roadmap R7. Backlog: the E2 optional items
+F1, F3 and F4; a test-only seam for R5-21; design deviations (the scheduler
+constructor default `profileV2Enabled=true` versus the worker default false, and
+two reason allowlists); the grant script should carry the DELETE revoke (a later
+grant run re-grants DELETE); SQL receipt defense-in-depth (a schema change) stays
+deferred; and a final pre-staging code audit before G3. Claude usage: at wave
+start 5-hour 0%, weekly all models 23%, weekly Fable 16%; at 05:30Z 5-hour 74%,
+weekly 32%, weekly Fable 19%; after the 06:00Z reset 5-hour 0%, weekly 33%.
+Active engineering hours remain unknown; no speedup or cost claim is made and the
+forecast is unchanged.
