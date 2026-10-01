@@ -31,6 +31,8 @@ import {QuantDataService,quantDataRoutes} from './quant-data.js';
 import {quantProfileRoutes} from './quant-profile.js';
 import {createQuantPreflightApi} from './quant-preflight-wiring.js';
 import {quantPreflightRoutes,quantProfileEnrollmentRoutes} from './quant-preflight-routes.js';
+import {ReadinessService} from './pf3-readiness-service.js';
+import {pf3ReadinessRoutes} from './pf3-readiness-routes.js';
 assertProductionConfig();
 const database = new PostgresDatabase();
 await database.runtimeLock();
@@ -66,6 +68,8 @@ const {profileService:quantProfileService,preflightService:quantPreflightService
   enrollmentEnabled:quantEnrollmentEnabled,preflightEnabled:quantPreflightEnabled}=await createQuantPreflightApi({
   pineService:pineBridgeService,dataService:quantDataService,researchStore:quantResearchService.datasetStore,
   dataEnabled:quantDataEnabled,paperTrading:config.paperTrading});
+const readinessService=new ReadinessService({store,defaultRisk:config.defaultRisk,preflightService:quantPreflightService,
+  preflightEnabled:quantPreflightEnabled,pineBridgeEnabled});
 const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
 await database.transaction(async()=>{
 await database.lock('robot:bootstrap');
@@ -536,6 +540,7 @@ async function userRoutes(req, res, url) {
       ok: true
     });
   }
+  if(await pf3ReadinessRoutes(req,res,url,{actor,user},readinessService,json))return;
   if (req.method === 'GET' && url.pathname === '/api/risk') return json(res, 200, {
     ...(await store.risk(user.id, config.defaultRisk)),
     paperTrading: true

@@ -393,3 +393,53 @@ test('journey styles keep the page inside a 390px viewport and wrap long hashes'
   assert.ok(!block.includes('[hidden]')||block.includes('.jr-stamp'),'no rule overrides the hidden attribute of the page section');
   assert.ok(!/\.jr-(page|root)[^{]*\{[^}]*display:(?!grid)/.test(block));
 });
+
+// PF-3 hook (P1-B1): step 3 learns the readiness verdict from the pf3:report event of the Risk panel. No request, no bot_id.
+const announce=(p,detail)=>p.d.dispatchEvent(new p.w.CustomEvent('pf3:report',{detail}));
+const READINESS={bot_id:'bot-1',verdict:'CAPABILITY_UNAVAILABLE',historical_status:'UNAVAILABLE',generated_at:'2026-10-02T12:00:00.000Z'};
+
+test('step 3 appends the readiness rows only after a pf3:report event; the chip and every other row stay as they were',async()=>{
+  const fx=fixtures(),p=setup({handler:answer(fx),session:fx.session});
+  try{
+    await p.open();
+    const before=rowsOf(p,3),chipBefore=p.chip(3),requests=p.calls.length;
+    assert.equal(before['Readiness verdict'],undefined,'no readiness row without a report');
+    announce(p,READINESS);await settle();
+    assert.deepEqual(rowsOf(p,3),{...before,'Readiness verdict':'CAPABILITY_UNAVAILABLE','Report bot':'bot-1',
+      'Report time':'2026-10-02 12:00:00 UTC','Historical evidence':'UNAVAILABLE'});
+    assert.equal(p.chip(3),chipBefore);assert.equal(chipBefore,'Preview available');
+    assert.equal(p.calls.length,requests,'the event causes no request');
+    assert.equal(p.card(3).querySelector('.jr-v .jr-hash').textContent.length>0,true);
+    // A newer report replaces the rows; a malformed event removes them instead of leaving stale values.
+    announce(p,{...READINESS,verdict:'READY_TO_START_PAPER',historical_status:'AVAILABLE'});await settle();
+    assert.equal(rowsOf(p,3)['Readiness verdict'],'READY_TO_START_PAPER');assert.equal(rowsOf(p,3)['Historical evidence'],'AVAILABLE');
+    announce(p,null);await settle();
+    assert.equal(rowsOf(p,3)['Readiness verdict'],undefined);
+    announce(p,{verdict:7});await settle();assert.equal(rowsOf(p,3)['Readiness verdict'],undefined);
+    announce(p,{...READINESS,generated_at:'not a time'});await settle();
+    assert.equal(rowsOf(p,3)['Report time'],'—');
+    // Logout clears the readiness rows with the rest of the page.
+    announce(p,READINESS);await settle();assert.equal(rowsOf(p,3)['Readiness verdict'],'CAPABILITY_UNAVAILABLE');
+    p.d.querySelector('#logout').click();await settle();
+    assert.equal(rowsOf(p,3)['Readiness verdict'],undefined);
+    for(const n of [1,2,4,5,6])assert.equal(rowsOf(p,n)['Readiness verdict'],undefined,'only step 3 reads the event');
+  }finally{p.w.close();}
+});
+
+test('the readiness rows of step 3 and the journey page stay text only and translate to Thai',async()=>{
+  const fx=fixtures(),p=setup({language:'th',handler:answer(fx),session:fx.session});
+  try{
+    await p.open();
+    announce(p,{...READINESS,bot_id:'<img src=x onerror=alert(1)>'});await settle();
+    const rows=rowsOf(p,3);
+    assert.equal(rows['ผลประเมินความพร้อม'],'CAPABILITY_UNAVAILABLE');assert.equal(rows['หลักฐานย้อนหลัง'],'UNAVAILABLE');
+    assert.equal(rows['เวลาของรายงาน'],'2026-10-02 12:00:00 UTC');assert.equal(rows['Bot ของรายงาน'],'<img src=x onerror=alert(1)>');
+    assert.equal(p.d.querySelectorAll('[data-page="journey"] img').length,0);
+    for(const element of p.d.querySelectorAll('[data-page="journey"] [data-ui-label]')){
+      const label=element.dataset.uiLabel;assert.equal(element.textContent,p.w.translate(label),label);
+    }
+    const language=p.d.querySelector('#language');
+    language.value='en';language.dispatchEvent(new p.w.Event('change'));await settle();
+    assert.equal(rowsOf(p,3)['Readiness verdict'],'CAPABILITY_UNAVAILABLE');
+  }finally{p.w.close();}
+});

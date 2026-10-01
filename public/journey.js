@@ -47,7 +47,7 @@
   ];
 
   const pending=()=>({pending:true});
-  const state={seq:0,checkedAt:null,bots:pending(),overview:pending(),history:pending()};
+  const state={seq:0,checkedAt:null,bots:pending(),overview:pending(),history:pending(),readiness:null};
   // me, signals and selectedBot belong to app.js. Absent globals read as unavailable, never as empty data.
   const session=()=>({me:typeof me==='undefined'?null:me,signals:typeof signals==='undefined'?null:signals,scope:typeof selectedBot==='undefined'?'':selectedBot});
 
@@ -126,6 +126,10 @@
       rows.push(row('Ready Bridge deployments',dash(overview.data.deployments?.by_state?.READY??0)));
       if(ready)rows.push(row('Latest ready deployment',short(ready.deployment_id)+' · v'+dash(ready.source_version)+' · '+utc(ready.created_at)),row('Snapshot hash',hash(ready.snapshot_hash)));
     }
+    // The PF-3 readiness report of the Risk manager panel, once the owner has opened it. No request is made here.
+    const readiness=state.readiness;
+    if(readiness)rows.push(row('Readiness verdict',dash(readiness.verdict)),row('Report bot',hash(readiness.bot_id)),
+      row('Report time',utc(Date.parse(readiness.generated_at))),row('Historical evidence',dash(readiness.historical_status)));
     return {chip:chip('Preview available','info'),rows};
   }
 
@@ -202,7 +206,14 @@
     await Promise.allSettled([track('bots','/api/bots'),track('overview','/api/quant/pine-bridge/overview'),track('history','/api/quant/research/history?limit='+RUN_ROWS)]);
     if(seq===state.seq){state.checkedAt=Date.now();render();}
   }
-  function clear(){state.seq++;state.checkedAt=null;state.bots=state.overview=state.history=pending();render();}
+  function clear(){state.seq++;state.checkedAt=null;state.bots=state.overview=state.history=pending();state.readiness=null;render();}
+  // readiness.js announces each rendered report; only its plain string fields are kept.
+  document.addEventListener('pf3:report',event=>{
+    const detail=event?.detail,text=value=>typeof value==='string'?value.slice(0,200):null;
+    state.readiness=detail&&typeof detail==='object'&&text(detail.verdict)?{bot_id:text(detail.bot_id),verdict:text(detail.verdict),
+      historical_status:text(detail.historical_status),generated_at:text(detail.generated_at)}:null;
+    render();
+  });
 
   function openBridge(){
     const panel=[...document.querySelectorAll('[data-page="quant"] details')].find(item=>(item.querySelector('summary')?.textContent||'').trim().startsWith('Build Pine Bridge'));

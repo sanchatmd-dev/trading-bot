@@ -301,3 +301,37 @@ table{table-layout:fixed}th,td{white-space:normal;overflow-wrap:anywhere;vertica
 .jr-run-status{color:var(--text);font-weight:700}
 .jr-open{align-self:flex-start;min-height:44px;margin-top:auto}
 @media(max-width:600px){.jr-root{grid-template-columns:minmax(0,1fr)}.jr-open{width:100%}}
+/* PF-3 readiness report (Risk manager): read-only diagnostic panel. The CSP allows stylesheets only, so no inline styles. */
+.pf3-save-warning{margin:0 0 12px;padding:8px 10px;border:1px solid #ffd36b55;border-radius:10px;background:#2a2000;color:#ffe3a1;font-size:13px;overflow-wrap:anywhere}
+.pf3-panel{margin-top:16px;min-width:0}
+.pf3-root{display:grid;gap:14px;min-width:0}
+.pf3-verdict{display:grid;gap:8px;min-width:0}
+.pf3-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.pf3-chip{display:inline-flex;align-items:center;max-width:100%;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:#182a42;color:var(--muted);font-size:13px;font-weight:700;overflow-wrap:anywhere}
+.pf3-chip.pf3-ok{background:#123e34;color:#63e5b0;border-color:#37d59a55}
+.pf3-chip.pf3-warn{background:#2a2000;color:#ffd36b;border-color:#ffd36b55}
+.pf3-chip.pf3-bad{background:#3e1a24;color:#ff9dab;border-color:#5a1020}
+.pf3-meaning,.pf3-fixed{margin:0;line-height:1.55;overflow-wrap:anywhere}
+.pf3-fixed{color:var(--cyan);font-weight:700}
+.pf3-block{min-width:0}
+.pf3-block h3{margin:0 0 6px;color:var(--cyan);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.pf3-evidence{display:grid;gap:6px;min-width:0}
+.pf3-ev{display:flex;flex-wrap:wrap;gap:2px 8px;min-width:0;font-size:13px;line-height:1.5}
+.pf3-k{flex:0 0 auto;color:var(--muted)}
+.pf3-k::after{content:":"}
+.pf3-v{flex:1 1 auto;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+.pf3-note{color:var(--muted);overflow-wrap:anywhere}
+.pf3-ev-error{color:#ffb2bc;overflow-wrap:anywhere}
+.pf3-code,.pf3-hash{font-family:ui-monospace,monospace;font-size:12px;overflow-wrap:anywhere;word-break:break-all}
+.pf3-cat{margin:0 0 8px;min-width:0}
+.pf3-cat h4{margin:0 0 6px;font-size:13px}
+.pf3-blockers,.pf3-list{display:grid;gap:6px;margin:2px 0 0;padding:0;list-style:none}
+.pf3-list{font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.pf3-blocker{display:flex;flex-wrap:wrap;gap:2px 10px;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#091726;font-size:12px;overflow-wrap:anywhere}
+.pf3-tag{color:var(--muted)}
+.pf3-reason{flex:1 1 100%;min-width:0;color:var(--text);overflow-wrap:anywhere}
+.pf3-detail{flex:1 1 100%;color:var(--muted);overflow-wrap:anywhere}
+.pf3-table-wrap{width:100%;overflow-x:auto}
+.pf3-table{width:100%;table-layout:auto;font-size:12px}
+.pf3-table th,.pf3-table td{padding:6px;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:600px){.pf3-panel{padding:12px}.pf3-ev{flex-direction:column}}
