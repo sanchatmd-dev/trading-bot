@@ -1,5 +1,12 @@
 # Robot trade — Project Context
 
+The owner now prioritizes a visible staging prototype, followed by the complete
+six-step Bridge/Preflight/Paper/Quant/Library workflow. The
+[P0/P1 plan](docs/STAGING_PROTOTYPE_PLAN_2026-10-01.md) distinguishes an early
+preview from functional acceptance; the [Claude handoff](docs/CODEX_TO_CLAUDE_PROTOTYPE_HANDOFF_2026-10-01.md)
+preserves runtime gates and ownership. This documentation checkpoint performs no
+deployment or implementation and retains Spot/Paper-only and 10K/1m limits.
+
 Later read-only recovery discovery found an additional five-minute fallback
 timer referencing the market collector. Its service was inactive when sampled;
 the host source bytes and effective database target remain unverified. The four

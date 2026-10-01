@@ -1,5 +1,18 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+## Staging prototype priority — 2026-10-01
+
+The owner requests a visible staging preview first, then a functional six-step
+journey: AI Bridge, ten numeric inputs, Preflight recommendations, real signals
+with Paper execution, bounded optimization and Quant Library selection. The
+[prototype delivery plan](STAGING_PROTOTYPE_PLAN_2026-10-01.md) defines P0 preview
+and P1 functional acceptance without changing phase gates. P0 may use a reviewed
+compatible UI release while foundation remains off; changes requiring migration
+or foundation startup still wait for B2. PF-3/PF-4 and library/comparison work
+remain unfinished. The next operational action remains the B2 timer/source/DB
+target and recovery inventory. This turn creates a plan and
+[Claude handoff](CODEX_TO_CLAUDE_PROTOTYPE_HANDOFF_2026-10-01.md), not a deployment.
+
 ## Document authority and update rules
 
 This is the canonical index of all current plans, their sequence, acceptance

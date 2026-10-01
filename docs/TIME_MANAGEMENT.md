@@ -1,5 +1,23 @@
 # Time Management — Project execution and data collection
 
+## Staging prototype planning and Claude handoff — 2026-10-01
+
+The owner requests an early staging preview followed by six-step functional
+acceptance. The [delivery plan](STAGING_PROTOTYPE_PLAN_2026-10-01.md) separates
+P0 visible preview from P1 complete workflow. Inventory the deployed capabilities
+and B2 recovery prerequisites before estimating either milestone. Existing
+410–720-hour full-project estimates are not prototype estimates; no completion
+date or guaranteed market-data wait is inferred here. Record engineering effort,
+machine execution and natural-signal waits separately and re-estimate after P0.
+
+Latest observed Codex weekly usage is 86% used, 14% remaining; short window is
+unknown and the reserve remains 15 points. No override was granted. This is
+requested planning/checkpoint work only: no substantive implementation, agent
+dispatch, host operation or deployment. The owner explicitly requests a Claude
+handoff; the incoming root must refresh its own usage and obey AGENTS.md, not
+treat the handoff as a quota exception. README/Context and Roadmap now link the
+plan. Existing runtime and phase acceptance facts remain unchanged.
+
 ## Latest B2 recovery discovery — 2026-10-01
 
 The first read-only recovery observation took 5.368 seconds and retained a
