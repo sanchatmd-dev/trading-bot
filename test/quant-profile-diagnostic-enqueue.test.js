@@ -265,7 +265,9 @@ test('private request file refuses non-canonical paths, other platforms and inva
     await assert.rejects(readWith(file,fakeFs()),code('QUANT_DIAGNOSTIC_PRIVATE_FILE_REQUIRED'));
   for(const platform of ['win32','darwin'])
     await assert.rejects(readWith(privatePath,fakeFs(),{platform}),code('QUANT_DIAGNOSTIC_CONFIGURATION_REQUIRED'));
-  await assert.rejects(readWith(privatePath,fakeFs(),{uid:undefined}),code('QUANT_DIAGNOSTIC_CONFIGURATION_REQUIRED'));
+  // null, not undefined: an undefined uid would fall back to process.getuid(), which is real on Linux.
+  for(const uid of [null,Number.NaN,-1.5])
+    await assert.rejects(readWith(privatePath,fakeFs(),{uid}),code('QUANT_DIAGNOSTIC_CONFIGURATION_REQUIRED'));
   const missing={...fakeFs(),lstat:async()=>{throw Object.assign(Error('ENOENT '+privatePath),{code:'ENOENT'});}};
   await assert.rejects(readWith(privatePath,missing),
     error=>error.code==='QUANT_DIAGNOSTIC_PRIVATE_FILE_UNTRUSTED'&&!error.message.includes('home'));
