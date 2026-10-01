@@ -61,9 +61,9 @@ test('index.html: panel after the Risk form and outside it, fixed texts, warning
     assert.equal(panel.querySelectorAll('input,select,textarea,form,a').length,0,'no field can save or start anything');
     assert.equal(panel.querySelectorAll('button').length,1);assert.equal(panel.querySelector('[style]'),null,'the CSP forbids inline styles');
     assert.equal(form.querySelector('.pf3-save-warning').textContent,WARNING);
-    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/readiness.js?v=pf3a1','/journey.js?v=p0j1pf3'].map(part=>html.indexOf(part));
+    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/readiness.js?v=pf3a1','/journey.js?v=ux1a'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'readiness.js loads after app.js and before journey.js');
-    assert.match(html,/styles-v2\.css\?v=p0j1pf3/);assert.match(html,/i18n\.js\?v=p0j1pf3/);
+    assert.match(html,/styles-v2\.css\?v=ux1a/);assert.match(html,/i18n\.js\?v=ux1a/);
     assert.doesNotMatch(html,/(styles-v2\.css|i18n\.js|journey\.js)\?v=p0j1["']/,'changed files carry a new cache version');
   }finally{dom.window.close();}
 });

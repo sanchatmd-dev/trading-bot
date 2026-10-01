@@ -271,6 +271,84 @@ table{table-layout:fixed}th,td{white-space:normal;overflow-wrap:anywhere;vertica
 /* Keep the research-workspace controls above legacy Quant Lab rules. */
 .ql-shell .ql-tabs{margin:0;border-bottom:1px solid var(--line);padding-bottom:0}.ql-shell .ql-tab{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:11px 16px;color:var(--muted);bottom:0}.ql-shell .ql-tab.active{border-color:var(--cyan);background:transparent;color:var(--text)}.ql-shell .ql-workspace,.ql-shell .ql-opt-workspace,.ql-shell .ql-risk-workspace{grid-template-columns:minmax(250px,300px) minmax(0,1fr)}.ql-shell .ql-config-rail,.ql-shell .ql-results{padding:18px}.ql-shell .ql-summary-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.ql-shell .ql-rp-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.ql-shell .ql-equity-chart{min-height:250px;padding:0}@media(max-width:900px){.ql-shell .ql-workspace,.ql-shell .ql-opt-workspace,.ql-shell .ql-risk-workspace{grid-template-columns:1fr}.ql-shell .ql-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.ql-shell .ql-tab{padding:10px 11px;font-size:12px}.ql-shell .ql-config-rail,.ql-shell .ql-results{padding:14px}.ql-shell .ql-rp-grid,.ql-shell .ql-summary-grid{grid-template-columns:1fr 1fr}}
 .ql-data-workspace{grid-template-columns:minmax(250px,340px) minmax(0,1fr)}.ql-data-workspace select,.ql-data-workspace input{width:100%;padding:10px 11px;background:#071424;border:1px solid #29405c;color:var(--text);border-radius:8px;font:inherit}.ql-data-workspace label{display:block;margin:12px 0 0;font-size:12px}.ql-data-workspace button:disabled{opacity:.5;cursor:not-allowed}.ql-data-card{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#071424}.ql-data-card h4{margin:0 0 12px}.ql-data-card dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0}.ql-data-card dl div{min-width:0}.ql-data-card dt{font-size:11px;color:var(--muted)}.ql-data-card dd{margin:4px 0 0;overflow-wrap:anywhere}.ql-data-card p{overflow-wrap:anywhere}.ql-data-card[hidden]{display:none}@media(max-width:900px){.ql-data-workspace{grid-template-columns:1fr}}@media(max-width:600px){.ql-data-card dl{grid-template-columns:1fr}}
+/* Guided Build Pine Bridge panel (P1-UX1): six steps that unlock in the real fill order. bridge-wizard.js adds .pbw-on, the step states and the coach marks.
+   Without that class every step stays open. The CSP allows stylesheets only, so all motion is class driven. */
+#pbPanel{min-width:0}
+#pbPanel [hidden]{display:none!important}
+#pbPanel>summary{max-width:none;font-weight:700;overflow:visible;overflow-wrap:anywhere}
+#pbPanel .pbw-intro{margin:8px 0 0;overflow-wrap:anywhere}
+#pbPanel .pbw-tips{margin:8px 0 0;min-height:36px}
+#pbPanel .pbw-notice{margin:12px 0 0;padding:8px 10px;border:1px solid #ffd36b55;border-radius:10px;background:#2a2000;color:#ffe3a1;font-size:13px;overflow-wrap:anywhere}
+#pbPanel .pbw-steps,#pbPanel .pbw-form{display:grid;gap:10px;min-width:0}
+#pbPanel .pbw-steps{margin-top:12px}
+#pbPanel .pbw-step{position:relative;min-width:0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#0a1727;scroll-margin-top:12px;transition:border-color .26s ease-out,background-color .26s ease-out,opacity .26s ease-out}
+#pbPanel .pbw-step[data-state="current"]{border-color:var(--cyan);background:#0c1e33}
+#pbPanel .pbw-step[data-state="done"]{border-color:#37d59a55}
+#pbPanel .pbw-step[data-state="locked"]{border-style:dashed;opacity:.55;pointer-events:none}
+#pbPanel .pbw-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px}
+#pbPanel .pbw-num{display:inline-grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#03111d;font-size:14px;font-weight:800}
+#pbPanel .pbw-step[data-state="locked"] .pbw-num{background:#182a42;color:var(--muted)}
+#pbPanel .pbw-title{flex:1 1 140px;min-width:0;margin:0;font-size:15px;overflow-wrap:anywhere;outline:0}
+#pbPanel .pbw-chip{display:inline-flex;align-items:center;max-width:100%;padding:3px 10px;border:1px solid var(--line);border-radius:999px;background:#182a42;color:var(--muted);font-size:12px;font-weight:700;overflow-wrap:anywhere}
+#pbPanel .pbw-step[data-state="current"] .pbw-chip{background:#0d3b45;color:#7ff0e6;border-color:#36d6ca66}
+#pbPanel .pbw-step[data-state="done"] .pbw-chip{background:#123e34;color:#63e5b0;border-color:#37d59a55}
+#pbPanel .pbw-edit{min-height:36px;padding:6px 12px}
+#pbPanel .pbw-help,#pbPanel .pbw-summary{margin:8px 0 0;overflow-wrap:anywhere}
+#pbPanel .pbw-summary{color:var(--text);font-size:13px}
+#pbPanel.pbw-on .pbw-collapse{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows .18s ease-in,opacity .18s ease-in,visibility 0s linear .18s}
+#pbPanel.pbw-on .pbw-step.is-open .pbw-collapse{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows .26s ease-out,opacity .26s ease-out,visibility 0s}
+#pbPanel.pbw-on .pbw-inner{min-height:0;overflow:hidden}
+#pbPanel .pbw-pad{padding:4px 6px 6px;min-width:0}
+#pbPanel .pbw-note{margin:8px 0;font-size:12px;overflow-wrap:anywhere}
+#pbPanel .pbw-hint{color:var(--muted);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+#pbPanel .pbw-warn{margin:8px 0;padding:8px 10px;border:1px solid #ffd36b55;border-radius:10px;background:#2a2000;color:#ffe3a1;font-size:13px;overflow-wrap:anywhere}
+#pbPanel .pbw-warnings{display:grid;gap:8px;margin:0 0 12px;padding:0;list-style:none}
+#pbPanel .pbw-warnings li{padding:8px 10px;border:1px solid #ffd36b55;border-radius:10px;background:#2a2000;color:#ffe3a1;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+#pbPanel .pbw-sub{margin:14px 0 6px;color:var(--cyan);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+#pbPanel button:disabled{opacity:.5;cursor:not-allowed}
+#pbPanel .primary{margin-top:8px;justify-self:start}
+#pbPanel label{align-content:start}
+#pbPanel #pbInputReviewStatus{font-size:13px;overflow-wrap:anywhere}
+#pbPanel .primary.is-idle{opacity:.55}
+#pbPanel fieldset{min-width:0;margin:0 0 8px;padding:0;border:0}
+#pbPanel select,#pbPanel input,#pbPanel textarea{min-width:0;max-width:100%}
+#pbPanel a{color:var(--cyan);overflow-wrap:anywhere}
+#pbPanel #pbInputFields{display:grid;gap:4px}
+/* Quant search slots: one line per slot on a wide screen, the old two-by-two block below that. */
+@media(min-width:57em){#pbPanel #pbSlots fieldset{grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));gap:0 10px}#pbPanel #pbSlots label{margin:4px 0}}
+#pbPanel .pbw-confirm{display:flex;align-items:flex-start;gap:12px;margin:14px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#071424;color:var(--text);font-size:14px;line-height:1.5;cursor:pointer}
+#pbPanel .pbw-confirm input{flex:0 0 22px;width:22px;height:22px;margin:1px 0 0;padding:0;accent-color:var(--cyan)}
+#pbPanel .pbw-activity{display:grid;gap:8px;margin-top:10px;min-width:0}
+#pbPanel .pbw-status{margin:0;min-height:1.2em;font-size:13px;overflow-wrap:anywhere}
+#pbPanel .pbw-activity>button,#pbPanel .pbw-fail>button{justify-self:start}
+#pbPanel .pbw-progress{display:grid;gap:6px}
+#pbPanel .pbw-bar{height:6px;border-radius:999px;background:#13263d;overflow:hidden}
+#pbPanel .pbw-bar span{display:block;width:40%;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--cyan),var(--blue));animation:pbw-slide 1.3s ease-in-out infinite}
+#pbPanel .pbw-phase{margin:0;font-size:13px;overflow-wrap:anywhere}
+#pbPanel .pbw-fail{display:grid;gap:6px;padding:10px 12px;border:1px solid #5a1020;border-radius:10px;background:#3e1a24}
+#pbPanel .pbw-fail p{margin:0;color:#ffd2d9;overflow-wrap:anywhere}
+#pbPanel .pbw-fail-title{font-weight:700}
+#pbPanel .pbw-fail-code code{overflow-wrap:anywhere;word-break:break-all}
+#pbPanel .pbw-report,#pbPanel .pbw-adv{margin-top:12px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:#08131f}
+#pbPanel details>summary{max-width:none;overflow:visible;overflow-wrap:anywhere}
+#pbPanel .pbw-report pre,#pbPanel #pbDownloads pre{margin:8px 0 0;max-height:260px;white-space:pre-wrap;overflow-wrap:anywhere}
+#pbPanel .pbw-checklist{display:grid;gap:8px;margin:0 0 12px;padding-left:22px;font-size:14px;line-height:1.55}
+#pbPanel .pbw-checklist li{overflow-wrap:anywhere}
+#pbPanel .pbw-downloads p{margin:6px 0}
+#pbPanel .pbw-coach{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:8px 0 10px;padding:10px 12px;border:1px solid var(--cyan);border-radius:10px;background:#0b3144;color:var(--text);font-size:13px;line-height:1.5;max-width:min(100%,440px);overflow-wrap:anywhere}
+#pbPanel .pbw-coach::before{content:"";position:absolute;left:20px;top:-7px;width:12px;height:12px;border-left:1px solid var(--cyan);border-top:1px solid var(--cyan);background:#0b3144;transform:rotate(45deg)}
+#pbPanel .pbw-coach.is-in{animation:pbw-pop .24s ease-out}
+#pbPanel .pbw-coach-text{flex:1 1 180px;min-width:0}
+#pbPanel .pbw-coach-ok{min-height:36px;padding:6px 14px;border-color:var(--cyan);color:var(--text)}
+@keyframes pbw-pulse{0%{box-shadow:0 0 0 0 #36d6ca99}70%{box-shadow:0 0 0 8px #36d6ca00}100%{box-shadow:0 0 0 0 #36d6ca00}}
+@keyframes pbw-pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes pbw-slide{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
+#pbPanel .pbw-pulse{animation:pbw-pulse .8s ease-out 2}
+/* Reduced motion: no transitions, no pulse, no moving bar. Coach marks still appear, without the pop. */
+@media(prefers-reduced-motion:reduce){#pbPanel *,#pbPanel *::before,#pbPanel *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}#pbPanel .pbw-bar span{width:100%;opacity:.45}}
+#pbPanel[data-motion="reduced"] *,#pbPanel[data-motion="reduced"] *::before,#pbPanel[data-motion="reduced"] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+#pbPanel[data-motion="reduced"] .pbw-bar span{width:100%;opacity:.45}
+@media(max-width:600px){#pbPanel .pbw-step{padding:10px}#pbPanel .pbw-pad{padding:2px}#pbPanel button,#pbPanel summary{min-height:44px}#pbPanel .primary{width:100%}#pbPanel .pbw-coach{max-width:100%}}
 /* Prototype journey (P0 staging preview): read-only status cards. The CSP allows stylesheets only, so no inline styles. */
 .jr-banner{margin-bottom:14px;border-color:#ffd36b55;background:linear-gradient(150deg,#2a2000,#0a1727)}
 .jr-banner p{margin:0;color:#ffe3a1;overflow-wrap:anywhere}

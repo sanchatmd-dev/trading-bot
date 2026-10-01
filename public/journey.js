@@ -216,10 +216,13 @@
   });
 
   function openBridge(){
-    const panel=[...document.querySelectorAll('[data-page="quant"] details')].find(item=>(item.querySelector('summary')?.textContent||'').trim().startsWith('Build Pine Bridge'));
+    // The panel has a fixed id; the summary text is only the fallback because it is translated.
+    const panel=document.getElementById('pbPanel')||[...document.querySelectorAll('[data-page="quant"] details')].find(item=>(item.querySelector('summary')?.textContent||'').trim().startsWith('Build Pine Bridge'));
     if(!panel)return;
     panel.open=true;
-    if(typeof panel.scrollIntoView==='function')panel.scrollIntoView({block:'start'});
+    // The guided panel handles this event and scrolls to its current step; without it the whole panel scrolls into view.
+    const handled=!panel.dispatchEvent(new CustomEvent('pb:reveal',{cancelable:true}));
+    if(!handled&&typeof panel.scrollIntoView==='function')panel.scrollIntoView({block:'start'});
   }
   root.addEventListener('click',event=>{
     const button=event.target.closest?.('.jr-open');if(!button)return;

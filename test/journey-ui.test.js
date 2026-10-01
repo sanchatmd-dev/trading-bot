@@ -77,9 +77,9 @@ test('index.html adds the journey nav right after Overview, a hidden page with t
     assert.equal(section.querySelector('.jr-banner p').textContent,BANNER);
     assert.ok(section.querySelector('#journeyRoot'));
     assert.equal(section.querySelector('[style]'),null,'the CSP forbids inline styles');
-    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/journey.js?v=p0j1'].map(part=>html.indexOf(part));
+    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/journey.js?v=ux1a'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'journey.js loads after i18n.js, app.js and pine-bridge.js');
-    assert.match(html,/styles-v2\.css\?v=p0j1/);assert.match(html,/i18n\.js\?v=p0j1/);
+    assert.match(html,/styles-v2\.css\?v=ux1a/);assert.match(html,/i18n\.js\?v=ux1a/);
   }finally{dom.window.close();}
 });
 
@@ -441,5 +441,33 @@ test('the readiness rows of step 3 and the journey page stay text only and trans
     const language=p.d.querySelector('#language');
     language.value='en';language.dispatchEvent(new p.w.Event('change'));await settle();
     assert.equal(rowsOf(p,3)['Readiness verdict'],'CAPABILITY_UNAVAILABLE');
+  }finally{p.w.close();}
+});
+
+// P1-UX1: the guided Bridge panel (id pbPanel, summary translated) takes over the reveal; journey.js only asks and falls back to a plain scroll.
+test('Open buttons of steps 1 and 2 ask the Bridge panel by its id to reveal its current step; only an unhandled request scrolls the whole panel',()=>{
+  const p=setup({language:'th',handler:answer(fixtures())});
+  try{
+    const {d}=p;
+    d.querySelector('[data-page="quant"]').insertAdjacentHTML('beforeend','<details id="pbPanel" class="panel"><summary>สร้าง Pine Bridge — ฉบับร่างเพื่อดูตัวอย่าง</summary></details>');
+    const panel=d.getElementById('pbPanel'),requests=[],scrolled=[];
+    panel.scrollIntoView=options=>scrolled.push(options);
+    panel.addEventListener('pb:reveal',event=>{requests.push({cancelable:event.cancelable,open:panel.open});event.preventDefault();});
+    for(const n of [1,2]){
+      panel.open=false;
+      p.card(n).querySelector('button.jr-open').click();
+      assert.equal(panel.open,true,'step '+n+' opens the panel although its summary is translated');
+    }
+    assert.deepEqual(requests,[{cancelable:true,open:true},{cancelable:true,open:true}],'the panel is already open when it is asked to reveal its step');
+    assert.equal(scrolled.length,0,'a handled request leaves the scrolling to the panel');
+    // Nothing handles the request: the whole panel scrolls into view as before.
+    const bare=setup({handler:answer(fixtures())});
+    try{
+      bare.d.querySelector('[data-page="quant"]').insertAdjacentHTML('beforeend','<details id="pbPanel"><summary>x</summary></details>');
+      const plain=bare.d.getElementById('pbPanel');let calls=0;plain.scrollIntoView=()=>{calls++;};
+      bare.card(1).querySelector('button.jr-open').click();assert.equal(plain.open,true);assert.equal(calls,1);
+      for(const n of [3,4,5,6]){plain.open=false;bare.card(n).querySelector('button.jr-open').click();assert.equal(plain.open,n<=2,'step '+n);}
+      assert.equal(calls,1,'only the Bridge steps scroll');
+    }finally{bare.w.close();}
   }finally{p.w.close();}
 });
