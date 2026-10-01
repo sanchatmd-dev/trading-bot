@@ -49,6 +49,19 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Latest checkpoint, 2026-10-01: the owner accepts staging downtime and the
+mode/database/privilege/admission effects, and authorizes Codex continuation
+with commit/push at significant checkpoints. The technical questions are no
+longer waiting for the owner to guess configuration values. Read-only staging
+discovery found a legacy schema with no foundation BACKFILL, missing resource
+policies and physical I/O limits, and different previous code roots across the
+three services. The [W7 prerequisite checkpoint](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md)
+records the immediate Roadmap action: review a separate prerequisite packet,
+establish rollback/configuration evidence and prepare foundation data before
+W7. The local 532-file blob export is verified; G1 is still open. No host
+mutation, W7 case, migration or deployment occurred in this discovery slice.
+This update supersedes earlier statements that only owner answers remain.
+
 The owner approved parallel local PF-2 engineering while QD-1/QS-1 runtime and
 I/O acceptance remain the primary work. The [PF-2 contract checkpoint](PF_2_CONTRACT_CHECKPOINT_2026-09-29.md)
 adds a hashed, development-only replay plan with frozen input/state references,

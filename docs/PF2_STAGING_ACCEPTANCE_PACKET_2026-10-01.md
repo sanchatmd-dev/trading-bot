@@ -1,5 +1,27 @@
 # PF-2 staging acceptance packet
 
+## Current execution amendment — 2026-10-01
+
+The owner accepts staging downtime and the mode/database/privilege/admission
+effects and authorizes Codex continuation with checkpoint commits/pushes.
+Execution may be delegated to the one root-designated operations agent; this
+supersedes the owner-typed-host-steps restriction in the original packet below.
+The root records the existing owner authority at each bounded dispatch; the
+accepted choices do not need to be requested again.
+
+Do not execute the original packet directly on the currently observed host.
+The [prerequisite checkpoint](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md)
+records missing foundation data and physical I/O controls, a different runtime
+role, different code roots per service, and Node argument-loaded environment
+files instead of the assumed systemd EnvironmentFile arrangement. Establish
+reviewed per-service rollback/configuration evidence and complete separate
+bootstrap gates before W7 re-entry. The original G1 record is not complete.
+The release remains `28d6f7e`; one attempt per case, Spot/Paper-only and the
+separate D6/R7 gates remain unchanged. The sections below retain the audited
+procedure and historical preparation status, subject to this amendment.
+
+## Original preparation record
+
 Status: prepared locally; not executed or approved as a release. The W7 diagnostic
 enqueue helper is ready for the release record (reviewed, fixed and pushed in
 `e6f0dff`; unchanged at `28d6f7e`, the planned release commit, whose later

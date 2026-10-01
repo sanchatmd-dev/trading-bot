@@ -1,5 +1,27 @@
 # Time Management — Project execution and data collection
 
+## Latest checkpoint — 2026-10-01: W7 prerequisite discovery
+
+The owner allows staging downtime at any time, accepts the mode/database/grant/
+admission effects, and authorizes continuing work with commit/push at important
+checkpoints. Read-only observations at approximately 09:48–09:52 UTC found that
+the existing staging environment needs a prerequisite bootstrap before W7:
+foundation tables/data, reviewed resource policies, physical I/O limits, and
+per-service rollback identities. See the [checkpoint](PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md).
+The 532-file release export was prepared and verified locally; no host mutation
+or W7 attempt occurred. Total engineering duration is not yet measured; do not
+change the 410–720-hour forecast or claim a speedup from this discovery.
+
+Codex usage at the bounded dispatch/checkpoint preparation: weekly 41% used,
+59% remaining; short window unavailable. Reserve 15 percentage points. One
+operations agent gathers live facts; one auditor reviews the prerequisite
+path. No new local regression suite is required for read-only discovery and
+documentation. Next: reviewed prerequisites, W7, D6, Roadmap R7. The owner
+availability question is closed, but current technical readiness is not.
+
+At integration, weekly usage was 42% used, 58% remaining; the short window
+remains unknown. The one-point shared change is not an exact agent cost.
+
 ## หน้าที่ของเอกสาร
 
 เอกสารหลักด้านเวลาและการจัดสรรงานของโครงการ ใช้ร่วมกับ [README](../README.md), [Context](../Context.md) และ [Roadmap](ROADMAP.md)

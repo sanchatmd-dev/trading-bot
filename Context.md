@@ -99,6 +99,14 @@ changed; token savings and memory quality have not been benchmarked.
 
 ## Purpose
 
+Latest continuation, 2026-10-01: the owner accepts staging downtime and the
+mode/database/privilege/admission effects and authorizes Codex to continue with
+checkpoint commits/pushes. Read-only staging discovery found missing foundation
+tables/data and resource policies, no physical worker I/O limit, and different
+previous code roots for the staging services. A reviewed prerequisite packet
+must precede W7; see the [current checkpoint](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md).
+The blob release is prepared locally, but no new staging mutation has occurred.
+
 The [2026-10-01 PF-2 continuation](docs/PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md)
 implements effective owner-wide holdout admission, worker/API wiring and measured
 PROFILE V2 enrollment with an immutable receipt. A local 10,000-bar test now runs

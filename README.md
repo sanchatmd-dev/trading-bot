@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต W7 วันที่ 2026-10-01: เจ้าของอนุมัติ downtime และผลกระทบของ staging พร้อมให้ Codex เดินงานและ commit/push ตาม checkpoint แล้ว การตรวจแบบอ่านอย่างเดียวพบว่าเครื่องยังขาด FOUNDATION/BACKFILL, resource policies และ physical I/O limits รวมทั้งต้องตรวจ rollback แยกแต่ละ service จึงต้องผ่าน prerequisite bootstrap ก่อน W7 ดู [checkpoint ล่าสุด](docs/PF2_W7_PREREQUISITE_CHECKPOINT_2026-10-01.md) ยังไม่มีการเปลี่ยน staging จากการตรวจรอบนี้
+
 ตลาดหลักที่เจ้าของยืนยันสำหรับเก็บข้อมูลและวิจัยคือ **BINANCE:BTCUSDT Spot 1m** ใช้ตลาดเดิมต่อ ตามขอบเขต source/settings ที่ตรวจแล้ว
 
 - **README นี้:** ภาพรวมโครงการ วิธีเริ่มใช้งานและขอบเขตผลิตภัณฑ์
