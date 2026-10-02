@@ -85,8 +85,9 @@
     rows.push(row('AI jobs',Object.entries(data.jobs?.by_status||{}).map(([status,count])=>status+' '+count).join(' · ')||T('None yet')));
     if(job){
       rows.push(row('Latest job',dash(job.operation)+' · '+dash(job.job_status)+' · '+utc(job.created_at)+(job.has_draft?' · '+T('draft returned'):'')));
+      // Tokens only: the screen never shows a price for an AI call, so the recorded cost_usd is not displayed.
       const usage=job.usage_summary;
-      rows.push(row('AI usage (latest job)',usage?tpl('{input} in / {output} out tokens · USD {cost}',{input:usage.input_tokens,output:usage.output_tokens,cost:usage.cost_usd}):T('Not recorded')));
+      rows.push(row('AI usage (latest job)',usage?tpl('{input} in / {output} out tokens',{input:usage.input_tokens,output:usage.output_tokens}):T('Not recorded')));
       if(job.diagnostic)rows.push(row('Diagnostic',job.diagnostic));
     }
     return {chip:live?chip('Live on staging','ok'):chip('Unavailable','bad'),rows};

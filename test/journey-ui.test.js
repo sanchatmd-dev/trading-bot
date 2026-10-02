@@ -86,9 +86,9 @@ test('index.html adds the journey nav right after Overview, a hidden page with t
     assert.equal(section.querySelector('.jr-banner p').textContent,BANNER);
     assert.ok(section.querySelector('#journeyRoot'));
     assert.equal(section.querySelector('[style]'),null,'the CSP forbids inline styles');
-    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/research-library.js?v=qr1a','/journey.js?v=rj1'].map(part=>html.indexOf(part));
+    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/research-library.js?v=qr1a','/journey.js?v=pa1'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'journey.js loads after i18n.js, app.js, pine-bridge.js and research-library.js');
-    assert.match(html,/styles-v2\.css\?v=qr1a/);assert.match(html,/i18n\.js\?v=nw1/);
+    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=pa1/);
   }finally{dom.window.close();}
 });
 
@@ -139,7 +139,9 @@ test('evidence comes from the API responses, with long hashes in wrapping contai
   try{
     await p.open();
     assert.deepEqual(rowsOf(p,1),{'AI provider':'openai-chat · gpt-4.1-mini','Analyzed sources':'2','Latest source':'My indicator · v1','Source hash':HASH_A,
-      'AI jobs':'FAILED 1 · SUCCEEDED 2','Latest job':'generate · SUCCEEDED · '+utc(fx.now-5*HOUR)+' · draft returned','AI usage (latest job)':'1200 in / 800 out tokens · USD 0.00176'});
+      'AI jobs':'FAILED 1 · SUCCEEDED 2','Latest job':'generate · SUCCEEDED · '+utc(fx.now-5*HOUR)+' · draft returned','AI usage (latest job)':'1200 in / 800 out tokens'});
+    // The API still reports the recorded cost, but the screen never shows a price for an AI call, in either language.
+    assert.doesNotMatch(p.d.querySelector('section[data-page="journey"]').textContent,/USD|0\.00176|\$\s*\d|dollar/i);
     assert.deepEqual(rowsOf(p,2),{'Latest research run':'3f2a9c1e','Source slots in run':'3','ATR multiplier grid':'1.5–3 (4 values)','RR grid':'1–2 (3 values)'});
     assert.deepEqual(rowsOf(p,3),{'Bot session':'SETUP','Paper accounts':'1','Bots':'2 / 5','Ready Bridge deployments':'1',
       'Latest ready deployment':'d1d1d1d1 · v1 · '+utc(fx.now-3*HOUR),'Snapshot hash':HASH_B});

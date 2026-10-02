@@ -15,6 +15,7 @@ export const SHARED_APPLICATION_FILES=Object.freeze([
   'src/postgres/db.js',
   'src/postgres/http.js',
   'src/postgres/ledger.js',
+  'src/postgres/pine-bridge-deployments.js',
   'src/postgres/pine-bridge-market.js',
   'src/postgres/pine-bridge-readiness.js',
   'src/postgres/pine-bridge-registry.js',

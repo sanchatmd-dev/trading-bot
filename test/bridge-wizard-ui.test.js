@@ -23,6 +23,7 @@ function makeApi(overrides={},bots=BOTS){
     calls.push({path,options});counts[path]=(counts[path]||0)+1;
     if(overrides[path])return overrides[path](options,counts[path]);
     if(path==='/api/bots')return {bots};
+    if(path==='/api/quant/pine-bridge/deployments')return {bot_id:options?.botId,deployments:[]};
     if(path==='/api/quant/pine-bridge/inspect')return {source_hash:ANALYSIS.source_hash,input_count:ANALYSIS.inputs.length,inputs:reviewFields(ANALYSIS)};
     if(path==='/api/quant/pine-bridge/analyze')return {job_id:'job-analyze'};
     if(path==='/api/quant/pine-bridge/generate')return {job_id:'job-generate'};
@@ -78,7 +79,9 @@ function setup({language,reduced=false,coarse=false,storage,seen,overrides,bots,
 
 test('index.html loads the guided panel assets with their cache tokens, kit before panel',()=>{
   const html=publicFile('index.html');
-  for(const part of ['/styles-v2.css?v=qr1a','/i18n.js?v=nw1','/bridge-wizard.js?v=ux1a','/pine-bridge.js?v=nw1','/journey.js?v=rj1'])assert.ok(html.includes(part),part);
+  for(const part of ['/styles-v2.css?v=pa1','/i18n.js?v=pa1','/bridge-wizard.js?v=ux1a','/pine-bridge.js?v=pa1','/journey.js?v=pa1'])assert.ok(html.includes(part),part);
+  // The Paper activation change touched these four files, so none may keep the token of the release before it.
+  assert.doesNotMatch(html,/(styles-v2\.css|i18n\.js|pine-bridge\.js|journey\.js)\?v=(nw1|rj1|qr1a)["']/,'the activation change gave the files it touched a new cache version');
   const order=['/i18n.js?v=','/app.js?v=','/bridge-wizard.js?v=','/pine-bridge.js?v=','/readiness.js?v=','/journey.js?v='].map(part=>html.indexOf(part));
   assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'load order');
   assert.ok(!/bridge2/.test(html),'the old Bridge token is gone');
@@ -586,7 +589,7 @@ test('the scripts stay free of markup injection, inline styles and new endpoints
   assert.equal(bridge.split('innerHTML').length-1,1,'one static template and nothing else');assert.equal(kit.includes('innerHTML'),false);
   assert.equal(bridge.includes('localStorage'),false,'only the kit stores anything');assert.equal(kit.split('localStorage').length-1,2,'one read and one write, both inside try');
   assert.ok(/try\{const list=JSON\.parse\(localStorage/.test(kit)&&/try\{localStorage\.setItem/.test(kit));
-  assert.deepEqual([...new Set([...bridge.matchAll(/'(\/api\/[^']*)'/g)].map(match=>match[1]))].sort(),['/api/bots','/api/quant/pine-bridge/','/api/quant/pine-bridge/captures/','/api/quant/pine-bridge/deployments/','/api/quant/pine-bridge/inspect','/api/quant/pine-bridge/jobs/']);
+  assert.deepEqual([...new Set([...bridge.matchAll(/'(\/api\/[^']*)'/g)].map(match=>match[1]))].sort(),['/api/bots','/api/quant/pine-bridge/','/api/quant/pine-bridge/captures/','/api/quant/pine-bridge/deployments','/api/quant/pine-bridge/deployments/','/api/quant/pine-bridge/inspect','/api/quant/pine-bridge/jobs/']);
 });
 
 test('without the kit the panel still works as plain stacked steps and shows the relock notice itself',async()=>{
@@ -641,5 +644,25 @@ test('a code or input type that equals an inherited object key (constructor) get
     p.submit(el('pbAnalyze'));await p.until(()=>!el('pbwFail').hidden,'failure card');
     assert.equal(el('pbwFailCode').textContent,'constructor');
     assert.equal(el('pbwFailWhy').textContent,'The job did not finish. Nothing was generated. Trying again starts a new AI call.');
+  }finally{p.close();}
+});
+
+test('the drafts list is read when the Bots load and again after Generate, so the new draft can be activated; the six steps do not depend on it',async()=>{
+  const LIST='/api/quant/pine-bridge/deployments',failing=setup({overrides:{[LIST]:async()=>{throw apiError('PINE_BRIDGE_DISABLED','Disabled');}}});
+  try{
+    // A list that cannot be read changes nothing in the six steps: the only Bot is chosen, so step 2 is current, as without a list.
+    await failing.openPanel();await failing.until(()=>/Code: PINE_BRIDGE_DISABLED/.test(failing.el('pbDeployStatus').textContent),'list failure shown');
+    assert.deepEqual(failing.states(),['done','current','locked','locked','locked','locked']);assert.equal(failing.el('pbStatus').textContent,'');
+  }finally{failing.close();}
+  const p=setup();
+  try{
+    const reads=()=>p.calls.filter(call=>call.path===LIST);
+    await p.advance(5);
+    await p.until(()=>reads().length===1,'read once the Bots loaded');
+    assert.equal(reads()[0].options.botId,'bot-1');
+    p.submit(p.el('pbGenerate'));await p.until(()=>p.states()[5]==='current','generated');
+    await p.until(()=>reads().length===2,'read again after Generate');
+    assert.equal(p.calls.filter(call=>call.options?.method==='POST'&&/activate$/.test(call.path)).length,0,'generating never activates');
+    assert.deepEqual(p.errors,[]);
   }finally{p.close();}
 });

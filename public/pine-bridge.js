@@ -48,6 +48,26 @@
       <button id="pbGenerateButton" class="primary" type="submit" data-ui-label="Generate draft and setup guide"></button>${note(COST)}</form>`)}
     ${step(6,'Install in TradingView','Replace the script in TradingView and create the Bridge alert.',`<div id="pbDownloads"></div>`)}
     </div>
+    <section id="pbDeploy" class="pbw-deploy" aria-labelledby="pbDeployTitle">
+      <h3 id="pbDeployTitle" class="pbw-deploy-title" data-ui-label="Drafts and deployments of this Bot"></h3>
+      ${note('Only a draft can be activated. Activating makes it the READY Bridge of this Bot for Paper trading. Nothing is activated automatically.')}
+      <button id="pbDeployRefresh" class="ghost" type="button" data-ui-label="Refresh list"></button>
+      <p id="pbDeployStatus" class="pbw-status" role="status" aria-live="polite"></p>
+      <div id="pbDeployDone" class="pbw-done" role="status" tabindex="-1" hidden></div>
+      <div id="pbDeployFail" class="pbw-fail" role="alert" tabindex="-1" hidden></div>
+      <ul id="pbDeployList" class="pbw-deploy-list"></ul>
+    </section>
+    <dialog id="pbActivateDialog" class="pbw-dialog" aria-labelledby="pbActivateTitle">
+      <h3 id="pbActivateTitle" data-ui-label="Activate this draft for Paper?"></h3>
+      <p id="pbActivateWhich" class="pbw-note"></p>
+      <ul class="pbw-points">
+        <li data-ui-label="This draft becomes the READY Bridge of this Bot for Paper trading. No real orders are sent."></li>
+        <li data-ui-label="The READY Bridge of this Bot now, if there is one, becomes EXIT_ONLY. It only closes open positions."></li>
+        <li data-ui-label="The Bot must be in SETUP, RUNNING or PAUSED. A stopped Bot cannot be activated."></li>
+        <li id="pbActivateAlert"></li>
+      </ul>
+      <div class="pbw-actions"><button id="pbActivateCancel" class="ghost" type="button" data-ui-label="Cancel"></button><button id="pbActivateConfirm" class="primary" type="button" data-ui-label="Activate for Paper"></button></div>
+    </dialog>
     <details id="pbReport" class="pbw-report" hidden><summary data-ui-label="Analysis report (not Pine code)"></summary>${note('Technical details from the AI. Do not paste this into TradingView.')}<pre id="pbDiagnostics"></pre></details>`;
   host.append(panel);
   const el=id=>document.getElementById(id);
@@ -189,6 +209,7 @@
     state.epoch++;clearTimeout(state.timer);state.editing=null;state.loading=false;state.fingerprint='';state.failed.clear();wizard?.hideCoach();clearNotice();
     invalidateInspection();state.job=null;state.bot=null;state.requests.clear();state.urls.forEach(URL.revokeObjectURL);state.urls=[];
     el('pbSource').value='';el('pbStrategyHint').hidden=true;el('pbBot').replaceChildren();setReport('');setBusy(false);status('');
+    resetDeployments();
   }
   document.getElementById('logout')?.addEventListener('click',clearPrivateState);
   document.getElementById('language')?.addEventListener('change',()=>sync());
@@ -287,6 +308,7 @@
       el('pbBot').value=pick;
       if(!bots.length)status(T('No Bots found. Create one in Bot Manager first.'));
       if(pick!==keep)invalidateInspection(true);
+      loadDeployments();
     }catch(e){if(epoch===state.epoch)status(e.message);}
     finally{
       if(epoch===state.epoch){
@@ -297,6 +319,144 @@
     }
   }
   el('pbLoadBots').addEventListener('click',()=>{if(!state.busy)loadBots();});
+  // Drafts and deployments of the selected Bot. Activating a draft for Paper needs one explicit confirmation.
+  // Rows, messages and error texts are set with textContent only; API data never becomes markup.
+  const DEPLOY_STATE={DRAFT:'Draft',READY:'Ready',EXIT_ONLY:'Exit only',REVOKED:'Revoked'};
+  const DEPLOY_ID=/^[a-f0-9-]{36}$/;
+  const CHANGED='Risk settings, capital or the Pine source changed after this draft was generated. Generate a new draft and activate that one.';
+  const BAD_EVIDENCE='The recorded evidence for this draft is failed or incomplete. Ask your administrator to review it.';
+  const NOT_ACTIVATED='The deployment was not activated. Refresh the list to see its current state.';
+  // Plain explanations for the codes that activating can end with. Any other code gets the generic text and the server text.
+  const ACTIVATE_WHY={
+    NOT_FOUND:'This deployment was not found for this Bot. Refresh the list.',
+    DEPLOYMENT_REPLACED:'This deployment was already replaced or revoked, so it cannot be activated. Generate a new draft if you need one.',
+    MULTI_PINE_REQUIRES_APP_3B:'Activation needs exactly one connected Pine source on this Bot. Several Pine sources on one Bot are not supported yet.',
+    BOT_STOPPED:'Start the Bot (Run) first. A stopped Bot must be reset in Bot Manager before it can run. Then try again.',
+    RISK_EXCEEDS_POLICY:'The Bridge risk exceeds the Risk policy of this Bot (Max risk / trade). Adjust the Risk settings, then generate a new draft.',
+    STALE_MEMBERSHIP:CHANGED,STALE_POLICY:CHANGED,STALE_CAPITAL:CHANGED,STALE_EVIDENCE:CHANGED,
+    BRIDGE_EXECUTION_EVIDENCE_REQUIRED:'No Paper evidence is recorded for this draft yet. An administrator records it after the checks. Ask your administrator, then try again.',
+    BRIDGE_EVIDENCE_FAILED:BAD_EVIDENCE,BRIDGE_EVIDENCE_INCOMPLETE:BAD_EVIDENCE,
+    RETRY_TRANSACTION:'Another update was running at the same time. Nothing was changed. Try again.'
+  };
+  // The alert reminder names the path of the Bridge webhook only. The webhook secret stays in Account and License.
+  const AFTER='After activation, in TradingView, point the alert of this script to the Bridge webhook URL: {url} followed by the webhook secret of this Bot (Account and License → Current webhook, the part after /webhooks/tradingview/). Do not use the capture URL.';
+  const NEXT='Next, in TradingView, point the alert of this script to the Bridge webhook URL: {url} followed by the webhook secret of this Bot (Account and License → Current webhook, the part after /webhooks/tradingview/). Do not use the capture URL.';
+  const dep={items:null,loading:false,failure:'',bot:'',token:0,pending:null,activating:false,result:null};
+  const dialog=el('pbActivateDialog');
+  const openDialog=()=>{if(dialog.open)return;if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');};
+  const closeDialog=()=>{if(!dialog.open)return;if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');};
+  const utcText=ms=>{const date=new Date(ms);return Number.isFinite(ms)&&!Number.isNaN(date.getTime())?date.toISOString().slice(0,19).replace('T',' ')+' UTC':'—';};
+  const shortId=id=>String(id).slice(0,8);
+  const setLabel=(node,text)=>{node.dataset.uiLabel=text;node.textContent=T(text);return node;};
+  const webhookUrl=()=>location.origin+'/webhooks/pine-bridge/v2/';
+  function detailsOf(item){
+    const market=item.market&&typeof item.market==='object'?[item.market.broker,item.market.symbol,item.market.timeframe].filter(part=>typeof part==='string'&&part).join(' '):'';
+    return [typeof item.source_name==='string'?item.source_name:'',Number.isSafeInteger(item.source_version)?'v'+item.source_version:'',market,utcText(item.created_at)].filter(Boolean).join(' · ');
+  }
+  function deployRow(item){
+    const row=document.createElement('li'),head=document.createElement('div'),id=document.createElement('code'),chip=document.createElement('span'),meta=document.createElement('p');
+    row.className='pbw-deploy-row';row.dataset.state=item.state;row.dataset.deploymentId=item.deployment_id;
+    head.className='pbw-head';id.className='pbw-deploy-id';id.textContent=shortId(item.deployment_id);chip.className='pbw-state';
+    const known=own(DEPLOY_STATE,item.state);
+    if(known)setLabel(chip,known);else chip.textContent=item.state;
+    head.append(id,chip);meta.className='pbw-deploy-meta';meta.textContent=detailsOf(item);row.append(head,meta);
+    if(item.state==='DRAFT'){
+      const button=setLabel(document.createElement('button'),'Activate for Paper');
+      button.type='button';button.className='primary pbw-activate';button.dataset.deploymentId=item.deployment_id;
+      button.setAttribute('aria-label',T('Activate for Paper')+' '+shortId(item.deployment_id));button.disabled=dep.activating;
+      row.append(button);
+    }
+    return row;
+  }
+  function renderDeploy(){
+    el('pbDeployStatus').textContent=!dep.bot?T('Select a Bot to see its drafts and deployments.'):dep.loading?T('Loading…'):dep.failure?tpl('The list could not be loaded. Use Refresh list to try again. Code: {code}',{code:dep.failure}):dep.items&&!dep.items.length?T('No drafts or deployments for this Bot yet. Generate a draft in the steps above.'):'';
+    el('pbDeployList').replaceChildren(...(dep.items??[]).map(deployRow));
+    el('pbDeployRefresh').disabled=!dep.bot||dep.loading||dep.activating;
+  }
+  function renderDialog(){
+    const item=dep.pending?.item;
+    el('pbActivateWhich').textContent=item?T('Draft')+' '+shortId(item.deployment_id)+' · '+detailsOf(item):'';
+    el('pbActivateAlert').textContent=tpl(AFTER,{url:webhookUrl()});
+    setLabel(el('pbActivateConfirm'),dep.activating?'Activating…':'Activate for Paper');
+    el('pbActivateConfirm').disabled=el('pbActivateCancel').disabled=dep.activating;
+  }
+  const activateWhy=error=>{
+    const known=own(ACTIVATE_WHY,error.code),detail=typeof error.message==='string'&&error.message&&error.message!==error.code?' '+error.message:'';
+    return known?T(known):T(NOT_ACTIVATED)+detail;
+  };
+  // The outcome of the last activation: a success card with the alert reminder, or a failure card with the code and its plain meaning.
+  function renderResult(){
+    const done=el('pbDeployDone'),fail=el('pbDeployFail'),result=dep.result;
+    done.replaceChildren();fail.replaceChildren();done.hidden=!result||!result.ok;fail.hidden=!result||result.ok;
+    if(!result)return;
+    if(result.ok){
+      const title=setLabel(document.createElement('p'),'Activated'),which=document.createElement('p'),next=document.createElement('p'),close=setLabel(document.createElement('button'),'Close');
+      title.className='pbw-done-title';which.textContent=tpl('Draft {id} is now the READY Bridge of this Bot for Paper trading.',{id:shortId(result.id)});
+      next.textContent=tpl(NEXT,{url:webhookUrl()});close.type='button';close.className='ghost';
+      done.append(title,which,next,close);
+      return;
+    }
+    const title=setLabel(document.createElement('p'),'Activation did not complete'),codeLine=document.createElement('p'),code=document.createElement('code'),why=document.createElement('p');
+    title.className='pbw-fail-title';codeLine.className='pbw-fail-code';why.className='pbw-fail-why';
+    code.textContent=String(result.error.code||result.error.status||'REQUEST_FAILED');why.textContent=activateWhy(result.error);
+    codeLine.append(setLabel(document.createElement('span'),'Code'),': ',code);
+    fail.append(title,codeLine,why);
+  }
+  async function loadDeployments(){
+    const bot=el('pbBot').value,token=++dep.token,epoch=state.epoch;
+    if(bot!==dep.bot)dep.items=null;
+    dep.bot=bot;dep.failure='';
+    if(!bot){dep.loading=false;renderDeploy();return;}
+    dep.loading=true;renderDeploy();
+    try{
+      const answer=await api('/api/quant/pine-bridge/deployments',{botId:bot,silent:true});
+      if(token!==dep.token||epoch!==state.epoch)return;
+      if(!Array.isArray(answer?.deployments))throw Object.assign(new Error('unexpected answer'),{code:'UNEXPECTED_ANSWER'});
+      dep.items=answer.deployments.filter(item=>item&&typeof item==='object'&&typeof item.deployment_id==='string'&&DEPLOY_ID.test(item.deployment_id)&&typeof item.state==='string');
+    }catch(error){
+      if(token!==dep.token||epoch!==state.epoch)return;
+      if(error.status===401){clearPrivateState();return;}
+      dep.items=null;dep.failure=String(error.code||error.status||'REQUEST_FAILED');
+    }
+    dep.loading=false;renderDeploy();
+  }
+  function resetDeployments(){
+    dep.token++;dep.items=null;dep.loading=false;dep.failure='';dep.bot='';dep.pending=null;dep.activating=false;dep.result=null;
+    closeDialog();renderDialog();renderDeploy();renderResult();
+  }
+  el('pbDeployRefresh').addEventListener('click',()=>{if(!dep.activating)loadDeployments();});
+  el('pbBot').addEventListener('change',()=>{dep.result=null;renderResult();loadDeployments();});
+  // A row button only opens the confirmation. Nothing is activated before the owner confirms there.
+  el('pbDeployList').addEventListener('click',event=>{
+    const button=event.target.closest?.('.pbw-activate');if(!button||dep.activating)return;
+    const item=(dep.items??[]).find(row=>row.deployment_id===button.dataset.deploymentId&&row.state==='DRAFT');
+    if(!item)return;
+    dep.pending={id:item.deployment_id,bot:dep.bot,item};dep.result=null;renderResult();renderDialog();openDialog();
+  });
+  el('pbDeploy').addEventListener('click',event=>{if(event.target.closest?.('.pbw-done button')){dep.result=null;renderResult();}});
+  el('pbActivateCancel').addEventListener('click',()=>{if(dep.activating)return;dep.pending=null;closeDialog();});
+  dialog.addEventListener('cancel',event=>{if(dep.activating)event.preventDefault();});
+  dialog.addEventListener('close',()=>{if(!dep.activating)dep.pending=null;});
+  el('pbActivateConfirm').addEventListener('click',async()=>{
+    const target=dep.pending;if(!target||dep.activating)return;
+    const epoch=state.epoch;dep.activating=true;renderDialog();renderDeploy();
+    let result;
+    try{
+      await api('/api/quant/pine-bridge/deployments/'+target.id+'/activate',{method:'POST',botId:target.bot,silent:true,body:'{}'});
+      result={ok:true,id:target.id};
+    }catch(error){
+      if(epoch!==state.epoch)return;
+      if(error.status===401){clearPrivateState();return;}
+      result={ok:false,id:target.id,error};
+    }
+    if(epoch!==state.epoch)return;
+    dep.activating=false;dep.pending=null;dep.result=result;
+    closeDialog();renderDialog();renderResult();
+    (result.ok?el('pbDeployDone'):el('pbDeployFail')).focus();
+    await loadDeployments();
+  });
+  document.getElementById('language')?.addEventListener('change',()=>{renderDeploy();renderDialog();renderResult();});
+  renderDeploy();renderDialog();renderResult();
   function duplicates(){const selects=[...el('pbSlots').querySelectorAll('select')],used=new Set(selects.map(s=>s.value).filter(Boolean));for(const select of selects)for(const o of select.options)o.disabled=!!o.value&&o.value!==select.value&&used.has(o.value);}
   function showAnalysis(result,job) {
     state.source={id:job.pine_import_id,version:job.source_version,result};state.bot=el('pbBot').value;state.draft=null;
@@ -350,6 +510,7 @@
         el('pbDownloads').append(url,refresh,close,resultBox);await check();
       }catch(error){if(epoch===state.epoch){status(error.message);capture.disabled=false;}}
     });
+    loadDeployments();
     sync();
   }
   async function poll(){

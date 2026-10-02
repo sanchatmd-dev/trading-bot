@@ -5,6 +5,7 @@ import {readJson} from './http.js';
 import {membershipSnapshot,effectiveInputs,invalidateEntries,setMembership} from './pine-bridge-registry.js';
 import {reviewFields,reviewedInputs} from '../pine-bridge/input-review.js';
 import {activateDeployment} from './pine-bridge-readiness.js';
+import {listDeployments,deploymentListBot} from './pine-bridge-deployments.js';
 import {createCapture,captureStatus} from './pine-capture.js';
 import {enforceAiQuota} from './ai-quota.js';
 
@@ -111,6 +112,10 @@ export async function pineBridgeRoutes(req,res,url,actor,service,json,{enabled=f
   const operation=url.pathname.slice(base.length);
   if(operation==='inspect'&&req.method==='POST'){
     json(res,200,await service.inspect(actor.id,await readJson(req)));return true;
+  }
+  // Read-only list of one Bot's deployments, so a stored DRAFT can be activated from the web UI.
+  if(operation==='deployments'&&req.method==='GET'){
+    json(res,200,await listDeployments(service,actor.id,deploymentListBot(url)));return true;
   }
   const capture=operation.match(/^deployments\/([a-f0-9-]{36})\/capture$/);
   const session=operation.match(/^captures\/([a-f0-9-]{36})(\/close)?$/);

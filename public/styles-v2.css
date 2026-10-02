@@ -417,6 +417,29 @@ table{table-layout:fixed}th,td{white-space:normal;overflow-wrap:anywhere;vertica
 @keyframes pbw-pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes pbw-slide{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
 #pbPanel .pbw-pulse{animation:pbw-pulse .8s ease-out 2}
+/* Drafts and deployments of the selected Bot: list, Paper activation confirmation and outcome cards. */
+#pbPanel .pbw-deploy{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#0a1727;min-width:0}
+#pbPanel .pbw-deploy-title{margin:0;font-size:15px;overflow-wrap:anywhere}
+#pbPanel .pbw-deploy-list{display:grid;gap:8px;margin:10px 0 0;padding:0;list-style:none;min-width:0}
+#pbPanel .pbw-deploy-row{min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#08131f}
+#pbPanel .pbw-deploy-row[data-state="DRAFT"]{border-color:var(--cyan)}
+#pbPanel .pbw-deploy-row[data-state="READY"]{border-color:#37d59a55}
+#pbPanel .pbw-deploy-id{overflow-wrap:anywhere}
+#pbPanel .pbw-state{display:inline-flex;align-items:center;max-width:100%;padding:3px 10px;border:1px solid var(--line);border-radius:999px;background:#182a42;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+#pbPanel .pbw-deploy-row[data-state="DRAFT"] .pbw-state{background:#0d3b45;color:#7ff0e6;border-color:#36d6ca66}
+#pbPanel .pbw-deploy-row[data-state="READY"] .pbw-state{background:#123e34;color:#63e5b0;border-color:#37d59a55}
+#pbPanel .pbw-deploy-meta{margin:6px 0 0;font-size:13px;overflow-wrap:anywhere}
+#pbPanel .pbw-done{display:grid;gap:6px;margin-top:10px;padding:10px 12px;border:1px solid #37d59a55;border-radius:10px;background:#0b2a20;color:#c6f6e0}
+#pbPanel .pbw-done p{margin:0;overflow-wrap:anywhere}
+#pbPanel .pbw-done-title{font-weight:700}
+#pbPanel .pbw-done>button{justify-self:start}
+#pbPanel .pbw-deploy .pbw-fail{margin-top:10px}
+#pbPanel .pbw-dialog h3{margin:0 0 8px;font-size:17px;overflow-wrap:anywhere}
+#pbPanel .pbw-points{display:grid;gap:8px;margin:12px 0 0;padding-left:22px;font-size:14px;line-height:1.55}
+#pbPanel .pbw-points li{overflow-wrap:anywhere}
+#pbPanel .pbw-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:18px}
+#pbPanel .pbw-actions .primary{margin-top:0}
+@media(max-width:600px){#pbPanel .pbw-dialog{padding:16px}#pbPanel .pbw-deploy{padding:10px}}
 /* Reduced motion: no transitions, no pulse, no moving bar. Coach marks still appear, without the pop. */
 @media(prefers-reduced-motion:reduce){#pbPanel *,#pbPanel *::before,#pbPanel *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}#pbPanel .pbw-bar span{width:100%;opacity:.45}}
 #pbPanel[data-motion="reduced"] *,#pbPanel[data-motion="reduced"] *::before,#pbPanel[data-motion="reduced"] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}

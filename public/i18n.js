@@ -148,7 +148,7 @@ const journeyPairs=[
   ['Bridge is disabled on this release.','Bridge ถูกปิดในรุ่นนี้'],
   ['AI provider','ผู้ให้บริการ AI'],['Analyzed sources','ซอร์สที่วิเคราะห์แล้ว'],['Latest source','ซอร์สล่าสุด'],['Source hash','Hash ของซอร์ส'],
   ['AI jobs','งาน AI'],['Latest job','งานล่าสุด'],['AI usage (latest job)','การใช้ AI (งานล่าสุด)'],
-  ['{input} in / {output} out tokens · USD {cost}','Token เข้า {input} / ออก {output} · USD {cost}'],['Diagnostic','ข้อมูลวินิจฉัย'],
+  ['{input} in / {output} out tokens','Token เข้า {input} / ออก {output}'],['Diagnostic','ข้อมูลวินิจฉัย'],
   ['Latest research run','การรันวิจัยล่าสุด'],['Source slots in run','Slot ซอร์สในการรัน'],['ATR multiplier grid','ตารางค่า ATR multiplier'],['RR grid','ตารางค่า RR'],
   ['{min}–{max} ({count} values)','{min}–{max} ({count} ค่า)'],
   ['Numeric inputs','Input ตัวเลข'],['Eligible numeric inputs','Input ตัวเลขที่ใช้ได้'],['Input review confirmed','ยืนยันการตรวจ Input แล้ว'],['Selected source slots','Slot ซอร์สที่เลือก'],
@@ -379,6 +379,37 @@ const bridgeWizardPairs=[
   ['Next: download bridge-draft.pine, then replace the whole script in TradingView.','ถัดไป: ดาวน์โหลด bridge-draft.pine แล้ว "แทนที่" สคริปต์ทั้งหมดใน TradingView']
 ];
 uiPairs.push(...bridgeWizardPairs);
+// Drafts and deployments of a Bot, the Paper activation confirmation and its outcome (Build Pine Bridge panel).
+// One named block so a test can prove these pairs stay unique and complete. The Thai wording is a proposal for owner review.
+const bridgeActivatePairs=[
+  ['Drafts and deployments of this Bot','ฉบับร่างและ Deployment ของ Bot นี้'],
+  ['Only a draft can be activated. Activating makes it the READY Bridge of this Bot for Paper trading. Nothing is activated automatically.','เปิดใช้งานได้เฉพาะฉบับร่างเท่านั้น การเปิดใช้งานจะทำให้ฉบับร่างนั้นเป็น Bridge ที่ READY ของ Bot นี้สำหรับการเทรดแบบ Paper ระบบจะไม่เปิดใช้งานให้อัตโนมัติ'],
+  ['Refresh list','รีเฟรชรายการ'],
+  ['Select a Bot to see its drafts and deployments.','เลือก Bot เพื่อดูฉบับร่างและ Deployment'],
+  ['No drafts or deployments for this Bot yet. Generate a draft in the steps above.','Bot นี้ยังไม่มีฉบับร่างหรือ Deployment ให้สร้างฉบับร่างในขั้นตอนด้านบน'],
+  ['The list could not be loaded. Use Refresh list to try again. Code: {code}','โหลดรายการไม่ได้ กดรีเฟรชรายการเพื่อลองอีกครั้ง รหัส: {code}'],
+  ['Draft','ฉบับร่าง'],['Ready','พร้อมใช้งาน'],['Exit only','ปิดสถานะเท่านั้น'],['Revoked','ถูกเพิกถอน'],
+  ['Activate for Paper','เปิดใช้งานสำหรับ Paper'],['Activating…','กำลังเปิดใช้งาน…'],
+  ['Activate this draft for Paper?','เปิดใช้งานฉบับร่างนี้สำหรับ Paper หรือไม่?'],
+  ['This draft becomes the READY Bridge of this Bot for Paper trading. No real orders are sent.','ฉบับร่างนี้จะกลายเป็น Bridge ที่ READY ของ Bot นี้สำหรับการเทรดแบบ Paper ไม่มีการส่งคำสั่งจริง'],
+  ['The READY Bridge of this Bot now, if there is one, becomes EXIT_ONLY. It only closes open positions.','Bridge ที่ READY ของ Bot นี้ในตอนนี้ (ถ้ามี) จะเปลี่ยนเป็น EXIT_ONLY และทำได้เฉพาะปิดสถานะที่เปิดอยู่'],
+  ['The Bot must be in SETUP, RUNNING or PAUSED. A stopped Bot cannot be activated.','Bot ต้องอยู่ในสถานะ SETUP, RUNNING หรือ PAUSED Bot ที่หยุดอยู่เปิดใช้งานไม่ได้'],
+  ['After activation, in TradingView, point the alert of this script to the Bridge webhook URL: {url} followed by the webhook secret of this Bot (Account and License → Current webhook, the part after /webhooks/tradingview/). Do not use the capture URL.','หลังเปิดใช้งาน ให้ตั้ง Alert ของสคริปต์นี้ใน TradingView ให้ส่งไปที่ Bridge webhook URL: {url} ตามด้วยรหัสลับ Webhook ของ Bot นี้ (บัญชีและ License → Webhook ปัจจุบัน ส่วนที่อยู่หลัง /webhooks/tradingview/) อย่าใช้ URL ของ Capture'],
+  ['Draft {id} is now the READY Bridge of this Bot for Paper trading.','ฉบับร่าง {id} เป็น Bridge ที่ READY ของ Bot นี้สำหรับการเทรดแบบ Paper แล้ว'],
+  ['Next, in TradingView, point the alert of this script to the Bridge webhook URL: {url} followed by the webhook secret of this Bot (Account and License → Current webhook, the part after /webhooks/tradingview/). Do not use the capture URL.','ถัดไป ให้ตั้ง Alert ของสคริปต์นี้ใน TradingView ให้ส่งไปที่ Bridge webhook URL: {url} ตามด้วยรหัสลับ Webhook ของ Bot นี้ (บัญชีและ License → Webhook ปัจจุบัน ส่วนที่อยู่หลัง /webhooks/tradingview/) อย่าใช้ URL ของ Capture'],
+  ['Activation did not complete','เปิดใช้งานไม่สำเร็จ'],
+  ['The deployment was not activated. Refresh the list to see its current state.','ไม่ได้เปิดใช้งาน Deployment นี้ กดรีเฟรชรายการเพื่อดูสถานะล่าสุด'],
+  ['This deployment was not found for this Bot. Refresh the list.','ไม่พบ Deployment นี้ใน Bot นี้ กดรีเฟรชรายการ'],
+  ['This deployment was already replaced or revoked, so it cannot be activated. Generate a new draft if you need one.','Deployment นี้ถูกแทนที่หรือเพิกถอนไปแล้ว จึงเปิดใช้งานไม่ได้ หากต้องการให้สร้างฉบับร่างใหม่'],
+  ['Activation needs exactly one connected Pine source on this Bot. Several Pine sources on one Bot are not supported yet.','การเปิดใช้งานต้องมีซอร์ส Pine ที่เชื่อมต่ออยู่ใน Bot นี้พอดีหนึ่งรายการ ยังไม่รองรับหลายซอร์ส Pine ใน Bot เดียว'],
+  ['Start the Bot (Run) first. A stopped Bot must be reset in Bot Manager before it can run. Then try again.','เริ่มให้ Bot ทำงานก่อน (กด Run) หาก Bot หยุดอยู่ ต้องกด Reset ใน Bot Manager ก่อนจึงจะ Run ได้ แล้วลองอีกครั้ง'],
+  ['The Bridge risk exceeds the Risk policy of this Bot (Max risk / trade). Adjust the Risk settings, then generate a new draft.','ความเสี่ยงของ Bridge เกินนโยบาย Risk ของ Bot นี้ (ความเสี่ยงสูงสุดต่อเทรด) ปรับการตั้งค่า Risk แล้วสร้างฉบับร่างใหม่'],
+  ['Risk settings, capital or the Pine source changed after this draft was generated. Generate a new draft and activate that one.','การตั้งค่า Risk ทุน หรือซอร์ส Pine เปลี่ยนไปหลังสร้างฉบับร่างนี้ ให้สร้างฉบับร่างใหม่แล้วเปิดใช้งานฉบับนั้น'],
+  ['No Paper evidence is recorded for this draft yet. An administrator records it after the checks. Ask your administrator, then try again.','ยังไม่มีการบันทึกหลักฐาน Paper ของฉบับร่างนี้ ผู้ดูแลระบบจะบันทึกหลังตรวจสอบเสร็จ ให้แจ้งผู้ดูแลระบบแล้วลองอีกครั้ง'],
+  ['The recorded evidence for this draft is failed or incomplete. Ask your administrator to review it.','หลักฐานที่บันทึกไว้ของฉบับร่างนี้ไม่ผ่านหรือไม่ครบ ให้แจ้งผู้ดูแลระบบตรวจสอบ'],
+  ['Another update was running at the same time. Nothing was changed. Try again.','มีการอัปเดตอื่นทำงานพร้อมกัน ไม่มีการเปลี่ยนแปลงใดๆ ลองอีกครั้ง']
+];
+uiPairs.push(...bridgeActivatePairs);
 // PF-4 Risk proposals (Risk manager panel). One named block so a test can prove these pairs stay unique and complete.
 const pf4Pairs=[
   ['Risk proposal','ข้อเสนอ Risk'],['Deterministic and explained. Nothing is saved until you confirm.','คำนวณแบบกำหนดแน่นอนและอธิบายได้ ไม่มีการบันทึกจนกว่าคุณจะยืนยัน'],
