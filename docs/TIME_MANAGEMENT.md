@@ -1,5 +1,14 @@
 # Time Management — Project execution and data collection
 
+## QR-1 Research Library — 2026-10-02 07:44 UTC (Claude root)
+
+- **Build:** coder about 67 minutes against a 150-minute budget, plus a fix round of about 11 minutes.
+- **Verification:** independent tester about 30 minutes plus a 10-minute re-check; root review and test runs about 30 minutes.
+- **Release:** preparation about 45 minutes; the live switch about 2 minutes, plus checks up to ten minutes later.
+- **Usage:** the 5-hour window reached 72% before its 05:50 UTC reset and 19% after it; the weekly window reached 68%, with no reserve breach. Weekly use stays near 3 points per hour with two agents, so the remaining P1 slices need careful selection.
+- **P1-E:** the QR-1 view and the minimum comparison run on staging; owner acceptance waits for P1-F.
+- **Total:** the total P1 estimate is unchanged.
+
 ## PF-4 staging release — 2026-10-02 05:02 UTC (Claude root)
 
 - **Release prep:** about 56 minutes against a 45-minute budget, because of a slow mock harness and one full re-run. The harness passed 89 checks.
@@ -753,6 +762,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-10-02 | QR-1 คลังผลการวิจัย (Research Library) commit `f36181c` (CI 9/9) และขึ้น staging API กับ trading worker: แสดงทุกการรันของเจ้าของแยกตามผล, รายละเอียดพร้อมที่มาและการตรวจว่าข้อมูลไม่ถูกแก้ไข, เปรียบเทียบได้เฉพาะการรันที่บริบทตรงกัน, ยังไม่มีผลที่ผ่านเกณฑ์; tester อิสระตรวจในเบราว์เซอร์จริง 1280/375 px และ API 142 รายการ, แก้ UI 5 จุดแล้วตรวจซ้ำผ่าน; สลับ release 10 ขั้นผ่านทั้งหมด รวมตรวจสุขภาพ Window 2 และตรวจหลัง 10 นาที; ไฟล์ที่เสิร์ฟตรงกับ commit 9/9 | Staging เท่านั้น; research worker ยังอยู่ `3309d07`; ไม่มี migration, research job หรือ production
 | 2026-10-02 | staging release `b2f0bae` (แผงเสนอค่า Risk ของ PF-4) ขึ้น staging API และ trading worker; ต่างจาก `3309d07` เฉพาะโค้ด PF-4, เทสต์ และเอกสาร 18 path, ไฟล์ engine 78 ไฟล์ตรงกันทุกไบต์; เครื่องมือสลับ v4 ผ่าน mock 89 รายการ และมีตัวครอบด่าน reload ที่ยอมรับเฉพาะ drop-in FOUNDATION ของ research worker ที่ pin ไว้; สลับจริง 8 ขั้นผ่านในราว 2 นาที, API restart ราว 4 วินาที; ตรวจหลัง 10 นาที HOLD เฉพาะตัวนับงาน AI หลังสลับ root ตรวจแบบอ่านอย่างเดียวแล้วพบว่าเป็นการใช้งานของเจ้าของเอง (login, วิเคราะห์ 1 ครั้ง, สร้าง draft 1 ครั้ง สำเร็จทั้งคู่) จึงยอมรับ; ไฟล์ที่เสิร์ฟตรงกับ Git blob ของ commit 8/8 | Staging เท่านั้น; research worker ยังอยู่ `3309d07`; ไม่มี migration, research job หรือ production
 | 2026-10-02 | B2 Window 2: ฐานข้อมูล staging เข้าโหมด FOUNDATION (66 ตาราง), ใช้ grants v4 (v3 + ถอนสิทธิ์แก้/ลบ `quant_job_steps` ที่เป็นตารางเพิ่มอย่างเดียว ซึ่งพบจากการซ้อม T10), research worker ย้ายไป release `3309d07` แบบ idle และยังปิดรับงาน; API ดับไม่เกิน 1 นาที 36 วินาที, ฐานข้อมูลดับราว 4 วินาที; PF-4 commit `68a6268` (CI 9/9, audit ผ่าน) ยังไม่ deploy | Staging เท่านั้น; Analytics และ backtest/optimize แบบเก่าบน staging ตอบ 409 ตามที่ยอมรับไว้; ไม่มี research job, backfill หรือ production
 | 2026-10-01 | B2 Window 1: ย้ายฐานข้อมูล PostgreSQL ของ staging ออกจาก /tmp ไปไว้ในโฟลเดอร์ถาวรภายใต้ service ของตัวเอง (enabled); ฐานข้อมูลดับราว 9 วินาที, API ดับไม่เกิน 3 นาที 29 วินาที; system id, checkpoint และจำนวนแถว 49 ตารางตรงกับก่อนหยุด; socket จำกัดสิทธิ์เป็นเจ้าของเท่านั้น; waive 3 ข้อของเครื่องมือพร้อมหลักฐาน; ตรวจหลัง 10 นาทีผ่าน | Staging เท่านั้น; ยังไม่มี migration, grant, foundation หรือ production; หลัง reboot มีแค่ฐานข้อมูลที่ขึ้นเอง
