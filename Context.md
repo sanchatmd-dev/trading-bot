@@ -7,6 +7,8 @@ preview from functional acceptance; the [Claude handoff](docs/CODEX_TO_CLAUDE_PR
 preserves runtime gates and ownership. The plan itself retains Spot/Paper-only and
 10K/1m limits.
 
+Staging release update, 2026-10-02 05:02 UTC: the staging API and trading worker run release `b2f0bae`, adding the PF-4 Risk proposals panel (read-only preview, confirmed save) on the Risk manager page. The research worker stays on `3309d07`; the database, market stream, fallback timer and production are unchanged.
+
 B2 update, 2026-10-02 03:47 UTC: Window 2 is complete. The staging database runs in FOUNDATION mode with bootstrap grants v4, and the research worker runs release `3309d07` in foundation idle mode with admission closed. Staging Analytics and legacy backtest/optimize answer 409 as accepted. PF-4 Risk proposals are committed in `68a6268` but not deployed.
 
 B2 update, 2026-10-01 23:04 UTC: the staging PostgreSQL cluster now runs from a

@@ -1,5 +1,14 @@
 # Time Management — Project execution and data collection
 
+## PF-4 staging release — 2026-10-02 05:02 UTC (Claude root)
+
+- **Release prep:** about 56 minutes against a 45-minute budget, because of a slow mock harness and one full re-run. The harness passed 89 checks.
+- **Live switch:** about 2 minutes for eight steps, plus one check ten minutes later.
+- **Usage:** the 5-hour window reached 69% before its 05:50 UTC reset, and the weekly window reached 65%, with no reserve breach. Weekly use is about 3 points per hour with two agents running, so later slices stay lean.
+- **P1-B:** about 7 of its 8–16 hours used. PF-3 and PF-4 run on staging; owner acceptance waits for P1-F.
+- **P1-E:** the QR-1 library design is done and implementation is in progress.
+- **Total:** the total P1 estimate is unchanged.
+
 ## B2 Window 2 and PF-4 — 2026-10-02 03:47 UTC (Claude root)
 
 - **PF-4:** coder about 69 minutes, a fix round of about 20 minutes, an independent audit and re-verification of about 26 minutes.
@@ -744,6 +753,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-10-02 | staging release `b2f0bae` (แผงเสนอค่า Risk ของ PF-4) ขึ้น staging API และ trading worker; ต่างจาก `3309d07` เฉพาะโค้ด PF-4, เทสต์ และเอกสาร 18 path, ไฟล์ engine 78 ไฟล์ตรงกันทุกไบต์; เครื่องมือสลับ v4 ผ่าน mock 89 รายการ และมีตัวครอบด่าน reload ที่ยอมรับเฉพาะ drop-in FOUNDATION ของ research worker ที่ pin ไว้; สลับจริง 8 ขั้นผ่านในราว 2 นาที, API restart ราว 4 วินาที; ตรวจหลัง 10 นาที HOLD เฉพาะตัวนับงาน AI หลังสลับ root ตรวจแบบอ่านอย่างเดียวแล้วพบว่าเป็นการใช้งานของเจ้าของเอง (login, วิเคราะห์ 1 ครั้ง, สร้าง draft 1 ครั้ง สำเร็จทั้งคู่) จึงยอมรับ; ไฟล์ที่เสิร์ฟตรงกับ Git blob ของ commit 8/8 | Staging เท่านั้น; research worker ยังอยู่ `3309d07`; ไม่มี migration, research job หรือ production
 | 2026-10-02 | B2 Window 2: ฐานข้อมูล staging เข้าโหมด FOUNDATION (66 ตาราง), ใช้ grants v4 (v3 + ถอนสิทธิ์แก้/ลบ `quant_job_steps` ที่เป็นตารางเพิ่มอย่างเดียว ซึ่งพบจากการซ้อม T10), research worker ย้ายไป release `3309d07` แบบ idle และยังปิดรับงาน; API ดับไม่เกิน 1 นาที 36 วินาที, ฐานข้อมูลดับราว 4 วินาที; PF-4 commit `68a6268` (CI 9/9, audit ผ่าน) ยังไม่ deploy | Staging เท่านั้น; Analytics และ backtest/optimize แบบเก่าบน staging ตอบ 409 ตามที่ยอมรับไว้; ไม่มี research job, backfill หรือ production
 | 2026-10-01 | B2 Window 1: ย้ายฐานข้อมูล PostgreSQL ของ staging ออกจาก /tmp ไปไว้ในโฟลเดอร์ถาวรภายใต้ service ของตัวเอง (enabled); ฐานข้อมูลดับราว 9 วินาที, API ดับไม่เกิน 3 นาที 29 วินาที; system id, checkpoint และจำนวนแถว 49 ตารางตรงกับก่อนหยุด; socket จำกัดสิทธิ์เป็นเจ้าของเท่านั้น; waive 3 ข้อของเครื่องมือพร้อมหลักฐาน; ตรวจหลัง 10 นาทีผ่าน | Staging เท่านั้น; ยังไม่มี migration, grant, foundation หรือ production; หลัง reboot มีแค่ฐานข้อมูลที่ขึ้นเอง
 | 2026-10-01 | staging release `3309d07` (แผง PF-3 readiness + wizard ของ Bridge UX รอบ 1) ขึ้น staging API และ trading worker ด้วยเครื่องมือสลับที่ผ่าน mock 61 assertions; precheck ครั้งแรก HOLD เพราะเช็ก port production ผิดแบบ (production ใช้ unix socket) แก้ 3 บรรทัดแล้วผ่านทุกขั้น; root ตรวจซ้ำว่าไฟล์ที่เสิร์ฟตรงกับ commit; เครื่องมือ W1 แก้ v3/v4 หลัง audit และ tester 2 รอบ กำลังทำ host proof | Staging เท่านั้น; ไม่มีการย้ายฐานข้อมูลจริง, migration หรือ production

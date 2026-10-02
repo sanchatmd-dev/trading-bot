@@ -68,6 +68,8 @@ grants and foundation start) remains gated on its own rehearsal and owner notice
 
 **B2 Window 2 done, 2026-10-02 03:47 UTC.** The staging database now runs in FOUNDATION mode (66 tables, schema 14). Bootstrap grants v4 are applied: v3 plus a revoke that keeps `quant_job_steps` append-only. Legacy table privileges are unchanged. The research worker runs release `3309d07` in foundation idle mode; research admission stays closed and its I/O limit is kept. The API was down for at most 1 minute 36 seconds and the database for about 4 seconds, while a cold archive was taken. Staging Analytics and legacy backtest/optimize now answer 409, as accepted. PF-4 deterministic Risk proposals are committed (`68a6268`, CI 9/9) and accepted after an independent audit, but are not yet deployed. Next in P1-A: B3 (one bounded backfill), W7 C1/C2 diagnostics and D6 Linux p99, then R7 PF-2 staging activation.
 
+**PF-4 staging release, 2026-10-02 05:02 UTC.** The staging API and trading worker now run release `b2f0bae`, which adds the PF-4 Risk proposals panel (read-only preview and confirmed save) to release `3309d07`. The two releases differ only in PF-4 code and documentation (18 paths); the 78 engine files are byte-identical and the trading worker's import closure is unchanged. The switch wrote new drop-ins over the `3309d07` drop-ins, with per-unit rollback to `3309d07`, one gated manager reload and read-only database gates. All eight steps passed in about two minutes, and the served page and script bytes match the commit. Since Window 2 the reload gate has a narrow adapter: it accepts the research worker's pinned FOUNDATION drop-in and nothing else. The research worker stays on release `3309d07`; it, the database, market stream, fallback timer and production are unchanged. A check ten minutes later held only on its post-switch AI job counters; a read-only query showed the owner's own sign-in, one analysis and one draft generation (both succeeded), so the hold was accepted as expected use. Owner acceptance of the panel on staging waits for P1-F.
+
 ## Document authority and update rules
 
 This is the canonical index of all current plans, their sequence, acceptance
@@ -116,6 +118,8 @@ resume facts, evidence and gates; public/product docs retain normal prose.
 This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
+
+Latest staging release, 2026-10-02 05:02 UTC: release `b2f0bae` (PF-4 Risk proposals) runs on the staging API and trading worker; the research worker stays on `3309d07`. See the staging prototype priority section above.
 
 Latest B2 progress, 2026-10-02 03:47 UTC: Window 2 is complete (FOUNDATION mode, grants v4, research worker on release `3309d07` in idle mode with admission closed). PF-4 is committed in `68a6268` and not deployed. See the staging prototype priority section above.
 
@@ -2293,3 +2297,38 @@ P1-F. See the [P0 preview record](STAGING_PREVIEW_P0_2026-10-01.md).
   954 passed; CI 9/9.
 - **Scope:** staging only. No research job, backfill, Live or production
   change. Research admission stays closed.
+
+## 2026-10-02 — Staging release `b2f0bae`: PF-4 Risk proposals (Claude root)
+
+- **Release `b2f0bae`:** exported from Git blobs (559 source files plus 182
+  dependency rows). It differs from `3309d07` in 18 paths, all PF-4 code,
+  PF-4 tests or documentation. The 78 engine files are byte-identical, so
+  the engine pins stay legacy `053b4eaa…` and foundation `f9b78da9…`. The
+  trading worker's import closure is unchanged (34 files); the API gains the
+  three PF-4 modules.
+- **Switch tool v4:** new drop-ins sort after the `3309d07` drop-ins, and
+  rollback renames them aside to return a unit to `3309d07`. The verbatim
+  reload gate holds whenever the FOUNDATION drop-in of the research worker
+  exists, which Window 2 made permanent. A separate adapter accepts only
+  that exact gate result, and only when the drop-in is the single pinned
+  file; every other result still holds. The read-only database gate also
+  checks FOUNDATION mode, zero foundation jobs, 66 tables and the legacy
+  409 guard, computed by the product function on a read-only session. A
+  mock harness ran 89 checks, all passed.
+- **Live switch (05:00–05:02 UTC):** upload, extract, precheck, prepare
+  (one gated reload, no restart), API switch, trading switch, postcheck.
+  All eight steps passed. The API restart took about 4 seconds. Served page
+  and script bytes match the commit (8 of 8), authenticated routes answer
+  401 without a session, health reports `PAPER_ONLY`, and no error lines
+  were logged. Research worker, database, market stream and production
+  processes kept their PIDs. The check ten
+  minutes later held only on its post-switch AI job counters. A read-only
+  root query found the owner's sign-in, one analysis, one draft generation
+  (both succeeded) and a new alert capture, so the hold was accepted as
+  expected use. Root also compared the served bytes with the Git blobs of
+  `b2f0bae`: 8 of 8 equal.
+- **Tool follow-up:** the unit-directory manifest changed at prepare, so
+  older preflight and health tools that pin the previous manifest or the
+  `3309d07` drop-in map need a new version before reuse.
+- **Scope:** staging only. No migration, research job, backfill, Live or
+  production change. Research admission stays closed.
