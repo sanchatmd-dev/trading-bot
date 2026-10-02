@@ -15,7 +15,7 @@ const SPEC=[
   {n:3,title:'Preflight and Risk settings',view:'risk',now:'Risk manager → Order Preview: saved or hypothetical Draft authority, Generic or Bridge mode, venue filters and cost estimates. A preview saves nothing.',next:'Historical Preflight on staging (PF-2/R7), PF-3 report and PF-4 deterministic recommendations with before/after values and explicit save.'},
   {n:4,title:'Real signals and Paper execution',view:'signals',now:'Trade log shows each signal from receipt through the Risk decision to the simulated Paper fill. Live trading stays locked.',next:'Trace one real TradingView BUY and targeted EXIT with ledger evidence in a bounded observation window.'},
   {n:5,title:'Quant optimizer',view:'quant',now:'Historical runs appear with their original run identity. New research jobs stay closed until the foundation gates pass.',next:'Foundation migration and startup (B2), one bounded dataset (B3), diagnostics (W7), D6/R7, then one admitted bounded job with declared budget and holdout rules.'},
-  {n:6,title:'Quant Library and selection',view:'quant',now:'History lists preserved runs, including failures. It is not a qualified recommendation; no qualified winner exists.',next:'QR-1 durable library storage and view, QR-3 comparison and QR-4 qualification.'}
+  {n:6,title:'Quant Library and selection',view:'quant',now:'Research Library lists every preserved run with provenance, including failed, insufficient and cancelled runs. Development scores are not recommendations; no qualified winner exists.',next:'Full QR-3 comparison objectives and QR-4 validation-gated reporting (QL-4B/QL-4C).'}
 ];
 const HASH_A='a'.repeat(64),HASH_B='b'.repeat(64),HASH_C='c'.repeat(64);
 
@@ -34,15 +34,19 @@ function fixtures(now=Date.now()){
       usage_summary:{input_tokens:1200,output_tokens:800,cost_usd:0.00176},diagnostic:null,has_draft:true}},
     deployments:{by_state:{DRAFT:2,READY:1},latest_ready:{deployment_id:'d1d1d1d1-aaaa-4bbb-8ccc-dddddddddddd',source_version:1,snapshot_hash:HASH_B,created_at:now-3*HOUR}}};
   const history={admission_enabled:false,total_runs:7,runs:[0,1,2,3,4].map(i=>run(i))};
+  // Test fixture only (labelled): the library list as the API returns it.
+  const library={version:'quant-library-v1',schema_present:true,admission_enabled:false,totals:{all:11,ACTIVE:1,COMPLETED:6,INSUFFICIENT:2,FAILED:1,CANCELLED:1},qualified_total:0,qualified_winner:null,next_before:null,
+    runs:[{run_id:'3f2a9c1e-0000-4000-8000-000000000000',status:'NO_VALID_CANDIDATE',library_class:'NO_VALID_CANDIDATE',library_group:'COMPLETED',created_at:now}]};
   const bots={bots:[{id:'bot-1',label:'Staging Bot'},{id:'bot-2',label:'Second Bot'}],maxBots:5};
   const session={me:{botSession:{state:'SETUP'},paperAccounts:[{broker:'binance-global'}],bot:{id:'bot-1',label:'Staging Bot'}},
     signals:[{received_at:now-1*HOUR,status:'FILLED'},{received_at:now-2*HOUR,status:'REJECTED'},{received_at:now-3*HOUR,status:'QUEUED'},{received_at:now-30*HOUR,status:'FILLED'}]};
-  return {now,run,overview,history,bots,session};
+  return {now,run,overview,history,library,bots,session};
 }
 const answer=fx=>path=>{
   if(path==='/api/bots')return fx.bots;
   if(path==='/api/quant/pine-bridge/overview')return fx.overview;
   if(path.startsWith('/api/quant/research/history'))return fx.history;
+  if(path.startsWith('/api/quant/library'))return fx.library;
   throw new Error('Unexpected '+path);
 };
 const apiError=(code,status=503)=>Object.assign(new Error(code||'Request failed'),{code,status});
@@ -77,9 +81,9 @@ test('index.html adds the journey nav right after Overview, a hidden page with t
     assert.equal(section.querySelector('.jr-banner p').textContent,BANNER);
     assert.ok(section.querySelector('#journeyRoot'));
     assert.equal(section.querySelector('[style]'),null,'the CSP forbids inline styles');
-    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/journey.js?v=ux1a'].map(part=>html.indexOf(part));
-    assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'journey.js loads after i18n.js, app.js and pine-bridge.js');
-    assert.match(html,/styles-v2\.css\?v=pf4a/);assert.match(html,/i18n\.js\?v=pf4a/);
+    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/research-library.js?v=qr1a','/journey.js?v=qr1a'].map(part=>html.indexOf(part));
+    assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'journey.js loads after i18n.js, app.js, pine-bridge.js and research-library.js');
+    assert.match(html,/styles-v2\.css\?v=qr1a/);assert.match(html,/i18n\.js\?v=qr1a/);
   }finally{dom.window.close();}
 });
 
@@ -107,8 +111,8 @@ test('chips follow the live API data and the loaded session',async()=>{
   const fx=fixtures(),p=setup({handler:answer(fx),session:fx.session});
   try{
     await p.open();
-    assert.deepEqual([1,2,3,4,5,6].map(n=>p.chip(n)),['Live on staging','Partial','Preview available','Receiving','Paused — admission closed','Planned']);
-    assert.deepEqual([1,2,3,4,5,6].map(n=>p.card(n).querySelector('.jr-chip').className),['jr-chip jr-ok','jr-chip jr-warn','jr-chip jr-info','jr-chip jr-ok','jr-chip jr-warn','jr-chip jr-muted']);
+    assert.deepEqual([1,2,3,4,5,6].map(n=>p.chip(n)),['Live on staging','Partial','Preview available','Receiving','Paused — admission closed','Inspection only']);
+    assert.deepEqual([1,2,3,4,5,6].map(n=>p.card(n).querySelector('.jr-chip').className),['jr-chip jr-ok','jr-chip jr-warn','jr-chip jr-info','jr-chip jr-ok','jr-chip jr-warn','jr-chip jr-ok']);
   }finally{p.w.close();}
   const variants=[
     ['admission open',f=>{f.history.admission_enabled=true;},5,'Admission open'],
@@ -137,11 +141,9 @@ test('evidence comes from the API responses, with long hashes in wrapping contai
     assert.deepEqual(rowsOf(p,4),{'Bot scope':'Staging Bot','Signals received (24 h)':'3','Filled (24 h)':'1','Rejected (24 h)':'1','Latest signal received':utc(fx.now-1*HOUR)});
     assert.deepEqual(rowsOf(p,5),{'Latest run status':'NO_VALID_CANDIDATE','Candidates':'100 / 100','Run ID':'3f2a9c1e','Dataset hash':HASH_C,
       'Created (UTC)':utc(fx.now),'Completion reason':'NO_VALID_TRAIN_VALIDATION_CANDIDATE'});
-    assert.deepEqual(notesOf(p,6),['7 preserved research runs (history only)']);
-    const runs=[...p.card(6).querySelectorAll('li.jr-run')];
-    assert.equal(runs.length,5);
-    assert.deepEqual([...runs[0].children].map(item=>item.textContent),['NO_VALID_CANDIDATE',utc(fx.now),'100/100 Candidates','3f2a9c1e']);
-    assert.deepEqual([...runs[1].children].map(item=>item.textContent),['FAILED',utc(fx.now-48*HOUR),'99/100 Candidates','3f2a9c1e']);
+    assert.deepEqual(notesOf(p,6),['11 runs in library','Qualified recommendations: none. No qualified winner.']);
+    assert.deepEqual(rowsOf(p,6),{'Runs by group':'Completed 6 · Insufficient 2 · Failed 1 · Cancelled 1 · In progress 1','Latest run':'3f2a9c1e · No valid candidate'});
+    assert.equal(p.card(6).querySelectorAll('li').length,0,'the run list moved into the Research Library panel');
     assert.equal([...p.d.querySelectorAll('.jr-v .jr-hash')].filter(item=>item.textContent.length===64).length,3,'full 64-character hashes sit in .jr-hash');
     assert.match(p.d.querySelector('.jr-stamp').textContent,/^Status checked: \d{4}-\d\d-\d\d \d\d:\d\d:\d\d UTC$/);
   }finally{p.w.close();}
@@ -154,8 +156,7 @@ test('step 2 falls back to the latest source inputs and then to an explicit empt
     await p.open();
     assert.deepEqual(rowsOf(p,2),{'Latest source':'My indicator · v1','Numeric inputs':'10','Eligible numeric inputs':'8','Input review confirmed':'Yes','Selected source slots':'3'});
     assert.deepEqual(notesOf(p,5),['No research runs recorded yet.']);
-    assert.deepEqual(notesOf(p,6),['0 preserved research runs (history only)']);
-    assert.equal(p.card(6).querySelectorAll('li').length,0);
+    assert.deepEqual(notesOf(p,6),['11 runs in library','Qualified recommendations: none. No qualified winner.'],'step 6 reads the library, not the history');
   }finally{p.w.close();}
   const empty=fixtures();empty.history.runs=[];empty.overview.sources={count:0,latest:null};
   const q=setup({handler:answer(empty),session:empty.session});
@@ -182,15 +183,15 @@ test('an API failure shows Not available with its code on the affected cards and
     assert.deepEqual(errorsOf(bridge,3),['Not available (PINE_BRIDGE_DISABLED)']);
     assert.equal(rowsOf(bridge,3)['Bot session'],'SETUP');
     assert.equal(rowsOf(bridge,2)['Source slots in run'],'3','step 2 still uses the research history');
-    assert.deepEqual([4,5,6].map(n=>bridge.chip(n)),['Receiving','Paused — admission closed','Planned']);
+    assert.deepEqual([4,5,6].map(n=>bridge.chip(n)),['Receiving','Paused — admission closed','Inspection only']);
     assert.equal(rowsOf(bridge,5)['Latest run status'],'NO_VALID_CANDIDATE');
   }finally{bridge.w.close();}
   const history=setup({handler:failing({'/api/quant/research/history':apiError('QUANT_HISTORY_UNAVAILABLE',500)}),session:fx.session});
   try{
     await history.open();
     assert.deepEqual(errorsOf(history,5),['Not available (QUANT_HISTORY_UNAVAILABLE)']);
-    assert.deepEqual(errorsOf(history,6),['Not available (QUANT_HISTORY_UNAVAILABLE)']);
-    assert.deepEqual([history.chip(5),history.chip(6)],['Unavailable','Planned']);
+    assert.deepEqual(errorsOf(history,6),[]);
+    assert.deepEqual([history.chip(5),history.chip(6)],['Unavailable','Inspection only']);
     assert.equal(rowsOf(history,2)['Numeric inputs'],'10','step 2 falls back to the latest source');
     assert.equal(history.chip(1),'Live on staging');assert.equal(rowsOf(history,1)['AI provider'],'openai-chat · gpt-4.1-mini');
     assert.equal(history.chip(4),'Receiving');
@@ -210,24 +211,31 @@ test('an unexpected response shape degrades only the cards that read it',async()
   const fx=fixtures(),p=setup({handler:path=>path.startsWith('/api/quant/research/history')?null:answer(fx)(path),session:fx.session});
   try{
     await p.open();
-    assert.deepEqual([2,5,6].map(n=>errorsOf(p,n)),[['Not available (RENDER_ERROR)'],['Not available (RENDER_ERROR)'],['Not available (RENDER_ERROR)']]);
+    assert.deepEqual([2,5,6].map(n=>errorsOf(p,n)),[['Not available (RENDER_ERROR)'],['Not available (RENDER_ERROR)'],[]],'step 6 reads the library, not the history');
     assert.equal(p.chip(1),'Live on staging');assert.equal(p.chip(4),'Receiving');
     assert.equal(rowsOf(p,3)['Bots'],'2 / 5');
   }finally{p.w.close();}
+  const shape=setup({handler:path=>path.startsWith('/api/quant/library')?null:answer(fx)(path),session:fx.session});
+  try{
+    await shape.open();
+    assert.deepEqual(errorsOf(shape,6),['Not available (RENDER_ERROR)']);assert.equal(shape.chip(6),'Unavailable');assert.equal(shape.chip(5),'Paused — admission closed');
+    const odd=setup({handler:path=>path.startsWith('/api/quant/library')?{totals:'x',runs:'y'}:answer(fx)(path),session:fx.session});
+    try{await odd.open();assert.equal(odd.chip(6),'Inspection only');assert.deepEqual(notesOf(odd,6),['0 runs in library','Qualified recommendations: none. No qualified winner.']);}finally{odd.w.close();}
+  }finally{shape.w.close();}
 });
 
-test('opening loads three independent owner-scoped reads; Refresh reloads only while the page is visible; stale answers are ignored',async()=>{
+test('opening loads four independent owner-scoped reads; Refresh reloads only while the page is visible; stale answers are ignored',async()=>{
   const fx=fixtures(),p=setup({handler:answer(fx),session:fx.session});
   try{
     await p.open();
-    assert.deepEqual(p.calls.map(call=>call.path),['/api/bots','/api/quant/pine-bridge/overview','/api/quant/research/history?limit=5']);
+    assert.deepEqual(p.calls.map(call=>call.path),['/api/bots','/api/quant/pine-bridge/overview','/api/quant/research/history?limit=5','/api/quant/library?limit=5']);
     assert.ok(p.calls.every(call=>call.options.silent===true&&call.options.botId===''&&call.options.method===undefined),'GET only, no bot_id scope, no Saved toast');
     const section=p.d.querySelector('section[data-page="journey"]');
     p.d.querySelector('#refresh').click();await settle();
-    assert.equal(p.calls.length,3,'hidden page: Refresh loads nothing');
+    assert.equal(p.calls.length,4,'hidden page: Refresh loads nothing');
     section.hidden=false;
     p.d.querySelector('#refresh').click();await settle();
-    assert.equal(p.calls.length,6,'visible page: Refresh reloads all three');
+    assert.equal(p.calls.length,8,'visible page: Refresh reloads all four');
   }finally{p.w.close();}
   const slow=fixtures(),stale=structuredClone(slow.overview);stale.ai.model='stale-model';
   let overviewCalls=0;
@@ -250,10 +258,11 @@ test('Thai switch translates every static text and re-renders dynamic evidence; 
     assert.equal(d.querySelector('.jr-banner p').textContent,'พรีวิวบน Staging (P0) หน้านี้แสดงสิ่งที่ทำงานอยู่บน Staging รุ่นนี้ในตอนนี้ และสิ่งที่แต่ละขั้นตอนยังต้องมีเพิ่ม ไม่ใช่การรับรองครบทั้งหกขั้นตอน ใช้ Paper เท่านั้น ส่วน Live ถูกล็อก');
     assert.equal(d.querySelector('#primaryNav [data-view="journey"]').textContent,'เส้นทางต้นแบบ');
     await p.open();
-    assert.deepEqual([1,2,3,4,5,6].map(n=>p.chip(n)),['ใช้งานได้บน Staging','ทำได้บางส่วน','ดูตัวอย่างได้','กำลังรับสัญญาณ','หยุดชั่วคราว — ปิดรับงาน','วางแผนไว้']);
+    assert.deepEqual([1,2,3,4,5,6].map(n=>p.chip(n)),['ใช้งานได้บน Staging','ทำได้บางส่วน','ดูตัวอย่างได้','กำลังรับสัญญาณ','หยุดชั่วคราว — ปิดรับงาน','ใช้ตรวจดูเท่านั้น']);
     assert.equal(p.card(2).querySelector('.jr-title').textContent.trim(),'2 Input ตัวเลขสิบตัว');
-    assert.deepEqual(notesOf(p,6),['7 การรันวิจัยที่เก็บรักษาไว้ (เฉพาะประวัติ)']);
-    assert.equal(p.card(6).querySelector('li.jr-run .jr-run-count').textContent,'100/100 Candidate');
+    assert.deepEqual(notesOf(p,6),['มี 11 การรันในคลัง','ผลที่ผ่านเกณฑ์และแนะนำได้: ไม่มี ยังไม่มีผลที่ผ่านเกณฑ์']);
+    assert.equal(rowsOf(p,6)['จำนวนรันแต่ละกลุ่ม'],'เสร็จสมบูรณ์ 6 · ไม่เพียงพอ 2 · ล้มเหลว 1 · ยกเลิกแล้ว 1 · กำลังดำเนินการ 1');
+    assert.equal(rowsOf(p,6)['การรันล่าสุด'],'3f2a9c1e · ไม่มี Candidate ที่ใช้ได้');
     assert.equal(rowsOf(p,2)['ตารางค่า ATR multiplier'],'1.5–3 (4 ค่า)');
     assert.match(d.querySelector('.jr-stamp').textContent,/^ตรวจสถานะเมื่อ: /);
     for(const element of d.querySelectorAll('[data-page="journey"] [data-ui-label]')){
@@ -264,11 +273,11 @@ test('Thai switch translates every static text and re-renders dynamic evidence; 
     const language=d.querySelector('#language');
     language.value='en';language.dispatchEvent(new w.Event('change'));await settle();
     assert.equal(d.querySelector('.jr-banner p').textContent,BANNER);
-    assert.deepEqual([1,2,3,4,5,6].map(n=>p.chip(n)),['Live on staging','Partial','Preview available','Receiving','Paused — admission closed','Planned']);
-    assert.deepEqual(notesOf(p,6),['7 preserved research runs (history only)']);
+    assert.deepEqual([1,2,3,4,5,6].map(n=>p.chip(n)),['Live on staging','Partial','Preview available','Receiving','Paused — admission closed','Inspection only']);
+    assert.deepEqual(notesOf(p,6),['11 runs in library','Qualified recommendations: none. No qualified winner.']);
     assert.equal(p.card(1).querySelector('.jr-block p').textContent,SPEC[0].now);
     language.value='th';language.dispatchEvent(new w.Event('change'));await settle();
-    assert.equal(p.chip(6),'วางแผนไว้');assert.equal(rowsOf(p,5)['รหัสรัน'],'3f2a9c1e');
+    assert.equal(p.chip(6),'ใช้ตรวจดูเท่านั้น');assert.equal(rowsOf(p,5)['รหัสรัน'],'3f2a9c1e');
   }finally{p.w.close();}
 });
 
@@ -343,7 +352,7 @@ test('works with app.js: nav shows the page, Thai title, owner-scoped requests a
     w.fetch=async path=>{
       requests.push(path);
       const route=path.split('?')[0];
-      const body=route==='/api/bots'?fx.bots:route==='/api/quant/pine-bridge/overview'?fx.overview:route==='/api/quant/research/history'?fx.history:null;
+      const body=route==='/api/bots'?fx.bots:route==='/api/quant/pine-bridge/overview'?fx.overview:route==='/api/quant/research/history'?fx.history:route==='/api/quant/library'?fx.library:null;
       return {ok:body!==null,json:async()=>body??{error:'Unexpected '+path}};
     };
     w.freshMe=fx.session.me;w.freshSignals=fx.session.signals;
@@ -355,11 +364,11 @@ test('works with app.js: nav shows the page, Thai title, owner-scoped requests a
     d.querySelector('nav button[data-view="journey"]').click();await settle();
     assert.equal(d.querySelector('[data-page="journey"]').hidden,false);
     assert.equal(d.querySelector('#pageTitle').textContent,'Prototype journey');
-    assert.deepEqual(requests,['/api/bots','/api/quant/pine-bridge/overview','/api/quant/research/history?limit=5'],'no bot_id even with Bot 2 selected');
+    assert.deepEqual(requests,['/api/bots','/api/quant/pine-bridge/overview','/api/quant/research/history?limit=5','/api/quant/library?limit=5'],'no bot_id even with Bot 2 selected');
     assert.match(card(4).textContent,/Signals received \(24 h\)3/);
     w.freshSignals=[{received_at:fx.now-HOUR,status:'FILLED'}];
     d.querySelector('#refresh').click();await settle();
-    assert.equal(requests.length,6);
+    assert.equal(requests.length,8);
     assert.match(card(4).textContent,/Signals received \(24 h\)1Filled \(24 h\)1Rejected \(24 h\)0/);
     const language=d.querySelector('#language');language.value='th';language.dispatchEvent(new w.Event('change'));await settle();
     assert.equal(d.querySelector('#pageTitle').textContent,'เส้นทางต้นแบบ');
@@ -372,7 +381,7 @@ test('journey.js stays read-only, self-contained and CSP-safe',()=>{
   for(const banned of ['innerHTML','outerHTML','insertAdjacentHTML','document.write','eval(','new Function','fetch(','XMLHttpRequest','WebSocket','localStorage','sessionStorage','setAttribute(','.style','http://','https://','onclick='])
     assert.ok(!source.includes(banned),'forbidden in journey.js: '+banned);
   const paths=[...source.matchAll(/'(\/api\/[^']*)'/g)].map(match=>match[1]).sort();
-  assert.deepEqual(paths,['/api/bots','/api/quant/pine-bridge/overview','/api/quant/research/history?limit=']);
+  assert.deepEqual(paths,['/api/bots','/api/quant/library?limit=','/api/quant/pine-bridge/overview','/api/quant/research/history?limit=']);
   assert.ok(!/method\s*:/.test(source),'only GET requests');
   assert.equal(source.split('=>api(path,').length-1,1,'a single api() call site');
 });

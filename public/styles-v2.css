@@ -271,6 +271,55 @@ table{table-layout:fixed}th,td{white-space:normal;overflow-wrap:anywhere;vertica
 /* Keep the research-workspace controls above legacy Quant Lab rules. */
 .ql-shell .ql-tabs{margin:0;border-bottom:1px solid var(--line);padding-bottom:0}.ql-shell .ql-tab{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:11px 16px;color:var(--muted);bottom:0}.ql-shell .ql-tab.active{border-color:var(--cyan);background:transparent;color:var(--text)}.ql-shell .ql-workspace,.ql-shell .ql-opt-workspace,.ql-shell .ql-risk-workspace{grid-template-columns:minmax(250px,300px) minmax(0,1fr)}.ql-shell .ql-config-rail,.ql-shell .ql-results{padding:18px}.ql-shell .ql-summary-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.ql-shell .ql-rp-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.ql-shell .ql-equity-chart{min-height:250px;padding:0}@media(max-width:900px){.ql-shell .ql-workspace,.ql-shell .ql-opt-workspace,.ql-shell .ql-risk-workspace{grid-template-columns:1fr}.ql-shell .ql-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.ql-shell .ql-tab{padding:10px 11px;font-size:12px}.ql-shell .ql-config-rail,.ql-shell .ql-results{padding:14px}.ql-shell .ql-rp-grid,.ql-shell .ql-summary-grid{grid-template-columns:1fr 1fr}}
 .ql-data-workspace{grid-template-columns:minmax(250px,340px) minmax(0,1fr)}.ql-data-workspace select,.ql-data-workspace input{width:100%;padding:10px 11px;background:#071424;border:1px solid #29405c;color:var(--text);border-radius:8px;font:inherit}.ql-data-workspace label{display:block;margin:12px 0 0;font-size:12px}.ql-data-workspace button:disabled{opacity:.5;cursor:not-allowed}.ql-data-card{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#071424}.ql-data-card h4{margin:0 0 12px}.ql-data-card dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0}.ql-data-card dl div{min-width:0}.ql-data-card dt{font-size:11px;color:var(--muted)}.ql-data-card dd{margin:4px 0 0;overflow-wrap:anywhere}.ql-data-card p{overflow-wrap:anywhere}.ql-data-card[hidden]{display:none}@media(max-width:900px){.ql-data-workspace{grid-template-columns:1fr}}@media(max-width:600px){.ql-data-card dl{grid-template-columns:1fr}}
+/* Quant Research Library (P1-E): read-only panel on the Quant page. The CSP allows stylesheets only, so no inline styles.
+   This block sits above the PF-4, Guided Build, journey and PF-3 blocks on purpose: their style tests ban nowrap and fixed
+   min-widths in everything below their markers, and the library tables need nowrap inside their own scrolling wrapper. */
+.qrl{min-width:0}
+.qrl-summary{cursor:pointer;display:flex;align-items:center;min-height:44px;font-weight:700}
+.qrl-banner{margin:8px 0;padding:10px 12px;border:1px solid #ffd36b55;border-radius:10px;background:linear-gradient(150deg,#2a2000,#0a1727);color:#ffe3a1;overflow-wrap:anywhere}
+.qrl-winner{margin:8px 0;font-weight:700;color:var(--cyan);overflow-wrap:anywhere}
+.qrl-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;min-width:0}
+.qrl-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.qrl-filter,.qrl-refresh,.qrl-more,.qrl-compare,.qrl-inspect,.qrl-back{min-height:44px;max-width:100%}
+.qrl-filter[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}
+.qrl-count{color:var(--muted)}
+.qrl-status{margin:8px 0;color:var(--muted);overflow-wrap:anywhere}
+.qrl-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;min-width:0}
+.qrl-card{display:flex;flex-direction:column;gap:6px;min-width:0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#091726}
+.qrl-card-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;min-width:0;overflow-wrap:anywhere}
+.qrl-chip{display:inline-flex;align-items:center;max-width:100%;padding:3px 10px;border:1px solid var(--line);border-radius:999px;background:#182a42;color:var(--muted);font-size:12px;font-weight:700;overflow-wrap:anywhere}
+.qrl-chip.qrl-ok{background:#123e34;color:#63e5b0;border-color:#37d59a55}
+.qrl-chip.qrl-warn{background:#2a2000;color:#ffd36b;border-color:#ffd36b55}
+.qrl-chip.qrl-info{background:#0d2847;color:#7dbbff;border-color:#1a3a60}
+.qrl-chip.qrl-bad{background:#3e1a24;color:#ff9dab;border-color:#5a1020}
+.qrl-ev{display:flex;flex-wrap:wrap;gap:2px 8px;min-width:0;font-size:13px;line-height:1.5}
+.qrl-k{flex:0 0 auto;color:var(--muted)}
+.qrl-k::after{content:":"}
+.qrl-v{flex:1 1 auto;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+.qrl-note{margin:2px 0;font-size:12px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.qrl-error{margin:6px 0;color:#ffb2bc;overflow-wrap:anywhere}
+.qrl-code,.qrl-hash,.qrl-status-raw{font-family:ui-monospace,monospace;font-size:12px;overflow-wrap:anywhere;word-break:break-all}
+.qrl-codes{display:inline-flex;flex-wrap:wrap;gap:4px 8px}
+.qrl-card-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:auto}
+.qrl-pick-label{display:inline-flex;align-items:center;gap:6px;min-height:44px;margin:0}
+.qrl-pick{flex:none;width:22px;height:22px}
+.qrl-ctx{font-size:12px;color:#ffd36b;overflow-wrap:anywhere}
+.qrl-compare-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.qrl-view{min-width:0;margin-top:14px}
+.qrl-title{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0;font-size:16px;overflow-wrap:anywhere}
+.qrl-alert{margin:8px 0;padding:10px 12px;border:1px solid #5a1020;border-radius:10px;background:#3e1a24;color:#ff9dab;overflow-wrap:anywhere}
+.qrl-sec{min-width:0;margin:8px 0;padding:4px 12px;border:1px solid var(--line);border-radius:12px}
+.qrl-sec-title{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;min-height:44px;cursor:pointer;font-weight:700}
+.qrl-block{min-width:0;margin-bottom:8px}
+.qrl-subhead{display:flex;flex-wrap:wrap;align-items:center;gap:0 10px;min-width:0}
+.qrl-sub{margin:10px 0 4px;color:var(--cyan);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.qrl-title:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+.qrl-gaps{display:grid;gap:6px;margin:6px 0;padding:0;list-style:none}
+.qrl-gap{min-width:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.qrl-scroll{max-width:100%;overflow-x:auto}
+.qrl-table{border-collapse:collapse;font-size:12px}
+.qrl-table th,.qrl-table td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;white-space:nowrap}
+@media(max-width:600px){.qrl-list{grid-template-columns:minmax(0,1fr)}.qrl-card-actions button{flex:1 1 100%}}
 /* PF-4 Risk proposals (Risk manager): declared limits form and the proposal preview. Reuses the PF-3 panel rules; the CSP allows stylesheets only.
    This block sits above the Guided Build, journey and PF-3 blocks on purpose: their style tests ban nowrap and fixed min-widths in everything
    below their markers, and the changes table needs both inside its scrolling wrapper. The id selectors beat the PF-3 table rules in any order. */

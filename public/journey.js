@@ -41,13 +41,13 @@
     {n:5,title:'Quant optimizer',view:'quant',
       now:'Historical runs appear with their original run identity. New research jobs stay closed until the foundation gates pass.',
       next:'Foundation migration and startup (B2), one bounded dataset (B3), diagnostics (W7), D6/R7, then one admitted bounded job with declared budget and holdout rules.'},
-    {n:6,title:'Quant Library and selection',view:'quant',
-      now:'History lists preserved runs, including failures. It is not a qualified recommendation; no qualified winner exists.',
-      next:'QR-1 durable library storage and view, QR-3 comparison and QR-4 qualification.'}
+    {n:6,title:'Quant Library and selection',view:'quant',library:true,
+      now:'Research Library lists every preserved run with provenance, including failed, insufficient and cancelled runs. Development scores are not recommendations; no qualified winner exists.',
+      next:'Full QR-3 comparison objectives and QR-4 validation-gated reporting (QL-4B/QL-4C).'}
   ];
 
   const pending=()=>({pending:true});
-  const state={seq:0,checkedAt:null,bots:pending(),overview:pending(),history:pending(),readiness:null};
+  const state={seq:0,checkedAt:null,bots:pending(),overview:pending(),history:pending(),library:pending(),readiness:null};
   // me, signals and selectedBot belong to app.js. Absent globals read as unavailable, never as empty data.
   const session=()=>({me:typeof me==='undefined'?null:me,signals:typeof signals==='undefined'?null:signals,scope:typeof selectedBot==='undefined'?'':selectedBot});
 
@@ -156,20 +156,21 @@
       ...(typeof reason==='string'?[row('Completion reason',reason)]:[]),...(run.diagnostic?[row('Diagnostic',run.diagnostic)]:[])]};
   }
 
+  // Step 6 reads the Research Library: counts per group and the class of the latest run. No view names a winner.
+  const GROUPS=[['COMPLETED','Completed'],['INSUFFICIENT','Insufficient'],['FAILED','Failed'],['CANCELLED','Cancelled'],['ACTIVE','In progress']];
+  const CLASS_TEXT={IN_PROGRESS:'In progress',CANCELLED:'Cancelled',TIMED_OUT:'Timed out',INSUFFICIENT_DATA:'Insufficient data',FAILED:'Failed',
+    CANDIDATE_PENDING_ACCEPTANCE:'Candidate pending acceptance',INSUFFICIENT_EVIDENCE:'Insufficient evidence',NO_VALID_CANDIDATE:'No valid candidate'};
   function step6(){
-    const history=state.history,planned=chip('Planned','muted');
-    if(history.pending)return {chip:planned,rows:[pendingRow()]};
-    if(!history.ok)return {chip:planned,rows:[failedRow(history.code)]};
-    const runs=Array.isArray(history.data.runs)?history.data.runs:[];
-    const total=Number.isSafeInteger(history.data.total_runs)?history.data.total_runs:runs.length;
-    const rows=[make('div','jr-ev jr-note',tpl('{n} preserved research runs (history only)',{n:total}))];
-    if(runs.length){
-      const list=make('ul','jr-runs');
-      for(const run of runs.slice(0,RUN_ROWS))list.append(make('li','jr-run',make('span','jr-run-status',dash(run.status)),make('span','jr-run-time',utc(run.created_at)),
-        make('span','jr-run-count',tpl('{done}/{planned} Candidates',{done:dash(run.candidates_completed),planned:dash(run.candidates_planned)})),make('span','jr-hash',short(run.run_id))));
-      rows.push(list);
-    }
-    return {chip:planned,rows};
+    const library=state.library;
+    if(library.pending)return {chip:chip('Checking…','muted'),rows:[pendingRow()]};
+    if(!library.ok)return {chip:chip('Unavailable','bad'),rows:[failedRow(library.code)]};
+    const data=library.data,totals=data.totals&&typeof data.totals==='object'?data.totals:{},latest=Array.isArray(data.runs)?data.runs[0]:null;
+    const total=Number.isSafeInteger(totals.all)?totals.all:0;
+    const rows=[make('div','jr-ev jr-note',tpl('{n} runs in library',{n:total})),
+      row('Runs by group',GROUPS.map(([key,text])=>T(text)+' '+(Number.isSafeInteger(totals[key])?totals[key]:0)).join(' · ')),
+      note('Qualified recommendations: none. No qualified winner.')];
+    if(latest)rows.push(row('Latest run',short(latest.run_id)+' · '+(Object.hasOwn(CLASS_TEXT,latest.library_class)?T(CLASS_TEXT[latest.library_class]):dash(latest.library_class))));
+    return {chip:chip('Inspection only','ok'),rows};
   }
 
   const stamp=make('p','jr-stamp');stamp.hidden=true;
@@ -203,10 +204,10 @@
   async function refresh(){
     const seq=++state.seq;
     const track=(key,path)=>request(path).then(data=>({ok:true,data}),error=>({ok:false,code:errorCode(error)})).then(result=>{if(seq===state.seq){state[key]=result;render();}});
-    await Promise.allSettled([track('bots','/api/bots'),track('overview','/api/quant/pine-bridge/overview'),track('history','/api/quant/research/history?limit='+RUN_ROWS)]);
+    await Promise.allSettled([track('bots','/api/bots'),track('overview','/api/quant/pine-bridge/overview'),track('history','/api/quant/research/history?limit='+RUN_ROWS),track('library','/api/quant/library?limit='+RUN_ROWS)]);
     if(seq===state.seq){state.checkedAt=Date.now();render();}
   }
-  function clear(){state.seq++;state.checkedAt=null;state.bots=state.overview=state.history=pending();state.readiness=null;render();}
+  function clear(){state.seq++;state.checkedAt=null;state.bots=state.overview=state.history=state.library=pending();state.readiness=null;render();}
   // readiness.js announces each rendered report; only its plain string fields are kept.
   document.addEventListener('pf3:report',event=>{
     const detail=event?.detail,text=value=>typeof value==='string'?value.slice(0,200):null;
@@ -224,11 +225,19 @@
     const handled=!panel.dispatchEvent(new CustomEvent('pb:reveal',{cancelable:true}));
     if(!handled&&typeof panel.scrollIntoView==='function')panel.scrollIntoView({block:'start'});
   }
+  function openLibrary(){
+    const panel=document.getElementById('qrlPanel');if(!panel)return;
+    panel.open=true;
+    // The library panel handles this event and scrolls itself; without a handler the whole panel scrolls into view.
+    const handled=!panel.dispatchEvent(new CustomEvent('qrl:reveal',{cancelable:true}));
+    if(!handled&&typeof panel.scrollIntoView==='function')panel.scrollIntoView({block:'start'});
+  }
   root.addEventListener('click',event=>{
     const button=event.target.closest?.('.jr-open');if(!button)return;
     const step=STEPS.find(item=>String(item.n)===button.dataset.step);if(!step)return;
     document.querySelector('nav button[data-view="'+step.view+'"]')?.click();
     if(step.bridge)openBridge();
+    if(step.library)openLibrary();
   });
   document.querySelector('nav button[data-view="journey"]')?.addEventListener('click',refresh);
   document.getElementById('refresh')?.addEventListener('click',()=>{if(!page.hidden)refresh();});

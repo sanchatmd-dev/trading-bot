@@ -27,6 +27,7 @@ import {receiveCapture} from './pine-capture.js';
 import {keys} from '../pine-bridge/source.js';
 import {QuantResearchService,quantResearchRoutes} from './quant-research.js';
 import {quantResearchHistoryRoutes} from './quant-research-history.js';
+import {quantLibraryRoutes} from './quant-library.js';
 import {QuantDataService,quantDataRoutes} from './quant-data.js';
 import {quantProfileRoutes} from './quant-profile.js';
 import {createQuantPreflightApi} from './quant-preflight-wiring.js';
@@ -240,6 +241,7 @@ async function userRoutes(req, res, url) {
   if(await pineBridgeOverviewRoutes(req,res,url,actor,pineBridgeService,json,{enabled:pineBridgeEnabled,captureEnabled:pineCaptureEnabled}))return;
   if(await pineBridgeRoutes(req,res,url,actor,pineBridgeService,json,{enabled:pineBridgeEnabled,captureEnabled:pineCaptureEnabled,capturePublicOrigin:pineCapturePublicOrigin}))return;
   if(await quantResearchHistoryRoutes(req,res,url,actor,database,json,{admissionEnabled:quantResearchEnabled}))return;
+  if(await quantLibraryRoutes(req,res,url,actor,database,json,{admissionEnabled:quantResearchEnabled}))return;
   if(await quantResearchRoutes(req,res,url,actor,quantResearchService,json,{enabled:quantResearchEnabled}))return;
   if(await quantPreflightRoutes(req,res,url,actor,quantPreflightService,json,{enabled:quantPreflightEnabled}))return;
   if(await quantProfileEnrollmentRoutes(req,res,url,actor,quantProfileService,json,{enabled:quantEnrollmentEnabled}))return;
