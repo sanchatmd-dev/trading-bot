@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต 2026-10-02 13:45 UTC: research worker บน staging เลือกใช้ Python สำเนาแยกที่ตรวจแล้ว ตรวจทันทีและหลัง 10 นาทีผ่าน โดยไม่มี restart หรือ error เพิ่ม API/trading, ฐานข้อมูลและ production คงเดิม ยังปิดรับ optimizer และยังไม่มีงานวิจัยใหม่ ขั้นต่อไปคือเตรียมเปิด–ปิด admission และยืนยันช่องทางส่งงานที่ล็อกอิน ดู [checkpoint ขั้นที่ 5](docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md)
+
 อัปเดต 2026-10-02 12:02 UTC: สำเนา Python สำหรับ staging ผ่านการตรวจโมดูล, native libraries และไฟล์ก่อน–หลังแล้ว ต้นทางไม่เปลี่ยนและไม่มี bytecode ใหม่ แต่ research worker ยังไม่ได้เลือกใช้สำเนานี้ และยังปิดรับ optimizer อยู่ ดู [checkpoint ขั้นที่ 5](docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md) และ [handoff จาก Codex ให้ Claude](docs/CODEX_TO_CLAUDE_HANDOFF_2026-10-02.md)
 
 อัปเดต 2026-10-02 10:14 UTC: หน้าสั่ง research job ขึ้น staging แล้วที่ release `c3fa9e5` รวม 10 inputs การยืนยันก่อนรัน ติดตามและยกเลิกงาน และหน้าจอ EN/TH หลังสลับ API/trading ตรวจ health, ไฟล์หน้าเว็บ และฐานข้อมูลผ่าน ส่วน research worker ยังอยู่ `3309d07` และปิดรับงาน ยังไม่มี optimizer run ใหม่ ขั้นถัดไปคือเตรียม Python แยกสำหรับ staging แล้วเปิดรับงานหนึ่งรอบที่กำหนดไว้ ดู [checkpoint ขั้นที่ 5](docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md)

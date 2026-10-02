@@ -40,7 +40,7 @@ The immutable release contains 753 files: 571 source files and 182 dependencies.
 
 Following fresh health and idle checks, staging API and trading worker switched to `c3fa9e5` at 10:13 UTC. The immediate postcheck passed at 10:13:59 UTC: all 12 served assets matched, five unauthenticated routes retained their guards, health remained `PAPER_ONLY`, and no active research or foundation job appeared. The research worker, database, market stream and production processes were preserved. The delayed postcheck passed at 10:24:42 UTC using the original switch attribution window; the same releases, guards, idle state and configuration hashes held. This verifies deployment; the owner's signed-in browser walkthrough remains separate.
 
-The research worker has not switched Python environments, and API admission remains closed. No new optimizer run has been submitted at this checkpoint.
+The research worker switched to the verified isolated Python wrapper at the later 13:33 UTC checkpoint below. API admission remains closed, and no new optimizer run has been submitted.
 
 Read-only Python discovery at 10:25–10:29 UTC found all seven required dependency distributions and confirmed the pinned operating-system interpreter is Python 3.12.3. The first probe stopped because the virtual environment uses `version_info` rather than `version`; the follow-up resolved that metadata-format difference. An editable-package path points to an older release outside staging. The reviewed copy helper excludes that pinned path and bytecode from the staging copy while preserving the source.
 
@@ -53,6 +53,18 @@ Recovery verification passed at 12:00:47 UTC after 293 seconds. It retained the 
 Final health and capacity checks passed at 12:01:16 UTC with no active test process or research job. Selected Python, loader and virtual-environment override keys were absent from both the existing worker process and user manager; values were not disclosed. That observation is not a proof of a future restarted worker or transient job environment. The isolated interpreter is accepted only for the declared import smoke; unexecuted imports, lazy loads, worker activation and a real optimizer run remain unproved. No configuration layer was added, no service restarted, and admission remained closed during this recovery.
 
 ## Verification limits
+
+### Research-worker interpreter activation — 2026-10-02
+
+The reviewed worker tool adds only an exact interpreter override, preserves the previous configuration layers and keeps API admission closed. Independent fault testing found that a restart timeout could lead to an automatic second restart during backout. The corrected tool stops on every activation failure, preserving the new configuration and evidence for named read-only reconciliation. Healthy explicit rollback is available; failed-worker or invalid-environment recovery requires a separately reviewed packet. That limitation was accepted for supervised idle staging work under the owner's downtime authority.
+
+The first Linux precheck stopped before any configuration write because its environment probe read only the initial process environment. The actual interpreter came from Node's env file and had not changed. The corrected probe verifies the worker command against its pinned configuration, reads only those approved env files in order, then applies process-environment precedence. It passed 59 author checks and 11 independent checks, in addition to the earlier four independent stop-on-failure checks. Corrected Linux precheck passed at 13:28:04 UTC, including actual I/O limits, SQL idle state, effective environment and the prepared Python inventory.
+
+Activation ran from 13:30:24 to 13:33:15 UTC. One configuration override, one user-manager reload and one research-worker restart selected the staged wrapper. The new worker logged successful startup and passed effective-environment, release, I/O, file-integrity and idle checks. API, trading, database, market and production process identities were preserved. The delayed check ran from 13:43:35 to 13:44:56 UTC and passed: the worker process and start identity were unchanged, its journal contained exactly one startup and no recorded errors since activation, and no test process or research job remained. Prepared files, configuration, I/O limits and closed admission were unchanged. No child Python research evaluation ran: worker configuration acceptance is separate from a real optimizer run and its process-isolation evidence.
+
+The next slice is an independently reviewed API admission open/close path, followed by the single declared run through an authenticated owner session. Do not leave admission open while submission access is unavailable. The owner's current reserve is 4%, superseding the earlier continuation's 2% exception.
+
+### Browser and research-result limits
 
 The interactive browser and Computer Use runtimes failed during initialization before any UI action. The tester instead used installed Edge with a separate headless profile and intercepted synthetic fixture responses. These checks are not the owner's signed-in staging acceptance, a PostgreSQL integration run or a real worker run. The fixture failures involving an unavailable Chromium binary, an insecure origin and a translated-word assertion were recorded separately from product defects.
 
