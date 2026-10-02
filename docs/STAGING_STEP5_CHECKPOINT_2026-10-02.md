@@ -32,7 +32,9 @@ The research-job UI passed independent local acceptance. It loads a preserved ru
 
 The initial independent UI/data regression run passed 61 tests. Browser testing found that the translation observer removed appended API error codes; a focused correction preserves them as inert text. The corrected snapshot passed 18 focused tests and 34 independent browser checks using isolated fixtures, including actual service projections and the real input-lock validator. Root reviewed the 1280-pixel English and 375-pixel Thai confirmation screenshots. No research engine or server file changed.
 
-Release preparation is still local. Independent review found two inherited switch-tool defects: failed systemd queries could be counted as zero jobs or zero reload needs. Their corrections require independent verification before any host action. A release must preserve the existing engine and use the reviewed switch tool with rollback to `f36181c`.
+Release preparation is still local. Independent review found two inherited switch-tool defects: failed systemd queries could be counted as zero jobs or zero reload needs. Their corrections passed independent verification with 11 fault probes and four helper cases. Unknown evidence now blocks restart and remains visible in recovery results. This accepts the local tool, not host deployment. A release must preserve the existing engine and use the reviewed switch tool with rollback to `f36181c`.
+
+UI checkpoint `7934265` was pushed. Its Quant CI passed; the Ubuntu unit job exposed two older Bridge and PF-3 tests that still expected the previous i18n/journey cache tokens. The assertions were updated to the new tokens without changing product files, and both affected tests passed locally. The replacement checkpoint must pass CI before deployment. README and Context were reviewed unchanged for this test-only correction; their local-acceptance and not-deployed status remains accurate.
 
 The Python bytecode wrapper, isolated staging Python environment and API admission configuration are not applied. No new optimizer run has been submitted at this checkpoint.
 
