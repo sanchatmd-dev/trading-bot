@@ -79,7 +79,7 @@ test('index.html adds the journey nav right after Overview, a hidden page with t
     assert.equal(section.querySelector('[style]'),null,'the CSP forbids inline styles');
     const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/journey.js?v=ux1a'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'journey.js loads after i18n.js, app.js and pine-bridge.js');
-    assert.match(html,/styles-v2\.css\?v=ux1a/);assert.match(html,/i18n\.js\?v=ux1a/);
+    assert.match(html,/styles-v2\.css\?v=pf4a/);assert.match(html,/i18n\.js\?v=pf4a/);
   }finally{dom.window.close();}
 });
 

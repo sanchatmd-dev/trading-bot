@@ -78,7 +78,7 @@ function setup({language,reduced=false,coarse=false,storage,seen,overrides,bots,
 
 test('index.html loads the guided panel assets with the ux1a cache token, kit before panel',()=>{
   const html=publicFile('index.html');
-  for(const part of ['/styles-v2.css?v=ux1a','/i18n.js?v=ux1a','/bridge-wizard.js?v=ux1a','/pine-bridge.js?v=ux1a','/journey.js?v=ux1a'])assert.ok(html.includes(part),part);
+  for(const part of ['/styles-v2.css?v=pf4a','/i18n.js?v=pf4a','/bridge-wizard.js?v=ux1a','/pine-bridge.js?v=ux1a','/journey.js?v=ux1a'])assert.ok(html.includes(part),part);
   const order=['/i18n.js?v=','/app.js?v=','/bridge-wizard.js?v=','/pine-bridge.js?v=','/readiness.js?v=','/journey.js?v='].map(part=>html.indexOf(part));
   assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'load order');
   assert.ok(!/bridge2/.test(html),'the old Bridge token is gone');

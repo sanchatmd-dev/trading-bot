@@ -125,6 +125,25 @@ function renderSavedRiskPreview(result){
   const limits=[...new Set([...(result.readiness?.reasons||[]),...(result.limitations||[])])].map(readinessMeaning);
   $('#riskPreviewReason').textContent=[calculation.reason,order?.sizingAdjustment?'Order size is capped by saved limits.':null,...conflicts,...limits,capacity.remainingDailyExecutions!=null?'Daily execution allowance counts entries and exits; it does not guarantee future BUY orders.':null,capacity.allocationLimitEnforced===false?'Separate allocation limits are not enforced.':null].filter(Boolean).join(' · ');
 }
+// The {signal} or {bridge} half of an Order Preview request, read from the Order Preview fields. null when the form cannot build one
+// (not signed in, legacy money format, or a generic BUY without entry and Stop Loss). previewRisk and the PF-4 sizing preview share it.
+function riskPreviewRequest(){
+  if(!authenticated||!me||me.moneyFormat!=='decimal-string')return null;
+  const f=$('#riskForm').elements,entry=f.previewEntry.value,stopLoss=f.previewStopLoss.value,side=f.previewSide.value;
+  if(f.previewSource.value!=='BRIDGE'&&side==='BUY'&&!(entry>0&&stopLoss>0))return null;
+  const signal={account_type:'SPOT',trade_id:'preview-'+Date.now(),broker:f.previewBroker.value,symbol:f.previewSymbol.value,event:side,order_type:'MARKET',risk_mode:f.previewSizeMode.value,risk_value:f.previewRiskPercent.value,timestamp:Date.now(),reduce_only:side==='SELL'};
+  if(entry!=='')signal.entry=entry;if(stopLoss!=='')signal.sl=stopLoss;
+  if(f.previewSizeMode.value==='QUANTITY')signal.quantity=f.previewRiskPercent.value;
+  if(f.previewTargetTradeId.value.trim())signal.target_trade_id=f.previewTargetTradeId.value.trim();
+  if(f.previewVolatilityPercent.value!=='')signal.volatility_percent=Number(f.previewVolatilityPercent.value);
+  if(f.previewNewsRisk.value!=='')signal.news_risk=f.previewNewsRisk.value==='true';
+  if(f.previewSource.value==='BRIDGE'){
+    const intent={deployment_id:f.previewDeploymentId.value.trim(),bar_time:Number(f.previewBarTime.value),event_type:f.previewBridgeEvent.value};
+    if(intent.event_type==='EXIT'){intent.entry_ref=f.previewEntryRef.value.trim();intent.reason=f.previewExitReason.value;}
+    return {bridge:intent};
+  }
+  return {signal};
+}
 async function previewRisk(){
   if(!authenticated||!me)return;
   const f=$('#riskForm').elements,entry=me.moneyFormat==='decimal-string'?f.previewEntry.value:+f.previewEntry.value,stopLoss=me.moneyFormat==='decimal-string'?f.previewStopLoss.value:+f.previewStopLoss.value;
@@ -135,18 +154,7 @@ async function previewRisk(){
   const sequence=++riskPreviewSequence,botScope=selectedBot;$('#riskPreviewStatus').textContent=translate('Checking…');
   try{
     if(saved){
-      const signal={account_type:'SPOT',trade_id:'preview-'+Date.now(),broker:f.previewBroker.value,symbol:f.previewSymbol.value,event:side,order_type:'MARKET',risk_mode:f.previewSizeMode.value,risk_value:f.previewRiskPercent.value,timestamp:Date.now(),reduce_only:side==='SELL'};
-      if(entry!=='')signal.entry=entry;if(stopLoss!=='')signal.sl=stopLoss;
-      if(f.previewSizeMode.value==='QUANTITY')signal.quantity=f.previewRiskPercent.value;
-      if(f.previewTargetTradeId.value.trim())signal.target_trade_id=f.previewTargetTradeId.value.trim();
-      if(f.previewVolatilityPercent.value!=='')signal.volatility_percent=Number(f.previewVolatilityPercent.value);
-      if(f.previewNewsRisk.value!=='')signal.news_risk=f.previewNewsRisk.value==='true';
-      let body={signal};
-      if(bridge){
-        const intent={deployment_id:f.previewDeploymentId.value.trim(),bar_time:Number(f.previewBarTime.value),event_type:f.previewBridgeEvent.value};
-        if(intent.event_type==='EXIT'){intent.entry_ref=f.previewEntryRef.value.trim();intent.reason=f.previewExitReason.value;}
-        body={bridge:intent};
-      }
+      const body=riskPreviewRequest();
       if(f.previewAuthority.value==='DRAFT')body.scenario={policy:collectRiskPolicy(),capital:{cash:f.previewCash.value,bookEquity:f.previewBookEquity.value}};
       const result=await api('/api/risk/readiness',{method:'POST',silent:true,body:JSON.stringify(body)});
       if(sequence!==riskPreviewSequence||botScope!==selectedBot)return;

@@ -271,6 +271,30 @@ table{table-layout:fixed}th,td{white-space:normal;overflow-wrap:anywhere;vertica
 /* Keep the research-workspace controls above legacy Quant Lab rules. */
 .ql-shell .ql-tabs{margin:0;border-bottom:1px solid var(--line);padding-bottom:0}.ql-shell .ql-tab{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:11px 16px;color:var(--muted);bottom:0}.ql-shell .ql-tab.active{border-color:var(--cyan);background:transparent;color:var(--text)}.ql-shell .ql-workspace,.ql-shell .ql-opt-workspace,.ql-shell .ql-risk-workspace{grid-template-columns:minmax(250px,300px) minmax(0,1fr)}.ql-shell .ql-config-rail,.ql-shell .ql-results{padding:18px}.ql-shell .ql-summary-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.ql-shell .ql-rp-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.ql-shell .ql-equity-chart{min-height:250px;padding:0}@media(max-width:900px){.ql-shell .ql-workspace,.ql-shell .ql-opt-workspace,.ql-shell .ql-risk-workspace{grid-template-columns:1fr}.ql-shell .ql-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.ql-shell .ql-tab{padding:10px 11px;font-size:12px}.ql-shell .ql-config-rail,.ql-shell .ql-results{padding:14px}.ql-shell .ql-rp-grid,.ql-shell .ql-summary-grid{grid-template-columns:1fr 1fr}}
 .ql-data-workspace{grid-template-columns:minmax(250px,340px) minmax(0,1fr)}.ql-data-workspace select,.ql-data-workspace input{width:100%;padding:10px 11px;background:#071424;border:1px solid #29405c;color:var(--text);border-radius:8px;font:inherit}.ql-data-workspace label{display:block;margin:12px 0 0;font-size:12px}.ql-data-workspace button:disabled{opacity:.5;cursor:not-allowed}.ql-data-card{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#071424}.ql-data-card h4{margin:0 0 12px}.ql-data-card dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0}.ql-data-card dl div{min-width:0}.ql-data-card dt{font-size:11px;color:var(--muted)}.ql-data-card dd{margin:4px 0 0;overflow-wrap:anywhere}.ql-data-card p{overflow-wrap:anywhere}.ql-data-card[hidden]{display:none}@media(max-width:900px){.ql-data-workspace{grid-template-columns:1fr}}@media(max-width:600px){.ql-data-card dl{grid-template-columns:1fr}}
+/* PF-4 Risk proposals (Risk manager): declared limits form and the proposal preview. Reuses the PF-3 panel rules; the CSP allows stylesheets only.
+   This block sits above the Guided Build, journey and PF-3 blocks on purpose: their style tests ban nowrap and fixed min-widths in everything
+   below their markers, and the changes table needs both inside its scrolling wrapper. The id selectors beat the PF-3 table rules in any order. */
+.pf4-panel{min-width:0}
+.pf4-form{display:grid;gap:12px;min-width:0}
+.pf4-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))}
+.pf4-grid label{min-width:0}
+.pf4-grid input,.pf4-grid select{max-width:100%}
+.pf4-actions{display:flex;flex-wrap:wrap;gap:8px}
+.pf4-root{min-width:0}
+.pf4-confirm{display:flex;gap:8px;align-items:flex-start;overflow-wrap:anywhere}
+.pf4-confirm input{width:auto;flex:none}
+.pf4-prov{display:grid;gap:4px;min-width:0}
+.pf4-prov-item{overflow-wrap:anywhere}
+.pf4-advisory{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#091726;overflow-wrap:anywhere}
+.pf4-advisory.pf4-warn{border-color:#ffd36b55;background:#2a2000;color:#ffe3a1}
+/* A disabled button must look disabled (the same as the Bridge panel). */
+#pf4Panel button:disabled{opacity:.5;cursor:not-allowed}
+/* The changes table has six columns and scrolls inside its wrapper. The numbers stay whole: the headers and the Before and After cells never wrap, not even per digit. */
+#pf4Panel .pf4-changes{min-width:640px}
+#pf4Panel .pf4-changes th,#pf4Panel .pf4-changes td:nth-child(2),#pf4Panel .pf4-changes td:nth-child(3){white-space:nowrap;overflow-wrap:normal}
+/* The sizing table keeps its words and numbers whole too: its texts wrap at spaces only, and the wrapper scrolls when a phone is too narrow. */
+#pf4Panel .pf4-sizing th,#pf4Panel .pf4-sizing td{overflow-wrap:normal}
+@media(max-width:600px){.pf4-actions button{flex:1 1 100%}}
 /* Guided Build Pine Bridge panel (P1-UX1): six steps that unlock in the real fill order. bridge-wizard.js adds .pbw-on, the step states and the coach marks.
    Without that class every step stays open. The CSP allows stylesheets only, so all motion is class driven. */
 #pbPanel{min-width:0}
