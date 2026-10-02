@@ -4,6 +4,7 @@ import {D} from '../money.js';
 import {normalizeSignal} from './domain.js';
 import {deploymentEvidence,freshSnapshot} from './pine-bridge-readiness.js';
 import {verifiedBar} from './pine-bridge-market.js';
+import {newsRiskFor} from './news-windows.js';
 
 export const MARKET_WAIT_MS=5000;
 
@@ -36,8 +37,10 @@ export async function admitBridgeEvent(store,row,bot,body,eventHash,{defaultRisk
   if(Date.now()>=deadlineAt)throw fail('MARKET_WAIT_EXPIRED');
   const tradeId='pb-'+hash(row.deployment_id+':'+body.event_id).slice(0,48);
   const signal=normalizeSignal({trade_id:tradeId,broker:body.broker,symbol:body.symbol,timeframe:body.timeframe,event:body.event_type==='BUY'?'BUY':'SELL',reduce_only:body.event_type==='EXIT',timestamp:body.bar_time,entry:executionPrice(Number(bar.close),body.event_type,model.slippage_bps,model.price_tick),...(body.event_type==='BUY'?{sl:protection.sl,tp:protection.tp,risk_mode:'PERCENT_EQUITY',risk_value:model.risk_percent}:{}),volatility_percent:Number(D(bar.high).minus(bar.low).div(bar.close).mul(100))});
-  // Never fabricate news data. An enabled news-risk policy blocks entries until
-  // an independently supplied news policy source is available.
+  // Never fabricate news data. newsRisk is true only when an independently supplied news window covers this bar_time
+  // (see news-windows.js); with no window it is a real false, so missing news data never rejects an entry. EXIT is
+  // never news-blocked, so only a BUY carries the fact.
+  if(body.event_type==='BUY')signal.newsRisk=await newsRiskFor(store,{barTime:body.bar_time,receivedAt,now});
   signal.bridge={deployment_id:row.deployment_id,event_id:body.event_id,entry_ref:body.entry_ref,bar_time:body.bar_time,event_type:body.event_type,reason:body.reason??null,market_hash:bar.content_hash,evidence_hash:hash(canonical(evidence)),signal_close:bar.close,signal_atr14:bar.atr14};
   if(!await store.enqueue(bot.id,signal,'PAPER'))throw fail('SIGNAL_ID_CONFLICT',409);
   const saved=await store.db.prepare('SELECT id FROM signals WHERE user_id=? AND trade_id=?').get(bot.id,tradeId);

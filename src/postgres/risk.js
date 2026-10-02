@@ -17,8 +17,8 @@ export function evaluateRisk(signal,context){
   if(!isExit&&daily.loss_streak>=policy.pauseAfterLossStreak)return reject('Trading paused after loss streak');
   if(!isExit&&policy.blockHighVolatility&&!Number.isFinite(signal.volatilityPercent))return reject('Missing volatility data');
   if(!isExit&&policy.blockHighVolatility&&signal.volatilityPercent>policy.maxVolatilityPercent)return reject('High volatility block is active');
-  if(!isExit&&policy.blockDuringNews&&typeof signal.newsRisk!=='boolean')return reject('Missing news risk data');
-  if(!isExit&&policy.blockDuringNews&&signal.newsRisk)return reject('News trading block is active');
+  // Only an active news window (newsRisk===true) blocks a new entry. Missing or non-boolean news data never rejects, and an EXIT is never news-blocked.
+  if(!isExit&&policy.blockDuringNews&&signal.newsRisk===true)return reject('News trading block is active');
   if(!isExit&&policy.allowedSymbols?.length&&!policy.allowedSymbols.some(s=>normalizeSymbol(s,signal.broker)===signal.symbol))return reject('Symbol is not allowed');
   if(policy.sideMode==='BUY_ONLY'&&signal.side!=='BUY'&&!isExit)return reject('Only BUY is allowed');
   if(policy.sideMode==='SELL_ONLY'&&signal.side!=='SELL')return reject('Only SELL is allowed');

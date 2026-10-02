@@ -88,7 +88,7 @@ test('PF-2 disabled: each broken current setting is CONFIGURATION_FAILURE; a los
   const setPolicy=overrides=>f.store.setRisk(id,clean(overrides));
   const cases=[
     ['KILL_SWITCH_ACTIVE',{killSwitch:true}],['SIDE_MODE_BLOCKS_BUY',{sideMode:'SELL_ONLY'}],
-    ['NEWS_BLOCK_WITHOUT_NEWS_DATA',{blockDuringNews:true}],['SYMBOL_NOT_ALLOWED',{allowedSymbols:['ETHUSDT']}],
+    ['SYMBOL_NOT_ALLOWED',{allowedSymbols:['ETHUSDT']}],
     ['PAPER_CAPITAL_NOT_FUNDED',{equities:{},balances:{}}]];
   for(const [code,overrides] of cases){
     await setPolicy(overrides);
@@ -97,6 +97,10 @@ test('PF-2 disabled: each broken current setting is CONFIGURATION_FAILURE; a los
     assert.equal(body.historical.unavailable_code,'PF2_DISABLED','the rest of the picture is still reported');
     assert.ok(codes(body).includes('PF2_DISABLED')&&codes(body).includes('NO_READY_DEPLOYMENT'));
   }
+  // The news block (the default for new profiles) is never a blocker: only the missing PF-2 and deployment remain.
+  await setPolicy({blockDuringNews:true});
+  const news=await report();
+  assert.equal(news.verdict,'CAPABILITY_UNAVAILABLE');assert.ok(!codes(news).some(code=>/NEWS/.test(code)),'no news blocker');
   // A conflicting saved policy is reported with its issue codes, never repaired.
   await setPolicy({defaults:{...config.defaultRisk.defaults,riskPercent:101}});
   const conflict=await report();
@@ -231,8 +235,13 @@ test('PF-2 enabled: a staged bot reaches READY only with complete current eviden
       rejected_by_reason:{'A reason nobody classified':2}});
     assert.equal(unknown.verdict,'EXECUTION_FAULT_REVIEW_REQUIRED');assert.deepEqual(unknown.verdict_basis,['HISTORICAL_UNKNOWN_REJECTIONS']);
     const configuration=await use({intents:{buy:8,exit_sl:6},fills:{buy:6,exit:6,exit_by_reason:{SL:6}},episodes:{closed:6,losing:2},
-      rejected_by_reason:{'Missing news risk data':2}});
+      rejected_by_reason:{'Symbol is not allowed':2}});
     assert.equal(configuration.verdict,'CONFIGURATION_FAILURE');assert.deepEqual(configuration.verdict_basis,['HISTORICAL_CONFIGURATION_REJECTIONS']);
+    // An older engine rejected BUYs for missing news data. That evidence stays classified and is no longer a failure.
+    const retired=await use({intents:{buy:8,exit_sl:6},fills:{buy:6,exit:6,exit_by_reason:{SL:6}},episodes:{closed:6,losing:2},
+      rejected_by_reason:{'Missing news risk data':2}});
+    assert.equal(retired.verdict,'READY_TO_START_PAPER');assert.deepEqual(retired.verdict_basis,[]);
+    assert.ok(retired.historical.rejections.items.some(item=>item.reason==='Missing news risk data'&&item.code==='LEGACY_NEWS_DATA_MISSING'&&item.category==='EXPECTED_POLICY_SKIP'));
     const paused=await use({intents:{buy:9,exit_sl:6},fills:{buy:6,exit:6,exit_by_reason:{SL:6}},episodes:{closed:6,losing:6},
       rejected_by_reason:{'Trading paused after loss streak':3},guards:{loss_streak_final:3,pause:persistentPause('LOSS_STREAK',S()+300*MINUTE)}});
     assert.equal(paused.verdict,'INSUFFICIENT_ACTIVITY');assert.deepEqual(paused.verdict_basis,['HISTORICAL_PERSISTENT_PAUSE']);
@@ -272,14 +281,19 @@ test('PF-2 enabled: a staged bot reaches READY only with complete current eviden
     refuse(await put({maxTradesPerDay:saved.maxTradesPerDay}),200);
     const restored=await report();
     assert.equal(restored.verdict,'READY_TO_START_PAPER',JSON.stringify(restored.blockers));
-    // Configuration blockers on top of fresh evidence: kill switch, news block, SELL_ONLY.
-    for(const [code,body] of [['KILL_SWITCH_ACTIVE',{killSwitch:true}],['NEWS_BLOCK_WITHOUT_NEWS_DATA',{blockDuringNews:true}],['SIDE_MODE_BLOCKS_BUY',{sideMode:'SELL_ONLY'}]]){
+    // Configuration blockers on top of fresh evidence: kill switch, SELL_ONLY.
+    for(const [code,body] of [['KILL_SWITCH_ACTIVE',{killSwitch:true}],['SIDE_MODE_BLOCKS_BUY',{sideMode:'SELL_ONLY'}]]){
       refuse(await put(body),200);
       const broken=await report();
       assert.equal(broken.verdict,'CONFIGURATION_FAILURE',code);assert.ok(broken.verdict_basis.includes(code),code);
       assert.ok(broken.verdict_basis.includes('DEPLOYMENT_SNAPSHOT_STALE'));
       refuse(await put({killSwitch:saved.killSwitch,blockDuringNews:saved.blockDuringNews,sideMode:saved.sideMode}),200);
     }
+    // The news block is never a blocker: switched on, only the stale deployment remains.
+    refuse(await put({blockDuringNews:true}),200);
+    const newsOn=await report();
+    assert.ok(!codes(newsOn).some(code=>/NEWS/.test(code)),'no news blocker');assert.ok(newsOn.verdict_basis.includes('DEPLOYMENT_SNAPSHOT_STALE'));
+    refuse(await put({blockDuringNews:saved.blockDuringNews}),200);
     assert.equal((await report()).verdict,'READY_TO_START_PAPER');
     assert.equal(hash(canonical(await f.store.risk(bot,config.defaultRisk))),hash(canonical(saved)),'the policy is back to the staged one');
   });

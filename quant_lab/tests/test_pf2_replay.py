@@ -370,18 +370,22 @@ def assert_node_parity(contract, rows):
 
 NODE_CASES = [
     ("plain", NOON, {}),
+    # The news block is on, no window supplies news data: replay never rejects for it (Node and Python agree).
+    ("newsBlockOn", NOON, {"blockDuringNews": True}),
     ("killSwitch", NOON, {"killSwitch": True}),
     ("maxTradesPerDay", NOON, {"maxTradesPerDay": 6}),
     ("maxDailyLossR", NOON, {"maxDailyLossR": 0.01}),
     ("pauseAfterLossStreak", NOON, {"pauseAfterLossStreak": 1}),
     ("midnight_plain", MIDNIGHT - 10 * MINUTE, {}),
+    ("midnight_newsBlockOn", MIDNIGHT - 10 * MINUTE, {"blockDuringNews": True}),
     ("midnight_maxTradesPerDay", MIDNIGHT - 10 * MINUTE, {"maxTradesPerDay": 6}),
     ("midnight_maxDailyLossR", MIDNIGHT - 10 * MINUTE, {"maxDailyLossR": 0.01}),
     ("midnight_pauseAfterLossStreak", MIDNIGHT - 10 * MINUTE, {"pauseAfterLossStreak": 1}),
 ]
 
 
-NATIVE_FILLS = {"plain", "midnight_plain", "midnight_maxTradesPerDay", "midnight_maxDailyLossR"}
+NATIVE_FILLS = {"plain", "newsBlockOn", "midnight_plain", "midnight_newsBlockOn",
+                "midnight_maxTradesPerDay", "midnight_maxDailyLossR"}
 
 
 @pytest.mark.parametrize(("name", "first", "changes"), NODE_CASES, ids=[c[0] for c in NODE_CASES])

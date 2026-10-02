@@ -79,8 +79,7 @@ export class ProposalService{
       if(stored)bridgeRisk={deployment_id:deployment.deployment_id,evidence_hash:stored.evidence_hash,risk_percent:deployment.bridge_risk_percent};
     }
     const has=code=>report.blockers.some(item=>item.code===code);
-    const context={newsBlockWithoutNewsData:has('NEWS_BLOCK_WITHOUT_NEWS_DATA'),readyDeploymentId:deployment?.deployment_id??null,
-      currentLossStreakPause:has('CURRENT_LOSS_STREAK_PAUSE')};
+    const context={readyDeploymentId:deployment?.deployment_id??null,currentLossStreakPause:has('CURRENT_LOSS_STREAK_PAUSE')};
     const built=buildProposal({botId,base,defaultRisk:this.defaultRisk,declared,evidence:evidence,bridgeRisk,context});
     return {session,base,report,evidence,deployment,built,drift:await this.capitalDrift(botId,base)};
   }

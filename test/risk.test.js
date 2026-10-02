@@ -13,9 +13,9 @@ test('explicit quantity and fixed notional cannot bypass max risk',()=>{
     assert.match(evaluateRisk({...signal,...sizing},ctx).reason,/risk percent/i);
   assert.match(evaluateRisk({...signal,quantity:.01,stopLoss:undefined},ctx).reason,/stop_loss/);
 });
-test('entry guards fail closed on absent data and protect pending exits',()=>{
+test('entry guards fail closed on absent volatility data, never on absent news data, and protect pending exits',()=>{
   assert.match(evaluateRisk({...signal,volatilityPercent:undefined},ctx).reason,/Missing volatility/);
-  assert.match(evaluateRisk({...signal,newsRisk:undefined},ctx).reason,/Missing news/);
+  assert.equal(evaluateRisk({...signal,newsRisk:undefined},ctx).ok,true,'missing news data no longer rejects an entry');
   assert.equal(evaluateRisk({...signal,side:'SELL',reduceOnly:true},{...ctx,position:{quantity:1},hasPendingOrder:true}).ok,false);
 });
 test('pause entries and expired license still allow reduce-only exits',()=>{

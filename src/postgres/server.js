@@ -21,6 +21,8 @@ import {D,Money,amount,exact} from '../money.js';
 import { hasPermission, adminPermission } from '../permissions.js';
 import { getQuota } from './quotas.js';
 import {PineBridgeService,pineBridgeRoutes} from './pine-bridge.js';
+import {parseAiQuota,describeAiQuota} from './ai-quota.js';
+import {parseNewsFeedToken,createNewsWindowsPort,newsRiskFor} from './news-windows.js';
 import {pineBridgeOverviewRoutes} from './pine-bridge-overview.js';
 import {receiveBridge} from './pine-bridge-receiver.js';
 import {receiveCapture} from './pine-capture.js';
@@ -37,6 +39,12 @@ import {pf3ReadinessRoutes} from './pf3-readiness-routes.js';
 import {ProposalService} from './pf4-proposal-service.js';
 import {pf4ProposalRoutes} from './pf4-proposal-routes.js';
 assertProductionConfig();
+// Optional per-plan AI limit. A set but invalid PINE_BRIDGE_AI_QUOTA throws here, before any database work, so a typo
+// fails startup instead of leaving every plan unlimited.
+const pineBridgeAiQuota=parseAiQuota(process.env.PINE_BRIDGE_AI_QUOTA);
+console.log(describeAiQuota(pineBridgeAiQuota));
+// Machine port for a future AI news feed: off unless NEWS_FEED_TOKEN_SHA256 (64 hex characters) is set; a malformed value also fails startup.
+const newsFeedDigest=parseNewsFeedToken(process.env.NEWS_FEED_TOKEN_SHA256);
 const database = new PostgresDatabase();
 await database.runtimeLock();
 await database.verifySchema();
@@ -57,7 +65,7 @@ if(pineBridgeEnabled) {
   const rows=(await database.query('SELECT version FROM pine_bridge_schema')).rows;
   if(rows.length!==1||rows[0].version!==1)throw new Error('Initialize Pine Bridge extension 1 offline');
 }
-const pineBridgeService=new PineBridgeService(store,{defaultRisk:config.defaultRisk});
+const pineBridgeService=new PineBridgeService(store,{defaultRisk:config.defaultRisk,aiQuota:pineBridgeAiQuota});
 const quantResearchEnabled=process.env.QUANT_RESEARCH_ENABLED==='1';
 if(quantResearchEnabled){
   if(!pineBridgeEnabled||process.env.PINE_BRIDGE_ENV!=='staging'||!config.paperTrading)throw new Error('Quant research requires explicitly configured Paper staging');
@@ -186,6 +194,7 @@ async function quantBridge(req, res, url, actor, store) {
 }
 // Trust only the right-most address from the explicitly configured loopback proxy.
 const loginKey = req => clientIp(req, config.trustLoopbackProxy);
+const newsWindowsPort = createNewsWindowsPort({store, digest: newsFeedDigest, limit: req => auth.limit('news-windows:' + loginKey(req), 120, 60000)});
 const analyticsBrokers = ['binance-global', 'binance-th', 'innovestx', 'settrade'];
 async function analyticsData(url, targetUserId) {
   const broker = String(url.searchParams.get('broker') || 'binance-global');
@@ -912,6 +921,8 @@ async function handleRequest(req, res) {
       if (!isExit && owner.role !== 'ADMIN' && !(await store.hasActiveLicense(owner.id))) return json(res, 403, {
         error: 'License inactive or expired'
       });
+      // A BUY is news-risk when the alert says so or an independent news window covers its time; never invented.
+      if (!isExit) signal.newsRisk = signal.newsRisk === true || await newsRiskFor(store, {barTime: signal.timestamp});
       const policy = await store.risk(user.id, config.defaultRisk);
       if (Date.now() - signal.timestamp > policy.maxSignalAgeSeconds * 1000) throw new Error('Signal is stale');
       if (!(await store.enqueue(user.id, signal, 'PAPER'))) return json(res, 409, {
@@ -945,6 +956,9 @@ async function handleRequest(req, res) {
   }
 }
 const server=http.createServer(async(req,res)=>{
+  // Machine port first: no cookie, session or Origin check applies to it. It answers only its own path and only while enabled.
+  try{if(await newsWindowsPort.handle(req,res))return;}
+  catch{if(!res.headersSent)json(res,503,{ok:false,error:'Service unavailable'});return;}
   const transactional=req.url.startsWith('/api/')||req.url.startsWith('/webhooks/');
   if(!transactional){try{return await handleRequest(req,res);}catch{if(!res.headersSent)json(res,503,{ok:false,error:'Service unavailable'});return;}}
   try{

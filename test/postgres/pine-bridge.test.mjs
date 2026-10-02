@@ -14,6 +14,8 @@ import {fail} from '../../src/pine-bridge/source.js';
 import {hash,canonical} from '../../src/pine-bridge/source.js';
 import {activateDeployment,validateEvidence} from '../../src/postgres/pine-bridge-readiness.js';
 import {setMembership} from '../../src/postgres/pine-bridge-registry.js';
+import {saveWindows} from '../../src/postgres/news-windows.js';
+import {parseAiQuota} from '../../src/postgres/ai-quota.js';
 import {ExecutionWorker} from '../../src/postgres/worker.js';
 import {encryptJson} from '../../src/security.js';
 import {hashPassword} from '../../src/security.js';
@@ -119,8 +121,8 @@ async function draft(a){
   return db.prepare('SELECT * FROM pine_deployments WHERE deployment_id=?').get(done.result.deployment_id);
 }
 function evidenceFor(d){return {snapshot_hash:d.snapshot_hash,artifact_hash:d.snapshot.artifact_hash,source_hash:d.snapshot.source_hash,compilation_errors:0,warnings:0,reviewed_warnings:0,binding_coverage:100,source_changed_bytes:0,unresolved_references:0,identifier_collisions:0,duplicate_bindings:0,native_alerts_isolated:true,effective_inputs_reviewed:true,signals_reviewed:true,cases:{sl:10,tp:10,native_and_bridge:5,both_touched:5,rejected:5,capped:5,buy:1,targeted_exit:1,duplicate_delivery:1},decision_match_percent:100,duplicate_ledger_effects:0,unrelated_payloads:0,level_difference_ticks:0,execution_model:{version:'paper-close-v1',price_tick:.01,quantity_step:.001,fee_bps:10,slippage_bps:10,risk_percent:1,data_profile:'closed-ohlcv-atr14-v1'},references:{tradingview:'fixture-only-not-real-compilation',source_review:'fixture-only-source-review',paper_fixture:'fixture-only-gate-validation'}};}
-async function ready(a,{capital=1000,maxOrder=10000,maxSignalAgeSeconds=3600}={}){
-  await store.setRisk(a,{...structuredClone(config.defaultRisk),maxRiskPercent:2,maxDailyLossR:1000,pauseAfterLossStreak:100,maxOrderNotional:maxOrder,maxDailyNotional:1e7,maxTradesPerDay:10000,onePositionPerSymbol:false,blockHighVolatility:false,blockDuringNews:false,maxSignalAgeSeconds,equities:{'binance-global':capital},balances:{'binance-global':capital},capPercentEquitySize:true});
+async function ready(a,{capital=1000,maxOrder=10000,maxSignalAgeSeconds=3600,blockDuringNews=false}={}){
+  await store.setRisk(a,{...structuredClone(config.defaultRisk),maxRiskPercent:2,maxDailyLossR:1000,pauseAfterLossStreak:100,maxOrderNotional:maxOrder,maxDailyNotional:1e7,maxTradesPerDay:10000,onePositionPerSymbol:false,blockHighVolatility:false,blockDuringNews,maxSignalAgeSeconds,equities:{'binance-global':capital},balances:{'binance-global':capital},capPercentEquitySize:true});
   const d=await draft(a),e=evidenceFor(d);validateEvidence(e,d.snapshot_hash);
   await db.prepare('INSERT INTO pine_bridge_evidence VALUES(?,?,?,?,?)').run(d.deployment_id,d.snapshot_hash,JSON.stringify(e),hash(canonical(e)),Date.now());
   await db.transaction(()=>activateDeployment(service,a,d.deployment_id));
@@ -474,4 +476,35 @@ test('protected backup restores extension records exactly and runtime cannot for
     await db.query('DROP OWNED BY '+role).catch(()=>{});await admin.query('DROP ROLE IF EXISTS '+role);
     await fs.rm(dir,{recursive:true,force:true});
   }
+});
+test('news windows: a Bridge BUY inside an active window is rejected, an EXIT is not, and the same Bot trades again after the window',async()=>{
+  const a=await owner(),x=await ready(a,{blockDuringNews:true}),base=Date.now()-40000;
+  const [t1,t2,t3,t4]=[base,base+10000,base+20000,base+30000];
+  await market(t1);await market(t2);await market(t3,{close:88,high:120,low:85});await market(t4);
+  try{
+    // The window is supplied by the news feed. The bar_time of each event decides, not the clock at receipt.
+    await saveWindows(store,[{start_ms:t2-1000,end_ms:t3+5000,source:'fixture',label:'window'}]);
+    for(const body of [event(x.d,t1),event(x.d,t2),event(x.d,t3,{type:'EXIT',entryTime:t1,reason:'SL'}),event(x.d,t4)])await receiveBridge(store,x.secret,body);
+    await execute();
+    const rows=(await db.prepare('SELECT status,error_message FROM signals WHERE user_id=? ORDER BY id').all(a)).map(row=>[row.status,row.error_message]);
+    assert.equal(rows.length,4);
+    assert.deepEqual(rows[1],['REJECTED','News trading block is active']);
+    for(const index of [0,2,3])assert.notEqual(rows[index][0],'REJECTED','signal '+index);
+    assert.equal((await db.prepare('SELECT count(*) n FROM pine_bridge_entries WHERE deployment_id=?').get(x.d.deployment_id)).n,2,'the rejected BUY opened no entry');
+    assert.equal((await store.getBotSession(a)).state,'SETUP','no pause, Resume or new run was needed around the window');
+  }finally{await db.prepare("DELETE FROM system_settings WHERE key='news_windows'").run();}
+});
+test('AI quota: the hook counts only the owner trailing 24 hours of the same kind in the jobs table; unset it limits nothing',async()=>{
+  const a=await owner(),b=await owner();
+  const limited=new PineBridgeService(store,{defaultRisk:config.defaultRisk,getProvider,aiQuota:parseAiQuota('{"default":{"analyze_per_day":1}}')});
+  const run=(id,svc)=>db.transaction(()=>svc.enqueue(id,'analyze',{bot_id:id,pine_source:source,source_name:'Quota'},randomUUID()));
+  await run(a,limited);
+  await assert.rejects(run(a,limited),{code:'AI_QUOTA_EXCEEDED',status:429});
+  await run(b,limited);
+  await runAll();
+  await run(a,service);
+  await runAll();
+  await db.prepare('UPDATE pine_bridge_jobs SET created_at=? WHERE owner_id=?').run(Date.now()-2*86400000,a);
+  await run(a,limited);
+  await runAll();
 });

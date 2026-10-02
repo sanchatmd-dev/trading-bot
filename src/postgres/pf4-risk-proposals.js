@@ -130,7 +130,6 @@ const ADVISORIES={
   BRIDGE_RISK_PERCENT_UNKNOWN:['info','No READY Bridge deployment gives a risk percent, so the risk ceiling cannot be checked against Bridge entries.'],
   DAILY_BELOW_ORDER_NOTIONAL:['warn','The daily notional ceiling ({daily}) is below the order notional ceiling ({order}); one order can use the whole daily allowance.'],
   REPEATED_ENTRIES_NOT_LOOSENED:['info','Repeated entries stay blocked. A proposal never switches a guard off; turn off the repeated-entry block yourself in the Risk form if you want them.'],
-  NEWS_BLOCK_WITHOUT_NEWS_DATA:['warn','Bridge alerts carry no news data; turn off Block during news yourself in the Risk form, then save and generate again.'],
   BASE_POLICY_CONFLICT:['warn','The saved policy has conflicting settings ({detail}). Fix them in the Risk form first; a proposal cannot be saved on top of them.']
 };
 const EXPLANATIONS={
@@ -154,7 +153,7 @@ const NOTIONAL_RULES=[['ORDER_NOTIONAL','maxOrderNotional','order_notional_ceili
  * Builds the proposal for one bot.
  *   botId, base (the saved policy as the store returns it), defaultRisk (the configured defaults of the validator),
  *   declared (limits as sent by the owner), evidence (PF-2 summary or null), bridgeRisk (READY deployment or null),
- *   context {newsBlockWithoutNewsData, readyDeploymentId, currentLossStreakPause}: only for advisories, not hashed.
+ *   context {readyDeploymentId, currentLossStreakPause}: only for advisories, not hashed.
  * Returns {proposal, after}. proposal.policy_input holds the changed keys only; after is the whole policy the same
  * validator produces from it (null when there is no change or a conflict refuses it). Nothing in the inputs is changed.
  */
@@ -255,7 +254,6 @@ export function buildProposal({botId,base,defaultRisk,declared,evidence=null,bri
     if(after!==null)assertMonotoneSafe(base,after,limits,defaultRisk);
   }
   if(refusal!==null)notes.unshift(['BASE_POLICY_CONFLICT',{detail:refusal.detail}]);
-  if(context.newsBlockWithoutNewsData===true||merged.blockDuringNews===true)notes.push(['NEWS_BLOCK_WITHOUT_NEWS_DATA',{}]);
   if(typeof context.readyDeploymentId==='string'&&context.readyDeploymentId)notes.push(['SAVE_STALES_DEPLOYMENT',{deployment_id:context.readyDeploymentId}]);
   if(context.currentLossStreakPause===true)notes.push(['PERSISTENT_PAUSE_NOT_CHANGED',{}]);
   notes.push(['LOSS_GUARDS_LOCKED',{}],['CAPITAL_NEVER_CHANGED',{}],['HISTORICAL_AFTER_NOT_SIMULATED',{}]);

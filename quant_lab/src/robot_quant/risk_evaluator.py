@@ -135,11 +135,11 @@ def evaluate_risk(signal: dict[str, Any], context: RiskContext) -> RiskEvaluatio
         if float(vol) > policy.max_volatility_percent:
             return reject("High volatility block is active")
 
+    # Only an active news window (newsRisk is True) blocks a new entry. Missing or non-boolean
+    # news data never rejects, and an EXIT is never news-blocked (parity with src/postgres/risk.js).
     if not is_exit and policy.block_during_news:
         news = signal.get("newsRisk", signal.get("news_risk"))
-        if not isinstance(news, bool):
-            return reject("Missing news risk data")
-        if news:
+        if news is True:
             return reject("News trading block is active")
 
     if not is_exit and policy.allowed_symbols:

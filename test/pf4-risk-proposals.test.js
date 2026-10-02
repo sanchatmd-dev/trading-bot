@@ -222,7 +222,9 @@ test('loss guards and capital are never part of a proposal: the saved values sta
   assert.ok(Object.keys(result.proposal.policy_input).every(key=>ALLOW_LIST.includes(key)));
   for(const key of [...LOSS_GUARDS,...CAPITAL_FIELDS,'blockDuringNews','sideMode','allowedSymbols'])assert.ok(!(key in result.proposal.policy_input),key);
   assert.deepEqual(result.after.equities,guarded.equities);assert.deepEqual(result.after.balances,guarded.balances);
-  assert.ok(codes(result).includes('NEWS_BLOCK_WITHOUT_NEWS_DATA'),'the news block is only reported, never changed');
+  // The news block is never changed and never advised against: it only acts inside an active news window.
+  assert.ok(!codes(result).includes('NEWS_BLOCK_WITHOUT_NEWS_DATA'),'no advice to turn the news block off');
+  assert.ok(!result.proposal.advisories.some(item=>/news/i.test(item.explanation)),'no advisory mentions news');
   assert.equal(result.after.blockDuringNews,true);
   for(const change of result.proposal.changes)assert.ok(ALLOW_LIST.includes(change.field.split('.')[0]),change.field);
 });
@@ -263,7 +265,7 @@ test('hash and proposal are deterministic, ignore key order and spelling, and re
   assert.equal(shuffled.proposal.proposal_hash,a.proposal.proposal_hash);
   assert.equal(a.proposal.base_policy_hash,policyHash(policy0()));assert.equal(a.proposal.after_policy_hash,policyHash(a.after));
   // Context only decorates the advisories; it is not part of the hash.
-  assert.equal(build({...inputs,context:{readyDeploymentId:'dep-1',currentLossStreakPause:true,newsBlockWithoutNewsData:true}}).proposal.proposal_hash,a.proposal.proposal_hash);
+  assert.equal(build({...inputs,context:{readyDeploymentId:'dep-1',currentLossStreakPause:true}}).proposal.proposal_hash,a.proposal.proposal_hash);
   const hash=options=>build({...inputs,...options}).proposal.proposal_hash,seen=new Set([a.proposal.proposal_hash]);
   const variants=[{declared:{...inputs.declared,loss_per_trade_percent:'0.9'}},{declared:{...inputs.declared,order_notional_ceiling:'901'}},
     {declared:{...inputs.declared,daily_notional_ceiling:'4000'}},{declared:{...inputs.declared,allow_repeated_entries:true}},

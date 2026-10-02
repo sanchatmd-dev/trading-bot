@@ -50,7 +50,7 @@ const auditCounts=async(db,id)=>Object.fromEntries((await db.query(`SELECT event
 const count=async(db,table,id)=>(await db.query(`SELECT count(*)::int n FROM ${table} WHERE user_id=$1`,[id])).rows[0].n;
 const LIMITS={loss_per_trade_percent:'1',order_notional_ceiling:'500',daily_notional_ceiling:'30000',allow_repeated_entries:false};
 
-test('preview: a read-only proposal with before/after, provenance and the news advisory; nothing is written',async t=>{
+test('preview: a read-only proposal with before/after and provenance, no news advice; nothing is written',async t=>{
   const f=await fixture(t,{mode:'disabled'}),owner=await f.login(f.owner),id=f.owner.id;
   await f.store.setRisk(id,policy({blockDuringNews:true}));
   assert.equal((await f.request(PREVIEW,'POST',{})).status,401);
@@ -59,7 +59,7 @@ test('preview: a read-only proposal with before/after, provenance and the news a
   assert.equal(answer.status,200,JSON.stringify(answer.body));
   const body=answer.body,p=body.proposal;
   assert.equal(body.version,'pf4-preview-v1');assert.deepEqual(body.flags,{saves_nothing:true,deterministic:true,ai_used:false});
-  assert.equal(body.report_verdict,'CONFIGURATION_FAILURE','the news block is a PF-3 configuration blocker');
+  assert.equal(body.report_verdict,'CAPABILITY_UNAVAILABLE','the news block is on and is not a PF-3 blocker; only the missing PF-2 and deployment are');
   assert.equal(p.version,'pf4-proposal-v1');assert.equal(p.bot_id,id);assert.equal(p.base_policy_hash,await savedHash(f,id));
   assert.deepEqual(p.declared,{loss_per_trade_percent:'1',order_notional_ceiling:'500',daily_notional_ceiling:'30000',allow_repeated_entries:false});
   assert.deepEqual(p.changes.map(item=>item.field),['maxRiskPercent','maxOrderNotional','maxDailyNotional','onePositionPerSymbol','capPercentEquitySize','defaults.orderNotional']);
@@ -70,10 +70,9 @@ test('preview: a read-only proposal with before/after, provenance and the news a
   assert.deepEqual(p.policy_input,{maxRiskPercent:1,maxOrderNotional:'500',maxDailyNotional:'30000',onePositionPerSymbol:true,capPercentEquitySize:true,defaults:{orderNotional:'500'}});
   assert.match(p.proposal_hash,/^[a-f0-9]{64}$/);assert.match(p.after_policy_hash,/^[a-f0-9]{64}$/);
   assert.equal(p.refusal,null);assert.equal(p.evidence,null);assert.equal(p.bridge_risk,null);
-  const news=p.advisories.find(item=>item.code==='NEWS_BLOCK_WITHOUT_NEWS_DATA');
-  assert.equal(news.explanation,'Bridge alerts carry no news data; turn off Block during news yourself in the Risk form, then save and generate again.');
+  assert.ok(!p.advisories.some(item=>item.code==='NEWS_BLOCK_WITHOUT_NEWS_DATA'||/news/i.test(item.explanation)),'no advice to turn the news block off');
   assert.ok(p.advisories.some(item=>item.code==='LOSS_GUARDS_LOCKED')&&p.advisories.some(item=>item.code==='CAPITAL_NEVER_CHANGED'));
-  assert.ok(!('blockDuringNews' in p.policy_input),'the news block is only advised, never proposed');
+  assert.ok(!('blockDuringNews' in p.policy_input),'the news block is never proposed');
   assert.equal(body.static.consistency.before.status,'CONSISTENT');assert.equal(body.static.consistency.after.status,'CONSISTENT');
   assert.equal(body.static.capacity.before.remainingDailyNotional,'20000');assert.equal(body.static.capacity.after.remainingDailyNotional,'30000');
   assert.deepEqual(body.sizing,{status:'NOT_REQUESTED',code:null,detail:null,before:null,after:null,capital:null});

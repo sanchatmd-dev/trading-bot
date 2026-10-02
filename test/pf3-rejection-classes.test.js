@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {CATEGORY,REJECTION_TABLE,TARGET_NOT_OPEN,BELOW_QUANTITY_STEP,Pf3IntegrityError,attributeSides,classifyReason,
+import {CATEGORY,REJECTION_TABLE,RETIRED_REASONS,TARGET_NOT_OPEN,BELOW_QUANTITY_STEP,Pf3IntegrityError,attributeSides,classifyReason,
   classifyRejections,parseEntryRef,verifyTargets} from '../src/postgres/pf3-rejection-classes.js';
 
 const read=name=>fs.readFileSync(new URL('../'+name,import.meta.url),'utf8');
@@ -34,8 +34,14 @@ test('every evaluator rejection string, in both implementations, has a class (dr
   for(const reason of python)assert.ok(js.has(reason),'only in risk_evaluator.py: '+reason);
   // Reverse guard: a table key that no evaluator source can produce is a typo or a stale entry.
   const sources=read(PYTHON)+read(JS)+read('quant_lab/src/robot_quant/paper_state.py')+read('quant_lab/src/robot_quant/bridge_replay.py');
+  // A retired reason is listed on purpose: stored evidence of an older engine may still hold it. No evaluator may produce it any more.
   for(const reason of REJECTION_TABLE.keys())
-    assert.ok(reasons.has(reason)||sources.includes(reason),'table entry without a source: '+reason);
+    assert.ok(reasons.has(reason)||sources.includes(reason)||RETIRED_REASONS.includes(reason),'table entry without a source: '+reason);
+  assert.deepEqual([...RETIRED_REASONS],['Missing news risk data']);
+  for(const reason of RETIRED_REASONS){
+    assert.ok(classifyReason(reason),'a retired reason stays classified: '+reason);
+    assert.ok(!reasons.has(reason)&&!sources.includes(reason),'an evaluator still produces a retired reason: '+reason);
+  }
   assert.ok(read('quant_lab/src/robot_quant/paper_state.py').includes('"TARGET_NOT_OPEN"'));
   assert.ok(read('quant_lab/src/robot_quant/bridge_replay.py').includes('"BELOW_QUANTITY_STEP"'));
 });
@@ -53,7 +59,10 @@ test('table entries carry a known category, a stable code, a side and the cappab
   const category=reason=>classifyReason(reason).category;
   assert.equal(category('Kill switch is active: entries paused'),CATEGORY.CONFIGURATION);
   assert.equal(category('License is inactive or expired'),CATEGORY.CONFIGURATION);
-  assert.equal(category('Missing news risk data'),CATEGORY.CONFIGURATION);
+  assert.equal(category('Missing news risk data'),CATEGORY.POLICY_SKIP,'retired: never a configuration failure');
+  assert.equal(classifyReason('Missing news risk data').code,'LEGACY_NEWS_DATA_MISSING');
+  assert.equal(category('News trading block is active'),CATEGORY.POLICY_SKIP);
+  assert.equal(classifyReason('News trading block is active').code,'NEWS_BLOCK_ACTIVE');
   assert.equal(category('Maximum trades per day reached'),CATEGORY.POLICY_SKIP);
   assert.equal(category('High volatility block is active'),CATEGORY.POLICY_SKIP);
   assert.equal(category('Maximum daily loss reached'),CATEGORY.LOSS_PAUSE);

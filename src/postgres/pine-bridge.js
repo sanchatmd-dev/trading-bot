@@ -6,10 +6,12 @@ import {membershipSnapshot,effectiveInputs,invalidateEntries,setMembership} from
 import {reviewFields,reviewedInputs} from '../pine-bridge/input-review.js';
 import {activateDeployment} from './pine-bridge-readiness.js';
 import {createCapture,captureStatus} from './pine-capture.js';
+import {enforceAiQuota} from './ai-quota.js';
 
 const terminal=new Set(['SUCCEEDED','FAILED','TIMED_OUT','CANCELLED','OUTCOME_UNKNOWN']);
 export class PineBridgeService {
-  constructor(store,{defaultRisk={},getProvider=providerConfig}={}){this.store=store;this.db=store.db;this.defaultRisk=defaultRisk;this.getProvider=getProvider;}
+  // aiQuota is the parsed PINE_BRIDGE_AI_QUOTA config (see ai-quota.js); null leaves every plan unlimited.
+  constructor(store,{defaultRisk={},getProvider=providerConfig,aiQuota=null}={}){this.store=store;this.db=store.db;this.defaultRisk=defaultRisk;this.getProvider=getProvider;this.aiQuota=aiQuota;}
   async authorize(owner,bot) {
     if(typeof bot!=='string'||!await this.store.ownsBot(owner,bot))throw fail('NOT_FOUND',404);
     if((await this.store.userById(bot))?.status!=='ACTIVE'||(await this.store.userById(owner))?.status!=='ACTIVE')throw fail('NOT_FOUND',404);
@@ -41,6 +43,9 @@ export class PineBridgeService {
     const requestHash=hash(canonical({operation,body,versions,provider:this.getProvider()}));
     const old=await this.db.prepare('SELECT * FROM pine_bridge_jobs WHERE owner_id=? AND bot_id=? AND operation=? AND idempotency_key=?').get(owner,body.bot_id,operation,key);
     if(old){if(old.request_hash!==requestHash)throw fail('IDEMPOTENCY_CONFLICT',409);return this.summary(old);}
+    // After the owner and queue locks and the idempotent replay, so a retried request never counts twice and
+    // concurrent requests of one owner are counted one by one. A no-op unless PINE_BRIDGE_AI_QUOTA is configured.
+    await enforceAiQuota({db:this.db,store:this.store,config:this.aiQuota,owner,operation});
     let source,analysis,selection;
     if(operation==='analyze') {
       if(body.input_review!==undefined&&!body.effective_inputs)throw fail('EFFECTIVE_INPUT_REVIEW_REQUIRED');

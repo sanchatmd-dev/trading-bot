@@ -10,6 +10,7 @@ export const SHARED_APPLICATION_FILES=Object.freeze([
   'src/pine-bridge/provider.js',
   'src/pine-bridge/source.js',
   'src/pine-bridge/template.js',
+  'src/postgres/ai-quota.js',
   'src/postgres/auth-store.js',
   'src/postgres/db.js',
   'src/postgres/http.js',

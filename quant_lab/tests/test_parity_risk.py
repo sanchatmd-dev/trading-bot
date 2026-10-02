@@ -1,5 +1,6 @@
 """Golden parity tests comparing Python risk evaluation against Node.js risk engine."""
 
+import dataclasses
 from decimal import Decimal
 
 from robot_quant.risk_evaluator import (
@@ -118,6 +119,58 @@ def test_guards_volatility_and_news():
     )
     assert not res_news.ok
     assert res_news.reason == "News trading block is active"
+
+
+def news_buy(**extra):
+    return {
+        "broker": "binance-global",
+        "symbol": "BTCUSDT",
+        "side": "BUY",
+        "entry": "60000",
+        "sl": "59000",
+        "timestamp": 1700000000000,
+        "volatilityPercent": 2.0,
+        "riskMode": "PERCENT_EQUITY",
+        "riskValue": "1.0",
+        **extra,
+    }
+
+
+def test_news_block_rejects_only_an_active_window_for_a_new_entry():
+    ctx = sample_context()
+    active = evaluate_risk(news_buy(newsRisk=True), ctx)
+    assert not active.ok
+    assert active.reason == "News trading block is active"
+    # The snake_case alias of the Node signal field means the same.
+    assert evaluate_risk(news_buy(news_risk=True), ctx).reason == "News trading block is active"
+    # No window, or no news data at all, never rejects: missing data is not a news block.
+    assert evaluate_risk(news_buy(newsRisk=False), ctx).ok
+    for value in (None, 1, 0, "true", "false", [], {}):
+        result = evaluate_risk(news_buy(newsRisk=value), ctx)
+        assert result.ok, value
+        assert result.reason is None
+    absent = evaluate_risk(news_buy(), ctx)
+    assert absent.ok
+    assert absent.reason != "Missing news risk data"
+    assert evaluate_risk(news_buy(news_risk=1), ctx).ok
+
+
+def test_news_block_never_blocks_an_exit_and_a_bot_with_the_switch_off_ignores_it():
+    held = PositionState(quantity=Decimal("1.0"))
+    exit_signal = {
+        "broker": "binance-global",
+        "symbol": "BTCUSDT",
+        "side": "SELL",
+        "entry": "61000",
+        "quantity": "1.0",
+        "reduceOnly": True,
+        "timestamp": 1700000000000,
+        "volatilityPercent": 2.0,
+    }
+    for value in (True, False, None):
+        assert evaluate_risk({**exit_signal, "newsRisk": value}, sample_context(position=held)).ok
+    off = dataclasses.replace(sample_context().policy, block_during_news=False)
+    assert evaluate_risk(news_buy(newsRisk=True), sample_context(policy=off)).ok
 
 
 def test_stop_loss_validation():

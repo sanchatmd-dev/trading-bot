@@ -63,10 +63,11 @@ test('index.html: panel after the Risk form and outside it, fixed texts, warning
     assert.equal(panel.querySelectorAll('input,select,textarea,form,a').length,0,'no field can save or start anything');
     assert.equal(panel.querySelectorAll('button').length,1);assert.equal(panel.querySelector('[style]'),null,'the CSP forbids inline styles');
     assert.equal(form.querySelector('.pf3-save-warning').textContent,WARNING);
-    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/readiness.js?v=pf4a','/journey.js?v=rj1'].map(part=>html.indexOf(part));
+    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/readiness.js?v=nw1','/journey.js?v=rj1'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'readiness.js loads after app.js and before journey.js');
-    assert.match(html,/styles-v2\.css\?v=qr1a/);assert.match(html,/i18n\.js\?v=rj1/);
+    assert.match(html,/styles-v2\.css\?v=qr1a/);assert.match(html,/i18n\.js\?v=nw1/);
     assert.doesNotMatch(html,/(styles-v2\.css|i18n\.js|journey\.js)\?v=p0j1["']/,'changed files carry a new cache version');
+    assert.doesNotMatch(html,/(i18n\.js|readiness\.js|pine-bridge\.js)\?v=(rj1|pf4a|ux1a)["']/,'the news block change gave the files it touched a new cache version');
   }finally{dom.window.close();}
 });
 
@@ -571,7 +572,7 @@ test('PF-4 markup: a separate panel after the readiness panel, outside both form
 });
 
 test('PF-4 compute posts only the declared limits, renders explained changes, advisories and consequences, and Save opens only with the confirmation',async()=>{
-  const answer=previewAnswer({context:{readyDeploymentId:'dep-1',newsBlockWithoutNewsData:true}}),proposal=answer.proposal;
+  const answer=previewAnswer({context:{readyDeploymentId:'dep-1'}}),proposal=answer.proposal;
   const p=setup({scope:'bot-1',handler:router({preview:answer,apply:SAVED})}),q=parts(p);let loads=0;p.w.load=async()=>{loads++;};
   try{
     assert.match(rootText(q),/^Declare your limits, then compute a proposal\.$/);assert.equal(p.calls.length,0,'nothing is requested before a click');
@@ -592,8 +593,8 @@ test('PF-4 compute posts only the declared limits, renders explained changes, ad
     assert.match(cap[4],/PF-2 evidence job-1 {0,2}CASH_LIMIT 1, ORDER_NOTIONAL_LIMIT 3/);
     assert.match(cap[5],/^4 historical BUY intents were rejected because the risk-sized order exceeded a limit\. Lower notional ceilings with capping off would reject orders above them; capping keeps them inside the new ceilings\. Capping keeps an order inside every limit/);
     const advisories=[...q.root.querySelectorAll('li.pf4-advisory')].map(item=>item.textContent);
-    assert.ok(advisories.some(text=>text.startsWith('NEWS_BLOCK_WITHOUT_NEWS_DATA ')&&text.endsWith('Bridge alerts carry no news data; turn off Block during news yourself in the Risk form, then save and generate again.')),'the news advisory');
-    assert.ok(!rows.some(row=>/news/i.test(row[0])),'the news block is advised, never proposed');
+    assert.ok(!advisories.some(text=>/news/i.test(text)),'no advice about the news block: it is automatic and hidden');
+    assert.ok(!rows.some(row=>/news/i.test(row[0])),'the news block is never proposed');
     for(const code of ['LOSS_GUARDS_LOCKED','CAPITAL_NEVER_CHANGED','HISTORICAL_AFTER_NOT_SIMULATED','SAVE_STALES_DEPLOYMENT'])assert.ok(advisories.some(text=>text.startsWith(code+' ')),code);
     assert.ok(q.root.querySelector('li.pf4-warn'));
     assert.match(rootText(q),/What a save changes\s*DEPLOYMENT_SNAPSHOT_STALE The READY Bridge deployment becomes stale: generate and activate again before trading\. dep-1\s*PF2_EVIDENCE_STALE The PF-2 evidence no longer matches the saved policy: enroll and run Preflight again\. job-1/);
@@ -751,7 +752,7 @@ test('PF-4 sizing preview: sends the Order Preview intent, shows before and afte
 });
 
 test('PF-4 Thai: static text, every label, the templated explanations, advisories and consequences follow the language; raw data stays raw',async()=>{
-  const answer=previewAnswer({context:{readyDeploymentId:'dep-1',newsBlockWithoutNewsData:true}});
+  const answer=previewAnswer({context:{readyDeploymentId:'dep-1'}});
   const p=setup({language:'th',scope:'bot-1',handler:router({preview:answer,apply:SAVED})}),q=parts(p),{d,w}=p;
   try{
     assert.equal(d.querySelector('#pf4Panel h2').textContent,'ข้อเสนอ Risk');
@@ -766,11 +767,10 @@ test('PF-4 Thai: static text, every label, the templated explanations, advisorie
     assert.equal(rows[0][5],'คุณระบุขาดทุนต่อเทรด 1% ความเสี่ยงสูงสุดต่อเทรดลดจาก 5% เป็น 1% ความเสี่ยงของ Bridge ที่ใช้งานอยู่คือ 1% จึงยังเปิดสถานะได้ ค่าธรรมเนียม สลิปเพจ และการเว้นช่องราคา (gap) อาจทำให้ขาดทุนเกินระดับ Stop ที่ตั้งไว้');
     assert.deepEqual(rows.find(row=>row[0]===w.translate('Block repeated entries')).slice(1,3),[w.translate('Off'),w.translate('On')]);
     assert.notEqual(w.translate('Off'),'Off');
-    const news=[...q.root.querySelectorAll('li.pf4-advisory')].find(item=>item.textContent.startsWith('NEWS_BLOCK_WITHOUT_NEWS_DATA '));
-    assert.equal(news.textContent,'NEWS_BLOCK_WITHOUT_NEWS_DATA การแจ้งเตือนของ Bridge ไม่มีข้อมูลข่าว ให้ปิด Block during news เองในฟอร์ม Risk แล้วบันทึกและสร้างใหม่อีกครั้ง');
+    assert.ok(![...q.root.querySelectorAll('li.pf4-advisory')].some(item=>/NEWS_BLOCK|ข่าว/.test(item.textContent)),'no news advisory in Thai either');
     assert.ok(rootText(q).includes('Bridge deployment ที่ READY จะหมดอายุ ต้องสร้างและเปิดใช้งานใหม่ก่อนเทรด'));
     assert.ok(rootText(q).includes('LOSS_CEILING')===false&&rootText(q).includes('SAVED_POLICY')===false,'rule and source names are translated labels');
-    assert.ok(rootText(q).includes('CONSISTENT → CONSISTENT')&&rootText(q).includes('NEWS_BLOCK_WITHOUT_NEWS_DATA')&&rootText(q).includes('dep-1'),'codes and ids stay raw');
+    assert.ok(rootText(q).includes('CONSISTENT → CONSISTENT')&&rootText(q).includes('LOSS_GUARDS_LOCKED')&&rootText(q).includes('dep-1'),'codes and ids stay raw');
     for(const element of d.querySelectorAll('#pf4Panel [data-ui-label]')){
       const label=element.dataset.uiLabel;assert.equal(element.textContent,w.translate(label),label);assert.notEqual(element.textContent,label,'untranslated: '+label);
     }

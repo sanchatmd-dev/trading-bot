@@ -12,6 +12,11 @@ export const CATEGORY=Object.freeze({CONFIGURATION:'CONFIGURATION_FAILURE',POLIC
   LOSS_PAUSE:'LOSS_PROTECTION_PAUSE',FAULT:'EXECUTION_FAULT',UNKNOWN:'UNKNOWN'});
 const C=CATEGORY.CONFIGURATION,S=CATEGORY.POLICY_SKIP,L=CATEGORY.LOSS_PAUSE,F=CATEGORY.FAULT;
 
+// Reasons the Risk evaluator no longer produces. Evidence stored by an older engine can still contain them, so they stay
+// classified. 'Missing news risk data' was retired when missing news data stopped rejecting entries: an old rejection is
+// recorded as a policy skip of the older engine, never as a configuration failure, and it blocks nothing.
+export const RETIRED_REASONS=Object.freeze(['Missing news risk data']);
+
 export const TARGET_NOT_OPEN='TARGET_NOT_OPEN';
 export const BELOW_QUANTITY_STEP='BELOW_QUANTITY_STEP';
 export const OVERFLOW_REASON='OTHER';
@@ -27,7 +32,7 @@ const ROWS=[
   ['Trading paused after loss streak',L,'LOSS_STREAK','BUY'],
   ['Missing volatility data',F,'MISSING_VOLATILITY_DATA','BUY'],
   ['High volatility block is active',S,'HIGH_VOLATILITY_BLOCK','BUY'],
-  ['Missing news risk data',C,'NEWS_BLOCK_WITHOUT_NEWS_DATA','BUY'],
+  ['Missing news risk data',S,'LEGACY_NEWS_DATA_MISSING','BUY'],
   ['News trading block is active',S,'NEWS_BLOCK_ACTIVE','BUY'],
   ['Symbol is not allowed',C,'SYMBOL_NOT_ALLOWED','BUY'],
   ['Only SELL is allowed',C,'SIDE_MODE_BLOCKS_BUY','BUY'],

@@ -76,9 +76,9 @@ function setup({language,reduced=false,coarse=false,storage,seen,overrides,bots,
   return {dom,w,d,el,panel,calls:stub.calls,counts:stub.counts,scrolls,errors,intervals,states,open,coach,until,type,submit,openPanel,advance,close:()=>w.close()};
 }
 
-test('index.html loads the guided panel assets with the ux1a cache token, kit before panel',()=>{
+test('index.html loads the guided panel assets with their cache tokens, kit before panel',()=>{
   const html=publicFile('index.html');
-  for(const part of ['/styles-v2.css?v=qr1a','/i18n.js?v=rj1','/bridge-wizard.js?v=ux1a','/pine-bridge.js?v=ux1a','/journey.js?v=rj1'])assert.ok(html.includes(part),part);
+  for(const part of ['/styles-v2.css?v=qr1a','/i18n.js?v=nw1','/bridge-wizard.js?v=ux1a','/pine-bridge.js?v=nw1','/journey.js?v=rj1'])assert.ok(html.includes(part),part);
   const order=['/i18n.js?v=','/app.js?v=','/bridge-wizard.js?v=','/pine-bridge.js?v=','/readiness.js?v=','/journey.js?v='].map(part=>html.indexOf(part));
   assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'load order');
   assert.ok(!/bridge2/.test(html),'the old Bridge token is gone');
@@ -119,15 +119,16 @@ test('the report box, advanced slots, warnings and cost notes follow the owner s
     const advanced=p.el('pbSlots').closest('details');
     assert.equal(advanced.open,false);assert.match(advanced.querySelector('summary').textContent,/Advanced: Quant search slots \(optional, does not change Pine\)/);
     const warnings=[...p.el('pbwWarnings').querySelectorAll('li')].map(item=>item.textContent);
-    assert.equal(warnings.length,3);
+    assert.equal(warnings.length,2);
     assert.ok(warnings.some(text=>/Settle Risk settings before Generate; saving Risk later requires a new Generate/.test(text)));
     assert.ok(warnings.some(text=>/Each Generate creates a new deployment id; use the newest draft/.test(text)));
-    assert.ok(warnings.some(text=>/Bridge alerts carry no news data/.test(text)&&text.includes('"Block during news"')&&/save Risk BEFORE Generate/.test(text)&&/every BUY is rejected/.test(text)));
-    const notes=[...p.panel.querySelectorAll('.pbw-note')].filter(node=>node.textContent.includes('usually under USD 0.05 per AI call'));
-    assert.equal(notes.length,2,'Analyze and Generate each carry the cost note');
+    assert.ok(!warnings.some(text=>/news/i.test(text)),'the news block is no longer a step to take: it is automatic and hidden');
+    assert.ok(!/Block during news/.test(p.panel.textContent),'the wizard never mentions the hidden control');
+    const notes=[...p.panel.querySelectorAll('.pbw-note')].filter(node=>node.textContent==="Each AI analysis or generation uses paid AI processing and counts toward your plan's limited quota.");
+    assert.equal(notes.length,2,'Analyze and Generate each carry the neutral cost note');
     assert.ok(p.el('pbAnalyzeButton').closest('.pbw-pad').contains(notes[0])&&p.el('pbGenerateButton').closest('form').contains(notes[1]));
     assert.match(p.el('pbAtr').closest('label').textContent,/cost-to-stop in Risk manager → Order Preview/);
-    assert.ok(!/USD 0\.0[1-4]\b/.test(p.panel.textContent),'no exact price is promised');
+    assert.ok(!/\bUSD\b|\$\s*\d|dollar|usually under/i.test(p.panel.textContent),'no price or dollar estimate is promised');
   }finally{p.close();}
 });
 
@@ -248,7 +249,7 @@ test('the fields unlock in the real fill order with the right focus, hints and c
     assert.equal(el('pbAnalyzeButton').disabled,false);assert.equal(d.activeElement,el('pbAnalyzeButton'));
     assert.equal(el('pbStatus').textContent,'','the status of the previous step does not follow the owner to the next one');
     assert.equal(el('pbAnalyzeButton').classList.contains('pbw-pulse'),true,'the next primary button pulses');
-    assert.equal(p.coach().previousElementSibling,el('pbAnalyzeButton'));assert.match(p.coach().textContent,/usually under USD 0\.05/);
+    assert.equal(p.coach().previousElementSibling,el('pbAnalyzeButton'));assert.equal(p.coach().textContent.startsWith("Next: click Analyze. It makes one AI call and counts toward your plan's limited quota."),true);assert.ok(!/USD/.test(p.coach().textContent));
     // Step 4: a live job shows an indeterminate bar, the plain phase, elapsed seconds and Cancel; then the Generate form opens.
     p.submit(el('pbAnalyze'));await p.until(()=>!el('pbwProgress').hidden,'progress');
     assert.equal(el('pbCancel').hidden,false);assert.equal(el('pbwProgress').querySelector('.pbw-bar').getAttribute('aria-hidden'),'true');
@@ -400,6 +401,22 @@ test('a finished AI job that failed shows its code, a plain explanation and Try 
   }finally{p.close();}
 });
 
+test('an AI_QUOTA_EXCEEDED answer shows its code and a plain explanation, in English and Thai',async()=>{
+  const server='You reached the limit of 20 AI analyses per 24 hours on your FREE plan. Try again later.';
+  for(const language of ['en','th']){
+    const p=setup({language,overrides:{'/api/quant/pine-bridge/analyze':async()=>{throw apiError('AI_QUOTA_EXCEEDED',server);}}});
+    try{
+      const {el}=p;
+      await p.advance(4);
+      p.submit(el('pbAnalyze'));await p.until(()=>!el('pbwFail').hidden,'quota failure');
+      assert.equal(el('pbwFailCode').textContent,'AI_QUOTA_EXCEEDED');
+      assert.equal(el('pbwFailWhy').textContent,language==='en'?"Your plan's AI limit for the last 24 hours is used up. Try again later.":'โควตา AI ของแพ็กเกจคุณในรอบ 24 ชั่วโมงที่ผ่านมาใช้ครบแล้ว ลองใหม่อีกครั้งภายหลัง');
+      assert.equal(el('pbStatus').textContent,server,'the server text stays visible next to the plain explanation');
+      assert.equal(p.calls.filter(call=>call.path==='/api/quant/pine-bridge/analyze').length,1,'nothing retries by itself');
+    }finally{p.close();}
+  }
+});
+
 test('a request that never created a job is retried with the SAME idempotency key; a failed status check can be resumed',async()=>{
   const p=setup({overrides:{'/api/quant/pine-bridge/analyze':async(options,n)=>{if(n===1)throw apiError('AI_QUEUE_FULL','Queue is full');return {job_id:'job-analyze'};}}});
   try{
@@ -531,7 +548,9 @@ test('a full run in Thai: every text that reaches translate() has Thai, every la
     assert.match(d.querySelector('#pbStep2 .pbw-summary').textContent,/ตัวอักษร · พบ 5 Input/);
     assert.match(p.coach().textContent,/^ถัดไป: /);assert.equal(p.coach().querySelector('button').textContent,'เข้าใจแล้ว');
     assert.equal(el('pbSource').closest('label').querySelector('span').textContent,'Indicator ต้นฉบับ');
-    assert.ok([...el('pbwWarnings').querySelectorAll('li')].some(li=>/ระงับช่วงข่าว/.test(li.textContent)&&li.textContent.includes('"Block during news"')));
+    assert.equal(el('pbwWarnings').querySelectorAll('li').length,2);
+    assert.ok(![...el('pbwWarnings').querySelectorAll('li')].some(li=>/ระงับช่วงข่าว|news/i.test(li.textContent)));
+    assert.ok([...d.querySelectorAll('#pbPanel .pbw-note')].some(node=>node.textContent==='การวิเคราะห์หรือ generate ด้วย AI แต่ละครั้งมีค่าใช้จ่าย และนับรวมในโควตาที่จำกัดของแพ็กเกจ'));
     assert.equal(el('pbReport').querySelector('summary').textContent,'รายงานการวิเคราะห์ (ไม่ใช่โค้ด Pine)');
     assert.match(el('pbDownloads').querySelector('ol li').textContent,/^เปิด Pine Editor/);assert.equal(el('pbDownloads').querySelector('a').textContent,'ดาวน์โหลด bridge-draft.pine');
     for(const text of asked)assert.notEqual(real(text),text,'a text of the run has no Thai: '+text);

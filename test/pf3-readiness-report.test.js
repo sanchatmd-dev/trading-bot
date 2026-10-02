@@ -81,7 +81,6 @@ test('PF-3 report builder over validated PF-2 envelopes',async t=>{
     const cases=[
       ['KILL_SWITCH_ACTIVE',facts=>changePolicy(facts,{killSwitch:true})],
       ['SIDE_MODE_BLOCKS_BUY',facts=>changePolicy(facts,{sideMode:'SELL_ONLY'})],
-      ['NEWS_BLOCK_WITHOUT_NEWS_DATA',facts=>changePolicy(facts,{blockDuringNews:true})],
       ['SYMBOL_NOT_ALLOWED',facts=>changePolicy(facts,{allowedSymbols:['ETHUSDT']})],
       ['PAPER_CAPITAL_NOT_FUNDED',facts=>{facts.account.configuredEquity='0';}],
       ['LICENSE_INACTIVE',facts=>{facts.licensed=false;}],
@@ -102,6 +101,25 @@ test('PF-3 report builder over validated PF-2 envelopes',async t=>{
     assert.equal(byCode(build({edit:facts=>{facts.deployment.staleCode='STALE_CAPITAL';}}).report,'DEPLOYMENT_SNAPSHOT_STALE').detail,'STALE_CAPITAL');
     assert.equal(build({edit:facts=>{facts.deployment.staleCode='STALE_MEMBERSHIP';}}).report.current.deployment.fresh,false);
     assert.equal(byCode(build({edit:facts=>{changePolicy(facts,{maxRiskPercent:0.5});}}).report,'BRIDGE_RISK_EXCEEDS_POLICY').detail,'1 > 0.5');
+  });
+
+  await t.test('the news block is never a blocker; a retired Missing news risk data rejection is a policy skip',()=>{
+    // The saved news block is on and the evidence was made under the same policy: nothing blocks.
+    const newsOn=facts=>{changePolicy(facts,{blockDuringNews:true});facts.historical.evidence.planPolicyHash=facts.policy.hash;};
+    const on=build({edit:newsOn}).report;
+    assert.equal(on.current.policy.consistency.status,'CONSISTENT');
+    assert.equal(on.verdict,VERDICT.READY);assert.deepEqual(on.blockers,[]);
+    assert.ok(!JSON.stringify(on).includes('NEWS_BLOCK_WITHOUT_NEWS_DATA'),'the old code is gone from the report');
+    // An older engine rejected BUYs for missing news data. Such evidence stays readable and classified, and blocks nothing.
+    const spec=trades(6,{intents:{buy:7,exit_sl:6},rejected_by_reason:{'Missing news risk data':1}});
+    const old=build({spec,edit:newsOn}).report;
+    assert.equal(old.verdict,VERDICT.READY);assert.deepEqual(old.blockers,[]);
+    const item=old.historical.rejections.items.find(entry=>entry.reason==='Missing news risk data');
+    assert.deepEqual([item.category,item.code,item.count,item.side],['EXPECTED_POLICY_SKIP','LEGACY_NEWS_DATA_MISSING',1,'BUY']);
+    assert.equal(old.historical.rejections.by_category.CONFIGURATION_FAILURE,0);
+    // An active news window is a skip as before.
+    const active=build({spec:trades(6,{intents:{buy:7,exit_sl:6},rejected_by_reason:{'News trading block is active':1}}),edit:newsOn}).report;
+    assert.equal(active.verdict,VERDICT.READY);
   });
 
   await t.test('current capability blockers: Bridge, deployment, evidence, global kill and uncertain orders',()=>{

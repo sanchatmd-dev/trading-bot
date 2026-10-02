@@ -52,7 +52,6 @@
     POLICY_CONFIGURATION_CONFLICT:'The effective Risk policy has conflicting settings.',
     KILL_SWITCH_ACTIVE:'The kill switch is on, so new entries are paused.',
     SIDE_MODE_BLOCKS_BUY:'Side mode SELL_ONLY blocks every BUY.',
-    NEWS_BLOCK_WITHOUT_NEWS_DATA:'Block during news is on, but Bridge intents carry no news data, so every BUY is rejected.',
     SYMBOL_NOT_ALLOWED:'Allowed symbols do not include BTCUSDT.',
     PAPER_CAPITAL_NOT_FUNDED:'Binance Global Paper equity is not funded.',
     BRIDGE_RISK_EXCEEDS_POLICY:'The Bridge risk per trade is above the policy maximum.',
@@ -295,7 +294,6 @@
     BRIDGE_RISK_PERCENT_UNKNOWN:'No READY Bridge deployment gives a risk percent, so the risk ceiling cannot be checked against Bridge entries.',
     DAILY_BELOW_ORDER_NOTIONAL:'The daily notional ceiling is below the order notional ceiling; one order can use the whole daily allowance.',
     REPEATED_ENTRIES_NOT_LOOSENED:'Repeated entries stay blocked. A proposal never switches a guard off; turn off the repeated-entry block yourself in the Risk form if you want them.',
-    NEWS_BLOCK_WITHOUT_NEWS_DATA:'Bridge alerts carry no news data; turn off Block during news yourself in the Risk form, then save and generate again.',
     BASE_POLICY_CONFLICT:'The saved policy has conflicting settings. Fix them in the Risk form first; a proposal cannot be saved on top of them.'};
   const P4_CONSEQUENCES={DEPLOYMENT_SNAPSHOT_STALE:'The READY Bridge deployment becomes stale: generate and activate again before trading.',
     PF2_EVIDENCE_STALE:'The PF-2 evidence no longer matches the saved policy: enroll and run Preflight again.'};

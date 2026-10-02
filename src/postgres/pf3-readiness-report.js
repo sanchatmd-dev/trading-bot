@@ -191,8 +191,8 @@ function currentBlockers(facts,policy,consistency,deployment,add){
   if(policy!==null){
     if(policy.killSwitch===true)add('KILL_SWITCH_ACTIVE','CONFIGURATION','CURRENT');
     if(policy.sideMode==='SELL_ONLY')add('SIDE_MODE_BLOCKS_BUY','CONFIGURATION','CURRENT');
-    // Bridge intents carry no news flag, so an enabled news block rejects every BUY.
-    if(policy.blockDuringNews===true)add('NEWS_BLOCK_WITHOUT_NEWS_DATA','CONFIGURATION','CURRENT');
+    // The news block is never a blocker: it rejects an entry only inside an active news window, and missing news data
+    // never rejects (a window that has not been supplied simply does nothing).
     if(symbolBlocked(policy))add('SYMBOL_NOT_ALLOWED','CONFIGURATION','CURRENT');
   }
   if(!attempt(()=>D(facts.account?.configuredEquity).gt(0),false))add('PAPER_CAPITAL_NOT_FUNDED','CONFIGURATION','CURRENT');

@@ -7,7 +7,8 @@
   // Static markup only. Every label comes from the i18n pairs; API data is never placed into this template.
   const step=(n,title,help,body)=>`<section class="pbw-step" id="pbStep${n}" data-step="${n}" data-state="locked" aria-labelledby="pbStep${n}Title"><header class="pbw-head"><span class="pbw-num" aria-hidden="true">${n}</span><h3 class="pbw-title" id="pbStep${n}Title" tabindex="-1" data-ui-label="${title}"></h3><span class="pbw-chip" data-ui-label="Locked"></span><button class="pbw-edit ghost" type="button" hidden data-ui-label="Edit"></button></header><p class="pbw-help" data-ui-label="${help}"></p><p class="pbw-summary" hidden></p><div class="pbw-collapse"><div class="pbw-inner"><div class="pbw-pad">${body}<button class="pbw-back ghost" type="button" hidden data-ui-label="Back to the current step"></button></div></div></div></section>`;
   const note=text=>`<p class="pbw-note" data-ui-label="${text}"></p>`;
-  const COST='Cost: usually under USD 0.05 per AI call (not a fixed price).';
+  // Neutral wording only: the screen never states a price or a dollar estimate for an AI call.
+  const COST="Each AI analysis or generation uses paid AI processing and counts toward your plan's limited quota.";
   const panel=document.createElement('details');panel.className='panel pbw';panel.id='pbPanel';
   panel.innerHTML=`<summary data-ui-label="Build Pine Bridge — draft preview"></summary>
     <p class="pbw-intro" data-ui-label="Submit an authorized Pine v5/v6 indicator. Convert strategies before uploading. Generated drafts need compilation and Paper checks."></p>
@@ -53,8 +54,7 @@
   for(const node of panel.querySelectorAll('[data-ui-label]'))node.textContent=T(node.dataset.uiLabel);
   const WARNINGS=[
     'Settle Risk settings before Generate; saving Risk later requires a new Generate.',
-    'Each Generate creates a new deployment id; use the newest draft.',
-    'Bridge alerts carry no news data. Turn off "Block during news" in Risk manager and save Risk BEFORE Generate, or every BUY is rejected.'
+    'Each Generate creates a new deployment id; use the newest draft.'
   ];
   const CHECKLIST=[
     'Open the Pine Editor in TradingView, select everything and REPLACE the whole script with bridge-draft.pine. Do not append it to the original indicator.',
@@ -75,6 +75,7 @@
     AI_PROVIDER_NOT_CONFIGURED:'The AI provider is not configured on this server.',
     PROVIDER_RATE_LIMIT:'The AI provider is busy. Wait a minute, then try again.',
     AI_QUEUE_FULL:'Too many AI jobs are waiting. Wait a moment, then try again.',
+    AI_QUOTA_EXCEEDED:"Your plan's AI limit for the last 24 hours is used up. Try again later.",
     INVALID_AI_OUTPUT:'The AI answer did not pass the safety checks. Trying again starts a new AI call.',
     JOB_DEADLINE_EXCEEDED:'The job did not finish within five minutes. Trying again starts a new AI call.',
     TIMED_OUT:'The job did not finish within five minutes. Trying again starts a new AI call.',
@@ -145,7 +146,7 @@
     if(n===1)return el('pbBot').options.length>1?{id:'bot',target:el('pbBot'),text:'Next: choose the Bot for this Bridge.'}:{id:'load',target:el('pbLoadBots'),text:'Next: load your Bots.'};
     if(n===2)return el('pbSource').value.trim()===''?{id:'source',target:el('pbSource'),text:'Next: paste your Pine indicator here. It must be an indicator, not a strategy.'}:{id:'inspect',target:el('pbInspect'),text:'Next: click Inspect inputs. This does not call AI.'};
     if(n===3)return {id:'confirm',target:el('pbInputsConfirmed'),text:'Next: compare every value with TradingView, then tick this box.'};
-    if(n===4)return {id:'analyze',target:el('pbAnalyzeButton'),text:'Next: click Analyze. It makes one AI call, usually under USD 0.05.'};
+    if(n===4)return {id:'analyze',target:el('pbAnalyzeButton'),text:"Next: click Analyze. It makes one AI call and counts toward your plan's limited quota."};
     if(n===5)return {id:'generate',target:el('pbGenerateButton'),text:'Next: check the values above, then click Generate. Each Generate makes a new draft.'};
     const link=el('pbDownloads').querySelector('a');
     return link?{id:'install',target:link,host:el('pbDownloads').querySelector('.pbw-downloads'),text:'Next: download bridge-draft.pine, then replace the whole script in TradingView.'}:null;
