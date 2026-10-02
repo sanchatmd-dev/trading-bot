@@ -121,7 +121,7 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
-Latest continuation, 2026-10-02 10:25 UTC: the research-job UI is deployed on staging release `c3fa9e5` for API and trading. Both CI workflows passed, the unchanged extractor verified all 753 release files on Linux, and immediate and ten-minute switch checks passed. Research worker `3309d07`, production and database processes were preserved. Admission is closed; no new optimizer job has run. Next are isolated Python and admission preparation, then one bounded 21-candidate optimizer run on the verified 6,600-bar dataset. The owner permits a 2% usage reserve for this continuation. B3 and W7 are not prerequisites for this research path; D6/R7 still gate PF-2 acceptance. See the [Step 5 checkpoint](STAGING_STEP5_CHECKPOINT_2026-10-02.md).
+Latest continuation, 2026-10-02 12:02 UTC: the research-job UI is deployed on staging release `c3fa9e5` for API and trading. Both CI workflows and deployment checks passed. The isolated Python copy now passes module/native origin, source/target integrity and bytecode checks; final health passed at 12:01 UTC. Next is a separately reviewed worker interpreter configuration change, then admission and one bounded 21-candidate run on the verified 6,600-bar dataset. Research worker `3309d07`, production and database processes remain preserved; admission is closed and no optimizer job has run. Usage is 3% remaining with a 2% reserve for this Codex continuation, so the remaining margin is retained for checkpoint and handoff. B3 and W7 are not prerequisites for this research path; D6/R7 still gate PF-2 acceptance. See the [Step 5 checkpoint](STAGING_STEP5_CHECKPOINT_2026-10-02.md) and [Claude handoff](CODEX_TO_CLAUDE_HANDOFF_2026-10-02.md).
 
 Latest handoff, 2026-10-02 08:30 UTC: at the owner's request, Claude root stopped all work at a checkpoint and handed off to Codex. Staging runs release `f36181c` (API and trading) and `3309d07` (research worker, FOUNDATION idle, admission closed). Step 5 has a design but no code; four owner requests from 2026-10-02 (timeframe select, generate cost wording, news-window port, a timeframe question) are recorded but not implemented. See the [Claude to Codex handoff](CLAUDE_TO_CODEX_HANDOFF_2026-10-02.md).
 
@@ -914,7 +914,7 @@ remains 10K bars including warm-up for the supported Spot 1m profile. The planne
 research datasets use timeframe/stage budgets. Historical Preflight precedes owner
 Run; a saved-setting proposal never applies itself. Signal history comes from a
 supported evaluator **or** validated fixed-input CSV. Price data is still required
-for Bridge protection and execution. Status below reflects the 2026-10-02 10:25 UTC
+for Bridge protection and execution. Status below reflects the 2026-10-02 12:01 UTC
 checkpoint: API/trading run `c3fa9e5`, the research worker runs `3309d07`, and
 research admission is closed. One Paper session is RUNNING; this does not prove a
 new natural TradingView BUY/EXIT pair. PF-3/PF-4 and the research UI are deployed;
@@ -950,7 +950,8 @@ flowchart TD
     SIGNALS --> SNAP
     SNAP --> QS["✅ QD/QS baseline, cancel and child timeout in staging<br/>One global heavy slot; current 10K/1m<br/>Local: mid-terminal crash recovery; FTR-1c Linux proof PASS-MEASURED (one case)<br/>Remaining fault gates open"]
     U --> JOBUI["Research-job UI deployed c3fa9e5<br/>10 domains / review / submit / poll / cancel"]
-    JOBUI --> ADMIT["Step 5 in progress: isolated Python + admission<br/>Declared 6600 bars / 21 candidates / seed 20261002<br/>No new run submitted"]
+    JOBUI --> PYENV["Isolated staging Python verified<br/>Module/native origins, unchanged source, no bytecode<br/>Not yet selected by research worker"]
+    PYENV --> ADMIT["Step 5 in progress: worker configuration + admission<br/>Declared 6600 bars / 21 candidates / seed 20261002<br/>No new run submitted"]
     ADMIT --> QS
     QS --> OPT["✅ One 100-candidate QL-3A run completed<br/>NO_VALID_CANDIDATE; holdout unopened"]
     OPT --> LIB[("QR-1 Research Library deployed<br/>Owner-scoped read-only view + compatible comparison<br/>No qualified winner")]
@@ -969,7 +970,7 @@ flowchart TD
     classDef scoped fill:#e1f5e8,stroke:#23844b,color:#143d28;
     classDef partial fill:#fff1d5,stroke:#b77900,color:#573a00;
     classDef planned fill:#e5e7eb,stroke:#6b7280,color:#243348;
-    class AI,PF1,DATA,RX,WORKER,DB,JOBUI,LIB scoped;
+    class AI,PF1,DATA,RX,WORKER,DB,JOBUI,PYENV,LIB scoped;
     class TV,CAP,QS,OPT,MAIL,PF,READY,ADMIT,COMP partial;
     class FREEZE,PACKAGE,PORT,BEST,FOLLOW planned;
 ```
