@@ -7,6 +7,8 @@ preview from functional acceptance; the [Claude handoff](docs/CODEX_TO_CLAUDE_PR
 preserves runtime gates and ownership. The plan itself retains Spot/Paper-only and
 10K/1m limits.
 
+Handoff update, 2026-10-02 08:30 UTC: at the owner's request Claude stopped all work at a checkpoint and handed off to Codex; no code change is pending. Staging runs `f36181c` (API and trading) and `3309d07` (research worker, admission closed). See the [Claude to Codex handoff](docs/CLAUDE_TO_CODEX_HANDOFF_2026-10-02.md).
+
 Staging release update, 2026-10-02 07:34 UTC: the staging API and trading worker run release `f36181c`, adding the read-only Research Library (Step 6) on the Quant page with provenance, read-time integrity checks and a context-matched comparison; no run can be labelled qualified yet. The research worker stays on `3309d07`; the database and production are unchanged.
 
 Staging release update, 2026-10-02 05:02 UTC: the staging API and trading worker run release `b2f0bae`, adding the PF-4 Risk proposals panel (read-only preview, confirmed save) on the Risk manager page. The research worker stays on `3309d07`; the database, market stream, fallback timer and production are unchanged.

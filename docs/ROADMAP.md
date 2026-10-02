@@ -121,6 +121,8 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Latest handoff, 2026-10-02 08:30 UTC: at the owner's request, Claude root stopped all work at a checkpoint and handed off to Codex. Staging runs release `f36181c` (API and trading) and `3309d07` (research worker, FOUNDATION idle, admission closed). Step 5 has a design but no code; four owner requests from 2026-10-02 (timeframe select, generate cost wording, news-window port, a timeframe question) are recorded but not implemented. See the [Claude to Codex handoff](CLAUDE_TO_CODEX_HANDOFF_2026-10-02.md).
+
 Latest staging release, 2026-10-02 07:34 UTC: release `f36181c` (QR-1 Research Library) runs on the staging API and trading worker; the research worker stays on `3309d07`. See the staging prototype priority section above.
 
 Latest staging release, 2026-10-02 05:02 UTC: release `b2f0bae` (PF-4 Risk proposals) runs on the staging API and trading worker; the research worker stays on `3309d07`. See the staging prototype priority section above.

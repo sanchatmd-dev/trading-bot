@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต 2026-10-02 08:30 UTC: ส่งต่องานจาก Claude ให้ Codex แล้วตามที่เจ้าของสั่ง หยุดงานทั้งหมดที่ checkpoint โดยไม่มีโค้ดค้าง staging ยังรัน release `f36181c` (API และ trading) และ `3309d07` (research worker ปิดรับงาน) ดูรายละเอียดใน [Claude to Codex handoff](docs/CLAUDE_TO_CODEX_HANDOFF_2026-10-02.md)
+
 อัปเดต staging วันที่ 2026-10-02 07:34 UTC: staging API และ trading worker เปลี่ยนเป็น release `f36181c` แล้ว หน้า Quant มีแผงคลังผลการวิจัย (ขั้นที่ 6) ที่แสดงทุกการรันแยกตามผล เปิดดูที่มาและผลตรวจว่าข้อมูลไม่ถูกแก้ไขได้ และเปรียบเทียบได้เฉพาะการรันที่บริบทตรงกัน ตอนนี้ยังไม่มีผลที่ผ่านเกณฑ์ ส่วน research worker ยังอยู่ release `3309d07` ฐานข้อมูลและ production ไม่เปลี่ยน
 
 อัปเดต staging วันที่ 2026-10-02 05:02 UTC: staging API และ trading worker เปลี่ยนเป็น release `b2f0bae` แล้ว หน้า Risk manager มีแผงเสนอค่า Risk (PF-4) ที่แสดงค่าก่อนและหลังให้ดูก่อน และบันทึกได้เมื่อกดยืนยันเท่านั้น ส่วน research worker ยังอยู่ release `3309d07` ฐานข้อมูล, market stream และ production ไม่เปลี่ยน

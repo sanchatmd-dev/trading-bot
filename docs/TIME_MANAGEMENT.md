@@ -1,5 +1,12 @@
 # Time Management — Project execution and data collection
 
+## Handoff to Codex — 2026-10-02 08:30 UTC (Claude root)
+
+- **Stop:** the owner asked for a checkpoint and a handoff to Codex. Two running children (Step 5 design, owner-request coder) stopped at safe points; the coder had changed no file.
+- **Work since the QR-1 checkpoint:** a Step 5 design of about 25 minutes, owner Q&A and a read-only staging check. See the [handoff](CLAUDE_TO_CODEX_HANDOFF_2026-10-02.md).
+- **Usage:** Claude's 5-hour window 34% used and weekly window 70% used at handoff.
+- **Remaining P1:** Step 5 (design done, three gaps), Step 4 observation, the four owner requests, P1-A gates (D6, R7, W7) and P1-F acceptance. The total P1 estimate is unchanged.
+
 ## QR-1 Research Library — 2026-10-02 07:44 UTC (Claude root)
 
 - **Build:** coder about 67 minutes against a 150-minute budget, plus a fix round of about 11 minutes.
@@ -762,6 +769,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-10-02 | ส่งต่องานให้ Codex ตามที่เจ้าของสั่ง: หยุดงานทั้งหมดที่ checkpoint, งานย่อย 2 งานหยุดอย่างปลอดภัยโดยไม่มีโค้ดค้าง; staging ตรวจแบบอ่านอย่างเดียวผ่านทั้งหมด (API/trading `f36181c`, research worker `3309d07` แบบ FOUNDATION idle ปิดรับงาน); ขั้นที่ 5 มีแบบแผนแล้วแต่ยังไม่มีโค้ด; คำขอของเจ้าของ 4 ข้อ (TF 1m–1D, ข้อความค่าใช้จ่าย generate + โควตาราย plan, ช่องรับข่าวแบบสวิตช์ราย bot, ปัญหากราฟเด้ง 1D) บันทึกไว้ยังไม่ได้ทำ | เอกสารเท่านั้น; ไม่มีการเปลี่ยน staging หรือ production
 | 2026-10-02 | QR-1 คลังผลการวิจัย (Research Library) commit `f36181c` (CI 9/9) และขึ้น staging API กับ trading worker: แสดงทุกการรันของเจ้าของแยกตามผล, รายละเอียดพร้อมที่มาและการตรวจว่าข้อมูลไม่ถูกแก้ไข, เปรียบเทียบได้เฉพาะการรันที่บริบทตรงกัน, ยังไม่มีผลที่ผ่านเกณฑ์; tester อิสระตรวจในเบราว์เซอร์จริง 1280/375 px และ API 142 รายการ, แก้ UI 5 จุดแล้วตรวจซ้ำผ่าน; สลับ release 10 ขั้นผ่านทั้งหมด รวมตรวจสุขภาพ Window 2 และตรวจหลัง 10 นาที; ไฟล์ที่เสิร์ฟตรงกับ commit 9/9 | Staging เท่านั้น; research worker ยังอยู่ `3309d07`; ไม่มี migration, research job หรือ production
 | 2026-10-02 | staging release `b2f0bae` (แผงเสนอค่า Risk ของ PF-4) ขึ้น staging API และ trading worker; ต่างจาก `3309d07` เฉพาะโค้ด PF-4, เทสต์ และเอกสาร 18 path, ไฟล์ engine 78 ไฟล์ตรงกันทุกไบต์; เครื่องมือสลับ v4 ผ่าน mock 89 รายการ และมีตัวครอบด่าน reload ที่ยอมรับเฉพาะ drop-in FOUNDATION ของ research worker ที่ pin ไว้; สลับจริง 8 ขั้นผ่านในราว 2 นาที, API restart ราว 4 วินาที; ตรวจหลัง 10 นาที HOLD เฉพาะตัวนับงาน AI หลังสลับ root ตรวจแบบอ่านอย่างเดียวแล้วพบว่าเป็นการใช้งานของเจ้าของเอง (login, วิเคราะห์ 1 ครั้ง, สร้าง draft 1 ครั้ง สำเร็จทั้งคู่) จึงยอมรับ; ไฟล์ที่เสิร์ฟตรงกับ Git blob ของ commit 8/8 | Staging เท่านั้น; research worker ยังอยู่ `3309d07`; ไม่มี migration, research job หรือ production
 | 2026-10-02 | B2 Window 2: ฐานข้อมูล staging เข้าโหมด FOUNDATION (66 ตาราง), ใช้ grants v4 (v3 + ถอนสิทธิ์แก้/ลบ `quant_job_steps` ที่เป็นตารางเพิ่มอย่างเดียว ซึ่งพบจากการซ้อม T10), research worker ย้ายไป release `3309d07` แบบ idle และยังปิดรับงาน; API ดับไม่เกิน 1 นาที 36 วินาที, ฐานข้อมูลดับราว 4 วินาที; PF-4 commit `68a6268` (CI 9/9, audit ผ่าน) ยังไม่ deploy | Staging เท่านั้น; Analytics และ backtest/optimize แบบเก่าบน staging ตอบ 409 ตามที่ยอมรับไว้; ไม่มี research job, backfill หรือ production
