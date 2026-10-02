@@ -42,6 +42,8 @@ Following fresh health and idle checks, staging API and trading worker switched 
 
 The Python bytecode wrapper, isolated staging Python environment and API admission configuration are not applied. No new optimizer run has been submitted at this checkpoint.
 
+Read-only Python discovery at 10:25–10:29 UTC found all seven required dependency distributions and confirmed the pinned operating-system interpreter is Python 3.12.3. The first probe stopped because the virtual environment uses `version_info` rather than `version`; the follow-up resolved that metadata-format difference. An editable-package path points to an older release outside staging. A direct copy cannot therefore be accepted without excluding that pinned path from the staging copy and proving imports resolve only to the intended staging environment and research release. The source environment was not invoked or modified. A bounded copy-and-verification helper is being prepared locally; full source-byte comparison and staged imports remain unrun.
+
 ## Verification limits
 
 The interactive browser and Computer Use runtimes failed during initialization before any UI action. The tester instead used installed Edge with a separate headless profile and intercepted synthetic fixture responses. These checks are not the owner's signed-in staging acceptance, a PostgreSQL integration run or a real worker run. The fixture failures involving an unavailable Chromium binary, an insecure origin and a translated-word assertion were recorded separately from product defects.

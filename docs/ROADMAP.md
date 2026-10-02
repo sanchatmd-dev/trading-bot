@@ -914,14 +914,16 @@ remains 10K bars including warm-up for the supported Spot 1m profile. The planne
 research datasets use timeframe/stage budgets. Historical Preflight precedes owner
 Run; a saved-setting proposal never applies itself. Signal history comes from a
 supported evaluator **or** validated fixed-input CSV. Price data is still required
-for Bridge protection and execution. All Bots are currently stopped by the owner.
-PF-2 is amber because development-only local slices exist; they are not wired to
-any runtime, and nothing new is deployed.
+for Bridge protection and execution. Status below reflects the 2026-10-02 10:25 UTC
+checkpoint: API/trading run `c3fa9e5`, the research worker runs `3309d07`, and
+research admission is closed. One Paper session is RUNNING; this does not prove a
+new natural TradingView BUY/EXIT pair. PF-3/PF-4 and the research UI are deployed;
+PF-2 staging activation and the new bounded optimizer run remain pending.
 
 ```mermaid
 flowchart TD
     U["Owner / Web UI"] --> AI["✅ APP-3A staging engineering<br/>Indicator + direct AI API; Template / Guide; no MCP"]
-    AI --> TV["TradingView Pine Bridge<br/>Compile / Inputs / Alert"]
+    AI --> TV["TradingView Pine Bridge<br/>8 source inputs + ATR/RR<br/>Owner compile / alert walkthrough pending"]
     TV --> RX["Webhook receiver"]
 
     U --> RANGE["Choose asset / timeframe / period<br/>Primary market: BINANCE:BTCUSDT Spot 1m"]
@@ -933,10 +935,12 @@ flowchart TD
     EVAL --> SIGNALS
 
     U --> PF1["✅ PF-1 engineering<br/>Risk Manager venue/cost/consistency and UI"]
-    PF1 --> PF["PF-2 historical replay: local S1/S3/S4/R1-R4 done, not wired<br/>Staging waits for PROFILE v2 enrollment; target <=50K<br/>PF-3 readiness; PF-4 owner proposals; V2 parity gate"]
+    PF1 --> PF["PF-2 historical replay: local wiring accepted<br/>Staging activation waits for D6/R7<br/>PROFILE v2 enrollment / parity gates remain"]
+    PF1 --> READY["PF-3 readiness + PF-4 Risk proposals deployed<br/>Preview and confirmed save; owner walkthrough pending"]
     DATA --> PF
     SIGNALS --> PF
     PF --> OWNER["Owner reviews settings and starts Paper Bot"]
+    READY --> OWNER
     OWNER --> WORKER["Spot Paper worker + current risk checks"]
     RX --> WORKER
     WORKER --> DB[("PostgreSQL<br/>Cash / Positions / Fills / Audit")]
@@ -945,8 +949,12 @@ flowchart TD
     DATA --> SNAP
     SIGNALS --> SNAP
     SNAP --> QS["✅ QD/QS baseline, cancel and child timeout in staging<br/>One global heavy slot; current 10K/1m<br/>Local: mid-terminal crash recovery; FTR-1c Linux proof PASS-MEASURED (one case)<br/>Remaining fault gates open"]
+    U --> JOBUI["Research-job UI deployed c3fa9e5<br/>10 domains / review / submit / poll / cancel"]
+    JOBUI --> ADMIT["Step 5 in progress: isolated Python + admission<br/>Declared 6600 bars / 21 candidates / seed 20261002<br/>No new run submitted"]
+    ADMIT --> QS
     QS --> OPT["✅ One 100-candidate QL-3A run completed<br/>NO_VALID_CANDIDATE; holdout unopened"]
-    OPT --> LIB[("QR-1 Research Library: read-only view on staging<br/>Immutable freeze QR-1b planned; includes failed runs")]
+    OPT --> LIB[("QR-1 Research Library deployed<br/>Owner-scoped read-only view + compatible comparison<br/>No qualified winner")]
+    LIB --> FREEZE["QR-1b planned<br/>Immutable artifact freeze and restart/readback proof"]
     OPT --> VALID{"Candidate + export validation pass?"}
     VALID -->|No| REASON["Reason report; no Best Inputs"]
     VALID -->|Yes| PACKAGE["QL-4B/4C planned<br/>Best Inputs + inputs.json + Pine + Guide + Quant Data"]
@@ -954,16 +962,16 @@ flowchart TD
     PACKAGE --> REVIEW["Owner reviews; may start a new Bot"]
     MAIL --> REVIEW
     DB --> PORT["QR-2 planned<br/>Actual Paper Portfolio Performance"]
-    LIB --> COMP["QR-3 planned<br/>Comparable strategies for one asset"]
+    LIB --> COMP["QR-3 partial: compatible comparison deployed<br/>Full fair comparison/reporting remains"]
     COMP --> BEST["QR-4 planned<br/>Best Performance or no qualified winner"]
     BEST --> REVIEW
     LIB --> FOLLOW["Owner-requested replay / backtest / new optimize<br/>Separate run; parent_run_id; no automatic loop"]
     classDef scoped fill:#e1f5e8,stroke:#23844b,color:#143d28;
     classDef partial fill:#fff1d5,stroke:#b77900,color:#573a00;
-    classDef planned fill:#e9eef7,stroke:#71829d,color:#243348;
-    class AI,PF1,DATA scoped;
-    class CAP,QS,OPT,MAIL,PF partial;
-    class LIB,PACKAGE,PORT,COMP,BEST,FOLLOW planned;
+    classDef planned fill:#e5e7eb,stroke:#6b7280,color:#243348;
+    class AI,PF1,DATA,RX,WORKER,DB,JOBUI,LIB scoped;
+    class TV,CAP,QS,OPT,MAIL,PF,READY,ADMIT,COMP partial;
+    class FREEZE,PACKAGE,PORT,BEST,FOLLOW planned;
 ```
 
 ### Owner-requested follow-up diagram
