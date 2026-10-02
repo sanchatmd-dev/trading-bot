@@ -1,5 +1,18 @@
 # Time Management — Project execution and data collection
 
+## B2 Window 2 and PF-4 — 2026-10-02 03:47 UTC (Claude root)
+
+- **PF-4:** coder about 69 minutes, a fix round of about 20 minutes, an independent audit and re-verification of about 26 minutes.
+- **Window-2 tools:**
+  - build: about 46 minutes;
+  - tester: about 46 minutes;
+  - two fix-and-rehearsal rounds: about 26 and 11 minutes, including the grants v4 finding.
+- **Live window:** about 5 minutes, plus one pre-downtime hold. The API was down for at most 1 minute 36 seconds and the database for about 4 seconds.
+- **Usage:** the 5-hour window reached 43% after its 00:50 UTC reset, and the weekly window reached 61%, with no reserve breach.
+- **P1-A:** about 10 of its 12–24 hours used. B3, W7 C1/C2, D6 and R7 remain.
+- **P1-B:** about 6 of its 8–16 hours used. PF-3 is deployed; PF-4 is committed but not deployed.
+- **Total:** the total P1 estimate is unchanged.
+
 ## B2 Window 1 — 2026-10-01 23:04 UTC (Claude root)
 
 - **Host proof:** about 6 minutes, 8 connections.
@@ -731,6 +744,7 @@ retain the same local/staging scope.
 
 | Date | Change | Scope / impact |
 | --- | --- | --- |
+| 2026-10-02 | B2 Window 2: ฐานข้อมูล staging เข้าโหมด FOUNDATION (66 ตาราง), ใช้ grants v4 (v3 + ถอนสิทธิ์แก้/ลบ `quant_job_steps` ที่เป็นตารางเพิ่มอย่างเดียว ซึ่งพบจากการซ้อม T10), research worker ย้ายไป release `3309d07` แบบ idle และยังปิดรับงาน; API ดับไม่เกิน 1 นาที 36 วินาที, ฐานข้อมูลดับราว 4 วินาที; PF-4 commit `68a6268` (CI 9/9, audit ผ่าน) ยังไม่ deploy | Staging เท่านั้น; Analytics และ backtest/optimize แบบเก่าบน staging ตอบ 409 ตามที่ยอมรับไว้; ไม่มี research job, backfill หรือ production
 | 2026-10-01 | B2 Window 1: ย้ายฐานข้อมูล PostgreSQL ของ staging ออกจาก /tmp ไปไว้ในโฟลเดอร์ถาวรภายใต้ service ของตัวเอง (enabled); ฐานข้อมูลดับราว 9 วินาที, API ดับไม่เกิน 3 นาที 29 วินาที; system id, checkpoint และจำนวนแถว 49 ตารางตรงกับก่อนหยุด; socket จำกัดสิทธิ์เป็นเจ้าของเท่านั้น; waive 3 ข้อของเครื่องมือพร้อมหลักฐาน; ตรวจหลัง 10 นาทีผ่าน | Staging เท่านั้น; ยังไม่มี migration, grant, foundation หรือ production; หลัง reboot มีแค่ฐานข้อมูลที่ขึ้นเอง
 | 2026-10-01 | staging release `3309d07` (แผง PF-3 readiness + wizard ของ Bridge UX รอบ 1) ขึ้น staging API และ trading worker ด้วยเครื่องมือสลับที่ผ่าน mock 61 assertions; precheck ครั้งแรก HOLD เพราะเช็ก port production ผิดแบบ (production ใช้ unix socket) แก้ 3 บรรทัดแล้วผ่านทุกขั้น; root ตรวจซ้ำว่าไฟล์ที่เสิร์ฟตรงกับ commit; เครื่องมือ W1 แก้ v3/v4 หลัง audit และ tester 2 รอบ กำลังทำ host proof | Staging เท่านั้น; ไม่มีการย้ายฐานข้อมูลจริง, migration หรือ production
 | 2026-10-01 | P1 wave 1 โดย Claude root: หลักฐานขั้นที่ 1 กับ AI จริง (analyze ล้มเหลวที่มองเห็นได้ 1 ครั้งแล้วสำเร็จ, Generate 2 ครั้ง, รวมราว USD 0.03); PF-3 ผ่านการรับงานระดับ local ที่ `0aabe14` (CI 9/9, ยังไม่ deploy); B2: สำเนากู้คืน fallback, backup + restore rehearsal ตรง 49/49 ตาราง, runbook แบบแยก 2 window, ซ้อมเครื่องมือ Window-1 ครบบน unit/port ทดสอบ (พบว่าหยุด transient unit แล้วต้อง reload ก่อน start); fallback timer หยุด 45 วินาทีระหว่าง micro-test โดยไม่พลาดรอบ | Staging: ยังไม่มีการย้ายฐานข้อมูลจริง, migration, grant, foundation start หรือ production; Window 1 จริงรอ audit และแจ้งเจ้าของก่อน (ภายใน 2026-10-10)

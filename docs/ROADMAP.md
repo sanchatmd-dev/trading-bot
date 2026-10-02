@@ -66,6 +66,8 @@ are queued for the next tool version. After a reboot only the database starts
 automatically; the five writers still need a manual start. Window 2 (migration,
 grants and foundation start) remains gated on its own rehearsal and owner notice.
 
+**B2 Window 2 done, 2026-10-02 03:47 UTC.** The staging database now runs in FOUNDATION mode (66 tables, schema 14). Bootstrap grants v4 are applied: v3 plus a revoke that keeps `quant_job_steps` append-only. Legacy table privileges are unchanged. The research worker runs release `3309d07` in foundation idle mode; research admission stays closed and its I/O limit is kept. The API was down for at most 1 minute 36 seconds and the database for about 4 seconds, while a cold archive was taken. Staging Analytics and legacy backtest/optimize now answer 409, as accepted. PF-4 deterministic Risk proposals are committed (`68a6268`, CI 9/9) and accepted after an independent audit, but are not yet deployed. Next in P1-A: B3 (one bounded backfill), W7 C1/C2 diagnostics and D6 Linux p99, then R7 PF-2 staging activation.
+
 ## Document authority and update rules
 
 This is the canonical index of all current plans, their sequence, acceptance
@@ -114,6 +116,8 @@ resume facts, evidence and gates; public/product docs retain normal prose.
 This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
+
+Latest B2 progress, 2026-10-02 03:47 UTC: Window 2 is complete (FOUNDATION mode, grants v4, research worker on release `3309d07` in idle mode with admission closed). PF-4 is committed in `68a6268` and not deployed. See the staging prototype priority section above.
 
 Latest B2 progress, 2026-10-01 23:04 UTC: Window 1 is complete; the staging
 database now runs from a persistent directory under its own service. See the
@@ -2249,3 +2253,43 @@ P1-F. See the [P0 preview record](STAGING_PREVIEW_P0_2026-10-01.md).
 - **Scope:** staging only. No migration, grant, foundation start, research job,
   Live or production change. Old data directory, backup, archive and rehearsal
   directories are kept for the owner's cleanup decision.
+
+## 2026-10-02 — B2 Window 2 and PF-4 (Claude root)
+
+- **Window-2 tools:** migration, grants, policies, research-worker switch,
+  health, cold archive and rehearsal driver, plus fixed versions of the
+  Window-1 quiesce, preflight and backup tools. A tester ran the real
+  migration and 46 access-control assertions on a throwaway cluster.
+- **Rehearsal T10 (fresh physical restore, separate port):** it found that
+  bootstrap grants v3 would widen `quant_job_steps` from SELECT+INSERT to
+  SELECT+INSERT+UPDATE+DELETE. The table is append-only: a trigger rejects
+  every update and delete, and the code only inserts and reads. The
+  post-check refused and rolled back. Grants v4 add the revoke plus an
+  in-transaction assert.
+- **Rehearsal T10b:** every batch passed: migration, grants (no expected
+  changes, append-only check, privilege matrix equal), idempotency and the
+  physical rollback. The live system was identical before and after.
+- **Live window (03:42–03:47 UTC):**
+  - preflight, policies;
+  - stop the five writers, take a backup and a cold archive;
+  - migrate to FOUNDATION, apply grants v4 in one transaction;
+  - switch the research worker, restart the writers, watch the journal,
+    check health.
+  The API was down for at most 1 minute 36 seconds and the database for
+  about 4 seconds. One cosmetic waiver: a policies log line showed a redacted
+  stage path. Checks after ten minutes showed identical processes and no
+  restarts.
+- **Pins:** the W7 grants pin moves from v3 to v4. v4 is shaped for staging
+  and refuses to apply on a baseline whose privileges differ. The engine
+  pins at release `3309d07` are legacy `053b4eaa…` and foundation
+  `f9b78da9…`, verified on the host.
+- **PF-4 (`68a6268`):** deterministic Risk proposals with a read-only
+  preview and a confirmed save. Ceilings move to the owner-declared values,
+  up or down, never past them. Loss guards and capital never change. Stale
+  saves are refused with 409. When max risk per trade rises, the panel
+  states the higher money value of the R-based daily loss limit. An
+  independent audit included 6000 fuzz cases, races and a real browser
+  check, and accepted it after one fix round. Node suite 959 tests,
+  954 passed; CI 9/9.
+- **Scope:** staging only. No research job, backfill, Live or production
+  change. Research admission stays closed.
