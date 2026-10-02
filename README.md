@@ -4,7 +4,7 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
-อัปเดต 2026-10-02: Codex รับช่วงและดำเนินขั้นที่ 5 ต่อแล้ว หน้าสั่ง research job ผ่านการตรวจอิสระในเครื่อง รวม 10 inputs การยืนยันก่อนรัน ติดตามและยกเลิกงาน และหน้าจอ EN/TH ชุดข้อมูล 6,600 bars ผ่านการตรวจบน staging แต่ UI ใหม่นี้ยังไม่ deploy และยังไม่เปิดรับงานหรือรัน optimizer ใหม่ ดู [checkpoint ขั้นที่ 5](docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md)
+อัปเดต 2026-10-02 10:14 UTC: หน้าสั่ง research job ขึ้น staging แล้วที่ release `c3fa9e5` รวม 10 inputs การยืนยันก่อนรัน ติดตามและยกเลิกงาน และหน้าจอ EN/TH หลังสลับ API/trading ตรวจ health, ไฟล์หน้าเว็บ และฐานข้อมูลผ่าน ส่วน research worker ยังอยู่ `3309d07` และปิดรับงาน ยังไม่มี optimizer run ใหม่ ขั้นถัดไปคือเตรียม Python แยกสำหรับ staging แล้วเปิดรับงานหนึ่งรอบที่กำหนดไว้ ดู [checkpoint ขั้นที่ 5](docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md)
 
 อัปเดต 2026-10-02 08:30 UTC: ส่งต่องานจาก Claude ให้ Codex แล้วตามที่เจ้าของสั่ง หยุดงานทั้งหมดที่ checkpoint โดยไม่มีโค้ดค้าง staging ยังรัน release `f36181c` (API และ trading) และ `3309d07` (research worker ปิดรับงาน) ดูรายละเอียดใน [Claude to Codex handoff](docs/CLAUDE_TO_CODEX_HANDOFF_2026-10-02.md)
 
