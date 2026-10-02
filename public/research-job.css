@@ -1,0 +1,14 @@
+.qrj { margin-top: 20px; min-width: 0; }
+.qrj summary { font-size: 1.15rem; font-weight: 700; cursor: pointer; }
+.qrj fieldset { border: 0; padding: 0; margin: 16px 0; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+.qrj label { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.qrj input,.qrj select { width: 100%; min-width: 0; box-sizing: border-box; }
+.qrj #qrjDomains,.qrj #qrjIdentity,.qrj fieldset>p { grid-column: 1/-1; }
+.qrj-domain { display: grid; grid-template-columns: minmax(130px,1fr) repeat(3,minmax(60px,1fr)); gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border,#30405a); }
+.qrj-domain>span { grid-column: 1; font-size: .85rem; }
+.qrj-domain>label { grid-row: 1/3; }
+.qrj pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 460px; overflow: auto; padding: 14px; background: #101b2d; color: #dce8fa; }
+.qrj #qrjIdentity,.qrj #qrjProgress { overflow-wrap: anywhere; }
+.qrj button { margin: 4px; min-height: 44px; }
+.qrj [hidden] { display: none !important; }
+@media(max-width:600px) { .qrj fieldset { grid-template-columns: minmax(0,1fr); } .qrj-domain { grid-template-columns: repeat(3,minmax(0,1fr)); } .qrj-domain>strong,.qrj-domain>span { grid-column: 1/-1; } .qrj-domain>label { grid-row: auto; } .qrj button { max-width: 100%; white-space: normal; } }

@@ -1,5 +1,7 @@
 # Robot trade — Project Context
 
+Continuation update, 2026-10-02: Codex resumed Step 5 after verifying the handoff and current staging state. The research-job UI passed independent local acceptance, including isolated desktop/mobile browser checks; release preparation remains local. The declared 6,600-bar dataset and existing ten-dimension lock passed read-only checks. Admission remains closed and no new optimizer job has been submitted. See the [Step 5 checkpoint](docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md).
+
 The owner now prioritizes a visible staging prototype, followed by the complete
 six-step Bridge/Preflight/Paper/Quant/Library workflow. The
 [P0/P1 plan](docs/STAGING_PROTOTYPE_PLAN_2026-10-01.md) distinguishes an early

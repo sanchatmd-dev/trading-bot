@@ -168,8 +168,8 @@ const journeyPairs=[
   ['Historical Preflight on staging (PF-2/R7), PF-3 report and PF-4 deterministic recommendations with before/after values and explicit save.','Historical Preflight บน Staging (PF-2/R7), รายงาน PF-3 และข้อเสนอแนะแบบกำหนดผลได้ PF-4 พร้อมค่าก่อน/หลัง และการบันทึกที่ผู้ใช้ยืนยันเอง'],
   ['Trade log shows each signal from receipt through the Risk decision to the simulated Paper fill. Live trading stays locked.','Trade log แสดงแต่ละสัญญาณตั้งแต่รับสัญญาณ ผ่านการตัดสินใจของ Risk จนถึงการจับคู่จำลองของ Paper ส่วนการเทรดจริง (Live) ยังคงถูกล็อก'],
   ['Trace one real TradingView BUY and targeted EXIT with ledger evidence in a bounded observation window.','ติดตาม BUY จริงจาก TradingView หนึ่งรายการและ EXIT ที่ระบุเป้าหมาย พร้อมหลักฐานใน ledger ภายในช่วงสังเกตการณ์ที่จำกัด'],
-  ['Historical runs appear with their original run identity. New research jobs stay closed until the foundation gates pass.','การรันในอดีตแสดงพร้อมรหัสรันเดิม งานวิจัยใหม่ยังปิดอยู่จนกว่าจะผ่าน foundation gate'],
-  ['Foundation migration and startup (B2), one bounded dataset (B3), diagnostics (W7), D6/R7, then one admitted bounded job with declared budget and holdout rules.','Foundation migration และ startup (B2), dataset แบบจำกัดหนึ่งชุด (B3), diagnostics (W7), D6/R7 จากนั้นรับงานแบบจำกัดหนึ่งงานพร้อมงบประมาณและกฎ holdout ที่ประกาศไว้'],
+  ['Research job: prepare ten inputs from a preserved run, choose the dataset, then review the frozen request. Submission requires open research admission and server readiness checks.','งานวิจัย: เตรียมสิบค่าจากการรันที่เก็บไว้ เลือกชุดข้อมูล แล้วตรวจคำขอที่ล็อกไว้ ต้องเปิดการรับงานวิจัยและผ่านการตรวจความพร้อมจากระบบก่อนส่ง'],
+  ['One owner-confirmed bounded research job with a declared budget and holdout rules. Independent historical Preflight gates remain separate; results still require acceptance.','งานวิจัยมีขอบเขตหนึ่งงานที่เจ้าของยืนยัน พร้อมงบและกติกา holdout ที่ประกาศไว้ ด่าน Historical Preflight เป็นการตรวจแยกต่างหาก และผลยังต้องผ่านการรับรอง'],
 ];
 uiPairs.push(...journeyPairs);
 // PF-3 readiness report (Risk manager panel and the journey step 3 rows). One named block so a test can prove these pairs stay unique and complete.
@@ -621,7 +621,54 @@ const qr1Pairs=[
   ['Selected candidate','Candidate ที่เลือก'],
   ['{n} runs in this group are not loaded yet. Use Load more.','ยังไม่ได้โหลดการรันในกลุ่มนี้อีก {n} รายการ ใช้ปุ่มโหลดเพิ่ม']
 ];
-uiPairs.push(...qr1Pairs);
+uiPairs.push(...qr1Pairs,
+  ['Research job','งานวิจัย'],['Legacy optimizer','Optimizer เดิม'],
+  ['Prepare another job','เตรียมงานใหม่'],['Total bars including warm-up','จำนวนแท่งทั้งหมดรวม warm-up'],['Ten research dimensions','สิบมิติสำหรับวิจัย'],['Source slot','ช่อง source'],
+  ['Bounded Spot/Paper research. Results require independent acceptance; they are not recommendations.','งานวิจัย Spot/Paper มีขอบเขตจำกัด ผลต้องผ่านการรับรองแยกต่างหาก และยังไม่ใช่คำแนะนำ'],
+  ['Open this panel to check research admission.','เปิดแผงนี้เพื่อตรวจการรับงานวิจัย'],
+  ['Seed from Research Library','ตั้งต้นจาก Research Library'],
+  ['Load selected run','โหลดการรันที่เลือก'],
+  ['Dataset start (UTC, inclusive)','เริ่มชุดข้อมูล (UTC รวมเวลานี้)'],
+  ['Dataset end (UTC, inclusive)','สิ้นสุดชุดข้อมูล (UTC รวมเวลานี้)'],
+  ['Warm-up bars (inside dataset)','จำนวนแท่ง warm-up (อยู่ในชุดข้อมูล)'],
+  ['Candidate budget (1–100)','งบจำนวน candidate (1–100)'],
+  ['Random seed (0–2147483647)','ค่า seed สุ่ม (0–2147483647)'],
+  ['Deadline from submission (60–900 seconds)','เวลาสูงสุดนับจากส่งงาน (60–900 วินาที)'],
+  ['UTC only. At most 10,000 total bars, including warm-up; at least 2,000 measured bars. Dataset availability and readiness are checked on submission.','ใช้ UTC เท่านั้น รวม warm-up ไม่เกิน 10,000 แท่ง และมีแท่งประเมินอย่างน้อย 2,000 แท่ง ระบบตรวจข้อมูลและความพร้อมเมื่อส่งงาน'],
+  ['Review submission','ตรวจคำขอ'],['Confirm and submit frozen request','ยืนยันและส่งคำขอที่ล็อกไว้'],['Edit request','แก้ไขคำขอ'],
+  ['Check job status','ตรวจสถานะงาน'],['Cancel research job','ยกเลิกงานวิจัย'],['Open Research Library','เปิด Research Library'],['Check admission again','ตรวจการรับงานอีกครั้ง'],
+  ['Sign in again or check owner permissions.','เข้าสู่ระบบอีกครั้ง หรือตรวจสิทธิ์เจ้าของ'],
+  ['Research admission is closed. No new job was submitted.','การรับงานวิจัยปิดอยู่ ไม่มีการส่งงานใหม่'],
+  ['Request failed. Check the error before continuing.','คำขอล้มเหลว ตรวจข้อผิดพลาดก่อนดำเนินการต่อ'],
+  ['Checking research admission…','กำลังตรวจการรับงานวิจัย…'],
+  ['Choose a preserved run','เลือกการรันที่เก็บไว้'],
+  ['Admission is reported open. The server checks execution readiness on submission.','รายงานว่าการรับงานเปิดอยู่ ระบบตรวจความพร้อมทำงานเมื่อส่งคำขอ'],
+  ['Research admission is closed. You can inspect and prepare inputs.','การรับงานวิจัยปิดอยู่ สามารถตรวจและเตรียมค่าได้'],
+  ['Baseline','ค่าตั้งต้น'],['Minimum','ค่าต่ำสุด'],['Maximum','ค่าสูงสุด'],['Step','ระยะเพิ่มค่า'],
+  ['A verified run with eight source bindings is required.','ต้องใช้การรันที่ตรวจสอบแล้วและผูกค่า source ครบแปดช่อง'],
+  ['Inputs loaded. Choose the dataset explicitly, then review.','โหลดค่าแล้ว เลือกช่วงชุดข้อมูลเอง แล้วตรวจคำขอ'],
+  ['Check integer limits.','ตรวจขอบเขตจำนวนเต็ม'],['Enter a whole-minute UTC date.','กรอกเวลา UTC ที่เป็นนาทีเต็ม'],['Enter a valid past UTC date.','กรอกเวลา UTC ในอดีตที่ถูกต้อง'],
+  ['Load a verified run first.','โหลดการรันที่ตรวจสอบแล้วก่อน'],['Check each grid and its baseline alignment.','ตรวจทุกช่วงค่า ระยะเพิ่ม และความสอดคล้องกับค่าตั้งต้น'],['Check dataset length and warm-up limits.','ตรวจความยาวชุดข้อมูลและขอบเขต warm-up'],
+  ['Frozen request','คำขอที่ล็อกไว้'],['Estimated split (train / validation / holdout)','แบ่งข้อมูลโดยประมาณ (train / validation / holdout)'],
+  ['Estimated maximum evaluations / chunk launches','จำนวนประเมินสูงสุด / การเริ่มชุดย่อย โดยประมาณ'],
+  ['Estimated runtime: 2.5–3 seconds per launch, plus preparation. Not a guarantee; the deadline can expire.','เวลาประมาณ 2.5–3 วินาทีต่อการเริ่มชุดย่อย รวมเวลาเตรียมเพิ่มเติม ไม่รับประกัน และอาจหมดเวลา'],
+  ['Estimated output cap: 8 MiB; state cap: 1 MiB. Server resource limits remain authoritative.','เพดานผลลัพธ์ประมาณ 8 MiB และสถานะ 1 MiB ใช้ขอบเขตทรัพยากรจริงจากระบบ'],
+  ['Review the immutable request. Submit only after confirming all inputs.','ตรวจคำขอที่ล็อกไว้ ส่งเมื่อยืนยันทุกค่าแล้วเท่านั้น'],
+  ['Checks completed','การตรวจที่เสร็จแล้ว'],['Elapsed seconds','เวลาที่ผ่านไป (วินาที)'],['Deadline (UTC)','หมดเวลา (UTC)'],
+  ['Bot','Bot'],['Deployment','Deployment'],['Phase','ขั้นตอน'],['Dimension coverage','จำนวนมิติที่ประเมินแล้ว'],
+  ['Estimated runtime (seconds, plus preparation)','เวลาประมาณ (วินาที บวกเวลาเตรียม)'],
+  ['Job finished. Inspect the preserved result in Research Library.','งานสิ้นสุดแล้ว ตรวจผลที่เก็บไว้ใน Research Library'],
+  ['Cancellation recorded. Worker cleanup may still be in progress. Inspect Research Library.','บันทึกการยกเลิกแล้ว ระบบอาจยังคืนทรัพยากร ตรวจ Research Library'],
+  ['Polling paused. Use Check job status to resume.','พักการตรวจสถานะ ใช้ปุ่มตรวจสถานะงานเพื่อทำต่อ'],
+  ['Polling limit reached. Check status manually or inspect Research Library.','ครบขอบเขตการตรวจสถานะแล้ว กดตรวจเองหรือเปิด Research Library'],
+  ['Polling stopped after an error. Check status manually.','หยุดตรวจสถานะหลังเกิดข้อผิดพลาด กดตรวจเอง'],
+  ['Submitting the frozen request…','กำลังส่งคำขอที่ล็อกไว้…'],
+  ['Submission outcome is unknown. Retry only this unchanged request with the same key.','ยังไม่ทราบผลการส่ง ลองใหม่ได้เฉพาะคำขอเดิมที่ไม่แก้ไขและใช้ key เดิม'],
+  ['Retry unchanged submission','ส่งคำขอเดิมอีกครั้ง'],
+  ['Cancel this research job? The preserved result will remain in Research Library.','ยกเลิกงานวิจัยนี้หรือไม่? ผลที่เก็บไว้จะยังอยู่ใน Research Library'],
+  ['Check job status before continuing.','ตรวจสถานะงานก่อนดำเนินการต่อ'],
+  ['A request may be pending. Inspect Research Library before submitting again.','คำขออาจยังดำเนินอยู่ ตรวจ Research Library ก่อนส่งอีกครั้ง']
+);
 for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}

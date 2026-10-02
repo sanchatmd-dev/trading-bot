@@ -38,9 +38,9 @@
     {n:4,title:'Real signals and Paper execution',view:'signals',
       now:'Trade log shows each signal from receipt through the Risk decision to the simulated Paper fill. Live trading stays locked.',
       next:'Trace one real TradingView BUY and targeted EXIT with ledger evidence in a bounded observation window.'},
-    {n:5,title:'Quant optimizer',view:'quant',
-      now:'Historical runs appear with their original run identity. New research jobs stay closed until the foundation gates pass.',
-      next:'Foundation migration and startup (B2), one bounded dataset (B3), diagnostics (W7), D6/R7, then one admitted bounded job with declared budget and holdout rules.'},
+    {n:5,title:'Quant optimizer',view:'quant',research:true,
+      now:'Research job: prepare ten inputs from a preserved run, choose the dataset, then review the frozen request. Submission requires open research admission and server readiness checks.',
+      next:'One owner-confirmed bounded research job with a declared budget and holdout rules. Independent historical Preflight gates remain separate; results still require acceptance.'},
     {n:6,title:'Quant Library and selection',view:'quant',library:true,
       now:'Research Library lists every preserved run with provenance, including failed, insufficient and cancelled runs. Development scores are not recommendations; no qualified winner exists.',
       next:'Full QR-3 comparison objectives and QR-4 validation-gated reporting (QL-4B/QL-4C).'}
@@ -238,6 +238,7 @@
     document.querySelector('nav button[data-view="'+step.view+'"]')?.click();
     if(step.bridge)openBridge();
     if(step.library)openLibrary();
+    if(step.research){const panel=document.getElementById('qrjPanel');if(panel){panel.open=true;const handled=!panel.dispatchEvent(new CustomEvent('qrj:reveal',{cancelable:true}));if(!handled)panel.scrollIntoView?.({block:'start'});}}
   });
   document.querySelector('nav button[data-view="journey"]')?.addEventListener('click',refresh);
   document.getElementById('refresh')?.addEventListener('click',()=>{if(!page.hidden)refresh();});

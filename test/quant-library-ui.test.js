@@ -106,9 +106,9 @@ const apiError=(code,status=503)=>Object.assign(new Error(code||'Request failed'
 test('index.html loads the library script before journey.js with the qr1a token; the panel is created closed on the Quant page with the fixed banner',()=>{
   const html=publicFile('index.html'),dom=new JSDOM(html),d=dom.window.document;
   try{
-    const order=['/pine-bridge.js?v=','/readiness.js?v=','/research-library.js?v=qr1a','/journey.js?v=qr1a'].map(part=>html.indexOf(part));
+    const order=['/pine-bridge.js?v=','/readiness.js?v=','/research-library.js?v=qr1a','/journey.js?v=rj1'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'the library script loads after the Bridge panel and before journey.js');
-    assert.ok(html.includes('/styles-v2.css?v=qr1a')&&html.includes('/i18n.js?v=qr1a'));
+    assert.ok(html.includes('/styles-v2.css?v=qr1a')&&html.includes('/i18n.js?v=rj1'));
   }finally{dom.window.close();}
   const p=setup({handler:router()});
   try{

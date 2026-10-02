@@ -1,5 +1,12 @@
 # Time Management — Project execution and data collection
 
+## Codex Step 5 continuation — 2026-10-02
+
+- The owner resumed work and explicitly allowed this continuation to use the account allowance down to 2% remaining. Codex's weekly allowance was 26% remaining at intake and 23% at the start of independent UI acceptance; the short window is unknown. These are shared account observations, not per-agent costs.
+- Fresh read-only staging and dataset checks finished at 08:49 UTC using two SSH connections. No host configuration changed.
+- UI implementation ran approximately 08:47–09:06 UTC, including focused tests and fixes. Independent review found an error-code display defect; the correction ran approximately 09:21–09:25 UTC and then passed independent checks. Local release-tool preparation and correction verification remain in progress; deployment and job runtime have not started.
+- The declared run uses 21 candidates and a 900-second deadline. Completion time and a qualifying candidate are not guaranteed. See the [Step 5 checkpoint](STAGING_STEP5_CHECKPOINT_2026-10-02.md); the overall P1 estimate is unchanged.
+
 ## Handoff to Codex — 2026-10-02 08:30 UTC (Claude root)
 
 - **Stop:** the owner asked for a checkpoint and a handoff to Codex. Two running children (Step 5 design, owner-request coder) stopped at safe points; the coder had changed no file.
