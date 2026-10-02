@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต 2026-10-02 17:46 UTC: งาน optimizer แบบจำกัดขอบเขตของขั้นที่ 5 รันจบบน staging แล้ว ผลเป็น `NO_VALID_CANDIDATE` ทดสอบ 21 ชุดในราว 3.4 นาที ไม่มีชุดที่ผ่าน train/validation จึงไม่เปิด holdout และไม่มีค่าแนะนำหรือการ apply การส่งครั้งแรกเวลา 15:23 UTC ล้มด้วย `QUANT_IO_GATE_FAILED` เพราะ Python ของงานย่อยต้อง compile โมดูลใหม่ทุกครั้งภายใต้ CPU 50% จนเกินเวลาพร้อม 3 วินาที จึงเพิ่ม bytecode cache แบบอ่านอย่างเดียวให้ research worker (เปิด Python ราว 1 วินาที) แล้วรันคำขอเดิมซ้ำหนึ่งครั้งตามที่เจ้าของอนุมัติ ปิดรับงานแล้วและตรวจการเก็บกวาดผ่าน release ของ API/trading และ research worker คงเดิม
+
 อัปเดต 2026-10-02 13:45 UTC: research worker บน staging เลือกใช้ Python สำเนาแยกที่ตรวจแล้ว ตรวจทันทีและหลัง 10 นาทีผ่าน โดยไม่มี restart หรือ error เพิ่ม API/trading, ฐานข้อมูลและ production คงเดิม ยังปิดรับ optimizer และยังไม่มีงานวิจัยใหม่ ขั้นต่อไปคือเตรียมเปิด–ปิด admission และยืนยันช่องทางส่งงานที่ล็อกอิน ดู [checkpoint ขั้นที่ 5](docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md)
 
 อัปเดต 2026-10-02 12:02 UTC: สำเนา Python สำหรับ staging ผ่านการตรวจโมดูล, native libraries และไฟล์ก่อน–หลังแล้ว ต้นทางไม่เปลี่ยนและไม่มี bytecode ใหม่ แต่ research worker ยังไม่ได้เลือกใช้สำเนานี้ และยังปิดรับ optimizer อยู่ ดู [checkpoint ขั้นที่ 5](docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md) และ [handoff จาก Codex ให้ Claude](docs/CODEX_TO_CLAUDE_HANDOFF_2026-10-02.md)

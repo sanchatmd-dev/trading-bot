@@ -40,7 +40,7 @@ The immutable release contains 753 files: 571 source files and 182 dependencies.
 
 Following fresh health and idle checks, staging API and trading worker switched to `c3fa9e5` at 10:13 UTC. The immediate postcheck passed at 10:13:59 UTC: all 12 served assets matched, five unauthenticated routes retained their guards, health remained `PAPER_ONLY`, and no active research or foundation job appeared. The research worker, database, market stream and production processes were preserved. The delayed postcheck passed at 10:24:42 UTC using the original switch attribution window; the same releases, guards, idle state and configuration hashes held. This verifies deployment; the owner's signed-in browser walkthrough remains separate.
 
-The research worker switched to the verified isolated Python wrapper at the later 13:33 UTC checkpoint below. API admission remains closed, and no new optimizer run has been submitted.
+The research worker switched to the verified isolated Python wrapper at the later 13:33 UTC checkpoint below. The sections below record the first submission's readiness failure, the bytecode-cache correction and the declared run's result.
 
 Read-only Python discovery at 10:25–10:29 UTC found all seven required dependency distributions and confirmed the pinned operating-system interpreter is Python 3.12.3. The first probe stopped because the virtual environment uses `version_info` rather than `version`; the follow-up resolved that metadata-format difference. An editable-package path points to an older release outside staging. The reviewed copy helper excludes that pinned path and bytecode from the staging copy while preserving the source.
 
@@ -63,6 +63,36 @@ The first Linux precheck stopped before any configuration write because its envi
 Activation ran from 13:30:24 to 13:33:15 UTC. One configuration override, one user-manager reload and one research-worker restart selected the staged wrapper. The new worker logged successful startup and passed effective-environment, release, I/O, file-integrity and idle checks. API, trading, database, market and production process identities were preserved. The delayed check ran from 13:43:35 to 13:44:56 UTC and passed: the worker process and start identity were unchanged, its journal contained exactly one startup and no recorded errors since activation, and no test process or research job remained. Prepared files, configuration, I/O limits and closed admission were unchanged. No child Python research evaluation ran: worker configuration acceptance is separate from a real optimizer run and its process-isolation evidence.
 
 The next slice is an independently reviewed API admission open/close path, followed by the single declared run through an authenticated owner session. Do not leave admission open while submission access is unavailable. The owner's current reserve is 4%, superseding the earlier continuation's 2% exception.
+
+### First submission and readiness failure — 2026-10-02
+
+A reviewed admission tool opened API research admission at 15:15:10 UTC. The owner submitted the declared request at about 15:23 UTC through an authenticated session. The job failed at 15:23:26 UTC with `QUANT_IO_GATE_FAILED` after one evaluation in the candidate phase; its foundation job was cancelled after 6,104 ms. Admission closed at 15:30:11 UTC. The terminal proof found no active research or foundation job, no research child unit, no open launch and no unsettled ledger operation. The research worker was not changed.
+
+The research child must report readiness within 3,000 ms. The isolated interpreter runs with bytecode writing disabled, and neither the release sources nor the staged packages contain bytecode, so every child compiled its whole import closure. That took about 1.5 seconds of CPU, which under the child's 50% CPU quota is about 3 seconds of wall time, and the launcher stopped the unit at its deadline. The host has no swap and showed no input/output activity for the unit.
+
+### Read-only bytecode cache — 2026-10-02
+
+A reviewed tool built a separate bytecode tree once, inside a throttled transient unit. It compiled 2,011 source files from the release, the staged packages and the operating-system standard library with hash-checked invalidation, with no compile failures (38.2 MB in total). The files are read-only and a manifest hash pins the tree. A new wrapper differs from the accepted one only in pointing Python at that tree; bytecode writing stays disabled. A new worker override selects that wrapper and leaves the earlier layers in place.
+
+Before activation, two import-only units with the research child's exact CPU, memory, task and input/output limits had to finish within 1,500 ms, with every imported Python module served from the cache. The first attempt measured 1,160 ms but stopped on coverage: 563 of 564 modules. The one module left over is the operating system's `sitecustomize`, a symbolic link that the builder skips. The tool was amended to accept exactly that named module and re-run, measuring 990 ms and 1,060 ms, with the cache and the release unchanged afterwards. Activation at 16:45:28 UTC used one override, one user-manager reload and one research-worker restart. The delayed check passed at 17:00:04 UTC.
+
+The admission tool's first precheck after activation stopped because its closed-state baseline predated the new override. The corrected baseline was read back and verified, and the precheck passed at 17:05:06 UTC.
+
+### Declared run result — 2026-10-02
+
+The owner approved correcting the failure and repeating the same declared request once. Admission opened at 17:20:10 UTC after a read-only import warm-up of 610 ms, and the owner submitted once. The job ran from 17:25:29 to 17:28:50 UTC and finished `NO_VALID_CANDIDATE` in phase `COMPLETE` on its first attempt:
+- 21 evaluations of 21 candidates from the approved lock, covering all ten dimensions;
+- seed `20261002`;
+- completion reason `NO_VALID_TRAIN_VALIDATION_CANDIDATE`.
+
+The holdout was not evaluated, no candidate was selected and no owner recommendation is ready. The foundation job succeeded in 200,662 ms across one preparation chunk and 21 candidate chunks.
+
+Admission closed at 17:45:11 UTC. The terminal proof at 17:45:39 UTC found no research child unit, no active research or foundation job, no open launch and no unsettled operation. The API returned to its closed configuration and the research worker kept the cache wrapper. This result is research evidence. Do not change ranges or submit another run automatically.
+
+Open follow-ups:
+- Compile symbolic-link modules into a new cache so the named exception can be removed.
+- Measure readiness with a cold page cache, since the child reads at 512 KiB/s.
+- Give the earlier worker checks a post-run adapter, because the job totals changed from two to three.
 
 ### Browser and research-result limits
 

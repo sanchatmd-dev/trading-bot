@@ -121,6 +121,8 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Step 5 run checkpoint, 2026-10-02 17:46 UTC (Claude root): the declared bounded run completed with `NO_VALID_CANDIDATE`: 21 evaluations, holdout unopened, no recommendation. The first submission failed at the research child's 3-second readiness gate because the interpreter compiled its imports on every launch. A read-only bytecode cache for the research worker fixed this, bringing import time under the child's limits to about 1 second. With the owner's approval, the same declared request ran once more and completed in about 3.4 minutes. API admission is closed and cleanup is proven. The owner's floor for this continuation is 2% weekly usage remaining. Open follow-ups: cache coverage for symbolic-link modules, cold page-cache timing, and a post-run adapter for the earlier worker checks. The owner's queued requests come next.
+
 Resumed continuation, 2026-10-02 13:45 UTC: the owner now reserves 4% usage remaining. The research worker selects the verified isolated Python wrapper. Immediate checks and the delayed check at 13:44:56 UTC passed with the same worker process, one startup and no recorded errors since activation. API admission is still closed, other services retain their releases and processes, and no optimizer job was submitted. Next is reviewed API admission preparation plus a concrete authenticated submission route; this does not activate PF-2.
 
 Latest continuation, 2026-10-02 12:02 UTC: the research-job UI is deployed on staging release `c3fa9e5` for API and trading. Both CI workflows and deployment checks passed. The isolated Python copy now passes module/native origin, source/target integrity and bytecode checks; final health passed at 12:01 UTC. Next is a separately reviewed worker interpreter configuration change, then admission and one bounded 21-candidate run on the verified 6,600-bar dataset. Research worker `3309d07`, production and database processes remain preserved; admission is closed and no optimizer job has run. Usage is 3% remaining with a 2% reserve for this Codex continuation, so the remaining margin is retained for checkpoint and handoff. B3 and W7 are not prerequisites for this research path; D6/R7 still gate PF-2 acceptance. See the [Step 5 checkpoint](STAGING_STEP5_CHECKPOINT_2026-10-02.md) and [Claude handoff](CODEX_TO_CLAUDE_HANDOFF_2026-10-02.md).
@@ -916,11 +918,13 @@ remains 10K bars including warm-up for the supported Spot 1m profile. The planne
 research datasets use timeframe/stage budgets. Historical Preflight precedes owner
 Run; a saved-setting proposal never applies itself. Signal history comes from a
 supported evaluator **or** validated fixed-input CSV. Price data is still required
-for Bridge protection and execution. Status below reflects the 2026-10-02 13:45 UTC
-checkpoint: API/trading run `c3fa9e5`, the research worker runs `3309d07`, and
+for Bridge protection and execution. Status below reflects the 2026-10-02 17:46 UTC
+checkpoint: API/trading run `c3fa9e5`, the research worker runs `3309d07` with a
+read-only bytecode cache, and
 research admission is closed. One Paper session is RUNNING; this does not prove a
 new natural TradingView BUY/EXIT pair. PF-3/PF-4 and the research UI are deployed;
-PF-2 staging activation and the new bounded optimizer run remain pending.
+PF-2 staging activation remains pending. The declared bounded optimizer run
+completed with `NO_VALID_CANDIDATE`; its holdout stayed unopened.
 
 ```mermaid
 flowchart TD
@@ -952,8 +956,8 @@ flowchart TD
     SIGNALS --> SNAP
     SNAP --> QS["✅ QD/QS baseline, cancel and child timeout in staging<br/>One global heavy slot; current 10K/1m<br/>Local: mid-terminal crash recovery; FTR-1c Linux proof PASS-MEASURED (one case)<br/>Remaining fault gates open"]
     U --> JOBUI["Research-job UI deployed c3fa9e5<br/>10 domains / review / submit / poll / cancel"]
-    JOBUI --> PYENV["Isolated staging Python verified<br/>Module/native origins, unchanged source, no bytecode<br/>Selected by research worker; immediate and +10 min checks passed"]
-    PYENV --> ADMIT["Step 5 in progress: API admission + authenticated submission<br/>Declared 6600 bars / 21 candidates / seed 20261002<br/>No new run submitted"]
+    JOBUI --> PYENV["Isolated staging Python verified<br/>Module/native origins, unchanged source, no bytecode<br/>Selected by research worker + read-only bytecode cache<br/>Child import about 1 s; +10 min checks passed"]
+    PYENV --> ADMIT["✅ Step 5 bounded run complete: NO_VALID_CANDIDATE<br/>6600 bars / 21 evaluations / seed 20261002; holdout unopened<br/>Run 1 failed readiness; fixed, repeated once; admission closed"]
     ADMIT --> QS
     QS --> OPT["✅ One 100-candidate QL-3A run completed<br/>NO_VALID_CANDIDATE; holdout unopened"]
     OPT --> LIB[("QR-1 Research Library deployed<br/>Owner-scoped read-only view + compatible comparison<br/>No qualified winner")]

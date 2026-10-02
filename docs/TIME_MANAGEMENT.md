@@ -1,5 +1,12 @@
 # Time Management — Project execution and data collection
 
+## Claude Step 5 continuation — 2026-10-02 14:02–17:47 UTC
+
+- Claude root resumed from Codex checkpoint `ea9b55e` at 14:02 UTC, and a fresh staging check passed at 14:05 UTC. The owner set this continuation's floor at 2% weekly usage remaining. Claude weekly usage read 71% used at 15:07 UTC and 76% used at 17:46 UTC. These are shared account readings, not per-agent costs.
+- Admission-tool preparation, review and fixtures ran between the resume check and the first admission opening at 15:15 UTC. The first run failed at 15:23 UTC, and admission closed at 15:30 UTC. Read-only diagnosis followed.
+- The bytecode-cache tool and admission tool v2 were built and fixture-tested between about 15:31 and 16:16 UTC. Staging work ran 16:22–17:05 UTC. It hit one coverage stop and one stale-baseline stop; each was corrected with a reviewed one-line change, followed by activation and both prechecks.
+- Run 2 took about 3.4 minutes of job time, and admission was open from 17:20 to 17:45 UTC. This continuation's Step 5 wall time was about 3.7 hours, mostly tool preparation and verification rather than job runtime.
+
 ## Codex Step 5 continuation — 2026-10-02
 
 - The owner resumed the next continuation with a 4% remaining reserve, superseding the earlier 2% exception for new work. The refreshed weekly allowance reports 14% remaining; the short window is unknown. Git remains at `f284e9d` with no tracked changes at intake. A fresh staging read-only check passed at 12:52 UTC. The next bounded packet prepares and tests the research-worker interpreter switch locally, with no service change until independent review and fresh operational gates pass.
