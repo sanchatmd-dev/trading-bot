@@ -1,5 +1,17 @@
 # Time Management — Project execution and data collection
 
+## Claude continuation — 2026-10-02 17:47–20:55 UTC
+
+- The owner asked to keep working through the main documents with periodic commits, at a 2% weekly floor. Claude weekly usage read 77% used at 18:35 UTC and 80% used at 20:47 UTC.
+- 18:04–18:38 UTC, cleanup:
+  - a read-only inventory of leftovers;
+  - the owner chose a labelled holding folder;
+  - an operations agent moved 62 items in three SSH connections and held 7 referenced items.
+- 18:45–19:35 UTC, owner requests 3 and 4: coder implementation, 1,060 of 1,065 Node tests passing and 203 Python tests passing.
+- 19:29–19:50 UTC, independent testing found one HIGH defect. Root fixed it with a regression test, and commit `34e8652` passed CI 9/9.
+- 19:58–20:50 UTC, the Activate-for-Paper UI: 1,090 of 1,095 tests passing, and commit `f21deff` passed CI 9/9.
+- Step 4 and release preparation used read-only checks only. No staging service, configuration or database changed in this window.
+
 ## Claude Step 5 continuation — 2026-10-02 14:02–17:47 UTC
 
 - Claude root resumed from Codex checkpoint `ea9b55e` at 14:02 UTC, and a fresh staging check passed at 14:05 UTC. The owner set this continuation's floor at 2% weekly usage remaining. Claude weekly usage read 71% used at 15:07 UTC and 76% used at 17:46 UTC. These are shared account readings, not per-agent costs.

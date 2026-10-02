@@ -4,6 +4,17 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต 2026-10-02 20:55 UTC: push แล้ว 2 commit ผ่าน CI 9/9 แต่ยังไม่ขึ้น staging
+- `34e8652` เพิ่มจุดตั้งโควตา AI ตามแพ็กเกจ เปลี่ยนข้อความค่าใช้จ่ายเป็น "มีค่าใช้จ่ายและโควตาจำกัด" และออกแบบการบล็อกข่าวใหม่
+  - ซ่อนตัวเลือกราย bot และเปิดเป็นค่าเริ่มต้นสำหรับ bot ใหม่
+  - บล็อกเฉพาะ BUY ช่วงที่มีหน้าต่างข่าว EXIT ทำได้เสมอ
+  - ไม่ปฏิเสธเพราะไม่มีข้อมูลข่าวอีก
+  - มี port รับข่าวที่ปิดไว้เป็นค่าเริ่มต้น
+- `f21deff` เพิ่มปุ่ม Activate for Paper พร้อมรายการ deployment แบบอ่านอย่างเดียว และเอาตัวเลข USD ออกจากหน้า journey
+- การขึ้น staging ต้องใช้เครื่องมือสลับ release รุ่นใหม่ เพราะตัวประเมินความเสี่ยงฝั่ง Python เปลี่ยน
+- ย้ายไฟล์เหลือใช้ที่ตรวจแล้วราว 1 GB ไปไว้ในโฟลเดอร์พักที่ระบุว่าเตรียมลบหลังจบ project ยังไม่ลบอะไร
+- Bridge ที่ generate ใหม่ต้องมีหลักฐานการตรวจก่อน Activate
+
 อัปเดต 2026-10-02 17:46 UTC: งาน optimizer แบบจำกัดขอบเขตของขั้นที่ 5 รันจบบน staging แล้ว ผลเป็น `NO_VALID_CANDIDATE` ทดสอบ 21 ชุดในราว 3.4 นาที ไม่มีชุดที่ผ่าน train/validation จึงไม่เปิด holdout และไม่มีค่าแนะนำหรือการ apply การส่งครั้งแรกเวลา 15:23 UTC ล้มด้วย `QUANT_IO_GATE_FAILED` เพราะ Python ของงานย่อยต้อง compile โมดูลใหม่ทุกครั้งภายใต้ CPU 50% จนเกินเวลาพร้อม 3 วินาที จึงเพิ่ม bytecode cache แบบอ่านอย่างเดียวให้ research worker (เปิด Python ราว 1 วินาที) แล้วรันคำขอเดิมซ้ำหนึ่งครั้งตามที่เจ้าของอนุมัติ ปิดรับงานแล้วและตรวจการเก็บกวาดผ่าน release ของ API/trading และ research worker คงเดิม
 
 อัปเดต 2026-10-02 13:45 UTC: research worker บน staging เลือกใช้ Python สำเนาแยกที่ตรวจแล้ว ตรวจทันทีและหลัง 10 นาทีผ่าน โดยไม่มี restart หรือ error เพิ่ม API/trading, ฐานข้อมูลและ production คงเดิม ยังปิดรับ optimizer และยังไม่มีงานวิจัยใหม่ ขั้นต่อไปคือเตรียมเปิด–ปิด admission และยืนยันช่องทางส่งงานที่ล็อกอิน ดู [checkpoint ขั้นที่ 5](docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md)
@@ -271,7 +282,7 @@ Risk Manager ปัจจุบันยังเป็นผู้คุมเ�
 - ตรวจรายการค้างตามเวลาแม้คิวไม่ว่าง และหมุนรายการที่ตรวจไม่สำเร็จ
 - นับ Pending BUY ใน exposure และจองวงเงิน; อนุญาต Scale-in ตาม Risk settings และใช้ trade_id ไม่ซ้ำ
 - Kill switch หมายถึง **หยุดเปิดใหม่**; reduce-only exits ผ่านได้เมื่อ pause หรือ License หมดอายุ แต่ผู้ใช้ Suspended ยังถูกบล็อกทั้งหมด
-- News/Volatility Guard ปฏิเสธ entry เมื่อเปิด Guard แต่ข้อมูลขาดหาย
+- Volatility Guard ปฏิเสธ entry เมื่อเปิด Guard แต่ข้อมูลขาดหาย ส่วน News Guard บล็อก BUY เฉพาะช่วงที่มีหน้าต่างข่าว และไม่ปฏิเสธเมื่อไม่มีข้อมูลข่าว (commit `34e8652`, ยังไม่ขึ้น staging)
 - จำกัด request body, rate, queue; ตรวจ boolean อย่างเข้มงวด; เปลี่ยนรหัสผ่าน/ระงับบัญชีแล้วเพิกถอน Session
 - ไม่รับ Broker URL จากผู้ใช้; credentials ใหม่เข้ารหัส AES-GCM พร้อมผูก user/Broker
 - Schema migration แบบ transaction, single-instance lock, graceful shutdown, queue health, backup integrity check

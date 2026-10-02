@@ -121,6 +121,14 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Owner-request checkpoint, 2026-10-02 20:55 UTC (Claude root): commits `34e8652` (AI quota and wording, news-window block) and `f21deff` (Activate-for-Paper UI, read-only deployment list) passed CI 9/9. They are not deployed.
+- **Independent test:** an independent tester found one HIGH defect, fixed before commit: a malformed request target could crash the API while the news port was enabled. A raw-socket regression test now covers it.
+- **Staging release:** needs a revised switch tool. The previous tool assumes no engine change, but `risk_evaluator.py` changed. After deployment, PF-2 needs re-enrollment and a new run, and the research worker needs a matching release and bytecode cache before any further research job. For new profiles, staging sets `BLOCK_DURING_NEWS=false` today; set it to true at the switch.
+- **Step 4:** the owner's new ETRP bridge has captured 21 events, but activation requires recorded execution evidence that it does not have yet. The READY SPT deployment already has evidence, a webhook secret and a RUNNING Paper session. It needs only a current TradingView execution alert for a natural BUY/EXIT demonstration.
+- **Cleanup:** 62 verified-unused items (about 1 GB) moved into a labelled holding folder, and 7 still-referenced items were held.
+- **New risk:** the market stream and fallback runtime directory lives under `/tmp`, so a reboot would remove it.
+- **Pending:** the 24-hour B2 Window-2 check is due 2026-10-03 03:47 UTC.
+
 Step 5 run checkpoint, 2026-10-02 17:46 UTC (Claude root): the declared bounded run completed with `NO_VALID_CANDIDATE`: 21 evaluations, holdout unopened, no recommendation. The first submission failed at the research child's 3-second readiness gate because the interpreter compiled its imports on every launch. A read-only bytecode cache for the research worker fixed this, bringing import time under the child's limits to about 1 second. With the owner's approval, the same declared request ran once more and completed in about 3.4 minutes. API admission is closed and cleanup is proven. The owner's floor for this continuation is 2% weekly usage remaining. Open follow-ups: cache coverage for symbolic-link modules, cold page-cache timing, and a post-run adapter for the earlier worker checks. The owner's queued requests come next.
 
 Resumed continuation, 2026-10-02 13:45 UTC: the owner now reserves 4% usage remaining. The research worker selects the verified isolated Python wrapper. Immediate checks and the delayed check at 13:44:56 UTC passed with the same worker process, one startup and no recorded errors since activation. API admission is still closed, other services retain their releases and processes, and no optimizer job was submitted. Next is reviewed API admission preparation plus a concrete authenticated submission route; this does not activate PF-2.
