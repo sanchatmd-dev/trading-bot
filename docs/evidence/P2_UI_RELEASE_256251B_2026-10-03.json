@@ -1,0 +1,178 @@
+{
+  "observedAt": "2026-10-03T19:07:00Z",
+  "scope": "Staging UI release 256251b: publication, API-only activation, immediate and delayed checks and a local-forwarding byte comparison of served files; no authenticated browser journey",
+  "root": {
+    "platform": "Claude",
+    "segment": "2026-10-03T17:10Z to 2026-10-03T19:10Z",
+    "followsEvidence": "P2_PARENT_PERMISSION_2026-10-03.json"
+  },
+  "usage": {
+    "weeklyFloorPercent": 2,
+    "claudeWeeklyUsedAt1908UtcPercent": 85,
+    "claudeFiveHourUsedPercent": 37
+  },
+  "adapters": {
+    "description": "Two local adapters over the frozen UI release tool (publication; activation, checks and rollback); each had author controls and an independent tester verdict",
+    "publication": {
+      "authorControls": {
+        "passed": 75,
+        "failed": 0
+      },
+      "independentControls": {
+        "passed": 506,
+        "failed": 0,
+        "verdict": "ACCEPT_NARROW"
+      }
+    },
+    "activationChecksRollback": {
+      "authorControls": {
+        "passed": 39,
+        "failed": 0
+      },
+      "independentControls": {
+        "passed": 50,
+        "failed": 0,
+        "verdict": "ACCEPT_NARROW"
+      },
+      "activityTolerantComparison": {
+        "mayChange": [
+          "Five activity counts",
+          "Four activity table pins"
+        ],
+        "rules": [
+          "Counts may not decrease and may grow by at most 100",
+          "A changed count needs its table pin to change",
+          "Pending may change only together with another count change",
+          "Every other compared field must match exactly"
+        ]
+      }
+    },
+    "rootAcceptedLocalDeliveryOnly": true
+  },
+  "liveStepSequence": "One pre-armed operations session, a separate root read-only refresh approval, root review of the fresh facts against predefined criteria, then one separate phase approval with the readiness token written last",
+  "publication": {
+    "refreshObservedAt": "2026-10-03T18:12:54Z",
+    "refreshStableFieldsMatched": true,
+    "activityBefore": {
+      "events": 12,
+      "pending": 12,
+      "signals": 12
+    },
+    "activityNow": {
+      "events": 14,
+      "pending": 14,
+      "signals": 14
+    },
+    "activityNote": "Natural growth only",
+    "phaseApprovalIssuedAt": "2026-10-03T18:13:03Z",
+    "approvalAgeSeconds": 9,
+    "resultAround": "2026-10-03T18:13Z",
+    "verdict": "PUBLISH_PREPARED_PASS",
+    "release": "256251b",
+    "filesPlaced": 767,
+    "placement": "Atomic no-replace rename",
+    "linuxModesVerified": true,
+    "serviceChanged": false,
+    "refreshRawSha256": "e7e2120de18b4aadd1d3b6211be8a26e5ad5436293576179fd16ea1ea3295f79",
+    "resultSha256": "0c88483ee676d2d3e2134c944958e6f9f6f4298fd8dcddd204788ea265243900",
+    "readOnlyApprovalSha256": "fe62bd0f210e4236dd514c65fd8166c216a7a3901a1d178128c8b0ff231106db",
+    "phaseApprovalSha256": "ab3bde37c9ef5e444907e6cc24bce795f8ffa12188463fc6d526ef22210f53d8"
+  },
+  "activation": {
+    "refreshObservedAt": "2026-10-03T18:56:16Z",
+    "activityBefore": {
+      "events": 14,
+      "pending": 14,
+      "signals": 14
+    },
+    "activityNow": {
+      "events": 15,
+      "pending": 15,
+      "signals": 15
+    },
+    "toleranceVerdict": "PASS",
+    "phaseApprovalIssuedAt": "2026-10-03T18:56:25Z",
+    "approvalAgeSeconds": 9,
+    "resultAt": "2026-10-03T18:56:31Z",
+    "verdict": "ACTIVATE_PASS",
+    "release": "256251b",
+    "scope": "API-only restart onto the new release",
+    "conservativeApiDowntimeSeconds": 2.5,
+    "tradingChanged": false,
+    "researchChanged": false,
+    "databaseChanged": false,
+    "protectedServicesChanged": false,
+    "refreshRawSha256": "5d58d5771d151e96ca7bc5f41afe317a87c031bb058498a7ea67179519be5d89",
+    "resultSha256": "3c8819f2a5275d6aecde675ed64d2318bbff8f13d778485d6406276bb1c12446",
+    "readOnlyApprovalSha256": "cc092d663add4754ecbe6993b550b25e1243d04435259f936ea39169893caa22",
+    "phaseApprovalSha256": "1a562413e4559aae84560d447389d174fe685c5bdd884b742145f427bf4e73b0"
+  },
+  "immediateCheck": {
+    "around": "2026-10-03T18:57Z",
+    "verdict": "POSTCHECK_PASS",
+    "activityChanged": false,
+    "resultSha256": "285c25199c96720606368a80c82ec5d52766c5a6fda5c0a7458e71c4c9926a8e",
+    "readOnlyApprovalSha256": "dbfb5e89eb56530867ab0d127606ab3c282d3bb2e453b386059a2c7c0f087078",
+    "phaseApprovalSha256": "52b83dacaed04e07d46e00f1266a1fc56bfc61df007211773952f600824da593"
+  },
+  "delayedCheck": {
+    "around": "2026-10-03T19:07Z",
+    "secondsAfterActivation": 629,
+    "delayProof": true,
+    "minimumDelaySeconds": 600,
+    "verdict": "POSTCHECK_PASS",
+    "activityChanged": false,
+    "resultSha256": "77937c7c3dbcefd2753079a65708127e2c35e0c9d638240b1a7278c368e178ca",
+    "readOnlyApprovalSha256": "103d612f60f81a32cc41b528553cf31f944f169c15b7b3388debc2a3570d1465",
+    "phaseApprovalSha256": "7867d9f19d8f735910753648dc820b796898d81c9d9475bbd85961b4f0c53d58"
+  },
+  "browser": {
+    "path": "Existing local forwarding to the staging API",
+    "servedFilesByteIdenticalToGitRelease": "256251b",
+    "servedFilesDifferFromGitRevision": "f2bd332",
+    "servedBotsJsSha256": "caecdbed42c4d8ffb9881bc400f5f0662c6cc517cdca8b2e3bd772646d71ce28",
+    "servedIndexHtmlSha256": "e275b3a8ee9aa5680bd742908797757086e17d45b001fa7582483abb2a008592",
+    "consoleErrors": "Content Security Policy inline-style errors and external chart-script errors; both predate this release",
+    "authenticatedCreateBotJourneyChecked": false,
+    "authenticatedJourneyRequires": "The owner signs in"
+  },
+  "activityAtLastCheck": {
+    "events": 15,
+    "pending": 15,
+    "signals": 15,
+    "entries": 1,
+    "allocations": 1
+  },
+  "approvalsConsumedAndClosed": true,
+  "replayAllowed": false,
+  "retryNeeded": false,
+  "rollbackNeeded": false,
+  "notPerformed": [
+    "Retry",
+    "Rollback",
+    "Restart of trading, research, database or protected services"
+  ],
+  "localOnlyNotDeployed": {
+    "quantHistory": "02af486"
+  },
+  "stillOpen": [
+    "Authenticated browser journey for Create Bot after the owner signs in",
+    "Quant History 02af486 is local and not part of 256251b; it needs a separate future release",
+    "Natural same-entry EXIT for the new 0.01179 BTC OPEN allocation",
+    "Webhook delivery during the approximately 2.5 second API restart window was not separately verified"
+  ],
+  "oldAlert": "QL-3A stays stopped until the old OPEN allocation of 0.01181 BTC is resolved",
+  "unchangedGates": [
+    "PF-2 remains off",
+    "D6, R7, B3, W7 and related gates are unchanged"
+  ],
+  "publicationApprovedForAnyOtherRelease": false,
+  "capacityApproved": false,
+  "naturalSameEntryExitAccepted": false,
+  "limitations": [
+    "Release publication and activation here cover Create Bot 256251b on staging only.",
+    "Byte-identical served files show the release content, not an authenticated user journey.",
+    "Unchanged activity counts across activation do not verify webhook delivery during the restart window.",
+    "Future publication and activation require fresh facts and separate reviewed authority."
+  ]
+}
