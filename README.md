@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต 2026-10-03 17:25 น. (กรุงเทพฯ): ตรวจ VPS เวลา 17:22 น. พบ API healthy, Paper-only, คิวว่าง และ process เดิมคงอยู่ Package UI อัปโหลดแล้ว แต่ขั้น extract หยุดระหว่างอ่าน research digest มี partial ที่เก็บไว้และยังไม่มี target release หรือ override ใหม่ กำลังเตรียมขั้นตรวจ partial ก่อน publish ยังไม่สลับบริการ ปุ่ม Create Bot ยังไม่ deploy และยังรอเจ้าของแก้ webhook ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
+
 อัปเดต 2026-10-03 16:30 น. (กรุงเทพฯ): ตัวตรวจ worker ผ่านการตรวจอิสระ local แล้ว แต่ยังไม่ปรับ worker บน VPS ปุ่ม Create Bot ยังไม่ deploy การอ่าน staging สองครั้งหยุดที่เงื่อนไขเครื่องมือก่อนรับรองสถานะครบ ไม่มีการเปลี่ยนบริการหรือฐานข้อมูล กำลังให้ Debugger ตรวจสาเหตุและเพิ่มรหัส error ที่ปลอดภัย ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
 
 อัปเดต 2026-10-03 15:40 น. (กรุงเทพฯ): ปุ่ม Create Bot commit `256251b` push แล้วและ CI ผ่าน ยังไม่ deploy เพราะเครื่องมือสลับ API ต้องแก้ตามผลตรวจอิสระ ตรวจ staging แบบอ่านอย่างเดียวเวลา 15:31 น. ผ่าน ระบบและ READY คงเดิม ไม่มีงานวิจัยใหม่ ทีมกำลังแก้เครื่องมือ local และตัวตรวจ worker ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
