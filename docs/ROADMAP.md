@@ -1,5 +1,9 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+## Codex to Claude handoff — 2026-10-03
+
+The outgoing root stops dispatch at the owner's handoff request. Read the [whole-project handoff](CODEX_TO_CLAUDE_HANDOFF_2026-10-03.md) and its private handoff first. The operational checkpoint is 22:25 Bangkok (15:25 UTC); all jobs launched by the outgoing root are closed. Runtime has not been refreshed for this handoff. The incoming root must reverify Git, usage, ownership and authorized runtime before dispatch. The next bounded local action prepares a reviewed watcher in a new immutable namespace for fresh observation 4, preserving observation 3's STOP. Finish all local setup before issuing a new read-only approval; review actual fresh state/activity/headroom before a separate permission approval and readiness token. Retain the 120-second gate, separate publication/API activation/delayed-check/browser gates, and the natural same-entry EXIT requirement. Older entries below are historical evidence, not current authority to replay closed approvals.
+
 ## Staging prototype priority — 2026-10-01
 
 **Local delivery checkpoint, 2026-10-03 15:25 UTC:** the watcher correction passed sixty-one author and sixty-five independent local controls. Its first bounded wait ended without a child attempt. The separately issued current-facts command reached its local boundary after the permitted start time and stopped with zero SSH connections; it produced no fresh state or capacity evidence. No permission or service changed. Complete local setup before issuing the next separately named read-only approval, preserve the failed receipt, and review actual fresh facts before any permission approval. The 120-second freshness gate and separate publication/activation gates remain required. The staging UI shows nine signals, but the latest full database facts remain the 14:19 UTC observation and the natural same-entry EXIT remains unverified.
