@@ -1,5 +1,11 @@
 # Time Management — Project execution and data collection
 
+## Codex release and Step 4 preparation — 2026-10-03
+
+- The owner approved path B and release-first ordering. Operations prepared an exact 765-file release and revised the switch tool; independent review found sequential rollback and command-failure handling defects before any deployment. The corrected switch and path repairs passed independent review. Linux preparation completed at 05:10 UTC; API/trading activation and immediate postchecks passed at 05:14:39 UTC. The delayed check remains pending; see the [P2 checkpoint](STAGING_P2_CHECKPOINT_2026-10-03.md).
+- Between 04:32 and 04:35 UTC, focused current-release Node and isolated PostgreSQL Bridge/news checks passed 74/74. The test cluster stopped afterward; these are generic controlled fixtures, not natural TradingView execution or exact new-artifact acceptance.
+- The owner signed into TradingView and staging. Computer use verified the accessible chart and staging page. The normal bot API exposed a quota prerequisite; the owner completed MFA and the normal staging test-license flow now permits a third bot. No old bot, alert or position was changed. The fresh bot still awaits the delayed release check.
+
 ## Codex takeover verification — 2026-10-03
 
 - Read the private handoff first after AGENTS and the Caveman skill, then the tracked handoff, current project documents and newest Claude checkpoint entries.
