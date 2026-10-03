@@ -4,7 +4,7 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
-อัปเดต 2026-10-03 13:00 น. (กรุงเทพฯ): staging API/trading ใช้ f2bd332 และตรวจซ้ำหลัง deploy ผ่านแล้ว สร้าง SPT Paper bot ใหม่ผ่าน API และให้ AI สร้าง Bridge draft สำเร็จ สคริปต์ใหม่ compile ใน TradingView ผ่าน ตรวจและเปิดค่าที่บันทึกกลับมาครบ 58 source inputs + 2 Bridge inputs แล้ว ยังรอบันทึก readiness, Activate และ alert ใหม่ก่อนพิสูจน์ BUY/targeted EXIT จริง ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
+อัปเดต 2026-10-03 13:47 น. (กรุงเทพฯ): staging API/trading ใช้ f2bd332 และตรวจซ้ำหลัง deploy ผ่านแล้ว สร้าง SPT Paper bot ใหม่ผ่าน API และให้ AI สร้าง Bridge draft สำเร็จ สคริปต์ใหม่ compile ใน TradingView ผ่าน ตรวจและเปิดค่าที่บันทึกกลับมาครบ 58 source inputs + 2 Bridge inputs แล้ว บันทึก readiness evidence สำเร็จเวลา 13:44 น. พร้อมตรวจระบบหลังเปิดกลับผ่าน หยุด API ไม่เกิน 3.792 วินาที ยังรอ Activate, webhook ที่เจ้าของกรอก และ alert ใหม่ก่อนพิสูจน์ BUY/targeted EXIT จริง ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
 
 อัปเดต 2026-10-03 04:15 UTC: ส่งต่องานจาก Claude ให้ Codex ตามที่เจ้าของขอ ([เอกสารส่งต่อ](docs/CLAUDE_TO_CODEX_HANDOFF_2026-10-03.md)) งานใน TradingView จะให้ Codex ใช้ computer use
 - ตรวจฐานข้อมูลครบ 24 ชั่วโมงหลัง Window 2 ผ่าน: ไม่มีการรีสตาร์ท โหมด FOUNDATION 66 ตาราง สิทธิ์ตรงกับบันทึกหลัง Window 2
