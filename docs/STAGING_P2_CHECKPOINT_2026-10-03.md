@@ -4,6 +4,8 @@ The staging API and trading worker now run `f2bd332`, including the news-window 
 
 ## Release evidence
 
+The visible Create Bot control is prepared locally at the 07:43 UTC checkpoint. It uses the authenticated quota, blocks duplicate submission and displays server errors through the existing API path. Eight focused tests and twelve independent cases passed; desktop and mobile layout checks passed on an inert fixture. Only `public/bots.js`, its script cache token in `public/index.html` and focused tests change product behavior. This UI is not yet deployed. Worker alignment preparation remains local and under independent audit; it grants no host or research-job authorization.
+
 - The package contains 583 exact source files and 765 files including dependencies. Linux extraction, file modes, hashes, syntax and imports passed before activation.
 - Independent review found and corrected sequential rollback, failed-command handling and runner path-normalization defects. The accepted switch is SHA-256 `6b6d35a9fc1010beca19ce9fa919215888e8f1bdcd3c64fde90e85b42d3e236b`; the runner is `bfc63a6df10b58f6cf691796e87ae663308e21860c9bd682ea44b2bfbb8d40e6`.
 - Prepare, API switch, trading switch and immediate postcheck passed. Served assets, authentication guards, Paper health, environment, engine files, research cache and database invariants passed. No signal or AI-job activity occurred in the exact switch interval.

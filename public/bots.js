@@ -2,7 +2,8 @@
 const botT = (en, th) => uiLanguage === 'th' ? th : en;
 
 // ─── State ──────────────────────────────────────────────────────────────────
-let maxBots = 5;
+let maxBots = null;       // Unknown until the authenticated quota response arrives.
+let botCreatePending = false;
 let botSessions = {};      // { [botId]: { state, run_id, started_at, stopped_at } }
 let accountSnapshots = {}; // { [botId]: { accounts: [], ts: number } }
 let lifecyclePending = {}; // { [botId]: boolean } — block duplicate submissions
@@ -56,7 +57,7 @@ async function refreshBots() {
   try {
     const result = await api('/api/bots');
     botProfiles = result.bots;
-    maxBots = result.maxBots || 1;
+    maxBots = Number.isInteger(result.maxBots) && result.maxBots >= 0 ? result.maxBots : null;
     // Parallel session fetch
     const sessions = await Promise.all(
       botProfiles.map(bot => api('/api/bot/session', { botId: bot.id, silent: true })
@@ -93,8 +94,30 @@ function renderBots() {
     $('#botSlots').innerHTML = `<p class="error">${translate('Select one bot for this operation')}</p>`;
     return;
   }
-  $('#botSlots').innerHTML = renderBotCard(bot);
+  $('#botSlots').innerHTML = renderBotCard(bot) + renderBotCreate();
   $('#botScopeNotice').textContent = `${translate('Settings and webhook apply to the selected bot.')} ${bot.label}`;
+}
+
+function availableBotSlot() {
+  if (!authenticated || maxBots === null || botProfiles.length >= maxBots) return null;
+  const used = new Set(botProfiles.map(bot => Number(bot.bot_slot_index)));
+  for (let slot = 1; slot <= maxBots; slot++) {
+    if (!used.has(slot)) return slot;
+  }
+  return null;
+}
+
+function renderBotCreate() {
+  const slot = availableBotSlot();
+  const capacity = authenticated && maxBots !== null
+    ? botT(`${Math.max(0, maxBots - botProfiles.length)} of ${maxBots} bot slots available`, `เหลือ ${Math.max(0, maxBots - botProfiles.length)} จาก ${maxBots} ช่อง Bot`)
+    : botT('Bot capacity unavailable', 'ยังไม่ทราบจำนวนช่อง Bot');
+  const label = botCreatePending ? botT('Creating Bot…', 'กำลังสร้าง Bot…') : botT('Create Bot', 'สร้าง Bot');
+  return `<div class="panel" style="margin-top:12px">
+    <p class="muted">${capacity}</p>
+    <button type="button" class="primary" data-bot-create="${slot || ''}" ${slot === null || botCreatePending ? 'disabled' : ''}>${label}</button>
+    ${slot === null && maxBots !== null && authenticated ? `<p class="muted">${botT('Bot limit reached', 'ครบจำนวน Bot ที่อนุญาตแล้ว')}</p>` : ''}
+  </div>`;
 }
 
 function renderAllBotsCard() {
@@ -373,13 +396,20 @@ $('#botSlots').onclick = async event => {
   if (!button) return;
 
   // Bot create
-  if (button.dataset.botCreate) {
-    button.disabled = true;
+  if (button.hasAttribute('data-bot-create')) {
+    const slot = availableBotSlot();
+    if (button.disabled || botCreatePending || selectedBot === 'all' || slot === null) return;
+    botCreatePending = true;
+    $('#botMessage').textContent = '';
+    renderBots();
     try {
-      await api('/api/bots', { method: 'POST', body: JSON.stringify({ label: `Bot ${button.dataset.botCreate}` }) });
+      await api('/api/bots', { method: 'POST', body: JSON.stringify({ label: `Bot ${slot}` }) });
       await refreshBots();
-    } catch (err) { $('#botMessage').textContent = err.message; }
-    finally { button.disabled = false; }
+    } catch (err) {
+      if (err.status === 403) await refreshBots();
+      $('#botMessage').textContent = err.message;
+    }
+    finally { botCreatePending = false; renderBots(); }
     return;
   }
 
