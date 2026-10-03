@@ -1,6 +1,6 @@
 # Staging P2 release checkpoint — 2026-10-03
 
-The staging API and trading worker now run `f2bd332`, including the news-window changes in `34e8652` and the Activate-for-Paper interface in `f21deff`. Immediate postchecks passed at 05:14:39 UTC (12:14:39 Bangkok). The ten-minute postcheck and browser acceptance are pending; this is not full six-step prototype acceptance.
+The staging API and trading worker now run `f2bd332`, including the news-window changes in `34e8652` and the Activate-for-Paper interface in `f21deff`. Immediate postchecks passed at 05:14:39 UTC and the delayed check passed at 05:28:06 UTC. The new Paper bot has a generated draft that compiled in TradingView; readiness recording, activation and a natural trade pair remain pending. This is not full six-step prototype acceptance.
 
 ## Release evidence
 
@@ -14,11 +14,13 @@ Private operational receipts remain under `.qa-local/codex-p2-release/`; indepen
 
 ## Step 4 continuation
 
-The owner approved path B: a fresh SPT Paper bot, deployment, evidence and alert. The owner completed MFA, and a normal staging test license now permits a third bot. No new bot or AI job has been created yet. Bot creation must use the authenticated quota-enforced API; the current interface lacks a visible create-bot control.
+After the delayed release check passed, the authenticated quota-enforced API created the third bot, `SPT Prototype Paper 2026-10-03`. Its session is RUNNING with Paper capital of 1,000 USDT and news blocking enabled. The normal wizard completed AI analysis and generation. Deployment `b45d9f9d` is DRAFT; no webhook event or trading signal existed at the 05:50:48 UTC read-only check. The current interface still lacks a visible create-bot control.
 
-The approved source and all 58 effective inputs are preserved. The planned Bridge exposes eight source parameter bindings plus ATR multiplier 60 and reward-to-risk 1.5. Paper capital is 1,000 USDT. The approved policy values remain unchanged except `blockDuringNews=true`; API money normalization must be accounted for when recording the new policy hash.
+The approved source and all 58 effective inputs are preserved. The generated Bridge exposes eight source parameter bindings plus ATR multiplier 60 and reward-to-risk 1.5. The approved policy values remain unchanged except `blockDuringNews=true`; normal API decimal-string normalization was checked. An independent deterministic rebuild matches the 62,337-byte generated artifact exactly.
 
-Current-release generic Bridge/news checks passed 74/74 using an isolated local database, which was stopped afterward. These fixtures use ATR2/1D and do not certify the exact new ATR60 artifact or natural TradingView execution. Fresh compilation, input review, immutable readiness evidence, activation, owner-entered webhook details and a natural BUY/targeted EXIT accounting chain remain required.
+The private TradingView script `QL-P2 SPT Paper 2026-10-03 b45d9f9d` compiled and was added to the standard BTCUSDT 1m chart at 05:51:08 UTC. An initial editor transfer left a sample header and failed; replacing the entire editor with the generated file corrected it. The latest compile has one reviewed warning about the strict ticker guard. All 58 source inputs and both Bridge inputs were saved and reopened for review. Native notifications are disabled, and the chart layout was saved. Independent source, template and screenshot review passed. No new alert has been created.
+
+Current-release generic Bridge/news checks passed 74/74 using an isolated local database, which was stopped afterward. Their case counts and accounting metrics cover generic ATR2/1D fixtures, not exact SPT ATR60/model parity or natural TradingView trades. The manual readiness gate combines those scoped regressions with exact source/artifact/input/compile review and an external runtime binding. The proposed evidence states these limits explicitly. Operator recording, separate activation, owner-entered webhook details and a natural BUY/targeted EXIT accounting chain remain required.
 
 Computer use observed `QL-3A SPT Custom ATR60 PAPER staging 1m` as **Stopped — Triggered too often**. Do not restart it while its old OPEN Paper long remains unresolved. No alert was changed.
 
@@ -26,4 +28,4 @@ Step 5 already completed its bounded 21-evaluation run with `NO_VALID_CANDIDATE`
 
 ## Next gate
 
-Run the delayed postcheck no earlier than 05:24:40 UTC using the original switch interval. Keep bot, policy and capital writes paused until it passes. Then create the new bot through the normal application flow and continue the exact-artifact checks above. Spot/Paper-only, BTCUSDT 1m and current data limits remain in force.
+Review and record the new deployment's immutable evidence through the operator-only script, then activate through the normal application. Prepare an alert for the exact new chart instance; the owner enters its private webhook details. The public staging route differs from the internal route and was verified read-only. Observe an accepted natural BUY and a targeted EXIT for the same entry before accepting Step 4. Spot/Paper-only, BTCUSDT 1m and current data limits remain in force. PF-2 remains disabled, and the fresh import's generic Quant capability remains UNSUPPORTED; the older source-specific research result does not certify this import.

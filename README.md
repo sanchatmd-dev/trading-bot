@@ -4,7 +4,7 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
-อัปเดต 2026-10-03 12:14 น. (กรุงเทพฯ): API และ trading บน staging เปลี่ยนเป็น f2bd332 แล้ว รวมการแก้ news window และปุ่ม Activate for Paper ตรวจทันทีผ่าน รอตรวจซ้ำหลัง 10 นาทีและตรวจหน้าเว็บ เจ้าของเลือกสร้าง SPT Paper bot ใหม่ และตั้งค่า MFA/license ทดสอบแล้ว ยังไม่สร้าง bot หรือเปิด alert ใหม่ ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
+อัปเดต 2026-10-03 13:00 น. (กรุงเทพฯ): staging API/trading ใช้ f2bd332 และตรวจซ้ำหลัง deploy ผ่านแล้ว สร้าง SPT Paper bot ใหม่ผ่าน API และให้ AI สร้าง Bridge draft สำเร็จ สคริปต์ใหม่ compile ใน TradingView ผ่าน ตรวจและเปิดค่าที่บันทึกกลับมาครบ 58 source inputs + 2 Bridge inputs แล้ว ยังรอบันทึก readiness, Activate และ alert ใหม่ก่อนพิสูจน์ BUY/targeted EXIT จริง ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
 
 อัปเดต 2026-10-03 04:15 UTC: ส่งต่องานจาก Claude ให้ Codex ตามที่เจ้าของขอ ([เอกสารส่งต่อ](docs/CLAUDE_TO_CODEX_HANDOFF_2026-10-03.md)) งานใน TradingView จะให้ Codex ใช้ computer use
 - ตรวจฐานข้อมูลครบ 24 ชั่วโมงหลัง Window 2 ผ่าน: ไม่มีการรีสตาร์ท โหมด FOUNDATION 66 ตาราง สิทธิ์ตรงกับบันทึกหลัง Window 2

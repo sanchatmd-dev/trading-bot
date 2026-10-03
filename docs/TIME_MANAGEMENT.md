@@ -2,9 +2,13 @@
 
 ## Codex release and Step 4 preparation — 2026-10-03
 
-- The owner approved path B and release-first ordering. Operations prepared an exact 765-file release and revised the switch tool; independent review found sequential rollback and command-failure handling defects before any deployment. The corrected switch and path repairs passed independent review. Linux preparation completed at 05:10 UTC; API/trading activation and immediate postchecks passed at 05:14:39 UTC. The delayed check remains pending; see the [P2 checkpoint](STAGING_P2_CHECKPOINT_2026-10-03.md).
+- The delayed release check passed at 05:28:06 UTC. The third Paper bot was then created through the normal authenticated API, followed by successful wizard analysis and generation. One read-only operational connection at 05:50:48 UTC confirmed the new deployment, snapshot, policy, source, artifact and runtime identities, with no events or signals.
+- TradingView work between approximately 05:45 and 06:00 UTC created a separate private script, corrected an editor-transfer error, compiled it and saved/reopened all 58 source inputs plus both Bridge inputs. Independent artifact and input review passed. Readiness recording, activation and a natural trade pair remain pending. Most elapsed time was UI setup and verification, not AI execution.
+- Codex weekly usage read 25% used at this checkpoint; the short window remains unknown. These are shared account readings, not exact per-agent costs. Reserve remains 15 percentage points. Operations is preparing a bounded evidence-recording tool locally; independent final evidence review runs separately.
+
+- The owner approved path B and release-first ordering. Operations prepared an exact 765-file release and revised the switch tool; independent review found sequential rollback and command-failure handling defects before any deployment. The corrected switch and path repairs passed independent review. Linux preparation completed at 05:10 UTC; API/trading activation and immediate postchecks passed at 05:14:39 UTC. The delayed check subsequently passed at 05:28:06 UTC; see the [P2 checkpoint](STAGING_P2_CHECKPOINT_2026-10-03.md).
 - Between 04:32 and 04:35 UTC, focused current-release Node and isolated PostgreSQL Bridge/news checks passed 74/74. The test cluster stopped afterward; these are generic controlled fixtures, not natural TradingView execution or exact new-artifact acceptance.
-- The owner signed into TradingView and staging. Computer use verified the accessible chart and staging page. The normal bot API exposed a quota prerequisite; the owner completed MFA and the normal staging test-license flow now permits a third bot. No old bot, alert or position was changed. The fresh bot still awaits the delayed release check.
+- The owner signed into TradingView and staging. Computer use verified the accessible chart and staging page. The normal bot API exposed a quota prerequisite; the owner completed MFA and the normal staging test-license flow now permits a third bot. No old bot, alert or position was changed. The fresh bot was created after the delayed release check passed.
 
 ## Codex takeover verification — 2026-10-03
 
