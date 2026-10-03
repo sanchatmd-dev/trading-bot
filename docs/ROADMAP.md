@@ -2,6 +2,8 @@
 
 ## Staging prototype priority — 2026-10-01
 
+**Current update, 2026-10-03 11:48 UTC:** the owner corrected the webhook and created the new `QL-P2 SPT ATR60 PAPER staging 1m b45d9f9d` alert. Computer Use verifies Active on BTCUSDT 1m; the old ATR60 alert remains stopped. Step 4 still requires observed webhook delivery and a natural Paper BUY with targeted EXIT. Quant History has a local, independently checked correction for legacy configuration shapes and safe text rendering; it is not deployed. Create Bot publication still waits for the parent permission gate. The Linux adapter passed twenty-five independent mock controls; supervisor acceptance and actual Linux enforcement remain separate. No new optimizer, holdout evaluation or Live activation occurred. See [P2 checkpoint](STAGING_P2_CHECKPOINT_2026-10-03.md).
+
 The owner requests a visible staging preview first, then a functional six-step
 journey: AI Bridge, ten numeric inputs, Preflight recommendations, real signals
 with Paper execution, bounded optimization and Quant Library selection. The

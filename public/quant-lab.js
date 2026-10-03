@@ -86,18 +86,44 @@ function qShowOptimizer(result) {
 async function qLoadHistory() {
   const botId = q('qlOptBotId').value;
   if (!botId) return;
+  const rows = q('qlRunHistoryRows');
+  const message = text => {
+    const row = document.createElement('tr'), cell = document.createElement('td');
+    cell.colSpan = 5; cell.textContent = text; row.append(cell); rows.replaceChildren(row);
+  };
+  const text = value => typeof value === 'string' ? value : typeof value === 'number' && Number.isFinite(value) ? String(value) : '—';
+  const indicators = config => {
+    const list = Array.isArray(config) ? config : config && typeof config === 'object' && Array.isArray(config.indicators) ? config.indicators : [];
+    const names = list.map(item => typeof item === 'string' ? item : item && typeof item === 'object' && typeof item.name === 'string' ? item.name : '').filter(name => name.trim());
+    return names.length ? names.join(', ') : 'Unavailable';
+  };
+  const metric = (metrics, key) => {
+    if (!metrics) return '-';
+    const value = typeof metrics === 'object' && !Array.isArray(metrics) ? metrics[key] : undefined;
+    return (typeof value === 'number' || typeof value === 'string' && value.trim()) && Number.isFinite(Number(value)) ? qFixed(value) : '—';
+  };
   try {
-    const runs = await api(`/api/quant/runs?bot_id=${botId}`);
-    q('qlRunHistoryRows').innerHTML = runs.map(r => `
-      <tr>
-        <td style="font-size:11px">${r.run_id}</td>
-        <td style="font-size:11px">${r.indicators_config.map(i=>i.name||'Ind').join(', ')}</td>
-        <td><span class="ql-candidate-status ${r.status==='COMPLETED'?'passed':''}">${r.status}</span></td>
-        <td>${r.metrics ? qFixed(r.metrics.train_score) : '-'}</td>
-        <td>${r.metrics ? qFixed(r.metrics.test_score) : '-'}</td>
-      </tr>
-    `).join('');
+    const runs = await api(`/api/quant/runs?bot_id=${encodeURIComponent(botId)}`);
+    if (!Array.isArray(runs)) { message('History unavailable.'); return; }
+    const rendered = [];
+    for (const run of runs) {
+      if (!run || typeof run !== 'object' || Array.isArray(run)) continue;
+      const row = document.createElement('tr');
+      for (const value of [text(run.run_id), indicators(run.indicators_config)]) {
+        const cell = document.createElement('td'); cell.style.fontSize = '11px'; cell.textContent = value; row.append(cell);
+      }
+      const statusCell = document.createElement('td'), status = document.createElement('span');
+      status.className = `ql-candidate-status ${run.status === 'COMPLETED' ? 'passed' : ''}`;
+      status.textContent = text(run.status); statusCell.append(status); row.append(statusCell);
+      for (const value of [metric(run.metrics, 'train_score'), metric(run.metrics, 'test_score')]) {
+        const cell = document.createElement('td'); cell.textContent = value; row.append(cell);
+      }
+      rendered.push(row);
+    }
+    if (runs.length && !rendered.length) { message('History unavailable.'); return; }
+    rows.replaceChildren(...rendered);
   } catch (e) {
+    message('History unavailable.');
     console.error('Failed to load history', e);
   }
 }

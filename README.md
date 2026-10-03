@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต 2026-10-03 18:48 น. (กรุงเทพฯ): เจ้าของแก้ Webhook และสร้าง alert ใหม่แล้ว ตรวจ TradingView พบ `QL-P2 SPT ATR60 PAPER staging 1m b45d9f9d` เป็น Active บน BTCUSDT 1m และ alert เก่า ATR60 ยังหยุดอยู่ ยังต้องตรวจสัญญาณและ BUY/targeted EXIT ของ Paper จริง แก้หน้า Quant History ในเครื่องให้รองรับข้อมูลเก่าและใหม่โดยไม่ล้ม พร้อมตรวจอิสระ 7 กรณีผ่าน แต่ยังไม่ deploy ปุ่ม Create Bot และการปรับ research worker ยังติดเงื่อนไขเดิม ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
+
 อัปเดต 2026-10-03 18:12 น. (กรุงเทพฯ): ตรวจ staging เวลา 17:59 น. ผ่าน พร้อม READY/evidence และข้อมูลวิจัยเดิมครบ การ publish UI หยุดที่ `RENAME_PARENT` เพราะ parent directory ใช้ `0775` แต่เครื่องมือคาด `0755` ตรวจซ้ำเวลา 18:05 น. พบ partial ยังอยู่ target และ override ยังไม่มี API ปกติและบริการเดิมคงอยู่ กำลังตรวจ group/ACL ก่อนแก้เครื่องมือ โดยยังไม่เปลี่ยนสิทธิ์ directory ปุ่ม Create Bot ยังไม่ deploy ตัวอ่านไฟล์ Linux ผ่านเฉพาะ local mock และการแก้ integer timestamp; adapter และการจำกัดทรัพยากรยังไม่รับรองบน VPS ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
 
 อัปเดต 2026-10-03 17:25 น. (กรุงเทพฯ): ตรวจ VPS เวลา 17:22 น. พบ API healthy, Paper-only, คิวว่าง และ process เดิมคงอยู่ Package UI อัปโหลดแล้ว แต่ขั้น extract หยุดระหว่างอ่าน research digest มี partial ที่เก็บไว้และยังไม่มี target release หรือ override ใหม่ กำลังเตรียมขั้นตรวจ partial ก่อน publish ยังไม่สลับบริการ ปุ่ม Create Bot ยังไม่ deploy และยังรอเจ้าของแก้ webhook ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
