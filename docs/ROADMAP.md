@@ -121,6 +121,8 @@ This communication policy does not change phase order or runtime compaction.
 
 ## Current status — 2026-09-29
 
+Codex takeover verification, 2026-10-03: Codex resumed as sole root from `95a9d63` on `codex/app3a-market-wait-checkpoint`, with HEAD matching the remote branch and no tracked changes at intake. A fresh read-only staging check passed: API/trading remain on `c3fa9e5`, research on `3309d07` with the W98 cache, admission closed, no active research jobs, and FOUNDATION schema 14 with 66 tables and unchanged privileges. The SPT allocation remains OPEN at 0.01181 BTC. Do not restart the named ATR60 execution alert. Step 4 path A/B and release timing remain owner decisions; existing bots retain their news settings by default. No implementation, deployment or new research run was started during intake. README and Context were reviewed and remain consistent with the handoff.
+
 Handoff checkpoint, 2026-10-03 04:15 UTC (Claude root): at the owner's request Claude handed the project to Codex; see the [Claude to Codex handoff](CLAUDE_TO_CODEX_HANDOFF_2026-10-03.md). The owner said Codex will use computer use for TradingView work.
 - **24-hour Window-2 check:** passed at 04:03 UTC. The database kept its Window-2 start with no restart, FOUNDATION mode, schema 14 and 66 tables. Privileges equal the Window-2 post record. The three PostgreSQL ERROR lines since Window 2 came from Claude's own read-only diagnostic queries.
 - **Cleanup batch 2:** two old B2 backups and the inactive pre-relocation database copy (408.7 MB) moved into the holding folder after per-item reference checks. Nothing was deleted; the folder now holds 65 items.

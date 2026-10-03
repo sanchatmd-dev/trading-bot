@@ -1,5 +1,12 @@
 # Time Management — Project execution and data collection
 
+## Codex takeover verification — 2026-10-03
+
+- Read the private handoff first after AGENTS and the Caveman skill, then the tracked handoff, current project documents and newest Claude checkpoint entries.
+- Verified `95a9d63` against the remote branch. One read-only SSH check passed; its receipt reports 04:16:39–04:16:40 UTC. No remote configuration, service or trading action changed.
+- Codex weekly usage read 0% used at intake and 1% at the checkpoint; the short window is unavailable. Reserve 15 percentage points for this takeover and admit only bounded slices while short-window data remains unknown. These are shared account readings, not exact task costs.
+- No child agents are active. Step 4 path and release priority were presented to the owner; existing bots' news settings remain unchanged by default. Local intake receipts and the current root checkpoint are retained in the ignored directory.
+
 ## Claude handoff checkpoint — 2026-10-03 03:52–04:20 UTC
 
 - 04:03 UTC, the scheduled 24-hour Window-2 check ran read-only in one SSH connection and passed.
