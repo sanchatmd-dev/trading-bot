@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต 2026-10-03 20:56 น. (กรุงเทพฯ): ตรวจ staging แบบอ่านอย่างเดียวพบสัญญาณ 8 รายการ โดยบริการ, Risk, READY/evidence, membership และข้อมูลวิจัยเดิมคงเดิม ยังไม่รับรองคู่ BUY/targeted EXIT หรืออนุมัติ deploy กำลังปรับเครื่องมือ deploy ให้รับสถานะหลังมีสัญญาณจริง โดยยังไม่เปลี่ยนสิทธิ์หรือ restart บริการ ดู [หลักฐานสถานะปัจจุบัน](docs/evidence/P2_CURRENT_RUNTIME_FACTS_2026-10-03.json)
+
 อัปเดต 2026-10-03 20:22 น. (กรุงเทพฯ): ตรวจ ledger ยืนยัน BUY แรก fill `0.01179 BTC` และ allocation ยัง OPEN ส่วน EXIT แบบ TP อ้างถึง entry อื่นที่ไม่มี mapping จึงถูกปฏิเสธ ยังไม่ผ่านคู่ BUY/targeted EXIT และยังไม่ deploy UI รุ่นใหม่ ดู [หลักฐาน BUY จริง](docs/evidence/P2_NATURAL_PAPER_BUY_2026-10-03.json)
 
 อัปเดต 2026-10-03 20:00 น. (กรุงเทพฯ): หน้า staging ของ bot ใหม่แสดงสัญญาณจริง 6 รายการ มี BUY ที่ Paper fill สำเร็จ 1 รายการเวลา 19:02 น. อีก 5 รายการถูกปฏิเสธด้วย `BELOW_QUANTITY_STEP` และ `TARGET_NOT_OPEN` ยังต้องตรวจ ledger และคู่ BUY/targeted EXIT เครื่องมือแก้สิทธิ์ผ่านการตรวจอิสระ 17 กรณี แต่การตรวจ runtime ล่าสุดหยุดที่ `NATURAL_ACTIVITY_REQUIRES_REBASELINE` จึงยังไม่แก้สิทธิ์หรือ deploy UI ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)

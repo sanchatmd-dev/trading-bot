@@ -1,0 +1,32 @@
+{
+  "observedAt": "2026-10-03T13:56:00.168Z",
+  "scope": "Read-only current runtime facts and root comparison; no mutation approval",
+  "receiptSha256": "873a32e77fb90421423b9d2129a689c237f28a5aa831bb92c61918843d67c7d3",
+  "referenceReceiptSha256": "a3997e65c91cffb521cbe3dc824a97c6b47a9371f0a084c7e5e39a376c52d576",
+  "stateSha256": "9308e5e47fc2a9d5ddc4008bdaf7e9e455cd2bc4739bafee80677d5e527da16a",
+  "verdict": "CURRENT_UNREVIEWED",
+  "connections": 1,
+  "elapsedMs": 4044,
+  "activity": { "events": 8, "entries": 1, "pending": 8, "signals": 8, "allocations": 1 },
+  "unchanged": [
+    "Service process identities and known configuration fields",
+    "API configuration, layers, persistent unit and runtime holders",
+    "Research wrapper, cache metadata and nine research-table digests",
+    "Database identity, grants and idle job state",
+    "READY deployment, evidence and full membership",
+    "Bot identity, policy, session, run and configured funding",
+    "Old OPEN allocation quantity"
+  ],
+  "changedTableHashes": [ "ledger_position_allocations", "pine_bridge_entries", "pine_bridge_events", "signals" ],
+  "globalTablePinByteBudget": "UNPROVED",
+  "baselineApproved": false,
+  "capacityApproved": false,
+  "mutationApproved": false,
+  "naturalSameEntryExitAccepted": false,
+  "limitations": [
+    "Changed table hashes do not reconstruct every row or certify a natural EXIT.",
+    "Configured funding does not certify current Paper cash.",
+    "Global table hashes retain statement timeouts without proved row or UTF-8 byte budgets.",
+    "Future permission and release actions require fresh facts and separate reviewed authority."
+  ]
+}
