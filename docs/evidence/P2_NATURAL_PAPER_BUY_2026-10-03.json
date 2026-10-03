@@ -1,0 +1,75 @@
+{
+  "scope": "Natural staging BUY and narrow read-only ledger observation; targeted EXIT acceptance remains open",
+  "observedAt": "2026-10-03T13:22:42.108Z",
+  "sourceReceiptSha256": "0717f75badec726f82a1bc7fa409c6064607e0eb91abb61a63fd2df718ebadc2",
+  "method": {
+    "connections": 1,
+    "readOnly": true,
+    "outerElapsedMs": 1600,
+    "collectorElapsedMs": 114,
+    "sshExitCode": 0,
+    "collectorVerdict": "STEP4_OBSERVED",
+    "sourceEnvelopeNote": "The successful raw receipt retains an inherited TRANSPORT_UNKNOWN code. Original bytes are preserved; the validated observation verdict and exit code determine this record's narrow scope."
+  },
+  "deploymentId": "b45d9f9d-6d70-451d-8684-cd4ce7a4ff27",
+  "executionModel": "paper-close-v1",
+  "counts": {
+    "events": 6,
+    "signals": 6,
+    "filled": 1,
+    "rejected": 5,
+    "entries": 1,
+    "allocations": 1,
+    "openAllocations": 1,
+    "fills": 1
+  },
+  "firstBuy": {
+    "signalId": "66",
+    "barTime": "1791028920000",
+    "entryHash": "0252b7355d0bfebd6c3c50897fbc9c152b9740178762186d5e83fd921f5d3173",
+    "positionHash": "7a37f18cdf9ba1714205ff3db10f10c1b5a3f0b7705fd78124d969230938fc2d",
+    "status": "FILLED",
+    "positionStatusAtObservation": "OPEN",
+    "quantity": "0.011790000000000000",
+    "remainingQuantity": "0.011790000000000000",
+    "price": "84697.310000000000000000",
+    "appliedQuote": "998.581284900000000000",
+    "feeQuote": "0.998581284900000000",
+    "webhookReceivedAt": "1791028921896",
+    "fillRecordedAt": "1791028922172",
+    "receiptToFillMs": 276
+  },
+  "observedExit": {
+    "signalId": "69",
+    "barTime": "1791030360000",
+    "reason": "TP",
+    "entryHash": "ffe70ccc8205bb479af03c4aec3ffae7f29f46c927b42f2ce61f2edc2327f033",
+    "status": "REJECTED",
+    "rejection": "TARGET_NOT_OPEN",
+    "entryMapped": false,
+    "targetMatched": null,
+    "matchesFirstBuy": false,
+    "matchesAnyRejectedBuyInSixObservedEvents": false
+  },
+  "otherRejections": {"BELOW_QUANTITY_STEP": 4},
+  "preservation": {
+    "oldOpenQuantity": "0.01181",
+    "oldPositionAndEntryMatched": true,
+    "paperOnly": true,
+    "healthStatus": 200,
+    "queuedAtObservation": 0,
+    "apiRelease": "f2bd332",
+    "tradingRelease": "f2bd332",
+    "researchRelease": "3309d07"
+  },
+  "limits": {
+    "currentImportBindingMatched": true,
+    "wholeSnapshotMembership": "UNPROVED",
+    "cashAndHistoricalReservations": "UNPROVED",
+    "exitOriginBeforeAlertOrMissingDelivery": "UNPROVED",
+    "preIngressRejections": "UNKNOWN_NOT_PERSISTED",
+    "naturalBuyAndSameEntryExit": "NOT_COMPLETE",
+    "releaseBaselineOrCapacityApproval": false,
+    "latencyScope": "One observed BUY using server timestamps; not a throughput or percentile claim"
+  }
+}

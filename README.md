@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต 2026-10-03 20:22 น. (กรุงเทพฯ): ตรวจ ledger ยืนยัน BUY แรก fill `0.01179 BTC` และ allocation ยัง OPEN ส่วน EXIT แบบ TP อ้างถึง entry อื่นที่ไม่มี mapping จึงถูกปฏิเสธ ยังไม่ผ่านคู่ BUY/targeted EXIT และยังไม่ deploy UI รุ่นใหม่ ดู [หลักฐาน BUY จริง](docs/evidence/P2_NATURAL_PAPER_BUY_2026-10-03.json)
+
 อัปเดต 2026-10-03 20:00 น. (กรุงเทพฯ): หน้า staging ของ bot ใหม่แสดงสัญญาณจริง 6 รายการ มี BUY ที่ Paper fill สำเร็จ 1 รายการเวลา 19:02 น. อีก 5 รายการถูกปฏิเสธด้วย `BELOW_QUANTITY_STEP` และ `TARGET_NOT_OPEN` ยังต้องตรวจ ledger และคู่ BUY/targeted EXIT เครื่องมือแก้สิทธิ์ผ่านการตรวจอิสระ 17 กรณี แต่การตรวจ runtime ล่าสุดหยุดที่ `NATURAL_ACTIVITY_REQUIRES_REBASELINE` จึงยังไม่แก้สิทธิ์หรือ deploy UI ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
 
 อัปเดต 2026-10-03 18:48 น. (กรุงเทพฯ): เจ้าของแก้ Webhook และสร้าง alert ใหม่แล้ว ตรวจ TradingView พบ `QL-P2 SPT ATR60 PAPER staging 1m b45d9f9d` เป็น Active บน BTCUSDT 1m และ alert เก่า ATR60 ยังหยุดอยู่ ยังต้องตรวจสัญญาณและ BUY/targeted EXIT ของ Paper จริง แก้หน้า Quant History ในเครื่องให้รองรับข้อมูลเก่าและใหม่โดยไม่ล้ม พร้อมตรวจอิสระ 7 กรณีผ่าน แต่ยังไม่ deploy ปุ่ม Create Bot และการปรับ research worker ยังติดเงื่อนไขเดิม ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
