@@ -2,6 +2,8 @@
 
 ## Staging prototype priority — 2026-10-01
 
+**Local checkpoint, 2026-10-03 12:22 UTC:** the inventory supervisor passed fifty-nine independent mock controls after two callback-ordering defects were corrected. This accepts only the local lifecycle contract; actual Linux resource enforcement, inventory and worker alignment remain open. Eleven local artifact comparisons confirm the ten input values, with historical saved Pine and snapshot evidence; current selection/domain roundtrip and supported evaluator effects remain unproved. The parent permission tool is blocked on missing current SQL and environment guards. Correct those guards, obtain independent acceptance and fresh runtime checks before any permission change or UI publication. No service or permission changed in this checkpoint.
+
 **Current update, 2026-10-03 11:48 UTC:** the owner corrected the webhook and created the new `QL-P2 SPT ATR60 PAPER staging 1m b45d9f9d` alert. Computer Use verifies Active on BTCUSDT 1m; the old ATR60 alert remains stopped. Step 4 still requires observed webhook delivery and a natural Paper BUY with targeted EXIT. Quant History has a local, independently checked correction for legacy configuration shapes and safe text rendering; it is not deployed. Create Bot publication still waits for the parent permission gate. The Linux adapter passed twenty-five independent mock controls; supervisor acceptance and actual Linux enforcement remain separate. No new optimizer, holdout evaluation or Live activation occurred. See [P2 checkpoint](STAGING_P2_CHECKPOINT_2026-10-03.md).
 
 The owner requests a visible staging preview first, then a functional six-step
