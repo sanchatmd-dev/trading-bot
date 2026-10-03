@@ -4,6 +4,8 @@
 
 ## เอกสารหลักและสถานะโครงการ
 
+อัปเดต 2026-10-03 14:16 น. (กรุงเทพฯ): Activate bot ใหม่เป็น READY ผ่านหน้าระบบแล้ว ตรวจ staging แบบอ่านอย่างเดียวเวลา 14:10 น. ยืนยัน deployment, snapshot และ evidence หนึ่งรายการตรงกัน ระบบ Paper ปกติและปิดรับ research อยู่ URL ใน alert ใหม่ยังมี URL ภายในเครื่องซ้อนอยู่ เจ้าของต้องแก้ก่อนสร้าง alert; ยังไม่มีสัญญาณหรือ BUY/EXIT ของ bot ใหม่ ตรวจหน้า Risk และ Research Library บน desktop/มือถือบางส่วนผ่าน แต่ PF-2 ยังปิดและไม่มี qualified winner ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
+
 อัปเดต 2026-10-03 13:47 น. (กรุงเทพฯ): staging API/trading ใช้ f2bd332 และตรวจซ้ำหลัง deploy ผ่านแล้ว สร้าง SPT Paper bot ใหม่ผ่าน API และให้ AI สร้าง Bridge draft สำเร็จ สคริปต์ใหม่ compile ใน TradingView ผ่าน ตรวจและเปิดค่าที่บันทึกกลับมาครบ 58 source inputs + 2 Bridge inputs แล้ว บันทึก readiness evidence สำเร็จเวลา 13:44 น. พร้อมตรวจระบบหลังเปิดกลับผ่าน หยุด API ไม่เกิน 3.792 วินาที ยังรอ Activate, webhook ที่เจ้าของกรอก และ alert ใหม่ก่อนพิสูจน์ BUY/targeted EXIT จริง ดู [checkpoint P2](docs/STAGING_P2_CHECKPOINT_2026-10-03.md)
 
 อัปเดต 2026-10-03 04:15 UTC: ส่งต่องานจาก Claude ให้ Codex ตามที่เจ้าของขอ ([เอกสารส่งต่อ](docs/CLAUDE_TO_CODEX_HANDOFF_2026-10-03.md)) งานใน TradingView จะให้ Codex ใช้ computer use
