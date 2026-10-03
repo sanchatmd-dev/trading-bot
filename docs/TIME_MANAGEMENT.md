@@ -1,5 +1,12 @@
 # Time Management — Project execution and data collection
 
+## Claude handoff checkpoint — 2026-10-03 03:52–04:20 UTC
+
+- 04:03 UTC, the scheduled 24-hour Window-2 check ran read-only in one SSH connection and passed.
+- 04:06–04:11 UTC, cleanup batch 2: one read-only reference check and one move connection; 3 items, 408.7 MB, no deletes.
+- The owner asked which SPT alert to use. Local records identified the READY deployment's script and alert. A read-only query confirmed the stuck OPEN Paper long.
+- About 04:10 UTC the owner asked for a handoff to Codex. Claude weekly usage read 80% used at 03:52 and 04:08 UTC.
+
 ## Claude continuation — 2026-10-02 17:47–20:55 UTC
 
 - The owner asked to keep working through the main documents with periodic commits, at a 2% weekly floor. Claude weekly usage read 77% used at 18:35 UTC and 80% used at 20:47 UTC.
