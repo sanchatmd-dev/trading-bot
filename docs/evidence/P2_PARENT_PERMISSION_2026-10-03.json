@@ -1,0 +1,108 @@
+{
+  "observedAt": "2026-10-03T17:04:18.683Z",
+  "scope": "Observation 4 read-only facts, root comparison and one exact parent-directory permission result; no publication, deployment or activation",
+  "rootHandoff": {
+    "from": "Codex",
+    "to": "Claude",
+    "baseCommit": "1fab165",
+    "intakeUtc": "2026-10-03T16:10Z",
+    "intakeVerified": "Git, CI and the 22-file local evidence inventory; runtime was unknown at intake"
+  },
+  "usage": {
+    "weeklyFloorPercent": 2,
+    "claudeWeeklyUsedAtIntakePercent": 81,
+    "claudeWeeklyUsedAt1706UtcPercent": 82
+  },
+  "namespace": {
+    "description": "New immutable local namespace replacing the closed observation-3 window; observation 3 STOP preserved",
+    "operationsProcesses": 1,
+    "sequence": "Wait for a root read-only approval, run the frozen collector once, then wait for a separate root permission approval",
+    "authorControls": { "passed": 129, "failed": 0 },
+    "independentControls": { "passed": 80, "failed": 0, "verdict": "ACCEPT_NARROW" },
+    "rootAcceptedLocalDeliveryOnly": true
+  },
+  "observation4": {
+    "readOnlyApprovalIssuedAt": "2026-10-03T17:04:14Z",
+    "observedAt": "2026-10-03T17:04:18.683Z",
+    "verdict": "CURRENT_UNREVIEWED",
+    "connections": 1,
+    "rawSha256": "7ab97ec398b2f86ff558aea5eafa80b3e13dddff07d92c1f8887fe9d5fcf4b7d",
+    "stateSha256": "22bb1f5abfeb58e5b12083ec73f74144ef9b8156855966fcf6b7f20f3c5dba33",
+    "activitySha256": "6eebc8efbd4eafa4a47b7c711a9bfaa8fd1c81d0dcd70cd4ae9011b9fecf1cfc",
+    "readOnlyApprovalSha256": "9816f12898ba7d3e6c4d857536d33647f935a9e7135143206c6cb1a30572bfd5"
+  },
+  "rootReview": {
+    "comparedWith": "2026-10-03T14:19Z observation",
+    "stableFieldsEqual": 23,
+    "unchanged": [
+      "Service process identities and protected configuration",
+      "READY deployment, evidence and full membership",
+      "Bot identity, policy, session, run and configured funding",
+      "Idle research job state",
+      "Research evidence, cache metadata and grants",
+      "Database identity",
+      "Old OPEN allocation quantity 0.01181 BTC",
+      "Seven non-activity table pins"
+    ],
+    "activityBefore": { "events": 8, "entries": 1, "pending": 8, "signals": 8, "allocations": 1 },
+    "activityNow": { "events": 12, "entries": 1, "pending": 12, "signals": 12, "allocations": 1 },
+    "activityNote": "Natural growth only; entries and allocations and their table pins are unchanged",
+    "headroom": { "memoryAvailableGB": 7.0, "diskAvailableGB": 95.2 },
+    "capacityApproved": false
+  },
+  "permission": {
+    "approvalIssuedAt": "2026-10-03T17:04:27Z",
+    "approvalAgeSeconds": 9,
+    "freshnessGateSeconds": 120,
+    "resultAt": "2026-10-03T17:04:29Z",
+    "verdict": "PARENT_TIGHTEN_PASS",
+    "chmodCalls": 1,
+    "target": "UI release parent directory",
+    "modeBefore": "0775",
+    "modeAfter": "0755",
+    "ownerGroupChanged": false,
+    "accessAclPresent": false,
+    "defaultAclPresent": false,
+    "protectedConfigurationIdentityPreserved": true,
+    "apiHealth": { "status": 200, "mode": "PAPER_ONLY", "queue": 0 },
+    "sqlIdle": true,
+    "publicationPerformed": false,
+    "connections": 1,
+    "elapsedMs": 236,
+    "approvalSha256": "c49d22493767e02246915e0d31065690cd7c882a4dac5ed12538ed6a103e789c",
+    "resultSha256": "6f5f948c865f333fb0dd06cd460c1f41170c87398a3c7db8f60cb5924bcc6317"
+  },
+  "approvalsConsumedAndClosed": true,
+  "replayAllowed": false,
+  "notPerformed": [
+    "Retry",
+    "Deployment",
+    "Publication",
+    "API activation",
+    "Service restart",
+    "Pine or Risk Manager change",
+    "Trade"
+  ],
+  "localOnlyNotDeployed": {
+    "createBot": "256251b",
+    "quantHistory": "02af486"
+  },
+  "stillOpen": [
+    "Nonzero-activity publication adapter with independent acceptance",
+    "Separate publication approval and publish",
+    "API activation",
+    "Immediate and delayed (at least 10 minutes) checks",
+    "Browser proof",
+    "Natural same-entry EXIT for the new 0.01179 BTC OPEN allocation"
+  ],
+  "oldAlert": "QL-3A stays stopped until the old OPEN allocation is resolved",
+  "publicationApproved": false,
+  "capacityApproved": false,
+  "naturalSameEntryExitAccepted": false,
+  "limitations": [
+    "The directory permission change does not publish, deploy or activate anything.",
+    "Headroom figures are a point-in-time observation, not a general capacity approval.",
+    "Changed activity-table hashes do not reconstruct every row or certify a natural EXIT.",
+    "Future publication and activation require fresh facts and separate reviewed authority."
+  ]
+}
