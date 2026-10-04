@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test,{describe,before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {
   OHLCV_PATH,MARKET,SOURCE,INTERVALS,STALE_AFTER_SECONDS,HEALTH,GAP_RANGE_CAP,SQL,parseOhlcvQuery,ohlcvWindow,historyLower,
@@ -6,9 +6,11 @@ import {
 import {ReadinessService} from '../src/postgres/pf3-readiness-service.js';
 
 // No test in this file may reach a network: the stored-data path never calls Binance.
+// The guard is scoped to this describe block: npm test runs every file in one process (--test-isolation=none).
+describe('market-ohlcv (no network)',()=>{
 const realFetch=globalThis.fetch;
-globalThis.fetch=()=>{throw new Error('network call forbidden in market-ohlcv tests');};
-test.after(()=>{globalThis.fetch=realFetch;});
+before(()=>{globalThis.fetch=()=>{throw new Error('network call forbidden in market-ohlcv tests');};});
+after(()=>{globalThis.fetch=realFetch;});
 
 const M=60000,H=60*M,D=24*H;
 const L=Date.parse('2026-10-04T00:00:00Z');
@@ -336,4 +338,5 @@ test('PF-3 service: configuration, application failures and platform errors',asy
   const sqlstate=Object.assign(new Error('serialization'),{code:'40001'});
   const rethrown=await codeOf(()=>serviceOf({marketData:{health:async()=>{throw sqlstate;}}}).report('owner','bot'));
   assert.equal(rethrown,sqlstate);
+});
 });
