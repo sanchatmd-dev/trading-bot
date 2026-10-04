@@ -1,0 +1,219 @@
+{
+  "observedAt": "2026-10-04T19:06:03Z",
+  "scope": "Staging chart v3 indicators release 2919f9b: precheck, incoming namespace, upload, extraction, API-only activation, immediate and delayed checks, and an owner-signed-in browser check of the Overview chart",
+  "root": {
+    "platform": "Claude",
+    "segment": "Live steps 2026-10-04T18:52Z to 2026-10-04T19:06Z; the workflow from design to fix (about 98 minutes) and the release tool build with its audit (about 51 minutes) came before; the browser check was at about 19:00 to 19:02 UTC",
+    "followsEvidence": "P2_CHART_RELEASE_F22F3D0_2026-10-04.json"
+  },
+  "usage": {
+    "note": "No usage reading is recorded for this release; no engineering-hour total is established"
+  },
+  "code": {
+    "release": "2919f9b",
+    "baseline": "f22f3d0",
+    "commits": {
+      "0f110ff": "Chart v3 indicators code (feat)",
+      "2919f9b": "Test-only fix: accept a CRLF checkout in the line-ending check"
+    },
+    "ci": {
+      "0f110ff": {
+        "checksPassed": 8,
+        "checksTotal": 9,
+        "failure": "test (windows-latest): test-only line-ending assertion under a CRLF checkout"
+      },
+      "2919f9b": {
+        "checksPassed": 9,
+        "checksTotal": 9,
+        "observedAround": "2026-10-04T18:05Z"
+      }
+    },
+    "supersededPackage": "A package built for 0f110ff was superseded and never uploaded",
+    "localTests": "Coder and tester full npm test: 1286 passed, 0 failed; root focused 218 and 37 passed",
+    "feature": {
+      "emas": "Two EMAs, default 50 and 200, on",
+      "atrStop": "close minus k times ATR(14), Wilder smoothing, default 2x, on; a visual guide only, not a bot stop-loss",
+      "panes": "RSI 14 and MACD 12/26/9, off by default",
+      "settings": "Every indicator toggles on or off with bounded settings saved per viewer (robotMarketChart.v1, nested indicators v1)",
+      "math": "public/chart-indicators.js",
+      "warmUp": "The chart requests up to 1000 bars (for example BTCUSDT 1h 720, 2h 360) and draws the usual visible count",
+      "isolation": "Indicators never reach a bot, the Risk Manager, Preflight or any order",
+      "cacheTokens": "mc2 to mc3"
+    }
+  },
+  "tool": {
+    "description": "Accepted chart tool3 plus exact substitutions (release tool4), one independent three-lens audit",
+    "layer": "s04",
+    "package": {
+      "release": "2919f9b",
+      "files": 787,
+      "sourceFiles": 605,
+      "dependencyFiles": 182,
+      "diffPathsVersusPreviousRelease": 18,
+      "pathsAdded": 3,
+      "pathsModified": 15,
+      "previousRelease": "f22f3d0",
+      "sourceTarSha256": "fd9f1abd69c9bd7f4bb91397252158ea3fd2155b2e70f86b53b839e8e897d5f6",
+      "depsTarSha256": "c0bd614e9cb3ad1d17e51ac14bab20c0d8b4258f888cc24855684e64566e1214",
+      "depsTarUnchangedFromPreviousRelease": true,
+      "manifestSha256": "b6953be6432216ad7b71667088d3ce57a2ceec836352e9fb44c5f06bd73bda1e",
+      "releaseManifestSha256": "afc45d2754a00d6905c47e5db40433e2f7780aca46b8e0bab9261c6f4bfda105",
+      "note": "The src/postgres/market-ohlcv.js change is comment-only"
+    },
+    "pinsSha256": "e795bf29882b65bd8672371d8cc25aa34136d058ef24df77d3251e4a667d2b31",
+    "independentAudit": {
+      "lenses": {
+        "diff": {
+          "passed": 51,
+          "failed": 0
+        },
+        "behavior": {
+          "passed": 101,
+          "failed": 0
+        },
+        "safety": {
+          "passed": 12,
+          "failed": 0
+        }
+      },
+      "total": {
+        "passed": 164,
+        "failed": 0
+      },
+      "verdict": "ACCEPT_NARROW",
+      "findings": "No blocker, high or medium finding",
+      "receiptSha256": "35e6fb4408ed59ab7726e3f51194dbb943e1776e6b82bd8e1ec598241d7071ec"
+    },
+    "rootAcceptedLocalDeliveryOnly": true,
+    "rootAcceptedAt": "2026-10-04T18:51:24.282Z",
+    "rootAcceptanceSha256": "6ba6313398ecd6791860d0387a22736c49c3aa8441276f341d89cae220ceb7ec",
+    "rollbackTarget": "f22f3d0",
+    "nextLayerMustSortAfter": "s04"
+  },
+  "liveStepSequence": "One operations worker, root approval per step; recover and rollback were not used",
+  "precheck": {
+    "observedAt": "2026-10-04T18:52:25Z",
+    "verdict": "PRECHECK_PASS",
+    "rawSha256": "5d94dbd74c94c13fe3a947a605a3bc2e6327d989ac414684aaa1a0c307786285"
+  },
+  "incoming": {
+    "observedAt": "2026-10-04T18:53:25Z",
+    "verdict": "INCOMING_PASS",
+    "rawSha256": "b5edb7e2fc02dc715204dd45d1a842b7cfddfdaaa865733c5236e4025eb25447"
+  },
+  "upload": {
+    "method": "One scp",
+    "startedAt": "2026-10-04T18:54:01Z",
+    "finishedAt": "2026-10-04T18:54:17Z",
+    "returnCode": 0,
+    "totalBytes": 38011088,
+    "retried": false
+  },
+  "extract": {
+    "observedAt": "2026-10-04T18:54:55Z",
+    "verdict": "EXTRACT_PASS",
+    "filesPlaced": 787,
+    "linuxModesVerified": true,
+    "rawSha256": "172c7e11f11265d1cd8fd7729531f1e4c0af225195fbfc004dd16ea2d3c13770"
+  },
+  "activation": {
+    "t0": "2026-10-04T18:55:29.654Z",
+    "verdict": "ACTIVATE_PASS",
+    "release": "2919f9b",
+    "scope": "API-only restart onto the new release",
+    "conservativeApiDowntimeSeconds": 2.1,
+    "newLayer": "s04",
+    "newLayerSha256": "3b6ad4d9cd9c37d7c63e600cb5b1ee0bc5c421131aced0b2aa3c091204c05783",
+    "tradingChanged": false,
+    "researchChanged": false,
+    "rawSha256": "c0be1df491897bb6e17364327395ad012b14ed107c21f8b7c3a64174317aeade"
+  },
+  "recover": {
+    "needed": false,
+    "attempted": false
+  },
+  "immediateCheck": {
+    "observedAt": "2026-10-04T18:56:08Z",
+    "verdict": "POSTCHECK_PASS",
+    "rawSha256": "4797467b3844ee3bf426569efadb62bc3d7e08f07e78276fc2e253906617c0d7"
+  },
+  "delayedCheck": {
+    "observedAt": "2026-10-04T19:06:03.442Z",
+    "secondsAfterActivation": 634,
+    "delayProof": true,
+    "verdict": "POSTCHECK_PASS",
+    "rawSha256": "fbfe74d3d8fda46192a249a89b8e89874da5c3067f3f10855f8db5581bb75a3d"
+  },
+  "runtimeAtDelayedCheck": {
+    "api": "2919f9b",
+    "paperDeployment": "READY",
+    "bot": "QL-P2 ACTIVE",
+    "oldOpenAllocation": "QL-3A OPEN 0.01181 BTC preserved; the QL-3A alert stays stopped",
+    "researchJobsActive": 0,
+    "activity": {
+      "reference": {
+        "events": 60,
+        "pending": 60,
+        "signals": 60,
+        "entries": 4,
+        "allocations": 4,
+        "observedAt": "Chart v2 delayed check, 2026-10-04T15:51Z"
+      },
+      "now": {
+        "events": 65,
+        "pending": 65,
+        "signals": 65,
+        "entries": 5,
+        "allocations": 5
+      },
+      "note": "Natural growth; every change passed the tolerance rule and happened before the API restart, so the release did not cause it; the content of the new rows was not inspected in this release"
+    }
+  },
+  "browser": {
+    "observedAround": "2026-10-04T19:00Z to 19:02Z",
+    "path": "Owner signed in; root browser check",
+    "pageLoads": "i18n, chart-indicators and interactive-chart scripts with ?v=mc3",
+    "defaults": "EMA 50, EMA 200 and ATR stop 2.0x14 on; RSI and MACD off",
+    "btcusdt1d": "245 visible bars with the three overlays, dashed forming-bar tails and a values list",
+    "panes": "RSI pane (70, 50 and 30 guides) and MACD pane (histogram, MACD and signal) appear when toggled and hide when off",
+    "toggles": "Toggles send no market request",
+    "boundedSettings": "Multiplier 2.35 is shown as 2.4; EMA length 50.5 is refused with the range note and 50 is kept; Reset restores the defaults",
+    "btcusdt1h": "Source shown as Binance public REST: with the larger 720-bar window the staging stored coverage is shorter than needed, so the chart uses labelled REST data (known and accepted product trade-off; the stored bot-feed source is kept only when its coverage spans the window)",
+    "notChecked": [
+      "Phone-width layout",
+      "Thai language view",
+      "TradingView value comparison"
+    ]
+  },
+  "approvalsConsumedAndClosed": true,
+  "replayAllowed": false,
+  "retryNeeded": false,
+  "rollbackNeeded": false,
+  "rollbackTargetIfEverNeeded": "f22f3d0 only",
+  "notPerformed": [
+    "Retry of any host step",
+    "Recover phase",
+    "Rollback",
+    "Restart of trading, research, database or protected services"
+  ],
+  "stillOpen": [
+    "Authenticated Create Bot journey remains unchecked",
+    "Pre-launch market-data gate MD-1 remains open",
+    "A natural same-entry EXIT for any new allocation is not claimed",
+    "Webhook delivery during the roughly 2.1 second API restart window was not separately verified",
+    "Resolution of the old OPEN allocation of 0.01181 BTC (QL-3A)"
+  ],
+  "unchangedGates": [
+    "PF-2 remains off",
+    "D6, R7, B3, W7 and related gates are unchanged",
+    "Pre-launch market-data gate MD-1 is unchanged"
+  ],
+  "publicationApprovedForAnyOtherRelease": false,
+  "capacityApproved": false,
+  "limitations": [
+    "Release upload, extraction and activation here cover chart v3 indicators 2919f9b on staging only.",
+    "The ATR stop line is a visual guide, not a bot stop-loss, and indicators never reach a bot, the Risk Manager, Preflight or any order.",
+    "Unchanged behavior of trading and research is shown by the delayed check, not by independent inspection of the new activity rows.",
+    "Future publication and activation require fresh facts and separate reviewed authority."
+  ]
+}
