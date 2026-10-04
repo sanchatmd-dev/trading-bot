@@ -20,8 +20,9 @@ export const OHLCV_PATH='/api/market/ohlcv';
 export const MARKET=Object.freeze({broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'});
 export const SOURCE='binance-spot-public-stored';
 const MINUTE=60000;
-// ms/ttl come from the proxy table (one source of truth). limit = default bar count (the UI never sends it, so all viewers share one
-// proxy cache entry per symbol and interval); cap = largest accepted bar count; poll = UI refresh seconds while visible;
+// ms/ttl come from the proxy table (one source of truth). limit = default bar count when a request names none (the chart UI asks for
+// one fixed limit per symbol and interval, so all viewers share one proxy cache entry); cap = largest accepted bar count; poll = UI
+// refresh seconds while visible;
 // stored = BTCUSDT stored aggregation offered; storedCap = min(1000, floor(43200 / minutes)), the stored read bound per request.
 const bucketSpec=(name,limit,poll,stored)=>{
   const {ms,ttl}=KLINE_INTERVALS[name];

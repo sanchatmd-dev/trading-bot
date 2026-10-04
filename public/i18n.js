@@ -755,7 +755,25 @@ const marketChartPairs=[
   ['below range','ใต้ช่วงที่แสดง'],
   ['cost incl. fee','ต้นทุนรวมค่าธรรมเนียม'],
   ['Lot quantities do not match the position; average line shown','จำนวนในล็อตไม่ตรงกับสถานะ จึงแสดงเส้นราคาเฉลี่ย'],
-  ['Position lines unavailable ({code})','เส้นของสถานะใช้ไม่ได้ ({code})']
+  ['Position lines unavailable ({code})','เส้นของสถานะใช้ไม่ได้ ({code})'],
+  ['Indicators','อินดิเคเตอร์'],
+  ['First EMA','EMA เส้นที่ 1'],
+  ['Second EMA','EMA เส้นที่ 2'],
+  ['Length','ความยาว'],
+  ['ATR stop line','เส้นจุดตัดขาดทุนตาม ATR'],
+  ['ATR length','ความยาว ATR'],
+  ['Multiplier (× ATR)','ตัวคูณ (× ATR)'],
+  ['RSI pane','แผง RSI'],
+  ['MACD pane','แผง MACD'],
+  ['Fast length','ความยาวเส้นเร็ว'],
+  ['Slow length','ความยาวเส้นช้า'],
+  ['Signal length','ความยาวเส้นสัญญาณ'],
+  ['Reset indicators','รีเซ็ตอินดิเคเตอร์'],
+  ['ATR stop line = close − multiplier × ATR (Wilder), long side only. A visual guide, not the stop-loss of any bot.','เส้นจุดตัดขาดทุนตาม ATR = ราคาปิด − ตัวคูณ × ATR (Wilder) เฉพาะฝั่ง Long เป็นเส้นช่วยดูเท่านั้น ไม่ใช่ Stop Loss ของบอทใด'],
+  ['Indicators are visual aids computed in this browser. They never change bots, risk checks, Preflight or orders.','อินดิเคเตอร์เป็นเครื่องมือช่วยดูที่คำนวณในเบราว์เซอร์นี้ ไม่เปลี่ยนบอท การตรวจความเสี่ยง Preflight หรือคำสั่งซื้อขาย'],
+  ['needs {bars} bars','ต้องใช้ {bars} แท่ง'],
+  ['Allowed range {min}–{max}; kept {value}','ช่วงที่ใช้ได้ {min}–{max} คงค่า {value}'],
+  ['Fast length must be below slow length','ความยาวเส้นเร็วต้องน้อยกว่าความยาวเส้นช้า']
 ];
 uiPairs.push(...marketChartPairs);
 for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}

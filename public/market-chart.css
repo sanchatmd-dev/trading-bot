@@ -71,3 +71,31 @@
   .mc-tf,.mc-toolbar>button{flex:1 1 100%}
   .mc-tf select{width:100%}
 }
+.mc-ind{margin-top:10px;border:1px solid var(--line);border-radius:9px;padding:6px 10px}
+.mc-ind[hidden]{display:none}
+.mc-ind summary{cursor:pointer;font-size:13px;color:var(--muted)}
+.mc-ind-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-top:8px}
+.mc-ind-group{margin:0;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:8px}
+.mc-ind-group legend{padding:0 4px;font-size:13px}
+.mc-ind-group legend label{display:flex;align-items:center;gap:8px;min-height:40px;margin:0;cursor:pointer}
+.mc-ind input[type="checkbox"]{width:auto;min-width:18px;min-height:18px;margin:0;padding:0}
+.mc-ind-field{display:flex;gap:6px;align-items:center;justify-content:space-between;margin:4px 0 0;font-size:12px;color:var(--muted)}
+.mc-ind-field input{width:96px;padding:6px 8px;font-size:16px}
+.mc-ind-help,.mc-ind-note{font-size:12px;margin:6px 0 0}
+.mc-ind-note:empty{display:none}
+.mc-ind>button{margin-top:8px}
+.mc-ind-values{list-style:none;display:flex;flex-wrap:wrap;gap:4px 12px;margin:0 0 6px;padding:0;font-size:12px}
+.mc-ind-values:empty{display:none}
+.mc-iv{padding-left:6px;border-left:3px solid var(--line)}
+.mc-iv-ema1{border-left-color:#ffd36b}.mc-iv-ema2{border-left-color:#b48cff}.mc-iv-atr{border-left-color:#ff9f43}
+.mc-iv-rsi,.mc-iv-macd{border-left-color:#6ec1ff}.mc-iv-forming{opacity:.75}
+.mc-pane[hidden]{display:none}
+.mc-svg.mc-sub{min-height:0;margin-top:4px}
+.mc-ind-line{fill:none;stroke-width:1.5}
+.mc-ind-ema1{stroke:#ffd36b}.mc-ind-ema2{stroke:#b48cff}.mc-ind-atr{stroke:#ff9f43;stroke-dasharray:2 3}
+.mc-ind-rsi,.mc-ind-macd{stroke:#6ec1ff}.mc-ind-signal{stroke:#ff9f43}
+.mc-ind-forming{stroke-dasharray:3 2;opacity:.6}
+.mc-ind-hist{stroke-width:0;opacity:.45}.mc-ind-hist-up{fill:#35e0b1}.mc-ind-hist-down{fill:#ff7187}
+.mc-ind-guide{stroke:#3a5068;stroke-width:1;stroke-dasharray:4 4}.mc-ind-mid,.mc-ind-zero{stroke:#1d3247;stroke-width:1}
+.mc-svg text.mc-ind-title{fill:#c9d6e5}.mc-svg text.mc-ind-needs{text-anchor:middle}
+@media(max-width:600px){.mc-ind-grid{grid-template-columns:1fr}}

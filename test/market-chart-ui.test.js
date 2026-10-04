@@ -1,12 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 import {JSDOM} from 'jsdom';
+import {INTERVALS as SERVER_INTERVALS,MARKET} from '../src/postgres/market-ohlcv.js';
 
 const publicFile=name=>fs.readFileSync(new URL('../public/'+name,import.meta.url),'utf8');
 const settle=()=>new Promise(resolve=>setTimeout(resolve,10));
 const SVG_NS='http://www.w3.org/2000/svg';
 const T0=Date.parse('2026-10-04T05:00:00Z'),HOUR=3600000,KEY='robotMarketChart.v1';
+const limitFor=(symbol,interval)=>symbol==='BTCUSDT'&&interval==='1h'?720:symbol==='BTCUSDT'&&interval==='2h'?360:1000;
 const INTERVALS=['1m','3m','5m','15m','30m','1h','2h','4h','6h','8h','12h','1d','3d','1w'];
 
 const bar=(time,over={})=>({time,open:'100.5',high:'110',low:'90.25',close:'105',volume:'3.5',minutes:60,complete:true,...over});
@@ -33,7 +36,7 @@ const many=count=>Array.from({length:count},(_,index)=>['A'+String(index).padSta
  * One jsdom page with the chart script. The three server reads are stubbed per kind; setInterval is captured so a test
  * drives the 5 s scheduler by hand; Date.now of this window only is a manual clock. Nothing global of the test process is touched.
  */
-function setup({language,ohlcv,symbols,levels,prefs,scope,visible=true,storage}={}){
+function setup({language,ohlcv,symbols,levels,prefs,scope,visible=true,storage,indicators=true}={}){
   const dom=new JSDOM(publicFile('index.html'),{url:'https://robot.test',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document;
   if(language)w.localStorage.setItem('robotLanguage',language);
   if(prefs!==undefined)w.localStorage.setItem(KEY,typeof prefs==='string'?prefs:JSON.stringify(prefs));
@@ -54,6 +57,7 @@ function setup({language,ohlcv,symbols,levels,prefs,scope,visible=true,storage}=
     if(kind===null)throw new Error('Unexpected '+path);
     return handlers[kind](path,options);
   };
+  if(indicators)w.eval(publicFile('chart-indicators.js'));
   w.eval(publicFile('interactive-chart.js'));
   if(visible)d.querySelector('#app').hidden=false;
   const q=selector=>d.querySelector(selector);
@@ -75,6 +79,7 @@ function setup({language,ohlcv,symbols,levels,prefs,scope,visible=true,storage}=
 }
 const withPage=async(options,body)=>{const p=setup(options);try{await body(p);}finally{p.w.close();}};
 const sourceOf=name=>publicFile(name);
+const DEFAULT_INDICATORS={v:1,ema1:{on:true,period:50},ema2:{on:true,period:200},atr:{on:true,period:14,multiplier:2},rsi:{on:false,period:14},macd:{on:false,fast:12,slow:26,signal:9}};
 
 test('static: panel on Overview after the status grid, 14 timeframes with 1d, quick buttons, no external script, no inline style',()=>{
   const html=publicFile('index.html'),dom=new JSDOM(html),d=dom.window.document;
@@ -84,8 +89,8 @@ test('static: panel on Overview after the status grid, 14 timeframes with 1d, qu
     for(const link of d.querySelectorAll('link[rel="stylesheet"]'))assert.ok(link.getAttribute('href').startsWith('/'),'stylesheet '+link.getAttribute('href'));
     assert.equal(d.querySelectorAll('#interactiveChartPanel').length,1,'one panel only');
     assert.equal(d.querySelector('#interactiveChartPanel [style]'),null,'the CSP forbids inline styles');
-    for(const part of ['/interactive-chart.js?v=mc2','/market-chart.css?v=mc2','/i18n.js?v=mc2','/readiness.js?v=md1'])assert.ok(html.includes(part),part);
-    assert.ok(html.indexOf('/app.js?v=')<html.indexOf('/interactive-chart.js?v='),'app.js loads before the chart');
+    for(const part of ['/interactive-chart.js?v=mc3','/chart-indicators.js?v=mc3','/market-chart.css?v=mc3','/i18n.js?v=mc3','/readiness.js?v=md1'])assert.ok(html.includes(part),part);
+    assert.ok(html.indexOf('/app.js?v=')<html.indexOf('/chart-indicators.js?v=')&&html.indexOf('/chart-indicators.js?v=')<html.indexOf('/interactive-chart.js?v='),'app.js, then the indicator module, then the chart');
     assert.ok(!publicFile('market-chart.css').includes('!important'));
     const panel=d.querySelector('#interactiveChartPanel');
     assert.ok(d.querySelector('section[data-page="overview"] > #interactiveChartPanel'),'on Overview');
@@ -104,7 +109,7 @@ test('static: panel on Overview after the status grid, 14 timeframes with 1d, qu
     assert.equal(panel.querySelector('#mcSymbolList').getAttribute('role'),'listbox');assert.ok(panel.querySelector('#mcSymbolList').hidden);
     assert.ok(panel.querySelector('#mcHeld').hidden);
     assert.equal(panel.querySelectorAll('.mc-data').length>=5,true);
-    assert.equal(panel.querySelectorAll('button').length,6,'five quick buttons and the refresh button: no order, alert or trade control');
+    assert.equal(panel.querySelectorAll('button').length,7,'five quick buttons, refresh and reset indicators: no order, alert or trade control');
   }finally{dom.window.close();}
   for(const name of fs.readdirSync(new URL('../public/',import.meta.url)).filter(file=>file.endsWith('.js'))){
     const source=publicFile(name);
@@ -125,7 +130,7 @@ test('interactive-chart.js bans: no markup injection, no network, one guarded st
   for(const at of uses)assert.ok(/try\{[^}]*$/.test(source.slice(Math.max(0,at-90),at)),'storage use inside a try block');
   // Requests: three same-origin reads, literal paths.
   assert.equal(source.split('api(').length-1,3,'three api() call sites');
-  assert.ok(source.includes("api('/api/market/ohlcv?symbol='+encodeURIComponent(state.symbol)+'&interval='+state.interval,{silent:true})"));
+  assert.ok(source.includes("api('/api/market/ohlcv?symbol='+encodeURIComponent(state.symbol)+'&interval='+state.interval+'&limit='+fetchLimit(),{silent:true})"));
   assert.ok(source.includes("api('/api/market/symbols',{silent:true})"));
   assert.ok(source.includes("api('/api/positions/levels',{silent:true,botId:scopeAll()?'all':undefined})"));
   assert.ok(source.includes("typeof selectedBot!=='undefined'&&selectedBot==='all'"));
@@ -133,7 +138,7 @@ test('interactive-chart.js bans: no markup injection, no network, one guarded st
   const names=[...source.matchAll(/setAttribute\(\s*([^,)]+)/g)].map(match=>match[1].trim());
   assert.ok(names.every(name=>name==="'class'"||name==='name'),'setAttribute names: '+names);
   const geometry=source.match(/GEOMETRY=new Set\(\[([^\]]+)\]\)/)[1].match(/'(\w+)'/g).map(item=>item.slice(1,-1)).sort();
-  assert.deepEqual(geometry,['height','width','x','x1','x2','y','y1','y2'].sort(),'only geometry attributes reach the SVG');
+  assert.deepEqual(geometry,['height','points','width','x','x1','x2','y','y1','y2'].sort(),'only geometry attributes reach the SVG');
   const aria=source.match(/ARIA=new Set\(\[([^\]]+)\]\)/)[1].match(/'([\w-]+)'/g).map(item=>item.slice(1,-1)).sort();
   assert.deepEqual(aria,['aria-activedescendant','aria-expanded','aria-pressed','aria-selected','id','role'],'the fixed ARIA, id and role set');
   assert.deepEqual([...new Set([...source.matchAll(/addEventListener\('([a-z:0-9]+)'/g)].map(match=>match[1]))].sort(),
@@ -150,7 +155,7 @@ test('scheduler: nothing before the page is visible; the first visible tick read
     await p.tick();assert.equal(p.calls.length,0,'another page is on screen: no request');
     p.q('[data-page="overview"]').hidden=false;
     await p.tick();
-    assert.deepEqual(p.paths().sort(),['/api/market/ohlcv?symbol=BTCUSDT&interval=1d','/api/market/symbols','/api/positions/levels']);
+    assert.deepEqual(p.paths().sort(),['/api/market/ohlcv?symbol=BTCUSDT&interval=1d&limit=1000','/api/market/symbols','/api/positions/levels']);
     assert.ok(p.calls.every(call=>call.options.silent===true));
     assert.equal(p.calls.find(call=>call.path==='/api/positions/levels').options.botId,undefined,'no explicit bot: the page helper adds the selected bot');
   });
@@ -199,7 +204,7 @@ test('REST answer: source badge, cache age, forming bar flagged and drawn distin
   const list=bars(4,index=>({minutes:null,complete:index!==3,forming:index===3}));
   await withPage({prefs:{symbol:'ETHUSDT',interval:'1d'},ohlcv:rest(list,{symbol:'ETHUSDT',price_tick:'0.01000000'})},async p=>{
     await p.tick();
-    assert.equal(p.paths('/api/market/ohlcv')[0],'/api/market/ohlcv?symbol=ETHUSDT&interval=1d');
+    assert.equal(p.paths('/api/market/ohlcv')[0],'/api/market/ohlcv?symbol=ETHUSDT&interval=1d&limit=1000');
     assert.equal(p.badge.dataset.source,'rest');assert.equal(p.badge.textContent,'Source: Binance public REST (cached 7 s)');
     assert.equal(p.status.textContent,'Updated 2026-10-04 05:01 UTC · cache age 7 s');assert.equal(p.state(),'ready');
     assert.equal(p.meta.textContent,'4 bars · 1d · generated 2026-10-04 05:01 UTC');
@@ -250,15 +255,15 @@ test('timeframe: the select and the quick buttons stay in sync, a change clears 
     p.interval('15m').click();
     assert.equal(p.select.value,'15m');assert.equal(p.candles(),0,'nothing of the old interval stays on screen');assert.equal(p.state(),'loading');
     await settle();
-    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=BTCUSDT&interval=15m');
+    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=BTCUSDT&interval=15m&limit=1000');
     assert.equal(p.interval('15m').getAttribute('aria-pressed'),'true');assert.equal(p.interval('1d').getAttribute('aria-pressed'),'false');
     p.select.value='2h';p.select.dispatchEvent(new p.w.Event('change',{bubbles:true}));await settle();
-    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=BTCUSDT&interval=2h');
+    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=BTCUSDT&interval=2h&limit=360');
     assert.ok(p.d.querySelectorAll('[data-mc-interval][aria-pressed="true"]').length===0,'no quick button for 2h is pressed');
     assert.equal(p.select.value,'2h');
-    for(const name of INTERVALS){p.select.value=name;p.select.dispatchEvent(new p.w.Event('change',{bubbles:true}));await settle();assert.ok(p.paths('/api/market/ohlcv').at(-1).endsWith('&interval='+name),name);}
+    for(const name of INTERVALS){p.select.value=name;p.select.dispatchEvent(new p.w.Event('change',{bubbles:true}));await settle();assert.ok(p.paths('/api/market/ohlcv').at(-1).includes('&interval='+name+'&limit='),name);}
     p.chips.querySelector('button').click();await settle();
-    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=ETHUSDT&interval=1w','the chip keeps the timeframe');
+    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=ETHUSDT&interval=1w&limit=1000','the chip keeps the timeframe');
     assert.equal(p.select.value,'1w');
   });
 });
@@ -270,9 +275,9 @@ test('late answers are dropped: an older interval, symbol or levels read never o
     await p.tick();
     assert.equal(p.state(),'loading');assert.equal(p.status.textContent,'Loading market data…');
     p.interval('15m').click();await settle();
-    resolvers['symbol=BTCUSDT&interval=15m'](payload(bars(3),{interval:'15m'}));await settle();
+    resolvers['symbol=BTCUSDT&interval=15m&limit=1000'](payload(bars(3),{interval:'15m'}));await settle();
     assert.equal(p.candles(),3);
-    resolvers['symbol=BTCUSDT&interval=1d'](payload(bars(7)));await settle();
+    resolvers['symbol=BTCUSDT&interval=1d&limit=1000'](payload(bars(7)));await settle();
     assert.equal(p.candles(),3,'the answer of the older request is dropped');assert.match(p.meta.textContent,/ · 15m · /);
     // A late levels answer after a bot switch is dropped as well.
     p.w.eval("var selectedBot='b2';");
@@ -423,9 +428,9 @@ test('picker keyboard: arrows wrap, PageDown/PageUp move 10, Home/End, Enter sel
     p.key('ArrowDown');assert.equal(p.list.hidden,false,'ArrowDown opens the list');
     assert.equal(p.list.querySelector('[aria-selected="true"]').dataset.symbol,'BTCUSDT','the list opens at the symbol on screen');
     p.key('Enter');await settle();
-    assert.equal(p.list.hidden,true);assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=BTCUSDT&interval=1d','the current symbol stays selected');
+    assert.equal(p.list.hidden,true);assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=BTCUSDT&interval=1d&limit=1000','the current symbol stays selected');
     p.type('a003');p.key('Enter');await settle();
-    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=A003USDT&interval=1d');
+    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=A003USDT&interval=1d&limit=1000');
     assert.equal(p.input.value,'A003USDT');assert.equal(p.symbolBadge.textContent,'BINANCE:A003USDT');
     assert.equal(p.candles(),5);
   });
@@ -445,7 +450,7 @@ test('picker mouse and focus: a click selects, focus leaving the picker closes a
     p.handlers.ohlcv=()=>new Promise(resolve=>resolvers.push(resolve));
     p.type('sol');p.list.querySelector('[role="option"]').click();
     assert.equal(p.candles(),0,'the old symbol is not mixed in');assert.equal(p.state(),'loading');assert.equal(p.symbolBadge.textContent,'BINANCE:SOLUSDT');
-    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=SOLUSDT&interval=1d');
+    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=SOLUSDT&interval=1d&limit=1000');
     resolvers[0](payload(bars(2),{symbol:'SOLUSDT'}));await settle();assert.equal(p.candles(),2);
   });
 });
@@ -618,24 +623,24 @@ test('lines: a failed levels read keeps the chart, drops the lines and says why;
 test('persistence: the last symbol and interval are restored; garbage is ignored; a blocked storage still renders the defaults',async()=>{
   await withPage({prefs:{symbol:'ETHUSDT',interval:'4h'}},async p=>{
     assert.equal(p.input.value,'ETHUSDT');assert.equal(p.select.value,'4h');assert.equal(p.interval('4h').getAttribute('aria-pressed'),'true');assert.equal(p.symbolBadge.textContent,'BINANCE:ETHUSDT');
-    await p.tick();assert.equal(p.paths('/api/market/ohlcv')[0],'/api/market/ohlcv?symbol=ETHUSDT&interval=4h');
+    await p.tick();assert.equal(p.paths('/api/market/ohlcv')[0],'/api/market/ohlcv?symbol=ETHUSDT&interval=4h&limit=1000');
     p.select.value='1w';p.select.dispatchEvent(new p.w.Event('change',{bubbles:true}));
-    assert.deepEqual(JSON.parse(p.w.localStorage.getItem(KEY)),{symbol:'ETHUSDT',interval:'1w'});
+    assert.deepEqual(JSON.parse(p.w.localStorage.getItem(KEY)),{symbol:'ETHUSDT',interval:'1w',indicators:DEFAULT_INDICATORS});
     p.type('sol');p.key('Enter');
-    assert.deepEqual(JSON.parse(p.w.localStorage.getItem(KEY)),{symbol:'SOLUSDT',interval:'1w'});
+    assert.deepEqual(JSON.parse(p.w.localStorage.getItem(KEY)),{symbol:'SOLUSDT',interval:'1w',indicators:DEFAULT_INDICATORS});
     await settle();
   });
   for(const garbage of ['not json','null','[]','{"symbol":"eth/usdt","interval":"2w"}','{"symbol":"../x","interval":7}','{"symbol":"ABC","interval":"1d"}']){
     await withPage({prefs:garbage},async p=>{
       await p.tick();
-      assert.equal(p.paths('/api/market/ohlcv')[0],'/api/market/ohlcv?symbol=BTCUSDT&interval=1d',garbage);assert.equal(p.select.value,'1d');
+      assert.equal(p.paths('/api/market/ohlcv')[0],'/api/market/ohlcv?symbol=BTCUSDT&interval=1d&limit=1000',garbage);assert.equal(p.select.value,'1d');
     });
   }
   await withPage({storage:'throw'},async p=>{
     await p.tick();
-    assert.equal(p.paths('/api/market/ohlcv')[0],'/api/market/ohlcv?symbol=BTCUSDT&interval=1d');assert.equal(p.candles(),5);
+    assert.equal(p.paths('/api/market/ohlcv')[0],'/api/market/ohlcv?symbol=BTCUSDT&interval=1d&limit=1000');assert.equal(p.candles(),5);
     p.type('eth');p.key('Enter');await settle();
-    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=ETHUSDT&interval=1d','selecting still works without storage');
+    assert.equal(p.paths('/api/market/ohlcv').at(-1),'/api/market/ohlcv?symbol=ETHUSDT&interval=1d&limit=1000','selecting still works without storage');
     await settle();
   });
 });
@@ -734,5 +739,304 @@ test('a read that never answers does not block the scheduler for ever',async()=>
     await p.tick();assert.equal(p.paths('/api/market/ohlcv').length,1);assert.equal(p.state(),'loading');
     await p.tick(30000);assert.equal(p.paths('/api/market/ohlcv').length,1,'still waiting inside the minute');
     await p.tick(31000);assert.equal(p.paths('/api/market/ohlcv').length,2,'a new read starts after a minute');
+  });
+});
+// ---- Chart v3: indicators (two EMAs, ATR stop line, RSI, MACD), each on or off --------------------------------------------------
+const REF=vm.runInNewContext(publicFile('chart-indicators.js')+'\n;ChartIndicators',{});
+const DAY=86400000;
+/** One bar per day ending at T0: a sine wave around 100, open = previous close. The forming variant is a REST answer with an open last bar. */
+const trend=(count,{forming=false}={})=>{
+  const closes=Array.from({length:count},(_,index)=>100+10*Math.sin(index/20));
+  return closes.map((close,index)=>{
+    const open=index===0?close:closes[index-1],last=forming&&index===count-1;
+    return {time:T0-(count-index)*DAY,open:open.toFixed(2),high:(Math.max(open,close)+2).toFixed(2),low:(Math.min(open,close)-2).toFixed(2),close:close.toFixed(2),
+      volume:'1',minutes:last?null:1440,complete:!last,...(last?{forming:true}:{})};
+  });
+};
+const trendBody=(count,options)=>{
+  const list=trend(count,options);
+  return options?.forming?rest(list,{interval:'1d',price_tick:'0.01'}):payload(list,{interval:'1d',price_tick:'0.01'});
+};
+const numbersOf=(list,field)=>list.map(item=>Number(item[field]));
+const fire=(p,element)=>element.dispatchEvent(new p.w.Event('change',{bubbles:true}));
+const toggle=(p,id,on)=>{const box=p.q('#'+id);box.checked=on;fire(p,box);};
+const edit=(p,id,value)=>{const field=p.q('#'+id);field.value=value;fire(p,field);};
+const rowsOf=p=>[...p.d.querySelectorAll('#mcIndValues li')].map(item=>item.textContent);
+const pointsOf=(root,selector)=>[...root.querySelectorAll(selector)].flatMap(item=>item.getAttribute('points').split(' ').map(pair=>pair.split(',').map(Number)));
+const pointCount=(root,selector)=>pointsOf(root,selector).length;
+const stored=p=>JSON.parse(p.w.localStorage.getItem(KEY));
+
+test('drift: the display and fetch tables mirror the server intervals; the control markup mirrors the module limits and defaults',()=>{
+  const source=sourceOf('interactive-chart.js');
+  const table=pattern=>JSON.parse(source.match(pattern)[1].replaceAll("'",'"'));
+  const display=table(/DISPLAY_BARS=Object\.freeze\((\{[^}]*\})\)/),btc=table(/BTC_STORED_LIMIT=Object\.freeze\((\{[^}]*\})\)/);
+  const fetchLimit=Number(source.match(/FETCH_LIMIT=(\d+)/)[1]);
+  assert.equal(MARKET.symbol,'BTCUSDT');assert.ok(source.includes("DEFAULT_SYMBOL='BTCUSDT'"));
+  assert.deepEqual(Object.keys(display).sort(),Object.keys(SERVER_INTERVALS).sort());
+  for(const [name,spec] of Object.entries(SERVER_INTERVALS)){
+    assert.equal(display[name],spec.limit,'display bars '+name);
+    assert.equal(fetchLimit,spec.cap,'fetch limit '+name);
+    const wanted=spec.stored&&spec.limit<=spec.storedCap?Math.min(spec.cap,spec.storedCap):spec.cap;
+    assert.equal(Object.hasOwn(btc,name)?btc[name]:fetchLimit,wanted,'BTCUSDT limit '+name);
+    assert.equal(limitFor('BTCUSDT',name),wanted);
+  }
+  const dom=new JSDOM(publicFile('index.html')),d=dom.window.document;
+  try{
+    for(const field of d.querySelectorAll('[data-mc-ind-field]')){
+      const limit=REF.LIMITS[field.dataset.mcIndField],[group,name]=field.dataset.mcIndField.split('.');
+      assert.deepEqual([Number(field.getAttribute('min')),Number(field.getAttribute('max')),Number(field.getAttribute('step'))],[limit.min,limit.max,limit.step],field.id);
+      assert.equal(field.getAttribute('value'),String(REF.DEFAULTS[group][name]),field.id+' default');
+    }
+    assert.equal(d.querySelectorAll('[data-mc-ind-field]').length,Object.keys(REF.LIMITS).length,'one input per limit');
+    for(const box of d.querySelectorAll('[data-mc-ind-on]'))assert.equal(box.hasAttribute('checked'),REF.DEFAULTS[box.dataset.mcIndOn].on,box.id+' default');
+  }finally{dom.window.close();}
+});
+
+test('indicator markup: a closed disclosure outside the data area, labelled controls, hidden panes, the value list before the chart, no inline style',()=>{
+  const dom=new JSDOM(publicFile('index.html')),d=dom.window.document;
+  try{
+    const box=d.querySelector('#mcIndicators');
+    assert.equal(box.tagName,'DETAILS');assert.ok(!box.open,'closed by default');assert.equal(box.closest('.mc-data'),null);
+    assert.equal(box.querySelectorAll('fieldset').length,5);
+    for(const checkbox of box.querySelectorAll('input[type="checkbox"]'))assert.ok(checkbox.closest('legend > label'),checkbox.id+' sits in its legend label');
+    for(const field of box.querySelectorAll('input[type="number"]'))assert.ok(field.closest('label'),field.id+' has a label');
+    assert.equal(new Set([...d.querySelectorAll('[id]')].map(item=>item.id)).size,d.querySelectorAll('[id]').length,'unique ids');
+    assert.ok(d.querySelector('#mcRsiPane').hidden&&d.querySelector('#mcMacdPane').hidden);
+    assert.equal(d.querySelector('#mcRsiSvg').getAttribute('viewBox'),'0 0 900 150');assert.equal(d.querySelector('#mcMacdSvg').getAttribute('viewBox'),'0 0 900 170');
+    const values=d.querySelector('#interactiveChart #mcIndValues'),chart=d.querySelector('#marketChartSvg');
+    assert.ok(values&&(values.compareDocumentPosition(chart)&dom.window.Node.DOCUMENT_POSITION_FOLLOWING),'the value list comes before the chart');
+    assert.equal(d.querySelector('#interactiveChartPanel [style]'),null);
+    assert.equal(box.querySelectorAll('form,a').length,0);
+    assert.equal(box.querySelector('#mcIndNote').getAttribute('role'),'status');
+  }finally{dom.window.close();}
+});
+
+test('requests: the limit follows the symbol and interval; toggling or editing an indicator never reads again',async()=>{
+  await withPage({ohlcv:trendBody(1000)},async p=>{
+    await p.tick();
+    assert.ok(p.paths('/api/market/ohlcv').includes('/api/market/ohlcv?symbol=BTCUSDT&interval=1d&limit=1000'));
+    const before=p.calls.length;
+    toggle(p,'mcIndEma1On',false);toggle(p,'mcIndRsiOn',true);toggle(p,'mcIndMacdOn',true);edit(p,'mcIndEma2Period','150');edit(p,'mcIndAtrMult','3.5');edit(p,'mcIndRsiPeriod','1');
+    p.q('#mcIndReset').click();await settle();
+    assert.equal(p.calls.length,before,'no request for an indicator change');
+  });
+  for(const [symbol,interval,limit] of [['BTCUSDT','1h',720],['BTCUSDT','2h',360],['ETHUSDT','2h',1000],['BTCUSDT','1w',1000],['BTCUSDT','1m',1000]]){
+    await withPage({prefs:{symbol,interval}},async p=>{
+      await p.tick();
+      assert.equal(p.paths('/api/market/ohlcv')[0],'/api/market/ohlcv?symbol='+symbol+'&interval='+interval+'&limit='+limit);
+    });
+  }
+});
+
+test('defaults on 1000 daily bars: 365 candles, EMA 50, EMA 200 and the ATR stop line cover every visible bar, three value rows, panes hidden',async()=>{
+  const list=trend(1000);
+  await withPage({ohlcv:trendBody(1000)},async p=>{
+    await p.tick();
+    assert.equal(p.candles(),365);assert.ok(p.meta.textContent.startsWith('365 bars'),p.meta.textContent);
+    for(const kind of ['ema1','ema2','atr'])assert.equal(pointCount(p.svg,'polyline.mc-ind-'+kind),365,kind+' covers all visible bars');
+    assert.ok(p.q('#mcRsiPane').hidden&&p.q('#mcMacdPane').hidden);
+    const closes=numbersOf(list,'close'),highs=numbersOf(list,'high'),lows=numbersOf(list,'low');
+    const atr=REF.atr(highs,lows,closes,14);
+    assert.deepEqual(rowsOf(p),['EMA 50 · '+REF.ema(closes,50).at(-1).toFixed(2),'EMA 200 · '+REF.ema(closes,200).at(-1).toFixed(2),
+      'ATR SL 2.0×ATR14 · '+(closes.at(-1)-2*atr.at(-1)).toFixed(2)]);
+    for(const element of p.svg.querySelectorAll('polyline'))assert.match(element.getAttribute('points'),/^-?\d+(\.\d+)?,-?\d+(\.\d+)?( -?\d+(\.\d+)?,-?\d+(\.\d+)?)+$/);
+    for(const [x,y] of pointsOf(p.svg,'polyline')){assert.ok(y>=10&&y<=300,'y '+y);assert.ok(x>=8&&x<=820,'x '+x);}
+    const tooltip=p.svg.querySelector('g.mc-bar:last-of-type title').textContent;
+    assert.ok(tooltip.includes(' · EMA 50 '+REF.ema(closes,50).at(-1).toFixed(2)+' · EMA 200 '+REF.ema(closes,200).at(-1).toFixed(2)+' · ATR SL '),tooltip);
+    assert.ok(!tooltip.includes('RSI')&&!tooltip.includes('MACD'),'only indicators that are on');
+    assert.equal(p.d.querySelectorAll('#interactiveChartPanel [style]').length,0);
+    for(const element of p.svg.querySelectorAll('polyline'))assert.equal(element.getAttribute('style'),null);
+  });
+});
+
+test('short history: nothing is drawn before the first defined bar and each row says how many bars it needs',async()=>{
+  await withPage({},async p=>{
+    await p.tick();
+    assert.equal(p.svg.querySelectorAll('.mc-ind-line').length,0);
+    assert.deepEqual(rowsOf(p),['EMA 50 · — · needs 50 bars','EMA 200 · — · needs 200 bars','ATR SL 2.0×ATR14 · — · needs 14 bars']);
+    assert.equal(p.svg.querySelector('g.mc-bar title').textContent,'2026-10-04 00:00 UTC · O 100.5 · H 110 · L 90.25 · C 105 · V 3.5 · 60 min','no indicator text in the tooltip');
+  });
+});
+
+test('toggles: each indicator has its own switch; the choice is stored per browser and restored',async()=>{
+  await withPage({ohlcv:trendBody(1000)},async p=>{
+    await p.tick();
+    const before=p.calls.length;
+    toggle(p,'mcIndEma1On',false);
+    assert.equal(p.svg.querySelectorAll('.mc-ind-ema1').length,0);assert.ok(p.svg.querySelectorAll('.mc-ind-ema2').length>0);
+    assert.equal(rowsOf(p).length,2);assert.ok(rowsOf(p)[0].startsWith('EMA 200'));
+    assert.equal(stored(p).indicators.ema1.on,false);assert.equal(p.calls.length,before);
+    toggle(p,'mcIndEma2On',false);toggle(p,'mcIndAtrOn',false);
+    assert.equal(p.svg.querySelectorAll('.mc-ind-line').length,0);assert.equal(rowsOf(p).length,0);
+    toggle(p,'mcIndAtrOn',true);assert.ok(p.svg.querySelectorAll('.mc-ind-atr').length>0);
+  });
+  await withPage({ohlcv:trendBody(1000),prefs:{symbol:'BTCUSDT',interval:'1d',indicators:{...DEFAULT_INDICATORS,ema1:{on:false,period:50}}}},async p=>{
+    assert.equal(p.q('#mcIndEma1On').checked,false);assert.equal(p.q('#mcIndEma2On').checked,true);assert.equal(p.q('#mcIndRsiOn').checked,false);
+    await p.tick();
+    assert.equal(p.svg.querySelectorAll('.mc-ind-ema1').length,0);assert.ok(p.svg.querySelectorAll('.mc-ind-ema2').length>0);
+  });
+});
+
+test('inputs: a valid length is used at once; an invalid one is replaced by the last valid value with a note; a later valid change clears the note',async()=>{
+  const closes=numbersOf(trend(1000),'close');
+  await withPage({ohlcv:trendBody(1000)},async p=>{
+    await p.tick();
+    edit(p,'mcIndEma1Period','20');
+    assert.equal(rowsOf(p)[0],'EMA 20 · '+REF.ema(closes,20).at(-1).toFixed(2));assert.equal(stored(p).indicators.ema1.period,20);assert.equal(p.q('#mcIndNote').textContent,'');
+    edit(p,'mcIndEma1Period','1');
+    assert.equal(p.q('#mcIndEma1Period').value,'20');assert.equal(p.q('#mcIndNote').textContent,'Allowed range 2–500; kept 20');assert.equal(stored(p).indicators.ema1.period,20);
+    edit(p,'mcIndEma1Period','abc');assert.equal(p.q('#mcIndEma1Period').value,'20');assert.equal(p.q('#mcIndNote').textContent,'Allowed range 2–500; kept 20');
+    edit(p,'mcIndAtrMult','3');
+    assert.ok(rowsOf(p)[2].startsWith('ATR SL 3.0×ATR14 · '),rowsOf(p)[2]);assert.equal(p.q('#mcIndNote').textContent,'');
+    edit(p,'mcIndAtrMult','0.4');
+    assert.equal(p.q('#mcIndAtrMult').value,'3');assert.equal(p.q('#mcIndNote').textContent,'Allowed range 0.5–10; kept 3');assert.equal(stored(p).indicators.atr.multiplier,3);
+    edit(p,'mcIndAtrMult','2.35');assert.equal(stored(p).indicators.atr.multiplier,2.4);assert.equal(p.q('#mcIndAtrMult').value,'2.4');assert.ok(rowsOf(p)[2].startsWith('ATR SL 2.4×ATR14 · '));
+    toggle(p,'mcIndMacdOn',true);
+    edit(p,'mcIndMacdFast','30');
+    assert.equal(p.q('#mcIndMacdFast').value,'12');assert.equal(p.q('#mcIndNote').textContent,'Fast length must be below slow length');assert.equal(stored(p).indicators.macd.fast,12);
+    edit(p,'mcIndMacdSlow','12');assert.equal(p.q('#mcIndMacdSlow').value,'26','slow may not drop to the fast length');
+    edit(p,'mcIndMacdSlow','40');
+    assert.equal(p.q('#mcIndNote').textContent,'');assert.equal(stored(p).indicators.macd.slow,40);
+    assert.ok(p.svg.querySelectorAll('polyline').length>0,'the chart is intact after bad input');
+  });
+});
+
+test('RSI pane: 70 and 30 guides, a title with the length, values inside the pane; MACD pane: histogram bars aligned with the candles, also on a narrow chart',async()=>{
+  const closes=numbersOf(trend(1000),'close');
+  await withPage({ohlcv:trendBody(1000)},async p=>{
+    await p.tick();
+    toggle(p,'mcIndRsiOn',true);
+    const pane=p.q('#mcRsiPane'),svg=p.q('#mcRsiSvg');
+    assert.equal(pane.hidden,false);assert.equal(svg.querySelectorAll('line.mc-ind-guide').length,2);
+    assert.equal(svg.querySelector('.mc-ind-title').textContent,'RSI 14');
+    assert.deepEqual([...svg.querySelectorAll('text.mc-axis')].map(item=>item.textContent),['70','50','30']);
+    assert.equal(pointCount(svg,'polyline.mc-ind-rsi'),365);
+    for(const [,y] of pointsOf(svg,'polyline'))assert.ok(y>=8&&y<=142,'rsi y '+y);
+    assert.equal(rowsOf(p).at(-1),'RSI 14 · '+REF.rsi(closes,14).at(-1).toFixed(2));
+    toggle(p,'mcIndRsiOn',false);assert.equal(pane.hidden,true);assert.equal(svg.childNodes.length,0);
+    toggle(p,'mcIndMacdOn',true);
+    const macdPane=p.q('#mcMacdPane'),macdSvg=p.q('#mcMacdSvg'),macd=REF.macd(closes,12,26,9);
+    assert.equal(macdPane.hidden,false);assert.equal(macdSvg.querySelector('.mc-ind-title').textContent,'MACD 12 26 9');
+    assert.equal(macdSvg.querySelectorAll('rect.mc-ind-hist').length,macd.histogram.slice(-365).filter(value=>value!==null).length);
+    assert.equal(macdSvg.querySelectorAll('polyline.mc-ind-macd').length,1);assert.equal(macdSvg.querySelectorAll('polyline.mc-ind-signal').length,1);
+    assert.ok(macdSvg.querySelector('.mc-ind-zero'));
+    for(const [,y] of pointsOf(macdSvg,'polyline'))assert.ok(y>=8&&y<=162,'macd y '+y);
+    assert.ok(rowsOf(p).at(-1).startsWith('MACD 12 26 9 · '));
+    const mid=item=>Number(item.getAttribute('x'))+Number(item.getAttribute('width'))/2;
+    assert.ok(Math.abs(mid([...macdSvg.querySelectorAll('rect.mc-ind-hist')].at(-1))-mid([...p.svg.querySelectorAll('g.mc-bar rect.mc-candle')].at(-1)))<=0.02,'last histogram bar sits under the last candle');
+  });
+  const narrow=setup({ohlcv:trendBody(1000),prefs:{symbol:'BTCUSDT',interval:'1d',indicators:{...DEFAULT_INDICATORS,macd:{on:true,fast:12,slow:26,signal:9}}}});
+  try{
+    narrow.svg.getBoundingClientRect=()=>({width:360});
+    await narrow.tick();
+    assert.equal(narrow.candles(),90);
+    const mid=item=>Number(item.getAttribute('x'))+Number(item.getAttribute('width'))/2,rects=[...narrow.q('#mcMacdSvg').querySelectorAll('rect.mc-ind-hist')];
+    assert.equal(rects.length,90);
+    assert.ok(Math.abs(mid(rects.at(-1))-mid([...narrow.svg.querySelectorAll('g.mc-bar rect.mc-candle')].at(-1)))<=0.02);
+    assert.ok(Math.abs(mid(rects[0])-mid(narrow.svg.querySelector('g.mc-bar rect.mc-candle')))<=0.02);
+  }finally{narrow.w.close();}
+});
+
+test('panes that are on but too short say how many bars they need',async()=>{
+  await withPage({prefs:{symbol:'BTCUSDT',interval:'1d',indicators:{...DEFAULT_INDICATORS,rsi:{on:true,period:14},macd:{on:true,fast:12,slow:26,signal:9}}}},async p=>{
+    await p.tick();
+    assert.equal(p.q('#mcRsiPane').hidden,false);assert.equal(p.q('#mcMacdPane').hidden,false);
+    assert.equal(p.q('#mcRsiSvg').querySelector('.mc-ind-needs').textContent,'needs 15 bars');
+    assert.equal(p.q('#mcMacdSvg').querySelector('.mc-ind-needs').textContent,'needs 34 bars');
+    assert.equal(p.q('#mcRsiSvg').querySelectorAll('polyline').length,0);assert.equal(p.q('#mcMacdSvg').querySelectorAll('rect').length,0);
+    assert.deepEqual(rowsOf(p).slice(-2),['RSI 14 · — · needs 15 bars','MACD 12 26 9 · — · needs 34 bars']);
+  });
+});
+
+test('forming bar: the last segment of every line is dashed and separate, the rows say so, the last histogram bar is faded',async()=>{
+  await withPage({ohlcv:trendBody(1000,{forming:true}),prefs:{symbol:'BTCUSDT',interval:'1d',indicators:{...DEFAULT_INDICATORS,macd:{on:true,fast:12,slow:26,signal:9},rsi:{on:true,period:14}}}},async p=>{
+    await p.tick();
+    for(const kind of ['ema1','ema2','atr']){
+      assert.equal(p.svg.querySelectorAll('polyline.mc-ind-forming.mc-ind-'+kind).length,1,kind);
+      assert.equal(pointCount(p.svg,'polyline.mc-ind-forming.mc-ind-'+kind),2);
+      assert.equal(pointCount(p.svg,'polyline.mc-ind-'+kind),366,'the dashed segment repeats the second-to-last point');
+    }
+    for(const row of p.d.querySelectorAll('#mcIndValues li')){assert.ok(row.classList.contains('mc-iv-forming'));assert.ok(row.textContent.endsWith(' · Forming bar'),row.textContent);}
+    const hist=[...p.q('#mcMacdSvg').querySelectorAll('rect.mc-ind-hist')];
+    assert.ok(hist.at(-1).classList.contains('mc-incomplete'));assert.ok(!hist.at(-2).classList.contains('mc-incomplete'));
+    assert.equal(p.q('#mcMacdSvg').querySelectorAll('polyline.mc-ind-forming').length,2);assert.equal(p.q('#mcRsiSvg').querySelectorAll('polyline.mc-ind-forming').length,1);
+    assert.ok(p.svg.querySelector('g.mc-bar:last-of-type title').textContent.includes(' · Forming bar'));
+  });
+});
+
+test('range: an indicator far from the candles is left out instead of squeezing them; drawn points stay inside the plot',async()=>{
+  const closes=Array.from({length:1000},(_,index)=>index<900?200:100);
+  const list=closes.map((close,index)=>({time:T0-(1000-index)*DAY,open:close.toFixed(2),high:(close+2).toFixed(2),low:(close-2).toFixed(2),close:close.toFixed(2),volume:'1',minutes:1440,complete:true}));
+  await withPage({ohlcv:payload(list,{interval:'1d',price_tick:'0.01'})},async p=>{
+    p.svg.getBoundingClientRect=()=>({width:400});
+    await p.tick();
+    assert.equal(p.candles(),100);
+    assert.equal(p.svg.querySelectorAll('polyline.mc-ind-ema2').length,0,'EMA 200 is far above the visible candles');
+    for(const [,y] of pointsOf(p.svg,'polyline'))assert.ok(y>=10&&y<=300,'y '+y);
+    const wicks=[...p.svg.querySelectorAll('line.mc-wick')].flatMap(item=>[Number(item.getAttribute('y1')),Number(item.getAttribute('y2'))]);
+    assert.ok(Math.max(...wicks)-Math.min(...wicks)>=130,'the candles keep at least about half of the plot: '+(Math.max(...wicks)-Math.min(...wicks)));
+    assert.equal(rowsOf(p)[1].startsWith('EMA 200 · '),true,'the value row still shows the value');
+  });
+});
+
+test('reset: every control, the stored choice and the note go back to the defaults',async()=>{
+  await withPage({ohlcv:trendBody(1000)},async p=>{
+    await p.tick();
+    toggle(p,'mcIndEma1On',false);edit(p,'mcIndEma2Period','120');toggle(p,'mcIndRsiOn',true);toggle(p,'mcIndMacdOn',true);edit(p,'mcIndAtrMult','4');edit(p,'mcIndAtrPeriod','1');
+    assert.notEqual(p.q('#mcIndNote').textContent,'');
+    p.q('#mcIndReset').click();
+    assert.deepEqual(stored(p).indicators,DEFAULT_INDICATORS);assert.equal(p.q('#mcIndNote').textContent,'');
+    assert.equal(p.q('#mcIndEma1On').checked,true);assert.equal(p.q('#mcIndEma2Period').value,'200');assert.equal(p.q('#mcIndRsiOn').checked,false);assert.equal(p.q('#mcIndMacdOn').checked,false);
+    assert.equal(p.q('#mcIndAtrMult').value,'2');assert.equal(p.q('#mcIndAtrPeriod').value,'14');
+    assert.ok(p.q('#mcRsiPane').hidden&&p.q('#mcMacdPane').hidden);assert.equal(rowsOf(p).length,3);
+  });
+});
+
+test('garbage in storage falls back to the defaults field by field; blocked storage still renders and toggles',async()=>{
+  for(const indicators of ['x',{v:2},{v:1,ema1:{on:'yes',period:9999}},[],null,{v:1,macd:{on:true,fast:40,slow:26,signal:9}}]){
+    await withPage({prefs:{symbol:'BTCUSDT',interval:'1d',indicators}},async p=>{
+      const macd=indicators?.macd;
+      assert.equal(p.q('#mcIndEma1On').checked,true,JSON.stringify(indicators));assert.equal(p.q('#mcIndEma1Period').value,'50');assert.equal(p.q('#mcIndEma2Period').value,'200');
+      assert.equal(p.q('#mcIndRsiOn').checked,false);assert.equal(p.q('#mcIndMacdOn').checked,Boolean(macd));
+      assert.equal(p.q('#mcIndMacdFast').value,'12','an impossible fast and slow pair is reset');assert.equal(p.q('#mcIndMacdSlow').value,'26');
+      await p.tick();assert.equal(p.candles(),5);
+    });
+  }
+  await withPage({storage:'throw',ohlcv:trendBody(1000)},async p=>{
+    await p.tick();
+    assert.equal(p.candles(),365);assert.ok(p.svg.querySelectorAll('polyline.mc-ind-ema1').length>0);
+    assert.doesNotThrow(()=>toggle(p,'mcIndEma1On',false));
+    assert.equal(p.svg.querySelectorAll('polyline.mc-ind-ema1').length,0,'the toggle works without storage');
+  });
+});
+
+test('without the indicator module the plain chart still works and nothing indicator-related is stored',async()=>{
+  await withPage({indicators:false},async p=>{
+    assert.equal(p.q('#mcIndicators').hidden,true);assert.ok(p.q('#mcRsiPane').hidden&&p.q('#mcMacdPane').hidden);
+    await p.tick();
+    assert.equal(p.candles(),5);assert.equal(p.q('#mcIndValues').childNodes.length,0);assert.equal(p.svg.querySelectorAll('polyline').length,0);
+    p.interval('15m').click();await settle();
+    assert.deepEqual(stored(p),{symbol:'BTCUSDT',interval:'15m'});
+  });
+});
+
+test('Thai: the indicator texts and notes are Thai, the value rows keep their technical names, a language switch redraws the note',async()=>{
+  await withPage({language:'th',ohlcv:trendBody(1000)},async p=>{
+    assert.equal(p.q('#mcIndicators summary').textContent,'อินดิเคเตอร์');
+    assert.equal(p.q('#mcIndEma1On').closest('label').textContent.trim(),'EMA เส้นที่ 1');
+    assert.equal(p.q('#mcIndEma1Period').closest('label').querySelector('span').textContent,'ความยาว');
+    assert.equal(p.q('#mcIndReset').textContent,'รีเซ็ตอินดิเคเตอร์');
+    assert.equal(p.q('#mcIndAtrMult').closest('label').querySelector('span').textContent,'ตัวคูณ (× ATR)');
+    await p.tick();await settle();
+    assert.ok(rowsOf(p)[0].startsWith('EMA 50 · '),'value rows keep the raw name');
+    edit(p,'mcIndEma1Period','1');
+    assert.equal(p.q('#mcIndNote').textContent,'ช่วงที่ใช้ได้ 2–500 คงค่า 50');
+    const language=p.q('#language');
+    language.value='en';language.dispatchEvent(new p.w.Event('change'));await settle();
+    assert.equal(p.q('#mcIndNote').textContent,'Allowed range 2–500; kept 50');assert.equal(p.q('#mcIndicators summary').textContent,'Indicators');
+    language.value='th';language.dispatchEvent(new p.w.Event('change'));await settle();
+    assert.equal(p.q('#mcIndNote').textContent,'ช่วงที่ใช้ได้ 2–500 คงค่า 50');
+    toggle(p,'mcIndMacdOn',true);edit(p,'mcIndMacdFast','30');
+    assert.equal(p.q('#mcIndNote').textContent,'ความยาวเส้นเร็วต้องน้อยกว่าความยาวเส้นช้า');
   });
 });
