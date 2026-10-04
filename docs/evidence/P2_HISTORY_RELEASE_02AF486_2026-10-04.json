@@ -1,0 +1,266 @@
+{
+  "observedAt": "2026-10-04T09:17:00Z",
+  "scope": "Staging Quant History release 02af486: precheck, incoming namespace, upload, extraction, API-only activation, immediate and delayed checks and a local-forwarding byte comparison of the served quant-lab.js; no authenticated browser journey",
+  "root": {
+    "platform": "Claude",
+    "segment": "2026-10-04T09:00Z to 2026-10-04T09:20Z",
+    "followsEvidence": "P2_UI_RELEASE_256251B_2026-10-03.json"
+  },
+  "usage": {
+    "claudeFiveHourUsedAt0920UtcPercent": 22,
+    "claudeWeeklyAllModelsUsedPercent": 6,
+    "claudeWeeklyFableUsedPercent": 5,
+    "note": "The owner upgraded the plan at about 2026-10-03T20:00Z and the counters reset then; these readings are not comparable with the earlier weekly reading"
+  },
+  "tool": {
+    "description": "One local adapter over the frozen UI release tool; author controls and an independent three-lens audit workflow with a verdict",
+    "probe": "Frozen probe plus 9 exact substitutions",
+    "runner": "Accepted activation runner plus 11 exact substitutions",
+    "layer": "s02",
+    "package": {
+      "release": "02af486",
+      "files": 768,
+      "sourceTarSha256": "691c85c85ef23aca3aa7f2fcca6a1ac8a35230ceabb5373ef5e768a5d07cdc09",
+      "depsTarSha256": "c0bd614e9cb3ad1d17e51ac14bab20c0d8b4258f888cc24855684e64566e1214",
+      "releaseManifestSha256": "fda25a0db4aac4ef0bed998830a0d2b3e521e8d2733df037fbdb46374eacd549"
+    },
+    "authorControls": {
+      "passed": 38,
+      "failed": 0
+    },
+    "independentAudit": {
+      "lenses": {
+        "diff": {
+          "passed": 52,
+          "failed": 0
+        },
+        "behavior": {
+          "passed": 20,
+          "failed": 0,
+          "mutants": {
+            "total": 109,
+            "killed": 105,
+            "equivalent": 4
+          }
+        },
+        "hostSafety": {
+          "passed": 9,
+          "failed": 0
+        }
+      },
+      "total": {
+        "passed": 81,
+        "failed": 0
+      },
+      "frozenDirectoriesUnchanged": true,
+      "verdict": "ACCEPT_NARROW"
+    },
+    "findingsAcknowledged": [
+      "MEDIUM: a STOP after the write step of activate or rollback has no in-tool recovery; it needs a read-only reconcile and a named recovery packet",
+      "LOW: rollback capacity floor",
+      "LOW: extract rename check-then-use race under the same user id",
+      "LOW: pin change without a count change (matches the root rule)",
+      "LOW: extract runs once per namespace, so a late STOP burns the namespace"
+    ],
+    "rootAcceptedLocalDeliveryOnly": true,
+    "activityTolerantComparison": {
+      "reference": "The 2026-10-03T19:07Z delayed-check state recorded in P2_UI_RELEASE_256251B_2026-10-03.json",
+      "mayChange": [
+        "Five activity counts",
+        "Four activity table pins"
+      ],
+      "rules": [
+        "Counts may not decrease and may grow by at most 100",
+        "A changed count needs its table pin to change",
+        "Pending may change only together with another count change",
+        "Every other compared field must match exactly"
+      ]
+    }
+  },
+  "liveStepSequence": "One pre-armed operations session per step, one root read-only refresh approval, root review of the fresh facts against predefined criteria, then one separate phase approval with the readiness token written last; the upload used one separate root upload approval and no session",
+  "precheck": {
+    "jobId": "p2-hist-precheck-20261004-1",
+    "refreshObservedAt": "2026-10-04T09:02:34Z",
+    "activityReference": {
+      "events": 15,
+      "pending": 15,
+      "signals": 15,
+      "entries": 1,
+      "allocations": 1
+    },
+    "activityNow": {
+      "events": 39,
+      "pending": 39,
+      "signals": 39,
+      "entries": 2,
+      "allocations": 2
+    },
+    "activityNote": "Natural growth only; all four activity table pins changed; no other drift",
+    "oldOpenAllocationPreserved": "0.01181 BTC",
+    "deployment": "READY",
+    "bot": "ACTIVE",
+    "researchJobs": "Idle",
+    "hostChange": "None",
+    "resultAround": "2026-10-04T09:02:50Z",
+    "verdict": "PRECHECK_PASS",
+    "refreshRawSha256": "5e0d3ace098944437006a9a8bbead616b31089c81a30cd4863d25b88d33bb72d",
+    "resultSha256": "39979a9491ce642ddd1af2853c3cd358264bd1f61c9d957a401712a9733cc87d",
+    "readOnlyApprovalSha256": "4133cc33f39a25bce1234853f8d5d532e6418a745f57e68d23d28238c26bf371",
+    "phaseApprovalSha256": "5e3c7be0e143295b5418f255bb737643ea18ff345afd68d349803adb1508f4e2"
+  },
+  "incoming": {
+    "jobId": "p2-hist-incoming-20261004-1",
+    "refreshObservedAt": "2026-10-04T09:03:31Z",
+    "resultAround": "2026-10-04T09:03:44Z",
+    "verdict": "INCOMING_PASS",
+    "action": "One mkdir with mode 0700 of the incoming namespace",
+    "serviceChanged": false,
+    "refreshRawSha256": "3ee91ab6a8b174b60d322792322361c6745f90019ff8364f146069c8d9313408",
+    "resultSha256": "aeda58564533b3e0de98cf6a127644f1613e924bca69031d0c0805e49aef2fa0",
+    "readOnlyApprovalSha256": "a9fddf7db290002d0e23e19d9d5ff6d7ca459f0444a2f6b2aa45d47e5f909fb7",
+    "phaseApprovalSha256": "f4efcd58a9398033eefd8c90bdfad0dc54dcd3f8f5dd42c1a7b7c25bb0388400"
+  },
+  "upload": {
+    "approvalSha256": "063a691eab59ab8471f641febe865264e13f2e01290cfe0c6cb005a4213490e2",
+    "method": "One scp of 3 files: source.tar, deps.tar and release-manifest.txt",
+    "totalBytes": 37468856,
+    "returnCode": 0,
+    "startedAt": "2026-10-04T09:04:37Z",
+    "finishedAt": "2026-10-04T09:04:53Z",
+    "durationSeconds": 16,
+    "retried": false,
+    "remoteHashesVerifiedBy": "The extract step"
+  },
+  "extract": {
+    "jobId": "p2-hist-extract-20261004-1",
+    "refreshObservedAt": "2026-10-04T09:05:17Z",
+    "resultAround": "2026-10-04T09:05:30Z",
+    "verdict": "EXTRACT_PASS",
+    "filesPlaced": 768,
+    "linuxModesVerified": true,
+    "target": "Inert target; the service was unchanged",
+    "serviceChanged": false,
+    "refreshRawSha256": "eeb771f40e8cffc1714095c0efaf2023747ab352f3dce61e93b1cd9e61deb24f",
+    "resultSha256": "97dbcc07758447d52acab2e81c3154d6604f911ebfb8134f752755653edb34dd",
+    "readOnlyApprovalSha256": "015a00844e6fead9720d52cc539e3f9a9272075e115fb96bd9b76b0810d18199",
+    "phaseApprovalSha256": "15121ece433fcd3fe0186549f9a7c2ce124b320aebee36c3745515afddd34430"
+  },
+  "activation": {
+    "jobId": "p2-hist-activate-20261004-1",
+    "refreshObservedAt": "2026-10-04T09:06:07Z",
+    "activityAtRefresh": {
+      "events": 39,
+      "pending": 39,
+      "signals": 39,
+      "entries": 2,
+      "allocations": 2
+    },
+    "resultAt": "2026-10-04T09:06:25Z",
+    "verdict": "ACTIVATE_PASS",
+    "release": "02af486",
+    "scope": "API-only restart onto the new release",
+    "conservativeApiDowntimeSeconds": 2.841,
+    "tradingChanged": false,
+    "researchChanged": false,
+    "databaseChanged": false,
+    "protectedServicesChanged": false,
+    "activityChanged": false,
+    "refreshRawSha256": "6a474b10b998c631e3803d962ff2805ab68bc63a11d21b3f3ee7c4b8cca6ae7d",
+    "resultSha256": "dd61d1011714168fe93a17b48b6c9979b083a54757ef0c6f0b1742d66985685b",
+    "readOnlyApprovalSha256": "7bc2ae2ee420c371abd151ecce29dafdad53354a9bae6310a0243b6f29f5e2fd",
+    "phaseApprovalSha256": "db63741d133314b7b442be72883a932bb72b8fe3c0ca4f88e6c2475bd75a26cb"
+  },
+  "immediateCheck": {
+    "jobId": "p2-hist-immediate-20261004-1",
+    "around": "2026-10-04T09:07:04Z",
+    "verdict": "POSTCHECK_PASS",
+    "activityChanged": false,
+    "refreshRawSha256": "38f8ef2716dfedd3bb942ffa6f647f20b5f430ca9e5fff64a2eba6079fe7bf1c",
+    "resultSha256": "6b7fdd295d238356c9ecaf7e7791cc8b4539c2095e05b4f63482a89dea0a29f5",
+    "readOnlyApprovalSha256": "fc1cf50b7790cceb733bd8bc24d551b5091ea4b205e43a9af3b2ecbb57c6eb73",
+    "phaseApprovalSha256": "6ca7cb64cea925b77ca9d195d381180da1b120a330f4672f41a940aabb5d6140"
+  },
+  "delayedCheck": {
+    "firstJob": {
+      "jobId": "p2-hist-delayed-20261004-1",
+      "closedAt": "2026-10-04T09:16:18Z",
+      "code": "REFRESH_WAIT_TIMEOUT",
+      "refreshAttempts": 0,
+      "phaseAttempts": 0,
+      "hostContact": false,
+      "approvalsIssued": false,
+      "cause": "The 240 second refresh window of the session closed 8 seconds before the 600 second minimum delay had passed",
+      "effect": "None; recorded as a timing slip"
+    },
+    "jobId": "p2-hist-delayed-20261004-2",
+    "around": "2026-10-04T09:17:09Z",
+    "secondsAfterActivation": 641,
+    "delayProof": true,
+    "minimumDelaySeconds": 600,
+    "verdict": "POSTCHECK_PASS",
+    "activityChanged": false,
+    "refreshRawSha256": "6473afcc71a64715f23760a4f2e51e9cdeb04fcdd6825c3c704832dff20c8f7e",
+    "resultSha256": "f642940314830a7528738b8d4bb2ecc18142d9c1acd2ca22e66b74428c9b68a0",
+    "readOnlyApprovalSha256": "d0fd65a31acdc993426fe71366886c34ecd9c48dd2169cb63a3e5fdb0968fbe2",
+    "phaseApprovalSha256": "2cafb82179617fdc708acb6dfb3637182d11edd035dd68b32a5fbfd31d9f8def"
+  },
+  "browser": {
+    "path": "Existing local forwarding to the staging API, unauthenticated",
+    "servedIndexHtmlReferences": "/quant-lab.js?v=robot25-history1",
+    "servedQuantLabJsBytes": 31738,
+    "previousReleaseQuantLabJsBytes": 29922,
+    "servedQuantLabJsSha256": "bb59d2943b7860d9ce4076074bf7e3393ad5054afc6e560bdafddfdc262851b3",
+    "servedQuantLabJsByteIdenticalToGit": "02af486 public/quant-lab.js",
+    "servedPageStillLoads": "The old unpkg chart script and interactive-chart.js?v=robot21; the new chart in local commit e44dfba is not deployed",
+    "authenticatedHistoryViewChecked": false,
+    "authenticatedViewRequires": "The owner signs in; the browser session expired"
+  },
+  "activityAtLastCheck": {
+    "events": 39,
+    "pending": 39,
+    "signals": 39,
+    "entries": 2,
+    "allocations": 2
+  },
+  "approvalsConsumedAndClosed": true,
+  "replayAllowed": false,
+  "retryNeeded": false,
+  "rollbackNeeded": false,
+  "rollbackTargetIfEverNeeded": "256251b only",
+  "notPerformed": [
+    "Retry of any host step",
+    "Rollback",
+    "Restart of trading, research, database or protected services"
+  ],
+  "localOnlyNotDeployed": {
+    "marketDataChart": "e44dfba: authenticated read-only GET /api/market/ohlcv over stored BTCUSDT 1m bars (1m to 1d aggregation), a CSP-safe SVG chart replacing the unpkg and browser-Binance path, and an advisory PF-3 Market data item; test fix 5516a7f; pushed; all nine CI checks passed on 5516a7f; not deployed"
+  },
+  "ownerDecisions": {
+    "marketData": "2026-10-03/04: real Binance Global data may be used only for OHLCV charts and Preflight, through keyless public endpoints; no trading; Paper only; Live stays locked",
+    "chartV2PlannedDesignInProgress": [
+      "Chart always visible",
+      "TradingView-like symbol picker for any Binance Spot symbol through a server-side keyless proxy",
+      "Timeframes 1m to 1w with 1d as the default",
+      "Entry, stop-loss and take-profit lines for every held position on the chart of every held asset until the position clears"
+    ]
+  },
+  "stillOpen": [
+    "Authenticated Quant History view in the browser after the owner signs in; the authenticated Create Bot journey from the previous release also remains unchecked",
+    "Natural same-entry EXIT for the 0.01179 BTC OPEN allocation",
+    "Webhook delivery during the approximately 2.8 second API restart window was not separately verified"
+  ],
+  "oldAlert": "QL-3A stays stopped until the old OPEN allocation of 0.01181 BTC is resolved",
+  "unchangedGates": [
+    "PF-2 remains off",
+    "D6, R7, B3, W7 and related gates are unchanged"
+  ],
+  "publicationApprovedForAnyOtherRelease": false,
+  "capacityApproved": false,
+  "naturalSameEntryExitAccepted": false,
+  "limitations": [
+    "Release upload, extraction and activation here cover Quant History 02af486 on staging only.",
+    "A byte-identical served quant-lab.js shows the release content, not an authenticated user journey.",
+    "Unchanged activity counts across activation do not verify webhook delivery during the restart window.",
+    "Future publication and activation require fresh facts and separate reviewed authority."
+  ]
+}
