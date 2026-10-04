@@ -1,5 +1,7 @@
 # Staging prototype delivery plan — 2026-10-01
 
+Status matrix frozen at 2026-10-01. PF-3 (`3309d07`), PF-4 (`b2f0bae`) and the QR-1 library/comparison view (`f36181c`) went live on staging later; natural BUY/targeted EXIT was observed 2026-10-03/04 on the QL-P2 bot and the bounded Step 5 run ended NO_VALID_CANDIDATE on 2026-10-02. See the Roadmap and Context for current status.
+
 The owner requests an accessible staging prototype first, followed by a working
 six-step journey. This plan narrows the first delivery; it does not declare
 unfinished engineering accepted or replace the governing Roadmap gates.
