@@ -35,7 +35,9 @@ import {quantProfileRoutes} from './quant-profile.js';
 import {createQuantPreflightApi} from './quant-preflight-wiring.js';
 import {quantPreflightRoutes,quantProfileEnrollmentRoutes} from './quant-preflight-routes.js';
 import {ReadinessService} from './pf3-readiness-service.js';
-import {MarketDataReader,marketOhlcvRoutes} from './market-ohlcv.js';
+import {MarketDataReader,marketOhlcvRoutes,runMarketDeferred} from './market-ohlcv.js';
+import {PublicMarketProxy,parseProxyConfig} from './market-proxy.js';
+import {POSITION_LEVELS_PATH,readPositionLevels} from './position-levels.js';
 import {pf3ReadinessRoutes} from './pf3-readiness-routes.js';
 import {ProposalService} from './pf4-proposal-service.js';
 import {pf4ProposalRoutes} from './pf4-proposal-routes.js';
@@ -82,6 +84,8 @@ const {profileService:quantProfileService,preflightService:quantPreflightService
   dataEnabled:quantDataEnabled,paperTrading:config.paperTrading});
 // Read-only stored public market data (closed Binance Spot 1m bars); serves the chart endpoint and the PF-3 market-data item.
 const marketData=new MarketDataReader({db:database,enabled:pineBridgeEnabled});
+// Bounded keyless public Binance Spot proxy for the chart. MARKET_PUBLIC_PROXY=0 is the kill switch; answers are deferred until after COMMIT.
+const marketProxy=new PublicMarketProxy(parseProxyConfig(process.env));
 const readinessService=new ReadinessService({store,defaultRisk:config.defaultRisk,preflightService:quantPreflightService,
   preflightEnabled:quantPreflightEnabled,pineBridgeEnabled,marketData});
 const proposalService=new ProposalService({store,defaultRisk:config.defaultRisk,readinessService,pineBridgeEnabled});
@@ -259,7 +263,7 @@ async function userRoutes(req, res, url) {
   if(await quantProfileEnrollmentRoutes(req,res,url,actor,quantProfileService,json,{enabled:quantEnrollmentEnabled}))return;
   if(await quantProfileRoutes(req,res,url,actor,quantProfileService,json,{enabled:quantDataEnabled}))return;
   if(await quantDataRoutes(req,res,url,actor,quantDataService,json,{enabled:quantDataEnabled}))return;
-  if(await marketOhlcvRoutes(req,res,url,marketData,json))return;
+  if(await marketOhlcvRoutes(req,res,url,marketData,json,{actor,proxy:marketProxy}))return;
   try { if (await quantBridge(req, res, url, actor, store)) return; }
   catch (error) {
     if (error?.code === 'QUANT_EXECUTOR_MODE_UNAVAILABLE') return json(res, 503, {code: error.code, error: 'Quant executor mode is unavailable'});
@@ -340,7 +344,7 @@ async function userRoutes(req, res, url) {
   if (!allBots && !(await store.ownsBot(actor.id, requestedBot))) return json(res, 403, {
     error: 'Bot access denied'
   });
-  if (allBots && !['/api/signals', '/api/positions', '/api/me'].includes(url.pathname)) return json(res, 400, {
+  if (allBots && !['/api/signals', '/api/positions', POSITION_LEVELS_PATH, '/api/me'].includes(url.pathname)) return json(res, 400, {
     error: 'Select one bot for this operation'
   });
   const selected = allBots ? actor.id : requestedBot;
@@ -695,6 +699,9 @@ async function userRoutes(req, res, url) {
     });
   }
   if (req.method === 'GET' && url.pathname === '/api/audit') return json(res, 200, await store.listAudit(user.id, false, safeLimit(url)));
+  if (req.method === 'GET' && url.pathname === POSITION_LEVELS_PATH) return json(res, 200, await readPositionLevels(database, allBots ? await store.listBots(actor.id) : (await store.listBots(actor.id)).filter(bot => bot.id === user.id), {
+    scope: allBots ? 'all' : 'bot'
+  }));
   if (req.method === 'GET' && url.pathname === '/api/positions') return json(res, 200, (await Promise.all((allBots ? await store.listBots(actor.id) : (await store.listBots(actor.id)).filter(bot => bot.id === user.id)).map(async bot => (await store.listPositions(bot.id)).map(row => ({
     ...row,
     bot_id: bot.id,
@@ -974,7 +981,9 @@ const server=http.createServer(async(req,res)=>{
     res.phase2Buffer=true;
     await database.transaction(()=>handleRequest(req,res),{isolation:req.url.startsWith('/webhooks/')?'READ COMMITTED':'SERIALIZABLE'});
     res.phase2Buffer=false;
-    const result=res.phase2Result;
+    // A market proxy answer runs here, after COMMIT: no database connection or snapshot is held during network I/O.
+    const deferred=res.phase2Deferred;res.phase2Deferred=null;
+    const result=deferred?await runMarketDeferred(deferred):res.phase2Result;
     if(result)json(res,result.status,result.body);
   }catch(error){
     res.phase2Buffer=false;res.removeHeader('set-cookie');

@@ -1,12 +1,15 @@
 import {fail} from '../pine-bridge/source.js';
 import {exact} from '../money.js';
+import {SYMBOL_RE,KLINE_INTERVALS} from './market-proxy.js';
 
 /**
- * Stored public market data for the Analytics chart and the PF-3 market-data readiness item.
+ * Public market data for the Overview chart and the PF-3 market-data readiness item.
  *
- * Source: closed BINANCE:BTCUSDT Spot 1m bars that the market-data writer already stored in pine_market_bars from the public,
+ * Two sources. Stored: closed BINANCE:BTCUSDT Spot 1m bars that the market-data writer already stored in pine_market_bars from the public,
  * keyless Binance REST/WebSocket feed. This module only reads those rows: no Binance call, no API key, no write, no
- * lock. Every read starts with SET TRANSACTION READ ONLY, so a write would fail loudly.
+ * lock. Every read starts with SET TRANSACTION READ ONLY, so a write would fail loudly. REST: any Binance Spot symbol through the
+ * bounded keyless PublicMarketProxy (market-proxy.js), answered in a deferred phase AFTER the request transaction has committed, so
+ * no database connection or snapshot is held during network I/O.
  *
  * Time convention: pine_market_bars.bar_time is the kline close time + 1, which equals the candle OPEN time + 60000. A row
  * with bar_time T covers the open-time interval [T-60000, T). Every time this module returns is a candle OPEN time unless the
@@ -17,14 +20,25 @@ export const OHLCV_PATH='/api/market/ohlcv';
 export const MARKET=Object.freeze({broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'});
 export const SOURCE='binance-spot-public-stored';
 const MINUTE=60000;
-// ms = bucket size; limit = default bar count; cap = largest accepted bar count.
+// ms/ttl come from the proxy table (one source of truth). limit = default bar count (the UI never sends it, so all viewers share one
+// proxy cache entry per symbol and interval); cap = largest accepted bar count; poll = UI refresh seconds while visible;
+// stored = BTCUSDT stored aggregation offered; storedCap = min(1000, floor(43200 / minutes)), the stored read bound per request.
+const bucketSpec=(name,limit,poll,stored)=>{
+  const {ms,ttl}=KLINE_INTERVALS[name];
+  return Object.freeze({ms,limit,cap:1000,ttl,poll,stored,storedCap:stored?Math.min(1000,Math.floor(43200/(ms/MINUTE))):null});
+};
 export const INTERVALS=Object.freeze({
-  '1m':Object.freeze({ms:MINUTE,limit:240,cap:1000}),
-  '5m':Object.freeze({ms:5*MINUTE,limit:288,cap:1000}),
-  '15m':Object.freeze({ms:15*MINUTE,limit:192,cap:1000}),
-  '1h':Object.freeze({ms:60*MINUTE,limit:168,cap:720}),
-  '4h':Object.freeze({ms:240*MINUTE,limit:180,cap:180}),
-  '1d':Object.freeze({ms:1440*MINUTE,limit:30,cap:30})});
+  '1m':bucketSpec('1m',360,15,true),'3m':bucketSpec('3m',320,30,true),'5m':bucketSpec('5m',288,30,true),
+  '15m':bucketSpec('15m',288,60,true),'30m':bucketSpec('30m',336,60,true),'1h':bucketSpec('1h',336,120,true),
+  '2h':bucketSpec('2h',360,120,true),'4h':bucketSpec('4h',360,300,true),'6h':bucketSpec('6h',360,300,true),
+  '8h':bucketSpec('8h',360,300,true),'12h':bucketSpec('12h',360,300,true),'1d':bucketSpec('1d',365,300,true),
+  '3d':bucketSpec('3d',243,600,false),'1w':bucketSpec('1w',260,600,false)});
+export const SYMBOLS_PATH='/api/market/symbols';
+export const REST_SOURCE='binance-spot-public-rest';
+export const DEFAULT_INTERVAL='1d';
+// The deferred (proxy) phase must answer inside this budget; the stored fallback starts only with enough time left.
+export const DEFERRED_DEADLINE_MS=11000;
+export const STORED_FALLBACK_MIN_MS=1000;
 export const STALE_AFTER_SECONDS=180;
 // First guesses, to be tuned after staging observation. The REST fallback timer runs every 5 minutes, so a dead stream shows
 // WARN, and more than failAgeSeconds means the stream and its fallback both failed.
@@ -60,19 +74,31 @@ export const SQL=Object.freeze({
       WHERE broker=$1 AND symbol=$2 AND timeframe='1' AND bar_time>$3 AND bar_time<=$4) x
     WHERE bar_time-prev>60000 ORDER BY bar_time LIMIT $5`});
 
-const KEYS=new Set(['interval','limit','bot_id']);
+const KEYS=new Set(['symbol','interval','limit','source','bot_id']);
 const LIMIT_TEXT=/^[1-9][0-9]{0,3}$/;
+const SOURCES=new Set(['auto','stored']);
 
-/** Strict query parsing. Throws fail(code,400); nothing is clamped. bot_id is tolerated and ignored (public venue data, never bot-scoped). */
-export function parseOhlcvQuery(searchParams){
+// Each key at most once, never empty. The page's api() helper appends the selected bot id; this data is global and the value is
+// never used (public venue data, never bot-scoped).
+function strictEntries(searchParams,allowed){
   const seen=new Map();
   for(const [key,value] of searchParams.entries()){
-    if(!KEYS.has(key)||seen.has(key)||value==='')throw fail('INVALID_FIELDS');
+    if(!allowed.has(key)||seen.has(key)||value==='')throw fail('INVALID_FIELDS');
     seen.set(key,value);
   }
-  // The page's api() helper appends the selected bot id; this data is global and the value is never used.
   if(seen.has('bot_id')&&seen.get('bot_id').length>128)throw fail('INVALID_FIELDS');
-  const interval=seen.has('interval')?seen.get('interval'):'1h';
+  return seen;
+}
+
+/**
+ * Strict query parsing. Throws fail(code,400); nothing is clamped. The symbol is plain ('ETHUSDT', no prefix or slash). Returns
+ * {symbol,interval,ms,limit,source}. With source=stored and no limit the default limit is lowered to the stored cap of the interval.
+ */
+export function parseOhlcvQuery(searchParams){
+  const seen=strictEntries(searchParams,KEYS);
+  const symbol=seen.has('symbol')?seen.get('symbol'):MARKET.symbol;
+  if(!SYMBOL_RE.test(symbol))throw fail('MARKET_SYMBOL_INVALID');
+  const interval=seen.has('interval')?seen.get('interval'):DEFAULT_INTERVAL;
   if(!Object.hasOwn(INTERVALS,interval))throw fail('INTERVAL_NOT_ALLOWED');
   const spec=INTERVALS[interval];
   let limit=spec.limit;
@@ -81,7 +107,20 @@ export function parseOhlcvQuery(searchParams){
     if(!LIMIT_TEXT.test(text)||Number(text)>spec.cap)throw fail('LIMIT_OUT_OF_RANGE');
     limit=Number(text);
   }
-  return {interval,ms:spec.ms,limit};
+  const source=seen.has('source')?seen.get('source'):'auto';
+  if(!SOURCES.has(source))throw fail('SOURCE_NOT_ALLOWED');
+  if(source==='stored'){
+    if(symbol!==MARKET.symbol||!spec.stored)throw fail('SOURCE_NOT_ALLOWED');
+    if(!seen.has('limit'))limit=Math.min(limit,spec.storedCap);
+    if(limit>spec.storedCap)throw fail('SOURCE_NOT_ALLOWED');
+  }
+  return {symbol,interval,ms:spec.ms,limit,source};
+}
+
+/** GET /api/market/symbols accepts only the tolerated bot_id. */
+export function parseSymbolsQuery(searchParams){
+  strictEntries(searchParams,new Set(['bot_id']));
+  return {};
 }
 
 /**
@@ -136,6 +175,52 @@ export function shapeOhlcv({now,interval,ms,limit,latest=null,first=null,window=
     window:{start_open_time:window.start,end_close_time:window.end,history_start_open_time:first-MINUTE,
       expected_minutes:window.expected,stored_minutes:edge.n},
     bars,gaps:gaps??emptyGaps()};
+}
+
+/**
+ * The v2 stored answer: the v1 shape plus the v2 fields. latest_closed_bar and the window keep the stored time convention (close
+ * time = open time + interval). history_partial is true when the stored history starts after the window start.
+ */
+export function shapeStoredV2(answer,{fallback=null}={}){
+  const partial=answer.window!==null&&answer.window.history_start_open_time>answer.window.start_open_time;
+  return {...answer,version:'market-ohlcv-v2',display_symbol:'BINANCE:'+answer.symbol,stale_reason:answer.stale?'STORED_AGE':null,
+    cache_age_seconds:null,price_tick:null,history_partial:partial,fallback,
+    bars:answer.bars.map(bar=>({...bar,forming:false}))};
+}
+
+/**
+ * The v2 REST answer from a proxy result {bars,cache_age_seconds,stale}. REST keeps the forming last bar, flagged forming:true;
+ * closed-bar facts (latest_closed_bar, age_seconds) ignore it. closed_only is false. No URL or upstream text appears in the body.
+ */
+export function shapeRest({now,query,result,tick=null,fallback=null}){
+  const bars=result.bars.map(bar=>({...bar}));
+  const closed=bars.filter(bar=>bar.complete===true).at(-1)??null;
+  const closeTime=closed===null?null:closed.time+query.ms;
+  return {version:'market-ohlcv-v2',source:REST_SOURCE,broker:MARKET.broker,symbol:query.symbol,display_symbol:'BINANCE:'+query.symbol,
+    market:'SPOT',interval:query.interval,interval_ms:query.ms,limit:query.limit,generated_at:new Date(now).toISOString(),
+    status:bars.length===0?'EMPTY':'OK',closed_only:false,
+    latest_closed_bar:closed===null?null:{open_time:closed.time,close_time:closeTime},
+    age_seconds:closeTime===null?null:ageSeconds(now,closeTime),
+    stale:result.stale===true,stale_reason:result.stale===true?'UPSTREAM_UNAVAILABLE':null,stale_after_seconds:null,
+    cache_age_seconds:result.cache_age_seconds,price_tick:tick,history_partial:false,fallback,window:null,gaps:null,base_timeframe:null,bars};
+}
+
+/**
+ * Which source answers (pure). query is parseOhlcvQuery output; coverage is {available,latest,first} (only needed for BTCUSDT).
+ * Returns one of: {kind:'stored'}, {kind:'proxy',fallback:boolean} (fallback = a labelled stored answer may replace a failed proxy
+ * answer), {kind:'stored-fallback',reason} (proxy off, answered from the store) or {kind:'unavailable',code}.
+ */
+export function chooseSource({query,coverage=null,proxyEnabled=false,now}){
+  const spec=INTERVALS[query.interval];
+  if(query.source==='stored')return {kind:'stored'};
+  if(query.symbol!==MARKET.symbol)return proxyEnabled?{kind:'proxy',fallback:false}:{kind:'unavailable',code:'MARKET_PROXY_DISABLED'};
+  if(spec.stored&&query.limit<=spec.storedCap&&coverage?.available===true&&coverage.latest!==null){
+    const window=ohlcvWindow(coverage.latest,query.ms,query.limit);
+    // Full coverage: the oldest stored candle opens at or before the window start, and the newest bar is fresh.
+    if(coverage.first-MINUTE<=window.start&&ageSeconds(now,coverage.latest)<=STALE_AFTER_SECONDS)return {kind:'stored'};
+  }
+  if(proxyEnabled)return {kind:'proxy',fallback:spec.stored};
+  return spec.stored?{kind:'stored-fallback',reason:'MARKET_PROXY_DISABLED'}:{kind:'unavailable',code:'MARKET_PROXY_DISABLED'};
 }
 
 /**
@@ -198,11 +283,24 @@ export class MarketDataReader{
     return {edge,internal,lower:historyLower(start,first)};
   }
 
-  /** The OHLCV answer. Throws fail(...,400) for a bad query (before any SQL) and MARKET_DATA_UNAVAILABLE (503) when the store is off. */
-  async ohlcv(searchParams){
-    const query=parseOhlcvQuery(searchParams);
+  /** Presence and span of the stored history: {available,latest,first} (bar_time values). No bars are read. */
+  async coverage(now=this.clock()){
+    const none={available:false,latest:null,first:null};
+    if(!this.enabled)return none;
+    return this.#readOnly(async()=>{
+      if(!await this.#present())return none;
+      const {latest,first}=await this.#span(now);
+      return {available:true,latest,first};
+    });
+  }
+
+  /**
+   * The stored v1-shaped answer for already validated input {interval,ms,limit,now}. Throws MARKET_DATA_UNAVAILABLE (503) when the
+   * store is off or missing.
+   */
+  async stored({interval,ms,limit,now=this.clock()}){
     if(!this.enabled)throw fail('MARKET_DATA_UNAVAILABLE',503);
-    const {db}=this,now=this.clock();
+    const {db}=this,query={interval,ms,limit};
     return this.#readOnly(async()=>{
       if(!await this.#present())throw fail('MARKET_DATA_UNAVAILABLE',503);
       const {latest,first}=await this.#span(now);
@@ -233,15 +331,115 @@ export class MarketDataReader{
   }
 }
 
-/** GET /api/market/ohlcv. Any other path returns false; an unavailable store is a 503 body (no throw, so no audit row per poll). */
-export async function marketOhlcvRoutes(req,res,url,reader,json){
-  if(url.pathname!==OHLCV_PATH)return false;
-  if(req.method!=='GET')throw fail('METHOD_NOT_ALLOWED',405);
+const UNAVAILABLE={error:'Market data unavailable',code:'MARKET_DATA_UNAVAILABLE'};
+const ERROR_TEXT=Object.freeze({400:'Market request rejected',429:'Too many market requests',503:'Market data unavailable'});
+const FAILED={status:503,body:{error:ERROR_TEXT[503],code:'MARKET_PROXY_FAILED'}};
+
+/**
+ * A market error as a {status,body} answer. Only MARKET_*, interval and limit codes with status 400, 429 or 503 pass through (code
+ * and optional retry_after_seconds); anything else, including database errors, becomes MARKET_PROXY_FAILED. Upstream text never
+ * appears: the message is fixed per status.
+ */
+export function marketError(error){
+  const code=error?.code,status=error?.status;
+  if(typeof code!=='string'||!(code.startsWith('MARKET_')||code==='INTERVAL_NOT_ALLOWED'||code==='LIMIT_OUT_OF_RANGE')||!(status in ERROR_TEXT))return FAILED;
+  const retry=Number.isInteger(error.retry_after_seconds)&&error.retry_after_seconds>0?{retry_after_seconds:error.retry_after_seconds}:{};
+  return {status,body:{error:ERROR_TEXT[status],code,...retry}};
+}
+
+/** Runs a deferred phase function. Never throws: any exception becomes 503 MARKET_PROXY_FAILED with no upstream text. */
+export async function runMarketDeferred(fn){
   try{
-    json(res,200,await reader.ohlcv(url.searchParams));
+    const result=await fn();
+    if(Number.isInteger(result?.status)&&result.body!==null&&typeof result.body==='object')return result;
+    return FAILED;
+  }catch{return FAILED;}
+}
+
+// The deferred OHLCV phase: runs after COMMIT, holds no database client, and reads the store (its own short read-only
+// transaction) only for the labelled BTCUSDT fallback after the network attempt failed.
+function ohlcvDeferred({reader,proxy,actorId,query,fallback}){
+  return async()=>{
+    const deadline=proxy.now()+DEFERRED_DEADLINE_MS;
+    let failure;
+    try{
+      const result=await proxy.klines({symbol:query.symbol,interval:query.interval,limit:query.limit,actorId,deadline});
+      return {status:200,body:shapeRest({now:proxy.now(),query,result,tick:proxy.tick(query.symbol)})};
+    }catch(error){failure=error;}
+    if(fallback&&deadline-proxy.now()>=STORED_FALLBACK_MIN_MS){
+      try{
+        const spec=INTERVALS[query.interval];
+        const stored=await reader.stored({interval:query.interval,ms:query.ms,limit:Math.min(query.limit,spec.storedCap),now:reader.clock()});
+        const reason=typeof failure?.code==='string'&&failure.code.startsWith('MARKET_')?failure.code:'MARKET_PROXY_FAILED';
+        if(stored.bars.length>0)return {status:200,body:shapeStoredV2(stored,{fallback:{from:REST_SOURCE,reason}})};
+      }catch{/* the proxy error stays the answer */}
+    }
+    return marketError(failure);
+  };
+}
+
+function symbolsDeferred({proxy}){
+  return async()=>{
+    try{
+      const snapshot=await proxy.symbols({deadline:proxy.now()+DEFERRED_DEADLINE_MS});
+      const now=proxy.now();
+      return {status:200,body:{version:'market-symbols-v1',source:REST_SOURCE,generated_at:new Date(now).toISOString(),
+        retrieved_at:new Date(snapshot.retrieved_at).toISOString(),stale:snapshot.stale,count:snapshot.list.length,symbols:snapshot.list}};
+    }catch(error){return marketError(error);}
+  };
+}
+
+// Defers the answer until after COMMIT. Only valid inside the buffered request pipeline; otherwise the setup is wrong and the
+// request fails loudly instead of holding a transaction during network I/O.
+function defer(res,fn){
+  if(res.phase2Buffer!==true)throw fail('MARKET_PIPELINE_INVALID',500);
+  res.phase2Deferred=fn;
+}
+
+/**
+ * GET /api/market/ohlcv and GET /api/market/symbols. Any other path returns false; any other method is 405. options =
+ * {actor,proxy}; a missing proxy means the proxy is disabled. A proxy answer sets res.phase2Deferred and returns true without
+ * calling json(); stored answers and refusals are json() bodies (no throw, so a poll never writes an audit row).
+ */
+export async function marketOhlcvRoutes(req,res,url,reader,json,{actor=null,proxy=null}={}){
+  const ohlcv=url.pathname===OHLCV_PATH,symbols=url.pathname===SYMBOLS_PATH;
+  if(!ohlcv&&!symbols)return false;
+  if(req.method!=='GET')throw fail('METHOD_NOT_ALLOWED',405);
+  const proxyOn=proxy?.enabled===true;
+  const refuse=(status,code,extra={})=>json(res,status,{error:ERROR_TEXT[status],code,...extra});
+  const admit=()=>{
+    if(!actor?.id)throw fail('MARKET_PIPELINE_INVALID',500);
+    const admitted=proxy.admit(actor.id);
+    if(admitted.ok)return true;
+    refuse(429,admitted.code,{retry_after_seconds:admitted.retry_after_seconds});
+    return false;
+  };
+  if(symbols){
+    parseSymbolsQuery(url.searchParams);
+    if(!proxyOn)refuse(503,'MARKET_PROXY_DISABLED');
+    else if(res.phase2Buffer!==true)throw fail('MARKET_PIPELINE_INVALID',500);
+    else if(admit())defer(res,symbolsDeferred({proxy}));
+    return true;
+  }
+  const query=parseOhlcvQuery(url.searchParams),spec=INTERVALS[query.interval],now=reader.clock();
+  // Coverage matters only for BTCUSDT on a stored interval; every other request skips the database entirely.
+  const needsCoverage=query.source==='auto'&&query.symbol===MARKET.symbol&&spec.stored&&query.limit<=spec.storedCap;
+  const coverage=needsCoverage?await reader.coverage(now):null;
+  const choice=chooseSource({query,coverage,proxyEnabled:proxyOn,now});
+  if(choice.kind==='unavailable'){refuse(503,choice.code);return true;}
+  if(choice.kind==='proxy'){
+    if(res.phase2Buffer!==true)throw fail('MARKET_PIPELINE_INVALID',500);
+    if(admit())defer(res,ohlcvDeferred({reader,proxy,actorId:actor.id,query,fallback:choice.fallback}));
+    return true;
+  }
+  try{
+    const direct=choice.kind==='stored';
+    const limit=direct?query.limit:Math.min(query.limit,spec.storedCap);
+    const answer=await reader.stored({interval:query.interval,ms:query.ms,limit,now});
+    json(res,200,shapeStoredV2(answer,{fallback:direct?null:{from:REST_SOURCE,reason:choice.reason}}));
   }catch(error){
     if(error?.code!=='MARKET_DATA_UNAVAILABLE')throw error;
-    json(res,503,{error:'Market data unavailable',code:'MARKET_DATA_UNAVAILABLE'});
+    json(res,503,UNAVAILABLE);
   }
   return true;
 }

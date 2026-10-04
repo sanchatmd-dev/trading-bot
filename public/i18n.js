@@ -719,18 +719,43 @@ uiPairs.push(...qr1Pairs,
   ['Check job status before continuing.','ตรวจสถานะงานก่อนดำเนินการต่อ'],
   ['A request may be pending. Inspect Research Library before submitting again.','คำขออาจยังดำเนินอยู่ ตรวจ Research Library ก่อนส่งอีกครั้ง']
 );
-// Market chart (Analytics). One named block so a test can prove these pairs stay unique and complete.
+// Market chart (Overview). One named block so a test can prove these pairs stay unique and complete.
 const marketChartPairs=[
   ['Market chart','กราฟตลาด'],
-  ['BINANCE:BTCUSDT Spot · stored closed bars · Paper only','BINANCE:BTCUSDT Spot · แท่งที่ปิดแล้วที่เก็บไว้ · Paper เท่านั้น'],
   ['Refresh chart','รีเฟรชกราฟ'],
   ['Loading market data…','กำลังโหลดข้อมูลตลาด…'],
-  ['No stored bars for this interval yet','ยังไม่มีแท่งที่เก็บไว้สำหรับช่วงเวลานี้'],
   ['Market data unavailable ({code})','ข้อมูลตลาดใช้ไม่ได้ ({code})'],
-  ['{bars} bars · interval {interval} · stored Binance Spot public data · generated {time}','{bars} แท่ง · ช่วงเวลา {interval} · ข้อมูลสาธารณะ Binance Spot ที่เก็บไว้ · สร้างเมื่อ {time}'],
-  ['{count} gaps · {missing} missing 1m bars in this window','ช่องว่าง {count} จุด · ขาดแท่ง 1 นาที {missing} แท่งในช่วงนี้'],
   ['Stale: latest closed bar is {age} s old (limit {limit} s)','ข้อมูลเก่า: แท่งที่ปิดล่าสุดเก่า {age} วินาที (เกณฑ์ {limit} วินาที)'],
-  ['Latest closed bar {time} · age {age} s','แท่งที่ปิดล่าสุด {time} · อายุ {age} วินาที']
+  ['Latest closed bar {time} · age {age} s','แท่งที่ปิดล่าสุด {time} · อายุ {age} วินาที'],
+  ['{count} gaps · {missing} missing 1m bars in this window','ช่องว่าง {count} จุด · ขาดแท่ง 1 นาที {missing} แท่งในช่วงนี้'],
+  ['Binance Spot public market data · view only · Paper only','ข้อมูลตลาดสาธารณะ Binance Spot · ดูอย่างเดียว · Paper เท่านั้น'],
+  ['Search symbol','ค้นหาสัญลักษณ์'],
+  ['Type to search Binance Spot symbols','พิมพ์เพื่อค้นหาสัญลักษณ์ Binance Spot'],
+  ['Chart timeframe','กรอบเวลาของกราฟ'],
+  ['Held assets','สินทรัพย์ที่ถืออยู่'],
+  ['Open position lines','เส้นของสถานะที่เปิดอยู่'],
+  ['View only. The chart cannot place, change or close orders.','ดูอย่างเดียว กราฟนี้ส่ง แก้ไข หรือปิดคำสั่งซื้อขายไม่ได้'],
+  ['No bars for this symbol and timeframe','ไม่มีแท่งราคาสำหรับสัญลักษณ์และกรอบเวลานี้'],
+  ['{bars} bars · {interval} · generated {time}','{bars} แท่ง · {interval} · สร้างเมื่อ {time}'],
+  ['Updated {time} · cache age {age} s','อัปเดต {time} · อายุแคช {age} วินาที'],
+  ['Source: stored Binance bars (bot feed)','แหล่งข้อมูล: แท่ง Binance ที่เก็บไว้ (ฟีดของบอท)'],
+  ['Source: Binance public REST (cached {age} s)','แหล่งข้อมูล: Binance REST สาธารณะ (แคช {age} วินาที)'],
+  ['Fallback: stored bars, Binance REST unavailable ({code})','สำรอง: แท่งที่เก็บไว้ เพราะ Binance REST ใช้ไม่ได้ ({code})'],
+  ['Stale copy: {age} s old, Binance REST unavailable ({code})','สำเนาเก่า: อายุ {age} วินาที Binance REST ใช้ไม่ได้ ({code})'],
+  ['Too many chart requests; retrying in {seconds} s','คำขอกราฟมากเกินไป จะลองใหม่ใน {seconds} วินาที'],
+  ['Partial history: stored bars start {time}','ประวัติไม่ครบ: แท่งที่เก็บไว้เริ่มที่ {time}'],
+  ['Forming bar','แท่งที่ยังไม่ปิด'],
+  ['No matching symbol','ไม่พบสัญลักษณ์ที่ตรงกัน'],
+  ['Loading symbol list…','กำลังโหลดรายการสัญลักษณ์…'],
+  ['Symbol list unavailable ({code}); BTCUSDT and held assets only','รายการสัญลักษณ์ใช้ไม่ได้ ({code}) ใช้ได้เฉพาะ BTCUSDT และสินทรัพย์ที่ถืออยู่'],
+  ['{count} bots','{count} บอท'],
+  ['more lines not drawn: {count}','เส้นที่ไม่ได้วาดอีก {count} เส้น'],
+  ['Positions on other brokers have no Binance chart','สถานะบนโบรกเกอร์อื่นไม่มีกราฟ Binance'],
+  ['above range','เหนือช่วงที่แสดง'],
+  ['below range','ใต้ช่วงที่แสดง'],
+  ['cost incl. fee','ต้นทุนรวมค่าธรรมเนียม'],
+  ['Lot quantities do not match the position; average line shown','จำนวนในล็อตไม่ตรงกับสถานะ จึงแสดงเส้นราคาเฉลี่ย'],
+  ['Position lines unavailable ({code})','เส้นของสถานะใช้ไม่ได้ ({code})']
 ];
 uiPairs.push(...marketChartPairs);
 for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
@@ -744,7 +769,7 @@ function translateUI(){
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   let node;
   while((node=walker.nextNode())){
-    if(node.parentElement.closest('script,style,pre,textarea,#signalRows,#recentSignals .list-row,#positions .list-row,#accountInfo p,#userRows,#licenseRows,#webhookResult,#newLicenseResult,#loginError,#passwordMessage'))continue;
+    if(node.parentElement.closest('script,style,pre,textarea,#signalRows,#recentSignals .list-row,#positions .list-row,#accountInfo p,#userRows,#licenseRows,#webhookResult,#newLicenseResult,#loginError,#passwordMessage,.mc-data'))continue;
     const current=node.textContent.trim(),old=originalUiText.get(node);
     // Retain canonical text through language toggles, but detect renderer updates.
     const source=old&&(current===old.en||current===old.th)?old:uiTranslations.get(current);
