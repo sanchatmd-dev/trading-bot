@@ -129,9 +129,11 @@ Current Codex specialists use GPT-6.1 Sol except the Astra Medium auditor:
 debugger/operations use high effort, coder/tester/routine worker use medium,
 and documentation/release clerk use low. This is a local configuration update;
 historical model assignments below remain evidence of earlier work.
-A Claude root follows the AGENTS.md Claude column (Opus 5.5 and Sonnet 5.5). The
-owner removed the three Claude-only Fable 5.1 roles on 2026-10-01; earlier Fable
-work stays recorded below as history.
+A Claude root follows the AGENTS.md Claude column: on 2026-10-03 the owner set
+an Opus 5.5 / xhigh root with ultracode, graded Opus 5.5 and Sonnet 5.5 child
+roles as the primary models, and supplemental Claude-only Fable 5.1 roles
+(second-opinion reviewer, alternative designer, consistency scout). That reverses
+the 2026-10-01 Fable removal; earlier Fable work stays recorded below as history.
 Three bounded setup agents performed team audit, PF-1 mapping and a dispatch template.
 Team setup is followed by the local PF-1A backend checkpoint below. Production
 resource enforcement remains planned; QD-1/QS-1 and existing gates still apply.

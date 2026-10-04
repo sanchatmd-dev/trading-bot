@@ -223,6 +223,7 @@ role profiles explicitly select Astra Medium or GPT-6.1 Sol: High for debugger
 and operations, Medium for coder/tester/routine worker, and Low for documentation
 and release clerk. The default child model is gpt-6.1-sol at Medium effort.
 At most three children run concurrently in this session, with no child delegation.
+Since 2026-10-03 a Claude root follows the AGENTS.md ultracode rules instead: up to six concurrent workflow agents, at most three writers, one writer per file, and supplemental Fable 5.1 review roles.
 Usage checks are account-wide observations, not guaranteed per-agent reservations.
 Project configuration does not prove the model of an already active task changed.
 Local development and authorized supervised VPS jobs retain the existing production,

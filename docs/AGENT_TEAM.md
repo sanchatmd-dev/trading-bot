@@ -20,8 +20,15 @@ unattended or authorize a new research study merely because workers are availabl
 | Release clerk | gpt-6.1-sol / low | Execute reviewed Git checkpoint/push serially | Root handoff + actual user authority; no independent merge/deploy |
 | Operations | gpt-6.1-sol / high | Designated executor of scoped local/VPS operational packets | Read-only default; mutations limited to existing user authority and readiness gates |
 
-A Claude root uses the Claude column of [AGENTS.md](../AGENTS.md) (Opus 5.5 and
-Sonnet 5.5). The owner removed the Claude-only Fable 5.1 roles on 2026-10-01.
+A Claude root uses the Claude column of [AGENTS.md](../AGENTS.md): Opus 5.5 /
+xhigh root with ultracode (owner, 2026-10-03), graded Opus 5.5 and Sonnet 5.5
+child roles as the primary models, and supplemental Claude-only Fable 5.1 roles
+(re-added 2026-10-03 after the 2026-10-01 removal). For a Claude root, the
+ultracode concurrency, fan-out and Fable rules in AGENTS.md replace the
+three-child maximum and the swarm-default sentences in the next paragraph and the
+worker counts in the Usage admission table below (at most three concurrent
+writers, one writer per file, at most six agents in total). The review,
+independent-verification and pilot rules there still apply to every child.
 
 The owner's "light" maps to supported effort `low`. Role profiles are in
 `.codex/agents/`; root/default-child settings are in `.codex/config.toml`.
