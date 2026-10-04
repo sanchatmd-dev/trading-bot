@@ -6,6 +6,8 @@ Claude remained root after the Create Bot release and put Quant History release 
 
 Local only, not deployed: the owner decided on 2026-10-03/04 that real Binance Global data may be used only for OHLCV charts and Preflight, through keyless public endpoints, with no trading, Paper only and Live locked. Local commit `e44dfba` with test fix `5516a7f` (pushed; all nine CI checks passed on `5516a7f`, including the PostgreSQL job that ran the new endpoint test; not deployed) adds an authenticated read-only `GET /api/market/ohlcv` over the stored BTCUSDT 1m bars (aggregated from 1m to 1d), a CSP-safe SVG chart that replaces the unpkg and browser-Binance path, and an advisory PF-3 Market data item. The owner's chart v2 requirements are planned and the design is in progress: the chart is always visible; a TradingView-like symbol picker covers any Binance Spot symbol through a server-side keyless proxy; timeframes run from 1m to 1w with 1d as the default; and entry, stop-loss and take-profit lines appear on the chart of every held asset for every held position until the position clears.
 
+Owner request, 2026-10-04: the recommended production market-data work is now the pre-launch [market-data gate MD-1](#pre-launch-gate-md-1--market-data-at-production-scale) (WebSocket market-data service, egress separation, shared limiter and alerts, load test, data-rights and region review).
+
 Still open: the authenticated History view after the owner signs in (the authenticated Create Bot journey also remains unchecked); the natural same-entry EXIT for the 0.01179 BTC OPEN allocation, which remains unproved; and the old QL-3A alert, which stays stopped until the old OPEN allocation of 0.01181 BTC is resolved. Webhook delivery during the roughly 2.8-second restart window was not separately verified. PF-2 stays off, the D6, R7, B3, W7 and related gates are unchanged, and capacity is not approved. Claude usage at 09:20 UTC was 22% of the 5-hour window and 6% of the weekly all-models window, with Fable at 5%; the owner upgraded the plan at about 20:00 UTC on 2026-10-03 and the counters reset then. See the [Quant History release checkpoint](STAGING_P2_CHECKPOINT_2026-10-03.md#quant-history-release-02af486-upload-extraction-and-activation), its [evidence](evidence/P2_HISTORY_RELEASE_02AF486_2026-10-04.json) and the earlier [UI release checkpoint](STAGING_P2_CHECKPOINT_2026-10-03.md#ui-release-256251b-publication-and-activation).
 
 ## Claude continuation — 2026-10-03
@@ -895,7 +897,7 @@ candidates only. Absolute DB/WAL/backup/temp headroom and hard process limits al
 | Infrastructure stage | Design and review gate | Status |
 | --- | --- | --- |
 | I: Private use | Current VPS with queue, admission, isolation, monitoring and recovery before broader heavy usage. | Hardware decision retained; protections planned. |
-| II: Public/paid Paper beta | APP-3B/APP-4 tenant fairness/quotas, concurrent service-impact tests, off-host backups/alerts and full restore drill. Keep current VPS when measured objectives hold. | Planned release gate. |
+| II: Public/paid Paper beta | APP-3B/APP-4 tenant fairness/quotas, concurrent service-impact tests, off-host backups/alerts, full restore drill and the [market-data gate MD-1](#pre-launch-gate-md-1--market-data-at-production-scale). Keep current VPS when measured objectives hold. | Planned release gate. |
 | III: Vertical option | Consider 4 vCPU / 16 GB / 200 GB only after measured pressure/headroom review. | Optional; upgrade not approved. |
 | IV: Separate Quant | Main host retains Web/API, trading, DB; move Quant using portable authenticated job/dataset/result contracts. | Optional when Quant dominates pressure; preferred over contention on trading host. |
 | V: Separate data layer | Dedicated PostgreSQL, shared/object research storage and bounded worker pool. | Future usage-driven option. |
@@ -935,6 +937,20 @@ flowchart LR
     IV --> V["V: Dedicated DB + storage / Quant pool"]
     V --> VI["VI: HA / multiple Web nodes / DR"]
 ```
+
+### Pre-launch gate MD-1 — market data at production scale
+
+Owner decision, 2026-10-04: before any public or paid launch (infrastructure stage II or later), market data for charts and Preflight must not depend on per-process limits on an IP shared with trading. Chart v2 adds a server-side keyless Binance proxy with a request-weight budget (600 per minute, stopping when Binance reports 3,000 used), caches, per-user limits and a circuit for 429 and 418 responses. That protects the staging prototype from an IP ban by degrading charts to limited or stale states, but it does not scale to a launched product. Binance counts request weight per IP, not per key; a 418 ban lasts from 2 minutes to 3 days; the same IP carries the bots’ BTCUSDT bar stream (and would carry orders if Live is ever approved); and per-process limits multiply with every additional API instance.
+
+| Item | Requirement before launch | Status |
+| --- | --- | --- |
+| MD-1a Market-data service | One dedicated service ingests Binance WebSocket streams for the symbols users watch and serves every user from a shared cache or store, so REST weight does not grow with the number of users. REST is used only for backfill, within a budget. | Planned |
+| MD-1b Egress separation | Trading data and any future order path use a different egress IP from the chart and market-data service, so a chart-side 429 or 418 cannot stop bot data or orders. | Planned |
+| MD-1c Shared limiter and alerts | One rate limiter shared by every API and service instance, driven by the `X-MBX-USED-WEIGHT` response headers; alerts on 429, 418 and budget exhaustion; a used-weight dashboard. | Planned |
+| MD-1d Load test | A measured test at the target number of concurrent users, symbols and timeframes. Pass criteria: no 429 from Binance, a chart limited-state rate below an agreed threshold, and an unaffected bot bar stream. | Planned |
+| MD-1e Data rights and region | Review the Binance API terms for showing market data in a commercial product, or choose a licensed data feed; confirm that the production server region can reach the chosen source. | Planned; needs owner and legal review |
+
+Exit: all five items accepted with evidence before stage II. Until then the chart proxy is a prototype-scale feature for the staging Paper product. No effort estimate is recorded yet in [Time Management](TIME_MANAGEMENT.md).
 
 ### Report and research behavior
 
