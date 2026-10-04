@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {JSDOM} from 'jsdom';
-import {inspectSource} from '../src/pine-bridge/source.js';
+import {inspectSource,validateSelection} from '../src/pine-bridge/source.js';
 import {reviewFields} from '../src/pine-bridge/input-review.js';
 
 test('Bridge dropdown binds up to eight unique numeric slots, preserves errors as text, clears source on logout',async()=>{
@@ -37,5 +37,82 @@ test('Bridge dropdown binds up to eight unique numeric slots, preserves errors a
   assert.equal(el('pbGenerate').hidden,true);
   assert.equal(el('pbInputsConfirmed').checked,false);
   el('logout').click();assert.equal(el('pbSource').value,'');assert.equal(el('pbDiagnostics').textContent,'');assert.equal(el('pbGenerate').hidden,true);
+  w.close();
+});
+
+// Step 2 UI proof (S2): ten numeric inputs, so eight slot selects can all be filled and the pick list can be reduced.
+// Fixture source only; product behavior is unchanged.
+const wideSource=['//@version=6','indicator("Wide")',...Array.from({length:10},(_,i)=>'p'+(i+1)+'=input.'+(i%2?'float':'int')+'('+(10+i)+(i%2?'.5':'')+', minval=1, maxval=100)'),'buy=close>open','sell=close<open'].join('\n');
+async function mountWide(eligible){
+  const dom=new JSDOM('<button id="logout"></button><section data-page="quant"></section>',{url:'http://localhost',runScripts:'outside-only'});
+  const w=dom.window,analysis=inspectSource(wideSource),requests=[];
+  w.URL.revokeObjectURL=()=>{};
+  w.api=async(path,options)=>{
+    requests.push({path,options});
+    if(path==='/api/bots')return {bots:[{id:'mine',label:'Mine'}]};
+    if(path.endsWith('/inspect'))return {source_hash:analysis.source_hash,input_count:analysis.inputs.length,inputs:reviewFields(analysis)};
+    if(path.endsWith('/analyze'))return {job_id:'analyze-job'};
+    if(path.endsWith('/generate'))return {job_id:'generate-job'};
+    // The generate job ends here. These tests inspect the POST, not the finished draft.
+    if(path.endsWith('/generate-job'))return {job_status:'FAILED',diagnostic:'FIXTURE_STOP'};
+    return {job_status:'SUCCEEDED',pine_import_id:'source',source_version:1,result:{...analysis,proposal:{buy:'buy',exit:'sell',eligible_inputs:eligible(analysis),diagnostics:[]}}};
+  };
+  w.eval(await fs.readFile(new URL('../public/pine-bridge.js',import.meta.url),'utf8'));
+  const el=id=>w.document.getElementById(id),flush=()=>new Promise(resolve=>setImmediate(resolve));
+  el('pbLoadBots').click();await flush();
+  el('pbSource').value=wideSource;el('pbInspect').click();await flush();
+  el('pbInputsConfirmed').click();el('pbAnalyze').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
+  return {w,el,flush,requests,analysis,selects:[...el('pbSlots').querySelectorAll('select')]};
+}
+function pick(w,selects,ids){selects.forEach((select,i)=>{if(ids[i]===undefined)return;select.value=ids[i];select.dispatchEvent(new w.Event('change'));});}
+async function generate({w,el,flush,requests}){
+  el('pbGenerate').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
+  const posts=requests.filter(r=>r.path.endsWith('/generate'));assert.equal(posts.length,1);
+  assert.ok(posts[0].options.headers['Idempotency-Key']);
+  return JSON.parse(posts[0].options.body);
+}
+
+test('Step 2 UI: filling all eight slot selects plus ATR 60 and RR 1.5 sends one generate POST that the server validator accepts',async()=>{
+  const ctx=await mountWide(a=>a.inputs.map(i=>i.input_id)),{w,el,analysis,selects}=ctx;
+  assert.equal(analysis.inputs.filter(i=>i.eligible).length,10);
+  assert.equal(selects.length,8);
+  assert.deepEqual(selects.map(s=>Number(s.dataset.slot)),[3,4,5,6,7,8,9,10]);
+  for(const select of selects)assert.equal(select.options.length,11,'Unused plus all ten inputs');
+  const ids=analysis.inputs.slice(0,8).map(i=>i.input_id);
+  pick(w,selects,ids);
+  for(const select of selects){
+    for(const id of ids)assert.equal([...select.options].find(o=>o.value===id).disabled,id!==select.value);
+    for(const id of analysis.inputs.slice(8).map(i=>i.input_id))assert.equal([...select.options].find(o=>o.value===id).disabled,false);
+  }
+  for(const input of el('pbSlots').querySelectorAll('input'))assert.equal(input.disabled,false);
+  el('pbAtr').value='60';el('pbRR').value='1.5';
+  const body=await generate(ctx);
+  assert.equal(body.parameter_slots.length,8);
+  assert.deepEqual(body.parameter_slots.map(s=>s.slot),[3,4,5,6,7,8,9,10]);
+  assert.deepEqual(body.parameter_slots.map(s=>s.input_id),ids);
+  analysis.inputs.slice(0,8).forEach((input,i)=>assert.deepEqual(body.parameter_slots[i],{slot:3+i,input_id:input.input_id,min:1,max:100,step:input.type==='int'?1:.1}));
+  assert.deepEqual(body.bridge_options,{atr_multiplier:60,rr:1.5});
+  assert.deepEqual(body.selected_signals,{buy:'buy',exit:'sell',timing:'bar_close'});
+  const selection=validateSelection(analysis,body.selected_signals,body.parameter_slots,body.bridge_options);
+  assert.equal(selection.bindings.length,8);assert.deepEqual(selection.bridge,{atr_multiplier:60,rr:1.5});
+  w.close();
+});
+
+test('Step 2 UI: when the AI proposal omits eligible inputs, every slot pick list is reduced to the proposed ones and the omitted inputs stay fixed',async()=>{
+  const kept=a=>a.inputs.slice(0,5).map(i=>i.input_id);
+  const ctx=await mountWide(kept),{w,el,analysis,selects}=ctx;
+  const keep=kept(analysis),omitted=analysis.inputs.slice(5).map(i=>i.input_id);
+  assert.equal(analysis.inputs.filter(i=>i.eligible).length,10,'all ten inputs are eligible; the proposal alone reduces the list');
+  assert.equal(selects.length,8);
+  for(const select of selects){
+    assert.deepEqual([...select.options].map(o=>o.value),['',...keep]);
+    for(const id of omitted)assert.equal([...select.options].some(o=>o.value===id),false);
+  }
+  assert.equal(el('pbInputFields').querySelectorAll('[data-input-id]').length,10,'omitted inputs are still reviewed as fixed values');
+  pick(w,selects,keep);
+  const body=await generate(ctx);
+  assert.deepEqual(body.parameter_slots.map(s=>s.slot),[3,4,5,6,7]);
+  assert.deepEqual(body.parameter_slots.map(s=>s.input_id),keep);
+  assert.equal(validateSelection(analysis,body.selected_signals,body.parameter_slots,body.bridge_options).bindings.length,5);
   w.close();
 });

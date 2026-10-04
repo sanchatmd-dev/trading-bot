@@ -508,3 +508,34 @@ test('AI quota: the hook counts only the owner trailing 24 hours of the same kin
   await run(a,limited);
   await runAll();
 });
+
+// Step 2 (S2): eight source slots plus ATR 60 and RR 1.5 through the real analyze -> generate -> worker flow.
+// Ten numeric inputs, so eight can be bound. A small fixture, because a large source exceeds the provider token budget.
+const wideSource=['//@version=6','indicator("Wide")',...Array.from({length:10},(_,i)=>'p'+(i+1)+'=input.'+(i%2?'float':'int')+'('+(10+i)+(i%2?'.5':'')+', minval=1, maxval=100)'),'buy=close>open','sell=close<open'].join('\n');
+test('Step 2: eight source slots, ATR 60 and RR 1.5 persist exactly in the deployment snapshot and the ten-binding artifact',async()=>{
+  const a=await owner();
+  const stub=provider(request=>({value:{buy:'buy',exit:'sell',diagnostics:[],...(request.operation==='analyze'?{eligible_inputs:request.analysis.inputs.filter(i=>i.eligible).map(i=>i.input_id)}:{})},usage:{input_tokens:50,output_tokens:30,cost_usd:.000011},request_id:'fixture'}));
+  const job=await enqueue(a,'analyze',{bot_id:a,pine_source:wideSource,source_name:'Wide'});
+  await runAll(stub);
+  const analyzed=await db.transaction(()=>service.get(a,job.job_id));assert.equal(analyzed.job_status,'SUCCEEDED');
+  const eligible=analyzed.result.inputs.filter(i=>i.eligible);assert.ok(eligible.length>=8);
+  const slots=eligible.slice(0,8).map((input,i)=>({slot:3+i,input_id:input.input_id,...(input.type==='int'?{min:input.effective_value-2,max:input.effective_value+2,step:1}:{min:input.effective_value-1,max:input.effective_value+1,step:.5})}));
+  const generated=await enqueue(a,'generate',{bot_id:a,pine_import_id:job.pine_import_id,source_version:1,selected_signals:{buy:'buy',exit:'sell',timing:'bar_close'},parameter_slots:slots,bridge_options:{atr_multiplier:60,rr:1.5},market:{broker:'binance-global',symbol:'BTCUSDT',timeframe:'1D'}});
+  await runAll(stub);
+  const done=await db.transaction(()=>service.get(a,generated.job_id));assert.equal(done.job_status,'SUCCEEDED',JSON.stringify(done.diagnostic));
+  const deployment=await db.prepare('SELECT * FROM pine_deployments WHERE deployment_id=?').get(done.result.deployment_id);
+  const {selection}=deployment.snapshot;
+  assert.equal(selection.bindings.length,8);
+  for(const slot of slots){
+    const bound=selection.bindings.find(b=>b.slot===slot.slot),input=eligible.find(i=>i.input_id===slot.input_id);
+    assert.ok(bound,'slot '+slot.slot);
+    assert.equal(bound.input_id,slot.input_id);
+    assert.deepEqual(bound.search_domain,{min:slot.min,max:slot.max,step:slot.step});
+    assert.equal(bound.effective_value,input.effective_value);
+  }
+  assert.equal(new Set(selection.bindings.map(b=>b.slot)).size,8);
+  assert.deepEqual(selection.bridge,{atr_multiplier:60,rr:1.5});
+  assert.equal(done.result.bindings.length,10);
+  assert.deepEqual(done.result.bindings.map(b=>b.slot).sort((x,y)=>x-y),[1,2,3,4,5,6,7,8,9,10]);
+  assert.equal(done.result.source_diff.changed_original_bytes,0);
+});
