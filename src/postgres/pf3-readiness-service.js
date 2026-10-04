@@ -2,6 +2,7 @@ import {fail,hash,canonical} from '../pine-bridge/source.js';
 import {exact} from '../money.js';
 import {freshSnapshot,deploymentEvidence} from './pine-bridge-readiness.js';
 import {buildReadinessReport} from './pf3-readiness-report.js';
+import {classifyMarketHealth} from './market-ohlcv.js';
 
 /**
  * PF-3 readiness service: reads the current Paper facts (PF-1) and the newest successful PF-2 evidence of one owner
@@ -21,12 +22,13 @@ const code=error=>appError(error)?error.code.slice(0,64):'READ_FAILED';
 const attempt=(operation,fallback=null)=>{try{return operation();}catch{return fallback;}};
 
 export class ReadinessService{
-  constructor({store,defaultRisk,preflightService=null,preflightEnabled=false,pineBridgeEnabled=false,clock=Date.now}={}){
+  constructor({store,defaultRisk,preflightService=null,preflightEnabled=false,pineBridgeEnabled=false,marketData=null,clock=Date.now}={}){
     if(!store||!store.db||typeof store.risk!=='function'||!defaultRisk||typeof defaultRisk!=='object'||typeof clock!=='function'||
-       (preflightEnabled&&(!preflightService||typeof preflightService.list!=='function'||typeof preflightService.get!=='function')))
+       (preflightEnabled&&(!preflightService||typeof preflightService.list!=='function'||typeof preflightService.get!=='function'))||
+       (marketData!==null&&typeof marketData?.health!=='function'))
       throw fail('PF3_CONFIGURATION_INVALID',500);
     this.store=store;this.defaultRisk=defaultRisk;this.preflight=preflightService;
-    this.preflightEnabled=preflightEnabled===true;this.pineBridgeEnabled=pineBridgeEnabled===true;this.clock=clock;
+    this.preflightEnabled=preflightEnabled===true;this.pineBridgeEnabled=pineBridgeEnabled===true;this.marketData=marketData;this.clock=clock;
   }
 
   /** The report for one of the owner's bots. Throws a fixed code; database errors pass through unchanged. */
@@ -35,11 +37,23 @@ export class ReadinessService{
     try{
       return await db.transaction(async()=>{
         await db.query('SET TRANSACTION READ ONLY');
-        return this.collect(ownerId,botId);
+        const report=await this.collect(ownerId,botId);
+        // Advisory market-data item, appended after the builder: it never changes the verdict, blockers or the PF-4 inputs.
+        if(this.marketData)report.market_data=await this.readMarket();
+        return report;
       },{isolation:'REPEATABLE READ'});
     }catch(error){
       if(appError(error)||platformError(error))throw error;
       throw fail('PF3_READINESS_UNAVAILABLE',503);
+    }
+  }
+
+  /** The stored-market-data health item. An application failure becomes a FAIL item; a platform error propagates. */
+  async readMarket(){
+    try{return await this.marketData.health();}
+    catch(error){
+      if(platformError(error))throw error;
+      return classifyMarketHealth({now:this.clock(),unavailable:code(error)});
     }
   }
 

@@ -276,7 +276,28 @@ const pf3Pairs=[
   ['The evidence belongs to a deployment that is not the READY one.','หลักฐานเป็นของ deployment ที่ไม่ใช่ตัวที่ READY'],
   ['The loss-streak pause is active now, so no estimate is possible.','การหยุดพักจากขาดทุนติดต่อกันยังทำงานอยู่ จึงประมาณเวลาไม่ได้'],
   ['A persistent pause was active in the evidence window.','มีการหยุดพักถาวรในช่วงหลักฐาน'],
-  ['The window has fewer than 5 closed episodes.','ช่วงนี้มีรอบเทรดที่ปิดครบน้อยกว่า 5 รอบ']
+  ['The window has fewer than 5 closed episodes.','ช่วงนี้มีรอบเทรดที่ปิดครบน้อยกว่า 5 รอบ'],
+  // Market data item (stored public Binance Spot 1m bars): advisory only.
+  ['Market data','ข้อมูลตลาด'],
+  ['Market data is current','ข้อมูลตลาดเป็นปัจจุบัน'],
+  ['Market data needs attention','ข้อมูลตลาดต้องตรวจสอบ'],
+  ['Market data is not usable','ข้อมูลตลาดยังใช้ไม่ได้'],
+  ['Advisory only. Does not change the verdict, enable Historical Preflight or allow trading.','เป็นข้อมูลประกอบเท่านั้น ไม่เปลี่ยนผลสรุป ไม่เปิดใช้ Historical Preflight และไม่อนุญาตให้เทรด'],
+  ['Latest closed 1m bar','แท่ง 1 นาทีที่ปิดล่าสุด'],
+  ['Data age (seconds)','อายุข้อมูล (วินาที)'],
+  ['Bars in the last 24 hours','จำนวนแท่งใน 24 ชั่วโมงล่าสุด'],
+  ['Missing 1m bars','แท่ง 1 นาทีที่ขาดหาย'],
+  ['Gap count','จำนวนช่องว่างของข้อมูล'],
+  ['Reasons','เหตุผลที่พบ'],
+  ['Unavailable code','รหัสที่ใช้ไม่ได้'],
+  ['Gap range','ช่วงที่ข้อมูลขาด'],
+  ['More gaps exist than are listed.','ยังมีช่องว่างอื่นที่ไม่ได้แสดง'],
+  ['Stored market data is not available on this server.','เซิร์ฟเวอร์นี้ยังไม่มีข้อมูลตลาดที่เก็บไว้'],
+  ['No closed 1m bar has been stored yet.','ยังไม่มีแท่ง 1 นาทีที่ปิดแล้วถูกเก็บไว้'],
+  ['The newest closed 1m bar is more than 15 minutes old.','แท่ง 1 นาทีที่ปิดล่าสุดเก่ากว่า 15 นาที'],
+  ['The newest closed 1m bar is more than 3 minutes old.','แท่ง 1 นาทีที่ปิดล่าสุดเก่ากว่า 3 นาที'],
+  ['The last 24 hours miss 60 or more 1m bars.','24 ชั่วโมงล่าสุดขาดแท่ง 1 นาทีตั้งแต่ 60 แท่งขึ้นไป'],
+  ['The last 24 hours miss some 1m bars.','24 ชั่วโมงล่าสุดขาดแท่ง 1 นาทีบางส่วน']
 ];
 uiPairs.push(...pf3Pairs);
 // Guided Build Pine Bridge panel (P1-UX1). One named block so a test can prove these pairs stay unique and complete.
@@ -698,6 +719,20 @@ uiPairs.push(...qr1Pairs,
   ['Check job status before continuing.','ตรวจสถานะงานก่อนดำเนินการต่อ'],
   ['A request may be pending. Inspect Research Library before submitting again.','คำขออาจยังดำเนินอยู่ ตรวจ Research Library ก่อนส่งอีกครั้ง']
 );
+// Market chart (Analytics). One named block so a test can prove these pairs stay unique and complete.
+const marketChartPairs=[
+  ['Market chart','กราฟตลาด'],
+  ['BINANCE:BTCUSDT Spot · stored closed bars · Paper only','BINANCE:BTCUSDT Spot · แท่งที่ปิดแล้วที่เก็บไว้ · Paper เท่านั้น'],
+  ['Refresh chart','รีเฟรชกราฟ'],
+  ['Loading market data…','กำลังโหลดข้อมูลตลาด…'],
+  ['No stored bars for this interval yet','ยังไม่มีแท่งที่เก็บไว้สำหรับช่วงเวลานี้'],
+  ['Market data unavailable ({code})','ข้อมูลตลาดใช้ไม่ได้ ({code})'],
+  ['{bars} bars · interval {interval} · stored Binance Spot public data · generated {time}','{bars} แท่ง · ช่วงเวลา {interval} · ข้อมูลสาธารณะ Binance Spot ที่เก็บไว้ · สร้างเมื่อ {time}'],
+  ['{count} gaps · {missing} missing 1m bars in this window','ช่องว่าง {count} จุด · ขาดแท่ง 1 นาที {missing} แท่งในช่วงนี้'],
+  ['Stale: latest closed bar is {age} s old (limit {limit} s)','ข้อมูลเก่า: แท่งที่ปิดล่าสุดเก่า {age} วินาที (เกณฑ์ {limit} วินาที)'],
+  ['Latest closed bar {time} · age {age} s','แท่งที่ปิดล่าสุด {time} · อายุ {age} วินาที']
+];
+uiPairs.push(...marketChartPairs);
 for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}

@@ -35,6 +35,7 @@ import {quantProfileRoutes} from './quant-profile.js';
 import {createQuantPreflightApi} from './quant-preflight-wiring.js';
 import {quantPreflightRoutes,quantProfileEnrollmentRoutes} from './quant-preflight-routes.js';
 import {ReadinessService} from './pf3-readiness-service.js';
+import {MarketDataReader,marketOhlcvRoutes} from './market-ohlcv.js';
 import {pf3ReadinessRoutes} from './pf3-readiness-routes.js';
 import {ProposalService} from './pf4-proposal-service.js';
 import {pf4ProposalRoutes} from './pf4-proposal-routes.js';
@@ -79,8 +80,10 @@ const {profileService:quantProfileService,preflightService:quantPreflightService
   enrollmentEnabled:quantEnrollmentEnabled,preflightEnabled:quantPreflightEnabled}=await createQuantPreflightApi({
   pineService:pineBridgeService,dataService:quantDataService,researchStore:quantResearchService.datasetStore,
   dataEnabled:quantDataEnabled,paperTrading:config.paperTrading});
+// Read-only stored public market data (closed Binance Spot 1m bars); serves the chart endpoint and the PF-3 market-data item.
+const marketData=new MarketDataReader({db:database,enabled:pineBridgeEnabled});
 const readinessService=new ReadinessService({store,defaultRisk:config.defaultRisk,preflightService:quantPreflightService,
-  preflightEnabled:quantPreflightEnabled,pineBridgeEnabled});
+  preflightEnabled:quantPreflightEnabled,pineBridgeEnabled,marketData});
 const proposalService=new ProposalService({store,defaultRisk:config.defaultRisk,readinessService,pineBridgeEnabled});
 const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
 await database.transaction(async()=>{
@@ -256,6 +259,7 @@ async function userRoutes(req, res, url) {
   if(await quantProfileEnrollmentRoutes(req,res,url,actor,quantProfileService,json,{enabled:quantEnrollmentEnabled}))return;
   if(await quantProfileRoutes(req,res,url,actor,quantProfileService,json,{enabled:quantDataEnabled}))return;
   if(await quantDataRoutes(req,res,url,actor,quantDataService,json,{enabled:quantDataEnabled}))return;
+  if(await marketOhlcvRoutes(req,res,url,marketData,json))return;
   try { if (await quantBridge(req, res, url, actor, store)) return; }
   catch (error) {
     if (error?.code === 'QUANT_EXECUTOR_MODE_UNAVAILABLE') return json(res, 503, {code: error.code, error: 'Quant executor mode is unavailable'});

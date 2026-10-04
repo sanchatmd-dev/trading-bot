@@ -1,274 +1,154 @@
-const CHART_COLORS = {
-  up: '#35e0b1',
-  down: '#ff7187',
-  bg: '#040d17',
-  grid: '#0a1a2a',
-  text: '#8fa4ba',
-  emaFast: '#2962FF',
-  emaSlow: '#FF6D00',
-  atrUpper: '#ff2edb',
-  atrLower: '#ff2edb',
-  entry: '#ffffff',
-  sl: '#ff7187',
-  tp: '#35e0b1'
-};
+/* Market chart (Analytics): closed BINANCE:BTCUSDT Spot bars that the server already stored from the public Binance feed.
+   Read-only and CSP-safe: no external script, no request to any other host (one authenticated GET of the same origin through
+   the page helper), no inline style, no markup injection. Candles are SVG nodes made with createElementNS and painted by market-chart.css;
+   every value is set with textContent or a geometry attribute. Prices shown come from the server as exact decimal strings. */
+(() => {
+  const SVG_NS='http://www.w3.org/2000/svg';
+  const panel=document.getElementById('interactiveChartPanel'),root=document.getElementById('interactiveChart'),
+    svg=document.getElementById('marketChartSvg'),status=document.getElementById('marketChartStatus'),meta=document.getElementById('marketChartMeta');
+  if(!panel||!root||!svg||!status||!meta)return;
+  const page=document.querySelector('[data-page="analytics"]'),app=document.getElementById('app');
+  const T=text=>typeof translate==='function'?translate(text):text;
+  const tpl=(text,values)=>T(text).replace(/\{(\w+)\}/g,(match,key)=>Object.hasOwn(values,key)?String(values[key]):match);
+  const errorCode=error=>error?.code||(error?.status?'HTTP_'+error.status:'REQUEST_FAILED');
+  const pad=value=>String(value).padStart(2,'0');
+  const date=ms=>{const d=new Date(ms);return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate());};
+  const clock=ms=>{const d=new Date(ms);return pad(d.getUTCHours())+':'+pad(d.getUTCMinutes());};
+  const stamp=ms=>Number.isFinite(ms)?date(ms)+' '+clock(ms)+' UTC':'—';
+  const axisTime=(ms,interval)=>interval==='1d'?date(ms):interval==='1h'||interval==='4h'?date(ms).slice(5)+' '+clock(ms):clock(ms);
 
-let interactiveChart = null;
-let candleSeries = null;
-let volumeSeries = null;
-let emaFastSeries = null;
-let emaSlowSeries = null;
-let atrUpperSeries = null;
-let atrLowerSeries = null;
+  // Layout in the 900 x 380 viewBox: plot, price labels on the right, volume under the price area.
+  const X0=8,X1=820,LABEL_X=824,PRICE_TOP=10,PRICE_BOTTOM=300,VOLUME_TOP=310,VOLUME_BOTTOM=370,TIME_Y=378;
+  const GEOMETRY=new Set(['x','y','x1','y1','x2','y2','width','height']);
+  const round=value=>Math.round(value*100)/100;
+  const node=(tag,className,attributes,text)=>{
+    const element=document.createElementNS(SVG_NS,tag);
+    if(className)element.setAttribute('class',className);
+    if(attributes)for(const [name,value] of Object.entries(attributes))if(GEOMETRY.has(name))element.setAttribute(name,String(round(value)));
+    if(text!==undefined)element.textContent=text;
+    return element;
+  };
 
-let currentChartSymbol = '';
-let currentChartBroker = 'binance-global';
-let cachedPositions = [];
-let chartPriceLines = [];
-let cachedOHLCV = [];
+  const state={interval:'1h',seq:0,loading:false,data:null,error:null};
+  const show=(name,text)=>{root.dataset.state=name;status.textContent=text;};
+  const clearSvg=()=>svg.replaceChildren();
 
-// Entry point: Initialize the chart component
-async function initInteractiveChart() {
-  const container = document.getElementById('interactiveChart');
-  if (!container || !window.LightweightCharts) return;
-
-  if (!interactiveChart) {
-    interactiveChart = LightweightCharts.createChart(container, {
-      layout: { background: { color: CHART_COLORS.bg }, textColor: CHART_COLORS.text },
-      grid: {
-        vertLines: { color: CHART_COLORS.grid },
-        horzLines: { color: CHART_COLORS.grid },
-      },
-      timeScale: { timeVisible: true, secondsVisible: false },
-      crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
-    });
-
-    candleSeries = interactiveChart.addCandlestickSeries({
-      upColor: CHART_COLORS.up, downColor: CHART_COLORS.down, borderVisible: false,
-      wickUpColor: CHART_COLORS.up, wickDownColor: CHART_COLORS.down
-    });
-
-    volumeSeries = interactiveChart.addHistogramSeries({
-      priceFormat: { type: 'volume' },
-      priceScaleId: '',
-      scaleMargins: { top: 0.8, bottom: 0 }
-    });
-
-    emaFastSeries = interactiveChart.addLineSeries({ color: CHART_COLORS.emaFast, lineWidth: 2 });
-    emaSlowSeries = interactiveChart.addLineSeries({ color: CHART_COLORS.emaSlow, lineWidth: 2 });
-    
-    // ATR Bands
-    atrUpperSeries = interactiveChart.addLineSeries({ color: CHART_COLORS.atrUpper, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
-    atrLowerSeries = interactiveChart.addLineSeries({ color: CHART_COLORS.atrLower, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
-
-    new ResizeObserver(entries => {
-      if (entries.length === 0 || entries[0].target !== container) return;
-      const newRect = entries[0].contentRect;
-      interactiveChart.applyOptions({ width: newRect.width, height: newRect.height });
-    }).observe(container);
+  // Paper position levels from the page's own positions list (loaded by app.js). Rows of other symbols or invalid prices are skipped.
+  const LEVELS=[['avg_price','ENTRY','mc-entry'],['stop_loss','SL','mc-sl'],['take_profit','TP','mc-tp']];
+  function levels(){
+    if(typeof positions==='undefined'||!Array.isArray(positions))return [];
+    const found=[];
+    for(const row of positions){
+      if(!row||row.broker!=='binance-global'||row.symbol!=='BTCUSDT'||!(Number(row.quantity)>0))continue;
+      for(const [key,tag,className] of LEVELS){
+        const price=Number(row[key]);
+        if(Number.isFinite(price)&&price>0)found.push({tag,className,price,text:String(row[key])});
+      }
+    }
+    return found;
   }
 
-  // Bind events
-  document.getElementById('interactiveChartSymbol')?.addEventListener('change', async (e) => {
-    const selected = e.target.value;
-    if (selected) {
-      const pos = cachedPositions.find(p => p.symbol === selected);
-      currentChartBroker = pos ? pos.broker : document.getElementById('analyticsBroker')?.value || 'binance-global';
-      await loadChartForSymbol(selected, currentChartBroker);
-    } else {
-      clearChart();
+  const tip=bar=>stamp(bar.time)+' · O '+bar.open+' · H '+bar.high+' · L '+bar.low+' · C '+bar.close+' · V '+bar.volume+' · '+bar.minutes+' min';
+  const ticks=(count,wanted)=>{
+    const step=Math.max(1,Math.ceil(count/wanted)),picks=[];
+    for(let at=0;at<count;at+=step)picks.push(at);
+    return picks;
+  };
+
+  /** Draws the candles, grid, labels and position levels. Number() is used for pixel geometry only. */
+  function draw(bars,found,interval,intervalMs){
+    clearSvg();
+    const usable=bars.filter(bar=>[bar.open,bar.high,bar.low,bar.close,bar.volume].every(value=>Number.isFinite(Number(value))));
+    if(usable.length===0)return;
+    let min=Math.min(...usable.map(bar=>Number(bar.low)),...found.map(level=>level.price));
+    let max=Math.max(...usable.map(bar=>Number(bar.high)),...found.map(level=>level.price));
+    if(max===min){min-=1;max+=1;}
+    const margin=(max-min)*0.04;min-=margin;max+=margin;
+    const y=price=>PRICE_TOP+(max-price)/(max-min)*(PRICE_BOTTOM-PRICE_TOP);
+    const peak=Math.max(...usable.map(bar=>Number(bar.volume)),0);
+    // Candles sit on the time axis: a bucket with no stored minutes leaves an empty slot instead of the neighbors closing the gap.
+    const step=Number.isFinite(intervalMs)&&intervalMs>0?intervalMs:null,t0=usable[0].time;
+    const place=(bar,index)=>step===null?index:Math.round((bar.time-t0)/step);
+    const slots=Math.max(usable.length,step===null?0:place(usable[usable.length-1],usable.length-1)+1);
+    const slot=(X1-X0)/slots,width=Math.max(1,slot*0.7);
+    const grid=node('g','mc-grid-group');
+    for(let line=0;line<5;line++){
+      const price=max-(max-min)*line/4,at=y(price);
+      grid.append(node('line','mc-grid',{x1:X0,x2:X1,y1:at,y2:at}),node('text','mc-axis',{x:LABEL_X,y:at+4},price.toFixed(2)));
     }
+    svg.append(grid);
+    usable.forEach((bar,index)=>{
+      const x=X0+slot*(place(bar,index)+0.5),open=Number(bar.open),close=Number(bar.close),direction=close>=open?'mc-up':'mc-down';
+      const group=node('g','mc-bar'+(bar.complete===false?' mc-incomplete':''));
+      const volume=peak>0?Number(bar.volume)/peak*(VOLUME_BOTTOM-VOLUME_TOP):0;
+      group.append(node('title',null,null,tip(bar)),
+        node('line','mc-wick '+direction,{x1:x,x2:x,y1:y(Number(bar.high)),y2:y(Number(bar.low))}),
+        node('rect','mc-candle '+direction,{x:x-width/2,y:Math.min(y(open),y(close)),width,height:Math.max(1,Math.abs(y(open)-y(close)))}),
+        node('rect','mc-vol '+direction,{x:x-width/2,y:VOLUME_BOTTOM-volume,width,height:volume}));
+      svg.append(group);
+    });
+    for(const at of ticks(usable.length,5))
+      svg.append(node('text','mc-axis mc-axis-mid',{x:X0+slot*(place(usable[at],at)+0.5),y:TIME_Y},axisTime(usable[at].time,interval)));
+    const last=usable[usable.length-1],lastY=y(Number(last.close));
+    svg.append(node('line','mc-last',{x1:X0,x2:X1,y1:lastY,y2:lastY}),node('text','mc-axis mc-last-label',{x:LABEL_X,y:lastY+4},last.close));
+    for(const level of found){
+      const at=y(level.price);
+      svg.append(node('line','mc-level '+level.className,{x1:X0,x2:X1,y1:at,y2:at}),node('text','mc-level-label',{x:X0+4,y:at-3},level.tag+' '+level.text));
+    }
+  }
+
+  const metaText=(data,bars)=>{
+    let text=tpl('{bars} bars · interval {interval} · stored Binance Spot public data · generated {time}',
+      {bars:bars.length,interval:data.interval,time:stamp(Date.parse(data.generated_at))});
+    if(data.gaps?.count>0)text+=' · '+tpl('{count} gaps · {missing} missing 1m bars in this window',{count:data.gaps.count,missing:data.gaps.missing_minutes});
+    return text;
+  };
+
+  function render(){
+    if(state.error!==null){clearSvg();meta.textContent='';show('unavailable',tpl('Market data unavailable ({code})',{code:state.error}));return;}
+    const data=state.data;
+    if(data===null){
+      clearSvg();meta.textContent='';
+      if(state.loading)show('loading',T('Loading market data…'));else show('idle','');
+      return;
+    }
+    const bars=Array.isArray(data.bars)?data.bars:[];
+    if(bars.length===0){clearSvg();meta.textContent='';show('empty',T('No stored bars for this interval yet'));return;}
+    draw(bars,levels(),data.interval||state.interval,Number(data.interval_ms));
+    meta.textContent=metaText(data,bars);
+    if(data.stale===true)show('stale',tpl('Stale: latest closed bar is {age} s old (limit {limit} s)',
+      {age:data.age_seconds,limit:data.stale_after_seconds??180}));
+    else show('ready',tpl('Latest closed bar {time} · age {age} s',{time:stamp(data.latest_closed_bar?.close_time),age:data.age_seconds}));
+  }
+
+  async function load(){
+    const interval=state.interval,seq=++state.seq;
+    state.loading=true;
+    if(state.data===null&&state.error===null)render();
+    try{
+      const data=await api('/api/market/ohlcv?interval='+interval,{silent:true});
+      if(seq!==state.seq)return;
+      state.loading=false;state.error=null;state.data=data;render();
+    }catch(error){
+      if(seq!==state.seq)return;
+      state.loading=false;state.data=null;state.error=errorCode(error);render();
+    }
+  }
+  function clear(){state.seq++;state.loading=false;state.data=null;state.error=null;clearSvg();meta.textContent='';show('idle','');}
+  const visible=()=>!!page&&!page.hidden&&(!app||!app.hidden);
+
+  const buttons=[...panel.querySelectorAll('[data-mc-interval]')];
+  for(const button of buttons)button.addEventListener('click',()=>{
+    state.interval=button.dataset.mcInterval;
+    for(const other of buttons){const on=other===button;other.classList.toggle('active',on);other.ariaPressed=String(on);}
+    // Nothing of the old interval stays on screen while the new one loads.
+    state.data=null;state.error=null;load();
   });
-
-  document.getElementById('chartEmaPeriod')?.addEventListener('change', updateIndicators);
-  document.getElementById('chartEma2Period')?.addEventListener('change', updateIndicators);
-  document.getElementById('chartAtrPeriod')?.addEventListener('change', updateIndicators);
-  document.getElementById('chartAtrMult')?.addEventListener('change', updateIndicators);
-
-  await refreshChartData();
-}
-
-function clearChart() {
-  candleSeries?.setData([]);
-  volumeSeries?.setData([]);
-  emaFastSeries?.setData([]);
-  emaSlowSeries?.setData([]);
-  atrUpperSeries?.setData([]);
-  atrLowerSeries?.setData([]);
-  clearPriceLines();
-}
-
-function clearPriceLines() {
-  if (candleSeries && chartPriceLines.length > 0) {
-    chartPriceLines.forEach(line => candleSeries.removePriceLine(line));
-    chartPriceLines = [];
-  }
-}
-
-async function refreshChartData() {
-  try {
-    cachedPositions = await api('/api/positions');
-    const symbols = [...new Set(cachedPositions.map(p => p.symbol))];
-    const select = document.getElementById('interactiveChartSymbol');
-    
-    if (select) {
-      const currentVal = select.value;
-      select.innerHTML = '<option value="">Select Asset</option>' + symbols.map(s => `<option value="${s}">${s}</option>`).join('');
-      
-      if (symbols.includes(currentVal)) {
-        select.value = currentVal;
-        const pos = cachedPositions.find(p => p.symbol === currentVal);
-        await loadChartForSymbol(currentVal, pos ? pos.broker : 'binance-global');
-      } else if (symbols.length > 0) {
-        select.value = symbols[0];
-        const pos = cachedPositions.find(p => p.symbol === symbols[0]);
-        await loadChartForSymbol(symbols[0], pos.broker);
-      } else {
-        clearChart();
-      }
-    }
-  } catch (err) {
-    console.error('Failed to load positions:', err);
-  }
-}
-
-async function loadChartForSymbol(symbol, broker) {
-  currentChartSymbol = symbol;
-  currentChartBroker = broker;
-  if (!interactiveChart) return;
-  
-  try {
-    cachedOHLCV = await fetchBrokerOHLCV(symbol, broker);
-    if (!cachedOHLCV || cachedOHLCV.length === 0) return;
-
-    const candleData = cachedOHLCV.map(d => ({ time: d.time, open: d.open, high: d.high, low: d.low, close: d.close }));
-    const volData = cachedOHLCV.map(d => ({ time: d.time, value: d.volume, color: d.close >= d.open ? '#35e0b188' : '#ff718788' }));
-    
-    candleSeries.setData(candleData);
-    volumeSeries.setData(volData);
-
-    updateIndicators();
-    renderActivePositions(symbol);
-  } catch (err) {
-    console.error('Error rendering chart', err);
-  }
-}
-
-function updateIndicators() {
-  if (!cachedOHLCV.length) return;
-  
-  const emaPeriod = Number(document.getElementById('chartEmaPeriod')?.value || 9);
-  const ema2Period = Number(document.getElementById('chartEma2Period')?.value || 21);
-  const atrPeriod = Number(document.getElementById('chartAtrPeriod')?.value || 14);
-  const atrMult = Number(document.getElementById('chartAtrMult')?.value || 2);
-  
-  const candles = cachedOHLCV;
-  
-  // EMA
-  const ema = calculateEMA(candles, emaPeriod);
-  const emaSlow = calculateEMA(candles, ema2Period); 
-  emaFastSeries.setData(ema);
-  emaSlowSeries.setData(emaSlow);
-
-  // ATR Bands
-  const atrVals = calculateATR(candles, atrPeriod);
-  const upper = [];
-  const lower = [];
-  
-  for (let i = 0; i < candles.length; i++) {
-    const time = candles[i].time;
-    const atrObj = atrVals.find(a => a.time === time);
-    const emaObj = ema.find(e => e.time === time);
-    if (atrObj && emaObj) {
-      upper.push({ time, value: emaObj.value + (atrObj.value * atrMult) });
-      lower.push({ time, value: emaObj.value - (atrObj.value * atrMult) });
-    }
-  }
-  
-  atrUpperSeries.setData(upper);
-  atrLowerSeries.setData(lower);
-}
-
-function calculateEMA(data, period) {
-  const result = [];
-  const k = 2 / (period + 1);
-  let ema = data[0].close;
-  for (let i = 0; i < data.length; i++) {
-    if (i > 0) ema = (data[i].close * k) + (ema * (1 - k));
-    if (i >= period - 1) result.push({ time: data[i].time, value: ema });
-  }
-  return result;
-}
-
-function calculateATR(data, period) {
-  const result = [];
-  let trSum = 0;
-  for (let i = 0; i < data.length; i++) {
-    let tr = 0;
-    if (i === 0) {
-      tr = data[i].high - data[i].low;
-    } else {
-      const hl = data[i].high - data[i].low;
-      const hc = Math.abs(data[i].high - data[i - 1].close);
-      const lc = Math.abs(data[i].low - data[i - 1].close);
-      tr = Math.max(hl, hc, lc);
-    }
-    
-    if (i < period) {
-      trSum += tr;
-      if (i === period - 1) {
-        result.push({ time: data[i].time, value: trSum / period });
-      }
-    } else {
-      const prevAtr = result[result.length - 1].value;
-      const atr = ((prevAtr * (period - 1)) + tr) / period; // Smoothed Moving Average (RMA)
-      result.push({ time: data[i].time, value: atr });
-    }
-  }
-  return result;
-}
-
-function renderActivePositions(symbol) {
-  if (!candleSeries) return;
-  clearPriceLines();
-  candleSeries.setMarkers([]);
-
-  const active = cachedPositions.filter(p => p.symbol === symbol);
-  active.forEach(pos => {
-    const entry = Number(pos.entry_price || pos.entryPrice);
-    if (entry) chartPriceLines.push(candleSeries.createPriceLine({ price: entry, color: CHART_COLORS.entry, lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: true, title: 'ENTRY' }));
-    const sl = Number(pos.stop_loss || pos.stopLoss);
-    if (sl) chartPriceLines.push(candleSeries.createPriceLine({ price: sl, color: CHART_COLORS.sl, lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, axisLabelVisible: true, title: 'SL' }));
-    const tp = Number(pos.take_profit || pos.takeProfit);
-    if (tp) chartPriceLines.push(candleSeries.createPriceLine({ price: tp, color: CHART_COLORS.tp, lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Solid, axisLabelVisible: true, title: 'TP' }));
-  });
-}
-
-async function fetchBrokerOHLCV(symbol, broker) {
-  const isBinance = broker.startsWith('binance');
-  if (isBinance) {
-    let fetchSymbol = symbol.replace(/THB$/, 'USDT').toUpperCase();
-    const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${fetchSymbol}&interval=1h&limit=500`);
-    if (!res.ok) throw new Error('Binance API error');
-    const data = await res.json();
-    return data.map(k => ({ time: Math.floor(k[0]/1000), open: +k[1], high: +k[2], low: +k[3], close: +k[4], volume: +k[5] }));
-  }
-  
-  let fetchSymbol = symbol.endsWith('USDT') || symbol.endsWith('THB') ? symbol.replace(/THB$/, 'USDT').toUpperCase() : 'BTCUSDT'; 
-  const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${fetchSymbol}&interval=1h&limit=500`);
-  const data = await res.json();
-  return data.map(k => ({ time: Math.floor(k[0]/1000), open: +k[1], high: +k[2], low: +k[3], close: +k[4], volume: +k[5] }));
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const targetNode = document.querySelector('[data-page="analytics"]');
-  if (!targetNode) return;
-  new MutationObserver(mutations => {
-    mutations.forEach(mutation => {
-      if (mutation.attributeName === 'hidden' && !targetNode.hidden) {
-        if (!interactiveChart) initInteractiveChart();
-        else refreshChartData();
-      }
-    });
-  }).observe(targetNode, { attributes: true });
-});
+  document.getElementById('marketChartRefresh')?.addEventListener('click',load);
+  document.querySelector('nav button[data-view="analytics"]')?.addEventListener('click',load);
+  document.getElementById('refresh')?.addEventListener('click',()=>{if(visible())load();});
+  document.getElementById('language')?.addEventListener('change',render);
+  document.getElementById('logout')?.addEventListener('click',clear);
+  // A quiet refresh while the chart is on screen: the stored feed adds a bar every minute.
+  setInterval(()=>{if(visible()&&!document.hidden)load();},60000);
+})();

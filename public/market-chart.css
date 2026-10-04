@@ -1,0 +1,26 @@
+/* Market chart (Analytics). Classes only: the CSP forbids inline styles, so every paint of the SVG candles lives here. */
+.mc-controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mc-controls button.mini{padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:#091726;color:var(--muted);cursor:pointer}
+.mc-controls button.active{border-color:var(--cyan);background:#0d3547;color:var(--cyan)}
+.mc-root{margin-top:10px}
+.mc-svg{display:block;width:100%;height:auto;min-height:260px;background:#040d17;border-radius:9px}
+.mc-status{color:#8fa4ba;font-size:13px;margin:0 0 6px}
+.mc-root[data-state="stale"] .mc-status{color:#ffd36b}
+.mc-root[data-state="unavailable"] .mc-status{color:#ff9dab}
+.mc-root[data-state="loading"] .mc-svg{opacity:.5}
+.mc-up{fill:#35e0b1;stroke:#35e0b1}
+.mc-down{fill:#ff7187;stroke:#ff7187}
+.mc-wick{stroke-width:1}
+.mc-candle{stroke-width:0}
+.mc-vol{opacity:.35;stroke-width:0}
+.mc-incomplete{opacity:.45}
+.mc-grid{stroke:#0a1a2a;stroke-width:1}
+.mc-svg text{font-size:11px;fill:#8fa4ba;stroke:none}
+.mc-svg text.mc-axis-mid{text-anchor:middle}
+.mc-last{stroke:#8fa4ba;stroke-width:1;stroke-dasharray:4 4}
+.mc-level{stroke-width:1}
+.mc-entry{stroke:#fff;stroke-dasharray:6 3}
+.mc-sl{stroke:#ff7187}
+.mc-tp{stroke:#35e0b1}
+.mc-meta{font-size:12px}
+@media(max-width:800px){.mc-svg{min-height:210px}}

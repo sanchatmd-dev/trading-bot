@@ -108,7 +108,7 @@ test('index.html loads the library script before journey.js with the qr1a token;
   try{
     const order=['/pine-bridge.js?v=','/readiness.js?v=','/research-library.js?v=qr1a','/journey.js?v=pa1'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'the library script loads after the Bridge panel and before journey.js');
-    assert.ok(html.includes('/styles-v2.css?v=pa1')&&html.includes('/i18n.js?v=pa1'));
+    assert.ok(html.includes('/styles-v2.css?v=pa1')&&html.includes('/i18n.js?v=md1'));
   }finally{dom.window.close();}
   const p=setup({handler:router()});
   try{

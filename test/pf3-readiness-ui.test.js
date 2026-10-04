@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
 import {buildReadinessReport} from '../src/postgres/pf3-readiness-report.js';
 import {buildProposal} from '../src/postgres/pf4-risk-proposals.js';
+import {classifyMarketHealth} from '../src/postgres/market-ohlcv.js';
 import {config} from '../src/config.js';
 import {HEALTHY,changePolicy,createEnvelopeWorld,persistentPause,pf3Facts} from './helpers/pf3-envelope-fixture.js';
 
@@ -32,6 +33,19 @@ const REPORTS={
   EXECUTION_FAULT_REVIEW_REQUIRED:reportOf({spec:FAULTY}),
   CAPABILITY_UNAVAILABLE:reportOf({edit:facts=>{facts.preflightEnabled=false;facts.historical={status:'DISABLED'};}}),
   INSUFFICIENT_ACTIVITY:reportOf({spec:{}})};
+
+// Reports with the advisory market_data item from the real classifier (stored public Binance Spot 1m bars).
+const MARKET_LATEST=Math.floor(Date.parse(REPORTS.READY_TO_START_PAPER.generated_at)/MINUTE)*MINUTE;
+const marketReport=({age=5,missing=0,item}={})=>{
+  const report=structuredClone(REPORTS.READY_TO_START_PAPER);
+  report.market_data=item??classifyMarketHealth({now:MARKET_LATEST+age*1000,latest:MARKET_LATEST,first:MARKET_LATEST-3*86400000,edge:{n:1440-missing},
+    gaps:{count:missing>0?1:0,missing_minutes:missing,truncated:false,ranges:missing>0?[{from_open_time:MARKET_LATEST-3600000,
+      to_open_time:MARKET_LATEST-3600000+(missing-1)*MINUTE,missing_minutes:missing}]:[]}});
+  return report;
+};
+const MARKET_REPORTS={PASS:marketReport(),WARN:marketReport({missing:3}),FAIL:marketReport({age:1000,missing:70}),
+  UNAVAILABLE:marketReport({item:classifyMarketHealth({now:MARKET_LATEST,unavailable:'MARKET_DATA_UNAVAILABLE'})}),
+  EMPTY:marketReport({item:classifyMarketHealth({now:MARKET_LATEST})})};
 
 function setup({language,handler,scope}={}){
   const dom=new JSDOM(publicFile('index.html'),{url:'https://robot.test',runScripts:'outside-only'}),w=dom.window,d=w.document;
@@ -63,9 +77,9 @@ test('index.html: panel after the Risk form and outside it, fixed texts, warning
     assert.equal(panel.querySelectorAll('input,select,textarea,form,a').length,0,'no field can save or start anything');
     assert.equal(panel.querySelectorAll('button').length,1);assert.equal(panel.querySelector('[style]'),null,'the CSP forbids inline styles');
     assert.equal(form.querySelector('.pf3-save-warning').textContent,WARNING);
-    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/readiness.js?v=nw1','/journey.js?v=pa1'].map(part=>html.indexOf(part));
+    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/readiness.js?v=md1','/journey.js?v=pa1'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'readiness.js loads after app.js and before journey.js');
-    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=pa1/);
+    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=md1/);
     assert.doesNotMatch(html,/(styles-v2\.css|i18n\.js|journey\.js)\?v=p0j1["']/,'changed files carry a new cache version');
     assert.doesNotMatch(html,/(i18n\.js|readiness\.js|pine-bridge\.js)\?v=(rj1|pf4a|ux1a)["']/,'the news block change gave the files it touched a new cache version');
   }finally{dom.window.close();}
@@ -391,7 +405,7 @@ test('every label of every report shape has a Thai text; the pf3 pairs are compl
     for(const text of english)assert.ok(shown.has(text),'pair for text no longer shown: '+text);
   }finally{w.close();}
   // Rendered labels of every report shape, in English and in Thai.
-  const reports=[...Object.values(REPORTS),ALL,reportOf({spec:{intents:{buy:3,exit_sl:3},fills:{buy:3,exit:3,exit_by_reason:{SL:3}},episodes:{closed:3,losing:0}}}),
+  const reports=[...Object.values(REPORTS),...Object.values(MARKET_REPORTS),ALL,reportOf({spec:{intents:{buy:3,exit_sl:3},fills:{buy:3,exit:3,exit_by_reason:{SL:3}},episodes:{closed:3,losing:0}}}),
     reportOf({edit:facts=>{facts.historical.evidence.planPolicyHash='e'.repeat(64);}}),reportOf({spec:{intents:{buy:2,exit_sl:2},fills:{buy:2,exit:2,exit_by_reason:{SL:2}},episodes:{closed:2,losing:0}}})];
   for(const language of ['en','th']){
     for(const report of reports){
@@ -1005,4 +1019,101 @@ test('PF-4 shows the R rule of the daily loss limit with every proposal, and its
     const language=th.d.querySelector('#language');language.value='en';language.dispatchEvent(new th.w.Event('change'));await settle();
     assert.equal(advisory(t,'DAILY_LOSS_VALUE_RISES').textContent,'DAILY_LOSS_VALUE_RISES '+RISES);
   }finally{th.w.close();}
+});
+
+// Market data section (advisory item from stored public Binance Spot 1m bars).
+const MARKET_ADVISORY='Advisory only. Does not change the verdict, enable Historical Preflight or allow trading.';
+const marketRows=block=>[...block.querySelectorAll('.pf3-ev')].filter(item=>item.querySelector('.pf3-k')).map(item=>[item.querySelector('.pf3-k').textContent,item.querySelector('.pf3-v').textContent]);
+
+test('Market data section: chip tone, advisory note and rows for PASS, WARN and FAIL; the verdict section is unchanged',async()=>{
+  const labels={PASS:['Market data is current','ok'],WARN:['Market data needs attention','warn'],FAIL:['Market data is not usable','bad']};
+  for(const status of ['PASS','WARN','FAIL']){
+    const report=MARKET_REPORTS[status],item=report.market_data,p=setup({handler:answer(report)});
+    try{
+      await p.open();
+      const block=p.block('Market data');
+      assert.ok(block,'section present: '+status);
+      const chip=block.querySelector('.pf3-chip');
+      assert.equal(chip.textContent,labels[status][0]);assert.ok(chip.classList.contains('pf3-'+labels[status][1]),status);
+      assert.equal(block.querySelector('.pf3-head code').textContent,status);
+      assert.equal(block.querySelector('.pf3-note').textContent,MARKET_ADVISORY);
+      const rows=Object.fromEntries(marketRows(block));
+      assert.equal(rows['Latest closed 1m bar'],utc(item.latest_closed_bar.close_time));
+      assert.equal(rows['Data age (seconds)'],String(item.age_seconds));
+      assert.equal(rows['Bars in the last 24 hours'],item.bars_available+' / '+item.expected_bars);
+      assert.equal(rows['Missing 1m bars'],String(item.missing_bars));assert.equal(rows['Gap count'],String(item.gap_count));
+      assert.equal(block.querySelectorAll('.pf3-list li').length,item.reasons.length);
+      if(status==='PASS')assert.equal(rows['Reasons'],'None');
+      if(status==='WARN'){
+        assert.equal(rows['Reasons'],'The last 24 hours miss some 1m bars.');
+        assert.equal(rows['Gap range'],utc(item.gaps[0].from_open_time)+' – '+utc(item.gaps[0].to_open_time)+' (3 min)');
+      }
+      if(status==='FAIL')assert.deepEqual([...block.querySelectorAll('.pf3-list li')].map(li=>li.textContent),
+        ['The newest closed 1m bar is more than 15 minutes old.','The last 24 hours miss 60 or more 1m bars.']);
+      assert.equal(p.root.querySelector('.pf3-chip').textContent,'Ready to start Paper collection','the verdict chip is the same with the item');
+      assert.equal(p.root.querySelectorAll('button,input,select,textarea,a').length,0,'the item adds no control');
+    }finally{p.w.close();}
+  }
+});
+
+test('Market data section: unavailable and empty items, ordering between PF-1 and PF-2, and absence without the key',async()=>{
+  for(const [name,reason,code] of [['UNAVAILABLE','Stored market data is not available on this server.','MARKET_DATA_UNAVAILABLE'],
+    ['EMPTY','No closed 1m bar has been stored yet.',null]]){
+    const p=setup({handler:answer(MARKET_REPORTS[name])});
+    try{
+      await p.open();
+      const block=p.block('Market data'),rows=Object.fromEntries(marketRows(block));
+      assert.ok(block.querySelector('.pf3-chip').classList.contains('pf3-bad'));
+      assert.equal(rows['Reasons'],reason);assert.equal(rows['Latest closed 1m bar'],'—');assert.equal(rows['Data age (seconds)'],'—');
+      assert.equal(rows['Bars in the last 24 hours'],'0 / 0');
+      assert.equal(rows['Unavailable code'],code??undefined);
+    }finally{p.w.close();}
+  }
+  const p=setup({handler:answer(MARKET_REPORTS.WARN)});
+  try{
+    await p.open();
+    const titles=[...p.root.querySelectorAll('section.pf3-block > h3')].map(item=>item.textContent);
+    const at=name=>titles.indexOf(name);
+    assert.ok(at('Current state (PF-1)')>=0&&at('Market data')===at('Current state (PF-1)')+1&&at('Historical evidence (PF-2)')===at('Market data')+1,titles.join('|'));
+  }finally{p.w.close();}
+  const plain=setup({handler:answer(REPORTS.READY_TO_START_PAPER)});
+  try{
+    await plain.open();
+    assert.equal(plain.block('Market data'),undefined,'no market_data key: no section');
+    assert.ok(!plain.text().includes('Advisory only. Does not change'));
+  }finally{plain.w.close();}
+});
+
+test('Market data section: an unknown status or reason shows its raw code; hostile values are text; at most 10 gap ranges',async()=>{
+  const report=structuredClone(MARKET_REPORTS.WARN);
+  report.market_data.status='SOMETHING_NEW';report.market_data.reasons=['A_NEW_REASON','MARKET_DATA_GAPS'];
+  const p=setup({handler:answer(report)});
+  try{
+    await p.open();
+    const block=p.block('Market data'),chip=block.querySelector('.pf3-chip');
+    assert.equal(chip.textContent,'SOMETHING_NEW');assert.ok(chip.classList.contains('pf3-muted'));
+    const items=[...block.querySelectorAll('.pf3-list li')];
+    assert.equal(items[0].querySelector('code').textContent,'A_NEW_REASON');assert.equal(items[1].textContent,'The last 24 hours miss some 1m bars.');
+  }finally{p.w.close();}
+  const hostile=structuredClone(MARKET_REPORTS.WARN);
+  hostile.market_data.unavailable_code='<img src=x onerror=alert(1)>';hostile.market_data.reasons=['<b onmouseover=bad()>x</b>'];
+  hostile.market_data.gaps=Array.from({length:12},(_,index)=>({from_open_time:MARKET_LATEST-(index+2)*MINUTE,to_open_time:MARKET_LATEST-(index+2)*MINUTE,missing_minutes:'<u>1</u>'}));
+  hostile.market_data.gaps_truncated=true;
+  const q=setup({handler:answer(hostile)});
+  try{
+    await q.open();
+    const block=q.block('Market data');
+    assert.equal(block.querySelectorAll('img,b,u,script,iframe,a,svg').length,0);assert.equal(block.querySelector('[onerror],[onmouseover],[style]'),null);
+    assert.ok(block.textContent.includes('<img src=x onerror=alert(1)>')&&block.textContent.includes('<b onmouseover=bad()>x</b>'));
+    assert.equal(marketRows(block).filter(row=>row[0]==='Gap range').length,10,'at most 10 ranges are listed');
+    assert.ok(block.textContent.includes('More gaps exist than are listed.'));
+  }finally{q.w.close();}
+  for(const value of ['nonsense',null,42]){
+    const garbage=structuredClone(REPORTS.READY_TO_START_PAPER);garbage.market_data=value;
+    const g=setup({handler:answer(garbage)});
+    try{await g.open();assert.equal(g.block('Market data'),undefined,'only an object makes a section: '+value);assert.ok(g.root.querySelector('.pf3-verdict'));}finally{g.w.close();}
+  }
+  const malformed=structuredClone(REPORTS.READY_TO_START_PAPER);malformed.market_data={status:5,reasons:'x',gaps:{},latest_closed_bar:'bad'};
+  const m=setup({handler:answer(malformed)});
+  try{await m.open();assert.ok(m.block('Market data'),'a malformed item still renders');assert.ok(m.root.querySelector('.pf3-verdict'),'the other sections are untouched');}finally{m.w.close();}
 });

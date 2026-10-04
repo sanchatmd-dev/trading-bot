@@ -136,6 +136,33 @@
     return group('Current state (PF-1)',...rows);
   }
 
+  // Stored public market data (advisory): freshness and gaps of the closed BINANCE:BTCUSDT Spot 1m bars. Never part of the verdict.
+  const MARKET_STATUS={PASS:['Market data is current','ok'],WARN:['Market data needs attention','warn'],FAIL:['Market data is not usable','bad']};
+  const MARKET_REASONS={
+    MARKET_DATA_UNAVAILABLE:'Stored market data is not available on this server.',
+    MARKET_DATA_EMPTY:'No closed 1m bar has been stored yet.',
+    MARKET_DATA_STALE_FAIL:'The newest closed 1m bar is more than 15 minutes old.',
+    MARKET_DATA_STALE:'The newest closed 1m bar is more than 3 minutes old.',
+    MARKET_DATA_GAPS_EXCESSIVE:'The last 24 hours miss 60 or more 1m bars.',
+    MARKET_DATA_GAPS:'The last 24 hours miss some 1m bars.'};
+
+  function marketDataSection(report){
+    const item=report.market_data;
+    const [name,tone]=Object.hasOwn(MARKET_STATUS,item.status)?MARKET_STATUS[item.status]:[null,'muted'];
+    const reasons=Array.isArray(item.reasons)?item.reasons:[],ranges=Array.isArray(item.gaps)?item.gaps.slice(0,10):[];
+    const rows=[make('div','pf3-head',make('span','pf3-chip pf3-'+tone,name?label(name):code(item.status)),name?code(item.status):null),
+      note('Advisory only. Does not change the verdict, enable Historical Preflight or allow trading.'),
+      row('Latest closed 1m bar',utc(item.latest_closed_bar?.close_time)),row('Data age (seconds)',dash(item.age_seconds)),
+      row('Bars in the last 24 hours',dash(item.bars_available)+' / '+dash(item.expected_bars)),
+      row('Missing 1m bars',dash(item.missing_bars)),row('Gap count',dash(item.gap_count)),
+      row('Reasons',reasons.length?make('ul','pf3-list',...reasons.map(reason=>make('li','',known(MARKET_REASONS,reason)))):T('None'))];
+    if(item.unavailable_code)rows.push(row('Unavailable code',code(item.unavailable_code)));
+    for(const range of ranges)
+      rows.push(row('Gap range',utc(range?.from_open_time)+' – '+utc(range?.to_open_time)+' ('+dash(range?.missing_minutes)+' min)'));
+    if(item.gaps_truncated===true)rows.push(note('More gaps exist than are listed.'));
+    return group('Market data',...rows);
+  }
+
   function table(headers,rows){
     const head=make('tr','',...headers.map(text=>label(text,'th')));
     const body=rows.map(cells=>make('tr','',...cells.map(cell=>make('td','',cell))));
@@ -223,7 +250,9 @@
     if(!state.report){root.replaceChildren(make('p','pf3-note',label('Open the report to check readiness.')));return;}
     const report=state.report;
     root.replaceChildren(guard('Verdict',()=>verdictSection(report)),guard('Blockers',()=>blockersSection(report)),
-      guard('Current state (PF-1)',()=>currentSection(report)),guard('Historical evidence (PF-2)',()=>historicalSection(report)),
+      guard('Current state (PF-1)',()=>currentSection(report)),
+      ...(report.market_data&&typeof report.market_data==='object'?[guard('Market data',()=>marketDataSection(report))]:[]),
+      guard('Historical evidence (PF-2)',()=>historicalSection(report)),
       guard('Collection estimate',()=>projectionSection(report)),guard('Limitations',()=>limitationsSection(report)));
   }
 
