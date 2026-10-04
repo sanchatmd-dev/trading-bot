@@ -14,6 +14,8 @@ Update, 2026-10-04 about 18:52 to about 19:06 UTC: the chart v3 indicators live 
 
 Update, 2026-10-04 about 19:30 to 19:45 UTC: root did the read-only QL-P2 sizing analysis and the local phone/Thai check of the chart v3 page (no host change).
 
+Update, 2026-10-04 about 19:55 to 21:27 UTC: Step 2 ten-input work, local only (no host change): planning workflow about 13 minutes, S1 (commit `40253be`, ten-input round trip and CATALOG parity tests) about 7 minutes of workflow plus root review and CI, S3 (commit `56bbedc`, 103 custom-effect tests) about 10 minutes plus a fix round of about 15 minutes, plus CI waits. S1 and S3 are test-only; Step 2 is not accepted (S2, S4, S5, S6 and S7 open, and the slot-10 decision belongs to the owner).
+
 Planning note, 2026-10-04: the owner added the pre-launch [market-data gate MD-1](ROADMAP.md#pre-launch-gate-md-1--market-data-at-production-scale) to the Roadmap. It is not estimated yet; estimate it before infrastructure stage II, after the chart v2 staging release has measured proxy usage.
 
 ## Codex to Claude handoff — 2026-10-03
