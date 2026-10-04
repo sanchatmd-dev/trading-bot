@@ -1,0 +1,393 @@
+{
+  "observedAt": "2026-10-04T16:05:00Z",
+  "scope": "Staging chart v2 release f22f3d0: precheck, incoming namespace, upload, extraction, API-only activation, immediate and delayed checks, an owner-signed-in browser and API proof through local forwarding, and a later read-only API verification of the natural same-entry EXIT",
+  "root": {
+    "platform": "Claude",
+    "segment": "Live steps 2026-10-04T15:38Z to 2026-10-04T15:52Z; adapter iterations and audits came before; the browser proof followed (its clock time is not recorded); the read-only EXIT verification was at about 2026-10-04T16:05Z",
+    "followsEvidence": "P2_HISTORY_RELEASE_02AF486_2026-10-04.json"
+  },
+  "usage": {
+    "claudeFiveHourUsedAt1505UtcPercent": 14,
+    "claudeWeeklyAllModelsUsedPercent": 11,
+    "claudeWeeklyFableUsedPercent": 6,
+    "note": "Reading at about 2026-10-04T15:05Z, before the live steps; no reading after the live steps is recorded; no engineering-hour total is established"
+  },
+  "code": {
+    "release": "f22f3d0",
+    "commits": {
+      "dc775e8": "Chart v2 code",
+      "f22f3d0": "Roadmap: pre-launch market-data gate MD-1 (documentation only)"
+    },
+    "builtOn": "e44dfba (stored-bar chart) with test fix 5516a7f",
+    "ci": {
+      "commit": "f22f3d0",
+      "checksPassed": 9,
+      "checksTotal": 9,
+      "includesPostgresqlJob": true
+    },
+    "endpoints": [
+      "GET /api/market/ohlcv v2: any allow-listed Binance Spot symbol, 14 intervals from 1m to 1w, default 1d; stored BTCUSDT bars when fresh and complete, otherwise a keyless server-side proxy; the forming bar is flagged",
+      "GET /api/market/symbols: the symbol allow-list for the picker",
+      "GET /api/positions/levels: entry, stop-loss and take-profit per open lot, for the bot scope or all bots"
+    ],
+    "ui": "Chart on Overview with a symbol picker, a timeframe selector, held-asset chips and per-lot entry, stop-loss and take-profit lines labelled with the bot name",
+    "proxy": {
+      "host": "Fixed host and paths",
+      "weightPerMinuteBudget": 600,
+      "usedWeightGuard": 3000,
+      "perUserRequestsPerMinute": 60,
+      "perUserCacheMissesPerMinute": 20,
+      "circuitOnStatus": [
+        429,
+        418,
+        403,
+        451
+      ],
+      "defaultState": "On by default under the owner authorization",
+      "killSwitch": "MARKET_PUBLIC_PROXY=0 disables it",
+      "apiKey": false,
+      "tradingPath": false
+    }
+  },
+  "tool": {
+    "description": "One local adapter over the frozen UI release tool, iterated three times; each iteration had author controls and an independent audit with a verdict",
+    "layer": "s03",
+    "package": {
+      "release": "f22f3d0",
+      "files": 784,
+      "sourceFiles": 602,
+      "dependencyFiles": 182,
+      "diffPathsVersusPreviousRelease": 33,
+      "previousRelease": "02af486",
+      "sourceTarSha256": "a527acc5fc29523332536fa61896f397d0215ed11a4d3e575910c0f6b2d1875c",
+      "depsTarSha256": "c0bd614e9cb3ad1d17e51ac14bab20c0d8b4258f888cc24855684e64566e1214",
+      "depsTarUnchangedFromPreviousRelease": true,
+      "releaseManifestSha256": "b5cd2444a6b9a237b54f814a0c1758c88092a5a75f2e4b81400b58bf45703b70"
+    },
+    "iterations": {
+      "version1": {
+        "authorControls": {
+          "passed": 42,
+          "failed": 0
+        },
+        "independentAudit": {
+          "verdict": "REJECT",
+          "findings": [
+            "MEDIUM (safety): no tool path back to 02af486 after a failed activation",
+            "LOW: server import linkage not proven on the host"
+          ],
+          "receiptSha256": "416b178fcbbda56c38774a7c5767ca341e0acfbe1c80a84d11a1f5ed8782d59e"
+        }
+      },
+      "version2": {
+        "change": "Added a recover phase, a health retry and a link-only import gate",
+        "authorControls": {
+          "passed": 51,
+          "failed": 0
+        },
+        "independentAudit": {
+          "verdict": "REJECT",
+          "findings": [
+            "HIGH: the recover phase ran reset-failed unconditionally and could leave the API stopped if systemd had unloaded the unit"
+          ],
+          "receiptSha256": "c6987ae0cc1fdc032320b4e8ea8c4f78f7845fb8043f48c33294d0edf7de0fab"
+        }
+      },
+      "version3": {
+        "change": "reset-failed runs only for a loaded failed unit, plus a clean error code",
+        "authorControls": {
+          "passed": 53,
+          "failed": 0
+        },
+        "independentAudit": {
+          "lenses": {
+            "diff": {
+              "passed": 35,
+              "failed": 0
+            },
+            "behavior": {
+              "passed": 55,
+              "failed": 0,
+              "mutants": {
+                "total": 30,
+                "killed": 28,
+                "equivalent": 2
+              }
+            },
+            "safety": {
+              "passed": 20,
+              "failed": 0
+            }
+          },
+          "total": {
+            "passed": 110,
+            "failed": 0
+          },
+          "verdict": "ACCEPT_NARROW",
+          "findingsAccepted": "Two LOW findings",
+          "receiptSha256": "8011d3153ad8e5eaef737c3f8f900555b84cf52d8ff0fbbceefdda5301889a30"
+        }
+      }
+    },
+    "rootAcceptedLocalDeliveryOnly": true,
+    "rootAcceptedAt": "2026-10-04T15:37:48Z",
+    "rollbackTarget": "02af486",
+    "activityTolerantComparison": {
+      "reference": "The 2026-10-04T09:17Z delayed-check state of 02af486 recorded in P2_HISTORY_RELEASE_02AF486_2026-10-04.json",
+      "mayChange": [
+        "Five activity counts",
+        "Four activity table pins"
+      ],
+      "rules": [
+        "Counts may not decrease and may grow by at most 100",
+        "A changed count needs its table pin to change",
+        "Pending may change only together with another count change",
+        "Every other compared field must match exactly"
+      ]
+    }
+  },
+  "liveStepSequence": "One pre-armed operations session per step, one root read-only refresh approval, root review of the fresh facts against predefined criteria, then one separate phase approval with the readiness token written last; the upload used one separate root upload approval and no session",
+  "precheck": {
+    "jobId": "p2-chart-precheck-20261004-1",
+    "refreshObservedAt": "2026-10-04T15:38:23Z",
+    "activityReference": {
+      "events": 39,
+      "pending": 39,
+      "signals": 39,
+      "entries": 2,
+      "allocations": 2
+    },
+    "activityNow": {
+      "events": 60,
+      "pending": 60,
+      "signals": 60,
+      "entries": 4,
+      "allocations": 4
+    },
+    "activityNote": "Natural growth only; all four activity table pins changed; no other drift",
+    "oldOpenAllocationPreserved": "0.01181 BTC",
+    "deployment": "READY",
+    "bot": "ACTIVE",
+    "researchJobs": "Idle",
+    "hostChange": "None",
+    "resultAround": "2026-10-04T15:38:40Z",
+    "verdict": "PRECHECK_PASS",
+    "refreshRawSha256": "097f0feb23c6b870dd57ee32ab28d4a9a3f24cbd00e130ef517dd136ed2e8048",
+    "resultSha256": "1a7f4a3f99720fdcf7462221d5c8747a54b4cf7b7123b6663d7b45fab586083b",
+    "readOnlyApprovalSha256": "4321672051e67983d2397a46408530c251885117d96e1bca0dfa53af1e27a633",
+    "phaseApprovalSha256": "b5dbcc1e505dc0db0f4ef7a8e170606a9cbf4ee69e619890b786d95aac254624"
+  },
+  "incoming": {
+    "jobId": "p2-chart-incoming-20261004-1",
+    "refreshObservedAt": "2026-10-04T15:39:03Z",
+    "resultAround": "2026-10-04T15:39:18Z",
+    "verdict": "INCOMING_PASS",
+    "action": "One mkdir with mode 0700 of the incoming namespace",
+    "serviceChanged": false,
+    "refreshRawSha256": "12c1d8e99b28c7206033d92e9aee1c5998b5f949812b75e662ff385539adfae5",
+    "resultSha256": "852fc8e0bac9fc2227732b386608e3c9f177901bbae223e50268a0744aa267ff",
+    "readOnlyApprovalSha256": "06583cbb9457af9d3385bf24b9b6ed580dec6c290923f0daa3b0b41be200b5f0",
+    "phaseApprovalSha256": "29d38134c1bb8aa1e1292aaaaf2f79e304e4f5b3246cf0a1964570043de9801e"
+  },
+  "upload": {
+    "approvalSha256": "6dd4bceec393d7b372903db926404ece8ba2ee0eb84f2438bdda864ccd0bc5ca",
+    "method": "One scp of 3 files: source.tar, deps.tar and release-manifest.txt",
+    "totalBytes": 37898636,
+    "returnCode": 0,
+    "startedAt": "2026-10-04T15:39:45Z",
+    "finishedAt": "2026-10-04T15:40:01Z",
+    "durationSeconds": 16,
+    "retried": false,
+    "remoteHashesVerifiedBy": "The extract step"
+  },
+  "extract": {
+    "jobId": "p2-chart-extract-20261004-1",
+    "refreshObservedAt": "2026-10-04T15:40:25Z",
+    "resultAround": "2026-10-04T15:40:41Z",
+    "verdict": "EXTRACT_PASS",
+    "filesPlaced": 784,
+    "linuxModesVerified": true,
+    "hostGates": "Server syntax, import and link gates passed on the host",
+    "target": "Inert target; the service was unchanged",
+    "serviceChanged": false,
+    "refreshRawSha256": "f48f2d2249a282cea20c03829133685adb73d37343a1789c32c244e0e1cd75f5",
+    "resultSha256": "a30f65de8bfff5bec31027023d647c63f321edd2bab3338365637309b60a0b3b",
+    "readOnlyApprovalSha256": "6031a2d32f38d635226e479d13e7298885b142a8e5d7732c7a6e57718eaa18be",
+    "phaseApprovalSha256": "30ffd961b09d7f1b9e05685c342cb4484c3c67cf26c799e8a6118614d83b9dd4"
+  },
+  "activation": {
+    "jobId": "p2-chart-activate-20261004-1",
+    "refreshObservedAt": "2026-10-04T15:41:05Z",
+    "activityAtRefresh": {
+      "events": 60,
+      "pending": 60,
+      "signals": 60,
+      "entries": 4,
+      "allocations": 4
+    },
+    "resultAt": "2026-10-04T15:41:21.9Z",
+    "verdict": "ACTIVATE_PASS",
+    "release": "f22f3d0",
+    "scope": "API-only restart onto the new release",
+    "conservativeApiDowntimeSeconds": 2.898,
+    "tradingChanged": false,
+    "researchChanged": false,
+    "databaseChanged": false,
+    "protectedServicesChanged": false,
+    "activityChanged": false,
+    "refreshRawSha256": "a7b5df83efda334e09734e00a2c86d786bc6148402e9aeb0106334ae4ca984fc",
+    "resultSha256": "840772d54f58f27ba1dbbd464dc271f2b8cfb672d6abfd970ddae570489acdf0",
+    "readOnlyApprovalSha256": "8497ce24e6df72df5f3e104f978069181be02f1eb75356d2e5ac274a215f5443",
+    "phaseApprovalSha256": "3cd9208808af744ecca972258b6c4b01dcda486e85731f5d3f17bd88546653d0"
+  },
+  "recover": {
+    "needed": false,
+    "attempted": false,
+    "note": "The recover phase added in tool version 2 was not used"
+  },
+  "immediateCheck": {
+    "jobId": "p2-chart-immediate-20261004-1",
+    "refreshObservedAt": "2026-10-04T15:41:44Z",
+    "around": "2026-10-04T15:41:47Z",
+    "verdict": "POSTCHECK_PASS",
+    "activityChanged": false,
+    "refreshRawSha256": "919edba0d05085fb1ad9587d43407ba1e2a1da1644182068937c8b1025d54f2d",
+    "resultSha256": "72ad8c01b820ab898d7b8ab0493dda67084b73d7be9d369eaf900086213ff9a9",
+    "readOnlyApprovalSha256": "9c6a7e253fc6dab2c78d85f1effabf5b408b278a638af5e511d2b34bf62becdf",
+    "phaseApprovalSha256": "a1f0fd8b1dd7ffd80c085db4b72fe286cc1f03f1bf37697f09fb9b1cc1014828"
+  },
+  "delayedCheck": {
+    "jobId": "p2-chart-delayed-20261004-1",
+    "refreshObservedAt": "2026-10-04T15:51:38Z",
+    "around": "2026-10-04T15:51:41Z",
+    "secondsAfterActivation": 616,
+    "secondsAfterActivationNote": "Delayed refresh created 2026-10-04T15:51:38Z, activation state created 2026-10-04T15:41:21.9Z",
+    "delayProof": true,
+    "minimumDelaySeconds": 600,
+    "verdict": "POSTCHECK_PASS",
+    "activityChanged": false,
+    "timingSlip": false,
+    "refreshRawSha256": "c1c034e729dd814f10c64f57138486a3be754e05c97d4c987fa3fba4c7dd11f6",
+    "resultSha256": "341805336f07adf7f1f99de6589b3bed1a70e1b638b6271ef5db2d09db1a64ce",
+    "readOnlyApprovalSha256": "987e1f54847bd3f5938bc8e10601595f1aa949fed128cddd08e3194dff05ed2c",
+    "phaseApprovalSha256": "1ba6e3b0e69a965feb32988ef1bc0b580dd9957d2ba9d589f80ef1e92a7e372f"
+  },
+  "browser": {
+    "path": "Existing local forwarding to the staging API; the owner was signed in",
+    "servedInteractiveChartJsBytes": 33561,
+    "servedInteractiveChartJsSha256": "cc0865e9878a211fa28f2d787719e6129480f35a42bbd46fa924a37e68444d8a",
+    "servedMarketChartCssBytes": 4166,
+    "servedMarketChartCssSha256": "099e6b90a963b8b5f59a881e22b051fdad00e7fbf23bec170581f8ae04772e27",
+    "servedFilesByteIdenticalToGit": "f22f3d0 public/interactive-chart.js and public/market-chart.css",
+    "unpkgChartScriptLoaded": false,
+    "api": {
+      "reachesBinancePublicRest": true,
+      "symbolsEndpointSymbols": 1331,
+      "btcusdtDefault1d": {
+        "bars": 365,
+        "source": "Binance public REST through the server proxy",
+        "formingBarFlagged": true
+      },
+      "ethusdt1h": {
+        "bars": 336
+      }
+    },
+    "overview": "Market chart with the symbol picker on BTCUSDT, 14 timeframes with 1d selected, quick buttons, a source badge and a view-only note",
+    "positionLines": {
+      "allBotsScope": "A held-asset chip and take-profit, entry (LONG 0.01181) and stop-loss lines labelled with the QL-3A bot name for the old OPEN allocation",
+      "mainBotScope": "No open position, so no lines"
+    },
+    "quantHistoryTable": "Rendered rows without the unavailable message",
+    "authenticatedCreateBotJourney": "Not part of this proof; remains unchecked"
+  },
+  "naturalSameEntryExit": {
+    "verifiedAt": "2026-10-04T16:05:00Z",
+    "method": "Read-only through the authenticated API: /api/signals, /api/positions and /api/positions/levels for the QL-P2 bot named SPT Prototype Paper 2026-10-03",
+    "result": "PROVED for the 0.01179 BTC allocation",
+    "buy": {
+      "signal": 66,
+      "mode": "Paper",
+      "status": "FILLED",
+      "quantityBtc": "0.01179",
+      "price": "84,697.31",
+      "processedAt": "2026-10-03T12:02Z"
+    },
+    "exit": {
+      "signal": 85,
+      "kind": "Reduce-only SELL from the Pine Bridge EXIT event, reason NATIVE",
+      "entryReference": "Same entry reference as the BUY; targets the position opened by signal 66",
+      "status": "FILLED the full 0.01179 BTC",
+      "price": "84,776.51",
+      "quoteUsdt": "999.515",
+      "processedAt": "2026-10-03T19:45Z"
+    },
+    "botNow": "No open position and no open lot",
+    "resultEstimate": {
+      "grossUsdtBeforeSimulatedFees": "about +0.93",
+      "netUsdtWithTenBpsPerSidePaperFee": "about -1.06",
+      "note": "An estimate: the analytics API is unavailable while managed Quant execution is enabled"
+    },
+    "laterRoundTripsOnSameBot": "Entry and exit references also matched: one TP exit at 09:30 UTC and two NATIVE exits at 14:17 UTC on 2026-10-04",
+    "rejectionsInSignalHistory": {
+      "buyRejectedBelowQuantityStep": 21,
+      "sellRejectedTargetNotOpen": 31,
+      "note": "Consistent with fail-closed behavior; the rejected SELL signals are reduce-only exits whose entries never filled in the ledger"
+    },
+    "unchanged": "The old QL-3A OPEN allocation of 0.01181 BTC is still open, so the QL-3A alert stays stopped"
+  },
+  "activityAtLastCheck": {
+    "events": 60,
+    "pending": 60,
+    "signals": 60,
+    "entries": 4,
+    "allocations": 4
+  },
+  "activityAtLastCheckNote": "Reading at the delayed check, 2026-10-04T15:51Z; counts grew from 39, 39, 39, 2 and 2 at the 2026-10-04T09:17Z state",
+  "approvalsConsumedAndClosed": true,
+  "replayAllowed": false,
+  "retryNeeded": false,
+  "rollbackNeeded": false,
+  "rollbackTargetIfEverNeeded": "02af486 only",
+  "notPerformed": [
+    "Retry of any host step",
+    "Recover phase",
+    "Rollback",
+    "Restart of trading, research, database or protected services"
+  ],
+  "ownerDecisions": {
+    "marketData": "2026-10-03/04: real Binance Global data may be used only for OHLCV charts and Preflight, through keyless public endpoints; no trading; Paper only; Live stays locked",
+    "proxy": "The keyless server-side proxy is on by default under the owner authorization",
+    "chartV2Requirements": [
+      "Chart always visible",
+      "TradingView-like symbol picker for any Binance Spot symbol through a server-side keyless proxy",
+      "Timeframes 1m to 1w with 1d as the default",
+      "Entry, stop-loss and take-profit lines for every held position on the chart of every held asset until the position clears"
+    ],
+    "chartV2RequirementsStatus": "Delivered and live on staging in release f22f3d0"
+  },
+  "stillOpen": [
+    "Authenticated Create Bot journey remains unchecked",
+    "Webhook delivery during the approximately 2.9 second API restart window was not separately verified",
+    "Resolution of the old OPEN allocation of 0.01181 BTC (QL-3A)"
+  ],
+  "acceptedRisks": [
+    "LOW: the recover phase depends on host systemd semantics that were not tested on the host",
+    "LOW: the market proxy is on by default; its kill switch is an environment change outside the release tool"
+  ],
+  "oldAlert": "QL-3A stays stopped until the old OPEN allocation of 0.01181 BTC is resolved",
+  "unchangedGates": [
+    "PF-2 remains off",
+    "D6, R7, B3, W7 and related gates are unchanged",
+    "Pre-launch market-data gate MD-1 is unchanged"
+  ],
+  "publicationApprovedForAnyOtherRelease": false,
+  "capacityApproved": false,
+  "naturalSameEntryExitAccepted": true,
+  "limitations": [
+    "Release upload, extraction and activation here cover chart v2 f22f3d0 on staging only.",
+    "Byte-identical served chart files and a successful Binance REST read show the release content and upstream reach, not production-scale market-data capacity (gate MD-1).",
+    "Unchanged activity counts across activation do not verify webhook delivery during the restart window.",
+    "The EXIT verification is a read-only API reading for one bot on staging Paper; the net result is an estimate, not an analytics figure.",
+    "Future publication and activation require fresh facts and separate reviewed authority."
+  ]
+}
