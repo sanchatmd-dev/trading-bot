@@ -169,7 +169,9 @@ test('source bans: no DOM, storage, network, timers, clock or randomness; the gl
   assert.doesNotMatch(source,/\b(document|window|localStorage|sessionStorage|indexedDB|fetch|XMLHttpRequest|WebSocket|Date|require|import|eval|Function|setTimeout|setInterval)\b/);
   for(const banned of ['Math.random','api(','innerHTML'])assert.ok(!source.includes(banned),banned);
   assert.equal(source.split('globalThis').length-1,1,'globalThis appears once, on the export line');
-  assert.ok(source.endsWith('\n')&&!source.includes('\r'),'LF with a trailing newline');
+  // A Windows checkout may turn LF into CRLF; either way there is no stray CR and the file ends with a newline.
+  const lines=source.replace(/\r\n/g,'\n');
+  assert.ok(lines.endsWith('\n')&&!lines.includes('\r'),'one line-ending style with a trailing newline');
 });
 
 test('isolation: visual aids never reach trading code (only the chart script and its page load the module)',()=>{
