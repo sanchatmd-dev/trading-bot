@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+Update, 2026-10-05 about 04:00 UTC: Claude handed the project to Codex at the owner request; Codex is the sole root. See the [Claude to Codex handoff](CLAUDE_TO_CODEX_HANDOFF_2026-10-05.md). No schedule change; the entries below stay as history.
+
 ## Claude continuation — 2026-10-03 to 2026-10-04
 
 Claude took over as root at about 16:10 UTC and this continuation ran to about 17:10 UTC, roughly one hour of elapsed wall time that includes waits for root approvals. No engineering-hour total is established. Claude weekly usage was 81% used at intake and 82% used at 17:06 UTC under the owner's 2% weekly floor for this continuation; no short-window reading is recorded here. Within the span, root issued one read-only approval at 17:04:14 UTC (one connection, observed 17:04:18.683 UTC) and one exact permission approval at 17:04:27 UTC (age about 9 seconds against the 120-second gate), which completed in 236 ms with PARENT_TIGHTEN_PASS. Both approvals are closed. The remaining critical path is local publication-adapter work with independent acceptance, a new fresh read-only observation and separate publication and API activation approvals, then the delayed deployment check of at least ten minutes and browser proof. Natural same-entry EXIT waiting continues without forcing trades. README and Context received a current checkpoint paragraph; their older dated entries remain historical. Shared usage percentages do not establish exact task cost, and agent count alone supports no speedup claim.
