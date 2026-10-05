@@ -2,6 +2,14 @@
 
 ## Codex continuation — 2026-10-05
 
+At 07:46 UTC, the S05 switch tool received local root acceptance after 30 passing
+test groups and six independently checked critical groups. Thirty tool files are
+pinned. This does not authorize or prove a runtime phase. The separate upload
+supervisor's two corrections also passed independent local review. Host execution
+is waiting for the designated operations model after capacity refusals; no upload,
+restart or backfill has occurred. Release target `5e398e7` and normal rollback
+`2919f9b` remain unchanged. S4 runtime acceptance remains open.
+
 At 07:06 UTC, the B3 follow-up had confirmed namespace/database identity and an
 idle research queue, but storage trust remained unknown: ACL information was
 unavailable and the process scan reached its byte cap. Shared-parent permission

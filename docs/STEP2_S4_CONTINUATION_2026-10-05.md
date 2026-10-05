@@ -163,6 +163,19 @@ with `2919f9b` as its normal rollback target. B3 worker changes are parked until
 this API release is completed so that the verified worker identities remain
 stable during release preparation.
 
+At 07:46 UTC, the complete local switch tool passed root acceptance after 30
+passing test groups, six independently checked critical groups and verification
+of all 30 pinned tool files. The recovery matrix contains 20 cases within one
+group; these counts are not added together as unique tests. The separate upload
+supervisor then required corrections for receipt-write failure handling and
+verification of the actual incoming receipt bytes. Root corrected both locally;
+four process-cleanup cases and eleven negative incoming-evidence cases passed.
+Independent correction review passed the same four cleanup cases and eleven
+negative evidence cases. Root accepted the supervisor locally. The designated
+operations model was unavailable on two attempts; host work waits for that role
+to resume. No operational session, upload, restart or release acceptance is
+claimed by this local evidence.
+
 - S6: decide the replacement for `confirmLookback`, freeze a new owner input
   lock if approved, and prove TradingView axis parity. Synthetic reachability
   does not establish the required effect on real data.

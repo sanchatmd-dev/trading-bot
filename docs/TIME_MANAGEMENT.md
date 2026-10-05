@@ -2,6 +2,18 @@
 
 ## Codex continuation — 2026-10-05
 
+At 07:46 UTC, local S05 tool preparation reached acceptance: 30 test groups
+passed, including a 20-case recovery matrix within one group; the independent
+review checked six critical groups and all 30 pinned files. Two upload-supervisor
+findings required another bounded correction and review, which passed before
+host work. Model
+capacity interruptions also paused the coder and operations agents; root completed
+local corrections without substituting models. Operations remained unavailable
+on its next attempt, so no host phase began. No deployment duration or speedup
+is inferred from this preparation. Codex weekly remaining was 59% at 07:56 UTC;
+the short window was unknown and the reserve remained intact. README and Context
+were reviewed and still correctly report S4 as undeployed.
+
 At 07:06 UTC, the bounded parent-permission read completed in approximately
 1.15 seconds. It did not resolve storage trust because ACL information was
 unavailable and the process scan reached its byte limit. Permission work and B3
