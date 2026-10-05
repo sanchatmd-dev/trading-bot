@@ -2,6 +2,26 @@
 
 ## Codex continuation — 2026-10-05
 
+At 09:57 UTC, the corrected read-only resource collector returned complete
+diagnostic fields. Its first version had stopped at the parent-permission gate
+at 09:49 UTC and discarded partial measurements; that consumed attempt was
+preserved. The separate corrected collector passed 73 local checks and focused
+independent review before one new observation. Worker limits and permission
+changes remain unapplied. Browser acceptance is parked because a fresh reload
+returned a connection refusal on the owner access channel. Shared Codex weekly
+remaining was 50% at 09:59 UTC; the short window was unknown and the reserve
+remained 15 percentage points. These readings do not measure individual task
+cost. README and Context were reviewed for the unchanged release and open gates.
+See the [prerequisite evidence](evidence/B3_PREREQUISITE_OBSERVATIONS_2026-10-05.json).
+
+At 10:08 UTC, one separate capability observation confirmed that the existing
+Python can read ACL xattrs. Its 32 local checks and independent review preceded
+execution. Dynamic identity-provider and mount questions remain open; no broad
+process scan or permission change followed. Weekly remaining was 48% at 10:07
+UTC, with the short window still unknown. The first resource STOP, corrected
+resource observation and capability observation are separate consumed jobs;
+none was retried or reset.
+
 At 08:40:29.836 UTC, the API-only staging release passed its delayed check,
 698.965 seconds after activation; root accepted the release at 08:41:52 UTC.
 One SCP transfer took 17.938 seconds for 38,142,338 bytes in three files,

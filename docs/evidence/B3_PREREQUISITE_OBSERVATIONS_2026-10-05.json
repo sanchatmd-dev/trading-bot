@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "scope": "B3 prerequisite observations only",
+  "observedAt": "2026-10-05T09:57:20.545Z",
+  "rootReviewed": true,
+  "rootAcceptance": "READ_ONLY_OBSERVATIONS_ONLY",
+  "deploymentAccepted": false,
+  "capacityAccepted": false,
+  "researchAdmissionAccepted": false,
+  "hostMutations": 0,
+  "resources": {
+    "memoryCurrentBytes": 64782336,
+    "swapCurrentBytes": 0,
+    "tasksCurrent": 11,
+    "threadCount": 11,
+    "processCount": 1,
+    "directDescendantCount": 0,
+    "effectiveLimits": {
+      "memoryMax": "max",
+      "swapMax": "max",
+      "tasksMax": 9483,
+      "cpuCores": "max",
+      "capacityAccepted": false
+    },
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "pidsEvents": {
+      "max": 0
+    },
+    "ioMax": [
+      {
+        "device": "8:0",
+        "rbps": 524288,
+        "wbps": 524288,
+        "riops": "max",
+        "wiops": "max"
+      }
+    ]
+  },
+  "releases": {
+    "api": "5e398e7eff1a90b5c47c8c73456a0717cda592ee",
+    "trading": "f2bd332e2d78c3a385d5b39ca6e2e1da5c59738c",
+    "research": "3309d076440a8f4fb9eec4420d60878622fb484a"
+  },
+  "health": {
+    "status": 200,
+    "ok": true,
+    "mode": "PAPER_ONLY",
+    "queued": 0
+  },
+  "flags": {
+    "api": {
+      "QUANT_RESEARCH_ENABLED": false,
+      "QUANT_RESEARCH_FOUNDATION_ENABLED": false,
+      "QUANT_PROFILE_V2_ENABLED": false,
+      "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": false,
+      "QUANT_PREFLIGHT_ENABLED": false
+    },
+    "research": {
+      "QUANT_RESEARCH_ENABLED": true,
+      "QUANT_RESEARCH_FOUNDATION_ENABLED": true,
+      "QUANT_PROFILE_V2_ENABLED": false,
+      "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": false,
+      "QUANT_PREFLIGHT_ENABLED": false
+    }
+  },
+  "configuration": {
+    "candidateDropinAbsent": true,
+    "parentMetadataTrusted": false,
+    "aclTrust": "UNKNOWN",
+    "groupWritableAncestorCount": 2,
+    "groupWritableAncestorModes": [
+      "0775",
+      "0775"
+    ],
+    "writeApproved": false,
+    "oldConfigBytesPreserved": false,
+    "capabilityObservation": {
+      "observedAt": "2026-10-05T10:08:18.671Z",
+      "pythonGetxattrAvailable": true,
+      "accessAclResults": [
+        "ENODATA",
+        "ENODATA"
+      ],
+      "defaultAclResults": [
+        "ENODATA",
+        "ENODATA"
+      ],
+      "targetMetadataStable": true,
+      "mountSemantics": "UNKNOWN",
+      "nssPasswdProviders": [
+        "files",
+        "systemd"
+      ],
+      "nssGroupProviders": [
+        "files",
+        "systemd"
+      ],
+      "nssInitgroups": "UNKNOWN_MISSING",
+      "membershipCollected": false,
+      "principalClosureAccepted": false,
+      "trustAccepted": false,
+      "storageExamined": false,
+      "getfaclStatus": "UNKNOWN_UNAVAILABLE"
+    }
+  },
+  "databaseFreshness": "NOT_QUERIED_BY_RESOURCE_OBSERVATION",
+  "storageTrust": "UNKNOWN",
+  "browser": {
+    "observedAt": "2026-10-05T09:53:04Z",
+    "freshReloadResult": "ERR_CONNECTION_REFUSED",
+    "authenticatedJourneyAccepted": false,
+    "cachedContentIsLiveEvidence": false,
+    "ownerAccessRequired": true,
+    "observationTimeApproximate": true
+  },
+  "evidence": {
+    "statusReceiptSha256": "15c83e7b06a39a38332adadfc55c73ab90771ab8d04a9db0f68a4703d88fdd09",
+    "firstResourceStopSha256": "414fa9766db3a351a2e8d53663d6d90518e877ffcaf1feddd34803619fe133c9",
+    "resourceReceiptSha256": "73c40b0a75395b958c9878fbfd5e4fcfba71a9b0fac9861c4e2ffd07d128b79b",
+    "resourceSourceSha256": "bb3f1b89923a205ec8996d3a1b5b2e619d3f25cea16ad590940536bb3a830d73",
+    "capabilityReceiptSha256": "e55c2b6e40b6f6d92251e59e7fe2cdb327663245a97e73138bd8e8e63e75b077",
+    "capabilitySourceSha256": "1264589527fd07b9729cc29cb63bdede35a00af72a6fd3ac81af18cc84c75a6d"
+  },
+  "limitations": [
+    "Observations are not an atomic snapshot or event-history proof.",
+    "Database invariants require a separate fresh read before any later effect.",
+    "Group-write metadata does not prove an untrusted writer exists.",
+    "No BACKFILL, permission change, worker restart or new research campaign ran.",
+    "ACL attribute absence does not establish mount semantics or principal closure.",
+    "The capability collector inspected configuration ancestors only, not dataset storage."
+  ]
+}

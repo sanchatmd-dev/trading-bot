@@ -2,6 +2,24 @@
 
 ## Codex continuation — 2026-10-05
 
+At 09:57 UTC, a reviewed read-only diagnostic measured the research worker at
+64,782,336 bytes of memory, zero swap, one process and 11 threads. CPU, memory
+and swap limits remain unlimited; the effective task limit is 9,483. Observed
+OOM and task-limit event counters are zero. Two shared configuration ancestors
+are group-writable, so configuration-write trust remains unresolved. This does
+not establish an untrusted writer or authorize changing shared permissions.
+The 10:08 UTC capability read found Python xattr support and absent access/default
+ACL attributes on those two ancestors. NSS uses files plus systemd; membership
+and mount interpretation remain unproved, so the read does not close trust.
+Next: complete a targeted filesystem/principal proof or prepare a separately
+authorized shared-permission proposal. Finite worker limits still require trust,
+an audited executor and fresh runtime evidence; scoped grants and executable
+closure remain separate B3 work.
+No worker restart, permission change, BACKFILL or admission change occurred.
+Fresh browser reload also found the owner access channel unavailable; cached UI
+content is not authenticated acceptance. See the
+[prerequisite evidence](evidence/B3_PREREQUISITE_OBSERVATIONS_2026-10-05.json).
+
 At 08:40:29.836 UTC, API-only staging `5e398e7` passed its delayed postcheck,
 698.965 seconds after activation. Root accepted the staging API release at
 08:41:52 UTC after reviewing all six closed phase receipts and the single
