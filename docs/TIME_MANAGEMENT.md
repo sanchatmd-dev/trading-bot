@@ -2,6 +2,10 @@
 
 ## Codex continuation — 2026-10-05
 
+The S4b package review found a one-hour browser-cache risk from unchanged script URLs. A small asset-version correction precedes the final package and release-tool audit; no deployment time is claimed yet.
+
+The correction passed 98 UI tests. The bounded read-only diagnostic at 06:00 UTC found loss-streak pause rejections in every candidate; aggregate counters do not yet establish partition timing. Historical boundary validation and main-worker resource checks are the next B3 prerequisites. No additional data-collection ETA is justified by these findings.
+
 The S4 input-picker follow-up passed related UI regressions (51 tests) and independent focused checks (6 tests). It preserves selections and adds capability and omission labels in English/Thai. The B3/W7 transition design is prepared locally; final historical-boundary, native-closure and calibration evidence still gates executable operations. No host mutation or staging deployment followed from these local results.
 
 See [S4 and prototype continuation](STEP2_S4_CONTINUATION_2026-10-05.md). Work resumed with a bounded read-only runtime intake, S4 implementation and independent review; final PostgreSQL verification completed at 05:33 UTC with 50 passes and one intentional private-fixture skip. Read-only inventory completed at 05:28 UTC. PF-2 still requires B3/W7, D6 and R7; missing policy and dataset prerequisites prevent a credible activation ETA. All 21 candidates in the latest preserved run have zero validation trades, so no finite collection ETA can be inferred. Owner-only steps are parked while the owner is away. No throughput improvement is claimed from agent count.

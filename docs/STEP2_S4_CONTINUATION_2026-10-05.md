@@ -62,6 +62,12 @@ wizard, activation and Pine suites passed 51 tests; independent focused verifica
 passed six tests and found no blocker. The counts overlap. This UI change is also
 local only, with no staging browser acceptance claim.
 
+Release preparation found that the changed scripts still used their old asset
+URLs while static JavaScript is cached for one hour. The HTML now versions both
+the Bridge panel and translations as `s4b1`; existing loading-order expectations
+were updated. The package built before this correction is not a release target.
+The three affected UI suites passed 98 tests with no failures or skips.
+
 ## Authenticated journey and current runtime
 
 Authenticated browser checks on 2026-10-05 verified the journey, Bot Manager,
@@ -83,6 +89,16 @@ validation trades and failed `INSUFFICIENT_VALIDATION_TRADES`; holdout was not
 evaluated. This gives no finite data-collection estimate and no qualified winner.
 More bars alone are not yet proved to solve the problem. Guard-state and signal
 activity diagnosis must precede any proposal for another research campaign.
+
+Read-only checkpoint inspection at 06:00 UTC confirmed loss-streak pause
+rejections in every candidate (13 to 24 each). Across the 21 candidates there
+were 343 loss-streak pauses, 60 daily-trade-limit rejections, 190 quantities below
+the exchange step and 484 exits whose target was not open. These counters span
+training and validation together; they do not locate each rejection within a
+partition. The result supports investigating persistent guard state rather than
+assuming more bars will produce validation trades. No guard was reset and no
+new evaluation was run. Historical boundary metadata was collected separately;
+it still requires validation before any new data range is approved.
 
 ## Remaining work
 

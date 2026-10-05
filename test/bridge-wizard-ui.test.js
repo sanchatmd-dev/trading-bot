@@ -79,7 +79,7 @@ function setup({language,reduced=false,coarse=false,storage,seen,overrides,bots,
 
 test('index.html loads the guided panel assets with their cache tokens, kit before panel',()=>{
   const html=publicFile('index.html');
-  for(const part of ['/styles-v2.css?v=pa1','/i18n.js?v=mc3','/bridge-wizard.js?v=ux1a','/pine-bridge.js?v=pa1','/journey.js?v=pa1'])assert.ok(html.includes(part),part);
+  for(const part of ['/styles-v2.css?v=pa1','/i18n.js?v=s4b1','/bridge-wizard.js?v=ux1a','/pine-bridge.js?v=s4b1','/journey.js?v=pa1'])assert.ok(html.includes(part),part);
   // The Paper activation change touched these four files, so none may keep the token of the release before it.
   assert.doesNotMatch(html,/(styles-v2\.css|i18n\.js|pine-bridge\.js|journey\.js)\?v=(nw1|rj1|qr1a)["']/,'the activation change gave the files it touched a new cache version');
   const order=['/i18n.js?v=','/app.js?v=','/bridge-wizard.js?v=','/pine-bridge.js?v=','/readiness.js?v=','/journey.js?v='].map(part=>html.indexOf(part));
