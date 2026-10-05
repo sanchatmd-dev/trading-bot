@@ -2,6 +2,16 @@
 
 ## Codex continuation — 2026-10-05
 
+At 07:06 UTC, the bounded parent-permission read completed in approximately
+1.15 seconds. It did not resolve storage trust because ACL information was
+unavailable and the process scan reached its byte limit. Permission work and B3
+worker mutations are parked while S05 session preparation continues. The runner
+passed 53 author checks and six independent execution-gate checks; none is a
+deployment timing measurement. Codex weekly remaining was 68% at 07:05 UTC, with
+the short window unknown and the policy reserve retained. Shared usage does not
+measure this packet's cost. README and Context were reviewed and corrected to
+keep S7's local acceptance distinct from the remaining S4 runtime and S6 gates.
+
 S7's reviewed corrective run completed nine cases in 4.657 seconds after an initial 2.547-second stop at Windows policy-file decoding. Preparation also required a Windows process-tree containment fix and synthetic cleanup verification; these wall times are not summed as engineering time. S7 is locally accepted with the RR target-versus-realized-effect limitation recorded. The `5e398e7` release target passed all nine CI checks. Independent package/reference reviews are complete; S05 executable switch preparation remains. B3 read-only resource and file checks narrowed the remaining work to finite worker limits, storage trust, remaining native/grant checks and fresh admission evidence; `STORAGE_TRUST` stopped the namespace/idle probe. No deployment or backfill duration is claimed. Shared Codex weekly remaining was 74% at 06:44 UTC; the short window was unknown, so work continued only in small checkpointable packets with the policy reserve retained.
 
 CI caught a stale cache-token expectation and the follow-up scan found a second, adding one small correction and a new CI checkpoint before release. Both corrected suites passed all 56 tests in about 68 seconds. The 06:15 UTC owner-wide metadata check closed the known boundary-completeness gap. B3 resource/native checks and the S05 switch-tool audit remain separate work; elapsed preparation does not count as deployment.

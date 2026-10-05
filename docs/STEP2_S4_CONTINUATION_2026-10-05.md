@@ -144,6 +144,25 @@ CPU limits remain unlimited. The storage check at 06:42 UTC stopped at
 `STORAGE_TRUST` before returning namespace, schema, idle or grant facts.
 These observations do not establish capacity or admit a BACKFILL.
 
+The separately reviewed read-only follow-up at 06:54 UTC confirmed storage
+namespace and database identity, schema 14 with 66 tables, and no research jobs,
+leases or unresolved launches. The checked role has no administrative flags;
+the fixed table-grant sample does not prove the complete enqueue grant set.
+The follow-up preserved storage trust as unknown rather than weakening that
+acceptance gate. At 07:06 UTC, a bounded parent-permission check found only the
+owner in the enumerated group membership, but ACL information was unavailable
+and the process scan stopped at its byte limit after 57 of 139 processes.
+Neither observation proves the absence of other writers. No permission changed.
+Further shared-parent permission work is parked; no BACKFILL is admitted.
+
+The S05 runner passed 53 local checks and six independent negative execution-gate
+checks. Missing or rejected acceptance evidence stops before transport. Session
+integration, final tool pins, independent integrated review and fresh runtime
+checks remain required before publication. The release target stays `5e398e7`,
+with `2919f9b` as its normal rollback target. B3 worker changes are parked until
+this API release is completed so that the verified worker identities remain
+stable during release preparation.
+
 - S6: decide the replacement for `confirmLookback`, freeze a new owner input
   lock if approved, and prove TradingView axis parity. Synthetic reachability
   does not establish the required effect on real data.
