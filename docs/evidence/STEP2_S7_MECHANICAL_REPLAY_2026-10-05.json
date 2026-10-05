@@ -1,0 +1,478 @@
+{
+  "date": "2026-10-05",
+  "scope": "PREDECLARED_FIXED_SIGNAL_MECHANICAL_DIAGNOSTIC",
+  "status": "LOCAL_MECHANICAL_REPLAY_COMPLETE",
+  "releaseTarget": "5e398e7eff1a90b5c47c8c73456a0717cda592ee",
+  "csvSha256": "892e1727be727f11c086ac356c81de6091e8b3706ec1875321cdc5f59a923b3e",
+  "policySha256": "e151fccd990ddd34ee368a410903f6d0edb2e1480c8585c07de5d49456cafff7",
+  "planSha256": "82de9869ba2f8333d9e58a5da098fc35985425b3d7289bae47e66b6e34023369",
+  "boundarySha256": "4735adc7221fd71c4569c42e6b03ff12dee43db8e4f4bc9d7d06f9d1c4939d53",
+  "baselineEvidenceSha256": "0993c49c59775e5ca0bc1cc5b96faa8b232a5154f4d277dd93982d60a12847e0",
+  "runnerSha256": "657d565558a70d3b24e3bf5218084a3f7e2def7798aefd1f2b1e744bcc80b119",
+  "supervisorSha256": "2e2dd4c0e7a56e1cacd3bb3410c9b4bb1cb9aa31c1c1bf8100782a65220650f2",
+  "resultSha256": "5e6a6da1b36b5e12e3ab66f5beaa4266c0974346ae6b8bea71d6b865a59aaa32",
+  "signalVectorSha256": "afda7c39566ba74a32e58ced079a0c034402b1dc6f52a2bdc0bde72001db5f92",
+  "engineFilesSha256": "9d95a9c1d290bd3c3496ecbfd90bc161c02fb4a76ec7be408be19b6c5321bf72",
+  "prefixRows": 4533,
+  "warmupRows": 1006,
+  "holdoutRowsExcluded": 882,
+  "protectedOpenTime": 1790365980000,
+  "elapsedSeconds": 4.657000000006519,
+  "baselineReproduced": true,
+  "allExecutionParityMatched": true,
+  "cases": [
+    {
+      "atrMultiplier": 60,
+      "rr": 1.5,
+      "fills": 10,
+      "closedTrades": 5,
+      "openAllocations": 0,
+      "parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 75,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "mechanicalTargetDifferences": {
+        "sl_ticks": 0,
+        "tp_ticks": 0,
+        "validity": 0
+      },
+      "executionDifferences": {
+        "counts": {
+          "event_type": 0,
+          "entry_ref": 0,
+          "outcome": 0,
+          "reason": 0,
+          "quantity": 0,
+          "sizing_outcome": 0,
+          "sizing_adjustment": 0
+        },
+        "first_differing_event_time": null,
+        "open_allocation_delta": 0
+      }
+    },
+    {
+      "atrMultiplier": 40,
+      "rr": 1.5,
+      "fills": 10,
+      "closedTrades": 5,
+      "openAllocations": 0,
+      "parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 75,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "mechanicalTargetDifferences": {
+        "sl_ticks": 40,
+        "tp_ticks": 40,
+        "validity": 0
+      },
+      "executionDifferences": {
+        "counts": {
+          "event_type": 4,
+          "entry_ref": 4,
+          "outcome": 4,
+          "reason": 4,
+          "quantity": 14,
+          "sizing_outcome": 4,
+          "sizing_adjustment": 9
+        },
+        "first_differing_event_time": 1790193600000,
+        "open_allocation_delta": 0
+      }
+    },
+    {
+      "atrMultiplier": 50,
+      "rr": 1.5,
+      "fills": 10,
+      "closedTrades": 5,
+      "openAllocations": 0,
+      "parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 75,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "mechanicalTargetDifferences": {
+        "sl_ticks": 40,
+        "tp_ticks": 40,
+        "validity": 0
+      },
+      "executionDifferences": {
+        "counts": {
+          "event_type": 0,
+          "entry_ref": 0,
+          "outcome": 0,
+          "reason": 0,
+          "quantity": 10,
+          "sizing_outcome": 0,
+          "sizing_adjustment": 5
+        },
+        "first_differing_event_time": 1790193600000,
+        "open_allocation_delta": 0
+      }
+    },
+    {
+      "atrMultiplier": 70,
+      "rr": 1.5,
+      "fills": 10,
+      "closedTrades": 5,
+      "openAllocations": 0,
+      "parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 75,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "mechanicalTargetDifferences": {
+        "sl_ticks": 40,
+        "tp_ticks": 40,
+        "validity": 0
+      },
+      "executionDifferences": {
+        "counts": {
+          "event_type": 0,
+          "entry_ref": 0,
+          "outcome": 0,
+          "reason": 0,
+          "quantity": 10,
+          "sizing_outcome": 0,
+          "sizing_adjustment": 5
+        },
+        "first_differing_event_time": 1790193600000,
+        "open_allocation_delta": 0
+      }
+    },
+    {
+      "atrMultiplier": 80,
+      "rr": 1.5,
+      "fills": 10,
+      "closedTrades": 5,
+      "openAllocations": 0,
+      "parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 75,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "mechanicalTargetDifferences": {
+        "sl_ticks": 40,
+        "tp_ticks": 40,
+        "validity": 0
+      },
+      "executionDifferences": {
+        "counts": {
+          "event_type": 0,
+          "entry_ref": 0,
+          "outcome": 0,
+          "reason": 0,
+          "quantity": 10,
+          "sizing_outcome": 0,
+          "sizing_adjustment": 5
+        },
+        "first_differing_event_time": 1790193600000,
+        "open_allocation_delta": 0
+      }
+    },
+    {
+      "atrMultiplier": 60,
+      "rr": 1,
+      "fills": 10,
+      "closedTrades": 5,
+      "openAllocations": 0,
+      "parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 75,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "mechanicalTargetDifferences": {
+        "sl_ticks": 0,
+        "tp_ticks": 40,
+        "validity": 0
+      },
+      "executionDifferences": {
+        "counts": {
+          "event_type": 0,
+          "entry_ref": 0,
+          "outcome": 0,
+          "reason": 0,
+          "quantity": 0,
+          "sizing_outcome": 0,
+          "sizing_adjustment": 0
+        },
+        "first_differing_event_time": null,
+        "open_allocation_delta": 0
+      }
+    },
+    {
+      "atrMultiplier": 60,
+      "rr": 1.25,
+      "fills": 10,
+      "closedTrades": 5,
+      "openAllocations": 0,
+      "parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 75,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "mechanicalTargetDifferences": {
+        "sl_ticks": 0,
+        "tp_ticks": 40,
+        "validity": 0
+      },
+      "executionDifferences": {
+        "counts": {
+          "event_type": 0,
+          "entry_ref": 0,
+          "outcome": 0,
+          "reason": 0,
+          "quantity": 0,
+          "sizing_outcome": 0,
+          "sizing_adjustment": 0
+        },
+        "first_differing_event_time": null,
+        "open_allocation_delta": 0
+      }
+    },
+    {
+      "atrMultiplier": 60,
+      "rr": 1.75,
+      "fills": 10,
+      "closedTrades": 5,
+      "openAllocations": 0,
+      "parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 75,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "mechanicalTargetDifferences": {
+        "sl_ticks": 0,
+        "tp_ticks": 40,
+        "validity": 0
+      },
+      "executionDifferences": {
+        "counts": {
+          "event_type": 0,
+          "entry_ref": 0,
+          "outcome": 0,
+          "reason": 0,
+          "quantity": 0,
+          "sizing_outcome": 0,
+          "sizing_adjustment": 0
+        },
+        "first_differing_event_time": null,
+        "open_allocation_delta": 0
+      }
+    },
+    {
+      "atrMultiplier": 60,
+      "rr": 2,
+      "fills": 10,
+      "closedTrades": 5,
+      "openAllocations": 0,
+      "parity": {
+        "differences": {
+          "event_count": 0,
+          "event_identity_or_reason": 0,
+          "level_ticks": 0,
+          "decision_count": 0,
+          "accept_reject": 0,
+          "quantity_steps": 0,
+          "price_ticks": 0,
+          "fee": 0,
+          "allocation_targets": 0,
+          "sizing_outcome_or_reason": 0,
+          "sizing_quantities": 0,
+          "remaining_quantity": 0,
+          "open_allocation_count": 0
+        },
+        "per_entry_cash_max_delta": "0",
+        "final_cash_delta": "0E-18",
+        "final_position_cost_delta": "0E-18",
+        "matched": true,
+        "compared_decisions": 75,
+        "quantity_step": "0.00001",
+        "price_tick": "0.01"
+      },
+      "mechanicalTargetDifferences": {
+        "sl_ticks": 0,
+        "tp_ticks": 40,
+        "validity": 0
+      },
+      "executionDifferences": {
+        "counts": {
+          "event_type": 0,
+          "entry_ref": 0,
+          "outcome": 0,
+          "reason": 0,
+          "quantity": 0,
+          "sizing_outcome": 0,
+          "sizing_adjustment": 0
+        },
+        "first_differing_event_time": null,
+        "open_allocation_delta": 0
+      }
+    }
+  ],
+  "limits": [
+    "Frozen TradingView BUY/EXIT signals; no source-input re-evaluation.",
+    "Mechanical targets compare frozen BUY opportunities, including rejected opportunities.",
+    "RR changed TP targets but not realized decision records on this development prefix.",
+    "Decision difference counts include missing or newly timed records, not only changed values on matching records.",
+    "No search, ranking, new data range, holdout replay, Best Inputs, live change or profitable-candidate qualification."
+  ],
+  "rework": [
+    "Initial local execution stopped before replay at Windows default-encoding policy decode.",
+    "A separately reviewed UTF-8 correction used unchanged case plan, policy and development prefix; the original STOP receipt is preserved."
+  ],
+  "deployed": false
+}

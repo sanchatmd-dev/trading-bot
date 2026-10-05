@@ -115,12 +115,41 @@ not admit a backfill, register a boundary or certify runtime capacity.
 
 ## Remaining work
 
+S7 is locally accepted as a mechanical replay on the frozen development prefix.
+The nine predeclared cases reproduced the saved baseline before varying either
+Bridge multiplier or RR, and Node/Python execution parity matched in every case.
+The multiplier changes affected SL/TP targets and quantities. RR changed 40 TP
+targets per case but did not change realized decision records in this prefix.
+All cases produced ten fills, five closed trades and no remaining allocation.
+This proves the stated input effects, not profitability or a qualified candidate.
+The [sanitized evidence](evidence/STEP2_S7_MECHANICAL_REPLAY_2026-10-05.json)
+records the immutable inputs, result hash and separate target/decision counts.
+
+The run used only the existing 4,533-row prefix, including 1,006 warmup rows;
+882 holdout rows and the forming row were excluded. No policy, guard, source
+signal, search grid or data range changed. An initial attempt stopped before
+replay because Windows used a non-UTF-8 default to decode the private policy
+bundle. A separately reviewed explicit UTF-8 correction completed in 4.657
+seconds. A Windows Job Object contains all child processes; independent checks
+covered normal exit, timeout, failure and receipt-write failure. The original
+STOP receipt remains preserved. Independent result review passed; root accepted
+only this local S7 gate.
+
+The release target `5e398e7` passed all nine CI checks. Its 793-file package and
+historical rollback reference passed independent local review, but publication
+and the S05 switch tool remain unaccepted. Staging still runs API `2919f9b`.
+Read-only checks at 06:30 and 06:36 UTC resolved the I/O device ancestry and
+matched all 263 declared ingestion/dependency files. Effective memory, swap and
+CPU limits remain unlimited. The storage check at 06:42 UTC stopped at
+`STORAGE_TRUST` before returning namespace, schema, idle or grant facts.
+These observations do not establish capacity or admit a BACKFILL.
+
 - S6: decide the replacement for `confirmLookback`, freeze a new owner input
   lock if approved, and prove TradingView axis parity. Synthetic reachability
   does not establish the required effect on real data.
-- S7: prepare a predeclared RR/multiplier replay on a proven development-only
-  prefix. Report target changes separately from realized decisions. No ranking,
-  holdout access, parameter search or automatic optimizer loop is authorized.
+- S7: the local mechanical replay above is complete. Full Step 2 remains gated
+  by S4 runtime acceptance and S6. RR's unchanged realized decisions must remain
+  visible in subsequent reports; no ranking or optimizer loop is authorized.
 - PF-2: read-only inventory at 05:28 UTC found no eligible BACKFILL for the
   current bot and no registered current/sibling boundary in the new holdout
   registry. This does not erase holdout constraints in historical contracts.

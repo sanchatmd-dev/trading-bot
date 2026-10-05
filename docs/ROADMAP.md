@@ -2,6 +2,8 @@
 
 ## Codex continuation — 2026-10-05
 
+Latest checkpoint: **S7 local mechanical replay accepted**. All nine predeclared cases matched Node/Python execution parity; multiplier changed targets and quantities, while RR changed TP targets without changing realized decision records on the frozen development prefix. No holdout, search, guard reset or qualified-candidate claim. S4 runtime and S6 remain open. Release target `5e398e7` passed all nine CI checks; its package is locally reviewed, with S05 switch preparation still pending. B3 resource checks confirmed unlimited effective memory/swap/CPU; declared ingestion/dependency hashes matched, but a later storage check stopped at `STORAGE_TRUST`. No deployment, backfill or PF-2 activation occurred. See [continuation and evidence](STEP2_S4_CONTINUATION_2026-10-05.md#remaining-work). Older paragraphs below retain their checkpoint-time status.
+
 CI found stale cache-token assertions outside the first local test selection; journey and readiness expectations were corrected, and both suites passed all 56 tests. The release remains gated on corrected-checkpoint CI and the revised switch tool. Owner-wide historical metadata was verified at 06:15 UTC; the frozen TradingView development boundary remains earlier and controls the proposed S7 diagnostic and B3 range. No replay or backfill has been admitted by that metadata check.
 
 Release preparation caught stale cache tokens for the changed Bridge and translation scripts. Their URLs now use `s4b1`; a fresh package must include this correction. The earlier local package is not approved for publication. Staging remains unchanged.

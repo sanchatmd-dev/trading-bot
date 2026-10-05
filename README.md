@@ -1,5 +1,7 @@
 # Robot trade VPS 2.2.0 — PostgreSQL Paper staging
 
+Current checkpoint, 2026-10-05: S7's nine-case mechanical replay is locally accepted, with Node/Python parity throughout. RR changed TP targets but not realized decisions on the frozen development prefix. S4 runtime and S6 remain open; PF-2 remains off. Release target `5e398e7` passed all nine CI checks but is not deployed. B3 still needs finite worker limits and resolution of the observed storage-trust failure. See the [continuation record](docs/STEP2_S4_CONTINUATION_2026-10-05.md#remaining-work); no qualified strategy or full six-step acceptance is claimed.
+
 ระบบรับสัญญาณ TradingView สำหรับ Bot แบบ Spot Paper พร้อมบัญชีผู้ใช้, License, Risk Manager, Trade log และ Quant Lab สำหรับวิจัยย้อนหลัง โดย Worker เป็นผู้ตัดสินคำสั่งและบันทึกบัญชีเงินสด Paper ของระบบ
 
 ## เอกสารหลักและสถานะโครงการ
