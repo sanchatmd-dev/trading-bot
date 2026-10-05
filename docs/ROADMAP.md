@@ -20,6 +20,8 @@ Still open: storage acceptance, grants, native/executable closure, BACKFILL admi
 
 At about 17:04 UTC, after owner approval, one reviewed run applied finite limits to the staging research worker: CPU 50%, memory 512 MiB, swap 0 and 32 tasks, with I/O unchanged. Immediate and delayed checks passed with the same process and no restarts, out-of-memory or task-limit events; health stayed PAPER_ONLY with an empty queue. Root accepted "applied, idle survival only". Capacity, BACKFILL feasibility and admission, Node heap behavior under the memory limit, storage acceptance, grants, native/executable closure, principal closure (UNKNOWN), PROFILE/PREFLIGHT under these limits, W7, D6, R7 and PF-2 stay open, and rollback needs a separate owner approval. The next B3 slice is storage acceptance evidence or grants/native closure preparation, each with its own review and GO. See the [B3 worker limits evidence](evidence/B3_WORKER_LIMITS_2026-10-05.json).
 
+At 18:14 UTC one reviewed read-only observation confirmed the dataset storage chain, marker binding, database identity and idle state after the group-write change and the worker restart. The owner confirmed that every process running as the project Linux user on staging is trusted, and root accepted storage trust under that domain only. Next B3 slice: grants closure for the API enqueue path (identify the API database role without reading secrets), then a native drift-baseline decision and a fresh pre-admission read. BACKFILL admission stays a separate owner GO. See the [B3 storage acceptance evidence](evidence/B3_STORAGE_ACCEPTANCE_2026-10-05.json).
+
 ## Codex continuation — 2026-10-05
 
 At 09:57 UTC, a reviewed read-only diagnostic measured the research worker at

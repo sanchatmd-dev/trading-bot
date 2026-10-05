@@ -17,6 +17,8 @@ From about 11:30 to 13:43 UTC, Claude took over as root, and the B3 principal ob
 
 The finite worker limits slice (see [evidence](evidence/B3_WORKER_LIMITS_2026-10-05.json)) took about 20 minutes of design, about 56 minutes of build, and fix rounds of about 44 and 21 minutes; each host run took about 2 to 15 seconds. Usage at 17:20 UTC: Claude 5-hour window reset (0 to 5% used), weekly all-models 23%, weekly Fable 13%. These are observed durations only, with no speedup claim from agent count. Storage acceptance and grants/native closure remain unestimated until each has its own review and GO.
 
+The storage acceptance slice took about 11 minutes to choose, about 42 minutes to build and review, and about 2 seconds of host reading; root review and the owner trust-domain decision followed. Usage at 18:14 UTC: Claude 5-hour window 5%, weekly all-models 24%, weekly Fable 14%. Grants closure, the native baseline decision and the pre-admission read remain unestimated until each has its own review and GO.
+
 ## Codex continuation — 2026-10-05
 
 At 09:57 UTC, the corrected read-only resource collector returned complete

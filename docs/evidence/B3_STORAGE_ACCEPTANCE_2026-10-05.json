@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "scope": "B3 dataset storage trust acceptance on staging (facts plus owner trust-domain decision); not capacity or admission",
+  "rootReviewed": true,
+  "observation": {
+    "at": "2026-10-05T18:14:25Z",
+    "readOnly": true,
+    "hostConnections": 1,
+    "hostWrites": 0,
+    "holdoutBarsRead": false,
+    "chain": {
+      "positions": 7,
+      "allWithoutGroupOrOtherWrite": true,
+      "modes": [
+        "0755",
+        "0755",
+        "0750",
+        "0755",
+        "0700",
+        "0700",
+        "0600 (marker)"
+      ],
+      "formerSharedAncestor": "now 0755 after the owner-approved group-write removal",
+      "aclOnFormerSharedAncestor": "absent (access and default)",
+      "beforeEqualsAfter": true
+    },
+    "marker": {
+      "mode": "0600",
+      "binding": {
+        "storeId": true,
+        "rootHash": true,
+        "databaseHash": true
+      },
+      "namespaceMatchesPrior": true
+    },
+    "database": {
+      "identityMatches": true,
+      "workerRoleMatches": true,
+      "readOnlyTransaction": true,
+      "schema": 14,
+      "tables": 66,
+      "roleFlags": "no superuser, bypass RLS, create role/db or replication"
+    },
+    "idle": {
+      "legacyActive": 0,
+      "foundationActive": 0,
+      "leases": 0,
+      "unresolvedLaunches": 0,
+      "unresolvedOperations": 0
+    },
+    "runtime": {
+      "servicesMatchPins": true,
+      "apiResearchFlagsOff": true,
+      "health": "PAPER_ONLY, queue 0",
+      "workerLimitsPresent": true
+    },
+    "grantsFacts": {
+      "scope": "16 fixed tables, current worker role",
+      "completeEnqueueGrantProof": false,
+      "note": "facts only; enqueue runs under the API role, which is not yet observed"
+    }
+  },
+  "ownerTrustDomain": {
+    "at": "2026-10-05 (chat)",
+    "decision": "Owner trusts root and every process running as the project Linux user on staging, including processes in separate user namespaces whose identity was not individually established."
+  },
+  "rootAcceptance": "STORAGE_TRUST_ACCEPTED_UNDER_OWNER_TRUST_DOMAIN",
+  "recheckTriggers": [
+    "chain or marker identity, mode, owner or ACL change",
+    "binding or namespace change",
+    "mount change",
+    "service restart or release change",
+    "new principal evidence",
+    "fresh pre-admission read before any BACKFILL"
+  ],
+  "notAccepted": [
+    "capacity and free space against the dataset budget",
+    "grants closure for the API enqueue path",
+    "native/executable closure",
+    "BACKFILL admission, enqueue or range",
+    "W7, D6, R7",
+    "PF-2 activation"
+  ],
+  "b2Rerun": false,
+  "deploymentAccepted": false,
+  "researchAdmissionAccepted": false
+}
