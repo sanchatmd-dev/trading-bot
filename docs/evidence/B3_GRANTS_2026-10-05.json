@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "scope": "B3 database grants for the BACKFILL path on staging (facts and root decision); no grant was changed",
+  "rootReviewed": true,
+  "matrix": {
+    "rows": 76,
+    "derivation": "static from source with file and line for every row; independent second opinion found six additions, all confirmed (for example the API health endpoint reads heartbeat and signal tables on every worker health probe)"
+  },
+  "observation": {
+    "at": "2026-10-05T20:32:53Z",
+    "readOnly": true,
+    "hostConnections": 1,
+    "hostWrites": 0,
+    "attempts": "first attempt stopped on an unclassified error with no facts and no writes; the collector gained safe stage diagnostics, per-query isolation and two hardened statements; the second attempt collected every fact with no unknown query"
+  },
+  "facts": {
+    "apiRoleSameAsWorker": true,
+    "roleIdentityFromProcessEnvUsernameOnly": true,
+    "urlRoleOverridesPresent": false,
+    "workerRequired": 22,
+    "workerMissing": 0,
+    "workerConditionalPresent": 2,
+    "apiRequired": 25,
+    "apiMissing": 0,
+    "rowLevelSecurityOnTables": 0,
+    "securityDefinerPublicFunctions": 0,
+    "guardTriggersEnabled": 4,
+    "roleFlags": "no superuser, bypass RLS, create role/db or replication; no memberships; owns no public objects",
+    "schemaCreate": false,
+    "sequenceUpdate": 0
+  },
+  "excess": {
+    "summary": "one shared application role holds broad select/insert/update/delete on about 60 tables from earlier blanket grants",
+    "decision": "recorded only; a least-privilege split is a separate owner decision; no revoke proposed now"
+  },
+  "nonGrantAdmissionPrerequisites": [
+    "API process environment lacks the storage-limits file and dataset-root settings that the API research path needs when enabled; adding them requires an owner-approved API configuration change and restart as part of BACKFILL admission",
+    "API health depends on fresh trading heartbeats"
+  ],
+  "nativeBaseline": {
+    "decision": "first-observed Node executable digest and size recorded as a drift-detection baseline only, not provenance",
+    "sha256Prefix": "7fde7b8a",
+    "bytes": 126595440
+  },
+  "rootAcceptance": "GRANTS_SUFFICIENT_CANDIDATE_FOR_BACKFILL_PATH",
+  "notAccepted": [
+    "end-to-end enqueue proof",
+    "API storage environment prerequisites",
+    "capacity",
+    "BACKFILL admission, enqueue or range",
+    "W7, D6, R7",
+    "PF-2 activation"
+  ],
+  "grantChanges": 0,
+  "b2Rerun": false,
+  "deploymentAccepted": false,
+  "researchAdmissionAccepted": false
+}

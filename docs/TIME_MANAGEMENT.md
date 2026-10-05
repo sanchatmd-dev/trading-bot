@@ -19,6 +19,8 @@ The finite worker limits slice (see [evidence](evidence/B3_WORKER_LIMITS_2026-10
 
 The storage acceptance slice took about 11 minutes to choose, about 42 minutes to build and review, and about 2 seconds of host reading; root review and the owner trust-domain decision followed. Usage at 18:14 UTC: Claude 5-hour window 5%, weekly all-models 24%, weekly Fable 14%. Grants closure, the native baseline decision and the pre-admission read remain unestimated until each has its own review and GO.
 
+The grants slice took about 70 minutes for the matrix and collector build with reviews, about 15 minutes for a fix round, about 25 minutes of debugging after the first host stop, about 10 minutes for a test-harness fix, and two host reads of about 2 seconds each. Usage at 20:31 UTC: Claude 5-hour window 14%, weekly all-models 27%, weekly Fable 15%. The API settings change, the pre-admission read and BACKFILL admission remain unestimated.
+
 ## Codex continuation — 2026-10-05
 
 At 09:57 UTC, the corrected read-only resource collector returned complete

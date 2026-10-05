@@ -22,6 +22,8 @@ At about 17:04 UTC, after owner approval, one reviewed run applied finite limits
 
 At 18:14 UTC one reviewed read-only observation confirmed the dataset storage chain, marker binding, database identity and idle state after the group-write change and the worker restart. The owner confirmed that every process running as the project Linux user on staging is trusted, and root accepted storage trust under that domain only. Next B3 slice: grants closure for the API enqueue path (identify the API database role without reading secrets), then a native drift-baseline decision and a fresh pre-admission read. BACKFILL admission stays a separate owner GO. See the [B3 storage acceptance evidence](evidence/B3_STORAGE_ACCEPTANCE_2026-10-05.json).
 
+At 20:32 UTC a reviewed read-only collector compared live database privileges with a source-derived BACKFILL privilege matrix. One shared role serves the API and the worker and holds every required privilege; excess privileges are recorded for a later owner decision. A first attempt stopped on an unclassified error without facts or writes; the collector gained safe diagnostics and per-query isolation before the passing run. Root accepted grants as a sufficient candidate and recorded the first-observed Node executable digest as a drift-detection baseline, not provenance. Remaining before BACKFILL: the API storage settings (owner-approved configuration change), a fresh pre-admission read, and the owner BACKFILL GO with range and job ID; W7, D6 and R7 stay distinct. See the [B3 grants evidence](evidence/B3_GRANTS_2026-10-05.json).
+
 ## Codex continuation — 2026-10-05
 
 At 09:57 UTC, a reviewed read-only diagnostic measured the research worker at
