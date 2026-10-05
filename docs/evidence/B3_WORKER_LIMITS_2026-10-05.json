@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "scope": "B3 finite resource limits on the staging research worker only",
+  "rootReviewed": true,
+  "ownerApproval": {
+    "at": "2026-10-05T17:03Z (approx)",
+    "channel": "chat",
+    "scope": "Create one new limits drop-in (CPU 50%, memory 512 MiB, swap 0, tasks 32), one service-manager reload, and one research worker stop/start on staging; residuals accepted; rollback needs a separate approval."
+  },
+  "tool": {
+    "reviews": [
+      "design panel: Opus draft, Fable alternative draft (advisory), Opus judge synthesis",
+      "build: Opus author checks 507 pass; independent tester checks 614 pass",
+      "Opus audit REJECT, two fix rounds, Opus re-reviews ACCEPT_NARROW",
+      "Fable second opinion on apply fencing (findings confirmed by the auditor and closed)"
+    ],
+    "effectSourceSha": "29d3f8440700da3052b804ee9c7f99fe7e9a9c3614d046f3bd15e34f92648eb6",
+    "probeSourceSha": "286593d69842d04abc12c74187a3857a302a571fbaf406a188d5b5cb40137579"
+  },
+  "baseline": {
+    "observedAt": "2026-10-05T16:15:16Z",
+    "readOnly": true,
+    "gatesPassed": 24,
+    "gatesFailed": 0,
+    "threads": {
+      "total": 11,
+      "main": 1,
+      "delayedTaskScheduler": 1,
+      "v8Worker": 4,
+      "signalInspector": 1,
+      "libuvWorker": 4
+    },
+    "lifetimePeakTasks": 12,
+    "memoryBytes": 64782336,
+    "swapTotalKb": 0,
+    "threadPoolOverridesPresent": false,
+    "researchIdle": true,
+    "health": {
+      "mode": "PAPER_ONLY",
+      "queued": 0
+    }
+  },
+  "apply": {
+    "started": "2026-10-05T17:04:25.971Z",
+    "finished": "2026-10-05T17:04:40.786Z",
+    "hostConnections": 1,
+    "attempts": 1,
+    "retry": false,
+    "order": [
+      "exclusive create of the new drop-in",
+      "service-manager reload while running",
+      "read-only idle SQL",
+      "stop (inactive, exit 0, cgroup empty)",
+      "start",
+      "readiness (start line, no error lines)",
+      "readback"
+    ],
+    "readyAfterStartMs": 12312,
+    "limits": {
+      "cpuMax": "50000 100000",
+      "memoryMaxBytes": 536870912,
+      "swapMaxBytes": 0,
+      "pidsMax": 32,
+      "ioUnchanged": true
+    },
+    "existingConfigUnchanged": true,
+    "otherServicesUntouched": true
+  },
+  "checks": {
+    "immediate": {
+      "at": "2026-10-05T17:05:36Z",
+      "secondsAfterReady": 56,
+      "verdict": "P1_PASS",
+      "memoryBytes": 45912064
+    },
+    "delayed": {
+      "at": "2026-10-05T17:15:26Z",
+      "secondsAfterReady": 646,
+      "verdict": "P2_PASS",
+      "samePid": true,
+      "restarts": 0,
+      "memoryBytes": 53805056,
+      "peakMemoryBytes": 54329344,
+      "tasks": 11,
+      "peakTasks": 12,
+      "oomEvents": 0,
+      "pidsMaxEvents": 0,
+      "cpuThrottledCount": 18,
+      "cpuThrottledSeconds": 0.99,
+      "throttlingNote": "all throttling occurred during startup; counters unchanged from the post-start readback to the delayed check"
+    },
+    "sqlIdleEachPhase": true,
+    "healthEachPhase": "PAPER_ONLY, queue 0"
+  },
+  "rootAcceptance": "B3_LIMITS_APPLIED_IDLE_SURVIVAL_ONLY",
+  "rollback": "Separate owner-approved step: archive the new drop-in by rename, reload, stop/start, prove previous values.",
+  "notAccepted": [
+    "capacity",
+    "BACKFILL feasibility, admission or enqueue",
+    "Node heap behavior under the memory limit",
+    "storage acceptance",
+    "grants and native/executable closure",
+    "principal closure for processes in non-initial user namespaces",
+    "PROFILE or PREFLIGHT under these limits",
+    "W7, D6, R7",
+    "PF-2 activation"
+  ],
+  "b2Rerun": false,
+  "deploymentAccepted": false,
+  "capacityAccepted": false,
+  "researchAdmissionAccepted": false
+}
