@@ -41,6 +41,7 @@
       <label><span data-ui-label="Broker"></span><select id="pbBroker"><option value="binance-global">Binance Global</option><option value="binance-th">Binance TH</option><option value="innovestx">InnovestX</option><option value="settrade">Settrade</option></select></label>
       <label><span data-ui-label="Symbol"></span><input id="pbSymbol" value="BTCUSDT" pattern="[A-Z0-9]{3,30}" required></label>
       <label><span data-ui-label="Pine chart timeframe (1 = 1 minute)"></span><input id="pbTimeframe" value="1" required><small class="pbw-hint" data-ui-label="Prototype scope: BINANCE:BTCUSDT Spot, 1 minute (timeframe 1)."></small></label></div>
+      <p id="pbSlotOmissions" class="pbw-note" role="note" hidden></p>
       <details class="pbw-adv"><summary data-ui-label="Advanced: Quant search slots (optional, does not change Pine)"></summary>
       ${note('Slots 3–10 only feed the later Quant search and the stored snapshot. They do not change the Pine draft.')}
       ${note('Select up to eight numeric inputs. Empty slots stay unused. Other inputs stay at the reviewed TradingView values recorded above. The Pine draft preserves the original source; set its TradingView inputs to those reviewed values.')}
@@ -212,7 +213,7 @@
     resetDeployments();
   }
   document.getElementById('logout')?.addEventListener('click',clearPrivateState);
-  document.getElementById('language')?.addEventListener('change',()=>sync());
+  document.getElementById('language')?.addEventListener('change',()=>{sync();renderAnalysisLabels();});
   el('pbSource').addEventListener('input',()=>{el('pbStrategyHint').hidden=!hasStrategy(el('pbSource').value);invalidateInspection(true);});
   el('pbName').addEventListener('input',()=>sync());
   el('pbBot').addEventListener('change',()=>invalidateInspection(true));
@@ -229,6 +230,8 @@
   // Enter in a text field must never start an AI call by accident.
   for(const form of [el('pbAnalyze'),el('pbGenerate')])form.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.matches('input:not([type=checkbox])'))event.preventDefault();});
   const sptHash='0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a';
+  // Keep this label catalog aligned with the server's supported research dimensions.
+  const researchDimensions=new Set(['emaFastInput','emaSlowInput','atrLenInput','stFactorInput','zoneAtrMultInput','setupExpiryInput','cooldownInput','confirmLookback','slAtrBufferInput','minRiskATRInput']);
   function showInspection(inspection){
     state.inspection=inspection;state.inspectedSource=el('pbSource').value;state.inspectedBot=el('pbBot').value;
     el('pbInputFields').replaceChildren();
@@ -458,19 +461,31 @@
   document.getElementById('language')?.addEventListener('change',()=>{renderDeploy();renderDialog();renderResult();});
   renderDeploy();renderDialog();renderResult();
   function duplicates(){const selects=[...el('pbSlots').querySelectorAll('select')],used=new Set(selects.map(s=>s.value).filter(Boolean));for(const select of selects)for(const o of select.options)o.disabled=!!o.value&&o.value!==select.value&&used.has(o.value);}
+  function renderAnalysisLabels(){
+    for(const item of el('pbSlots').querySelectorAll('option[data-capability]'))item.textContent=`${item.dataset.inputLabel} — ${T(item.dataset.capability)}`;
+    const note=el('pbSlotOmissions'),count=Number(note.dataset.count??0);
+    note.hidden=count===0;
+    if(count)note.textContent=tpl('AI proposal omitted {count} eligible numeric inputs from the slot lists. They remain at the reviewed values.',{count});
+  }
   function showAnalysis(result,job) {
     state.source={id:job.pine_import_id,version:job.source_version,result};state.bot=el('pbBot').value;state.draft=null;
     for(const id of ['pbBuy','pbExit'])el(id).replaceChildren(option('',T('Select a boolean variable')),...result.declarations.map(v=>option(v,v)));
     el('pbBuy').value=result.proposal.buy??'';el('pbExit').value=result.proposal.exit??'';
     const candidates=result.inputs.filter(i=>i.eligible&&result.proposal.eligible_inputs.includes(i.input_id));
+    el('pbSlotOmissions').dataset.count=result.inputs.filter(i=>i.eligible&&['int','float'].includes(i.type)&&!result.proposal.eligible_inputs.includes(i.input_id)).length;
     el('pbSlots').replaceChildren();
     for(let i=3;i<=10;i++) {
       const row=document.createElement('fieldset');row.className='form-grid';const label=document.createElement('label');label.textContent='Slot '+i;
-      const select=document.createElement('select');select.dataset.slot=i;select.append(option('',T('Unused')),...candidates.map(c=>option(c.input_id,`${c.pine_variable} (${c.type}, ${c.effective_value}) — Quant pending`)));label.append(select);row.append(label);
+      const select=document.createElement('select');select.dataset.slot=i;select.append(option('',T('Unused')),...candidates.map(c=>{
+        const item=option(c.input_id,'');item.dataset.inputLabel=`${c.pine_variable} (${c.type}, ${c.effective_value})`;
+        item.dataset.capability=result.source_hash===sptHash?(researchDimensions.has(c.pine_variable)?'Research dimension supported':'Bridge only — research unsupported'):'Quant pending';
+        return item;
+      }));label.append(select);row.append(label);
       for(const field of ['min','max','step']){const l=document.createElement('label');l.textContent=field;const input=document.createElement('input');input.type='number';input.step='any';input.dataset.field=field;input.disabled=true;l.append(input);row.append(l);}
       select.addEventListener('change',()=>{const c=candidates.find(c=>c.input_id===select.value);for(const input of row.querySelectorAll('input')){input.disabled=!c;input.required=!!c;input.value=c?(c.declared_domain[input.dataset.field]??(input.dataset.field==='step'?(c.type==='int'?1:.1):c.effective_value)):'';}duplicates();});
       el('pbSlots').append(row);
     }
+    renderAnalysisLabels();
     el('pbGenerate').hidden=false;
     setReport(JSON.stringify({bridge:result.bridge_capability,quant:result.quant_capability,diagnostics:result.proposal.diagnostics},null,2));
     sync();

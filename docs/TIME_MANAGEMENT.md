@@ -2,6 +2,8 @@
 
 ## Codex continuation — 2026-10-05
 
+The S4 input-picker follow-up passed related UI regressions (51 tests) and independent focused checks (6 tests). It preserves selections and adds capability and omission labels in English/Thai. The B3/W7 transition design is prepared locally; final historical-boundary, native-closure and calibration evidence still gates executable operations. No host mutation or staging deployment followed from these local results.
+
 See [S4 and prototype continuation](STEP2_S4_CONTINUATION_2026-10-05.md). Work resumed with a bounded read-only runtime intake, S4 implementation and independent review; final PostgreSQL verification completed at 05:33 UTC with 50 passes and one intentional private-fixture skip. Read-only inventory completed at 05:28 UTC. PF-2 still requires B3/W7, D6 and R7; missing policy and dataset prerequisites prevent a credible activation ETA. All 21 candidates in the latest preserved run have zero validation trades, so no finite collection ETA can be inferred. Owner-only steps are parked while the owner is away. No throughput improvement is claimed from agent count.
 
 Update, 2026-10-05 about 04:00 UTC: Claude handed the project to Codex at the owner request; Codex is the sole root. See the [Claude to Codex handoff](CLAUDE_TO_CODEX_HANDOFF_2026-10-05.md). No schedule change; the entries below stay as history.

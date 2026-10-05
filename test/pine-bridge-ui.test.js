@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {JSDOM} from 'jsdom';
 import {inspectSource,validateSelection} from '../src/pine-bridge/source.js';
+import {CATALOG,SOURCE_HASH} from '../src/quant-research/contract.js';
 import {reviewFields} from '../src/pine-bridge/input-review.js';
 
 test('Bridge dropdown binds up to eight unique numeric slots, preserves errors as text, clears source on logout',async()=>{
@@ -43,9 +44,14 @@ test('Bridge dropdown binds up to eight unique numeric slots, preserves errors a
 // Step 2 UI proof (S2): ten numeric inputs, so eight slot selects can all be filled and the pick list can be reduced.
 // Fixture source only; product behavior is unchanged.
 const wideSource=['//@version=6','indicator("Wide")',...Array.from({length:10},(_,i)=>'p'+(i+1)+'=input.'+(i%2?'float':'int')+'('+(10+i)+(i%2?'.5':'')+', minval=1, maxval=100)'),'buy=close>open','sell=close<open'].join('\n');
-async function mountWide(eligible){
+async function mountWide(eligible,{source=wideSource,sourceHash,i18n=false}={}){
   const dom=new JSDOM('<button id="logout"></button><section data-page="quant"></section>',{url:'http://localhost',runScripts:'outside-only'});
-  const w=dom.window,analysis=inspectSource(wideSource),requests=[];
+  const w=dom.window,analysis=inspectSource(source),requests=[];
+  if(sourceHash)analysis.source_hash=sourceHash;
+  if(i18n){
+    w.document.body.insertAdjacentHTML('afterbegin','<select id="language"><option value="en">English</option><option value="th">ไทย</option></select><button id="forgotPassword"></button><dialog id="recoveryDialog"></dialog>');
+    w.eval(await fs.readFile(new URL('../public/i18n.js',import.meta.url),'utf8'));
+  }
   w.URL.revokeObjectURL=()=>{};
   w.api=async(path,options)=>{
     requests.push({path,options});
@@ -60,7 +66,7 @@ async function mountWide(eligible){
   w.eval(await fs.readFile(new URL('../public/pine-bridge.js',import.meta.url),'utf8'));
   const el=id=>w.document.getElementById(id),flush=()=>new Promise(resolve=>setImmediate(resolve));
   el('pbLoadBots').click();await flush();
-  el('pbSource').value=wideSource;el('pbInspect').click();await flush();
+  el('pbSource').value=source;el('pbInspect').click();await flush();
   el('pbInputsConfirmed').click();el('pbAnalyze').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
   return {w,el,flush,requests,analysis,selects:[...el('pbSlots').querySelectorAll('select')]};
 }
@@ -115,4 +121,57 @@ test('Step 2 UI: when the AI proposal omits eligible inputs, every slot pick lis
   assert.deepEqual(body.parameter_slots.map(s=>s.input_id),keep);
   assert.equal(validateSelection(analysis,body.selected_signals,body.parameter_slots,body.bridge_options).bindings.length,5);
   w.close();
+});
+
+
+test('S4b browser label catalog stays equal to the production research catalog',async()=>{
+ const script=await fs.readFile(new URL('../public/pine-bridge.js',import.meta.url),'utf8');
+ const list=script.match(/const researchDimensions=new Set\((\[[^\]]+\])\)/)[1];
+ const names=[...list.matchAll(/'([^']+)'/g)].map(match=>match[1]);
+ assert.deepEqual(names.sort(),Object.keys(CATALOG).sort());
+});
+
+test('S4b supported source labels research dimensions and keeps other Bridge inputs selectable through language changes',async()=>{
+ const source=['//@version=6','indicator("Catalog fixture")',...Object.entries(CATALOG).map(([name,limits])=>name+'=input.'+(limits[2]?'int':'float')+'('+(limits[2]?'10':'1.5')+', minval=1, maxval=100)'),
+  'outside=input.int(10,minval=1,maxval=100)','buy=close>open','sell=close<open'].join('\n');
+ const ctx=await mountWide(a=>a.inputs.map(i=>i.input_id),{source,sourceHash:SOURCE_HASH,i18n:true});
+ const {w,el,analysis,selects,flush,requests}=ctx;
+ try{
+  for(const select of selects)for(const item of [...select.options].slice(1)){
+   const input=analysis.inputs.find(i=>i.input_id===item.value);
+   assert.match(item.textContent,input.pine_variable==='outside'?/Bridge only — research unsupported$/:/Research dimension supported$/);
+  }
+  assert.equal(el('pbSlotOmissions').hidden,true);
+  const outside=analysis.inputs.find(i=>i.pine_variable==='outside');
+  pick(w,selects,[outside.input_id]);assert.equal(selects[0].value,outside.input_id);
+  const fields=[...el('pbSlots').querySelectorAll('input')];fields[0].value='2';
+  const before={picks:selects.map(s=>s.value),values:fields.map(i=>i.value),disabled:fields.map(i=>i.disabled),requests:requests.length};
+  el('language').value='th';el('language').dispatchEvent(new w.Event('change'));await flush();
+  assert.match(selects[0].selectedOptions[0].textContent,/ใช้ได้เฉพาะ Bridge — ยังไม่รองรับการวิจัย$/);
+  assert.match(selects[0].options[1].textContent,/รองรับมิติสำหรับวิจัย$/);
+  el('language').value='en';el('language').dispatchEvent(new w.Event('change'));await flush();
+  assert.match(selects[0].selectedOptions[0].textContent,/Bridge only — research unsupported$/);
+  assert.deepEqual({picks:selects.map(s=>s.value),values:fields.map(i=>i.value),disabled:fields.map(i=>i.disabled),requests:requests.length},before);
+ }finally{w.close();}
+});
+
+test('S4b unknown source retains Quant pending and reports omitted eligible inputs without adding them back',async()=>{
+ const ctx=await mountWide(a=>a.inputs.slice(0,5).map(i=>i.input_id),{i18n:true});
+ const {w,el,analysis,selects,flush}=ctx;
+ try{
+  assert.equal(el('pbSlotOmissions').hidden,false);
+  assert.match(el('pbSlotOmissions').textContent,/AI proposal omitted 5 eligible numeric inputs/);
+  for(const select of selects){
+   assert.equal(select.options.length,6);
+   for(const item of [...select.options].slice(1))assert.match(item.textContent,/Quant pending$/);
+   for(const omitted of analysis.inputs.slice(5))assert.equal([...select.options].some(o=>o.value===omitted.input_id),false);
+  }
+  pick(w,selects,analysis.inputs.slice(0,5).map(i=>i.input_id));
+  const before=selects.map(s=>s.value);
+  el('language').value='th';el('language').dispatchEvent(new w.Event('change'));await flush();
+  assert.match(el('pbSlotOmissions').textContent,/Input ตัวเลขที่เลือกได้ 5 รายการ/);
+  assert.match(selects[0].selectedOptions[0].textContent,/Quant รอตรวจสอบ$/);
+  assert.deepEqual(selects.map(s=>s.value),before);
+  const body=await generate(ctx);assert.equal(body.parameter_slots.length,5);
+ }finally{w.close();}
 });

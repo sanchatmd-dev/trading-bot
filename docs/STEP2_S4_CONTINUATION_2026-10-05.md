@@ -44,6 +44,24 @@ output. Fresh isolated clusters completed the checks and were stopped. No shared
 database was used. Root accepts S4 local implementation; staging acceptance is
 still pending.
 
+The backend checkpoint `5e2ba93` passed all nine CI checks, including PostgreSQL
+and the Windows and Ubuntu test jobs. This confirms the committed test results;
+it does not establish staging release compatibility or runtime acceptance.
+
+## Input capability labels
+
+The local Bridge input picker now labels dimensions supported by the known SPT
+research catalog separately from inputs supported only by Bridge. Unknown sources
+retain the pending label. A visible count explains when an AI proposal omitted
+otherwise eligible numeric inputs; it does not add those inputs back. These labels
+do not certify parity, readiness or profitability.
+
+English and Thai labels update without changing selected inputs, domain values,
+defaults, duplicate-choice protections or the eight-slot request. The related
+wizard, activation and Pine suites passed 51 tests; independent focused verification
+passed six tests and found no blocker. The counts overlap. This UI change is also
+local only, with no staging browser acceptance claim.
+
 ## Authenticated journey and current runtime
 
 Authenticated browser checks on 2026-10-05 verified the journey, Bot Manager,
@@ -84,6 +102,12 @@ activity diagnosis must precede any proposal for another research campaign.
   capacity and health-recovery policy files were absent; device mapping and
   cgroup memory limits remain unverified. Prepare a reviewed transition packet
   before any job or runtime change.
+- The prerequisite review separates B3 from W7: BACKFILL runs in the main Node
+  worker and does not require PROFILE V2 capacity calibration. B3 still needs
+  verified main-worker controls, storage, health, grants, executable closure and
+  historical holdout boundaries. Existing calibration receipts do not establish
+  the six physical I/O bounds needed for W7. Historical synthetic policy values
+  must not be relabelled as measured capacity.
 - Authenticated Create Bot success needs spare capacity or an explicitly
   authorized test-account arrangement. No existing bot was deleted or license
   expanded to manufacture this proof.

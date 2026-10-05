@@ -399,7 +399,12 @@ const bridgeWizardPairs=[
   ['Next: check the values above, then click Generate. Each Generate makes a new draft.','ถัดไป: ตรวจค่าด้านบน แล้วกด Generate ทุกครั้งที่ Generate จะได้ฉบับร่างใหม่'],
   ['Next: download bridge-draft.pine, then replace the whole script in TradingView.','ถัดไป: ดาวน์โหลด bridge-draft.pine แล้ว "แทนที่" สคริปต์ทั้งหมดใน TradingView']
 ];
-uiPairs.push(...bridgeWizardPairs);
+uiPairs.push(...bridgeWizardPairs,
+  ['Research dimension supported','รองรับมิติสำหรับวิจัย'],
+  ['Bridge only — research unsupported','ใช้ได้เฉพาะ Bridge — ยังไม่รองรับการวิจัย'],
+  ['Quant pending','Quant รอตรวจสอบ'],
+  ['AI proposal omitted {count} eligible numeric inputs from the slot lists. They remain at the reviewed values.','ข้อเสนอ AI ไม่รวม Input ตัวเลขที่เลือกได้ {count} รายการในช่องเลือก โดยคงค่าที่ตรวจสอบแล้ว']
+);
 // Drafts and deployments of a Bot, the Paper activation confirmation and its outcome (Build Pine Bridge panel).
 // One named block so a test can prove these pairs stay unique and complete. The Thai wording is a proposal for owner review.
 const bridgeActivatePairs=[

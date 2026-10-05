@@ -2,6 +2,8 @@
 
 ## Codex continuation — 2026-10-05
 
+S4 input-picker follow-up is locally accepted: known-source research dimensions and Bridge-only inputs have distinct English/Thai labels, and AI omissions are counted without changing selection. Related UI tests passed 51, with independent focused 6/6 verification. No deployment occurred; see the same continuation record below. README and Context were reviewed and remain accurate for this follow-up.
+
 The owner resumed the prototype blockers. [S4 continuation](STEP2_S4_CONTINUATION_2026-10-05.md) records the accepted local deployment/research selection guard, independent review, 50 PostgreSQL passes with one intentional skip, and fresh read-only staging observations. S4 runtime acceptance remains separate from local code; S6 and S7 remain open. Next implementation and operations gates: prepare the B3/W7 prerequisite transition from the current runtime before D6/R7, and review S4 release compatibility. B2 is complete. PF-2 and research admission remain off. Authenticated Create Bot success is blocked by full 3/3 capacity; the latest research run has zero validation trades in all 21 candidates, so no qualified winner exists. No new campaign or holdout access is approved by this checkpoint.
 
 ## Latest handoff — 2026-10-05
