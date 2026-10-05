@@ -10,6 +10,13 @@ Claude re-verifies Git, file ownership, authorized runtime and its own usage
 before becoming the sole root. Current next work remains bounded B3 trust,
 grant and executable prerequisites; full S4, S6 and authenticated acceptance
 remain open. This transfer does not authorize a new runtime effect or close a gate.
+Claude has since re-verified the handoff and is the sole root.
+
+## Claude continuation — 2026-10-05
+
+Claude re-verified the Codex handoff and became sole root at about 11:30 UTC. At 12:52 UTC one reviewed read-only B3 principal observation passed 11 of 12 closure gates. The task check stays UNKNOWN because 13 processes run in non-initial user namespaces; root chose no rerun or broader scan. After owner approval, one run at 13:42 UTC removed group write (0775 to 0755, non-recursive) on three staging directories, verified with identity, mounts, runtime guards and health unchanged. Root accepted group-write closure for those three directories only; rollback is a separate owner step.
+
+Still open: finite worker limits (they need preserved old configuration bytes, a reviewed executor, fresh SQL and health, and immediate plus delayed acceptance), storage acceptance, grants, native/executable closure, BACKFILL admission, PF-2, W7, D6 and R7. Principal closure stays UNKNOWN, and full S4, S6, authenticated acceptance and the old QL-3A OPEN allocation are unchanged. No deployment, restart, flag change or research job ran. Next B3 slice is finite worker limits preparation or storage acceptance evidence, each with its own review and GO. See the [B3 principal and group-write evidence](evidence/B3_PRINCIPAL_GROUP_WRITE_2026-10-05.json).
 
 ## Codex continuation — 2026-10-05
 

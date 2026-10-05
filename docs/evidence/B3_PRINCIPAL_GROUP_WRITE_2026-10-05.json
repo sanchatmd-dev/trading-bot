@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "scope": "B3 principal observation and owner-approved group-write removal on three staging directories only",
+  "rootReviewed": true,
+  "principalObservation": {
+    "observedAt": "2026-10-05T12:52:50.054Z",
+    "readOnly": true,
+    "hostConnections": 1,
+    "hostMutations": 0,
+    "dbRead": false,
+    "releases": {
+      "api": "5e398e7eff1a90b5c47c8c73456a0717cda592ee",
+      "trading": "f2bd332e2d78c3a385d5b39ca6e2e1da5c59738c",
+      "research": "3309d076440a8f4fb9eec4420d60878622fb484a"
+    },
+    "health": {
+      "status": 200,
+      "ok": true,
+      "mode": "PAPER_ONLY",
+      "queued": 0
+    },
+    "apiResearchAdmissionFlagsOff": true,
+    "closureGates": [
+      {
+        "gate": "TARGETS_STABLE_PINNED",
+        "status": "PASS"
+      },
+      {
+        "gate": "MOUNT_LOCAL_POSIX",
+        "status": "PASS"
+      },
+      {
+        "gate": "MOUNT_NO_IDMAPPED_NO_NOACL",
+        "status": "PASS"
+      },
+      {
+        "gate": "MOUNT_NAMESPACE_SAME",
+        "status": "PASS"
+      },
+      {
+        "gate": "PROC_VISIBILITY",
+        "status": "PASS"
+      },
+      {
+        "gate": "ACL_WRITE_CLOSED",
+        "status": "PASS"
+      },
+      {
+        "gate": "FILES_UNION_ONLY_OWNER",
+        "status": "PASS"
+      },
+      {
+        "gate": "NSS_PROVIDERS_FILES_SYSTEMD_ONLY",
+        "status": "PASS"
+      },
+      {
+        "gate": "USERDB_SURFACE_CLEAN",
+        "status": "PASS"
+      },
+      {
+        "gate": "TASK_SCAN_COMPLETE",
+        "status": "PASS"
+      },
+      {
+        "gate": "TASKS_NO_OTHER_PRINCIPAL",
+        "status": "UNKNOWN"
+      },
+      {
+        "gate": "GUARDS_BEFORE_AFTER",
+        "status": "PASS"
+      }
+    ],
+    "passCount": 11,
+    "unknownCount": 1,
+    "failCount": 0,
+    "tasksNoOtherPrincipal": {
+      "otherUidWithOwnerGroup": 0,
+      "bypassCapability": 0,
+      "mixedCredential": 0,
+      "nonInitialUserNamespaceProcesses": 13,
+      "unknown": 0,
+      "status": "UNKNOWN"
+    },
+    "taskScan": {
+      "processes": 141,
+      "tasks": 223,
+      "capHit": false
+    },
+    "principalRecommendation": "UNKNOWN",
+    "rootDecision": "No rerun or broader scan; prepare an owner-effect proposal for the three group-writable directories instead."
+  },
+  "ownerApproval": {
+    "at": "2026-10-05T13:00Z (approx)",
+    "channel": "chat",
+    "scope": "Remove group write, non-recursive, on exactly the three staging directories in the reviewed proposal; expected 0775 to 0755; run once by the operations worker under a fresh root GO, with the before-state captured for rollback. No other change."
+  },
+  "groupWriteEffect": {
+    "tool": {
+      "effectSha": "11f11650f374d163d795c92f4599e39b81aeb4f5dba4dd7cdb00f13805efedf5",
+      "localChecks": "143 pass, 0 fail",
+      "reviews": [
+        "Opus auditor ACCEPT_NARROW with low findings",
+        "Fable second opinion (advisory; findings confirmed by root and auditor)",
+        "fix round",
+        "Opus re-review ACCEPT_NARROW"
+      ]
+    },
+    "go": {
+      "approvedAt": "2026-10-05T13:42:09.992Z",
+      "expiresAt": "2026-10-05T13:44:09.992Z",
+      "issuedBy": "root under the owner approval above"
+    },
+    "run": {
+      "started": "2026-10-05T13:42:55.274Z",
+      "finished": "2026-10-05T13:42:56.740Z",
+      "hostConnections": 1,
+      "attempts": 1,
+      "retry": false,
+      "autoRollback": false,
+      "chmodCalls": 3,
+      "rc": 0,
+      "stderrBytes": 0
+    },
+    "targets": [
+      {
+        "role": "configuration ancestor of the research worker unit drop-in directory",
+        "before": "0775",
+        "after": "0755",
+        "state": "APPLIED_VERIFIED"
+      },
+      {
+        "role": "configuration ancestor of the research worker unit drop-in directory",
+        "before": "0775",
+        "after": "0755",
+        "state": "APPLIED_VERIFIED"
+      },
+      {
+        "role": "ancestor of the research dataset root",
+        "before": "0775",
+        "after": "0755",
+        "state": "APPLIED_VERIFIED"
+      }
+    ],
+    "verification": {
+      "identityUnchanged": true,
+      "specialBitsBeforeAfter": "none/none",
+      "aclBefore": "absent (ENODATA x6)",
+      "aclAfter": "absent (ENODATA x6)",
+      "mount": "matches prior observation 3/3",
+      "runtimeGuardsBefore": true,
+      "runtimeGuardsAfter": true,
+      "healthAfter": "PAPER_ONLY, queue 0"
+    },
+    "rollback": "Separate owner-approved step: exact numeric mode 0775 on each directory; values recorded privately.",
+    "rootAcceptance": "GROUP_WRITE_CLOSED_THREE_DIRECTORIES_ONLY"
+  },
+  "notAccepted": [
+    "storage acceptance",
+    "finite worker limits write (needs preserved old configuration bytes, a reviewed executor, fresh SQL and health, immediate and delayed acceptance)",
+    "BACKFILL admission",
+    "grants and native/executable closure",
+    "principal closure for processes in non-initial user namespaces",
+    "W7, D6, R7",
+    "PF-2 activation"
+  ],
+  "b2Rerun": false,
+  "deploymentAccepted": false,
+  "capacityAccepted": false,
+  "researchAdmissionAccepted": false
+}

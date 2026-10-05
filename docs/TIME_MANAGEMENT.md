@@ -11,6 +11,10 @@ its own windows and applicable Fable bucket before admission under AGENTS.md.
 No new engineering-hour total, deployment or completion guarantee follows from
 this documentation handoff. Earlier elapsed observations retain their scope.
 
+## Claude continuation — 2026-10-05
+
+From about 11:30 to 13:43 UTC, Claude took over as root, and the B3 principal observation and group-write closure ran (see [evidence](evidence/B3_PRINCIPAL_GROUP_WRITE_2026-10-05.json)). Usage at 13:41 UTC: 5-hour window 12% used, weekly all-models 20%, weekly Fable 11%. The tool build round took about 25 minutes and the fix round about 15 minutes; the one host run took about 1.5 seconds. These are observed durations only, with no speedup claim from agent count. Finite worker limits and storage acceptance remain unestimated until each has its own review and GO.
+
 ## Codex continuation — 2026-10-05
 
 At 09:57 UTC, the corrected read-only resource collector returned complete
