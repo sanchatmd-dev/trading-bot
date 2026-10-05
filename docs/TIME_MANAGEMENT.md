@@ -2,6 +2,24 @@
 
 ## Codex continuation — 2026-10-05
 
+At 08:40:29.836 UTC, the API-only staging release passed its delayed check,
+698.965 seconds after activation; root accepted the release at 08:41:52 UTC.
+One SCP transfer took 17.938 seconds for 38,142,338 bytes in three files,
+exited with code 0 and did not time out. Extraction verified 793 files
+(611 source and 182 dependencies) and Linux modes. Activation's conservative
+API downtime was 4,368 ms. These are observed spans, not total engineering
+hours or evidence of a speedup. The observed span from the first fresh host
+state at 08:17:29.533 UTC to the delayed observation was about 23 minutes,
+including root review, token waits and the required observation delay.
+All six sessions closed successfully; no retry, recovery or rollback ran.
+Root reported 58% weekly remaining before the phase and 57% at 08:42 UTC;
+the short window remains unknown and the reserve is 15 percentage points.
+Shared account readings cannot attribute task cost. README and Context now
+record the accepted API release while preserving separate full-journey gates.
+See the [release checkpoint](STEP2_S4_CONTINUATION_2026-10-05.md#api-only-staging-release-checkpoint).
+
+The earlier time-specific entries below are historical preparation checkpoints.
+
 At 07:46 UTC, local S05 tool preparation reached acceptance: 30 test groups
 passed, including a 20-case recovery matrix within one group; the independent
 review checked six critical groups and all 30 pinned files. Two upload-supervisor

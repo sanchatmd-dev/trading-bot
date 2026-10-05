@@ -1,5 +1,10 @@
 # Step 2 selection coherence and prototype continuation — 2026-10-05
 
+Current checkpoint: API-only staging `5e398e7` passed activation, immediate and
+delayed checks. Root accepted the release at 08:41:52 UTC. Authenticated behavior
+and full S4/Step 2 acceptance remain separate. See the [release checkpoint](#api-only-staging-release-checkpoint).
+Earlier entries retain their time-specific historical scope.
+
 ## Scope and decision
 
 The owner resumed work on the prototype blockers and authorized Computer Use.
@@ -21,7 +26,7 @@ request bodies retain the existing idempotency conflict. No historical contract,
 owner lock, active deployment, Pine source or Risk policy is rewritten. General
 Bridge support for zero to eight source slots is unchanged.
 
-This is local code only. `contract.js` participates in engine hashing, so a
+At the initial implementation checkpoint, this was local code only. `contract.js` participates in engine hashing, so a
 compatible release and its runtime checks remain separate gates. Staging
 research admission remains closed.
 
@@ -205,3 +210,45 @@ claimed by this local evidence.
 Private read-only receipts and local test logs remain in the ignored checkpoint
 namespaces. No PF-2 activation, new research campaign, guard reset, forced close,
 Live activation or production change occurred in this continuation.
+
+
+## API-only staging release checkpoint
+
+Existing owner staging and checkpoint commit/push continuation authority persists.
+Root remains the sole acceptance and Git authority. Source target
+`5e398e7eff1a90b5c47c8c73456a0717cda592ee` passed nine of nine CI checks;
+normal rollback remains `2919f9b`. No new owner approval is recorded here.
+
+The closed precheck passed at 08:18:04.951 UTC and incoming preparation passed.
+One SCP transferred three files totaling 38,142,338 bytes in 17.938 seconds,
+with exit code 0 and no timeout. Extraction passed at 08:26:41 UTC, verifying
+793 files (611 source and 182 dependencies) and Linux modes.
+API activation passed at 08:28:50.871 UTC, with PID 682462, start ticks
+171496461 and conservative downtime of 4,368 ms. The immediate postcheck
+passed at 08:30:54.420 UTC; its `delayProof` is false.
+
+The delayed postcheck passed at 08:40:29.836 UTC, 698.965 seconds after
+activation, with `delayProof: true`, the same API process and no invariant or
+activity differences from activation. Root reviewed the exact receipt hashes,
+closed journals and unchanged protected state, then accepted the staging API
+release at 08:41:52 UTC. All six sessions used one refresh and one phase;
+none timed out or required a retry, recovery or rollback. This runtime release
+does not prove the authenticated behavioral journey or complete S4 or Step 2.
+
+These phases changed only the staging API. No migration, research admission,
+research campaign, capacity change, TradingView action or production effect
+occurred. Trading worker `f2bd332`, research worker `3309d07` and protected
+services remain unchanged. All four API admission flags remain off.
+The old QL-3A allocation remains OPEN for 0.01181 BTC; its alert remains off.
+S6, successful authenticated Create Bot at three-of-three capacity,
+PF-2 B3/W7/D6/R7 remain open. No qualified candidate exists. S7 acceptance
+remains limited to the local mechanical replay described above.
+
+The [sanitized release evidence](evidence/STEP2_S4_STAGING_RELEASE_2026-10-05.json)
+records all phase verdicts, the delayed proof and root release acceptance.
+Private immutable receipts retain the operational evidence. Raw SHA-256 pins:
+precheck `d9715a6ec69d248534f6f07c32bd8401516cf2dbce6547f039996629e646d2c8`;
+activation `132e02363e31ee2cec7c36a41d6efea02790fbaf6e65f66d36c0e2fa437b90dc`;
+immediate postcheck `aec33e58c3ff561392a79d3c266dc70c0178d34fdf7fcdaffdbd94561d99d2ab`.
+Delayed postcheck SHA-256:
+`71a08f1675586a8db06261f374a55a063b155c006bff837ffebecdd45467539c`.

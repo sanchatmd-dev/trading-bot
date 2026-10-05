@@ -1,12 +1,12 @@
 # Robot trade VPS 2.2.0 — PostgreSQL Paper staging
 
-Current checkpoint, 2026-10-05: S7's nine-case mechanical replay is locally accepted, with Node/Python parity throughout. RR changed TP targets but not realized decisions on the frozen development prefix. S4 runtime and S6 remain open; PF-2 remains off. Release target `5e398e7` passed all nine CI checks but is not deployed. B3 still needs finite worker limits and storage-trust acceptance despite verified namespace identity and an idle research queue. See the [continuation record](docs/STEP2_S4_CONTINUATION_2026-10-05.md#remaining-work); no qualified strategy or full six-step acceptance is claimed.
+Current checkpoint, 2026-10-05: API-only staging `5e398e7` passed activation, the immediate check and the delayed check at 08:40:29.836 UTC, 698.965 seconds after activation. Root accepted the staging API release at 08:41:52 UTC. Authenticated behavioral acceptance, full S4 and full Step 2 remain separate. S7 is accepted only for local mechanical replay; S6, successful authenticated Create Bot at three-of-three capacity and PF-2 B3/W7/D6/R7 remain open. No qualified candidate exists, and four API admission flags stay off. See the [release checkpoint](docs/STEP2_S4_CONTINUATION_2026-10-05.md#api-only-staging-release-checkpoint).
 
 ระบบรับสัญญาณ TradingView สำหรับ Bot แบบ Spot Paper พร้อมบัญชีผู้ใช้, License, Risk Manager, Trade log และ Quant Lab สำหรับวิจัยย้อนหลัง โดย Worker เป็นผู้ตัดสินคำสั่งและบันทึกบัญชีเงินสด Paper ของระบบ
 
 ## เอกสารหลักและสถานะโครงการ
 
-อัปเดต 2026-10-05: [งาน S4 และสถานะ prototype](docs/STEP2_S4_CONTINUATION_2026-10-05.md) เพิ่มตัวตรวจให้ input ของคำขอวิจัยตรงกับ deployment ผ่านการตรวจอิสระและ PostgreSQL 50 ข้อ (ข้าม fixture ส่วนตัว 1 ข้อ) ยังไม่ deploy; PF-2 และ research admission ยังปิด S7 ผ่านเฉพาะการ replay เชิงกลในเครื่องแล้ว ส่วน S4 บน staging, S6 และการเลือก candidate ที่ผ่าน validation ยังไม่เสร็จ
+ประวัติก่อนการ activate API วันที่ 2026-10-05: [งาน S4 และสถานะ prototype](docs/STEP2_S4_CONTINUATION_2026-10-05.md) เพิ่มตัวตรวจให้ input ของคำขอวิจัยตรงกับ deployment ผ่านการตรวจอิสระและ PostgreSQL 50 ข้อ (ข้าม fixture ส่วนตัว 1 ข้อ) ยังไม่ deploy; PF-2 และ research admission ยังปิด S7 ผ่านเฉพาะการ replay เชิงกลในเครื่องแล้ว ส่วน S4 บน staging, S6 และการเลือก candidate ที่ผ่าน validation ยังไม่เสร็จ
 
 Handoff ล่าสุด 2026-10-05 ราว 11:00 น. (กรุงเทพฯ, 04:00 UTC): ตามคำขอของเจ้าของโครงการ Claude ส่งงานทั้งโครงการและงานล่าสุดให้ Codex และหยุดเป็น root โดย Codex เป็น root เพียงรายเดียว อ่านที่ [handoff จาก Claude ถึง Codex](docs/CLAUDE_TO_CODEX_HANDOFF_2026-10-05.md) ก่อน สรุปนี้ไม่ใช่หลักฐานสถานะสดและต้องตรวจ Git, usage และ runtime ใหม่ก่อนสั่งงาน รายการก่อนหน้าด้านล่างเก็บไว้เป็นประวัติ
 

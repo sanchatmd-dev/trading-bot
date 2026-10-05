@@ -2,6 +2,20 @@
 
 ## Codex continuation — 2026-10-05
 
+At 08:40:29.836 UTC, API-only staging `5e398e7` passed its delayed postcheck,
+698.965 seconds after activation. Root accepted the staging API release at
+08:41:52 UTC after reviewing all six closed phase receipts and the single
+upload. This does not close full S4, Step 2 or the authenticated behavioral
+journey. S6, successful authenticated Create Bot at three-of-three capacity
+and PF-2 B3/W7/D6/R7 remain open. S7 remains locally accepted only, and no
+qualified candidate exists.
+Four API admission flags remain off; worker and protected-service identities,
+the old QL-3A 0.01181 BTC OPEN allocation and its stopped alert are preserved.
+Existing owner staging and checkpoint commit/push continuation authority persists;
+root owns acceptance and Git. See the [release checkpoint](STEP2_S4_CONTINUATION_2026-10-05.md#api-only-staging-release-checkpoint).
+
+The earlier time-specific entries below are historical preparation checkpoints.
+
 At 07:46 UTC, the S05 switch tool received local root acceptance after 30 passing
 test groups and six independently checked critical groups. Thirty tool files are
 pinned. This does not authorize or prove a runtime phase. The separate upload

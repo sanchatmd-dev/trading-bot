@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "scope": "Staging API-only S4 release; authenticated journey acceptance is separate",
+  "target": "5e398e7eff1a90b5c47c8c73456a0717cda592ee",
+  "rollback": "2919f9b27d75de62626ca8a446461a123bf8be88",
+  "sourceCiPassed": 9,
+  "package": {
+    "sourceFiles": 611,
+    "dependencyFiles": 182,
+    "totalFiles": 793,
+    "uploadBytes": 38142338
+  },
+  "phases": [
+    {
+      "phase": "precheck",
+      "jobId": "s4precheck-0818",
+      "verdict": "PRECHECK_PASS",
+      "closedAt": "2026-10-05T08:18:04.951Z",
+      "rawSha256": "d9715a6ec69d248534f6f07c32bd8401516cf2dbce6547f039996629e646d2c8",
+      "refreshAttempts": 1,
+      "phaseAttempts": 1,
+      "observedAt": "2026-10-05T08:18:04.697Z"
+    },
+    {
+      "phase": "incoming",
+      "jobId": "s4incoming-0819",
+      "verdict": "INCOMING_PASS",
+      "closedAt": "2026-10-05T08:20:17.803Z",
+      "rawSha256": "44ca0fa78c8d38bd57ea0a3fc80beb4b42cc350798ee2ee7a040e331b9c48eb4",
+      "refreshAttempts": 1,
+      "phaseAttempts": 1
+    },
+    {
+      "phase": "extract",
+      "jobId": "s4extract-0825",
+      "verdict": "EXTRACT_PASS",
+      "closedAt": "2026-10-05T08:26:41.235Z",
+      "rawSha256": "d05635bdc66142d45d80a48c256ba3dd38f4e57fef816222138b6ac64accce38",
+      "refreshAttempts": 1,
+      "phaseAttempts": 1
+    },
+    {
+      "phase": "activate",
+      "jobId": "s4activate-0828",
+      "verdict": "ACTIVATE_PASS",
+      "closedAt": "2026-10-05T08:28:51.069Z",
+      "rawSha256": "132e02363e31ee2cec7c36a41d6efea02790fbaf6e65f66d36c0e2fa437b90dc",
+      "refreshAttempts": 1,
+      "phaseAttempts": 1,
+      "observedAt": "2026-10-05T08:28:50.871Z"
+    },
+    {
+      "phase": "immediate",
+      "jobId": "s4immediate-0830",
+      "verdict": "POSTCHECK_PASS",
+      "closedAt": "2026-10-05T08:30:54.611Z",
+      "rawSha256": "aec33e58c3ff561392a79d3c266dc70c0178d34fdf7fcdaffdbd94561d99d2ab",
+      "refreshAttempts": 1,
+      "phaseAttempts": 1,
+      "observedAt": "2026-10-05T08:30:54.420Z",
+      "delayProof": false
+    },
+    {
+      "phase": "delayed",
+      "jobId": "s4delayed-0839",
+      "verdict": "POSTCHECK_PASS",
+      "closedAt": "2026-10-05T08:40:30.052Z",
+      "rawSha256": "71a08f1675586a8db06261f374a55a063b155c006bff837ffebecdd45467539c",
+      "refreshAttempts": 1,
+      "phaseAttempts": 1,
+      "observedAt": "2026-10-05T08:40:29.836Z",
+      "delayProof": true
+    }
+  ],
+  "upload": {
+    "receiptSha256": "466f9db7ba320d4f939ec217e7ae28dfc36292c4970ad318769e1356b8789d41",
+    "status": "TRANSPORT_COMPLETE_ROOT_EXTRACT_VERIFICATION_REQUIRED",
+    "scpAttempts": 1,
+    "extraSshCommands": 0,
+    "elapsedSeconds": 17.93800000002375,
+    "timeout": false,
+    "noRetry": true
+  },
+  "activation": {
+    "observedAt": "2026-10-05T08:28:50.871Z",
+    "downtimeConservativeMs": 4368,
+    "newApiPid": "682462",
+    "newApiStartTicks": "171496461",
+    "layerSha256": "96d1e0dd9596a40f454a3a65d5cbc1d5ab6f56ca9db1d4af1e62ae242e632413",
+    "rawCanonicalSha256": "61741f5f6b9a35c0f49620c7b996d33a710b305ab85833f9a086d91bef6c1d8a"
+  },
+  "delayedCheck": {
+    "status": "PASS",
+    "observedAt": "2026-10-05T08:40:29.836Z",
+    "sinceActivationSeconds": 698.965,
+    "rawSha256": "71a08f1675586a8db06261f374a55a063b155c006bff837ffebecdd45467539c",
+    "delayProof": true
+  },
+  "rootReleaseAcceptance": true,
+  "authenticatedJourneyAcceptance": false,
+  "limits": {
+    "spotPaperOnly": true,
+    "symbol": "BINANCE:BTCUSDT",
+    "timeframe": "1m",
+    "researchAdmissionEnabled": false,
+    "pf2Enabled": false,
+    "newResearchJobSubmitted": false,
+    "qualifiedCandidate": false,
+    "oldQl3aAlertMustRemainOff": true
+  },
+  "rootAcceptedAt": "2026-10-05T08:41:52.878Z",
+  "remainingAcceptanceGates": [
+    "Authenticated S4 behavioral journey",
+    "Step 2 S6 input effect and TradingView parity",
+    "PF-2 B3/W7/D6/R7 runtime gates",
+    "Successful authenticated Create Bot capacity",
+    "Qualified candidate validation"
+  ]
+}
