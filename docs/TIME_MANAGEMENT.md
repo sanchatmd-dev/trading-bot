@@ -1,5 +1,16 @@
 # Time Management — Project execution and data collection
 
+## Latest handoff — Codex to Claude, 2026-10-05
+
+The owner requests transfer of the whole project and latest work to Claude.
+Codex closes dispatch at the saved checkpoint, with children completed and no
+active host command. See the [handoff](CODEX_TO_CLAUDE_HANDOFF_2026-10-05.md)
+and its private read-first notes. Codex weekly remaining was 48% at 11:14 UTC;
+its short window and all current Claude usage are unknown. Claude must refresh
+its own windows and applicable Fable bucket before admission under AGENTS.md.
+No new engineering-hour total, deployment or completion guarantee follows from
+this documentation handoff. Earlier elapsed observations retain their scope.
+
 ## Codex continuation — 2026-10-05
 
 At 09:57 UTC, the corrected read-only resource collector returned complete

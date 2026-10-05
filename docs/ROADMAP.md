@@ -1,5 +1,16 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+## Latest handoff — Codex to Claude, 2026-10-05
+
+The owner requests transfer of the whole project and latest work to Claude.
+Codex saves this checkpoint and stops dispatching; no child or host command
+remains active. Read the private handoff before the
+[whole-project handoff](CODEX_TO_CLAUDE_HANDOFF_2026-10-05.md).
+Claude re-verifies Git, file ownership, authorized runtime and its own usage
+before becoming the sole root. Current next work remains bounded B3 trust,
+grant and executable prerequisites; full S4, S6 and authenticated acceptance
+remain open. This transfer does not authorize a new runtime effect or close a gate.
+
 ## Codex continuation — 2026-10-05
 
 At 09:57 UTC, a reviewed read-only diagnostic measured the research worker at

@@ -1,5 +1,7 @@
 # Robot trade — Project Context
 
+Latest handoff, 2026-10-05: the owner transfers the whole project and latest work from Codex to Claude. Codex stops dispatching after this checkpoint. Read the private handoff first, then [Codex to Claude handoff](docs/CODEX_TO_CLAUDE_HANDOFF_2026-10-05.md); Claude re-verifies Git, runtime, file ownership and its own usage before taking command. Earlier root and runtime statements retain their recorded historical scope.
+
 Prerequisite update, 2026-10-05 09:57 UTC: the research worker's current resource use is measured, but finite limits remain unapplied and shared configuration-parent trust remains unresolved. Fresh browser access is unavailable, so authenticated acceptance stays open. No additional deployment, permission change or research job ran. See [B3 observations](docs/evidence/B3_PREREQUISITE_OBSERVATIONS_2026-10-05.json).
 
 Current checkpoint, 2026-10-05: API-only staging `5e398e7` passed activation, the immediate check and the delayed check at 08:40:29.836 UTC, 698.965 seconds after activation. Root accepted the staging API release at 08:41:52 UTC. Authenticated behavioral acceptance, full S4 and full Step 2 remain separate. S7 is accepted only for local mechanical replay; S6, successful authenticated Create Bot at three-of-three capacity and PF-2 B3/W7/D6/R7 remain open. No qualified candidate exists, and four API admission flags stay off. See the [release checkpoint](docs/STEP2_S4_CONTINUATION_2026-10-05.md#api-only-staging-release-checkpoint).
