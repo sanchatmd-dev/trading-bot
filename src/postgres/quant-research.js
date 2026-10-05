@@ -5,7 +5,7 @@ import {D} from '../money.js';
 import {hash,canonical,keys,number,fail} from '../pine-bridge/source.js';
 import {freshSnapshot,deploymentEvidence} from './pine-bridge-readiness.js';
 import {validateBar} from './pine-bridge-market.js';
-import {lockInputs,candidatePlan,coverage,SOURCE_HASH,RULES} from '../quant-research/contract.js';
+import {lockInputs,assertSelectionCoherence,candidatePlan,coverage,SOURCE_HASH,RULES} from '../quant-research/contract.js';
 import {readJson} from './http.js';
 import {ResearchDatasetStore} from '../quant-research/research-dataset-store.js';
 import {CONTENT_DIGEST_SQL,buildResearchContractV2,expectedFoundationRequestV2,
@@ -85,6 +85,7 @@ export class QuantResearchService{
   if(Object.entries(settings).some(([name,value])=>effective[name]!==value))throw fail('UNSUPPORTED_CUSTOM_SETTING');
   if(canonical(snapshot.selection.signals)!==canonical({buy:'buySignal',exit:'sellSignal',timing:'bar_close'}))throw fail('UNSUPPORTED_SIGNAL_MAPPING');
   const lock=lockInputs(source.analysis,snapshot.selection,body.parameter_slots,body.bridge_domains);
+  assertSelectionCoherence(snapshot.selection,lock.selection);
   const plan=candidatePlan(lock,body.budget,body.seed);
   keys(body.dataset,['start_time','end_time','warmup_bars']);
   for(const k of ['start_time','end_time'])number(body.dataset[k],{min:1,max:this.clock(),integer:true});

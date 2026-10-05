@@ -1,5 +1,9 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+## Codex continuation — 2026-10-05
+
+The owner resumed the prototype blockers. [S4 continuation](STEP2_S4_CONTINUATION_2026-10-05.md) records the accepted local deployment/research selection guard, independent review, 50 PostgreSQL passes with one intentional skip, and fresh read-only staging observations. S4 runtime acceptance remains separate from local code; S6 and S7 remain open. Next implementation and operations gates: prepare the B3/W7 prerequisite transition from the current runtime before D6/R7, and review S4 release compatibility. B2 is complete. PF-2 and research admission remain off. Authenticated Create Bot success is blocked by full 3/3 capacity; the latest research run has zero validation trades in all 21 candidates, so no qualified winner exists. No new campaign or holdout access is approved by this checkpoint.
+
 ## Latest handoff — 2026-10-05
 
 At about 04:00 UTC (11:00 Bangkok) on 2026-10-05 the owner asked Claude to hand the whole project and the latest work to Codex. Claude stopped as root and Codex is the sole root. See the [Claude to Codex handoff](CLAUDE_TO_CODEX_HANDOFF_2026-10-05.md) for the Git baseline (`f4ce608`), staging state (API on `2919f9b`), the six-step state, open owner decisions and the backlog. No gate changes with this handoff, and it is not a live-state certificate. The sections below stay as history.

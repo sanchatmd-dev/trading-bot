@@ -31,6 +31,41 @@ export function lockInputs(analysis,selection,slots,bridgeDomains){
   return {selection:locked,baseline,domains,lock_hash:hash(canonical({selection:locked,domains}))};
 }
 
+// Research may vary parameters only within the selection deployed by the owner.
+// Ignore presentation metadata and array order, but fail closed on incomplete identity.
+export function assertSelectionCoherence(deployed,locked){
+  const mismatch=()=>{throw fail('RESEARCH_SELECTION_MISMATCH',409);};
+  const project=selection=>{
+    if(!selection||!Array.isArray(selection.bindings)||!Array.isArray(selection.fixed_inputs))mismatch();
+    keys(selection.signals,['buy','exit','timing']);
+    if(selection.signals.timing!=='bar_close'||![selection.signals.buy,selection.signals.exit].every(v=>typeof v==='string'&&/^[A-Za-z_]\w*$/.test(v)))mismatch();
+    keys(selection.bridge,['atr_multiplier','rr']);
+    for(const value of Object.values(selection.bridge))number(value,{min:Number.MIN_VALUE,max:1000});
+    const ids=new Set(),variables=new Set(),slots=new Set(),effective=Object.create(null);
+    for(const input of [...selection.bindings,...selection.fixed_inputs]){
+      if(!input||typeof input.input_id!=='string'||!input.input_id||typeof input.pine_variable!=='string'||!/^[A-Za-z_]\w*$/.test(input.pine_variable)||typeof input.type!=='string'||!input.type||ids.has(input.input_id)||variables.has(input.pine_variable))mismatch();
+      ids.add(input.input_id);variables.add(input.pine_variable);
+      const value=input.effective_value;
+      if(!['number','string','boolean'].includes(typeof value)||(typeof value==='number'&&!Number.isFinite(value)))mismatch();
+      effective[input.pine_variable]=value;
+    }
+    const bindings=selection.bindings.map(input=>{
+      number(input.slot,{min:3,max:10,integer:true});
+      if(slots.has(input.slot)||!['int','float'].includes(input.type))mismatch();
+      slots.add(input.slot);
+      number(input.effective_value,{integer:input.type==='int'});
+      keys(input.search_domain,['min','max','step']);
+      for(const value of Object.values(input.search_domain))number(value,{integer:input.type==='int'});
+      const {min,max,step}=input.search_domain;
+      if(min>=max||step<=0||input.effective_value<min||input.effective_value>max)mismatch();
+      return {slot:input.slot,input_id:input.input_id,pine_variable:input.pine_variable,type:input.type,effective_value:input.effective_value,search_domain:{min,max,step}};
+    }).sort((a,b)=>a.slot-b.slot);
+    return {bindings,effective,signals:selection.signals,bridge:selection.bridge};
+  };
+  try{if(canonical(project(deployed))!==canonical(project(locked)))mismatch();}
+  catch{mismatch();}
+}
+
 export function validParameters(values,fixed){
   const fast=values.emaFastInput??fixed.emaFastInput,slow=values.emaSlowInput??fixed.emaSlowInput;
   return fast<slow;

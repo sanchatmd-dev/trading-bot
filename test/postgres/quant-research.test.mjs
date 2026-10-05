@@ -7,7 +7,7 @@ import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {QuantResearchService} from '../../src/postgres/quant-research.js';
 import {QuantResearchWorker} from '../../src/postgres/quant-research-worker.js';
-import {canonical,hash} from '../../src/pine-bridge/source.js';
+import {canonical,hash,validateSelection} from '../../src/pine-bridge/source.js';
 import {config} from '../../src/config.js';
 import {fixture,source} from '../helpers/quant-research-fixture.mjs';
 let admin,db,store,pine,service,databaseName,now=Date.now();
@@ -33,7 +33,7 @@ async function baseline(){
  await db.prepare('INSERT INTO pine_source_revisions VALUES(?,?,?,?,?,?)').run(importId,1,hash(source),source,JSON.stringify(f.analysis),now);
  await db.prepare('INSERT INTO pine_memberships VALUES(?,?,?,?,TRUE)').run(importId,a,a,1);
  const members=await db.prepare('SELECT pine_import_id,source_version,source_hash,analysis FROM pine_source_revisions WHERE pine_import_id=?').all(importId);
- const capital=await store.paperAccounts(a),snapshot={source_hash:hash(source),artifact_hash:hash('fixture'),market:{broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'},policy,policy_hash:hash(canonical(policy)),capital,funding_cutoff:0,membership:members,selection:{...f.selection,bindings:[],fixed_inputs:f.analysis.inputs}};
+ const capital=await store.paperAccounts(a),snapshot={source_hash:hash(source),artifact_hash:hash('fixture'),market:{broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'},policy,policy_hash:hash(canonical(policy)),capital,funding_cutoff:0,membership:members,selection:validateSelection(f.analysis,f.selection.signals,f.slots,f.selection.bridge)};
  snapshot.funding_cutoff=(await db.prepare('SELECT COALESCE(max(id),0) cutoff FROM paper_funding WHERE user_id=?').get(a)).cutoff;
  await db.prepare('INSERT INTO pine_deployments VALUES(?,?,?,?,?,?,?,\'READY\',?)').run(deploymentId,a,a,importId,1,JSON.stringify(snapshot),hash(canonical(snapshot)),now);
  const evidence={snapshot_hash:hash(canonical(snapshot)),artifact_hash:snapshot.artifact_hash,source_hash:snapshot.source_hash,compilation_errors:0,warnings:0,reviewed_warnings:0,binding_coverage:100,source_changed_bytes:0,unresolved_references:0,identifier_collisions:0,duplicate_bindings:0,native_alerts_isolated:true,effective_inputs_reviewed:true,signals_reviewed:true,cases:{sl:10,tp:10,native_and_bridge:5,both_touched:5,rejected:5,capped:5,buy:1,targeted_exit:1,duplicate_delivery:1},decision_match_percent:100,duplicate_ledger_effects:0,unrelated_payloads:0,level_difference_ticks:0,execution_model:{version:'paper-close-v1',price_tick:.01,quantity_step:.001,fee_bps:10,slippage_bps:1,risk_percent:1,data_profile:'closed-ohlcv-atr14-v1'},references:{tradingview:'synthetic-fixture-only',source_review:'synthetic-fixture-only',paper_fixture:'synthetic-fixture-only'}};
@@ -114,4 +114,46 @@ test('recovery after a committed holdout does not evaluate test performance twic
  await db.prepare('UPDATE quant_jobs SET lease_until=0 WHERE run_id=?').run(job.run_id);
  let calculations=0;const recovered=worker((...args)=>{calculations++;return evaluation(...args);});await recovered.tick();
  assert.equal(calculations,0);assert.equal((await get(x,q.run_id)).status,'SUCCEEDED');
+});
+
+
+test('selection mismatch rejects before dataset queries or new job writes',async()=>{
+ const x=await baseline(),sql=[],query=db.query.bind(db);
+ const count=()=>db.prepare('SELECT count(*) n FROM quant_jobs').get();
+ const before=(await count()).n;
+ db.query=(statement,...args)=>{sql.push(String(statement));return query(statement,...args);};
+ try{
+  await assert.rejects(enqueue({...x,body:{...x.body,parameter_slots:x.body.parameter_slots.slice(1)}}),
+   {code:'RESEARCH_SELECTION_MISMATCH',status:409});
+ }finally{delete db.query;}
+ assert.equal((await count()).n,before);
+ assert.equal(sql.some(statement=>statement.includes('pine_market_bars')),false);
+ assert.equal(sql.some(statement=>/INSERT INTO quant_jobs/i.test(statement)),false);
+});
+
+
+test('persisted exact retry survives historical deployment selection mismatch without rewriting the job',async()=>{
+ const x=await baseline(),key=randomUUID(),queued=await enqueue(x,key);
+ const before=await db.prepare('SELECT * FROM quant_jobs WHERE run_id=?').get(queued.run_id);
+ const count=(await db.prepare('SELECT count(*) n FROM quant_jobs').get()).n;
+ const deployed=await db.prepare('SELECT * FROM pine_deployments WHERE deployment_id=?').get(x.body.deployment_id);
+ const snapshot=structuredClone(deployed.snapshot);
+ // Historical deployments stored every input as fixed while research chose its own slots.
+ snapshot.selection.fixed_inputs=[...snapshot.selection.bindings,...snapshot.selection.fixed_inputs];
+ snapshot.selection.bindings=[];
+ const snapshotHash=hash(canonical(snapshot));
+ const record=await db.prepare('SELECT evidence FROM pine_bridge_evidence WHERE deployment_id=?').get(x.body.deployment_id);
+ const evidence={...record.evidence,snapshot_hash:snapshotHash};
+ await db.transaction(async()=>{
+  await db.prepare('UPDATE pine_deployments SET snapshot=?,snapshot_hash=? WHERE deployment_id=?')
+   .run(JSON.stringify(snapshot),snapshotHash,x.body.deployment_id);
+  await db.prepare('UPDATE pine_bridge_evidence SET snapshot_hash=?,evidence=?,evidence_hash=? WHERE deployment_id=?')
+   .run(snapshotHash,JSON.stringify(evidence),hash(canonical(evidence)),x.body.deployment_id);
+ });
+ await assert.rejects(enqueue(x,randomUUID()),{code:'RESEARCH_SELECTION_MISMATCH',status:409});
+ const retry=await enqueue(x,key);assert.equal(retry.run_id,queued.run_id);
+ assert.equal(retry.contract_hash,queued.contract_hash);
+ await assert.rejects(enqueue({...x,body:{...x.body,seed:x.body.seed+1}},key),{code:'IDEMPOTENCY_CONFLICT',status:409});
+ assert.equal((await db.prepare('SELECT count(*) n FROM quant_jobs').get()).n,count);
+ assert.deepEqual(await db.prepare('SELECT * FROM quant_jobs WHERE run_id=?').get(queued.run_id),before);
 });
