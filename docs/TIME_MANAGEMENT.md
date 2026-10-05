@@ -2,6 +2,8 @@
 
 ## Codex continuation — 2026-10-05
 
+CI caught a stale cache-token expectation and the follow-up scan found a second, adding one small correction and a new CI checkpoint before release. Both corrected suites passed all 56 tests in about 68 seconds. The 06:15 UTC owner-wide metadata check closed the known boundary-completeness gap. B3 resource/native checks and the S05 switch-tool audit remain separate work; elapsed preparation does not count as deployment.
+
 The S4b package review found a one-hour browser-cache risk from unchanged script URLs. A small asset-version correction precedes the final package and release-tool audit; no deployment time is claimed yet.
 
 The correction passed 98 UI tests. The bounded read-only diagnostic at 06:00 UTC found loss-streak pause rejections in every candidate; aggregate counters do not yet establish partition timing. Historical boundary validation and main-worker resource checks are the next B3 prerequisites. No additional data-collection ETA is justified by these findings.

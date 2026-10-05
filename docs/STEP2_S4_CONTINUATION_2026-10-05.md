@@ -67,6 +67,11 @@ URLs while static JavaScript is cached for one hour. The HTML now versions both
 the Bridge panel and translations as `s4b1`; existing loading-order expectations
 were updated. The package built before this correction is not a release target.
 The three affected UI suites passed 98 tests with no failures or skips.
+CI on `4b47170` then caught an additional stale cache-token assertion in the
+journey suite. A targeted scan found the same assertion in the readiness suite;
+both expectations were corrected without changing application behavior. Release
+acceptance requires the corrected checkpoint's checks, not the earlier package.
+The two corrected suites then passed 56 tests with no failures or skips.
 
 ## Authenticated journey and current runtime
 
@@ -99,6 +104,14 @@ partition. The result supports investigating persistent guard state rather than
 assuming more bars will produce validation trades. No guard was reset and no
 new evaluation was run. Historical boundary metadata was collected separately;
 it still requires validation before any new data range is approved.
+
+The follow-up at 06:15 UTC checked every research run for the same owner,
+including sibling bots without a market filter: three runs, all with usable
+metadata, and no registered boundary rows. Independent local review and root
+validation retain the earlier frozen TradingView boundary of 2026-09-25 19:53 UTC
+on the bar-open axis. Only the existing development prefix is eligible for the
+proposed diagnostic. This closes the observed metadata-completeness gap; it does
+not admit a backfill, register a boundary or certify runtime capacity.
 
 ## Remaining work
 

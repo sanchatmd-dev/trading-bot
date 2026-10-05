@@ -2,6 +2,8 @@
 
 ## Codex continuation — 2026-10-05
 
+CI found stale cache-token assertions outside the first local test selection; journey and readiness expectations were corrected, and both suites passed all 56 tests. The release remains gated on corrected-checkpoint CI and the revised switch tool. Owner-wide historical metadata was verified at 06:15 UTC; the frozen TradingView development boundary remains earlier and controls the proposed S7 diagnostic and B3 range. No replay or backfill has been admitted by that metadata check.
+
 Release preparation caught stale cache tokens for the changed Bridge and translation scripts. Their URLs now use `s4b1`; a fresh package must include this correction. The earlier local package is not approved for publication. Staging remains unchanged.
 
 At 06:00 UTC, read-only research checkpoints confirmed loss-streak pause rejections in all 21 candidates. Counters cover training and validation together, so the exact partition-level cause remains unproved. This is diagnostic evidence, not permission to reset a guard or rerun optimization. The cache correction passed 98 related UI tests.
