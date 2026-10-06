@@ -171,7 +171,7 @@ function renderBotCard(bot) {
       <div class="bot-card-title">
         <div class="bot-card-name">${esc(bot.label)}</div>
         <div class="bot-card-badges">
-          <span class="state-badge ${stateClass}">${stateLabel}</span>
+          <span class="state-badge ${stateClass}">${esc(stateLabel)}</span>
           <span class="mode-badge ${modeClass}">${translate(mode)}</span>
         </div>
       </div>

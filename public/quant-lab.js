@@ -1,7 +1,8 @@
 /* Offline Quant Lab: a research UI only. All calculations come from /api/quant. */
 const q = id => document.getElementById(id);
 const qNum = id => Number(q(id).value);
-const qText = value => String(value ?? '—');
+// Values placed into innerHTML templates are escaped; server and user text never becomes markup.
+const qEsc = value => String(value ?? '—').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 const qMoney = value => Number.isFinite(Number(value)) ? `${Number(value).toLocaleString(undefined, {maximumFractionDigits: 2})} USDT` : '—';
 const qFixed = (value, digits = 2) => Number.isFinite(Number(value)) ? Number(value).toLocaleString(undefined, {maximumFractionDigits: digits}) : '—';
 const qDate = () => new Intl.DateTimeFormat(undefined, {dateStyle: 'medium', timeStyle: 'short'}).format(new Date());
@@ -36,7 +37,7 @@ function qDrawCurve() {
   chart.setAttribute('aria-label', `${qBasis === 'mtm' ? 'Mark-to-market' : 'Book'} equity curve. Start ${qMoney(values[0])}; end ${qMoney(values.at(-1))}.`);
   chart.innerHTML = `<svg viewBox="0 0 ${width} ${height}" width="100%" height="250" role="img"><g class="ql-chart-grid">${ticks}</g><polyline class="ql-curve ${positive ? 'positive' : 'negative'}" points="${points}"/><text class="ql-axis-label" x="${pad.left}" y="${height - 8}">Start</text><text class="ql-axis-label" x="${width - pad.right - 24}" y="${height - 8}">End</text></svg>`;
 }
-function qParams(params, candles, balance) { q('qlRunParameters').innerHTML = [`EMA ${qText(params.ema_fast)} / ${qText(params.ema_slow)}`, `ATR ${qText(params.atr_period)} × ${qText(params.atr_multiplier)}`, `${qFixed(candles, 0)} candles`, `${qMoney(balance)} start`].map(value => `<span class="ql-pill">${value}</span>`).join(''); }
+function qParams(params, candles, balance) { q('qlRunParameters').innerHTML = [`EMA ${qEsc(params.ema_fast)} / ${qEsc(params.ema_slow)}`, `ATR ${qEsc(params.atr_period)} × ${qEsc(params.atr_multiplier)}`, `${qFixed(candles, 0)} candles`, `${qMoney(balance)} start`].map(value => `<span class="ql-pill">${value}</span>`).join(''); }
 async function qBacktest() {
   if (!qBacktestValid()) return; const button = q('qlBacktest'); qSetBusy(button, true, 'Running research…'); qStatus('Running offline synthetic backtest…');
   const params = {ema_fast: qNum('qlEmaFast'), ema_slow: qNum('qlEmaSlow'), atr_period: qNum('qlAtrPeriod'), atr_multiplier: qNum('qlAtrMult')}, config = {num_candles: qNum('qlCandles'), starting_balance: qNum('qlBalance')};
@@ -55,32 +56,43 @@ function qRenderIndicators() {
   const isMulti = qIndicators.length > 1;
   q('qlOptModeLabel').textContent = isMulti ? 'Multi-Indicator (Locked)' : 'Single Indicator (Optimizable)';
   
-  container.innerHTML = qIndicators.map((ind, i) => `
-    <fieldset class="ql-fieldset">
-      <legend>Indicator ${i+1}: ${ind.name} <button type="button" class="mini danger" onclick="qRemoveIndicator(${i})">X</button></legend>
-      ${ind.params.map((p, j) => `
-        <div class="ql-input-pair ql-input-pair-gap">
-          <label>${p.name} Min <input type="number" value="${p.min}" onchange="qUpdateParam(${i},${j},'min',this.value)" ${isMulti?'disabled':''}></label>
-          <label>Max <input type="number" value="${p.max}" onchange="qUpdateParam(${i},${j},'max',this.value)" ${isMulti?'disabled':''}></label>
-        </div>
-      `).join('')}
-    </fieldset>
-  `).join('');
+  // DOM nodes, not markup: the production CSP blocks inline handlers, and names render as text.
+  // Remove and Min/Max edits reach qRemoveIndicator and qUpdateParam through the delegated listeners in initQuantLab.
+  container.replaceChildren(...qIndicators.map((ind, i) => {
+    const fieldset = document.createElement('fieldset'), legend = document.createElement('legend'), remove = document.createElement('button');
+    fieldset.className = 'ql-fieldset';
+    remove.type = 'button'; remove.className = 'mini danger'; remove.dataset.qlRemove = String(i); remove.textContent = 'X';
+    legend.append(`Indicator ${i + 1}: ${String(ind.name ?? '')} `, remove);
+    fieldset.append(legend);
+    ind.params.forEach((p, j) => {
+      const field = (text, key) => {
+        const label = document.createElement('label'), input = document.createElement('input');
+        input.type = 'number'; input.value = String(p[key]); input.dataset.qlParam = `${i}:${j}:${key}`; input.disabled = isMulti;
+        label.append(text, input);
+        return label;
+      };
+      const pair = document.createElement('div');
+      pair.className = 'ql-input-pair ql-input-pair-gap';
+      pair.append(field(`${String(p.name ?? '')} Min `, 'min'), field('Max ', 'max'));
+      fieldset.append(pair);
+    });
+    return fieldset;
+  }));
 }
 
-window.qRemoveIndicator = (i) => { qIndicators.splice(i, 1); qRenderIndicators(); };
-window.qUpdateParam = (i, j, key, val) => { qIndicators[i].params[j][key] = Number(val); };
+function qRemoveIndicator(i) { qIndicators.splice(i, 1); qRenderIndicators(); }
+function qUpdateParam(i, j, key, val) { qIndicators[i].params[j][key] = Number(val); }
 
 function qCandidateRow(candidate, index) { 
   const p = candidate.params || {}, status = candidate.status || (candidate.passed_stress && candidate.stability_ok ? 'passed' : 'rejected'); 
-  return `<tr><td>${index + 1}</td><td><pre class="ql-param-pre">${JSON.stringify(p, null, 2)}</pre></td><td>${qFixed(candidate.train_score)}</td><td>${qFixed(candidate.validation_score)}</td><td>${qFixed(candidate.test_score)}</td><td><span class="ql-candidate-status ${status === 'passed' ? 'passed' : ''}">${status}</span></td></tr>`; 
+  return `<tr><td>${index + 1}</td><td><pre class="ql-param-pre">${qEsc(JSON.stringify(p, null, 2))}</pre></td><td>${qFixed(candidate.train_score)}</td><td>${qFixed(candidate.validation_score)}</td><td>${qFixed(candidate.test_score)}</td><td><span class="ql-candidate-status ${status === 'passed' ? 'passed' : ''}">${qEsc(status)}</span></td></tr>`; 
 }
 
 function qShowOptimizer(result) {
   const best = result.best, candidates = Array.isArray(result.candidates) ? result.candidates : [], split = result.dataset_split || {};
-  const intro = best ? `<section class="ql-best-params"><div><span class="ql-mini-label">Best validated candidate</span><pre>${JSON.stringify(best.params, null, 2)}</pre><p>Train ${qFixed(best.train_score)} · validation ${qFixed(best.validation_score)} · test ${qFixed(best.test_score)}</p></div><span class="ql-candidate-status passed">passed</span></section>` : '<p class="ql-empty-state">No candidate passed every validation gate. Adjust bounds or budget and run again.</p>';
+  const intro = best ? `<section class="ql-best-params"><div><span class="ql-mini-label">Best validated candidate</span><pre>${qEsc(JSON.stringify(best.params, null, 2))}</pre><p>Train ${qFixed(best.train_score)} · validation ${qFixed(best.validation_score)} · test ${qFixed(best.test_score)}</p></div><span class="ql-candidate-status passed">passed</span></section>` : '<p class="ql-empty-state">No candidate passed every validation gate. Adjust bounds or budget and run again.</p>';
   const table = candidates.length ? `<div class="table-wrap ql-candidate-table"><table><thead><tr><th>#</th><th>Parameters</th><th>Train</th><th>Validation</th><th>Test</th><th>Gate</th></tr></thead><tbody>${candidates.map(qCandidateRow).join('')}</tbody></table></div>` : '';
-  q('qlOptResults').innerHTML = `${intro}${table}<p class="ql-split-info">Dataset split: <strong>${qText(split.train_end)}</strong> train · <strong>${qText(split.validation_end)}</strong> validation · <strong>${qText(split.test_end)}</strong> test</p>`;
+  q('qlOptResults').innerHTML = `${intro}${table}<p class="ql-split-info">Dataset split: <strong>${qEsc(split.train_end)}</strong> train · <strong>${qEsc(split.validation_end)}</strong> validation · <strong>${qEsc(split.test_end)}</strong> test</p>`;
 }
 
 async function qLoadHistory() {
@@ -157,7 +169,7 @@ function qRiskItem(label, value, detail = '') { return `<article class="ql-rp-it
 function qShowRisk(result) {
   q('qlRiskResults').innerHTML = [qRiskItem('Order notional', qMoney(result.effective_order_notional), `${qFixed(result.effective_quantity, 8)} units`), qRiskItem('Consumed capital', qMoney(result.consumed_capital), `of ${qMoney(result.available_balance)}`), qRiskItem('Free capital', qMoney(result.free_capital)), qRiskItem('Position capacity', qFixed(result.position_capacity, 2)), qRiskItem('Daily trade capacity', qFixed(result.daily_trades_capacity, 2)), qRiskItem('Effective risk', `${qFixed(result.requested_risk_percent)}%`)].join('');
   const used = Math.max(0, Math.min(100, Number(result.consumed_capital) / Math.max(Number(result.available_balance), 1) * 100)); q('qlCapitalUse').hidden = false; q('qlCapitalUseText').textContent = `${qFixed(used, 1)}% used`; q('qlCapitalUseBar').style.width = `${used}%`;
-  const rules = Array.isArray(result.active_limiting_rules) ? result.active_limiting_rules : []; q('qlRiskConstraints').hidden = false; q('qlRiskConstraints').innerHTML = `<span class="ql-mini-label">Active constraints</span>${(rules.length ? rules : ['No active constraint']).map(rule => `<span class="ql-pill warn">${qText(rule)}</span>`).join('')}`;
+  const rules = Array.isArray(result.active_limiting_rules) ? result.active_limiting_rules : []; q('qlRiskConstraints').hidden = false; q('qlRiskConstraints').innerHTML = `<span class="ql-mini-label">Active constraints</span>${(rules.length ? rules : ['No active constraint']).map(rule => `<span class="ql-pill warn">${qEsc(rule)}</span>`).join('')}`;
 }
 async function qRiskPreview() {
   const button = q('qlRisk'); qSetBusy(button, true, 'Computing…'); qStatus('Computing risk preview…');
@@ -355,6 +367,8 @@ async function initQuantLab() {
   document.querySelectorAll('[data-view]').forEach(button => { if (button.dataset.view !== 'quant') button.addEventListener('click', qDataStopPoll); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) qDataStopPoll(); else if (qDataVisible() && qDataJob && !qDataTerminal(qDataJob.status)) { qDataPollCount = 0; qDataPoll(); } });
   
+  q('qlIndicatorsList').addEventListener('click', event => { const button = event.target.closest('[data-ql-remove]'); if (button) qRemoveIndicator(Number(button.dataset.qlRemove)); });
+  q('qlIndicatorsList').addEventListener('change', event => { const input = event.target.closest('[data-ql-param]'); if (!input) return; const [i, j, key] = input.dataset.qlParam.split(':'); qUpdateParam(Number(i), Number(j), key, input.value); });
   q('qlAddIndicator').addEventListener('click', () => {
     qIndicators.push({ name: 'CustomIndicator', params: [{name: 'param1', min: 10, max: 20, default: 15, step: 1, unit: 'bars', optimizable: true, locked: false}] });
     qRenderIndicators();
@@ -367,7 +381,8 @@ async function initQuantLab() {
     // Load bots for selector
     try {
         const bots = await api('/api/bots');
-        q('qlOptBotId').innerHTML = bots.bots.map(b => `<option value="${b.id}">${b.label}</option>`).join('');
+        // Bot labels are user text: options are built as nodes, never as markup.
+        q('qlOptBotId').replaceChildren(...bots.bots.map(b => { const option = document.createElement('option'); option.value = String(b.id); option.textContent = String(b.label ?? b.id); return option; }));
         qLoadHistory();
     } catch(e) {}
   });
