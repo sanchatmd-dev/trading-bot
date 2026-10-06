@@ -76,7 +76,9 @@ function renderDonut(){
 }
 function renderAssetBars(){
   const assets=analyticsState.breakdown.assets,max=Math.max(1,...assets.map(a=>Math.abs(a.netProfit)));
-  $('#assetBars').innerHTML=assets.length?assets.map(a=>`<button type="button" data-symbol="${esc(a.symbol)}"><span>${esc(a.symbol)}</span><i><b class="${a.netProfit>=0?'positive':'negative'}" style="width:${Math.max(2,Math.abs(a.netProfit)/max*100)}%"></b></i><strong class="${a.netProfit>=0?'positive-text':'negative-text'}">${esc(money(a.netProfit))}</strong></button>`).join(''):`<p>${esc(translate('No closed positions in this period'))}</p>`;
+  $('#assetBars').innerHTML=assets.length?assets.map(a=>`<button type="button" data-symbol="${esc(a.symbol)}"><span>${esc(a.symbol)}</span><i><b class="${a.netProfit>=0?'positive':'negative'}" data-bar-width="${Math.max(2,Math.abs(a.netProfit)/max*100).toFixed(2)}"></b></i><strong class="${a.netProfit>=0?'positive-text':'negative-text'}">${esc(money(a.netProfit))}</strong></button>`).join(''):`<p>${esc(translate('No closed positions in this period'))}</p>`;
+  // CSP style-src 'self' ignores style attributes in markup; the CSSOM sets each bar width instead.
+  document.querySelectorAll('#assetBars b[data-bar-width]').forEach(bar=>{bar.style.width=bar.dataset.barWidth+'%';});
   document.querySelectorAll('#assetBars button').forEach(button=>button.onclick=()=>{$('#analyticsSymbol').value=button.dataset.symbol;loadAnalytics();});
 }
 function renderClosedTrades(){

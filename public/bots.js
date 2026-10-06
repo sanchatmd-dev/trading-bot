@@ -20,8 +20,13 @@ function startPolling(botId) {
   pollTimer = setInterval(async () => {
     if (pollSequence !== seq) return; // cancelled
     if (document.hidden) return;      // skip hidden tab
+    if (botPageHidden()) return;      // the Overview page has its own refresh; poll only while the Bot cards show
     await refreshBotAccounts(botId, seq);
-  }, 4000);
+  }, 10000);
+}
+
+function botPageHidden() {
+  return !!document.querySelector('[data-page="bots"]')?.hidden;
 }
 
 function stopPolling() {
@@ -32,7 +37,7 @@ function stopPolling() {
 
 // Resume poll on tab visibility
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && pollActiveBotId) {
+  if (!document.hidden && pollActiveBotId && !botPageHidden()) {
     refreshBotAccounts(pollActiveBotId, pollSequence);
   }
 });
@@ -113,7 +118,7 @@ function renderBotCreate() {
     ? botT(`${Math.max(0, maxBots - botProfiles.length)} of ${maxBots} bot slots available`, `เหลือ ${Math.max(0, maxBots - botProfiles.length)} จาก ${maxBots} ช่อง Bot`)
     : botT('Bot capacity unavailable', 'ยังไม่ทราบจำนวนช่อง Bot');
   const label = botCreatePending ? botT('Creating Bot…', 'กำลังสร้าง Bot…') : botT('Create Bot', 'สร้าง Bot');
-  return `<div class="panel" style="margin-top:12px">
+  return `<div class="panel bot-create-panel">
     <p class="muted">${capacity}</p>
     <button type="button" class="primary" data-bot-create="${slot || ''}" ${slot === null || botCreatePending ? 'disabled' : ''}>${label}</button>
     ${slot === null && maxBots !== null && authenticated ? `<p class="muted">${botT('Bot limit reached', 'ครบจำนวน Bot ที่อนุญาตแล้ว')}</p>` : ''}
@@ -134,7 +139,7 @@ function renderAllBotsCard() {
     <div class="all-bots-pnl ${pnlPos ? 'positive-text' : 'negative-text'}">
       ${translate('Combined daily P/L')}: ${pnlPos ? '+' : ''}${fmt(dailyPnl)} R
     </div>
-    <p class="muted" style="margin-top:10px;font-size:12px">${translate('All Bots: overview and trade log only. Select a bot to edit settings.')}</p>
+    <p class="muted all-bots-note">${translate('All Bots: overview and trade log only. Select a bot to edit settings.')}</p>
   </article>`;
   $('#botScopeNotice').textContent = translate('All Bots: overview and trade log only. Select a bot to edit settings.');
 }
@@ -170,7 +175,7 @@ function renderBotCard(bot) {
           <span class="mode-badge ${modeClass}">${translate(mode)}</span>
         </div>
       </div>
-      <button class="mini" data-bot-save="${esc(bot.id)}" title="${translate('Save')}" style="margin-left:auto">✏️</button>
+      <button class="mini" data-bot-save="${esc(bot.id)}" title="${translate('Save')}" aria-label="${botT('Save Bot name', 'บันทึกชื่อ Bot')}">✏️</button>
     </div>
 
     <div class="account-cards-row" id="acct-${esc(bot.id)}">
@@ -188,8 +193,8 @@ function renderBotCard(bot) {
       <button class="risk-edit-btn" data-bot-open="${esc(bot.id)}" title="${translate('Save')}">⚙</button>
     </div>
 
-    <label style="display:none">${botT('Label', 'ชื่อ Bot')}<input data-bot-label="${esc(bot.id)}" maxlength="80" value="${esc(bot.label)}"></label>
-    <div class="bot-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+    <label class="bot-rename">${botT('Label', 'ชื่อ Bot')}<input data-bot-label="${esc(bot.id)}" maxlength="80" value="${esc(bot.label)}"></label>
+    <div class="bot-actions">
       <button type="button" class="mini" data-bot-copy="${esc(bot.id)}">${translate('Copy webhook')}</button>
       <button type="button" class="mini" data-bot-open="${esc(bot.id)}">${botT('Open', 'เปิด')}</button>
     </div>
@@ -526,7 +531,11 @@ async function switchBot(id) {
 
 // ─── Nav hooks ────────────────────────────────────────────────────────────────
 document.querySelectorAll('nav button').forEach(button => button.addEventListener('click', () => {
-  if (button.dataset.view === 'bots') refreshBots();
+  if (button.dataset.view === 'bots') {
+    refreshBots();
+    // Account cards update at once instead of waiting for the next 10 s poll.
+    if (pollActiveBotId) refreshBotAccounts(pollActiveBotId, pollSequence);
+  }
   if (selectedBot === 'all' && !['bots', 'overview', 'signals', 'journey'].includes(button.dataset.view)) {
     $('#botMessage').textContent = translate('Select one bot for this operation');
     document.querySelector('[data-view="bots"]').click();

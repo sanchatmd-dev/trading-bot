@@ -59,7 +59,7 @@ function qRenderIndicators() {
     <fieldset class="ql-fieldset">
       <legend>Indicator ${i+1}: ${ind.name} <button type="button" class="mini danger" onclick="qRemoveIndicator(${i})">X</button></legend>
       ${ind.params.map((p, j) => `
-        <div class="ql-input-pair" style="margin-bottom: 8px;">
+        <div class="ql-input-pair ql-input-pair-gap">
           <label>${p.name} Min <input type="number" value="${p.min}" onchange="qUpdateParam(${i},${j},'min',this.value)" ${isMulti?'disabled':''}></label>
           <label>Max <input type="number" value="${p.max}" onchange="qUpdateParam(${i},${j},'max',this.value)" ${isMulti?'disabled':''}></label>
         </div>
@@ -73,7 +73,7 @@ window.qUpdateParam = (i, j, key, val) => { qIndicators[i].params[j][key] = Numb
 
 function qCandidateRow(candidate, index) { 
   const p = candidate.params || {}, status = candidate.status || (candidate.passed_stress && candidate.stability_ok ? 'passed' : 'rejected'); 
-  return `<tr><td>${index + 1}</td><td><pre style="margin:0;font-size:11px">${JSON.stringify(p, null, 2)}</pre></td><td>${qFixed(candidate.train_score)}</td><td>${qFixed(candidate.validation_score)}</td><td>${qFixed(candidate.test_score)}</td><td><span class="ql-candidate-status ${status === 'passed' ? 'passed' : ''}">${status}</span></td></tr>`; 
+  return `<tr><td>${index + 1}</td><td><pre class="ql-param-pre">${JSON.stringify(p, null, 2)}</pre></td><td>${qFixed(candidate.train_score)}</td><td>${qFixed(candidate.validation_score)}</td><td>${qFixed(candidate.test_score)}</td><td><span class="ql-candidate-status ${status === 'passed' ? 'passed' : ''}">${status}</span></td></tr>`; 
 }
 
 function qShowOptimizer(result) {

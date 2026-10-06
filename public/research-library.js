@@ -49,6 +49,7 @@
   // Static markup. Every label comes from the i18n pairs; API data is only ever placed with textContent.
   const panel=make('details','panel qrl');panel.id='qrlPanel';
   const banner=label('Inspection only. Development scores are not recommendations. Applying settings or starting a Bot is a separate owner action.','p','qrl-banner');banner.setAttribute('role','note');
+  const scopeNote=label('Runs from every Bot of this account. Inspect a run to see its Bot.','p','qrl-scope');
   const winner=label('Qualified recommendations: none. No qualified winner.','p','qrl-winner');winner.setAttribute('role','status');
   const chips=make('div','qrl-chips');chips.setAttribute('role','group');
   const refresh=label('Refresh library','button','ghost qrl-refresh');refresh.type='button';
@@ -61,7 +62,7 @@
   const compareView=make('section','qrl-view qrl-compare-view');compareView.hidden=true;
   const detailView=make('section','qrl-view qrl-detail-view');detailView.hidden=true;
   // The views sit directly above the list, so Inspect and Compare show their answer at the top of the panel, not below every card.
-  panel.append(label('Research Library','summary','qrl-summary'),banner,winner,make('div','qrl-toolbar',chips,refresh),status,integrityNote,compareView,detailView,
+  panel.append(label('Research Library','summary','qrl-summary'),banner,scopeNote,winner,make('div','qrl-toolbar',chips,refresh),status,integrityNote,compareView,detailView,
     listBox,more,make('div','qrl-compare-bar',compareButton,selectedNote));
   host.append(panel);
 
@@ -74,6 +75,21 @@
     make('span','qrl-score qrl-none','— ',score&&score.reason?make('span','qrl-reason',known(REASONS,score.reason)):'');
   const qualOf=quality=>make('span','qrl-qual',chip('Not qualified','warn'),' ',known(LABELS,quality?.label));
   const contextKey=id=>state.runs.find(run=>run.run_id===id)?.compatibility_key;
+  // What a result was measured on, shown before any score: market and timeframe, data window, and the cost model.
+  const grouped=new Intl.NumberFormat('en-US');
+  const minute=ms=>Number.isFinite(ms)?new Date(ms).toISOString().slice(0,16).replace('T',' '):'—';
+  const timeframe=value=>typeof value==='string'&&/^\d+$/.test(value)?(Number(value)%1440===0?Number(value)/1440+'D':Number(value)%60===0?Number(value)/60+'h':value+'m'):dash(value);
+  function provenanceLine(run){
+    const market=run?.market,data=run?.dataset,cost=run?.cost,parts=[];
+    if(market)parts.push(make('span','qrl-pv',[dash(market.broker),dash(market.symbol),timeframe(market.timeframe)].join(' · ')));
+    if(data)parts.push(make('span','qrl-pv',minute(data.start_time)+' → '+minute(data.end_time)+' UTC · '+tpl('{n} bars',{n:Number.isFinite(data.bar_count)?grouped.format(data.bar_count):'—'})));
+    if(cost)parts.push(make('span','qrl-pv',tpl('Fee {fee} bps · Slippage {slip} bps',{fee:dash(cost.fee_bps),slip:dash(cost.slippage_bps)})));
+    return parts.length?make('div','qrl-prov',...parts):null;
+  }
+  // The library lists runs of every Bot of the account; a run names its Bot by label when the Bot list knows it.
+  const botName=id=>{try{const bot=typeof botProfiles!=='undefined'&&Array.isArray(botProfiles)?botProfiles.find(item=>item.id===id):null;return bot?.label||dash(id);}catch{return dash(id);}};
+  const currentBot=()=>{try{return (typeof selectedBot==='string'&&selectedBot)||(typeof me!=='undefined'&&me?.user?.id)||'';}catch{return '';}};
+  const botLine=id=>make('p','qrl-botline',label('Bot of this run'),': ',make('span','qrl-v',botName(id)),' ',id&&id===currentBot()?chip('Selected bot','info'):chip('Another Bot of this account','muted'));
 
   function card(run){
     const pick=make('input','qrl-pick');pick.type='checkbox';pick.dataset.run=run.run_id;pick.checked=state.selected.includes(run.run_id);
@@ -82,6 +98,7 @@
     const inspect=label('Inspect','button','ghost qrl-inspect');inspect.type='button';inspect.dataset.run=run.run_id;
     const article=make('article','qrl-card',
       make('div','qrl-card-head',classChip(run),make('code','qrl-status-raw',dash(run.status)),make('span','qrl-time',utc(run.created_at)),make('span','qrl-id',short(run.run_id))),
+      provenanceLine(run),
       row('Candidates',dash(run.candidates?.evaluated)+' / '+dash(run.candidates?.planned)),
       row('Development score',scoreOf(run.development_score)),
       row('Qualification',qualOf(run.qualification)),
@@ -219,7 +236,7 @@
     const back=label('Back to list','button','ghost qrl-back');back.type='button';
     const heading=make('h3','qrl-title',label('Research run'),' ',make('span','qrl-id',short(run.run_id)),' ',classChip(run),' ',make('code','qrl-status-raw',dash(run.status)));
     heading.tabIndex=-1;
-    fill(detailView,[back,heading,
+    fill(detailView,[back,heading,botLine(run.bot_id),
       warn?make('p','qrl-alert',label('Integrity check failed. The stored values do not match the preserved record; the development score is withheld.')):null,
       outcome(body),provenance(body),integrity(body),gaps(body),candidates(body),gates(body)]);
     if(warn)detailView.querySelector('.qrl-alert').setAttribute('role','alert');
@@ -247,7 +264,8 @@
         ['Search algorithm',run=>dash(run.disclosed?.search?.algorithm)]];
       const table2=make('div','qrl-scroll',make('table','qrl-table',make('thead',null,make('tr',null,label('Metric','th'),...cols.map(text=>make('th',null,text)))),
         make('tbody',null,...lines.map(([name,get])=>make('tr',null,label(name,'th'),...runs.map(run=>make('td',null,cell(run,get))))))));
-      nodes.push(note('Runs share one context and are listed by creation time. Development scores are in-sample selection; no run is ranked.'),table2);
+      nodes.push(note('Runs share one context and are listed by creation time. Development scores are in-sample selection; no run is ranked.'),
+        make('div','qrl-block qrl-shared',make('h4','qrl-sub',label('Shared context')),provenanceLine(runs[0])),table2);
     }
     fill(compareView,nodes);compareView.hidden=false;detailView.hidden=true;
   }

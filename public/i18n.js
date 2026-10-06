@@ -781,7 +781,54 @@ const marketChartPairs=[
   ['Fast length must be below slow length','ความยาวเส้นเร็วต้องน้อยกว่าความยาวเส้นช้า']
 ];
 uiPairs.push(...marketChartPairs);
-for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
+// Account overview, Navy command theme and the Selected bot tiles (overview.js, app.js).
+const overviewPairs=[
+  ['Account overview','ภาพรวมบัญชี'],['All bots','ทุก Bot'],['Paper only · Live locked','Paper เท่านั้น · Live ล็อก'],
+  ['Pause auto-refresh','หยุดอัปเดตอัตโนมัติ'],['Resume auto-refresh','เริ่มอัปเดตอัตโนมัติ'],['Refresh now','อัปเดตตอนนี้'],
+  ['Auto-refresh paused','หยุดอัปเดตอัตโนมัติอยู่'],['Reconnecting','กำลังเชื่อมต่อใหม่'],['Connecting…','กำลังเชื่อมต่อ…'],
+  ['Data may be stale','ข้อมูลอาจไม่เป็นปัจจุบัน'],['Connected','เชื่อมต่อแล้ว'],['Not updated yet','ยังไม่ได้อัปเดต'],
+  ['Updated {n} s ago','อัปเดตเมื่อ {n} วินาทีก่อน'],['Next try in {n} s','ลองใหม่ใน {n} วินาที'],
+  ['Updates every {n} s while this page is open. Read only: it never sends orders.','อัปเดตทุก {n} วินาทีขณะเปิดหน้านี้ อ่านอย่างเดียว ไม่ส่งคำสั่งซื้อขาย'],
+  ['Bots in this account','Bot ในบัญชีนี้'],['Every Bot of this account. Open one to manage it.','ทุก Bot ในบัญชีนี้ กดเปิดเพื่อจัดการ'],
+  ['Bot status','สถานะของ Bot'],['New entries','เปิดสถานะใหม่'],['Daily loss','ขาดทุนวันนี้'],['Positions','Position'],['Paper equity','มูลค่า Paper'],['Action','จัดการ'],
+  ['Running','ทำงานอยู่'],['Paused','พักอยู่'],['Stopped','หยุดแล้ว'],['Setup','กำลังตั้งค่า'],
+  ['Takes new entries','รับสัญญาณเปิดสถานะใหม่'],['No new entries. Open positions are still managed.','ไม่เปิดสถานะใหม่ Position ที่เปิดอยู่ยังถูกดูแล'],
+  ['Session ended. Reset it to trade again.','Session จบแล้ว กด Reset เพื่อเทรดอีกครั้ง'],['Not trading yet','ยังไม่เริ่มเทรด'],
+  ['Allowed','อนุญาต'],['Paused: kill switch','หยุด: Kill switch'],['Paused: global kill','หยุด: Global kill'],['Paused: bot paused','หยุด: Bot ถูก Pause'],['Not running','ยังไม่ทำงาน'],
+  ['Open bot','เปิด Bot'],['Open {bot} in Bot Manager','เปิด {bot} ใน Bot Manager'],['Could not load this Bot','โหลดข้อมูล Bot นี้ไม่ได้'],
+  ['Since {time}','ตั้งแต่ {time}'],['Realized {r}','ปิดแล้ว {r}'],['Bots running','Bot ที่กำลังทำงาน'],
+  ['Paused {p} · Stopped {s} · Setup {u}','หยุดพัก {p} · หยุดแล้ว {s} · ตั้งค่า {u}'],
+  ['Book equity at position cost, per currency','Book equity คิดจากต้นทุน Position แยกตามสกุลเงิน'],
+  ['Realized today','กำไร/ขาดทุนที่ปิดแล้ววันนี้'],['{n} trades today','วันนี้เทรด {n} ครั้ง'],['Held by {n} of {total} bots','ถือโดย {n} จาก {total} Bot'],
+  ['Open Bot Manager','เปิด Bot Manager'],['No bots yet. Create one in Bot Manager.','ยังไม่มี Bot สร้างได้ใน Bot Manager'],['Selected bot','Bot ที่เลือก'],
+  ['Bot state','สถานะ Bot'],['On · global','เปิดอยู่ · ทั้งระบบ'],['Signed out','ออกจากระบบแล้ว'],['Sign in to resume updates','เข้าสู่ระบบเพื่ออัปเดตต่อ'],
+  ['New entries paused. Position-reducing orders still allowed.','หยุดเปิดสถานะใหม่ ยังลด Position ได้'],
+  ['New entries allowed while the bot runs.','เปิดสถานะใหม่ได้เมื่อ Bot ทำงาน'],['See the bots table above','ดูตาราง Bot ด้านบน'],
+  ['Save Bot name','บันทึกชื่อ Bot'],['Settings and webhook apply to the selected bot.','การตั้งค่าและ Webhook ใช้กับ Bot ที่เลือก'],
+  ['Continue setup','ตั้งค่าต่อ'],['Setup guide','ขั้นตอนตั้งค่า Bot'],
+  ['From AI analysis to a running Paper Bot. Each button opens the screen for that step; nothing starts by itself.','ตั้งแต่ให้ AI วิเคราะห์จนถึง Bot ทำงานแบบ Paper ปุ่มแต่ละขั้นจะพาไปหน้าที่ต้องทำ ระบบไม่เริ่มทำงานเอง'],
+  ['Check again','ตรวจอีกครั้ง'],['Checked {time}','ตรวจเมื่อ {time}'],['{n} of {total} steps done','เสร็จแล้ว {n} จาก {total} ขั้น'],['Setup complete','ตั้งค่าครบแล้ว'],
+  ['Select one Bot to see its setup steps.','เลือก Bot หนึ่งตัวเพื่อดูขั้นตอนตั้งค่า'],
+  ['Done','เสร็จแล้ว'],['Do this now','ทำขั้นนี้'],['Not yet','ยังไม่ถึง'],['Not checked','ยังไม่ได้ตรวจ'],['Could not read this status.','อ่านสถานะนี้ไม่ได้'],
+  ['Create the Bot','สร้าง Bot'],['Each Bot has its own webhook, risk policy and Paper funds.','แต่ละ Bot มี Webhook นโยบายความเสี่ยง และเงิน Paper ของตัวเอง'],
+  ['Analyze your indicator with AI','ให้ AI วิเคราะห์ Indicator'],
+  ['Quant Lab, Build Pine Bridge: add your Pine indicator, check its inputs, then run Analyze.','ไปที่ Quant Lab หัวข้อ Build Pine Bridge ใส่ Pine indicator ตรวจ input แล้วกด Analyze'],
+  ['Generate the draft Pine','สร้าง Pine ฉบับร่าง'],
+  ['Choose the BUY and exit variables, the ATR multiplier and RR, then generate the draft and its setup guide.','เลือกตัวแปร BUY และตัวแปรปิดสถานะ ตัวคูณ ATR และ RR แล้วสร้างฉบับร่างพร้อมคู่มือตั้งค่า'],
+  ['Activate the draft for Paper','Activate ฉบับร่างสำหรับ Paper'],
+  ['Activation makes the draft the READY Bridge of this Bot. No real orders are sent.','การ Activate ทำให้ฉบับร่างเป็น READY Bridge ของ Bot นี้ ไม่มีการส่งคำสั่งจริง'],
+  ['Connect the TradingView alert','เชื่อม Alert ใน TradingView'],
+  ['Add the generated Pine to your TradingView chart and paste the webhook of this Bot into its alert. Done when the first signal arrives.','ใส่ Pine ที่สร้างลงกราฟ TradingView แล้ววาง Webhook ของ Bot นี้ใน Alert ขั้นนี้เสร็จเมื่อสัญญาณแรกเข้ามา'],
+  ['Set risk limits and check readiness','ตั้งลิมิตความเสี่ยงและตรวจความพร้อม'],
+  ['Save the risk policy and Paper funding of this Bot, then read its readiness report.','บันทึกนโยบายความเสี่ยงและเงิน Paper ของ Bot นี้ แล้วอ่านรายงานความพร้อม'],
+  ['Run the Bot in Paper','Run Bot แบบ Paper'],
+  ['Use Run on the Bot card below. You confirm before it starts. Live trading stays locked.','กด Run ที่การ์ด Bot ด้านล่าง ระบบให้ยืนยันก่อนเริ่ม การเทรดจริงยังล็อกอยู่'],
+  ['Open Pine Bridge','เปิด Pine Bridge'],['Open Risk manager','เปิดหน้าจัดการความเสี่ยง'],['Go to Run','ไปที่ปุ่ม Run'],
+  ['{n} bars','{n} แท่ง'],['Fee {fee} bps · Slippage {slip} bps','ค่าธรรมเนียม {fee} bps · Slippage {slip} bps'],['Shared context','บริบทที่ใช้ร่วมกัน'],
+  ['Runs from every Bot of this account. Inspect a run to see its Bot.','รายการจากทุก Bot ในบัญชีนี้ กด Inspect เพื่อดูว่าเป็นของ Bot ไหน'],['Another Bot of this account','Bot อื่นในบัญชีนี้'],['Bot of this run','Bot ของรายการนี้'],
+  ['Go to','ไปที่'],['Build Pine Bridge','สร้าง Pine Bridge'],['Research sections','ส่วนงานวิจัย'],['Backtest and legacy tools','Backtest และเครื่องมือเดิม']
+];
+uiPairs.push(...overviewPairs);for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}
 function translate(text) {return uiTranslations.get(text)?.[uiLanguage]??text;}
@@ -792,7 +839,7 @@ function translateUI(){
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   let node;
   while((node=walker.nextNode())){
-    if(node.parentElement.closest('script,style,pre,textarea,#signalRows,#recentSignals .list-row,#positions .list-row,#accountInfo p,#userRows,#licenseRows,#webhookResult,#newLicenseResult,#loginError,#passwordMessage,.mc-data'))continue;
+    if(node.parentElement.closest('script,style,pre,textarea,.ov-data,#signalRows,#recentSignals .list-row,#positions .list-row,#accountInfo p,#userRows,#licenseRows,#webhookResult,#newLicenseResult,#loginError,#passwordMessage,.mc-data'))continue;
     const current=node.textContent.trim(),old=originalUiText.get(node);
     // Retain canonical text through language toggles, but detect renderer updates.
     const source=old&&(current===old.en||current===old.th)?old:uiTranslations.get(current);
