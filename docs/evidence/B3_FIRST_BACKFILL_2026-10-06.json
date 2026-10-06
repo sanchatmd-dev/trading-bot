@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "scope": "First staging BACKFILL through the owner UI: temporary API research admission, one raw 1m BTCUSDT fetch of 515 bars, immediate and delayed checks, then closing the admission; Paper only, keyless public market data, no trade or research run",
+  "rootReviewed": true,
+  "ownerDecisions": [
+    "2026-10-06T09:22Z: open the two API research flags and storage settings temporarily in one API restart and close them right after the checks; 515 bars ending before holdout E; owner enqueues once via the UI; automatic rollback if the API fails to start",
+    "2026-10-06 ~13:27Z: keep the flags open while a tool reporting bug is fixed, then continue",
+    "2026-10-06 ~14:20Z: keep the flags open while the BACKFILL tool is updated for pre-existing storage and two READY deployments, then continue",
+    "2026-10-06 ~14:45Z: BACKFILL bot = SPT Prototype Paper 2026-10-03"
+  ],
+  "admission": {
+    "openedAt": "2026-10-06T13:24:53Z",
+    "closedAt": "2026-10-06T15:17:37Z",
+    "apiRestarts": 2,
+    "readyAfterStartSeconds": 11.3,
+    "readyNote": "the tool's ready time includes a 10-second stability wait after the API ready line",
+    "openFlags": "QUANT_RESEARCH_ENABLED and QUANT_RESEARCH_FOUNDATION_ENABLED plus the two storage settings; profile, enrollment and preflight flags stayed off",
+    "openCheck": "the open run completed every effect and its post gate passed, but reported UNCLASSIFIED_STOP because the pass constant was missing from the remote script; after a reviewed fix root accepted that run by its recorded facts, pinned by hashes; the delayed check passed at 14:11:40Z",
+    "close": "the admission drop-in was archived (kept on the host as an inert record), the API restarted, and the API environment again equals the pre-admission baseline with all five flags off and no storage settings; a read-only check at 15:18:32Z confirmed health, idle jobs and unchanged worker and trading processes"
+  },
+  "backfill": {
+    "preRead": {"at": "2026-10-06T15:03:30Z", "result": "pass, 47 of 47 gates, after a first pre-read at 14:12:51Z stopped on pre-existing storage entries and two READY deployments"},
+    "bot": "SPT Prototype Paper 2026-10-03 (owner and bot binding verified at the monitor and both checks)",
+    "job": {"enqueued": "2026-10-06T15:06:02Z", "terminal": "2026-10-06T15:06:04.744Z", "state": "SUCCEEDED", "attempts": 1, "runtimeMs": 754},
+    "range": {"warmupBars": 500, "evaluationBars": 15, "totalBars": 515, "firstBarOpen": "2026-09-25T11:18:00Z", "lastBarOpen": "2026-09-25T19:52:00Z", "endExclusive": "2026-09-25T19:53:00Z (holdout boundary E)", "continuous": true},
+    "dataset": {"finalId8": "bd7e1440", "pageId8": "a4695cd4", "rowsSha8": "ac17d86f", "provenance": "raw only, not a verified execution profile; enrollment not ready by design"},
+    "storage": "the pre-existing dataset and ATR14 entry were unchanged; exactly two new dataset directories were added; committed bytes rose by 146,738",
+    "monitor": "pass; 66 samples; worker peak memory about 64 MB and 12 tasks, no out-of-memory or task-limit events, health always ok",
+    "immediateCheck": {"at": "2026-10-06T15:06:59Z", "result": "pass, 17 of 17"},
+    "delayedCheck": {"at": "2026-10-06T15:16:49Z", "result": "pass, 17 of 17, no drift"}
+  },
+  "toolFixesThisSession": [
+    "API-settings tool: the pass constant was referenced inside code sent to the host but never sent; fixed, with tests that execute the exact host script; the worker-switch and BACKFILL scripts were scanned and are clean",
+    "BACKFILL tool: pre-existing storage entries are bound in the pre-read record and must stay unchanged; the job's bot and owner must match a READY deployment"
+  ],
+  "unchanged": ["Spot/Paper only; no trade, close or Live action", "QL-3A OPEN allocation 0.01181 BTC and its stopped alert", "no holdout opened; the bars end at boundary E", "no optimizer, Best Inputs or guard reset"],
+  "notClaimed": ["W7, D6, R7 and PF-2", "a verified execution profile or any research result", "full S4, S6 and authenticated acceptance"]
+}
