@@ -11,6 +11,10 @@ its own windows and applicable Fable bucket before admission under AGENTS.md.
 No new engineering-hour total, deployment or completion guarantee follows from
 this documentation handoff. Earlier elapsed observations retain their scope.
 
+## Claude continuation — 2026-10-06
+
+Observed durations: the API-settings auto-rollback change took about 31 minutes of build and review; the worker-switch resume build and review about 47 minutes; the resume run, switch and immediate check used about 25 seconds of host time between 10:15 and 10:18 UTC; the ctime diagnosis took two read-only reads (about 1 second, and about 3 minutes including a wait for a 5-minute mark); the three-tool ctime fix with reviews and a second opinion took about 68 minutes; the second delayed check took 2.4 seconds. The shadowed-flag fix and review took about 46 minutes, and each read-only API baseline read took about 2 seconds. Usage at 12:44 UTC: Claude 5-hour window 16% used, weekly all-models 38%, weekly Fable 19%. These are observed durations only, with no speedup claim from agent count. The admission session and BACKFILL remain unestimated until the owner is present.
+
 ## Claude continuation — 2026-10-05
 
 From about 11:30 to 13:43 UTC, Claude took over as root, and the B3 principal observation and group-write closure ran (see [evidence](evidence/B3_PRINCIPAL_GROUP_WRITE_2026-10-05.json)). Usage at 13:41 UTC: 5-hour window 12% used, weekly all-models 20%, weekly Fable 11%. The tool build round took about 25 minutes and the fix round about 15 minutes; the one host run took about 1.5 seconds. These are observed durations only, with no speedup claim from agent count. At that checkpoint, finite worker limits and storage acceptance were unestimated.

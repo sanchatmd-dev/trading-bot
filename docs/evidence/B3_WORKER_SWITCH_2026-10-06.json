@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "scope": "Staging research worker switched to the API release 5e398e7 (prerequisite for the first BACKFILL) and the API-settings tool's read-only baseline; no API restart, flag change, BACKFILL or research job",
+  "rootReviewed": true,
+  "ownerApproval": {
+    "at": "2026-10-06T09:22Z",
+    "scope": "move the research worker to release 5e398e7: stage a new tree, recovery policy and Python cache, add a unit layer, reload, restart the research worker, then immediate and delayed checks"
+  },
+  "stage": {
+    "firstRun": {
+      "at": "2026-10-06T09:22:37Z",
+      "result": "STOP at the final Python timing check; the tool emitted no timing diagnostics; worker untouched",
+      "effects": "new release tree (359 files copied from the API served tree) verified, new recovery policy created, checked-hash bytecode cache sealed (2011 files, 0 failed)"
+    },
+    "resumeRun": {
+      "at": "2026-10-06T10:15:44Z",
+      "result": "pass; every staged artifact re-verified equal to the first run, nothing re-created",
+      "timing": {
+        "run1WallMs": 3430,
+        "run1CpuMs": 1729,
+        "run2WallMs": 1120,
+        "run2CpuMs": 570,
+        "modules": 564,
+        "cachedModules": 563,
+        "allowedUncached": "1 (system sitecustomize symlink)",
+        "warning": "first cold run above the 1500 ms evidence threshold; recorded as a warning, not a gate"
+      }
+    }
+  },
+  "switch": {
+    "at": "2026-10-06T10:17:53Z",
+    "readySeconds": 12.3,
+    "release": "pw-5e398e7",
+    "engineEqualsApi": true,
+    "engineFiles": 79,
+    "limits": "unchanged: CPU 50%, memory 512 MiB, swap 0, 32 tasks",
+    "restarts": 0,
+    "apiAndTradingUntouched": true,
+    "journalErrors": 0,
+    "health": "200 PAPER_ONLY, empty queue"
+  },
+  "checks": {
+    "immediate": {
+      "at": "2026-10-06T10:18:30Z",
+      "secondsAfterReady": 36,
+      "result": "pass"
+    },
+    "delayedFirst": {
+      "at": "2026-10-06T10:28:38Z",
+      "result": "STOP on a ctime-only metadata change; content, size, mode, owner, inode and mtime unchanged; service healthy"
+    },
+    "delayedSecond": {
+      "at": "2026-10-06T11:45:58Z",
+      "result": "pass with a ctime-only warning on the tree, cache and switch layer; owner and modes re-proven by a read-only check first"
+    }
+  },
+  "ctimeFinding": {
+    "observed": "a periodic host process bumps the ctime of each newly created file once, 5 to 13 seconds after a 5-minute clock mark and 2.5 minutes to 1 hour 44 minutes after creation; every earlier research drop-in shows the same single bump",
+    "likelySource": "the provider-installed security scanner running as root; not proven (no xattr tool on the host; no canary write was made)",
+    "trustDomain": "inside the owner-accepted trust domain (root and the project user)",
+    "toolChange": "the worker-switch, API-settings and BACKFILL tools treat a ctime-only difference as evidence (WARN_CTIME_ONLY) in cross-run and rollback comparisons; any other metadata or content change still stops"
+  },
+  "memory": {
+    "afterSwitchBytesApprox": 43500000,
+    "afterSecondDelayedCheckBytesApprox": 59500000,
+    "previousWorkerAfterAbout14HoursBytes": 62025728,
+    "reading": "start-up growth toward the previous plateau, far below the 512 MiB cap; no out-of-memory or task-limit events"
+  },
+  "apiSettingsBaseline": {
+    "firstRead": {
+      "at": "2026-10-06T11:47:53Z",
+      "result": "STOP KEY_SET_ELSEWHERE: the API's research Node env file sets QUANT_RESEARCH_ENABLED=1"
+    },
+    "finding": "the earlier unit drop-in 90-w7-b1 sets all five research, profile and preflight flags to 0; unit environment wins over Node --env-file and the application enables a flag only for the exact value 1, so the env-file value stays shadowed while that drop-in is unchanged",
+    "toolChange": "narrow reviewed exception for Node env files only (systemd EnvironmentFile stays strict), re-checked at every later step; closing must prove all flags off",
+    "secondRead": {
+      "at": "2026-10-06T12:40:37Z",
+      "result": "pass, 19 of 19 gates; baseline pinned by root"
+    },
+    "apiFlags": "all five off",
+    "apiRestarted": false
+  },
+  "carryForward": [
+    "the cold Python import (3.4 s) exceeds the 3-second evaluation readiness deadline; carry into W7 and PROFILE gating (the BACKFILL path is Node-only)",
+    "the legacy quant_jobs Python path passes a different PYTHONPATH than the cache wrapper expects (src/postgres/quant-research-worker.js:18); not on the BACKFILL path",
+    "trading-side activity counts rose to 163 events and 11 entries and allocations, all pending; not reviewed in this slice"
+  ],
+  "next": "owner-present admission session: API settings restart with the two research flags, immediate and delayed checks, BACKFILL pre-read and monitor, one owner UI enqueue of 515 BTCUSDT 1m bars ending before holdout E, checks, then a second API restart to close the flags",
+  "notClaimed": [
+    "BACKFILL admission",
+    "W7, D6, R7 and PF-2",
+    "full S4, S6 and authenticated acceptance",
+    "any change to the QL-3A OPEN allocation"
+  ]
+}
