@@ -1,8 +1,9 @@
 /* Account overview: every Bot of this account on one page, kept fresh on a server-friendly schedule.
-   Read only. It sends GET requests through the shared api() helper and never writes, so it has no path to orders.
+   Read only: GET requests only, so it has no path to orders. Text is set with textContent only.
    Refresh: every 20 s (longer with many Bots) while both the Overview page and the browser tab are visible,
-   one cycle at a time, with back-off after errors. Per cycle: one /api/me per Bot plus one /api/positions;
-   the Bot list is re-read every fifth cycle. Text is set with textContent only. */
+   one cycle at a time, with back-off after errors. One GET /api/overview per cycle, revalidated with its ETag.
+   A server without that endpoint (404, the SQLite runtime) falls back for the session to the earlier reads:
+   one /api/me per Bot plus one /api/positions, with the Bot list re-read every fifth cycle. */
 (() => {
   const page=document.querySelector('[data-page="overview"]'),grid=page&&page.querySelector('.status-grid');
   if(!page||!grid)return;
@@ -25,7 +26,7 @@
   const app=document.getElementById('app');
   const visible=()=>!page.hidden&&!(app&&app.hidden)&&document.visibilityState!=='hidden';
 
-  const state={bots:[],rows:new Map(),positions:[],cycle:0,seq:0,timer:0,ticker:0,inFlight:false,failures:0,lastOk:0,nextAt:0,paused:false,loaded:false,signedOut:false};
+  const state={bots:[],rows:new Map(),positions:[],cycle:0,seq:0,timer:0,ticker:0,inFlight:false,failures:0,lastOk:0,nextAt:0,paused:false,loaded:false,signedOut:false,legacy:false};
 
   // Static frame
   const root=make('section','ov');root.id='ovAccount';root.setAttribute('aria-labelledby','ovTitle');
@@ -185,33 +186,68 @@
   function startTicker(){if(!state.ticker)state.ticker=setInterval(()=>{if(visible())renderStatus();else stopTicker();},1000);}
   function stopTicker(){clearInterval(state.ticker);state.ticker=0;}
   const transient=error=>!error||!Number.isInteger(error.status)||error.status===429||error.status>=500;
+  // The overview answer carries a strong ETag and cache-control: no-store, so the browser keeps nothing. The last tag
+  // and body live only here, in memory, and go back as If-None-Match; a 304 reuses the body. Never stored anywhere else.
+  const cache={tag:null,body:null,account:null};
+  const clearCache=()=>{cache.tag=null;cache.body=null;cache.account=null;};
+  const accountKey=()=>{try{return typeof me!=='undefined'&&me?.user?.id?String(me.user.id):null;}catch{return null;}};
+  const failure=(response,body)=>Object.assign(new Error(body?.error||'Request failed'),{status:response.status,code:body?.code});
+  // api() parses every answer as JSON and hides status and headers, so the 304 path needs this small GET-only reader.
+  async function readOverview(){
+    const headers={accept:'application/json'};
+    try{if(typeof csrfToken==='string'&&csrfToken)headers['x-csrf-token']=csrfToken;}catch{}
+    if(cache.tag&&cache.body&&cache.account===accountKey())headers['if-none-match']=cache.tag;
+    const response=await fetch('/api/overview',{method:'GET',credentials:'same-origin',cache:'no-store',headers});
+    if(response.status===304&&headers['if-none-match'])return cache.body;
+    let body=null;try{body=await response.json();}catch{}
+    if(!response.ok)throw failure(response,body);
+    if(!body||!Array.isArray(body.bots)||!Array.isArray(body.positions))throw failure({status:502},body);
+    cache.tag=response.headers.get('etag')||null;cache.body=body;cache.account=accountKey();
+    return body;
+  }
+  // Fallback for a server without /api/overview. Same shape as the overview answer; a Bot that fails alone carries error.
+  async function readLegacy(force){
+    let bots=state.bots;
+    if(!bots.length||force||state.cycle%BOTS_EVERY===0){
+      const list=await api('/api/bots',{silent:true});
+      bots=Array.isArray(list?.bots)?list.bots.filter(bot=>bot&&typeof bot.id==='string'):[];
+    }
+    const results=await pool(bots,CONCURRENCY,bot=>api('/api/me',{botId:bot.id,silent:true}).then(me=>({bot,me}),error=>({bot,error})));
+    const hard=results.find(result=>result.error&&(result.error.status===401||transient(result.error)));
+    if(hard)throw hard.error;
+    const positions=await api('/api/positions',{botId:'all',silent:true});
+    return {globalKill:results.some(result=>result.me?.globalKill),positions:Array.isArray(positions)?positions:[],
+      bots:results.map(({bot,me,error})=>me?{...me,...bot}:{...bot,error:error?.code||'ERROR'})};
+  }
   async function pool(items,limit,task){
     const out=new Array(items.length);let next=0;
     const worker=async()=>{while(next<items.length){const index=next++;out[index]=await task(items[index]);}};
     await Promise.all(Array.from({length:Math.min(limit,items.length)},worker));return out;
   }
   async function refresh({force=false}={}){
-    if(state.inFlight||!signedIn()||typeof api!=='function')return;
+    if(state.inFlight||!signedIn())return;
     if(!force&&(state.paused||!visible()))return;
     // Refresh now and the header Refresh skip a cycle while the last good one is under 5 s old.
     if(force&&!state.failures&&state.lastOk&&Date.now()-state.lastOk<COOLDOWN)return;
     stopTimer();state.inFlight=true;state.signedOut=false;now.disabled=true;root.classList.add('is-refreshing');
     let signedOut=false;
     try{
-      if(!state.bots.length||force||state.cycle%BOTS_EVERY===0){
-        const list=await api('/api/bots',{silent:true});
-        state.bots=Array.isArray(list?.bots)?list.bots.filter(bot=>bot&&typeof bot.id==='string'):[];
+      if(cache.account!==null&&cache.account!==accountKey())clearCache();
+      let data=null;
+      if(!state.legacy){
+        try{data=await readOverview();}
+        catch(error){if(error?.status!==404)throw error;state.legacy=true;clearCache();}
       }
+      if(state.legacy)data=await readLegacy(force);
       state.cycle++;
-      const results=await pool(state.bots,CONCURRENCY,bot=>api('/api/me',{botId:bot.id,silent:true}).then(me=>({id:bot.id,me}),error=>({id:bot.id,error})));
-      const hard=results.find(result=>result.error&&(result.error.status===401||transient(result.error)));
-      if(hard)throw hard.error;
-      const positions=await api('/api/positions',{botId:'all',silent:true});
-      state.positions=Array.isArray(positions)?positions:[];
-      state.rows=new Map(results.map(result=>[result.id,result.me?{me:result.me}:{error:result.error?.code||'ERROR'}]));
+      const bots=data.bots.filter(bot=>bot&&typeof bot.id==='string');
+      state.bots=bots.map(({id,parent_user_id,bot_slot_index,label,status})=>({id,parent_user_id,bot_slot_index,label,status}));
+      state.rows=new Map(bots.map(bot=>[bot.id,bot.error?{error:bot.error}:{me:{...bot,globalKill:bot.globalKill??data.globalKill===true}}]));
+      state.positions=data.positions;
       state.failures=0;state.lastOk=Date.now();state.loaded=true;
     }catch(error){
-      if(error?.status===401){signedOut=true;state.signedOut=true;stopTicker();}else state.failures++;
+      // Signed out: forget the cached answer and its time, so the next sign-in reads fresh data at once.
+      if(error?.status===401){signedOut=true;state.signedOut=true;state.lastOk=0;clearCache();stopTicker();}else state.failures++;
     }finally{
       state.inFlight=false;now.disabled=false;root.classList.remove('is-refreshing');
       if(!signedOut)schedule(delay());
@@ -242,7 +278,7 @@
   document.getElementById('refresh')?.addEventListener('click',()=>{if(visible())refresh({force:true});});
   document.getElementById('language')?.addEventListener('change',render);
   document.getElementById('botSwitcher')?.addEventListener('change',()=>setTimeout(render,0));
-  document.getElementById('logout')?.addEventListener('click',()=>{sleep();state.bots=[];state.rows=new Map();state.positions=[];state.lastOk=0;state.loaded=false;});
+  document.getElementById('logout')?.addEventListener('click',()=>{sleep();clearCache();state.bots=[];state.rows=new Map();state.positions=[];state.lastOk=0;state.loaded=false;});
   // app.js load() runs after sign-in and after every Bot switch. Wake once it finishes.
   try{
     if(typeof load==='function'){
