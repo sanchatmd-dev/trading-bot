@@ -45,8 +45,8 @@ function harness({portHandles=false}={}){
   return {send,rows};
 }
 
-const apiTargets=['/api/bots','//evil/api/bots','http://localhost/api/bots','http://evil.example/api/bots','/webhooks/../api/bots','/./api/bots','/%2e%2e/api/bots'];
-const webhookTargets=['/webhooks/tradingview/'+hex,'//evil/webhooks/tradingview/'+hex,'http://localhost/webhooks/tradingview/'+hex,'/./webhooks/tradingview/'+hex,'/x/../webhooks/tradingview/'+hex,'/%2e%2e/webhooks/tradingview/'+hex,'/api/../webhooks/tradingview/'+hex];
+const apiTargets=['/api/bots','//evil/api/bots','http://localhost/api/bots','http://evil.example/api/bots','/webhooks/../api/bots','/./api/bots','/%2e%2e/api/bots','/\\evil/api/bots','/x/..\\api/bots'];
+const webhookTargets=['/webhooks/tradingview/'+hex,'//evil/webhooks/tradingview/'+hex,'http://localhost/webhooks/tradingview/'+hex,'/./webhooks/tradingview/'+hex,'/x/../webhooks/tradingview/'+hex,'/%2e%2e/webhooks/tradingview/'+hex,'/api/../webhooks/tradingview/'+hex,'/x/..\\webhooks/tradingview/'+hex,'/\\evil/webhooks/tradingview/'+hex];
 
 test('every raw spelling of an API path is limited, Origin-checked and SERIALIZABLE',async()=>{
   const {send}=harness();
@@ -119,4 +119,86 @@ test('the machine port answers before the pipeline: no limiter, Origin, session 
   const {send,rows}=harness({portHandles:true});
   const answer=await send('/api/news-windows',{origin:null});
   assert.equal(answer.status,200);assert.deepEqual(answer.events,['port']);assert.equal(rows.size,0);
+});
+
+// Bare dispatcher with scripted router and transaction, for the error mapping and the deferred market answer.
+function bare({handleRequest,runMarketDeferred=async()=>null,audit=async()=>{}}){
+  const events=[],audits=[];
+  const dispatch=createDispatcher({
+    newsWindowsPort:{handle:async()=>false},
+    requestLimits:async()=>true,
+    auth:{checkOrigin(){},async prepareSession(){}},
+    database:{transaction:async(fn,{isolation})=>{events.push('begin:'+isolation);try{const value=await fn();events.push('commit');return value;}catch(error){events.push('rollback');throw error;}}},
+    store:{audit:async(...args)=>{audits.push(args[3]);return audit(...args);}},
+    preloadJson:async()=>{},
+    handleRequest:async(req,res)=>{events.push('route');return handleRequest(req,res,events);},
+    runMarketDeferred:async deferred=>{events.push('deferred');return runMarketDeferred(deferred);}
+  });
+  const send=async(url='/api/bots')=>{
+    const headers=new Map();
+    const res={headersSent:false,status:null,written:null,body:null,phase2Buffer:false,
+      setHeader(name,value){headers.set(name.toLowerCase(),value);},getHeader(name){return headers.get(name.toLowerCase());},removeHeader(name){headers.delete(name.toLowerCase());},
+      writeHead(status,extra){this.status=status;this.written={...Object.fromEntries(headers),...extra};this.headersSent=true;},
+      end(body){this.body=body===undefined?'':String(body);}};
+    await dispatch({url,method:'GET',headers:{},socket:{remoteAddress:'127.0.0.1'}},res);
+    return {res,events:[...events],audits:[...audits]};
+  };
+  return {send};
+}
+
+test('catch mapping: retryable SQLSTATEs become 409 RETRY_TRANSACTION',async()=>{
+  for(const code of ['40001','40P01','55P03']){
+    const {res,events,audits}=await bare({handleRequest:async()=>{throw Object.assign(new Error('could not serialize access'),{code});}}).send();
+    assert.equal(res.status,409,code);
+    assert.equal(res.body,JSON.stringify({error:'Concurrent update; retry the request',code:'RETRY_TRANSACTION'}),code);
+    assert.deepEqual(events,['begin:SERIALIZABLE','route','rollback'],code);
+    assert.deepEqual(audits,[{message:'Concurrent request rolled back'}],code);
+  }
+});
+
+test('catch mapping: other SQLSTATEs become 503 without database detail',async()=>{
+  for(const code of ['23505','42P01','08006','XX000']){
+    const {res,audits}=await bare({handleRequest:async()=>{throw Object.assign(new Error('duplicate key value violates unique constraint users_email_key'),{code});}}).send();
+    assert.equal(res.status,503,code);
+    assert.equal(res.body,JSON.stringify({error:'Request could not be completed'}),code);
+    assert.deepEqual(audits,[{message:'Database request failed'}],code);
+  }
+});
+
+test('catch mapping: error.status and an application code pass through; a plain error is 400',async()=>{
+  let answer=(await bare({handleRequest:async()=>{throw Object.assign(new Error('Bot access denied'),{status:403,code:'BOT_DENIED'});}}).send()).res;
+  assert.equal(answer.status,403);assert.equal(answer.body,JSON.stringify({error:'Bot access denied',code:'BOT_DENIED'}));
+  answer=(await bare({handleRequest:async()=>{throw Object.assign(new Error('Too many'),{status:429});}}).send()).res;
+  assert.equal(answer.status,429);assert.equal(answer.body,JSON.stringify({error:'Too many'}));
+  const plain=await bare({handleRequest:async()=>{throw new Error('Invalid risk policy');}}).send();
+  assert.equal(plain.res.status,400);assert.equal(plain.res.body,JSON.stringify({error:'Invalid risk policy'}));
+  assert.deepEqual(plain.audits,[{message:'Request validation failed'}]);
+});
+
+test('catch mapping: set-cookie and phase-2 buffering never leak into the error answer; a failed audit does not block it',async()=>{
+  const {res}=await bare({
+    handleRequest:async(req,res)=>{res.setHeader('set-cookie','session=new');json(res,200,{issued:true});throw Object.assign(new Error('late conflict'),{code:'40001'});},
+    audit:async()=>{throw new Error('audit down');}
+  }).send();
+  assert.equal(res.phase2Buffer,false,'buffering is reset');
+  assert.equal(res.status,409,'the buffered 200 is discarded');
+  assert.equal(res.written['set-cookie'],undefined,'no cookie from the rolled-back work');
+  assert.equal(res.body,JSON.stringify({error:'Concurrent update; retry the request',code:'RETRY_TRANSACTION'}));
+});
+
+test('a deferred market answer runs after COMMIT and replaces the buffered result',async()=>{
+  const deferred={kind:'market'};let seen=null;
+  const {res,events}=await bare({
+    handleRequest:async(req,res)=>{json(res,200,{buffered:true});res.phase2Deferred=deferred;},
+    runMarketDeferred:async value=>{seen=value;return {status:200,body:{market:true}};}
+  }).send('/api/market/ohlcv');
+  assert.deepEqual(events,['begin:SERIALIZABLE','route','commit','deferred']);
+  assert.equal(seen,deferred);assert.equal(res.phase2Deferred,null);
+  assert.equal(res.status,200);assert.equal(res.body,JSON.stringify({market:true}));
+  const buffered=await bare({handleRequest:async(req,res)=>{json(res,201,{buffered:true});}}).send();
+  assert.deepEqual(buffered.events,['begin:SERIALIZABLE','route','commit'],'no deferred call without a deferred answer');
+  assert.equal(buffered.res.status,201);assert.equal(buffered.res.body,JSON.stringify({buffered:true}));
+  const failed=await bare({handleRequest:async(req,res)=>{res.phase2Deferred=deferred;},runMarketDeferred:async()=>{throw Object.assign(new Error('upstream'),{status:502});}}).send();
+  assert.deepEqual(failed.events,['begin:SERIALIZABLE','route','commit','deferred']);
+  assert.equal(failed.res.status,502,'a failing market call answers after COMMIT, never rolls it back');
 });

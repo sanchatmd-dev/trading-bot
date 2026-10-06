@@ -17,6 +17,7 @@ import {booleanValue, clientIp} from '../http-safety.js';
 import {readJson,preloadJson} from './http.js';
 import {createRequestLimits} from './request-limits.js';
 import {json,createDispatcher} from './request-dispatch.js';
+import {overviewRoute} from './overview.js';
 import { PostgresDatabase } from './db.js';
 import {Auth} from './auth.js';
 import {D,Money,amount,exact} from '../money.js';
@@ -266,6 +267,7 @@ async function userRoutes(req, res, url) {
     return json(res, 503, {error: 'Quant Lab engine is unavailable'});
   }
   if (req.method !== 'GET' && (url.pathname === '/api/me/webhook-secret' || url.pathname.startsWith('/api/brokers/')) || url.pathname === '/api/me/password') await auth.sensitive(req);
+  if (await overviewRoute(req, res, url, actor, {store, json, defaultRisk: config.defaultRisk})) return;
   if (req.method === 'GET' && url.pathname === '/api/bots') {
     const plan = await store.activePlan(actor.id);
     const quota = getQuota(plan);

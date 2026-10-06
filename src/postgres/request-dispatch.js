@@ -2,6 +2,8 @@ import {requestPathname} from './request-limits.js';
 
 export const json = (res, status, body) => {
   if(res.phase2Buffer){res.phase2Result={status,body};return;}
+  // 304 Not Modified carries no body; the validator header was set by the route.
+  if(status===304){res.writeHead(304,{'cache-control':'no-store'});res.end();return;}
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store'
@@ -34,7 +36,8 @@ export function createDispatcher({newsWindowsPort,requestLimits,auth,database,st
       const result=deferred?await runMarketDeferred(deferred):res.phase2Result;
       if(result)json(res,result.status,result.body);
     }catch(error){
-      res.phase2Buffer=false;res.removeHeader('set-cookie');
+      // An error answer never carries a cookie or a validator from the rolled-back work.
+      res.phase2Buffer=false;res.removeHeader('set-cookie');res.removeHeader('etag');
       const retry=['40001','40P01','55P03'].includes(error.code);
       const internal=error.code&&/^[0-9A-Z]{5}$/.test(error.code);
       await store.audit(null,'request.error',null,{message:retry?'Concurrent request rolled back':internal?'Database request failed':'Request validation failed'}).catch(()=>{});
