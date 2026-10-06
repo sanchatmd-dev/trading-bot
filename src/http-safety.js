@@ -25,14 +25,21 @@ export function readJson(req, {maxBytes=65536}={}) {
 }
 
 export class RateLimiter {
-  constructor({limit=120,windowMs=60000,maxKeys=10000}={}) {
-    Object.assign(this,{limit,windowMs,maxKeys});this.entries=new Map();
+  constructor({limit=120,windowMs=60000,maxKeys=10000,evictOldest=false}={}) {
+    Object.assign(this,{limit,windowMs,maxKeys,evictOldest});this.entries=new Map();
   }
   accept(key,now=Date.now()) {
-    for(const [k,v] of this.entries)if(v.until<=now)this.entries.delete(k);
+    // windowMs is fixed and new keys append, so expiry follows insertion order: stop at the first live entry.
+    for(const [k,v] of this.entries){if(v.until>now)break;this.entries.delete(k);}
     let item=this.entries.get(key);
+    // A clock step back can leave an expired entry behind a live one; never count into it.
+    if(item&&item.until<=now){this.entries.delete(key);item=undefined;}
     if(!item){
-      if(this.entries.size>=this.maxKeys)return false;
+      if(this.entries.size>=this.maxKeys){
+        if(!this.evictOldest)return false;
+        // Fairness buckets: a flood of new keys may reset the oldest bucket, never lock out a new key.
+        this.entries.delete(this.entries.keys().next().value);
+      }
       item={count:0,until:now+this.windowMs};this.entries.set(key,item);
     }
     return ++item.count<=this.limit;

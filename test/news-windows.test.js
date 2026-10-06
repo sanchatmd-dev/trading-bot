@@ -294,9 +294,11 @@ test('startup: a malformed NEWS_FEED_TOKEN_SHA256 stops the server before any da
 test('the source keeps its promises: no cookie or session read, no Origin bypass in the shared pipeline, port answered before the pipeline',()=>{
   const port=fs.readFileSync(new URL('../src/postgres/news-windows.js',import.meta.url),'utf8');
   assert.ok(!/cookie|session|checkOrigin/i.test(port.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm,'')),'the port code never reads a cookie or session');
+  // The shared pipeline lives in request-dispatch.js; the router stays in server.js.
   const server=fs.readFileSync(new URL('../src/postgres/server.js',import.meta.url),'utf8');
-  assert.equal(server.split('auth.checkOrigin(req)').length-1,2,'the Origin check of the shared pipeline is unchanged');
-  assert.ok(server.indexOf('newsWindowsPort.handle(req,res)')<server.indexOf("const transactional=req.url.startsWith('/api/')"),'the port runs before the transactional pipeline');
+  const dispatch=fs.readFileSync(new URL('../src/postgres/request-dispatch.js',import.meta.url),'utf8');
+  assert.equal((server+dispatch).split('auth.checkOrigin(req)').length-1,2,'the Origin check of the shared pipeline is unchanged');
+  assert.ok(dispatch.indexOf('newsWindowsPort.handle(req,res)')>0&&dispatch.indexOf('newsWindowsPort.handle(req,res)')<dispatch.indexOf('const pathname=requestPathname(req.url)'),'the port runs before the transactional pipeline');
 });
 
 test('port enabled: a malformed request target never crashes the server; the pipeline answers it and the port keeps working',async()=>{
