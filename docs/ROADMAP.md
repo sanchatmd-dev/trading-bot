@@ -1,5 +1,9 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+## Latest handoff — Claude to Codex, 2026-10-06
+
+At about 15:22 UTC (22:22 Bangkok) on 2026-10-06 the owner asked Claude to hand the whole project and the latest work to Codex. Claude stopped as root and Codex is the sole root. See the [Claude to Codex handoff](CLAUDE_TO_CODEX_HANDOFF_2026-10-06.md) for the Git baseline, staging state (API and research worker on `5e398e7`, flags closed, first BACKFILL dataset raw only), what Claude did, lessons, open owner decisions and next work (W7, then D6, R7, PF-2). No gate changes with this handoff, and it is not a live-state certificate.
+
 ## Latest handoff — Codex to Claude, 2026-10-05
 
 The owner requests transfer of the whole project and latest work to Claude.

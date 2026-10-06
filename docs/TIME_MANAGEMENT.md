@@ -1,5 +1,9 @@
 # Time Management — Project execution and data collection
 
+## Latest handoff — Claude to Codex, 2026-10-06
+
+At about 15:22 UTC on 2026-10-06 Claude handed the project to Codex at the owner request; Codex is the sole root. See the [Claude to Codex handoff](CLAUDE_TO_CODEX_HANDOFF_2026-10-06.md). No schedule change; the entries below stay as history.
+
 ## Latest handoff — Codex to Claude, 2026-10-05
 
 The owner requests transfer of the whole project and latest work to Claude.
