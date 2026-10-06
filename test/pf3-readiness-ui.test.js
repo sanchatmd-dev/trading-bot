@@ -284,23 +284,32 @@ test('the All Bots scope asks for one bot and requests nothing',async()=>{
 
 test('late responses are dropped: an older answer never replaces a newer one, nor does an answer for the previous bot',async()=>{
   const slow=structuredClone(REPORTS.CONFIGURATION_FAILURE),fast=REPORTS.READY_TO_START_PAPER;
+  // Explicit gates, not timers: an answer arrives only when the test opens its gate, so the order never depends on CPU load.
+  const gate=()=>{let open;const promise=new Promise(resolve=>{open=resolve;});return {promise,open};};
+  const first=gate();
   let calls=0;
-  const p=setup({handler:()=>++calls===1?new Promise(resolve=>setTimeout(()=>resolve(structuredClone(slow)),90)):structuredClone(fast)});
+  const p=setup({handler:()=>++calls===1?first.promise.then(()=>structuredClone(slow)):structuredClone(fast)});
   try{
     await p.open();await p.open();
-    await new Promise(resolve=>setTimeout(resolve,160));
+    // The newer answer has rendered; only now does the older one arrive. Everything after the gate runs in microtasks.
+    first.open();await settle();
     assert.equal(calls,2);assert.equal(p.root.querySelector('.pf3-head code').textContent,'READY_TO_START_PAPER');
     assert.equal(p.events.length,1,'the dropped answer announces nothing');
   }finally{p.w.close();}
   // A bot switch while a report is in flight: the old answer is ignored, the new bot is read.
-  const answers=[{delay:90,report:slow},{delay:0,report:fast}];
-  const q=setup({scope:'bot-1',handler:()=>{const next=answers.shift();return new Promise(resolve=>setTimeout(()=>resolve(structuredClone(next.report)),next.delay));}});
+  const gates=[gate(),gate()],reports=[slow,fast],asked=gate();
+  let requests=0;
+  const q=setup({scope:'bot-1',handler:()=>{const index=requests++;if(index===1)asked.open();return gates[index].promise.then(()=>structuredClone(reports[index]));}});
   try{
     q.page.hidden=false;
     q.d.querySelector('nav button[data-view="risk"]').click();
     q.w.selectedBot='bot-2';
     q.d.querySelector('#botSwitcher').dispatchEvent(new q.w.Event('change'));
-    await new Promise(resolve=>setTimeout(resolve,200));
+    // readiness.js reads the new bot on the next turn; wait for that request, not for a clock.
+    await asked.promise;
+    const announced=new Promise(resolve=>q.d.addEventListener('pf3:report',event=>{if(event.detail)resolve();}));
+    gates[1].open();await announced;
+    gates[0].open();await settle();
     assert.equal(q.calls.length,2);assert.equal(q.root.querySelector('.pf3-head code')?.textContent,'READY_TO_START_PAPER');
     assert.deepEqual(q.events.map(event=>event===null?null:event.verdict),[null,'READY_TO_START_PAPER'],'the switch announces that the old report is gone, then the new bot');
   }finally{q.w.close();}
