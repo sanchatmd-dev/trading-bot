@@ -9,6 +9,7 @@ import {PostgresDatabase} from '../../src/postgres/db.js';
 import {Store} from '../../src/postgres/store.js';
 import {bindQuantStorage} from '../../src/postgres/quant-storage-retention.js';
 import {validateQuantCapacityPolicy} from '../../src/postgres/quant-capacity-policy.js';
+import {pf2ExecutableHashes} from '../../src/quant-research/preflight-resolver.js';
 import {profileV2Fixture} from './profile-v2-fixture.js';
 import {hashPassword} from '../../src/security.js';
 import {httpClient} from '../helpers.mjs';
@@ -48,6 +49,8 @@ export async function quantPreflightHttpFixture(connection,{mode='disabled',envi
     const limits=path.join(directory,'limits.json');
     await fs.writeFile(limits,JSON.stringify({diskQuotaBytes:128*1024*1024,tempQuotaBytes:64*1024*1024,freeFloorBytes:0}));
     const policy=structuredClone(capacityPolicy??profileV2Fixture().policy);policy.environment='staging';
+    // The default policy is written for the live PF-2 evaluator, or an enabled start refuses. A supplied policy is kept.
+    if(!capacityPolicy)policy.scope.evaluator_hash=(await pf2ExecutableHashes()).evaluator_hash;
     policy.terminal??={version:'quant-io-terminal-policy-v1',runtime_max_ms:30000,terminal_drain_ms:0,tail_margin_ms:5000};
     validateQuantCapacityPolicy(policy);
     const policyFile=path.join(directory,'policy.json');await fs.writeFile(policyFile,JSON.stringify(policy));

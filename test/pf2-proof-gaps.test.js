@@ -11,10 +11,11 @@ import {profileV2Fixture} from './helpers/profile-v2-fixture.js';
 // The seam would let a caller move "now" and with it the current-minute bound on holdout boundaries and the
 // freshness checks of the plan builder.
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const liveEvaluator=(await pf2ExecutableHashes()).evaluator_hash;
 
 function wiringOptions(){
   const {policy}=profileV2Fixture(600);
-  policy.environment='staging';
+  policy.environment='staging';policy.scope.evaluator_hash=liveEvaluator;
   policy.terminal={version:'quant-io-terminal-policy-v1',runtime_max_ms:30000,terminal_drain_ms:0,tail_margin_ms:5000};
   const raw={root:'fixture-root',inspect(){},read(){}};
   const researchStore={root:raw.root,storageBudget:{},raw,inspectSidecarV2(){},readV2(){}};

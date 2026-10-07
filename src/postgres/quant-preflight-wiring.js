@@ -1,13 +1,17 @@
 import {fail} from '../pine-bridge/source.js';
 import {QuantProfileService} from './quant-profile.js';
 import {QuantPreflightService,assertQuantPreflightSchema} from './quant-preflight.js';
-import {loadQuantCapacityPolicy,validateQuantCapacityPolicy} from './quant-capacity-policy.js';
+import {assertCapacityPolicyEvaluator,loadQuantCapacityPolicy,validateQuantCapacityPolicy} from './quant-capacity-policy.js';
 import {assertQuantProfileEnrollmentSchema} from './quant-profile-enrollment-migration.js';
+import {pf2ExecutableHashes} from '../quant-research/preflight-resolver.js';
 
-/** Trusted startup dependencies only. HTTP input never supplies policy or constructors. */
+/**
+ * Trusted startup dependencies only. HTTP input never supplies policy or constructors. executableHashes feeds
+ * only the startup evaluator check; the preflight service always hashes the real PF-2 files itself.
+ */
 export async function createQuantPreflightApi({pineService,dataService,researchStore,dataEnabled=false,
   paperTrading=false,environment=process.env,loadPolicy=loadQuantCapacityPolicy,
-  assertEnrollmentSchema=assertQuantProfileEnrollmentSchema}={}){
+  assertEnrollmentSchema=assertQuantProfileEnrollmentSchema,executableHashes=pf2ExecutableHashes}={}){
   const profileV2Enabled=environment.QUANT_PROFILE_V2_ENABLED==='1';
   const enrollmentRequested=environment.QUANT_PROFILE_V2_ENROLLMENT_ENABLED==='1';
   const preflightRequested=environment.QUANT_PREFLIGHT_ENABLED==='1';
@@ -19,6 +23,7 @@ export async function createQuantPreflightApi({pineService,dataService,researchS
   let capacityPolicy;
   if(enrollmentEnabled||preflightEnabled){
     capacityPolicy=validateQuantCapacityPolicy(await loadPolicy(environment.QUANT_CAPACITY_POLICY_FILE));
+    assertCapacityPolicyEvaluator(capacityPolicy,(await executableHashes()).evaluator_hash);
     await dataService.ready();
     await assertEnrollmentSchema(pineService.db);
   }

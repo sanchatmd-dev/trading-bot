@@ -588,6 +588,8 @@ async function resolve(planValue,trusted,{now,supportedSourceHash,readFile},canc
      hash(canonical(profile.execution_model))!==planSnapshot.execution_model_hash||
      profile.metadata_hash!==planSnapshot.venue_metadata_hash||
      profile.deployment_id!==venue.market.deployment_id)enrollmentFail();
+  // The enrollment was made for the evaluator this plan runs; step 6 bound the plan to the live tree.
+  if(binding.evidence.evaluator_hash!==planSnapshot.signal.evaluator_hash)bad('PF2_EVALUATOR_HASH_MISMATCH');
 
   // 9b. The deployment snapshot the enrollment was created from binds the plan inputs.
   const deployment=verified(await record('deployment_snapshot',enrolled.snapshot_hash),enrolled.snapshot_hash);

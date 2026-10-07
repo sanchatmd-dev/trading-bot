@@ -19,6 +19,7 @@ import {config} from '../../src/config.js';
 import {profileV2Fixture} from '../helpers/profile-v2-fixture.js';
 import {fixture} from './quant-research-fixture.mjs';
 import {reviewedAnalysis} from './pf2-fixture.js';
+import {pf2ExecutableHashes} from '../../src/quant-research/preflight-resolver.js';
 
 const minute=60000;
 
@@ -106,7 +107,8 @@ export async function createProducerWorld(admin){
   const policy=profileV2Fixture(10000).policy;
   policy.environment='staging';policy.max_raw_bars=10000;
   policy.terminal={version:'quant-io-terminal-policy-v1',runtime_max_ms:70000,terminal_drain_ms:45000,tail_margin_ms:5000};
-  Object.assign(policy.scope,{source_hash:hash(source),settings_hash:input.analysis.effective_inputs_hash});
+  Object.assign(policy.scope,{source_hash:hash(source),settings_hash:input.analysis.effective_inputs_hash,
+    evaluator_hash:(await pf2ExecutableHashes()).evaluator_hash});
   const epoch={};
   const tickets=createProfileEnrollmentTicketAuthority({readExecutableHash:ingestionEngineHash,releaseGuard:()=>epoch,isTransaction:()=>db.isTransaction});
   profile=new QuantProfileService({pineService:pine,dataService:data,researchStore,clock:()=>now,enabled:true,supportedSourceHash:hash(source),capacityPolicy:policy,profileV2Enabled:true,enrollmentEnabled:true,enrollmentTicketVerifier:tickets.assert});
