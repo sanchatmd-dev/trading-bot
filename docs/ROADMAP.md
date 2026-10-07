@@ -1,5 +1,9 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+## Latest status — Claude resumed as root, 2026-10-07
+
+Latest status, 2026-10-07: Claude is sole root again. At about 15:57 UTC on 2026-10-06 the owner asked Claude to continue the next work before Codex started; there was no Codex commit or checkpoint after e43b755. Pointers that name Codex as root are superseded. W7 window 1 passed on staging on 2026-10-07 (policy files and the PROFILE V2 layer on the research worker, release 5e398e7, enrollment and preflight off, API and trading worker untouched, health 200 PAPER_ONLY); evidence in [W7 window 1](evidence/W7_WINDOW1_2026-10-07.json). Not done: W7 window 2, any PROFILE job, holdout access, campaigns; D6, R7 and PF-2 stay after W7. Commits 646446d to 01007c9 (UI Overview, CSP fixes, webhook rate-limit isolation, read-only account overview) are integrated on the branch but not released to staging; a release needs a separate owner GO after window 2.
+
 ## Latest handoff — Claude to Codex, 2026-10-06
 
 At about 15:22 UTC (22:22 Bangkok) on 2026-10-06 the owner asked Claude to hand the whole project and the latest work to Codex. Claude stopped as root and Codex is the sole root. See the [Claude to Codex handoff](CLAUDE_TO_CODEX_HANDOFF_2026-10-06.md) for the Git baseline, staging state (API and research worker on `5e398e7`, flags closed, first BACKFILL dataset raw only), what Claude did, lessons, open owner decisions and next work (W7, then D6, R7, PF-2). No gate changes with this handoff, and it is not a live-state certificate.

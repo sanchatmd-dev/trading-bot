@@ -73,7 +73,7 @@ Rollback requires a pre-upgrade database snapshot **and** the matching old appli
 - Watch queue age/depth, disk space, SQLite errors, rejected signals, login failures and backup age.
 - Docker log files rotate at 10 MB × 3. Database/audit retention is manual; no automatic deletion of trade history.
 - Graceful shutdown awaits active worker and SMTP tasks. Forced kill remains recoverable through UNKNOWN, not resend.
-- HTTP limits: 64 KiB JSON, 240 requests/minute per client, 20 login attempts/15 minutes, queue cap 1000 unresolved/queued orders. Set `TRUST_LOOPBACK_PROXY=true` only when the app listens on loopback behind a same-host proxy; it uses the right-most forwarded hop.
+- HTTP limits: 64 KiB JSON, API requests 240/minute per client source (TradingView/Pine webhooks use a separate per-source guard of 1200/minute and a per-webhook-identity bucket of 120/minute; the client source key depends on proxy configuration and forwarded-for trust), 20 login attempts/15 minutes, queue cap 1000 unresolved/queued orders. Set `TRUST_LOOPBACK_PROXY=true` only when the app listens on loopback behind a same-host proxy; it uses the right-most forwarded hop.
 - Application request timeout 15 seconds; SMTP attempt timeout 20 seconds. Tune only after load tests.
 
 ## Required before public staging

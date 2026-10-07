@@ -1,0 +1,150 @@
+{
+  "schema": "w7-window1-evidence-v1",
+  "date": "2026-10-07",
+  "release": {
+    "commit": "5e398e7",
+    "note": "W7 packet re-baselined 2026-10-06: at that point src/, scripts/ and quant_lab equalled 5e398e7, and W7 needs no product code change. Later branch commits (590fa3f, 5f2b2b7) change API files outside the engine hash lists and are not deployed; staging serves 5e398e7.",
+    "ci": "9/9",
+    "ingestionEngineHash": "9be04b05",
+    "ingestionFiles": 79,
+    "ingestionRole": "PROFILE V2 contract engine hash",
+    "foundationEngineHash": "8fe49f0d",
+    "foundationFiles": 78,
+    "helperAndIdleCheckBlobs": "equal 28d6f7e pins"
+  },
+  "decisions": {
+    "ioBounds": "provisional, explicitly not calibrated, W7 only; never reused for D6, R7 or PF-2",
+    "freeze": "no policy, capital or funding edits of bot SPT Prototype Paper 2026-10-03 during W7",
+    "afterPass": "hold V2 layer with API admission off until R7",
+    "windows": {
+      "W1": "policy files + V2 layer",
+      "W2": "C1, delayed check, C2"
+    },
+    "ownerGo": "S3 and S5 including automatic in-run rollback, 02:32 UTC 2026-10-07"
+  },
+  "policy": {
+    "capacity": {
+      "sha256": "30f63da1ec5b90e2b37627fbdb481244d575a3eb2fb376f24d3c42b71d5b0c13",
+      "policyHash": "00eba827ef64ef8b47361d11d160cf99a7411639bd008fde791ae8f62ca58f6b",
+      "maxRawBars": 515,
+      "maxChunkBars": 15,
+      "maxRuntimeMs": 300000,
+      "claimWindowMs": 225000,
+      "ioTotalBytesPerDirection": 41943040,
+      "ioNote": "provisional",
+      "settingsHashPrefix": "e571b4d9",
+      "evaluatorHashPrefix": "94464971",
+      "terminalMs": {
+        "runtimeMaxMs": 70000,
+        "terminalDrainMs": 45000,
+        "tailMarginMs": 5000
+      }
+    },
+    "healthRecovery": {
+      "sha256": "2cb92e4146ad8b20c7da2e2978279ff4e4dc04327fb0f9d25ad25c0e1f47bdc4",
+      "minimumHealthyMs": 5000,
+      "samples": 3,
+      "spacingMs": 1000,
+      "maximumSampleGapMs": 20000,
+      "probeMs": 2000,
+      "observationAgeMs": 2000
+    },
+    "review": "Opus auditor and Fable second opinion, then root-accepted",
+    "probeS1": {
+      "utc": "2026-10-06T18:13Z",
+      "verdict": "R0_FACTS; only blocker FALLBACK_ACTIVE, root-classified as expected (three named fallback units, untouched) and pinned by name and state for later gates",
+      "ioControlsAndRecoveryPolicy": "present and valid",
+      "capacityAndHealthRecoveryPolicy": "absent as expected",
+      "drainNeedMs": 45000,
+      "drainMarginMs": 0,
+      "swap": 0
+    }
+  },
+  "window1": {
+    "steps": [
+      {
+        "id": "r1",
+        "utc": "2026-10-07T02:28Z",
+        "kind": "read-only",
+        "verdict": "PASS",
+        "stdoutSha256Prefix": "04faa928"
+      },
+      {
+        "id": "r1-2",
+        "utc": "2026-10-07T02:32Z",
+        "kind": "read-only",
+        "verdict": "PASS",
+        "stdoutSha256Prefix": "d42a9543"
+      },
+      {
+        "id": "s3",
+        "utc": "2026-10-07T02:33:10Z-02:33:14Z",
+        "kind": "effect",
+        "verdict": "PASS",
+        "stdoutSha256Prefix": "e909cddd",
+        "note": "two policy files created mode 0600; V2 drop-in staged as pending; worker untouched"
+      },
+      {
+        "id": "a5",
+        "utc": "2026-10-07T02:34:05Z-02:34:21Z",
+        "kind": "effect",
+        "verdict": "PASS",
+        "stdoutSha256Prefix": "163410b9",
+        "note": "bounded stop verified in 204 ms; drop-in published; one daemon-reload after confirming no other unit needed one; start; ready 02:34:20.337 UTC after 11.4 s; automatic rollback armed, not used"
+      },
+      {
+        "id": "p1",
+        "utc": "2026-10-07T02:35:34Z",
+        "kind": "read-only",
+        "verdict": "PASS",
+        "stdoutSha256Prefix": "6e4c04df"
+      },
+      {
+        "id": "p2",
+        "utc": "2026-10-07T02:45:17Z",
+        "kind": "read-only",
+        "verdict": "PASS",
+        "stdoutSha256Prefix": "4daa6f24",
+        "note": "about 655 s after ready"
+      }
+    ],
+    "researchWorkerDownSeconds": 15
+  },
+  "state_after": {
+    "researchWorker": {
+      "release": "5e398e7",
+      "profileV2": "on",
+      "enrollment": "off",
+      "preflight": "off",
+      "killMode": "mixed",
+      "stopTimeoutSeconds": 90,
+      "restart": "no (unchanged)",
+      "limits": "CPU 50%, 512 MiB, swap 0, 32 tasks (unchanged)",
+      "journal": "one start line, no errors",
+      "queue": "idle"
+    },
+    "api": "untouched",
+    "tradingWorker": "untouched",
+    "health": "200 PAPER_ONLY"
+  },
+  "not_done": [
+    "W7 window 2 (helper dry run, C1 measured diagnostic, delayed check, C2 worker-stop case): needs its own reviewed tool and owner GO",
+    "no PROFILE job has run",
+    "no holdout access",
+    "no campaign",
+    "D6, R7, PF-2 stay after W7"
+  ],
+  "unreleased_commits": {
+    "stagingServes": "5e398e7",
+    "ci": "9/9 except one Windows timing flake on 590fa3f in an unrelated quant I/O test (passed on next commit)",
+    "commits": [
+      "646446d UI HUD theme, account Overview, setup guide, research jump bar, library provenance, CSP inline-style removal",
+      "2ecb168 Quant Lab controls work under production CSP and escaping",
+      "fd12769 deterministic readiness late-response test",
+      "590fa3f webhook rate-limit isolation and canonical-pathname routing",
+      "5f2b2b7 read-only GET /api/overview with ETag/304",
+      "01007c9 Overview page uses it"
+    ],
+    "releaseGate": "separate owner GO after W7 window 2, plus read-only host check of proxy chain, forwarded-for trust and access logs"
+  }
+}
