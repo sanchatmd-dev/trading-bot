@@ -68,7 +68,7 @@ The owner authorizes each mutating effect by name before execution: new release
 code on all three staging services; dependency installation with network access
 (package scripts disabled); the offline schema installation (additive and not
 reversible) and, where it applies, the executor-mode switch; the runtime grant
-script and the DELETE revoke below; the recovery and capacity policy rewrites;
+script below, which now carries the DELETE revoke; the recovery and capacity policy rewrites;
 the worker unit drop-in; the two immutable diagnostic job rows; the staging
 downtime and the period with API admission off; and a rollback that is argued
 statically, not rehearsed. The owner records a GO time before the drain, before

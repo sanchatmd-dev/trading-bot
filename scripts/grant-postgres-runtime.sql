@@ -26,7 +26,8 @@ BEGIN
   IF NOT pg_try_advisory_xact_lock(hashtextextended('robot:maintenance',0)) THEN
     RAISE EXCEPTION 'Stop every PostgreSQL API and worker before maintenance';
   END IF;
-  IF to_regrole(runtime_role) IS NULL THEN
+  -- Exact name match: to_regrole would case-fold an unquoted name, while the grants below quote it with %I.
+  IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname=runtime_role) THEN
     RAISE EXCEPTION 'Runtime role % does not exist',runtime_role;
   END IF;
   REVOKE CREATE ON SCHEMA public FROM PUBLIC;
@@ -49,11 +50,20 @@ BEGIN
       EXECUTE format('REVOKE INSERT,UPDATE,DELETE ON TABLE public.%I FROM %I',item,runtime_role);
     END IF;
   END LOOP;
-  -- The final state is checked, not assumed: any remaining DELETE on a protected table rolls everything back.
+  -- The final state is checked, not assumed: any remaining DELETE on a protected table, or any write privilege on a
+  -- read-only table (including one held through PUBLIC or an inherited role), rolls everything back.
   FOREACH item IN ARRAY protected LOOP
     IF to_regclass(format('public.%I',item)) IS NOT NULL
         AND has_table_privilege(runtime_role,format('public.%I',item),'DELETE') THEN
       RAISE EXCEPTION 'Runtime role % can still DELETE from %',runtime_role,item;
+    END IF;
+  END LOOP;
+  FOREACH item IN ARRAY read_only LOOP
+    IF to_regclass(format('public.%I',item)) IS NOT NULL
+        AND (has_table_privilege(runtime_role,format('public.%I',item),'INSERT')
+          OR has_table_privilege(runtime_role,format('public.%I',item),'UPDATE')
+          OR has_table_privilege(runtime_role,format('public.%I',item),'DELETE')) THEN
+      RAISE EXCEPTION 'Runtime role % can still write to %',runtime_role,item;
     END IF;
   END LOOP;
 END $$;

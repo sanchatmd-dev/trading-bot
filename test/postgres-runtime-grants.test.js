@@ -30,6 +30,10 @@ test('runtime grants: role from the psql variable, one transaction under the mai
   assert.match(sql,/tablename<>ALL\(protected\) AND tablename<>ALL\(read_only\)/);
   assert.match(sql,/REVOKE DELETE ON TABLE public\.%I FROM %I/);
   assert.match(sql,/has_table_privilege\(runtime_role,format\('public\.%I',item\),'DELETE'\)/);
+  // The read-only provenance tables are proven read-only too, and the role is matched by its exact name.
+  assert.match(sql,/FOREACH item IN ARRAY read_only LOOP\s+IF to_regclass\(format\('public\.%I',item\)\) IS NOT NULL\s+AND \(has_table_privilege\(runtime_role,format\('public\.%I',item\),'INSERT'\)\s+OR has_table_privilege\(runtime_role,format\('public\.%I',item\),'UPDATE'\)\s+OR has_table_privilege\(runtime_role,format\('public\.%I',item\),'DELETE'\)\) THEN\s+RAISE EXCEPTION/);
+  assert.match(sql,/IF NOT EXISTS\(SELECT 1 FROM pg_roles WHERE rolname=runtime_role\) THEN/);
+  assert.doesNotMatch(sql,/to_regrole/);
   // The scheduler keeps the table-level UPDATE that LOCK TABLE ... IN EXCLUSIVE MODE needs.
   assert.doesNotMatch(sql,/REVOKE[^;]*(?:UPDATE|ALL)[^;]*quant_foundation_scheduler/i);
   assert.match(sql,/GRANT SELECT,INSERT,UPDATE ON ALL TABLES IN SCHEMA public TO %I/);

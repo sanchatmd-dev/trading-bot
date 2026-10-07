@@ -23,17 +23,19 @@ test('runtime grants: DELETE is refused on the ten PF-2 tables while scheduler U
   {skip:process.env.TEST_DATABASE_URL?false:'TEST_DATABASE_URL is required (isolated PostgreSQL only)'},async t=>{
   const admin=new PostgresDatabase({connectionString:process.env.TEST_DATABASE_URL}),suffix=randomUUID().replaceAll('-','');
   const name='robot_grants_'+suffix,role='robot_grants_role_'+suffix,idle='robot_grants_idle_'+suffix;
+  // A mixed-case role must be found by its exact name, never case-folded.
+  const mixed='Robot_Grants_Mixed_'+suffix;
   let db=null;
   t.after(async()=>{
-    for(const owned of [role,idle])await db?.query('DROP OWNED BY '+owned).catch(()=>{});
+    for(const owned of [role,idle,'"'+mixed+'"'])await db?.query('DROP OWNED BY '+owned).catch(()=>{});
     await db?.close();await admin.query('DROP DATABASE IF EXISTS '+name);
-    for(const dropped of [role,idle])await admin.query('DROP ROLE IF EXISTS '+dropped);await admin.close();
+    for(const dropped of [role,idle,'"'+mixed+'"'])await admin.query('DROP ROLE IF EXISTS '+dropped);await admin.close();
   });
   await admin.query('CREATE DATABASE '+name);
   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+name;
   db=new PostgresDatabase({connectionString:url.toString()});await db.migrate();
   for(const file of SCHEMAS)await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
-  for(const created of [role,idle])await admin.query('CREATE ROLE '+created+' NOSUPERUSER NOCREATEDB NOCREATEROLE');
+  for(const created of [role,idle,'"'+mixed+'"'])await admin.query('CREATE ROLE '+created+' NOSUPERUSER NOCREATEDB NOCREATEROLE');
   const script=await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8');
   // Each application runs on its own connection, as psql does; a failed one leaves nothing behind.
   const apply=async sql=>{
@@ -55,6 +57,15 @@ test('runtime grants: DELETE is refused on the ten PF-2 tables while scheduler U
     assert.ok(Date.now()-started<10000,'the lock is tried, never waited for');
   }finally{await runtime.end();}
   assert.equal(await usage(idle),false,'a refused run changed nothing');
+  // A write privilege on a read-only table that the role holds through PUBLIC survives the role's own REVOKE; the
+  // final check refuses to commit.
+  await db.query('GRANT INSERT ON schema_version TO PUBLIC');
+  try{await assert.rejects(apply(withRole(script,idle)),/can still write to schema_version/);}
+  finally{await db.query('REVOKE INSERT ON schema_version FROM PUBLIC');}
+  assert.equal(await usage(idle),false,'the refused run changed nothing');
+  await apply(withRole(script,mixed));
+  assert.equal(await usage(mixed),true,'the mixed-case role was granted under its exact name');
+  assert.equal(await privilege(mixed,'quant_foundation_jobs','DELETE'),false);
 
   // History an older script leaves: DELETE on every table. The script removes it, and a second run changes nothing.
   await db.query('GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO '+role);
@@ -71,6 +82,7 @@ test('runtime grants: DELETE is refused on the ten PF-2 tables while scheduler U
   // Read-only provenance stays read-only; elsewhere the runtime keeps DELETE (sessions).
   for(const table of ['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars'])
     for(const kind of ['INSERT','UPDATE','DELETE'])assert.equal(await privilege(role,table,kind),false,table+' '+kind);
-  assert.equal(await privilege(role,'sessions','DELETE'),true);
+  for(const table of ['sessions','auth_challenges','password_resets','security_mail','mfa_recovery','user_security',
+    'worker_heartbeats','security_limits'])assert.equal(await privilege(role,table,'DELETE'),true,table+' keeps the runtime DELETE');
   assert.equal(await usage(idle),false,'only the named role was granted');
 });
