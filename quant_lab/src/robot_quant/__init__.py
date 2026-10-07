@@ -1,78 +1,87 @@
-"""Offline contracts and parity engines only; importing this package performs no I/O."""
+"""Offline contracts and parity engines with lazily loaded public exports.
 
-from robot_quant.analytics import (
-    LegacyAdjustment,
-    RealizationEvent,
-    SummaryMetrics,
-    fifo_analytics,
-    summarize_closed_positions,
-)
-from robot_quant.backtest import (
-    BacktestConfig,
-    BacktestEngine,
-    BacktestResult,
-    run_backtest,
-)
-from robot_quant.contracts import (
-    Capability,
-    Contract,
-    Decision,
-    ExportMetadata,
-    OptimizationRun,
-    ParameterBounds,
-    PositionIntent,
-    RiskProfile,
-    Scope,
-    StrategyDefinition,
-)
-from robot_quant.market_data import (
-    Candle,
-    candles_to_dataframe,
-    compute_candles_sha256,
-    generate_synthetic_ohlcv,
-    load_candles_from_parquet,
-    query_candles_with_duckdb,
-    save_candles_to_parquet,
-)
-from robot_quant.optimizer import (
-    CandidateEvaluation,
-    ConstrainedOptimizer,
-    OptimizationReport,
-)
-from robot_quant.records import (
-    AnalyticsSettingsRecord,
-    CashJournalRecord,
-    DatasetManifest,
-    FillRecord,
-    FundingRecord,
-    PositionAllocationRecord,
-    SignalRecord,
-)
-from robot_quant.risk_evaluator import (
-    DailyStats,
-    PositionState,
-    RiskContext,
-    RiskEvaluationResult,
-    RiskPolicy,
-    evaluate_risk,
-)
-from robot_quant.risk_preview import (
-    RiskSimulationPreview,
-    generate_risk_preview,
-)
-from robot_quant.strategy import (
-    StrategySignal,
-    SyntheticEmaParameters,
-    SyntheticEmaStrategy,
-)
-from robot_quant.validation import (
-    ChronologicalDatasetSplit,
-    WalkForwardWindow,
-    chronological_split,
-    walk_forward_windows,
-)
+Python runs this package initializer before any ``python -m robot_quant.*``
+entry point. Keep data libraries out of the evaluator's I/O readiness path.
+"""
+
+from importlib import import_module
 
 __version__ = "0.3.0"
+
+_EXPORT_GROUPS = {
+    "analytics": (
+        "LegacyAdjustment",
+        "RealizationEvent",
+        "SummaryMetrics",
+        "fifo_analytics",
+        "summarize_closed_positions",
+    ),
+    "backtest": (
+        "BacktestConfig",
+        "BacktestEngine",
+        "BacktestResult",
+        "run_backtest",
+    ),
+    "contracts": (
+        "Capability",
+        "Contract",
+        "Decision",
+        "ExportMetadata",
+        "OptimizationRun",
+        "ParameterBounds",
+        "PositionIntent",
+        "RiskProfile",
+        "Scope",
+        "StrategyDefinition",
+    ),
+    "market_data": (
+        "Candle",
+        "candles_to_dataframe",
+        "compute_candles_sha256",
+        "generate_synthetic_ohlcv",
+        "load_candles_from_parquet",
+        "query_candles_with_duckdb",
+        "save_candles_to_parquet",
+    ),
+    "optimizer": (
+        "CandidateEvaluation",
+        "ConstrainedOptimizer",
+        "OptimizationReport",
+    ),
+    "records": (
+        "AnalyticsSettingsRecord",
+        "CashJournalRecord",
+        "DatasetManifest",
+        "FillRecord",
+        "FundingRecord",
+        "PositionAllocationRecord",
+        "SignalRecord",
+    ),
+    "risk_evaluator": (
+        "DailyStats",
+        "PositionState",
+        "RiskContext",
+        "RiskEvaluationResult",
+        "RiskPolicy",
+        "evaluate_risk",
+    ),
+    "risk_preview": (
+        "RiskSimulationPreview",
+        "generate_risk_preview",
+    ),
+    "strategy": (
+        "StrategySignal",
+        "SyntheticEmaParameters",
+        "SyntheticEmaStrategy",
+    ),
+    "validation": (
+        "ChronologicalDatasetSplit",
+        "WalkForwardWindow",
+        "chronological_split",
+        "walk_forward_windows",
+    ),
+}
+_EXPORT_MODULES = {name: module for module, names in _EXPORT_GROUPS.items() for name in names}
 
 __all__ = [
     "AnalyticsSettingsRecord",
@@ -127,3 +136,16 @@ __all__ = [
     "summarize_closed_positions",
     "walk_forward_windows",
 ]
+
+
+def __getattr__(name):
+    module = _EXPORT_MODULES.get(name)
+    if module is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(import_module(f".{module}", __name__), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__():
+    return sorted(set(globals()) | set(__all__))
