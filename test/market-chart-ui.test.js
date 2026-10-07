@@ -89,7 +89,7 @@ test('static: panel on Overview after the status grid, 14 timeframes with 1d, qu
     for(const link of d.querySelectorAll('link[rel="stylesheet"]'))assert.ok(link.getAttribute('href').startsWith('/'),'stylesheet '+link.getAttribute('href'));
     assert.equal(d.querySelectorAll('#interactiveChartPanel').length,1,'one panel only');
     assert.equal(d.querySelector('#interactiveChartPanel [style]'),null,'the CSP forbids inline styles');
-    for(const part of ['/interactive-chart.js?v=mc3','/chart-indicators.js?v=mc3','/market-chart.css?v=mc3','/i18n.js?v=s4b1','/readiness.js?v=md1'])assert.ok(html.includes(part),part);
+    for(const part of ['/interactive-chart.js?v=mc3','/chart-indicators.js?v=mc3','/market-chart.css?v=mc3','/i18n.js?v=rel20261007','/readiness.js?v=md1'])assert.ok(html.includes(part),part);
     assert.ok(html.indexOf('/app.js?v=')<html.indexOf('/chart-indicators.js?v=')&&html.indexOf('/chart-indicators.js?v=')<html.indexOf('/interactive-chart.js?v='),'app.js, then the indicator module, then the chart');
     assert.ok(!publicFile('market-chart.css').includes('!important'));
     const panel=d.querySelector('#interactiveChartPanel');

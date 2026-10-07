@@ -79,7 +79,7 @@ test('index.html: panel after the Risk form and outside it, fixed texts, warning
     assert.equal(form.querySelector('.pf3-save-warning').textContent,WARNING);
     const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/readiness.js?v=md1','/journey.js?v=pa1'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'readiness.js loads after app.js and before journey.js');
-    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=s4b1/);
+    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=rel20261007/);
     assert.doesNotMatch(html,/(styles-v2\.css|i18n\.js|journey\.js)\?v=p0j1["']/,'changed files carry a new cache version');
     assert.doesNotMatch(html,/(i18n\.js|readiness\.js|pine-bridge\.js)\?v=(rj1|pf4a|ux1a)["']/,'the news block change gave the files it touched a new cache version');
   }finally{dom.window.close();}

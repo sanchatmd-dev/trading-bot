@@ -86,9 +86,9 @@ test('index.html adds the journey nav right after Overview, a hidden page with t
     assert.equal(section.querySelector('.jr-banner p').textContent,BANNER);
     assert.ok(section.querySelector('#journeyRoot'));
     assert.equal(section.querySelector('[style]'),null,'the CSP forbids inline styles');
-    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/research-library.js?v=qr1a','/journey.js?v=pa1'].map(part=>html.indexOf(part));
+    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/research-library.js?v=rel20261007','/journey.js?v=pa1'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'journey.js loads after i18n.js, app.js, pine-bridge.js and research-library.js');
-    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=s4b1/);
+    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=rel20261007/);
   }finally{dom.window.close();}
 });
 
