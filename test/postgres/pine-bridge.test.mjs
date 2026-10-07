@@ -478,9 +478,16 @@ test('protected backup restores extension records exactly and runtime cannot for
   }
 });
 test('news windows: a Bridge BUY inside an active window is rejected, an EXIT is not, and the same Bot trades again after the window',async()=>{
-  const a=await owner(),x=await ready(a,{blockDuringNews:true}),base=Date.now()-40000;
+  const a=await owner(),x=await ready(a,{blockDuringNews:true});
+  // pine_market_bars is shared by every test in this file and market() keeps an existing row on conflict. An earlier test
+  // bar at the same millisecond as t3 turned the SL EXIT into EXIT_PRIORITY_MISMATCH (CI, 2bce8fd). Start from four free bar times.
+  const taken=async times=>(await db.prepare("SELECT count(*) n FROM pine_market_bars WHERE broker='binance-global' AND symbol='BTCUSDT' AND timeframe='1D' AND bar_time IN (?,?,?,?)").get(...times)).n>0;
+  let base=Date.now()-40000;
+  while(await taken([base,base+10000,base+20000,base+30000]))base-=1;
   const [t1,t2,t3,t4]=[base,base+10000,base+20000,base+30000];
   await market(t1);await market(t2);await market(t3,{close:88,high:120,low:85});await market(t4);
+  const stored=await db.prepare("SELECT bar_time,bar FROM pine_market_bars WHERE broker='binance-global' AND symbol='BTCUSDT' AND timeframe='1D' AND bar_time IN (?,?,?,?) ORDER BY bar_time").all(t1,t2,t3,t4);
+  assert.deepEqual(stored.map(row=>[Number(row.bar_time),row.bar.close,row.bar.low]),[[t1,'100','99'],[t2,'100','99'],[t3,'88','85'],[t4,'100','99']],'this test wrote its own four bars');
   try{
     // The window is supplied by the news feed. The bar_time of each event decides, not the clock at receipt.
     await saveWindows(store,[{start_ms:t2-1000,end_ms:t3+5000,source:'fixture',label:'window'}]);
@@ -489,7 +496,7 @@ test('news windows: a Bridge BUY inside an active window is rejected, an EXIT is
     const rows=(await db.prepare('SELECT status,error_message FROM signals WHERE user_id=? ORDER BY id').all(a)).map(row=>[row.status,row.error_message]);
     assert.equal(rows.length,4);
     assert.deepEqual(rows[1],['REJECTED','News trading block is active']);
-    for(const index of [0,2,3])assert.notEqual(rows[index][0],'REJECTED','signal '+index);
+    for(const index of [0,2,3])assert.notEqual(rows[index][0],'REJECTED','signal '+index+' '+JSON.stringify(rows));
     assert.equal((await db.prepare('SELECT count(*) n FROM pine_bridge_entries WHERE deployment_id=?').get(x.d.deployment_id)).n,2,'the rejected BUY opened no entry');
     assert.equal((await store.getBotSession(a)).state,'SETUP','no pause, Resume or new run was needed around the window');
   }finally{await db.prepare("DELETE FROM system_settings WHERE key='news_windows'").run();}
