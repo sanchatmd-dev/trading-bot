@@ -2267,12 +2267,18 @@ above and CI 9/9 at `06a0f0f` and `28d6f7e`. These are test durations, not
 engineering hours.
 
 Next: the owner answers and the G1 release record; owner GO; owner-run W7 cases
-C1 and C2; then the D6 measurement and Roadmap R7. Backlog: the E2 optional items
-F1, F3 and F4; a test-only seam for R5-21; design deviations (the scheduler
-constructor default `profileV2Enabled=true` versus the worker default false, and
-two reason allowlists); the grant script should carry the DELETE revoke (a later
-grant run re-grants DELETE); SQL receipt defense-in-depth (a schema change) stays
-deferred. The final pre-staging code audit ran after this checkpoint (see below). Claude usage: at wave
+C1 and C2; then the D6 measurement and Roadmap R7. Backlog (status for the release
+that carries the held branches): the E2 optional items F1, F3 and F4 were done in
+the E2 optional accounting follow-ups below. Its residual items G1 (charge the runtime after a
+terminal throw with a completion), G5 (clock comment) and G6 (one shared charge
+test helper), the test-only seam for R5-21 and the grant script carrying the
+DELETE revoke are done on `codex-worker/pf2-backlog`: `d24fa88` (G1, G5, G6, the
+seam and the revoke), `7878531` (seam message and the PostgreSQL grant proof),
+`bb8ef44` (required role variable, maintenance lock and an order-independent
+revoke with a final DELETE check) and `d7f05d0` (final read-only check and exact
+role match). Still open: design deviations (the scheduler constructor default
+`profileV2Enabled=true` versus the worker default false, and two reason
+allowlists); SQL receipt defense-in-depth (a schema change) stays deferred. The final pre-staging code audit ran after this checkpoint (see below). Claude usage: at wave
 start 5-hour 0%, weekly all models 23%, weekly Fable 16%; at 05:30Z 5-hour 74%,
 weekly 32%, weekly Fable 19%; after the 06:00Z reset 5-hour 0%, weekly 33%.
 Active engineering hours remain unknown; no speedup or cost claim is made and the
@@ -2345,8 +2351,13 @@ the monotonic term and sets the sticky clock anomaly, as R2 does for the wall cl
 BEGIN authority call, so a doubled charge fails them; it passed the old bounds. Local:
 Node 836 tests, 831 pass, 0 fail, 5 skipped; nine PostgreSQL enrollment, runtime and
 ledger files pass; every mutant fails the new tests. Optional residuals: the runtime
-after a terminal throw with a completion, and after a process death, stays uncharged
-(process death needs a persisted BEGIN time).
+after a terminal throw with a completion stayed uncharged; CX-B item G1 now charges
+it (`d24fa88`). Two pre-existing under-charges of the same class remain: a process
+death (it needs a persisted BEGIN time), and the no-handle path in
+`src/postgres/quant-io-runtime.js` (around lines 446-457), which returns
+STOPPING/UNCONFIRMED without a charge when cancel or acknowledge fails or the
+completion outcome is UNCERTAIN. That path returns instead of throwing, so the
+terminal-throw charge does not cover it.
 
 The Claude root then stopped at the owner's request and prepared a handoff to Codex.
 State at handoff: the W7 owner packet revision 4 is ready; gates G1 (release record)

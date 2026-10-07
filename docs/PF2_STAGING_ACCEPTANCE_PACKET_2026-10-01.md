@@ -224,7 +224,9 @@ therefore refused. Use a fresh idempotency key for every case.
    namespace and the executor mode; it revokes DELETE on those ten to clear older
    grants; and before COMMIT it checks that the runtime role cannot DELETE from
    any of them, so the result does not depend on statement order or on earlier
-   grants. SELECT, INSERT and UPDATE stay: no runtime statement deletes from
+   grants. The same final check refuses to commit while the runtime role can
+   INSERT, UPDATE or DELETE on the read-only version and provenance tables,
+   including through PUBLIC or another role. SELECT, INSERT and UPDATE stay: no runtime statement deletes from
    these tables. Rollback caveat: copies of the grant script from before this
    change grant DELETE on every table. After any rollback that reapplies such a
    copy, reapply this script, or restore exactly the DELETE grants recorded
