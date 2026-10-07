@@ -46,7 +46,7 @@ test('pg_dump restore preserves every row; offline key rotation backs up and rol
   assert.equal((await db.prepare('SELECT count(*) n FROM sessions').get()).n,0);
   assert.equal((await db.prepare('SELECT mfa_secret FROM user_security WHERE user_id=?').get(user.id)).mfa_secret,preservedMfa);
   await admin.query('CREATE ROLE '+role+' NOSUPERUSER NOCREATEDB NOCREATEROLE');
-  await db.query(fs.readFileSync(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8').replaceAll('robot_app',role));
+  await db.query(fs.readFileSync(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8').replaceAll(":'runtime_role'","'"+role+"'"));
   await db.transaction(async()=>{await db.query('SET LOCAL ROLE '+role);await db.verifySchema();await store.audit(user.id,'role.fixture',null,{});assert.equal((await store.userById(user.id)).id,user.id);});
   await assert.rejects(db.transaction(async()=>{await db.query('SET LOCAL ROLE '+role);await db.query('CREATE TABLE forbidden_fixture(id int)');}),{code:'42501'});
 });

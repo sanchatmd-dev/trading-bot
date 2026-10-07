@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import {canonical,hash} from '../src/pine-bridge/source.js';
 import {capacityPolicyHash} from '../src/quant-research/capacity-contract.js';
 import {deriveClosedMetadataV2} from '../src/quant-research/data-profile-v2.js';
@@ -9,6 +10,7 @@ import {createProfileEnrollmentTicketAuthority} from '../src/postgres/quant-prof
 import {prepareEnrollmentAttempt,beginProfileCompletionLocked,refreshProfileCompletionTicket,finalizeProfileEnrollmentLocked,
  chargeProfileCompletionRuntime} from '../src/postgres/quant-profile-enrollment.js';
 import {QuantIoRuntime,quantIoUnitName} from '../src/postgres/quant-io-runtime.js';
+import {QuantProfileRuntimeV2} from '../src/postgres/quant-profile-runtime-v2.js';
 
 // Pure harness: real attempt, ticket, BEGIN, finalizer and I/O runtime terminal over a recording database double. The
 // double keeps the one job row a charge touches and applies runtime_used_ms=GREATEST(runtime_used_ms,$3) for its key.
@@ -83,13 +85,65 @@ async function begun({runtimeUsed=1000}={}){
   return locked(()=>finalizeProfileEnrollmentLocked({db,job:stopping,settledLedger:evidence.ledger,launch:evidence.launch,
    completion,executionTicket,healthObservation:health,currentPolicy:attempt.policy}));
  }
- return {job,lease,row,calls,events,logs,failure,io,request,install,at,charge,finalize,onTerminalDiagnostic,
+ // Exercise the adapter's terminal catch using the real completion and charge clock. Launch and result delivery
+ // are synthetic; completion has already passed the real BEGIN authority above.
+ async function runAdapter({withCompletion=true,priorCharge=false,stopThrows=false}={}){
+  const adapterJob=withCompletion?job:{...job,contract:{...job.contract}};
+  if(!withCompletion){delete adapterJob.contract.completion_mode;adapterJob.contract_hash=hash(canonical(adapterJob.contract));}
+  const adapterDb={get isTransaction(){return flags.transaction;},transaction:locked,
+   query:async(sql,parameters)=>sql.startsWith('SELECT')?{rows:[adapterJob]}:db.query(sql,parameters)};
+  const adapter=new QuantProfileRuntimeV2({db:adapterDb,ledger:{...ledger,db:adapterDb},scheduler,
+   launcher:{terminalConfig:policy.terminal,spawnPrepared(){throw Error('synthetic launch only');}},
+   storageBudget:{root:path.resolve('fixture')},authorizeRelease:async()=>({ok:true}),health:async()=>({ok:true}),enrollment,clock:()=>START});
+  const payload='terminal-throw-fixture';
+  io.payloads.set(id,payload);
+  io.handles.set(id,{accepted:Promise.resolve({unitName,payloadHash:hash(payload)}),
+   profileResult:Promise.resolve({...frame,payloadHash:hash(payload)}),stop:async()=>{
+    events.push('stop');at(START+80,90);if(stopThrows)throw Error('stop failed');return trusted;
+   }});
+  for(const method of ['assertHost','reserve','start','ready','bind','release','observe'])io[method]=async()=>{};
+  io.prepareEnrollment=async()=>attempt;
+  scheduler.beginProfileCompletion=async()=>completion;
+  const terminalThrow=async()=>{
+   at(START+40,70);
+   if(priorCharge)await chargeProfileCompletionRuntime({db,completion});
+   throw Error('terminal failed');
+  };
+  io.completeProfile=terminalThrow;io.cancel=terminalThrow;adapter.io=io;
+  return adapter.run({...request,ownerId:job.owner_id});
+ }
+ return {job,lease,row,calls,events,logs,failure,io,request,install,at,charge,finalize,runAdapter,onTerminalDiagnostic,
   complete:()=>io.completeProfile({...request,completion,onTerminalDiagnostic}),
   charges:()=>calls.filter(call=>isCharge(call.sql)).map(call=>call.parameters[2]),
   chargeKeys:()=>calls.filter(call=>isCharge(call.sql)).map(call=>call.parameters.slice(0,2)),
   receipts:()=>calls.filter(call=>isReceipt(call.sql)),successes:()=>calls.filter(call=>isSuccess(call.sql))};
 }
 const quarantined={status:'STOPPING',proof:'UNCONFIRMED'};
+
+test('a terminal throw charges through the attempted child stop with one absolute total',async()=>{
+ for(const priorCharge of [false,true])for(const stopThrows of [false,true]){
+  const w=await begun();
+  await assert.rejects(w.runAdapter({priorCharge,stopThrows}),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+  assert.deepEqual(w.events,['stop']);assert.equal(w.row.token,w.lease);
+  assert.deepEqual(w.charges(),priorCharge?[1070,1090]:[1090]);assert.equal(w.row.runtime,1090);
+  assert.ok(w.chargeKeys().every(([jobId,lease])=>jobId===w.job.job_id&&lease===w.lease));
+  assert.deepEqual(w.receipts(),[]);assert.deepEqual(w.successes(),[]);
+  assert.equal(await w.charge({wall:START+100,mono:100}),1100);assert.equal(w.row.runtime,1100);
+ }
+});
+
+test('a terminal throw with a failed charge stays fail closed and never releases the token',async()=>{
+ const w=await begun();w.failure.charge=true;
+ await assert.rejects(w.runAdapter(),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+ assert.deepEqual(w.charges(),[1090]);assert.equal(w.row.runtime,1000);assert.equal(w.row.token,w.lease);
+ assert.deepEqual(w.events,['stop']);assert.deepEqual(w.receipts(),[]);assert.deepEqual(w.successes(),[]);
+});
+
+test('a terminal throw without a completion stops the child without charging completion runtime',async()=>{
+ const w=await begun();
+ await assert.rejects(w.runAdapter({withCompletion:false}),{code:'QUANT_IO_LAUNCH_UNCERTAIN'});
+ assert.deepEqual(w.events,['stop']);assert.deepEqual(w.charges(),[]);assert.equal(w.row.runtime,1000);
+});
 
 test('an UNCONFIRMED terminal with a completion charges the runtime since BEGIN once and keeps the quarantine',async()=>{
  for(const kind of EXITS){

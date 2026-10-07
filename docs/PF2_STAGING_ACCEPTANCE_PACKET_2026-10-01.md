@@ -23,8 +23,10 @@ role, different code roots per service, and Node argument-loaded environment
 files instead of the assumed systemd EnvironmentFile arrangement. Establish
 reviewed per-service rollback/configuration evidence and complete separate
 bootstrap gates before W7 re-entry. The original G1 record is not complete.
-The release remains `28d6f7e`; one attempt per case, Spot/Paper-only and the
-separate D6/R7 gates remain unchanged. The sections below retain the audited
+The release for these steps is the one that carries the held branches (CX-A
+research-chunk readiness and CX-B PF-2 backlog, including the hardened grant
+script); the release record names its commit. One attempt per case, Spot/Paper-only
+and the separate D6/R7 gates remain unchanged. The sections below retain the audited
 procedure and historical preparation status, subject to this amendment.
 
 ## Original preparation record
@@ -66,7 +68,7 @@ The owner authorizes each mutating effect by name before execution: new release
 code on all three staging services; dependency installation with network access
 (package scripts disabled); the offline schema installation (additive and not
 reversible) and, where it applies, the executor-mode switch; the runtime grant
-script and the DELETE revoke below; the recovery and capacity policy rewrites;
+script below, which now carries the DELETE revoke; the recovery and capacity policy rewrites;
 the worker unit drop-in; the two immutable diagnostic job rows; the staging
 downtime and the period with API admission off; and a rollback that is argued
 statically, not rehearsed. The owner records a GO time before the drain, before
@@ -189,9 +191,9 @@ therefore refused. Use a fresh idempotency key for every case.
 4. Before any step with owner credentials, prove that the owner environment and
    the owner database client reach the same database as the runtime role (equal
    database name, port and server start time); stop on a mismatch. Because the
-   installation cannot be undone, also confirm before it that the grant script
-   names the staging runtime role and that the owner database client is psql 10
-   or later (the grants run as one transaction). Back up the
+   installation cannot be undone, also confirm before it that the owner database
+   client is psql 10 or later and that the operator has the staging runtime role
+   name for the psql variable `runtime_role`. Back up the
    database/configuration under the existing staging procedure.
    Run `node scripts/migrate-quant-foundation.mjs --mode=FOUNDATION` offline with
    the schema owner and the reviewed dataset root. The installer has its own idle
@@ -207,17 +209,26 @@ therefore refused. Use a fresh idempotency key for every case.
    database without a storage namespace requires an empty dataset root; if a
    failed installation leaves only the storage marker file in an otherwise empty
    root with no namespace row, only a separate root-authorized step may move that
-   file aside. Then, before any runtime-role read of the new tables, reapply the
-   runtime grant script as the schema owner in one transaction that first takes
-   the database maintenance lock (it fails while any API or worker holds the
-   database) and ends with a reviewed `REVOKE DELETE` of the runtime role on the
-   foundation job, owner and scheduler tables, the legacy job and research chunk
-   tables, both I/O tables, the enrollment receipts, the storage namespace and
-   the executor mode. Record the previous DELETE grants first; a rollback restores
-   exactly those. SELECT, INSERT and UPDATE stay: no runtime statement deletes
-   from these tables. The revoke is not durable: the grant script grants DELETE
-   on all tables, so every later run of it must repeat the same revoke until the
-   script itself carries it.
+   file aside. Record the runtime role's current DELETE grants on the ten tables
+   named below. Then, before any runtime-role read of the new tables, reapply the
+   runtime grant script as the schema owner:
+   `psql -v ON_ERROR_STOP=1 -v runtime_role=<staging runtime role> -f scripts/grant-postgres-runtime.sql`.
+   The role comes only from that variable; there is no default, so a missing
+   variable or an unknown role stops the script before any change. The script is
+   one transaction that first tries the product's maintenance lock
+   (`robot:maintenance`, the lock of migration, restore and key rotation) and
+   fails at once, without waiting, while any API or worker holds the database.
+   The DELETE revoke is now in the script: it grants DELETE only on tables other
+   than the foundation job, owner and scheduler tables, the legacy job and
+   research chunk tables, both I/O tables, the enrollment receipts, the storage
+   namespace and the executor mode; it revokes DELETE on those ten to clear older
+   grants; and before COMMIT it checks that the runtime role cannot DELETE from
+   any of them, so the result does not depend on statement order or on earlier
+   grants. SELECT, INSERT and UPDATE stay: no runtime statement deletes from
+   these tables. Rollback caveat: copies of the grant script from before this
+   change grant DELETE on every table. After any rollback that reapplies such a
+   copy, reapply this script, or restore exactly the DELETE grants recorded
+   above.
 5. `LOCK TABLE ... IN EXCLUSIVE MODE` needs table-level UPDATE, DELETE or
    TRUNCATE privilege, or ownership; column grants do not count. The helper locks
    the scheduler table, the worker claim updates it and enrollment completion
@@ -226,8 +237,9 @@ therefore refused. Use a fresh idempotency key for every case.
    true, and table-level SELECT, INSERT and UPDATE on the foundation job and owner
    tables and on both I/O tables. A missing privilege fails closed as
    `QUANT_DIAGNOSTIC_FAILED` with `sqlstate` 42501. After the DELETE revoke,
-   UPDATE alone carries these locks; also record DELETE false on the revoked
-   tables.
+   UPDATE alone carries these locks. The script already refuses to commit if
+   DELETE remains on any of the ten tables; still record DELETE false on them as
+   the runtime role.
 6. Verify the real release root, storage binding, block-device identity, free
    space, cgroup delegation, I/O controls and current health. The dataset root
    must be on ext4. The host-derived drain need is 2,000 ms plus the dirty-expire

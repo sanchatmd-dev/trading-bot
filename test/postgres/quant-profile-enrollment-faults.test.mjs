@@ -1,3 +1,4 @@
+import {markCharge} from '../helpers/profile-completion-charge.mjs';
 import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {PostgresDatabase} from '../../src/postgres/db.js';
@@ -20,14 +21,6 @@ async function bounded(promise,label,ms=20000){let timer;
 async function until(predicate){const end=Date.now()+15000;
  while(!await predicate()){if(Date.now()>=end)throw Error('condition timed out');await new Promise(resolve=>setTimeout(resolve,10));}}
 const coherentRead=sql=>sql.includes('LEFT JOIN public.quant_profile_enrollment_receipts')&&sql.includes('x.operation_id=$2');
-// BEGIN reads the monotonic clock inside beginProfileCompletion, right after authorizeLocked('BEGIN') starts, and every charge
-// counts from that reading. The marks are that authority call and the last charge statement. No honest charge exceeds the time
-// between them, while a doubled charge does once the terminal has run for a while.
-function markCharge(f){const marks={},push=f.authorityCalls.push.bind(f.authorityCalls),query=f.db.query.bind(f.db);
- f.authorityCalls.push=phase=>{if(phase==='BEGIN')marks.begin=performance.now();return push(phase);};
- f.db.query=async(sql,params)=>{if(sql.startsWith('UPDATE quant_foundation_jobs SET runtime_used_ms=GREATEST'))marks.charge=performance.now();
-  return query(sql,params);};
- return marks;}
 function captureCompletion(f){let completion;const begin=f.scheduler.beginProfileCompletion.bind(f.scheduler);
  f.scheduler.beginProfileCompletion=async request=>{completion=await begin(request);return completion;};return ()=>completion;}
 function settledPayload(params){for(const value of params??[]){if(typeof value!=='string'||!value.startsWith('{'))continue;

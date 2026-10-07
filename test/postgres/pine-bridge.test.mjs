@@ -489,7 +489,7 @@ test('protected backup restores extension records exactly and runtime cannot for
     const status=await new Promise((resolve,reject)=>{const child=spawn(process.env.PG_RESTORE_PATH||'pg_restore',['--exit-on-error','--no-owner','--dbname',env.PGDATABASE,backup.path],{env,stdio:'ignore',windowsHide:true});child.on('error',reject);child.on('exit',resolve);});
     assert.equal(status,0);assert.equal(await snapshot(restored),before);
     await admin.query('CREATE ROLE '+role+' NOSUPERUSER NOCREATEDB NOCREATEROLE');
-    const grants=(await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll('robot_app',role);await db.query(grants);
+    const grants=(await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll(":'runtime_role'","'"+role+"'");await db.query(grants);
     for(const table of ['pine_bridge_evidence','pine_market_bars','pine_bridge_schema'])await assert.rejects(db.transaction(async()=>{await db.query('SET LOCAL ROLE '+role);await db.query('DELETE FROM '+table);}),{code:'42501'});
   }finally{
     await restored?.close();await admin.query('DROP DATABASE IF EXISTS '+target);

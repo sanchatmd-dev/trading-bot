@@ -20,6 +20,18 @@ import {RESEARCH_V2_VERSIONS,DATASET_BINDING_STEP_ID,DATASET_BINDING_KIND,
 
 const identity=(contract,parameters,kind)=>hash(canonical({contract,parameters,kind}));
 
+// Only the Node test runner can register a capture. No constructor option or environment setting enables it.
+const preflightTestCaptures=process.execArgv.includes('--test')?new WeakMap():null;
+export function capturePreflightRunChunkForTest(worker){
+ if(!preflightTestCaptures)throw Error('Preflight capture requires node --test --test-isolation=none');
+ if(preflightTestCaptures.has(worker))throw Error('Preflight capture already installed');
+ const capture={runChunk:null};preflightTestCaptures.set(worker,capture);
+ return {get runChunk(){return capture.runChunk;},release(){
+  if(preflightTestCaptures.get(worker)===capture)preflightTestCaptures.delete(worker);
+  capture.runChunk=null;
+ }};
+}
+
 /** Reason allowlist of the PROFILE V2 terminal log: the I/O diagnostic reasons plus the worker's own PROFILE reasons. */
 export const QUANT_PROFILE_TERMINAL_LOG_REASONS=Object.freeze([...QUANT_IO_DIAGNOSTIC_REASONS,'PROFILE_STOP_REQUESTED',
  'PROFILE_COMPUTE_DEADLINE','QUANT_PROFILE_POLICY_MISMATCH','QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED','PROFILE_DEADLINE_NEAR',
@@ -391,13 +403,16 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
      if(cleared.rowCount!==1)throw fail('FOUNDATION_LEASE_LOST');
     }});
    let running=false;
+   const runChunk=async(input,options)=>{
+    if(running)throw fail('PF2_RUNNER_FAILED');
+    if(this.clock()>=foundation.deadline_at)throw fail('PF2_DEADLINE_EXCEEDED');
+    running=true;try{return await runner.runChunk(input,options);}finally{running=false;}
+   };
+   const capture=preflightTestCaptures?.get(this);
+   if(capture)capture.runChunk=runChunk;
    const envelope=await runHistoricalPreflight({resolved,research:this.service.datasetStore,signal,clock:this.clock,
     resume:foundation.checkpoint?.state,onCheckpoint:token=>this.checkpointToken(foundation,token),
-    runChunk:async(input,options)=>{
-     if(running)throw fail('PF2_RUNNER_FAILED');
-     if(this.clock()>=foundation.deadline_at)throw fail('PF2_DEADLINE_EXCEEDED');
-     running=true;try{return await runner.runChunk(input,options);}finally{running=false;}
-    }});
+    runChunk});
    await runner.settled();
    if(runner.unconfirmed)throw Object.assign(fail('QUANT_PROCESS_STOP_UNCONFIRMED'),{stopped:false});
    if(Buffer.byteLength(canonical(envelope))>foundation.contract.budget.max_output_bytes)throw fail('PF2_LIMIT_EXCEEDED');

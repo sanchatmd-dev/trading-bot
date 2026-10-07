@@ -1,3 +1,4 @@
+// Run with node --test --test-isolation=none: the R5-21 capture seam reads --test from this process execArgv, which default process isolation drops.
 import test,{describe,before,after,beforeEach,afterEach} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -8,7 +9,7 @@ import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {QuantResearchService} from '../../src/postgres/quant-research.js';
-import {QuantResearchFoundationWorker} from '../../src/postgres/quant-research-foundation.js';
+import {QuantResearchFoundationWorker,capturePreflightRunChunkForTest} from '../../src/postgres/quant-research-foundation.js';
 import {QuantFoundationScheduler} from '../../src/postgres/quant-foundation-scheduler.js';
 import {recoverQuantFoundation} from '../../src/postgres/quant-foundation-recovery.js';
 import {ResearchDatasetStore} from '../../src/quant-research/research-dataset-store.js';
@@ -22,7 +23,6 @@ import {createHarness,createWorld} from '../helpers/preflight-pg-fixture.mjs';
 import {quantResearchHttpFixture} from '../helpers/quant-research-prepare-fixture.mjs';
 import {source} from '../helpers/quant-research-fixture.mjs';
 import {profileV2Fixture} from '../helpers/profile-v2-fixture.js';
-import {captureReplayOptions} from '../helpers/pf2-proof-capture.mjs';
 
 // Proof gaps of the PF-2 carry notes (R5-19, R5-21, R5-23, S3b-9, W3-4). Isolated local PostgreSQL only. The PF-2
 // suite runs the real resolver and replay driver over local Python; its supervisor is a synthetic stand-in for
@@ -137,12 +137,12 @@ describe('PF-2 worker: R5-19 recovery of a never-loaded unit, R5-21 serial launc
 
  test('R5-21 a second launch forced while a chunk runs is refused before any unit or process exists',async()=>{
   const {id}=await queued(),entered=deferred(),gate=deferred();releaseGates.push(gate.resolve);
-  const capture=captureReplayOptions();
   let launches=0;
   const w=worker({supervisor:async options=>{
    if(++launches===1){entered.resolve(options.unitName);await gate.promise;}
    return replay(options);
   }});
+  const capture=capturePreflightRunChunkForTest(w);
   const fences=[],fenced=w.scheduler.fenced.bind(w.scheduler);
   w.scheduler.fenced=(job,action,update)=>{fences.push(action);return fenced(job,action,update);};
   const persists=()=>fences.filter(action=>action==='CHECKPOINT').length;

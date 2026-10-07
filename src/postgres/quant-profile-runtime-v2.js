@@ -1,7 +1,7 @@
 import {canonical,hash,fail} from '../pine-bridge/source.js';
 import {validateProfileResultV2} from '../quant-research/profile-contract-v2.js';
 import {QuantIoRuntime,QUANT_PROFILE_RUNTIME_PROTOCOL,quantIoUnitName} from './quant-io-runtime.js';
-import {profileCompletionVeto} from './quant-profile-enrollment.js';
+import {profileCompletionVeto,chargeProfileCompletionRuntime} from './quant-profile-enrollment.js';
 
 const uncertain=()=>fail('QUANT_IO_LAUNCH_UNCERTAIN');
 // Graceful stop (signal) and compute deadline both end the frame loop; the drained terminal still runs (W2 3.3).
@@ -171,6 +171,9 @@ export class QuantProfileRuntimeV2 {
             // Terminal failed before the stop was proven. Never leave the child running.
             const handle=this.io.handles.get(jobId+':'+operationId);
             if(handle)await handle.stop().catch(()=>{});
+            // BEGIN stopped the scheduler's runtime clock. Include the failed terminal and stop attempt using
+            // the same absolute total as every other completion charge; a failed write must keep quarantine.
+            if(completion)try{await chargeProfileCompletionRuntime({db:this.db,completion});}catch{}
             stop={status:'STOPPING',proof:'UNCONFIRMED'};
           }
           if(failure&&typeof failure==='object'&&stop){
