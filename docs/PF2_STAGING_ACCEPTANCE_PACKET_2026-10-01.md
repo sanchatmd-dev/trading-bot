@@ -380,6 +380,27 @@ staging-only configuration in the API and dedicated worker:
 the enrollment below passes. Data admission derives from the research and
 foundation flags; there is no separate `QUANT_DATA_ENABLED` flag.
 
+Evaluator identity binding. Since `432b328` the capacity policy's
+`scope.evaluator_hash` is bound to the running evaluator: at worker and API
+startup (A) and when the PF-2 resolver reads an enrollment (D). The limitation
+string `ENROLLMENT_EVALUATOR_IDENTITY_NOT_BOUND` remains only for envelope
+compatibility; remove it with the next envelope version bump. Expected startup
+refusals when `QUANT_PROFILE_V2_ENROLLMENT_ENABLED=1` or
+`QUANT_PREFLIGHT_ENABLED=1`:
+
+- `CAPACITY_POLICY_EVALUATOR_MISMATCH`: the policy's evaluator differs from the
+  release tree. Fix it by issuing a new capacity policy that carries the
+  evaluator hash computed from the exported release tree's blob bytes (the
+  combined release: `3fb2d465`). Never change code or flags to get past it.
+- `PF2_ENGINE_HASH_MISMATCH`: the process could not read the PF-2 engine files,
+  including the `quant_lab` Python evaluator files, which an enrollment-enabled
+  API now reads at start. Verify that the release tree holds them before turning
+  enrollment on.
+
+With both flags off, as on staging today, no check runs. The resolver check (D)
+reuses `PF2_EVALUATOR_HASH_MISMATCH`, like the plan check; a fresh plan on this
+code that still gets it means a stale enrollment: re-enroll.
+
 Using the authenticated owner session and CSRF protection, send exactly one
 `POST /api/quant/data/profile-enrollments` with a fresh idempotency key and
 `{bot_id, raw_job_id, deployment_id}` referring to real authorized records.
