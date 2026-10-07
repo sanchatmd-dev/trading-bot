@@ -6,7 +6,7 @@ import {execFile} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {PostgresDatabase} from '../../src/postgres/db.js';
-import {checkDatabaseUrl,checkEnvironment,parseOptions,plannedConnections,serverConnection}
+import {checkConnectionHeadroom,checkDatabaseUrl,checkEnvironment,parseOptions,plannedConnections,serverConnection}
   from '../../scripts/measure-d6-prepare-begin.mjs';
 
 // The D6 harness is a measurement tool, so these tests check its report shape, its sanity and its database refusals.
@@ -73,9 +73,29 @@ test('environment check refuses session options, preloads and the native driver,
   assert.throws(()=>checkEnvironment({PAPER_TRADING:'false'}),error=>error.code==='D6_PAPER_TRADING_REQUIRED');
   assert.doesNotThrow(()=>checkEnvironment({PAPER_TRADING:'true',PGPASSWORD:'scrubbed-later'}));
   const env={D6_DATABASE_URL:'postgresql://d6user:not-a-secret@127.0.0.1:5432/d6_local'};
-  // Defaults: the measuring pool (5) and its rate-limit pool (2), plus 2 + 2 for each of the 6 default contenders.
-  assert.equal(plannedConnections(parseOptions([],env).options),31);
-  assert.equal(plannedConnections(parseOptions(['--read=8','--cancel=8','--claim=0','--hash=0','--vacuum=0'],env).options),71);
+  // Defaults: the measuring pool (5) and its rate-limit pool (2), plus 1 + 2 for each of the 6 default contenders.
+  assert.equal(plannedConnections(parseOptions([],env).options),25);
+  assert.equal(plannedConnections(parseOptions(['--read=8','--cancel=8','--claim=0','--hash=0','--vacuum=0'],env).options),55);
+});
+
+test('connection headroom refuses below the required free count with counts only, and the minimum is bounded',()=>{
+  // 70 client backends already held on a 100-connection server with 3 superuser slots: the default plan leaves 2 free.
+  const short={max:100,reserved:3,reservedRoles:0,inUse:70,planned:25,minFree:20};
+  assert.throws(()=>checkConnectionHeadroom(short),error=>error.code==='D6_CONNECTION_HEADROOM_REFUSED'&&
+    JSON.stringify(error.detail)===JSON.stringify({max:100,reserved:3,reserved_roles:0,in_use:70,planned:25,
+      required_free:20,free_after_plan:2}));
+  assert.equal(checkConnectionHeadroom({...short,inUse:40}).free_after_plan,32);
+  assert.throws(()=>checkConnectionHeadroom({...short,inUse:55}),error=>error.code==='D6_CONNECTION_HEADROOM_REFUSED');
+  assert.equal(checkConnectionHeadroom({...short,inUse:55,minFree:5}).free_after_plan,17);
+  assert.throws(()=>checkConnectionHeadroom({...short,inUse:55,reservedRoles:20,minFree:5}),
+    error=>error.code==='D6_CONNECTION_HEADROOM_REFUSED'&&error.detail.free_after_plan===-3);
+  const env={D6_DATABASE_URL:'postgresql://d6user:not-a-secret@127.0.0.1:5432/d6_local'};
+  assert.equal(parseOptions([],env).options['min-free-connections'],20);
+  assert.equal(parseOptions(['--min-free-connections=5'],env).options['min-free-connections'],5);
+  const refused=(argv,code)=>assert.throws(()=>parseOptions(argv,env),error=>error.code===code,argv.join(' '));
+  refused(['--min-free-connections=4'],'D6_USAGE');
+  refused(['--min-free-connections=19','--evidence-class=staging-run'],'D6_MIN_FREE_CONNECTIONS_REFUSED');
+  refused(['--min-free-connections=5','--evidence-class=staging-run'],'D6_MIN_FREE_CONNECTIONS_REFUSED');
 });
 
 test('harness refuses a missing, non-test, remote or rerouted database and bad settings before it connects',async()=>{
@@ -144,8 +164,19 @@ test('without --forwarded-loopback a non-loopback server address is refused befo
 
 test('harness measures prepare and BEGIN under every contention kind and reports a sane, redacted shape',{skip:needsDatabase},async t=>{
   const {db,url,name}=await scratchDatabase(t,'d6_run_');
-  const run=await harness(['--samples=3','--warmup=1','--max-seconds=30','--read=1','--cancel=1','--claim=1','--hash=1',
-    '--vacuum=1','--think-ms=1','--settle-ms=20','--vacuum-interval-ms=100','--heartbeat-ms=50',forwarded],{D6_DATABASE_URL:url});
+  // One contender per role: the smallest plan that still covers every contention kind.
+  const args=['--samples=3','--warmup=1','--max-seconds=30','--read=1','--cancel=1','--claim=1','--hash=1',
+    '--vacuum=1','--think-ms=1','--settle-ms=20','--vacuum-interval-ms=100','--heartbeat-ms=50',forwarded];
+  // CI runs every PostgreSQL test file in one process, so pools of earlier files can still hold client backends. The
+  // default minimum of 20 free connections stays unless this server is that busy; then the development-only floor.
+  const busy=(await db.query("SELECT current_setting('max_connections')::int max,"+
+    "current_setting('superuser_reserved_connections')::int reserved,"+
+    "COALESCE(current_setting('reserved_connections',true),'0')::int roles,"+
+    "(SELECT count(*)::int FROM pg_catalog.pg_stat_activity WHERE backend_type='client backend') in_use")).rows[0];
+  // The harness also counts its own first connection.
+  const expectedFree=busy.max-busy.reserved-busy.roles-busy.in_use-1-plannedConnections(parseOptions(args,{D6_DATABASE_URL:url}).options);
+  if(expectedFree<20)args.push('--min-free-connections=5');
+  const run=await harness(args,{D6_DATABASE_URL:url});
   assert.equal(run.code,0,run.stderr);
   const report=JSON.parse(run.stdout);
   assert.equal(report.report,'d6-prepare-begin-v1');
@@ -171,7 +202,9 @@ test('harness measures prepare and BEGIN under every contention kind and reports
   assert.equal(report.p99_reliable,false);
   for(const [name,size] of Object.entries(report.fixture))assert.ok(Number.isSafeInteger(size)&&size>0,name);
   const connections=report.environment.connections;
-  assert.equal(connections.planned,plannedConnections(report.settings));assert.ok(connections.free_after_plan>=20);
+  assert.equal(connections.planned,plannedConnections(report.settings));
+  assert.equal(connections.required_free,report.settings['min-free-connections']);
+  assert.ok(connections.free_after_plan>=connections.required_free);
   assert.ok(Number.isSafeInteger(connections.reserved_roles)&&connections.reserved_roles>=0);
   for(const [phase,stats] of Object.entries(report.phases)){
     if(stats.count===0)continue;

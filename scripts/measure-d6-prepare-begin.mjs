@@ -38,8 +38,10 @@ import {fileURLToPath} from 'node:url';
  * TEST_DATABASE_URL before it loads any product module. Before it connects, it refuses any database name that does
  * not match d6_[a-z0-9_]+, any host other than loopback or a local socket directory, and any URL query other than one
  * socket directory. After it connects, and before any write, it refuses a database that reports another name or
- * server address, that holds any relation outside the system schemas, or that would keep fewer than 20 free
- * connections once the harness opens its pools. The server address must be loopback (NULL for a socket). Only
+ * server address, that holds any relation outside the system schemas, or that would keep fewer free connections than
+ * --min-free-connections once the harness opens its pools (default and staging minimum 20; a development-only run may
+ * go down to 5, for a shared test server). That refusal reports the counts it used, never names or addresses. The
+ * server address must be loopback (NULL for a socket). Only
  * --forwarded-loopback, for a development-only run over a loopback URL, also accepts a private (RFC 1918 or IPv6
  * unique local) server address: a container PostgreSQL behind a loopback port mapping, as in CI, reports its bridge
  * address. A public or other address is refused either way, and the staging-run class refuses the option. Each
@@ -56,7 +58,8 @@ import {fileURLToPath} from 'node:url';
  *   D6_DATABASE_URL=postgresql://USER:PASSWORD@127.0.0.1:PORT/d6_example node scripts/measure-d6-prepare-begin.mjs
  *     [--samples=200] [--warmup=5] [--max-seconds=120] [--read=2] [--cancel=1] [--claim=1] [--hash=1] [--vacuum=1]
  *     [--hold-ms=0] [--think-ms=2] [--settle-ms=10] [--start-jitter-ms=50] [--vacuum-interval-ms=500]
- *     [--heartbeat-ms=5000] [--evidence-class=development-only|staging-run] [--forwarded-loopback] [--debug]
+ *     [--heartbeat-ms=5000] [--min-free-connections=20] [--evidence-class=development-only|staging-run]
+ *     [--forwarded-loopback] [--debug]
  * Every number has a hard cap (LIMITS). Sampling stops at --max-seconds after start, and a watchdog ends the run 60 s
  * later. A p99 rests on fewer than two tail samples below 100 measured samples; the report says so. The report is a
  * measurement only: D6 acceptance and the marked reserve stay root decisions.
@@ -71,13 +74,14 @@ const REFUSED_ENV=['PGOPTIONS','NODE_OPTIONS','NODE_PG_FORCE_NATIVE'];
 const SCRUBBED_ENV=['DATABASE_URL','TEST_DATABASE_URL'];
 const LIMITS=Object.freeze({samples:[1,5000],warmup:[0,100],'max-seconds':[5,600],read:[0,8],cancel:[0,8],claim:[0,8],
   hash:[0,8],vacuum:[0,2],'hold-ms':[0,100],'think-ms':[0,1000],'settle-ms':[0,1000],'start-jitter-ms':[0,1000],
-  'vacuum-interval-ms':[50,10000],'heartbeat-ms':[10,5000]});
+  'vacuum-interval-ms':[50,10000],'heartbeat-ms':[10,5000],'min-free-connections':[5,1000]});
 // The heartbeat default is the worker's own interval for its 30 s lease: max(10, min(5000, floor(leaseMs / 3))).
 const DEFAULTS=Object.freeze({samples:200,warmup:5,'max-seconds':120,read:2,cancel:1,claim:1,hash:1,vacuum:1,'hold-ms':0,
-  'think-ms':2,'settle-ms':10,'start-jitter-ms':50,'vacuum-interval-ms':500,'heartbeat-ms':5000});
+  'think-ms':2,'settle-ms':10,'start-jitter-ms':50,'vacuum-interval-ms':500,'heartbeat-ms':5000,'min-free-connections':20});
 const ROLES=['read','cancel','claim','hash','vacuum'];
 const EVIDENCE_CLASSES=['development-only','staging-run'];
-const MAX_CONTENDERS=16,POOL_MAX=5,CONTENDER_POOL_MAX=2,LIMIT_POOL_MAX=2,LEASE_MS=30000,WATCHDOG_GRACE_MS=60000,BARRIER_MS=30000;
+// A contender runs one operation at a time, and every statement of an operation shares its transaction connection.
+const MAX_CONTENDERS=16,POOL_MAX=5,CONTENDER_POOL_MAX=1,LIMIT_POOL_MAX=2,LEASE_MS=30000,WATCHDOG_GRACE_MS=60000,BARRIER_MS=30000;
 const MIN_FREE_CONNECTIONS=20,RELIABLE_P99_SAMPLES=100;
 const PG_SETTINGS=['server_version','max_connections','shared_buffers','work_mem','default_transaction_isolation',
   'deadlock_timeout','lock_timeout','idle_in_transaction_session_timeout','autovacuum','autovacuum_naptime',
@@ -88,7 +92,7 @@ const IDENTITY_FIELDS=['name','address','port','started'];
 const MINUTE=60000;
 const SOURCE='//@version=6\nindicator("Synthetic queue fixture")\nbuySignal=false\nsellSignal=false';
 
-class Refusal extends Error{constructor(code){super(code);this.code=code;}}
+class Refusal extends Error{constructor(code,detail){super(code);this.code=code;if(detail)this.detail=detail;}}
 const refuse=code=>{throw new Refusal(code);};
 const failure=code=>Object.assign(new Error(code),{code});
 const safeCode=error=>{const code=error?.code;return typeof code==='string'&&/^[A-Za-z0-9_]{1,64}$/.test(code)?code:'UNKNOWN';};
@@ -161,6 +165,8 @@ export function parseOptions(argv,env){
   if(ROLES.reduce((sum,role)=>sum+options[role],0)>MAX_CONTENDERS)refuse('D6_USAGE');
   if(!EVIDENCE_CLASSES.includes(options['evidence-class']))refuse('D6_USAGE');
   if(options['forwarded-loopback']&&options['evidence-class']!=='development-only')refuse('D6_FORWARDED_LOOPBACK_REFUSED');
+  if(options['min-free-connections']<MIN_FREE_CONNECTIONS&&options['evidence-class']!=='development-only')
+    refuse('D6_MIN_FREE_CONNECTIONS_REFUSED');
   if(options['evidence-class']==='staging-run'&&process.platform!=='linux')refuse('D6_EVIDENCE_CLASS_REFUSED');
   const argument=options['database-url'],variable=env.D6_DATABASE_URL;
   if(argument!==undefined&&variable!==undefined&&argument!==variable)refuse('D6_USAGE');
@@ -174,6 +180,14 @@ export function parseOptions(argv,env){
 /** Connections the run can open: the measuring pool and each contender's pool, each with its rate-limit pool. */
 export function plannedConnections(options){
   return POOL_MAX+LIMIT_POOL_MAX+ROLES.reduce((sum,role)=>sum+options[role],0)*(CONTENDER_POOL_MAX+LIMIT_POOL_MAX);
+}
+
+/** Free connections left once the run opens its pools. Refuses below minFree; the refusal carries the counts only. */
+export function checkConnectionHeadroom({max,reserved,reservedRoles,inUse,planned,minFree}){
+  const counts={max,reserved,reserved_roles:reservedRoles,in_use:inUse,planned,required_free:minFree,
+    free_after_plan:max-reserved-reservedRoles-inUse-planned};
+  if(counts.free_after_plan<minFree)throw new Refusal('D6_CONNECTION_HEADROOM_REFUSED',counts);
+  return counts;
 }
 async function product(){
   const load=file=>import(new URL('../src/'+file,import.meta.url));
@@ -263,14 +277,11 @@ async function checkDatabase(db,target,options){
   const connection=serverConnection(target,identity.address,{forwardedLoopback:options['forwarded-loopback']});
   if(!connection)refuse('D6_DATABASE_IDENTITY_MISMATCH');
   if(row.relations!==0||row.schemas!==0)refuse('D6_DATABASE_NOT_EMPTY');
-  const planned=plannedConnections(options);
   // reserved_connections (PostgreSQL 16+) holds slots for pg_use_reserved_connections roles; it reads 0 before 16.
-  const free=row.max_connections-row.reserved_connections-row.reserved_role_connections-row.client_connections-planned;
-  if(free<MIN_FREE_CONNECTIONS)refuse('D6_CONNECTION_HEADROOM_REFUSED');
-  return {connection,identity:Object.fromEntries(IDENTITY_FIELDS.map(field=>[field,identity[field]])),
-    connections:{max:row.max_connections,reserved:row.reserved_connections,reserved_roles:row.reserved_role_connections,
-      in_use_at_start:row.client_connections,
-      planned,free_after_plan:free}};
+  const connections=checkConnectionHeadroom({max:row.max_connections,reserved:row.reserved_connections,
+    reservedRoles:row.reserved_role_connections,inUse:row.client_connections,planned:plannedConnections(options),
+    minFree:options['min-free-connections']});
+  return {connection,identity:Object.fromEntries(IDENTITY_FIELDS.map(field=>[field,identity[field]])),connections};
 }
 
 const timed=(probe,key,fn)=>async(...args)=>{
@@ -727,7 +738,8 @@ if(invokedAsScript()){
     }catch(error){
       if(debug)process.stderr.write(String(error?.stack??error)+'\n');
       const refused=error instanceof Refusal;
-      finish(process.stderr,JSON.stringify(refused?{error:error.code}:{error:'D6_FAILED',code:safeCode(error)}),refused?2:1);
+      finish(process.stderr,JSON.stringify(refused?{error:error.code,...(error.detail?{detail:error.detail}:{})}:
+        {error:'D6_FAILED',code:safeCode(error)}),refused?2:1);
     }
   }
 }
