@@ -2290,7 +2290,12 @@ evaluator (`PF2_EVALUATOR_HASH_MISMATCH`), before any dataset read.
 `ENROLLMENT_EVALUATOR_IDENTITY_NOT_BOUND` stays declared as an envelope format pin
 until the next envelope version. Engine identities of the combined tree: legacy
 `98817114` (unchanged), foundation `4304a00f`, ingestion `2999dbac`, PF-2 engine
-`fcc1303e`, PF-2 evaluator `3fb2d465`. The final pre-staging code audit ran after this checkpoint (see below). Claude usage: at wave
+`fcc1303e`, PF-2 evaluator `3fb2d465`. Backlog for the next engine rotation, before broad PF-2
+activation and not before R7: an optional policy-field enrollment reserve gate
+(`terminal.enrollment_reserve_ms`, `PROFILE_ENROLLMENT_RESERVE_NEAR`) that diverts a
+marked job near its deadline to the measured cancellation path, so production
+overruns settle measured; until then D6 validates the acceptance inequality in the
+PF-2 staging packet. The final pre-staging code audit ran after this checkpoint (see below). Claude usage: at wave
 start 5-hour 0%, weekly all models 23%, weekly Fable 16%; at 05:30Z 5-hour 74%,
 weekly 32%, weekly Fable 19%; after the 06:00Z reset 5-hour 0%, weekly 33%.
 Active engineering hours remain unknown; no speedup or cost claim is made and the

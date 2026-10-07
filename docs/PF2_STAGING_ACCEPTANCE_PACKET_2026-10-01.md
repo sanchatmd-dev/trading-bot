@@ -350,7 +350,8 @@ SIGKILL fails acceptance. A safe fallback is not a measured-completion pass.
 ## D6 and the gate it blocks
 
 D6 is the Linux measurement of the enrollment prepare and BEGIN cost (p99 under
-contention), which sets the reserve a marked job needs before its terminal. It
+contention), which the acceptance inequality below checks against the time a marked
+job has before its terminal. It
 applies to marked enrollment jobs only. The PROFILE V2 runtime
 (`src/postgres/quant-profile-runtime-v2.js`) marks a job only when its contract
 carries `completion_mode: 'pf2-enrollment-v1'`. Only a marked job runs the
@@ -365,13 +366,22 @@ D6 therefore neither blocks nor is measured by the W7 cases C1 and C2. It blocks
 the durable enrollment proof (R7) and with it staging activation. Before R7,
 measure prepare plus BEGIN on this host under contention (API reads and cancels
 holding the scheduler row, the scheduler lock wait, autovacuum, the executable
-closure hash) and set the marked reserve to the measured p99 plus a margin;
-below that reserve a marked job takes the diagnostic cancellation path, which
-still settles measured.
+closure hash). There is no marked-reserve field and no diversion to the
+cancellation path. D6 instead validates an acceptance inequality:
+`worst_case_total.ms + 1100 + M <= runtime_max_ms - 5000 - terminal_drain_ms - tail_margin_ms - S`.
+Here 1100 ms is the poll interval (100 ms) plus the deadline slack (1000 ms), M
+is the root's margin and S is the spawn-to-frame time on staging (cold start,
+readiness and compute). With the W7 terminal block (70000 / 45000 / 5000) the
+right side is 15000 ms minus S, and no policy value can enlarge it;
+`tail_margin_ms` is not a reserve, and raising it shrinks the window. An
+overrun is fail-closed: the final state is unknown, the completion runtime is
+charged, the job ends CANCELLED / UNKNOWN_FINAL_CHARGED and nothing enrolls. If
+D6 fails the inequality, stop: no retry under the same pins. Choose a code lever
+with owner approval; it needs an engine rotation and a D6 rerun.
 
 ## Durable enrollment and R7 API proof
 
-After W7 passes and D6 has set the marked reserve, enable the reviewed
+After W7 passes and D6 passes the acceptance inequality above, enable the reviewed
 staging-only configuration in the API and dedicated worker:
 `PINE_BRIDGE_ENV=staging`, `PAPER_TRADING=true`,
 `PINE_BRIDGE_ENABLED=1`, `QUANT_RESEARCH_ENABLED=1`,
