@@ -1,0 +1,159 @@
+{
+  "schema": "w7-window2-evidence-v1",
+  "date": "2026-10-07",
+  "release": {
+    "commit": "5e398e7",
+    "stagingServes": "5e398e7",
+    "ingestionEngineHash": "9be04b05",
+    "policyHashPrefix": "00eba827",
+    "contractHashPrefix": "4cc9a664",
+    "note": "No product code change for W7; window 2 used a reviewed one-off tool."
+  },
+  "decisions": {
+    "ownerGo": [
+      "Window 2 GO about 05:51 UTC: d0, C1, q1, C2, q2 with conditional restore and hold rules; C2 only after C1 PASS-MEASURED and q1 PASS",
+      "C2 GO re-confirmed about 07:30 UTC after a classification-only tool change (host effects unchanged)"
+    ],
+    "rootDecisions": [
+      "Provisional I/O bounds stay W7-only; never reused for D6, R7 or PF-2",
+      "Hold V2 layer with API admission off until R7",
+      "Fix-round-1 rule (C2 PASS needs a 60 s run) could never pass for a ~1 s diagnostic; root held C2 and replaced it with a normal-terminal signature check"
+    ]
+  },
+  "window2": {
+    "steps": [
+      {
+        "id": "r2",
+        "utc": "2026-10-07T05:28Z",
+        "kind": "read-only",
+        "verdict": "R2_PASS",
+        "stdoutSha256Prefix": "bc41f728"
+      },
+      {
+        "id": "r2-2",
+        "utc": "2026-10-07T05:52Z",
+        "kind": "read-only",
+        "verdict": "R2_PASS",
+        "stdoutSha256Prefix": "94cb6006"
+      },
+      {
+        "id": "d0",
+        "utc": "2026-10-07T05:52Z",
+        "kind": "dry-run",
+        "verdict": "D0_PASS",
+        "stdoutSha256Prefix": "9427900e",
+        "note": "WOULD_ENQUEUE; contract hash prefix 4cc9a664; policy 00eba827; engine 9be04b05; 515 raw bars; claim window 225000 ms; completion_mode null; evaluator_admission false; no write"
+      },
+      {
+        "id": "c1",
+        "utc": "2026-10-07T05:53Z-05:54Z",
+        "kind": "effect",
+        "verdict": "C1_PASS_MEASURED",
+        "stdoutSha256Prefix": "62c567bb",
+        "note": "one unmarked PROFILE diagnostic job"
+      },
+      {
+        "id": "q1",
+        "utc": "2026-10-07T06:05Z",
+        "kind": "read-only",
+        "verdict": "Q1_PASS",
+        "stdoutSha256Prefix": "28538b1d"
+      },
+      {
+        "id": "c2",
+        "utc": "2026-10-07T07:31Z",
+        "kind": "effect",
+        "verdict": "C2_PASS",
+        "stdoutSha256Prefix": "c3c445e7",
+        "note": "worker stop inside terminal drain"
+      },
+      {
+        "id": "q2",
+        "utc": "2026-10-07T07:42Z",
+        "kind": "read-only",
+        "verdict": "Q2_PASS",
+        "stdoutSha256Prefix": "b6fbd814"
+      }
+    ]
+  },
+  "c1": {
+    "jobPrefix": "d7b3a3d5",
+    "worker": "research worker",
+    "claimMsLeft": 224969,
+    "computeAboutMs": 1000,
+    "runningToStoppingMs": 1020,
+    "terminal": "MEASURED_FINAL_SETTLED",
+    "reason": "COMPLETE",
+    "drainMs": 25604,
+    "operation": "SETTLED",
+    "ledger": "equals charge equals frozen (73728 bytes read, 28672 written)",
+    "finalStatus": "CANCELLED",
+    "finalStatusNote": "by design for an unmarked diagnostic",
+    "receipts": 0,
+    "marked": false,
+    "workerRestart": false,
+    "killLine": false,
+    "newWorkerIdentityAfterStart": true
+  },
+  "c2": {
+    "watcherStopAfterStoppingMs": 1020,
+    "stop": "clean, about 0.66 s, no kill line, empty cgroup",
+    "terminal": "UNKNOWN_FINAL_CHARGED",
+    "reason": "STOP_REQUESTED",
+    "operation": "CRASHED",
+    "charge": "full provisional allowance (7864320 bytes read and written), conservative by design",
+    "leaseCleared": true,
+    "workerReadyAboutSeconds": 11,
+    "c1EvidenceUnchanged": true,
+    "meaning": "C2 PASS means the worker was stopped during a terminal drain entered through the scheduler cancel path with the child released and one operation open, and recovery charged the unknown final. It does not prove the compute ended normally."
+  },
+  "tool_history": [
+    "Root review rounds before window 2.",
+    "After C1, root found its own fix-round-1 rule could never pass for this ~1 s diagnostic, held C2, and replaced it with a normal-terminal signature check (fix rounds 2-3; Opus re-audits plus a Fable second opinion). Classification only; no change to host effects."
+  ],
+  "state_after": {
+    "researchWorker": "PROFILE V2 layer, release 5e398e7, idle",
+    "enrollment": "off",
+    "preflight": "off",
+    "apiAdmission": "off",
+    "api": "untouched",
+    "tradingWorker": "untouched",
+    "health": "200 PAPER_ONLY",
+    "queuedJobs": 0,
+    "ioBounds": "provisional, W7-only"
+  },
+  "not_done": [
+    "D6 staging measurement",
+    "R7 durable enrollment",
+    "PF-2 activation",
+    "any holdout access or campaign"
+  ],
+  "branch_work": {
+    "status": "integrated, CI green, not released to staging",
+    "commits": [
+      "2bce8fd",
+      "c5a7f4a",
+      "c057340",
+      "61083d9 (test flake fixes)",
+      "227f1a8 (D6 measurement harness, local; staging run needs its own owner GO)",
+      "db9fb98 (new cache tokens for six changed UI scripts plus a test pinning tokens to asset digests)"
+    ]
+  },
+  "held_branches": [
+    {
+      "name": "codex-worker/py-ready-early",
+      "note": "research chunk readiness before heavy imports; local cold start 8-11 s before vs 0.2 s after; staging measurement pending"
+    },
+    {
+      "name": "codex-worker/pf2-backlog",
+      "note": "runtime charge after terminal throw, R5-21 test seam, runtime grant DELETE revoke with PostgreSQL test"
+    }
+  ],
+  "held_note": "Reviewed, CI green, not integrated; rotate engine hashes; for the release before R7.",
+  "next": [
+    "Staging release of UI/API batch from db9fb98 (API-only; engine hashes unchanged; read-only host check, release tool, owner GO)",
+    "Integrate held branches",
+    "D6 on staging",
+    "R7"
+  ]
+}
