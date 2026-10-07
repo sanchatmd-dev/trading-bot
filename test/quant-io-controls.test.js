@@ -69,8 +69,12 @@ test('bounded readiness waits for real byte fields and cleans its owned reservat
       file.endsWith('io.stat')?(++reads<2?'8:0 \n':'8:0 rbytes=0 wbytes=4096'):'0::/test.service';
     const statter=async file=>file===root?{dev:2049}:{ino:123};
     const resolver=async file=>file.endsWith('/8:0')?'/sys/devices/block/sda':'/sys/devices/block/sda/sda1';
-    assert.deepEqual(await prepareCgroupIo('/test.service',controls,'main',budget,{reader,statter,resolver,timeoutMs:500}),
+    // The deadline is wall time from before the storage reservation and the fsync'd 4 KiB probe; a loaded Windows
+    // runner once spent more than 500 ms there. The product ceiling (3000 ms) keeps the bound and gives headroom;
+    // the wait itself is proven by the read count, not by timing.
+    assert.deepEqual(await prepareCgroupIo('/test.service',controls,'main',budget,{reader,statter,resolver,timeoutMs:3000}),
       {group:'/test.service',inode:123,readBytes:0,writeBytes:4096});
+    assert.equal(reads,2,'the empty counter line was read and refused before the real byte fields');
     assert.equal(readinessPurpose,'quant-io-readiness-v1');
     assert.deepEqual(await readdir(root),['.storage-reservations']);
     assert.equal((await budget.inspect()).reservations,0);
@@ -110,12 +114,14 @@ test('readiness rejects valid counters returned after deadline',async()=>{
     const reader=async file=>{
       if(file.endsWith('io.max'))return '8:0 rbps=1048576 wbps=524288';
       delayed=true;
-      await new Promise(resolve=>setTimeout(resolve,700));
+      // Longer than the whole 3000 ms budget, so the counters are late however long the reservation took.
+      await new Promise(resolve=>setTimeout(resolve,3300));
       return '8:0 rbytes=0 wbytes=4096';
     };
     const statter=async file=>file===root?{dev:2049}:{ino:123};
     const resolver=async file=>file.endsWith('/8:0')?'/sys/devices/block/sda':'/sys/devices/block/sda/sda1';
-    await assert.rejects(prepareCgroupIo('/test.service',controls,'main',budget,{reader,statter,resolver,timeoutMs:500}),
+    // A 500 ms budget could expire during the reservation on a loaded runner, before any counter read (delayed false).
+    await assert.rejects(prepareCgroupIo('/test.service',controls,'main',budget,{reader,statter,resolver,timeoutMs:3000}),
       {code:'QUANT_IO_TELEMETRY_UNAVAILABLE'});
     assert.equal(delayed,true);
     assert.deepEqual(await readdir(root),['.storage-reservations']);

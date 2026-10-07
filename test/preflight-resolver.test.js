@@ -42,8 +42,18 @@ const rejectsWith=(promise,code)=>assert.rejects(promise,error=>{hygiene(error);
 const keyOf=(world,kind)=>kind==='deployment_snapshot'?world.key(OWNER,BOT,kind,world.scenario.snapshotHash):
   world.key(OWNER,BOT,kind,world.plan.snapshot[PLAN_FIELD[kind]]);
 const craftedError=code=>Object.assign(new Error(code),{code,status:400,leak:MARKER,cause:new Error(MARKER)});
-const settled=(promise,ms=3000)=>Promise.race([promise.then(()=>'RESOLVED',error=>error),
-  new Promise(done=>setTimeout(()=>done('HUNG'),ms))]);
+// HUNG only after a generous 10 s: the bound catches a stuck resolver, never a slow runner. The timer is cleared.
+const settled=(promise,ms=10000)=>{let timer;return Promise.race([promise.then(()=>'RESOLVED',error=>error),
+  new Promise(done=>{timer=setTimeout(()=>done('HUNG'),ms);})]).finally(()=>clearTimeout(timer));};
+const gate=()=>{let open;const promise=new Promise(done=>{open=done;});return {promise,open};};
+// Promptness without a wall clock: event-loop turns from the abort until the call settles. The release
+// path is promise-only, so a released call settles within a turn or two on any runner, loaded or not.
+const PROMPT_TURNS=10;
+const turnsAfter=async(trigger,promise,limit=1000)=>{
+  await trigger;let done=false;promise.then(()=>{done=true;},()=>{done=true;});
+  let turns=0;while(!done&&turns<limit){await new Promise(next=>setImmediate(next));turns++;}
+  return turns;
+};
 const stuck=()=>new Promise(()=>{});
 function watchUnhandled(){
   const seen=[],listener=reason=>seen.push(reason);
@@ -82,7 +92,17 @@ const python=configuredPython?(path.isAbsolute(configuredPython)?configuredPytho
 test('PF-2 S3 trusted resolver',async t=>{
   const base=await createPf2Base(t);
   const raw=base.rawReference.metadata;
-  const world=(scenario,options)=>makeWorld(base,scenario,options);
+  // Engine files are read from disk once, here. Every world resolve hashes this snapshot unless a case passes its
+  // own readFile, so on a loaded runner a transient read failure or a concurrent writer can no longer turn an
+  // unrelated case into PF2_ENGINE_HASH_MISMATCH. The engine-hash cases still read and patch the real files.
+  const engineBytes=new Map();
+  for(const file of PF2_ENGINE_FILES){const url=new URL('../'+file,import.meta.url);engineBytes.set(url.href,await readFile(url));}
+  const snapshotRead=async url=>{const bytes=engineBytes.get(url?.href);if(!bytes)throw new Error('not an engine file');return bytes;};
+  const world=(scenario,options)=>{
+    const w=makeWorld(base,scenario,options),resolve=w.resolve;
+    w.resolve=(extra={})=>resolve({readFile:snapshotRead,...extra});
+    return w;
+  };
   const resolvedVariants=[];
 
   await t.test('happy path: frozen, detached, mapped, deterministic',async()=>{
@@ -985,20 +1005,21 @@ test('PF-2 S3 trusted resolver',async t=>{
       // F10-B2: shadow false, no-op listeners, never settle: a caller abort still wins promptly.
       const controller=new AbortController();
       w=world();
-      let started=0;
+      let reached=false;const aborted=gate();
       w.trusted.records.get=(kind,sha,context)=>{
         shadowValue(context.signal,false);
         context.signal.addEventListener=()=>{};
         context.signal.removeEventListener=()=>{};
-        started=performance.now();
-        setTimeout(()=>controller.abort(),20);
+        reached=true;
+        setTimeout(()=>{controller.abort();aborted.open();},20);
         return stuck();
       };
-      const outcome=await settled(w.resolve({signal:controller.signal}));
+      const run=w.resolve({signal:controller.signal}),turns=turnsAfter(aborted.promise,run);
+      const outcome=await settled(run);
       assert.notEqual(outcome,'HUNG');
       hygiene(outcome);
       assert.equal(outcome.code,'PF2_CANCELLED');
-      assert.ok(started>0&&performance.now()-started<1000);
+      assert.ok(reached&&await turns<=PROMPT_TURNS);
       assert.equal(getEventListeners(controller.signal,'abort').length,0);
       // F10-C: throwing add/removeEventListener on the child: no unhandled rejection, result unaffected.
       w=sourceHook(child=>{
@@ -1106,14 +1127,15 @@ test('PF-2 S3 trusted resolver',async t=>{
       for(const [name,install,make,code,alsoWithoutSignal] of cases){
         for(const linked of alsoWithoutSignal?[true,false]:[true]){
           const controller=new AbortController(),w=world();
-          let started=0;
-          install(w,()=>{started=performance.now();setTimeout(()=>controller.abort(),20);return make();});
-          const outcome=await settled(w.resolve({signal:linked?controller.signal:undefined}),1500);
+          let reached=false;const aborted=gate();
+          install(w,()=>{reached=true;setTimeout(()=>{controller.abort();aborted.open();},20);return make();});
+          const run=w.resolve({signal:linked?controller.signal:undefined}),turns=turnsAfter(aborted.promise,run);
+          const outcome=await settled(run);
           const label=name+(linked?' (link)':' (no signal)');
           assert.notEqual(outcome,'HUNG',label);
           hygiene(outcome);
           assert.equal(outcome.code,code,label);
-          assert.ok(started>0&&performance.now()-started<1000,label);
+          assert.ok(reached&&await turns<=PROMPT_TURNS,label);
           assert.equal(getEventListeners(controller.signal,'abort').length,0,label);
         }
       }
@@ -1243,17 +1265,18 @@ test('PF-2 S3 trusted resolver',async t=>{
       await rejectsWith(w.resolve({signal:controller.signal}),'PF2_CANCELLED');
       // The pass never settles: the abort releases the resolver promptly and the listener is gone.
       controller=new AbortController();w=world();
-      let started=0;
+      let reached=false;const aborted=gate();
       storeWith(w,'inspectSidecarV2',()=>()=>{
-        started=performance.now();
-        setTimeout(()=>controller.abort(),20);
+        reached=true;
+        setTimeout(()=>{controller.abort();aborted.open();},20);
         return stuck();
       });
-      const outcome=await settled(w.resolve({signal:controller.signal}));
+      const run=w.resolve({signal:controller.signal}),turns=turnsAfter(aborted.promise,run);
+      const outcome=await settled(run);
       assert.notEqual(outcome,'HUNG');
       hygiene(outcome);
       assert.equal(outcome.code,'PF2_CANCELLED');
-      assert.ok(started>0&&performance.now()-started<1000);
+      assert.ok(reached&&await turns<=PROMPT_TURNS);
       assert.equal(getEventListeners(controller.signal,'abort').length,0);
       await new Promise(done=>setTimeout(done,25));
       assert.deepEqual(watch.seen,[]);
