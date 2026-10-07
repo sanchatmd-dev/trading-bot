@@ -51,7 +51,8 @@ test('server address check accepts loopback, and a private bridge address only w
     assert.equal(serverConnection(loopback,address),null,address);
     assert.equal(serverConnection(loopback,address,{forwardedLoopback:true}),'loopback-forwarded-private',address);
   }
-  for(const address of ['8.8.8.8','203.0.113.5','172.15.0.1','172.32.0.1','192.169.0.1','11.0.0.1','fe80::1','2001:db8::1',null,'']){
+  for(const address of ['8.8.8.8','203.0.113.5','172.15.0.1','172.32.0.1','192.169.0.1','11.0.0.1','fe80::1','2001:db8::1',
+    'fd::1','fc1::1','fd1::5','fc0:1::1',null,'']){
     assert.equal(serverConnection(loopback,address),null,String(address));
     assert.equal(serverConnection(loopback,address,{forwardedLoopback:true}),null,String(address));
   }
@@ -171,6 +172,7 @@ test('harness measures prepare and BEGIN under every contention kind and reports
   for(const [name,size] of Object.entries(report.fixture))assert.ok(Number.isSafeInteger(size)&&size>0,name);
   const connections=report.environment.connections;
   assert.equal(connections.planned,plannedConnections(report.settings));assert.ok(connections.free_after_plan>=20);
+  assert.ok(Number.isSafeInteger(connections.reserved_roles)&&connections.reserved_roles>=0);
   for(const [phase,stats] of Object.entries(report.phases)){
     if(stats.count===0)continue;
     const order=[stats.min,stats.p50,stats.p95,stats.p99,stats.max];
@@ -185,6 +187,7 @@ test('harness measures prepare and BEGIN under every contention kind and reports
   assert.ok(heartbeats>=1,'the probe or the timer records a heartbeat duration');
   const worst=report.worst_case;
   assert.ok(Math.abs(worst.ms-(report.phases.prepare.p99+worst.heartbeat_max+report.phases.begin.p99))<0.01);
+  assert.ok(Math.abs(report.worst_case_total.ms-(report.phases.frame_check.p99+worst.ms))<0.01);
   assert.equal(report.phases.prepare.count,samples.measured-samples.prepare_failed);
   const beginFailures=Object.values(report.failures.begin).reduce((sum,count)=>sum+count,0);
   assert.equal(beginFailures,samples.begin_failed);

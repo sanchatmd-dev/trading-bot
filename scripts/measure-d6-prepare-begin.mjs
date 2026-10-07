@@ -18,7 +18,8 @@ import {fileURLToPath} from 'node:url';
  *   begin        QuantFoundationScheduler.beginProfileCompletion: the SERIALIZABLE transaction with the scheduler
  *                table lock, the schema assertion and the locked enrollment authority.
  * The heartbeat timer runs with a random phase against prepare, as on the worker, and every sample also runs one
- * probe heartbeat under contention, so the report holds the heartbeat duration a drain can cost at worst.
+ * probe heartbeat once every contender has started, so the report holds the heartbeat duration a drain can cost at
+ * worst under contention.
  *
  * Contention comes from separate processes, as on the host. Each can be switched off with a count of 0:
  *   read    API-style reads (QuantProfileService.get in SERIALIZABLE transactions) of the measured job. Each holds
@@ -132,7 +133,7 @@ const LOOPBACK_ADDRESSES=new Set(['127.0.0.1','::1']);
 function privateAddress(address){
   const v4=/^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/.exec(address??'');
   if(v4){const [a,b]=[Number(v4[1]),Number(v4[2])];return a===10||a===172&&b>=16&&b<=31||a===192&&b===168;}
-  return /^f[cd][0-9a-f]{0,2}:/i.test(address??'');
+  return /^f[cd][0-9a-f]{2}:/i.test(address??'');
 }
 
 /** Classifies the server address the connected database reports; null means refuse. */
@@ -251,6 +252,7 @@ async function checkDatabase(db,target,options){
   const identity=(await db.query(IDENTITY_SQL)).rows[0];
   const row=(await db.query(`SELECT current_setting('max_connections')::int max_connections,
     current_setting('superuser_reserved_connections')::int reserved_connections,
+    COALESCE(current_setting('reserved_connections',true),'0')::int reserved_role_connections,
     (SELECT count(*)::int FROM pg_catalog.pg_stat_activity WHERE backend_type='client backend') client_connections,
     (SELECT count(*)::int FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
       WHERE n.nspname<>ALL(ARRAY['pg_catalog','information_schema']) AND n.nspname NOT LIKE 'pg\\_toast%'
@@ -262,10 +264,12 @@ async function checkDatabase(db,target,options){
   if(!connection)refuse('D6_DATABASE_IDENTITY_MISMATCH');
   if(row.relations!==0||row.schemas!==0)refuse('D6_DATABASE_NOT_EMPTY');
   const planned=plannedConnections(options);
-  const free=row.max_connections-row.reserved_connections-row.client_connections-planned;
+  // reserved_connections (PostgreSQL 16+) holds slots for pg_use_reserved_connections roles; it reads 0 before 16.
+  const free=row.max_connections-row.reserved_connections-row.reserved_role_connections-row.client_connections-planned;
   if(free<MIN_FREE_CONNECTIONS)refuse('D6_CONNECTION_HEADROOM_REFUSED');
   return {connection,identity:Object.fromEntries(IDENTITY_FIELDS.map(field=>[field,identity[field]])),
-    connections:{max:row.max_connections,reserved:row.reserved_connections,in_use_at_start:row.client_connections,
+    connections:{max:row.max_connections,reserved:row.reserved_connections,reserved_roles:row.reserved_role_connections,
+      in_use_at_start:row.client_connections,
       planned,free_after_plan:free}};
 }
 
@@ -453,7 +457,9 @@ async function runSample(f,children,options){
   const quiet=async()=>{clearTimeout(first);clearInterval(interval);await heartbeatTask;};
   resume(children,job.job_id,options['start-jitter-ms']);
   try{
-    // One probe heartbeat under the same contention: the duration a drain can cost when a heartbeat just started.
+    // One probe heartbeat once every contender has passed its random start offset, so it meets the same contention:
+    // the duration a drain can cost when a heartbeat just started. It ends before frame check and prepare start.
+    if(options['start-jitter-ms'])await sleep(options['start-jitter-ms']);
     await beat(ms=>{sample.heartbeat_probe=ms;});
     if(options['settle-ms'])await sleep(options['settle-ms']);
     // The runtime's post-frame work before prepare, the same for marked and unmarked jobs: the job row read, the
@@ -570,6 +576,10 @@ function report(options,f,samples,stoppedBy,contention,environment,startedAt,sta
     phases,
     worst_case:{formula:'prepare p99 + heartbeat max + BEGIN p99',heartbeat_max:heartbeatMax===null?null:round(heartbeatMax),
       ms:phases.prepare.count&&phases.begin.count&&heartbeatMax!==null?round(phases.prepare.p99+heartbeatMax+phases.begin.p99):null},
+    // The whole post-frame path: the frame check also sits between the accepted frame and the terminal.
+    worst_case_total:{formula:'frame check p99 + prepare p99 + heartbeat max + BEGIN p99',
+      ms:phases.frame_check.count&&phases.prepare.count&&phases.begin.count&&heartbeatMax!==null?
+        round(phases.frame_check.p99+phases.prepare.p99+heartbeatMax+phases.begin.p99):null},
     failures:f.failures,
     serialization:{failures:f.failures.begin['40001']??0,retries:0,
       retry_policy:'none: beginProfileCompletion does not retry; the marked job then takes the diagnostic path'},
