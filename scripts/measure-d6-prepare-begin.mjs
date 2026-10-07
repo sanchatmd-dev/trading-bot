@@ -60,8 +60,9 @@ import {fileURLToPath} from 'node:url';
  *     [--hold-ms=0] [--think-ms=2] [--settle-ms=10] [--start-jitter-ms=50] [--vacuum-interval-ms=500]
  *     [--heartbeat-ms=5000] [--min-free-connections=20] [--evidence-class=development-only|staging-run]
  *     [--forwarded-loopback] [--debug]
- * Every number has a hard cap (LIMITS). Sampling stops at --max-seconds after start, and a watchdog ends the run 60 s
- * later. A p99 rests on fewer than two tail samples below 100 measured samples; the report says so. The report is a
+ * Every number has a hard cap (LIMITS). --max-seconds goes up to 1800 for the staging-run class and up to 600 otherwise.
+ * Sampling stops at --max-seconds after start, and a watchdog ends the run after a grace of 10% of that window (at least
+ * 60 s). A p99 rests on fewer than two tail samples below 100 measured samples; the report says so. The report is a
  * measurement only: D6 acceptance and the marked reserve stay root decisions.
  */
 
@@ -72,7 +73,7 @@ const LOOPBACK=new Set(['localhost','127.0.0.1','[::1]']);
 const REFUSED_ENV=['PGOPTIONS','NODE_OPTIONS','NODE_PG_FORCE_NATIVE'];
 // Removed with every PG* variable.
 const SCRUBBED_ENV=['DATABASE_URL','TEST_DATABASE_URL'];
-const LIMITS=Object.freeze({samples:[1,5000],warmup:[0,100],'max-seconds':[5,600],read:[0,8],cancel:[0,8],claim:[0,8],
+const LIMITS=Object.freeze({samples:[1,5000],warmup:[0,100],'max-seconds':[5,1800],read:[0,8],cancel:[0,8],claim:[0,8],
   hash:[0,8],vacuum:[0,2],'hold-ms':[0,100],'think-ms':[0,1000],'settle-ms':[0,1000],'start-jitter-ms':[0,1000],
   'vacuum-interval-ms':[50,10000],'heartbeat-ms':[10,5000],'min-free-connections':[5,1000]});
 // The heartbeat default is the worker's own interval for its 30 s lease: max(10, min(5000, floor(leaseMs / 3))).
@@ -82,6 +83,9 @@ const ROLES=['read','cancel','claim','hash','vacuum'];
 const EVIDENCE_CLASSES=['development-only','staging-run'];
 // A contender runs one operation at a time, and every statement of an operation shares its transaction connection.
 const MAX_CONTENDERS=16,POOL_MAX=5,CONTENDER_POOL_MAX=1,LIMIT_POOL_MAX=2,LEASE_MS=30000,WATCHDOG_GRACE_MS=60000,BARRIER_MS=30000;
+// A staging-run measurement needs at least 1000 completed samples on the shared host, so it may sample for up to 1800 s;
+// development-only runs keep the earlier 600 s cap.
+const DEV_MAX_SECONDS=600;
 const MIN_FREE_CONNECTIONS=20,RELIABLE_P99_SAMPLES=100;
 const PG_SETTINGS=['server_version','max_connections','shared_buffers','work_mem','default_transaction_isolation',
   'deadlock_timeout','lock_timeout','idle_in_transaction_session_timeout','autovacuum','autovacuum_naptime',
@@ -167,6 +171,7 @@ export function parseOptions(argv,env){
   if(options['forwarded-loopback']&&options['evidence-class']!=='development-only')refuse('D6_FORWARDED_LOOPBACK_REFUSED');
   if(options['min-free-connections']<MIN_FREE_CONNECTIONS&&options['evidence-class']!=='development-only')
     refuse('D6_MIN_FREE_CONNECTIONS_REFUSED');
+  if(options['max-seconds']>DEV_MAX_SECONDS&&options['evidence-class']!=='staging-run')refuse('D6_MAX_SECONDS_REFUSED');
   if(options['evidence-class']==='staging-run'&&process.platform!=='linux')refuse('D6_EVIDENCE_CLASS_REFUSED');
   const argument=options['database-url'],variable=env.D6_DATABASE_URL;
   if(argument!==undefined&&variable!==undefined&&argument!==variable)refuse('D6_USAGE');
@@ -176,6 +181,9 @@ export function parseOptions(argv,env){
   if(options['forwarded-loopback']&&target.connection!=='loopback')refuse('D6_FORWARDED_LOOPBACK_REFUSED');
   return {options,url,target};
 }
+
+/** Watchdog deadline: the sampling window plus a grace of 10% of it, at least 60 s (teardown of a longer run takes longer). */
+export function watchdogMs(options){return options['max-seconds']*1000+Math.max(WATCHDOG_GRACE_MS,options['max-seconds']*100);}
 
 /** Connections the run can open: the measuring pool and each contender's pool, each with its rate-limit pool. */
 export function plannedConnections(options){
@@ -607,7 +615,7 @@ async function measure(options,url,target){
     if(root)try{rmSync(root,{recursive:true,force:true});}catch{}
     process.stderr.write(JSON.stringify({error:code})+'\n');process.exit(exitCode);
   };
-  const watchdog=setTimeout(()=>abandon('D6_WATCHDOG',3),options['max-seconds']*1000+WATCHDOG_GRACE_MS);
+  const watchdog=setTimeout(()=>abandon('D6_WATCHDOG',3),watchdogMs(options));
   watchdog.unref();
   const onSignal=signal=>abandon('D6_INTERRUPTED',signal==='SIGINT'?130:143);
   process.once('SIGINT',onSignal);process.once('SIGTERM',onSignal);

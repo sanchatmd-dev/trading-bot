@@ -6,7 +6,7 @@ import {execFile} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {PostgresDatabase} from '../../src/postgres/db.js';
-import {checkConnectionHeadroom,checkDatabaseUrl,checkEnvironment,parseOptions,plannedConnections,serverConnection}
+import {checkConnectionHeadroom,checkDatabaseUrl,checkEnvironment,parseOptions,plannedConnections,serverConnection,watchdogMs}
   from '../../scripts/measure-d6-prepare-begin.mjs';
 
 // The D6 harness is a measurement tool, so these tests check its report shape, its sanity and its database refusals.
@@ -78,6 +78,24 @@ test('environment check refuses session options, preloads and the native driver,
   assert.equal(plannedConnections(parseOptions(['--read=8','--cancel=8','--claim=0','--hash=0','--vacuum=0'],env).options),55);
 });
 
+test('max-seconds goes up to 1800 only for the staging-run class, and the watchdog grace scales with it',()=>{
+  const env={D6_DATABASE_URL:'postgresql://d6user:not-a-secret@127.0.0.1:5432/d6_local'};
+  const refused=(argv,code)=>assert.throws(()=>parseOptions(argv,env),error=>error.code===code,argv.join(' '));
+  assert.equal(watchdogMs(parseOptions(['--max-seconds=600'],env).options),660000);
+  assert.equal(watchdogMs(parseOptions([],env).options),180000);
+  refused(['--max-seconds=601'],'D6_MAX_SECONDS_REFUSED');
+  refused(['--max-seconds=1800'],'D6_MAX_SECONDS_REFUSED');
+  refused(['--max-seconds=1801','--evidence-class=staging-run'],'D6_USAGE');
+  // The staging-run class itself needs Linux; check the class rule there whatever the test host is.
+  const platform=Object.getOwnPropertyDescriptor(process,'platform');
+  Object.defineProperty(process,'platform',{value:'linux',configurable:true});
+  try{
+    const options=parseOptions(['--max-seconds=1800','--evidence-class=staging-run'],env).options;
+    assert.equal(options['max-seconds'],1800);assert.equal(watchdogMs(options),1980000);
+    refused(['--max-seconds=1801','--evidence-class=staging-run'],'D6_USAGE');
+  }finally{Object.defineProperty(process,'platform',platform);}
+});
+
 test('connection headroom refuses below the required free count with counts only, and the minimum is bounded',()=>{
   // 70 client backends already held on a 100-connection server with 3 superuser slots: the default plan leaves 2 free.
   const short={max:100,reserved:3,reservedRoles:0,inUse:70,planned:25,minFree:20};
@@ -115,7 +133,8 @@ test('harness refuses a missing, non-test, remote or rerouted database and bad s
     [['--samples=0'],{D6_DATABASE_URL:local+'d6_local'},'D6_USAGE'],
     [['--samples=5001'],{D6_DATABASE_URL:local+'d6_local'},'D6_USAGE'],
     [['--read=9'],{D6_DATABASE_URL:local+'d6_local'},'D6_USAGE'],
-    [['--max-seconds=601'],{D6_DATABASE_URL:local+'d6_local'},'D6_USAGE'],
+    [['--max-seconds=601'],{D6_DATABASE_URL:local+'d6_local'},'D6_MAX_SECONDS_REFUSED'],
+    [['--max-seconds=1801'],{D6_DATABASE_URL:local+'d6_local'},'D6_USAGE'],
     [['--unknown=1'],{D6_DATABASE_URL:local+'d6_local'},'D6_USAGE'],
     [[forwarded,'--evidence-class=staging-run'],{D6_DATABASE_URL:local+'d6_local'},'D6_FORWARDED_LOOPBACK_REFUSED'],
     [[forwarded],{D6_DATABASE_URL:'postgresql:///d6_local?host=/var/run/postgresql'},'D6_FORWARDED_LOOPBACK_REFUSED'],
