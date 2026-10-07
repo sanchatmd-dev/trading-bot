@@ -1,3 +1,4 @@
+// Run with node --test --test-isolation=none: the R5-21 capture seam reads --test from this process execArgv, which default process isolation drops.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';

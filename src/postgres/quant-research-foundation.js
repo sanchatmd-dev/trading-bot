@@ -23,7 +23,7 @@ const identity=(contract,parameters,kind)=>hash(canonical({contract,parameters,k
 // Only the Node test runner can register a capture. No constructor option or environment setting enables it.
 const preflightTestCaptures=process.execArgv.includes('--test')?new WeakMap():null;
 export function capturePreflightRunChunkForTest(worker){
- if(!preflightTestCaptures)throw Error('Preflight capture requires node --test');
+ if(!preflightTestCaptures)throw Error('Preflight capture requires node --test --test-isolation=none');
  if(preflightTestCaptures.has(worker))throw Error('Preflight capture already installed');
  const capture={runChunk:null};preflightTestCaptures.set(worker,capture);
  return {get runChunk(){return capture.runChunk;},release(){
