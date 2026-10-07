@@ -65,11 +65,19 @@ def test_supervisor_rejects_import_failure_after_ready(tmp_path):
     """
     env = environment(tmp_path, "fail:robot_quant.bridge_replay")
     env["QUANT_TEST_PYTHON"] = sys.executable
+    # Without ioControls the supervisor writes {} with no newline and no terminal protocol.
+    env["QUANT_TEST_STARTUP_TERMINAL"] = "0"
     child = subprocess.run([node, "--input-type=module", "-e", script], cwd=ROOT,
                            env=env, capture_output=True, timeout=40)
     assert child.returncode == 0, child.stderr.decode()
     assert json.loads(child.stdout) == {"accepted": False, "code": "EVALUATION_FAILED", "stopped": True}
-    assert [event["event"] for event in events(tmp_path)[:2]] == ["scratch_created", "ready"]
+    observed = events(tmp_path)
+    assert [event["event"] for event in observed[:2]] == ["scratch_created", "ready"]
+    # The child died on the injected import after readiness, not on request framing before evaluation.
+    assert [(event["event"], event["module"], event["ready"]) for event in observed[-2:]] == [
+        ("evaluation_import", "robot_quant.bridge_replay", True),
+        ("import_failed", "robot_quant.bridge_replay", True)]
+    assert observed[-1]["message"] == "INJECTED_HEAVY_IMPORT_FAILURE"
 
 
 def test_package_exports_remain_available_without_eager_data_imports():

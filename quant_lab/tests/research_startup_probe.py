@@ -11,6 +11,8 @@ from types import SimpleNamespace
 
 started = time.perf_counter()
 mode = os.environ.get("QUANT_TEST_STARTUP_MODE", "ready_only")
+# "0" leaves QUANT_IO_TERMINAL_PROTOCOL unset, as the local supervisor does without ioControls.
+terminal = os.environ.get("QUANT_TEST_STARTUP_TERMINAL", "1") == "1"
 events = os.environ["QUANT_TEST_STARTUP_EVENTS"]
 original_open = builtins.open
 original_import = builtins.__import__
@@ -22,6 +24,7 @@ original_close = os.close
 original_realpath = os.path.realpath
 original_exists = os.path.exists
 ready = False
+injected = None
 synced = False
 counters_read = False
 filename = "/quant-test/.pending-startup"
@@ -79,9 +82,11 @@ def fake_fsync(fd):
 
 
 def imports(name, *args, **kwargs):
+    global injected
     if name in ("robot_quant.bridge_replay", "robot_quant.paper_state", "robot_quant.spt_custom_evaluator"):
         record("evaluation_import", module=name, ready=ready)
         if mode == "fail:" + name:
+            injected = name
             raise ImportError("INJECTED_HEAVY_IMPORT_FAILURE")
     return original_import(name, *args, **kwargs)
 
@@ -96,8 +101,9 @@ def profile(frame, event, arg):
 
 
 os.environ.update(QUANT_IO_READY_FILE=filename, QUANT_IO_READY_DEVICE="8:0",
-                  QUANT_IO_READY_RBPS="1048576", QUANT_IO_READY_WBPS="1048576",
-                  QUANT_IO_TERMINAL_PROTOCOL="quant-io-terminal-v1")
+                  QUANT_IO_READY_RBPS="1048576", QUANT_IO_READY_WBPS="1048576")
+if terminal:
+    os.environ["QUANT_IO_TERMINAL_PROTOCOL"] = "quant-io-terminal-v1"
 builtins.open = fake_open
 builtins.__import__ = imports
 os.stat = fake_stat
@@ -111,4 +117,9 @@ os.major = lambda device: 8
 os.minor = lambda device: 0
 os.O_NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 sys.setprofile(profile)
-runpy.run_module("robot_quant.research_chunk", run_name="__main__")
+try:
+    runpy.run_module("robot_quant.research_chunk", run_name="__main__")
+except ImportError as error:
+    # The exception that ends the child, as its stderr traceback shows; the supervisor keeps only a byte count.
+    record("import_failed", module=injected, ready=ready, message=str(error))
+    raise
