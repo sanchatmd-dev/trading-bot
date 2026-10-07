@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import {realpathSync,rmSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {fork} from 'node:child_process';
@@ -8,13 +9,16 @@ import {fileURLToPath} from 'node:url';
 /**
  * D6 measurement harness. It never runs by itself: an operator or a test starts it against an empty database.
  *
- * It times the two steps that only a marked PROFILE V2 job (contract completion_mode 'pf2-enrollment-v1') runs
- * between its accepted frame and its terminal, through the same product objects the worker wiring builds:
- *   prepare  QuantIoRuntime.prepareEnrollment: strict validation, the executable-closure hash and the BEGIN ticket.
- *   begin    QuantFoundationScheduler.beginProfileCompletion: the SERIALIZABLE transaction with the scheduler table
- *            lock, the schema assertion and the locked enrollment authority.
- * The worker heartbeat drain that runs between the two (beforeTerminal) is reported as its own phase, with a random
- * heartbeat phase against prepare, as on the worker.
+ * It times what a marked PROFILE V2 job (contract completion_mode 'pf2-enrollment-v1') runs between its accepted frame
+ * and its terminal, through the same product objects the worker wiring builds (quant-profile-runtime-v2.js):
+ *   frame check  the post-frame job row read and frame checks (sizes, hashes, validateProfileResultV2). Marked and
+ *                unmarked jobs both run it.
+ *   prepare      QuantIoRuntime.prepareEnrollment: strict validation, the executable-closure hash and the BEGIN ticket.
+ *   drain        beforeTerminal: the worker stops its heartbeat timer and waits for a heartbeat in flight.
+ *   begin        QuantFoundationScheduler.beginProfileCompletion: the SERIALIZABLE transaction with the scheduler
+ *                table lock, the schema assertion and the locked enrollment authority.
+ * The heartbeat timer runs with a random phase against prepare, as on the worker, and every sample also runs one
+ * probe heartbeat under contention, so the report holds the heartbeat duration a drain can cost at worst.
  *
  * Contention comes from separate processes, as on the host. Each can be switched off with a count of 0:
  *   read    API-style reads (QuantProfileService.get in SERIALIZABLE transactions) of the measured job. Each holds
@@ -22,16 +26,26 @@ import {fileURLToPath} from 'node:url';
  *   cancel  API-style enrollment enqueues of a decoy (these hash the executable closure) and owner cancels of it.
  *   claim   scheduler claim polls (scheduler table lock and the running-job check).
  *   hash    executable-closure hashing (CPU and file reads).
- *   vacuum  VACUUM (ANALYZE) of the scheduler and job tables every --vacuum-interval-ms, as autovacuum would.
- * Between samples every contender pauses, so no decoy is queued when the measuring process claims its next job.
+ *   vacuum  VACUUM (ANALYZE) of the scheduler and job tables every --vacuum-interval-ms. This is a conservative
+ *           stand-in for autovacuum: a manual VACUUM keeps its lock while BEGIN's LOCK TABLE waits, whereas
+ *           autovacuum cancels itself for a lock waiter.
+ * In each sample every contender starts after its own random offset below --start-jitter-ms. Between samples every
+ * contender pauses, so no decoy is queued when the measuring process claims its next job.
  *
- * Database safety. The database comes only from --database-url or D6_DATABASE_URL. No other variable is read, and the
- * PostgreSQL routing variables (PGHOST, PGDATABASE and similar) are removed first. Before it connects, the harness
- * refuses any database name that does not match d6_[a-z0-9_]+, any host other than loopback or a local socket
- * directory, and any URL query other than one socket directory. After it connects, and before any write, it refuses a
- * database that reports another name or server address or holds any relation outside the system schemas. The caller
- * creates the empty database and drops it afterwards. The harness installs the product schema through the product
- * migrations and fills it through the product services with synthetic Paper fixtures. It never contacts an exchange.
+ * Database safety. The database comes only from --database-url or D6_DATABASE_URL. The harness refuses to start when
+ * PGOPTIONS, NODE_OPTIONS or NODE_PG_FORCE_NATIVE is set, and removes every other PG* variable, DATABASE_URL and
+ * TEST_DATABASE_URL before it loads any product module. Before it connects, it refuses any database name that does
+ * not match d6_[a-z0-9_]+, any host other than loopback or a local socket directory, and any URL query other than one
+ * socket directory. After it connects, and before any write, it refuses a database that reports another name or
+ * server address, that holds any relation outside the system schemas, or that would keep fewer than 20 free
+ * connections once the harness opens its pools. The server address must be loopback (NULL for a socket). Only
+ * --forwarded-loopback, for a development-only run over a loopback URL, also accepts a private (RFC 1918 or IPv6
+ * unique local) server address: a container PostgreSQL behind a loopback port mapping, as in CI, reports its bridge
+ * address. A public or other address is refused either way, and the staging-run class refuses the option. Each
+ * contender checks the database name, server address, port and postmaster start time against the measuring process
+ * before its first operation. The caller creates the empty database and drops it afterwards. The harness installs
+ * the product schema through the product migrations and fills it through the product services with synthetic Paper
+ * fixtures. It never contacts an exchange.
  *
  * Output: one JSON report on standard output and exit 0. A refusal prints {"error":CODE} on standard error and exits
  * 2; any other failure prints {"error":"D6_FAILED","code":CODE} and exits 1. The report and these lines hold no paths,
@@ -40,29 +54,36 @@ import {fileURLToPath} from 'node:url';
  * Usage (pass the URL in the environment, not on the command line, so the password stays out of the process list):
  *   D6_DATABASE_URL=postgresql://USER:PASSWORD@127.0.0.1:PORT/d6_example node scripts/measure-d6-prepare-begin.mjs
  *     [--samples=200] [--warmup=5] [--max-seconds=120] [--read=2] [--cancel=1] [--claim=1] [--hash=1] [--vacuum=1]
- *     [--hold-ms=0] [--think-ms=2] [--settle-ms=10] [--vacuum-interval-ms=500] [--heartbeat-ms=5000]
- *     [--evidence-class=development-only|staging-run] [--debug]
+ *     [--hold-ms=0] [--think-ms=2] [--settle-ms=10] [--start-jitter-ms=50] [--vacuum-interval-ms=500]
+ *     [--heartbeat-ms=5000] [--evidence-class=development-only|staging-run] [--forwarded-loopback] [--debug]
  * Every number has a hard cap (LIMITS). Sampling stops at --max-seconds after start, and a watchdog ends the run 60 s
- * later. The report is a measurement only: D6 acceptance and the marked reserve stay root decisions.
+ * later. A p99 rests on fewer than two tail samples below 100 measured samples; the report says so. The report is a
+ * measurement only: D6 acceptance and the marked reserve stay root decisions.
  */
 
 const REPORT_VERSION='d6-prepare-begin-v1';
 const SCRIPT=fileURLToPath(import.meta.url);
 const DATABASE_NAME=/^d6_[a-z0-9_]{1,59}$/;
 const LOOPBACK=new Set(['localhost','127.0.0.1','[::1]']);
-const SCRUBBED_ENV=['PGHOST','PGHOSTADDR','PGPORT','PGDATABASE','PGSERVICE','PGSERVICEFILE','DATABASE_URL','TEST_DATABASE_URL'];
+const REFUSED_ENV=['PGOPTIONS','NODE_OPTIONS','NODE_PG_FORCE_NATIVE'];
+// Removed with every PG* variable.
+const SCRUBBED_ENV=['DATABASE_URL','TEST_DATABASE_URL'];
 const LIMITS=Object.freeze({samples:[1,5000],warmup:[0,100],'max-seconds':[5,600],read:[0,8],cancel:[0,8],claim:[0,8],
-  hash:[0,8],vacuum:[0,2],'hold-ms':[0,100],'think-ms':[0,1000],'settle-ms':[0,1000],'vacuum-interval-ms':[50,10000],
-  'heartbeat-ms':[10,5000]});
+  hash:[0,8],vacuum:[0,2],'hold-ms':[0,100],'think-ms':[0,1000],'settle-ms':[0,1000],'start-jitter-ms':[0,1000],
+  'vacuum-interval-ms':[50,10000],'heartbeat-ms':[10,5000]});
 // The heartbeat default is the worker's own interval for its 30 s lease: max(10, min(5000, floor(leaseMs / 3))).
 const DEFAULTS=Object.freeze({samples:200,warmup:5,'max-seconds':120,read:2,cancel:1,claim:1,hash:1,vacuum:1,'hold-ms':0,
-  'think-ms':2,'settle-ms':10,'vacuum-interval-ms':500,'heartbeat-ms':5000});
+  'think-ms':2,'settle-ms':10,'start-jitter-ms':50,'vacuum-interval-ms':500,'heartbeat-ms':5000});
 const ROLES=['read','cancel','claim','hash','vacuum'];
 const EVIDENCE_CLASSES=['development-only','staging-run'];
-const MAX_CONTENDERS=16,POOL_MAX=5,CONTENDER_POOL_MAX=2,LEASE_MS=30000,WATCHDOG_GRACE_MS=60000,BARRIER_MS=30000;
+const MAX_CONTENDERS=16,POOL_MAX=5,CONTENDER_POOL_MAX=2,LIMIT_POOL_MAX=2,LEASE_MS=30000,WATCHDOG_GRACE_MS=60000,BARRIER_MS=30000;
+const MIN_FREE_CONNECTIONS=20,RELIABLE_P99_SAMPLES=100;
 const PG_SETTINGS=['server_version','max_connections','shared_buffers','work_mem','default_transaction_isolation',
   'deadlock_timeout','lock_timeout','idle_in_transaction_session_timeout','autovacuum','autovacuum_naptime',
   'synchronous_commit','fsync','max_pred_locks_per_transaction','max_worker_processes'];
+const IDENTITY_SQL=`SELECT current_database() name,host(inet_server_addr()) address,inet_server_port() port,
+  pg_postmaster_start_time()::text started`;
+const IDENTITY_FIELDS=['name','address','port','started'];
 const MINUTE=60000;
 const SOURCE='//@version=6\nindicator("Synthetic queue fixture")\nbuySignal=false\nsellSignal=false';
 
@@ -74,8 +95,19 @@ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const tally=(counts,key)=>{counts[key]=(counts[key]??0)+1;};
 const round=value=>Math.round(value*1000)/1000;
 const debug=process.argv.includes('--debug');
+
+/** Session options, preloads and the native driver could change what is measured or how it connects. */
+export function checkEnvironment(env){
+  if(REFUSED_ENV.some(key=>env[key]!==undefined))refuse('D6_ENVIRONMENT_REFUSED');
+  if(env.PAPER_TRADING!==undefined&&env.PAPER_TRADING!=='true')refuse('D6_PAPER_TRADING_REQUIRED');
+}
+
+function scrubEnvironment(env){
+  for(const key of Object.keys(env))if(/^PG/i.test(key)||SCRUBBED_ENV.includes(key))delete env[key];
+}
+
 /** Checks the URL text only; nothing here connects. */
-function checkDatabaseUrl(value){
+export function checkDatabaseUrl(value){
   if(typeof value!=='string'||!value)refuse('D6_DATABASE_URL_REQUIRED');
   let url,name,host;
   try{url=new URL(value);name=decodeURIComponent(url.pathname.slice(1));host=decodeURIComponent(url.hostname);}
@@ -96,12 +128,27 @@ function checkDatabaseUrl(value){
   refuse('D6_DATABASE_HOST_REFUSED');
 }
 
-function parseOptions(argv,env){
-  const options={...DEFAULTS,'database-url':undefined,'evidence-class':'development-only'};
+const LOOPBACK_ADDRESSES=new Set(['127.0.0.1','::1']);
+function privateAddress(address){
+  const v4=/^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/.exec(address??'');
+  if(v4){const [a,b]=[Number(v4[1]),Number(v4[2])];return a===10||a===172&&b>=16&&b<=31||a===192&&b===168;}
+  return /^f[cd][0-9a-f]{0,2}:/i.test(address??'');
+}
+
+/** Classifies the server address the connected database reports; null means refuse. */
+export function serverConnection(target,address,{forwardedLoopback=false}={}){
+  if(target.connection==='unix-socket')return address===null?'unix-socket':null;
+  if(LOOPBACK_ADDRESSES.has(address))return 'loopback';
+  return forwardedLoopback&&privateAddress(address)?'loopback-forwarded-private':null;
+}
+
+export function parseOptions(argv,env){
+  const options={...DEFAULTS,'database-url':undefined,'evidence-class':'development-only','forwarded-loopback':false};
   for(const arg of argv){
     if(arg==='--debug')continue;
+    if(arg==='--forwarded-loopback'){options['forwarded-loopback']=true;continue;}
     const match=/^--([a-z-]+)=(.*)$/s.exec(arg);
-    if(!match||!Object.hasOwn(options,match[1]))refuse('D6_USAGE');
+    if(!match||!Object.hasOwn(options,match[1])||match[1]==='forwarded-loopback')refuse('D6_USAGE');
     options[match[1]]=match[2];
   }
   for(const [name,[min,max]] of Object.entries(LIMITS)){
@@ -112,23 +159,31 @@ function parseOptions(argv,env){
   }
   if(ROLES.reduce((sum,role)=>sum+options[role],0)>MAX_CONTENDERS)refuse('D6_USAGE');
   if(!EVIDENCE_CLASSES.includes(options['evidence-class']))refuse('D6_USAGE');
+  if(options['forwarded-loopback']&&options['evidence-class']!=='development-only')refuse('D6_FORWARDED_LOOPBACK_REFUSED');
   if(options['evidence-class']==='staging-run'&&process.platform!=='linux')refuse('D6_EVIDENCE_CLASS_REFUSED');
   const argument=options['database-url'],variable=env.D6_DATABASE_URL;
   if(argument!==undefined&&variable!==undefined&&argument!==variable)refuse('D6_USAGE');
   const url=argument??variable;
   delete options['database-url'];
-  return {options,url,target:checkDatabaseUrl(url)};
+  const target=checkDatabaseUrl(url);
+  if(options['forwarded-loopback']&&target.connection!=='loopback')refuse('D6_FORWARDED_LOOPBACK_REFUSED');
+  return {options,url,target};
 }
 
+/** Connections the run can open: the measuring pool and each contender's pool, each with its rate-limit pool. */
+export function plannedConnections(options){
+  return POOL_MAX+LIMIT_POOL_MAX+ROLES.reduce((sum,role)=>sum+options[role],0)*(CONTENDER_POOL_MAX+LIMIT_POOL_MAX);
+}
 async function product(){
   const load=file=>import(new URL('../src/'+file,import.meta.url));
-  const [db,store,pine,data,profile,worker,research,budget,migration,ledger,io,ticket,schema,source,config,pipeline,scheduler]=
-    await Promise.all(['postgres/db.js','postgres/store.js','postgres/pine-bridge.js','postgres/quant-data.js',
+  const [db,store,pine,data,profile,worker,research,budget,migration,ledger,io,ticket,schema,source,config,pipeline,scheduler,
+    profileContract]=await Promise.all(['postgres/db.js','postgres/store.js','postgres/pine-bridge.js','postgres/quant-data.js',
       'postgres/quant-profile.js','postgres/quant-research-foundation.js','quant-research/research-dataset-store.js',
       'quant-research/storage-budget.js','postgres/quant-foundation-migration.js','postgres/quant-io-ledger.js',
       'postgres/quant-io-runtime.js','postgres/quant-profile-enrollment-ticket.js',
       'postgres/quant-profile-enrollment-migration.js','pine-bridge/source.js','config.js',
-      'quant-research/profile-pipeline-v2.js','postgres/quant-foundation-scheduler.js'].map(load));
+      'quant-research/profile-pipeline-v2.js','postgres/quant-foundation-scheduler.js',
+      'quant-research/profile-contract-v2.js'].map(load));
   return {PostgresDatabase:db.PostgresDatabase,Store:store.Store,PineBridgeService:pine.PineBridgeService,
     QuantDataService:data.QuantDataService,ingestionEngineHash:data.ingestionEngineHash,
     QuantProfileService:profile.QuantProfileService,QuantResearchFoundationWorker:worker.QuantResearchFoundationWorker,
@@ -138,7 +193,7 @@ async function product(){
     createProfileEnrollmentTicketAuthority:ticket.createProfileEnrollmentTicketAuthority,
     loadQuantProfileEnrollmentSchemaAssertion:schema.loadQuantProfileEnrollmentSchemaAssertion,
     canonical:source.canonical,hash:source.hash,config:config.config,buildProfileV2:pipeline.buildProfileV2,
-    QuantFoundationScheduler:scheduler.QuantFoundationScheduler};
+    QuantFoundationScheduler:scheduler.QuantFoundationScheduler,validateProfileResultV2:profileContract.validateProfileResultV2};
 }
 
 // Synthetic Paper fixture, the same shape as the PostgreSQL enrollment tests use. The settings keys are the ones the
@@ -189,24 +244,35 @@ function apiServices(m,db,root,{sourceHash,policy,enrollmentTicketVerifier}){
 }
 
 const serial=(db,fn)=>db.transaction(fn,{isolation:'SERIALIZABLE'});
-async function checkDatabase(db,target){
-  const row=(await db.query(`SELECT current_database() name,host(inet_server_addr()) address,
+
+/** Read-only checks before any write. Returns the connection class, the server identity the contenders must match
+ * (kept out of the report) and the connection plan. */
+async function checkDatabase(db,target,options){
+  const identity=(await db.query(IDENTITY_SQL)).rows[0];
+  const row=(await db.query(`SELECT current_setting('max_connections')::int max_connections,
+    current_setting('superuser_reserved_connections')::int reserved_connections,
+    (SELECT count(*)::int FROM pg_catalog.pg_stat_activity WHERE backend_type='client backend') client_connections,
     (SELECT count(*)::int FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
       WHERE n.nspname<>ALL(ARRAY['pg_catalog','information_schema']) AND n.nspname NOT LIKE 'pg\\_toast%'
       AND n.nspname NOT LIKE 'pg\\_temp\\_%') relations,
     (SELECT count(*)::int FROM pg_catalog.pg_namespace WHERE nspname<>ALL(ARRAY['public','pg_catalog','information_schema'])
       AND nspname NOT LIKE 'pg\\_%') schemas`)).rows[0];
-  if(row.name!==target.name)refuse('D6_DATABASE_IDENTITY_MISMATCH');
-  if(target.connection==='loopback'?!['127.0.0.1','::1'].includes(row.address):row.address!==null)
-    refuse('D6_DATABASE_IDENTITY_MISMATCH');
+  if(identity.name!==target.name)refuse('D6_DATABASE_IDENTITY_MISMATCH');
+  const connection=serverConnection(target,identity.address,{forwardedLoopback:options['forwarded-loopback']});
+  if(!connection)refuse('D6_DATABASE_IDENTITY_MISMATCH');
   if(row.relations!==0||row.schemas!==0)refuse('D6_DATABASE_NOT_EMPTY');
+  const planned=plannedConnections(options);
+  const free=row.max_connections-row.reserved_connections-row.client_connections-planned;
+  if(free<MIN_FREE_CONNECTIONS)refuse('D6_CONNECTION_HEADROOM_REFUSED');
+  return {connection,identity:Object.fromEntries(IDENTITY_FIELDS.map(field=>[field,identity[field]])),
+    connections:{max:row.max_connections,reserved:row.reserved_connections,in_use_at_start:row.client_connections,
+      planned,free_after_plan:free}};
 }
 
 const timed=(probe,key,fn)=>async(...args)=>{
   const start=performance.now();
   try{return await fn(...args);}finally{probe[key]+=performance.now()-start;}
 };
-
 async function installFixture(m,db,root){
   const read=name=>fs.readFile(new URL('../src/postgres/'+name,import.meta.url),'utf8');
   await db.migrate();
@@ -287,16 +353,25 @@ async function installFixture(m,db,root){
     const start=performance.now();
     try{return await query(sql,params);}finally{probe.lock+=performance.now()-start;}
   };
-  return {m,db,root,worker,profile,io,probe,policy,owner,body,sourceHash,result,resultHash:hash(canonical(result)),
-    engineHash:contract.engine_hash,failures:{prepare:{},begin:{}},heartbeat:{started:0,errors:{}},strayQueued:0};
+  const bytes=value=>Buffer.byteLength(typeof value==='string'?value:canonical(value));
+  return {m,db,root,worker,profile,io,ledger,probe,policy,owner,body,sourceHash,result,resultHash:hash(canonical(result)),
+    engineHash:contract.engine_hash,failures:{frame_check:{},prepare:{},begin:{}},heartbeat:{started:0,errors:{}},strayQueued:0,
+    sizes:{raw_bars:520,source_bytes:bytes(SOURCE),analysis_bytes:bytes(input.analysis),snapshot_bytes:bytes(snapshot),
+      contract_bytes:bytes(contract),result_bytes:bytes(result)}};
 }
+
+// A dead contender must give a clean failure and cleanup: errors on the channel are ignored here and surface through
+// the reply barrier instead, and every barrier waits for all its replies before it fails.
+const post=(child,message)=>{try{child.send(message,()=>{});}catch{}};
+
 function reply(child,type,timeoutMs=BARRIER_MS){
   return new Promise((resolve,reject)=>{
     const done=(error,value)=>{clearTimeout(timer);child.off('message',onMessage);child.off('exit',onExit);
       if(error)reject(error);else resolve(value);};
     const onMessage=message=>{
       if(message?.type===type)done(null,message);
-      else if(message?.type==='failed')done(failure('D6_CONTENDER_FAILED'));
+      else if(message?.type==='failed')done(message.code==='D6_DATABASE_IDENTITY_MISMATCH'?new Refusal(message.code):
+        failure('D6_CONTENDER_FAILED'));
     };
     const onExit=()=>done(failure('D6_CONTENDER_EXITED'));
     const timer=setTimeout(()=>done(failure('D6_CONTENDER_TIMEOUT')),timeoutMs);
@@ -304,20 +379,28 @@ function reply(child,type,timeoutMs=BARRIER_MS){
   });
 }
 
-const pause=children=>Promise.all(children.map(child=>{const answer=reply(child,'paused');child.send({type:'pause'});return answer;}));
-const resume=(children,target)=>{for(const child of children)child.send({type:'resume',target});};
+async function settled(promises){
+  const reasons=(await Promise.allSettled(promises)).filter(result=>result.status==='rejected').map(result=>result.reason);
+  if(reasons.length)throw reasons.find(reason=>reason instanceof Refusal)??reasons[0];
+}
 
-async function startContenders(options,url,f,children){
-  const init={url,root:f.root,owner:f.owner,body:f.body,policy:f.policy,sourceHash:f.sourceHash,holdMs:options['hold-ms'],
-    thinkMs:options['think-ms'],vacuumIntervalMs:options['vacuum-interval-ms']};
+const pause=children=>settled(children.map(child=>{const answer=reply(child,'paused');post(child,{type:'pause'});return answer;}));
+const resume=(children,target,jitterMs)=>{
+  for(const child of children)post(child,{type:'resume',target,delay:Math.floor(Math.random()*jitterMs)});
+};
+
+async function startContenders(options,url,f,identity,children){
+  const init={url,identity,root:f.root,owner:f.owner,body:f.body,policy:f.policy,sourceHash:f.sourceHash,
+    holdMs:options['hold-ms'],thinkMs:options['think-ms'],vacuumIntervalMs:options['vacuum-interval-ms']};
   const ready=[];
   for(const role of ROLES)for(let index=0;index<options[role];index++){
     const child=fork(SCRIPT,['--contender',...(debug?['--debug']:[])],
       {stdio:['ignore','ignore',debug?'inherit':'ignore','ipc'],serialization:'json'});
+    child.on('error',()=>{});
     child.role=role;children.push(child);
-    ready.push(reply(child,'ready'));child.send({type:'init',role,index,...init});
+    ready.push(reply(child,'ready'));post(child,{type:'init',role,index,...init});
   }
-  await Promise.all(ready);
+  await settled(ready);
 }
 
 async function stopContenders(children){
@@ -325,7 +408,7 @@ async function stopContenders(children){
     if(child.stopRequested||child.exitCode!==null||!child.connected)return null;
     child.stopRequested=true;
     const answer=reply(child,'stopped',10000).catch(()=>null);
-    try{child.send({type:'stop'});}catch{}
+    post(child,{type:'stop'});
     const stats=await answer;
     if(!stats)child.kill();
     return stats;
@@ -339,7 +422,6 @@ async function release(f,job){
   if(await status()==='STOPPING')await worker.scheduler.acknowledgeStopped(job.job_id,job.lease_token);
   if(await status()!=='CANCELLED')throw failure('D6_RELEASE_FAILED');
 }
-
 /** One marked job from claim to BEGIN. Contenders are paused on entry and on return. */
 async function runSample(f,children,options){
   const {m,db,worker,profile,io,probe,owner,body}=f;
@@ -351,23 +433,45 @@ async function runSample(f,children,options){
   const claimed=await worker.scheduler.claim('d6-measure');
   if(claimed?.job_id!==queued.job_id)throw failure('D6_CLAIM_MISMATCH');
   const job={job_id:claimed.job_id,lease_token:claimed.lease_token},operationId='d6-operation-'+randomUUID();
-  const frame={jobId:job.job_id,operationId,payloadHash:m.hash('d6-payload:'+operationId),resultHash:f.resultHash,result:f.result};
-  const sample={outcome:null,prepare:null,closure:null,drain:null,begin:null,lock:null,schema:null,authority:null};
+  const payload='d6-payload:'+operationId;
+  const frame={jobId:job.job_id,operationId,payloadHash:m.hash(payload),resultHash:f.resultHash,result:f.result};
+  const sample={outcome:null,frame_check:null,prepare:null,closure:null,drain:null,begin:null,lock:null,schema:null,
+    authority:null,heartbeat_probe:null,heartbeats:[]};
+  // The worker heartbeat is single-flight, as in QuantResearchFoundationWorker.tick.
   let heartbeatTask=null,interval=null;
-  const beat=()=>{
-    if(heartbeatTask)return;
+  const beat=record=>{
+    if(heartbeatTask)return heartbeatTask;
     f.heartbeat.started++;
-    heartbeatTask=worker.scheduler.heartbeat(job).catch(error=>tally(f.heartbeat.errors,safeCode(error)))
-      .finally(()=>{heartbeatTask=null;});
+    const start=performance.now();
+    heartbeatTask=worker.scheduler.heartbeat(job).then(()=>record(performance.now()-start),
+      error=>tally(f.heartbeat.errors,safeCode(error))).finally(()=>{heartbeatTask=null;});
+    return heartbeatTask;
   };
-  const first=setTimeout(()=>{beat();interval=setInterval(beat,options['heartbeat-ms']);},
+  const timerBeat=()=>beat(ms=>sample.heartbeats.push(ms));
+  const first=setTimeout(()=>{timerBeat();interval=setInterval(timerBeat,options['heartbeat-ms']);},
     Math.floor(Math.random()*options['heartbeat-ms']));
   const quiet=async()=>{clearTimeout(first);clearInterval(interval);await heartbeatTask;};
-  resume(children,job.job_id);
+  resume(children,job.job_id,options['start-jitter-ms']);
   try{
+    // One probe heartbeat under the same contention: the duration a drain can cost when a heartbeat just started.
+    await beat(ms=>{sample.heartbeat_probe=ms;});
     if(options['settle-ms'])await sleep(options['settle-ms']);
-    // The runtime reads the job row after the accepted frame and hands it to prepare.
-    const row=(await db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1',[job.job_id])).rows[0];
+    // The runtime's post-frame work before prepare, the same for marked and unmarked jobs: the job row read, the
+    // frame identity, hash and size checks, and validateProfileResultV2 under the ledger policy.
+    const frameStart=performance.now();
+    let row=null;
+    try{
+      row=(await db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1',[job.job_id])).rows[0];
+      if(!row||row.lease_token!==job.lease_token||row.status!=='RUNNING'||frame.jobId!==job.job_id||
+        frame.operationId!==operationId||frame.payloadHash!==m.hash(payload)||
+        frame.resultHash!==m.hash(m.canonical(frame.result))||
+        Buffer.byteLength(m.canonical(frame))>Math.min(8*1024*1024,row.contract.budget.max_output_bytes)+4096)
+        throw failure('D6_FRAME_CHECK_FAILED');
+      m.validateProfileResultV2(row.contract,frame.result,{policy:f.ledger.policy});
+      if(frame.result.evaluator_admission!==false)throw failure('D6_FRAME_CHECK_FAILED');
+    }catch(error){tally(f.failures.frame_check,safeCode(error));sample.outcome='FRAME_CHECK_FAILED';}
+    sample.frame_check=performance.now()-frameStart;
+    if(sample.outcome)return sample;
     Object.assign(probe,{closure:0,schema:0,authority:0,lock:0});
     let attempt=null;
     const prepareStart=performance.now();
@@ -387,12 +491,15 @@ async function runSample(f,children,options){
       finally{probe.inBegin=false;}
       Object.assign(sample,{begin:performance.now()-beginStart,lock:probe.lock,schema:probe.schema,authority:probe.authority});
     }
+    return sample;
   }finally{
     await quiet();
-    await pause(children);
+    // Release the job even when a contender died; the barrier failure is raised after.
+    let barrier=null;
+    try{await pause(children);}catch(error){barrier=error;}
     await release(f,job);
+    if(barrier)throw barrier;
   }
-  return sample;
 }
 
 function summary(values){
@@ -409,33 +516,88 @@ async function harnessHash(){
   return createHash('sha256').update(text).digest('hex');
 }
 
-async function environmentFacts(db,target){
+async function environmentFacts(db,checked){
   const settings=Object.fromEntries((await db.query(
     'SELECT name,setting,unit FROM pg_catalog.pg_settings WHERE name=ANY($1::text[]) ORDER BY name',[PG_SETTINGS])).rows
     .map(row=>[row.name,row.unit?row.setting+' '+row.unit:row.setting]));
   const cpus=os.cpus();
   return {platform:process.platform,arch:process.arch,os_release:os.release(),node:process.version,
     cpu_count:os.availableParallelism(),cpu_model:cpus[0]?.model?.trim()??null,total_memory_mb:Math.round(os.totalmem()/1048576),
-    load_average_1m:process.platform==='win32'?null:round(os.loadavg()[0]),database_connection:target.connection,
-    directory_sync_relaxed:process.platform==='win32',postgres:settings};
+    load_average_1m:process.platform==='win32'?null:round(os.loadavg()[0]),database_connection:checked.connection,
+    connections:checked.connections,directory_sync_relaxed:process.platform==='win32',postgres:settings};
+}
+
+function report(options,f,samples,stoppedBy,contention,environment,startedAt,started){
+  const measured=samples.filter(sample=>!sample.warmup);
+  const framed=measured.filter(sample=>sample.outcome!=='FRAME_CHECK_FAILED');
+  const prepared=framed.filter(sample=>sample.outcome!=='PREPARE_FAILED');
+  const completed=prepared.filter(sample=>sample.outcome==='COMPLETED');
+  const values=(list,key)=>list.map(sample=>sample[key]);
+  const phases={
+    frame_check:summary(values(measured,'frame_check')),
+    prepare:summary(values(prepared,'prepare')),
+    prepare_closure_hash:summary(values(prepared,'closure')),
+    heartbeat_drain:summary(values(prepared,'drain')),
+    begin:summary(values(completed,'begin')),
+    begin_lock_wait:summary(values(completed,'lock')),
+    begin_schema_assert:summary(values(completed,'schema')),
+    begin_authority:summary(values(completed,'authority')),
+    begin_failed:summary(values(prepared.filter(sample=>sample.outcome==='BEGIN_FAILED'),'begin')),
+    combined:summary(completed.map(sample=>sample.prepare+sample.begin)),
+    combined_with_drain:summary(completed.map(sample=>sample.prepare+sample.drain+sample.begin)),
+    post_frame_total:summary(completed.map(sample=>sample.frame_check+sample.prepare+sample.drain+sample.begin))};
+  const timer=measured.flatMap(sample=>sample.heartbeats);
+  const probe=measured.map(sample=>sample.heartbeat_probe).filter(value=>value!==null);
+  const heartbeatMax=timer.length+probe.length?Math.max(...timer,...probe):null;
+  const byRole={};
+  for(const role of ROLES)if(options[role])byRole[role]={processes:options[role],reported:0,ops:0,errors:{}};
+  for(const stats of contention){
+    if(!stats)continue;
+    const entry=byRole[stats.role];entry.reported++;entry.ops+=stats.ops;
+    for(const [code,count] of Object.entries(stats.errors))entry.errors[code]=(entry.errors[code]??0)+count;
+  }
+  return {report:REPORT_VERSION,evidence_class:options['evidence-class'],
+    note:'Measurement only. D6 acceptance and the marked reserve are root decisions.',
+    harness:{name:'measure-d6-prepare-begin',sha256:null,line_endings:'normalized-lf'},
+    product:{ingestion_engine_hash:f.engineHash},
+    started_at:startedAt.toISOString(),duration_ms:Math.round(performance.now()-started),units:'ms',
+    percentile_method:'nearest-rank',p99_reliable:measured.length>=RELIABLE_P99_SAMPLES,environment,fixture:f.sizes,
+    settings:{...options,pool_max:POOL_MAX,contender_pool_max:CONTENDER_POOL_MAX,lease_ms:LEASE_MS,heartbeat_phase:'random'},
+    samples:{requested:options.samples,warmup:Math.min(options.warmup,samples.length),measured:measured.length,
+      completed:completed.length,frame_check_failed:measured.length-framed.length,
+      prepare_failed:framed.length-prepared.length,begin_failed:prepared.length-completed.length,stopped_by:stoppedBy,
+      stray_queued_cancelled:f.strayQueued},
+    phases,
+    worst_case:{formula:'prepare p99 + heartbeat max + BEGIN p99',heartbeat_max:heartbeatMax===null?null:round(heartbeatMax),
+      ms:phases.prepare.count&&phases.begin.count&&heartbeatMax!==null?round(phases.prepare.p99+heartbeatMax+phases.begin.p99):null},
+    failures:f.failures,
+    serialization:{failures:f.failures.begin['40001']??0,retries:0,
+      retry_policy:'none: beginProfileCompletion does not retry; the marked job then takes the diagnostic path'},
+    heartbeat:{started:f.heartbeat.started,errors:f.heartbeat.errors,timer_duration:summary(timer),probe_duration:summary(probe)},
+    contention:byRole};
 }
 async function measure(options,url,target){
   const startedAt=new Date(),started=performance.now(),deadline=started+options['max-seconds']*1000;
   const children=[];
-  const watchdog=setTimeout(()=>{
+  let root=null;
+  // Watchdog and signals: stop the contenders, remove the temporary dataset root (best effort) and exit.
+  const abandon=(code,exitCode)=>{
     for(const child of children)child.kill();
-    process.stderr.write(JSON.stringify({error:'D6_WATCHDOG'})+'\n');process.exit(3);
-  },options['max-seconds']*1000+WATCHDOG_GRACE_MS);
+    if(root)try{rmSync(root,{recursive:true,force:true});}catch{}
+    process.stderr.write(JSON.stringify({error:code})+'\n');process.exit(exitCode);
+  };
+  const watchdog=setTimeout(()=>abandon('D6_WATCHDOG',3),options['max-seconds']*1000+WATCHDOG_GRACE_MS);
   watchdog.unref();
+  const onSignal=signal=>abandon('D6_INTERRUPTED',signal==='SIGINT'?130:143);
+  process.once('SIGINT',onSignal);process.once('SIGTERM',onSignal);
   const m=await product();
   const db=new m.PostgresDatabase({connectionString:url,max:POOL_MAX});
-  let root=null;
   try{
-    await checkDatabase(db,target);
-    const environment=await environmentFacts(db,target);
+    const checked=await checkDatabase(db,target,options);
+    const environment=await environmentFacts(db,checked);
     root=await fs.mkdtemp(path.join(os.tmpdir(),'d6-harness-'));
     const f=await installFixture(m,db,root);
-    await startContenders(options,url,f,children);
+    await startContenders(options,url,f,checked.identity,children);
     await pause(children);
     const samples=[],total=options.warmup+options.samples;
     let stoppedBy='samples';
@@ -445,47 +607,14 @@ async function measure(options,url,target){
       sample.warmup=index<options.warmup;samples.push(sample);
     }
     const contention=await stopContenders(children);
-    const measured=samples.filter(sample=>!sample.warmup),completed=measured.filter(sample=>sample.outcome==='COMPLETED');
-    const prepared=measured.filter(sample=>sample.outcome!=='PREPARE_FAILED');
-    const values=(list,key)=>list.map(sample=>sample[key]);
-    const byRole={};
-    for(const role of ROLES)if(options[role])byRole[role]={processes:options[role],reported:0,ops:0,errors:{}};
-    for(const stats of contention){
-      if(!stats)continue;
-      const entry=byRole[stats.role];entry.reported++;entry.ops+=stats.ops;
-      for(const [code,count] of Object.entries(stats.errors))entry.errors[code]=(entry.errors[code]??0)+count;
-    }
-    return {report:REPORT_VERSION,evidence_class:options['evidence-class'],
-      note:'Measurement only. D6 acceptance and the marked reserve are root decisions.',
-      harness:{name:'measure-d6-prepare-begin',sha256:await harnessHash(),line_endings:'normalized-lf'},
-      product:{ingestion_engine_hash:f.engineHash},
-      started_at:startedAt.toISOString(),duration_ms:Math.round(performance.now()-started),units:'ms',
-      percentile_method:'nearest-rank',environment,
-      settings:{...options,pool_max:POOL_MAX,contender_pool_max:CONTENDER_POOL_MAX,lease_ms:LEASE_MS,raw_bars:520,
-        heartbeat_phase:'random'},
-      samples:{requested:options.samples,warmup:Math.min(options.warmup,samples.length),measured:measured.length,
-        completed:completed.length,prepare_failed:measured.length-prepared.length,
-        begin_failed:prepared.length-completed.length,stopped_by:stoppedBy,stray_queued_cancelled:f.strayQueued},
-      phases:{
-        prepare:summary(values(prepared,'prepare')),
-        prepare_closure_hash:summary(values(prepared,'closure')),
-        heartbeat_drain:summary(values(prepared,'drain')),
-        begin:summary(values(completed,'begin')),
-        begin_lock_wait:summary(values(completed,'lock')),
-        begin_schema_assert:summary(values(completed,'schema')),
-        begin_authority:summary(values(completed,'authority')),
-        begin_failed:summary(values(prepared.filter(sample=>sample.outcome==='BEGIN_FAILED'),'begin')),
-        combined:summary(completed.map(sample=>sample.prepare+sample.begin)),
-        combined_with_drain:summary(completed.map(sample=>sample.prepare+sample.drain+sample.begin))},
-      failures:f.failures,
-      serialization:{failures:f.failures.begin['40001']??0,retries:0,
-        retry_policy:'none: beginProfileCompletion does not retry; the marked job then takes the diagnostic path'},
-      heartbeat:f.heartbeat,contention:byRole};
+    const result=report(options,f,samples,stoppedBy,contention,environment,startedAt,started);
+    result.harness.sha256=await harnessHash();
+    return result;
   }finally{
     await stopContenders(children);
     await db.close().catch(()=>{});
     if(root)await fs.rm(root,{recursive:true,force:true}).catch(()=>{});
-    clearTimeout(watchdog);
+    clearTimeout(watchdog);process.off('SIGINT',onSignal);process.off('SIGTERM',onSignal);
   }
 }
 
@@ -521,55 +650,74 @@ async function contenderOperation(m,db,init,count){
 async function contender(){
   if(typeof process.send!=='function')refuse('D6_USAGE');
   process.on('disconnect',()=>process.exit(0));
+  const send=(message,done=()=>{})=>{try{process.send(message,done);}catch{done();}};
   const init=await new Promise(resolve=>process.once('message',resolve));
   const m=await product();
   const db=new m.PostgresDatabase({connectionString:init.url,max:CONTENDER_POOL_MAX});
   const stats={ops:0,errors:{}},count=error=>tally(stats.errors,safeCode(error));
   let operation;
-  try{operation=await contenderOperation(m,db,init,count);}
-  catch(error){
+  try{
+    // The same server and database as the measuring process, before any other statement.
+    const identity=(await db.query(IDENTITY_SQL)).rows[0];
+    if(IDENTITY_FIELDS.some(field=>identity[field]!==init.identity[field]))refuse('D6_DATABASE_IDENTITY_MISMATCH');
+    operation=await contenderOperation(m,db,init,count);
+  }catch(error){
     if(debug)process.stderr.write(String(error?.stack??error)+'\n');
-    process.send({type:'failed',code:safeCode(error)});await db.close().catch(()=>{});process.exit(1);
+    await db.close().catch(()=>{});
+    send({type:'failed',code:safeCode(error)},()=>process.exit(1));
+    return;
   }
-  let running=false,stopping=false,busy=false,waiter=null,target=null;
+  let running=false,stopping=false,busy=false,waiter=null,target=null,delay=0;
   const wake=()=>{const resolve=waiter;waiter=null;resolve?.();};
+  const rest=ms=>new Promise(resolve=>{
+    const timer=setTimeout(()=>{waiter=null;resolve();},ms);
+    waiter=()=>{clearTimeout(timer);resolve();};
+  });
   process.on('message',message=>{
-    if(message?.type==='resume'){target=message.target;running=true;wake();}
-    else if(message?.type==='pause'){running=false;if(!busy)process.send({type:'paused'});wake();}
+    if(message?.type==='resume'){target=message.target;delay=message.delay??0;running=true;wake();}
+    else if(message?.type==='pause'){running=false;if(!busy)send({type:'paused'});wake();}
     else if(message?.type==='stop'){running=false;stopping=true;wake();}
   });
-  process.send({type:'ready'});
+  send({type:'ready'});
   while(!stopping){
     if(!running){await new Promise(resolve=>{waiter=resolve;});continue;}
+    // Random start offset for this sample, so contention has no fixed phase against prepare and BEGIN.
+    if(delay){const ms=delay;delay=0;await rest(ms);continue;}
     busy=true;
     try{await operation(target);stats.ops++;}catch(error){count(error);}
     busy=false;
-    if(!running){if(!stopping)process.send({type:'paused'});continue;}
-    const rest=init.role==='vacuum'?init.vacuumIntervalMs:init.thinkMs;
-    if(rest)await new Promise(resolve=>{
-      const timer=setTimeout(()=>{waiter=null;resolve();},rest);
-      waiter=()=>{clearTimeout(timer);resolve();};
-    });
+    if(!running){if(!stopping)send({type:'paused'});continue;}
+    const pauseMs=init.role==='vacuum'?init.vacuumIntervalMs:init.thinkMs;
+    if(pauseMs)await rest(pauseMs);
   }
   await db.close().catch(()=>{});
-  process.send({type:'stopped',role:init.role,ops:stats.ops,errors:stats.errors},()=>process.exit(0));
+  send({type:'stopped',role:init.role,ops:stats.ops,errors:stats.errors},()=>process.exit(0));
 }
 
 const finish=(stream,text,code)=>stream.write(text+'\n',()=>process.exit(code));
-// Product modules may log; only the report reaches standard output.
-if(!debug)for(const method of ['log','info','warn','debug'])console[method]=()=>{};
-if(process.argv[2]==='--contender'){
-  contender().catch(error=>{if(debug)process.stderr.write(String(error?.stack??error)+'\n');process.exit(1);});
-}else{
+// Runs only as a command or a forked contender. An import (the tests import the checks above) runs nothing.
+const invokedAsScript=()=>{
   try{
-    const {options,url,target}=parseOptions(process.argv.slice(2),process.env);
-    if(process.env.PAPER_TRADING!==undefined&&process.env.PAPER_TRADING!=='true')refuse('D6_PAPER_TRADING_REQUIRED');
-    for(const key of SCRUBBED_ENV)delete process.env[key];
-    const report=await measure(options,url,target);
-    finish(process.stdout,JSON.stringify(report,null,1),0);
-  }catch(error){
-    if(debug)process.stderr.write(String(error?.stack??error)+'\n');
-    const refused=error instanceof Refusal;
-    finish(process.stderr,JSON.stringify(refused?{error:error.code}:{error:'D6_FAILED',code:safeCode(error)}),refused?2:1);
+    const invoked=realpathSync(process.argv[1]??''),self=realpathSync(SCRIPT);
+    return process.platform==='win32'?invoked.toLowerCase()===self.toLowerCase():invoked===self;
+  }catch{return false;}
+};
+if(invokedAsScript()){
+  // Product modules may log; only the report reaches standard output.
+  if(!debug)for(const method of ['log','info','warn','debug'])console[method]=()=>{};
+  if(process.argv[2]==='--contender'){
+    contender().catch(error=>{if(debug)process.stderr.write(String(error?.stack??error)+'\n');process.exit(1);});
+  }else{
+    try{
+      checkEnvironment(process.env);
+      const {options,url,target}=parseOptions(process.argv.slice(2),process.env);
+      scrubEnvironment(process.env);
+      const result=await measure(options,url,target);
+      finish(process.stdout,JSON.stringify(result,null,1),0);
+    }catch(error){
+      if(debug)process.stderr.write(String(error?.stack??error)+'\n');
+      const refused=error instanceof Refusal;
+      finish(process.stderr,JSON.stringify(refused?{error:error.code}:{error:'D6_FAILED',code:safeCode(error)}),refused?2:1);
+    }
   }
 }
