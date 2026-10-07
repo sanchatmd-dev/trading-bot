@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "scope": "Staging UI/API-only S06 release; trading worker, research worker, database, proxy and flags unchanged",
+  "target": "db9fb989e91e217fa6af93d3f7afd9f47960264a",
+  "baseline": "5e398e7eff1a90b5c47c8c73456a0717cda592ee",
+  "rollback": "5e398e7eff1a90b5c47c8c73456a0717cda592ee",
+  "sourceCiPassed": 9,
+  "sourceSha256": "266f26944dc7c5a8dd5cabf2faa7e040845793963bff4e0ce187ba17de6f542e",
+  "package": {
+    "sourceFiles": 641,
+    "dependencyFiles": 182,
+    "totalFiles": 823,
+    "releaseBytes": 37789931,
+    "baselineTotalFiles": 793,
+    "artifacts": {
+      "source.tar": {
+        "sha256": "f757bf3ec05efcf3cf8165e2b15e805824e76b67fa82bf44b8c6ccf4d71ab046",
+        "bytes": 15088128
+      },
+      "deps.tar": {
+        "sha256": "c0bd614e9cb3ad1d17e51ac14bab20c0d8b4258f888cc24855684e64566e1214",
+        "bytes": 23338496
+      },
+      "release-manifest.txt": {
+        "sha256": "ee521006f8e2580a09ce91734eb80522cdf791f1aa5b009d16e6ee7d65a82c61",
+        "bytes": 87573
+      },
+      "manifest.json": {
+        "sha256": "4a534460bf3563b9f92d6ab9497bf5ee25f0afde6eec58fcd6126cb41622547f",
+        "bytes": 261765
+      },
+      "served-list.json": {
+        "sha256": "35ff7b1feb8effb926a72654f373506dbefb7246714343afe53d342ecb93e5e7",
+        "bytes": 10696
+      },
+      "engine-check.json": {
+        "sha256": "b8119467f90774474390e4dd7739fe7c87349184d0911b748f5153d57a7e4cfa",
+        "bytes": 3772
+      }
+    }
+  },
+  "ownerGo": {
+    "approxAt": "2026-10-07T13:20Z",
+    "scope": "whole window x1-x4, contingency and rollback",
+    "autoRollbackBeforeNewCodeRuns": true
+  },
+  "releaseHostCheck": {
+    "job": "h1",
+    "verdict": "H1_PASS",
+    "finishedAt": "2026-10-07T10:02:41Z",
+    "readOnly": true
+  },
+  "phases": [
+    {
+      "job": "rel-api-s06-v1-r0",
+      "verdict": "R0_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-07T13:09:50.180Z",
+      "stdoutSha256": "011354c410c16adc761e46a19a3587b7fc01012ea55ceb48f50e63608dabb9a8",
+      "rawSha256": "b5f77f108d06d45099f1da50774d2fa41bc9c5ec67f57acccf36c2b4b51c02fb"
+    },
+    {
+      "job": "rel-api-s06-v1-r1",
+      "verdict": "R1_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-07T13:13:19.061Z",
+      "stdoutSha256": "33ec971cfb0876005382a3a30b576d7d8720ad6ecebf1db54735a6c1010fb8b9",
+      "rawSha256": "721c43ebb48310307634a092a80c489ac134dfdb9024e3db293242f7059cf2ca"
+    },
+    {
+      "job": "rel-api-s06-v1-x1",
+      "verdict": "X1_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-07T13:21:59.596Z",
+      "stdoutSha256": "f1be41c606bd53245b60b43643ff42be4d82fc943657e5d48ece7f3a3757d0f6",
+      "rawSha256": "933ee1fb4593d6fe680d4995acfb335387d81c7656afc89888f12add1f10b273"
+    },
+    {
+      "job": "rel-api-s06-v1-x2",
+      "verdict": "X2_TRANSPORT_COMPLETE",
+      "pass": true,
+      "finishedAt": "2026-10-07T13:22:57.808Z",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rawSha256": "cce93c5336e7f1feda2f250a0971a1cfcc349010cb0590f4a453adbaaf368539"
+    },
+    {
+      "job": "rel-api-s06-v1-x3",
+      "verdict": "X3_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-07T13:23:59.502Z",
+      "stdoutSha256": "e234241df38827ebc74b21462601016e2632899a0303f5e6c288e5a1469dad45",
+      "rawSha256": "b4a42c86d70ea5413ae573746a789bb4f07338ac8ffc00fa3293030deeedf566"
+    },
+    {
+      "job": "rel-api-s06-v1-x4",
+      "verdict": "X4_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-07T13:25:19.891Z",
+      "stdoutSha256": "18f32b86718b72d7c02b57fc7cc80c980e90fe6b953b7fb812ffdf61ab673c85",
+      "rawSha256": "1fa9fcfebd993763f2289d36fe4a5798a58e6a59d49ed10709c6e036f26f8abe"
+    },
+    {
+      "job": "rel-api-s06-v1-r5",
+      "verdict": "R5_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-07T13:27:07.088Z",
+      "stdoutSha256": "2a1a45117bfb22e66bcf1170f57e6dc6d343e96ddc43960c121feef0fe0094a0",
+      "rawSha256": "c2819bd52ae14c5357d3be917fb9307a60a69867eaa2a28cfc8cc6fdd5aae2dd"
+    },
+    {
+      "job": "rel-api-s06-v1-r6",
+      "verdict": "R6_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-07T13:36:30.032Z",
+      "stdoutSha256": "a2babea2c346cfbe64536e38ebae100324918111d1bae42229b06121b9da1369",
+      "rawSha256": "2dec3f32c4c5af90cab35f68311b4ad5b22a77d301de777212912e09d7f25214"
+    }
+  ],
+  "upload": {
+    "transfers": 1,
+    "files": 3,
+    "bytes": 38514197,
+    "seconds": 3.588,
+    "finishedAt": "2026-10-07T13:22:57.808Z"
+  },
+  "extractVerification": {
+    "verdict": "X3_PASS",
+    "files": 823,
+    "sourceFiles": 641,
+    "dependencyFiles": 182,
+    "exact": true
+  },
+  "activation": {
+    "verdict": "X4_PASS",
+    "readyAt": "2026-10-07T13:25:19.013Z",
+    "stopToReadySecondsApprox": 12,
+    "rollbackUsed": false
+  },
+  "immediateCheck": {
+    "verdict": "R5_PASS",
+    "secondsAfterReady": 108
+  },
+  "delayedCheck": {
+    "verdict": "R6_PASS",
+    "delayProof": true,
+    "secondsAfterReadyApprox": 670,
+    "sameApiProcess": true,
+    "servedFiles": {
+      "passed": 31,
+      "total": 31,
+      "newCacheTokens": true
+    },
+    "authGuards": {
+      "passed": 3,
+      "total": 3,
+      "includes": "/api/overview"
+    },
+    "health": "200 PAPER_ONLY",
+    "apiAdmissionFlagsOff": true,
+    "researchQueueIdle": true,
+    "activityUnchanged": true
+  },
+  "engineIdentities": {
+    "unchangedFrom": "5e398e7",
+    "legacy": "98817114",
+    "foundation": "8fe49f0d",
+    "ingestion": "9be04b05",
+    "pf2Engine": "663f0689",
+    "pf2Evaluator": "94464971"
+  },
+  "unchanged": {
+    "tradingWorker": "f2bd332, not restarted",
+    "researchWorker": "5e398e7, not restarted",
+    "migration": false,
+    "tradingViewAction": false
+  },
+  "rootReleaseAcceptance": true,
+  "rootAcceptedAt": "2026-10-07T13:37:46.421Z",
+  "residuals": [
+    "A webhook arriving during the about 12 s stop-to-ready gap would not have been served; no TradingView action was planned in the window.",
+    "TRUST_LOOPBACK_PROXY is not set on staging, so all clients share one application rate bucket; acceptable at single-owner staging volume; no change made."
+  ],
+  "rollbackAvailability": "Rollback to 5e398e7 stays available (tree and previous layer kept) until the combined release.",
+  "next": [
+    "Combined release of CX-A, CX-B and evaluator binding A + D (codex-worker/combined-r7, 31aa9ef)",
+    "D6 staging measurement",
+    "New capacity policy",
+    "R7 durable enrollment and API proof"
+  ],
+  "limits": {
+    "spotPaperOnly": true,
+    "symbol": "BINANCE:BTCUSDT",
+    "timeframe": "1m",
+    "liveTrading": false
+  }
+}
