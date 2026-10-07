@@ -22,9 +22,9 @@ unattended or authorize a new research study merely because workers are availabl
 
 A Claude root uses the Claude column of [AGENTS.md](../AGENTS.md): Opus 5.5 /
 xhigh root with ultracode (owner, 2026-10-03), graded Opus 5.5 and Sonnet 5.5
-child roles as the primary models, and supplemental Claude-only Fable 5.1 roles
+child roles only. The owner removed Fable 5.1 from the team again on 2026-10-07
 (re-added 2026-10-03 after the 2026-10-01 removal). For a Claude root, the
-ultracode concurrency, fan-out and Fable rules in AGENTS.md replace the
+ultracode concurrency and fan-out rules in AGENTS.md replace the
 three-child maximum and the swarm-default sentences in the next paragraph and the
 worker counts in the Usage admission table below (at most three concurrent
 writers, one writer per file, at most six agents in total). The review,

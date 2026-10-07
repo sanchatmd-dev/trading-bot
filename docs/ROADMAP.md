@@ -264,9 +264,9 @@ and documentation/release clerk use low. This is a local configuration update;
 historical model assignments below remain evidence of earlier work.
 A Claude root follows the AGENTS.md Claude column: on 2026-10-03 the owner set
 an Opus 5.5 / xhigh root with ultracode, graded Opus 5.5 and Sonnet 5.5 child
-roles as the primary models, and supplemental Claude-only Fable 5.1 roles
-(second-opinion reviewer, alternative designer, consistency scout). That reverses
-the 2026-10-01 Fable removal; earlier Fable work stays recorded below as history.
+roles only. The owner removed Fable 5.1 again on 2026-10-07 (it had been
+re-added on 2026-10-03 after the 2026-10-01 removal); earlier Fable work stays
+recorded below as history.
 Three bounded setup agents performed team audit, PF-1 mapping and a dispatch template.
 Team setup is followed by the local PF-1A backend checkpoint below. Production
 resource enforcement remains planned; QD-1/QS-1 and existing gates still apply.
@@ -2591,3 +2591,14 @@ P1-F. See the [P0 preview record](STAGING_PREVIEW_P0_2026-10-01.md).
   deferred). Thai labels await owner review.
 - **Scope:** staging only. No migration, research job, backfill, Live or
   production change.
+
+## 2026-10-07 — Fable 5.1 roles removed again
+
+The owner removed Fable 5.1 from the Claude agent team again. AGENTS.md drops the
+three Claude-only Fable roles (second-opinion reviewer, alternative designer and
+consistency scout) and the Fable usage-bucket rule. The Opus architecture auditor
+covers second opinions and design panels, and Sonnet documentation covers
+consistency sweeps. No Fable agent was running at the change (the running s07
+rereview and D6 work use Opus only). Fable is not dispatched again unless the
+owner asks. Earlier Fable results stay in this file and in Time Management as
+history. No product code, test, deploy or VPS state changed.
