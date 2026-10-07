@@ -2,23 +2,35 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
-// Offline contract check only: this test never executes the grant script.
-test('runtime grants durably revoke DELETE on the PF-2 packet tables while retaining table UPDATE',async()=>{
- const sql=(await readFile(new URL('../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replace(/--[^\n]*/g,'');
- const block=sql.match(/FOREACH protected_table IN ARRAY ARRAY\[([\s\S]*?)\] LOOP([\s\S]*?)END LOOP;/);
- assert.ok(block,'the DELETE revoke follows the general grants and tolerates optional tables');
- const expected=['quant_foundation_jobs','quant_foundation_owners','quant_foundation_scheduler','quant_jobs',
+// Offline contract check only: this test never executes the grant script. test/postgres/runtime-grants.test.mjs runs it.
+const PROTECTED=['quant_foundation_jobs','quant_foundation_owners','quant_foundation_scheduler','quant_jobs',
   'quant_research_chunks','quant_io_ledgers','quant_io_launches','quant_profile_enrollment_receipts',
   'quant_storage_namespace','quant_research_executor_mode'];
- const tables=[...block[1].matchAll(/'([^']+)'/g)].map(match=>match[1]);
- assert.deepEqual(tables.sort(),expected.sort());
- assert.match(block[2],/IF to_regclass\(format\('public\.%I',protected_table\)\) IS NOT NULL THEN/);
- assert.match(block[2],/EXECUTE format\('REVOKE DELETE ON TABLE public\.%I FROM robot_app',protected_table\);/);
- const grant='GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO robot_app;';
- assert.ok(sql.indexOf(grant)>=0&&sql.indexOf(grant)<block.index);
- assert.doesNotMatch(sql.slice(block.index+block[0].length),/GRANT\s+[^;]*DELETE/i);
- // These revokes affect schema/provenance tables only. Scheduler keeps its table-level UPDATE needed by LOCK TABLE.
- const schedulerRevokes=[...sql.matchAll(/REVOKE\s+([^;]+?)\s+ON\s+([^;]+?)\s+FROM\s+robot_app;/gi)]
-  .filter(match=>/quant_foundation_scheduler/.test(match[2]));
- assert.ok(schedulerRevokes.every(match=>!/(UPDATE|ALL)/i.test(match[1])));
+
+test('runtime grants: role from the psql variable, one transaction under the maintenance lock, DELETE never granted to PF-2 tables',async()=>{
+  const raw=await readFile(new URL('../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8');
+  const sql=raw.replace(/--[^\n]*/g,'');
+  // The role comes only from the required psql variable: no hard-coded role, no default.
+  assert.doesNotMatch(raw,/robot_app/);
+  assert.equal(sql.split(":'runtime_role'").length-1,1);
+  assert.match(sql,/SELECT set_config\('robot\.runtime_role',:'runtime_role',true\)/);
+  assert.doesNotMatch(sql,/\\(?:set|if)\b/,'no psql default for the role');
+  // One transaction; the maintenance lock is taken first and never waits.
+  const statements=sql.trim();
+  assert.match(statements,/^BEGIN;/);assert.match(statements,/COMMIT;$/);
+  assert.equal(sql.split('COMMIT;').length-1,1);
+  const lock=sql.indexOf("pg_try_advisory_xact_lock(hashtextextended('robot:maintenance',0))");
+  assert.ok(lock>0);
+  assert.doesNotMatch(sql,/pg_advisory_(?:xact_)?lock\(/,'a blocking lock could wait for ever');
+  assert.ok(lock<sql.search(/\bGRANT\b/)&&lock<sql.search(/\bREVOKE\b/),'the lock precedes every grant and revoke');
+  // The ten PF-2 tables are excluded from DELETE, revoked for history, and checked at the end.
+  const list=sql.match(/protected CONSTANT TEXT\[\] := ARRAY\[([\s\S]*?)\];/);
+  assert.ok(list);assert.deepEqual([...list[1].matchAll(/'([^']+)'/g)].map(match=>match[1]).sort(),[...PROTECTED].sort());
+  assert.doesNotMatch(sql,/ON ALL TABLES[^;]*DELETE|DELETE[^;]*ON ALL TABLES/,'no blanket DELETE grant');
+  assert.match(sql,/tablename<>ALL\(protected\) AND tablename<>ALL\(read_only\)/);
+  assert.match(sql,/REVOKE DELETE ON TABLE public\.%I FROM %I/);
+  assert.match(sql,/has_table_privilege\(runtime_role,format\('public\.%I',item\),'DELETE'\)/);
+  // The scheduler keeps the table-level UPDATE that LOCK TABLE ... IN EXCLUSIVE MODE needs.
+  assert.doesNotMatch(sql,/REVOKE[^;]*(?:UPDATE|ALL)[^;]*quant_foundation_scheduler/i);
+  assert.match(sql,/GRANT SELECT,INSERT,UPDATE ON ALL TABLES IN SCHEMA public TO %I/);
 });

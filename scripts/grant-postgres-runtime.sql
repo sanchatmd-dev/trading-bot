@@ -1,35 +1,61 @@
--- Run as the schema owner AFTER migration/import. Create robot_app separately
--- as LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE; set its password with psql \password.
--- DATABASE_URL for API and worker must use robot_app, not the migration owner.
-REVOKE CREATE ON SCHEMA public FROM PUBLIC;
-GRANT USAGE ON SCHEMA public TO robot_app;
-GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO robot_app;
-GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO robot_app;
--- Runtime validates schema but must never rewrite its version or provenance.
-REVOKE INSERT,UPDATE,DELETE ON schema_version FROM robot_app;
--- If the optional Pine Bridge extension is installed, protect its version too.
-DO $$ BEGIN
-  IF to_regclass('public.pine_bridge_schema') IS NOT NULL THEN
-    REVOKE INSERT,UPDATE,DELETE ON pine_bridge_schema FROM robot_app;
-    REVOKE INSERT,UPDATE,DELETE ON pine_bridge_evidence,pine_market_bars FROM robot_app;
-  END IF;
-  IF to_regclass('public.pine_capture_schema') IS NOT NULL THEN
-    REVOKE INSERT,UPDATE,DELETE ON pine_capture_schema FROM robot_app;
-  END IF;
-END $$;
--- PF-2 quarantine, accounting and provenance rows must survive runtime actions. These extensions are optional,
--- so revoke only for installed tables. Keep SELECT, INSERT and table-level UPDATE: in particular, UPDATE on
--- quant_foundation_scheduler is required by LOCK TABLE ... IN EXCLUSIVE MODE during enrollment completion.
-DO $$ DECLARE protected_table TEXT;
-BEGIN
-  FOREACH protected_table IN ARRAY ARRAY[
-    'quant_foundation_jobs','quant_foundation_owners','quant_foundation_scheduler',
+-- Runtime grants for the PostgreSQL API and workers. Run as the schema owner AFTER migration/import:
+--   psql -v ON_ERROR_STOP=1 -v runtime_role=<runtime role> -f scripts/grant-postgres-runtime.sql
+-- runtime_role is required and has no default: without it the first statement fails and nothing changes.
+-- Create the runtime role separately as LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE; set its password with psql \password.
+-- DATABASE_URL for the API and workers must use that role, not the migration owner.
+-- The script is one transaction. It first takes the product's exclusive maintenance lock (robot:maintenance, the
+-- lock of migration, restore and key rotation) and fails at once while any API or worker holds its shared lock.
+-- Rollback caveat: copies of this script from before the PF-2 revoke grant DELETE on every table. Reapplying such a
+-- copy re-grants DELETE on the protected tables below, so a rollback must reapply this script afterwards.
+BEGIN;
+SELECT set_config('robot.runtime_role',:'runtime_role',true) AS runtime_role;
+DO $$
+DECLARE
+  runtime_role CONSTANT TEXT := current_setting('robot.runtime_role');
+  -- PF-2 quarantine, accounting and provenance rows must survive runtime actions. These extensions are optional,
+  -- so only installed tables are touched. SELECT, INSERT and table-level UPDATE stay: in particular, UPDATE on
+  -- quant_foundation_scheduler carries LOCK TABLE ... IN EXCLUSIVE MODE during enrollment completion.
+  protected CONSTANT TEXT[] := ARRAY['quant_foundation_jobs','quant_foundation_owners','quant_foundation_scheduler',
     'quant_jobs','quant_research_chunks','quant_io_ledgers','quant_io_launches',
-    'quant_profile_enrollment_receipts','quant_storage_namespace','quant_research_executor_mode'
-  ] LOOP
-    IF to_regclass(format('public.%I',protected_table)) IS NOT NULL THEN
-      EXECUTE format('REVOKE DELETE ON TABLE public.%I FROM robot_app',protected_table);
+    'quant_profile_enrollment_receipts','quant_storage_namespace','quant_research_executor_mode'];
+  -- Versions and provenance the runtime validates but never rewrites (the Pine tables exist only with the extension).
+  read_only CONSTANT TEXT[] := ARRAY['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars',
+    'pine_capture_schema'];
+  item TEXT;
+BEGIN
+  IF NOT pg_try_advisory_xact_lock(hashtextextended('robot:maintenance',0)) THEN
+    RAISE EXCEPTION 'Stop every PostgreSQL API and worker before maintenance';
+  END IF;
+  IF to_regrole(runtime_role) IS NULL THEN
+    RAISE EXCEPTION 'Runtime role % does not exist',runtime_role;
+  END IF;
+  REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+  EXECUTE format('GRANT USAGE ON SCHEMA public TO %I',runtime_role);
+  EXECUTE format('GRANT SELECT,INSERT,UPDATE ON ALL TABLES IN SCHEMA public TO %I',runtime_role);
+  EXECUTE format('GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO %I',runtime_role);
+  -- DELETE only where the runtime may delete; this script never grants it on a protected or read-only table.
+  FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
+      AND tablename<>ALL(protected) AND tablename<>ALL(read_only) ORDER BY tablename LOOP
+    EXECUTE format('GRANT DELETE ON TABLE public.%I TO %I',item,runtime_role);
+  END LOOP;
+  -- Remove what an earlier grant left behind, so the result does not depend on the database's history.
+  FOREACH item IN ARRAY protected LOOP
+    IF to_regclass(format('public.%I',item)) IS NOT NULL THEN
+      EXECUTE format('REVOKE DELETE ON TABLE public.%I FROM %I',item,runtime_role);
+    END IF;
+  END LOOP;
+  FOREACH item IN ARRAY read_only LOOP
+    IF to_regclass(format('public.%I',item)) IS NOT NULL THEN
+      EXECUTE format('REVOKE INSERT,UPDATE,DELETE ON TABLE public.%I FROM %I',item,runtime_role);
+    END IF;
+  END LOOP;
+  -- The final state is checked, not assumed: any remaining DELETE on a protected table rolls everything back.
+  FOREACH item IN ARRAY protected LOOP
+    IF to_regclass(format('public.%I',item)) IS NOT NULL
+        AND has_table_privilege(runtime_role,format('public.%I',item),'DELETE') THEN
+      RAISE EXCEPTION 'Runtime role % can still DELETE from %',runtime_role,item;
     END IF;
   END LOOP;
 END $$;
+COMMIT;
 -- Reapply after future migrations; do not grant DDL or automatic ownership.
