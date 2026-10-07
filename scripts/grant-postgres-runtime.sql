@@ -17,4 +17,19 @@ DO $$ BEGIN
     REVOKE INSERT,UPDATE,DELETE ON pine_capture_schema FROM robot_app;
   END IF;
 END $$;
+-- PF-2 quarantine, accounting and provenance rows must survive runtime actions. These extensions are optional,
+-- so revoke only for installed tables. Keep SELECT, INSERT and table-level UPDATE: in particular, UPDATE on
+-- quant_foundation_scheduler is required by LOCK TABLE ... IN EXCLUSIVE MODE during enrollment completion.
+DO $$ DECLARE protected_table TEXT;
+BEGIN
+  FOREACH protected_table IN ARRAY ARRAY[
+    'quant_foundation_jobs','quant_foundation_owners','quant_foundation_scheduler',
+    'quant_jobs','quant_research_chunks','quant_io_ledgers','quant_io_launches',
+    'quant_profile_enrollment_receipts','quant_storage_namespace','quant_research_executor_mode'
+  ] LOOP
+    IF to_regclass(format('public.%I',protected_table)) IS NOT NULL THEN
+      EXECUTE format('REVOKE DELETE ON TABLE public.%I FROM robot_app',protected_table);
+    END IF;
+  END LOOP;
+END $$;
 -- Reapply after future migrations; do not grant DDL or automatic ownership.
