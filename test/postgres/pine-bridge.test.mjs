@@ -129,9 +129,17 @@ async function ready(a,{capital=1000,maxOrder=10000,maxSignalAgeSeconds=3600,blo
   const secret=randomUUID();await store.setWebhookSecret(a,secret,encryptJson({secret},config.keyring,'webhook:'+a));
   return {d,secret,e};
 }
+// pine_market_bars is one table for every test in this file. A test must never be judged on a bar another test wrote,
+// so each test that writes bars starts with freshBars() (earlier tests have ended and no forked server outlives its test),
+// and market() never falls back to an existing row with different facts: the same facts at one time are one bar.
+async function freshBars(){await db.prepare('DELETE FROM pine_market_bars').run();}
 async function market(time,{close=100,high=101,low=99,atr=5}={}){
   const bar={time,open:String(close),high:String(high),low:String(low),close:String(close),volume:'100',atr14:String(atr),price_tick:'0.01',quantity_step:'0.001'};
-  await db.prepare('INSERT INTO pine_market_bars VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING').run('binance-global','BTCUSDT','1D',time,JSON.stringify(bar),JSON.stringify({profile:'closed-ohlcv-atr14-v1',source:'isolated fixture'}),hash(canonical(bar)));
+  const content=hash(canonical(bar));
+  const written=await db.prepare('INSERT INTO pine_market_bars VALUES(?,?,?,?,?,?,?) ON CONFLICT DO NOTHING RETURNING bar_time').get('binance-global','BTCUSDT','1D',time,JSON.stringify(bar),JSON.stringify({profile:'closed-ohlcv-atr14-v1',source:'isolated fixture'}),content);
+  if(written)return;
+  const existing=await db.prepare("SELECT content_hash FROM pine_market_bars WHERE broker='binance-global' AND symbol='BTCUSDT' AND timeframe='1D' AND bar_time=?").get(time);
+  if(existing?.content_hash!==content)throw new Error('market(): bar_time '+time+' already holds different facts');
 }
 function event(d,time,{type='BUY',entryTime=time,reason='NATIVE'}={}) {
   const ref=d.deployment_id+':'+entryTime+':0';
@@ -172,6 +180,7 @@ test('capture rotation, expiry, schema scope and quota remain fail closed',async
 });
 
 test('Bridge accepted fill maps one allocation; retries and scoped exits cannot affect another Bot',async()=>{
+  await freshBars();
   const a=await owner(),b=await owner(),x=await ready(a),y=await ready(b),time=Date.now()-5000;
   await market(time);const buy=event(x.d,time);
   const responses=await Promise.all(Array.from({length:5},()=>receiveBridge(store,x.secret,buy)));
@@ -191,6 +200,7 @@ test('Bridge accepted fill maps one allocation; retries and scoped exits cannot 
   assert.equal(fills.length,2);assert.equal(Number(fills[1].price),87.91);assert.ok(Number(fills[1].fee_quote)>0);
 });
 test('isolated Bridge HTTP webhook reaches Paper fill without capture writes',async t=>{
+  await freshBars();
   const capturesBefore=(await db.prepare('SELECT count(*) n FROM pine_capture_events').get()).n;
   const a=await owner(),x=await ready(a),time=Date.now()-5000;
   await market(time);
@@ -213,6 +223,7 @@ test('isolated Bridge HTTP webhook reaches Paper fill without capture writes',as
   assert.equal((await db.prepare('SELECT count(*) n FROM pine_capture_events').get()).n,capturesBefore);
 });
 test('missing/mismatched market facts, unknown targets and unreviewed readiness fail closed',async()=>{
+  await freshBars();
   const a=await owner(),x=await ready(a),time=Date.now()-8000;
   await assert.rejects(receiveBridge(store,x.secret,event(x.d,time)),{code:'VERIFIED_MARKET_DATA_REQUIRED'});
   await market(time);await assert.rejects(receiveBridge(store,x.secret,{...event(x.d,time),atr:4}),{code:'MARKET_FACT_MISMATCH'});
@@ -223,6 +234,7 @@ test('missing/mismatched market facts, unknown targets and unreviewed readiness 
 });
 
 test('v2 HTTP BUY and NATIVE EXIT close only the referenced long with no duplicate ledger effects',async t=>{
+  await freshBars();
   const capturesBefore=(await db.prepare('SELECT count(*) n FROM pine_capture_events').get()).n;
   const a=await owner(),b=await owner(),x=await ready(a),y=await ready(b),time=Date.now()-6000;
   await market(time);
@@ -257,6 +269,7 @@ test('v2 HTTP BUY and NATIVE EXIT close only the referenced long with no duplica
 });
 
 test('v2 market wait queues BUY and NATIVE EXIT only after the matching bar is frozen',async t=>{
+  await freshBars();
   const a=await owner(),x=await ready(a),time=Date.now()-20000;
   const worker=new PineMarketWaitWorker({store,defaultRisk:config.defaultRisk});
   const buy={...event(x.d,time),schema_version:'bridge-exit-v2'};
@@ -282,6 +295,7 @@ test('v2 market wait queues BUY and NATIVE EXIT only after the matching bar is f
 });
 
 test('v2 market wait expires after five seconds and a late bar cannot create a signal',async t=>{
+  await freshBars();
   const a=await owner(),x=await ready(a),time=Date.now()-20000;
   const buy={...event(x.d,time),schema_version:'bridge-exit-v2'};
   await receiveBridge(store,x.secret,buy);
@@ -299,6 +313,7 @@ test('v2 market wait expires after five seconds and a late bar cannot create a s
 });
 
 test('v2 market wait never extends signal age and rechecks policy and market facts before queue',async()=>{
+  await freshBars();
   const shortOwner=await owner(),short=await ready(shortOwner,{maxSignalAgeSeconds:1}),recent=Date.now()-500;
   const shortBuy={...event(short.d,recent),schema_version:'bridge-exit-v2'};
   const response=await receiveBridge(store,short.secret,shortBuy);assert.equal(response.deadline_at,recent+1000);
@@ -317,6 +332,7 @@ test('v2 market wait never extends signal age and rechecks policy and market fac
 });
 
 test('policy and capital changes invalidate entries; queued entries recheck snapshots',async()=>{
+  await freshBars();
   const a=await owner(),x=await ready(a),time=Date.now()-9000;
   await market(time);await receiveBridge(store,x.secret,event(x.d,time));
   await store.setRisk(a,{...await store.risk(a,config.defaultRisk),maxRiskPercent:1.9});
@@ -329,6 +345,7 @@ test('policy and capital changes invalidate entries; queued entries recheck snap
   await assert.rejects(receiveBridge(store,y.secret,event(y.d,time)),{code:'STALE_CAPITAL'});
 });
 test('source revision/effective inputs invalidate entry routes while preserving old exits',async()=>{
+  await freshBars();
   const a=await owner(),x=await ready(a),time=Date.now()-10000;
   await market(time);await receiveBridge(store,x.secret,event(x.d,time));await execute();
   const analysis=(await service.source(a,a,x.d.pine_import_id,1)).analysis;
@@ -344,6 +361,7 @@ test('source revision/effective inputs invalidate entry routes while preserving 
   await assert.rejects(db.transaction(()=>activateDeployment(service,a,x.d.deployment_id)),{code:'DEPLOYMENT_REPLACED'});
 });
 test('reference receiver/worker fixtures cover 10 SL, 10 TP, 5 both-touched and 5 native/Bridge conflicts',async()=>{
+  await freshBars();
   const cases=[...Array.from({length:10},()=>({reason:'SL',close:89,low:88,high:104})),...Array.from({length:10},()=>({reason:'TP',close:117,low:96,high:120})),...Array.from({length:5},()=>({reason:'SL',close:100,low:88,high:120})),...Array.from({length:5},()=>({reason:'SL',close:95,low:89,high:102,wrong:'NATIVE'}))];
   const a=await owner(),x=await ready(a);let time=Date.now()-120000;
   for(const c of cases) {
@@ -362,6 +380,7 @@ test('reference receiver/worker fixtures cover 10 SL, 10 TP, 5 both-touched and 
   assert.equal((await store.paperAccount(a,'binance-global')).positionCost,'0');
 });
 test('5 rejected and 5 capped BUY cases map only actual accepted quantities',async()=>{
+  await freshBars();
   for(let i=0;i<5;i++) {
     const a=await owner(),x=await ready(a,{capital:1000,maxOrder:10}),time=Date.now()-20000-i*100;
     await market(time);await receiveBridge(store,x.secret,event(x.d,time));await execute();
@@ -389,6 +408,7 @@ test('concurrent AI workers enforce four global/one owner leases and shutdown le
   assert.equal((await db.transaction(()=>service.get(a,job.job_id))).job_status,'OUTCOME_UNKNOWN');
 });
 test('crash before execution commit rolls back fills and mapping together; replacement preserves old exits',async()=>{
+  await freshBars();
   const a=await owner(),x=await ready(a),time=Date.now()-15000;
   await market(time);await receiveBridge(store,x.secret,event(x.d,time));
   const crash=new ExecutionWorker({store,config,beforeCommit:()=>{throw new Error('fixture crash');}});
@@ -478,12 +498,9 @@ test('protected backup restores extension records exactly and runtime cannot for
   }
 });
 test('news windows: a Bridge BUY inside an active window is rejected, an EXIT is not, and the same Bot trades again after the window',async()=>{
-  const a=await owner(),x=await ready(a,{blockDuringNews:true});
-  // pine_market_bars is shared by every test in this file and market() keeps an existing row on conflict. An earlier test
-  // bar at the same millisecond as t3 turned the SL EXIT into EXIT_PRIORITY_MISMATCH (CI, 2bce8fd). Start from four free bar times.
-  const taken=async times=>(await db.prepare("SELECT count(*) n FROM pine_market_bars WHERE broker='binance-global' AND symbol='BTCUSDT' AND timeframe='1D' AND bar_time IN (?,?,?,?)").get(...times)).n>0;
-  let base=Date.now()-40000;
-  while(await taken([base,base+10000,base+20000,base+30000]))base-=1;
+  await freshBars();
+  const a=await owner(),x=await ready(a,{blockDuringNews:true}),base=Date.now()-40000;
+  // An earlier test bar at the same millisecond as t3 once turned the SL EXIT into EXIT_PRIORITY_MISMATCH (CI, 2bce8fd).
   const [t1,t2,t3,t4]=[base,base+10000,base+20000,base+30000];
   await market(t1);await market(t2);await market(t3,{close:88,high:120,low:85});await market(t4);
   const stored=await db.prepare("SELECT bar_time,bar FROM pine_market_bars WHERE broker='binance-global' AND symbol='BTCUSDT' AND timeframe='1D' AND bar_time IN (?,?,?,?) ORDER BY bar_time").all(t1,t2,t3,t4);
