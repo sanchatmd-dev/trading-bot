@@ -12,12 +12,14 @@ for(const scenario of ['success','work-failure','preserve-evidence','duplicate-r
   const directory=await fs.mkdtemp(path.join(os.tmpdir(),'quant-completion-'));
   try{
     const ready=path.join(directory,'ready.json'),done=path.join(directory,'done.json'),adapter=path.join(directory,'adapter.mjs');
-    const now=Date.now(),marker={baseline_ok:true,run_id:'cli-test-123456789',issued_at_ms:now,deadline_ms:now+10000,cleanup_reserve_ms:2000};
+    // A loaded runner once took more than 5 s for one cold CLI start, so the old spawn timeout killed it (status null).
+    // The window and the timeouts below are hang guards only; no scenario depends on how close the deadline is.
+    const now=Date.now(),marker={baseline_ok:true,run_id:'cli-test-123456789',issued_at_ms:now,deadline_ms:now+60000,cleanup_reserve_ms:2000};
     await fs.writeFile(ready,JSON.stringify(marker));
     const workLog=path.join(directory,'work.log');
     await fs.writeFile(adapter,`import fs from 'node:fs/promises';\nexport async function work(){await fs.appendFile(${JSON.stringify(workLog)},'work\\n');${scenario==='work-failure'?'throw Error("fixture");':'return true;'}} export async function cleanup(){return true;}`);
     if(scenario==='preserve-evidence')await fs.writeFile(done,'prior evidence');
-    const result=spawnSync(process.execPath,[cli,ready,done,adapter,marker.run_id],{encoding:'utf8',timeout:5000,windowsHide:true});
+    const result=spawnSync(process.execPath,[cli,ready,done,adapter,marker.run_id],{encoding:'utf8',timeout:50000,windowsHide:true});
     if(scenario==='preserve-evidence'){
       assert.notEqual(result.status,0);assert.equal(await fs.readFile(done,'utf8'),'prior evidence');
       await assert.rejects(fs.access(workLog),{code:'ENOENT'});
@@ -27,7 +29,7 @@ for(const scenario of ['success','work-failure','preserve-evidence','duplicate-r
       assert.equal(inspectCalibrationCompletion(marker,completion,Date.now()),scenario==='work-failure'?'DRIVER_FAILED':'DRIVER_DONE');
       if(scenario==='duplicate-run'){
         await fs.unlink(done); // Even missing completion must not reopen a claimed run.
-        const duplicate=spawnSync(process.execPath,[cli,ready,done,adapter,marker.run_id],{encoding:'utf8',timeout:5000,windowsHide:true});
+        const duplicate=spawnSync(process.execPath,[cli,ready,done,adapter,marker.run_id],{encoding:'utf8',timeout:50000,windowsHide:true});
         assert.notEqual(duplicate.status,0);assert.equal(await fs.readFile(workLog,'utf8'),'work\n');
       }
     }

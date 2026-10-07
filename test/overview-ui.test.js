@@ -44,8 +44,9 @@ function setup({language,overview=()=>ok(overviewOf()),legacy=()=>{throw new Err
   const cellOf=(row,key)=>row.querySelector('td[data-label-key="'+key+'"]');
   const kpis=()=>[...d.querySelectorAll('#ovKpis .ov-kpi')].map(tile=>tile.querySelector('.ov-num').textContent);
   const boot=async()=>{await w.load();await settle();};
-  // Refresh now waits 5 s after a good cycle; tests move the page clock past that instead of sleeping.
-  const later=()=>{const real=w.Date.now.bind(w.Date);let shift=0;w.Date.now=()=>real()+shift;return ms=>{shift+=ms;};};
+  // The page clock moves only when a test moves it, so runner speed never changes a rendered age or wait (a loaded run
+  // once rendered "Updated 1 s ago"). Refresh now waits 5 s after a good cycle; tests move the clock past that.
+  const later=()=>{let now=w.Date.now();w.Date.now=()=>now;return ms=>{now+=ms;};};
   const advance=later();
   const refreshNow=async()=>{advance(6000);d.querySelector('#ovNow').click();await settle();};
   return {dom,w,d,requests,calls,switched,rows,cellOf,kpis,boot,refreshNow,advance};
@@ -151,7 +152,7 @@ test('Errors back off (40, 80, 160 s), Refresh now has a 5 s cooldown after a go
     assert.match(p.d.querySelector('#ovUpdated').textContent,/^Not updated yet · Next try in (39|40) s$/);
     assert.equal(p.rows().length,0,'no figures before a good cycle');
     const now=p.d.querySelector('#ovNow');
-    now.click();await settle();assert.match(p.d.querySelector('#ovUpdated').textContent,/Next try in (79|80) s$/);
+    now.click();await settle();assert.match(p.d.querySelector('#ovUpdated').textContent,/Next try in 80 s$/);
     mode='retry';now.click();await settle();assert.equal(p.d.querySelector('#ovConn').textContent,'Offline');
     assert.match(p.d.querySelector('#ovUpdated').textContent,/Next try in (159|160) s$/,'409 RETRY_TRANSACTION backs off like 503');
     mode='up';now.click();await settle();
