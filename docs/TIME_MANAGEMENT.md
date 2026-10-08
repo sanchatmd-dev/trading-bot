@@ -1,6 +1,8 @@
 # Time Management — Project execution and data collection
 
-Baseline read, 2026-10-08 14:37 UTC: the independently reviewed reader stopped with INPUT_FILE_TRUST before runtime collection. Its one-time ID is consumed. No deployment occurred; current health and idle state remain unverified. Next: diagnose the file trust failure before preparing another bounded read.
+Latest handoff, 2026-10-08: the owner stopped Codex and requested transfer to Claude. Read the [whole-project handoff](CODEX_TO_CLAUDE_HANDOFF_2026-10-08.md) and its private handoff first. All Codex children are completed/frozen. Latest read at 15:52 UTC observed healthy Paper API and no queued/running jobs or leases, but one non-SETTLED ledger operation blocked the idle gate. Its status and proof remain unknown; no deployment or ledger reset occurred. Claude must re-verify and diagnose it before amending any gate.
+
+Baseline preparation, 2026-10-08 15:52 UTC: the bounded read collected health 200/PAPER_ONLY, Preflight OFF and zero queued/running jobs or leases, but stopped at QUEUE_NOT_IDLE because one ledger operation is not SETTLED. Its exact status and physical/accounting meaning remain unverified. Later gates are incomplete; no deployment occurred. Next: review terminal-operation semantics and collect only the missing evidence. Do not reset or ignore the ledger.
 
 Native child diagnostics, 2026-10-08: `79c22b2` is committed and pushed on the combined release branch, with independent local review and full CI passing. It retains bounded, sanitized child metadata through terminal cleanup while preserving the parent error and proof. The inactive-release package passed independent reconstruction and 31 negative checks; fresh baseline and executor review remain pending. It is not deployed. [Evidence](evidence/R7_CHILD_DIAGNOSTICS_2026-10-08.json).
 
