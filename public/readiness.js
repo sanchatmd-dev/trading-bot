@@ -209,6 +209,10 @@
       return group('Historical evidence (PF-2)',...rows);
     }
     const e=h.evidence||{},a=h.account_end||{};
+    // The server accepts PF-2 evidence only when the holdout stayed unread, no order ran and the window is development-only
+    // (pf3-readiness-report.js); an AVAILABLE answer therefore carries these three facts.
+    const checked=value=>[label(value),' · ',label('checked by server','span','pf3-muted')];
+    rows.push(row('Holdout accessed',...checked('No')),row('Orders executed',...checked('No')),row('Development window only',...checked('Yes')));
     rows.push(row('Evidence job',make('span','pf3-hash',dash(e.job_id))),row('Evidence plan hash',make('span','pf3-hash',dash(e.plan_hash))),
       row('Engine unchanged since evidence',yesNo(e.engine_current)),row('Policy unchanged since evidence',yesNo(e.policy_current)),
       row('Capital unchanged since evidence',yesNo(e.capital_current)),row('Deployment is the READY one',yesNo(e.deployment_current)),
