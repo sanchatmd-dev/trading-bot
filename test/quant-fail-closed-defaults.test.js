@@ -9,6 +9,25 @@ import {prepareEnrollmentAttempt} from '../src/postgres/quant-profile-enrollment
 import {createProfileEnrollmentTicketAuthority} from '../src/postgres/quant-profile-enrollment-ticket.js';
 import {profileV2Fixture} from './helpers/profile-v2-fixture.js';
 import {canonical,hash} from '../src/pine-bridge/source.js';
+import {PROFILE_CHILD_DIAGNOSTIC_VERSION} from '../src/quant-research/profile-child-diagnostic.js';
+
+test('actual worker catch logs sanitized child evidence once without changing parent reason or proof',async()=>{
+ for(const parentCode of ['PROFILE_ENROLLMENT_DENIED','private/path']){
+  const {worker,job,logs}=profileTerminalLogFixture();
+  const error=Object.assign(new Error('private message'),{code:parentCode,terminal:{proof:'UNCONFIRMED'}});
+  worker.profileRuntimeV2={run:async({onChildDiagnostic})=>{
+   onChildDiagnostic({version:PROFILE_CHILD_DIAGNOSTIC_VERSION,code:'PROFILE_OPEN_BAR',byteCount:17,byteCountExact:true,
+    closeObserved:true,exitStatusKnown:true,exitStatus:1,exitSignalKnown:true,exitSignal:null,
+    childKernelStatusKnown:true,proof:'MEASURED_FINAL_SETTLED',path:'/private/secret',message:'private'});
+   throw error;
+  }};
+  await assert.rejects(worker.runProfileV2(job,{}),value=>value===error);
+  assert.equal(logs.length,1);assert.equal(logs[0].proof,'UNCONFIRMED');
+  assert.equal(logs[0].reason,parentCode==='PROFILE_ENROLLMENT_DENIED'?parentCode:'UNKNOWN');
+  assert.equal(logs[0].childDiagnostic.code,'PROFILE_OPEN_BAR');
+  assert.equal(logs[0].childDiagnostic.childKernelStatusKnown,false);assert.doesNotMatch(JSON.stringify(logs),/private|secret/);
+ }
+});
 
 // --- A: worker pool rule for health recovery ---------------------------------------------------------------------
 const pool=(poolMax,recoveryEnabled=true)=>()=>assertQuantHealthRecoveryPool({recoveryEnabled,poolMax});

@@ -2,6 +2,7 @@ import {canonical,hash,fail} from '../pine-bridge/source.js';
 import {validateProfileResultV2} from '../quant-research/profile-contract-v2.js';
 import {QuantIoRuntime,QUANT_PROFILE_RUNTIME_PROTOCOL,quantIoUnitName} from './quant-io-runtime.js';
 import {profileCompletionVeto,chargeProfileCompletionRuntime} from './quant-profile-enrollment.js';
+import {sanitizeProfileChildDiagnostic} from '../quant-research/profile-child-diagnostic.js';
 
 const uncertain=()=>fail('QUANT_IO_LAUNCH_UNCERTAIN');
 // Graceful stop (signal) and compute deadline both end the frame loop; the drained terminal still runs (W2 3.3).
@@ -53,10 +54,11 @@ export class QuantProfileRuntimeV2 {
    * A thrown stop or deadline error carries terminal {status, proof} when the terminal finished.
    */
   async run({jobId,leaseToken,operationId,expectedRevision=0,ownerId,signal=null,emergency=null,
-    beforeTerminal=null,onTerminalDiagnostic=null}){
+    beforeTerminal=null,onTerminalDiagnostic=null,onChildDiagnostic=null}){
     if(!signalLike(signal)||!signalLike(emergency)||
       beforeTerminal!==null&&typeof beforeTerminal!=='function'||
-      onTerminalDiagnostic!==null&&typeof onTerminalDiagnostic!=='function')throw uncertain();
+      onTerminalDiagnostic!==null&&typeof onTerminalDiagnostic!=='function'||
+      onChildDiagnostic!==null&&typeof onChildDiagnostic!=='function')throw uncertain();
     const request={jobId,leaseToken,operationId};
     let reserveAttempted=false,stop=null,frame=null,failure=null,hooked=false,attempt=null,marked=false;
     const checkStop=()=>{if(signal?.aborted||emergency?.aborted)throw stopRequested();};
@@ -153,6 +155,8 @@ export class QuantProfileRuntimeV2 {
     }catch(error){
       failure=error;throw error;
     }finally{
+      // Terminal cleanup deletes the map entry. Retain only this run's handle until finally ends.
+      const diagnosticHandle=this.io.handles.get(jobId+':'+operationId);
       try{
         if(reserveAttempted){
           // The heartbeat must be quiet before the terminal: cancel makes the job STOPPING, which holds no lease to renew.
@@ -184,6 +188,9 @@ export class QuantProfileRuntimeV2 {
         emergency?.removeEventListener('abort',onEmergency);
         emergency?.removeEventListener('abort',raiseAbort);
         signal?.removeEventListener('abort',raiseAbort);
+        if(onChildDiagnostic)try{
+          onChildDiagnostic(sanitizeProfileChildDiagnostic(diagnosticHandle?.childDiagnostic?.()));
+        }catch{}
       }
     }
     if(failure)throw failure;

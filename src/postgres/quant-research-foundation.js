@@ -9,6 +9,7 @@ import {validateBackfillState} from '../quant-research/foundation-contract.js';
 import {buildProfile,authorizeProfileV2Stop} from './quant-profile.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
 import {canReleaseQuantIo,QUANT_IO_DIAGNOSTIC_REASONS} from './quant-io-runtime.js';
+import {sanitizeProfileChildDiagnostic} from '../quant-research/profile-child-diagnostic.js';
 import {validateBar} from './pine-bridge-market.js';
 import {resolveHistoricalPreflight} from '../quant-research/preflight-resolver.js';
 import {runHistoricalPreflight} from '../quant-research/preflight-replay.js';
@@ -334,13 +335,14 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
  }
  async runProfileV2(job,{signal,emergency,beforeTerminal}){
   const foundation=job.foundation,operationId='op-'+foundation.lease_token;
-  const started=performance.now();let logged=false,terminalDiagnostic=null;
+  const started=performance.now();let logged=false,terminalDiagnostic=null,childDiagnostic=null;
   const log=diagnostic=>{
    if(logged)return;
    const proof=['MEASURED_FINAL_SETTLED','UNKNOWN_FINAL_CHARGED','NO_START_PROVEN','UNCONFIRMED'].includes(diagnostic?.proof)?diagnostic.proof:'UNCONFIRMED';
    const reason=QUANT_PROFILE_TERMINAL_LOG_REASONS.includes(diagnostic?.reason)?diagnostic.reason:'UNKNOWN';
    const record={jobId:foundation.job_id,proof,reason:reason==='COMPLETE'&&proof!=='MEASURED_FINAL_SETTLED'?'UNKNOWN':reason};
    for(const field of ['drainMs','elapsedMs','barrierMs'])if(Number.isSafeInteger(diagnostic?.[field])&&diagnostic[field]>=0)record[field]=diagnostic[field];
+   if(childDiagnostic)record.childDiagnostic=sanitizeProfileChildDiagnostic(childDiagnostic);
    logged=true;try{this.terminalLog(JSON.stringify(record));}catch{}
   };
   try{
@@ -352,7 +354,8 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
    this.profileOperations.set(foundation.job_id,{leaseToken:foundation.lease_token,operationId});
    const answer=await this.profileRuntimeV2.run({jobId:foundation.job_id,leaseToken:foundation.lease_token,
     operationId,expectedRevision:0,ownerId:foundation.owner_id,signal,emergency,beforeTerminal,
-    onTerminalDiagnostic:diagnostic=>{terminalDiagnostic=diagnostic;}});
+    onTerminalDiagnostic:diagnostic=>{terminalDiagnostic=diagnostic;},
+    onChildDiagnostic:diagnostic=>{childDiagnostic=sanitizeProfileChildDiagnostic(diagnostic);}});
    // elapsedMs always spans this worker run, including the terminal. Terminal evidence supplies only available timings.
    log({...terminalDiagnostic,proof:answer?.proof,reason:terminalDiagnostic?.reason??'COMPLETE',
     elapsedMs:Math.max(0,Math.round(performance.now()-started))});
