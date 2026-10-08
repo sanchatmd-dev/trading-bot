@@ -1,5 +1,11 @@
 # Time Management — Project execution and data collection
 
+Parent diagnostic correction, 2026-10-08: `bb0327c` is committed and pushed on the combined release branch. Author checks passed 11/11 and independent checks 15/15. It preserves two parent enrollment refusal codes without changing admission or accounting; CI passed and staging is unchanged. Exact-input pipeline reproduction also passed independently. Offline bootstrap proposal checks also passed author and independent review (9/9 plus six independent adversarial refusals); the tool cannot authorize execution. Next: establish genuine scratch admission inputs and bounded setup/cleanup before preparing a measurement execution packet. [Evidence](evidence/R7_PARENT_LOG_CORRECTION_2026-10-08.json).
+
+## R7 diagnostic preparation wave, 2026-10-08
+
+Three bounded roles worked locally: architecture review, operations tool preparation and debugger fixtures. The synthetic pipeline passed; error capture passed 14/14 independent checks; offline release checks passed 11/11 and root verified exact Git blobs. `f1daede` CI passed. Input-reader review found three corrections; independent checks passed after fixes (16/16 and 17/17). One read-only export completed at 12:47 UTC with 515 bars; no job execution, deployment, enrollment or calibration timing was measured. No agent-count speedup or completion estimate is claimed. Exact-input local reproduction then passed author and independent runs with an identical result hash; these timings are not host calibration. Latest known weekly usage was 73% remaining, short window unknown, reserve 15 points. [Evidence](evidence/R7_LOCAL_DIAGNOSTICS_2026-10-08.json).
+
 ## R7 local correction checkpoint, 2026-10-08
 
 The local correction `f1daede` passed author checks (9/9) and independent checks (13/13). Exact Git-blob engine identities were computed; no host work ran in this slice. The release plan now includes a new measured envelope because the previous envelope explicitly excludes another release/enrollment. No calibration duration or completion estimate is established. Latest weekly usage was 86% remaining, short window unknown, reserve 15 points. Next is a small measurement-contract design/review packet. [Plan](R7_OBSERVABILITY_RELEASE_PLAN_2026-10-08.md).

@@ -1,0 +1,31 @@
+{
+  "schema": "r7-parent-log-correction-v1",
+  "candidate": "bb0327c2c4d661a3cecb36d46539b6d62a88bc51",
+  "parent": "f1daede",
+  "status": "LOCAL_REVIEW_ACCEPTED_NOT_DEPLOYED",
+  "added_codes": [
+    "PROFILE_ENROLLMENT_DENIED",
+    "PROFILE_ENROLLMENT_TICKET_INVALID"
+  ],
+  "author_passed": 11,
+  "independent_passed": 15,
+  "test_scope": "Actual exported helper errors through actual worker catch with an isolated runtime boundary; not full parent DB integration.",
+  "git_blob_hashes": {
+    "legacy": "988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a",
+    "foundation": "1ecdef4861e122bd11e07533678e4d1be2c6fd1a80427c84441d55b90c57b4d4",
+    "ingestion": "38a169965df68d5a969b7a8ebd9c0b115ab9d582d8cc6ae12fe3184f34a9f003",
+    "pf2": "d1f041bbcafa9202cb774c99d780cd77e13835f2bcb3a9f7c00bd1da6542aa86",
+    "evaluator": "3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada"
+  },
+  "product_ingestion_pf2_hashes_cross_checked": true,
+  "historical_cause": "UNKNOWN",
+  "database_diagnostic_loss_fixed": false,
+  "deployment_performed": false,
+  "enrollment_retried": false,
+  "ci": "success",
+  "supersedes_candidate_pins": "f1daede; existing preparation tools are historical and must not be silently repinned.",
+  "ci_runs": [
+    37781488424,
+    37781488460
+  ]
+}

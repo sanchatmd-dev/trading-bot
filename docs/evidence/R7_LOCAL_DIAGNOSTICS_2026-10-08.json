@@ -1,0 +1,109 @@
+{
+  "schema": "r7-local-diagnostics-v1",
+  "date": "2026-10-08",
+  "candidate": "f1daede",
+  "candidate_ci": "success",
+  "scope": "Local pipeline and diagnostic checks plus one read-only staging input export; no staging job execution",
+  "synthetic_pipeline": {
+    "raw_bars": 515,
+    "warmup_bars": 500,
+    "processed_bars": 15,
+    "actual_product_modules": true,
+    "acceptance_and_result_frames_valid": true,
+    "result_bytes": 2354,
+    "synthetic_identity_and_data": true,
+    "evaluator_admission": false,
+    "linux_or_physical_io_measured": false,
+    "marked_enrollment_receipt_proven": false
+  },
+  "capture": {
+    "author_passed": 14,
+    "independent_passed": 14,
+    "parse_limit_bytes": 4096,
+    "retains_raw_stderr": false,
+    "exit_scope": "LAUNCHER_PROCESS",
+    "child_kernel_status_known": false,
+    "actual_launcher_module_tested": true,
+    "host_seams_controlled": true,
+    "valid_frames_preserved": true,
+    "artifact_hashes": {
+      "stderr-observer.mjs": "b1722a3ad7cd14c6d4774649337417f91142ccf4fae8e82dc855f5824894e525",
+      "stderr-observer.test.mjs": "b0bff266c448ffdb95e42322e2753207e212b4e52ee92180f71c07fdf40de76b",
+      "launcher-observer-adapter.mjs": "8fd50a42c350eaf25060ed8b289ff4293e309715c10b48387c96592f3ae711fb",
+      "launcher-observer-integration.test.mjs": "30b1a8b28ff1ad80de3f672ee6d7b67492bb9db29487ff8b0774ab16772d1b8e",
+      "existing-dependencies.mjs": "66f34bb700ef7bb90bfeb4597c56a015c2be7e564dc2ebca72e3a50929def776",
+      "invalid-payload-child.mjs": "a720959032ac4beb5f66e828cd8ccd09811a4c7a15428228870de69dfd09d1d8",
+      "negative-pipeline-child.mjs": "ca740775b0cd133855338842dd37ddb25ecb6bae1a3c5cdc29b941b7d81dec38",
+      "negative-pipeline-capture.test.mjs": "dc831ca7d26cc11edb87ab7f7cc153690c620359448530de1b02a8dc4491612b"
+    },
+    "review_manifest_sha256": "7f8bead54e8bb907df8e0d7f0a97bbcd638bb7d3556422b898f348b19ac85156"
+  },
+  "offline_release_preflight": {
+    "checks_passed": 11,
+    "exact_git_blob_identities_verified_by_root": true,
+    "host_access": 0,
+    "ready_for_execution": false
+  },
+  "input_reader": {
+    "status": "INPUT_READ_COMPLETE",
+    "source_sha": "1d4aebb709c0116725f4306c959730af3a40faf47001feee731f6d0a774c4990",
+    "independent_full_main_passed": 16,
+    "independent_primitives_go_passed": 17,
+    "host_access": 1,
+    "read_only": true,
+    "bars": 515,
+    "raw_input_bytes": 73370,
+    "original_payload_sha": "2fc1424568b22feaf7d77d4169d8bf2945fd7d261563a7d8624e9e7b54e3e762",
+    "raw_receipt_sha": "3f0d5076f6bddf9e799a930fe91e8624d07643293f4841256b2d7b7b4b06c6b7",
+    "host_finished": "2026-10-08T12:47:23.294Z",
+    "private_export": true,
+    "prior_review_findings_resolved": true,
+    "runtime_unchanged": true,
+    "health": "200/PAPER_ONLY",
+    "idle": true,
+    "preflight_enabled": false
+  },
+  "staging_cause": "UNKNOWN",
+  "deployment_performed": false,
+  "enrollment_retried": false,
+  "next": "Establish genuine scratch admission inputs, independent engineering budgets and setup/cleanup bounds before an executable measurement packet. No enrollment retry or release authorized.",
+  "exact_input_pipeline": {
+    "author": "PASS",
+    "independent": "PASS",
+    "independent_default_clock": true,
+    "raw_bars": 515,
+    "raw_bytes": 73370,
+    "processed_bars": 15,
+    "frames": 2,
+    "result_bytes": 2356,
+    "result_sha256": "6329a24d990d58cc12d11f58c46ebd339e47b1399b710ff1319cd4c8ee301fdb",
+    "contract_policy_raw_unchanged": true,
+    "transport_rebound": true,
+    "windows_directory_sync_allowance": true,
+    "supplied_store_factory": true,
+    "evaluator_admission": false,
+    "historical_cause_proven": false,
+    "excludes": [
+      "Child readiness and stdin entry",
+      "Parent enrollment authority and ticket",
+      "Linux supervision and physical I/O",
+      "Marked enrollment receipt"
+    ]
+  },
+  "bootstrap_proposal": {
+    "status": "LOCAL_PROPOSAL_TOOL_ACCEPTED",
+    "author_passed": 9,
+    "independent_passed": 9,
+    "independent_adversarial_refusals": 6,
+    "resolver_sha256": "0ecd4c176ab427928da1d77891e4c22c7d2a44af31261c3b409562533bfb333b",
+    "ready_for_execution": false,
+    "evidence_trust": "UNVERIFIED_CALLER_RECORDS",
+    "synthetic_fixtures": true,
+    "review_repairs": [
+      "Reject array properties omitted by canonical hashing",
+      "Require dataset digest to equal manifest digest"
+    ],
+    "real_calibration_certified": false,
+    "host_actions": 0
+  }
+}
