@@ -79,16 +79,73 @@ test('only an explicit true enables PROFILE V2 on a scheduler',()=>{
 
 // --- C: one source for the diagnostic reasons ---------------------------------------------------------------------
 const profileReasons=['PROFILE_STOP_REQUESTED','PROFILE_COMPUTE_DEADLINE','QUANT_PROFILE_POLICY_MISMATCH',
- 'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED','PROFILE_DEADLINE_NEAR','PROFILE_V2_DISABLED'];
+ 'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED','PROFILE_DEADLINE_NEAR','PROFILE_V2_DISABLED','QUANT_IO_LAUNCH_UNCERTAIN'];
 
-test('the worker terminal log reasons are the I/O diagnostic reasons plus the six PROFILE reasons',()=>{
+test('the worker terminal log reasons are the I/O diagnostic reasons plus the seven PROFILE reasons',()=>{
  assert.deepEqual([...QUANT_IO_DIAGNOSTIC_REASONS],['COMPLETE','STOP_REQUESTED','ALREADY_STOPPING','STOP_UNCONFIRMED','UNKNOWN',
   'WRITEBACK_PENDING','COMMIT_BARRIER_FAILED','COMMIT_BARRIER_TIMEOUT','MEMORY_STAT_INVALID','FREEZE_UNVERIFIED','NOT_FROZEN',
   'CGROUP_EMPTY','QUANT_IO_TELEMETRY_UNAVAILABLE','POST_EXIT_UNKNOWN','POST_EXIT_TAIL_OBSERVED']);
  assert.deepEqual([...QUANT_PROFILE_TERMINAL_LOG_REASONS],[...QUANT_IO_DIAGNOSTIC_REASONS,...profileReasons]);
- assert.equal(QUANT_PROFILE_TERMINAL_LOG_REASONS.length,21);
- assert.equal(new Set(QUANT_PROFILE_TERMINAL_LOG_REASONS).size,21);
+ assert.equal(QUANT_PROFILE_TERMINAL_LOG_REASONS.length,22);
+ assert.equal(new Set(QUANT_PROFILE_TERMINAL_LOG_REASONS).size,22);
  assert.ok(Object.isFrozen(QUANT_IO_DIAGNOSTIC_REASONS)&&Object.isFrozen(QUANT_PROFILE_TERMINAL_LOG_REASONS));
+});
+
+function profileTerminalLogFixture(){
+ const policy={terminal:{runtime_max_ms:30000}};
+ const logs=[],worker=Object.create(QuantResearchFoundationWorker.prototype);
+ const job={foundation:{job_id:'job-1',lease_token:'token-1',owner_id:'owner-1',deadline_at:1000000,
+  contract:{capacity:{policy_hash:hash(canonical(policy))}}}};
+ Object.assign(worker,{profileV2Enabled:true,capacityPolicy:policy,clock:()=>0,
+  profileOperations:new Map(),terminalLog:line=>logs.push(JSON.parse(line))});
+ return {worker,job,logs};
+}
+
+test('PROFILE V2 thrown launch uncertainty retains its safe code, terminal proof and timings',async()=>{
+ for(const proof of ['MEASURED_FINAL_SETTLED','UNKNOWN_FINAL_CHARGED','UNCONFIRMED']){
+  const {worker,job,logs}=profileTerminalLogFixture();
+  const error=Object.assign(new Error('private message /private/error-path'),{
+   code:'QUANT_IO_LAUNCH_UNCERTAIN',terminal:{proof,status:'private status'},path:'/private/path'});
+  worker.profileRuntimeV2={run:async({onTerminalDiagnostic})=>{
+   onTerminalDiagnostic({proof:'MEASURED_FINAL_SETTLED',reason:'COMPLETE',drainMs:32099,barrierMs:2,
+    message:'private diagnostic',path:'/private/diagnostic-path'});
+   throw error;
+  }};
+  await assert.rejects(worker.runProfileV2(job,{}),value=>value===error);
+  assert.equal(logs.length,1);
+  const {elapsedMs,...record}=logs[0];
+  assert.deepEqual(record,{jobId:'job-1',proof,reason:'QUANT_IO_LAUNCH_UNCERTAIN',drainMs:32099,barrierMs:2});
+  assert.ok(Number.isSafeInteger(elapsedMs)&&elapsedMs>=0);
+  assert.doesNotMatch(JSON.stringify(logs),/private/);
+  assert.equal(worker.profileOperations.size,0);
+ }
+});
+
+test('PROFILE V2 error logs exclude arbitrary codes, messages and paths; COMPLETE needs measured proof',async()=>{
+ for(const code of ['arbitrary error /private/code-path',undefined,'COMPLETE']){
+  const {worker,job,logs}=profileTerminalLogFixture();
+  const error=Object.assign(new Error('private message /private/message-path'),{
+   code,terminal:{proof:'UNKNOWN_FINAL_CHARGED'},path:'/private/path'});
+  worker.profileRuntimeV2={run:async({onTerminalDiagnostic})=>{
+   onTerminalDiagnostic({proof:'UNKNOWN_FINAL_CHARGED',reason:'COMPLETE',drainMs:-1,barrierMs:'private'});
+   throw error;
+  }};
+  await assert.rejects(worker.runProfileV2(job,{}),value=>value===error);
+  assert.equal(logs.length,1);
+  const {elapsedMs,...record}=logs[0];
+  assert.deepEqual(record,{jobId:'job-1',proof:'UNKNOWN_FINAL_CHARGED',reason:'UNKNOWN'});
+  assert.ok(Number.isSafeInteger(elapsedMs)&&elapsedMs>=0);
+  assert.doesNotMatch(JSON.stringify(logs),/private|arbitrary/);
+ }
+ for(const proof of ['MEASURED_FINAL_SETTLED','UNKNOWN_FINAL_CHARGED','UNCONFIRMED']){
+  const {worker,job,logs}=profileTerminalLogFixture();
+  const answer={status:'CANCELLED',proof};
+  worker.profileRuntimeV2={run:async()=>answer};
+  assert.equal(await worker.runProfileV2(job,{}),answer);
+  assert.equal(logs.length,1);
+  assert.equal(logs[0].proof,proof);
+  assert.equal(logs[0].reason,proof==='MEASURED_FINAL_SETTLED'?'COMPLETE':'UNKNOWN');
+ }
 });
 
 test('the PROFILE V2 terminal log keeps every listed reason and maps any other reason to UNKNOWN',{timeout:10000},async()=>{

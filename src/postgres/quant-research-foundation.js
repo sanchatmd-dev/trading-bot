@@ -35,7 +35,7 @@ export function capturePreflightRunChunkForTest(worker){
 /** Reason allowlist of the PROFILE V2 terminal log: the I/O diagnostic reasons plus the worker's own PROFILE reasons. */
 export const QUANT_PROFILE_TERMINAL_LOG_REASONS=Object.freeze([...QUANT_IO_DIAGNOSTIC_REASONS,'PROFILE_STOP_REQUESTED',
  'PROFILE_COMPUTE_DEADLINE','QUANT_PROFILE_POLICY_MISMATCH','QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED','PROFILE_DEADLINE_NEAR',
- 'PROFILE_V2_DISABLED']);
+ 'PROFILE_V2_DISABLED','QUANT_IO_LAUNCH_UNCERTAIN']);
 
 /** Smallest PG_POOL_SIZE of a worker with health recovery, for every job kind. The recovery probe runs through
  * db.pool.query, so it needs a connection outside the scheduler transaction that called health. Peak demand of a running
