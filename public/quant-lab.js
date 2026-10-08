@@ -296,13 +296,23 @@ async function qDataPreviewRange() {
     if (generation === qDataGeneration) { qDataPreview = null; q('qlDataPlan').hidden = true; qDataStatus(failure.message || 'Range preview failed.', 'err'); }
   } finally { qDataBusy = false; qDataUpdate(); }
 }
+const QL_DATA_DONE = {SUCCEEDED: 'Raw history job succeeded.', COMPLETED: 'Raw history job succeeded.', FAILED: 'Raw history job failed.', CANCELLED: 'Raw history job cancelled.', CANCELED: 'Raw history job cancelled.', TIMED_OUT: 'Raw history job timed out.'};
+// Server data (codes, ids, values) gets the no-i18n class, so the language switch never rewrites it.
+const qNode = (tag, text, className) => { const node = document.createElement(tag); if (className) node.className = className; node.textContent = String(text); return node; };
+// Scalar result fields as a key/value list; nested values are left out rather than dumped as JSON.
+const qFields = result => { const list = document.createElement('dl'); list.className = 'ql-fields';
+  for (const [key, value] of Object.entries(result && typeof result === 'object' ? result : {})) if (['string', 'number', 'boolean'].includes(typeof value)) list.append(qNode('dt', key, 'no-i18n'), qNode('dd', value, 'no-i18n'));
+  return list; };
 function qDataRenderJob(job) {
   qDataJob = job; q('qlDataJob').hidden = false;
   const complete = qDataTerminal(job.status);
-  q('qlDataProgress').textContent = `${job.status || 'UNKNOWN'} · ${Number(job.next_bar) || 0} / ${Number(job.total_bars) || 0} bars${job.diagnostic ? ` · ${typeof job.diagnostic === 'string' ? job.diagnostic : JSON.stringify(job.diagnostic)}` : ''}`;
+  // Fixed labels in their own nodes (so the Thai switch translates them) and data in separate nodes; no raw JSON.
+  const diagnostic = typeof job.diagnostic === 'string' ? job.diagnostic : job.diagnostic?.code ?? null;
+  q('qlDataProgress').replaceChildren(qNode('code', job.status || 'UNKNOWN', 'no-i18n'), ' · ', qNode('span', `${Number(job.next_bar) || 0} / ${Number(job.total_bars) || 0}`, 'no-i18n'), ' ', qNode('span', 'bars fetched'),
+    ...(diagnostic ? [' · ', qNode('code', diagnostic, 'no-i18n')] : []));
   q('qlDataCancel').disabled = complete;
-  q('qlDataResult').textContent = ['COMPLETED', 'SUCCEEDED'].includes(job.status) ? `Raw dataset ready: ${JSON.stringify(job.result || {})}` : '';
-  qDataStatus(complete ? `Raw history job ${job.status.toLowerCase()}.` : 'Raw history fetch in progress.', ['FAILED', 'CANCELLED', 'CANCELED', 'TIMED_OUT'].includes(job.status) ? 'err' : complete ? 'ok' : 'info');
+  q('qlDataResult').replaceChildren(...(['COMPLETED', 'SUCCEEDED'].includes(job.status) ? [qNode('span', 'Raw dataset ready'), qFields(job.result)] : []));
+  qDataStatus(complete ? (QL_DATA_DONE[job.status] || 'Raw history job finished.') : 'Raw history fetch in progress.', ['FAILED', 'CANCELLED', 'CANCELED', 'TIMED_OUT'].includes(job.status) ? 'err' : complete ? 'ok' : 'info');
   qDataUpdate();
   if (complete) qDataStopPoll();
   if(job.status==='SUCCEEDED'&&job.job_id)qDataLoadProfileReadiness(job.job_id,qDataJobBotId);
@@ -310,7 +320,8 @@ function qDataRenderJob(job) {
 async function qDataLoadProfileReadiness(id,botId){
   try{
     const result=await api(`/api/quant/data/jobs/${encodeURIComponent(id)}/profile-readiness`,{silent:true,botId});
-    if(qDataJob?.job_id===id)q('qlDataProfile').textContent=result.enrollment_ready?'Verified research profile ready.':`Research profile unavailable: ${(result.blockers||[]).join(', ')}. Raw history remains separate.`;
+    if(qDataJob?.job_id===id)q('qlDataProfile').replaceChildren(...(result.enrollment_ready?[qNode('span','Verified research profile ready.')]:
+      [qNode('span','Research profile unavailable:'),' ',...(result.blockers||[]).flatMap((code,index)=>[index?', ':'',qNode('code',String(code),'no-i18n')]),' ',qNode('span','Raw history remains separate.')]));
   }catch(error){if(qDataJob?.job_id===id)q('qlDataProfile').textContent=error.message||'Research profile status unavailable.';}
 }
 async function qDataPoll() {

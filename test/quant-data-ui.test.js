@@ -165,5 +165,9 @@ test('repeated Data opens and hide/show keep one status request active; stale re
   await tick();
   assert.equal(maximumActive, 1);
   assert.match(ui.get('qlDataResult').textContent, /fixture-ref/);
+  assert.deepEqual([...ui.get('qlDataResult').querySelectorAll('dt')].map(node => node.textContent), ['dataset_ref'], 'key fields, not a JSON dump');
+  assert.doesNotMatch(ui.get('qlDataResult').textContent, /[{}]/);
+  assert.equal(ui.get('qlDataStatus').textContent, 'Raw history job succeeded.', 'a fixed sentence the Thai switch can translate');
+  assert.equal(ui.get('qlDataProgress').querySelector('code').textContent, 'SUCCEEDED');
   ui.dom.window.close();
 });

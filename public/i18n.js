@@ -297,7 +297,8 @@ const pf3Pairs=[
   ['The newest closed 1m bar is more than 15 minutes old.','แท่ง 1 นาทีที่ปิดล่าสุดเก่ากว่า 15 นาที'],
   ['The newest closed 1m bar is more than 3 minutes old.','แท่ง 1 นาทีที่ปิดล่าสุดเก่ากว่า 3 นาที'],
   ['The last 24 hours miss 60 or more 1m bars.','24 ชั่วโมงล่าสุดขาดแท่ง 1 นาทีตั้งแต่ 60 แท่งขึ้นไป'],
-  ['The last 24 hours miss some 1m bars.','24 ชั่วโมงล่าสุดขาดแท่ง 1 นาทีบางส่วน']
+  ['The last 24 hours miss some 1m bars.','24 ชั่วโมงล่าสุดขาดแท่ง 1 นาทีบางส่วน'],
+  ['Holdout accessed','อ่านช่วง holdout'],['Orders executed','ส่งคำสั่งซื้อขาย'],['Development window only','เฉพาะช่วงพัฒนา'],['checked by server','ตรวจโดยเซิร์ฟเวอร์']
 ];
 uiPairs.push(...pf3Pairs);
 // Guided Build Pine Bridge panel (P1-UX1). One named block so a test can prove these pairs stay unique and complete.
@@ -828,7 +829,49 @@ const overviewPairs=[
   ['Runs from every Bot of this account. Inspect a run to see its Bot.','รายการจากทุก Bot ในบัญชีนี้ กด Inspect เพื่อดูว่าเป็นของ Bot ไหน'],['Another Bot of this account','Bot อื่นในบัญชีนี้'],['Bot of this run','Bot ของรายการนี้'],
   ['Go to','ไปที่'],['Build Pine Bridge','สร้าง Pine Bridge'],['Research sections','ส่วนงานวิจัย'],['Backtest and legacy tools','Backtest และเครื่องมือเดิม']
 ];
-uiPairs.push(...overviewPairs);for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
+uiPairs.push(...overviewPairs);// Historical Preflight (PF-2) runner in Risk manager (preflight-runner.js) and the Quant Lab Data tab labels (quant-lab.js).
+const pfrPairs=[
+  ['Historical Preflight (PF-2)','Preflight ย้อนหลัง (PF-2)'],
+  ['Three owner steps for R7. Each button sends one request; nothing runs by itself. Paper only: no orders, the holdout stays unread.','สามขั้นตอนของเจ้าของสำหรับ R7 แต่ละปุ่มส่งคำขอเดียว ระบบไม่ทำงานเอง เป็น Paper เท่านั้น ไม่มีคำสั่งซื้อขาย และไม่อ่านข้อมูล holdout'],
+  ['1. Holdout boundary','1. เส้นแบ่ง holdout'],['2. Profile enrollment','2. ลงทะเบียน profile'],['3. Preflight','3. รัน Preflight'],
+  ['Register holdout boundary','บันทึกเส้นแบ่ง holdout'],['Holdout start (UTC, whole minute)','เวลาเริ่ม holdout (UTC เต็มนาที)'],
+  ['I understand the boundary is permanent and cannot be moved.','เข้าใจแล้วว่าเส้นแบ่งนี้ถาวรและย้ายไม่ได้'],
+  ['Enroll profile','ลงทะเบียน profile'],['Raw dataset job','งานข้อมูลดิบ (raw dataset job)'],
+  ['Profile job','งาน profile'],['Start Preflight','เริ่ม Preflight'],['Cancel Preflight','ยกเลิก Preflight'],['Yes, cancel it','ยืนยันการยกเลิก'],
+  ['Uses the READY deployment chosen above.','ใช้ deployment สถานะ READY ที่เลือกไว้ด้านบน'],['Choose a READY deployment','เลือก deployment สถานะ READY'],
+  ['This step is closed on this server.','ขั้นตอนนี้ปิดอยู่บนเซิร์ฟเวอร์นี้'],['A required earlier step is missing.','ยังขาดขั้นตอนก่อนหน้าที่จำเป็น'],
+  ['The request failed.','คำขอไม่สำเร็จ'],['{n} / {total} bars','{n} / {total} แท่ง'],['Check status','ตรวจสถานะ'],['This attempt started nothing. Sign in again if asked, then press the button again.','ครั้งนี้ยังไม่ได้เริ่มงานใดๆ เข้าสู่ระบบใหม่ถ้าระบบขอ แล้วกดปุ่มอีกครั้ง'],['An earlier request may already have started a job. Check with the operator before you send it again.','คำขอก่อนหน้าอาจเริ่มงานไปแล้ว ตรวจสอบกับผู้ดูแลระบบก่อนส่งอีกครั้ง'],['Forget this request','ลืมคำขอนี้'],['Type CLEAR to forget this request. Sending it again after that may create a second job.','พิมพ์ CLEAR เพื่อลืมคำขอนี้ ถ้าส่งอีกครั้งหลังจากนั้นอาจได้งานซ้ำเป็นงานที่สอง'],
+  ['Watching stopped after repeated failures.','หยุดติดตามแล้วเพราะล้มเหลวหลายครั้ง'],['This boundary was already registered.','เส้นแบ่งนี้บันทึกไว้แล้ว'],
+  ['Will register {utc} UTC (Bangkok local {local}) · {ms} ms','จะบันทึก {utc} UTC (เวลากรุงเทพ {local}) · {ms} ms'],
+  ['Evidence stored. The Readiness report above now reads it.','บันทึกหลักฐานแล้ว รายงานความพร้อมด้านบนอ่านได้แล้ว'],
+  ['Enter a UTC date and time.','ใส่วันที่และเวลาแบบ UTC'],['Use a whole minute.','ใช้เวลาเต็มนาที'],['The time is in the future.','เวลานี้อยู่ในอนาคต'],
+  ['Holdout starts','holdout เริ่มที่'],['(registered, read only)','(บันทึกแล้ว อ่านอย่างเดียว)'],['Holdout boundary registered.','บันทึกเส้นแบ่ง holdout แล้ว'],
+  ['Profile enrolled and verified.','ลงทะเบียนและยืนยัน profile แล้ว'],['Preflight finished.','Preflight เสร็จแล้ว'],['Enrollment queued.','เข้าคิวลงทะเบียนแล้ว'],
+  ['Preflight queued.','เข้าคิว Preflight แล้ว'],['Cancel requested.','ส่งคำขอยกเลิกแล้ว'],
+  ['A different holdout boundary is already registered for this bot. It cannot be changed.','Bot นี้มีเส้นแบ่ง holdout ค่าอื่นบันทึกไว้แล้ว และเปลี่ยนไม่ได้'],
+  ['This time is later than an earlier holdout boundary of this account. Use that time or an earlier one.','เวลานี้ช้ากว่าเส้นแบ่ง holdout ที่บันทึกก่อนหน้าในบัญชีนี้ ใช้เวลานั้นหรือเวลาที่เร็วกว่า'],
+  ['The time must be a whole minute and not in the future.','เวลาต้องเป็นนาทีเต็มและไม่อยู่ในอนาคต'],
+  ['The server holds a different request under this key. Press the button again to send it with a new key.','เซิร์ฟเวอร์มีคำขออื่นใช้คีย์นี้อยู่ กดปุ่มอีกครั้งเพื่อส่งด้วยคีย์ใหม่'],
+  ['The request key is missing. Reload the page, then try again.','ไม่มีคีย์ของคำขอ โหลดหน้าใหม่แล้วลองอีกครั้ง'],
+  ['A Preflight is already active for this bot. Watch it or cancel it first.','Bot นี้มี Preflight ทำงานอยู่แล้ว ติดตามหรือยกเลิกก่อน'],
+  ['Enroll a verified profile for this bot and deployment first.','ลงทะเบียน profile ที่ยืนยันแล้วสำหรับ Bot และ deployment นี้ก่อน'],
+  ['Register the holdout boundary first.','บันทึกเส้นแบ่ง holdout ก่อน'],
+  ['The profile has no development range before the holdout boundary.','profile ไม่มีช่วงพัฒนาก่อนเส้นแบ่ง holdout'],
+  ['Preflight does not support this deployment.','Preflight ไม่รองรับ deployment นี้'],['The deployment is not READY.','deployment นี้ไม่ได้อยู่ในสถานะ READY'],
+  ['The deployment snapshot no longer matches. Generate and activate a new deployment.','snapshot ของ deployment ไม่ตรงแล้ว สร้างและ Activate deployment ใหม่'],
+  ['The saved risk policy changed after this deployment. Generate and activate a new deployment.','นโยบายความเสี่ยงเปลี่ยนหลัง deployment นี้ สร้างและ Activate deployment ใหม่'],
+  ['The Paper capital changed after this deployment. Generate and activate a new deployment.','เงิน Paper เปลี่ยนหลัง deployment นี้ สร้างและ Activate deployment ใหม่'],
+  ['The deployment membership changed. Generate and activate a new deployment.','สมาชิกของ deployment เปลี่ยน สร้างและ Activate deployment ใหม่'],
+  ['The Preflight evaluator does not match this deployment. Report it to the operator; do not retry.','ตัวประเมินของ Preflight ไม่ตรงกับ deployment นี้ แจ้งผู้ดูแลระบบ และอย่าลองซ้ำ'],
+  ['The capacity policy evaluator does not match. Report it to the operator; do not retry.','ตัวประเมินนโยบายความจุไม่ตรงกัน แจ้งผู้ดูแลระบบ และอย่าลองซ้ำ'],
+  ['The research queue is full. Try again later.','คิวงานวิจัยเต็ม ลองใหม่ภายหลัง'],['The server refused these fields. Check the ids.','เซิร์ฟเวอร์ไม่รับข้อมูลเหล่านี้ ตรวจรหัสอีกครั้ง'],
+  ['Not found for this bot.','ไม่พบสำหรับ Bot นี้'],['Confirm your identity, then press the button again.','ยืนยันตัวตน แล้วกดปุ่มอีกครั้ง'],
+  ['bars fetched','แท่งที่ดึงแล้ว'],['Raw dataset ready','ข้อมูลดิบพร้อมแล้ว'],['Raw history job succeeded.','งานดึงข้อมูลดิบสำเร็จ'],['Raw history job failed.','งานดึงข้อมูลดิบล้มเหลว'],
+  ['Raw history job cancelled.','งานดึงข้อมูลดิบถูกยกเลิก'],['Raw history job timed out.','งานดึงข้อมูลดิบหมดเวลา'],['Raw history job finished.','งานดึงข้อมูลดิบจบแล้ว'],
+  ['Raw history fetch in progress.','กำลังดึงข้อมูลดิบ'],['Verified research profile ready.','profile งานวิจัยที่ยืนยันแล้วพร้อมใช้'],
+  ['Research profile unavailable:','ยังใช้ profile งานวิจัยไม่ได้:'],['Raw history remains separate.','ข้อมูลดิบยังแยกเป็นอีกส่วน']
+];
+uiPairs.push(...pfrPairs);for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}
 function translate(text) {return uiTranslations.get(text)?.[uiLanguage]??text;}
@@ -839,7 +882,7 @@ function translateUI(){
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   let node;
   while((node=walker.nextNode())){
-    if(node.parentElement.closest('script,style,pre,textarea,.ov-data,#signalRows,#recentSignals .list-row,#positions .list-row,#accountInfo p,#userRows,#licenseRows,#webhookResult,#newLicenseResult,#loginError,#passwordMessage,.mc-data'))continue;
+    if(node.parentElement.closest('script,style,pre,textarea,.ov-data,.no-i18n,#signalRows,#recentSignals .list-row,#positions .list-row,#accountInfo p,#userRows,#licenseRows,#webhookResult,#newLicenseResult,#loginError,#passwordMessage,.mc-data'))continue;
     const current=node.textContent.trim(),old=originalUiText.get(node);
     // Retain canonical text through language toggles, but detect renderer updates.
     const source=old&&(current===old.en||current===old.th)?old:uiTranslations.get(current);

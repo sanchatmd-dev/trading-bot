@@ -13,8 +13,8 @@ const PINNED={
   '/styles-v2.css':['pa1','3c176609e0f7ac70'],
   '/research-job.css':['rj1','debdaa1caa20c7e0'],
   '/market-chart.css':['mc3','40b284a5bccd776f'],
-  '/theme-hud.css':['hud1','0b7476dcce91be79'],
-  '/i18n.js':['rel20261007','7e2483aaae8ead51'],
+  '/theme-hud.css':['r7ui1','08a46fadfa694f41'],
+  '/i18n.js':['r7ui5','03ca092f5d7eb400'],
   '/app.js':['rel20261007','e5c805b49a8669be'],
   '/analytics.js':['rel20261007','6ae87c8d66996569'],
   '/bots.js':['rel20261007','f5f66ce505852150'],
@@ -25,16 +25,17 @@ const PINNED={
   '/install-shortcut.js':['robot21','7e26ce2ba57a138b'],
   '/chart-indicators.js':['mc3','950f4cec25935f21'],
   '/interactive-chart.js':['mc3','5c3502ab4053f58c'],
-  '/quant-lab.js':['rel20261007','e4519c2794793c24'],
+  '/quant-lab.js':['r7ui2','6e3571a169a37d0a'],
   '/bridge-wizard.js':['ux1a','793e4724786f57b8'],
   '/pine-bridge.js':['s4b1','f1b33ebc7c5cc5a5'],
-  '/readiness.js':['md1','4d2273a9ffd44747'],
+  '/readiness.js':['r7ui1','a692c9349fbf06f9'],
   '/research-library.js':['rel20261007','7c30eeab079486fd'],
   '/research-job.js':['rj1','ffd1319d6cb583f4'],
   '/journey.js':['pa1','8afa02a6c985b4d3'],
   '/overview.js':['ov1','4a6b152db44a2a2d'],
   '/setup-guide.js':['sg1','0dd4be17dc729d4f'],
-  '/research-nav.js':['rn1','4de9b9e136d0c461']
+  '/research-nav.js':['rn1','4de9b9e136d0c461'],
+  '/preflight-runner.js':['r7ui6','380a5bf2e40ec318']
 };
 
 const publicFile=name=>new URL('../public'+name,import.meta.url);
