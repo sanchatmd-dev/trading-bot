@@ -1,0 +1,60 @@
+{
+  "schema": "r7-log-correction-identities-v1",
+  "baseline": "c4aab2a",
+  "candidate": "f1daede",
+  "source": "Exact Git release blobs; Windows working-tree CRLF hashes are not release pins.",
+  "identities": {
+    "legacy": {
+      "before": "988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a",
+      "after": "988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a",
+      "changed_files": []
+    },
+    "foundation": {
+      "before": "4304a00fc1dd8241decfb6d5a5046350804b70c2ce84623c55f1e9151a7690bd",
+      "after": "3b7696092798e88c60f555d5a08e44a2c3b67bc3d09e9710ecbf95f4930acbc5",
+      "changed_files": [
+        "src/postgres/quant-research-foundation.js"
+      ]
+    },
+    "ingestion": {
+      "before": "2999dbac1380a58d3dd1e02384114c3e723aede9d84a935a4971f2d035dc109f",
+      "after": "b15220aba1ee0bf3dfda06f7ccb80fcd87368320c0af63666bb3c64706ec36bd",
+      "changed_files": [
+        "src/postgres/quant-research-foundation.js"
+      ]
+    },
+    "pf2": {
+      "before": "fcc1303e0db4c1da9fd9f742a18423e0a19bd4493cb9f75a64bcc5074c7584e8",
+      "after": "a40e447edeb3a491fa347824f815f2a630e25670cf196e393a097d1887a15ffb",
+      "changed_files": [
+        "src/postgres/quant-research-foundation.js"
+      ]
+    },
+    "evaluator": {
+      "before": "3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada",
+      "after": "3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada",
+      "changed_files": []
+    }
+  },
+  "status": "LOCAL_REVIEW_ACCEPTED_NOT_DEPLOYED",
+  "author_checks": {
+    "passed": 9,
+    "failed": 0,
+    "command": "node --test test/quant-fail-closed-defaults.test.js"
+  },
+  "independent_checks": {
+    "passed": 13,
+    "failed": 0,
+    "commands": [
+      "node --test test/quant-fail-closed-defaults.test.js test/quant-engine-files.test.js"
+    ]
+  },
+  "historical_cancellation_cause": "UNKNOWN",
+  "database_diagnostic_loss_fixed": false,
+  "child_error_capture_added": false,
+  "deployment_performed": false,
+  "enrollment_retried": false,
+  "capacity_scope": "Existing envelope is limited to one enrollment on release 325d335. It cannot authorize this new release or another enrollment.",
+  "runtime_last_verified": "2026-10-08T11:18:21.899Z",
+  "runtime_reverified_this_slice": false
+}

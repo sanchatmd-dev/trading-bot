@@ -1,5 +1,9 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+## R7 local correction checkpoint, 2026-10-08
+
+The isolated terminal-log correction `f1daede` is pushed on `codex-worker/combined-r7`; independent checks passed 13/13. No deployment or retry occurred. Legacy/evaluator identities are unchanged; three runtime identities change. The old envelope is expressly limited to one enrollment on `325d335`, so unchanged evaluator identity does not authorize reuse. Next: design and independently review the bounded measurement contract, then prepare fresh release/policy/activation tools and concrete owner approval packets. Preserve historical failed evidence, keep Preflight OFF and defer the UI release. [Plan](R7_OBSERVABILITY_RELEASE_PLAN_2026-10-08.md), [evidence](evidence/R7_LOG_CORRECTION_2026-10-08.json).
+
 ## Codex continuation — R7 enrollment stopped, 2026-10-08
 
 After fresh intake and S1/S2 checks, the owner submitted O1 exactly once. The job finished CANCELLED on attempt one without a valid enrollment receipt. The read-only diagnostic at 11:18 UTC confirmed a direct launch in STOP_PROVEN and MEASURED_FINAL_SETTLED (0 read bytes, 28,672 write bytes), with no remaining lease. Receipt-dependent policy and launch fields do not establish a policy mismatch or an absent launch. The original cause remains UNKNOWN. Local reproduction confirms a diagnostic-loss path: runtime cancellation precedes the worker catch, whose diagnostic write requires RUNNING status. The reproduction does not identify the staging error. Next: review and implement a bounded diagnostic correction with focused failure-path tests, then determine release and capacity-policy pin consequences before seeking any new enrollment approval. Do not run a2, retry enrollment, mint another key or infer rollback authority from this failure. W7 and D6 remain accepted; R7 and PF-2 remain open, with Preflight OFF. [Evidence](evidence/R7_ENROLLMENT_STOP_2026-10-08.json).

@@ -1,5 +1,9 @@
 # Time Management — Project execution and data collection
 
+## R7 local correction checkpoint, 2026-10-08
+
+The local correction `f1daede` passed author checks (9/9) and independent checks (13/13). Exact Git-blob engine identities were computed; no host work ran in this slice. The release plan now includes a new measured envelope because the previous envelope explicitly excludes another release/enrollment. No calibration duration or completion estimate is established. Latest weekly usage was 86% remaining, short window unknown, reserve 15 points. Next is a small measurement-contract design/review packet. [Plan](R7_OBSERVABILITY_RELEASE_PLAN_2026-10-08.md).
+
 ## Codex continuation — R7 diagnostic checkpoint, 2026-10-08
 
 Fresh intake completed at 10:40 UTC. Browser modal confirmations required owner help because Computer Use could not establish the URL while dialogs were open. One enrollment was submitted; w1 observed CANCELLED at 11:00:12 UTC and v1 found no valid receipt at 11:00:53 UTC. The bounded diagnostic completed at 11:18:21 UTC: measured settlement, elapsed 35,417 ms, terminal drain 32,099 ms and barrier 2 ms. These timings do not identify the original failure. A local synthetic reproduction confirmed diagnostic loss after cancellation, not the staging cause. No completion estimate or speedup claim follows. Latest Codex weekly usage was 88% remaining; the short window was unavailable, and the 15-point reserve remains. Next work is a bounded local correction and independent review; deployment and another enrollment remain separate gates. [Evidence](evidence/R7_ENROLLMENT_STOP_2026-10-08.json).

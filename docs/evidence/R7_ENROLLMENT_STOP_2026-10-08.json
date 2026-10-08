@@ -48,7 +48,7 @@
     "policy_mismatch_proven": false,
     "measured_final_accounting_proven": true
   },
-  "next": "Implement and independently verify bounded terminal error observability against the intended release tree, then review fresh release pins before any separately approved enrollment attempt.",
+  "next": "Design and independently review the bounded measurement contract before fresh release/policy/activation tooling and separately approved enrollment.",
   "diagnostic": {
     "finished": "2026-10-08T11:18:21.899Z",
     "verdict": "DIAGNOSTIC_READ_COMPLETE",
@@ -71,7 +71,7 @@
     "full_database_fixture_run": false
   },
   "correction_review": {
-    "implemented": false,
+    "implemented": true,
     "first_slice": "Allowlist QUANT_IO_LAUNCH_UNCERTAIN in the worker terminal log; retain UNKNOWN for all unlisted codes.",
     "checks_required": [
       "Actual thrown-error catch preserves the allowlisted code.",
@@ -79,7 +79,9 @@
       "Existing terminal proof and success semantics remain unchanged."
     ],
     "deferred": "Scheduler-fenced durable diagnostics and bounded child diagnostics require a separate reviewed scope.",
-    "release_consequences": "Recompute runtime engine hashes and release pins. Revalidate capacity-policy and D6 applicability; no automatic policy replacement solely for an engine hash change.",
-    "new_enrollment_authorized": false
+    "release_consequences": "Superseded by R7_OBSERVABILITY_RELEASE_PLAN_2026-10-08.md: the existing envelope explicitly permits only one enrollment on release 325d335 and forbids reuse on another release. A new measured calibration/envelope and approved policy scope are required despite unchanged evaluator identity.",
+    "new_enrollment_authorized": false,
+    "implementation_commit": "f1daede",
+    "deployed": false
   }
 }
