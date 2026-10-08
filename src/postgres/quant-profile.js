@@ -39,7 +39,7 @@ export async function authorizeProfileV2Stop(db,owner,contract,context={}){
 
 /** One active PROFILE enrollment per owner and bot. Active means QUEUED, PAUSED, RUNNING or STOPPING.
  * The caller holds the scheduler singleton lock inside its SERIALIZABLE transaction, so a second submission with another
- * idempotency key either sees the first job here or conflicts with it at commit. It only reads, and creates no job, ledger or launch.
+ * idempotency key either sees the first job here or fails with 40001 at a read, the insert or the commit. It only reads, and creates no job, ledger or launch.
  * Diagnostic PROFILE jobs carry no completion mode and never match.
  */
 export async function assertNoActiveProfileEnrollment(db,owner,bot){

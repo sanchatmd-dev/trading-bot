@@ -155,11 +155,14 @@ test('offline enrollment extension installs exactly and admission builds marked 
 test('one active enrollment per owner and bot: a new key is refused with 409, the same key replays, terminal states free the slot',async()=>{
  const refusal=error=>error.code==='PROFILE_ENROLLMENT_ALREADY_ACTIVE'&&error.status===409;
  const activeEnrollments=async()=>(await db.query(`SELECT count(*)::int n FROM quant_foundation_jobs WHERE owner_id=$1
-  AND status IN ('QUEUED','PAUSED','RUNNING','STOPPING') AND contract->>'completion_mode'='pf2-enrollment-v1'`,[owner])).rows[0].n;
+  AND contract->>'bot_id'=$1 AND status IN ('QUEUED','PAUSED','RUNNING','STOPPING') AND contract->>'completion_mode'='pf2-enrollment-v1'`,[owner])).rows[0].n;
  const footprint=async()=>(await db.query(`SELECT (SELECT count(*) FROM quant_foundation_jobs)::int jobs,
   (SELECT count(*) FROM quant_io_ledgers)::int ledgers,(SELECT count(*) FROM quant_io_launches)::int launches`)).rows[0];
  const set=(id,sql,...values)=>db.query('UPDATE quant_foundation_jobs SET '+sql+' WHERE job_id=$1',[id,...values]);
- const cancelQueued=()=>db.query("UPDATE quant_foundation_jobs SET status='CANCELLED' WHERE owner_id=$1 AND status='QUEUED'",[owner]);
+ const cancelQueued=()=>db.query("UPDATE quant_foundation_jobs SET status='CANCELLED' WHERE owner_id=ANY($1::text[]) AND status='QUEUED'",[[owner,foreign]]);
+ // Direct insert of an active marked row, as the unmarked fixture below does.
+ const plant=(ownerId,contract)=>db.query(`INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at)
+  VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)`,[randomUUID(),ownerId,randomUUID(),JSON.stringify(contract),hash(canonical(contract)),now,now+900000]);
  assert.equal(await activeEnrollments(),0);
  const key=randomUUID(),first=await serial(()=>enrollment.enqueueEnrollment(owner,body,key));
  const before=await footprint(),token=randomUUID();
@@ -187,7 +190,16 @@ test('one active enrollment per owner and bot: a new key is refused with 409, th
  await serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID()));
  assert.equal(await activeEnrollments(),1);
  await cancelQueued();assert.equal(await activeEnrollments(),0);
- // Two simultaneous new keys: the scheduler lock and the SERIALIZABLE commit leave exactly one active job.
+ // The guard is per owner and bot: an active enrollment of another bot of this owner, or of this bot id under another owner, does not block.
+ const marked=(await row(first.job_id)).contract;
+ await db.query('INSERT INTO quant_foundation_owners(owner_id) VALUES($1) ON CONFLICT DO NOTHING',[foreign]);
+ await plant(owner,{...marked,bot_id:'other-bot-'+randomUUID()});
+ await plant(foreign,{...marked,owner_id:foreign});
+ assert.equal(await activeEnrollments(),0);
+ await serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID()));
+ assert.equal(await activeEnrollments(),1);
+ await cancelQueued();assert.equal(await activeEnrollments(),0);
+ // Two simultaneous new keys: one job commits; the loser is refused by the guard or loses the serialization race (40001).
  const race=await Promise.allSettled([serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID())),
   serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID()))]);
  assert.equal(race.filter(result=>result.status==='fulfilled').length,1);
@@ -195,7 +207,15 @@ test('one active enrollment per owner and bot: a new key is refused with 409, th
  assert.ok(refusal(loser)||loser.code==='40001',String(loser.code));
  assert.equal(await activeEnrollments(),1);
  await cancelQueued();
-});test('exact schema verification rejects shape, trigger, function, constraint and shadow FK drift',async()=>{
+ // A transaction that is open before the winner commits but takes its snapshot after it meets the guard itself, not 40001.
+ let committed;const afterWinner=new Promise(resolve=>{committed=resolve;});
+ const winner=serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID())).finally(committed);
+ const late=serial(async()=>{await afterWinner;return enrollment.enqueueEnrollment(owner,body,randomUUID());});
+ await Promise.all([winner,assert.rejects(late,refusal)]);
+ assert.equal(await activeEnrollments(),1);
+ await cancelQueued();
+});
+test('exact schema verification rejects shape, trigger, function, constraint and shadow FK drift',async()=>{
  const {assertQuantProfileEnrollmentSchema}=await import('../../src/postgres/quant-profile-enrollment-migration.js');
  const rollback=Error('rollback');
  for(const sql of [
