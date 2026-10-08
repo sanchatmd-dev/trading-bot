@@ -1,0 +1,51 @@
+{
+  "schema": "r7-inactive-release-preparation-v1",
+  "baseline": "325d335",
+  "candidate": "79c22b2db72d2a05512f96a3d065dbc980356138",
+  "status": "PACKAGE_LOCALLY_ACCEPTED_EXECUTOR_NOT_READY",
+  "package": {
+    "source_files": 653,
+    "dependency_files": 182,
+    "api_files": 835,
+    "worker_files": 363,
+    "worker_engine_files": 81,
+    "source_archive_bytes": 15207936,
+    "release_content_bytes": 37898028,
+    "builder_sha256": "7a2275f0a628fef17d2e0607e55916d13eb757b9d55351e24b4c576b5eab8211",
+    "checker_sha256": "48a39694c027427675c73b67628a7bad667808428cceb43bc1a37f7045be3b11",
+    "summary_sha256": "71a6de6c04bae7da1ff99d068fb4bc5276c597851d76f0a94fb4f9e0a2a5afe0",
+    "source_archive_sha256": "b139beb64a73f0225fd21aac076dddcb4072383f78f3626ac011c346f082eb64",
+    "release_manifest_sha256": "c7ccc0a38411e222a9ffa48a70972b0b3a155b80cef38cf4b1448a9149d89a5f",
+    "author_checker": "PASS",
+    "author_negative_refusals": 31,
+    "independent_checker": "PASS",
+    "independent_negative_refusals": 31,
+    "independent_builder_rerun": false,
+    "exact_git_and_dependency_proofs": true
+  },
+  "proposed_end_state": {
+    "api": "candidate running; all five research/foundation/V2/enrollment/Preflight flags OFF",
+    "research": "STOPPED; candidate tree and installed target only",
+    "trading": "unchanged"
+  },
+  "proposed_rollback": {
+    "target": "325d335",
+    "api_admission": "OFF",
+    "research": "STOPPED"
+  },
+  "fresh_host_baseline": "NOT_YET_RUN",
+  "execution_tool_review": "NOT_READY",
+  "owner_effect_go": "NOT_GRANTED_FOR_THIS_PACKET",
+  "host_actions": 0,
+  "deployment_performed": false,
+  "calibration_performed": false,
+  "enrollment_retried": false,
+  "baseline_reader_draft": {
+    "status": "PRE_REVIEW_INCOMPLETE",
+    "local_draft_checks_passed": 9,
+    "serialized_main_fixture_complete": false,
+    "execution_blocked": true,
+    "host_actions": 0
+  },
+  "candidate_ci": "success"
+}

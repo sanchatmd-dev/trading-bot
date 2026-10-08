@@ -66,7 +66,7 @@
   "staging_cause": "UNKNOWN",
   "deployment_performed": false,
   "enrollment_retried": false,
-  "next": "Establish genuine scratch admission inputs, independent engineering budgets and setup/cleanup bounds before an executable measurement packet. No enrollment retry or release authorized.",
+  "next": "Native child diagnostics and proposal-only epoch guard are accepted locally. Complete and review bounded baseline reader and inactive-release executor; calibration/enrollment remain separate gates.",
   "exact_input_pipeline": {
     "author": "PASS",
     "independent": "PASS",
@@ -105,5 +105,21 @@
     ],
     "real_calibration_certified": false,
     "host_actions": 0
-  }
+  },
+  "measurement_epoch_guard": {
+    "status": "LOCAL_PROPOSAL_GUARD_ACCEPTED",
+    "author_passed": 27,
+    "independent_passed": 27,
+    "source_sha256": "de952fe0e58fb593dc153a305023cd8f6fd93835f205ec8abe0782fdbe2bbbba",
+    "execution_ready": false,
+    "stateless": true,
+    "real_product_negative_paths_tested": true,
+    "synthetic_evidence": true,
+    "required_transition_proof": "MEASURED_FINAL_SETTLED",
+    "preflight_off_during_bootstrap": true,
+    "distinct_final_policy_and_job": true,
+    "proof_authenticity_verified": false,
+    "durable_replay_protection_implemented": false
+  },
+  "preferred_measurement_route": "Separately approved staging maintenance epoch on existing genuine records; scratch importer suspended."
 }

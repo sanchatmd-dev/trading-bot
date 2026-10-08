@@ -1,0 +1,66 @@
+{
+  "schema": "r7-native-child-diagnostics-v1",
+  "candidate": "79c22b2db72d2a05512f96a3d065dbc980356138",
+  "baseline": "bb0327c",
+  "status": "LOCAL_REVIEW_ACCEPTED_NOT_DEPLOYED",
+  "source_files": [
+    "src/quant-research/profile-child-diagnostic.js",
+    "src/quant-research/io-runtime-launcher.js",
+    "src/postgres/quant-profile-runtime-v2.js",
+    "src/postgres/quant-research-foundation.js",
+    "src/quant-research/runtime-engine-files.js"
+  ],
+  "git_blob_hashes": {
+    "legacy": "988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a",
+    "foundation": "7ac5ae0738a628ebe858cfb49cd7b12aae0afd6b1bd6c4a8fa836f32fc26e89a",
+    "ingestion": "fd6745fa5e0609fa208b263f5bbbf19a7c1bbb00836bde14a904341ae0ed68c8",
+    "pf2": "28fc4613b073cb539822fc64f1fe9922bbb9d967cc9fe44659a21e781c43a685",
+    "evaluator": "3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada"
+  },
+  "parse_limit_bytes": 4096,
+  "finite_codes": 11,
+  "raw_stderr_retained": false,
+  "child_exit_scope": "LAUNCHER_PROCESS",
+  "kernel_stop_inferred_from_launcher_exit": false,
+  "parent_error_proof_accounting_unchanged_in_tests": true,
+  "review_before_sanitizer_repair": {
+    "passed": 111,
+    "skipped": 1,
+    "skip_reason": "Linux filesystem sync test on Windows"
+  },
+  "review_after_sanitizer_repair": {
+    "targeted_passed": 23,
+    "additional_accessor_refusals": 4,
+    "getter_invocations": 0
+  },
+  "review_repair": "Snapshot selected own data descriptors once; reject accessors without evaluating them.",
+  "scope_limitations": [
+    "Local controlled I/O, authority and terminal seams",
+    "No live SQL, Linux stop or physical I/O proof",
+    "Historical cancellation cause UNKNOWN"
+  ],
+  "ci": "success",
+  "deployment_performed": false,
+  "enrollment_retried": false,
+  "implementation_commit": "d9e9984",
+  "ci_history": [
+    {
+      "candidate": "d9e9984",
+      "status": "failure",
+      "reason": "PostgreSQL T-W3 expected old terminal log keys; intended childDiagnostic field was absent from expected schema.",
+      "runtime_failure_demonstrated": false
+    }
+  ],
+  "test_correction": {
+    "commit": "79c22b2",
+    "runtime_dependency_bytes_unchanged_verified_by_root": true,
+    "independent_syntax_actual_sanitizer_schema_check": "PASS",
+    "postgres_local": "NOT_RUN_NO_LOCAL_DATABASE",
+    "assertion": "Exact UNKNOWN/no-observer metadata; existing proof/timing/heartbeat/privacy retained",
+    "postgres_ci": "PASS"
+  },
+  "ci_runs": [
+    37788069890,
+    37788069784
+  ]
+}
