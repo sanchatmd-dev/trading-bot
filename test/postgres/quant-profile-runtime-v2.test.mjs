@@ -741,7 +741,11 @@ test('product worker happy path quiets heartbeat throughout a long terminal and 
   assert.equal(f.logs.length,1);assert.equal(f.logs[0].proof,'MEASURED_FINAL_SETTLED');
   assert.equal(f.logs[0].drainMs,80);assert.equal(f.logs[0].barrierMs,7);
   assert.ok(Number.isSafeInteger(f.logs[0].elapsedMs));assert.ok(f.logs[0].elapsedMs>=180);
-  assert.deepEqual(Object.keys(f.logs[0]).sort(),['barrierMs','drainMs','elapsedMs','jobId','proof','reason']);
+  assert.deepEqual(Object.keys(f.logs[0]).sort(),['barrierMs','childDiagnostic','drainMs','elapsedMs','jobId','proof','reason']);
+  // This synthetic launcher has no stderr observer. Unknown observation cannot assert launcher or kernel exit.
+  assert.deepEqual(f.logs[0].childDiagnostic,{version:'profile-child-diagnostic-v1',code:'UNKNOWN',byteCount:0,
+    byteCountExact:false,truncated:false,closeObserved:false,exitStatus:null,exitStatusKnown:false,
+    exitSignal:null,exitSignalKnown:false,exitScope:'LAUNCHER_PROCESS',childKernelStatusKnown:false});
 });
 
 test('product worker health loss mid-frame drains and cancels one attempt (T-W4)',{timeout:15000},async()=>{
