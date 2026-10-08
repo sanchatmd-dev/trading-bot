@@ -290,7 +290,9 @@ and documentation/release clerk use low. This is a local configuration update;
 historical model assignments below remain evidence of earlier work.
 A Claude root follows the AGENTS.md Claude column: on 2026-10-03 the owner set
 an Opus 5.5 / xhigh root with ultracode, graded Opus 5.5 and Sonnet 5.5 child
-roles only. The owner removed Fable 5.1 again on 2026-10-07 (it had been
+roles. On 2026-10-08 the owner added Haiku 5.5 for the Claude-only read-only
+Scout, the Release clerk and mechanical-only Documentation packets. The owner
+removed Fable 5.1 again on 2026-10-07 (it had been
 re-added on 2026-10-03 after the 2026-10-01 removal); earlier Fable work stays
 recorded below as history.
 Three bounded setup agents performed team audit, PF-1 mapping and a dispatch template.
@@ -2628,3 +2630,19 @@ consistency sweeps. No Fable agent was running at the change (the running s07
 rereview and D6 work use Opus only). Fable is not dispatched again unless the
 owner asks. Earlier Fable results stay in this file and in Time Management as
 history. No product code, test, deploy or VPS state changed.
+
+## 2026-10-08 — Haiku 5.5 added to the Claude team
+
+The owner added Haiku 5.5 to the Claude agent team to save usage while keeping
+quality. AGENTS.md gives it only low-judgement work with an exact contract: a new
+Claude-only Scout role for read-only local lookups (Haiku 5.5 / medium), the
+Release clerk (Haiku 5.5 / low, previously Sonnet 5.5 / low) and mechanical-only
+Documentation packets (Haiku 5.5 / low). Authored documentation, handoffs, Thai
+translation and consistency sweeps stay with Sonnet documentation. Opus and
+Sonnet keep every judgement, implementation, test, verify and host role. A Scout
+result is a pointer, never acceptance evidence, and a Scout "not found" never
+proves absence for a safety question. A Haiku packet returns after one failed
+attempt or any ambiguity and goes to the matching Sonnet role. A pilot of three
+to five packets per assignment measures usage, rework and defects before any
+saving is claimed; a defect or repeated rework returns that assignment to Sonnet.
+Codex roles are unchanged. No product code, test, deploy or VPS state changed.

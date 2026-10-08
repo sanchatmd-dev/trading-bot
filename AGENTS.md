@@ -34,7 +34,7 @@ or runtime actions.
 ## Models and dispatch
 
 Roles are fixed; each platform maps them to its own models. Use the column for
-the platform running the root.
+the platform running the root. Scout is the only Claude-only role.
 
 | Role | Scope | Codex model / effort | Claude model / effort |
 | --- | --- | --- | --- |
@@ -45,8 +45,9 @@ the platform running the root.
 | Coder | Bounded implementation, including high-risk modules under review | gpt-6.1-sol / medium | Sonnet 5.5 / high |
 | Tester | Independent focused acceptance and regression evidence | gpt-6.1-sol / medium | Sonnet 5.5 / medium |
 | Routine worker | One small local code/UI/fixture slice with an explicit contract and observable acceptance | gpt-6.1-sol / medium | Sonnet 5.5 / medium |
-| Documentation | Documentation and mechanical edits with no behavior change | gpt-6.1-sol / low | Sonnet 5.5 / low |
-| Release clerk | Git/release clerical work | gpt-6.1-sol / low | Sonnet 5.5 / low |
+| Documentation | Documentation and mechanical edits with no behavior change | gpt-6.1-sol / low | Sonnet 5.5 / low; Haiku 5.5 / low for mechanical-only packets |
+| Release clerk | Git/release clerical work | gpt-6.1-sol / low | Haiku 5.5 / low |
+| Scout | Read-only local lookup: locate files, symbols and line ranges; grep inventories; Git and CI status reads | Not used; a Codex root reads directly | Haiku 5.5 / medium |
 
 All non-Astra Codex roles use GPT-6.1 Sol. Role boundaries and independent review
 still apply even when implementer and reviewer use the same model. High effort
@@ -58,16 +59,49 @@ efforts come only from the Claude column. Claude effort order
 is low < medium < high < xhigh < max. The Claude column is
 graded: only root runs at xhigh, and every child role runs at high or below.
 Opus 5.5 carries the judgement-heavy roles below root; Sonnet 5.5 carries volume
-work. Opus 5.5 and Sonnet 5.5 are the only Claude models on the team. The owner
-removed Fable 5.1 from the Claude agent team on 2026-10-07, after re-adding it on
-2026-10-03; do not dispatch Fable 5.1 unless the owner asks again. The Opus
-architecture auditor covers second opinions, adversarial verification and design
-panels, and Sonnet documentation covers cross-document consistency sweeps. Do
-not use max effort or any other Claude model by default.
+work; Haiku 5.5 carries clerical, mechanical and read-only lookup work under an
+exact contract. Opus 5.5, Sonnet 5.5 and Haiku 5.5 are the only Claude models on
+the team. The owner added Haiku 5.5 on 2026-10-08 to save usage on low-judgement
+work without lowering quality on judgement work. The owner removed Fable 5.1 from
+the Claude agent team on 2026-10-07, after re-adding it on 2026-10-03; do not
+dispatch Fable 5.1 unless the owner asks again. The Opus architecture auditor
+covers second opinions, adversarial verification and design panels, and Sonnet
+documentation covers cross-document consistency sweeps. Do not use max effort or
+any other Claude model by default.
 The root may deviate for one packet only (raise one effort level, move a Sonnet
 role to Opus 5.5 after a second failed approach, or lower effort for a clearly
 trivial packet), recording the reason in the packet; the next packet returns to
 the table. A deviation never raises a child to xhigh or max.
+
+### Claude Haiku 5.5 limits
+
+Haiku 5.5 fills only three Claude assignments: the Scout role, the Release clerk
+role and mechanical-only Documentation packets. A mechanical-only packet names the
+exact paths and gives either the exact text or a deterministic rule: link or path
+fixes, renames, formatting, or an approved row or sentence copied into named
+files. Authored prose, status, evidence and gate wording, handoffs, checkpoints,
+Thai translation and consistency sweeps stay with Sonnet documentation.
+
+Haiku 5.5 never fills the auditor, debugger, operations, coder, tester or
+routine-worker roles. It never runs a verify, judge or acceptance stage. It never
+touches product code, tests, fixtures, host, browser or TradingView. A Scout never
+writes files. The Release clerk stages only the paths in the root packet and
+stops on any unexpected state: an extra changed path, a hook failure, a rejected
+push, a conflict or a failed check. It does not retry with changed flags and does
+not fix anything.
+
+A Scout result is a pointer, not evidence. Root, or the role that owns the
+decision, confirms any fact used for acceptance, a gate, safety or a GO. A Scout
+"not found" never proves absence for a safety question such as secrets, machine
+locations, authorization or gate state.
+
+A Haiku packet returns after one failed attempt or any ambiguity; root then
+re-routes it to the matching Sonnet 5.5 role. Root may move any Haiku packet to
+Sonnet 5.5 without a failure and records the reason as a deviation. Pilot three to
+five packets for each Haiku assignment and record usage before and after, elapsed
+time, rework and defects. If a Haiku packet lets a defect reach root review, or
+the pilot shows repeated rework, return that assignment to Sonnet 5.5 and report
+it to the owner. Claim no usage saving until the pilot measures one.
 
 ### Claude root ultracode
 

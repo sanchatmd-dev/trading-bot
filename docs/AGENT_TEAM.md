@@ -21,8 +21,11 @@ unattended or authorize a new research study merely because workers are availabl
 | Operations | gpt-6.1-sol / high | Designated executor of scoped local/VPS operational packets | Read-only default; mutations limited to existing user authority and readiness gates |
 
 A Claude root uses the Claude column of [AGENTS.md](../AGENTS.md): Opus 5.5 /
-xhigh root with ultracode (owner, 2026-10-03), graded Opus 5.5 and Sonnet 5.5
-child roles only. The owner removed Fable 5.1 from the team again on 2026-10-07
+xhigh root with ultracode (owner, 2026-10-03), graded Opus 5.5, Sonnet 5.5 and
+Haiku 5.5 child roles only. The owner added Haiku 5.5 on 2026-10-08 for the
+Claude-only read-only Scout, the Release clerk and mechanical-only Documentation
+packets, within the AGENTS.md Haiku limits. The owner removed Fable 5.1 from the
+team again on 2026-10-07
 (re-added 2026-10-03 after the 2026-10-01 removal). For a Claude root, the
 ultracode concurrency and fan-out rules in AGENTS.md replace the
 three-child maximum and the swarm-default sentences in the next paragraph and the
