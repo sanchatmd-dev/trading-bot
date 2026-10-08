@@ -37,6 +37,18 @@ export async function authorizeProfileV2Stop(db,owner,contract,context={}){
   return canReleaseQuantIo(db,row);
 }
 
+/** One active PROFILE enrollment per owner and bot. Active means QUEUED, PAUSED, RUNNING or STOPPING.
+ * The caller holds the scheduler singleton lock inside its SERIALIZABLE transaction, so a second submission with another
+ * idempotency key either sees the first job here or conflicts with it at commit. It only reads, and creates no job, ledger or launch.
+ * Diagnostic PROFILE jobs carry no completion mode and never match.
+ */
+export async function assertNoActiveProfileEnrollment(db,owner,bot){
+  const blocking=(await db.query(`SELECT job_id FROM quant_foundation_jobs WHERE owner_id=$1 AND status=ANY($2::text[])
+    AND contract->>'kind'='PROFILE' AND contract->>'completion_mode'=$3 AND contract->>'bot_id'=$4 LIMIT 1`,
+  [owner,active,PROFILE_ENROLLMENT_MODE,bot])).rows[0];
+  if(blocking)throw fail('PROFILE_ENROLLMENT_ALREADY_ACTIVE',409);
+}
+
 /** Transaction-local service. Caller owns the SERIALIZABLE transaction. */
 export class QuantProfileService{
   constructor({pineService,dataService,researchStore,clock=Date.now,enabled=false,
@@ -181,6 +193,8 @@ export class QuantProfileService{
          previous.contract.profile.deployment_id!==body.deployment_id)throw fail('IDEMPOTENCY_CONFLICT',409);
       return this.expose(previous);
     }
+    // After the idempotent replay: the same key still returns its job, while a new key waits for the active one to finish.
+    await assertNoActiveProfileEnrollment(this.db,owner,body.bot_id);
     const policy=validateQuantCapacityPolicy(this.capacityPolicy);
     const raw=await this.raw(owner,body.bot_id,body.raw_job_id);
     const {deployment,evidence,source}=await this.deployment(owner,body.bot_id,body.deployment_id);
