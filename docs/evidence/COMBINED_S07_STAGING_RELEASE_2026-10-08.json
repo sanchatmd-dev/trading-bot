@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "scope": "Staging combined API + research worker S07 release; trading worker, database, proxy and flags unchanged",
+  "target": "325d335086edb20d94356bd3d95c1b9968219bdb",
+  "branch": "codex-worker/combined-r7",
+  "contents": [
+    "CX-A Python readiness early",
+    "CX-B",
+    "evaluator binding A + D (432b328)",
+    "docs"
+  ],
+  "baseline": {
+    "api": "db9fb98",
+    "researchWorker": "5e398e7"
+  },
+  "rollback": {
+    "api": "db9fb98",
+    "researchWorker": "5e398e7",
+    "step": "x7 (pair rollback)"
+  },
+  "ownerGo": {
+    "approxAt": "2026-10-08T03:38Z",
+    "message": "GO s07",
+    "scope": "x1 to x4, contingency ids after a no-effect failure only, pair rollback x7 on failure",
+    "autoRollbackBeforeNewCodeRuns": true
+  },
+  "phases": [
+    {
+      "job": "r0",
+      "verdict": "R0_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-07T20:22Z",
+      "readOnly": true
+    },
+    {
+      "job": "r1",
+      "verdict": "R1_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-07T20:24Z",
+      "readOnly": true
+    },
+    {
+      "job": "x1",
+      "verdict": "X1_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-08T03:42Z",
+      "note": "First GO at 03:39:06 refused locally by the tool (GO older than 60 s when the executor started; 0 host connections; not consumed). Reissued at 03:42:47; incoming directory created."
+    },
+    {
+      "job": "x2",
+      "verdict": "X2_TRANSPORT_COMPLETE",
+      "pass": true
+    },
+    {
+      "job": "x3",
+      "verdict": "X3_PASS",
+      "pass": true
+    },
+    {
+      "job": "x3w",
+      "verdict": "X3W_PASS",
+      "pass": true
+    },
+    {
+      "job": "x4",
+      "verdict": "X4_PASS",
+      "pass": true,
+      "finishedAt": "2026-10-08T03:48:30Z"
+    },
+    {
+      "job": "r5",
+      "verdict": "R5_PASS",
+      "pass": true,
+      "secondsAfterReadyApprox": 120
+    },
+    {
+      "job": "r6",
+      "verdict": "R6_PASS",
+      "pass": true,
+      "secondsAfterReadyApprox": 654
+    }
+  ],
+  "upload": {
+    "transfers": 1,
+    "files": 4,
+    "bytes": 38642076,
+    "secondsApprox": 4
+  },
+  "extractVerification": {
+    "verdict": "X3_PASS",
+    "incomingFilesExact": 4,
+    "apiTree": {
+      "files": 833,
+      "sourceFiles": 651,
+      "dependencyFiles": 182,
+      "directories": 70,
+      "exact": true
+    }
+  },
+  "researchWorkerTree": {
+    "verdict": "X3W_PASS",
+    "files": 362,
+    "sourceFiles": 180,
+    "dependencyFiles": 182,
+    "copiedByHashFromApiTree": true,
+    "verified": true,
+    "engineFilesEqualToApiTree": 80,
+    "capacityPolicyCopyMode": "0600",
+    "cacheSealed": true,
+    "compiledFiles": 2011,
+    "buildOk": true,
+    "datasetRootUnchanged": true,
+    "unitTouched": false,
+    "coldStartTimingRunsMs": [
+      120,
+      75,
+      403
+    ],
+    "heavyImportMs": 403,
+    "wallMs": 310,
+    "limitMs": 1500,
+    "note": "First staging evidence of the CX-A cold start."
+  },
+  "activation": {
+    "verdict": "X4_PASS",
+    "bothUnitsSwitchedInOneStep": true,
+    "apiReadyAt": "2026-10-08T03:48:19Z",
+    "apiDownSecondsApprox": 13,
+    "researchWorkerReadyAt": "2026-10-08T03:48:30Z",
+    "researchWorkerDownSecondsApprox": 25,
+    "rollbackUsed": false,
+    "newLayersLastInDropInLists": true,
+    "servedFiles": {
+      "passed": 31,
+      "total": 31
+    },
+    "authGuards": {
+      "passed": 3,
+      "total": 3
+    },
+    "enginesEqual": true,
+    "researchQueueIdle": true,
+    "journalErrors": 0,
+    "note": "The two stop commands printed the usual systemd daemon-reload warning (matched by hash; benign)."
+  },
+  "immediateCheck": {
+    "verdict": "R5_PASS",
+    "secondsAfterReadyApprox": 120
+  },
+  "delayedCheck": {
+    "verdict": "R6_PASS",
+    "secondsAfterReadyApprox": 654,
+    "sameProcesses": true,
+    "cgroupEvents": 0,
+    "researchWorkerMemoryMbApprox": 55,
+    "health": "200 PAPER_ONLY",
+    "flagsUnchanged": {
+      "api": "research and admission flags off",
+      "researchWorker": "research, foundation and PROFILE V2 on; enrollment and preflight off"
+    },
+    "databaseIdle": true,
+    "activityUnchanged": true,
+    "datasetUnchanged": true
+  },
+  "engineIdentities": {
+    "legacy": "98817114",
+    "foundation": "4304a00f",
+    "ingestion": "2999dbac",
+    "pf2Engine": "fcc1303e",
+    "pf2Evaluator": "3fb2d465"
+  },
+  "unchanged": {
+    "tradingWorker": "f2bd332, not touched",
+    "migration": false,
+    "tradingViewAction": false
+  },
+  "rootReleaseAcceptance": true,
+  "rootAcceptedAt": "2026-10-08T04:00Z",
+  "rootAcceptanceBasis": "All nine receipts and raw outputs verified by hash.",
+  "residuals": [
+    "Webhooks arriving during the API gap (about 13 s) were not served.",
+    "TRUST_LOOPBACK_PROXY is unset on staging (unchanged); all clients share one application rate bucket.",
+    "Rollback to db9fb98 / 5e398e7 (x7) stays available only until D6 or the first flag change; the old trees are kept."
+  ],
+  "notDone": [
+    "D6 staging measurement",
+    "New capacity policy install",
+    "R7 durable enrollment",
+    "PF-2 activation",
+    "Any holdout access or campaign",
+    "UI preflight runner panel 0ff67ba (committed, CI 9/9, not released; planned s08 after R7)"
+  ],
+  "next": [
+    "D6 on staging (owner GO, 50 min quiet window)",
+    "R7 GO-1 and PF-2 activation (R7 policy, activation/rollback tool, read-only verification tool and owner snippets built and reviewed overnight)"
+  ],
+  "limits": {
+    "spotPaperOnly": true,
+    "symbol": "BINANCE:BTCUSDT",
+    "timeframe": "1m",
+    "liveTrading": false
+  }
+}
