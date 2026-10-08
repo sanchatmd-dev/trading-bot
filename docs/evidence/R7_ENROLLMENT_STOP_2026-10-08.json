@@ -1,0 +1,85 @@
+{
+  "schema": "r7-enrollment-stop-evidence-v1",
+  "date": "2026-10-08",
+  "scope": "staging Spot/Paper only",
+  "source": "Reviewed read-only w1, v1 and direct diagnostic receipts; owner-reported O1 response",
+  "enrollment": {
+    "job_prefix": "f1cfcdd6",
+    "submit_http": "2XX",
+    "submit_status": "QUEUED",
+    "submit_tries": 1,
+    "terminal_status": "CANCELLED",
+    "attempts": 1
+  },
+  "w1": {
+    "verdict": "STOP",
+    "finished": "2026-10-08T11:00:12.628Z",
+    "stdout_sha": "26203fef94af84c57c92f384b0f8349533a67ab0a9e8c803d03a81e712184bce",
+    "raw_sha": "97231bfc84033e1556867d61ad327c3e0f468d633d11d076bd2a2518baa25c26"
+  },
+  "v1": {
+    "verdict": "STOP",
+    "finished": "2026-10-08T11:00:53.699Z",
+    "stdout_sha": "ed826fe4ab8a2f66f668c0bf7e1ec7f85acb3ddc6ebe95de091c4206aafea4ee",
+    "raw_sha": "a1f9e3a9b07a714ff02921ecc785b5b268450a001b7eb5f89dae6659bcad8f9b",
+    "checks": {
+      "evidence": false,
+      "receipt": false,
+      "expose": true,
+      "admission": false,
+      "released": true,
+      "policy": false,
+      "selection": true,
+      "stores": false
+    },
+    "receipt_code": "PROFILE_ENROLLMENT_RECEIPT_INVALID",
+    "operations": {
+      "total": 1,
+      "settled": 1
+    }
+  },
+  "root_assessment": {
+    "enrollment_accepted": false,
+    "preflight_enabled": false,
+    "cause": "UNKNOWN",
+    "retry_performed": false,
+    "rollback_performed": false,
+    "launch_absence_proven": false,
+    "policy_mismatch_proven": false,
+    "measured_final_accounting_proven": true
+  },
+  "next": "Implement and independently verify bounded terminal error observability against the intended release tree, then review fresh release pins before any separately approved enrollment attempt.",
+  "diagnostic": {
+    "finished": "2026-10-08T11:18:21.899Z",
+    "verdict": "DIAGNOSTIC_READ_COMPLETE",
+    "raw_sha": "cd34c8ce9f8aceb91021be44352a2e3d88532a137659446512ef609024089ae5",
+    "launch_state": "STOP_PROVEN",
+    "terminal_proof": "MEASURED_FINAL_SETTLED",
+    "read_bytes": 0,
+    "write_bytes": 28672,
+    "drain_ms": 32099,
+    "elapsed_ms": 35417,
+    "barrier_ms": 2,
+    "worker_reason": "UNKNOWN",
+    "transient_exit_known": false,
+    "cause": "UNKNOWN"
+  },
+  "local_reproduction": {
+    "scope": "Actual runtime and worker method bodies with synthetic database and I/O seams",
+    "diagnostic_loss_reproduced": true,
+    "staging_cause_proven": false,
+    "full_database_fixture_run": false
+  },
+  "correction_review": {
+    "implemented": false,
+    "first_slice": "Allowlist QUANT_IO_LAUNCH_UNCERTAIN in the worker terminal log; retain UNKNOWN for all unlisted codes.",
+    "checks_required": [
+      "Actual thrown-error catch preserves the allowlisted code.",
+      "Arbitrary messages, paths and secrets remain excluded.",
+      "Existing terminal proof and success semantics remain unchanged."
+    ],
+    "deferred": "Scheduler-fenced durable diagnostics and bounded child diagnostics require a separate reviewed scope.",
+    "release_consequences": "Recompute runtime engine hashes and release pins. Revalidate capacity-policy and D6 applicability; no automatic policy replacement solely for an engine hash change.",
+    "new_enrollment_authorized": false
+  }
+}
