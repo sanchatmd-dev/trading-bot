@@ -5,6 +5,8 @@ import {QuantFoundationScheduler} from '../src/postgres/quant-foundation-schedul
 import {QuantResearchFoundationWorker,assertQuantHealthRecoveryPool,QUANT_HEALTH_RECOVERY_MINIMUM_POOL,
  QUANT_PROFILE_TERMINAL_LOG_REASONS} from '../src/postgres/quant-research-foundation.js';
 import {QUANT_IO_DIAGNOSTIC_REASONS} from '../src/postgres/quant-io-runtime.js';
+import {prepareEnrollmentAttempt} from '../src/postgres/quant-profile-enrollment.js';
+import {createProfileEnrollmentTicketAuthority} from '../src/postgres/quant-profile-enrollment-ticket.js';
 import {profileV2Fixture} from './helpers/profile-v2-fixture.js';
 import {canonical,hash} from '../src/pine-bridge/source.js';
 
@@ -79,15 +81,16 @@ test('only an explicit true enables PROFILE V2 on a scheduler',()=>{
 
 // --- C: one source for the diagnostic reasons ---------------------------------------------------------------------
 const profileReasons=['PROFILE_STOP_REQUESTED','PROFILE_COMPUTE_DEADLINE','QUANT_PROFILE_POLICY_MISMATCH',
- 'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED','PROFILE_DEADLINE_NEAR','PROFILE_V2_DISABLED','QUANT_IO_LAUNCH_UNCERTAIN'];
+ 'QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED','PROFILE_DEADLINE_NEAR','PROFILE_V2_DISABLED','QUANT_IO_LAUNCH_UNCERTAIN',
+ 'PROFILE_ENROLLMENT_DENIED','PROFILE_ENROLLMENT_TICKET_INVALID'];
 
-test('the worker terminal log reasons are the I/O diagnostic reasons plus the seven PROFILE reasons',()=>{
+test('the worker terminal log reasons are the I/O diagnostic reasons plus the nine PROFILE reasons',()=>{
  assert.deepEqual([...QUANT_IO_DIAGNOSTIC_REASONS],['COMPLETE','STOP_REQUESTED','ALREADY_STOPPING','STOP_UNCONFIRMED','UNKNOWN',
   'WRITEBACK_PENDING','COMMIT_BARRIER_FAILED','COMMIT_BARRIER_TIMEOUT','MEMORY_STAT_INVALID','FREEZE_UNVERIFIED','NOT_FROZEN',
   'CGROUP_EMPTY','QUANT_IO_TELEMETRY_UNAVAILABLE','POST_EXIT_UNKNOWN','POST_EXIT_TAIL_OBSERVED']);
  assert.deepEqual([...QUANT_PROFILE_TERMINAL_LOG_REASONS],[...QUANT_IO_DIAGNOSTIC_REASONS,...profileReasons]);
- assert.equal(QUANT_PROFILE_TERMINAL_LOG_REASONS.length,22);
- assert.equal(new Set(QUANT_PROFILE_TERMINAL_LOG_REASONS).size,22);
+ assert.equal(QUANT_PROFILE_TERMINAL_LOG_REASONS.length,24);
+ assert.equal(new Set(QUANT_PROFILE_TERMINAL_LOG_REASONS).size,24);
  assert.ok(Object.isFrozen(QUANT_IO_DIAGNOSTIC_REASONS)&&Object.isFrozen(QUANT_PROFILE_TERMINAL_LOG_REASONS));
 });
 
@@ -100,6 +103,38 @@ function profileTerminalLogFixture(){
   profileOperations:new Map(),terminalLog:line=>logs.push(JSON.parse(line))});
  return {worker,job,logs};
 }
+
+const parentEnrollmentRefusals=[
+ {code:'PROFILE_ENROLLMENT_DENIED',reject:()=>prepareEnrollmentAttempt({enrollment:{enabled:false}})},
+ {code:'PROFILE_ENROLLMENT_TICKET_INVALID',reject:()=>{
+  let hashReads=0;
+  const authority=createProfileEnrollmentTicketAuthority({readExecutableHash:async()=>{hashReads++;return 'f'.repeat(64);},
+   releaseGuard:()=>authority,isTransaction:()=>false});
+  try{authority.assert(Object.freeze({}),{});}finally{assert.equal(hashReads,0);}
+ }}
+];
+
+for(const refusal of parentEnrollmentRefusals)test('parent enrollment refusal '+refusal.code+' survives actual worker catch',async()=>{
+ let error;
+ // These are real exported helper refusals. The runtime boundary below is isolated, not a full completion integration.
+ await assert.rejects(async()=>refusal.reject(),value=>{assert.equal(value.code,refusal.code);error=value;return true;});
+ for(const proof of ['MEASURED_FINAL_SETTLED','UNKNOWN_FINAL_CHARGED','UNCONFIRMED']){
+  const {worker,job,logs}=profileTerminalLogFixture();
+  Object.assign(error,{terminal:{proof,status:'private status'},path:'/private/enrollment-path'});
+  worker.profileRuntimeV2={run:async({onTerminalDiagnostic})=>{
+   onTerminalDiagnostic({proof:'MEASURED_FINAL_SETTLED',reason:'COMPLETE',drainMs:23,barrierMs:2,
+    message:'private authorization diagnostic',path:'/private/diagnostic-path'});
+   throw error;
+  }};
+  await assert.rejects(worker.runProfileV2(job,{}),value=>value===error);
+  assert.equal(logs.length,1);
+  const {elapsedMs,...record}=logs[0];
+  assert.deepEqual(record,{jobId:'job-1',proof,reason:refusal.code,drainMs:23,barrierMs:2});
+  assert.ok(Number.isSafeInteger(elapsedMs)&&elapsedMs>=0);
+  assert.doesNotMatch(JSON.stringify(logs),/private|authorization diagnostic/);
+  assert.equal(worker.profileOperations.size,0);
+ }
+});
 
 test('PROFILE V2 thrown launch uncertainty retains its safe code, terminal proof and timings',async()=>{
  for(const proof of ['MEASURED_FINAL_SETTLED','UNKNOWN_FINAL_CHARGED','UNCONFIRMED']){
