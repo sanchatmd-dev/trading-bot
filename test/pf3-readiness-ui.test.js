@@ -77,9 +77,9 @@ test('index.html: panel after the Risk form and outside it, fixed texts, warning
     assert.equal(panel.querySelectorAll('input,select,textarea,form,a').length,0,'no field can save or start anything');
     assert.equal(panel.querySelectorAll('button').length,1);assert.equal(panel.querySelector('[style]'),null,'the CSP forbids inline styles');
     assert.equal(form.querySelector('.pf3-save-warning').textContent,WARNING);
-    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/readiness.js?v=md1','/journey.js?v=pa1'].map(part=>html.indexOf(part));
+    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/readiness.js?v=r7ui1','/journey.js?v=pa1'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'readiness.js loads after app.js and before journey.js');
-    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=rel20261007/);
+    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=r7ui5/);
     assert.doesNotMatch(html,/(styles-v2\.css|i18n\.js|journey\.js)\?v=p0j1["']/,'changed files carry a new cache version');
     assert.doesNotMatch(html,/(i18n\.js|readiness\.js|pine-bridge\.js)\?v=(rj1|pf4a|ux1a)["']/,'the news block change gave the files it touched a new cache version');
   }finally{dom.window.close();}
@@ -163,6 +163,9 @@ test('the historical card shows the funnel, rejection classes, TARGET_NOT_OPEN, 
     await p.open();
     const rows=p.rowsOf('Historical evidence (PF-2)'),h=ALL.historical,e=h.evidence,f=h.funnel;
     assert.equal(rows['Status'],'AVAILABLE');assert.equal(rows['Evidence job'],e.job_id);assert.equal(rows['Evidence plan hash'],e.plan_hash);
+    // The server admits only holdout-free, order-free, development-window evidence; the card states it on every AVAILABLE answer.
+    assert.equal(rows['Holdout accessed'],'No · checked by server');assert.equal(rows['Orders executed'],'No · checked by server');
+    assert.equal(rows['Development window only'],'Yes · checked by server');
     assert.equal(rows['Engine unchanged since evidence'],'No');assert.equal(rows['Policy unchanged since evidence'],'Yes');
     assert.equal(rows['Capital unchanged since evidence'],'Yes');assert.equal(rows['Deployment is the READY one'],'Yes');
     assert.equal(rows['Execution model'],'paper-close-v1');
@@ -197,7 +200,7 @@ test('the historical card shows the funnel, rejection classes, TARGET_NOT_OPEN, 
   try{
     await disabled.open();
     const rows=disabled.rowsOf('Historical evidence (PF-2)');
-    assert.equal(rows['Status'],'UNAVAILABLE');assert.equal(rows['Unavailable because'],'PF2_DISABLED');
+    assert.equal(rows['Status'],'UNAVAILABLE');assert.equal(rows['Unavailable because'],'PF2_DISABLED');assert.equal(rows['Holdout accessed'],undefined,'only an AVAILABLE answer states the admission facts');
     assert.match(disabled.block('Historical evidence (PF-2)').textContent,/No historical evidence is used for readiness\./);
     assert.equal(disabled.block('Historical evidence (PF-2)').querySelector('table'),null);assert.equal(rows['Orders accepted'],undefined);
   }finally{disabled.w.close();}

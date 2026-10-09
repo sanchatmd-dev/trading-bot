@@ -253,3 +253,25 @@ html[lang="th"] .sg-text,html[lang="th"] .sg-sub{font-size:13.5px}
 .rnav-label{color:var(--muted);font-size:12px;margin-right:2px}
 .rnav-go{padding:8px 12px;font-size:13px}
 @media(max-width:600px){.rnav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.rnav-label{grid-column:1/-1}.rnav-go{width:100%}}#killValue{text-transform:uppercase}
+
+/* Historical Preflight (PF-2) runner (preflight-runner.js) and Quant Lab Data tab fields (quant-lab.js). */
+.pfr{display:grid;gap:12px}
+.pfr-card{display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#081525;min-width:0}
+.pfr-card h3{margin:0;font-size:15px}
+.pfr-form,.pfr-actions{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
+.pfr-field{display:grid;gap:6px;margin:0;min-width:min(100%,260px);flex:1 1 260px}
+.pfr-field input,.pfr-field select{font-variant-numeric:tabular-nums}
+.pfr-check{display:flex;align-items:flex-start;gap:8px;margin:0;color:var(--text);flex:1 1 100%}
+.pfr-check input{width:auto;margin-top:3px}
+.pfr-status{margin:0;min-height:1.2em;font-size:13px;overflow-wrap:anywhere}
+.pfr-status code,.pfr-line code{margin-left:4px}
+.pfr-ok{color:var(--gain)}.pfr-bad{color:#ff8a9a}.pfr-closed{color:var(--muted)}
+.pfr-note,.pfr-muted{color:var(--muted);font-size:12px;margin:0}
+.pfr-value{margin:0;overflow-wrap:anywhere}
+.pfr-job{display:grid;gap:6px;min-width:0}
+.pfr-line{margin:0;font-size:13px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.pfr-summary,.ql-fields{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px;margin:6px 0 0;font-size:12px}
+.pfr-summary dt,.ql-fields dt{color:var(--muted)}.pfr-summary dd,.ql-fields dd{margin:0;overflow-wrap:anywhere}
+.pfr-danger{border-color:rgba(255,107,127,.5);color:#ff8a9a}
+.pf3-muted{color:var(--muted);font-size:12px}
+@media(max-width:600px){.pfr-card{padding:12px}.pfr-form,.pfr-actions{display:grid;grid-template-columns:minmax(0,1fr)}.pfr-actions .primary,.pfr-actions .ghost,.pfr-form .primary{width:100%}.pfr-field{min-width:0}.pfr-summary,.ql-fields{grid-template-columns:minmax(0,1fr)}}
