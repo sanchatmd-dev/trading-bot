@@ -1,0 +1,119 @@
+{
+  "schema": "r7-operation-bind-evidence-v1",
+  "date": "2026-10-08",
+  "scope": "staging Spot/Paper only",
+  "source": "Root-authorized read-only binding read of the IO ledger operation; owner GO for steps 1-3 (2026-10-08)",
+  "read": {
+    "job": "r7-operation-read-v2-b1",
+    "tool_source_sha": "1c5e4498e995df6cbfadfa514e6dc7574312fd16b8dcba9f69fdb05c250a0cdb",
+    "finished": "2026-10-08T19:52:29.674Z",
+    "host_connections": 1,
+    "read_only_transaction": true,
+    "receipt_sha": "57b023f79bdf04e4c60c6a347fc2d0c63d372813fb9cb4c39b7113a86aba45d8",
+    "verdict": "B1_PASS",
+    "blockers": []
+  },
+  "same_record_as_o1_read": {
+    "salted_id_hash": "c2ffadec38d72d1b",
+    "ledger_revision": 5,
+    "charge_bytes": "7,864,320/7,864,320",
+    "stop_proof": "STOP_PROOF_V1"
+  },
+  "w7_c2_comparisons": {
+    "unsalted_job_hash_equal": true,
+    "contract_hash_equal": true,
+    "policy_hash_equal": true,
+    "revision_5_equal": true
+  },
+  "binding_result": {
+    "crashed_operation_is_w7_window2_c2_diagnostic": true,
+    "path": "runtime terminal-drain path: UNKNOWN_FINAL_CHARGED after STOP_REQUESTED",
+    "w7_pin_values_recorded": false
+  },
+  "pre_execution_assurance": {
+    "independent_review": "ACCEPTABLE_WITH_FIXES",
+    "root_side_bindability_rule_applied": true,
+    "local_checks": {
+      "passed": 317,
+      "failed": 0
+    },
+    "live_local_harness": {
+      "postgres": "16.15",
+      "assertions_passed": 928,
+      "assertions_total": 928
+    }
+  },
+  "correction": {
+    "file": "W7_WINDOW2_2026-10-07.json",
+    "wording": "C2 charge came from the runtime path (crash plus stop acknowledgement with the same stop-proof digest), not from recovery"
+  },
+  "release_candidate": {
+    "commit": "eb532ff",
+    "branch": "claude-worker/combined-r7b",
+    "composition": "79c22b2 + one-active-enrollment guard 8840b91 + fixes eb532ff",
+    "guard_re_review": "ACCEPTABLE",
+    "ci": "9/9",
+    "inactive_release_package": {
+      "files": 836,
+      "source_files": 654,
+      "deps_files": 182,
+      "worker_subset_files": 363,
+      "engine_files_covered": 81,
+      "independent_reconstruction": "69/69",
+      "negative_checks": 45,
+      "audit": "ACCEPTABLE_WITH_FIXES",
+      "root_accepted_provenance_only": true
+    },
+    "engines": {
+      "legacy_unchanged": true,
+      "evaluator_unchanged": true,
+      "foundation_rotates": true,
+      "ingestion_rotates": true,
+      "pf2_engine_rotates": true
+    }
+  },
+  "gate_amendment": {
+    "proposal": "v3.3",
+    "sha_prefix": "93850754",
+    "independent_reviews": 3,
+    "accepts_exactly_one_w7_c2_crashed_record_in_one_inactive_release_window": true,
+    "every_other_stop_kept": true,
+    "o1_exact_settled_requirement_changed": false,
+    "owner_approved": false
+  },
+  "inactive_release_executor": {
+    "tool_code_sha_prefix": "46df173c",
+    "target": "eb532ff",
+    "admission_flags_all_off": true,
+    "research_stopped": true,
+    "rollback_to": "325d335",
+    "build_fix_rounds": 4,
+    "final_audit": "ACCEPTABLE_WITH_FIXES (PLAN text only)",
+    "ready_for_pins": true,
+    "owner_go_packets_planned": [
+      "amendment",
+      "STAGE",
+      "CLOSE",
+      "SWITCH",
+      "ROLLBACK"
+    ],
+    "owner_session": "2026-10-09 16:30 Bangkok (09:30 UTC)",
+    "host_effect_run": false
+  },
+  "not_done": {
+    "reset": false,
+    "reopen": false,
+    "transition": false,
+    "gate_amendment_approved": false,
+    "release": false,
+    "enrollment": false,
+    "preflight": false,
+    "holdout": false,
+    "preflight_state": "OFF",
+    "staging_changed_by_reads": false
+  },
+  "root_assessment": {
+    "read_accepted_as_evidence": "pending root decision",
+    "o1_exact_settled_requirement_changed": false
+  }
+}

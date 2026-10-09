@@ -105,7 +105,7 @@
     "leaseCleared": true,
     "workerReadyAboutSeconds": 11,
     "c1EvidenceUnchanged": true,
-    "meaning": "C2 PASS means the worker was stopped during a terminal drain entered through the scheduler cancel path with the child released and one operation open, and recovery charged the unknown final. It does not prove the compute ended normally."
+    "meaning": "C2 PASS means the worker was stopped during a terminal drain entered through the scheduler cancel path with the child released and one operation open, and the runtime terminal-drain path charged the unknown final after the stop acknowledgement (not recovery). It does not prove the compute ended normally."
   },
   "tool_history": [
     "Root review rounds before window 2.",
