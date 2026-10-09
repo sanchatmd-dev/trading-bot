@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Astra Claude Chat</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="bar">
+    <div class="brand">
+      <strong>Astra Claude Chat</strong>
+      <span id="repo" class="muted"></span>
+    </div>
+    <div class="controls">
+      <label class="field"><span>โมเดล</span><select id="model"></select></label>
+      <label class="field"><span>สิทธิ์</span>
+        <select id="mode">
+          <option value="acceptEdits">แก้ไฟล์อัตโนมัติ · ถามก่อนรันคำสั่ง</option>
+          <option value="default">ถามทุกครั้ง</option>
+          <option value="plan">วางแผนก่อน (ไม่แก้ไฟล์)</option>
+        </select>
+      </label>
+    </div>
+    <div class="actions">
+      <span id="cost" class="pill" title="ค่าใช้จ่ายโดยประมาณของแชทนี้ คิดจากเครดิต API">$0.00</span>
+      <button id="history" type="button" class="ghost">ประวัติ</button>
+      <button id="new" type="button" class="ghost">แชทใหม่</button>
+    </div>
+  </header>
+
+  <main id="log" aria-live="polite">
+    <section id="empty" class="empty">
+      <h1>สั่งงาน Claude บนโปรเจกต์ของคุณ</h1>
+      <p>ใช้เครดิต API จาก Console ไม่ใช้โควตา Max · พิมพ์งานที่ต้องการ เช่น “รันเทสต์แล้วสรุปผล” หรือ “แก้บั๊กใน src/risk.js แล้วเปิด branch ใหม่”</p>
+    </section>
+  </main>
+
+  <dialog id="sessions">
+    <form method="dialog" class="sheet">
+      <header><strong>แชทก่อนหน้า</strong><button class="ghost" value="close">ปิด</button></header>
+      <ul id="session-list"></ul>
+    </form>
+  </dialog>
+
+  <dialog id="login">
+    <form id="login-form" class="sheet">
+      <header><strong>เชื่อมต่อ</strong></header>
+      <p>วางลิงก์ที่แสดงในเทอร์มินัลตอนรัน <code>npm start</code> (มี <code>#token=</code>)</p>
+      <input id="login-link" type="text" autocomplete="off" placeholder="http://127.0.0.1:8787/#token=..." required>
+      <button type="submit">เชื่อมต่อ</button>
+    </form>
+  </dialog>
+
+  <footer class="composer">
+    <div id="status" class="status" hidden><span class="dot"></span><span>Claude กำลังทำงาน…</span></div>
+    <form id="send-form">
+      <textarea id="input" rows="1" placeholder="พิมพ์งานที่ต้องการ…" required></textarea>
+      <button id="stop" type="button" class="danger" hidden>หยุด</button>
+      <button id="send" type="submit">ส่ง</button>
+    </form>
+  </footer>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

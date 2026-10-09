@@ -571,3 +571,7 @@ PostgreSQL 450 tests ผ่าน 448 ล้ม 0 ข้าม 2; รอบท�
 ผ่าน CI 9/9 ที่ `28d6f7e` Native Linux proof, การวัด D6 p99 บน
 Linux, durable PROFILE V2 enrollment บน Linux และ staging activation ยังเป็น gate
 แยก; PF-2 API ยังปิด
+
+## Astra Claude Chat — สั่งงาน Claude ตอนติด usage limit
+
+หน้าแชทส่วนตัวใน [tools/claude-chat](tools/claude-chat/README.md) ใช้ Claude Agent SDK สั่ง Claude อ่าน แก้ และทดสอบ repo นี้ โดยคิดเงินจากเครดิต API รายเดือนของ Max แทนโควตา usage เป็นเครื่องมือพัฒนาที่รันบนเครื่องผู้พัฒนาเท่านั้น ไม่อยู่ใน Docker image หรือ runtime ของบอท
