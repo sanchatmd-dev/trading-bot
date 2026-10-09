@@ -5,7 +5,7 @@ const storage = {
   set: value => { try { localStorage.setItem('claude-chat-token', value); } catch {} },
 };
 
-let token = null, lastSeq = 0, epoch = null;
+let token = null, lastSeq = 0, epoch = null, sessionLimit = null;
 let assistants = new Map(), tools = new Map(), asks = new Map();
 
 function readToken() {
@@ -86,7 +86,8 @@ function clearLog() {
   $('empty').hidden = false; assistants = new Map(); tools = new Map(); asks = new Map();
   setCost(0);
 }
-function setCost(cost) { $('cost').textContent = '$' + Number(cost || 0).toFixed(cost >= 10 ? 2 : 4); }
+// Cumulative estimate for the whole chat (every run), with the per-chat cap when one is set.
+function setCost(cost) { $('cost').textContent = '$' + Number(cost || 0).toFixed(cost >= 10 ? 2 : 4) + (sessionLimit ? ' / $' + sessionLimit : ''); }
 function setBusy(busy) { $('status').hidden = !busy; $('stop').hidden = !busy; }
 function note(text, error) { append(el('div', 'note' + (error ? ' error' : ''), text)); }
 
@@ -248,6 +249,7 @@ async function init() {
     const state = await api('/api/state');
     $('model').replaceChildren(...state.models.map(m => { const o = el('option', '', m.label); o.value = m.id; return o; }));
     $('model').value = state.model; $('mode').value = state.mode; $('repo').textContent = state.cwd;
+    sessionLimit = state.maxSessionUsd ?? null;
     setCost(state.cost); setBusy(state.busy);
   } catch { return; }
   if (!matchMedia('(pointer: coarse)').matches) input.placeholder += ' (Enter ส่ง, Shift+Enter ขึ้นบรรทัดใหม่)';

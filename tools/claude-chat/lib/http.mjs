@@ -13,6 +13,33 @@ const HEADERS = {
 
 const fail = (status, message) => Object.assign(new Error(message), {status});
 
+const LOOPBACK_NAMES = ['127.0.0.1', 'localhost', '[::1]'];
+
+// Host values this server answers to: a loopback name on the port it listens
+// on, plus any CHAT_ALLOWED_HOSTS entries (for a private network name). A page
+// on another site that is rebound to 127.0.0.1 keeps its own Host, so it fails.
+function allowedHosts(req, extraHosts) {
+  const port = req.socket.localPort;
+  return new Set([...LOOPBACK_NAMES.map(name => `${name}:${port}`), ...extraHosts]);
+}
+
+// A browser sends Origin on cross-site requests. A page from any other origin
+// must not drive this server even if it somehow learned the token.
+function checkOriginAndHost(req, extraHosts) {
+  const hosts = allowedHosts(req, extraHosts);
+  const host = String(req.headers.host ?? '').toLowerCase();
+  if (!hosts.has(host)) throw fail(403, 'Host not allowed');
+  const origin = req.headers.origin;
+  if (origin !== undefined && !originAllowed(origin, hosts)) throw fail(403, 'Origin not allowed');
+}
+
+function originAllowed(origin, hosts) {
+  try {
+    const url = new URL(origin);
+    return (url.protocol === 'http:' || url.protocol === 'https:') && hosts.has(url.host);
+  } catch { return false; }
+}
+
 function sameToken(given, token) {
   const a = Buffer.from(String(given ?? '')), b = Buffer.from(token);
   return a.length === b.length && timingSafeEqual(a, b);
@@ -26,7 +53,8 @@ async function body(req) {
   throw fail(400, 'Invalid JSON');
 }
 
-export function createApp({chat, token, publicDir}) {
+export function createApp({chat, token, publicDir, allowedHosts: extra = []}) {
+  const extraHosts = extra.map(host => String(host).trim().toLowerCase()).filter(Boolean);
   const json = (res, status, value) => { res.writeHead(status, {...HEADERS, 'content-type': 'application/json; charset=utf-8'}); res.end(JSON.stringify(value)); };
   const routes = {
     'GET /api/state': () => chat.state(),
@@ -62,6 +90,7 @@ export function createApp({chat, token, publicDir}) {
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     try {
+      checkOriginAndHost(req, extraHosts);
       if (req.method === 'GET' && STATIC[url.pathname]) {
         const [file, type] = STATIC[url.pathname];
         res.writeHead(200, {...HEADERS, 'content-type': type});

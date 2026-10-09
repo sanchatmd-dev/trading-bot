@@ -1,11 +1,14 @@
 import {randomUUID} from 'node:crypto';
 import path from 'node:path';
+import {DENY_RULES, checkTool, guardHooks} from './guard.mjs';
 
 // Every inherited CLAUDE*/ANTHROPIC* variable is dropped: launched from inside
 // another Claude Code session, they carry its OAuth token, gateway, cloud
 // provider or host-managed session and would bill that instead of the Console
 // API key. Monthly API credits apply only to the Claude API with that key.
-const INHERITED = /^(CLAUDE|ANTHROPIC_)/;
+// Matching is case-insensitive (Windows variable names are), and the access
+// token of this server is never passed on to the agent or its shell commands.
+const INHERITED = /^(claude|anthropic_|chat_token$)/i;
 
 export const MODELS = [
   {id: 'claude-opus-5-5', label: 'Opus 5.5'},
@@ -13,6 +16,11 @@ export const MODELS = [
   {id: 'claude-haiku-5-5', label: 'Haiku 5.5'},
 ];
 export const MODES = ['default', 'acceptEdits', 'plan'];
+
+export function memorySessionStore(ids = []) {
+  const set = new Set(ids);
+  return {has: id => set.has(id), add: id => { set.add(id); }};
+}
 
 const SYSTEM_APPEND = `You are running inside Astra Claude Chat, a private local web chat the repository owner uses to direct work on this Git repository. Reply in the user's language (Thai unless they write otherwise). Work on a feature branch rather than the default branch unless asked. Commit or push only when the user asks, and never force-push. Before you say a change is done, run the relevant checks and report their results faithfully.`;
 
@@ -25,7 +33,12 @@ export function agentEnv(base, apiKey) {
 const clip = (text, max) => text.length > max ? text.slice(0, max) + `\n… (${text.length - max} more characters)` : text;
 
 export function summarizeTool(name, input, cwd) {
-  const rel = p => typeof p === 'string' && cwd && p.startsWith(cwd + path.sep) ? path.relative(cwd, p) : p;
+  // path.relative also handles Windows drive letters and either slash style.
+  const rel = p => {
+    if (typeof p !== 'string' || !cwd) return p;
+    const relative = path.relative(cwd, p);
+    return relative && !relative.startsWith('..') && !path.isAbsolute(relative) ? relative : p;
+  };
   switch (name) {
     case 'Bash': return {summary: String(input.command ?? ''), detail: input.description ? String(input.description) : ''};
     case 'Read': case 'Write': case 'Edit': case 'NotebookEdit': {
@@ -75,15 +88,23 @@ class Inbox {
 // One conversation at a time, driven through the Agent SDK's streaming input
 // mode so follow-ups, interrupts and model/mode switches reach the same run.
 export class Chat {
-  constructor({query, listSessions = async () => [], getSessionMessages = async () => [], config}) {
+  constructor({query, listSessions = async () => [], getSessionMessages = async () => [], sessionStore = memorySessionStore(), config}) {
     this.queryFn = query; this.listSessionsFn = listSessions; this.getSessionMessagesFn = getSessionMessages;
+    this.sessionStore = sessionStore;
     this.config = config;
+    this.maxSessionUsd = config.maxSessionUsd > 0 ? config.maxSessionUsd : null;
     this.model = config.model; this.mode = config.permissionMode;
     this.events = []; this.seq = 0; this.listeners = new Set();
     this.pending = new Map();
     this.q = null; this.inbox = null; this.gen = 0;
-    this.sessionId = null; this.busy = false; this.cost = 0;
+    this.sessionId = null; this.busy = false;
+    // cost = finished runs (costBase) + the running one (runCost). A run that
+    // ends, for example at the per-run cap, starts the next one from zero.
+    this.cost = 0; this.costBase = 0; this.runCost = 0;
   }
+
+  settleRun() { this.costBase += this.runCost; this.runCost = 0; this.cost = this.costBase; }
+  overSessionLimit() { return this.maxSessionUsd !== null && this.cost >= this.maxSessionUsd; }
 
   emit(event) {
     const entry = {...event, seq: ++this.seq};
@@ -93,22 +114,26 @@ export class Chat {
   }
   subscribe(listener) { this.listeners.add(listener); return () => this.listeners.delete(listener); }
   since(seq) { return this.events.filter(e => e.seq > seq); }
-  state() { return {busy: this.busy, sessionId: this.sessionId, model: this.model, mode: this.mode, cost: this.cost, cwd: this.config.cwd, models: MODELS, modes: MODES, maxBudgetUsd: this.config.maxBudgetUsd}; }
+  state() { return {busy: this.busy, sessionId: this.sessionId, model: this.model, mode: this.mode, cost: this.cost, cwd: this.config.cwd, models: MODELS, modes: MODES, maxBudgetUsd: this.config.maxBudgetUsd, maxSessionUsd: this.maxSessionUsd}; }
 
   start(resume) {
     const gen = ++this.gen, inbox = new Inbox();
+    // The per-run cap never exceeds what is left of the per-chat cap.
+    const left = this.maxSessionUsd === null ? Infinity : Math.max(this.maxSessionUsd - this.costBase, 0.0001);
     const options = {
       cwd: this.config.cwd,
       model: this.model,
       effort: this.config.effort,
       permissionMode: this.mode,
       canUseTool: (name, input, opts) => this.ask(gen, name, input, opts),
-      // The model asks questions in chat text; the browser has no dialog for this tool.
-      disallowedTools: ['AskUserQuestion', 'Bash(git push --force*)', 'Bash(git push -f*)'],
+      // Deny rules and the PreToolUse hook hold in every permission mode: protected
+      // paths, secrets, force pushes (see guard.mjs).
+      disallowedTools: DENY_RULES,
+      hooks: guardHooks(this.config.cwd),
       settingSources: ['project'],
       systemPrompt: {type: 'preset', preset: 'claude_code', append: SYSTEM_APPEND},
       includePartialMessages: true,
-      maxBudgetUsd: this.config.maxBudgetUsd,
+      maxBudgetUsd: Math.min(this.config.maxBudgetUsd, left),
       env: agentEnv(this.config.env, this.config.apiKey),
       ...(resume ? {resume} : {}),
     };
@@ -126,7 +151,7 @@ export class Chat {
     } catch (error) {
       if (gen === this.gen) this.emit({type: 'error', message: String(error?.message ?? error)});
     } finally {
-      if (gen === this.gen) { this.q = null; this.inbox = null; this.setBusy(false); this.denyPending('Session ended'); }
+      if (gen === this.gen) { this.q = null; this.inbox = null; this.settleRun(); this.setBusy(false); this.denyPending('Session ended'); }
     }
   }
 
@@ -134,12 +159,14 @@ export class Chat {
 
   handle(m) {
     if (m.type === 'system' && m.subtype === 'init') {
-      this.sessionId = m.session_id;
       if (m.apiKeySource !== 'ANTHROPIC_API_KEY') {
+        this.sessionId = m.session_id;
         this.emit({type: 'error', message: `หยุดทำงาน: Claude ไม่ได้ใช้ ANTHROPIC_API_KEY (ได้ "${m.apiKeySource}") จึงอาจไม่ได้ใช้เครดิต API`});
         this.stop();
         return;
       }
+      this.sessionId = m.session_id;
+      this.sessionStore.add(m.session_id);
       this.emit({type: 'init', sessionId: m.session_id, model: m.model, cwd: m.cwd, mode: m.permissionMode});
       return;
     }
@@ -167,10 +194,16 @@ export class Chat {
       return;
     }
     if (m.type === 'result') {
-      this.cost = m.total_cost_usd ?? this.cost;
+      this.runCost = m.total_cost_usd ?? this.runCost;
+      this.cost = this.costBase + this.runCost;
       this.emit({type: 'result', subtype: m.subtype, isError: m.is_error, cost: this.cost, durationMs: m.duration_ms, turns: m.num_turns, errors: m.errors ?? [], text: m.subtype === 'success' && m.is_error && !this.turnError ? m.result : undefined});
       this.turnError = false;
       if (!(m.queued_turn_count > 0)) this.setBusy(false);
+      if (this.overSessionLimit()) {
+        this.emit({type: 'error', message: `ถึงเพดานงบต่อแชท (CHAT_MAX_SESSION_USD $${this.maxSessionUsd}) แล้ว — เริ่มแชทใหม่เพื่อทำต่อ`});
+        this.stop();
+        return;
+      }
       // The per-run cap stops this run; the next message resumes the same
       // conversation as a new run with a fresh allowance.
       if (m.subtype === 'error_max_budget_usd') this.stop();
@@ -179,6 +212,9 @@ export class Chat {
 
   ask(gen, name, input, {signal, suggestions, title}) {
     if (gen !== this.gen) return Promise.resolve({behavior: 'deny', message: 'Session ended'});
+    // Same check as the PreToolUse hook: a protected target is refused without asking.
+    const refused = checkTool(name, input, this.config.cwd);
+    if (refused) return Promise.resolve({behavior: 'deny', message: refused});
     return new Promise(resolve => {
       const id = randomUUID();
       const finish = (result) => {
@@ -207,6 +243,7 @@ export class Chat {
   denyPending(message) { for (const p of [...this.pending.values()]) p.finish({behavior: 'deny', message}); }
 
   send(text) {
+    if (this.overSessionLimit()) throw Object.assign(new Error(`ถึงเพดานงบต่อแชท (CHAT_MAX_SESSION_USD $${this.maxSessionUsd}) แล้ว — เริ่มแชทใหม่เพื่อทำต่อ`), {status: 402});
     if (!this.q) this.start(this.sessionId);
     this.emit({type: 'user', text});
     this.inbox.push({type: 'user', message: {role: 'user', content: text}, parent_tool_use_id: null});
@@ -221,6 +258,7 @@ export class Chat {
   stop() {
     const q = this.q;
     this.gen++; this.q = null; this.inbox?.close(); this.inbox = null;
+    this.settleRun();
     this.denyPending('Session ended');
     this.setBusy(false);
     q?.close();
@@ -242,17 +280,19 @@ export class Chat {
 
   reset() {
     this.stop();
-    this.events = []; this.sessionId = null; this.cost = 0;
+    this.events = []; this.sessionId = null; this.cost = 0; this.costBase = 0; this.runCost = 0;
     this.emit({type: 'reset'});
   }
 
   async sessions() {
-    const list = await this.listSessionsFn({dir: this.config.cwd, limit: 30});
+    // Only chats this tool created: other Claude Code sessions in the repository stay out of reach.
+    const list = (await this.listSessionsFn({dir: this.config.cwd, limit: 200})).filter(s => this.sessionStore.has(s.sessionId)).slice(0, 30);
     return list.map(s => ({sessionId: s.sessionId, title: s.customTitle || s.summary || s.firstPrompt || s.sessionId, lastModified: s.lastModified, gitBranch: s.gitBranch ?? null}));
   }
 
   async resume(sessionId) {
     if (!/^[0-9a-f-]{36}$/i.test(sessionId)) throw Object.assign(new Error('Invalid session'), {status: 400});
+    if (!this.sessionStore.has(sessionId)) throw Object.assign(new Error('Session was not created by Astra Claude Chat'), {status: 404});
     const history = await this.getSessionMessagesFn(sessionId, {dir: this.config.cwd});
     this.reset();
     this.sessionId = sessionId;

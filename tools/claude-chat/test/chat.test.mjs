@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {Chat, agentEnv} from '../lib/chat.mjs';
+import {Chat, agentEnv, memorySessionStore} from '../lib/chat.mjs';
 import {createApp} from '../lib/http.mjs';
 
 const TOKEN = 'fixture-token-not-a-secret-000';
@@ -171,7 +171,7 @@ test('resume replays the saved transcript before continuing it', async () => {
     {type: 'user', uuid: 'u2', parent_tool_use_id: null, message: {role: 'user', content: [{type: 'tool_result', tool_use_id: 't9', content: '...'}]}},
   ];
   const query = fakeQuery(bashTurn);
-  const chat = new Chat({query, config, getSessionMessages: async (id, opts) => { assert.equal(id, SESSION); assert.equal(opts.dir, '/repo'); return history; }});
+  const chat = new Chat({query, config, sessionStore: memorySessionStore([SESSION]), getSessionMessages: async (id, opts) => { assert.equal(id, SESSION); assert.equal(opts.dir, '/repo'); return history; }});
   await chat.resume(SESSION);
   assert.deepEqual(chat.events.map(e => e.type), ['reset', 'user', 'text', 'tool', 'resumed']);
   assert.equal(chat.events.find(e => e.type === 'tool').summary, 'README.md');
