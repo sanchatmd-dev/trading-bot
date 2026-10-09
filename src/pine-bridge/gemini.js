@@ -1,6 +1,7 @@
 import {fail} from './source.js';
 import {providerMessages,OpenAIProvider} from './provider.js';
 import {aiSourceView} from './ai-source.js';
+import {AnthropicProvider} from './anthropic.js';
 
 export class GeminiProvider {
   constructor({fetcher=fetch,env=process.env}={}){this.fetcher=fetcher;this.env=env;}
@@ -47,6 +48,7 @@ export class GeminiProvider {
 export class DirectProvider {
   run(request,source,options){
     if(request.provider.provider==='gemini')return new GeminiProvider().run(request,source,options);
+    if(request.provider.provider==='anthropic')return new AnthropicProvider().run(request,source,options);
     if(request.provider.provider==='openai-chat')return new OpenAIProvider().run(request,source,options);
     throw fail('AI_PROVIDER_NOT_CONFIGURED');
   }

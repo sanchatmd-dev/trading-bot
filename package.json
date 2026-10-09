@@ -23,8 +23,12 @@
     "jsdom": "^30.0.1"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.128.0",
     "decimal.js": "10.6.0",
     "js-tiktoken": "1.0.21",
     "pg": "8.23.0"
+  },
+  "overrides": {
+    "@babel/runtime": "7.29.7"
   }
 }
