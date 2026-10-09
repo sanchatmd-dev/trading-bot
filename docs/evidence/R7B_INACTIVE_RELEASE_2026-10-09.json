@@ -1,0 +1,93 @@
+{
+  "schema": "r7b-inactive-release-evidence-v1",
+  "date": "2026-10-09",
+  "scope": "staging Spot/Paper only",
+  "source": "Root-supervised inactive release window under owner GOs (2026-10-09); all times UTC",
+  "owner_go": {
+    "amendment": "R7-CRASHED-BASELINE-AMENDMENT-V3",
+    "amendment_issued": [
+      {"time": "09:40", "code": "46df173c", "status": "voided by code fixes"},
+      {"time": "11:29", "code": "85508557", "status": "superseded by code fixes"},
+      {"time": "12:56", "code": "e7ebf314", "allowlist_sha": "78296fec984a43f96b9b03b363d318ba3afd38dc89fd1a8ce854d201a98f175f", "status": "used"}
+    ],
+    "stage_and_close": "11:41",
+    "switch_and_rollback": "11:41, re-issued 12:56 for code e7ebf314",
+    "owner_confirmed_no_foundation_or_research_job_since_b1_read": true
+  },
+  "executor": {
+    "name": "claude-r7b-release-v1",
+    "tool_code_sha": "e7ebf31470d648a4784ad912671b716ab3b3f12fa06aa09ca009675a81bd2573",
+    "fix_rounds": [
+      {"round": "5a", "reason": "r0 read stopped ENVFILE_FLAG at 09:41: API env file holds QUANT_RESEARCH_ENABLED=1 shadowed by unit value 0; the B3 SHADOWED rule was not ported; read-only, no effect"},
+      {"round": "5b/5c", "reason": "r0 collects every blocker and records host facts instead of stopping; FULL pins need explicit root allow entries"},
+      {"round": "5d", "reason": "pins derivation checks"},
+      {"round": "5e/5f", "reason": "x4 refused locally at 11:51 before any host connection because a stopped unit reports empty InvocationID and ControlGroup; fixed; pins re-bound to the new allowlist without a new baseline read"}
+    ],
+    "review_per_round": "independent tester plus Opus delta audit; all ACCEPTABLE or ACCEPTABLE_WITH_FIXES, no HIGH finding"
+  },
+  "jobs": [
+    {"step": "r0", "verdict": "STOP ENVFILE_FLAG", "time": "09:41:48", "note": "read-only"},
+    {"step": "r0-2", "verdict": "R0_PASS", "time": "11:30", "warning": "WARN_ENVFILE_FLAG_SHADOWED for API and worker", "config_identity": "8/8", "policy_match": true, "manager_environment_keys_allowed_by_root": 2},
+    {"step": "old-tool retirement", "result": "13/13", "time": "09:41"},
+    {"step": "x1a", "verdict": "X1A_PASS", "time": "11:42:14"},
+    {"step": "x1b", "verdict": "X1B_TRANSPORT_COMPLETE", "time": "11:43:35", "package_files": 4, "bytes": 38686578},
+    {"step": "x1c", "verdict": "X1C_PASS", "time": "11:44:53", "api_tree_entries_exact": 836},
+    {"step": "x1d", "verdict": "X1D_PASS", "time": "11:46:58", "worker_tree_files": 363, "worker_tree_is_byte_equal_subset_of_api_tree": true, "bytecode_cache": {"compiled": 2011, "failed": 0, "sealed": true}, "import_timing_checks_passed": 2, "api_and_worker_untouched": true},
+    {"step": "x2", "verdict": "X2_PASS", "time": "11:48:35", "detail": "API stopped, R7 enrollment layer archived, admission-off layer installed, all five flags 0, API restarted on 325d335", "gap_seconds_approx": 12, "restore": false},
+    {"step": "x3", "verdict": "X3_PASS", "time": "11:50:21", "detail": "research worker stopped and settled, stayed down 15 s, no strays, no new rows, research STOPPED"},
+    {"step": "x4 (first)", "verdict": "refused locally", "time": "11:51", "consumed": false},
+    {"step": "x4", "verdict": "X4_PASS", "time": "12:56:57", "detail": "API on eb532ff with all five flags 0, ready after about 11 s, no rollback; worker target installed, not started"},
+    {"step": "r5", "verdict": "R5_PASS", "time": "12:57:46"},
+    {"step": "r6", "verdict": "R6_PASS", "time": "13:07:41", "seconds_after_ready": 644}
+  ],
+  "idle_gate": {
+    "every_gate_verdict": "IDLE_AMENDED",
+    "accepted_historical": "exactly the one W7 C2 CRASHED operation",
+    "other_non_settled_operation": false
+  },
+  "root_acceptance": {
+    "accepted": "inactive release",
+    "time": "13:08:44",
+    "amendment_window_closed": "13:08:44"
+  },
+  "session_elapsed": {
+    "from": "09:40 (first owner GO)",
+    "to": "13:08 (window close)",
+    "approx_hours": 3.5,
+    "fix_rounds": 3
+  },
+  "staging_state_after": {
+    "release": "eb532ff",
+    "flags": {
+      "QUANT_RESEARCH_ENABLED": 0,
+      "QUANT_RESEARCH_FOUNDATION_ENABLED": 0,
+      "QUANT_PREFLIGHT_ENABLED": 0,
+      "QUANT_PROFILE_V2_ENABLED": 0,
+      "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": 0
+    },
+    "research_worker": "STOPPED",
+    "rollback_target": "325d335 (trees kept on the host)",
+    "rollback_now_requires": "new idle authority and new owner GO"
+  },
+  "residuals": [
+    "a manual worker start and stop that writes no rows would not be detected (owner told)",
+    "x4 stop command printed 165 bytes of stderr with rc 0; content not read; likely the systemd changed-on-disk notice",
+    "failed-unit systemd values for ControlGroup assumed empty"
+  ],
+  "not_done": {
+    "enrollment": false,
+    "bootstrap": false,
+    "preflight": false,
+    "measured_capacity": false,
+    "holdout": false,
+    "calibration": false,
+    "new_research_work": false,
+    "crashed_record_reset_reopened_edited_or_deleted": false,
+    "live": false,
+    "optimizer": false,
+    "best_inputs": false,
+    "guard_reset": false,
+    "spot_paper_only_unchanged": true
+  },
+  "next": "Owner decides the next R7 gate (the Roadmap does not define the step after an inactive eb532ff release)."
+}
