@@ -320,3 +320,7 @@ License/subscription ยังควบคุมด้วย Admin ไม่ใ�
 ยังต้องทำ native protective orders, authoritative balances/prices, exchange precision/filter verification,
 fee-aware live ledger, broker-specific contract/sandbox tests, และขั้นตอน cancel/close/reconcile จริง
 ก่อนออก release ที่เปิด Live ได้ การล็อก Live เป็นมาตรการป้องกัน ไม่ได้หมายความว่างานเหล่านี้เสร็จแล้ว
+
+## Astra Claude Chat — สั่งงาน Claude ตอนติด usage limit
+
+หน้าแชทส่วนตัวใน [tools/claude-chat](tools/claude-chat/README.md) ใช้ Claude Agent SDK สั่ง Claude อ่าน แก้ และทดสอบ repo นี้ โดยคิดเงินจากเครดิต API รายเดือนของ Max แทนโควตา usage เป็นเครื่องมือพัฒนาที่รันบนเครื่องผู้พัฒนาเท่านั้น ไม่อยู่ใน Docker image หรือ runtime ของบอท
