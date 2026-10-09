@@ -759,6 +759,8 @@ Git checkpoint PF-1B/PF-1C รวมโค้ดและเอกสารห�
 
 ตรวจ account usage ก่อน dispatch/งานแพงและทุก checkpoint กัน reserve 15 percentage points ตามนโยบาย ใช้ทั้ง Codex และ Claude โดยนับ usage ของแต่ละแพลตฟอร์มแยกกัน; มากกว่า 15% ถึง 30% ทำทีละงานเล็ก, <=15% หยุดรับงานใหม่ บันทึก checkpoint และไม่เปิดงานใหม่ ค่าไม่ทราบต้องระบุ unknown ไม่ใช่ 100% การกัน quota เป็นประมาณการ ไม่ใช่ hard lock และต้องเผื่อ account usage จาก task อื่น บันทึก snapshot ส่วนตัวใน `.qa-local/agent-team-usage.json` ไม่เก็บ raw account IDs ลง Git
 
+API-credit continuation (owner อนุมัติ 2026-10-09, ดู AGENTS.md): เฉพาะเมื่อ owner สั่งในแชตทุกครั้ง root เสนอได้แต่ไม่เริ่มเอง root หยุด dispatch, ยืนยันว่าไม่มี child ทำงาน, บันทึก checkpoint ใน `.qa-local/` แล้วรัน `node tools/claude-chat/handoff.mjs <checkpoint>` (CHAT-2 เพิ่ม); ที่ <=15% ยังทำขั้นนี้ได้เมื่อ owner สั่งชัด และไม่เริ่มงานอื่น ระหว่างต่อ Astra เป็น commander และ writer เดียว (Claude Code root ไม่เขียน ไม่ dispatch และไม่ทำขั้น Git/host/browser) ทำงานเดี่ยวไม่ใช้ Workflow tool กฎ safety, Git, host, browser, GO และ one-writer ยังใช้ครบ งบเป็น API credits (Console spend limit, `CHAT_MAX_BUDGET_USD`) ไม่ใช่ band ของ subscription ห้ามซื้อ credits หรือเปิด auto-reload เมื่อกลับ owner สั่ง Astra บันทึก checkpoint แล้วหยุด และ root ตรวจ Git, ownership, checkpoint ใหม่ก่อน dispatch credits รีเซ็ตทุกรอบบิลไม่สะสม และไม่ครอบคลุม Claude Code
+
 เมื่อรอข้อมูล VPS ให้ทำ local coding/docs/test ที่ dependencies ผ่าน แต่ heavy Quant บน VPS ใช้เพดานปฏิบัติงานหนึ่งงานและต้องผ่าน health/capability ปัจจุบันก่อน Scheduler QD-1/QS-1 ยังไม่ใช่ความสามารถที่ setup agents ทำให้พร้อมใช้
 
 ## 7. วิธีอัปเดตพร้อมเอกสารหลัก

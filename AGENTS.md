@@ -237,7 +237,8 @@ Compute remaining = clamp(100 - usedPercent); evaluate every relevant known wind
 and bucket. Missing windows/counters are unknown, never 100%. Account usage is
 shared within a platform. Codex and Claude usage are separate; apply these
 thresholds to the platform running the current root and never move work to the
-other platform to bypass a stop. No exact token balance or guaranteed future task
+other platform to bypass a stop. The only exception is the owner-triggered
+API-credit continuation below. No exact token balance or guaranteed future task
 cost can be inferred from percentages.
 
 Reserve 15 percentage points as a project policy, not a platform guarantee. Above
@@ -250,7 +251,9 @@ Unknown short-window data means provisional small slices, no long unattended run
 or guaranteed completion. Unknown all usage means local read-only
 planning/checkpoint only until refreshed.
 Workers report progress at their budget boundary; root refreshes before continuing.
-Never automatically redeem reset credits, buy credits or switch accounts.
+Never automatically redeem reset credits, buy credits or switch accounts, except
+that an owner-triggered API-credit continuation (below) may run in Astra on the
+owner's API credits; it never buys credits or enables auto-reload.
 
 The bands bind Claude ultracode workflows. Above 30%, the reservation covers the
 whole wave of agents. Above 15% up to 30%, run no fan-out: one tiny task with at
@@ -296,3 +299,36 @@ locations out of tracked files. Do not touch unrelated untracked diagnostics.
 At a checkpoint update Roadmap and Time Management and review README/Context.
 Record planned/local/staging/production scope precisely. No speedup claim based
 only on agent count; log actual work and re-estimate from observed throughput.
+
+## API-credit continuation
+
+Owner approved this path on 2026-10-09 (packet CHAT-1). It is an owner-triggered
+exception for one case only: the Claude subscription usage is near a stop band and
+the owner chooses to continue in Astra Claude Chat, a local Agent SDK chat billed
+to the owner's monthly Claude API credits. It changes who commands the checkout
+and how budget is measured; it changes no other rule.
+
+1. Trigger: only an explicit owner instruction in chat, each time. Root may
+   propose the handoff at a usage-band checkpoint. Root never starts it
+   automatically, and an earlier instruction does not carry over.
+2. Before handoff: root stops dispatch and confirms no child is active, saves a
+   checkpoint under the compact/resume rules to an ignored `.qa-local/` file, then
+   runs `node tools/claude-chat/handoff.mjs <checkpoint>` (added by CHAT-2). At or
+   below the 15% stop band root may still save the checkpoint and, on an explicit
+   owner instruction, run that command. It starts no other work.
+3. During continuation: the Astra session is the only commander and the only
+   writer of this checkout; the Claude Code root does not write, dispatch or run
+   Git, host or browser steps. Every safety, Git, host, browser, approval (GO)
+   and one-writer rule still applies. Astra works solo by default and does not
+   use the Workflow tool. Any subagent is billed to API credits and the owner
+   sets the limit.
+4. Budget: the subscription usage bands do not apply inside Astra. The budget is
+   API credits. The hard cap is the Console workspace spend limit and the per-run
+   stop is `CHAT_MAX_BUDGET_USD`. Never buy credits or enable auto-reload; the
+   owner decides both.
+5. Return: the owner tells Astra to save a checkpoint to `.qa-local/` and stop.
+   The Claude Code root then re-verifies Git state, file ownership and the
+   checkpoint before dispatching again.
+6. State: API credits refresh each billing cycle with no rollover, and they cover
+   the Claude API and Agent SDK, not Claude Code. Source:
+   https://platform.claude.com/docs/en/about-claude/api-credits-for-subscribers

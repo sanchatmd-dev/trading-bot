@@ -123,13 +123,31 @@ allowances, not measured prices. Split larger tasks; if no safe reservation fits
 defer. Calibrate from observed task history while noting concurrent account use.
 Check partial progress before granting any extension; never use up the reserve
 just because a worker is close to finishing. No automatic reset credit redemption,
-credit purchase or account change. A reservation cannot prevent outside consumption
+credit purchase or account change, except the owner-triggered API-credit
+continuation below. A reservation cannot prevent outside consumption
 or a platform interruption; maintain resumable task packets and local checkpoints.
 
 Usage snapshots belong in ignored `.qa-local/agent-team-usage.json` or the user
 status message. Project docs record the policy and task outcomes, not mutable
 personal account telemetry. Model usage, Gemini API billing and VPS CPU/disk are
 separate budgets; visibility into one does not establish the others.
+
+### API-credit continuation
+
+Owner approved 2026-10-09 (CHAT-1); AGENTS.md section "API-credit continuation"
+is authoritative. Only an explicit owner chat instruction, each time, triggers it;
+root may propose it at a usage-band checkpoint but never starts it. Root stops
+dispatch, confirms no child is active, saves a `.qa-local/` checkpoint and runs
+`node tools/claude-chat/handoff.mjs <checkpoint>` (added by CHAT-2); at or below
+the 15% stop band root may still do this on an explicit owner instruction and
+starts no other work. Astra is then the only commander and writer (the Claude Code root does not
+write, dispatch or run Git, host or browser steps), works solo with
+no Workflow tool, and every safety, Git, host, browser, GO and one-writer rule
+still applies. Budget is API credits (Console spend limit, `CHAT_MAX_BUDGET_USD`),
+not the subscription bands; never buy credits or enable auto-reload. On return the
+owner has Astra save a checkpoint and stop, and root re-verifies Git, ownership and
+the checkpoint. Credits refresh each billing cycle with no rollover and do not
+cover Claude Code.
 
 ## Local PC and VPS execution
 
