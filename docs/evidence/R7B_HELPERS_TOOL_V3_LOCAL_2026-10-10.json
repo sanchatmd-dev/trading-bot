@@ -1,0 +1,65 @@
+{
+  "schema": "r7b-helper-tool-v3-local-v1",
+  "recordedAt": "2026-10-10T18:05:00Z",
+  "status": "LOCAL_HELPERS_ON_TOOL_V3_ACCEPTED_EXECUTION_BLOCKED",
+  "operationalAcceptance": false,
+  "scope": "The R7B root helpers now read measurement tool v3. No helper code changed; the helper evidence was re-run locally. No host action.",
+  "install": {
+    "namespace": ".qa-local/codex-r7b-measure-v2",
+    "change": "host.mjs replaced byte for byte with the v3 host.mjs after checking the directory held exactly the previous tool bytes; all 11 v3 identity files now match there and the namespace code sha is the v3 value",
+    "toolCodeSha": "89cdc7c91566ced9ed48e4eae139a0b3cb792cb8e0f7ff9e20e4310d8793b385",
+    "previousBytesPreservedIn": ".qa-local/codex-r7b-startup-accepted-3447f121",
+    "note": "Codex's in-place suites in that directory that serve Job 0 now fail by design; the corrected copies live in .qa-local/claude-r7b-measure-v3-tests."
+  },
+  "helpers": {
+    "liveDirectory": ".qa-local/codex-r7b-measure-v2-root",
+    "codeEqualsAcceptedSnapshot": ".qa-local/codex-r7b-readiness-helper-accepted-e446d440",
+    "helperCodeChanged": false,
+    "helperDirectoryWrites": "none (all 53 helper and tool files hashed identical before and after)"
+  },
+  "checks": {
+    "previousVsV3": {
+      "selftestRoot": "57 / 57",
+      "abpb": "14 / 14",
+      "static": "16 / 16",
+      "isolation": "9 / 9",
+      "syntax": "11 / 11",
+      "startupChain": "22 / 22",
+      "fix3ReceiptPayload": "17 / 17 (taken from the tool v3 test run on identical bytes)"
+    },
+    "goldens": "AB, PB and hB unchanged; stage, m0, AB and PB bytes equal the previous fixtures; engine proof equal for all five engines",
+    "expectedDifferences": [
+      "tool code sha 3447f121 to 89cdc7c9",
+      "host.mjs hash 840e6c4c to 900c006b",
+      "m1 payload 219387 to 219635 bytes and a new payload hash; m0 payload unchanged"
+    ],
+    "records": {
+      "freeze": {
+        "path": ".qa-local/claude-r7b-helper-v3/helper-freeze-v3.json",
+        "sha256": "00bd024bab33382bb14daf1d89ea9f8e250a1a80a7b27045dc77139e0fc51aa0"
+      },
+      "integration": {
+        "path": ".qa-local/claude-r7b-helper-v3/integration-evidence-v3.json",
+        "sha256": "c7ac701a86d0e47439dd154e4f721aa3c9dc3edbd6ce6cc8f36bbe44a31938a0"
+      },
+      "golden": {
+        "path": ".qa-local/claude-r7b-helper-v3/golden-review-v3.json",
+        "sha256": "a0b6c2a3cfa0d821dce1165d14cb4427119ff468848c58315bdafdc9dcb24372"
+      }
+    },
+    "independentTester": "PASS"
+  },
+  "executionLocks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED"
+  ],
+  "nextAction": "The independent accounting review, the sealed Linux package and adapter, a read-only capability and health packet that also records one raw Job line, and the isolated PostgreSQL harness packet, each with a fresh owner GO; then a new epoch with new pins, allowlist (source sha 89cdc7c9) and per-effect GOs.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  }
+}
