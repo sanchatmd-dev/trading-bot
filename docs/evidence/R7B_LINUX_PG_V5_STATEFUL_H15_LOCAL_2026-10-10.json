@@ -1,0 +1,241 @@
+{
+  "schema": "r7b-linux-pg-v5-stateful-h15-local-v1",
+  "recordedAt": "2026-10-10T15:25:00Z",
+  "status": "LOCAL_SIMULATIONS_ACCEPTED_TOOL_DEFECT_FOUND_EXECUTION_BLOCKED",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "H-7b, H-7c, H-7d and H-15 case definitions, with local injected-simulation checks that run the accepted measurement tool mains whole. All 19 legacy cases are now defined. No PostgreSQL ran.",
+  "source": {
+    "codeSha256": "a9becea25f87be2a2466b2b54c99ae7adcc525fb5ac78f0980f1b7100f11eb1f",
+    "codeFiles": [
+      "runner.mjs",
+      "suite.mjs",
+      "integration.mjs",
+      "inventory.mjs",
+      "fixtures/startup-schema-fixture.mjs",
+      "fixtures/synthetic-product.mjs",
+      "accepted-tool-loader.mjs",
+      "service-cases.mjs",
+      "fixtures/service-world.mjs",
+      "accounting-cases.mjs",
+      "fixtures/accounting-world.mjs",
+      "timing-cases.mjs",
+      "close-cases.mjs",
+      "fixtures/close-world.mjs",
+      "producer-cases.mjs",
+      "fixtures/producer-world.mjs",
+      "fixtures/producer-m2b-world.mjs",
+      "stateful-cases.mjs",
+      "fixtures/stateful-world.mjs",
+      "h15-cases.mjs",
+      "fixtures/h15-world.mjs",
+      "fixtures/h15-product-config.mjs"
+    ],
+    "files": {
+      "runner.mjs": "50d9bcf66809e59af13982a6e4eaad881d899169c7f8862f4668c120e8061d54",
+      "suite.mjs": "fc6916d46ad42a9d1d53e350c65303ce5fdbc6ea5a229265a07924732412baea",
+      "integration.mjs": "f8aeb86317f394f4f43ffc88ac0592e894053463b405a816c05a3b5fda9235d2",
+      "inventory.mjs": "8acf6941d6a082db2953e6d2bcce74aa8662f6be696930cafe421e68ec5a5ddb",
+      "fixtures/startup-schema-fixture.mjs": "8031943714ac1c8c864304571b9cb03e10498f22d6d3d0bda6f29e615807c980",
+      "fixtures/synthetic-product.mjs": "733cc6439cc00b7d6b7f4d16864633737927fa50f658bfc61c5c195bd7bd7f02",
+      "accepted-tool-loader.mjs": "07e0a526953e308314879814de844c06db3e18e5eb79a79bf52c915c55416c2b",
+      "service-cases.mjs": "63b70b058e00783d56e87896aa632fc8b90c561aaed35d46d2b9e81f97d622b2",
+      "fixtures/service-world.mjs": "cfc48c8d43c693cbcc4a5fa7eecfa26fe0a9a474eb1add46d56cd372bba309b6",
+      "accounting-cases.mjs": "944658da565716c18cc8cfb545272d18883a34b0e5e647f6391b018ec5686c70",
+      "fixtures/accounting-world.mjs": "344d03d6157850f9ad14c36fe11cead5d08bdce9e7641996fc64bf8ef0666f19",
+      "timing-cases.mjs": "0d473929e074ec5f84008b1fd207497577524b1801007ccf202b9e1fd47d5935",
+      "close-cases.mjs": "1261b9f6efbc9c094578fcf0858d8bc03fe5e2a1545fb3bbf21a058456478523",
+      "fixtures/close-world.mjs": "22a7ecf1727f861c348696f455de8afc1b8232fa2e58babe9e4071b48f5bfb8a",
+      "producer-cases.mjs": "7a14cae4a459f61c52de46e2a05056ee89efe28ff8dbc47ea23aa8ee308fac9c",
+      "fixtures/producer-world.mjs": "5d0c877e774c6509eee7aa056611b38d71468353ae65c033fd86d10551006aa4",
+      "fixtures/producer-m2b-world.mjs": "3acd6bc783e81303880ff89cf10649c4e6e5a5fd0e1b7bcc48198a59b4e551c0",
+      "stateful-cases.mjs": "9469ef98d920dd9ece5bc19a288f6d24c5d0b81adf1c6c7880a286a36a52214e",
+      "fixtures/stateful-world.mjs": "d750c38887cfa014615a0f8d1fbd6c180d6b6525123584aacfe1407b33eca724",
+      "h15-cases.mjs": "308f3f4705e51fba7b6b42ac280efd9e182840e20deefabc5b29609763c67d1c",
+      "fixtures/h15-world.mjs": "024424c85d7e84b0b5a6aed6675a9d1183a647f67c5bb5fd0aceaf7fc190d188",
+      "fixtures/h15-product-config.mjs": "3aa72543c685ff3e381b9a6d359b4053b5242d5a348ca1125186471884e7374b"
+    },
+    "snapshot": ".qa-local/claude-r7b-linux-pg-v5-checkpoint-a9becea2",
+    "identitySha256": "6d8787f3373e0d828216f8a46f6d2e5bf5fb461574b2de8e26f00d9cee247216"
+  },
+  "provenance": {
+    "previousCodeSha256": "9527d9c4f170bbeb22c73303e12a455bd9875ad8ed0b391ff23465222c017f8f",
+    "previousSnapshot": ".qa-local/claude-r7b-linux-pg-v4-checkpoint-9527d9c4",
+    "previousSnapshotUnchanged": true,
+    "productRevision": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+    "acceptedMeasurementTool": "3447f1212353f7fa5fe933fc280f982eae8280ea53a839799ef79f9b74b496c4",
+    "changedFromPrevious": [
+      "suite.mjs (registration of the new cases; FAIL evidence keeps toolDefects, also through a cleanup AggregateError)",
+      "suite-selftest.mjs (the unported-gate test replaced)",
+      "new stateful-cases.mjs, fixtures/stateful-world.mjs, fixtures/stateful-memory-world.mjs (selftest only), stateful-selftest.mjs",
+      "new h15-cases.mjs, fixtures/h15-world.mjs, fixtures/h15-product-config.mjs, fixtures/h15-memory-world.mjs (selftest only), h15-selftest.mjs"
+    ]
+  },
+  "toolDefect": {
+    "id": "STOPAPI_JOB_EMPTY",
+    "severity": "HIGH",
+    "tool": "3447f1212353f7fa5fe933fc280f982eae8280ea53a839799ef79f9b74b496c4",
+    "site": "host.mjs:99 stopApi stop proof requires the systemd Job property to read exactly 0",
+    "realBehavior": "systemctl show -p Job prints Job= with an empty value when the unit has no job (systemd source: systemctl.c sets BUS_PRINT_PROPERTY_SHOW_EMPTY for -p; systemctl-show.c passes NULL for job id 0; bus-print-properties.c prints Name=). No systemd version prints Job=0.",
+    "impact": "Every API stop proof would time out and report STOP_FAILED after the API had already stopped: m1 step 4 (host.mjs:881), apiOff (host.mjs:709, reached from m4aMain and xmMain) and xm step 0 (host.mjs:1086). This is the EM-1 class of failure: an API outage after effects, with no automatic restart.",
+    "origin": "The measurement-v2 correction tightened the earlier check that accepted an empty or 0 Job; the correction fixtures served Job 0, so their tests could not see it. host.mjs:165 still accepts empty but also accepts a missing Job line.",
+    "verification": "Confirmed by the independent Opus audit from systemd source. Not yet observed on the VPS; a read-only host read of one raw Job line is still needed.",
+    "harnessEffect": "With the real Job shape, H-7b and H-7d FAIL with TOOL_DEFECT_STOPAPI_JOB_EMPTY. A diagnostic run with Job 0 shows the rest of each path passes; it can never turn a FAIL into a PASS. H-7c does not stop the API and passes.",
+    "proposedFix": "In a new tool version, accept exactly an empty Job value (or empty or 0) at host.mjs:99 and host.mjs:165, refuse a missing Job line, move the correction fixtures to the real shape, add a regression that parses a literal Job= line through parseShowText into stopApi for inactive and failed units, and re-accept the tool before any epoch."
+  },
+  "em1RootCauseProof": {
+    "toolSide": "The accepted tool checks the enabled API configuration in m0 and in the m1 pre-gate; an enroll layer without the storage limits file and dataset root stops with ENABLED_CONFIG_SCHEMA and zero effects.",
+    "productSide": "The eb532ff product readers QuantDataService (quant-data.js:48) and QuantResearchService (quant-research.js:43), loaded from the pinned export in an isolated worker thread, accept the API prospective environment the tool would write. Without QUANT_STORAGE_LIMITS_FILE they refuse with QUANT_STORAGE_LIMITS_REQUIRED (the EM-1 error); without only the dataset root they refuse with STORAGE_BUDGET_CONFIGURATION_REQUIRED.",
+    "unproven": "createQuantPreflightApi needs a database after its environment gates and is unproven until real PostgreSQL."
+  },
+  "acceptance": {
+    "rootAcceptedScope": [
+      "H-7b: whole m4aMain THREAT, TERMINAL and ADRS paths and m4bMain after ADRS on a stateful fake systemd; the stop paths fail honestly on the tool defect.",
+      "H-7c: whole m4bMain research stop and settlement with worker layers off, and the PREREQ_ADMISSION_OFF refusal.",
+      "H-7d: whole xmMain step 0, the reload-first and failed-start variants, the converged path, and the EM-1 failed-unit shape; the stop paths fail honestly on the tool defect.",
+      "H-15: m0Collect derives the four STAGE null facts and pins-derive full binds them; each D6-1 drift gives M0_DRIFT with zero effects; D6-2 gives COLLECT_INCOMPLETE; the enabled-config negative and the product-level reader proof above.",
+      "Every simulation override is honored only when the run is marked injected; passing paths assert verdict, null code and no blockers."
+    ],
+    "newCaseDefinitions": [
+      "H-7b",
+      "H-7c",
+      "H-7d",
+      "H-15"
+    ],
+    "injectedSuiteStatuses": {
+      "H-7b": "FAIL (TOOL_DEFECT_STOPAPI_JOB_EMPTY)",
+      "H-7c": "PASS",
+      "H-7d": "FAIL (TOOL_DEFECT_STOPAPI_JOB_EMPTY)",
+      "H-15": "PASS"
+    },
+    "reviews": {
+      "coderRounds": {
+        "stateful": 3,
+        "h15": 2
+      },
+      "architectureAudit": "ACCEPT_WITH_FIXES; harness fixes applied; tool defect confirmed",
+      "independentTester": "PASS_WITH_FINDINGS twice; second pass 36 of 36 with only low or info findings"
+    },
+    "wholePostgresCasesRun": false,
+    "nativeDependencySeal": false
+  },
+  "implementedCases": [
+    "H-1",
+    "H-2",
+    "H-3",
+    "H-4",
+    "H-5",
+    "H-6",
+    "H-7",
+    "H-7b",
+    "H-7c",
+    "H-7d",
+    "H-8",
+    "H-9",
+    "H-10",
+    "H-11",
+    "H-12a",
+    "H-12b",
+    "H-13",
+    "H-14",
+    "H-15",
+    "startup-schema"
+  ],
+  "missingLegacyCases": [],
+  "checks": {
+    "suiteRegression": {
+      "pass": 21,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/claude-r7b-linux-pg-v5-checkpoint-a9becea2/suite-selftest-results.json",
+        "sha256": "407c2a49938b34cd3132315e3b0a3e0606963a48cbf22bf9f76b3947a6958fb5"
+      }
+    },
+    "producerAuthor": {
+      "pass": 40,
+      "fail": 0
+    },
+    "closeRegression": {
+      "exit": 0
+    },
+    "serviceRegression": {
+      "exit": 0
+    },
+    "statefulAuthor": {
+      "pass": 36,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/claude-r7b-linux-pg-v5-checkpoint-a9becea2/stateful-results.json",
+        "sha256": "ae29aa7d06de806e783c8b7c0daa5967cfa8174999e9db2b54481bbbdf91d009"
+      }
+    },
+    "h15Author": {
+      "pass": 26,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/claude-r7b-linux-pg-v5-checkpoint-a9becea2/h15-results.json",
+        "sha256": "56d9b8d662de0d8104274aa11c1c67ca38074d3b2ac2118487a52aebacd9d8ef"
+      }
+    },
+    "independent": {
+      "pass": 36,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/claude-r7b-linux-pg-v5-independent/independent-results.json",
+        "sha256": "ac813676d53fd4e6a33071213c5561b2d68f9731aabca7252972c5d03b73da55"
+      },
+      "script": {
+        "path": ".qa-local/claude-r7b-linux-pg-v5-independent/independent.mjs",
+        "sha256": "9115307943384dbcb31dd0088e49277a1a98066f4cd10d670a1e542e51ed39ce"
+      }
+    },
+    "audit": {
+      "verdict": "ACCEPT_WITH_FIXES",
+      "report": {
+        "path": ".qa-local/claude-r7b-linux-pg-v5-audit.md",
+        "sha256": "c1e39de56d7dbdfbf5dd88c3d8571468686d534339c629163d180c484d2eb68d"
+      }
+    }
+  },
+  "residualFindings": [
+    "The H-15 expected holdout fact uses the new boundary and ignores a lower existing minimum; the drift run still fails closed, but the message can mislead.",
+    "The product-config worker imports readers from the plan product root while the pin check uses the tool root; they are the same path in the suite, and a tampered copy is refused, but a mismatched-root case is unprobed.",
+    "The fake systemd clears InvocationID on stop, sets NeedDaemonReload on pending-file creation, fixes the other-units reload count at 0, leaves ExecStart and EnvironmentFiles empty, and models neither start-limit-hit nor a queued job id."
+  ],
+  "limitations": [
+    "No PostgreSQL ran: SQL semantics, triggers, constraints, the holdout write-once row, the users.status and pine_deployments.state drift writes, and the pool and process peaks are unproven.",
+    "H-15 replaces the startup readiness collectors with a labeled synthetic seam; the skipped pre-effect gates are listed in the evidence.",
+    "Peak connections are computed (H-7 5 of 9, H-15 6 of 9), not measured.",
+    "The real Job line on the VPS systemd has not been read.",
+    "Native dependency graph unsealed; no Linux adapter; current VPS health and identity unknown."
+  ],
+  "executionLocks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED",
+    "TOOL_DEFECT_STOPAPI_JOB_EMPTY_OPEN"
+  ],
+  "nextAction": "Fix STOPAPI_JOB_EMPTY in a new measurement tool version and re-accept it, then point the harness at it. Then the independent accounting review, the sealed Linux package and adapter, a read-only capability and health packet that also records one raw Job line, and the isolated PostgreSQL harness packet, each with a fresh owner GO.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "oldEm1Closed": true,
+    "spotPaperOnly": true
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercentAtStart": 49,
+    "weeklyUsedPercentAtAcceptance": 50,
+    "fiveHourUsedPercentAtAcceptance": 8,
+    "checkedAt": "2026-10-10T15:20Z",
+    "reservePercentagePoints": 15,
+    "sharedAccountObservationOnly": true
+  },
+  "timing": {
+    "start": "2026-10-10T12:58Z",
+    "acceptance": "2026-10-10T15:25Z",
+    "speedupClaim": false
+  }
+}
