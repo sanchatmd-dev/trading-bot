@@ -1,0 +1,149 @@
+{
+  "schema": "r7b-linux-pg-v7-accounting-local-v1",
+  "recordedAt": "2026-10-10T19:30:00Z",
+  "status": "LOCAL_ACCOUNTING_REVIEW_FIXES_ACCEPTED_EXECUTION_BLOCKED",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "First architecture review of the accounting cases H-1, H-4 and H-5 and the resulting fixes, with local mock checks. No PostgreSQL ran.",
+  "source": {
+    "codeSha256": "41f76f04f037406df8be3239db1a453f13d5f41b7ca2f3766ee280e5a93963f8",
+    "codeFiles": [
+      "runner.mjs",
+      "suite.mjs",
+      "integration.mjs",
+      "inventory.mjs",
+      "fixtures/startup-schema-fixture.mjs",
+      "fixtures/synthetic-product.mjs",
+      "accepted-tool-loader.mjs",
+      "service-cases.mjs",
+      "fixtures/service-world.mjs",
+      "accounting-cases.mjs",
+      "fixtures/accounting-world.mjs",
+      "timing-cases.mjs",
+      "close-cases.mjs",
+      "fixtures/close-world.mjs",
+      "producer-cases.mjs",
+      "fixtures/producer-world.mjs",
+      "fixtures/producer-m2b-world.mjs",
+      "stateful-cases.mjs",
+      "fixtures/stateful-world.mjs",
+      "h15-cases.mjs",
+      "fixtures/h15-world.mjs",
+      "fixtures/h15-product-config.mjs"
+    ],
+    "files": {
+      "runner.mjs": "50d9bcf66809e59af13982a6e4eaad881d899169c7f8862f4668c120e8061d54",
+      "suite.mjs": "762cf696a0d623c25de587819ba5805f902c77f7f53b68017074048775dd3a57",
+      "integration.mjs": "f8aeb86317f394f4f43ffc88ac0592e894053463b405a816c05a3b5fda9235d2",
+      "inventory.mjs": "002847f2e297c6022de4b359212132d61c7dc68f2f6b6638d69d5b0d66af61cf",
+      "fixtures/startup-schema-fixture.mjs": "8031943714ac1c8c864304571b9cb03e10498f22d6d3d0bda6f29e615807c980",
+      "fixtures/synthetic-product.mjs": "733cc6439cc00b7d6b7f4d16864633737927fa50f658bfc61c5c195bd7bd7f02",
+      "accepted-tool-loader.mjs": "07e0a526953e308314879814de844c06db3e18e5eb79a79bf52c915c55416c2b",
+      "service-cases.mjs": "63b70b058e00783d56e87896aa632fc8b90c561aaed35d46d2b9e81f97d622b2",
+      "fixtures/service-world.mjs": "cfc48c8d43c693cbcc4a5fa7eecfa26fe0a9a474eb1add46d56cd372bba309b6",
+      "accounting-cases.mjs": "8a3a09293cc0858bace6b80bf1ee46515d864afcc4c8149bb2b5fe8a19959e36",
+      "fixtures/accounting-world.mjs": "07aec9b6bfa0d720c745b6a6e2b01d6c14e3ad8eb4d5d6735360396b0a1d73ec",
+      "timing-cases.mjs": "0d473929e074ec5f84008b1fd207497577524b1801007ccf202b9e1fd47d5935",
+      "close-cases.mjs": "1261b9f6efbc9c094578fcf0858d8bc03fe5e2a1545fb3bbf21a058456478523",
+      "fixtures/close-world.mjs": "22a7ecf1727f861c348696f455de8afc1b8232fa2e58babe9e4071b48f5bfb8a",
+      "producer-cases.mjs": "7a14cae4a459f61c52de46e2a05056ee89efe28ff8dbc47ea23aa8ee308fac9c",
+      "fixtures/producer-world.mjs": "5d0c877e774c6509eee7aa056611b38d71468353ae65c033fd86d10551006aa4",
+      "fixtures/producer-m2b-world.mjs": "3acd6bc783e81303880ff89cf10649c4e6e5a5fd0e1b7bcc48198a59b4e551c0",
+      "stateful-cases.mjs": "1d485fd205940a38edf46b91fe4c380716ca087dfcd0f7db03cbd28514ea4aba",
+      "fixtures/stateful-world.mjs": "d844419d87e33699aae0ab4b2b801f6a6e33b937d2ef2fd54d67b51ec36a0f67",
+      "h15-cases.mjs": "308f3f4705e51fba7b6b42ac280efd9e182840e20deefabc5b29609763c67d1c",
+      "fixtures/h15-world.mjs": "024424c85d7e84b0b5a6aed6675a9d1183a647f67c5bb5fd0aceaf7fc190d188",
+      "fixtures/h15-product-config.mjs": "3aa72543c685ff3e381b9a6d359b4053b5242d5a348ca1125186471884e7374b"
+    },
+    "snapshot": ".qa-local/claude-r7b-linux-pg-v7-checkpoint-41f76f04",
+    "identitySha256": "fc4fcf1a1c4f94f73ed054358085b6920bde5005f903a5b17d8af2b9bdbd4c7b"
+  },
+  "provenance": {
+    "previousCodeSha256": "148a43ec71cb646cd39de01ac308ef420bbde939c593a167f16fb8990254c3be",
+    "previousSnapshot": ".qa-local/claude-r7b-linux-pg-v6-checkpoint-148a43ec",
+    "acceptedMeasurementTool": "89cdc7c91566ced9ed48e4eae139a0b3cb792cb8e0f7ff9e20e4310d8793b385",
+    "productRevision": "eb532ffd7b127140c38c44c90cfed50f0708f81c"
+  },
+  "review": {
+    "auditor": "Opus, ACCEPT_WITH_FIXES",
+    "report": {
+      "path": ".qa-local/claude-r7b-linux-pg-accounting-audit.md",
+      "sha256": "ff2653cfe63f6ebbe82dccf40978baf0792417c7b69eefa9c291206672cf2adc"
+    },
+    "keyConclusions": [
+      "No path to a false PASS, an under-count or double-count of an active charge, a hidden foreign or second marked job, or the CRASHED record treated as settled.",
+      "The ONE-form subtraction runs only after CRASHED, PAUSED and lease or status mismatches are refused, and the residual must equal the W7 view exactly.",
+      "Donor rows come from the product runtime; copies use INSERTs with every key and trigger active; no replication-role change and no write to any W7 row."
+    ]
+  },
+  "fixes": [
+    "m0 builds use baseJobs null as production does; a non-null value needs an explicit label (one labeled strict variant remains).",
+    "The H-4 donor is disposed before the job fixtures; the computed connection peak drops from 9 to 5 of 9 usable.",
+    "H-5 stores the measured H-4 values and passes only when H-4 passed.",
+    "The lapse check reads 32 pinned product modules in H-1 and H-4; consumer worlds record lapseChecked 0 with the reason.",
+    "H-4 compares an independently computed job hash and the residual counts with the donor counts.",
+    "A W7 record revision drift must give ALLOWLIST_RECORD_CHANGED without touching donor rows.",
+    "Runtime failure and cleanup-timeout codes are no longer masked as fixture cleanup failures.",
+    "The first real run records the operations at the completing pause, the queued update result and the JSON round trip."
+  ],
+  "checks": {
+    "accounting": 16,
+    "service": "2 results PASS",
+    "close": 8,
+    "producer": 40,
+    "h15": 26,
+    "stateful": 39,
+    "suite": 22,
+    "accountingArtifact": {
+      "path": ".qa-local/claude-r7b-linux-pg-v7-checkpoint-41f76f04/accounting-results.json",
+      "sha256": "48bc0de056150c6881dddfdcbc7d19d39ce1e4949f2414ccbc0ac5898aee831b"
+    },
+    "independent": {
+      "verdict": "PASS_WITH_FINDINGS (one low, three info)",
+      "pass": 49,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/claude-r7b-linux-pg-v7-independent/independent-results.json",
+        "sha256": "fe0fbf268f27f9e9349273ce850758b4a7e021797fae07ddaf509fdf32dbddf4"
+      },
+      "script": {
+        "path": ".qa-local/claude-r7b-linux-pg-v7-independent/independent.mjs",
+        "sha256": "1079fd1ce1f574b19b0347673de4b2d2e404d9b027c234b360d14fca7baf5a20"
+      }
+    }
+  },
+  "firstRealRunObservations": [
+    "code for each H-1 and H-4 label",
+    "operations at the PROFILE_COMPLETING pause (expected ACTIVE; STOP_REQUIRED would be a harness fix)",
+    "RUNNING-to-QUEUED update result",
+    "JSON round trip of copied rows",
+    "peak connections from pg_stat_activity, wall time and peak memory"
+  ],
+  "residualFindings": [
+    "H-5 evidence lacks the synthetic-authority labels that H-1 and H-4 carry (not a regression).",
+    "Coverage gaps carried over from the legacy harness: no foreign ledger with an open operation during the ONE form, no PAUSED marked job, no active job created before the anchor."
+  ],
+  "limitations": [
+    "No PostgreSQL ran: every code, operation and count in these cases is a reasoned expectation until the first real run.",
+    "Native dependency graph unsealed; no Linux adapter; current VPS health and identity unknown."
+  ],
+  "executionLocks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED"
+  ],
+  "nextAction": "Build the sealed Linux package and execution adapter, then prepare a read-only capability and health packet that also records one raw Job line, and the isolated PostgreSQL harness packet, each with a fresh owner GO.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercent": 51,
+    "checkedAt": "2026-10-10T19:30Z",
+    "reservePercentagePoints": 15
+  }
+}
