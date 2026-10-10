@@ -1,0 +1,206 @@
+{
+  "schema": "r7b-linux-pg-v4-producer-local-v1",
+  "recordedAt": "2026-10-10T12:45:00Z",
+  "status": "LOCAL_PRODUCER_SIMULATIONS_ACCEPTED_EXECUTION_BLOCKED",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "H-12b and H-13 producer case definitions, with local injected-simulation checks of the case logic and the actual accepted-tool read and m2b functions. No PostgreSQL ran.",
+  "source": {
+    "codeSha256": "9527d9c4f170bbeb22c73303e12a455bd9875ad8ed0b391ff23465222c017f8f",
+    "codeFiles": [
+      "runner.mjs",
+      "suite.mjs",
+      "integration.mjs",
+      "inventory.mjs",
+      "fixtures/startup-schema-fixture.mjs",
+      "fixtures/synthetic-product.mjs",
+      "accepted-tool-loader.mjs",
+      "service-cases.mjs",
+      "fixtures/service-world.mjs",
+      "accounting-cases.mjs",
+      "fixtures/accounting-world.mjs",
+      "timing-cases.mjs",
+      "close-cases.mjs",
+      "fixtures/close-world.mjs",
+      "producer-cases.mjs",
+      "fixtures/producer-world.mjs",
+      "fixtures/producer-m2b-world.mjs"
+    ],
+    "files": {
+      "runner.mjs": "50d9bcf66809e59af13982a6e4eaad881d899169c7f8862f4668c120e8061d54",
+      "suite.mjs": "653833e652292b8557a2f298776fff25a9a8adbd1b451ed4dda92fd722533a65",
+      "integration.mjs": "f8aeb86317f394f4f43ffc88ac0592e894053463b405a816c05a3b5fda9235d2",
+      "inventory.mjs": "8acf6941d6a082db2953e6d2bcce74aa8662f6be696930cafe421e68ec5a5ddb",
+      "fixtures/startup-schema-fixture.mjs": "8031943714ac1c8c864304571b9cb03e10498f22d6d3d0bda6f29e615807c980",
+      "fixtures/synthetic-product.mjs": "733cc6439cc00b7d6b7f4d16864633737927fa50f658bfc61c5c195bd7bd7f02",
+      "accepted-tool-loader.mjs": "07e0a526953e308314879814de844c06db3e18e5eb79a79bf52c915c55416c2b",
+      "service-cases.mjs": "63b70b058e00783d56e87896aa632fc8b90c561aaed35d46d2b9e81f97d622b2",
+      "fixtures/service-world.mjs": "cfc48c8d43c693cbcc4a5fa7eecfa26fe0a9a474eb1add46d56cd372bba309b6",
+      "accounting-cases.mjs": "944658da565716c18cc8cfb545272d18883a34b0e5e647f6391b018ec5686c70",
+      "fixtures/accounting-world.mjs": "344d03d6157850f9ad14c36fe11cead5d08bdce9e7641996fc64bf8ef0666f19",
+      "timing-cases.mjs": "0d473929e074ec5f84008b1fd207497577524b1801007ccf202b9e1fd47d5935",
+      "close-cases.mjs": "1261b9f6efbc9c094578fcf0858d8bc03fe5e2a1545fb3bbf21a058456478523",
+      "fixtures/close-world.mjs": "22a7ecf1727f861c348696f455de8afc1b8232fa2e58babe9e4071b48f5bfb8a",
+      "producer-cases.mjs": "7a14cae4a459f61c52de46e2a05056ee89efe28ff8dbc47ea23aa8ee308fac9c",
+      "fixtures/producer-world.mjs": "5d0c877e774c6509eee7aa056611b38d71468353ae65c033fd86d10551006aa4",
+      "fixtures/producer-m2b-world.mjs": "3acd6bc783e81303880ff89cf10649c4e6e5a5fd0e1b7bcc48198a59b4e551c0"
+    },
+    "snapshot": ".qa-local/claude-r7b-linux-pg-v4-checkpoint-9527d9c4",
+    "identitySha256": "8cf97a332346010e60231bde14df6def58ea38a2358a4cc6ff632a49764a8818"
+  },
+  "provenance": {
+    "previousCodeSha256": "5fe8e2b354d678460437dd2516f67a0b105dd6333698594aab1ed1c2428924a5",
+    "previousSnapshot": ".qa-local/codex-r7b-linux-pg-v3-checkpoint-5fe8e2b3",
+    "previousSnapshotUnchanged": true,
+    "productRevision": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+    "acceptedMeasurementTool": "3447f1212353f7fa5fe933fc280f982eae8280ea53a839799ef79f9b74b496c4",
+    "changedFromPrevious": [
+      "producer-cases.mjs",
+      "fixtures/producer-world.mjs",
+      "accounting-cases.mjs (one line: test module override only when injected is true)",
+      "new fixtures/producer-m2b-world.mjs",
+      "new fixtures/producer-memory-world.mjs (selftest only)",
+      "producer-selftest.mjs",
+      "suite-selftest.mjs"
+    ]
+  },
+  "acceptance": {
+    "rootAcceptedScope": [
+      "H-12b: same owner and bot refused while the job is QUEUED and while RUNNING (reached through the product scheduler claim); another bot or another owner admitted; a foreign-bot row and a foreign-owner row each give sinceAnchor total 2, keyed 1, foreign 1 and m2b KEY_FOREIGN with stop class ADMISSION_THREAT; foreign rows removed in cleanup.",
+      "H-13: enrollment replay returns the same job and inserts no row after QUEUED, SUCCEEDED (product worker tick), CANCELLED from QUEUED (product scheduler cancel) and CANCELLED after launch (health drop mid-run); marked read and whole m2b give M2B_PASS with no effects on each terminal shape, with a synthetic W7 donor present.",
+      "Simulation inputs (producer factory, donor, accounting modules, idle exemption) are honored only when the run is marked injected; real mode requires the I-m2b idle result IDLE_AMENDED_MARKED."
+    ],
+    "newCaseDefinitions": [
+      "H-12b",
+      "H-13"
+    ],
+    "reviews": {
+      "coderRounds": 2,
+      "independentTester": "PASS (third pass 140 of 140)",
+      "architectureAudit": "ACCEPT_WITH_FIXES; all seven findings fixed and re-verified",
+      "rootFix": "two remaining truthy injected checks changed to strict equality, re-verified by the tester"
+    },
+    "wholePostgresCasesRun": false,
+    "nativeProducerFactoryRun": false,
+    "nativeDependencySeal": false
+  },
+  "implementedCases": [
+    "H-1",
+    "H-2",
+    "H-3",
+    "H-4",
+    "H-5",
+    "H-6",
+    "H-7",
+    "H-8",
+    "H-9",
+    "H-10",
+    "H-11",
+    "H-12a",
+    "H-12b",
+    "H-13",
+    "H-14",
+    "startup-schema"
+  ],
+  "missingLegacyCases": [
+    "H-7b",
+    "H-7c",
+    "H-7d",
+    "H-15"
+  ],
+  "checks": {
+    "producerAuthor": {
+      "pass": 40,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/claude-r7b-linux-pg-v4-checkpoint-9527d9c4/producer-results.json",
+        "sha256": "7cfcb5ae741ae01e0ef5ab335ca3134db7e43412683ced8df6469c8792941d8d"
+      }
+    },
+    "suiteRegression": {
+      "pass": 21,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/claude-r7b-linux-pg-v4-checkpoint-9527d9c4/suite-selftest-results.json",
+        "sha256": "31ff8aeeff7f8105cdba8de6767dd85adb7adb5d208db6fea144a45622091163"
+      }
+    },
+    "closeRegression": {
+      "pass": 8,
+      "note": "Rerun by the tester on the C2 files; close files unchanged from v3."
+    },
+    "serviceRegression": {
+      "exit": 0,
+      "note": "Rerun by the tester on the C2 files; service files unchanged from v3."
+    },
+    "accountingRegression": {
+      "note": "H-1, H-4 and H-5 give identical suite results in v3 and v4 under three dependency configurations (tester)."
+    },
+    "independent": {
+      "pass": 140,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/claude-r7b-linux-pg-v4-independent/independent-results.json",
+        "sha256": "4dc0b2bc3cdca923d23ab2a96ecb45feedc3bc86997969006e40549f86dd94c6"
+      },
+      "script": {
+        "path": ".qa-local/claude-r7b-linux-pg-v4-independent/independent.mjs",
+        "sha256": "cebd70759e72b59e262d3891318a1c46f86b3bbf5d60abbec9c7205458910a04"
+      }
+    },
+    "audit": {
+      "verdict": "ACCEPT_WITH_FIXES",
+      "report": {
+        "path": ".qa-local/claude-r7b-linux-pg-v4-audit.md",
+        "sha256": "1a42d83f5f5423b27a0b026772040196ddbf692f6accc31b0aa55aa0a7e5c1eb"
+      }
+    }
+  },
+  "corrections": [
+    "CANCELLED after launch added as a third H-13 shape (ops SETTLED, launches STOP_PROVEN).",
+    "Donor fixture disposed before the producer phases; producer pool limited to 3 connections.",
+    "Leak guard extended to the overridden owner, key, bot, policy hash and hB values; pbFileSha stays out because the real receipt prints it as the policy readback hash.",
+    "Profile worker executor mode uses the product readiness check.",
+    "Operations, launches and launcher stats asserted per terminal shape.",
+    "Evidence marks host facts, gates and stubs as synthetic; simulated path strings appear only in injected runs.",
+    "Simulation overrides honored only when injected is exactly true."
+  ],
+  "limitations": [
+    "No PostgreSQL ran: guard triggers, serialization, the one-executor index, FK and CHECK acceptance of test INSERT/DELETE, and transaction rollback of the foreign-row seed are unproven.",
+    "Real scheduler claim, cancel and worker tick, and the CANCELLED-after-launch path, have not run on the real runtime.",
+    "Host facts behind FLAG_MAP, ENVFILE_FLAG, PB_DRIFT, API_RESTARTED, RESEARCH_RESTARTED, worker DB identity and SUBMIT_LATE are synthetic, so those gates pass by construction.",
+    "The I-m2b idle site is NOT_EVALUATED in injected runs; IDLE_AMENDED_MARKED is unproven until real PostgreSQL.",
+    "Peak connections (donor 5, producer 4 to 6 of 9 usable) and process counts are computed, not measured.",
+    "H-12b ends with the job RUNNING because the product has no RUNNING-to-QUEUED path; each case disposes its own world.",
+    "Native dependency graph unsealed; no Linux adapter; current VPS health and identity unknown."
+  ],
+  "executionLocks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED"
+  ],
+  "nextAction": "Build H-7b/H-7c/H-7d (stateful recovery and stop paths) and H-15 (m0/FULL/m1 drift and pre-effect chain) locally, then the independent accounting review, the sealed Linux package and adapter, and concrete capability/health and harness packets that each need a fresh owner GO.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "oldEm1Closed": true,
+    "spotPaperOnly": true
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercentAtIntake": 48,
+    "weeklyUsedPercentAtAcceptance": 49,
+    "fiveHourUsedPercentAtIntake": 0,
+    "fiveHourUsedPercentAtAcceptance": 4,
+    "checkedAt": "2026-10-10T12:47Z",
+    "reservePercentagePoints": 15,
+    "sharedAccountObservationOnly": true
+  },
+  "timing": {
+    "intake": "2026-10-10T11:00Z",
+    "acceptance": "2026-10-10T12:45Z",
+    "speedupClaim": false
+  }
+}
