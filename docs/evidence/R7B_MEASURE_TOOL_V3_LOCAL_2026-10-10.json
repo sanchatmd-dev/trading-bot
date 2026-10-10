@@ -1,0 +1,133 @@
+{
+  "schema": "r7b-measure-tool-v3-local-v1",
+  "recordedAt": "2026-10-10T16:45:00Z",
+  "status": "LOCAL_TOOL_FIX_ACCEPTED_EXECUTION_BLOCKED",
+  "operationalAcceptance": false,
+  "scope": "A two-line fix of the API stop proof in the R7B measurement tool, with local regression and independent checks. No host action.",
+  "tool": {
+    "codeSha": "89cdc7c91566ced9ed48e4eae139a0b3cb792cb8e0f7ff9e20e4310d8793b385",
+    "codeShaRule": "SHA-256 of the concatenated bytes of the nine CODE_FILES listed in lib.mjs",
+    "identitySha256": "4999397290e3c096f53925d09fb11a6bb25b8f5e94aa6cf32acaaf4a300f7811",
+    "files": {
+      "probe.mjs": "0200b92617524384e64cf9dd19a86c535527b968d31a956380ac2a51e3f637f3",
+      "open.mjs": "33b1146f90f456472ff200d20a2c3ceb9b5e798b4d57c3170cc13f74ea77faec",
+      "close.mjs": "bf3c1821408bc5ce0ea0ffb104f2883aed81ffe0ec6eb1476f08b76647315684",
+      "converge.mjs": "667eb2b01030f546a9d2d97076c2d0042387cf92414fc9e5322b54e0c2434ca4",
+      "submit.tmpl.mjs": "88b5269c075d0c71b7d8cff602ebe3a87af53d39b29c9dd402cccf7b2b6a6781",
+      "lib.mjs": "fe170c085f8452c73ae4986c3c60ba243dc7283c9096e15f26b8b9b66e0e057e",
+      "host.mjs": "900c006b66e7827d91629c2c94a01675ba31630cb7de85d50fb88c87301bd4a7",
+      "readiness-core.mjs": "66bd42c93428c84cd17a6efc958e653bc5f17ed26d27a1f3a9afbb9dc932cf17",
+      "readiness-access.mjs": "9e3d8da6d3ffe30fc74c26635730e2f83b74f5c460b4b3d65a37019c0a51fda3",
+      "pins-derive.mjs": "cbbab8f89dbe2acded53faf7521189799a9d7d5a6f68f9de24c04c4c91eb74fa",
+      "PLAN.md": "21dc1f720f070aa62eafe532828ed38c71b52ce004506144c63547a696c4ec7b"
+    },
+    "snapshot": ".qa-local/claude-r7b-measure-v3-accepted-89cdc7c9",
+    "previousCodeSha": "3447f1212353f7fa5fe933fc280f982eae8280ea53a839799ef79f9b74b496c4",
+    "previousSnapshot": ".qa-local/codex-r7b-startup-accepted-3447f121",
+    "previousSnapshotUnchanged": true
+  },
+  "change": {
+    "file": "host.mjs",
+    "lines": [
+      99,
+      165
+    ],
+    "before": [
+      "stopApi: s.Job==='0'",
+      "stopAndProve: (!s.Job||s.Job==='0')"
+    ],
+    "after": "s.Job==='' at both sites, with a trailing comment; line numbers unchanged",
+    "reason": "systemctl show -p Job prints an empty Job value when no job exists; no systemd version prints Job=0. A missing Job line or a queued job id does not count as stopped.",
+    "otherFilesUnchanged": true
+  },
+  "defectFixed": {
+    "id": "STOPAPI_JOB_EMPTY",
+    "sites": [
+      "host.mjs:709 apiOff (m4aMain, xmMain)",
+      "host.mjs:881 m1 step 4",
+      "host.mjs:1086 xm step 0"
+    ],
+    "line165": "stopAndProve accepted an empty Job before; the change removes its acceptance of a missing Job line or Job=0 (fail-open hardening)."
+  },
+  "checks": {
+    "copiedCodexSuites": {
+      "note": "Each suite was run unchanged on the previous tool and on v3 with the Job fixtures moved to the real empty shape (10 fixture lines in 7 files); counts are identical. Stale suites fail the same way on both trees and give no signal.",
+      "equalCounts": {
+        "regression": 8,
+        "storageRegression": 14,
+        "reviewIndependent": 46,
+        "v2Independent": 46,
+        "reviewStorage": "75 of 76 (pg-harness spawn absent)",
+        "v2StorageCli": "75 of 76 (same)",
+        "rollbackOnly": 11,
+        "accessTests": 64,
+        "coreIndependent": 41,
+        "fix3Receipt": 17,
+        "fullChain": 23,
+        "accessFix1": 48
+      },
+      "staleNoSignal": [
+        "author-check 26 of 117",
+        "fix2-edges 21 of 29",
+        "access-tests-f5 5 of 41",
+        "access-independent f5 0 of 30",
+        "fix2-receipt exit 1"
+      ],
+      "crossDefect": "The previous tool with real-shape fixtures fails the stop tests (regression T2, two converge tests in each independent suite) with STOP_FAILED."
+    },
+    "jobShape": {
+      "pass": 20,
+      "fail": 0,
+      "script": {
+        "path": ".qa-local/claude-r7b-measure-v3-tests/job-shape.mjs",
+        "sha256": "207b094ef644cbe9cb97c3418d2f12536a55ef220b3c10b264633e88d8a20452"
+      }
+    },
+    "independentTester": {
+      "verdict": "PASS_WITH_FINDINGS (low or info only)",
+      "matrix": "Literal systemctl outputs through parseShowText: v3 succeeds only for an empty Job with inactive or failed state, MainPID 0, empty cgroup and a changed old PID; it fails for a missing Job line, Job=0, a queued job, deactivating, a live MainPID or cgroup processes. The three call sites end apiStop STOPPED on v3 and STOP_FAILED on the previous tool.",
+      "script": {
+        "path": ".qa-local/claude-r7b-measure-v3-independent/job-independent.mjs",
+        "sha256": "f712c04c60d786c6085d41de809862505221d98125cdbc1953f705b5051ed289"
+      },
+      "artifact": {
+        "path": ".qa-local/claude-r7b-measure-v3-independent/results.json",
+        "sha256": "528c86321b6d208e40a9ea98d8a73aaac6281b5dd62964663c27501b06512658"
+      }
+    },
+    "audit": {
+      "verdict": "ACCEPT",
+      "report": {
+        "path": ".qa-local/claude-r7b-measure-v3-audit.md",
+        "sha256": "9ada5241b04423feb6369d3b41418b41d5dae50a4512db48d58059f4fc7aff03"
+      },
+      "guards": "Payload grows 248 bytes in effect modes only; no size cap, static guard, forbidden-token count or leak-guard verdict changes."
+    }
+  },
+  "consumerFindings": [
+    "MEDIUM: the tool keeps the namespace constant codex-r7b-measure-v2, and the root helpers read the tool from that directory, which still holds the previous bytes. Before any epoch, the v3 files must be installed there byte for byte (preferred) or the namespace renamed, and the helper evidence re-run against v3.",
+    "MEDIUM: the Linux PostgreSQL harness v5 expects the defect; it needs a re-pin to v3 and inverted stop expectations (in progress as harness v6).",
+    "LOW: the copy-table and header still describe the stop functions as unchanged copies.",
+    "LOW: the real Job line has not been read on the VPS; the next read-only operations packet should record one raw line."
+  ],
+  "executionLocks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED"
+  ],
+  "lockChange": "TOOL_DEFECT_STOPAPI_JOB_EMPTY_OPEN is cleared for the tool itself by this local fix; consumers must move to v3 before it is cleared for an epoch.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercent": 50,
+    "fiveHourUsedPercent": 9,
+    "checkedAt": "2026-10-10T16:10Z",
+    "reservePercentagePoints": 15
+  }
+}
