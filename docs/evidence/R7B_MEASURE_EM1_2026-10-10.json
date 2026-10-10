@@ -1,0 +1,94 @@
+{
+  "schema": "r7b-measure-em1-evidence-v1",
+  "date": "2026-10-10",
+  "scope": "staging Spot/Paper only",
+  "source": "Root-supervised R7B bootstrap measurement epoch R7B-MEASURE-EM-1 under owner GOs; all times UTC",
+  "owner_go": {
+    "prep_and_desk": "03:08 (read-only host prep read, desk window, desk sentence)",
+    "amendment": [
+      {
+        "time": "03:24",
+        "sentence_sha": "6be5ed0d",
+        "tool_code": "3f56c55c",
+        "status": "lapsed by tool fix rounds 4 and 4b"
+      },
+      {
+        "time": "04:35",
+        "sentence_sha": "928e3ee2",
+        "tool_code": "a1358f35",
+        "allowlist_sha": "12f9c567",
+        "status": "used; ended at window close"
+      }
+    ],
+    "read_only_diagnostic": "03:33 (API capacity-policy path)",
+    "measure": {
+      "time": "07:07",
+      "sentence_sha": "90958a03",
+      "status": "used for m1 and the pre-armed convergence"
+    },
+    "manual_recovery": {
+      "time": "07:11",
+      "name": "R7B-MANUAL-RECOVER-API-V1",
+      "status": "used"
+    }
+  },
+  "executor": {
+    "tool": "claude-r7b-measure-v1",
+    "accepted_code": "a1358f35 (round 4b)",
+    "fix_rounds_today": [
+      "pgVersion sanitized (leak-guard false positive)",
+      "API base capacity-policy path ABSENT pinned fail-closed",
+      "policy tuple source tie",
+      "argv env-file model in the ABSENT proof"
+    ],
+    "tests": "fixture suite 115/115, 211 mutations killed; PostgreSQL harness not run (owner rule: no memory-heavy local runs)"
+  },
+  "jobs": [
+    {
+      "job": "m0",
+      "time": "03:24",
+      "result": "STOP read-only: local REDACTION, host POLICY_PATH_MODEL",
+      "effects": "none"
+    },
+    {
+      "job": "m0-2",
+      "time": "04:35",
+      "result": "M0_PASS 28/28 groups",
+      "effects": "none"
+    },
+    {
+      "job": "m1",
+      "time": "07:07",
+      "result": "host M1_STOP START_FAILED after effects (local SCHEMA)",
+      "effects": "measurement policy file installed and verified, admission-off layers archived, enrollment layers in, one reload, API start failed (QUANT_STORAGE_LIMITS_REQUIRED), API fail-stopped"
+    },
+    {
+      "job": "xm",
+      "time": "07:08",
+      "result": "host XM_STOP STOP_FAILED (local SCHEMA)",
+      "effects": "admission-off pending layer created; stop refused on a failed unit"
+    }
+  ],
+  "manual_recovery": {
+    "time": "07:11-07:15",
+    "steps": "enrollment layers renamed out, admission-off layers in, one reload, one API start",
+    "proof": "API running, health 200 PAPER_ONLY, five flags 0, capacity-policy key absent on the API, research stopped, protected Trading units active"
+  },
+  "api_outage": "about 07:07 to 07:15",
+  "window_closed": "07:16:11",
+  "d6_identity": "Node and PostgreSQL identity equal to the D6 record; no D6 rerun",
+  "staging_state_after": "eb532ff, API running PAPER_ONLY, five flags 0, research worker stopped, no marked job, no enrollment submitted; measurement policy file left in place (nothing deleted)",
+  "root_cause": "With data and foundation enabled the eb532ff API requires QUANT_STORAGE_LIMITS_FILE and a dataset root; the measurement enrollment layer did not provide them and the baseline read had no enabled-configuration check",
+  "tool_defects_open": [
+    "receipt parser returned SCHEMA for host STOP receipts with effects and showed no effects",
+    "convergence cannot stop or recover an API unit in the failed state",
+    "host leak guard is literal-only in effect modes",
+    "env-file parser accepts only the --env-file=<path> form"
+  ],
+  "not_done": [
+    "enrollment submit",
+    "bootstrap measurement result",
+    "PostgreSQL harness run (VPS, after the window, own GO)"
+  ],
+  "next": "Root-cause audit of the enabled API configuration, tool fix in a new version, then a new epoch with a new allowlist and new owner GOs"
+}
