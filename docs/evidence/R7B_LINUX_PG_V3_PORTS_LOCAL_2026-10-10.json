@@ -1,0 +1,223 @@
+{
+  "schema": "r7b-linux-pg-v3-ports-local-v1",
+  "recordedAt": "2026-10-10T10:38:33.208Z",
+  "status": "LOCAL_CLOSE_SQL_SIMULATIONS_ACCEPTED_EXECUTION_BLOCKED",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "H-7/H-9 close case definitions and H-14 SQL case definition, with local simulated function and query-response checks. Complete PostgreSQL cases remain unverified.",
+  "source": {
+    "codeSha256": "5fe8e2b354d678460437dd2516f67a0b105dd6333698594aab1ed1c2428924a5",
+    "codeFiles": [
+      "runner.mjs",
+      "suite.mjs",
+      "integration.mjs",
+      "inventory.mjs",
+      "fixtures/startup-schema-fixture.mjs",
+      "fixtures/synthetic-product.mjs",
+      "accepted-tool-loader.mjs",
+      "service-cases.mjs",
+      "fixtures/service-world.mjs",
+      "accounting-cases.mjs",
+      "fixtures/accounting-world.mjs",
+      "timing-cases.mjs",
+      "close-cases.mjs",
+      "fixtures/close-world.mjs",
+      "producer-cases.mjs",
+      "fixtures/producer-world.mjs"
+    ],
+    "files": {
+      "runner.mjs": "50d9bcf66809e59af13982a6e4eaad881d899169c7f8862f4668c120e8061d54",
+      "suite.mjs": "653833e652292b8557a2f298776fff25a9a8adbd1b451ed4dda92fd722533a65",
+      "integration.mjs": "f8aeb86317f394f4f43ffc88ac0592e894053463b405a816c05a3b5fda9235d2",
+      "inventory.mjs": "8acf6941d6a082db2953e6d2bcce74aa8662f6be696930cafe421e68ec5a5ddb",
+      "fixtures/startup-schema-fixture.mjs": "8031943714ac1c8c864304571b9cb03e10498f22d6d3d0bda6f29e615807c980",
+      "fixtures/synthetic-product.mjs": "733cc6439cc00b7d6b7f4d16864633737927fa50f658bfc61c5c195bd7bd7f02",
+      "accepted-tool-loader.mjs": "07e0a526953e308314879814de844c06db3e18e5eb79a79bf52c915c55416c2b",
+      "service-cases.mjs": "63b70b058e00783d56e87896aa632fc8b90c561aaed35d46d2b9e81f97d622b2",
+      "fixtures/service-world.mjs": "cfc48c8d43c693cbcc4a5fa7eecfa26fe0a9a474eb1add46d56cd372bba309b6",
+      "accounting-cases.mjs": "097643c2945d4f35bcb01e70ebc696a39561b07d19d657d08cc54d2e6c93db58",
+      "fixtures/accounting-world.mjs": "344d03d6157850f9ad14c36fe11cead5d08bdce9e7641996fc64bf8ef0666f19",
+      "timing-cases.mjs": "0d473929e074ec5f84008b1fd207497577524b1801007ccf202b9e1fd47d5935",
+      "close-cases.mjs": "1261b9f6efbc9c094578fcf0858d8bc03fe5e2a1545fb3bbf21a058456478523",
+      "fixtures/close-world.mjs": "22a7ecf1727f861c348696f455de8afc1b8232fa2e58babe9e4071b48f5bfb8a",
+      "producer-cases.mjs": "a893692106f430ba3491939f931c7c39935c49f1ae512817048028193ad83d71",
+      "fixtures/producer-world.mjs": "152dd7121fa7739b0c3a476c295f95c08b4d9567158b3462d7d209693d5e34f5"
+    },
+    "snapshot": ".qa-local/codex-r7b-linux-pg-v3-checkpoint-5fe8e2b3",
+    "identitySha256": "5ed44fea4baa194f75c21a9fbd38aa06997746710ca207bd786ce7b0c8e0a1bf"
+  },
+  "provenance": {
+    "previousCodeSha256": "06607aa8da39b0d49fe72d4686eb21f754d2673e101a63d8b20f4cbee07bc64d",
+    "previousSnapshotUnchanged": true,
+    "productRevision": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+    "acceptedMeasurementTool": "3447f1212353f7fa5fe933fc280f982eae8280ea53a839799ef79f9b74b496c4",
+    "acceptedIdentitySha256": "68764d67eaa5eebe41df808ed56d90f7dcfb9acf81c9ab7b7cb36be47a9bbd55",
+    "inventorySha256": "e00d282e5879f2452dcd6c7fa216e3d8a7bf2eeb015098a082c777335979d5c8",
+    "originalProducerFixtureSha256": "2b12b7ce2935ae46f40581e10a4a2b54817a8f29e3e8c4eb7608958a2b8f7db3"
+  },
+  "acceptance": {
+    "rootAcceptedScope": [
+      "Actual accepted close functions with in-memory service effects and synthetic SQL responses.",
+      "Actual H-14 case with an injected producer and exact synthetic SQL responses.",
+      "Pinned dependency byte reads, explicit producer environment bindings and cleanup error preservation."
+    ],
+    "newCaseDefinitions": [
+      "H-7",
+      "H-9",
+      "H-14"
+    ],
+    "priorAccountingCasesUnverified": [
+      "H-1",
+      "H-4",
+      "H-5"
+    ],
+    "wholePostgresCasesRun": false,
+    "nativeProducerFactoryRun": false,
+    "nativeDependencySeal": false
+  },
+  "implementedCases": [
+    "H-1",
+    "H-2",
+    "H-3",
+    "H-4",
+    "H-5",
+    "H-6",
+    "H-7",
+    "H-8",
+    "H-9",
+    "H-10",
+    "H-11",
+    "H-12a",
+    "H-14",
+    "startup-schema"
+  ],
+  "missingLegacyCases": [
+    "H-12b",
+    "H-13",
+    "H-7b",
+    "H-7c",
+    "H-7d",
+    "H-15"
+  ],
+  "incompleteProducerCases": {
+    "ids": [
+      "H-12b",
+      "H-13"
+    ],
+    "suiteDispatch": false,
+    "reason": "Queued guard/replay helpers exist, but RUNNING/foreign-key checks, terminal replay and complete m2b acceptance are not implemented."
+  },
+  "checks": {
+    "independentFunctional": {
+      "pass": 16,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v3-independent/functional-results.json",
+        "sha256": "3bda23322a7ceb3bd2f6a644ef8c6afbb842da90ecf99fe5ff174649bf19e5c2"
+      },
+      "script": {
+        "path": ".qa-local/codex-r7b-linux-pg-v3-independent/functional.mjs",
+        "sha256": "fcb7daa60434d38bfa6a2c632c79d84a57cfdc8e4845a656f57bff46237a0800"
+      }
+    },
+    "independentProducer": {
+      "pass": 16,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v3-independent/producer-results.json",
+        "sha256": "b1f4bda19e499fc1bea2bd7744889f4873d166ca2069e36e7b99522e411256a5"
+      },
+      "script": {
+        "path": ".qa-local/codex-r7b-linux-pg-v3-independent/producer.mjs",
+        "sha256": "d16e9a42264a881eb6ec6bdd258e9fb01045b3761112252a6d44bd4db832fed4"
+      }
+    },
+    "independentTotal": 32,
+    "suiteRegression": {
+      "pass": 20,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v3-checkpoint-5fe8e2b3/suite-selftest-results.json",
+        "sha256": "fa6873eaafadbdd64fa0309a920a20648efa210c8516c9ff1b75724301d0ccef"
+      }
+    },
+    "closeAuthor": {
+      "pass": 8,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v3-checkpoint-5fe8e2b3/close-results.json",
+        "sha256": "d23943b7369f6965db2d560871657a24a723d38690e7c690d25b082b2ba36206"
+      }
+    },
+    "producerAuthor": {
+      "pass": 14,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v3-checkpoint-5fe8e2b3/producer-results.json",
+        "sha256": "9c56610bdf3d53041a04a25900495dae9e3ff2cb7f34d4fc698cf05d3ce5e1d7"
+      }
+    },
+    "serviceRegression": {
+      "h6": 11,
+      "h8": 24,
+      "loader": 20,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v3-checkpoint-5fe8e2b3/service-results.json",
+        "sha256": "45f823b8634f23d5505ee196baf4bb5bc016e75eb53cb6f88ad111dc1a03e28e"
+      },
+      "note": "The service artifact excludes H-11 by module scope; it is not a whole-suite coverage report."
+    }
+  },
+  "corrections": [
+    "Read package bytes only from an explicitly supplied dependency root, checked against the existing inventory.",
+    "Require admin attestation before producer allocation; bind the database URL and owned temporary directory before native imports.",
+    "Refuse a native producer fallback when an injected simulation omits its producer factory.",
+    "Pass null synthetic allowlist to the H-14 buildB path instead of an incomplete object.",
+    "Preserve null and undefined primary exceptions and cleanup failures.",
+    "Reject null, empty and unsafe SQL integer values.",
+    "Advance the source-derived fixture clock before enrollment instead of rewriting immutable creation times.",
+    "Exclude incomplete H-12b/H-13 placeholders from suite dispatch."
+  ],
+  "limitations": [
+    "Actual package pinning; nested native graph unsealed.",
+    "H7/H9 PostgreSQL donor unrun; SQL responses synthetic.",
+    "No operational authority validated.",
+    "No native producer factory executed.",
+    "No actual PostgreSQL SQL semantics, Linux runtime, operational authority or cleanup filesystem validated.",
+    "Legacy H14 lines505–534 read only; listed assertion groups retained.",
+    "All complete PostgreSQL donor/accounting flows remain unrun.",
+    "The original producer fixture was adapted: Python and profile runtime construction were omitted, and its clock advances before the enrollment insert.",
+    "The H-9 private release-receipt scan is replaced with an explicit sanitized synthetic stopped-unit shape.",
+    "The accepted source inventory is not an isolated native dependency package or operating-system immutability proof.",
+    "Current VPS health and identity are unknown."
+  ],
+  "executionLocks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED"
+  ],
+  "nextAction": "Complete H-12b/H-13 and H-7b/H-7c/H-7d/H-15 in bounded local slices. Retain accounting and real PostgreSQL verification gates. Build the sealed Linux package and execution adapter before concrete capability/health and harness packets with fresh per-effect owner GOs.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "commit": false,
+    "push": false,
+    "oldEm1Closed": true,
+    "spotPaperOnly": true
+  },
+  "usage": {
+    "platform": "Codex",
+    "initialWeeklyUsedPercent": 51,
+    "finalWeeklyUsedPercent": 54,
+    "finalWeeklyRemainingPercent": 46,
+    "checkedAt": "2026-10-10T10:38:33.208Z",
+    "shortWindow": "unknown",
+    "reservePercentagePoints": 15,
+    "sharedAccountObservationOnly": true
+  },
+  "timing": {
+    "firstExplicitClock": "2026-10-10T10:25:54Z",
+    "checkpointAt": "2026-10-10T10:38:33.208Z",
+    "completeWorkDuration": "not measured",
+    "speedupClaim": false
+  }
+}

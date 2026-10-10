@@ -1,0 +1,210 @@
+{
+  "schema": "r7b-linux-pg-v2-ports-local-v1",
+  "recordedAt": "2026-10-10T10:24:02.378Z",
+  "status": "LOCAL_SERVICE_TIMING_ACCEPTED_ACCOUNTING_UNVERIFIED",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "Six additional legacy case implementations. Service and timing cases accepted only within local simulated scope. Accounting case execution remains unverified.",
+  "source": {
+    "codeSha256": "06607aa8da39b0d49fe72d4686eb21f754d2673e101a63d8b20f4cbee07bc64d",
+    "codeFiles": [
+      "runner.mjs",
+      "suite.mjs",
+      "integration.mjs",
+      "inventory.mjs",
+      "fixtures/startup-schema-fixture.mjs",
+      "fixtures/synthetic-product.mjs",
+      "accepted-tool-loader.mjs",
+      "service-cases.mjs",
+      "fixtures/service-world.mjs",
+      "accounting-cases.mjs",
+      "fixtures/accounting-world.mjs",
+      "timing-cases.mjs"
+    ],
+    "files": {
+      "runner.mjs": "50d9bcf66809e59af13982a6e4eaad881d899169c7f8862f4668c120e8061d54",
+      "suite.mjs": "fd62ffab3808d4e7118b6c17e7272b2573143ffbbdaefbf099c25c1dec304ebd",
+      "integration.mjs": "0f8ccf15f0d52ca4944948153b28ad288ac5925af5939bbc4c802f65c02b1f6b",
+      "inventory.mjs": "8acf6941d6a082db2953e6d2bcce74aa8662f6be696930cafe421e68ec5a5ddb",
+      "fixtures/startup-schema-fixture.mjs": "8031943714ac1c8c864304571b9cb03e10498f22d6d3d0bda6f29e615807c980",
+      "fixtures/synthetic-product.mjs": "733cc6439cc00b7d6b7f4d16864633737927fa50f658bfc61c5c195bd7bd7f02",
+      "accepted-tool-loader.mjs": "91d66db802405969b240e933428de858d9dbbbba22c0249bf2fcfb77341f4ae3",
+      "service-cases.mjs": "63b70b058e00783d56e87896aa632fc8b90c561aaed35d46d2b9e81f97d622b2",
+      "fixtures/service-world.mjs": "cfc48c8d43c693cbcc4a5fa7eecfa26fe0a9a474eb1add46d56cd372bba309b6",
+      "accounting-cases.mjs": "1ba4312dc0b68002555058ccc03cc2adf3c791d195edd266d580a83c3506d993",
+      "fixtures/accounting-world.mjs": "344d03d6157850f9ad14c36fe11cead5d08bdce9e7641996fc64bf8ef0666f19",
+      "timing-cases.mjs": "0d473929e074ec5f84008b1fd207497577524b1801007ccf202b9e1fd47d5935"
+    },
+    "snapshot": ".qa-local/codex-r7b-linux-pg-v2-checkpoint-06607aa8",
+    "identitySha256": "9b0034d17bf7691c96e3dda1748125fc141a320eede7a2704a007f19c89f892c"
+  },
+  "provenance": {
+    "productRevision": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+    "acceptedMeasurementTool": "3447f1212353f7fa5fe933fc280f982eae8280ea53a839799ef79f9b74b496c4",
+    "acceptedIdentitySha256": "68764d67eaa5eebe41df808ed56d90f7dcfb9acf81c9ab7b7cb36be47a9bbd55",
+    "inventorySha256": "e00d282e5879f2452dcd6c7fa216e3d8a7bf2eeb015098a082c777335979d5c8",
+    "previousFoundationCodeSha256": "8618742990b03cbf31ffcd1954f3bcbc496cd51add17dad6b47f37a1b37b8227",
+    "previousSnapshotUnchanged": true
+  },
+  "acceptance": {
+    "rootAcceptedNewLocalCases": [
+      "H-6",
+      "H-8",
+      "H-11"
+    ],
+    "accountingCandidateCases": [
+      "H-1",
+      "H-4",
+      "H-5"
+    ],
+    "accountingWholeCasesRun": false,
+    "accountingOperationalAuthorityValidated": false,
+    "realPostgres": false,
+    "realLinuxAdapter": false,
+    "nativeDependencySeal": false
+  },
+  "implementedCases": [
+    "H-1",
+    "H-2",
+    "H-3",
+    "H-4",
+    "H-5",
+    "H-6",
+    "H-8",
+    "H-10",
+    "H-11",
+    "H-12a",
+    "startup-schema"
+  ],
+  "missingLegacyCases": [
+    "H-7",
+    "H-9",
+    "H-12b",
+    "H-13",
+    "H-7b",
+    "H-7c",
+    "H-7d",
+    "H-14",
+    "H-15"
+  ],
+  "checks": {
+    "independentFunctional": {
+      "pass": 15,
+      "fail": 0,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v2-independent/functional-results.json",
+        "sha256": "99986bc89a9129282e23270f84a02196db2739dcaaa52c956cddf12fcb70f86b"
+      },
+      "script": {
+        "path": ".qa-local/codex-r7b-linux-pg-v2-independent/functional.mjs",
+        "sha256": "3600eb864cc15a2fcfc55dc8beb1cc42934f4eca6d2cd5f38eb818fdf3adcdca"
+      }
+    },
+    "suiteRegression": {
+      "pass": 20,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v2-checkpoint-06607aa8/suite-selftest-results.json",
+        "sha256": "fa6873eaafadbdd64fa0309a920a20648efa210c8516c9ff1b75724301d0ccef"
+      }
+    },
+    "service": {
+      "h6": 11,
+      "h8": 24,
+      "loader": 20,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v2-checkpoint-06607aa8/service-results.json",
+        "sha256": "771da3740f261862fcb71bdb233aa9cf16192137bf31873f401611dbd542bf9c"
+      },
+      "note": "The service-only artifact excludes H-11; timing has separate evidence."
+    },
+    "accountingHelpers": {
+      "pass": 19,
+      "wholeCasesRun": false,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v2-checkpoint-06607aa8/accounting-results.json",
+        "sha256": "646cffc7f74ac797370e0dfe7515dd88587990311d19fa27ff4dfc938f19a3a6"
+      }
+    },
+    "timing": {
+      "pass": 4,
+      "artifact": {
+        "path": ".qa-local/codex-r7b-linux-pg-v2-checkpoint-06607aa8/timing-results.json",
+        "sha256": "84884bed611d59744f93c66ab16f379c85d71098711211eaa2e2ec8e06b39a4a"
+      },
+      "independentObservation": {
+        "scope": "ISOLATED_FIXTURE_TIMING",
+        "firstClaimDelayMs": 4039,
+        "claimDelayMaxMs": 56000,
+        "idleLoopMsMin": 1002,
+        "idleLoopMsMedian": 1008,
+        "idleLoopMsMax": 1018,
+        "idleLoopSamples": 11,
+        "probes": 12,
+        "unhealthySamples": 1,
+        "realPostgres": false,
+        "productionTiming": false
+      }
+    },
+    "review": {
+      "initialServiceAuditChecks": 12,
+      "initialServiceAudit": {
+        "path": ".qa-local/codex-r7b-linux-pg-v2-audit/service-results.json",
+        "sha256": "020fe9c50a51b01dece7bca84d0e49d4b5f27414ad7d3a365d06302591bdbc6f"
+      },
+      "followupArchitectureAudit": "NO_RESULT_AGENT_ERROR",
+      "loaderCorrection": "Root source review and author negative tests passed; independent functional tests use corrected loader. No completed follow-up architecture audit claimed."
+    }
+  },
+  "fixes": [
+    "Bind every accepted auxiliary and code file to the trusted identity before module use.",
+    "Forward fresh host IO to each accepted helper context.",
+    "Preserve shared H-4/H-5 evidence within one suite run only.",
+    "Route default product imports through the inventory-checking importProduct method.",
+    "Preserve fixture foreign keys, SQL guards and checked rollback/release."
+  ],
+  "limitations": [
+    "Synthetic cohort does not execute SQL.",
+    "H1/H4/H5 full runtime not run; isolated PostgreSQL target absent.",
+    "Shared H4/H5 success through suite not exercised; H5 direct evidence and failure propagation checked.",
+    "SQL compatibility reviewed statically; PostgreSQL constraint evaluation not run.",
+    "H11 positive uses pinned health/worker modules and synthetic scheduler; error probes use synthetic worker.",
+    "The source inventory is not a sealed package or OS immutability proof.",
+    "No real PostgreSQL, Linux resource enforcement, supervisor or process-stop proof ran.",
+    "Accounting uses example pins and synthetic authority; it does not validate an operational allowlist.",
+    "The architecture follow-up produced no result; accounting acceptance remains open.",
+    "Current VPS health and identity remain unknown. Historical EM-1 runtime observations were not refreshed."
+  ],
+  "executionLocks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED"
+  ],
+  "nextAction": "Port the nine missing legacy cases in bounded local slices. Complete independent accounting review and whole-case execution through the reviewed isolated adapter. Build the sealed Linux package and real adapter, then prepare concrete capability/health and harness packets before fresh per-effect owner GOs.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "commit": false,
+    "push": false,
+    "oldEm1Closed": true,
+    "spotPaperOnly": true
+  },
+  "usage": {
+    "platform": "Codex",
+    "initialWeeklyUsedPercent": 45,
+    "finalWeeklyUsedPercent": 51,
+    "finalWeeklyRemainingPercent": 49,
+    "checkedAt": "2026-10-10T10:23:50Z",
+    "shortWindow": "unknown",
+    "reservePercentagePoints": 15,
+    "sharedAccountObservationOnly": true
+  },
+  "timing": {
+    "firstExplicitClock": "2026-10-10T10:06:35Z",
+    "checkpointAt": "2026-10-10T10:24:02.378Z",
+    "completeWorkDuration": "not measured",
+    "productionTiming": false,
+    "speedupClaim": false
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "schema": "r7b-measure-v2-local-evidence-v1",
+  "date": "2026-10-10",
+  "scope": "Local measurement-tool correction and isolated fixtures only",
+  "status": "LOCAL_CORRECTIONS_ACCEPTED_EXECUTION_BLOCKED",
+  "base_revision": "c7bae374b5150f608d6b7f5940b706947be17071",
+  "candidate_namespace": ".qa-local/codex-r7b-measure-v2",
+  "helper_namespace": ".qa-local/codex-r7b-measure-v2-root",
+  "candidate_code_sha256": "d4bf9c974da879df26449177ce38590ee57870fb7eeef504a8fc6e324aea93c3",
+  "root_cause_correction": {
+    "finding": "The missing API storage-limits and dataset-root settings are a measurement-tool regression. The earlier R7 activation supplied both settings.",
+    "revision_comparison": "No differences between 325d335 and eb532ff in src/postgres/quant-data.js, src/postgres/quant-research.js or src/postgres/server.js.",
+    "historical_evidence": "R7B_MEASURE_EM1_2026-10-10.json is preserved unchanged."
+  },
+  "validation": {
+    "independent_final": {
+      "passed": 162,
+      "failed": 0,
+      "suites": [
+        {
+          "path": ".qa-local/codex-r7b-v2-tests/final-independent-result.json",
+          "sha256": "5cd0a5816a3ac4289b5c8ef00e3536d9bc67cf08d89b7e4ea82e8d71d4dd5da4",
+          "passed": 46,
+          "failed": 0
+        },
+        {
+          "path": ".qa-local/codex-r7b-v2-tests/final-storage-cli-result.json",
+          "sha256": "7846491957d646de8dd9915042b61efe1d1d908a9fa21eaad18214b6905b4384",
+          "passed": 76,
+          "failed": 0
+        },
+        {
+          "path": ".qa-local/codex-r7b-v2-tests/final-edges-result.json",
+          "sha256": "4705ed6d3d49ce4db704aa25701f0e06e3afd8bb2af4d04271b75f8fe93282f9",
+          "passed": 29,
+          "failed": 0
+        },
+        {
+          "path": ".qa-local/codex-r7b-v2-tests/final-rollback-result.json",
+          "sha256": "30e35283e9f4ad3c14aeb56dbc47063c1c947b260547bf903806eae5d272c261",
+          "passed": 11,
+          "failed": 0
+        }
+      ],
+      "scope": "Isolated fixtures, serialized functions and refusal CLIs; whole successful host execution is not proven."
+    },
+    "architecture_final": {
+      "reported_correction_findings": "CLOSED_IN_LOCAL_SCOPE",
+      "rollback_delta_probes": {
+        "passed": 6,
+        "failed": 0
+      },
+      "reports": [
+        {
+          "path": ".qa-local/codex-r7b-v2-enabled-audit.md",
+          "sha256": "551cc4e35f015c50d87ba4d4cc3f1679fe8c1cee90d24fe8330b77e8561a9e57"
+        },
+        {
+          "path": ".qa-local/codex-r7b-v2-delta-recheck.md",
+          "sha256": "704e7d4d3be1327fddd9f1746750d81c110fbad503aa4dc9969fae771ddf7b8d"
+        },
+        {
+          "path": ".qa-local/codex-r7b-v2-r1-recheck.md",
+          "sha256": "eb2601d2798b0576283907775d0aea7f36c848692a4b81da1ded934d11dd98a6"
+        },
+        {
+          "path": ".qa-local/codex-r7b-v2-helper-recheck.md",
+          "sha256": "569c60f78056ce6d85ed00702025cf3e371afbf469aa0576d676129f3b76020a"
+        }
+      ],
+      "remaining_readiness": "Not accepted; separate implementation gate."
+    },
+    "helper_integration": {
+      "checks": {
+        "selftest-root.mjs": {
+          "passed": 57,
+          "failed": 0
+        },
+        "abpb/selftest.mjs": {
+          "passed": 14,
+          "failed": 0,
+          "verifyNegativeCases": 20,
+          "verifyRefusalCodes": 10
+        },
+        "selftest-helpers-static.mjs": {
+          "passed": 13,
+          "failed": 0
+        },
+        "selftest-isolation.mjs": {
+          "passed": 9,
+          "failed": 0,
+          "sentinelUnchanged": true
+        },
+        "syntax": {
+          "passed": 11,
+          "failed": 0
+        }
+      },
+      "engineProof": {
+        "evaluator": "EQUAL",
+        "foundation": "EQUAL",
+        "ingestion": "EQUAL",
+        "legacy": "EQUAL",
+        "pf2Engine": "EQUAL"
+      },
+      "synthetic_golden_byte_equality": true,
+      "fixture_authority": "NONE",
+      "manifest": {
+        "path": ".qa-local/codex-r7b-measure-v2-root/helper-freeze.json",
+        "sha256": "a1a4fc70d713fc83e6a5fe16cd1adfb88dd23e75556fd39b6bfff27698425d48",
+        "files_verified": 23
+      },
+      "evidence": {
+        "path": ".qa-local/codex-r7b-measure-v2-root/integration-evidence.json",
+        "sha256": "dd46cce2e27f0a7df8cc1afb695dcc7ba5e964970008340e7f2b20e2b6c23f3a"
+      },
+      "independent_scope": "Root reviewed golden deltas and manifest; auditor independently repeated isolation checks. Integration suites were run by helper implementer."
+    },
+    "helper_isolation": {
+      "passed": 9,
+      "failed": 0,
+      "independently_repeated": true
+    },
+    "full_legacy_author_suite": "Not run; legacy injected-execution fixtures conflict with the unconditional candidate execution lock.",
+    "postgresql_harness": "Not run. The inherited harness is Windows-specific and blocked before cluster creation; an isolated VPS harness needs a separate reviewed packet and owner GO.",
+    "hosted_ci": "Not verified in this session; gh is unavailable.",
+    "historical_source_integrity": {
+      "files_verified": 45,
+      "changed": 0
+    },
+    "budget_assertions": "PASS; code-derived bounds, not measured host timing",
+    "previous_failures": "Earlier snapshots and their failures remain recorded locally. Final assertions refer only to the final frozen candidate. The stale legacy T4-2 fixture failed before its guard; new independent exact-main guard fixtures isolate unrelated pre-gates."
+  },
+  "execution_locks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED"
+  ],
+  "remaining_gates": [
+    "Complete and independently verify exact startup-schema, full worker-health and service-access readiness checks.",
+    "Prepare and independently review the isolated Linux PostgreSQL harness and its resource, log and recovery limits before requesting a VPS run.",
+    "Obtain fresh authorized runtime observations, private pins, allowlist, policy and owner GOs for a new measurement epoch."
+  ],
+  "limits": [
+    "Local fixture results are not staging acceptance or measured host timing.",
+    "Synchronous filesystem elapsed guards detect overruns but do not individually preempt syscalls.",
+    "Temporary-path safeguards assume root-controlled scratch and do not atomically exclude concurrent hostile filesystem mutation."
+  ],
+  "external_effects": "No SSH, VPS operation, enrollment submit, flag change, deployment, commit or push in this work. Live staging state was not reverified.",
+  "preserved": "Spot/Paper-only, immutable EM-1 evidence, closed-window authority, the W7 C2 CRASHED record and unrelated owner files.",
+  "checkpoint_utc": "2026-10-10T08:35:00Z",
+  "acceptance": {
+    "owner": "Codex root",
+    "scope": "Bounded local receipt, stop-proof, storage, transaction-cleanup and helper-isolation corrections only",
+    "operational_readiness": false
+  },
+  "corrections": [
+    "Preserve valid STOP receipt effects and facts; malformed output means unknown effects, not an empty effect list.",
+    "Require complete stop proof for failed or inactive API units before any restart; retain attempted-stop evidence on failure.",
+    "Add API storage settings, bounded read-only m0 configuration evidence, mandatory FULL facts and m1 drift checks before effects.",
+    "Reject unsupported env-file syntax, bound repeated sources and retain safe effect summaries during redaction.",
+    "Recompute time budgets and reserve the complete SQL transaction before starting it.",
+    "Use a fresh namespace, salts, policy filename and draft authority identifiers without copying old epoch approvals or live inputs.",
+    "Confine helper rehearsal to validated temporary directories and refuse non-dry artifact preparation.",
+    "Reject rollback-only transaction failures with SQL_UNAVAILABLE while preserving the original error if an earlier statement failed."
+  ],
+  "storage_check_budget": {
+    "milliseconds": 112000,
+    "source_refs_max": 16,
+    "unique_env_files_max": 8,
+    "file_adapter_calls_max": 31,
+    "unit_shows": 2,
+    "sql_statements": 5,
+    "sql_statement_ms": 8000,
+    "latest_sql_start_elapsed_ms": 72000
+  },
+  "account_usage": {
+    "platform": "Codex",
+    "observed_utc": "2026-10-10T08:35:00Z",
+    "weekly_used_percent": 18,
+    "weekly_remaining_percent": 82,
+    "short_window": "UNKNOWN",
+    "reserve_percentage_points": 15,
+    "attribution": "Shared account values; not exact task or model costs."
+  }
+}

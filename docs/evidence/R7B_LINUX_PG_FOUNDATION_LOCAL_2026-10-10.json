@@ -1,0 +1,165 @@
+{
+  "schema": "r7b-linux-pg-foundation-local-v1",
+  "recordedAt": "2026-10-10T10:04:02.736Z",
+  "status": "LOCAL_FOUNDATION_ACCEPTED_EXECUTION_BLOCKED",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "Portable injected runner, immutable-input inventory checks, four legacy suite ports and startup-schema preparation. Local simulations only.",
+  "source": {
+    "codeSha256": "8618742990b03cbf31ffcd1954f3bcbc496cd51add17dad6b47f37a1b37b8227",
+    "codeFiles": [
+      "runner.mjs",
+      "suite.mjs",
+      "integration.mjs",
+      "inventory.mjs",
+      "fixtures/startup-schema-fixture.mjs",
+      "fixtures/synthetic-product.mjs"
+    ],
+    "files": {
+      "runner.mjs": "50d9bcf66809e59af13982a6e4eaad881d899169c7f8862f4668c120e8061d54",
+      "suite.mjs": "fe6b4c8d50ab20c579d10e4ca0595516cbb3970b38e4c4c9f5904b519fdb20ea",
+      "integration.mjs": "9bffe723d217c9654687b284aed192527265e5efd0f22c2192ed4d4f55a4fd1b",
+      "inventory.mjs": "8acf6941d6a082db2953e6d2bcce74aa8662f6be696930cafe421e68ec5a5ddb",
+      "fixtures/startup-schema-fixture.mjs": "8031943714ac1c8c864304571b9cb03e10498f22d6d3d0bda6f29e615807c980",
+      "fixtures/synthetic-product.mjs": "733cc6439cc00b7d6b7f4d16864633737927fa50f658bfc61c5c195bd7bd7f02"
+    },
+    "snapshot": ".qa-local/codex-r7b-linux-pg-foundation-accepted-86187429"
+  },
+  "provenance": {
+    "productRevision": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+    "productFiles": 199,
+    "dependencyPackages": 17,
+    "dependencyFiles": 182,
+    "acceptedMeasurementTool": "3447f1212353f7fa5fe933fc280f982eae8280ea53a839799ef79f9b74b496c4",
+    "inventorySha256": "e00d282e5879f2452dcd6c7fa216e3d8a7bf2eeb015098a082c777335979d5c8"
+  },
+  "checks": {
+    "independentRunner": 43,
+    "independentChain": 16,
+    "independentTotal": 59,
+    "inventoryFixAudit": 5,
+    "runnerFixAudit": 4,
+    "suiteFixAudit": 21,
+    "auditTotal": 30,
+    "authorRunner": 47,
+    "authorSuite": 20,
+    "authorInventory": 13,
+    "allPassed": true,
+    "artifacts": {
+      "independentRunner": {
+        "path": ".qa-local/codex-r7b-linux-pg-independent/runner-results.json",
+        "sha256": "dd9dcc9ba25ad0f3afe007d77bbe2dac5705febf8245db9ad22307b8245dc13f"
+      },
+      "independentChain": {
+        "path": ".qa-local/codex-r7b-linux-pg-independent/chain-results.json",
+        "sha256": "fcb020f7be883c07991e18802b453ddd16207bb090a9a4f02b740f6a60915cc0"
+      },
+      "inventoryAudit": {
+        "path": ".qa-local/codex-r7b-linux-pg-audit/inventory-fix1-results.json",
+        "sha256": "276332d56b572fda831e680eeca626b1a684b24cb4757eb99def533bbab49074"
+      },
+      "runnerAudit": {
+        "path": ".qa-local/codex-r7b-linux-pg-audit/runner-fix1-results.json",
+        "sha256": "9dcc42845e12e8f4a6f4f54e09dc382503108e2fe18b0fc05fa97e501e8da34b"
+      },
+      "suiteAudit": {
+        "path": ".qa-local/codex-r7b-linux-pg-audit/suite-fix1-results.json",
+        "sha256": "95609418caf4cc877eb1aaa21dc0f70fb2f50d491638698a5d9870053623f6b7"
+      },
+      "runnerAuthor": {
+        "path": ".qa-local/codex-r7b-linux-pg/runner-selftest-results.json",
+        "sha256": "7bb179a73a2709f7eadc6f740c0062f11c420cc13b74098f7b555425ef99713e"
+      },
+      "suiteAuthor": {
+        "path": ".qa-local/codex-r7b-linux-pg/suite-selftest-results.json",
+        "sha256": "fa6873eaafadbdd64fa0309a920a20648efa210c8516c9ff1b75724301d0ccef"
+      }
+    }
+  },
+  "implementedCases": [
+    "H-2",
+    "H-3",
+    "H-10",
+    "H-12a",
+    "startup-schema"
+  ],
+  "missingLegacyCases": [
+    "H-1",
+    "H-4",
+    "H-5",
+    "H-6",
+    "H-7",
+    "H-8",
+    "H-9",
+    "H-11",
+    "H-12b",
+    "H-13",
+    "H-7b",
+    "H-7c",
+    "H-7d",
+    "H-14",
+    "H-15"
+  ],
+  "fixes": [
+    "Pin accepted identity and recompute ordered tool hash.",
+    "Bind package dependency graph to inventoried package bytes.",
+    "Refuse synchronous deadline overruns with monotonic post-settlement checks.",
+    "Normalize null, primitive and hostile thrown values and retain stop/postcheck evidence.",
+    "Seed synthetic foreign owner before its referenced job.",
+    "Settle the fixture through the product runtime and verify its terminal proof before the guarded mode change.",
+    "Attest the admin database, role, local socket address and data directory before fixture creation."
+  ],
+  "limitations": [
+    "No real PostgreSQL queries or Linux execution occurred.",
+    "The independent chain uses a synthetic product/SQL model; accepted startup-core transaction plumbing is real code with synthetic responses.",
+    "The default noninjected product loader and pool connection have not run end to end.",
+    "Fifteen legacy cases remain NOT_BUILT. Missing cases cannot produce full-gate acceptance.",
+    "The source inventory is not a sealed package or an OS immutability proof.",
+    "A real execution adapter, resource enforcement, external supervisor and process stop proof remain unimplemented operational gates.",
+    "Current VPS health and identity are unknown; historical runtime observations were not refreshed."
+  ],
+  "proposedLimits": {
+    "workMs": 300000,
+    "cleanupMs": 30000,
+    "memoryBytes": 536870912,
+    "cpuQuotaPercent": 100,
+    "pids": 32,
+    "diskBytes": 1073741824,
+    "combinedOutputBytes": 1048576,
+    "maxConnections": 12,
+    "measuredHostTiming": false
+  },
+  "executionLocks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED"
+  ],
+  "nextAction": "Port the remaining legacy cases using synthetic authority and isolated fixtures, then build and review the sealed Linux package and real execution adapter. Prepare concrete capability/health and harness packets before fresh per-effect owner GOs.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "commit": false,
+    "push": false,
+    "oldEm1Closed": true,
+    "spotPaperOnly": true
+  },
+  "usage": {
+    "platform": "Codex",
+    "initialWeeklyUsedPercent": 38,
+    "finalWeeklyUsedPercent": 45,
+    "finalWeeklyRemainingPercent": 55,
+    "checkedAt": "2026-10-10T10:02:49Z",
+    "shortWindow": "unknown",
+    "reservePercentagePoints": 15,
+    "sharedAccountObservationOnly": true
+  },
+  "timing": {
+    "firstExplicitClock": "2026-10-10T09:48:46Z",
+    "checkpointClock": "2026-10-10T10:02:49Z",
+    "observedIntervalMinutes": 14,
+    "completeWorkDuration": "not measured",
+    "speedupClaim": false
+  }
+}

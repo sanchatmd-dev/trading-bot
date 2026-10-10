@@ -1,0 +1,170 @@
+{
+  "schema": "r7b-startup-readiness-local-v1",
+  "date": "2026-10-10",
+  "status": "LOCAL_ACCEPTED_EXECUTION_BLOCKED",
+  "base_revision": "c7bae374b5150f608d6b7f5940b706947be17071",
+  "scope": "Local readiness collectors and isolated fixtures only",
+  "prior_accepted_snapshot": ".qa-local/codex-r7b-v2-accepted-d4bf9c97",
+  "prior_helper_snapshot": ".qa-local/codex-r7b-helper-accepted-a1a4fc70",
+  "candidate_code_sha256": "3447f1212353f7fa5fe933fc280f982eae8280ea53a839799ef79f9b74b496c4",
+  "phase_contract": {
+    "m0": "Baseline policy only; no claim that prospective PB already exists or is validated.",
+    "full": "Bind the generated PB and m0 facts after local product validation.",
+    "m1": "Recheck baseline facts and validate actual prospective PB before the first effect. Emit policyHashSha=SHA256(hB UTF-8 hex) while retaining the original raw-hB output guard."
+  },
+  "initial_access_review": {
+    "source_sha256": "f5ad79dd5eee3c8eb0a1c5637b38c63677d346bd5e86a9b02dfda9fc03c430b0",
+    "independent_pass": 28,
+    "independent_fail": 2,
+    "findings": [
+      "Resolved properties and source inventory require a final recheck.",
+      "Client version is not running manager version.",
+      "Unit reads must bind to the same manager endpoint as credentials.",
+      "Executable file capabilities need an explicit proof.",
+      "Stable directory hashes must exclude unrelated entry-churn metadata."
+    ],
+    "resolution": "All five findings corrected in access source 9e3d8da6d3ffe30fc74c26635730e2f83b74f5c460b4b3d65a37019c0a51fda3; independent 48/48 and architecture delta review passed."
+  },
+  "validation": {
+    "independent": {
+      "access": {
+        "passed": 48,
+        "failed": 0,
+        "evidence": ".qa-local/codex-r7b-readiness-tests/access-fix1-final-result.json",
+        "sha256": "0c72f42b40b70ef33ca584553805b074255db288c07c577e45b48c5f764a45a8"
+      },
+      "core": {
+        "passed": 41,
+        "failed": 0,
+        "evidence": ".qa-local/codex-r7b-readiness-tests/core-fix3-result.json",
+        "sha256": "adcf2b7b37121ce7d8a63b580c0959069d28dda62795041d4f4de94705f173c3"
+      },
+      "receipt_payload": {
+        "passed": 17,
+        "failed": 0,
+        "evidence": ".qa-local/codex-r7b-readiness-tests/fix3-receipt-payload-result.json",
+        "sha256": "cc66ce2dfe40b62b20bb18580f8bc39448dee03c5ab9e25f982ffb0e3cbcf432"
+      },
+      "full_chain": {
+        "passed": 23,
+        "failed": 0,
+        "evidence": ".qa-local/codex-r7b-readiness-tests/full-chain-fix3-verified-result.json",
+        "sha256": "d823d7f59fea5638f74578017a8743446dd5ce7265838b88225bddd622c32d05"
+      }
+    },
+    "independent_fix3_total": 81,
+    "syntax": {
+      "passed": 2,
+      "failed": 0
+    },
+    "architecture": {
+      "final_fix3_checks": 11,
+      "blocking_findings": 0,
+      "report": ".qa-local/codex-r7b-readiness-final-audit.md",
+      "sha256": "74b4df6088f748eed29acd55e7ac2fb8570956103468f37cfeb86a4d1e8eb8fb"
+    },
+    "helper_integration": {
+      "root": 57,
+      "abpb": 14,
+      "static": 16,
+      "isolation": 9,
+      "syntax": 11,
+      "failed": 0,
+      "evidence": ".qa-local/codex-r7b-measure-v2-root/readiness-integration-evidence.json",
+      "sha256": "6405dc7e8fc15001e28e4990fe5fc6ffa229493e5c04ee86092f6da65a808ec5"
+    },
+    "author_chain_repeated_by_root": 22,
+    "historical_sources_unchanged": 45,
+    "postgresql": "NOT_RUN",
+    "host_runtime": "NOT_RUN"
+  },
+  "execution_locks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED"
+  ],
+  "operational_acceptance": false,
+  "external_effects": "No SSH, VPS operation, enrollment, deployment, commit or push. Public systemd documentation lookup only; live runtime remains unknown.",
+  "accepted_local_scope": "Exact startup collectors and phase/receipt plumbing on isolated fixtures through m1 first-effect interception. No successful operational m1 or host readiness is claimed.",
+  "accepted_snapshots": {
+    "tool": ".qa-local/codex-r7b-startup-accepted-3447f121",
+    "helper": ".qa-local/codex-r7b-readiness-helper-accepted-e446d440",
+    "helper_manifest_sha256": "e446d4406a6f930d0866851ff4b759afe60ecbd65450a136fa19d385ddf5c6be",
+    "helper_files": 21
+  },
+  "initial_core_review": {
+    "independent_pass": 36,
+    "independent_fail": 5,
+    "evidence": ".qa-local/codex-r7b-readiness-tests/core-pre-fix-result.json",
+    "findings": [
+      "Readiness was double-reserved before m1 first effect.",
+      "Unordered schema rows changed the transcript hash."
+    ],
+    "resolution": "Corrected; final independent core checks pass 41/41."
+  },
+  "pipeline_corrections": [
+    "Strict m1 receipt schema now accepts and requires complete readiness/prospective facts on PASS; early STOP may omit them.",
+    "Prospective evidence hashes hB again instead of exposing a forbidden raw policy hash.",
+    "Product-valid PB bytes whose file hash equals hB refuse before effects with PB_RECEIPT_UNREPRESENTABLE at hb, FULL derivation and m1. This is a collector encoding restriction, not a product-policy validation rule.",
+    "The helper allowlist template includes all nine code files."
+  ],
+  "fixture_limits": {
+    "real_new_collectors": [
+      "schema",
+      "worker configuration",
+      "module closure",
+      "service access"
+    ],
+    "actual_pipeline": "m0Collect with 30 groups; actual receipt/PLAN binding; PD.fullOf; serialized m1 stopped at first effect callback",
+    "historical_pre_gate_stubs": 27,
+    "process_and_filesystem": "Injected bounded adapters only; no real systemd, PostgreSQL or service actions",
+    "earlier_failed_runs": "Retained. Full-chain assertion corrections concern concrete STOP codes, partial derive facts and cross-VM equality; no source change was made to satisfy those assertion corrections."
+  },
+  "implementation": {
+    "schema_selects": 13,
+    "schema_control_roundtrips": 4,
+    "schema_total_roundtrips": 17,
+    "engine_files_per_release": 81,
+    "unique_files_per_release": 83,
+    "module_files": 10,
+    "access_path_cap": 256,
+    "access_subprocess_cap": 25,
+    "access_metadata_cap": 38,
+    "access_path_call_cap": 768
+  },
+  "code_budgets": {
+    "measured_host_timing": false,
+    "core_ms": 529000,
+    "access_ms": 477000,
+    "added_readiness_ms": 1006000,
+    "m0": {
+      "remote_sec": 1786,
+      "outer_sec": 1801,
+      "kill_sec": 1806
+    },
+    "m1": {
+      "remote_sec": 2416,
+      "outer_sec": 2431,
+      "kill_sec": 2436,
+      "effect_reserve_ms": 858000,
+      "pre_effect_allowance_ms": 1558000
+    },
+    "not_after_reserve_ms": 5989000,
+    "assertions": []
+  },
+  "remaining_gates": [
+    "Prepare and independently review a portable Linux PostgreSQL harness with immutable export inputs, isolated synthetic fixtures, bounded resources, logs and stop/recovery proof.",
+    "Review actual host capability, health and exact manager/client build, including extra property semantics and supported LP64/access profile, under a fresh bounded owner GO.",
+    "Run the separately authorized PostgreSQL harness; verify real driver/catalog and dynamic startup behavior.",
+    "Only then prepare fresh epoch pins, allowlist, policy and per-effect owner GOs; EM-1 authority remains closed."
+  ],
+  "usage": {
+    "captured_at_utc": "2026-10-10 09:38:14 UTC",
+    "weekly_used_percent": 37,
+    "weekly_remaining_percent": 63,
+    "short_window": "UNKNOWN",
+    "reserve_percentage_points": 15,
+    "cost_attribution": "Shared account readings; not per-agent or exact token cost."
+  },
+  "scratch_cleanup": "Automatic approval review rejected deletion of two failed rehearsal temporary directories with blocked by policy. They remain; no workaround was attempted."
+}
