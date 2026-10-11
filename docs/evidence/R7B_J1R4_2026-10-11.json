@@ -1,0 +1,330 @@
+{
+  "schema": "r7b-j1r4-run-v1",
+  "recordedAt": "2026-10-11T18:27:54Z",
+  "status": "J1R4_RAN_ONCE_FAILED_BEFORE_SUITE_LIMIT_READBACK_MISMATCH_OUTER_PROOF_PASSED",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "executionPass": false,
+  "ownerGo": {
+    "utc": "2026-10-11T18:13:53Z",
+    "consumed": true,
+    "scope": "one J1-R4 attempt, one run directory, no retry"
+  },
+  "operator": "one Claude Opus 5.5 operations worker, one admitted row at a time; root admitted and accepted every row",
+  "counts": {
+    "hostContacts": {
+      "used": 17,
+      "limit": 22
+    },
+    "health": {
+      "used": 2,
+      "limit": 2
+    },
+    "pgReadiness": {
+      "used": 4,
+      "limit": 4
+    },
+    "http": {
+      "used": 2,
+      "limit": 2
+    },
+    "starts": {
+      "used": 1,
+      "limit": 1
+    },
+    "identify": {
+      "used": 1,
+      "limit": 2
+    },
+    "status": {
+      "used": 1,
+      "limit": 3
+    },
+    "stop": {
+      "used": 0,
+      "limit": 1
+    },
+    "prove": {
+      "used": 1,
+      "limit": 2
+    },
+    "bundle": {
+      "used": 1,
+      "limit": 1
+    }
+  },
+  "rows": [
+    {
+      "row": "01-boot-check",
+      "startedUtc": "2026-10-11T18:14:38.769Z",
+      "elapsedMs": 986,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "c647b82f81b84d5fd92676c96e15d5339e456bb4fd0bfba7f2b6cbdc42b835ad",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "02-bootstrap",
+      "startedUtc": "2026-10-11T18:15:22.072Z",
+      "elapsedMs": 2622,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "199e18a8fc28c2eeb124b93939a2fa0390de2bb63bbc18dda97e954eba5fd059",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "03-upload-0",
+      "startedUtc": "2026-10-11T18:16:18.034Z",
+      "elapsedMs": 3010,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "63a12e5e9aecfa73f4512d6bd222843be21fe991f3384a4d68e83381bc31cad1",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "04-upload-1",
+      "startedUtc": "2026-10-11T18:17:14.283Z",
+      "elapsedMs": 887,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "65e8635b059a191f8e335d3e27d5b9bfc5fce7994d938c9d203df31b5e271ffc",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "05-upload-2",
+      "startedUtc": "2026-10-11T18:17:45.594Z",
+      "elapsedMs": 935,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "e2c0c1ef685f7f4fd9cb48683414d589395bbd4ca7fba8ec3ef73691c5ffc08e",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "06-upload-3",
+      "startedUtc": "2026-10-11T18:18:18.238Z",
+      "elapsedMs": 913,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "212f9d5c56e6d1a120daf3eaf9c7543688b95174a54a5eb45529ae25b49a9d62",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "07-upload-4",
+      "startedUtc": "2026-10-11T18:18:50.550Z",
+      "elapsedMs": 922,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "202a84642bb664d6daf42ca4e8962c61d2b700ea59e7d998b49a16b8598afb54",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "08-extract",
+      "startedUtc": "2026-10-11T18:19:22.884Z",
+      "elapsedMs": 2150,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "ca63ffc4092d005a5cca24da9b5f043a9c627eb16ff12737b23fc2b1b183edfb",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "09-verify-linux-strict",
+      "startedUtc": "2026-10-11T18:19:57.509Z",
+      "elapsedMs": 921,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "eb163d823fbf17a0b0e7b57f641bbcd8de23a7ce84cbb75dc7ca943622cd9b3e",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "10-preflight",
+      "startedUtc": "2026-10-11T18:20:29.120Z",
+      "elapsedMs": 1444,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "6b682b750a8ecf5837181fab33829285af625c0600354a0709ba760ce6459a41",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "11-health-prestart",
+      "startedUtc": "2026-10-11T18:21:03.862Z",
+      "elapsedMs": 4444,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "06a3a94bfc9a31bb8f373762282a043f509ca07b8a9b14de7f3b2f527d4a4e11",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "12-start-once",
+      "startedUtc": "2026-10-11T18:21:44.878Z",
+      "elapsedMs": 3458,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "25646c3e2da1129d97ec4e76d09808fab3e119044a8ebc70665a8f9d336a4293",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "13-identify-own-job",
+      "startedUtc": "2026-10-11T18:22:33.268Z",
+      "elapsedMs": 870,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "23ea46efdd973789de2f0fca567d25e45b654d6b8830497e6286cf10dc9da9e2",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "14-status",
+      "startedUtc": "2026-10-11T18:23:05.988Z",
+      "elapsedMs": 961,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "c5deffde05f53255c2973533ab97814a2eb9856a583e1d06be0b312ee987878b",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "15-first-conclusive-prove",
+      "startedUtc": "2026-10-11T18:23:40.004Z",
+      "elapsedMs": 1261,
+      "exitCode": 2,
+      "stderrBytes": 0,
+      "stdoutSha256": "e8fd4ab3388c2786fff9e91b04ea08b02aa3ddeee93b92b4ce5b554163261e2a",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "16-bundle",
+      "startedUtc": "2026-10-11T18:24:27.049Z",
+      "elapsedMs": 976,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "1a86a6b52905f5f6333d3a57ea1f1ade233c4ce0483405dc23804cfd7e1ffa58",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "17-health-postflight",
+      "startedUtc": "2026-10-11T18:25:40.821Z",
+      "elapsedMs": 1615,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "dd1c0f7784fdbe510838515068c63ae72761c3b676c5f76431f5952f8069f22b",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    }
+  ],
+  "chain": {
+    "acceptedPhases": [
+      "01-boot-check",
+      "02-bootstrap",
+      "03-upload-0",
+      "04-upload-1",
+      "05-upload-2",
+      "06-upload-3",
+      "07-upload-4",
+      "08-extract",
+      "09-verify-linux-strict",
+      "10-preflight",
+      "11-health-prestart",
+      "12-start-once",
+      "13-identify-own-job",
+      "14-status",
+      "15-first-conclusive-prove"
+    ],
+    "stopped": {
+      "phase": "first-conclusive-prove",
+      "code": "PROVE_VERDICT_NOT_PASS"
+    },
+    "hardStop": false,
+    "end": "CHAIN_COMPLETE",
+    "limitsExceeded": [],
+    "stopExecuted": false,
+    "postflight": {
+      "mode": "FAILURE_RECORD",
+      "accepted": false,
+      "executionPass": false,
+      "scope": "FAILURE_PATH_POINT_IN_TIME_HEALTH_ONLY",
+      "ancestorsComparedWithPrestart": true
+    }
+  },
+  "hostSteps": "Boot id matched the pin. Bootstrap created the new job base and inputs directory (0700). Five uploads stored with matching bytes and sha256 (0400). Extract created 436 files; Linux strict verification passed (435 files, owner and mode checked, packageId, harness and product revision matched). Explicit preflight returned go with exactly the two allowed warnings. Prestart health was accepted as the new baseline.",
+  "job": {
+    "jobId": "r7b-lpg-20261011-j1-08f2ff30",
+    "startPhase": "EXITED",
+    "wallMs": 1077,
+    "cases": {
+      "total": 11,
+      "notRun": 11
+    },
+    "result": {
+      "code": "LIMIT_READBACK_MISMATCH",
+      "runnerCode": "LIMIT_READBACK_MISMATCH+HOST_PARSE",
+      "secondary": [
+        "HOST_PARSE",
+        "REMOVE_SKIPPED_UNSTOPPED"
+      ],
+      "stopPath": "DRIFT",
+      "realPostgres": false,
+      "gatePassed": false,
+      "flags": [
+        "OUTER_PROOF_PASSED"
+      ]
+    },
+    "controlsMismatches": [
+      "ioWbps",
+      "ioRbps"
+    ],
+    "readBackFrom": "cgroup files",
+    "driverTail": "cleanup step prove-stopped failed with HOST_PARSE; runtime removal was skipped by the driver and done by the controller's outer proof"
+  },
+  "outerProof": {
+    "pass": true,
+    "checks": [
+      "unitList:ok",
+      "cgroupDir:ok",
+      "processes:ok",
+      "postmasterFiles:ok",
+      "sysv:ok",
+      "scratchInventory:ok",
+      "runtimeDirs:ok",
+      "out:ok",
+      "scratchInventoryFinal:ok",
+      "protectedServices:ok",
+      "hostTools:ok",
+      "inputPostcheck:ok"
+    ],
+    "lockReleased": true,
+    "verdict": {
+      "exitCode": 2,
+      "pass": false,
+      "reasons": [
+        "RECEIPT_NOT_PASS"
+      ]
+    }
+  },
+  "protectedServices": {
+    "controllerWindow": {
+      "equal": true,
+      "equivalent": true,
+      "allowances": 0
+    },
+    "healthWindow": "Informational root-gate comparison of prestart and postflight: the fallback timer fired once between them (start timestamp advanced by about 300.0 s); the RC6 rule tolerated that one field and the other 79 fields were equal. The strict J1-R3 rule would have failed here."
+  },
+  "hostTools": {
+    "beforeAndAfterPass": true
+  },
+  "productImpact": "None observed: health showed PAPER_ONLY, the five research flags OFF and queued 0 before and after; protected units unchanged except the tolerated timer field; no product service or configuration change.",
+  "defectsFound": [
+    "LIMIT_READBACK_MISMATCH (ioWbps, ioRbps): the driver's read-back of the job cgroup IO limits did not equal the planned values, so it stopped before PostgreSQL started. The planned values are 20,000,000 and 40,000,000 bytes per second; the exact read-back value was not recorded. A likely cause is unit or rounding handling between the systemd property and io.max; not proven.",
+    "HOST_PARSE in the driver's own stop proof (prove-stopped): a real host output did not parse; the controller's outer proof later passed every check."
+  ],
+  "retainedOnHost": "The new job base, its inputs and the new package root stay; the job runtime was removed by --remove-runtime. Earlier artefacts were not touched.",
+  "evidence": {
+    "runDir": ".qa-local/claude-r7b-j1r4-run-2026-10-11/",
+    "bundleSha256": "1a86a6b52905f5f6333d3a57ea1f1ade233c4ce0483405dc23804cfd7e1ffa58",
+    "finalAcceptRunSha256": "99efbd8be366d41d174bd7063200c747606e286a936a71fd1fe24a157748e3f1",
+    "goPacketSha256": "e50bf9f8064e54fb3ff3a2e4f08da3b4936cb1b96b313aad5c6c8848f9acfa6b"
+  },
+  "nextAction": "Diagnose both defects locally from the bundle and code, build RC7 with tests and audit, then ask the owner for a new GO (new run directory prefix). J2 to J4 stay closed.",
+  "authority": {
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  }
+}
