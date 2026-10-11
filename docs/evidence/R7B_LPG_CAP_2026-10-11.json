@@ -1,0 +1,118 @@
+{
+  "schema": "r7b-lpg-cap-local-v1",
+  "recordedAt": "2026-10-11T02:33:06Z",
+  "status": "CAP_CAPTURED_NO_GO_FOR_J1_OWNER_DECISIONS_REQUIRED",
+  "operationalAcceptance": false,
+  "scope": "One read-only capability capture on the VPS under the owner GO of 2026-10-11 (about 02:17 UTC). A pinned module was piped to node over SSH, so no file was created on the host; no unit was started, stopped or changed. Raw output stays in ignored local files; this record holds only the sanitized summary.",
+  "capture": {
+    "moduleSha256": "36b3f8156a11616ed7b04e2667ea1c1c2f8953676c7437fe11bb206528c61ae5",
+    "hostLinuxPin": "e23b5c2092c1eb24595e739e61c925d000afe4845ad537c695e3824a4975e439",
+    "factsSha256": "f0321c5c13bef0d3c767d86598717f9c9af9972fa8aec414ef19da01169b1050",
+    "factsBytes": 8429,
+    "status": "OK",
+    "elapsedMs": 2595,
+    "runs": 1,
+    "loginNonRoot": true,
+    "discovery": "Before the module, four read-only commands listed the user and system service units and the API unit's ExecStart; after it, one read-only unit show of the two PostgreSQL user units."
+  },
+  "facts": {
+    "host": {
+      "os": "Ubuntu 24.04",
+      "kernel": "6.8",
+      "systemd": 255,
+      "linger": true,
+      "seccompFeature": true
+    },
+    "cgroup": {
+      "v2": true,
+      "delegated": [
+        "cpu",
+        "io",
+        "memory",
+        "pids"
+      ],
+      "memoryPeak": true,
+      "pidsPeak": true,
+      "cgroupKill": true
+    },
+    "userNamespaces": {
+      "available": false,
+      "reason": "kernel AppArmor restriction on unprivileged user namespaces is on (Ubuntu 24.04 default)"
+    },
+    "node": {
+      "version": "v24.21.0",
+      "sameBinaryForApiAndPath": true,
+      "sha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+      "location": "under the service user's home (version manager), so owned by the job user"
+    },
+    "postgres": {
+      "systemPackages": "none found under the system PostgreSQL directory",
+      "productRuntime": "the Paper production and staging databases run as user units from a PostgreSQL 16 runtime inside the service user's home",
+      "systemPostgresUnits": 0,
+      "harnessPortCollision": false
+    },
+    "resources": {
+      "nproc": 2,
+      "memTotalGiB": 7.8,
+      "memAvailableGiB": 6.6,
+      "load1": 0,
+      "load5": 0.01,
+      "diskAvailGiB": 87.8,
+      "diskSizeGiB": 95.8,
+      "fstype": "ext4",
+      "jobBaseExists": false
+    },
+    "sysvSegments": 2,
+    "jobLine": {
+      "withoutAll": {
+        "exitCode": 0,
+        "linePresent": true,
+        "valueKind": "empty"
+      },
+      "withAll": {
+        "exitCode": 0,
+        "linePresent": true,
+        "valueKind": "empty"
+      },
+      "note": "systemctl prints an empty Job= line for the API unit with and without --all; this confirms the measurement tool v3 stop-proof fix"
+    },
+    "protectedUnits": {
+      "count": 11,
+      "pendingJobs": 0,
+      "statesAsExpected": true
+    },
+    "environment": {
+      "pgVariablesInUserManager": false
+    }
+  },
+  "verdict": {
+    "go": false,
+    "goFinal": false,
+    "bindingReady": false,
+    "refusals": [
+      "FACT_MISSING",
+      "FACT_MISSING"
+    ],
+    "warnings": [
+      "DISK_CAP_IS_RECORDED_EXCEPTION"
+    ],
+    "diskMechanismSelected": "WATCHDOG_IO_RATE_BOUNDED"
+  },
+  "defectsFound": [
+    "HIGH for J1: createNodeIo in adapter/host-linux.mjs builds file metadata from bigint stat values and mixes BigInt with Number (mode mask), so every real stat or lstat throws; the capture lost the Node file owner and mode, and the driver and controller would fail the same way on the host. Fakes in the tests use plain numbers, so no test caught it. Fix and a real-filesystem test go into candidate 3.",
+    "The module selects the system PostgreSQL directory only; the product runtime location needs an explicit library dir argument in the next capture."
+  ],
+  "blockersForJ1": [
+    "No unprivileged user namespaces: the tmpfs disk mechanism (A) and InaccessiblePaths are not available to user units, so only the owner's fallback mechanism B remains, and it is refused until the B-readiness fixes land. Without a mount namespace the production database socket cannot be hidden from the suite child.",
+    "Host tools are owned by the job user (Node under a version manager, PostgreSQL runtime in the home directory), so the strict immutability rule refuses them; the owner decides between a hash-pinned exception and root-owned installs.",
+    "The host stat defect above."
+  ],
+  "nextAction": "Owner decisions on the disk and sandbox path and on the host tools; then candidate 3 with the fixes; then a second capture under a new owner GO; then the J1 GO.",
+  "authority": {
+    "hostActions": "read-only capture only",
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  }
+}
