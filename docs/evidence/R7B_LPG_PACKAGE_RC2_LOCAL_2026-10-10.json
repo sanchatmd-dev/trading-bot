@@ -1,0 +1,170 @@
+{
+  "schema": "r7b-lpg-package-rc2-local-v1",
+  "recordedAt": "2026-10-10T19:49:48Z",
+  "status": "LOCAL_PACKAGE_RC2_AUDITED_READY_FOR_CAP_GO_EXECUTION_BLOCKED",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "Sealed Linux package and execution adapter for the isolated PostgreSQL harness: design, integration contract, implementation, two audit rounds, independent tests and a reproducible release candidate. Local only; nothing ran on Linux, systemd or PostgreSQL, and no host action occurred.",
+  "ownerDecisions": {
+    "diskCap": "tmpfs charged to the 512 MiB unit memory limit (mechanism A); watchdog plus IO limit (mechanism B) only as a recorded exception; otherwise refuse",
+    "osUser": "same OS user as the Paper services, with protection layers",
+    "fsync": "off for the throwaway cluster",
+    "goPerJob": "one owner GO for each of J1 to J4"
+  },
+  "rootDecisions": [
+    "The harness runner executeBound owns the job lifecycle; the driver supplies the adapter, monitors, receipt and sanitizer (contract D1).",
+    "Time budget: runner wall 285 s, cleanup 30 s, unit RuntimeMaxSec 330, TimeoutStopSec 15 (RD-1).",
+    "The cluster superuser is locked out after setup and the lockout is proven by SQLSTATE 28000 (RD-2).",
+    "Host tools must be immutable; a Node binary owned or writable by the job user goes to the owner as a decision (RD-3).",
+    "Cgroup guard ReadOnlyPaths and ReadWritePaths under mechanism A (RD-4).",
+    "J1 is the first Linux proof of the Node permission model (RD-5).",
+    "process.kill from the suite child is refused except signal 0 to itself (D49).",
+    "Mechanism B is refused by the controller until a B-readiness wave (audit A1-04, A1-08).",
+    "Sandbox InaccessiblePaths are required under mechanism A and attested by the driver at run time."
+  ],
+  "releaseCandidate": {
+    "packageId": "78e9e5a8e1e3eb470edbe88344de68158fa3b58b50d0879d89e23cf901a53b6d",
+    "tarSha256": "053fada79de552397eeb6074203fd14de766f0e8b985c974f7666242961e0eab",
+    "tarBytes": 26742784,
+    "files": 434,
+    "reproducible": "two builds in separate processes byte-equal",
+    "verify": "strict extract and verify passed on Windows with mode and owner checks skipped",
+    "harnessCodeSha256": "80379cacfdf020c65c6c152c3e4af7481159bd0445d21c485ef33a2e74d6ff60",
+    "harnessPreviousCodeSha256": "6e70ece5f2ef96cb525a9e81307ecfdff042e269765bf132f7ca454ef49de8c1",
+    "toolCodeSha256": "89cdc7c91566ced9ed48e4eae139a0b3cb792cb8e0f7ff9e20e4310d8793b385",
+    "productRevision": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+    "importGraph": {
+      "pinnedSchemeImports": 1,
+      "dynamicPinsSource": "builtin"
+    }
+  },
+  "adapter": {
+    "adapter/confine.mjs": "871020313999755ca3c7a604df61195e3767ecf52785827f9909042f89ebc39b",
+    "adapter/control.mjs": "36bac32cc1d0791f80e8212c7ff40e5fa22f63ca4790f02a7903dc22907d55b6",
+    "adapter/driver.mjs": "5ec0e32f473522de2d32520e1b0b096a3d97a96cbec1c1518b3200bf2f76d941",
+    "adapter/host-bind.mjs": "92f47fc24e3cd68ea3cd38a6051e04f848021b8ab45e9fd19bd669acd0c39941",
+    "adapter/host-linux.mjs": "e23b5c2092c1eb24595e739e61c925d000afe4845ad537c695e3824a4975e439",
+    "adapter/pgconf.mjs": "eb77ad2814230bc3b9deb8ad29b2c8bb614cd4917a13ae2a03820a5928792605",
+    "adapter/pkg-verify.mjs": "e277242eaf6bb2028b09fab4a071946f42a800dd651b308e9af113f8effab39a",
+    "adapter/receipt.mjs": "617c881b4e0f608688065bf900d2fc99ff9a933665e20306b08bba2b6107fe68",
+    "adapter/run-binding.mjs": "e161edf8f0e8396075b29d369f381232bbad5afc9738d303a6edc35d6303dc84",
+    "adapter/sanitize.mjs": "b9d970abe873ae20d3d3cf0015f1cf6bb935dd1cc265d67c563bce504383da7f",
+    "adapter/suite-entry.mjs": "3f1281a19003a3b9e42803792c9748cb3b20f938da32965830b684c4d29b056f",
+    "adapter/suite-launch.mjs": "bc338c0cdc8629f5652d7b5e385583e90adc8aafc745d0c39042d5528a807923",
+    "adapter/ustar.mjs": "45a3f490723bac2f023d0873cf11a5461b10607801064b1a51a1803fdf1b6725"
+  },
+  "tools": {
+    "makeRunPacket": {
+      "path": ".qa-local/claude-r7b-lpg-pkg-rc2-78e9e5a8/tools/make-run-packet.mjs",
+      "sha256": "e5a97de0d6e0447f8261b3c306d52e9494ed5303d1d65cf0a017b647aaf04a69"
+    },
+    "capModule": {
+      "path": ".qa-local/claude-r7b-lpg-cap-v1-checkpoint-36b3f815/out/cap-module.mjs",
+      "sha256": "36b3f8156a11616ed7b04e2667ea1c1c2f8953676c7437fe11bb206528c61ae5"
+    }
+  },
+  "documents": {
+    "design": {
+      "path": ".qa-local/claude-r7b-linux-pg-package-design.md",
+      "sha256": "956a9114bc1a9a75801529cf0fd98ad3d23147518c09a6695f33b7eb064dea7e"
+    },
+    "contract": {
+      "path": ".qa-local/claude-r7b-lpg-pkg-rc2-78e9e5a8/INTEGRATION-CONTRACT-v1.md",
+      "sha256": "84be150da5eea92fb110055b5fccf7e8a1889da047f6f0e0d884b13aee3e4895"
+    },
+    "auditA1": {
+      "path": ".qa-local/claude-r7b-lpg-pkg-rc2-78e9e5a8/A1-AUDIT.md",
+      "sha256": "113690f3a4e7cf14af0c847be036cda3f8b65c5e5b319ec4c24320a0ce54aac1"
+    },
+    "auditA1r": {
+      "path": ".qa-local/claude-r7b-lpg-pkg-rc2-78e9e5a8/A1R-AUDIT.md",
+      "sha256": "b3298d0fbb7c2e298fba54ae961fcee6651bad7cd505ad58b0ca6289a7b7dc3c"
+    },
+    "runbook": {
+      "path": ".qa-local/claude-r7b-lpg-pkg-rc2-78e9e5a8/RUNBOOK-D1.md",
+      "sha256": "ee4bbd040159c3c7c6cf519e8201736172bf1c64f785a2ae9c7b51acb6686588"
+    }
+  },
+  "snapshots": {
+    "package": {
+      "path": ".qa-local/claude-r7b-lpg-pkg-rc2-78e9e5a8/",
+      "freezeSha256": "a5915f354fbe4a46caf381ffc50be5c52e7bc1024ebaffe6234a27dd0941a48c"
+    },
+    "harness": {
+      "path": ".qa-local/claude-r7b-linux-pg-v8.1-checkpoint-80379cac/",
+      "freezeSha256": "b2eed5f9f3c21d0fbb076eec3d45acf78526565a929afdd8f686304e923b4fc2"
+    },
+    "cap": {
+      "path": ".qa-local/claude-r7b-lpg-cap-v1-checkpoint-36b3f815/",
+      "freezeSha256": "af74b2b256d8e155a62bed77f45906b90e3ee0ad637261a99cc74740433aa290"
+    }
+  },
+  "checks": {
+    "independentTesterRerun": {
+      "pkg": 132,
+      "confineSynthetic": 53,
+      "confineRealset": 6,
+      "driver": 102,
+      "host": 140,
+      "binding": 71,
+      "controller": 127,
+      "cap": 64,
+      "harnessSelftests": "10 suites, 0 failures (accounting 16, service 2, close 8, producer 40, h15 26, stateful 39, suite 22, runner 47, bound 40, bound-callback 9)"
+    },
+    "safetyMutations": "21 of 21 killed by the independent tester; coder mutation sets left only equivalent survivors",
+    "crossChecks": [
+      "one host contract test passes against the driver fake host and the real Linux binding",
+      "the driver process loads 9 adapter and harness files and no product or case module",
+      "the capability evaluator and the run binding agree on 53 of 53 host-binding fixtures"
+    ]
+  },
+  "audits": {
+    "A1": "ACCEPT_WITH_FIXES: no false-PASS path; one HIGH (SQLSTATE lost in the binding, every real job would fail at the superuser lockout) and seven MED, all fixed except the two mechanism-B items",
+    "A1r": "READY_FOR_CAP_AND_J1_AFTER_CAP: no new HIGH or MED; J1 only under mechanism A and only after the capability gate passes"
+  },
+  "openItems": {
+    "deferred": [
+      "A1-04 and A1-08: mechanism B watchdog and residue (B refused until fixed)",
+      "A1-14: residual R3b, the suite child can reach the user bus over AF_UNIX (owner awareness)"
+    ],
+    "low": [
+      "A1R-01 to A1R-05",
+      "host-layer immutable rule is stricter than the driver for symlink inputs (fail closed)"
+    ],
+    "nextCandidate": "Candidate 3 with the low fixes and a controller acknowledge command for a lock held after a failure"
+  },
+  "unprovenUntilJ1": [
+    "Node permission model, kill guard and Worker preload on Linux",
+    "systemd user-unit properties, cgroup delegation and the cgroup guard",
+    "tmpfs ownership and sizes inside the unit",
+    "PostgreSQL 16 superuser lockout with SQLSTATE 28000",
+    "memory headroom inside 512 MiB",
+    "protected-service snapshot stability",
+    "real proof, postcheck and receipt timings and the SIGTERM path"
+  ],
+  "executionLocks": [
+    "LOCAL_CANDIDATE_NOT_RELEASED",
+    "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+    "HARNESS_VPS_PACKET_REQUIRED"
+  ],
+  "nextAction": "Owner GO for the read-only capability packet (no host writes; it runs the version commands of node and the PostgreSQL tools and hashes those binaries). Then candidate 3, then the J1 GO if the capability gate passes under mechanism A.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  },
+  "time": {
+    "start": "2026-10-10T16:08:23Z",
+    "end": "2026-10-10T19:49:48Z",
+    "method": "clock readings and session event times"
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercentStart": 52,
+    "weeklyUsedPercentEnd": 56,
+    "fiveHourUsedPercent": 21,
+    "reservePercentagePoints": 15
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "schema": "r7b-timestamp-correction-v1",
+  "recordedAt": "2026-10-10T19:49:48Z",
+  "reason": "On 2026-10-10 the Claude root wrote estimated UTC times into six local-checkpoint evidence files and the time log instead of reading the clock. The estimates ran 0.9 to 4.4 hours ahead of the real times. Codex entries and the morning Claude entries that day used clock readings and are not affected.",
+  "method": "Real times come from each evidence file's modification time, the session transcript event times (dispatch and owner-question times) and the git commit times (+07:00 local, shown here in UTC). The original evidence files are left unchanged; this record supersedes their recordedAt and checkedAt values.",
+  "corrections": [
+    {
+      "file": "docs/evidence/R7B_LINUX_PG_V4_PRODUCER_LOCAL_2026-10-10.json",
+      "sha256": "fd15f0d70d32cfe3859b0aab37af34a0a96c6fc6e24b274724f9b93a981404db",
+      "recordedAtClaimed": "2026-10-10T12:45:00Z",
+      "checkedAtClaimed": "2026-10-10T12:47Z",
+      "recordedAtActual": "2026-10-10T11:49:45Z",
+      "commit": "1362c93",
+      "commitAt": "2026-10-10T12:19:58Z",
+      "workStart": "coder dispatched 11:01:02Z"
+    },
+    {
+      "file": "docs/evidence/R7B_LINUX_PG_V5_STATEFUL_H15_LOCAL_2026-10-10.json",
+      "sha256": "c59a2c26fe0a201a1bd7cceba2b0f36ae2f82216e75cfd3e33d5b5bba8f16587",
+      "recordedAtClaimed": "2026-10-10T15:25:00Z",
+      "checkedAtClaimed": "2026-10-10T15:20Z",
+      "recordedAtActual": "2026-10-10T13:21:57Z",
+      "commit": "33b4358",
+      "commitAt": "2026-10-10T13:34:12Z",
+      "workStart": "coders dispatched 12:21:04Z"
+    },
+    {
+      "file": "docs/evidence/R7B_MEASURE_TOOL_V3_LOCAL_2026-10-10.json",
+      "sha256": "eef8359e5f5cf049fdf1f9400b776bd55e9dda3f27d2d2b5fedbafbd8e0fa969",
+      "recordedAtClaimed": "2026-10-10T16:45:00Z",
+      "checkedAtClaimed": "2026-10-10T16:10Z",
+      "recordedAtActual": "2026-10-10T14:03:55Z",
+      "commit": "58c832d",
+      "commitAt": "2026-10-10T14:27:23Z",
+      "workStart": "coder dispatched 13:36:03Z"
+    },
+    {
+      "file": "docs/evidence/R7B_LINUX_PG_V6_TOOL_V3_LOCAL_2026-10-10.json",
+      "sha256": "b5397efc67e9a3795b6e895292a754eb134baa9b16ada816476ca09b605fcea4",
+      "recordedAtClaimed": "2026-10-10T17:30:00Z",
+      "checkedAtClaimed": "2026-10-10T17:25Z",
+      "recordedAtActual": "2026-10-10T14:18:27Z",
+      "commit": "58c832d",
+      "commitAt": "2026-10-10T14:27:23Z",
+      "workStart": "same wave as tool v3"
+    },
+    {
+      "file": "docs/evidence/R7B_HELPERS_TOOL_V3_LOCAL_2026-10-10.json",
+      "sha256": "3ee4f8c05c4376072e5d1a06b004156ad102685009c415401c9a2572f0821cbe",
+      "recordedAtClaimed": "2026-10-10T18:05:00Z",
+      "checkedAtClaimed": null,
+      "recordedAtActual": "2026-10-10T14:32:29Z",
+      "commit": "6b5f612",
+      "commitAt": "2026-10-10T14:33:17Z",
+      "workStart": "tester dispatched 14:28:26Z"
+    },
+    {
+      "file": "docs/evidence/R7B_LINUX_PG_V7_ACCOUNTING_LOCAL_2026-10-10.json",
+      "sha256": "8cb1f48e33050c90746e96bf3bf9b54ecaff5fdc11c248ef9fe048bef6ab4648",
+      "recordedAtClaimed": "2026-10-10T19:30:00Z",
+      "checkedAtClaimed": "2026-10-10T19:30Z",
+      "recordedAtActual": "2026-10-10T15:06:02Z",
+      "commit": "20c64fa",
+      "commitAt": "2026-10-10T16:07:47Z",
+      "workStart": "auditor dispatched 14:33:47Z"
+    }
+  ],
+  "timeManagementLinesCorrected": 5,
+  "rule": "The root now reads the clock (date -u) before writing any time."
+}
