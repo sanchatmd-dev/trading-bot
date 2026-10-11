@@ -1,0 +1,83 @@
+{
+  "schema": "r7b-hcap1-local-v1",
+  "date": "2026-10-11",
+  "checkpointAt": "2026-10-11T06:30:45.385Z",
+  "status": "REVIEWED_LOCAL_PROPOSAL_NO_GO",
+  "moduleSha256": "3113ad078768696252c596b2497e54b4141f76cc52568bb57175cd9982c6663e",
+  "argsSha256": "8efc20544fad82854457063e74da25e9f24fddfb2fd7f9b88d37cda7a5e545f8",
+  "freezeSha256": "5610685e4c227840882dddea4e3dfe5be4629823b613c0d63e030df23811ee2b",
+  "tests": {
+    "schema": "r7b-hcap1-local-tests-v1",
+    "passed": 32,
+    "failed": 0,
+    "realHostTests": false,
+    "scope": "Injected full probe refusal/drift/deadline and pure parser checks; no live HTTP, PostgreSQL or host access"
+  },
+  "review": {
+    "schema": "r7b-hcap1-review-v1",
+    "status": "ROOT_ACCEPTED_LOCAL_PROPOSAL_ONLY",
+    "independentRole": "architecture_auditor",
+    "initialFindings": [
+      "HIGH: unparsed PostgreSQL overrides could hide a conflicting endpoint",
+      "HIGH: synchronous I/O prevents a guaranteed remote hard timeout",
+      "MEDIUM: duplicate roles or tool paths could inflate observed counts",
+      "HIGH in listener follow-up: filtering by API PID first hid competing or shared listeners"
+    ],
+    "resolution": [
+      "Refuse unmodeled PostgreSQL switches and retain empty -h arguments",
+      "Nonblocking, no-follow opens plus regular-file checks; explicitly limited best-effort remote deadline with separate local transport timeout and unknown remote completion",
+      "Require unique unit IDs, distinct API/research/PG roles and unique five tool paths pinned to CAP3",
+      "Count all potentially applicable listeners before checking that their PID set contains only the API PID"
+    ],
+    "independentChecks": [
+      {
+        "scope": "Overrides, duplicates and exact CAP3 arguments/tool pins",
+        "passed": 9,
+        "failed": 0
+      },
+      {
+        "scope": "Final valid listener baseline, competing listener and shared foreign PID",
+        "passed": 3,
+        "failed": 0
+      }
+    ],
+    "rootFinalNarrowing": "After the final three independent checks, root additionally rejects competing IPv6 wildcard/dual-stack rows. The final 32 injected author checks cover this narrowing. No independent rerun is claimed for that last conservative change.",
+    "unrun": [
+      "Live host probe",
+      "Linux file I/O",
+      "Live HTTP",
+      "Live PostgreSQL readiness"
+    ],
+    "residuals": [
+      "Observations before and after do not eliminate races within the interval",
+      "No database admission-ledger read or whole-host heavy-job proof",
+      "First-observed pg_isready hash is not trusted provenance",
+      "Transport timeout does not establish remote termination"
+    ],
+    "executionAuthority": false,
+    "j1ReadinessAccepted": false
+  },
+  "scope": [
+    "One API health GET with current API listener identity before/after",
+    "Five explicitly named API admission flags only, as states",
+    "Ten protected unit snapshots before/after",
+    "Two product/staging PostgreSQL endpoint and readiness observations",
+    "Five CAP3 binary pins before/after, boot and disk-device mapping",
+    "Job-base absence"
+  ],
+  "limits": [
+    "No live host execution or Linux I/O test.",
+    "Best-effort remote timer only; 90-second local transport limit does not prove remote termination.",
+    "No database admission-ledger read or whole-host heavy-job proof.",
+    "pg_isready first-observed hash is drift evidence, not trusted provenance.",
+    "Readiness connection attempts may create ordinary PostgreSQL log entries."
+  ],
+  "j1": {
+    "status": "LOCAL_DRAFT_NO_GO",
+    "runPacketSha256": "a6c87ddc40a20cbcc5dca805339c5ba11d643f3850b57281db37374d925975dd",
+    "cases": 11,
+    "workSeconds": 285,
+    "cleanupSeconds": 30,
+    "remaining": "Current scoped health evidence and complete reviewed transfer/start/stop/recovery/postflight packet, then separate owner GO."
+  }
+}

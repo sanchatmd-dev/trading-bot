@@ -1,0 +1,50 @@
+{
+  "schema": "r7b-lpg-package-rc5-local-v1",
+  "date": "2026-10-11",
+  "status": "LOCAL_ACCEPTED_NOT_DEPLOYED",
+  "packageId": "3743a0b1e1073450957aa56c332bc661493d8edbdb8266cc21caf4d73df94a2a",
+  "tarSha256": "b9bb052d5122af97c62dd2c2b076521de1cf1c2a277ab34c55234bd5cdb2a36e",
+  "tarBytes": 26778624,
+  "manifestSha256": "3743a0b1e1073450957aa56c332bc661493d8edbdb8266cc21caf4d73df94a2a",
+  "payloadFiles": 435,
+  "archiveFiles": 436,
+  "changedPayloadPaths": [
+    "adapter/control.mjs"
+  ],
+  "unchangedAdapters": 13,
+  "unchangedHarnessCodeFiles": 27,
+  "controlSha256": "0b7fc46f5152aea3a9db241d2434f2ac6c8dd169eb35c2c842937864f0873539",
+  "reproducible": {
+    "inProcessTwice": true,
+    "separateProcessesEqual": true
+  },
+  "verification": {
+    "packageId": "3743a0b1e1073450957aa56c332bc661493d8edbdb8266cc21caf4d73df94a2a",
+    "files": 435,
+    "directories": 52,
+    "bytes": 26326939,
+    "modeChecked": false,
+    "ownerChecked": false,
+    "harnessCodeSha": "897e3fda555adfb65f95b5c56330afac810f95d8bbb8478585a01ed966dd22f1",
+    "productRevision": "eb532ffd7b127140c38c44c90cfed50f0708f81c"
+  },
+  "rootBuildElapsedMs": 5931,
+  "authorChecks": 10,
+  "independentFocusedChecks": 4,
+  "regressionChecks": 128,
+  "regressionAssertions": 2444,
+  "independentPackageReviewSha256": "75ce5ab4d9729a9cfd16ee2fcff1be26a6318f2b5955c7279d4eedecaa3b782d",
+  "freezeSha256": "d2ea5a8f92ee3e7006c34ae66d2e75155d5c21fa7c04bc7559b2c13ebacc729c",
+  "frozenFiles": 20,
+  "behavior": "Derive the PostgreSQL collector root from the validated shared version-16 product binary binding for both preflight and start; refuse unsupported layouts before collection.",
+  "builderOnlyDelta": "Retain local build and extraction artifacts instead of automatic recursive cleanup.",
+  "executionAuthority": false,
+  "hostRun": false,
+  "limits": [
+    "No Linux owner/mode verification for RC5 yet.",
+    "No harness SQL case ran.",
+    "No historical J1 unit-drift attribution.",
+    "B and JavaScript socket guard limitations remain unchanged.",
+    "A new reviewed owner GO is required for any RC5 host attempt."
+  ]
+}

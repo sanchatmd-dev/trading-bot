@@ -1,0 +1,402 @@
+{
+  "schema": "r7b-lpg-cap2-evidence-v1",
+  "checkpointDate": "2026-10-11",
+  "scope": "READ_ONLY_CAPTURE_COMPLETED_LOCAL_EVALUATION_NO_GO",
+  "baseRevision": "30e50ac2611d5d826a28a0ad6fe3939edbc57e3c",
+  "ownerAuthority": {
+    "packet": "R7B-LPG-CAP2-20261011",
+    "reply": "Approved",
+    "scope": "One read-only lookup and one capture",
+    "consumed": true,
+    "jobAuthority": false
+  },
+  "transport": {
+    "startedAt": "2026-10-11T03:57:52.12Z",
+    "finishedAt": "2026-10-11T03:57:54.956Z",
+    "lookupCount": 1,
+    "captureCount": 1,
+    "retryCount": 0,
+    "exitCodes": [
+      0,
+      0
+    ],
+    "stderrBytes": 0,
+    "captureBytes": 26990,
+    "captureSha256": "24feffcffab83b49b8b9378655e93bda9b989f937b9930620d2ea32f90355c12",
+    "sameAuthorizedUserAsCap1": true
+  },
+  "moduleSha256": "20c5a7b24d3ea7cd4748c38d350dd9a6f031270c4dacbfb9a9bc4f5aeb72db18",
+  "argsSha256": "2026d24a7ad5a42b147485f3c40ae33c80c8fda74f61c4b4b554eab1de017f90",
+  "evaluation": {
+    "schema": "r7b-lpg-cap-summary-v1",
+    "capSchema": "r7b-lpg-cap-facts-v1",
+    "capStatus": "OK",
+    "hostLinuxSha256": "3a63366c624ca34c981350c7b36f4f1bfb0122defdf21a39fbbad5c8f361dc38",
+    "go": false,
+    "goFinal": false,
+    "bindingReady": false,
+    "refusals": [
+      "FACT_MISSING"
+    ],
+    "warnings": [
+      "PG_CLUSTERS_UNKNOWN",
+      "DISK_CAP_IS_RECORDED_EXCEPTION"
+    ],
+    "findings": [
+      {
+        "code": "HOST_TOOL_NOT_READ_ONLY",
+        "severity": "decision",
+        "subject": "apiNode"
+      },
+      {
+        "code": "HOST_TOOL_NOT_READ_ONLY",
+        "severity": "info",
+        "subject": "execNode"
+      },
+      {
+        "code": "HOST_TOOL_NOT_READ_ONLY",
+        "severity": "decision",
+        "subject": "tool.postgres"
+      },
+      {
+        "code": "HOST_TOOL_NOT_READ_ONLY",
+        "severity": "decision",
+        "subject": "tool.initdb"
+      },
+      {
+        "code": "HOST_TOOL_NOT_READ_ONLY",
+        "severity": "decision",
+        "subject": "tool.pgCtl"
+      },
+      {
+        "code": "HOST_TOOL_GIVEN_PATH_NOT_CANONICAL",
+        "severity": "info",
+        "subject": "tool.sh"
+      },
+      {
+        "code": "HOST_TOOL_POLICY_FAILED",
+        "severity": "block",
+        "subject": null
+      }
+    ],
+    "diskMechanism": "WATCHDOG_IO_RATE_BOUNDED",
+    "diskRecordedException": true,
+    "host": {
+      "kernelMajorMinor": "6.8",
+      "osId": "ubuntu",
+      "osVersionId": "24.04",
+      "systemdMajor": 255,
+      "systemdSeccompFeature": true,
+      "lingerOn": true,
+      "userNonRoot": true,
+      "userName": "$USER",
+      "bootIdSha256Prefix": "d0563c019e26331f"
+    },
+    "cgroup": {
+      "cgroupV2": true,
+      "controllersAvailable": [
+        "cpu",
+        "io",
+        "memory",
+        "pids"
+      ],
+      "delegated": [
+        "cpu",
+        "io",
+        "memory",
+        "pids"
+      ],
+      "appSliceExists": true,
+      "appSliceControllers": [
+        "cpu",
+        "io",
+        "memory",
+        "pids"
+      ],
+      "memoryPeak": true,
+      "pidsPeak": true,
+      "cgroupKill": true
+    },
+    "userns": {
+      "available": false,
+      "maxUserNamespaces": 31613,
+      "unprivilegedUsernsClone": 1,
+      "apparmorRestrict": 1
+    },
+    "process": {
+      "seccomp": 0,
+      "noNewPrivs": 0
+    },
+    "node": {
+      "api": {
+        "sha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bytes": 126595440,
+        "ownerIsRoot": false,
+        "mode": "0755",
+        "givenPathCanonical": true,
+        "readOnly": false,
+        "immutable": false,
+        "version": "v24.21.0"
+      },
+      "exec": {
+        "sha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bytes": 126595440,
+        "ownerIsRoot": false,
+        "mode": "0755",
+        "givenPathCanonical": true,
+        "readOnly": false,
+        "immutable": false,
+        "version": "v24.21.0"
+      },
+      "sameBinary": true
+    },
+    "postgres": {
+      "version": "16.15",
+      "packageCount": 0,
+      "pathTemplate": "$PGBIN/<tool>",
+      "tools": {
+        "postgres": {
+          "sha256": "201d8daff9a5bd9df70b820471b965c39f5a776d677f395232c477d051270722",
+          "bytes": 10511456,
+          "ownerIsRoot": false,
+          "mode": "0755",
+          "givenPathCanonical": true,
+          "readOnly": false,
+          "immutable": false,
+          "version": null
+        },
+        "initdb": {
+          "sha256": "df8c50fd508bb31db312a8519a2e7922c63b44f7d963c39d58dc107169078a0d",
+          "bytes": 122464,
+          "ownerIsRoot": false,
+          "mode": "0755",
+          "givenPathCanonical": true,
+          "readOnly": false,
+          "immutable": false,
+          "version": null
+        },
+        "pgCtl": {
+          "sha256": "f311ff51f5a28ff104e43661c733b36d25cc9c5d7a66f0e463611378aafe4590",
+          "bytes": 68360,
+          "ownerIsRoot": false,
+          "mode": "0755",
+          "givenPathCanonical": true,
+          "readOnly": false,
+          "immutable": false,
+          "version": null
+        },
+        "sh": {
+          "sha256": "86d31f6fb799e91fa21bad341484564510ca287703a16e9e46c53338776f4f42",
+          "bytes": 129784,
+          "ownerIsRoot": true,
+          "mode": "0755",
+          "givenPathCanonical": false,
+          "readOnly": true,
+          "immutable": true,
+          "version": null
+        }
+      },
+      "clusterCount": null,
+      "clusterPortCollision": null
+    },
+    "resources": {
+      "nproc": 2,
+      "memTotalGiB": 7.8,
+      "memAvailableGiB": 6.6,
+      "load1": 0.08,
+      "load5": 0.02,
+      "load15": 0.01,
+      "pressureCpuAvg60": 0.03,
+      "pressureMemoryAvg60": 0,
+      "pressureIoAvg60": 0
+    },
+    "disk": {
+      "fstype": "ext4",
+      "sizeGiB": 95.8,
+      "availGiB": 87.8,
+      "availFraction": 0.916,
+      "deviceKind": "block",
+      "jobBase": "$JOB_BASE",
+      "jobBaseExists": false
+    },
+    "sysvSegments": 2,
+    "limits": {
+      "nofileSoft": 1048576,
+      "nofileHard": 1048576
+    },
+    "clkTck": 100,
+    "jobProbe": {
+      "withoutAll": {
+        "exitCode": 0,
+        "linePresent": true,
+        "valueKind": "empty"
+      },
+      "withAll": {
+        "exitCode": 0,
+        "linePresent": true,
+        "valueKind": "empty"
+      },
+      "collectorApiJobState": "NONE"
+    },
+    "protectedUnits": {
+      "user": [
+        {
+          "role": "unit-8",
+          "loadState": "loaded",
+          "activeState": "inactive",
+          "subState": "dead",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": false
+        },
+        {
+          "role": "unit-7",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "api",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-10",
+          "loadState": "loaded",
+          "activeState": "inactive",
+          "subState": "dead",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": false
+        },
+        {
+          "role": "unit-6",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-9",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-1",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-3",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-2",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-4",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        }
+      ],
+      "system": []
+    },
+    "environment": {
+      "managerNameCount": 10,
+      "pgVariablePresent": false,
+      "processNameCount": 17
+    },
+    "probeErrors": {
+      "count": 3,
+      "codes": [
+        "ENOENT",
+        "HOST_IO",
+        "HOST_PARSE"
+      ]
+    },
+    "hostBindingSha256": null,
+    "placeholders": [
+      "$HOME",
+      "$USER",
+      "$JOB_BASE",
+      "$PGBIN"
+    ],
+    "elapsedMs": 758
+  },
+  "nextAction": "Request PERM1 read-only metadata for the five captured writable ancestor directories. No permission change, CAP3 or J1 is authorized. Integrate and reseal the local Node collector candidate only in a successor package before future execution.",
+  "limits": [
+    "API health and admission flags were not checked.",
+    "Fresh binary observations establish proposed expected pins, not per-job pre/post proof.",
+    "No Linux/PostgreSQL harness job, remote file write, deployment or restart occurred.",
+    "The B disk bound is modeled, not measured.",
+    "Root no-heavy-job confirmation comes from the handoff and dispatch inventory, not a process inventory scan."
+  ],
+  "diagnosis": {
+    "rootReproduced": true,
+    "node": {
+      "fact": "Node capability probe returned HOST_IO; API and executing Node observations agree.",
+      "inference": "The collector searches SYSTEM_PATH before product ExecStart. This failure mode is reproduced; the original failing substep was not captured."
+    },
+    "toolPolicy": {
+      "mappingDefectFound": false,
+      "uniqueWritableAncestors": 5,
+      "productFileMetadataOtherwisePassed": true,
+      "strictShellPassed": true,
+      "exactDirectoryModesKnown": false,
+      "groupMembershipKnown": false,
+      "policyWeakened": false
+    },
+    "localNodeCandidate": {
+      "sha256": "2c6f76b0aa0f81e4cbbd556da5c88eaead87c5512da774cb8651ba7e3965d622",
+      "focusedPassed": 28,
+      "capabilityRegressionPassed": 41,
+      "rootIndependentPassed": 9,
+      "integratedIntoSealedPackage": false,
+      "linuxExecuted": false
+    },
+    "permissionReadProposal": {
+      "packet": "R7B-PERM1-20261011",
+      "status": "NO_GO",
+      "moduleSha256": "6e66868003b9b30413df2c90e08f48b6bcdffbd4524207ad2276f6d9c349e4fc",
+      "argsSha256": "894a2318088ff32e5c9a91dd3f5a5425b26e93302117e9edfa3f072b3fc71f42",
+      "rootMockedPassed": 8,
+      "moduleTimeoutSeconds": 10,
+      "transportTimeoutSeconds": 30,
+      "directoryCount": 5,
+      "hostMutationAllowed": false
+    },
+    "verificationLimit": "Runtime refused another agent because the thread limit was reached. Root independently checked the debugger Node change; the permission reader was authored and tested by root."
+  }
+}

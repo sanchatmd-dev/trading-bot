@@ -1,0 +1,46 @@
+{
+  "schema": "r7b-j1-unit-diagnostic-local-v1",
+  "status": "LOCAL_REVIEWED_AWAITING_OWNER_GO",
+  "date": "2026-10-11",
+  "sourceSha256": "dbc20e5c6eed116bc6be20fb99f38142fdf627c1cafe9d7c4d1acb3570d11f9a",
+  "argsSha256": "fcb2165bb616b291c5941b7cba6bf08ecd2ed1d059ae697862e34866f24b867c",
+  "packetSha256": "979cbfc0df1253bc807188efac51122296c17b7d80cfa58a185a03748c99b66e",
+  "freezeSha256": "fb1df3c02a7735c605a444699b84b066ca741761952fa8c8e0ef895470c1855a",
+  "frozenFiles": 10,
+  "authorChecks": 29,
+  "independentChecks": 15,
+  "failed": 0,
+  "scope": {
+    "captures": 1,
+    "additionalHostReads": 0,
+    "httpHealthRequests": 1,
+    "postgresReadinessConnections": 2,
+    "localDeadlineMs": 90000,
+    "stdoutCap": 65536,
+    "stderrCap": 8192,
+    "baseIdentityPinned": true,
+    "permittedUnitFields": [
+      "Id",
+      "LoadState",
+      "ActiveState",
+      "SubState",
+      "MainPID",
+      "NRestarts",
+      "ExecMainStartTimestampMonotonic",
+      "Job"
+    ]
+  },
+  "behavior": "Retains original unit digest and strict gates; returns structured before/after rows, canonical collection hashes and per-unit hashes. No host action has run.",
+  "limitations": [
+    "Historical unit and cause remain unknown because prior per-unit rows were not retained.",
+    "Key order can change the legacy digest in a local fixture; this does not establish the historical cause.",
+    "No atomic snapshot, DB-ledger or whole-host idleness proof.",
+    "Diagnostic GO grants no J1 continuation or package replacement."
+  ],
+  "usage": {
+    "weeklyUsedPercent": 25,
+    "weeklyRemainingPercent": 75,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  }
+}

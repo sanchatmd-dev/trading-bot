@@ -1,0 +1,170 @@
+{
+  "schema": "r7b-j1r2-a2-run-v1",
+  "status": "STOPPED_BEFORE_JOB_UNAPPROVED_WARNING_AND_CROSS_PHASE_IDENTITY_DRIFT",
+  "ownerGoConsumed": true,
+  "contacts": [
+    {
+      "phase": "01-preupload-health",
+      "startedUtc": "2026-10-11T08:50:39.175Z",
+      "endedUtc": "2026-10-11T08:50:40.813Z",
+      "elapsedMs": 1638,
+      "rawSha256": "b75bc65ac9223bb84005bf1e20e9a962a50e0e1e7f79adf3433cb11e8c4a6eec",
+      "rawBytes": 9778,
+      "receiptSha256": "a17ccf90fd9f0e6d6f4aa9946642db08424e03070edef0111af3b9cbbf598532"
+    },
+    {
+      "phase": "02-bootstrap",
+      "startedUtc": "2026-10-11T08:51:55.201Z",
+      "endedUtc": "2026-10-11T08:51:56.200Z",
+      "elapsedMs": 999,
+      "rawSha256": "875198f50c5d29aa045c62e42cf5dbfc8b68eb2cd2ec3ca4f99ddb6697920be5",
+      "rawBytes": 291,
+      "receiptSha256": "8f526f476c2fa2803aef8b58cb0d444fbd49813fdc1d77f315f123b8035f6a28"
+    },
+    {
+      "phase": "03-upload-0",
+      "startedUtc": "2026-10-11T08:53:24.788Z",
+      "endedUtc": "2026-10-11T08:53:28.141Z",
+      "elapsedMs": 3353,
+      "rawSha256": "58745bb158cfe61b12e258b9f543f1148deff5a6bc45159b4bdee251d75b775a",
+      "rawBytes": 305,
+      "receiptSha256": "94f748523e844fde311f85db394ef025cdf521f76c2bdfb67ad23c6d42db8fd0"
+    },
+    {
+      "phase": "04-upload-1",
+      "startedUtc": "2026-10-11T08:53:28.159Z",
+      "endedUtc": "2026-10-11T08:53:29.013Z",
+      "elapsedMs": 854,
+      "rawSha256": "b094419ef35ee2daa041196e44f9aef1675f94b7f83a916ecb15fd57e8d0c0a4",
+      "rawBytes": 299,
+      "receiptSha256": "17bdf3049ee2e51c13e13dd40f34d18908f8436e8f369161b23407d54d75ea94"
+    },
+    {
+      "phase": "05-upload-2",
+      "startedUtc": "2026-10-11T08:53:29.024Z",
+      "endedUtc": "2026-10-11T08:53:29.821Z",
+      "elapsedMs": 797,
+      "rawSha256": "687bebf9066b46ddd7f0a393221a6f2c1979d9f2a37a06a14f16b7ed71dd02aa",
+      "rawBytes": 297,
+      "receiptSha256": "346d7bc4a7b3a188612a036e8d8e4c62922e90a24a5a72156b173bac8109fcbc"
+    },
+    {
+      "phase": "06-upload-3",
+      "startedUtc": "2026-10-11T08:53:29.831Z",
+      "endedUtc": "2026-10-11T08:53:30.693Z",
+      "elapsedMs": 862,
+      "rawSha256": "6076e778cccc6a17858245cfbe89a312d53642a99bdbf7b3d76e75f1d550c958",
+      "rawBytes": 297,
+      "receiptSha256": "01c316554418117cb07f59191d85049fef29adc81dfd9464621a7ee46abadb48"
+    },
+    {
+      "phase": "07-upload-4",
+      "startedUtc": "2026-10-11T08:53:30.711Z",
+      "endedUtc": "2026-10-11T08:53:31.556Z",
+      "elapsedMs": 845,
+      "rawSha256": "c590250868c1e33f16d2162c002c0ea78cdc615448484f0af358428539b18585",
+      "rawBytes": 297,
+      "receiptSha256": "c5481092aa592f667bc31eee154d2216c640bf4775a2e7432a7c7a91072f54f7"
+    },
+    {
+      "phase": "08-extract",
+      "startedUtc": "2026-10-11T08:54:50.498Z",
+      "endedUtc": "2026-10-11T08:54:51.647Z",
+      "elapsedMs": 1149,
+      "rawSha256": "c0ea58f1da83a0ee35093da242b536b8dbac29b46c4575c8649415711a279920",
+      "rawBytes": 171,
+      "receiptSha256": "a32b29d9078ef1412919ae000144610b59f83fc64991c1d57b1f8d00206cad87"
+    },
+    {
+      "phase": "09-verify",
+      "startedUtc": "2026-10-11T08:54:51.652Z",
+      "endedUtc": "2026-10-11T08:54:52.554Z",
+      "elapsedMs": 902,
+      "rawSha256": "57b245dd12cc11bfc9b92283f88151dd3d4191673bcbc6f9c1c7b5f199a36a4f",
+      "rawBytes": 340,
+      "receiptSha256": "15d541132706924270e818c1a7020434cefa22866606a821235a1027f79fb8cd"
+    },
+    {
+      "phase": "10-preflight",
+      "startedUtc": "2026-10-11T08:57:25.967Z",
+      "endedUtc": "2026-10-11T08:57:27.216Z",
+      "elapsedMs": 1249,
+      "rawSha256": "29881ee6f256a4151b9b366d43a80be5a7ea708eb3a571d48c7090848ff7b8c3",
+      "rawBytes": 607,
+      "receiptSha256": "b5f6434b5fb22e237582791928272a26d9beb543c89dd149f6f8639cf6e16c9f"
+    },
+    {
+      "phase": "11-postflight-health",
+      "startedUtc": "2026-10-11T08:58:43.053Z",
+      "endedUtc": "2026-10-11T08:58:46.242Z",
+      "elapsedMs": 3188,
+      "rawSha256": "0b8b058f77d32c032dcf0e67b2c980385990877e260bce9f76af5fa7ae264417",
+      "rawBytes": 9909,
+      "receiptSha256": "1d366690f8e24d94a776ec52b47d65ce88baec2c5c183abac4a41b3dcba10946"
+    }
+  ],
+  "preflight": {
+    "controllerGo": true,
+    "rootAdmission": false,
+    "refusals": 0,
+    "warnings": [
+      {
+        "code": "PG_CLUSTERS_UNKNOWN",
+        "detail": "pg_lsclusters unavailable; confirm production port and socket directory by other means"
+      },
+      {
+        "code": "DISK_CAP_IS_RECORDED_EXCEPTION",
+        "detail": "WATCHDOG_IO_RATE_BOUNDED"
+      }
+    ],
+    "stopWarning": "PG_CLUSTERS_UNKNOWN",
+    "knownInCap3": true,
+    "explanation": "The approved root packet omitted a cluster-inventory warning already recorded by CAP3; the attempt must still obey its explicit warning allowlist."
+  },
+  "postflight": {
+    "currentBoundedHealthAccepted": true,
+    "crossPhaseAccepted": false,
+    "differences": [
+      {
+        "unit": "astra-pine-market-fallback-stage.service",
+        "field": "ExecMainStartTimestampMonotonic"
+      }
+    ],
+    "otherFieldsEqual": 79,
+    "otherNineUnitsUnchanged": true,
+    "otherCrossPhasePgDeviceToolFieldsEqual": true,
+    "triggerCause": "UNKNOWN"
+  },
+  "counts": {
+    "contacts": 11,
+    "bootstrap": 1,
+    "uploads": 5,
+    "uploadBytes": 26809239,
+    "extract": 1,
+    "strictVerify": 1,
+    "preflight": 1,
+    "health": 2,
+    "pgReadiness": 4,
+    "http": 2,
+    "prestart": 0,
+    "start": 0,
+    "cleanup": 0
+  },
+  "harnessJobsStarted": 0,
+  "rc5LinuxPackageVerified": true,
+  "pgRootFixReachedSuccessfulControllerPreflight": true,
+  "remoteArtifactsRetained": true,
+  "activeLocalTransport": false,
+  "retry": false,
+  "historicalOriginalJ1Cause": "UNKNOWN",
+  "executionAuthority": false,
+  "date": "2026-10-11",
+  "rootProofSha256": "b3cfba3c522ea774842d8c0e0ac8c858e2b3974ace18e3ee9d3aa853b03f9695",
+  "packageId": "3743a0b1e1073450957aa56c332bc661493d8edbdb8266cc21caf4d73df94a2a",
+  "usage": {
+    "weeklyUsedPercent": 33,
+    "weeklyRemainingPercent": 67,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  }
+}

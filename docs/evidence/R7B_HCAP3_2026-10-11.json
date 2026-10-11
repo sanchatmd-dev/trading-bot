@@ -1,0 +1,115 @@
+{
+  "schema": "r7b-hcap3-evidence-v1",
+  "date": "2026-10-11",
+  "status": "REFUSED_NO_COMPLETE_HEALTH_ACCEPTANCE",
+  "ownerGoConsumed": true,
+  "attempts": 1,
+  "startedAt": "2026-10-11T07:05:47.169Z",
+  "endedAt": "2026-10-11T07:05:48.485Z",
+  "elapsedMs": 1313,
+  "exitCode": 2,
+  "stderrBytes": 0,
+  "rawBytes": 1440,
+  "rawSha256": "1eacad5926c61b128ef41f7703e5331afba19621a99c2ddaf2c713c3bf297316",
+  "runEvidenceSha256": "88f6222c7d9e0dfc2f5a6b640da3a391698150c8515dab496da8ccb53d0b10b6",
+  "moduleSha256": "9315eb7defa9bbc61bf3d8b461ee343a253f7fcaeb6c3a5f8a821d5dc1653aa6",
+  "argsSha256": "802dc16734ca4cb3e593d4dd62919de4569fcce3e2e589227e93b8ea17e49f6d",
+  "result": {
+    "schema": "r7b-hcap3-result-v1",
+    "status": "REFUSED_OR_UNKNOWN",
+    "complete": false,
+    "code": "DEVICE_DRIFT",
+    "diagnostic": {
+      "phase": "DEVICE",
+      "pgIndex": null,
+      "argv": null
+    },
+    "partial": {
+      "toolChecks": {
+        "before": [
+          {
+            "sha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+            "bytes": 126595440
+          },
+          {
+            "sha256": "201d8daff9a5bd9df70b820471b965c39f5a776d677f395232c477d051270722",
+            "bytes": 10511456
+          },
+          {
+            "sha256": "df8c50fd508bb31db312a8519a2e7922c63b44f7d963c39d58dc107169078a0d",
+            "bytes": 122464
+          },
+          {
+            "sha256": "f311ff51f5a28ff104e43661c733b36d25cc9c5d7a66f0e463611378aafe4590",
+            "bytes": 68360
+          },
+          {
+            "sha256": "86d31f6fb799e91fa21bad341484564510ca287703a16e9e46c53338776f4f42",
+            "bytes": 129784
+          }
+        ],
+        "after": []
+      },
+      "protectedUnitsBeforeObserved": 10,
+      "pg": [
+        {
+          "index": 0,
+          "accepting": true
+        },
+        {
+          "index": 1,
+          "accepting": true
+        }
+      ],
+      "userMatchesPin": true,
+      "bootMatchesPin": true,
+      "researchInactive": true,
+      "flags": {
+        "QUANT_RESEARCH_ENABLED": "OFF",
+        "QUANT_RESEARCH_FOUNDATION_ENABLED": "OFF",
+        "QUANT_PREFLIGHT_ENABLED": "OFF",
+        "QUANT_PROFILE_V2_ENABLED": "OFF",
+        "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": "OFF"
+      },
+      "listenerMatchesApiPidBefore": true,
+      "health": {
+        "status": 200,
+        "ok": true,
+        "mode": "PAPER_ONLY"
+      },
+      "pgIsready": {
+        "sha256": "81099231d1f00c6fa292fdc76124d6a5f101f1f85d65a2e2449cd4899e6dfd2b",
+        "bytes": 39544
+      },
+      "pgEndpointsObserved": 2,
+      "pgStable": true
+    },
+    "limits": {
+      "databaseAdmissionLedgerRead": false,
+      "wholeHostHeavyJobsProven": false,
+      "executionAuthority": false,
+      "atomicSnapshot": false,
+      "exclusiveSocketOwnershipProven": false
+    }
+  },
+  "interpretation": "The probe observed API PAPER_ONLY, five flags OFF, ten initial protected unit states, five initial tool pins, both PostgreSQL readiness connections and stable before/after PostgreSQL snapshots. It then refused the device comparison. No after-tool pins, final unit identity checks, final PostgreSQL snapshot or complete health gate were established. No retry, configuration mutation or service action occurred. PostgreSQL readiness connections may have generated normal logs.",
+  "diagnosis": {
+    "actualMountOutput": "NOT_RETAINED; actual host cause remains unknown.",
+    "localReproduction": "HCAP3 compares the entire trimmed findmnt output against exactly one ASCII space; the same source and major:minor with aligned spaces or a tab falsely refuse.",
+    "next": "Review a new HCAP4 candidate that parses a strict one-row two-field output and retains safe device-match diagnostics. A new owner GO is required before another observation."
+  },
+  "timeout": false,
+  "retry": false,
+  "remoteCompletionUnknown": false,
+  "hostConfigMutation": false,
+  "serviceAction": false,
+  "j1Executed": false,
+  "pgReadinessConnections": 2,
+  "usage": {
+    "observedDuring": "Root review after HCAP3",
+    "weeklyUsedPercent": 16,
+    "weeklyRemainingPercent": 84,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  }
+}

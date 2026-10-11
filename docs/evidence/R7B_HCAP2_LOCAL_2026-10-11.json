@@ -1,0 +1,135 @@
+{
+  "schema": "r7b-hcap2-local-v1",
+  "date": "2026-10-11",
+  "checkpointAt": "2026-10-11T06:46:38.153Z",
+  "status": "ROOT_ACCEPTED_LOCAL_PROPOSAL_NO_GO",
+  "moduleSha256": "93573860b52768407d7c9c044bdaa74505aa5655240f9b76823dadd842263b05",
+  "argsSha256": "3c121a4e0a56bcec9c8ba33547d34f894b4f4f1d58f216e56877432ee150486c",
+  "freezeSha256": "d2bcd29553c3e7988add6851eac6798a2ffa96c7e4818a41fe8e18265e502b0c",
+  "frozenFiles": 8,
+  "predecessor": "R7B_HCAP1_2026-10-11.json",
+  "actualPredecessorHostCause": "UNKNOWN_NOT_CAPTURED",
+  "localReproduction": "Supported PostgreSQL arguments followed by terminal empty NUL padding were refused by HCAP1.",
+  "change": [
+    "Accept only terminal empty padding while preserving empty -h and every unsupported/interior-empty/duplicate/override refusal",
+    "Record safe phase, PG index, bounded argument shape and positively observed partial facts on refusal",
+    "Use the same failure serialization for tests and CLI, with complete=false and exit2"
+  ],
+  "unchanged": [
+    "Real host I/O function",
+    "Listener identity gate",
+    "All argument values except schema",
+    "Host read scope, commands, pin policies and timeout limitations"
+  ],
+  "checks": {
+    "author": {
+      "schema": "r7b-hcap2-local-tests-v1",
+      "regressionPassed": 32,
+      "passed": 51,
+      "failed": 0,
+      "realHostTests": false,
+      "sourceSha256": "93573860b52768407d7c9c044bdaa74505aa5655240f9b76823dadd842263b05",
+      "scope": "Injected full probe and serialization tests only; no live HTTP, PostgreSQL or host access"
+    },
+    "rootParser": {
+      "schema": "r7b-hcap2-root-parser-v1",
+      "passed": 14,
+      "failed": 0,
+      "cases": [
+        {
+          "name": "one terminator",
+          "passed": true
+        },
+        {
+          "name": "many terminal empty slots",
+          "passed": true
+        },
+        {
+          "name": "empty listen host plus terminator",
+          "passed": true
+        },
+        {
+          "name": "empty listen host plus long padding",
+          "passed": true
+        },
+        {
+          "name": "explicit loopback host plus padding",
+          "passed": true
+        },
+        {
+          "name": "interior empty slot cannot hide later arguments",
+          "passed": true
+        },
+        {
+          "name": "padding cannot hide config override",
+          "passed": true
+        },
+        {
+          "name": "config override still refused",
+          "passed": true
+        },
+        {
+          "name": "duplicate port still refused",
+          "passed": true
+        },
+        {
+          "name": "long option override still refused",
+          "passed": true
+        },
+        {
+          "name": "missing port is not supplied by padding",
+          "passed": true
+        },
+        {
+          "name": "missing socket is not supplied by padding",
+          "passed": true
+        },
+        {
+          "name": "empty host is not a blanket empty-argument permission",
+          "passed": true
+        },
+        {
+          "name": "old version reproduces local trailing-NUL defect",
+          "passed": true
+        }
+      ],
+      "actualHostCause": "UNKNOWN",
+      "hostExecution": false
+    },
+    "rootDiagnostics": {
+      "schema": "r7b-hcap2-root-diagnostic-v1",
+      "passed": 15,
+      "failed": 0,
+      "checks": [
+        "failure status and phase 0",
+        "redacted serialization 0",
+        "truthful partial observations 0",
+        "stop after first refusal 0",
+        "failure status and phase 1",
+        "redacted serialization 1",
+        "truthful partial observations 1",
+        "stop after first refusal 1",
+        "untrusted error code mapped {\"badCode\":true}",
+        "untrusted error code mapped {\"failAfterHealth\":true}",
+        "bounded argv shape",
+        "fallback error is incomplete",
+        "real host I/O function unchanged",
+        "listener function unchanged",
+        "arguments only change schema"
+      ],
+      "liveHost": false,
+      "additionalChildAudit": "UNAVAILABLE_RUNTIME_AGENT_THREAD_LIMIT",
+      "scope": "Independent injected error serialization, partial-fact accuracy, stop behavior, output redaction and unchanged I/O/argument contract"
+    }
+  },
+  "review": "Debugger implementation followed by root independent checks and source review. Additional architecture-auditor dispatch unavailable because runtime agent thread limit was reached.",
+  "limitations": [
+    "No HCAP2 host, live HTTP or PostgreSQL execution",
+    "Actual HCAP1 cause is unknown; local padding reproduction is a hypothesis",
+    "Partial facts are not a completed health/admission gate",
+    "No database admission-ledger read or whole-host heavy-job proof",
+    "Best-effort remote deadline only; local transport timeout leaves remote completion unknown",
+    "First-observed pg_isready hash is not trusted provenance"
+  ],
+  "next": "Fresh owner GO for exactly one HCAP2 observation; J1 remains separately gated."
+}

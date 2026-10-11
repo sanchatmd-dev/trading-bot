@@ -1,0 +1,25 @@
+{
+  "schema": "r7b-lpg-rc3-local-progress-v1",
+  "capturedAtUtc": "2026-10-11T03:28:07Z",
+  "scope": "LOCAL_CANDIDATE_ONLY",
+  "status": "IN_PROGRESS_NOT_SEALED",
+  "baseRevision": "30e50ac2611d5d826a28a0ad6fe3939edbc57e3c",
+  "ownerDecisions": {
+    "disk": "B_WITH_HARNESS_SOCKET_GUARD",
+    "tools": "EXISTING_PRODUCT_NODE_POSTGRESQL_PRE_POST_JOB_HASH_PINS",
+    "usageStopRemainingPercent": 2,
+    "usageExceptionScope": "CURRENT_R7_CONTINUATION_ONLY"
+  },
+  "localEvidence": {
+    "filesystemMetadata": {"independentWindowsPass": 8, "hostAdapterSha256": "899591fb9c5149c6eec1d85fcada7b7ff7906df028f23df2df85e54aa6609caf"},
+    "socketGuard": {"authorPass": 5, "independentPass": 6, "syntheticRegressionPass": 53, "workerGetterBypass": "FIXED_AND_RETESTED"},
+    "pureToolPolicy": {"authorPass": 42, "independentPass": 30},
+    "capabilityPolicy": {"authorPass": 13, "authorRegressionPass": 64, "independentEvaluatorPass": 35},
+    "runnerPolicy": {"authorPass": 13, "independentPass": 17, "runnerRegressionPass": 47, "boundRegressionPass": 40, "callbackRegressionPass": 9, "sha256": "b9f7f29f600f50d9fa22fad1bbf983f0e12647eaec5ecebcdccab56be3ccaa46"},
+    "diskB": {"originalAuditBlockersClosedLocally": 3, "newFinding": "15_SECOND_STOP_MODEL_DOES_NOT_COVER_18_SECOND_NORMAL_CLEANUP_REPRO", "newFindingStatus": "FIX_IN_PROGRESS"}
+  },
+  "openWork": ["CONTROLLER_DRIVER_RECEIPT_TOOL_POLICY_INTEGRATION_AND_REVIEW", "PRODUCT_POSTGRESQL_USER_UNIT_SCOPE_IN_CONTROLLER", "DISK_B_STOP_MODEL_REVIEW", "FULL_REGRESSION_AND_DETERMINISTIC_BUILD", "CAP2_FRESH_OWNER_GO", "J1_TO_J4_SEPARATE_OWNER_GATES"],
+  "limitations": ["NO_LINUX_OR_POSTGRESQL_RUN", "NO_NEW_HOST_CONTACT", "JAVASCRIPT_SOCKET_GUARD_IS_NOT_KERNEL_ISOLATION", "PRE_POST_HASHES_DO_NOT_DETECT_REPLACE_AND_RESTORE_OR_PIN_DYNAMIC_LIBRARIES", "DISK_ESTIMATE_NOT_MEASURED_HARD_CAP", "SHORT_USAGE_WINDOW_UNKNOWN"],
+  "actions": {"deployment": false, "hostJob": false, "commit": false, "push": false},
+  "executionAuthority": false
+}

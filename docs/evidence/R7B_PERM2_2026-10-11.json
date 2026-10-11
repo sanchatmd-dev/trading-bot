@@ -1,0 +1,48 @@
+{
+  "schema": "r7b-perm2-evidence-v1",
+  "checkpointDate": "2026-10-11",
+  "scope": "BOUNDED_DIRECTORY_MODE_CHANGE_ACCEPTED",
+  "packet": "R7B-PERM2-20261011",
+  "ownerGoConsumed": true,
+  "startedAt": "2026-10-11T05:33:11.423Z",
+  "finishedAt": "2026-10-11T05:33:13.138Z",
+  "attempts": 1,
+  "exitCode": 0,
+  "stderrBytes": 0,
+  "resultBytes": 4787,
+  "resultSha256": "4aba5227c5c09e9923a174e10ed60def585e19a23059edadf4f1c746b2eb2411",
+  "moduleSha256": "e7885b9a97974b95501f415c5fdff24b3210f80a0da9ca78a97537cdb83a54a2",
+  "argsSha256": "ad96d1deac89495558221fd799ff0bd43e0a51f092198e798240da6690b0be73",
+  "result": {
+    "status": "SUCCEEDED",
+    "directoryCount": 5,
+    "beforeMode": "0775",
+    "afterMode": "0755",
+    "allIdentitiesPreserved": true,
+    "ownerPermissionsPreserved": true,
+    "toolCount": 5,
+    "preHashMatches": 5,
+    "postHashMatches": 5,
+    "unknownCount": 0,
+    "errorCount": 0,
+    "pendingCount": 0,
+    "rollbackAttempted": false,
+    "retryCount": 0,
+    "rootVerifiedActualObservations": true
+  },
+  "hostEffects": [
+    "Changed mode on exactly five approved directory file descriptors from 0775 to 0755."
+  ],
+  "excludedEffects": [
+    "No recursive chmod or chown.",
+    "No binary replacement, file-content write, service action, deployment, install or restart.",
+    "No CAP3 or PostgreSQL harness job ran."
+  ],
+  "nextAction": "Integrate the reviewed product-Node collector into a new sealed RC4 package, then prepare CAP3 for a separate owner GO. PERM2 is not capability or job acceptance.",
+  "limits": [
+    "API health and admission flags were not checked.",
+    "Group-based maintenance writes are now restricted on the five directories.",
+    "Extended ACL contents and other group members remain unknown.",
+    "Before/after hashes do not detect replace-and-restore or pin dynamic libraries."
+  ]
+}

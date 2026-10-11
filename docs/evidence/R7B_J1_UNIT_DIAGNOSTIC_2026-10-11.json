@@ -1,0 +1,60 @@
+{
+  "schema": "r7b-j1-unit-diagnostic-run-v1",
+  "status": "CURRENT_HEALTH_ACCEPTED_WITH_LIMITS",
+  "date": "2026-10-11",
+  "ownerGoConsumed": true,
+  "contacts": 1,
+  "startedUtc": "2026-10-11T08:16:30.731Z",
+  "endedUtc": "2026-10-11T08:16:32.554Z",
+  "elapsedMs": 1823,
+  "exitCode": 0,
+  "stderrBytes": 0,
+  "rawSha256": "c02715092aab9976cb551650dc17123a1f030b9b7854900367be643b5ba23aa9",
+  "rawBytes": 9915,
+  "receiptSha256": "cef58896a52a9dcec9e9762ba830835e96ed44913c8694869bbd46fde5fca1a0",
+  "rootProofSha256": "bb7c6dc5f498ca98e2a685c224ceebfe926efaaf811e41269d45ae99eb7c6408",
+  "independentComparisonSha256": "af5702d68bad2a2342c72a01e9432fab1b31e8f28a46d19f8e387b51ace75956",
+  "observed": {
+    "flagsOff": 5,
+    "mode": "PAPER_ONLY",
+    "protectedUnitRows": 10,
+    "beforeAfterFieldsEqual": 80,
+    "canonicalHash": "2771d2543ea4feb1bb0df77d0afea62b2634a5935d355f0355f3ed0df6fd16b5",
+    "perUnitHashChecks": 20,
+    "postgresReadinessConnections": 2,
+    "httpRequests": 1,
+    "toolPinsBefore": 5,
+    "toolPinsAfter": 5,
+    "bootstrapIdentityMatched": true
+  },
+  "comparisonToCap3": {
+    "equalFields": 79,
+    "totalFields": 80,
+    "differingUnit": "astra-pine-market-fallback-stage.service",
+    "differingField": "ExecMainStartTimestampMonotonic",
+    "fallbackRemainsInactive": true,
+    "otherNineUnitsUnchanged": true,
+    "continuousStabilityProven": false
+  },
+  "historicalJ1": {
+    "cause": "UNKNOWN",
+    "oldStructuredRowsRetained": false,
+    "currentValuesUniformFieldOrderPermutationsChecked": 40320,
+    "historicalHashMatches": 0
+  },
+  "interpretation": "A completed scheduled fallback activation is consistent with the observations and the earlier documented five-minute timer, but the trigger and historical J1 drift are not proved.",
+  "next": "Prepare and independently review a new RC5/J1 proposal with fresh structured observations and unchanged strict identity gates. New owner GO is required for host execution.",
+  "limits": [
+    "No job, harness cluster, SQL case, retry, package replacement or cleanup ran.",
+    "No DB-ledger idleness, whole-host exclusivity, continuous stability or atomic snapshot proof.",
+    "No fallback exception or relaxed identity gate.",
+    "Earlier J1 remains stopped; this diagnostic does not authorize continuation."
+  ],
+  "executionAuthority": false,
+  "usage": {
+    "weeklyUsedPercent": 27,
+    "weeklyRemainingPercent": 73,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  }
+}

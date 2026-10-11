@@ -1,0 +1,63 @@
+{
+  "schema": "r7b-j1r2-local-v1",
+  "status": "LOCAL_REVIEWED_AWAITING_OWNER_GO",
+  "date": "2026-10-11",
+  "packageId": "3743a0b1e1073450957aa56c332bc661493d8edbdb8266cc21caf4d73df94a2a",
+  "tarSha256": "b9bb052d5122af97c62dd2c2b076521de1cf1c2a277ab34c55234bd5cdb2a36e",
+  "packetSha256": "7311b8673d1defcc190314964666743447b09d38eaf6612358f1b682efe8a39c",
+  "operationsPacketSha256": "66c1f23ef50d1d482141ddcfa752d99bd28cf0bceac33c14996d1dd89326c949",
+  "operationsFreezeSha256": "fe06bbd1948d954036e1df45cabe32c31dcce033863b7a0f1e2a8e371f3ee22f",
+  "rootFreezeSha256": "a3dcb0625dc6f150de9335d65f91f728b30eba119fe4ea3d8b57283878fe5a23",
+  "rootFrozenReferences": 14,
+  "operationsFrozenFiles": 463,
+  "workerChecks": 58,
+  "independentChecks": 24,
+  "rootHealthChecks": 22,
+  "failed": 0,
+  "sourceHealthSha256": "2bb21da66afcfc1839dd7790c9163d6a07b99a4e01e5b209b3a0b86b68eb9395",
+  "scope": {
+    "attempts": 1,
+    "uploads": 5,
+    "uploadBytes": 26809239,
+    "cases": 11,
+    "workSec": 285,
+    "cleanupSec": 30,
+    "diskMechanism": "B",
+    "diskGiB": 1,
+    "harnessOnlySocketGuard": true,
+    "originalProductBinaryPins": true,
+    "freshNamespaces": true,
+    "oldArtifactsPreserved": true,
+    "maxHealthProbes": 3,
+    "maxPgReadinessConnections": 6,
+    "maxHttpRequests": 3
+  },
+  "behavior": "Use the reviewed RC5 PostgreSQL root fix and fresh structured health baselines. Preserve all legacy and canonical identity gates, confinement preload, resource bounds and ownership-proven recovery.",
+  "reviewCorrection": "Root copied the unchanged old health evaluator function into a library without its CLI block; repeated 22 checks and a CLI-argument import passed.",
+  "allowedPreflightWarnings": [
+    "DISK_CAP_IS_RECORDED_EXCEPTION",
+    "WATCHDOG_IO_RATE_BOUNDED"
+  ],
+  "historicalJ1Cause": "UNKNOWN",
+  "remainingGates": [
+    "New owner GO",
+    "Fresh admission, health and absent destination checks",
+    "Accepted new bootstrap and concrete receipt-bound argv review",
+    "Strict Linux verification, one preflight, one start at most",
+    "Owned terminal proof, export and cross-phase postflight acceptance"
+  ],
+  "limitations": [
+    "The five-minute fallback timer may cause strict identity refusal; no exemption or retry.",
+    "No RC5 Linux harness case or measured throughput yet.",
+    "No atomicity, DB-ledger idleness, whole-host exclusivity or hostile same-UID isolation proof."
+  ],
+  "executionAuthority": false,
+  "hostRun": false,
+  "usage": {
+    "capturedUtc": "2026-10-11T08:34:12Z",
+    "weeklyUsedPercent": 29,
+    "weeklyRemainingPercent": 71,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  }
+}

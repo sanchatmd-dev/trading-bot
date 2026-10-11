@@ -1,0 +1,54 @@
+{
+  "schema": "r7b-hcap3-local-evidence-v1",
+  "date": "2026-10-11",
+  "status": "LOCAL_PROPOSAL_ACCEPTED_NO_GO",
+  "moduleSha256": "9315eb7defa9bbc61bf3d8b461ee343a253f7fcaeb6c3a5f8a821d5dc1653aa6",
+  "argsSha256": "802dc16734ca4cb3e593d4dd62919de4569fcce3e2e589227e93b8ea17e49f6d",
+  "freezeSha256": "40a300254d3d5947efa7258977bf3d2247329c7adc11cca86b0f166b1474877b",
+  "freezeFiles": 7,
+  "basis": "HCAP2 refused PG_ENDPOINT index0 on unsupported -c and missing explicit -p/-k. Derive live endpoints from bounded UNIX listener ownership, not command-line or configuration assumptions.",
+  "method": "SS_UNIX_MAINPID_V1",
+  "checks": {
+    "rootFullProbe": 33,
+    "independentAdversarial": 32,
+    "independentLocalBigintMetadata": 1,
+    "failures": 0,
+    "nonPgSourceSegmentsPreserved": true,
+    "priorArgumentValuesPreserved": true
+  },
+  "localRework": [
+    "Corrected ss owners capture index before successful test runs.",
+    "Corrected root test call counting; it had included the pg_isready file read as a connection.",
+    "Used bigint stat identities to avoid inode rounding."
+  ],
+  "sourceReference": {
+    "url": "https://raw.githubusercontent.com/iproute2/iproute2/v6.1.0/misc/ss.c",
+    "reviewed": "2026-10-11",
+    "basis": "unix_stats_print and UNIX diagnostic inode mapping, process ownership formatter and u_str/u_dgr/u_seq labels corroborate fixture shape. Source inspection only; installed host ss version and format not observed."
+  },
+  "scope": {
+    "hostExecution": false,
+    "realLinuxFormatObserved": false,
+    "realPostgres": false,
+    "productionCodeChanged": false,
+    "remoteFileWrites": false,
+    "proposedPgReadinessConnections": 2,
+    "proposedUnixSnapshots": 3,
+    "localTransportDeadlineSeconds": 90,
+    "remoteHardDeadlineProven": false
+  },
+  "limitations": [
+    "Unknown output formats, namespace mismatch or shared socket ownership refuse without retry.",
+    "Snapshot races and same-UID replace-and-restore remain outside proof.",
+    "No database admission ledger or whole-host heavy-job proof.",
+    "First-observed pg_isready hash is not established provenance.",
+    "J1-J4 and fresh measurement epoch retain separate owner GOs."
+  ],
+  "usage": {
+    "observedAt": "2026-10-11T07:01:07Z",
+    "weeklyUsedPercent": 15,
+    "weeklyRemainingPercent": 85,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  }
+}

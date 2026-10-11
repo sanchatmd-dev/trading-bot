@@ -1,0 +1,51 @@
+{
+  "schema": "r7b-j1r2-run-v1",
+  "status": "STOPPED_BEFORE_HEALTH_SSH_CONNECTION_TIMEOUT",
+  "ownerGoConsumed": true,
+  "contacts": 1,
+  "startedUtc": "2026-10-11T08:39:27.703Z",
+  "endedUtc": "2026-10-11T08:39:42.776Z",
+  "elapsedMs": 15074,
+  "exitCode": 255,
+  "stdoutBytes": 0,
+  "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrBytes": 65,
+  "stderrSha256": "475760bb496ffc2ed43ca8dd47be7365d812fe921ad9cc255fe4e7613722ead5",
+  "receiptSha256": "58084b2467c461fecb0036ecf1ab1bac5fb2869b16b7581384a3bdc4beccf29e",
+  "argvSha256": "077729b5c1a5dfe4c6b72be4461f5676016f51090d2f91ac5bd99ab34a85addc",
+  "transportStopReason": "STDERR_REMOTE_UNKNOWN",
+  "classification": "SSH_CONNECTION_TIMEOUT",
+  "currentHealth": "UNKNOWN",
+  "remoteProbeCompletion": "UNKNOWN",
+  "rootHealthAcceptance": false,
+  "commandsIssued": {
+    "preuploadHealthTransport": 1,
+    "bootstrap": 0,
+    "uploads": 0,
+    "extract": 0,
+    "verify": 0,
+    "preflight": 0,
+    "start": 0,
+    "cleanup": 0
+  },
+  "harnessJobsStarted": 0,
+  "retry": false,
+  "activeLocalTransport": false,
+  "limits": [
+    "An SSH connection timeout does not establish server health or its cause.",
+    "No health JSON was received; remote probe execution and completion remain unknown.",
+    "No retry or additional host lookup is authorized by this consumed attempt.",
+    "Frozen RC5 and J1-R2 preparation remain available; fresh owner GO and gates are required for another attempt."
+  ],
+  "date": "2026-10-11",
+  "packageId": "3743a0b1e1073450957aa56c332bc661493d8edbdb8266cc21caf4d73df94a2a",
+  "preparationPacketSha256": "7311b8673d1defcc190314964666743447b09d38eaf6612358f1b682efe8a39c",
+  "rootProofSha256": "7d89eb25b77a5b181180db3008c147f7b9c979f8d238be3d1dc8a84d0b11fb7a",
+  "usage": {
+    "capturedUtc": "2026-10-11T08:41:06Z",
+    "weeklyUsedPercent": 30,
+    "weeklyRemainingPercent": 70,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  }
+}

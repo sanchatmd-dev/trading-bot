@@ -1,0 +1,139 @@
+{
+  "schema": "r7b-j1r4-rc6-local-v1",
+  "recordedAt": "2026-10-11T18:11:27Z",
+  "status": "LOCAL_ACCEPTED_AWAITING_OWNER_GO_FOR_ONE_J1R4_ATTEMPT",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "Claude root intake of the Codex J1-R3 handoff, a timer finding, the RC6 package and the J1-R4 local preparation (inputs, command plan, root gates and a reviewed live-window runner). Local only; nothing ran on Linux, systemd or PostgreSQL and no host contact occurred.",
+  "intake": {
+    "codexHandoffVerified": true,
+    "freezePinsChecked": 583,
+    "freezeMismatches": 0,
+    "gitHead": "30e50ac2611d5d826a28a0ad6fe3939edbc57e3c"
+  },
+  "finding": "The staging fallback unit is started by its timer every five minutes and is a protected unit. Its ExecMainStartTimestampMonotonic is compared strictly by the controller (before launch versus prove) and by the root postflight gate, so a J1 window of several minutes would very likely fail for a benign product reason. J1-R3 was therefore not proposed for execution.",
+  "ownerDecision": "2026-10-11: fix the timer rule first, then test, audit and a new GO.",
+  "rule": "Only astra-pine-market-fallback-stage.service may differ, only in ExecMainStartTimestampMonotonic, only by a strict increase, only when it is loaded, inactive, dead, MainPID 0 and has no Job on both sides with NRestarts unchanged. Every other unit and field stays strict. An empty allowlist behaves exactly like RC5.",
+  "rc6": {
+    "packageId": "3cc3d5c147035c3477cfa2952ddc73526e17ced366b734e91592abad71c065ac",
+    "tarSha256": "d63f468deb7322b36dd590f782255e90dc35e2df21312f3d5a29ee8a7255fb3c",
+    "tarBytes": 26789376,
+    "files": 435,
+    "changedPayloadPaths": [
+      "adapter/control.mjs",
+      "adapter/receipt.mjs"
+    ],
+    "reproducible": {
+      "inProcessTwice": true,
+      "separateProcessesEqual": true
+    },
+    "adapters": {
+      "adapter/control.mjs": "0121221d5c1eb7f6125cfd10e6976670bfa84477699a4f9102cf9b15e586ec10",
+      "adapter/receipt.mjs": "6f79f23085eae64a406235d266da0ff75289baa3d4d27e747420192751150349"
+    },
+    "receipt": "schema v2: equal stays strict raw equality; equivalent, timerActivatedUnitsSha256 and at most one allowance (unit hash, field, deltaUs) were added; the receipt carries no unit names",
+    "unchanged": "harness v8.2, measurement tool v3, product revision eb532ffd and the other 12 adapters"
+  },
+  "j1r4": {
+    "freshJobBase": true,
+    "step0BootCheck": "read-only boot id hash check before any write",
+    "hostContacts": {
+      "minimum": 17,
+      "maximum": 22
+    },
+    "health": {
+      "observations": 2,
+      "pgReadiness": 4,
+      "http": 2
+    },
+    "limitsUnchanged": "11 cases, 285 s + 30 s, 512 MiB, CPU 100%, TasksMax 32 / 26, disk B 1 GiB with 20 / 40 MiB/s IO limits, harness-only socket guard, product tool hashes before and after",
+    "inputsBytes": 26820076,
+    "configSha256": "97eb0259a4b1c7dd2319c4900dfa58ee4e31ea3224d42a9b195f15b31f8e420f",
+    "runPacketSha256": "1366a0ae1da31e74f852e013733b48360a2df2ed4b0dfefbb0a78e650c1d64a1",
+    "packetDiffVsA2": [
+      "packageId",
+      "tarSha256",
+      "runnerManifestSha256"
+    ],
+    "runner": "admit, run-row and accept-run: the operations worker runs only one root-admitted row at a time; no retries; any stderr stops; records are write-once"
+  },
+  "checks": {
+    "rc6Author": {
+      "controller": 150,
+      "driver": 109,
+      "host": 140,
+      "binding": 71,
+      "package": 118,
+      "confinement": "53 + 5 + 6"
+    },
+    "controllerMutation": "157 killed; 9 not killed, all pre-RC6 gaps (5 never planted, 4 survived)",
+    "rootGate": 187,
+    "rc6Independent": {
+      "tests": 188,
+      "defectTests": 5,
+      "mutants": 89,
+      "killed": 81,
+      "survivorsEquivalent": 8
+    },
+    "opsPrep": {
+      "author": 228,
+      "independentRederivation": 77,
+      "a2Refusal": 31,
+      "independent": 64
+    },
+    "runner": {
+      "author": 104,
+      "independent": 85,
+      "mutants": 84,
+      "killed": 75
+    }
+  },
+  "audits": "Six Opus audits (RC6 twice, ops preparation twice, runner twice). No open high or medium finding; the remaining low items are runbook wording, folded into the runbook.",
+  "disclosures": [
+    "A timer start during a health probe or the controller snapshot, or the unit running at that moment, still fails or refuses the attempt.",
+    "A manual start of the fallback unit inside the window cannot be told apart from a timer start.",
+    "A reboot after the boot check gives BOOT_DRIFT at prestart and consumes the attempt.",
+    "The two-warning check is not atomic with the internal start preflight.",
+    "Any refusal, drift or unknown consumes the attempt; there is no retry.",
+    "Disk B is not a hard quota and the socket guard is not kernel isolation."
+  ],
+  "notRun": [
+    "RC6 on Linux, systemd or PostgreSQL",
+    "the real Windows OpenSSH path of the runner",
+    "any host contact"
+  ],
+  "incidents": [
+    "During local testing one tester ran a command that ended all local node processes once; later briefs forbid process kills."
+  ],
+  "documents": {
+    "packetSha256": "e50bf9f8064e54fb3ff3a2e4f08da3b4936cb1b96b313aad5c6c8848f9acfa6b",
+    "runbookSha256": "8dbb787d922464989fee8a35817cdc97e5b8cd764d9f061b891a31960133e77a",
+    "decisionsSha256": "11d3ec4e9788fb964d9cab986008a4c45197de736b7746d3705cd0fc2ec5dc03",
+    "goFreezeSha256": "49344d35bc62af1dab3e05fcb78c780f26e31882059920498ae505872cc9f2c2"
+  },
+  "executionLocks": [
+    "OWNER_GO_REQUIRED_FOR_J1R4",
+    "EACH_OF_J2_TO_J4_NEEDS_ITS_OWN_GO"
+  ],
+  "nextAction": "Owner GO for one J1-R4 attempt; then root dispatches one Claude operations worker under the runbook.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  },
+  "time": {
+    "start": "2026-10-11T09:50:30Z",
+    "end": "2026-10-11T18:11:27Z",
+    "ownerStop": "2026-10-11T17:08Z",
+    "resume": "2026-10-11T17:40Z",
+    "method": "clock readings"
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercentStart": 57,
+    "weeklyUsedPercentEnd": 61,
+    "reservePercentagePoints": 15
+  }
+}

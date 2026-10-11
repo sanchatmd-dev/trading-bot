@@ -1,0 +1,98 @@
+{
+  "schema": "r7b-j1-local-evidence-v1",
+  "date": "2026-10-11",
+  "status": "LOCAL_REVIEWED_AWAITING_SEPARATE_J1_GO",
+  "hostExecuted": false,
+  "packageId": "56b1c6fdd74c4673bfaff7c472767c3d377512a6518193395b26540ae1705671",
+  "tarSha256": "f9017520b68d9d55c78a1696af55021e23193de3f236850058f00e09d8571f3c",
+  "runPacketSha256": "a6c87ddc40a20cbcc5dca805339c5ba11d643f3850b57281db37374d925975dd",
+  "healthProbeSha256": "860aba8bc31ff6addfc088c81154c901a1a7b48535b4f70af2529a6589eb37a8",
+  "goPacketSha256": "c2758f0b7bfc94cf716662132fe9c586d411d587eaae018285e4b52ca39c60f9",
+  "freezeSha256": "86f762261e50b2059ac2959be119bebdbac6c39a36fab3a4627e99f80458286d",
+  "freezeFiles": 26,
+  "checks": {
+    "operations": {
+      "passed": 29,
+      "failed": 0
+    },
+    "operationsIndependent": {
+      "passed": 19,
+      "failed": 0
+    },
+    "health": {
+      "passed": 49,
+      "failed": 0
+    },
+    "healthIndependent": {
+      "passed": 25,
+      "failed": 0
+    }
+  },
+  "priorFreezes": {
+    "codex-r7b-lpg-pkg-rc4": {
+      "sha256": "4024a7a9be63bed095968b41f39e2d5936f7e7e45c740b85112952493b1a892f",
+      "files": 189
+    },
+    "codex-r7b-hcap4-prep": {
+      "sha256": "1a3471f797d73efa2a9710ee922471bde5bfed1cef46078887446f37f0dbcfcd",
+      "files": 5
+    }
+  },
+  "packagePayloadFiles": 435,
+  "scope": {
+    "jobs": [
+      "J1"
+    ],
+    "cases": [
+      "startup-schema",
+      "H-2",
+      "H-3",
+      "H-6",
+      "H-8",
+      "H-10",
+      "H-11",
+      "H-12a",
+      "H-1",
+      "H-7",
+      "H-9"
+    ],
+    "uploadFiles": 5,
+    "uploadBytes": 26809088,
+    "workMs": 285000,
+    "cleanupMs": 30000,
+    "memoryBytes": 536870912,
+    "cpuQuotaPercent": 100,
+    "tasksMax": 32,
+    "diskBytes": 1073741824,
+    "diskMechanism": "B",
+    "socketGuard": true,
+    "productToolsHashPinnedBeforeAfter": true,
+    "maxHealthProbes": 3,
+    "maxReadinessConnections": 6
+  },
+  "reviewCorrections": [
+    "Restored original controller confinement preload",
+    "Recovery uses canonical packet field comparisons and actual launch deadline fields",
+    "Health rejects special permission bits",
+    "Root fixture uses returned updated packet before accepting negative checks"
+  ],
+  "reviewLimit": "Architecture auditor could not dispatch due to runtime thread limit. Existing coder independently verified health; root independently checked operations.",
+  "limits": [
+    "Local injected tests do not prove Linux modes, systemd, PostgreSQL or kernel races.",
+    "Base metadata is a single non-atomic snapshot.",
+    "No DB admission ledger or whole-host idleness proof.",
+    "B is a watchdog/rate model, not a hard disk quota.",
+    "Socket guard is JavaScript defense in depth.",
+    "Binary hashes do not seal dynamic libraries or replacement-and-restore.",
+    "J1 GO, J1 acceptance, later jobs, deployment and Git authorization are separate."
+  ],
+  "usage": {
+    "observedAt": "2026-10-11T07:45:55.345Z",
+    "weeklyUsedPercent": 21,
+    "weeklyRemainingPercent": 79,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2,
+    "sharedUsageNotAgentCost": true
+  },
+  "next": "Owner GO for the exact J1 packet, then sole operations worker executes serially under fresh gates."
+}

@@ -1,0 +1,226 @@
+{
+  "schema": "r7b-lpg-package-rc3-local-v1",
+  "checkpointDate": "2026-10-11",
+  "scope": "LOCAL_CANDIDATE_ACCEPTED_NO_LINUX_POSTGRESQL_RUN",
+  "baseRevision": "30e50ac2611d5d826a28a0ad6fe3939edbc57e3c",
+  "ownerDecisions": {
+    "disk": "B_WITH_HARNESS_SOCKET_GUARD",
+    "tools": "EXISTING_PRODUCT_NODE_POSTGRESQL_WITH_PRE_POST_JOB_HASH_PINS",
+    "usageStopRemainingPercent": 2,
+    "usageExceptionScope": "CURRENT_R7_CONTINUATION_ONLY"
+  },
+  "package": {
+    "ok": true,
+    "packageId": "3bd883d4962d170d3c7a6cef83843c131fceeeece459d8c65dc861aad0c5c565",
+    "tarName": "r7b-lpg-3bd883d4962d170d.tar",
+    "tarBytes": 26777600,
+    "tarSha256": "99a8ce5b563122ede8ebd77fad06ff65a74630c447f4e5e651abdfb7a0c43827",
+    "manifestSha256": "3bd883d4962d170d3c7a6cef83843c131fceeeece459d8c65dc861aad0c5c565",
+    "entries": 488,
+    "files": 436,
+    "directories": 52,
+    "dataBytes": 26407121,
+    "byKind": {
+      "adapter": {
+        "files": 14,
+        "bytes": 476815
+      },
+      "dependency": {
+        "files": 182,
+        "bytes": 23190579
+      },
+      "export": {
+        "files": 199,
+        "bytes": 1912476
+      },
+      "suite": {
+        "files": 17,
+        "bytes": 260450
+      },
+      "fixture": {
+        "files": 10,
+        "bytes": 79590
+      },
+      "root": {
+        "files": 1,
+        "bytes": 58
+      },
+      "tool": {
+        "files": 12,
+        "bytes": 405804
+      }
+    },
+    "builtinAllowlist": [
+      "assert",
+      "assert/strict",
+      "async_hooks",
+      "child_process",
+      "crypto",
+      "dns",
+      "events",
+      "fs",
+      "fs/promises",
+      "http",
+      "https",
+      "module",
+      "net",
+      "os",
+      "path",
+      "perf_hooks",
+      "sqlite",
+      "stream",
+      "string_decoder",
+      "timers/promises",
+      "tls",
+      "url",
+      "util",
+      "util/types",
+      "vm",
+      "worker_threads"
+    ],
+    "reproducible": {
+      "inProcessTwice": true,
+      "separateProcessesEqual": true
+    },
+    "verified": {
+      "files": 435,
+      "bytes": 26325772,
+      "modeChecked": false
+    },
+    "jsTiktokenIncluded": true
+  },
+  "harness": {
+    "codeFiles": 27,
+    "codeSha256": "897e3fda555adfb65f95b5c56330afac810f95d8bbb8478585a01ed966dd22f1",
+    "identitySha256": "2e974ffd0c827a220b97183d97481d079f09c65fde2361bc9195c3a1711bfed7"
+  },
+  "cap2": {
+    "status": "AWAITING_FRESH_OWNER_GO",
+    "moduleSha256": "20c5a7b24d3ea7cd4748c38d350dd9a6f031270c4dacbfb9a9bc4f5aeb72db18",
+    "moduleBytes": 119874,
+    "hostAdapterSha256": "3a63366c624ca34c981350c7b36f4f1bfb0122defdf21a39fbbad5c8f361dc38",
+    "argsSha256": "2026d24a7ad5a42b147485f3c40ae33c80c8fda74f61c4b4b554eab1de017f90",
+    "moduleDeadlineSeconds": 60,
+    "transportDeadlineSeconds": 90,
+    "readOnly": true
+  },
+  "checks": {
+    "driver": {
+      "pass": 102,
+      "fail": 0
+    },
+    "controller": {
+      "pass": 128,
+      "fail": 0,
+      "assertions": 2444
+    },
+    "host": {
+      "pass": 140,
+      "fail": 0
+    },
+    "binding": {
+      "pass": 71,
+      "fail": 0
+    },
+    "confinementSynthetic": {
+      "pass": 53,
+      "fail": 0
+    },
+    "confinementRealModuleSet": {
+      "pass": 6,
+      "fail": 0
+    },
+    "packageComponents": {
+      "verify": 48,
+      "graph": 25,
+      "build": 45,
+      "real": 14,
+      "remainingFailures": 0,
+      "note": "Initial full run 130/132; real-module fixture migration followed by final targeted 14/14. Original failure evidence retained."
+    },
+    "runner": 47,
+    "bound": 40,
+    "boundCallback": 9,
+    "capabilityRegression": 64,
+    "independent": {
+      "filesystem": 8,
+      "pureToolPolicy": 30,
+      "capabilityPolicy": 35,
+      "runnerPolicy": 17,
+      "socket": 6,
+      "toolIntegration": 7,
+      "scope": 5,
+      "sealedCli": 8
+    },
+    "note": "Counts belong to separate suites and source snapshots; do not add them."
+  },
+  "audits": {
+    "originalDiskBlockers": 3,
+    "originalDiskBlockersStatus": "CLOSED_LOCALLY",
+    "workerGetterBypass": "FIXED_AND_RETESTED",
+    "stopModel": "4250_MS_OBSERVATION_PLUS_30000_MS_CLEANUP_ESTIMATE",
+    "modeledOvershootBytesAt20MiBPerSecond": 718274560,
+    "hostScope": "USER_OR_SYSTEM_EXPLICITLY_BOUND_IN_PACKET_PLAN_AND_RECOVERY",
+    "finalSealedReview": "NO_NEW_BLOCKER_OR_PIN_MISMATCH"
+  },
+  "freezes": {
+    "verifiedOriginals": [
+      {
+        "namespace": "claude-r7b-lpg-pkg-rc2-78e9e5a8",
+        "files": 173,
+        "freezeSha256": "a5915f354fbe4a46caf381ffc50be5c52e7bc1024ebaffe6234a27dd0941a48c"
+      },
+      {
+        "namespace": "claude-r7b-linux-pg-v8.1-checkpoint-80379cac",
+        "files": 61,
+        "freezeSha256": "b2eed5f9f3c21d0fbb076eec3d45acf78526565a929afdd8f686304e923b4fc2"
+      },
+      {
+        "namespace": "claude-r7b-lpg-cap-v1-checkpoint-36b3f815",
+        "files": 12,
+        "freezeSha256": "af74b2b256d8e155a62bed77f45906b90e3ee0ad637261a99cc74740433aa290"
+      }
+    ],
+    "newFreezes": [
+      {
+        "namespace": "codex-r7b-lpg-pkg-rc3",
+        "files": 233,
+        "freezeSha256": "e49d76d268efdeed6b54a1c1c6af28fb1d647c76ed27c45d2401a2adda460e83"
+      },
+      {
+        "namespace": "codex-r7b-linux-pg-v8.2",
+        "files": 68,
+        "freezeSha256": "ffc3de298b25f2c0cb2bd10facc1f6bd033ffbd48c19f475cd0512770f0a3165"
+      },
+      {
+        "namespace": "codex-r7b-lpg-cap-v2",
+        "files": 16,
+        "freezeSha256": "bc8372c5a07481e99416564b72da8f6378a35ad974962edbe28c3fc13f72e8a3"
+      }
+    ]
+  },
+  "knownLimitations": [
+    "NO_LINUX_POSTGRESQL_OR_NEW_HOST_RUN",
+    "WINDOWS_PACKAGE_MODE_CHECK_SKIPPED",
+    "JS_SOCKET_GUARD_IS_NOT_KERNEL_ISOLATION",
+    "PRE_POST_HASHES_DO_NOT_DETECT_REPLACE_AND_RESTORE_OR_PIN_DYNAMIC_LIBRARIES",
+    "DISK_MODEL_IS_NOT_A_MEASURED_HARD_CAP",
+    "FRESH_DEVICE_FACTS_API_HEALTH_AND_ADMISSION_GATES_REQUIRED_BEFORE_JOB",
+    "LOW_A1R02_TRUNCATED_AUXILIARY_BUNDLE_RECOVERY_DEFERRED",
+    "LOW_ACK_COMMAND_DEFERRED_PROVE_REMOVE_RUNTIME_EXISTS"
+  ],
+  "nextGates": [
+    "FRESH_OWNER_GO_FOR_CAP2_READ_ONLY_CAPTURE",
+    "LOCAL_EVALUATION_OF_FRESH_CAP2_FACTS",
+    "SEPARATE_OWNER_GO_FOR_EACH_J1_J2_J3_J4"
+  ],
+  "actions": {
+    "hostContact": false,
+    "postgresqlRun": false,
+    "deploy": false,
+    "commit": false,
+    "push": false
+  },
+  "executionAuthority": false,
+  "packetMakerSha256": "7f8369104ffb7a24024481dd848430db90f1b5054684242bcfec75e89979df2a"
+}

@@ -1,0 +1,142 @@
+{
+  "schema": "r7b-hcap2-evidence-v1",
+  "date": "2026-10-11",
+  "status": "REFUSED_NO_COMPLETE_HEALTH_ACCEPTANCE",
+  "ownerGoConsumed": true,
+  "attempts": 1,
+  "startedAt": "2026-10-11T06:51:39.864Z",
+  "endedAt": "2026-10-11T06:51:41.226Z",
+  "elapsedMs": 1359,
+  "exitCode": 2,
+  "stderrBytes": 0,
+  "rawBytes": 1750,
+  "rawSha256": "5c2384fa85f3a3742edb917e2df00f6447658443698046853601b3bdb65e6dec",
+  "runEvidenceSha256": "50fcd568f690db62d0aa9be2d54c87a0a6655c5514a5817a752b1401b12e45c8",
+  "moduleSha256": "93573860b52768407d7c9c044bdaa74505aa5655240f9b76823dadd842263b05",
+  "argsSha256": "3c121a4e0a56bcec9c8ba33547d34f894b4f4f1d58f216e56877432ee150486c",
+  "result": {
+    "schema": "r7b-hcap2-result-v1",
+    "status": "REFUSED_OR_UNKNOWN",
+    "complete": false,
+    "code": "PG_ARGUMENT_UNSUPPORTED",
+    "diagnostic": {
+      "phase": "PG_ENDPOINT",
+      "pgIndex": 0,
+      "argv": {
+        "bytes": 181,
+        "sha256": "8b907637bce23264d6b3d808d9638928f9f2280e7da023ea4fb297cbef01e50a",
+        "tokenCount": 6,
+        "emptyCount": 1,
+        "trailingEmptyCount": 1,
+        "optionNames": [
+          "-D",
+          "-c"
+        ],
+        "otherOptionCount": 0,
+        "truncated": false,
+        "tokens": [
+          {
+            "index": 0,
+            "label": "EXECUTABLE"
+          },
+          {
+            "index": 1,
+            "label": "OPTION",
+            "name": "-D"
+          },
+          {
+            "index": 2,
+            "label": "VALUE"
+          },
+          {
+            "index": 3,
+            "label": "OPTION",
+            "name": "-c"
+          },
+          {
+            "index": 4,
+            "label": "CONFIG_ASSIGNMENT",
+            "configKey": "OTHER_CONFIG_KEY"
+          },
+          {
+            "index": 5,
+            "label": "EMPTY"
+          }
+        ]
+      }
+    },
+    "partial": {
+      "toolChecks": {
+        "before": [
+          {
+            "sha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+            "bytes": 126595440
+          },
+          {
+            "sha256": "201d8daff9a5bd9df70b820471b965c39f5a776d677f395232c477d051270722",
+            "bytes": 10511456
+          },
+          {
+            "sha256": "df8c50fd508bb31db312a8519a2e7922c63b44f7d963c39d58dc107169078a0d",
+            "bytes": 122464
+          },
+          {
+            "sha256": "f311ff51f5a28ff104e43661c733b36d25cc9c5d7a66f0e463611378aafe4590",
+            "bytes": 68360
+          },
+          {
+            "sha256": "86d31f6fb799e91fa21bad341484564510ca287703a16e9e46c53338776f4f42",
+            "bytes": 129784
+          }
+        ],
+        "after": []
+      },
+      "protectedUnitsBeforeObserved": 10,
+      "pg": [],
+      "userMatchesPin": true,
+      "bootMatchesPin": true,
+      "researchInactive": true,
+      "flags": {
+        "QUANT_RESEARCH_ENABLED": "OFF",
+        "QUANT_RESEARCH_FOUNDATION_ENABLED": "OFF",
+        "QUANT_PREFLIGHT_ENABLED": "OFF",
+        "QUANT_PROFILE_V2_ENABLED": "OFF",
+        "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": "OFF"
+      },
+      "listenerMatchesApiPidBefore": true,
+      "health": {
+        "status": 200,
+        "ok": true,
+        "mode": "PAPER_ONLY"
+      },
+      "pgIsready": {
+        "sha256": "81099231d1f00c6fa292fdc76124d6a5f101f1f85d65a2e2449cd4899e6dfd2b",
+        "bytes": 39544
+      }
+    },
+    "limits": {
+      "databaseAdmissionLedgerRead": false,
+      "wholeHostHeavyJobsProven": false,
+      "executionAuthority": false
+    }
+  },
+  "timeout": false,
+  "retry": false,
+  "remoteCompletionUnknown": false,
+  "hostConfigMutation": false,
+  "serviceAction": false,
+  "j1Executed": false,
+  "interpretation": "HCAP2 refused the first PostgreSQL endpoint before any pg_isready connection. Its observed argument shape contains -D and -c with a non-allowlisted config key, no explicit -p/-k, and one terminal NUL. The narrow parser intentionally rejects -c. Terminal padding does not explain this HCAP2 refusal; HCAP1 actual arguments remain unknown. Configuration values were not recorded. Partial before-observations are retained, but PostgreSQL readiness, after-pins, stable identities and the complete health gate remain unverified.",
+  "remaining": [
+    "Independently reviewed live PostgreSQL endpoint observation design",
+    "Separate owner GO for any further host observation",
+    "Complete J1 operational packet and separate owner GO"
+  ],
+  "usage": {
+    "weeklyUsedPercent": 13,
+    "weeklyRemainingPercent": 87,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2,
+    "observedDuring": "Root review after HCAP2 completed"
+  }
+}

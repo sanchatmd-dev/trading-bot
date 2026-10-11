@@ -1,0 +1,148 @@
+{
+  "schema": "r7b-hcap4-evidence-v1",
+  "date": "2026-10-11",
+  "status": "HEALTH_OBSERVATION_ACCEPTED_WITH_LIMITS",
+  "ownerGoConsumed": true,
+  "attempts": 1,
+  "startedAt": "2026-10-11T07:25:04.690Z",
+  "endedAt": "2026-10-11T07:25:06.407Z",
+  "elapsedMs": 1712,
+  "moduleElapsedMs": 667.972143,
+  "exitCode": 0,
+  "stderrBytes": 0,
+  "rawBytes": 2480,
+  "rawSha256": "ca6203c28384ae6c23097f144a094873e52e0871b203e9eb29c91bb8859763fb",
+  "runEvidenceSha256": "b17121094b88ef9db738c1ab007ec524661fad7165b75d2f81012f841e42d4d3",
+  "moduleSha256": "caa7466f16340be2d11696d3dfb6cf43a7cde5efa9ab9f5cee37eaaa34d70c71",
+  "argsSha256": "0a71ae3db3355b266b67ca93140026c837965de908c7e96e5a4d015509f0f6a7",
+  "result": {
+    "schema": "r7b-hcap4-result-v1",
+    "status": "OBSERVED",
+    "complete": true,
+    "flags": {
+      "QUANT_RESEARCH_ENABLED": "OFF",
+      "QUANT_RESEARCH_FOUNDATION_ENABLED": "OFF",
+      "QUANT_PREFLIGHT_ENABLED": "OFF",
+      "QUANT_PROFILE_V2_ENABLED": "OFF",
+      "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": "OFF"
+    },
+    "health": {
+      "status": 200,
+      "ok": true,
+      "mode": "PAPER_ONLY",
+      "queued": 0,
+      "listenerMatchesApiPidBeforeAfter": true
+    },
+    "protectedUnits": 10,
+    "stableIdentities": true,
+    "researchInactive": true,
+    "pg": [
+      {
+        "index": 0,
+        "port": 55439,
+        "socketPathSha256": "993a1e598069894f4b0aa3425af37b0dc0bd81f63cb4f7637626bb3d38144266",
+        "identitySha256": "70db75be5742229664b552ec78e4470f0d1dbc8d2b5f13a96df4a05b50088199",
+        "kernelSocketId": "1865648",
+        "metadataSha256": "8d26eecb88165031f4c86ced39719b1628332ed9fcba0e34df1a85a264152e8e",
+        "accepting": true
+      },
+      {
+        "index": 1,
+        "port": 55432,
+        "socketPathSha256": "828ecc338c8e9ba5e4f02d85dbb0f16505ded96ac061a3ad941c15fa75b93779",
+        "identitySha256": "791f103ad5a3a88c6ea9f0e2ca90cb6768ab07d9e99ebae42c585caafbbd0df3",
+        "kernelSocketId": "187625",
+        "metadataSha256": "ec128b7bafcf5609da5669144f195275887cca2870d87da58245faa4d11a2c3c",
+        "accepting": true
+      }
+    ],
+    "device": {
+      "sourceMatchesPin": true,
+      "majorMinorMatchesPin": true
+    },
+    "jobBaseAbsent": true,
+    "toolChecks": {
+      "before": [
+        {
+          "sha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+          "bytes": 126595440
+        },
+        {
+          "sha256": "201d8daff9a5bd9df70b820471b965c39f5a776d677f395232c477d051270722",
+          "bytes": 10511456
+        },
+        {
+          "sha256": "df8c50fd508bb31db312a8519a2e7922c63b44f7d963c39d58dc107169078a0d",
+          "bytes": 122464
+        },
+        {
+          "sha256": "f311ff51f5a28ff104e43661c733b36d25cc9c5d7a66f0e463611378aafe4590",
+          "bytes": 68360
+        },
+        {
+          "sha256": "86d31f6fb799e91fa21bad341484564510ca287703a16e9e46c53338776f4f42",
+          "bytes": 129784
+        }
+      ],
+      "after": [
+        {
+          "sha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+          "bytes": 126595440
+        },
+        {
+          "sha256": "201d8daff9a5bd9df70b820471b965c39f5a776d677f395232c477d051270722",
+          "bytes": 10511456
+        },
+        {
+          "sha256": "df8c50fd508bb31db312a8519a2e7922c63b44f7d963c39d58dc107169078a0d",
+          "bytes": 122464
+        },
+        {
+          "sha256": "f311ff51f5a28ff104e43661c733b36d25cc9c5d7a66f0e463611378aafe4590",
+          "bytes": 68360
+        },
+        {
+          "sha256": "86d31f6fb799e91fa21bad341484564510ca287703a16e9e46c53338776f4f42",
+          "bytes": 129784
+        }
+      ]
+    },
+    "pgIsready": {
+      "sha256": "81099231d1f00c6fa292fdc76124d6a5f101f1f85d65a2e2449cd4899e6dfd2b",
+      "bytes": 39544,
+      "provenance": "FIRST_OBSERVED_EXISTING_PRODUCT_TOOL"
+    },
+    "elapsedMs": 667.972143,
+    "limits": {
+      "databaseAdmissionLedgerRead": false,
+      "wholeHostHeavyJobsProven": false,
+      "executionAuthority": false,
+      "atomicSnapshot": false,
+      "exclusiveSocketOwnershipProven": false
+    }
+  },
+  "interpretation": "Root accepted this bounded completed observation: ten protected unit identities and API listener stayed stable; five admission flags were OFF; API returned PAPER_ONLY; both PG endpoints answered readiness with three matching PG snapshots; five product/shell binary pins matched before and after; the device matched its pins and job base was absent. This is point-in-time health evidence only and authorizes no J1 job.",
+  "limitations": [
+    "Database admission ledger not read; queued0 is not a ledger proof.",
+    "Whole-host heavy-job idleness, atomic snapshots and exclusive ownership across time are not proved.",
+    "First-observed pg_isready hash is drift evidence only.",
+    "Success serialization omitted optional device parser diagnostics; the device gate still ran. Actual findmnt formatting and the historical HCAP3 refusal cause remain unproved.",
+    "Pre/post binary pins do not seal dynamic libraries or replace-and-restore."
+  ],
+  "timeout": false,
+  "retry": false,
+  "remoteCompletionUnknown": false,
+  "hostConfigMutation": false,
+  "serviceAction": false,
+  "j1Executed": false,
+  "pgReadinessConnections": 2,
+  "missingSuccessDeviceDiagnostics": true,
+  "usage": {
+    "observedAt": "2026-10-11T07:25:21Z",
+    "weeklyUsedPercent": 18,
+    "weeklyRemainingPercent": 82,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  },
+  "next": "Complete and independently review J1 operational packet, then obtain separate owner GO."
+}

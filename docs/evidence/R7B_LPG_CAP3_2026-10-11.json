@@ -1,0 +1,373 @@
+{
+  "schema": "r7b-lpg-cap3-evidence-v1",
+  "date": "2026-10-11",
+  "status": "CAPABILITY_ACCEPTED_ONLY",
+  "ownerGoConsumed": true,
+  "startedAt": "2026-10-11T06:14:28.578Z",
+  "endedAt": "2026-10-11T06:14:31.464Z",
+  "transport": [
+    {
+      "label": "lookup",
+      "startedAt": "2026-10-11T06:14:28.619Z",
+      "endedAt": "2026-10-11T06:14:29.509Z",
+      "elapsedMs": 875,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutBytes": 596,
+      "stdoutSha256": "66db5464d80d374a8aecf3b461ad2136e65a0ed29924cf22e36a2e26caa592ae"
+    },
+    {
+      "label": "capture",
+      "startedAt": "2026-10-11T06:14:29.514Z",
+      "endedAt": "2026-10-11T06:14:31.462Z",
+      "elapsedMs": 1944,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutBytes": 27324,
+      "stdoutSha256": "9952b5ce19525f3b289ac9a835ffc8b519fcf2b380b4d92c9ab4c586e054b80f"
+    }
+  ],
+  "factsSha256": "9952b5ce19525f3b289ac9a835ffc8b519fcf2b380b4d92c9ab4c586e054b80f",
+  "runEvidenceSha256": "3545977422443c1b7a341ebdb77106d0ebf6f51d9a9bdbbe739ff9294caacf59",
+  "moduleSha256": "d75874e62e03055e5d743ddb6d078fb6bb4d40c83cc8c40b42c2caf1f8d751af",
+  "rootProof": {
+    "schema": "r7b-cap3-root-proof-v1",
+    "rawSha256": "9952b5ce19525f3b289ac9a835ffc8b519fcf2b380b4d92c9ab4c586e054b80f",
+    "rawBytes": 27324,
+    "transportAttempts": 2,
+    "lookupAttempts": 1,
+    "captureAttempts": 1,
+    "exitCodes": [
+      0,
+      0
+    ],
+    "stderrBytes": [
+      0,
+      0
+    ],
+    "identityMatchesPrevious": true,
+    "binaryHashesUnchangedSinceCAP2": 5,
+    "permissionDirectoriesReobservedWithoutGroupOtherWrite": 5,
+    "goFinal": true,
+    "bindingReady": true,
+    "hostToolPolicyPass": true,
+    "factErrors": {
+      "dpkg": "HOST_PARSE",
+      "pgLsclusters": "ENOENT"
+    },
+    "healthAndAdmissionVerified": false,
+    "hostMutation": false,
+    "jobExecution": false,
+    "ownerGoConsumed": true
+  },
+  "capabilitySummary": {
+    "schema": "r7b-lpg-cap-summary-v1",
+    "capSchema": "r7b-lpg-cap-facts-v1",
+    "capStatus": "OK",
+    "hostLinuxSha256": "2c6f76b0aa0f81e4cbbd556da5c88eaead87c5512da774cb8651ba7e3965d622",
+    "go": true,
+    "goFinal": true,
+    "bindingReady": true,
+    "refusals": [],
+    "warnings": [
+      "PG_CLUSTERS_UNKNOWN",
+      "DISK_CAP_IS_RECORDED_EXCEPTION"
+    ],
+    "findings": [
+      {
+        "code": "HOST_TOOL_NOT_READ_ONLY",
+        "severity": "info",
+        "subject": "execNode"
+      },
+      {
+        "code": "HOST_TOOL_GIVEN_PATH_NOT_CANONICAL",
+        "severity": "info",
+        "subject": "tool.sh"
+      }
+    ],
+    "diskMechanism": "WATCHDOG_IO_RATE_BOUNDED",
+    "diskRecordedException": true,
+    "host": {
+      "kernelMajorMinor": "6.8",
+      "osId": "ubuntu",
+      "osVersionId": "24.04",
+      "systemdMajor": 255,
+      "systemdSeccompFeature": true,
+      "lingerOn": true,
+      "userNonRoot": true,
+      "userName": "$USER",
+      "bootIdSha256Prefix": "d0563c019e26331f"
+    },
+    "cgroup": {
+      "cgroupV2": true,
+      "controllersAvailable": [
+        "cpu",
+        "io",
+        "memory",
+        "pids"
+      ],
+      "delegated": [
+        "cpu",
+        "io",
+        "memory",
+        "pids"
+      ],
+      "appSliceExists": true,
+      "appSliceControllers": [
+        "cpu",
+        "io",
+        "memory",
+        "pids"
+      ],
+      "memoryPeak": true,
+      "pidsPeak": true,
+      "cgroupKill": true
+    },
+    "userns": {
+      "available": false,
+      "maxUserNamespaces": 31613,
+      "unprivilegedUsernsClone": 1,
+      "apparmorRestrict": 1
+    },
+    "process": {
+      "seccomp": 0,
+      "noNewPrivs": 0
+    },
+    "node": {
+      "api": {
+        "sha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bytes": 126595440,
+        "ownerIsRoot": false,
+        "mode": "0755",
+        "givenPathCanonical": true,
+        "readOnly": false,
+        "immutable": false,
+        "version": "v24.21.0"
+      },
+      "exec": {
+        "sha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+        "bytes": 126595440,
+        "ownerIsRoot": false,
+        "mode": "0755",
+        "givenPathCanonical": true,
+        "readOnly": false,
+        "immutable": false,
+        "version": "v24.21.0"
+      },
+      "sameBinary": true
+    },
+    "postgres": {
+      "version": "16.15",
+      "packageCount": 0,
+      "pathTemplate": "$PGBIN/<tool>",
+      "tools": {
+        "postgres": {
+          "sha256": "201d8daff9a5bd9df70b820471b965c39f5a776d677f395232c477d051270722",
+          "bytes": 10511456,
+          "ownerIsRoot": false,
+          "mode": "0755",
+          "givenPathCanonical": true,
+          "readOnly": false,
+          "immutable": false,
+          "version": null
+        },
+        "initdb": {
+          "sha256": "df8c50fd508bb31db312a8519a2e7922c63b44f7d963c39d58dc107169078a0d",
+          "bytes": 122464,
+          "ownerIsRoot": false,
+          "mode": "0755",
+          "givenPathCanonical": true,
+          "readOnly": false,
+          "immutable": false,
+          "version": null
+        },
+        "pgCtl": {
+          "sha256": "f311ff51f5a28ff104e43661c733b36d25cc9c5d7a66f0e463611378aafe4590",
+          "bytes": 68360,
+          "ownerIsRoot": false,
+          "mode": "0755",
+          "givenPathCanonical": true,
+          "readOnly": false,
+          "immutable": false,
+          "version": null
+        },
+        "sh": {
+          "sha256": "86d31f6fb799e91fa21bad341484564510ca287703a16e9e46c53338776f4f42",
+          "bytes": 129784,
+          "ownerIsRoot": true,
+          "mode": "0755",
+          "givenPathCanonical": false,
+          "readOnly": true,
+          "immutable": true,
+          "version": null
+        }
+      },
+      "clusterCount": null,
+      "clusterPortCollision": null
+    },
+    "resources": {
+      "nproc": 2,
+      "memTotalGiB": 7.8,
+      "memAvailableGiB": 6.6,
+      "load1": 0.02,
+      "load5": 0.03,
+      "load15": 0,
+      "pressureCpuAvg60": 0.03,
+      "pressureMemoryAvg60": 0,
+      "pressureIoAvg60": 0
+    },
+    "disk": {
+      "fstype": "ext4",
+      "sizeGiB": 95.8,
+      "availGiB": 87.8,
+      "availFraction": 0.916,
+      "deviceKind": "block",
+      "jobBase": "$JOB_BASE",
+      "jobBaseExists": false
+    },
+    "sysvSegments": 2,
+    "limits": {
+      "nofileSoft": 1048576,
+      "nofileHard": 1048576
+    },
+    "clkTck": 100,
+    "jobProbe": {
+      "withoutAll": {
+        "exitCode": 0,
+        "linePresent": true,
+        "valueKind": "empty"
+      },
+      "withAll": {
+        "exitCode": 0,
+        "linePresent": true,
+        "valueKind": "empty"
+      },
+      "collectorApiJobState": "NONE"
+    },
+    "protectedUnits": {
+      "user": [
+        {
+          "role": "unit-8",
+          "loadState": "loaded",
+          "activeState": "inactive",
+          "subState": "dead",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": false
+        },
+        {
+          "role": "unit-7",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "api",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-10",
+          "loadState": "loaded",
+          "activeState": "inactive",
+          "subState": "dead",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": false
+        },
+        {
+          "role": "unit-6",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-9",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-1",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-3",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-2",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        },
+        {
+          "role": "unit-4",
+          "loadState": "loaded",
+          "activeState": "active",
+          "subState": "running",
+          "job": "NONE",
+          "nRestarts": 0,
+          "hasMainPid": true
+        }
+      ],
+      "system": []
+    },
+    "environment": {
+      "managerNameCount": 10,
+      "pgVariablePresent": false,
+      "processNameCount": 17
+    },
+    "probeErrors": {
+      "count": 2,
+      "codes": [
+        "ENOENT",
+        "HOST_PARSE"
+      ]
+    },
+    "hostBindingSha256": "fc970438c8137a6e715b6744198d4f48f9156f4b887cdc68e917897e22ffa3c0",
+    "placeholders": [
+      "$HOME",
+      "$USER",
+      "$JOB_BASE",
+      "$PGBIN"
+    ],
+    "elapsedMs": 708
+  },
+  "interpretation": "goFinal and bindingReady describe capability and the candidate host binding only. They do not grant J1 execution or establish current API health, admission ledger state, or whole-host idleness.",
+  "unresolved": {
+    "packageInventory": "UNKNOWN: dpkg HOST_PARSE",
+    "postgresClusterInventory": "UNKNOWN: pgLsclusters ENOENT",
+    "apiHealth": "NOT_READ",
+    "admissionFlags": "NOT_READ",
+    "productionPgEndpointsAndHealth": "REQUIRE_CURRENT_SCOPED_READ",
+    "linuxPgHarness": "NOT_RUN"
+  },
+  "next": "Prepare and independently review HCAP1 scoped read-only health/admission/PG endpoint observation, then request its separate owner GO. J1 remains gated."
+}

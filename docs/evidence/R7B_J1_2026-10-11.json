@@ -1,0 +1,198 @@
+{
+  "schema": "r7b-j1-run-evidence-v1",
+  "date": "2026-10-11",
+  "recordedAt": "2026-10-11T08:08:22.175Z",
+  "status": "STOPPED_BEFORE_JOB_PREFLIGHT_REFUSED_POSTFLIGHT_IDENTITY_DRIFT",
+  "ownerGoConsumed": true,
+  "jobStarted": false,
+  "jobId": null,
+  "sqlHarnessCasesExecuted": 0,
+  "packageId": "56b1c6fdd74c4673bfaff7c472767c3d377512a6518193395b26540ae1705671",
+  "tarSha256": "f9017520b68d9d55c78a1696af55021e23193de3f236850058f00e09d8571f3c",
+  "runPacketSha256": "a6c87ddc40a20cbcc5dca805339c5ba11d643f3850b57281db37374d925975dd",
+  "contacts": [
+    {
+      "name": "01-preupload-health",
+      "startedAt": "2026-10-11T07:56:55.252Z",
+      "endedAt": "2026-10-11T07:56:56.844Z",
+      "elapsedMs": 1592,
+      "exitCode": 0,
+      "stdoutBytes": 2836,
+      "stdoutSha256": "642f8fa0969c9b7352a8ebe5b96b3c24aa718b1974448b96332f5ebe981f7a70",
+      "receiptSha256": "d7c42352340f3f180f8de3cc499efec7af437ec34fcf5965f653d536f395e5a6"
+    },
+    {
+      "name": "02-bootstrap",
+      "startedAt": "2026-10-11T07:58:41.517Z",
+      "endedAt": "2026-10-11T07:58:42.537Z",
+      "elapsedMs": 1020,
+      "exitCode": 0,
+      "stdoutBytes": 291,
+      "stdoutSha256": "c1c99b32908810d7c0459032c35541341da87c095a44610afe48db872624a035",
+      "receiptSha256": "9ec4f90ff5efe6a8a0e6367c7af6d7cb6aa553c62bf3fea9658b47a2bb5008f8"
+    },
+    {
+      "name": "03-upload-0",
+      "startedAt": "2026-10-11T08:00:37.610Z",
+      "endedAt": "2026-10-11T08:00:42.103Z",
+      "elapsedMs": 4493,
+      "exitCode": 0,
+      "stdoutBytes": 305,
+      "stdoutSha256": "392429d3a139236628bd7ce7947161169f8bc2ca4a962db9fec3170958e61696",
+      "receiptSha256": "176ed52016989ff78dba46620e62b74f28357f52fa1ae9b1e9cbd32bd3120867"
+    },
+    {
+      "name": "04-upload-1",
+      "startedAt": "2026-10-11T08:00:42.109Z",
+      "endedAt": "2026-10-11T08:00:42.981Z",
+      "elapsedMs": 871,
+      "exitCode": 0,
+      "stdoutBytes": 299,
+      "stdoutSha256": "23a4826058ad57cd53b9cdb41217683f44598e110bf9366c254d8376e13fd3b3",
+      "receiptSha256": "2811c1b947df1bdc0abfca959278c37b256f4850ccd8c5c85dd2f2404a21ef2c"
+    },
+    {
+      "name": "05-upload-2",
+      "startedAt": "2026-10-11T08:00:42.989Z",
+      "endedAt": "2026-10-11T08:00:43.910Z",
+      "elapsedMs": 920,
+      "exitCode": 0,
+      "stdoutBytes": 297,
+      "stdoutSha256": "5e1155fbd56c0fbd601fafc4bdf56bb744917957a267e21e4ea4868bb9f14e5c",
+      "receiptSha256": "ae7d692734fd233bf4f84a14b71f3b5589349e5d44162d7f7d35a82c9e826b5e"
+    },
+    {
+      "name": "06-upload-3",
+      "startedAt": "2026-10-11T08:00:43.921Z",
+      "endedAt": "2026-10-11T08:00:44.749Z",
+      "elapsedMs": 828,
+      "exitCode": 0,
+      "stdoutBytes": 297,
+      "stdoutSha256": "579c1c65b72b3ae6f9563160821182e9ee121282e6242c7aaedb4e8c42310949",
+      "receiptSha256": "6df78032b79fdb23609371c3bf6a6415a2b0ec8ce82f2636f30c5dee630f7b34"
+    },
+    {
+      "name": "07-upload-4",
+      "startedAt": "2026-10-11T08:00:44.761Z",
+      "endedAt": "2026-10-11T08:00:45.587Z",
+      "elapsedMs": 825,
+      "exitCode": 0,
+      "stdoutBytes": 297,
+      "stdoutSha256": "9fafb89525716086b9442f38d053eaf04cbcebe904de6b8bc370ff5b094439eb",
+      "receiptSha256": "07d601a9988a2697fc9d20debd526f4ac96d7a9237898a149cfd229f931b1d06"
+    },
+    {
+      "name": "08-extract",
+      "startedAt": "2026-10-11T08:02:23.238Z",
+      "endedAt": "2026-10-11T08:02:24.254Z",
+      "elapsedMs": 1016,
+      "exitCode": 0,
+      "stdoutBytes": 171,
+      "stdoutSha256": "629ce42c428ef100009020176b181a5530539f6c1c4178ead26f2cba21f04b64",
+      "receiptSha256": "13a7dfd99da4c2c66faec59b0a7de51dc68115dc072f4a1b680c3a03146f7e52"
+    },
+    {
+      "name": "09-verify",
+      "startedAt": "2026-10-11T08:02:24.270Z",
+      "endedAt": "2026-10-11T08:02:25.108Z",
+      "elapsedMs": 838,
+      "exitCode": 0,
+      "stdoutBytes": 340,
+      "stdoutSha256": "f65a5d38917a51ca4dec64ae62504f9b1cfc20a1b4348b4470b9b93c48683cfc",
+      "receiptSha256": "7a758f1ace5d8a85deb0b32baf0fd7cc12e48d8fe9b4032a325de33d7b67ce83"
+    },
+    {
+      "name": "10-preflight",
+      "startedAt": "2026-10-11T08:04:00.945Z",
+      "endedAt": "2026-10-11T08:04:02.325Z",
+      "elapsedMs": 1380,
+      "exitCode": 2,
+      "stdoutBytes": 526,
+      "stdoutSha256": "c85ab0fc3c2887766a5547ef27e21882284226005cf9d8ea2b4baa7507e54cac",
+      "receiptSha256": "74b915a3f977db3b85ec4a8e82e85b2c07b4425ff555278216fc76753b392fc6"
+    },
+    {
+      "name": "11-postflight-health",
+      "startedAt": "2026-10-11T08:05:34.491Z",
+      "endedAt": "2026-10-11T08:05:36.307Z",
+      "elapsedMs": 1816,
+      "exitCode": 0,
+      "stdoutBytes": 2974,
+      "stdoutSha256": "c871dee1e88d1b4d07e0c744f5e510f8c880d116cc30bbdd489bb349215c789b",
+      "receiptSha256": "404108d98e374cbdf1ee7ab0349527b515495d25e58929d1561ec93864ee45ad"
+    }
+  ],
+  "uploads": {
+    "files": 5,
+    "bytes": 26809088,
+    "allHashesMatched": true
+  },
+  "strictLinuxVerification": {
+    "payloadFiles": 435,
+    "modeChecked": true,
+    "ownerChecked": true
+  },
+  "preflight": {
+    "attempts": 1,
+    "go": false,
+    "exitCode": 2,
+    "refusals": [
+      {
+        "code": "FACT_MISSING",
+        "detail": "pg (ENOENT)"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "DISK_CAP_IS_RECORDED_EXCEPTION",
+        "detail": "WATCHDOG_IO_RATE_BOUNDED"
+      }
+    ]
+  },
+  "postflight": {
+    "complete": true,
+    "apiPaperOnly": true,
+    "flagsOff": 5,
+    "protectedUnits": 10,
+    "stableWithinProbe": true,
+    "crossPhase": {
+      "protectedUnitsIdentitySha256": false,
+      "pg": true,
+      "pgIsready": true,
+      "device": true,
+      "toolChecks": true
+    },
+    "protectedUnitsIdentityBefore": "d8f6513da528fcdfdc8a2df2540caea2a9e0f636f19f86de1ff87e9839ef94c0",
+    "protectedUnitsIdentityAfter": "b62606e723a77fc8b8c642ae6d45131a1b31129f9ae6bd91f2362afb77a89b27",
+    "pgReady": 2,
+    "toolsBeforeAfterMatched": true,
+    "bootstrapIdentityMatched": true,
+    "changedUnit": "UNKNOWN",
+    "cause": "UNKNOWN"
+  },
+  "healthProbes": 2,
+  "pgReadinessConnections": 4,
+  "httpHealthRequests": 2,
+  "prestartProbeExecuted": false,
+  "noAutomaticRetry": true,
+  "activeTransport": false,
+  "createdHarnessJob": false,
+  "remoteArtifactsRetained": [
+    "New job base and inputs with five pinned files",
+    "Strictly verified RC4 package"
+  ],
+  "limits": [
+    "No job ID, transient harness unit or PostgreSQL harness cluster was started.",
+    "Cross-phase protected-unit digest changed; individual rows were not retained, so changed unit and cause remain unknown.",
+    "Existing digest is sensitive to property order; this is a possible explanation only, not an observed historical cause.",
+    "API and PG observations passed at postflight, but full cross-phase health gate failed.",
+    "No database admission ledger or whole-host idleness proof."
+  ],
+  "usage": {
+    "weeklyUsedPercent": 24,
+    "weeklyRemainingPercent": 76,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  },
+  "next": "Local binding propagation fix and output-only unit diagnostic preparation; no further host action without a reviewed separate GO."
+}

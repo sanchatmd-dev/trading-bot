@@ -1,0 +1,53 @@
+{
+  "schema": "r7b-perm1-evidence-v1",
+  "checkpointDate": "2026-10-11",
+  "scope": "READ_ONLY_PERMISSION_METADATA",
+  "packet": "R7B-PERM1-20261011",
+  "ownerGoConsumed": true,
+  "observedAt": "2026-10-11T05:18:09.079Z",
+  "attempts": 1,
+  "exitCode": 0,
+  "stderrBytes": 0,
+  "factBytes": 970,
+  "factsSha256": "bd9f99274372ea3f20ed56f1e5868617e422b033d35bd73d78a3650d51004e74",
+  "moduleSha256": "6e66868003b9b30413df2c90e08f48b6bcdffbd4524207ad2276f6d9c349e4fc",
+  "argsSha256": "894a2318088ff32e5c9a91dd3f5a5425b26e93302117e9edfa3f072b3fc71f42",
+  "findings": {
+    "directoryCount": 5,
+    "allModes": "0775",
+    "allOwnerMatchesServiceUser": true,
+    "allGroupMatchesServiceUserPrimaryGroup": true,
+    "allGroupWritable": true,
+    "anyOtherWritable": false,
+    "serviceUserInEachDirectoryGroup": true,
+    "aclObserved": false,
+    "otherUsersGroupMembershipObserved": false
+  },
+  "hostMutations": false,
+  "harnessJobRan": false,
+  "jobGate": "NO_GO",
+  "nextAction": "Owner decision on the reviewed PERM2 packet: exactly five directories from 0775 to 0755, with fresh identity checks and binary hashes before/after. PERM2 is not authorized; no permission change has occurred.",
+  "limits": [
+    "Permissions are an observation at the recorded time, not future execution proof.",
+    "ACL contents and other group members remain unknown.",
+    "Removing group write would also restrict writes governed by an extended ACL group-class mask, if present.",
+    "No binary bytes, service state or file contents were changed.",
+    "API health and admission flags were not checked."
+  ],
+  "proposedPerm2": {
+    "status": "NO_GO",
+    "directoryCount": 5,
+    "beforeMode": "0775",
+    "afterMode": "0755",
+    "moduleSha256": "e7885b9a97974b95501f415c5fdff24b3210f80a0da9ca78a97537cdb83a54a2",
+    "argsSha256": "ad96d1deac89495558221fd799ff0bd43e0a51f092198e798240da6690b0be73",
+    "authorInjectedPass": 40,
+    "rootIndependentPass": 14,
+    "realMutationTested": false,
+    "additionalReviewerUnavailable": "Runtime agent thread limit",
+    "effectsSeconds": 10,
+    "moduleSeconds": 15,
+    "transportSeconds": 40,
+    "automaticRollback": false
+  }
+}

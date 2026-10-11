@@ -1,0 +1,46 @@
+{
+  "schema": "r7b-hcap1-evidence-v1",
+  "date": "2026-10-11",
+  "status": "REFUSED_NO_HEALTH_ACCEPTANCE",
+  "ownerGoConsumed": true,
+  "attempts": 1,
+  "startedAt": "2026-10-11T06:35:59.588Z",
+  "endedAt": "2026-10-11T06:36:01.197Z",
+  "elapsedMs": 1604,
+  "exitCode": 2,
+  "stderrBytes": 0,
+  "rawBytes": 96,
+  "rawSha256": "3feda22d3dd754e6a15b5306788f1d39b93c03c3649c411420ac7ca09b3112b4",
+  "runEvidenceSha256": "2b059b5073d55545786f6c33a4ceab9a98c9c8d05900556392a9a4a602f15dcf",
+  "moduleSha256": "3113ad078768696252c596b2497e54b4141f76cc52568bb57175cd9982c6663e",
+  "argsSha256": "8efc20544fad82854457063e74da25e9f24fddfb2fd7f9b88d37cda7a5e545f8",
+  "result": {
+    "schema": "r7b-hcap1-result-v1",
+    "status": "REFUSED_OR_UNKNOWN",
+    "code": "PG_ARGUMENT_UNSUPPORTED"
+  },
+  "timeout": false,
+  "retry": false,
+  "remoteCompletionUnknown": false,
+  "hostConfigMutation": false,
+  "serviceAction": false,
+  "j1Executed": false,
+  "interpretation": "The module returned a PostgreSQL argument-parser refusal. It did not retain phase or partial observations; no health, admission or PostgreSQL endpoint gate is accepted from this output. Zero or one earlier PostgreSQL readiness connection attempt may have occurred; ordinary server logging is possible. No further host read was performed.",
+  "localDiagnosis": {
+    "reproduced": "HCAP1 rejects a valid supported argument sequence followed by multiple trailing NUL bytes.",
+    "actualHostCause": "UNKNOWN: the failing argument shape was not retained.",
+    "next": "Prepare a new HCAP2 namespace that handles terminal empty padding while preserving refusals for unsupported arguments and retains safe phase/argument-shape diagnostics. Independently review before any new owner GO."
+  },
+  "remaining": [
+    "Current health/admission/PG evidence",
+    "HCAP2 independent local review and separate owner GO",
+    "Complete J1 operational packet and separate GO"
+  ],
+  "usage": {
+    "observedAt": "2026-10-11T06:37:25Z",
+    "weeklyUsedPercent": 11,
+    "weeklyRemainingPercent": 89,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  }
+}

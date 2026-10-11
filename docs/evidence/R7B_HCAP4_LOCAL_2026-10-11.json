@@ -1,0 +1,45 @@
+{
+  "schema": "r7b-hcap4-local-evidence-v1",
+  "date": "2026-10-11",
+  "status": "LOCAL_PROPOSAL_ACCEPTED_NO_GO",
+  "moduleSha256": "caa7466f16340be2d11696d3dfb6cf43a7cde5efa9ab9f5cee37eaaa34d70c71",
+  "argsSha256": "0a71ae3db3355b266b67ca93140026c837965de908c7e96e5a4d015509f0f6a7",
+  "freezeSha256": "1a3471f797d73efa2a9710ee922471bde5bfed1cef46078887446f37f0dbcfcd",
+  "freezeFiles": 5,
+  "changes": [
+    "Parse one findmnt row into source and major:minor with SP/TAB alignment; retain exact field pin comparisons.",
+    "Retain safe device parser diagnostics without raw observed source.",
+    "Advance args/result schemas to HCAP4."
+  ],
+  "checks": {
+    "rootFullProbeAndRegression": 43,
+    "independentDeltaAndParser": 29,
+    "failures": 0,
+    "exactDeltaVerified": true,
+    "priorArgumentValuesPreserved": true,
+    "hostReadScopeUnchanged": true
+  },
+  "historicalFinding": "HCAP3 observed both PG readiness connections and stable PG snapshots, then refused DEVICE_DRIFT before complete after-checks. Raw mount output was not retained, so actual cause remains unknown. Alignment mismatch is only a local reproduction.",
+  "scope": {
+    "hostExecution": false,
+    "realLinuxFindmnt": false,
+    "realPostgres": false,
+    "productionCodeChanged": false,
+    "proposedPgReadinessConnections": 2,
+    "proposedUnixSnapshots": 3,
+    "localTransportDeadlineSeconds": 90,
+    "remoteHardDeadlineProven": false
+  },
+  "remaining": [
+    "One separate owner GO for HCAP4 observation",
+    "Root acceptance of complete current health evidence",
+    "Complete J1 operational packet and separate owner GO"
+  ],
+  "usage": {
+    "observedAt": "2026-10-11T07:10:01Z",
+    "weeklyUsedPercent": 17,
+    "weeklyRemainingPercent": 83,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  }
+}

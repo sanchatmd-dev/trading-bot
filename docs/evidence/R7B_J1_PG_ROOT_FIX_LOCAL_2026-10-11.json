@@ -1,0 +1,25 @@
+{
+  "schema": "r7b-j1-pg-root-fix-local-v1",
+  "status": "LOCAL_REVIEWED_CANDIDATE_NOT_PACKAGED_OR_DEPLOYED",
+  "date": "2026-10-11",
+  "sourceSha256": "0b7fc46f5152aea3a9db241d2434f2ac6c8dd169eb35c2c842937864f0873539",
+  "frozenControllerSha256": "106fcc65d1a930db71d8bffad4344d161415f29b6aa803247eb79c4d100e0571",
+  "freezeSha256": "a7a34f01d559599f4ed8c03dce2ff0c83e748d7ad4bfc302f650400cac8070ef",
+  "finding": "Frozen controller omitted the explicit bound PostgreSQL library root when collecting preflight facts. CAP3 supplied that root. An injected actual-controller test reproduces the observed FACT_MISSING pg (ENOENT) refusal.",
+  "change": "Derive the supported root from validated PostgreSQL, initdb and pg_ctl bindings, requiring one exact PostgreSQL 16/bin layout; reject incoherent layouts before collection; propagate the root for preflight and start.",
+  "checks": {
+    "authorFocused": 10,
+    "independentFocused": 4,
+    "existingRegression": 128,
+    "assertions": 2444,
+    "failed": 0
+  },
+  "hostExecuted": false,
+  "rc4Changed": false,
+  "sealedPackageRebuilt": false,
+  "limitations": [
+    "Linux behavior of this candidate has not run.",
+    "Full package rebuild and renewed run packet are still required before any future job proposal.",
+    "This candidate does not explain or close the protected-unit digest mismatch."
+  ]
+}

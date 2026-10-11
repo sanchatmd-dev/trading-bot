@@ -1,0 +1,54 @@
+{
+  "schema": "r7b-j1r3-local-v1",
+  "date": "2026-10-11",
+  "createdAt": "2026-10-11T09:19:10.033Z",
+  "status": "LOCAL_ACCEPTED_AWAITING_OWNER_GO",
+  "scope": "LOCAL_PREPARATION_ONLY",
+  "checks": {
+    "author": 45,
+    "independent": 31,
+    "root": 21
+  },
+  "actualPriorEvidencePins": 46,
+  "rootProofSha256": "17c6f0ab393901fe60f4e147fb23f026f4b9cca5bda3a24946b36ad808da6a0b",
+  "rootPacketSha256": "6c8fb41576e00e73c213c5133ec4ece80c7f1f0064261af783c0c758a30f6a65",
+  "rootFreezeSha256": "b7169c309bdcc6823a76c9f1fd833a3210eb6755ed241bcfdf77147c6133c150",
+  "helperSha256": "8201f020ac1fc47de68192d0312d295968a4a647a0d9074e89f254ed22df25d9",
+  "packageId": "3743a0b1e1073450957aa56c332bc661493d8edbdb8266cc21caf4d73df94a2a",
+  "proposal": {
+    "retainedInputs": 5,
+    "inputBytes": 26809239,
+    "bootstrap": 0,
+    "uploads": 0,
+    "extraction": 0,
+    "startMaximum": 1,
+    "cases": 11,
+    "workSeconds": 285,
+    "cleanupSeconds": 30,
+    "healthMaximum": 2,
+    "pgReadinessMaximum": 4,
+    "httpMaximum": 2,
+    "warningGateAtomic": false,
+    "freshExecutionBaselineRequired": true,
+    "allProtectedFieldsRequired": true
+  },
+  "actual": {
+    "hostCalls": 0,
+    "jobsStarted": 0,
+    "priorA2Accepted": false,
+    "executionAuthority": false
+  },
+  "limitations": [
+    "Real Linux retained-helper behavior and J1 unrun",
+    "Cluster inventory and historical package inode UNKNOWN",
+    "Warning allowance applies only to explicit preflight; internal start does not enforce it atomically",
+    "Synchronous I/O timer provides no independent deadline interruption",
+    "No true-peak, termination, atomic snapshot, global idleness or hostile same-UID isolation guarantee"
+  ],
+  "usage": {
+    "weeklyUsedPercent": 36,
+    "weeklyRemainingPercent": 64,
+    "shortWindow": "UNKNOWN",
+    "ownerStopRemainingPercent": 2
+  }
+}
