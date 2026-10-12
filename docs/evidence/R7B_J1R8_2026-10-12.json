@@ -1,0 +1,404 @@
+{
+  "schema": "r7b-j1r8-run-v1",
+  "recordedAt": "2026-10-12T10:17:26Z",
+  "status": "J1R8_RAN_ONCE_TEN_OF_ELEVEN_CASES_PASSED_STARTUP_SCHEMA_FAILED",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "executionPass": false,
+  "ownerGo": {
+    "utc": "2026-10-12T10:08:20Z",
+    "consumed": true,
+    "scope": "one J1-R8 attempt with package candidate 10, one run directory, no retry"
+  },
+  "operator": "one Claude Opus 5.5 operations worker, one admitted row at a time; root admitted and accepted every row",
+  "counts": {
+    "hostContacts": {
+      "used": 17,
+      "limit": 22
+    },
+    "health": {
+      "used": 2,
+      "limit": 2
+    },
+    "pgReadiness": {
+      "used": 4,
+      "limit": 4
+    },
+    "http": {
+      "used": 2,
+      "limit": 2
+    },
+    "starts": {
+      "used": 1,
+      "limit": 1
+    },
+    "identify": {
+      "used": 1,
+      "limit": 2
+    },
+    "status": {
+      "used": 1,
+      "limit": 3
+    },
+    "stop": {
+      "used": 0,
+      "limit": 1
+    },
+    "prove": {
+      "used": 1,
+      "limit": 2
+    },
+    "bundle": {
+      "used": 1,
+      "limit": 1
+    }
+  },
+  "rows": [
+    {
+      "row": "01-boot-check",
+      "startedUtc": "2026-10-12T10:08:38.160Z",
+      "elapsedMs": 1014,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "02-bootstrap",
+      "startedUtc": "2026-10-12T10:09:02.027Z",
+      "elapsedMs": 3238,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "03-upload-0",
+      "startedUtc": "2026-10-12T10:09:30.355Z",
+      "elapsedMs": 4422,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "04-upload-1",
+      "startedUtc": "2026-10-12T10:09:56.564Z",
+      "elapsedMs": 951,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "05-upload-2",
+      "startedUtc": "2026-10-12T10:10:19.232Z",
+      "elapsedMs": 950,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "06-upload-3",
+      "startedUtc": "2026-10-12T10:10:41.648Z",
+      "elapsedMs": 907,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "07-upload-4",
+      "startedUtc": "2026-10-12T10:11:03.927Z",
+      "elapsedMs": 925,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "08-extract",
+      "startedUtc": "2026-10-12T10:11:26.462Z",
+      "elapsedMs": 1927,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "09-verify-linux-strict",
+      "startedUtc": "2026-10-12T10:11:54.015Z",
+      "elapsedMs": 989,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "10-preflight",
+      "startedUtc": "2026-10-12T10:12:17.178Z",
+      "elapsedMs": 1397,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "11-health-prestart",
+      "startedUtc": "2026-10-12T10:12:41.791Z",
+      "elapsedMs": 2901,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "12-start-once",
+      "startedUtc": "2026-10-12T10:13:08.086Z",
+      "elapsedMs": 26340,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "13-identify-own-job",
+      "startedUtc": "2026-10-12T10:14:00.200Z",
+      "elapsedMs": 970,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "14-status",
+      "startedUtc": "2026-10-12T10:14:22.367Z",
+      "elapsedMs": 944,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "15-first-conclusive-prove",
+      "startedUtc": "2026-10-12T10:14:45.437Z",
+      "elapsedMs": 1360,
+      "exitCode": 1,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "16-bundle",
+      "startedUtc": "2026-10-12T10:15:12.954Z",
+      "elapsedMs": 1163,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "17-health-postflight",
+      "startedUtc": "2026-10-12T10:15:38.885Z",
+      "elapsedMs": 1682,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    }
+  ],
+  "chain": {
+    "acceptedPhases": [
+      "01-boot-check",
+      "02-bootstrap",
+      "03-upload-0",
+      "04-upload-1",
+      "05-upload-2",
+      "06-upload-3",
+      "07-upload-4",
+      "08-extract",
+      "09-verify-linux-strict",
+      "10-preflight",
+      "11-health-prestart",
+      "12-start-once",
+      "13-identify-own-job",
+      "14-status",
+      "15-first-conclusive-prove"
+    ],
+    "stopped": {
+      "phase": "first-conclusive-prove",
+      "code": "PROVE_VERDICT_NOT_PASS"
+    },
+    "hardStop": false,
+    "end": "CHAIN_COMPLETE",
+    "limitsExceeded": [],
+    "stopExecuted": false,
+    "postflight": {
+      "mode": "FAILURE_RECORD",
+      "accepted": false,
+      "executionPass": false,
+      "scope": "FAILURE_PATH_POINT_IN_TIME_HEALTH_ONLY",
+      "ancestorsComparedWithPrestart": true
+    },
+    "finalAcceptRun": "accept-run.20.json"
+  },
+  "job": {
+    "jobId": "r7b-lpg-20261012-j1-16d0c9a4",
+    "result": {
+      "code": "SUITE_CASE_FAILED",
+      "runnerCode": "SUITE_FAIL",
+      "stopPath": "DONE",
+      "runnerRealPostgresField": false,
+      "flags": [
+        "OUTER_PROOF_PASSED"
+      ]
+    },
+    "timeline": {
+      "initdbMs": 734,
+      "readyMs": 1987,
+      "suiteStartMs": 1999,
+      "suiteEndMs": 23221
+    },
+    "cases": [
+      {
+        "id": "startup-schema",
+        "status": "FAIL",
+        "code": "SUITE_CASE_FAILED"
+      },
+      {
+        "id": "H-2",
+        "status": "PASS",
+        "code": null
+      },
+      {
+        "id": "H-3",
+        "status": "PASS",
+        "code": null
+      },
+      {
+        "id": "H-6",
+        "status": "PASS",
+        "code": null
+      },
+      {
+        "id": "H-8",
+        "status": "PASS",
+        "code": null
+      },
+      {
+        "id": "H-10",
+        "status": "PASS",
+        "code": null
+      },
+      {
+        "id": "H-11",
+        "status": "PASS",
+        "code": null
+      },
+      {
+        "id": "H-12a",
+        "status": "PASS",
+        "code": null
+      },
+      {
+        "id": "H-1",
+        "status": "PASS",
+        "code": null
+      },
+      {
+        "id": "H-7",
+        "status": "PASS",
+        "code": null
+      },
+      {
+        "id": "H-9",
+        "status": "PASS",
+        "code": null
+      }
+    ],
+    "suiteEvidenceRealPostgres": true,
+    "peaks": {
+      "tasksPeak": 22,
+      "roleBackends": 2,
+      "backendsTotal": 6,
+      "samples": 77,
+      "sampleErrors": 0,
+      "memoryPeakBytesUnit": 215105536,
+      "diskPeakBytes": 70430720,
+      "wallMs": 23221
+    }
+  },
+  "resolutionAudit": {
+    "schema": "r7b-lpg-resolution-audit-v2",
+    "source": "capture",
+    "attestation": "active",
+    "ancestors": 4,
+    "fileMode": "0400",
+    "postCheckDifferences": 0,
+    "attestedAnswers": 484,
+    "unansweredAttested": 0,
+    "overflow": 0,
+    "deniedRecords": [
+      {
+        "api": "promises.lstat",
+        "count": 121,
+        "permission": "FileSystemRead",
+        "resourceClass": "PACKAGE_ANCESTOR:1"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 121,
+        "permission": "FileSystemRead",
+        "resourceClass": "PACKAGE_ANCESTOR:2"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 121,
+        "permission": "FileSystemRead",
+        "resourceClass": "SCRATCH_ANCESTOR:1"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 121,
+        "permission": "FileSystemRead",
+        "resourceClass": "SCRATCH_ANCESTOR:2"
+      }
+    ],
+    "refused": 0,
+    "newAcceptanceProblems": []
+  },
+  "outerProof": {
+    "pass": true,
+    "checks": [
+      "unitList:ok",
+      "cgroupDir:ok",
+      "processes:ok",
+      "postmasterFiles:ok",
+      "sysv:ok",
+      "scratchInventory:ok",
+      "runtimeDirs:ok",
+      "out:ok",
+      "scratchInventoryFinal:ok",
+      "protectedServices:ok",
+      "hostTools:ok",
+      "inputPostcheck:ok",
+      "ioLimits:ok"
+    ],
+    "lockReleased": true,
+    "verdict": {
+      "exitCode": 1,
+      "pass": false,
+      "reasons": [
+        "RECEIPT_NOT_PASS"
+      ]
+    }
+  },
+  "whatWorked": "Every preparation step passed. RC10 worked on Linux: the driver attested the four ancestors of the scratch, the suite shim answered the product's ancestor check 484 times with no unanswered attested denial, and the post-check found no difference. Ten of the eleven cases passed on the job's own PostgreSQL; eight of the nine J1-R7 failures now pass. The monitor sampled 77 times with no errors. The controller's outer proof passed all 13 checks and released the job lock; the bundle was fetched. Root ran the new bundle checks on the raw bundle: no problem.",
+  "failure": "One case, startup-schema, failed with the generic code SUITE_CASE_FAILED. The product startup check throws an error whose message is the reason code but which has no code property, so the harness records only the generic code. The exact failing check is not yet known.",
+  "limitsObserved": "Unit tasks peaked at 22 of 32; role backends peaked at 2 of 9; the suite ran about 21 s of the 285 s work limit; no limit was exceeded.",
+  "protectedServices": "The controller outer proof's protectedServices check passed. Between the prestart and postflight health observations only the fallback stage unit's start timestamp advanced (by about 300.0 s), which the RC6 rule allows; stable identities and product tool hashes were equal.",
+  "productImpact": "None observed: health showed PAPER_ONLY, the five research flags OFF, queued 0 and the research unit inactive before and after; no product service or configuration change.",
+  "checks": {
+    "paperOnlyBeforeAfter": true,
+    "flagsOffBeforeAfter": true
+  },
+  "retainedOnHost": "The new job base (lock released), its inputs, its read-only ancestors file and the RC10 package root stay; the job runtime was removed. Earlier artefacts were not touched.",
+  "evidence": {
+    "runDir": ".qa-local/claude-r7b-j1r8-run-2026-10-12/",
+    "finalAcceptRunSha256": "569c1150ab99ddd51cf0aba445d970b1ddf1e4ecda0101e9738e64595d501701",
+    "bundleSha256": "df1dd18597ab8a0b8815dec676f1104bd7a2112b46ad5baea4fedc5d70840c59",
+    "proveStdoutSha256": "b4a8ec104ad25c276dfbf53fd9e3316afc34cb42bba0e673da5508262a72b4f2",
+    "goPacketSha256": "5dc70ba6d9940e9a2823d2bb3b27f5cd24b03c3107d498b35243701cba419464"
+  },
+  "nextAction": "Owner decision on the next step: find which startup check failed (local analysis, and the suite should record the message of reason-code errors), then a fix and a new GO. J2 to J4 stay closed.",
+  "authority": {
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  }
+}
