@@ -1,0 +1,161 @@
+{
+  "schema": "r7b-j1r9-rc11-local-v1",
+  "recordedAt": "2026-10-12T13:06:31Z",
+  "status": "LOCAL_ACCEPTED_AWAITING_OWNER_GO_FOR_ONE_J1R9_ATTEMPT",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "The J1-R8 startup-schema diagnosis, the RC11 package and the J1-R9 local preparation. Local only; nothing ran on Linux, systemd or PostgreSQL and no host contact occurred after J1-R8 ended at 10:15 UTC.",
+  "ownerDecisions": [
+    "2026-10-12 about 10:32 UTC: diagnose locally first",
+    "2026-10-12 about 11:05 UTC: fix startup-schema in the measurement tool's readiness core (no product change), with tests and audit, then prepare J1-R9 and ask for a new GO",
+    "2026-10-12 11:09 UTC: Claude usage may continue to 2% weekly remaining, then hand off to the owner's API-credit continuation"
+  ],
+  "diagnosis": {
+    "cause": "The measurement tool's readiness core runs each product startup schema query inside a row_to_json envelope and parses the JSON. PostgreSQL emits oid columns as JSON strings, while the product's schema check compares two of them with numbers (prorettype and tgconstraint), so it refused. The core then threw a code-less error and the harness recorded only SUITE_CASE_FAILED. The product's own runtime path uses the database client directly and is not shown to be affected.",
+    "method": "Reproduced locally with a stub database client (oid strings fail exactly like J1-R8, numbers pass) and consistent with a read-only reading of the PostgreSQL 16 source (json.c). Not observed on the host; no local PostgreSQL ran.",
+    "correction": "The J1-R8 run evidence said the product's startup check reports its reason only in the error message; the refusal came from the readiness core wrapping the product check, and the reason was lost there."
+  },
+  "rc11": {
+    "packageId": "2964b5e3bda887ee22d4d246eef63d9c84647263cced2ba589c0509ed6acb736",
+    "tarSha256": "1c3cf4c84c9dc269c8f96d5be339680a063467cd905e5f77d0a35a343f48189d",
+    "tarBytes": 26833920,
+    "files": 435,
+    "changedPayloadPaths": [
+      "harness/inventory.mjs",
+      "harness/readiness-core-scoped.mjs",
+      "harness/suite.mjs",
+      "tool/identity.json",
+      "tool/readiness-core.mjs"
+    ],
+    "reproducible": {
+      "inProcessTwice": true,
+      "separateProcessesEqual": true
+    },
+    "manifestDiffOutsideFiles": [
+      "harnessCodeSha",
+      "harnessIdentitySha",
+      "sourceInventorySha256",
+      "toolCodeSha",
+      "toolIdentitySha",
+      "totals/byKind/suite/bytes",
+      "totals/byKind/tool/bytes",
+      "totals/bytes"
+    ],
+    "toolV31": {
+      "codeSha": "6837d35f9d7497bd679b0f42941d5ccb6b1ad363087cb792834f81b6702c48a2",
+      "identitySha256": "993ca401b8d237a08aad40dcc73fcac62f6bcecdd7b1f23169fca56565107e54"
+    },
+    "harnessV83": {
+      "codeSha": "34af871333dfea04bece443f4343e5162aa33bb64b1fefc75eee6d9f677c63c1",
+      "identitySha256": "fe64d450df8697a0eda34f5c445fe4ca4802e24a3267b240a3d2c3453c44528a",
+      "sourceInventorySha256": "4769c32768358f72d4ae9363b84c1ecc6cfdccbd40cf4412d817a32dd7995004"
+    },
+    "changes": [
+      "after parsing each envelope row, the readiness core restores six allowlisted oid columns (two of them nullable) from strict decimal strings up to 4294967295; any other value refuses with STARTUP_SCHEMA_OID_INVALID",
+      "a product refusal keeps the product's own code; the aggregate and io checks after the product assertion refuse with STARTUP_AGGREGATE_UNSUPPORTED and STARTUP_IO_UNSUPPORTED",
+      "the harness records a bounded UPPER_SNAKE message, or the first line of an assertion message, when an error carries no code, so a case failure names its reason"
+    ],
+    "typeSweep": "every column of the 13 startup queries was compared between the JSON envelope and the database client's native type; only the six oid columns differ in a way the checks depend on (static reading, not observed on a server)",
+    "unchanged": "all 14 adapters (RC10 bytes, including the attestation and the preload shim), the product revision eb532ffd, the RC6 timer rule, every job limit"
+  },
+  "checks": {
+    "round1": {
+      "author": "harness selftests 269 checks, oid tests 24, 35 of 35 mutants killed, every package runner passes",
+      "audit": "ACCEPT; every pin recomputed; asked to name the checks after the product assertion and to bound the harness rule"
+    },
+    "round2": {
+      "oidTests": 33,
+      "mutants": "57 of 57 killed",
+      "runners": {
+        "controller": 192,
+        "driver": 210,
+        "host": 189,
+        "binding": 104,
+        "package": 133,
+        "confinement": 86,
+        "confinementSkippedLinuxOnly": 3,
+        "confinementRealSet": 6
+      },
+      "audit": "ACCEPT; independent reruns byte-equal"
+    },
+    "j1r9Prep": {
+      "opsPrep": 315,
+      "health": 22,
+      "runner": 136,
+      "deltaTests": "0 unexplained differences against J1-R8",
+      "independentRederivation": "config, run packet and all five inputs byte-equal; the recorded J1-R8 bundle is classified as a failure record, never as PASS"
+    }
+  },
+  "reviews": "Opus audits: RC11 round 1 ACCEPT with three requested improvements (applied in round 2), round 2 ACCEPT, J1-R9 preparation ACCEPT_WITH_FIXES (wording only; applied). A Fable 5.1 consistency check of the GO packet found 0 high, 0 medium and 6 low wording items; root confirmed and applied all of them. Fable output is not acceptance evidence.",
+  "j1r9": {
+    "freshJobBase": true,
+    "freshPackageRoot": true,
+    "sameRowsAndLimitsAsJ1R8": true,
+    "hostContacts": {
+      "minimum": 17,
+      "maximum": 22
+    },
+    "packetDiffVsJ1R8": [
+      "packageId",
+      "tarSha256",
+      "harnessCodeSha",
+      "toolCodeSha",
+      "runnerManifestSha256"
+    ],
+    "inputsBytes": 26864621,
+    "acceptance": "unchanged from J1-R8, including the resolution-audit requirements; a FAIL is still recorded",
+    "configSha256": "aeea835c11ce5d1d855ff2f6744e66d801b0be8198115f0aec7bd9208835b6b1",
+    "runPacketSha256": "67c5b42123616ac0dd5e71eb619a9da38a6b47ba2a67714cd030c539425e9a38"
+  },
+  "disclosures": [
+    "the oid-as-string rule is a reading of the PostgreSQL 16 source, not observed; RC11 is strict, so a native number refuses with STARTUP_SCHEMA_OID_INVALID",
+    "the startup-schema checks after the product assertion (aggregate row count, versions, modes and legacy-active; io ledgers, launches and guard count) have never run on Linux",
+    "QUANT_PROFILE_ENROLLMENT_SCHEMA_UNSUPPORTED would still not say which product check refused",
+    "the J1-R8 unit tasks peak was 22 of 32; the job cgroup peak (limit 26) is not exported",
+    "tool v3.1 replaces the accepted v3 inside this package only; any later tool host run must re-pin",
+    "the boot pin last matched at 2026-10-12 10:08 UTC; its current state is unknown",
+    "the J1-R8, J1-R7, J1-R6 and J1-R5 job bases, their inputs and the RC10, RC9, RC8 and RC7 package roots stay on the host"
+  ],
+  "documents": {
+    "goPacketSha256": "3f8ca77bbcda6ba8be4e5b2be6efde91e1f652dcdad0cc72fdf1f4dd29b7b7a6",
+    "runbookSha256": "5aeebf0535642cfc54605939ce493e6c38e445b506369b5037bb4f3f68822728",
+    "goFreezeSha256": "c42cc4ca833ab1582d2889c73d2fa0b84b1d8c5d50a1b024c1cb32221e2d6f0a",
+    "rc11DecisionsSha256": "dca0ba5af7548fbebfd4c0b50b135da0c5d8f5d80fcefc113f4c72f0e878e2d9",
+    "j1r9DecisionsSha256": "dc754f266722228ce90439b4125a033a0bb32a422b6c1766259a59043cbf3923",
+    "freezes": {
+      "toolV31": "12d83007e2e0b75c0af2050468038c138298d0a5274cba4090cb9bc9d6da7341",
+      "harnessV83": "43beefcb9cbb17bde90751dec03cb66d641a2c99a8c0b942a1e8dd19b03f7422",
+      "rc11Candidate": "7b51798b937f45d177db9908d7e2a463208d12d24716fc654cb6a80a8d8322e8",
+      "j1r9OpsPrep": "9c6ed25a624d70a7e417ce601b3cfb0656047e24bde80909821f73598c9f045d",
+      "j1r9Runner": "5ee9345f59a3a420a30e3f1d7d94b650514ca817373da179ef5562543f73406b",
+      "j1r9Independent": "25b39b575deb8dcf73e1ee6fbde30d8ea21fd0fcde439f63d8bbdd71e58919d8"
+    }
+  },
+  "executionLocks": [
+    "OWNER_GO_REQUIRED_FOR_J1R9",
+    "EACH_OF_J2_TO_J4_NEEDS_ITS_OWN_GO"
+  ],
+  "nextAction": "Owner GO for one J1-R9 attempt; then root dispatches one Claude operations worker under the J1-R9 runbook.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "productChange": false,
+    "spotPaperOnly": true
+  },
+  "time": {
+    "start": "2026-10-12T10:33Z",
+    "startMethod": "J1-R8 evidence commit and owner decision to diagnose",
+    "end": "2026-10-12T13:06:31Z",
+    "endMethod": "clock reading"
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercentStart": 75,
+    "weeklyUsedPercentEnd": 77,
+    "reservePercentagePoints": 15,
+    "ownerFloorRemainingPercent": 2,
+    "note": "every agent ran one at a time, because weekly remaining was below 30%"
+  }
+}
