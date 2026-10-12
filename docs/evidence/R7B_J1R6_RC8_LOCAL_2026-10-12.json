@@ -1,0 +1,136 @@
+{
+  "schema": "r7b-j1r6-rc8-local-v1",
+  "recordedAt": "2026-10-12T04:46:54Z",
+  "status": "LOCAL_ACCEPTED_AWAITING_OWNER_GO_FOR_ONE_J1R6_ATTEMPT",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "The RC8 package and the J1-R6 local preparation. Local only; nothing ran on Linux, systemd or PostgreSQL and no host contact occurred.",
+  "ownerDecision": "2026-10-12 about 02:44 UTC: build RC8 with tests and audit, prepare J1-R6, then ask for a new GO.",
+  "rc8": {
+    "packageId": "e2fce0b71448d40e51adcab998ba8cbd42bb6160731d05eb06d0192cc0f13b9b",
+    "tarSha256": "c4fbe10446a5a992228b86653e7b1a0783279696fc2cf4db2e77786f9505d3f9",
+    "tarBytes": 26804224,
+    "files": 435,
+    "changedPayloadPaths": [
+      "adapter/driver.mjs",
+      "adapter/host-bind.mjs",
+      "adapter/host-linux.mjs"
+    ],
+    "reproducible": {
+      "inProcessTwice": true,
+      "separateProcessesEqual": true
+    },
+    "adapters": {
+      "adapter/driver.mjs": "f7fd6ba758df07f30cb0bd4df4c89af14c5523923b46c4fccc8b1df1235ef1e7",
+      "adapter/host-bind.mjs": "531f68f1b25b426653441aeac4bff9682f8af1cbbc88615a28b6843b58d11251",
+      "adapter/host-linux.mjs": "3f51735da61544a0f329214c27102ad205c4fe4616c994fe48b59524b4251bae"
+    },
+    "changes": [
+      "the postmaster.pid parser accepts exactly the four status lines PostgreSQL 16 writes, including the space-padded ready and standby lines, and returns them trimmed",
+      "the shared memory identity is saved as soon as the pid and shared memory lines parse, and after a failed or timed-out pg_ctl start the driver makes one bounded best-effort read before stopping",
+      "an ipcs detail call for a segment that vanished between list and detail is skipped instead of failing the stop proof",
+      "postgres -C values come from stdout only"
+    ],
+    "sweep": "A read-only Opus sweep of every parser on the job path, against real formats, found no other job-failing format besides the two fixed in round 2.",
+    "unchanged": "control.mjs (RC7 bytes), receipt.mjs and sanitize.mjs (RC6 bytes), the other adapters, harness v8.2, measurement tool v3, product revision eb532ffd, the RC6 timer rule, every job limit"
+  },
+  "checks": {
+    "round1": {
+      "author": {
+        "controller": 184,
+        "driver": 136,
+        "host": 175,
+        "binding": 86,
+        "package": 118,
+        "confinement": 53
+      },
+      "authorMutants": "47 RC8 and 161 RC7 rows killed",
+      "independent": "23 tests",
+      "independentMutants": "26 of 28 killed; 2 equivalent"
+    },
+    "round2": {
+      "author": {
+        "controller": 189,
+        "driver": 150,
+        "host": 179,
+        "binding": 101,
+        "package": 118,
+        "confinement": 53
+      },
+      "authorMutants": "45 new, 47 round-1 and 161 RC7 rows killed",
+      "independent": "23 plus 24 tests",
+      "independentMutants": "31 of 32 killed; 1 equivalent"
+    },
+    "j1r6Prep": {
+      "opsPrep": 222,
+      "health": 22,
+      "runner": 118,
+      "deltaTests": "0 unexplained differences against J1-R5",
+      "independentRederivation": "config, run packet and inputs byte-identical"
+    }
+  },
+  "reviews": "Opus audits: RC8 round 1 ACCEPT_WITH_FIXES (fixed in round 2), round 2 ACCEPT, J1-R6 preparation ACCEPT_WITH_FIXES (GO packet and runbook text, applied). Fable 5.1 second opinions on RC8 and the J1-R6 preparation agreed. Fable output is not acceptance evidence.",
+  "j1r6": {
+    "freshJobBase": true,
+    "freshPackageRoot": true,
+    "sameRowsAndLimitsAsJ1R5": true,
+    "hostContacts": {
+      "minimum": 17,
+      "maximum": 22
+    },
+    "packetDiffVsJ1R5": [
+      "packageId",
+      "tarSha256",
+      "runnerManifestSha256"
+    ],
+    "inputsBytes": 26834924,
+    "configSha256": "147b256fbbc6e1b4d101c7ee9c13c5d1e449fedc0aeadb0056c092757cdd7c04",
+    "runPacketSha256": "ad0c181f8412ead678bf494bef7719f19b1d07c9cb0bba3b0da55c65e3db8b1b"
+  },
+  "disclosures": [
+    "the readiness and lockdown SQL, the monitor SQL, the postmaster identity monitor, the suite with its socket confinement and the System V removal path have never run on Linux",
+    "tasks are estimated near 27-29 of 32 during the suite; at the cap a case fails",
+    "Node 24.21 network gating under the permission model is unknown",
+    "the vanished-segment wording comes from util-linux source, not a host capture",
+    "the boot pin last matched at 2026-10-12 00:31:50 UTC; its currency is unknown",
+    "the J1-R5 job base with its held lock, its inputs and the RC7 package root stay on the host"
+  ],
+  "documents": {
+    "goPacketSha256": "897a2b6919219b032b10b34fd41a0c85f86a5386692591100183e719f5878524",
+    "runbookSha256": "de6a5f607b08cebda043bf0156b948bb97b9f986dd7f2bba1e56967153051ce5",
+    "goFreezeSha256": "e24cfec2d26f2d255b4138a3e998286f8465a3e7b6e58711a791a53254b21219",
+    "rc8DecisionsSha256": "8d2c62b5d33a541b982b696504f45e4fcae3558c0583ade31a9c1da525fa6051",
+    "j1r6DecisionsSha256": "53aa9ef3edbedaa478f8feeb3987dd8a09198f5be413b13a39457cee363a50f9",
+    "freezes": {
+      "rc8Candidate": "1f0c3e0711e104d60354785c6b9c8cd696d55aca9c4c276cd3f913ec4c1de618",
+      "rc8Independent": "aee5bd03b590c6c2df17919343f8d7f0fb86c666dcf31590033f02923ff09646",
+      "j1r6OpsPrep": "225786c328cf4c8724235c7758f6887f0a317df66b34a585f74725c0019244fd",
+      "j1r6Runner": "8dd1b99a0ca1fbce0f276564a9b89d076e5e3d49e98340b14f16e61440ec250a",
+      "j1r6Independent": "6d2902ab1d7d0f9a22e8645144f5775226d5b9ef0155e4bfc9c9a2d3aed1c080"
+    }
+  },
+  "executionLocks": [
+    "OWNER_GO_REQUIRED_FOR_J1R6",
+    "EACH_OF_J2_TO_J4_NEEDS_ITS_OWN_GO"
+  ],
+  "nextAction": "Owner GO for one J1-R6 attempt; then root dispatches one Claude operations worker under the J1-R6 runbook.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  },
+  "time": {
+    "start": "2026-10-12T02:45Z",
+    "startMethod": "RC8 decisions written",
+    "end": "2026-10-12T04:46:54Z",
+    "endMethod": "clock reading"
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercentStart": 67,
+    "weeklyUsedPercentEnd": 70,
+    "reservePercentagePoints": 15
+  }
+}
