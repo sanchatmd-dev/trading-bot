@@ -1,0 +1,143 @@
+{
+  "schema": "r7b-j1r8-rc10-local-v1",
+  "recordedAt": "2026-10-12T09:53:53Z",
+  "status": "LOCAL_ACCEPTED_AWAITING_OWNER_GO_FOR_ONE_J1R8_ATTEMPT",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "The J1-R7 failure diagnosis, the RC10 package and the J1-R8 local preparation. Local only; nothing ran on Linux, systemd or PostgreSQL and no host contact occurred after J1-R7 ended at 07:17 UTC.",
+  "ownerDecisions": [
+    "2026-10-12 about 07:21 UTC: diagnose locally first",
+    "2026-10-12 about 07:28 UTC: option 3 (the driver attests the scratch ancestors and the suite child answers lstat only for those exact paths; record the denied permission and resource class), with tests and audit, then prepare J1-R8 and ask for a new GO"
+  ],
+  "diagnosis": {
+    "cause": "The product DatasetStore.ready() checks every ancestor of its store root with lstat up to, not including, the filesystem root, to reject symlinked ancestors. The suite may read only the package root and the job scratch, so the read of the scratch's parent is denied (FileSystemRead). All nine failing cases reach it through the enrollment runtime fixture; H-6 and H-8 never build that store.",
+    "method": "Observed in a local replay under the J1 permission flags (Windows, Node 24.19, no PostgreSQL) and confirmed by root from the code; a control run with full read access found no second denial in the reachable non-database steps."
+  },
+  "rc10": {
+    "packageId": "c53b337c9a203b378bbbd2ab80d9ef70c5668eab5ffd78fffd6726fe5d47bb33",
+    "tarSha256": "aed7cd13d741f6ebe960f148740a00a29c643ef9458e54d179041f177821927d",
+    "tarBytes": 26831360,
+    "files": 435,
+    "changedPayloadPaths": [
+      "adapter/confine.mjs",
+      "adapter/driver.mjs"
+    ],
+    "reproducible": {
+      "inProcessTwice": true,
+      "separateProcessesEqual": true
+    },
+    "manifestDiffOutsideFiles": [
+      "importGraph/edges",
+      "importGraph/edgesSha256",
+      "totals/byKind/adapter/bytes",
+      "totals/bytes"
+    ],
+    "adapters": {
+      "adapter/confine.mjs": "15a73a292b41d557be6bbcfe308daaf662e26835fb89b93778562af0ebfa7e47",
+      "adapter/driver.mjs": "a5ae20c6333a49ffa62b1792019d6a498f16cc8aaf8901814eaf35f509a73ba1"
+    },
+    "changes": [
+      "before the suite starts, the driver checks every ancestor of the job scratch with the product's own rule (a directory, not a symlink), records their identities in a read-only file in the scratch, refuses on any failure, and checks them again after the suite; any difference fails the job",
+      "the suite child's preload answers lstat only after the real call was denied with FileSystemRead and only when the resolved argument and the reported resource both equal an attested ancestor; no permission is added",
+      "every permission denial seen through the wrapped fs functions is recorded as enums only (permission, resource class, API) with counts of attested answers and of attested denials left unanswered, in the resolution audit (schema v2)"
+    ],
+    "unchanged": "control.mjs (RC7 bytes), host-linux.mjs (RC9 bytes), host-bind.mjs (RC8 bytes), receipt.mjs and sanitize.mjs (RC6 bytes), suite-launch.mjs, suite-entry.mjs, harness v8.2, measurement tool v3, product revision eb532ffd, the RC6 timer rule, every job limit"
+  },
+  "checks": {
+    "round1": {
+      "author": "all runners pass; 81 of 81 mutants killed",
+      "independent": "0 defects",
+      "audit": "REJECT: the driver wrote the ancestors in the opposite order to the one the suite preload accepts, which would have failed on the host like J1-R7; both sides' tests had used their own order"
+    },
+    "round2": {
+      "author": {
+        "controller": 192,
+        "driver": 198,
+        "host": 189,
+        "binding": 104,
+        "package": 118,
+        "confinement": 86,
+        "confinementSkippedLinuxOnly": 3
+      },
+      "mutants": "96 of 96 killed, including an order mutant and a boundary test where the real preload reads the driver's own attestation",
+      "audit": "ACCEPT; the auditor's reproduction gave state active, 0 refusals and 11 attested answers with the driver order, and invalid with the old order"
+    },
+    "j1r8Prep": {
+      "opsPrep": 313,
+      "health": 22,
+      "newBundleAcceptanceTests": 53,
+      "newBundleAcceptanceMutants": "30 of 30 killed",
+      "runner": 130,
+      "deltaTests": "0 unexplained differences against J1-R7",
+      "independentRederivation": "config, run packet and all five inputs byte-equal; the recorded J1-R7 bundle is classified as a failure record; a PASS-shaped bundle passed through the real sanitizer kept the audit fields intact and each single violation was refused"
+    }
+  },
+  "reviews": "Opus audits: RC10 round 1 REJECT (fixed in round 2), round 2 ACCEPT, J1-R8 preparation ACCEPT_WITH_FIXES (text only; applied, one cosmetic item recorded). A Fable 5.1 consistency check of the GO packet found 0 high, 2 medium and 7 low wording items; root confirmed and applied all of them. Fable output is not acceptance evidence.",
+  "j1r8": {
+    "freshJobBase": true,
+    "freshPackageRoot": true,
+    "sameRowsAndLimitsAsJ1R7": true,
+    "hostContacts": {
+      "minimum": 17,
+      "maximum": 22
+    },
+    "packetDiffVsJ1R7": [
+      "packageId",
+      "tarSha256",
+      "runnerManifestSha256"
+    ],
+    "inputsBytes": 26862061,
+    "newAcceptance": "a PASS additionally requires the v2 resolution audit present and intact: attestation active and equal to the recorded ancestors, file mode 0400, no post-check difference, the denial table present with no unanswered attested denial and no overflow, at least one attested answer, and no invalid-records flag; a FAIL is still recorded",
+    "configSha256": "caf9f91348a21a0cef4dafb877bca02d09423593822a18cb107b31c0b530d03e",
+    "runPacketSha256": "2fb61eba6dc4f1c683f616038861f76c609942a86960db5da20f280005bb406e"
+  },
+  "disclosures": [
+    "the bodies and database steps of nine cases have never run on any real PostgreSQL; a second denial or a case failure is possible",
+    "the J1-R7 tasks peak of 22 is the unit figure (limit 32); the job cgroup peak (limit 26) is not exported; with the full bodies the auditor estimates about 17-20 of 26 and 25-28 of 32, not observed",
+    "role connections are computed at up to 5 of 9 per phase; memory headroom with the full bodies is unknown",
+    "the shim needs Node's reported resource to equal the attested path; Node 24.21 on Linux is unverified and a mismatch fails closed",
+    "the attestation is a snapshot: only the states before launch and at the end are compared",
+    "a full suite may run up to 285 s, with a silent SSH session of up to about 7 minutes and one or two fallback timer fires",
+    "the boot pin last matched at 2026-10-12 07:10 UTC; its current state is unknown",
+    "the J1-R7, J1-R6 and J1-R5 job bases, their inputs and the RC9, RC8 and RC7 package roots stay on the host"
+  ],
+  "documents": {
+    "goPacketSha256": "5dc70ba6d9940e9a2823d2bb3b27f5cd24b03c3107d498b35243701cba419464",
+    "runbookSha256": "293bb33e2ba5a162e18c4819516079e71693049413040d044089207584357b71",
+    "goFreezeSha256": "e57223356dc67f7e9b19b463deee2b9f7c7f4500ea1eaad480938b34c929b9bf",
+    "rc10DecisionsSha256": "6b299f818e087e2ff4cb514ff2b8413d321b0980daf87faa25c042217102b59d",
+    "j1r8DecisionsSha256": "cd6aaa553260da28414bd308f8051696bd84a23b21dc0fc105b8f6416228e581",
+    "freezes": {
+      "rc10Candidate": "368bf44dbc5896c238b49e977a1bacc90b44aa65ed2a81aeac42b65135ef3d76",
+      "rc10Independent": "ef66a6d71e9803abc379d0f420d22e77c58f470e6e641b1a2abb4217e78ee591",
+      "j1r8OpsPrep": "675cbd7f78ccf64ed55b47551ae6e459cb34a67a5d59c8b407ffc8dae4867f1d",
+      "j1r8Runner": "717d64f7a5f8015e1d904611c485bad316a77f487d36da419d87e0bb897191b8",
+      "j1r8Independent": "2b9b374ce56bfd5165e7c4197bd6ce658ac0e4cac1dc5a6871046a68d9fe1609"
+    }
+  },
+  "executionLocks": [
+    "OWNER_GO_REQUIRED_FOR_J1R8",
+    "EACH_OF_J2_TO_J4_NEEDS_ITS_OWN_GO"
+  ],
+  "nextAction": "Owner GO for one J1-R8 attempt; then root dispatches one Claude operations worker under the J1-R8 runbook.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  },
+  "time": {
+    "start": "2026-10-12T07:22Z",
+    "startMethod": "J1-R7 evidence commit and owner decision to diagnose",
+    "end": "2026-10-12T09:53:53Z",
+    "endMethod": "clock reading"
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercentStart": 73,
+    "weeklyUsedPercentEnd": 75,
+    "reservePercentagePoints": 15,
+    "note": "every agent ran one at a time, because weekly remaining was below 30%"
+  }
+}
