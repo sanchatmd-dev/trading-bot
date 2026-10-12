@@ -1,0 +1,85 @@
+{
+  "schema": "r7b-j1r5-diag-v1",
+  "recordedAt": "2026-10-12T02:27:00Z",
+  "status": "J1R5_DIAGNOSED_POSTMASTER_PID_STATUS_PARSE",
+  "ownerGo": {
+    "utc": "2026-10-12T02:24:41Z",
+    "consumed": true,
+    "scope": "read-only diagnostic of the J1-R5 job: two rows, no retry, no cleanup"
+  },
+  "rows": [
+    {
+      "row": "D1-bundle",
+      "startedUtc": "2026-10-12T02:24:55.878Z",
+      "elapsedMs": 1052,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "D2-sysv-inspect",
+      "startedUtc": "2026-10-12T02:25:28.885Z",
+      "elapsedMs": 887,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    }
+  ],
+  "hostContacts": 2,
+  "hostWrites": "none intended; both rows only read",
+  "finding": {
+    "resultCode": "HOST_PARSE",
+    "runnerCode": "HOST_PARSE",
+    "stopPath": "INFRA",
+    "realPostgres": false,
+    "timeline": {
+      "initdbMs": 753,
+      "readyMs": null,
+      "suiteStartMs": null
+    },
+    "what": "initdb succeeded (753 ms). PostgreSQL 16.15 started and logged that it was ready to accept connections. About 100 ms later the driver requested a fast shutdown, the server shut down cleanly, the driver's stop proof completed (cluster stopped, no System V segment, runtime removed) and the job ended with HOST_PARSE before the suite started.",
+    "cause": "The RC7 postmaster.pid parser accepts the status line only as one of starting, ready, stopping or standby. PostgreSQL writes the ready and standby states padded with spaces to eight characters (\"ready   \", \"standby \"), so the parser rejected a ready server. The padded string was confirmed in a local PostgreSQL 16.15 binary; the test fixtures used the unpadded form.",
+    "whyOuterProofFailed": "The driver saves the postmaster identity (shared memory key and id) only after that parse succeeds, so no saved identity existed, and the controller's System V check could not prove absence (SYSV_IDENTITY_UNKNOWN)."
+  },
+  "sysv": {
+    "totalRowsSeen": 2,
+    "keptRows": 0,
+    "window": {
+      "startUtc": "2026-10-12T00:36:10Z",
+      "endUtc": "2026-10-12T00:37:40Z"
+    },
+    "reading": "No System V segment created by the job uid inside the job window remains now. This does not prove none ever existed; the PostgreSQL log shows a clean shutdown, which removes the segment."
+  },
+  "ioLimits": {
+    "applied": [
+      {
+        "device": "8:0",
+        "rbps": 41943040,
+        "wbps": 20971520
+      }
+    ],
+    "plan": {
+      "wbps": 20971520,
+      "rbps": 41943040
+    },
+    "reading": "The applied IO limits equal the plan, confirming the RC7 IO fix on the host."
+  },
+  "correction": {
+    "target": "docs/evidence/R7B_J1R5_2026-10-12.json readingFromCode",
+    "correct": "PostgreSQL did start and became ready; the failure was the driver's parse of postmaster.pid right after the start, not the server start itself."
+  },
+  "retainedOnHost": "The J1-R5 job base stays with its job lock held; its runtime was removed. No cleanup or lock release ran.",
+  "nextAction": "Owner decision: an RC8 fix round (postmaster.pid status parsing with real PostgreSQL 16 output, saving the shared memory identity before any later parse can fail, and a sweep of other parsers against real formats), then a new GO.",
+  "evidence": {
+    "runDir": ".qa-local/claude-r7b-j1r5-diag-run-2026-10-12/",
+    "d1StdoutSha256": "35e67d1dc1f47a9d62c6d762a8f4aa9fc856c0ef5c29b6ca3ff83f4af8bfc676",
+    "d2StdoutSha256": "a2d7d7d3dcf9f4c71302414c81907a472c1e389a36e53d3414c8215f72e88e8f",
+    "goPacketSha256": "d0e8f198d480534f5e3fbb875937dee56e9539f3ab5b18079f245e6c2f19c56f"
+  },
+  "authority": {
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  }
+}
