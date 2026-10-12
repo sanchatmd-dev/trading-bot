@@ -1,0 +1,456 @@
+{
+  "schema": "r7b-j1r9-run-v1",
+  "recordedAt": "2026-10-12T13:27:54Z",
+  "status": "J1R9_PASSED_ONCE_ALL_ELEVEN_CASES_PASSED",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "executionPass": true,
+  "scopeNote": "One J1 job passed once on the VPS. It is not the full PostgreSQL gate: J2 to J4 have not run and each needs its own owner GO.",
+  "ownerGo": {
+    "utc": "2026-10-12T13:17:36Z",
+    "consumed": true,
+    "scope": "one J1-R9 attempt with package candidate 11, one run directory, no retry"
+  },
+  "operator": "one Claude Opus 5.5 operations worker, one admitted row at a time; root admitted and accepted every row",
+  "window": {
+    "firstContactUtc": "2026-10-12T13:18:15.806Z",
+    "lastContactEndUtc": "2026-10-12T13:25:45.902Z"
+  },
+  "counts": {
+    "hostContacts": {
+      "used": 17,
+      "limit": 22
+    },
+    "health": {
+      "used": 2,
+      "limit": 2
+    },
+    "pgReadiness": {
+      "used": 4,
+      "limit": 4
+    },
+    "http": {
+      "used": 2,
+      "limit": 2
+    },
+    "starts": {
+      "used": 1,
+      "limit": 1
+    },
+    "identify": {
+      "used": 1,
+      "limit": 2
+    },
+    "status": {
+      "used": 1,
+      "limit": 3
+    },
+    "stop": {
+      "used": 0,
+      "limit": 1
+    },
+    "prove": {
+      "used": 1,
+      "limit": 2
+    },
+    "bundle": {
+      "used": 1,
+      "limit": 1
+    }
+  },
+  "rows": [
+    {
+      "row": "01-boot-check",
+      "startedUtc": "2026-10-12T13:18:15.806Z",
+      "elapsedMs": 1014,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "02-bootstrap",
+      "startedUtc": "2026-10-12T13:18:40.375Z",
+      "elapsedMs": 3066,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "03-upload-0",
+      "startedUtc": "2026-10-12T13:19:10.848Z",
+      "elapsedMs": 2817,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "04-upload-1",
+      "startedUtc": "2026-10-12T13:19:41.907Z",
+      "elapsedMs": 962,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "05-upload-2",
+      "startedUtc": "2026-10-12T13:20:05.922Z",
+      "elapsedMs": 966,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "06-upload-3",
+      "startedUtc": "2026-10-12T13:20:32.952Z",
+      "elapsedMs": 887,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "07-upload-4",
+      "startedUtc": "2026-10-12T13:20:55.733Z",
+      "elapsedMs": 934,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "08-extract",
+      "startedUtc": "2026-10-12T13:21:18.981Z",
+      "elapsedMs": 1298,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "09-verify-linux-strict",
+      "startedUtc": "2026-10-12T13:21:41.457Z",
+      "elapsedMs": 985,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "10-preflight",
+      "startedUtc": "2026-10-12T13:22:05.807Z",
+      "elapsedMs": 1355,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "11-health-prestart",
+      "startedUtc": "2026-10-12T13:22:30.388Z",
+      "elapsedMs": 3115,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "12-start-once",
+      "startedUtc": "2026-10-12T13:23:02.695Z",
+      "elapsedMs": 27736,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "13-identify-own-job",
+      "startedUtc": "2026-10-12T13:24:03.703Z",
+      "elapsedMs": 942,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "14-status",
+      "startedUtc": "2026-10-12T13:24:26.275Z",
+      "elapsedMs": 938,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "15-first-conclusive-prove",
+      "startedUtc": "2026-10-12T13:24:49.357Z",
+      "elapsedMs": 1299,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "16-bundle",
+      "startedUtc": "2026-10-12T13:25:17.066Z",
+      "elapsedMs": 1051,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "17-health-postflight",
+      "startedUtc": "2026-10-12T13:25:44.232Z",
+      "elapsedMs": 1670,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    }
+  ],
+  "chain": {
+    "acceptedPhases": [
+      "01-boot-check",
+      "02-bootstrap",
+      "03-upload-0",
+      "04-upload-1",
+      "05-upload-2",
+      "06-upload-3",
+      "07-upload-4",
+      "08-extract",
+      "09-verify-linux-strict",
+      "10-preflight",
+      "11-health-prestart",
+      "12-start-once",
+      "13-identify-own-job",
+      "14-status",
+      "15-first-conclusive-prove",
+      "16-bundle",
+      "17-health-postflight"
+    ],
+    "stopped": null,
+    "hardStop": false,
+    "end": "CHAIN_COMPLETE",
+    "limitsExceeded": [],
+    "stopExecuted": false,
+    "postflight": {
+      "mode": "STRICT",
+      "accepted": true
+    },
+    "finalAcceptRun": "accept-run.20.json"
+  },
+  "job": {
+    "jobId": "r7b-lpg-20261012-j1-6a78f0b9",
+    "result": {
+      "code": "BOUND_PASS",
+      "runnerCode": "BOUND_PASS",
+      "stopPath": "DONE",
+      "gatePassed": true,
+      "pass": true,
+      "realPostgres": true,
+      "flags": [
+        "OUTER_PROOF_PASSED"
+      ],
+      "secondary": []
+    },
+    "timeline": {
+      "initdbMs": 707,
+      "readyMs": 1789,
+      "suiteStartMs": 1793,
+      "suiteEndMs": 24331
+    },
+    "cases": [
+      {
+        "id": "startup-schema",
+        "status": "PASS",
+        "code": null,
+        "ms": 3956,
+        "peakTasks": 21,
+        "peakRoleBackends": 2
+      },
+      {
+        "id": "H-2",
+        "status": "PASS",
+        "code": null,
+        "ms": 1630,
+        "peakTasks": 22,
+        "peakRoleBackends": 3
+      },
+      {
+        "id": "H-3",
+        "status": "PASS",
+        "code": null,
+        "ms": 975,
+        "peakTasks": 21,
+        "peakRoleBackends": 2
+      },
+      {
+        "id": "H-6",
+        "status": "PASS",
+        "code": null,
+        "ms": 57,
+        "peakTasks": null,
+        "peakRoleBackends": null
+      },
+      {
+        "id": "H-8",
+        "status": "PASS",
+        "code": null,
+        "ms": 12,
+        "peakTasks": null,
+        "peakRoleBackends": null
+      },
+      {
+        "id": "H-10",
+        "status": "PASS",
+        "code": null,
+        "ms": 307,
+        "peakTasks": 21,
+        "peakRoleBackends": 2
+      },
+      {
+        "id": "H-11",
+        "status": "PASS",
+        "code": null,
+        "ms": 12165,
+        "peakTasks": 21,
+        "peakRoleBackends": 2
+      },
+      {
+        "id": "H-12a",
+        "status": "PASS",
+        "code": null,
+        "ms": 337,
+        "peakTasks": 21,
+        "peakRoleBackends": 2
+      },
+      {
+        "id": "H-1",
+        "status": "PASS",
+        "code": null,
+        "ms": 1393,
+        "peakTasks": 21,
+        "peakRoleBackends": 2
+      },
+      {
+        "id": "H-7",
+        "status": "PASS",
+        "code": null,
+        "ms": 450,
+        "peakTasks": 21,
+        "peakRoleBackends": 2
+      },
+      {
+        "id": "H-9",
+        "status": "PASS",
+        "code": null,
+        "ms": 1234,
+        "peakTasks": 21,
+        "peakRoleBackends": 2
+      }
+    ],
+    "suiteEvidenceRealPostgres": true,
+    "peaks": {
+      "tasksPeak": 22,
+      "tasksPeakSource": "pids.peak",
+      "roleBackends": 3,
+      "clientBackends": 3,
+      "backendsTotal": 7,
+      "samples": 84,
+      "sampleErrors": 0,
+      "memoryPeakBytesJob": 176316416,
+      "memoryPeakBytesUnit": 228855808,
+      "diskPeakBytes": 68743168,
+      "wallMs": 24331
+    }
+  },
+  "resolutionAudit": {
+    "schema": "r7b-lpg-resolution-audit-v2",
+    "source": "capture",
+    "attestation": "active",
+    "ancestors": 4,
+    "fileMode": "0400",
+    "postCheckDifferences": 0,
+    "attestedAnswers": 484,
+    "unansweredAttested": 0,
+    "overflow": 0,
+    "deniedRecords": [
+      {
+        "api": "promises.lstat",
+        "count": 121,
+        "permission": "FileSystemRead",
+        "resourceClass": "PACKAGE_ANCESTOR:1"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 121,
+        "permission": "FileSystemRead",
+        "resourceClass": "PACKAGE_ANCESTOR:2"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 121,
+        "permission": "FileSystemRead",
+        "resourceClass": "SCRATCH_ANCESTOR:1"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 121,
+        "permission": "FileSystemRead",
+        "resourceClass": "SCRATCH_ANCESTOR:2"
+      }
+    ],
+    "rootCheckProblems": []
+  },
+  "confinement": {
+    "refused": 0,
+    "outsideRoot": 0,
+    "socketRefused": 0,
+    "canaryRefused": 1,
+    "hashMismatch": 0,
+    "scopeDrift": 0
+  },
+  "outerProof": {
+    "pass": true,
+    "checks": [
+      "unitList:ok",
+      "cgroupDir:ok",
+      "processes:ok",
+      "postmasterFiles:ok",
+      "sysv:ok",
+      "scratchInventory:ok",
+      "runtimeDirs:ok",
+      "out:ok",
+      "scratchInventoryFinal:ok",
+      "protectedServices:ok",
+      "hostTools:ok",
+      "inputPostcheck:ok",
+      "ioLimits:ok"
+    ],
+    "lockReleased": true,
+    "verdict": {
+      "exitCode": 0,
+      "pass": true,
+      "reasons": []
+    }
+  },
+  "whatWorked": "Every row ran once with a clean transport exit and no retry. RC11 fixed the J1-R8 failure on the host: startup-schema passed, so the readiness core's oid restoration matched what PostgreSQL 16 sent. All eleven cases passed on the job's own PostgreSQL. The RC10 attestation held again (active, four ancestors, 484 attested answers, nothing unanswered, no post-check difference). The controller's outer proof passed all 13 checks and released the job lock; the bundle was accepted with the resolution-audit requirements; the strict postflight was accepted.",
+  "limitsObserved": "Unit tasks peaked at 22 of 32; role backends at 3 of 9; the suite ran about 24 s of the 285 s work limit; the monitor sampled 84 times with no errors; no limit was exceeded.",
+  "protectedServices": "The controller outer proof's protectedServices check passed. Between the prestart and postflight health observations only the first protected unit's start timestamp advanced, by 300.000 s, the fallback stage timer pattern seen in J1-R8 and allowed by the RC6 rule; the strict postflight accepted it.",
+  "productImpact": "None observed: health showed PAPER_ONLY, the five research flags OFF and queued 0 before and after; no product service or configuration change.",
+  "checks": {
+    "paperOnlyBeforeAfter": true,
+    "flagsOffBeforeAfter": true,
+    "researchInactiveBefore": true,
+    "researchInactiveAfter": true
+  },
+  "notObserved": [
+    "the oid values themselves were not recorded; because RC11 refuses anything but a decimal string, the pass implies the allowlisted non-null oid columns arrived as decimal strings, as the source reading predicted",
+    "the job cgroup tasks peak (limit 26) is not exported; the unit peak was 22 of 32"
+  ],
+  "retainedOnHost": "The new job base (lock released), its inputs, its read-only ancestors file and the RC11 package root stay; the job runtime was removed. Earlier artefacts were not touched.",
+  "evidence": {
+    "runDir": ".qa-local/claude-r7b-j1r9-run-2026-10-12/",
+    "finalAcceptRunSha256": "78e6e2edc54c87ab6e288695088bdab48e9e970af48066db2b1abeaf8ec32168",
+    "bundleSha256": "e4a087a9f1180ddce1c0a14028d57b8dfc31fc9c2009cc3224f9945551efa797",
+    "proveStdoutSha256": "0c2bf18ae2ab8515b807177637c501ed6db220e7e4b04f44104745cceb329b46",
+    "goPacketSha256": "3f8ca77bbcda6ba8be4e5b2be6efde91e1f652dcdad0cc72fdf1f4dd29b7b7a6",
+    "ownerGoJsonSha256": "1faeb6c3fbb0da8fc400f27e501935b0cead2a1b4d5db98d0cbd3a342ede9acd"
+  },
+  "nextAction": "Owner decision on the next step. J1 has passed once; J2 to J4 stay closed and each needs its own preparation and owner GO.",
+  "authority": {
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "productChange": false,
+    "spotPaperOnly": true
+  }
+}
