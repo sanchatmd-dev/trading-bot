@@ -1,0 +1,117 @@
+{
+  "schema": "r7b-j1r7-rc9-local-v1",
+  "recordedAt": "2026-10-12T07:06:25Z",
+  "status": "LOCAL_ACCEPTED_AWAITING_OWNER_GO_FOR_ONE_J1R7_ATTEMPT",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "The RC9 package and the J1-R7 local preparation. Local only; nothing ran on Linux, systemd or PostgreSQL and no host contact occurred after J1-R6 ended at 05:38 UTC.",
+  "ownerDecision": "2026-10-12 about 05:42 UTC: build RC9 (the cgroup wrapper removes PWD before it executes the target; the suite entry stays strict) with tests and audit, prepare J1-R7, then ask for a new GO.",
+  "rc9": {
+    "packageId": "f0840703ee743d0a645a0d6e232ba584a141e89220b5fd8dcb453a09f7000de6",
+    "tarSha256": "1e3cd06b6cc3b07be470e63af68ea55a52e5f35350209a5ce30703e4399f6c04",
+    "tarBytes": 26804736,
+    "files": 435,
+    "changedPayloadPaths": [
+      "adapter/host-linux.mjs"
+    ],
+    "reproducible": {
+      "inProcessTwice": true,
+      "separateProcessesEqual": true
+    },
+    "adapters": {
+      "adapter/host-linux.mjs": "6bd52535b5f5a1068d7f5e77f9986b6471336e8c53338f5c957c3d6aa1d9c7b9"
+    },
+    "change": "the /bin/sh cgroup self-move wrapper runs unset PWD before exec, so every wrapped child (initdb, pg_ctl, postgres, the suite) receives exactly the environment the driver built; the suite entry's exact allowlist of 15 names is unchanged",
+    "unchanged": "control.mjs (RC7 bytes), driver.mjs and host-bind.mjs (RC8 bytes), receipt.mjs and sanitize.mjs (RC6 bytes), harness v8.2, measurement tool v3, product revision eb532ffd, the RC6 timer rule, every job limit"
+  },
+  "checks": {
+    "rc9": {
+      "author": {
+        "controller": 192,
+        "driver": 152,
+        "host": 189,
+        "binding": 104,
+        "package": 118,
+        "confinement": 54
+      },
+      "authorMutants": "23 of 23 killed",
+      "independent": "the same six runners pass, 0 defects",
+      "independentMutants": "18 of 18 killed",
+      "skippedLocally": "the Linux-only real-shell wrapper test returns early on Windows and is counted as passed; a dash-like fake shell model and the replayed J1-R6 failure cover the change"
+    },
+    "j1r7Prep": {
+      "opsPrep": 225,
+      "health": 22,
+      "runner": 124,
+      "deltaTests": "0 unexplained differences against J1-R6",
+      "independentRederivation": "config, run packet and all five inputs byte-equal; command plans equal row by row; every residual difference listed",
+      "replay": "the recorded J1-R6 outputs replayed through the J1-R7 validators: nine rows refused (boot check, three uploads, extract, verify, start, preflight, bundle); bootstrap, two uploads, health, identify, status and prove carry no package identity and were accepted structurally"
+    }
+  },
+  "reviews": "Opus audits: RC9 ACCEPT; J1-R7 preparation ACCEPT (GO text items applied). The Fable 5.1 second opinion on the J1-R7 preparation agreed (0.8); its role-connection concern was checked by root against the source and is disclosed, not confirmed. A Fable 5.1 consistency check of the GO packet found 0 high, 1 medium and 5 low wording items; root confirmed and applied all six. Fable output is not acceptance evidence.",
+  "j1r7": {
+    "freshJobBase": true,
+    "freshPackageRoot": true,
+    "sameRowsAndLimitsAsJ1R6": true,
+    "hostContacts": {
+      "minimum": 17,
+      "maximum": 22
+    },
+    "packetDiffVsJ1R6": [
+      "packageId",
+      "tarSha256",
+      "runnerManifestSha256"
+    ],
+    "inputsBytes": 26835436,
+    "configSha256": "fb3f4615c0d0403003cd351080354da3b567905bdcad8d7038243823f0753dcd",
+    "runPacketSha256": "17e5a85a6d1b0cd6d423f62708bcad0bc215e563da69602c8ef8a40215383334"
+  },
+  "disclosures": [
+    "the 11 suite cases have never run against any real PostgreSQL; the monitor SQL, the postmaster identity monitor and the du watchdog have never run while cases run",
+    "tasks may reach the unit limit of 32 or the job limit of 26 during the suite, and role connections are computed at 5 to 6 of 9 per phase but never observed; at a limit a case fails",
+    "a full suite makes start-once a silent SSH session of up to about 7 minutes and widens the prestart-to-postflight window to about 8-10 minutes, with one or two fallback timer fires",
+    "Node 24.21 does not gate network under the permission model (documented); the JavaScript socket guard is the only socket confinement",
+    "the bootstrap binder forbids only the A2 identity; a saved J1-R6 bootstrap output would fail closed at the first upload",
+    "the boot pin last matched at 2026-10-12 05:29 UTC; its current state is unknown",
+    "the J1-R6 and J1-R5 job bases, their inputs and the RC8 and RC7 package roots stay on the host"
+  ],
+  "documents": {
+    "goPacketSha256": "499992c92ffe99d37c1be3e484c15953267f016093b887afc6a350656879a904",
+    "runbookSha256": "36aab5c590b64841ce85b00ce5698be56fee6aab47a901818bf9ec1a0aa39d43",
+    "goFreezeSha256": "2e087fc3b72b35d360f8729a5377d1079e6b36eea2110904af0507befd0c4201",
+    "rc9DecisionsSha256": "361b62d6fa293b1fe09f1820e7f0fcef0a05f41b3ce52fcdcc06e71a62393453",
+    "j1r7DecisionsSha256": "10701290d5e3d1970d5e3d83f441808f421fb72a79358a7a9e8c919bff549884",
+    "freezes": {
+      "rc9Candidate": "93ef2951d3fadf1d16a47727ea8336b921979074eae49ddf82297b76bfe9ee4d",
+      "rc9Independent": "6c6a5d27d52df66e037d98934c746d73ff32b507449d89691566033369d6ba2e",
+      "j1r7OpsPrep": "4deb09add521c1b05eaf226b75610e32d483e702d4fadbbc498b1506f6462414",
+      "j1r7Runner": "775b15f23d07c66a7f9052853a1c6a09bc3e56296e25c7720c2d85d61a776bd3",
+      "j1r7Independent": "8269e4571d2c3271635384241338c08d8c42fa0d5712c880c66628473b01a5d8"
+    }
+  },
+  "executionLocks": [
+    "OWNER_GO_REQUIRED_FOR_J1R7",
+    "EACH_OF_J2_TO_J4_NEEDS_ITS_OWN_GO"
+  ],
+  "nextAction": "Owner GO for one J1-R7 attempt; then root dispatches one Claude operations worker under the J1-R7 runbook.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  },
+  "time": {
+    "start": "2026-10-12T05:43:52Z",
+    "startMethod": "RC9 decisions written",
+    "end": "2026-10-12T07:06:25Z",
+    "endMethod": "clock reading"
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercentStart": 70,
+    "weeklyUsedPercentEnd": 72,
+    "reservePercentagePoints": 15,
+    "bandDeviation": "the RC9 workflow (at 70% used) and the J1-R7 preparation workflow (at 71% used) ran with several agents while weekly remaining was 30% or less, where the policy allows one small task at a time without fan-out; reported to the owner; the GO packet check and the remaining steps used at most one agent"
+  }
+}
