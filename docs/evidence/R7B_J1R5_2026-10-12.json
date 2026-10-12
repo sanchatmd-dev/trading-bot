@@ -1,0 +1,298 @@
+{
+  "schema": "r7b-j1r5-run-v1",
+  "recordedAt": "2026-10-12T00:41:23Z",
+  "status": "J1R5_RAN_ONCE_FAILED_AT_POSTGRESQL_START_OUTER_PROOF_SYSV_UNPROVEN",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "executionPass": false,
+  "ownerGo": {
+    "utc": "2026-10-12T00:31:13Z",
+    "consumed": true,
+    "scope": "one J1-R5 attempt with package candidate 7, one run directory, no retry"
+  },
+  "operator": "one Claude Opus 5.5 operations worker, one admitted row at a time; root admitted and accepted every row",
+  "counts": {
+    "hostContacts": {
+      "used": 16,
+      "limit": 22
+    },
+    "health": {
+      "used": 2,
+      "limit": 2
+    },
+    "pgReadiness": {
+      "used": 4,
+      "limit": 4
+    },
+    "http": {
+      "used": 2,
+      "limit": 2
+    },
+    "starts": {
+      "used": 1,
+      "limit": 1
+    },
+    "identify": {
+      "used": 1,
+      "limit": 2
+    },
+    "status": {
+      "used": 1,
+      "limit": 3
+    },
+    "stop": {
+      "used": 0,
+      "limit": 1
+    },
+    "prove": {
+      "used": 1,
+      "limit": 2
+    },
+    "bundle": {
+      "used": 0,
+      "limit": 1
+    }
+  },
+  "rows": [
+    {
+      "row": "01-boot-check",
+      "startedUtc": "2026-10-12T00:31:50.873Z",
+      "elapsedMs": 1017,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "ba0a5c61b2051a52e7b3925daeca8552248b0aa0e637d8c9e7ac07036bd9c93b",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "02-bootstrap",
+      "startedUtc": "2026-10-12T00:32:12.651Z",
+      "elapsedMs": 1505,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "bcf5609df081e3c9886382de49828fd3496e5cc2fd3e2dfd5c9d2dafdd17e62d",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "03-upload-0",
+      "startedUtc": "2026-10-12T00:32:45.094Z",
+      "elapsedMs": 3061,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "ebdf8f3658b1b07405ec48ec1421cf1da7ce03bf6e8edff89feeedd096989f16",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "04-upload-1",
+      "startedUtc": "2026-10-12T00:33:18.479Z",
+      "elapsedMs": 920,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "44823b334f21233e4db3149f7406cadeaa6c160bd7fc7954d479c1d2e1708254",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "05-upload-2",
+      "startedUtc": "2026-10-12T00:33:39.827Z",
+      "elapsedMs": 881,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "2c131f0a089c1a49ae74013e98dbfcd727181c27f1406829651f1990edc593f6",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "06-upload-3",
+      "startedUtc": "2026-10-12T00:34:00.084Z",
+      "elapsedMs": 1762,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "056418de7596e79fbb308a97062092adc1782fbda8c83152c71b88bc0ece8604",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "07-upload-4",
+      "startedUtc": "2026-10-12T00:34:20.798Z",
+      "elapsedMs": 909,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "dc14e28bb975dab50e893869ecb198c27fb3be100f4391731d80e5c1dd244f3f",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "08-extract",
+      "startedUtc": "2026-10-12T00:34:40.180Z",
+      "elapsedMs": 1784,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "52a14c3bfe77f946d3b357aaf810b0eeec5a951a7c3ecd50d37420534fa3d52e",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "09-verify-linux-strict",
+      "startedUtc": "2026-10-12T00:35:00.483Z",
+      "elapsedMs": 1273,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "83e6502e50a7ddd9ad0984913ceba12494ff797e419bf61d961790fa52477b96",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "10-preflight",
+      "startedUtc": "2026-10-12T00:35:20.613Z",
+      "elapsedMs": 1337,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "d1426774045faf12108c6f8143a7c4cc1a72d3a2537a842cb82c8ea56b2616ab",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "11-health-prestart",
+      "startedUtc": "2026-10-12T00:35:41.220Z",
+      "elapsedMs": 3411,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "72fa102d334361aa4c29c5bf4e7fb884c22dc3503d86e79718fc7adb3822ae20",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "12-start-once",
+      "startedUtc": "2026-10-12T00:36:13.362Z",
+      "elapsedMs": 4778,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "33a547531ac8bbfb93a0aca9ca905547b8f4bd1f9580751e941794e33849faa8",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "13-identify-own-job",
+      "startedUtc": "2026-10-12T00:36:47.743Z",
+      "elapsedMs": 878,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "c117e8afbf8f4579f4b95ae25c70e37e577c5b02c1f71165a4af21bb5b9883f8",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "14-status",
+      "startedUtc": "2026-10-12T00:37:10.965Z",
+      "elapsedMs": 976,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "f952288b7339275d37080adf5ef67ca7fe69600d04ba3d1af79f7ac77906b633",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "15-first-conclusive-prove",
+      "startedUtc": "2026-10-12T00:37:31.946Z",
+      "elapsedMs": 1260,
+      "exitCode": 2,
+      "stderrBytes": 0,
+      "stdoutSha256": "752c89c64c6039db02f2ae86d7bd52192f0c72a230fa0138922ba63bd52743c4",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "16-health-postflight",
+      "startedUtc": "2026-10-12T00:38:22.683Z",
+      "elapsedMs": 1857,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "stdoutSha256": "63ed004d6fe7508fa49471e0db24bc86428080073f6022dbf1996389fa453411",
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    }
+  ],
+  "chain": {
+    "acceptedPhases": [
+      "01-boot-check",
+      "02-bootstrap",
+      "03-upload-0",
+      "04-upload-1",
+      "05-upload-2",
+      "06-upload-3",
+      "07-upload-4",
+      "08-extract",
+      "09-verify-linux-strict",
+      "10-preflight",
+      "11-health-prestart",
+      "12-start-once",
+      "13-identify-own-job",
+      "14-status"
+    ],
+    "stopped": {
+      "phase": "first-conclusive-prove",
+      "code": "PROVE_OUTER"
+    },
+    "hardStop": false,
+    "end": "CHAIN_COMPLETE",
+    "limitsExceeded": [],
+    "stopExecuted": false,
+    "postflight": {
+      "mode": "FAILURE_RECORD",
+      "accepted": false,
+      "executionPass": false,
+      "scope": "FAILURE_PATH_POINT_IN_TIME_HEALTH_ONLY",
+      "ancestorsComparedWithPrestart": true
+    },
+    "bundle": "not offered: the chain allows a bundle only after a passing outer proof"
+  },
+  "hostSteps": "Boot id matched the pin. Bootstrap created the new job base and inputs directory (0700). Five uploads stored with matching bytes and sha256 (0400). Extract created 488 entries (436 files); Linux strict verification passed (435 files, owner and mode checked, packageId, harness and product revision matched). Explicit preflight returned go with exactly the two allowed warnings and no refusal, so the 16 PostgreSQL runtime files were present and the IO argv check passed. Prestart health was accepted as the new baseline.",
+  "job": {
+    "jobId": "r7b-lpg-20261012-j1-70fcdecd",
+    "startPhase": "EXITED",
+    "startExitCode": 0,
+    "statusPhase": "EXITED_UNPROVEN",
+    "driverReceiptPresent": true,
+    "unitGone": true,
+    "verdict": {
+      "exitCode": 2,
+      "pass": false,
+      "reasons": [
+        "RECEIPT_NOT_PASS",
+        "OUTER_PROOF_NOT_RECORDED",
+        "OUTER_PROOF_FAILED_NOW"
+      ]
+    },
+    "lockReleased": false,
+    "cases": "UNKNOWN: no bundle was fetched, so the case results and the receipt's result code are not available locally"
+  },
+  "outerProof": {
+    "pass": false,
+    "checks": [
+      "unitList:ok",
+      "cgroupDir:ok",
+      "processes:ok",
+      "postmasterFiles:ok",
+      "sysv:PROOF_UNPROVEN/SYSV_IDENTITY_UNKNOWN",
+      "scratchInventory:ok",
+      "runtimeDirs:ok",
+      "out:ok",
+      "scratchInventoryFinal:ok",
+      "protectedServices:ok",
+      "hostTools:ok",
+      "inputPostcheck:ok",
+      "ioLimits:ok"
+    ]
+  },
+  "readingFromCode": "In the RC7 driver, pgStartAttempted becomes true only after initdb, the configuration files and the three configuration dry checks succeed, and postmaster.pid.saved is written only after pg_ctl start succeeds and postmaster.pid is read. The sysv check reports SYSV_IDENTITY_UNKNOWN when that saved file is absent and the start attempt cannot be ruled out. So initdb and the dry checks most likely passed, and the job most likely failed at pg_ctl start or the postmaster.pid read. This is an inference from code and the outer proof, not observed host output.",
+  "rc7Effects": "The IO limit defect of J1-R4 did not recur: the outer proof's ioLimits check ran and passed, which it does only after a successful driver read-back. The new preflight checks did not refuse.",
+  "protectedServices": "The controller outer proof's protectedServices check passed. The prestart and postflight health observations have equal protected-unit canonical and identity hashes, equal stable identities and equal product tool hashes.",
+  "productImpact": "None observed: health showed PAPER_ONLY, the five research flags OFF, queued 0 and the research unit inactive before and after; no product service or configuration change.",
+  "retainedOnHost": "The new job base (with its job lock still held because the outer proof failed), its inputs and the RC7 package root stay. The job runtime was removed by --remove-runtime as far as the outer proof checks show. Whether a System V shared memory segment from the job remains is unproven. Earlier J1-R4 artefacts were not touched.",
+  "evidence": {
+    "runDir": ".qa-local/claude-r7b-j1r5-run-2026-10-12/",
+    "finalAcceptRunSha256": "a18c0496d7e843e2ca3d56b58aee79fda8d33f1d3651f0f60c7caffed566dc1c",
+    "proveStdoutSha256": "752c89c64c6039db02f2ae86d7bd52192f0c72a230fa0138922ba63bd52743c4",
+    "goPacketSha256": "ef60cfc59fae403c176d550075eb07da90cb4a8ebb14f4dcb84f3f39fd9eb8eb",
+    "prestartSha256": "72fa102d334361aa4c29c5bf4e7fb884c22dc3503d86e79718fc7adb3822ae20",
+    "postflightSha256": "63ed004d6fe7508fa49471e0db24bc86428080073f6022dbf1996389fa453411"
+  },
+  "checks": {
+    "healthFlagsBeforeAfter": true,
+    "paperOnlyBeforeAfter": true
+  },
+  "nextAction": "Owner decision: a read-only diagnostic of the J1-R5 job (sanitized receipt and PostgreSQL start log through the frozen controller, plus a System V segment listing) under its own GO, or a local-only fix round. J2 to J4 stay closed.",
+  "authority": {
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  }
+}
