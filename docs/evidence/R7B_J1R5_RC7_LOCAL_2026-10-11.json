@@ -1,0 +1,161 @@
+{
+  "schema": "r7b-j1r5-rc7-local-v1",
+  "recordedAt": "2026-10-11T21:28:54Z",
+  "status": "LOCAL_ACCEPTED_AWAITING_OWNER_GO_FOR_ONE_J1R5_ATTEMPT",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "scope": "Diagnosis of the J1-R4 failure, the RC7 package and the J1-R5 local preparation (inputs, command plan, acceptance and runner). Local only; nothing ran on Linux, systemd or PostgreSQL and no host contact occurred.",
+  "ownerDecision": "2026-10-11 18:30 UTC: analyse the J1-R4 failure, build RC7 with tests and audit, then ask for a new GO. The owner later said work could continue while they were away; no GO was given.",
+  "diagnosis": {
+    "ioReadback": "The RC6 code formats the IO bandwidth limits for systemd as 20M and 40M (the host command line was not captured). systemd parses IO*BandwidthMax suffixes in base 1000, and the receipt recorded a kernel read-back of 20,000,000 and 40,000,000 bytes per second against a plan of 20,971,520 and 41,943,040, so the driver's strict read-back stopped the job before PostgreSQL started.",
+    "stopProofParse": "The driver's stop proof parser accepted only lowercase letters and underscores in cgroup keys; kernel 6.8 cpu.stat carries core_sched.force_idle_usec when CONFIG_SCHED_CORE is set (expected on Ubuntu generic kernels, not verified on the host). This cause is about 90% likely and was not confirmed on the host.",
+    "method": "Two Opus debuggers, read-only on the J1-R4 bundle and the code; a Fable second opinion agreed."
+  },
+  "correction": {
+    "target": "docs/evidence/R7B_J1R4_2026-10-11.json defectsFound[0]",
+    "recorded": "The planned values are 20,000,000 and 40,000,000 bytes per second; the exact read-back value was not recorded.",
+    "correct": "The plan was 20,971,520 and 41,943,040 bytes per second. The recorded read-back was 20,000,000 and 40,000,000 bytes per second on the whole disk device. The cause is the base-1000 suffix parsing above."
+  },
+  "rc7": {
+    "packageId": "fdeebe23f403a43d0fb43b19a9543f1d73d1c08bf367f02caddbbc85df9bbd3b",
+    "tarSha256": "ada395bdcfc8e25c33329d4c4a0fc6a2060a95a63524a92a267ef187b0a2a31d",
+    "tarBytes": 26799616,
+    "files": 435,
+    "changedPayloadPaths": [
+      "adapter/control.mjs",
+      "adapter/driver.mjs",
+      "adapter/host-linux.mjs"
+    ],
+    "reproducible": {
+      "inProcessTwice": true,
+      "separateProcessesEqual": true
+    },
+    "adapters": {
+      "adapter/control.mjs": "18109d79178bda6600575953621d62e367555a338827388aa30378f98b4b2bb7",
+      "adapter/driver.mjs": "8d7c4f0621df3e302d95061c520b692b0ef54a54043dc33d4097ab44a35dd653",
+      "adapter/host-linux.mjs": "be8e113b6c89746971bb3f7ef7e2258fb55764d1ca18e89f37190520c9f7f770"
+    },
+    "changes": [
+      "IO bandwidth limits are passed as plain integer bytes; memory and file-size limits keep the base-1024 form",
+      "cgroup parsers accept real kernel keys and spacing; repeated io.max fields or device lines refuse; ENODEV counts as absent only for cgroup files",
+      "a HOST_PARSE in a cleanup step is logged with a short allowlisted label",
+      "cgroup and SQL monitor read timeouts count toward the existing four-failure limit; the du watchdog still stops at once",
+      "before any write or launch the controller checks that the unit IO properties are digits equal to the plan bytes (IO_ARGV_MISMATCH)",
+      "preflight checks 16 PostgreSQL runtime files: 15 that initdb and server start need, plus english.stop as a fail-closed extra (PG_SHARE_MISSING)",
+      "the outer proof adds an ioLimits check against the driver's recorded read-back when that read-back succeeded"
+    ],
+    "unchanged": "receipt.mjs, sanitize.mjs and the other 9 adapters (RC6 bytes), harness v8.2, measurement tool v3, product revision eb532ffd, the RC6 timer rule, every job limit"
+  },
+  "checks": {
+    "round1": {
+      "author": {
+        "controller": 161,
+        "driver": 121,
+        "host": 156,
+        "binding": 78,
+        "package": 118,
+        "confinement": 53
+      },
+      "authorMutants": "64 of 64 killed",
+      "independent": "45 plus 8 passed",
+      "independentMutants": "39 of 39 killed",
+      "controlMutationRc6Runner": "153 of 162 killed; the 9 survivors are the same pre-RC6 gaps as in the RC6 candidate"
+    },
+    "round2": {
+      "author": {
+        "controller": 179,
+        "driver": 125,
+        "host": 161,
+        "binding": 78,
+        "package": 118,
+        "confinement": 53
+      },
+      "authorMutants": "161 of 161 killed",
+      "independent": "34 plus 34 passed",
+      "independentMutants": "37 of 38 killed; the survivor looks equivalent by reasoning only"
+    },
+    "j1r5Prep": {
+      "opsPrep": 216,
+      "health": 22,
+      "runner": 111,
+      "deltaTests": "0 unexplained differences against J1-R4 in the ops preparation and the runner",
+      "independentRederivation": "14 of 14 checks; the 17-row plan equals J1-R4 apart from derived values"
+    }
+  },
+  "reviews": "Three Opus audits (RC7 rounds 1 and 2, J1-R5 preparation): the one medium finding was closed in round 2, and the low items are disclosed in the GO packet. Fable 5.1 gave four second opinions (diagnosis, RC7 rounds 1 and 2, J1-R5 preparation) and one consistency check of this record; its stopword point was refuted against PostgreSQL source. Fable output is not acceptance evidence.",
+  "j1r5": {
+    "freshJobBase": true,
+    "freshPackageRoot": true,
+    "sameRowsAndLimitsAsJ1R4": true,
+    "hostContacts": {
+      "minimum": 17,
+      "maximum": 22
+    },
+    "health": {
+      "observations": 2,
+      "pgReadiness": 4,
+      "http": 2
+    },
+    "rootGate": "unchanged J1-R4 root gate (receipt.mjs is RC6 bytes)",
+    "packetDiffVsJ1R4": [
+      "packageId",
+      "tarSha256",
+      "runnerManifestSha256"
+    ],
+    "inputsBytes": 26830316,
+    "configSha256": "7ee9e57e67f645cdf6ed03403fb6d96393dded0822704d769720a828786efc9d",
+    "runPacketSha256": "ec1f28970fdd9147e09ff351a59dbf1cacd7cbb7348a8fe70618f4e58228fbd6"
+  },
+  "disclosures": [
+    "initdb, PostgreSQL start, the suite socket confinement, the monitor samples and the final cgroup statistics have never run on Linux in this job path",
+    "whether the 16 PostgreSQL runtime files exist in the bound runtime tree is unknown; a missing one refuses at preflight after the new paths are written and consumes the attempt",
+    "a stop before PostgreSQL starts ends as <code>+STOP_PROOF_FAILED from the frozen v8.2 runner",
+    "the IO outer check uses the driver's recorded read-back, not an independent kernel read",
+    "jobPidsMax 26 and the shared 512 MiB unit memory are tight",
+    "the boot pin currency after any reboot is unknown",
+    "the J1-R4 job base, inputs and RC6 package root stay on the host",
+    "whether the host has the system time zone data the Debian PostgreSQL build expects is unknown"
+  ],
+  "notRun": [
+    "RC7 on Linux, systemd or PostgreSQL",
+    "any host contact"
+  ],
+  "documents": {
+    "goPacketSha256": "ef60cfc59fae403c176d550075eb07da90cb4a8ebb14f4dcb84f3f39fd9eb8eb",
+    "runbookSha256": "4cd3a8e48899c5c180395851d64261bb470471c08d540bc3e0cddeaff86b7527",
+    "goFreezeSha256": "87d9cdd5c3384e9a01d0f55f307a2711d3861731f5b3b8078efa69ca3efb2f1f",
+    "rc7DecisionsSha256": "d23f400ce14f2944954c87fcdd5e8a6cfec418c987512a5eb364615ab7595aa1",
+    "j1r5DecisionsSha256": "d3bdad06f18fc6f8d99a5d307349b2160bdaec08d185d2c3b37783b11e5d0b03",
+    "freezes": {
+      "rc7Candidate": "bd33845a0f8d86a78ff6d2434a360e5c8f95a2207e75f16e7e12726c862b3f4d",
+      "rc7Independent": "ede6f04d8572e3fc3bc3aa1c477a06a5359bbf31be3551e2e84bec09c465b6d2",
+      "j1r5OpsPrep": "1623c57d1fa7aafec39251d2547114e1f5f1a9bd415b9adae94fefa114be013c",
+      "j1r5Runner": "f5af88b693d5be1fd073ca3291b7d0c115a359d212d6cc4dc2b731c2b00cdd5f",
+      "j1r5Independent": "074d286f00cfdd775bb0c718a21ca9d5736973e193ce19534c3652dba2e67891"
+    }
+  },
+  "executionLocks": [
+    "OWNER_GO_REQUIRED_FOR_J1R5",
+    "EACH_OF_J2_TO_J4_NEEDS_ITS_OWN_GO"
+  ],
+  "nextAction": "Owner GO for one J1-R5 attempt; then root dispatches one Claude operations worker under the J1-R5 runbook.",
+  "authority": {
+    "hostActions": false,
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  },
+  "time": {
+    "start": "2026-10-11T18:30Z",
+    "startMethod": "owner decision recorded as about 18:30 in the root checkpoint",
+    "end": "2026-10-11T21:28:54Z",
+    "endMethod": "clock reading"
+  },
+  "usage": {
+    "platform": "Claude",
+    "weeklyUsedPercentStart": 61,
+    "weeklyUsedPercentEnd": 66,
+    "reservePercentagePoints": 15
+  }
+}

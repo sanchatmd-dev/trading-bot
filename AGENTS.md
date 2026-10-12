@@ -34,7 +34,7 @@ or runtime actions.
 ## Models and dispatch
 
 Roles are fixed; each platform maps them to its own models. Use the column for
-the platform running the root. Scout is the only Claude-only role.
+the platform running the root. Scout and the Fable 5.1 roles (see Claude-only Fable 5.1 roles) are Claude-only.
 
 | Role | Scope | Codex model / effort | Claude model / effort |
 | --- | --- | --- | --- |
@@ -55,19 +55,19 @@ is reserved for debugger/operations work; bounded implementation, testing and
 routine work use medium; documentation and release clerical work use low.
 
 The effort sentence in the previous paragraph describes the Codex column; Claude
-efforts come only from the Claude column. Claude effort order
+efforts come only from the Claude column and the Fable table. Claude effort order
 is low < medium < high < xhigh < max. The Claude column is
 graded: only root runs at xhigh, and every child role runs at high or below.
 Opus 5.5 carries the judgement-heavy roles below root; Sonnet 5.5 carries volume
 work; Haiku 5.5 carries clerical, mechanical and read-only lookup work under an
-exact contract. Opus 5.5, Sonnet 5.5 and Haiku 5.5 are the only Claude models on
-the team. The owner added Haiku 5.5 on 2026-10-08 to save usage on low-judgement
-work without lowering quality on judgement work. The owner removed Fable 5.1 from
-the Claude agent team on 2026-10-07, after re-adding it on 2026-10-03; do not
-dispatch Fable 5.1 unless the owner asks again. The Opus architecture auditor
-covers second opinions, adversarial verification and design panels, and Sonnet
-documentation covers cross-document consistency sweeps. Do not use max effort or
-any other Claude model by default.
+exact contract; Fable 5.1 adds an independent lens from a different model in the
+Claude-only roles below. Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 are the
+Claude models on the team. The owner added Haiku 5.5 on 2026-10-08 to save usage
+on low-judgement work without lowering quality on judgement work. The owner
+re-added Fable 5.1 on 2026-10-11 and asked root to give it suitable duties
+(earlier history: added and removed on 2026-10-01, re-added on 2026-10-03,
+removed on 2026-10-07). Fable 5.1 is supplemental and never replaces a primary
+role. Do not use max effort or any other Claude model by default.
 The root may deviate for one packet only (raise one effort level, move a Sonnet
 role to Opus 5.5 after a second failed approach, or lower effort for a clearly
 trivial packet), recording the reason in the packet; the next packet returns to
@@ -103,6 +103,44 @@ time, rework and defects. If a Haiku packet lets a defect reach root review, or
 the pilot shows repeated rework, return that assignment to Sonnet 5.5 and report
 it to the owner. Claim no usage saving until the pilot measures one.
 
+### Claude-only Fable 5.1 roles
+
+The owner re-added Fable 5.1 as a supplemental model on 2026-10-11. A Codex root
+skips these rows. Fable's value is an independent lens from a different model, so
+use it only where that independence adds value: high-risk reviews, design choices
+with a wide solution space, and claims that must match the evidence. Mechanical,
+searchable or volume work stays with the Sonnet and Haiku roles.
+
+| Role | Scope | Claude model / effort |
+| --- | --- | --- |
+| Second-opinion reviewer | One extra independent review or adversarial verify in a verify stage, beside an Opus or Sonnet reviewer, for high-risk slices: host and GO packets, recovery, fencing, accounting, security, parity, protected-service or receipt logic | Fable 5.1 / high |
+| Alternative designer | One independent draft in a design judge panel beside an Opus draft; an Opus auditor judges and root decides | Fable 5.1 / high |
+| Consistency checker | Read-only sweep for drift between Roadmap, Time Management, README, Context, handoffs and evidence where the drift needs reasoning across documents, including a check that status and evidence wording does not overstate the raw evidence | Fable 5.1 / medium |
+
+Fable boundaries, which no packet may relax:
+- Fable output is never sole acceptance evidence, and Fable is never the only
+  tester or reviewer of a slice. Root or an Opus/Sonnet role confirms every Fable
+  finding before anyone acts on it or counts it as blocking.
+- Fable never writes product code, tests or fixtures, including database
+  migrations, scheduler/fencing, accounting, Risk Manager, evaluator/parity,
+  security and production operations. The reviewer and designer write only their
+  assigned report or design draft under `.qa-local/` or the session scratchpad;
+  the checker returns a packet only.
+- Fable never does host or VPS work, Git, GO issuance, browser or TradingView
+  steps, root duty or acceptance.
+- Fable roles follow the architecture-auditor developer_instructions except its
+  fix-edit permission; Fable makes no fix edits. Checkpoint and handoff drafts
+  stay with the Sonnet documentation role and root.
+- Brief Fable with goal, constraints, evidence paths, acceptance bar, budget and
+  stop condition, not a step-by-step script, plus the reason an independent
+  perspective is worth the cost. Never present another model's output as a Fable
+  result, or a Fable result as a primary-model result.
+
+Fable agents count as read-only or verify agents toward the limits below, because
+they write only under `.qa-local/` or the session scratchpad; one writer per file
+still applies to those files. Dispatch at most one Fable child per workflow stage
+and at most two per root at any time.
+
 ### Claude root ultracode
 
 The owner requests the Claude root at Opus 5.5 / xhigh with ultracode on
@@ -127,8 +165,8 @@ decides.
 Verify-stage output is evidence for root's acceptance, never acceptance itself.
 
 Every workflow agent is a child under every rule in this file. Each agent() call
-passes the model and effort of the role it fills, from the Claude column; root
-does not dispatch an agent without a named role. Each brief
+passes the model and effort of the role it fills, from the Claude column or the
+Fable table; root does not dispatch an agent without a named role. Each brief
 carries the assignment fields under File, Git and browser ownership plus the
 Caveman and packet rules. Limits per root: at most three concurrent writing
 agents, one writer per file; read-only and verify agents may raise the total to
@@ -264,6 +302,16 @@ workflow run on one fresh reading only when its estimated cost for every stage
 fits the known remaining-minus-reserve budget; larger work runs as separate
 workflows with a fresh reading before each. Root reads usage again after every
 workflow and stops admitting at a band change.
+
+Claude meters Fable 5.1 in its own weekly Fable bucket as well as the shared
+windows. Before each Fable dispatch, read that bucket and apply the same bands and
+reserve to it, in addition to the all-models windows. If the Fable bucket is at or
+below 15% remaining, or unknown, dispatch no Fable role: substitute the matching
+Opus or Sonnet role (architecture auditor for the reviewer and designer;
+documentation for the checker, or tester when the drift concerns test evidence)
+and record the substitution in the packet. A stage that planned a Fable agent still
+runs, with the substitute. The Fable bucket gates Fable dispatch only; it never
+admits or stops Opus, Sonnet or Haiku work, which the shared windows govern.
 
 ## File, Git and browser ownership
 
