@@ -1,0 +1,293 @@
+{
+  "schema": "r7b-j1r6-run-v1",
+  "recordedAt": "2026-10-12T05:40:21Z",
+  "status": "J1R6_RAN_ONCE_FAILED_AT_SUITE_ENTRY_ENV_EXTRA_PWD",
+  "operationalAcceptance": false,
+  "fullPgGatePassed": false,
+  "executionPass": false,
+  "ownerGo": {
+    "utc": "2026-10-12T05:29:01Z",
+    "consumed": true,
+    "scope": "one J1-R6 attempt with package candidate 8, one run directory, no retry"
+  },
+  "operator": "one Claude Opus 5.5 operations worker, one admitted row at a time; root admitted and accepted every row",
+  "counts": {
+    "hostContacts": {
+      "used": 17,
+      "limit": 22
+    },
+    "health": {
+      "used": 2,
+      "limit": 2
+    },
+    "pgReadiness": {
+      "used": 4,
+      "limit": 4
+    },
+    "http": {
+      "used": 2,
+      "limit": 2
+    },
+    "starts": {
+      "used": 1,
+      "limit": 1
+    },
+    "identify": {
+      "used": 1,
+      "limit": 2
+    },
+    "status": {
+      "used": 1,
+      "limit": 3
+    },
+    "stop": {
+      "used": 0,
+      "limit": 1
+    },
+    "prove": {
+      "used": 1,
+      "limit": 2
+    },
+    "bundle": {
+      "used": 1,
+      "limit": 1
+    }
+  },
+  "rows": [
+    {
+      "row": "01-boot-check",
+      "startedUtc": "2026-10-12T05:29:20.444Z",
+      "elapsedMs": 1048,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "02-bootstrap",
+      "startedUtc": "2026-10-12T05:30:01.136Z",
+      "elapsedMs": 4707,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "03-upload-0",
+      "startedUtc": "2026-10-12T05:30:41.238Z",
+      "elapsedMs": 2940,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "04-upload-1",
+      "startedUtc": "2026-10-12T05:31:30.640Z",
+      "elapsedMs": 933,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "05-upload-2",
+      "startedUtc": "2026-10-12T05:31:54.217Z",
+      "elapsedMs": 925,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "06-upload-3",
+      "startedUtc": "2026-10-12T05:32:17.132Z",
+      "elapsedMs": 932,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "07-upload-4",
+      "startedUtc": "2026-10-12T05:32:39.493Z",
+      "elapsedMs": 911,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "08-extract",
+      "startedUtc": "2026-10-12T05:33:02.184Z",
+      "elapsedMs": 1652,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "09-verify-linux-strict",
+      "startedUtc": "2026-10-12T05:33:25.271Z",
+      "elapsedMs": 969,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "10-preflight",
+      "startedUtc": "2026-10-12T05:33:47.850Z",
+      "elapsedMs": 1450,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "11-health-prestart",
+      "startedUtc": "2026-10-12T05:34:11.381Z",
+      "elapsedMs": 4175,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "12-start-once",
+      "startedUtc": "2026-10-12T05:34:49.443Z",
+      "elapsedMs": 5390,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "13-identify-own-job",
+      "startedUtc": "2026-10-12T05:35:28.553Z",
+      "elapsedMs": 917,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "14-status",
+      "startedUtc": "2026-10-12T05:35:57.631Z",
+      "elapsedMs": 924,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "15-first-conclusive-prove",
+      "startedUtc": "2026-10-12T05:36:30.658Z",
+      "elapsedMs": 1301,
+      "exitCode": 2,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "16-bundle",
+      "startedUtc": "2026-10-12T05:37:17.362Z",
+      "elapsedMs": 968,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    },
+    {
+      "row": "17-health-postflight",
+      "startedUtc": "2026-10-12T05:38:11.231Z",
+      "elapsedMs": 1663,
+      "exitCode": 0,
+      "stderrBytes": 0,
+      "remoteCompletion": "KNOWN_TRANSPORT_EXIT"
+    }
+  ],
+  "chain": {
+    "acceptedPhases": [
+      "01-boot-check",
+      "02-bootstrap",
+      "03-upload-0",
+      "04-upload-1",
+      "05-upload-2",
+      "06-upload-3",
+      "07-upload-4",
+      "08-extract",
+      "09-verify-linux-strict",
+      "10-preflight",
+      "11-health-prestart",
+      "12-start-once",
+      "13-identify-own-job",
+      "14-status",
+      "15-first-conclusive-prove"
+    ],
+    "stopped": {
+      "phase": "first-conclusive-prove",
+      "code": "PROVE_VERDICT_NOT_PASS"
+    },
+    "hardStop": false,
+    "end": "CHAIN_COMPLETE",
+    "limitsExceeded": [],
+    "stopExecuted": false,
+    "postflight": {
+      "mode": "FAILURE_RECORD",
+      "accepted": false,
+      "executionPass": false,
+      "scope": "FAILURE_PATH_POINT_IN_TIME_HEALTH_ONLY",
+      "ancestorsComparedWithPrestart": true
+    },
+    "finalAcceptRun": "accept-run.22.json"
+  },
+  "job": {
+    "jobId": "r7b-lpg-20261012-j1-a72dc946",
+    "result": {
+      "code": "SUITE_ENTRY_REFUSED",
+      "runnerCode": "SUITE_CHILD_REFUSED",
+      "stopPath": "REFUSAL",
+      "realPostgres": false,
+      "flags": [
+        "OUTER_PROOF_PASSED"
+      ]
+    },
+    "timeline": {
+      "initdbMs": 864,
+      "readyMs": 2197,
+      "suiteStartMs": 2199,
+      "suiteEndMs": 2315
+    },
+    "cases": {
+      "total": 11,
+      "notRun": 11
+    }
+  },
+  "outerProof": {
+    "pass": true,
+    "checks": [
+      "unitList:ok",
+      "cgroupDir:ok",
+      "processes:ok",
+      "postmasterFiles:ok",
+      "sysv:ok",
+      "scratchInventory:ok",
+      "runtimeDirs:ok",
+      "out:ok",
+      "scratchInventoryFinal:ok",
+      "protectedServices:ok",
+      "hostTools:ok",
+      "inputPostcheck:ok",
+      "ioLimits:ok"
+    ],
+    "lockReleased": true
+  },
+  "whatWorked": "Every preparation step passed. initdb, PostgreSQL start to ready, the readiness and lockdown SQL (the superuser login refused after lockdown is the expected check) and the suite launch ran on Linux for the first time. The controller's outer proof passed every check, including the System V check, and released the job lock; the bundle was fetched.",
+  "failure": "The suite child refused at its entry with ENTRY_ENV_EXTRA: its environment held one name outside the exact allowlist, PWD. Every job child is started through a /bin/sh cgroup self-move wrapper, and the host's /bin/sh exports PWD to the program it executes, so the strict suite entry refused. None of the 11 cases ran.",
+  "protectedServices": "The controller outer proof's protectedServices check passed. Between the prestart and postflight health observations only the fallback stage unit's start timestamp advanced (by about 300.0 s), which the RC6 rule allows; stable identities and product tool hashes were equal.",
+  "productImpact": "None observed: health showed PAPER_ONLY, the five research flags OFF, queued 0 and the research unit inactive before and after; no product service or configuration change.",
+  "checks": {
+    "paperOnlyBeforeAfter": true,
+    "flagsOffBeforeAfter": true
+  },
+  "retainedOnHost": "The new job base (lock released), its inputs and the RC8 package root stay; the job runtime was removed. Earlier artefacts were not touched.",
+  "evidence": {
+    "runDir": ".qa-local/claude-r7b-j1r6-run-2026-10-12/",
+    "finalAcceptRunSha256": "495f930f42ec8cf8e1081bda71c5ebd73120d4ff3103db4ed96cd7e289a0a805",
+    "bundleSha256": "c3670eea887193760356fe36968cc29b561d8f087759ab8f03fb43a2a4c023ee",
+    "proveStdoutSha256": "037d416817b2586f7fa86d56f2c4bfcf69069e03c251900dcabcdd82c9c2184a",
+    "goPacketSha256": "897a2b6919219b032b10b34fd41a0c85f86a5386692591100183e719f5878524"
+  },
+  "nextAction": "Owner decision: an RC9 fix (the cgroup wrapper removes PWD before it executes the target, keeping the suite entry strict) with tests and audit, then a new GO. J2 to J4 stay closed.",
+  "authority": {
+    "newEpoch": false,
+    "enrollment": false,
+    "deployment": false,
+    "spotPaperOnly": true
+  }
+}
