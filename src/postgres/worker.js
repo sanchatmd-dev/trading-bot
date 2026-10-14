@@ -13,9 +13,10 @@ const TRANSIENT_SQLSTATE_CLASSES=new Set(['08','40','53','55','57','58']);
 // feature not supported (0A), invalid transaction state (25) and internal error (XX). Worker code deployed before its
 // migration fails like this on every tick for every owner, so these are never counted and never reject a signal.
 const ENVIRONMENT_SQLSTATE_CLASSES=new Set(['42','28','3D','3F','0A','25','XX']);
-// Node network error codes are listed by name, so any other non-SQLSTATE code (later releases use them for Bridge
-// rejections, several starting with E) stays deterministic.
-const NETWORK_ERROR_CODES=new Set(['ECONNRESET','ECONNREFUSED','ECONNABORTED','ETIMEDOUT','EPIPE','EHOSTUNREACH','ENETUNREACH','ENOTFOUND','EAI_AGAIN']);
+// Node network and closed-socket error codes are listed by name, so any other non-SQLSTATE code (later releases use
+// them for Bridge rejections, several starting with E) stays deterministic.
+const NETWORK_ERROR_CODES=new Set(['ECONNRESET','ECONNREFUSED','ECONNABORTED','ETIMEDOUT','EPIPE','EHOSTUNREACH','ENETUNREACH','ENOTFOUND','EAI_AGAIN',
+  'ENETDOWN','EHOSTDOWN','EADDRNOTAVAIL','EPROTO','ERR_STREAM_DESTROYED','ERR_SOCKET_CLOSED','ERR_STREAM_PREMATURE_CLOSE']);
 // node-postgres raises these without a code when the pool or the socket is gone.
 const CONNECTION_MESSAGE=/connection terminated|timeout exceeded when trying to connect|not queryable|client was closed|pool is draining/i;
 // systemicOwners distinct owners failing with the same fault key inside systemicWindowMs suspend terminal writes of that key.
@@ -36,6 +37,13 @@ export function classifyExecutionFault(error){
 function describeError(error){
   if(error instanceof SyntaxError)return 'SyntaxError';
   return String(error?.message??'').replace(/\S+@\S+/g,'[redacted]').replace(/\s+/g,' ').slice(0,200);
+}
+// Systemic breaker key. Uncoded JavaScript errors all fall in class OTHER without a SQLSTATE, so the constructor name
+// keeps a SyntaxError on one owner and a TypeError on another apart. A name that is not a plain identifier reads NONE.
+function faultKey(info,error){
+  if(info.sqlstate!==null||info.faultClass!=='OTHER')return info.faultClass+':'+(info.sqlstate??'NONE');
+  const name=error?.constructor?.name;
+  return 'OTHER:'+(typeof name==='string'&&/^[A-Za-z_$][\w$]{0,63}$/.test(name)?name:'NONE');
 }
 
 export class ExecutionWorker {
@@ -152,7 +160,7 @@ export class ExecutionWorker {
     if(info.transient)return this.isolate(claim.ownerId,now+backoffMs[0]);
     if(environment)return this.isolate(claim.ownerId,now+backoffMs[backoffMs.length-1]);
     if(transient)return;
-    const key=info.faultClass+':'+(info.sqlstate??'NONE');
+    const key=faultKey(info,error);
     const fault={count,ownerId:claim.ownerId,userId:claim.userId,sqlstate:info.sqlstate,faultClass:info.faultClass,key,lastAt:now,terminalDue:null};
     this.faults.set(claim.signalId,fault);
     for(const [id,old] of this.faults)if(old.terminalDue===null&&now-old.lastAt>600000)this.faults.delete(id);
