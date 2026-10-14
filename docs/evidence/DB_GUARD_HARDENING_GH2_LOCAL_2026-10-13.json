@@ -171,6 +171,17 @@
       "stillOpen": [
         "CI confirmation on a pushed commit"
       ]
+    },
+    {
+      "packet": "PGX3",
+      "asOf": "2026-10-14T09:16:18Z",
+      "status": "TEST_FIX_LOCAL_CI_PENDING",
+      "finding": "CI on 82dde57 still failed its postgres job. The job log (read with the owner's consent in the owner's signed-in browser) showed the first top-level hook failing with 53300 sorry, too many clients already after 15 s, then every test failing. Under --test-isolation=none every file's pools stay open until the root after hooks at the end of the run; on the faster CI runner many suites finish setup inside the pool idle timeout (30 s), so connections pile up past the server limit of 100.",
+      "fix": "package.json test:postgres runs each file in its own process, one at a time (--test-isolation=process --test-concurrency=1). Two suites that start a nested node --test run now remove NODE_TEST_CONTEXT from the child environment (temp-privilege already did), otherwise the nested run reports in the parent runner binary format.",
+      "localEvidence": "Clean LF clone of 82dde57 with these changes, on a local server with password authentication and max_connections 100, npm run test:postgres: 687 tests, 681 pass, 0 fail, 6 skipped, 1847 s. Without the nested-run fix: 673 pass, 8 fail (all nested-run parse failures).",
+      "stillOpen": [
+        "CI confirmation on a pushed commit"
+      ]
     }
   ]
 }

@@ -15,7 +15,7 @@
     "worker:quant-research": "node --env-file-if-exists=.env src/postgres/quant-research-main.js",
     "migrate:quant-research": "node --env-file-if-exists=.env scripts/migrate-quant-research.mjs",
     "test": "node --test --test-isolation=none test/*.test.js",
-    "test:postgres": "node --test --test-isolation=none test/postgres/*.test.mjs",
+    "test:postgres": "node --test --test-isolation=process --test-concurrency=1 test/postgres/*.test.mjs",
     "import:postgres": "node --env-file-if-exists=.env scripts/import-postgres.mjs",
     "backup:postgres": "node --env-file-if-exists=.env scripts/backup-postgres.mjs"
   },

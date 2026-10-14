@@ -20,6 +20,9 @@ const sourceDir=new URL('../../src/postgres/',import.meta.url);
 const REFUSED='P0001:Invalid bot owner or slot';
 let admin,db,databaseName,roleName,connectionString,runtimeUrl;
 const databases=[],sessions=[];
+// The child is its own test run: inheriting NODE_TEST_CONTEXT (set when this file runs in its own process) would make it
+// report in the parent runner's binary format, with no text summary to parse.
+const childEnv=()=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;return env;};
 const urlOf=(name,user)=>{const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+name;if(user)url.username=user;return url.toString();};
 async function session(){const client=new pg.Client({connectionString:runtimeUrl});await client.connect();sessions.push(client);return client;}
 const read=name=>fs.readFile(new URL(name,sourceDir),'utf8');
@@ -270,7 +273,7 @@ process.on('exit',()=>process.stderr.write('GH2_HARDENING_APPLIED='+applied+'\\n
   let result;
   try{
     result=await run(process.execPath,['--import','data:text/javascript,'+encodeURIComponent(preload),'--test','--test-isolation=none','--test-reporter=spec',file],
-      {cwd:repoRoot,env:{...process.env,TEST_DATABASE_URL:process.env.TEST_DATABASE_URL},maxBuffer:64*1024*1024});
+      {cwd:repoRoot,env:childEnv(),maxBuffer:64*1024*1024});
   }catch(error){result={stdout:error.stdout||'',stderr:error.stderr||'',failed:true};}
   const text=result.stdout+result.stderr,count=name=>Number((new RegExp('ℹ '+name+' (\\d+)').exec(text)||[])[1]);
   return {failed:!!result.failed,pass:count('pass'),fail:count('fail'),skipped:count('skipped'),applied:Number((/GH2_HARDENING_APPLIED=(\d+)/.exec(text)||[])[1]),text};
