@@ -179,13 +179,26 @@ export const ledgerMethods={
             throw new Error('Fill exceeds remaining target allocation quantity');
           }
 
-          // F10 Fix: Exits deduct precise lot cost (allocatedCost) 
-          const removed = allocatedCost.gt(0) 
-            ? allocatedCost 
-            : (quantity.isZero() ? D(current.cost_basis) : D(amount(D(current.cost_basis).mul(qty).div(current.quantity))));
+          // F10 Fix: Exits deduct precise lot cost (allocatedCost). O3: lot cost per unit has 18 places, so the sum of
+          // take x entry_price can have up to 36. Round once per partial exit; a full close removes the whole remainder.
+          const costBefore=D(current.cost_basis);
+          if(quantity.isZero()&&allocatedCost.gt(0)&&allocatedCost.minus(costBefore).abs().gt('1e-12')){
+            // Full close: the whole position cost is removed either way; record that the lots disagreed with it.
+            await this.audit(row.user_id,'ledger.cost_divergence',row.trade_id,{signalId:row.id,symbol:row.symbol,lotCost:amount(allocatedCost),positionCost:amount(costBefore),atFlat:true});
+          }
+          let removed = quantity.isZero()
+            ? costBefore
+            : allocatedCost.gt(0)
+              ? D(amount(allocatedCost))
+              : D(amount(costBefore.mul(qty).div(current.quantity)));
 
-          cost=D(current.cost_basis).minus(removed);
-          if(cost.lt(0)) cost = D(0);
+          cost=costBefore.minus(removed);
+          if(cost.lt(0)){
+            // Lots cost more than the position holds (lot/position divergence): remove only what the position has, so profit uses the cost actually removed.
+            await this.audit(row.user_id,'ledger.cost_clamped',row.trade_id,{signalId:row.id,symbol:row.symbol,clamped:amount(cost.neg())});
+            cost = D(0);
+            removed = costBefore;
+          }
           initialRisk=D(current.initial_risk);
           const profit=notional.minus(removed).minus(fee);
           pnl=D(current.cumulative_pnl).plus(profit);
@@ -218,7 +231,9 @@ export const ledgerMethods={
       await this.db.prepare(`INSERT INTO ledger_daily VALUES(?,?,?,?,?,?,?) ON CONFLICT(user_id,account_id,execution_mode,day) DO UPDATE SET trades=ledger_daily.trades+excluded.trades,notional=ledger_daily.notional+excluded.notional,realized_r=ledger_daily.realized_r+excluded.realized_r`).run(...scope(row),day(),D(saved.applied_quantity).isZero()&&total.gt(0)?1:0,exact(notional),amount(realizedR));
       const status=execution.status==='NEW'?'SUBMITTED':execution.status,fillPrice=total.gt(0)?quote.div(total):null;
       const slip=fillPrice?(order.side==='BUY'?fillPrice.minus(order.price):D(order.price).minus(fillPrice)).div(order.price).mul(10000):null;
-      await this.complete(row.id,status,{response:execution.raw,orderId:execution.orderId||saved.order_id,fillPrice:fillPrice?amount(fillPrice):null,slippageBps:slip?amount(slip):null,appliedQuantity:exact(total),appliedQuote:exact(quote)});
+      // Rule marker for replay: written only when this call booked a fill, so status-only updates keep the broker response as it was.
+      const response=qty.gt(0)?{...(execution.raw&&typeof execution.raw==='object'&&!Array.isArray(execution.raw)?execution.raw:{}),ledgerRule:'paper-exit-cost-o3-v1'}:execution.raw;
+      await this.complete(row.id,status,{response,orderId:execution.orderId||saved.order_id,fillPrice:fillPrice?amount(fillPrice):null,slippageBps:slip?amount(slip):null,appliedQuantity:exact(total),appliedQuote:exact(quote)});
       await this.audit(row.user_id,'order.updated',row.trade_id,{status,mode:'PAPER',quantity:exact(total)});
       await this.db.prepare('INSERT INTO notification_outbox(user_id,subject,body) VALUES(?,?,?)').run(row.user_id,'Robot trade '+status+': '+row.symbol,'Trade '+row.trade_id+'\nMode PAPER\nFill '+(fillPrice?amount(fillPrice):'-'));
     });
