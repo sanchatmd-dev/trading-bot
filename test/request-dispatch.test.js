@@ -2,7 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {clientIp} from '../src/http-safety.js';
 import {createRequestLimits,API_LIMIT,WEBHOOK_SOURCE_LIMIT} from '../src/postgres/request-limits.js';
-import {createDispatcher,json} from '../src/postgres/request-dispatch.js';
+import {Readable} from 'node:stream';
+import {createDispatcher,json,RETRY_LIMIT,RETRY_BUDGET_MS,LEGACY_QUANT_PATHS,oncePerRequest,retryDelay} from '../src/postgres/request-dispatch.js';
+import {preloadJson,readJson} from '../src/postgres/http.js';
+import {readJson as readStream} from '../src/http-safety.js';
+import {marketOhlcvRoutes} from '../src/postgres/market-ohlcv.js';
+import {Auth} from '../src/postgres/auth.js';
 
 const ORIGIN='https://app.test',hex='c'.repeat(64),unknown='d'.repeat(64);
 // Real dispatcher and limiter; the database, session and router are recording fakes.
@@ -38,7 +43,7 @@ function harness({portHandles=false}={}){
     const req={url,method,headers:{...(origin?{origin}:{}),'content-type':'application/json'},socket:{remoteAddress:'127.0.0.1'}};
     const res={headersSent:false,status:null,headers:null,body:null,
       writeHead(status,headers){this.status=status;this.headers=headers;this.headersSent=true;},
-      end(body){this.body=body===undefined?'':String(body);},removeHeader(){},setHeader(){}};
+      end(body){this.body=body===undefined?'':String(body);},removeHeader(){},setHeader(){},getHeaders(){return {};},getHeaderNames(){return [];}};
     await dispatch(req,res);
     return {status:res.status,headers:res.headers,body:res.body,events:[...events],keys:[...keys]};
   };
@@ -122,38 +127,175 @@ test('the machine port answers before the pipeline: no limiter, Origin, session 
 });
 
 // Bare dispatcher with scripted router and transaction, for the error mapping and the deferred market answer.
-function bare({handleRequest,runMarketDeferred=async()=>null,audit=async()=>{}}){
-  const events=[],audits=[];
+function bare({handleRequest,runMarketDeferred=async()=>null,audit=async()=>{},auth={checkOrigin(){},async prepareSession(){}},onPause=()=>{},
+  preload=async()=>{},workerIntervalMs,clock}){
+  const events=[],audits=[],pauses=[],steps=[],warnings=[];
   const dispatch=createDispatcher({
     newsWindowsPort:{handle:async()=>false},
-    requestLimits:async()=>true,
-    auth:{checkOrigin(){},async prepareSession(){}},
+    requestLimits:async()=>{steps.push('limit');return true;},
+    auth:{checkOrigin(req){steps.push('origin');return auth.checkOrigin(req);},async prepareSession(req){steps.push('session');return auth.prepareSession(req);}},
     database:{transaction:async(fn,{isolation})=>{events.push('begin:'+isolation);try{const value=await fn();events.push('commit');return value;}catch(error){events.push('rollback');throw error;}}},
     store:{audit:async(...args)=>{audits.push(args[3]);return audit(...args);}},
-    preloadJson:async()=>{},
+    preloadJson:async req=>{steps.push('preload');return preload(req);},
     handleRequest:async(req,res)=>{events.push('route');return handleRequest(req,res,events);},
-    runMarketDeferred:async deferred=>{events.push('deferred');return runMarketDeferred(deferred);}
+    runMarketDeferred:async deferred=>{events.push('deferred');return runMarketDeferred(deferred);},
+    pause:async ms=>{pauses.push(ms);events.push('pause');onPause();},
+    workerIntervalMs,clock,warn:line=>warnings.push(line)
   });
-  const send=async(url='/api/bots')=>{
-    const headers=new Map();
+  const send=async(url='/api/bots',{method='GET',request={},preset={}}={})=>{
+    const headers=new Map(Object.entries(preset));
+    // Like Node's ServerResponse, header changes after writeHead throw ERR_HTTP_HEADERS_SENT.
+    const sent=()=>{if(res.headersSent)throw Object.assign(new Error('Cannot change headers after they are sent'),{code:'ERR_HTTP_HEADERS_SENT'});};
     const res={headersSent:false,status:null,written:null,body:null,phase2Buffer:false,
-      setHeader(name,value){headers.set(name.toLowerCase(),value);},getHeader(name){return headers.get(name.toLowerCase());},removeHeader(name){headers.delete(name.toLowerCase());},
+      setHeader(name,value){sent();headers.set(name.toLowerCase(),value);},getHeader(name){return headers.get(name.toLowerCase());},removeHeader(name){sent();headers.delete(name.toLowerCase());},
+      getHeaders(){return Object.fromEntries(headers);},getHeaderNames(){return [...headers.keys()];},
       writeHead(status,extra){this.status=status;this.written={...Object.fromEntries(headers),...extra};this.headersSent=true;},
       end(body){this.body=body===undefined?'':String(body);}};
-    await dispatch({url,method:'GET',headers:{},socket:{remoteAddress:'127.0.0.1'}},res);
-    return {res,events:[...events],audits:[...audits]};
+    const req=request instanceof Readable?Object.assign(request,{url,method,headers:{},socket:{remoteAddress:'127.0.0.1'}}):{url,method,headers:{},socket:{remoteAddress:'127.0.0.1'},...request};
+    await dispatch(req,res);
+    return {req,res,events:[...events],steps:[...steps],audits:[...audits],pauses:[...pauses],warnings:[...warnings]};
   };
   return {send};
 }
+const conflict=code=>Object.assign(new Error('could not serialize access'),{code});
+const attempt=['begin:SERIALIZABLE','route','rollback'];
 
-test('catch mapping: retryable SQLSTATEs become 409 RETRY_TRANSACTION',async()=>{
-  for(const code of ['40001','40P01','55P03']){
-    const {res,events,audits}=await bare({handleRequest:async()=>{throw Object.assign(new Error('could not serialize access'),{code});}}).send();
+test('catch mapping: a retryable SQLSTATE that persists becomes one 409 RETRY_TRANSACTION after the last attempt',async()=>{
+  for(const code of ['40001','40P01']){
+    const {res,events,steps,audits,pauses}=await bare({handleRequest:async()=>{throw conflict(code);}}).send();
     assert.equal(res.status,409,code);
     assert.equal(res.body,JSON.stringify({error:'Concurrent update; retry the request',code:'RETRY_TRANSACTION'}),code);
-    assert.deepEqual(events,['begin:SERIALIZABLE','route','rollback'],code);
-    assert.deepEqual(audits,[{message:'Concurrent request rolled back'}],code);
+    assert.deepEqual(events,[...attempt,'pause',...attempt,'pause',...attempt],code+': three attempts');
+    assert.deepEqual(steps,['limit','origin','session'],code+': the request steps run once');
+    assert.equal(pauses.length,RETRY_LIMIT,code);
+    assert.deepEqual(audits,[{message:'Concurrent request rolled back'}],code+': one audit row for the request');
   }
+  // 55P03 (lock not available) is mapped the same way but never retried.
+  const {res,events,audits}=await bare({handleRequest:async()=>{throw conflict('55P03');}}).send();
+  assert.equal(res.status,409);assert.equal(JSON.parse(res.body).code,'RETRY_TRANSACTION');
+  assert.deepEqual(events,attempt);
+  assert.deepEqual(audits,[{message:'Concurrent request rolled back'}]);
+});
+
+test('retry: one serialization failure then success answers 200 with no audit row',async()=>{
+  let attempts=0;
+  const {res,events,steps,audits,pauses}=await bare({handleRequest:async(req,res)=>{if(++attempts===1)throw conflict('40001');json(res,200,{attempt:attempts});}}).send('/api/quant/data/jobs/x',{method:'POST'});
+  assert.equal(res.status,200);assert.equal(res.body,JSON.stringify({attempt:2}));
+  assert.deepEqual(events,[...attempt,'pause','begin:SERIALIZABLE','route','commit']);
+  assert.deepEqual(steps,['limit','origin','preload','session'],'limiter, Origin, body and session run once');
+  assert.equal(events.filter(event=>event.startsWith('begin:')).length,2);
+  assert.equal(events.filter(event=>event==='rollback').length,1);assert.equal(events.filter(event=>event==='commit').length,1);
+  assert.deepEqual(audits,[]);
+  assert.equal(pauses.length,1);
+});
+
+test('retry: the jitter stays between 20 and 80 ms',()=>{
+  assert.equal(retryDelay(()=>0),20);assert.equal(retryDelay(()=>0.999999),80);
+  assert.equal(retryDelay(()=>0,250),270,'the worker interval comes first');assert.equal(retryDelay(()=>0.999999,250),330);
+  for(let i=0;i<200;i++){const ms=retryDelay();assert.ok(Number.isInteger(ms)&&ms>=20&&ms<=80,String(ms));}
+});
+
+test('retry: authentication paths, webhooks and non-retryable errors keep a single attempt',async()=>{
+  for(const url of ['/api/auth/login','/api/auth/mfa/verify','/api/auth','/api/../api/auth/login']){
+    const {res,events,audits}=await bare({handleRequest:async()=>{throw conflict('40001');}}).send(url,{method:'POST'});
+    assert.equal(res.status,409,url);
+    assert.equal(events.filter(event=>event.startsWith('begin:')).length,1,url);
+    assert.equal(audits.length,1,url);
+  }
+  const webhook=await bare({handleRequest:async()=>{throw conflict('40001');}}).send('/webhooks/tradingview/'+hex,{method:'POST'});
+  assert.equal(webhook.res.status,409);
+  assert.deepEqual(webhook.events,['begin:READ COMMITTED','route','rollback']);
+  assert.deepEqual(webhook.steps,['limit','preload','session']);
+  for(const error of [conflict('23505'),Object.assign(new Error('Bot access denied'),{status:403}),new Error('plain')]){
+    const {events}=await bare({handleRequest:async()=>{throw error;}}).send();
+    assert.equal(events.filter(event=>event.startsWith('begin:')).length,1,String(error.code||error.status||'plain'));
+  }
+});
+
+test('retry: a failed attempt leaks no cookie, validator or buffered answer, and adds no duplicate cookie',async()=>{
+  let attempts=0;
+  const {res}=await bare({handleRequest:async(req,res)=>{
+    attempts++;
+    res.setHeader('set-cookie',[...(res.getHeader('set-cookie')||[]),'robot_session=attempt'+attempts]);
+    if(attempts===1){res.setHeader('etag','"stale"');json(res,200,{attempt:1});throw conflict('40001');}
+    json(res,200,{attempt:attempts});
+  }}).send();
+  assert.equal(res.status,200);assert.equal(res.body,JSON.stringify({attempt:2}));
+  assert.deepEqual(res.written['set-cookie'],['robot_session=attempt2'],'only the committed attempt sets a cookie');
+  assert.equal(res.written.etag,undefined,'the rolled-back validator is gone');
+});
+
+test('retry: a failed attempt\'s deferred market call never runs',async()=>{
+  const seen=[];let attempts=0;
+  const first={kind:'first'},second={kind:'second'};
+  const {res,events}=await bare({
+    handleRequest:async(req,res)=>{attempts++;res.phase2Deferred=attempts===1?first:second;if(attempts===1)throw conflict('40001');},
+    runMarketDeferred:async value=>{seen.push(value);return {status:200,body:{market:value.kind}};}
+  }).send('/api/market/ohlcv');
+  assert.deepEqual(seen,[second]);assert.equal(events.filter(event=>event==='deferred').length,1);
+  assert.equal(res.body,JSON.stringify({market:'second'}));
+  let failed=0;
+  const exhausted=await bare({
+    handleRequest:async(req,res)=>{res.phase2Deferred=first;throw conflict('40001');},
+    runMarketDeferred:async()=>{failed++;return null;}
+  }).send('/api/market/ohlcv');
+  assert.equal(failed,0,'no deferred call after the final failure');assert.equal(exhausted.res.status,409);
+  assert.equal(exhausted.res.phase2Deferred,null);
+});
+
+test('retry: each attempt starts without cached authentication or a buffered result',async()=>{
+  const seen=[];let attempts=0;
+  await bare({handleRequest:async(req,res)=>{
+    attempts++;
+    seen.push({authUser:req.authUser,authToken:req.authToken,validateAuth:req.validateAuth,sensitiveChecked:req.sensitiveChecked,
+      buffer:res.phase2Buffer,result:res.phase2Result,deferred:res.phase2Deferred,sessionAlive:req.sessionAlive});
+    req.authUser={id:'cached'};req.authToken='t';req.validateAuth=async()=>{};req.sensitiveChecked=true;
+    json(res,200,{attempt:attempts});res.phase2Deferred={kind:'stale'};
+    if(attempts<3)throw conflict('40P01');
+    res.phase2Deferred=null;
+  },auth:{checkOrigin(){},async prepareSession(req){req.sessionAlive=true;}}}).send();
+  assert.equal(seen.length,3);
+  for(const state of seen)assert.deepEqual(state,{authUser:undefined,authToken:undefined,validateAuth:undefined,sensitiveChecked:undefined,
+    buffer:true,result:null,deferred:null,sessionAlive:true},'the session touch result stays; nothing from the failed attempt does');
+});
+
+test('retry: authentication re-runs on every attempt, so a revocation between attempts answers 401',async()=>{
+  const token='e'.repeat(64),config={secureCookies:false,sessionIdleMinutes:30,publicOrigin:ORIGIN};
+  let session={id:'u1',email:'u1@example.test',role:'USER',status:'ACTIVE',parent_user_id:null,
+    expires_at:Date.now()+3600000,last_seen:Date.now(),elevated_until:0,mfa_verified:0};
+  const reads=[],deleted=[];
+  const db={prepare:()=>({get:async()=>{reads.push(session?.id??null);return session;}})};
+  const auth=new Auth({db,deleteSession:async value=>{deleted.push(value);}},config,json);
+  let attempts=0;
+  const {res}=await bare({
+    auth:{checkOrigin(){},async prepareSession(req){req.sessionAlive=true;}},
+    handleRequest:async(req,res)=>{
+      attempts++;
+      const user=await auth.require(req);
+      if(attempts===1){session=null;throw conflict('40001');}
+      json(res,200,{user:user.id});
+    }
+  }).send('/api/bots',{request:{headers:{cookie:'robot_session='+token}}});
+  assert.deepEqual(reads,['u1',null],'the session row is read again on the retry');
+  assert.equal(res.status,401,'a session revoked between attempts is refused, never served from the first attempt\'s cache');
+  assert.deepEqual(deleted,[token]);
+});
+
+test('retry: no retry once headers are sent or the client has gone',async()=>{
+  const sent=await bare({handleRequest:async(req,res)=>{res.headersSent=true;throw conflict('40001');}}).send();
+  assert.equal(sent.events.filter(event=>event.startsWith('begin:')).length,1,'headers sent');
+  assert.equal(sent.audits.length,1);
+  for(const gone of [{socket:{remoteAddress:'127.0.0.1',destroyed:true}}]){
+    const closed=await bare({handleRequest:async()=>{throw conflict('40001');}}).send('/api/bots',{request:gone});
+    assert.equal(closed.events.filter(event=>event.startsWith('begin:')).length,1,'socket closed');
+    assert.equal(closed.audits.length,1);
+  }
+  // The client leaves during the jitter pause: the request stops before the next attempt.
+  let attempts=0;const socket={remoteAddress:'127.0.0.1',destroyed:false};
+  const left=await bare({handleRequest:async()=>{attempts++;throw conflict('40001');},onPause:()=>{socket.destroyed=true;}}).send('/api/bots',{request:{socket}});
+  assert.equal(attempts,1);assert.deepEqual(left.events,[...attempt,'pause']);assert.equal(left.audits.length,1);
+  const destroyed=await bare({handleRequest:async(req,res)=>{res.destroyed=true;throw conflict('40001');}}).send();
+  assert.equal(destroyed.events.filter(event=>event.startsWith('begin:')).length,1,'response destroyed');
 });
 
 test('catch mapping: other SQLSTATEs become 503 without database detail',async()=>{
@@ -201,4 +343,193 @@ test('a deferred market answer runs after COMMIT and replaces the buffered resul
   const failed=await bare({handleRequest:async(req,res)=>{res.phase2Deferred=deferred;},runMarketDeferred:async()=>{throw Object.assign(new Error('upstream'),{status:502});}}).send();
   assert.deepEqual(failed.events,['begin:SERIALIZABLE','route','commit','deferred']);
   assert.equal(failed.res.status,502,'a failing market call answers after COMMIT, never rolls it back');
+});
+
+const attempts=events=>events.filter(event=>event.startsWith('begin:')).length;
+
+test('retry: the legacy Quant Lab proxy paths keep a single attempt; their read-only run list still retries',async()=>{
+  assert.deepEqual([...LEGACY_QUANT_PATHS].sort(),['/api/quant/backtest','/api/quant/health','/api/quant/optimize','/api/quant/risk-preview']);
+  for(const url of [...LEGACY_QUANT_PATHS,'/api/x/../quant/optimize']){
+    const {res,events,pauses,audits}=await bare({handleRequest:async()=>{throw conflict('40001');}}).send(url,{method:'POST'});
+    assert.equal(res.status,409,url);assert.equal(attempts(events),1,url);assert.deepEqual(pauses,[],url);assert.equal(audits.length,1,url);
+  }
+  let runs=0;
+  const list=await bare({handleRequest:async(req,res)=>{if(++runs===1)throw conflict('40001');json(res,200,[]);}}).send('/api/quant/runs');
+  assert.equal(list.res.status,200);assert.equal(attempts(list.events),2);
+});
+
+test('retry: an attempt that made an outbound call is never rerun; the next request attempt starts with the flag clear',async()=>{
+  let upstream=0;
+  const {res,events,pauses,audits}=await bare({handleRequest:async(req,res)=>{res.phase2External=true;upstream++;throw conflict('40001');}}).send('/api/bots',{method:'POST'});
+  assert.equal(upstream,1,'exactly one attempt');assert.equal(attempts(events),1);assert.deepEqual(pauses,[]);
+  assert.equal(res.status,409);assert.equal(JSON.parse(res.body).code,'RETRY_TRANSACTION');assert.equal(audits.length,1);
+  const seen=[];let runs=0;
+  const clean=await bare({handleRequest:async(req,res)=>{seen.push(res.phase2External);if(++runs===1)throw conflict('40001');json(res,200,{ok:true});}}).send();
+  assert.equal(clean.res.status,200);assert.deepEqual(seen,[false,false]);
+});
+
+test('retry budget: a slow first attempt is not retried and answers one 409',async()=>{
+  let now=1000;
+  const {res,events,pauses,audits,warnings}=await bare({clock:()=>now,handleRequest:async()=>{now+=RETRY_BUDGET_MS-19;throw conflict('40001');}}).send();
+  assert.equal(attempts(events),1);assert.deepEqual(pauses,[]);assert.deepEqual(warnings,[]);
+  assert.equal(res.status,409);assert.equal(res.body,JSON.stringify({error:'Concurrent update; retry the request',code:'RETRY_TRANSACTION'}));
+  assert.deepEqual(audits,[{message:'Concurrent request rolled back'}]);
+  // The budget counts from the first attempt: a second attempt that would end the pause past it is not started either.
+  now=0;let runs=0;
+  const second=await bare({clock:()=>now,handleRequest:async()=>{runs++;now+=runs===1?100:RETRY_BUDGET_MS-110;throw conflict('40001');}}).send();
+  assert.equal(attempts(second.events),2);assert.equal(second.pauses.length,1);assert.equal(second.res.status,409);
+});
+
+test('retry delay: the default worker interval keeps both retries inside the budget',async()=>{
+  let runs=0;
+  const {res,pauses,events}=await bare({workerIntervalMs:250,handleRequest:async(req,res)=>{if(++runs<3)throw conflict('40P01');json(res,200,{runs});}}).send();
+  assert.equal(res.status,200);assert.equal(attempts(events),3);
+  assert.equal(pauses.length,2);for(const ms of pauses)assert.ok(ms>=270&&ms<=330,String(ms));
+  assert.ok(250+80+250+80<RETRY_BUDGET_MS,'the budget never disables retry at the default interval by itself');
+});
+
+test('retry delay: a configured worker interval whose pause exceeds the budget means no retry and one 409',async()=>{
+  const {res,events,pauses,audits}=await bare({workerIntervalMs:RETRY_BUDGET_MS,clock:()=>0,handleRequest:async()=>{throw conflict('40001');}}).send();
+  assert.equal(attempts(events),1);assert.deepEqual(pauses,[]);
+  assert.equal(res.status,409);assert.equal(JSON.parse(res.body).code,'RETRY_TRANSACTION');assert.equal(audits.length,1);
+});
+
+test('once per request: a limiter or admission runs on the first attempt only; a rejected run is tried again',async()=>{
+  let counted=0,runs=0;
+  const {res}=await bare({handleRequest:async(req,res)=>{
+    const allowed=await oncePerRequest(req,'password-change',async()=>{counted++;return true;});
+    if(++runs===1)throw conflict('40001');
+    json(res,allowed?200:429,{runs});
+  }}).send('/api/me/password',{method:'POST'});
+  assert.equal(res.status,200);assert.equal(runs,2);assert.equal(counted,1,'one limiter count for one request');
+  let tries=0;runs=0;
+  const again=await bare({handleRequest:async(req,res)=>{
+    runs++;
+    await oncePerRequest(req,'limit',async()=>{if(++tries===1)throw conflict('40P01');return true;});
+    json(res,200,{tries});
+  }}).send();
+  assert.equal(again.res.status,200);assert.equal(tries,2,'the failed first run is not reused');
+  const first={},second={};
+  assert.equal(oncePerRequest(first,'k',()=>1),1);assert.equal(oncePerRequest(first,'k',()=>2),1);assert.equal(oncePerRequest(second,'k',()=>3),3);
+});
+
+test('market proxy admission counts once for a retried request',async()=>{
+  let admitted=0,runs=0;
+  const proxy={enabled:true,admit:()=>{admitted++;return {ok:true};},now:()=>Date.now(),
+    symbols:async()=>({list:[{symbol:'BTCUSDT'}],retrieved_at:Date.now(),stale:false})};
+  const {res,events}=await bare({
+    handleRequest:async(req,res)=>{
+      await marketOhlcvRoutes(req,res,new URL(req.url,'http://localhost'),null,json,{actor:{id:'u1'},proxy});
+      if(++runs===1)throw conflict('40001');
+    },
+    runMarketDeferred:async fn=>fn()
+  }).send('/api/market/symbols');
+  assert.equal(runs,2);assert.equal(admitted,1,'one admission for one request');
+  assert.equal(events.filter(event=>event==='deferred').length,1);
+  assert.equal(res.status,200);assert.equal(JSON.parse(res.body).count,1);
+});
+
+const stream=text=>Readable.from([Buffer.from(text,'utf8')]);
+test('body reads: an attempt that changes the body leaves the next attempt the body as received',async()=>{
+  const seen=[];let runs=0;
+  const {res}=await bare({preload:preloadJson,handleRequest:async(req,res)=>{
+    const body=await readJson(req);
+    seen.push(JSON.stringify(body));
+    body.name='changed';body.list.push(4);delete body.keep;
+    if(++runs===1)throw conflict('40001');
+    json(res,200,{runs});
+  }}).send('/api/bots',{method:'POST',request:stream('{"name":"bot","list":[1,2,3],"keep":true}')});
+  assert.equal(res.status,200);
+  assert.deepEqual(seen,['{"name":"bot","list":[1,2,3],"keep":true}','{"name":"bot","list":[1,2,3],"keep":true}']);
+  // Nesting that JSON.parse accepts but structuredClone and JSON.stringify refuse still reads on every attempt.
+  const depth=5000,deep='{"a":'+'['.repeat(depth)+']'.repeat(depth)+'}';runs=0;
+  const nested=await bare({preload:preloadJson,handleRequest:async(req,res)=>{
+    let value=(await readJson(req)).a,levels=0;while(Array.isArray(value)){levels++;value=value[0];}
+    if(++runs===1)throw conflict('40001');
+    json(res,200,{levels});
+  }}).send('/api/bots',{method:'POST',request:stream(deep)});
+  assert.equal(nested.res.status,200,nested.res.body);assert.equal(JSON.parse(nested.res.body).levels,depth);
+});
+
+test('body reads: preloading keeps http-safety size limits and error answers',async()=>{
+  const cases=[['x'.repeat(65537),'/api/bots'],['{"a":"'+'x'.repeat(2*1024*1024)+'"}','/api/quant/pine-bridge/analyze'],
+    ['{"a":','/api/bots'],['[1]','/api/bots'],['null','/api/bots'],['','/api/bots']];
+  for(const [text,url] of cases){
+    const maxBytes=url==='/api/bots'?65536:2*1024*1024;
+    const expected=await readStream(stream(text),{maxBytes}).then(value=>({value}),error=>({error:error.message}));
+    const req=Object.assign(stream(text),{url,method:'POST'});
+    const actual=await preloadJson(req).then(()=>readJson(req)).then(value=>({value}),error=>({error:error.message}));
+    assert.deepEqual(actual,expected,url+' '+text.slice(0,12));
+  }
+  const {res,events,audits}=await bare({preload:preloadJson,handleRequest:async()=>{}}).send('/api/bots',{method:'POST',request:stream('x'.repeat(65537))});
+  assert.equal(res.status,400);assert.equal(res.body,JSON.stringify({error:'Payload too large'}));
+  assert.deepEqual(events,[],'no transaction for a refused body');assert.deepEqual(audits,[{message:'Request validation failed'}]);
+});
+
+test('retry: every header a failed attempt added is gone and earlier headers keep their values',async()=>{
+  let runs=0;const written=[];
+  const {res}=await bare({
+    auth:{checkOrigin(){},async prepareSession(req){req.sessionAlive=true;}},
+    handleRequest:async(req,res)=>{
+      runs++;written.push(res.getHeaderNames().sort());
+      res.setHeader('x-attempt-'+runs,'1');res.setHeader('x-request-base','attempt'+runs);
+      if(runs===1){res.setHeader('x-debug','leak');res.setHeader('content-location','/api/stale');throw conflict('40001');}
+      json(res,200,{runs});
+    }
+  }).send();
+  assert.equal(res.status,200);
+  assert.deepEqual(written,[[],[]],'the second attempt starts with no header from the first');
+  assert.equal(res.written['x-attempt-1'],undefined);assert.equal(res.written['x-debug'],undefined);assert.equal(res.written['content-location'],undefined);
+  assert.equal(res.written['x-attempt-2'],'1');
+  // A header set before the first attempt survives every reset with its original value.
+  runs=0;
+  const kept=await bare({handleRequest:async(req,res)=>{
+    runs++;
+    if(runs===1){res.setHeader('x-request-id','changed');res.removeHeader('x-frame-options');throw conflict('40001');}
+    json(res,200,{id:res.getHeader('x-request-id'),frame:res.getHeader('x-frame-options')});
+  }}).send('/api/bots',{preset:{'x-request-id':'r1','x-frame-options':'DENY'}});
+  assert.equal(kept.res.status,200);assert.deepEqual(JSON.parse(kept.res.body),{id:'r1',frame:'DENY'});
+  assert.equal(kept.res.written['x-request-id'],'r1');
+});
+
+test('final catch: an error after headers were sent neither throws nor touches headers',async()=>{
+  const {res,audits}=await bare({handleRequest:async(req,res)=>{res.setHeader('set-cookie','late=1');res.writeHead(200,{});res.end('{}');throw new Error('after send');}}).send('/api/bots',{method:'POST'});
+  assert.equal(res.headersSent,true);assert.equal(res.status,200,'the sent answer stands');
+  assert.deepEqual(audits,[{message:'Request validation failed'}]);
+  await assert.doesNotReject(bare({handleRequest:async(req,res)=>{res.writeHead(200,{});throw conflict('40001');}}).send());
+});
+
+test('retry log: one line per retry with the attempt number and SQLSTATE only',async()=>{
+  const cookie='robot_session='+'f'.repeat(64);
+  const {warnings,res}=await bare({handleRequest:async()=>{throw conflict('40P01');}})
+    .send('/api/me/secret-path?email=u1@example.test',{method:'POST',request:{headers:{cookie},body:'{"password":"hunter2"}'}});
+  assert.equal(res.status,409);
+  assert.deepEqual(warnings,['API request attempt 1 rolled back with SQLSTATE 40P01; retrying','API request attempt 2 rolled back with SQLSTATE 40P01; retrying']);
+  for(const line of warnings)for(const secret of ['secret-path','example.test','robot_session','hunter2','/api/'])assert.ok(!line.includes(secret),secret);
+  const single=await bare({handleRequest:async()=>{throw conflict('55P03');}}).send();
+  assert.deepEqual(single.warnings,[],'no line without a retry');
+});
+
+test('final catch: a handler that throws null or a non-object still gets one answer and one audit row',async()=>{
+  for(const thrown of [null,undefined,'plain text',42]){
+    const label=String(thrown);
+    const {res,events,audits,pauses}=await bare({handleRequest:async()=>{throw thrown;}}).send('/api/bots',{method:'POST'});
+    assert.equal(res.status,400,label);assert.equal(res.body,JSON.stringify({error:'Request failed'}),label);
+    assert.equal(attempts(events),1,label);assert.deepEqual(pauses,[],label);
+    assert.deepEqual(audits,[{message:'Request validation failed'}],label);
+  }
+});
+
+test('retry delay: a worker interval that leaves no pause inside the budget is logged once at creation, without request data',async()=>{
+  const off=bare({workerIntervalMs:RETRY_BUDGET_MS-79,handleRequest:async(req,res)=>{json(res,200,{ok:true});}});
+  const first=await off.send('/api/me/secret-path',{method:'POST'}),second=await off.send();
+  const line='API request retry is effectively off: a '+(RETRY_BUDGET_MS-79)+' ms worker interval plus up to 80 ms jitter exceeds the '+RETRY_BUDGET_MS+' ms retry budget';
+  assert.deepEqual(first.warnings,[line]);assert.deepEqual(second.warnings,[line],'once per dispatcher, not per request');
+  assert.ok(!line.includes('/api/'));
+  for(const workerIntervalMs of [undefined,250,RETRY_BUDGET_MS-80]){
+    let runs=0;
+    const {warnings,res}=await bare({workerIntervalMs,clock:()=>0,handleRequest:async(req,res)=>{if(++runs===1)throw conflict('40001');json(res,200,{runs});}}).send();
+    assert.equal(res.status,200,String(workerIntervalMs));
+    assert.deepEqual(warnings,['API request attempt 1 rolled back with SQLSTATE 40001; retrying'],String(workerIntervalMs));
+  }
 });

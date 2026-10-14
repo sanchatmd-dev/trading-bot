@@ -125,6 +125,7 @@ function pipeline(store){
     const set=new Map();
     const res={headersSent:false,status:null,written:null,body:null,
       setHeader(name,value){set.set(name.toLowerCase(),value);},removeHeader(name){set.delete(name.toLowerCase());},
+      getHeaders(){return Object.fromEntries(set);},getHeaderNames(){return [...set.keys()];},
       writeHead(status,extra){this.status=status;this.written={...Object.fromEntries(set),...extra};this.headersSent=true;},
       end(body){this.body=body===undefined?'':String(body);}};
     await dispatch({url,method:'GET',headers,socket:{remoteAddress:'127.0.0.1'}},res);

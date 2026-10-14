@@ -145,5 +145,5 @@ test('server.js wires the extracted dispatcher and keeps no raw-target routing d
   assert.ok(!server.includes("auth.limit('request:'"),'no direct shared request bucket remains');
   for(const source of [server,dispatch])assert.ok(!/req\.url\.startsWith\(/.test(source),'no decision on the raw target');
   assert.match(server,/createRequestLimits\(\{limit: auth\.limit\.bind\(auth\), sourceKey: loginKey\}\)/);
-  assert.match(server,/http\.createServer\(createDispatcher\(\{newsWindowsPort,requestLimits,auth,database,store,preloadJson,handleRequest,runMarketDeferred\}\)\)/);
+  assert.match(server,/http\.createServer\(createDispatcher\(\{newsWindowsPort,requestLimits,auth,database,store,preloadJson,handleRequest,runMarketDeferred,\s*workerIntervalMs:config\.workerIntervalMs\}\)\)/);
 });

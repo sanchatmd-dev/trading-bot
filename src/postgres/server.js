@@ -16,7 +16,7 @@ import { supportedBrokers, capabilities, validateCredentials } from '../adapters
 import {booleanValue, clientIp} from '../http-safety.js';
 import {readJson,preloadJson} from './http.js';
 import {createRequestLimits} from './request-limits.js';
-import {json,createDispatcher} from './request-dispatch.js';
+import {json,createDispatcher,LEGACY_QUANT_PATHS,oncePerRequest} from './request-dispatch.js';
 import {overviewRoute} from './overview.js';
 import { PostgresDatabase } from './db.js';
 import {Auth} from './auth.js';
@@ -132,7 +132,8 @@ const requireAdmin = async (req, res, url) => {
   return user;
 };
 const safeLimit = url => Math.min(500, Math.max(1, Number(url.searchParams.get('limit') || 100)));
-const quantPaths = new Set(['/api/quant/health', '/api/quant/backtest', '/api/quant/optimize', '/api/quant/risk-preview']);
+// The dispatcher runs these paths once: their upstream call cannot be rolled back.
+const quantPaths = LEGACY_QUANT_PATHS;
 async function quantBridge(req, res, url, actor, store) {
   if (req.method === 'GET' && url.pathname === '/api/quant/runs') {
     const requestedBot = String(url.searchParams.get('bot_id') || actor.id);
@@ -160,6 +161,8 @@ async function quantBridge(req, res, url, actor, store) {
       await store.db.prepare(`INSERT INTO quant_research_runs(run_id, user_id, bot_id, indicators_config, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'RUNNING', ?, ?)`).run(runId, actor.id, botId, JSON.stringify(bodyObj), Date.now(), Date.now());
   }
 
+  // The upstream run cannot be undone by a rollback, so a serialization failure after this point is never retried.
+  res.phase2External = true;
   const result = await new Promise((resolve, reject) => {
     const upstream = http.request({hostname: '127.0.0.1', port: 7654, path: url.pathname.replace('/api', ''), method: req.method,
       headers: bodyStr ? {'content-type': 'application/json', 'content-length': Buffer.byteLength(bodyStr)} : {}, timeout: 30000}, response => {
@@ -543,7 +546,8 @@ async function userRoutes(req, res, url) {
     });
   }
   if (req.method === 'POST' && url.pathname === '/api/me/password') {
-    if (!(await auth.limit('password-change:' + actor.id, 10))) return json(res, 429, {
+    // One count per request: a retried attempt reuses the first attempt's limiter answer.
+    if (!(await oncePerRequest(req, 'password-change', () => auth.limit('password-change:' + actor.id, 10)))) return json(res, 429, {
       error: 'Too many verification attempts'
     });
     const body = await readJson(req),
@@ -964,7 +968,8 @@ async function handleRequest(req, res) {
     });
   }
 }
-const server=http.createServer(createDispatcher({newsWindowsPort,requestLimits,auth,database,store,preloadJson,handleRequest,runMarketDeferred}));
+const server=http.createServer(createDispatcher({newsWindowsPort,requestLimits,auth,database,store,preloadJson,handleRequest,runMarketDeferred,
+  workerIntervalMs:config.workerIntervalMs}));
 server.requestTimeout = 15000;
 server.headersTimeout = 10000;
 server.maxRequestsPerSocket = 100;

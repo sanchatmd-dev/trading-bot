@@ -1,6 +1,7 @@
 import {fail} from '../pine-bridge/source.js';
 import {exact} from '../money.js';
 import {SYMBOL_RE,KLINE_INTERVALS} from './market-proxy.js';
+import {oncePerRequest} from './request-dispatch.js';
 
 /**
  * Public market data for the Overview chart and the PF-3 market-data readiness item.
@@ -410,7 +411,8 @@ export async function marketOhlcvRoutes(req,res,url,reader,json,{actor=null,prox
   const refuse=(status,code,extra={})=>json(res,status,{error:ERROR_TEXT[status],code,...extra});
   const admit=()=>{
     if(!actor?.id)throw fail('MARKET_PIPELINE_INVALID',500);
-    const admitted=proxy.admit(actor.id);
+    // One admission per request: a retried attempt reuses the first answer, so a rerun never spends a second slot.
+    const admitted=oncePerRequest(req,'market-admit',()=>proxy.admit(actor.id));
     if(admitted.ok)return true;
     refuse(429,admitted.code,{retry_after_seconds:admitted.retry_after_seconds});
     return false;
