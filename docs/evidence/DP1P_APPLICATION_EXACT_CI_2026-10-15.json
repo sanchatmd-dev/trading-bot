@@ -1,0 +1,65 @@
+{
+  "schema": "dp1p-application-exact-ci-v1",
+  "observedAt": "2026-10-14T23:46:36.974Z",
+  "commit": "70ea7f92a4547845291d32d836d3c740a0e7f1b7",
+  "status": "ROOT_ACCEPTED_EXACT_APPLICATION_CI",
+  "total": 9,
+  "otherApps": 0,
+  "rows": [
+    [
+      "container",
+      "completed",
+      "success"
+    ],
+    [
+      "gate",
+      "completed",
+      "success"
+    ],
+    [
+      "postgres",
+      "completed",
+      "success"
+    ],
+    [
+      "quant (ubuntu-latest)",
+      "completed",
+      "success"
+    ],
+    [
+      "quant (windows-latest)",
+      "completed",
+      "success"
+    ],
+    [
+      "scope",
+      "completed",
+      "success"
+    ],
+    [
+      "scope",
+      "completed",
+      "success"
+    ],
+    [
+      "test (ubuntu-latest)",
+      "completed",
+      "success"
+    ],
+    [
+      "test (windows-latest)",
+      "completed",
+      "success"
+    ]
+  ],
+  "rawSha256": "cbdde78499155be8ff8f299b6ca4d97315dc6b1ae64de501e33cadf3bb5a9804",
+  "summarySha256": "99117c8cbf8e91893bd5cd992596e8879a3279f92f4bf12e28b15f1177d32061",
+  "scope": "Exact pushed application commit only. This does not certify the DP1-P tool or authorize deployment.",
+  "precedingEvidence": "DP1P_S2_LOCAL_AND_APPLICATION_COMMIT_2026-10-15.json",
+  "remaining": [
+    "Full DP1-P tool proof, old-schema SQL and applicable Linux/reserve checks",
+    "Fresh production observations and effect-specific gates",
+    "Successful staging 24-hour check",
+    "Existing unresolved policy decisions, including D11"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "schema": "dp1p-s2-source-and-candidate-v1",
+  "at": "2026-10-14T23:45:18.478Z",
+  "status": "ROOT_ACCEPTED_BOUNDED_LOCAL_SOURCE_REVIEW_ONLY",
+  "tool": {
+    "hostSha256": "6301993b2a68001835ba0cc988c9bc0e885730ff86ce275db9b20f76a8cfa7b4",
+    "libSha256": "9a68031ee3d4e741b06c964a8bd4de8842a142676d5c786395e440689fb0516f",
+    "bundleSha256": "ba9c286cd4f18bad4bd05a4ebf76f42bcae6a9cba0b4f70606b36ffa3d1082bd",
+    "reviewSha256": "d206fbf5ff8052a96f63230284a98807972164ee5e27710a0f3be83efa822586",
+    "correction": "Unknown-S3 post now binds the second API observation to PC pins and retains that identity. The original false-pass reproduction remains preserved.",
+    "independent": {
+      "apiControls": 14,
+      "semanticMutantsKilled": 5,
+      "secondObservationExecutions": 6,
+      "apiDownRollbackPreserved": true,
+      "oldBaseCertificate": {
+        "workerClosure": 12,
+        "apiClosure": 20,
+        "publicFiles": 19
+      }
+    },
+    "limits": [
+      "Static import closure is not arbitrary in-memory or dependency payload attestation.",
+      "Bounded before/after sampling does not remove filesystem races; concurrent deployment exclusion remains required.",
+      "Source review and mocked checks do not establish full tool acceptance or host readiness."
+    ]
+  },
+  "application": {
+    "commit": "70ea7f92a4547845291d32d836d3c740a0e7f1b7",
+    "branch": "codex-worker/o3w1-p-g1",
+    "pushed": true,
+    "parent": "32bc24f1f90df0b269ae2affcdd1c9a9d1889cec",
+    "changedPaths": [
+      "src/postgres/ledger.js",
+      "test/paper-exit-cost.test.js",
+      "test/postgres/paper-exit-cost.test.mjs"
+    ],
+    "workingFilesReverified": 182,
+    "quantFilesPreserved": 41,
+    "rawEqualCommittedFiles": 11,
+    "onlyCRLFtoLF": 171,
+    "integrationManifestSha256": "8a402deec0982ee2f1190e1994f57352335c2c017cd6737ae5701ec8cd90b501",
+    "historicalCarry": "Qualified prior local JavaScript 124/124 and PostgreSQL 67/67, not a fresh run or time-of-run attestation.",
+    "exactCommitCi": "RUNNING; not accepted yet"
+  },
+  "open": [
+    "Full synthetic proof on frozen tool inputs",
+    "Old-schema SQL verification",
+    "Applicable Linux signal and reserve verification",
+    "Exact application commit CI",
+    "Fresh production identity, configuration, dependency and database checks",
+    "Successful staging 24-hour observation no earlier than 2026-10-15T22:17:53.400Z",
+    "Existing policy decisions including provisional D11"
+  ],
+  "effects": "Local candidate commit/push only. No new host effect or production deployment."
+}

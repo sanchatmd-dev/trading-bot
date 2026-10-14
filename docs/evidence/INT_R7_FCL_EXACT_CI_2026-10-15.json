@@ -1,0 +1,30 @@
+{
+  "schema": "int-r7-fcl-exact-ci-v1",
+  "status": "PASS",
+  "commit": "837a9534fe3c5a90af013729278a7c51d7e32ec7",
+  "observedAt": "2026-10-14T23:35:04.436Z",
+  "source": "GitHub commit check-runs API",
+  "rawResponseSha256": "e8a8f57c403ddf2991f4451c234a01b91fbc9577ba5f6692d6ab69394cbd5ffb",
+  "summarySha256": "99117c8cbf8e91893bd5cd992596e8879a3279f92f4bf12e28b15f1177d32061",
+  "checks": 9,
+  "otherApps": 0,
+  "allHeadsMatch": true,
+  "allCompletedSuccessfully": true,
+  "rows": [
+    ["container", "completed", "success"],
+    ["gate", "completed", "success"],
+    ["postgres", "completed", "success"],
+    ["quant (ubuntu-latest)", "completed", "success"],
+    ["quant (windows-latest)", "completed", "success"],
+    ["scope", "completed", "success"],
+    ["scope", "completed", "success"],
+    ["test (ubuntu-latest)", "completed", "success"],
+    ["test (windows-latest)", "completed", "success"]
+  ],
+  "scope": "Exact pushed integration commit, including final FCL2 fixture and documented Git newline normalization",
+  "limitations": [
+    "CI success does not erase the earlier local INT-R7 cleanup failure or the separate scopes of FCL1 and FCL2 evidence.",
+    "This is not host deployment, production candidate CI, or the staging 24-hour observation.",
+    "Per-pool runtime replication-role enforcement and independent DP1-P S2 review remain open."
+  ]
+}
