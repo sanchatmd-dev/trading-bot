@@ -1,0 +1,280 @@
+{
+  "schema": "dp1s-derived-linux-signal-evidence-v1",
+  "dateBangkok": "2026-10-15",
+  "commit": "5698fa1bd49c772e6be7ef481c4b1e70e1c64036",
+  "runId": 38635206165,
+  "jobId": 116096555167,
+  "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38635206165/job/116096555167",
+  "jobConclusion": "success",
+  "relatedCi": {
+    "allNineChecksConclusion": "success",
+    "windows": {
+      "jobId": 116096554959,
+      "tests": 1440,
+      "pass": 1412,
+      "fail": 0,
+      "skipped": 28,
+      "durationMs": 349915.9143
+    },
+    "postgres": {
+      "jobId": 116096554931,
+      "tests": 732,
+      "pass": 726,
+      "fail": 0,
+      "skipped": 6,
+      "durationMs": 591132.138951
+    }
+  },
+  "suite": {
+    "tests": 1440,
+    "pass": 1416,
+    "fail": 0,
+    "skipped": 24,
+    "durationMs": 327528.54389
+  },
+  "signalTestDurationMs": 4792.019173,
+  "source": {
+    "originalSha256": "6b94d5156f8c5df29182cbc80eb1e081fb865f0453237dc86a5c4ecaaa79fd80",
+    "derivedSha256": "cda624db47c1c131541365e6f67c620172b7acf8d26ae074af1828b668acbb36",
+    "change": "Two parentheses wrap the generated collect function object return. Original source remains immutable."
+  },
+  "scenarios": [
+    {
+      "scenario": "slow-stop",
+      "state": {
+        "active": "active",
+        "pid": 2,
+        "result": "success",
+        "starts": 1
+      },
+      "status": 124,
+      "signal": null,
+      "error": null,
+      "report": {
+        "code": "TERMINATED",
+        "phase": "EFFECT",
+        "effects": {
+          "pending": "NOT_ATTEMPTED",
+          "archive": "ARCHIVED",
+          "reload": "RELOADED",
+          "stop": "STOPPED_VERIFIED",
+          "start": "ATTEMPTED"
+        },
+        "startLimitWaitMs": 0
+      },
+      "events": [
+        {
+          "event": "archive",
+          "at": 1792011017008
+        },
+        {
+          "event": "reload",
+          "at": 1792011017008
+        },
+        {
+          "event": "stop-begin",
+          "at": 1792011017035
+        },
+        {
+          "event": "stop-end",
+          "at": 1792011018137
+        },
+        {
+          "event": "start-begin",
+          "at": 1792011018164
+        },
+        {
+          "event": "start-end",
+          "at": 1792011018184
+        },
+        {
+          "event": "term-handler",
+          "at": 1792011018187
+        },
+        {
+          "event": "report",
+          "at": 1792011018217
+        }
+      ]
+    },
+    {
+      "scenario": "first-start",
+      "state": {
+        "active": "active",
+        "pid": 2,
+        "result": "success",
+        "starts": 1
+      },
+      "status": 124,
+      "signal": null,
+      "error": null,
+      "report": {
+        "code": "TERMINATED",
+        "phase": "EFFECT",
+        "effects": {
+          "pending": "NOT_ATTEMPTED",
+          "archive": "ARCHIVED",
+          "reload": "RELOADED",
+          "stop": "STOPPED_VERIFIED",
+          "start": "ATTEMPTED"
+        },
+        "startLimitWaitMs": 0
+      },
+      "events": [
+        {
+          "event": "archive",
+          "at": 1792011018255
+        },
+        {
+          "event": "reload",
+          "at": 1792011018255
+        },
+        {
+          "event": "stop-begin",
+          "at": 1792011018280
+        },
+        {
+          "event": "stop-end",
+          "at": 1792011018300
+        },
+        {
+          "event": "start-begin",
+          "at": 1792011018326
+        },
+        {
+          "event": "start-end",
+          "at": 1792011019428
+        },
+        {
+          "event": "term-handler",
+          "at": 1792011019431
+        },
+        {
+          "event": "report",
+          "at": 1792011019461
+        }
+      ]
+    },
+    {
+      "scenario": "start-limit-recovery",
+      "state": {
+        "active": "active",
+        "pid": 2,
+        "result": "success",
+        "starts": 2
+      },
+      "status": 124,
+      "signal": null,
+      "error": null,
+      "report": {
+        "code": "TERMINATED",
+        "phase": "EFFECT",
+        "effects": {
+          "pending": "NOT_ATTEMPTED",
+          "archive": "ARCHIVED",
+          "reload": "RELOADED",
+          "stop": "STOPPED_VERIFIED",
+          "start": "ATTEMPTED"
+        },
+        "startLimitWaitMs": 1900
+      },
+      "events": [
+        {
+          "event": "archive",
+          "at": 1792011019499
+        },
+        {
+          "event": "reload",
+          "at": 1792011019500
+        },
+        {
+          "event": "stop-begin",
+          "at": 1792011019525
+        },
+        {
+          "event": "stop-end",
+          "at": 1792011019546
+        },
+        {
+          "event": "start-begin",
+          "at": 1792011019576
+        },
+        {
+          "event": "start-end",
+          "at": 1792011019597
+        },
+        {
+          "event": "term-handler",
+          "at": 1792011020170
+        },
+        {
+          "event": "start-begin",
+          "at": 1792011021523
+        },
+        {
+          "event": "start-end",
+          "at": 1792011021544
+        },
+        {
+          "event": "report",
+          "at": 1792011021576
+        }
+      ]
+    },
+    {
+      "scenario": "start-limit-exhaustion",
+      "state": {
+        "active": "failed",
+        "pid": 0,
+        "result": "start-limit-hit",
+        "starts": 1
+      },
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "report": {
+        "code": "RB_START_LIMIT_WAIT",
+        "phase": "EFFECT",
+        "effects": {
+          "pending": "NOT_ATTEMPTED",
+          "archive": "ARCHIVED",
+          "reload": "RELOADED",
+          "stop": "STOPPED_VERIFIED",
+          "start": "ATTEMPTED"
+        },
+        "startLimitWaitMs": 0
+      },
+      "events": [
+        {
+          "event": "archive",
+          "at": 1792011021614
+        },
+        {
+          "event": "reload",
+          "at": 1792011021614
+        },
+        {
+          "event": "stop-begin",
+          "at": 1792011021640
+        },
+        {
+          "event": "stop-end",
+          "at": 1792011021661
+        },
+        {
+          "event": "start-begin",
+          "at": 1792011021687
+        },
+        {
+          "event": "start-end",
+          "at": 1792011021707
+        },
+        {
+          "event": "report",
+          "at": 1792011021710
+        }
+      ]
+    }
+  ],
+  "scope": "Synthetic Linux GNU timeout and Node signal ordering with selected frozen r5 helpers. No real systemd, PostgreSQL, deployment, host capacity or production 268-second grace acceptance."
+}
