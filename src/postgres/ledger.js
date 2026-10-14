@@ -198,15 +198,23 @@ export const ledgerMethods={
           // F10 Fix: Exits deduct precise lot cost (allocatedCost). O3: lot cost per unit has 18 places, so the sum of
           // take x entry_price can have up to 36. Round once per partial exit; a full close removes the whole remainder.
           const costBefore=D(current.cost_basis);
-          if(quantity.isZero()&&allocatedCost.gt(0)&&allocatedCost.minus(costBefore).abs().gt('1e-12')){
-            // Full close: the whole position cost is removed either way; record that the lots disagreed with it.
-            await this.audit(row.user_id,'ledger.cost_divergence',row.trade_id,{signalId:row.id,symbol:row.symbol,lotCost:amount(allocatedCost),positionCost:amount(costBefore),atFlat:true});
+          if(quantity.isZero()&&allocatedCost.gt(0)&&(remainingToClose.isZero()?allocatedCost.minus(costBefore).abs():allocatedCost.minus(costBefore)).gt('1e-12')){
+            // Full close: the whole position cost is removed either way. When the lots covered the whole exit, record any
+            // difference above 1e-12 between their cost and the position cost. When uncovered quantity remains, the rest of
+            // the position cost is unlotted cost (G1), so record only lots that cost more than the whole position.
+            await this.audit(row.user_id,'ledger.cost_divergence',row.trade_id,{signalId:row.id,symbol:row.symbol,lotCost:amount(allocatedCost),positionCost:amount(costBefore),atFlat:true,uncoveredQuantity:exact(remainingToClose)});
           }
-          let removed = quantity.isZero()
-            ? costBefore
-            : allocatedCost.gt(0)
-              ? D(amount(allocatedCost))
-              : D(amount(costBefore.mul(qty).div(current.quantity)));
+          let removed;
+          if(quantity.isZero())removed=costBefore;
+          else if(remainingToClose.gt(0)&&allocatedCost.gt(0)){
+            // G1: a FIFO exit larger than the open lots also sells quantity that has no lot (positions opened before lots
+            // were recorded). Every open lot was consumed, so the rest of the position before this exit is unlotted; the
+            // uncovered part is charged at that rest's average cost. Lots with zero cost carry no cost information, so like
+            // no lots at all they take cost x qty / quantity below, whatever the exit size.
+            const unlottedQty=quantity.plus(remainingToClose),unlottedCost=costBefore.minus(allocatedCost);
+            removed=D(amount(allocatedCost.plus(unlottedCost.mul(remainingToClose).div(unlottedQty))));
+          }
+          else removed=allocatedCost.gt(0)?D(amount(allocatedCost)):D(amount(costBefore.mul(qty).div(current.quantity)));
 
           cost=costBefore.minus(removed);
           if(cost.lt(0)){
@@ -248,7 +256,7 @@ export const ledgerMethods={
       const status=execution.status==='NEW'?'SUBMITTED':execution.status,fillPrice=total.gt(0)?quote.div(total):null;
       const slip=fillPrice?(order.side==='BUY'?fillPrice.minus(order.price):D(order.price).minus(fillPrice)).div(order.price).mul(10000):null;
       // Rule marker for replay: written only when this call booked a fill, so status-only updates keep the broker response as it was.
-      const response=qty.gt(0)?{...(execution.raw&&typeof execution.raw==='object'&&!Array.isArray(execution.raw)?execution.raw:{}),ledgerRule:'paper-exit-cost-o3-v1'}:execution.raw;
+      const response=qty.gt(0)?{...(execution.raw&&typeof execution.raw==='object'&&!Array.isArray(execution.raw)?execution.raw:{}),ledgerRule:'paper-exit-cost-v2'}:execution.raw;
       await this.complete(row.id,status,{response,orderId:execution.orderId||saved.order_id,fillPrice:fillPrice?amount(fillPrice):null,slippageBps:slip?amount(slip):null,appliedQuantity:exact(total),appliedQuote:exact(quote)});
       await this.audit(row.user_id,'order.updated',row.trade_id,{status,mode:'PAPER',quantity:exact(total)});
       await this.db.prepare('INSERT INTO notification_outbox(user_id,subject,body) VALUES(?,?,?)').run(row.user_id,'Robot trade '+status+': '+row.symbol,'Trade '+row.trade_id+'\nMode PAPER\nFill '+(fillPrice?amount(fillPrice):'-'));
