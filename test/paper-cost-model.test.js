@@ -114,12 +114,14 @@ test('SELL does not reserve acquisition fees',async()=>{
   assert.equal(result.reservedNotional,'0');assert.equal(result.reservedFees,'0');assert.equal(result.feeReservationUnknown,false);
 });
 for(const uncertain of [false,true])test('withdrawal preserves reserved fees'+(uncertain?' when authority is unknown':''),async()=>{
-  let writes=0;
-  const store={db:{prepare(){return {async get(){return {id:'bot'};},async run(){writes++;}};}},
+  // The F4 fence upsert is the one write expected before the refusal, and the request rolls it back; any other write fails.
+  let writes=0,fences=0;
+  const store={db:{isTransaction:true,prepare(sql){return {async get(){return {id:'bot'};},async run(){if(sql.includes('public.paper_ledger_fence'))fences++;else writes++;}};}},
     async paperAccount(){return {configuredEquity:'100',configuredBalance:'100',cash:'100',bookEquity:'100',positionCost:'0'};},
     async exposure(){return {reservedNotional:'90',reservedFees:'5',feeReservationUnknown:uncertain};}};
   await assert.rejects(recordFunding(store,'bot',{equities:{'binance-global':'100'},balances:{'binance-global':'90'}}),/withdrawal exceeds unreserved funds/);
   assert.equal(writes,0);
+  assert.equal(fences,1);
 });
 
 test('evidence validator explicitly accepts V2 and continues rejecting unknown versions',()=>{

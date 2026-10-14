@@ -5,12 +5,31 @@ const day=()=>new Date().toISOString().slice(0,10);
 const scope=row=>[row.user_id,row.account_id,row.execution_mode];
 const pending="('PROCESSING','SUBMITTED','PARTIALLY_FILLED','UNKNOWN')";
 
+// F4 fence (design FD1-r2): one version row per Bot. Every Paper writer and every request that stores a decision taken from
+// the Bot's Paper cash runs this after it holds the Bot's users row lock and before it reads Paper state. A SERIALIZABLE
+// request whose snapshot predates a fill that committed while it waited for that lock then fails here with 40001 instead of
+// deciding on cash that misses the fill. Never call it before the users lock: a request holding the fence while waiting for
+// the users row, against a worker holding the users row while waiting for the fence, deadlocks. Schema-qualified, because a
+// pg_temp table of the same name would shadow an unqualified one. Outside a transaction the users lock and the fence would
+// each autocommit and order nothing, so a caller without one is refused.
+export async function bumpPaperLedgerFence(db,userId){
+  if(!db.isTransaction)throw new Error('Paper ledger fence requires a transaction');
+  await db.prepare('INSERT INTO public.paper_ledger_fence AS fence(user_id,version,updated_at) VALUES(?,1,?) ON CONFLICT(user_id) DO UPDATE SET version=fence.version+1,updated_at=excluded.updated_at').run(userId,Date.now());
+}
+
 export async function recordFunding(store,userId,policy){
-  await store.db.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').get(userId);
-  for(const broker of brokers){
-    const current=await store.paperAccount(userId,broker),equity=D(policy.equities?.[broker]??0),cash=D(policy.balances?.[broker]??equity);
+  // Every broker is validated before the lock and the fence, so an invalid policy stays a 400 and never becomes a 409.
+  const targets=brokers.map(broker=>{
+    const equity=D(policy.equities?.[broker]??0),cash=D(policy.balances?.[broker]??equity);
     exact(equity);exact(cash);
     if(cash.lt(0)||equity.lt(cash))throw new Error('Invalid Paper capital');
+    return {broker,equity,cash};
+  });
+  await store.db.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').get(userId);
+  // Every call, even one that changes no capital (decision D3): a save that races a fill is then a 409, never a stale write.
+  await bumpPaperLedgerFence(store.db,userId);
+  for(const {broker,equity,cash} of targets){
+    const current=await store.paperAccount(userId,broker);
     const ed=equity.minus(current.configuredEquity),cd=cash.minus(current.configuredBalance);
     if(ed.isZero()&&cd.isZero())continue;
     const exposure=await store.exposure({id:0,user_id:userId,account_id:broker+':primary',execution_mode:'PAPER',symbol:'',broker});
@@ -103,6 +122,9 @@ export const ledgerMethods={
       const saved=await this.db.prepare('SELECT * FROM signals WHERE id=? FOR UPDATE').get(row.id);
       if(!saved||saved.user_id!==row.user_id)throw new Error('Signal ownership mismatch');
       if(['FILLED','CANCELED','REJECTED','EXPIRED'].includes(saved.status))return;
+      // F4 fence after the Bot and signal locks, on every call that goes on to write: a funding or run request that waited
+      // for the Bot lock while this fill committed then sees a newer fence version and rolls back with 40001.
+      await bumpPaperLedgerFence(this.db,row.user_id);
       const total=D(execution.executedQty),quote=D(execution.quoteQty),fee=D(execution.deltaFeeQuote??0);
       if(total.lt(saved.applied_quantity)||quote.lt(saved.applied_quote)||total.gt(order.quantity)||fee.lt(0))throw new Error('Invalid or regressing cumulative broker fill');
       if(execution.status==='FILLED'&&!total.eq(order.quantity))throw new Error('FILLED response does not match order quantity');

@@ -19,6 +19,7 @@ import {createRequestLimits} from './request-limits.js';
 import {json,createDispatcher,LEGACY_QUANT_PATHS,oncePerRequest} from './request-dispatch.js';
 import {overviewRoute} from './overview.js';
 import { PostgresDatabase } from './db.js';
+import {requirePaperLedgerFence} from './paper-ledger-fence.js';
 import {Auth} from './auth.js';
 import {D,Money,amount,exact} from '../money.js';
 import { hasPermission, adminPermission } from '../permissions.js';
@@ -54,6 +55,8 @@ const newsFeedDigest=parseNewsFeedToken(process.env.NEWS_FEED_TOKEN_SHA256);
 const database = new PostgresDatabase();
 await database.runtimeLock();
 await database.verifySchema();
+// The Paper ledger fence must exist before any request runs; the throw refuses startup (never read report.ok).
+await requirePaperLedgerFence(database);
 const store = new Store(database);
 const pineBridgeEnabled=process.env.PINE_BRIDGE_ENABLED==='1';
 const pineCaptureEnabled=process.env.PINE_BRIDGE_CAPTURE_ENABLED==='1';
@@ -332,8 +335,8 @@ async function userRoutes(req, res, url) {
     if (lifecycleAction === 'run' && !Object.values(currentPolicy.equities || {}).some(value => D(exact(value)).gt(0))) {
       return json(res, 409, { error: 'Cannot run a bot without funded Paper capital' });
     }
-    const paperAccounts = await store.paperAccounts(lifecycleBotId);
-    const result = await store.transitionBotState(lifecycleBotId, lifecycleAction, currentPolicy, paperAccounts);
+    // A run from SETUP reads the Paper accounts inside the transition, after the Bot lock and the F4 fence.
+    const result = await store.transitionBotState(lifecycleBotId, lifecycleAction, currentPolicy);
     await store.audit(actor.id, `bot.lifecycle.${lifecycleAction}`, null, { botId: lifecycleBotId, state: result.state, run_id: result.run_id });
     return json(res, 200, result);
   }

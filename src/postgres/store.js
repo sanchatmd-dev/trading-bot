@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { transaction } from './db.js';
 import { hashToken, randomId } from '../security.js';
-import { ledgerMethods, recordFunding } from './ledger.js';
+import { ledgerMethods, recordFunding, bumpPaperLedgerFence } from './ledger.js';
 import { invalidateAuth } from './auth-store.js';
 export class Store {
   constructor(database) {
@@ -227,7 +227,7 @@ export class Store {
       return { rearm_id: rearmId, bot_id: userId, broker, previous_loss_streak: before, loss_streak: 0, at, session_state: 'STOPPED' };
     });
   }
-  async transitionBotState(userId, action, currentPolicy, paperAccounts) {
+  async transitionBotState(userId, action, currentPolicy) {
     const VALID = {
       SETUP:   { run: 'RUNNING' },
       RUNNING: { pause: 'PAUSED', stop: 'STOPPED' },
@@ -242,11 +242,16 @@ export class Store {
       const now = Date.now();
       if (next === 'RUNNING') {
         const runId = session.run_id || randomUUID();
-        // Snapshot capital: {broker: cash amount} from paper accounts at this moment
-        const capital = {};
-        for (const a of (paperAccounts || [])) capital[a.broker] = a.cash;
+        let initialCapital = session.initial_capital;
+        if (!initialCapital) {
+          // A run from SETUP stores the Paper cash it reads as initial_capital ({broker: cash}), so it takes the F4 fence after
+          // the users lock and reads the accounts only then. A resume keeps the stored snapshot and reads no Paper state.
+          await bumpPaperLedgerFence(this.db, userId);
+          const capital = {};
+          for (const a of await this.paperAccounts(userId)) capital[a.broker] = a.cash;
+          initialCapital = JSON.stringify(capital);
+        }
         const lockedPolicy = session.locked_policy || JSON.stringify(currentPolicy);
-        const initialCapital = session.initial_capital || JSON.stringify(capital);
         const startedAt = session.started_at || now;
         await this.db.prepare(
           `INSERT INTO bot_sessions(user_id,state,run_id,locked_policy,initial_capital,started_at,stopped_at,updated_at)

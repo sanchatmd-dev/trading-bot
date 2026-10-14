@@ -1,4 +1,5 @@
 import {PostgresDatabase} from './db.js';
+import {requirePaperLedgerFence} from './paper-ledger-fence.js';
 import {Store} from './store.js';
 import {ExecutionWorker,MailWorker} from './worker.js';
 import {config,assertProductionConfig} from '../config.js';
@@ -7,7 +8,7 @@ import {PineBridgeService} from './pine-bridge.js';
 import {PineBridgeWorker} from './pine-bridge-worker.js';
 import {PineMarketWaitWorker} from './pine-market-wait-worker.js';
 assertProductionConfig();
-const db=new PostgresDatabase();await db.runtimeLock();await db.verifySchema();
+const db=new PostgresDatabase();await db.runtimeLock();await db.verifySchema();await requirePaperLedgerFence(db);
 const store=new Store(db),worker=new ExecutionWorker({store,config}),mail=new MailWorker({store,config,notifier:new EmailNotifier(config.smtp)});
 let pineBridge,marketWait;
 if(process.env.PINE_BRIDGE_ENABLED==='1') {
