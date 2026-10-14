@@ -1,0 +1,122 @@
+{
+  "schema": "dp1s-systemctl-diagnostics-v1",
+  "scope": "Read-only staging diagnostics; no deployment, pins or service/database changes",
+  "previousPc": "DP1S_LOCAL_VERIFICATION_PC1_2026-10-15.json",
+  "diagnostics": [
+    {
+      "job": "dp1s-show-diagnostic-1",
+      "startedAt": "2026-10-14T21:33:30.075Z",
+      "finishedAt": "2026-10-14T21:33:30.135Z",
+      "payloadSha256": "64f27161b5acef757ad90a5060c4fdff39ce72fd3363e99bdef21adf88e2b563",
+      "receiptSha256": "612b3aef4563c499c5cdb6d5482a7dfa57c1ce8cf734c8b513f5382972e3ed7e",
+      "verdict": "DIAGNOSTIC_COLLECTED",
+      "sshConnections": 1,
+      "transportExitCode": 0,
+      "transportElapsedMs": 988,
+      "systemctlCommands": 8,
+      "list": {
+        "exitCode": 0,
+        "requestedUniqueUnits": 192
+      },
+      "originalBulkShow": {
+        "exitCode": 1,
+        "stdoutBytes": 0,
+        "stderrBytes": 140,
+        "stderrSha256": "e249d95a39bfcdb7122e5e0ba024d3159c7948aa767d38c4471a6ee39d78d6c7",
+        "blocks": 0,
+        "missingIds": 192,
+        "failure": "SYSTEMCTL_SHOW",
+        "failureGate": "Nonzero command exit, before the block-count guard"
+      },
+      "individualUnitFacts": {
+        "queries": 6,
+        "passed": 6,
+        "failed": 0
+      },
+      "interpretation": "The failure is localized to the bulk invocation. Empty output explains the observed count mismatch; it does not establish a separate parser defect. The underlying reason for exit code 1 remains unknown from this diagnostic.",
+      "goConsumed": true,
+      "activeTransportAfterReturn": false
+    },
+    {
+      "job": "dp1s-show-diagnostic-2",
+      "startedAt": "2026-10-14T21:42:37.615Z",
+      "finishedAt": "2026-10-14T21:42:37.832Z",
+      "payloadSha256": "0cdfff66d97f3cb47fd1fed95656ca1be7f13012e5fa33f2055f0a276844a69b",
+      "receiptSha256": "eea40330c24f281b4a1ad6f60b8dc10c8ab744e5df1374e42974aabbc5d59100",
+      "verdict": "DIAGNOSTIC_COLLECTED",
+      "sshConnections": 1,
+      "transportExitCode": 0,
+      "transportElapsedMs": 1159,
+      "systemctlCommands": 3,
+      "requestSet": {
+        "count": 192,
+        "uniqueCount": 192,
+        "hash": "37ee5125079bb8062ae9e08b4e62f82fe7f3a27e5caf28f275723a566b11e16d",
+        "orderedHash": "699400f7a08df2bcf146c85393e816718f87b300426b4fcb16147d49c947f692",
+        "duplicateListEntryCount": 0,
+        "leadingDashCount": 2,
+        "leadingDashHash": "40bb99e155d72c6ae0c2dd869dad02ff48f827cbabfeda9e3ca4410a495322c5"
+      },
+      "originalBulkShow": {
+        "label": "bulk_original",
+        "commandSha": "8b2d20eaf80266e45375cbc0d914cd874bc16a176a497efbb16c8cbe07d6693d",
+        "rc": 1,
+        "error": null,
+        "timedOut": false,
+        "stdoutBytes": 0,
+        "stdoutSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrBytes": 140,
+        "stderrSha": "e249d95a39bfcdb7122e5e0ba024d3159c7948aa767d38c4471a6ee39d78d6c7",
+        "stderrClass": "INVALID_OPTION",
+        "invalidOptionDot": true,
+        "requestedCount": 192,
+        "requestedUniqueCount": 192,
+        "requestedHash": "37ee5125079bb8062ae9e08b4e62f82fe7f3a27e5caf28f275723a566b11e16d",
+        "blockCount": 0,
+        "uniqueIdCount": 0,
+        "uniqueIdHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "missingIdCount": 192,
+        "duplicateIdCount": 0,
+        "unrequestedIdCount": 0,
+        "missingIdFieldCount": 0,
+        "needDaemonReloadNonNoCount": 0,
+        "parseCountMismatch": true
+      },
+      "comparisonBulkShow": {
+        "label": "bulk_comparison",
+        "commandSha": "3050fce66649a3cd5bfa1cd3892007d96f38179c6fbe4dcb69891f1f6a4e12a1",
+        "rc": 0,
+        "error": null,
+        "timedOut": false,
+        "stdoutBytes": 12618,
+        "stdoutSha": "4ce8c42587260f75836f0d50ce6b7dcc1054323efc131fc485a5e97e2c752d4c",
+        "stderrBytes": 0,
+        "stderrSha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrClass": null,
+        "invalidOptionDot": false,
+        "requestedCount": 192,
+        "requestedUniqueCount": 192,
+        "requestedHash": "37ee5125079bb8062ae9e08b4e62f82fe7f3a27e5caf28f275723a566b11e16d",
+        "blockCount": 192,
+        "uniqueIdCount": 192,
+        "uniqueIdHash": "37ee5125079bb8062ae9e08b4e62f82fe7f3a27e5caf28f275723a566b11e16d",
+        "missingIdCount": 0,
+        "duplicateIdCount": 0,
+        "unrequestedIdCount": 0,
+        "missingIdFieldCount": 0,
+        "needDaemonReloadNonNoCount": 0,
+        "parseCountMismatch": false
+      },
+      "sameRequestedSet": true,
+      "interpretation": "Two requested unit names start with a dash. The original invocation reports INVALID_OPTION with the invalid-option-dot flag. The comparison places properties before -- and returns all 192 requested unique IDs with no missing, duplicate or unrequested IDs and no pending reload. This supports an option-parsing defect in the original invocation. The comparison changes both property order and the option terminator; it is not an isolated test of either change alone.",
+      "goConsumed": true,
+      "activeTransportAfterReturn": false
+    }
+  ],
+  "nextGate": "Prepare a separate runtime candidate using the successful argument form, preserve all original guards and evidence, obtain independent review and focused verification, then consider a fresh PC GO. No PC acceptance or pins have been granted.",
+  "limits": [
+    "Dated samples do not prove continuous health.",
+    "Diagnostic collection is not PC acceptance.",
+    "No raw host names, unit names, paths, environment or command output is published."
+  ]
+}
