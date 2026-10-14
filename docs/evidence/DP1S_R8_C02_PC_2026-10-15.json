@@ -1,0 +1,123 @@
+{
+  "schema": "dp1s-r8-c02-pc-v1",
+  "scope": "Local r8 acceptance and one read-only staging PC; no deployment or host effect",
+  "targetCommit": "4d8682203ae19b68d0cad3252bdb5200d90f2e51",
+  "attemptId": "c02",
+  "localProof": {
+    "cleanupLinks": 0,
+    "sha256": "29272eba48cd48f4c445d9fbb4e99ea7c483e247ca089d3e4812976a5733c4ce",
+    "passed": 137,
+    "exitCode": 0,
+    "skipped": 0,
+    "wallSeconds": 738.3815494,
+    "argvMutantsKilled": 2,
+    "failed": 0,
+    "cleanupListeners": 0,
+    "focusedPassed": 9,
+    "cleanupOwnedProcesses": 0,
+    "cases": 137,
+    "focusedCases": 9,
+    "frozenFilesUnchanged": 32
+  },
+  "inspector": {
+    "initialFinding": "P2: raw stdout was not linked to receipt facts",
+    "independentPassed": 32,
+    "independentCases": 32,
+    "corrected": true,
+    "sha256": "0d05e7a34aeefb29d132663325b29335c1c4b4b9f0af8b6c3360c6aeccef467c"
+  },
+  "pc": {
+    "outerOk": true,
+    "closure": {
+      "files": 37,
+      "rawEqual": 37,
+      "lfOnly": 0,
+      "differ": 0,
+      "missing": 0,
+      "mtimeAfterStart": 0,
+      "ctimeAfterStartInfo": 0,
+      "ok": true,
+      "bad": []
+    },
+    "liveFailures": [],
+    "baseline": {
+      "faults": 0,
+      "maxSignalId": 213,
+      "maxAuditId": 52863,
+      "systemic": 0,
+      "executionFault": 0,
+      "costClamped": 0,
+      "costDivergence": 0,
+      "exposedLots": 0
+    },
+    "identityFailures": [],
+    "transportMs": 1713,
+    "otherNeedReload": {
+      "units": 192,
+      "needReload": 0
+    },
+    "rawSha256": "fff61a70dd727edf973695ab5696e8960e19aa6b94c0a6d65e60f07b29a55d0a",
+    "namespace": {
+      "incoming": "ABSENT",
+      "partial": "ABSENT",
+      "newTree": "ABSENT",
+      "layer": "ABSENT",
+      "layerPending": "ABSENT",
+      "layerArchive": "ABSENT",
+      "stage": "BEFORE_S2"
+    },
+    "pass": true,
+    "load": {
+      "load1": 0.02,
+      "memAvailableMiB": 6777
+    },
+    "health": {
+      "status": "OK",
+      "http": 200,
+      "ok": true,
+      "portSource": "ENV_FILE"
+    },
+    "phase": "DONE",
+    "rc": 0,
+    "depsSha": "0f373df17c655ee36a32c089e5257c72f433bcadaac689fc26985019fcd86eda",
+    "verdict": "PC_PASS",
+    "heavy": {
+      "heavyUnits": 0,
+      "unknownRunning": 1,
+      "heavyProcs": 0,
+      "otherPayloads": 0
+    },
+    "job": "dp1s-pc-1",
+    "queue": {
+      "heartbeatFreshRows": 1,
+      "heartbeatAgeMs": 240,
+      "processing": 0,
+      "liveMode": 0,
+      "queued": 0,
+      "heartbeatStaleRows": 0
+    },
+    "apiSameDb": true,
+    "startedAt": "2026-10-14T22:02:15.497Z",
+    "receiptSha256": "e3d7b5f0b3e0ca26482eb2522e718c6c3eb80227402e22cc32e97408a0a4f95c",
+    "sshConnections": 1,
+    "code": "PC_PASS",
+    "finishedAt": "2026-10-14T22:02:16.156Z"
+  },
+  "pins": {
+    "pinnedSourceSha": "1d82e2e419837da53ce73e0cfe16e83b4ccbbed75a2c3abab2b05ee154584dda",
+    "sha256": "026231c3a8c0c3d039be6107779d823d9d61ffd99467517d46a2333dc8fe713b",
+    "namespaceSha": "f4447e5932272622822189f1d0becbe19377509831a068629db458c6118d49fc",
+    "localOnly": true
+  },
+  "rootReview": {
+    "acceptedFor": "Local pins and separately authorized S2",
+    "unknownRunning": "Count 1 remains informational under the unchanged reviewed guard. No heavy pattern or other payload was observed; service identity is unknown. No claim that all services were classified."
+  },
+  "next": "Each S2 mkdir, transfer, extraction, S3 switch and post-check needs its own fresh exact GO. No effect GO is issued by this evidence.",
+  "limitations": [
+    "Dated PC does not establish continuous health",
+    "No staging switch, production deployment or database migration yet",
+    "Historical guard mutations and synthetic Linux signal evidence are retained separately and were not rerun as r8 results",
+    "No automatic repair or Live activation"
+  ]
+}
