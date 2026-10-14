@@ -1,6 +1,7 @@
 import pg from 'pg';
 import {AsyncLocalStorage} from 'node:async_hooks';
 import fs from 'node:fs/promises';
+import {ensurePaperLedgerFence} from './paper-ledger-fence.js';
 
 // int8 is used for timestamps and identifiers only. NUMERIC keeps pg's string parser.
 const parseInteger=value=>{const number=Number(value);if(!Number.isSafeInteger(number))throw new Error('Integer exceeds JavaScript safe range');return number;};
@@ -158,11 +159,14 @@ export class PostgresDatabase {
           `);
         }
         if(row?.version!==14)throw new Error('Unsupported PostgreSQL schema');
+        // The F4 fence table has no schema version of its own: every successful path ends by ensuring it in this transaction.
+        await ensurePaperLedgerFence(this);
         return;
       }
       const tables=(await this.query("SELECT count(*)::int n FROM pg_tables WHERE schemaname='public'")).rows[0].n;
       if(tables)throw new Error('Refusing to initialize a nonempty database without a schema version');
       await this.query(await fs.readFile(new URL('./schema.sql',import.meta.url),'utf8'));
+      await ensurePaperLedgerFence(this);
     });
   }
   async verifySchema(){
