@@ -1,0 +1,112 @@
+{
+  "schema": "r7b-j3r3-local-evidence-v1",
+  "asOf": "2026-10-12T19:57:29.639Z",
+  "status": "LOCAL_ACCEPTED_NOT_HOST_PASS",
+  "packageId": "7787906649c97e9debf92c05faa2c04d1fb8f4a025a27f4f646c3ae30dd407ee",
+  "tarSha256": "439e73e2c381f4572ce9c0cd85d83871031f6d49110b2eaf954062f655fdbdf5",
+  "runnerManifestSha256": "de4d9fcae7ff9d9ca42a73f181de9896d720502ca400cd0b79fc20d367fa83ec",
+  "scope": "H15 selected m1 reader effect-pre declaration; product, tool and adapters unchanged",
+  "sourceDeltaFromRc13": [
+    "harness/h15-cases.mjs"
+  ],
+  "authorChecks": 29,
+  "independentM1Checks": 15,
+  "independentRetentionChecks": 3,
+  "packagePayloadFiles": 435,
+  "tarEntries": 488,
+  "reproducibleBuild": true,
+  "gateChecks": 26,
+  "healthChecks": 22,
+  "contractChecks": 28,
+  "j3NegativeChecks": 9,
+  "focusedOpsChecks": 11,
+  "runnerChecks": 31,
+  "independentPrepNegativeChecks": 7,
+  "independentPrepIncompleteCheck": "Prior recovery test setup called bindMissing after the driver already bound the plan; assertion not reached.",
+  "rootRecoveryChecks": 1,
+  "rootRecoveryResult": "HARD_STOP_PLAN_FILE_TAMPERED",
+  "seams": [
+    "M0 preparation used the existing WINDOW_CLOSED exemption",
+    "t1Of used a controlled synthetic donor snapshot",
+    "Existing startup readiness seam",
+    "In-memory SQL responder"
+  ],
+  "originalHostInnerCause": "UNKNOWN",
+  "realPostgres": false,
+  "hostCalls": 0,
+  "hostGoIssued": false,
+  "usage": {
+    "weeklyUsedPercent": 21,
+    "weeklyRemainingPercent": 79,
+    "shortWindow": "UNKNOWN",
+    "ownerRemainingFloorPercent": 2
+  },
+  "estimates": {
+    "wholeProjectPercent": 60,
+    "prototypePercent": 75,
+    "kind": "engineering estimates, not gate scores"
+  },
+  "freezes": [
+    {
+      "namespace": "codex-r7b-linux-pg-v8.6",
+      "files": 72,
+      "sha256": "01aba74b8c692346c6db4377e598184b9e21fec0c94d12469440467607b7b2c6"
+    },
+    {
+      "namespace": "codex-r7b-h15-effect-pre-fix",
+      "files": 10,
+      "sha256": "15c912597d93285f3880876122a99e6d72e6cbeeb668cd81f4388086238472da"
+    },
+    {
+      "namespace": "codex-r7b-rc14-integration",
+      "files": 8,
+      "sha256": "3e286b2118469249f3edb859cf21ef954d7d00250ce3ae0c7306a22729062eb7"
+    },
+    {
+      "namespace": "codex-r7b-lpg-pkg-rc14",
+      "files": 20,
+      "sha256": "4c2c076c9815163b0db801a961a7dc19fbf83b6422f9d6a6e9b1f54c4f175a57"
+    },
+    {
+      "namespace": "codex-r7b-rc14-audit",
+      "files": 84,
+      "sha256": "2b6ee4bc36405dc3107db8573447f759a6770dddc1fe594e029dc6ec74ab5429"
+    },
+    {
+      "namespace": "codex-r7b-j3r3-gate",
+      "files": 8,
+      "sha256": "bc16ceed3846d5607f631baf58d5cc3e6dcf00f73d32243411b27e11ae4d60c6"
+    },
+    {
+      "namespace": "codex-r7b-j3r3-ops-prep",
+      "files": 472,
+      "sha256": "0a250a5d365e5c80c4ea90eb8838eb857959a18aa8feec31e2e083a6668315c5"
+    },
+    {
+      "namespace": "codex-r7b-j3r3-prep-work",
+      "files": 54,
+      "sha256": "20d177a81a1978d0ec976c615d44d04954eef5ca11607d7c9ad5615ae5196f84"
+    },
+    {
+      "namespace": "codex-r7b-j3r3-runner",
+      "files": 23,
+      "sha256": "395130462ff4400ce4f61e7b0abe2b557749aa94ed2b2dae58ab6f55a11187a8"
+    },
+    {
+      "namespace": "codex-r7b-j3r3-audit",
+      "files": 19,
+      "sha256": "60c075f883cba0dab4907aa5cf7d56a817129566cd7ef13d86f3984527644479"
+    },
+    {
+      "namespace": "codex-r7b-j3r3-root-review",
+      "files": 4,
+      "sha256": "b8feb10213bfd387667818bafa350721f2cd50cf795577bbd7d482cbe16a30ad"
+    },
+    {
+      "namespace": "codex-r7b-j3r3-go",
+      "files": 3,
+      "sha256": "b2ebf1b6ede549791b2b39d52d80267eeca4f14cb19795e333f9dacc9b3a0d8b"
+    }
+  ],
+  "acceptanceSha256": "4fce92c75761cdb4481205302607438405f4c0161e2fe00c0ec66e9129f21315"
+}

@@ -1,0 +1,274 @@
+{
+  "schema": "r7b-j3r3-host-evidence-v1",
+  "asOf": "2026-10-12T20:14:57.661Z",
+  "status": "FAIL_RESOLUTION_REFUSED",
+  "jobId": "r7b-lpg-20261012-j3-e8808246",
+  "packageId": "7787906649c97e9debf92c05faa2c04d1fb8f4a025a27f4f646c3ae30dd407ee",
+  "scope": "One isolated J3 attempt; not full R7 acceptance",
+  "executionPass": false,
+  "bundleAccepted": false,
+  "postflight": {
+    "mode": "FAILURE_RECORD",
+    "accepted": false,
+    "executionPass": false,
+    "scope": "FAILURE_PATH_POINT_IN_TIME_HEALTH_ONLY",
+    "ancestorsComparedWithPrestart": true
+  },
+  "contacts": 17,
+  "starts": 1,
+  "retries": 0,
+  "stopExecuted": false,
+  "limitsExceeded": [],
+  "cases": [
+    {
+      "code": null,
+      "endMs": 5466,
+      "evidenceSha256": null,
+      "id": "H-12b",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 200253440,
+      "peakRoleBackends": 4,
+      "peakTasks": 23,
+      "startMs": 1670,
+      "status": "PASS"
+    },
+    {
+      "code": null,
+      "endMs": 8354,
+      "evidenceSha256": null,
+      "id": "H-14",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 228298752,
+      "peakRoleBackends": 4,
+      "peakTasks": 23,
+      "startMs": 5466,
+      "status": "PASS"
+    },
+    {
+      "code": null,
+      "endMs": 14230,
+      "evidenceSha256": null,
+      "id": "H-15",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 278085632,
+      "peakRoleBackends": 4,
+      "peakTasks": 24,
+      "startMs": 8354,
+      "status": "PASS"
+    }
+  ],
+  "fullSuiteEvidence": null,
+  "caseEvidenceHashesAbsent": true,
+  "manualRetentionSatisfied": false,
+  "outerChecks": [
+    {
+      "code": null,
+      "detail": null,
+      "id": "unitList",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "cgroupDir",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "processes",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "postmasterFiles",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "sysv",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "scratchInventory",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "runtimeDirs",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "out",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "scratchInventoryFinal",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "protectedServices",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "hostTools",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "inputPostcheck",
+      "ok": true
+    },
+    {
+      "code": null,
+      "detail": null,
+      "id": "ioLimits",
+      "ok": true
+    }
+  ],
+  "lockReleased": true,
+  "recoveryComplete": true,
+  "ownRuntimeRemoved": true,
+  "health": {
+    "status": 200,
+    "ok": true,
+    "mode": "PAPER_ONLY",
+    "queued": 0,
+    "listenerMatchesApiPidBeforeAfter": true,
+    "flags": {
+      "QUANT_RESEARCH_ENABLED": "OFF",
+      "QUANT_RESEARCH_FOUNDATION_ENABLED": "OFF",
+      "QUANT_PREFLIGHT_ENABLED": "OFF",
+      "QUANT_PROFILE_V2_ENABLED": "OFF",
+      "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": "OFF"
+    },
+    "researchInactive": true
+  },
+  "peaks": {
+    "backendsTotal": 8,
+    "clientBackends": 4,
+    "cpuUsageUsec": 10995465,
+    "diskFinalBytes": 69632,
+    "diskPeakBytes": 73056256,
+    "memoryPeakBytesJob": 280551424,
+    "memoryPeakBytesUnit": 323637248,
+    "memoryPeakSource": "memory.peak",
+    "roleBackends": 4,
+    "sampleErrors": 0,
+    "sampleIntervalMs": 250,
+    "samples": 46,
+    "tasksPeak": 24,
+    "tasksPeakSource": "pids.peak",
+    "wallMs": 14264
+  },
+  "jobTaskPeak": "UNKNOWN",
+  "resolution": {
+    "ancestors": {
+      "count": 4,
+      "fileMode": "0400",
+      "postCheck": {
+        "checked": 4,
+        "differences": 0
+      },
+      "schema": "r7b-lpg-ancestors-v1",
+      "sha256": "44fbb01b6c9dac65ddf78f6ac363c0a4b94c979aaa9d1b26abaaf4c00f4a2316"
+    },
+    "resolution": {
+      "attestation": {
+        "count": 4,
+        "reason": null,
+        "sha256": "44fbb01b6c9dac65ddf78f6ac363c0a4b94c979aaa9d1b26abaaf4c00f4a2316",
+        "state": "active"
+      },
+      "auditCorrupt": 0,
+      "auditOverflow": 0,
+      "auditRecords": 832,
+      "auditSha256": "9d83d44a521d06b7db2636ce6906e2f314a381dc72d407adf407dfe31f1b0aeb",
+      "canaryRefused": 1,
+      "denied": {
+        "attestedAnswers": 502,
+        "overflow": 0,
+        "records": [
+          {
+            "api": "lstatSync",
+            "count": 83,
+            "permission": "FileSystemRead",
+            "resourceClass": "PACKAGE_ANCESTOR:1"
+          },
+          {
+            "api": "promises.lstat",
+            "count": 84,
+            "permission": "FileSystemRead",
+            "resourceClass": "PACKAGE_ANCESTOR:1"
+          },
+          {
+            "api": "lstatSync",
+            "count": 83,
+            "permission": "FileSystemRead",
+            "resourceClass": "PACKAGE_ANCESTOR:2"
+          },
+          {
+            "api": "promises.lstat",
+            "count": 84,
+            "permission": "FileSystemRead",
+            "resourceClass": "PACKAGE_ANCESTOR:2"
+          },
+          {
+            "api": "promises.lstat",
+            "count": 84,
+            "permission": "FileSystemRead",
+            "resourceClass": "SCRATCH_ANCESTOR:1"
+          },
+          {
+            "api": "promises.lstat",
+            "count": 84,
+            "permission": "FileSystemRead",
+            "resourceClass": "SCRATCH_ANCESTOR:2"
+          }
+        ],
+        "unansweredAttested": 0
+      },
+      "hashMismatch": 0,
+      "killRefused": 0,
+      "kind": "resolution",
+      "loadedFiles": 141,
+      "optionalAbsent": 1,
+      "outsideRoot": 0,
+      "packageId": "7787906649c97e9debf92c05faa2c04d1fb8f4a025a27f4f646c3ae30dd407ee",
+      "refused": 0,
+      "resolveErrors": 0,
+      "schema": "r7b-lpg-confine-v1",
+      "scopeDrift": 0,
+      "socketRefused": 0,
+      "threads": 5
+    },
+    "schema": "r7b-lpg-resolution-audit-v2",
+    "source": "tee"
+  },
+  "sourceObservation": "Pinned driver.mjs:966 requires threads <= 2; retained resolution reports 5. Exact source diagnosis and correction require separate review.",
+  "runFreezeSha256": "e634734f186d86529eee096ef08f37e72b704beca83e91028d29a3998bd1329d",
+  "runFiles": 109,
+  "finalAcceptanceSha256": "51da0f385d3e9a42acc140d513f3e1380b8af45df5621e63e8398b2a12133119",
+  "reviewSha256": "31b1fa67a9bf092550f46c9784ef79a05a75098c7d5b8b58f56873a872a3a5bf",
+  "usage": {
+    "weeklyUsedPercent": 27,
+    "weeklyRemainingPercent": 73,
+    "shortWindow": "UNKNOWN",
+    "ownerRemainingFloorPercent": 2
+  },
+  "next": "Local diagnosis of the resolution contract; separately reviewed fix and fresh root GO under existing owner instruction. J4 waits for J3 acceptance."
+}

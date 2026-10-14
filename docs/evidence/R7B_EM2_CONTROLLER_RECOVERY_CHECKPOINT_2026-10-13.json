@@ -1,0 +1,68 @@
+{
+  "schema": "r7b-em2-controller-recovery-checkpoint-v1",
+  "status": "STOPPED_FOR_OWNER_HANDOFF_PARTIAL_FAILURE_NOT_ACCEPTED",
+  "asOf": "2026-10-13T00:22:04.376Z",
+  "executionReady": false,
+  "releaseAuthorized": false,
+  "pins": {
+    ".qa-local/codex-r7b-em2-controller-recovery-v2/FILES.json": "efebdca5b14c6fee470e74f13a7fc38fdc2151395a7e42f03880caa5260a0214",
+    ".qa-local/codex-r7b-em2-controller-recovery-v2/FIRST-FAILURE.json": "e1a0bd78dd25fa84853c95cae7607797d6b6c329a194b1b933923781986b589b",
+    ".qa-local/codex-r7b-em2-controller-recovery-diagnostic/RESULTS.json": "2919b05842cdc0dc3638e72d8ad71e4a40f8c392ebda6409370c264c4529ca26",
+    ".qa-local/codex-r7b-em2-controller-recovery-diagnostic/REPORT.md": "9a521ade8432e4a8eadbb94bdc5dba7300f33d8a179abd5c2eaa4257da916b44",
+    ".qa-local/codex-r7b-em2-controller-recovery-diagnostic/CHECKPOINT.md": "379c87dac0e6d0ce339903b3287edc9ea3f66dbea5869085ae106e3574d3db48",
+    ".qa-local/codex-r7b-em2-decisions/HELD-REPORT-ACCEPTANCE.json": "6dd35ac25a04c22108b988dc412c66d2e730dbf29051fe50e6ae5301189bf583"
+  },
+  "completed": {
+    "passedCases": 10,
+    "m4a": [
+      "valid",
+      "missing",
+      "malformed",
+      "expired"
+    ],
+    "m4b": [
+      "valid",
+      "missing",
+      "malformed",
+      "expired"
+    ],
+    "xs": [
+      "valid",
+      "missing"
+    ]
+  },
+  "failure": {
+    "mode": "xs",
+    "operationalAllowlist": "malformed",
+    "status": "REFUSED",
+    "code": "CONTROLLER_REPARSE_PROOF_UNAVAILABLE",
+    "claims": 0,
+    "fakeTransports": 0,
+    "cause": "UNKNOWN"
+  },
+  "unrun": [
+    "xs with correctly pinned expired operational allowlist",
+    "Independent controller recovery matrix verification",
+    "Further replay/refusal and recovery completion/retention coverage"
+  ],
+  "diagnostic": {
+    "kind": "One read-only snapshot of the exact failed archive",
+    "status": "PASS",
+    "probeElapsedMs": 533.119,
+    "paths": 51,
+    "timeoutMs": 5000,
+    "timeoutChanged": false,
+    "inputsChanged": false,
+    "hookRestored": true,
+    "fullControllerRetry": false,
+    "historicalCauseEstablished": false
+  },
+  "limits": [
+    "Passed cases use trusted synthetic callbacks and supplied prior handoffs; no host effects or operational authority.",
+    "The accepted controller and native core are unchanged. The archive retains the valid allowlist while the operational callback varies.",
+    "A diagnostic harness manifest-schema failure occurred before import/probe and was fixed only in the owned diagnostic script.",
+    "A later successful snapshot does not certify the earlier proof phase or close the original failure.",
+    "All assigned child sessions are closed. Owner requested stop and handoff; no further retry or implementation ran afterward."
+  ],
+  "next": "Incoming Claude revalidates checkout, ownership, account usage and the stopped evidence; then prepares a fresh bounded instrumented XS/malformed case if continuing the authorized Roadmap work."
+}

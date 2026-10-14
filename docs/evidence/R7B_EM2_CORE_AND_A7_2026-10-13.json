@@ -1,0 +1,86 @@
+{
+  "schema": "r7b-em2-core-a7-evidence-v1",
+  "status": "LOCAL_CORE_AND_NARROW_A7_EVIDENCE_ACCEPTED",
+  "asOf": "2026-10-12T22:20:42.859Z",
+  "executionReady": false,
+  "decisionSha256": {
+    "CORE": "eb133c77b1260a3ec196f7cc36dc33a25dc600e5d16cfedb0a1d745f67422e72",
+    "A7": "b662963d848e5e0abe2ae13d396a2a394eba229cee2f24bf75888f92b437ee0d"
+  },
+  "decisions": {
+    "CORE": {
+      "schema": "r7b-em2-local-core-acceptance-v1",
+      "status": "LOCAL_INJECTED_IO_RELEASE_CORE_ACCEPTED",
+      "asOf": "2026-10-12T22:20:17.962Z",
+      "executionReady": false,
+      "realAdapterReleased": false,
+      "codeSha256": "6e240b3184f8a059c999729fb389b2702337dd236f232dc6928bf3eef321908b",
+      "freezeSha256": "a7bdaf4c5c92e5eea60598fb87620e2ed4c0d9072f219c1b9078f3f057cef305",
+      "identitySha256": "ef26e8e03c946b00bce5b296db65403ab342a8774601cd945a77345087601acf",
+      "sourceDeltaSha256": "308ec93800de7f3e8da56a45bafecee9cfc6616e882101771247e7cba0671060",
+      "independentReportSha256": "6f5a879699111c072cc0bb59f5c43e6d872211c3362b76a0233702bee2fc986d",
+      "independentOriginalChecksSha256": "90a6c6e4f9678c9a621e24aab2b2cc4e915abce85b0c6d29ac3b94084048466d",
+      "independentFocusedSha256": "86d39453d60c4daf63a52bf1e097a66c07936f84de052e11593cb72a77394d10",
+      "authorChecks": {
+        "core": 37,
+        "nativePositiveAndRetention": 13,
+        "completion": 12
+      },
+      "independentChecks": {
+        "originalRegression": 11,
+        "additionalFocused": 12
+      },
+      "scope": "Strict certificate admission and native m0/xm local driver flow with synthetic authority, fake transport and in-memory lease; corrected unknown outcome, raw retention and aggregate disposition",
+      "acceptedCorrections": [
+        "Incomplete transport retains consumed state and lease; aggregate reports nonpass.",
+        "Known native host receipt and observed effects remain retained; aggregate is separate.",
+        "Clean known failed host exit1 can complete and release; status uses original host pass.",
+        "Raw retention failure takes precedence; hints require confirmed completion and aggregate pass."
+      ],
+      "sourceApplicability": "Exact inverse reconstructs accepted v3.1. Sole executable delta is lib.mjs; identity metadata is separately regenerated. Native host functions, gate, prerequisites, receipt implementation, payload implementation and budgets remain unchanged.",
+      "limits": [
+        "Certificates reference reviewed evidence hashes; external file verification and durable controller are separate work.",
+        "FULL m1/m2a runtime hints and complete native STAGE-to-FULL chain remain unrun in this acceptance.",
+        "Wider close/xs/retry/C1/noEffect matrix, persistent restart/reconciliation, real filesystem durability and real dispatch authority remain open.",
+        "Synthetic native m0/xm and fake transport prove no host behavior, current health, installation, admission or measurement authority."
+      ],
+      "next": "Complete native synthetic STAGE-to-FULL proof and TEST_ONLY persistent controller, then independent review; real executor remains locked."
+    },
+    "A7": {
+      "schema": "r7b-em2-a7-local-evidence-acceptance-v1",
+      "status": "LOCAL_REPORTED_REPRODUCTION_EVIDENCE_ACCEPTED",
+      "asOf": "2026-10-12T22:14:40.053Z",
+      "executionReady": false,
+      "independentChecks": 40,
+      "reportedResultSha256": "6329a24d990d58cc12d11f58c46ebd339e47b1399b710ff1319cd4c8ee301fdb",
+      "reportedResultMatchesReference": true,
+      "storedBars": 515,
+      "processedBars": 15,
+      "reportedFrames": 2,
+      "reportedFrameBytes": 2736,
+      "sourceProductRecords": 16,
+      "sourceClosureSha256": "f69d5baf230d0807920be971b011092b494955e81f70239a4a404ad3a0817f4a",
+      "evidenceSha256": [
+        "563939cd191ac004e42da75694a7b50f77d5b4e304649017a46cd5a91eb377da",
+        "1a9e063dedad651e32f4fa8f93ab696b27e2545806f1b0bc9dd064b9a6b0c7b2",
+        "d5c15432d19e23b2cc83b26cd6afd74563a3bd7e45b30a52608fcaf5cca0e39a",
+        "1d3c9a1327d1a173e71368cd7ae3a601e954ad44d7c40548762f213663640c6c"
+      ],
+      "evaluatorAdmission": false,
+      "remainingGates": [
+        "EVALUATOR_PARITY_REQUIRED",
+        "SOURCE_SETTINGS_CAPABILITY_REQUIRED"
+      ],
+      "scope": "Review of retained local reproduction summary, unchanged raw inputs and exactly adapted script; no new execution",
+      "limits": [
+        "Full emitted result and frame bodies are absent; their reported digest and counts cannot be independently rehashed.",
+        "Source inventory completed after the run; no preverified closure or complete historical invocation proof.",
+        "The declared eb532ff export identity is root-pinned provenance, not fresh Git certification. Inherited f1daede/root-attested metadata remains historical.",
+        "The product-only closure digest excludes separately pinned dependency resolver and decimal records.",
+        "No parity, holdout, host calibration, enrollment, current host-state or runtime admission proof."
+      ],
+      "next": "Complete independently reviewed release core and synthetic STAGE-to-FULL chain; no A7 rerun or new campaign authorized by this decision."
+    }
+  },
+  "next": "Complete and independently review the synthetic STAGE-to-FULL admission chain and TEST_ONLY persistent controller. Owner-present and per-effect runtime gates remain unchanged."
+}

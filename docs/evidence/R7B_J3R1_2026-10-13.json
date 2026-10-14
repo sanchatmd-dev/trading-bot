@@ -1,0 +1,315 @@
+{
+  "schema": "r7b-j3r1-host-result-v1",
+  "date": "2026-10-13",
+  "timezone": "Asia/Bangkok",
+  "status": "FAIL_H15_ERR_ASSERTION",
+  "scope": "One supervised J3-R1 attempt; scoped failure, not full R7 acceptance",
+  "jobId": "r7b-lpg-20261012-j3-3c9b2ae4",
+  "packageId": "2964b5e3bda887ee22d4d246eef63d9c84647263cced2ba589c0509ed6acb736",
+  "ownerGO": "CONSUMED_ONE_ATTEMPT_NO_RETRY",
+  "executionPass": false,
+  "hostContacts": 17,
+  "starts": 1,
+  "retries": 0,
+  "stopRows": 0,
+  "limitsExceeded": [],
+  "cases": [
+    {
+      "code": null,
+      "endMs": 8790,
+      "evidenceSha256": "b13ae6b4dc2777e34489b20b6f2fbfc76f8938ab6a02761568f724e8246930a1",
+      "id": "H-12b",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 210980864,
+      "peakRoleBackends": 4,
+      "peakTasks": 23,
+      "startMs": 1935,
+      "status": "PASS"
+    },
+    {
+      "code": null,
+      "endMs": 12599,
+      "evidenceSha256": "2b8a5ad7ba3df9a86f1cee668f317f2836796830e8720074d028f98af0ec8af1",
+      "id": "H-14",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 228261888,
+      "peakRoleBackends": 4,
+      "peakTasks": 23,
+      "startMs": 8790,
+      "status": "PASS"
+    },
+    {
+      "code": "ERR_ASSERTION",
+      "endMs": 16686,
+      "evidenceSha256": "fc09c0979213d62d1037d091cbdf9f907901c07d576104ebc04eafeb05577d55",
+      "id": "H-15",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 251031552,
+      "peakRoleBackends": 4,
+      "peakTasks": 23,
+      "startMs": 12599,
+      "status": "FAIL"
+    }
+  ],
+  "suiteEvidence": {
+    "realPostgres": true,
+    "gatePassed": false,
+    "backend": "postgres",
+    "sha256": "f552424214d4f1d0de8da0d5da627f6f0414722f10685cae61f4fa38b29b4c59",
+    "hashMatches": true,
+    "rawUnmodified": true
+  },
+  "receiptCertification": {
+    "code": "SUITE_CASE_FAILED",
+    "evidenceScope": "BOUND_LINUX_V1",
+    "exitCode": 1,
+    "flags": [
+      "OUTER_PROOF_PASSED"
+    ],
+    "gatePassed": false,
+    "pass": false,
+    "realPostgres": false,
+    "runnerCode": "SUITE_FAIL",
+    "secondary": [],
+    "stopPath": "DONE"
+  },
+  "outer": {
+    "checks": [
+      {
+        "code": null,
+        "detail": null,
+        "id": "unitList",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "cgroupDir",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "processes",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "postmasterFiles",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "sysv",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "scratchInventory",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "runtimeDirs",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "out",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "scratchInventoryFinal",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "protectedServices",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "hostTools",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "inputPostcheck",
+        "ok": true
+      },
+      {
+        "code": null,
+        "detail": null,
+        "id": "ioLimits",
+        "ok": true
+      }
+    ],
+    "pass": true
+  },
+  "lockReleased": true,
+  "postflight": {
+    "mode": "FAILURE_RECORD",
+    "accepted": false,
+    "executionPass": false,
+    "scope": "FAILURE_PATH_POINT_IN_TIME_HEALTH_ONLY",
+    "ancestorsComparedWithPrestart": true
+  },
+  "pointInTimeHealth": {
+    "status": "OBSERVED",
+    "complete": true,
+    "mode": "PAPER_ONLY",
+    "ok": true,
+    "queued": 0,
+    "flags": {
+      "QUANT_RESEARCH_ENABLED": "OFF",
+      "QUANT_RESEARCH_FOUNDATION_ENABLED": "OFF",
+      "QUANT_PREFLIGHT_ENABLED": "OFF",
+      "QUANT_PROFILE_V2_ENABLED": "OFF",
+      "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": "OFF"
+    },
+    "researchInactive": true
+  },
+  "resolution": {
+    "facts": {
+      "present": true,
+      "droppedResolutionAudit": false,
+      "schema": "r7b-lpg-resolution-audit-v2",
+      "source": "capture",
+      "attestationState": "active",
+      "attestationReason": null,
+      "attestationCount": 4,
+      "attestationSha256": "b42b34a553597e841919ee5b204a161be18aeb377d30d1e5588474a63ea9d021",
+      "ancestorsCount": 4,
+      "ancestorsSha256": "b42b34a553597e841919ee5b204a161be18aeb377d30d1e5588474a63ea9d021",
+      "ancestorsFileMode": "0400",
+      "postCheckChecked": 4,
+      "postCheckDifferences": 0,
+      "deniedPresent": true,
+      "deniedRecords": 6,
+      "overflow": 0,
+      "unansweredAttested": 0,
+      "attestedAnswers": 502,
+      "deniedRecordsInvalidFlag": false
+    },
+    "problems": [],
+    "denialRecords": [
+      {
+        "api": "lstatSync",
+        "count": 83,
+        "permission": "FileSystemRead",
+        "resourceClass": "PACKAGE_ANCESTOR:1"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 84,
+        "permission": "FileSystemRead",
+        "resourceClass": "PACKAGE_ANCESTOR:1"
+      },
+      {
+        "api": "lstatSync",
+        "count": 83,
+        "permission": "FileSystemRead",
+        "resourceClass": "PACKAGE_ANCESTOR:2"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 84,
+        "permission": "FileSystemRead",
+        "resourceClass": "PACKAGE_ANCESTOR:2"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 84,
+        "permission": "FileSystemRead",
+        "resourceClass": "SCRATCH_ANCESTOR:1"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 84,
+        "permission": "FileSystemRead",
+        "resourceClass": "SCRATCH_ANCESTOR:2"
+      }
+    ]
+  },
+  "resources": {
+    "backendsTotal": 8,
+    "clientBackends": 4,
+    "cpuUsageUsec": 14944464,
+    "diskFinalBytes": 57344,
+    "diskPeakBytes": 72818688,
+    "memoryPeakBytesJob": 254431232,
+    "memoryPeakBytesUnit": 309407744,
+    "memoryPeakSource": "memory.peak",
+    "roleBackends": 4,
+    "sampleErrors": 0,
+    "sampleIntervalMs": 250,
+    "samples": 50,
+    "tasksPeak": 24,
+    "tasksPeakSource": "pids.peak",
+    "wallMs": 16718,
+    "unitTasksCap": 32,
+    "roleConnectionsCap": 9,
+    "jobTaskPeak": "NOT_EXPORTED",
+    "capacityAccepted": false
+  },
+  "diagnosis": {
+    "observedCode": "ERR_ASSERTION",
+    "assertionMessageOrStackRetained": false,
+    "exactCause": "UNKNOWN",
+    "h15WorkersProved": false,
+    "threads": 1,
+    "retentionAcceptance": "NOT_MET_H15_FAILED_DETAIL_ABSENT",
+    "noExtraHostContact": true
+  },
+  "retention": {
+    "allHostArtifactsKept": true,
+    "fullFailureSuiteEvidenceRetained": true,
+    "directCanonicalHashMatched": true,
+    "h15DetailAbsent": true,
+    "successRetentionCriteriaMet": false
+  },
+  "timing": {
+    "firstHostContactUtc": "2026-10-12T18:10:31.430Z",
+    "lastHostContactEndedUtc": "2026-10-12T18:24:37.702Z",
+    "jobTimeline": {
+      "allocatedMs": 802,
+      "endUtc": "2026-10-12T18:20:14.969Z",
+      "initdbMs": 709,
+      "postcheckMs": 249,
+      "proveMs": 20,
+      "readyMs": 1932,
+      "receiptMs": 2,
+      "startUtc": "2026-10-12T18:19:57.587Z",
+      "stopEndMs": 17473,
+      "stopStartMs": 16720,
+      "suiteEndMs": 16718,
+      "suiteStartMs": 1935
+    },
+    "windowApproxMinutes": 14,
+    "usageWeeklyUsedBefore": 74,
+    "usageWeeklyUsedAfter": 78,
+    "remainingPercent": 22,
+    "shortWindow": "UNKNOWN",
+    "ownerFloorRemainingPercent": 2,
+    "noSpeedupClaim": true
+  },
+  "evidencePins": {
+    "bundle": "c5ae8b13aff3b1c27497104eacc5e9ee534e683f173f2a1053620d2bbb325866",
+    "finalAcceptance": "8bafe37892d34c026c9126b3b6a3308f61fd3ab0c6ea5da21888010837370cdc",
+    "ownerGo": "bf37d2853a2c073e15a2a140247d2f30d0b971238c4e0360c890fd050ec3eb83",
+    "runFreezeSha256": "1b9786a48c9feaa9f1bf74c2b129f466f070fc2ea1b7b20d30c293645c8974e7",
+    "runFiles": 110,
+    "rootReviewSha256": "1cd739b50d3700ce0da0f32acc9effbe78cc987d8f93b066476e831217e38249"
+  },
+  "next": "Local-only diagnosis of H-15 ERR_ASSERTION from retained evidence and pinned sources; exact cause unknown. Any later host attempt needs a new reviewed packet and owner GO. J4 closed."
+}

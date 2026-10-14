@@ -1,0 +1,70 @@
+{
+  "schema": "r7b-em2-native-previews-evidence-v1",
+  "status": "LOCAL_SYNTHETIC_NATIVE_PREVIEWS_ACCEPTED",
+  "asOf": "2026-10-12T22:11:08.610Z",
+  "decisions": {
+    "STAGE": {
+      "schema": "r7b-em2-stage-preview-local-acceptance-v1",
+      "status": "LOCAL_SYNTHETIC_STAGE_PREVIEW_ACCEPTED",
+      "asOf": "2026-10-12T21:55:51.802Z",
+      "executionReady": false,
+      "pinsInstalled": false,
+      "authorChecks": 47,
+      "independentGroupedChecks": 134,
+      "originalBuilderGoldenVariants": 36,
+      "sourceRecords": 14,
+      "filesSha256": "599155363e552f55feeeb4ac325a69813ed3ce62d07998c9c045a076fc9c0498",
+      "resultSha256": "63820d18915a4e5b1bd311b4fb7682cd9766ec87535b76ff9e9f5e033ab8e294",
+      "independentResultSha256": "c35316874f930220b3f7c889288126b46a1f9be71908d9d3d088bf4c0b4765e5",
+      "independentReportSha256": "3cbdc75da6de27699321862078a5470de2c748ed309681f89eafcc0eb7a99fd2",
+      "nativeSyntheticStageSha256": "28583c63fcb282b4c91c642d4c0479ac0c8ddb80518b877427cee4187034879c",
+      "scope": "Exact native STAGE transformation and validation using synthetic inputs, in memory only",
+      "limits": [
+        "No actual private binding, collision proof or approval",
+        "Synthetic prefix restrictions are test-domain checks, not authentication",
+        "FULL facts remain null and allowlist remains pending",
+        "No installation or executor release",
+        "Windows symlink test unrun; no source TOCTOU security claim"
+      ],
+      "next": "Synthetic FULL provenance adapter and actual runMode release-admission/unknown-outcome tests; real executor remains locked."
+    },
+    "FULL": {
+      "schema": "r7b-em2-full-preview-local-acceptance-v1",
+      "status": "LOCAL_SYNTHETIC_FULL_PREVIEW_ACCEPTED",
+      "asOf": "2026-10-12T22:04:01.610Z",
+      "executionReady": false,
+      "pinsInstalled": false,
+      "authorChecks": 34,
+      "independentGroupedChecks": 267,
+      "independentEdgeChecks": 3,
+      "sourceRecords": 98,
+      "filesSha256": "8f6dd00b64feb91cdee994828e17462f62fe45f656576f1c49a14e3f82d53426",
+      "resultSha256": "63272480cb55ac90ce2d0562bbc8b0ce3bf0c73bab15c62fcbacdfdebe9c434a",
+      "independentResultSha256": "fc45b7eb63b7bc8c10761411f7007bce6dba55ab24f12781d6566064bbcb75e8",
+      "independentEdgeSha256": "5c04d472e1bab30da6690f8e4273c01f44b3d84c7edc0782e3bb496ddf4c3448",
+      "independentReportSha256": "ce58db34c22f21cd3fcc6399a6dab53f3fbccf293ddf6d2dc01a2f65ad09b73d",
+      "nativeSyntheticFullSha256": "439d2bba6dc2850c305d1fe9c55447600309bad2cdf5554791420f8467413e00",
+      "scope": "Actual pinned product PB validation, hbOf, fullOf, native FULL validation and claimFit using synthetic provenance, in memory only",
+      "limits": [
+        "Synthetic receipt equality does not authenticate host observations",
+        "Optional difference allowances and EF distinction are native fixture semantics, not owner approval",
+        "No actual private binding, runtime collision proof, installation or executor release",
+        "Windows symlink test unrun; no source TOCTOU security claim"
+      ],
+      "next": "Independent release-admission core review and fresh local A7 reproduction; real measurement still requires separate owner-present and per-effect gates."
+    }
+  },
+  "decisionSha256": {
+    "STAGE": "b6c60cc5b3afced01e32eaca4ab3ad6614ffd942b9c053f0834f238e623048cb",
+    "FULL": "c812bfa6c8a3f560934ebeadf1d61567a7be74f00e08a29fa368bf885459d5b6"
+  },
+  "executionReady": false,
+  "pinsInstalled": false,
+  "core": "CORRECTION_REQUIRED_UNKNOWN_OUTCOME_LOCK_RELEASE",
+  "next": "Correct and independently review the local release-admission core, then prove the synthetic native STAGE-to-FULL chain. Actual measurement retains its owner-present and per-effect gates.",
+  "estimates": {
+    "wholeProjectPercent": 60,
+    "prototypePercent": 75,
+    "kind": "Engineering estimates, not test-pass ratios"
+  }
+}

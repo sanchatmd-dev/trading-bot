@@ -1,0 +1,62 @@
+{
+  "schema": "r7b-em2-native-chain-evidence-v1",
+  "decisionSha256": "544f0118c2a31e13b81d73353d7774c825e96068752a4384596a2960a27b3930",
+  "decision": {
+    "schema": "r7b-em2-native-chain-acceptance-v1",
+    "status": "LOCAL_SYNTHETIC_NATIVE_STAGE_FULL_M1_CHAIN_ACCEPTED",
+    "asOf": "2026-10-12T22:24:44.395Z",
+    "executionReady": false,
+    "fixtureEvidence": "TEST_ONLY",
+    "sourceRecords": 119,
+    "authorNamedChecks": 7,
+    "authorNegativeCases": 5,
+    "authorM1SuppressionCases": 2,
+    "independentGroupedChecks": 14,
+    "filesSha256": "bb00d1e92ea9b431653c112928ec5d17fe56236115590efaa3ce96a4aa177ab3",
+    "resultSha256": "0e36d8ae8fdcbd11246d0a59e198f1830a4f4305e1377cb037f96236528263a3",
+    "independentResultSha256": "a3293c42301c022c24ea47d906c71637dfd08b7b103631864cccb04aede117a3",
+    "independentReportSha256": "dce3474a93f50321d879d616046f71a59b9d6f37965cfc51fef3409f83462b45",
+    "toolCodeSha256": "6e240b3184f8a059c999729fb389b2702337dd236f232dc6928bf3eef321908b",
+    "chain": {
+      "m0Pass": true,
+      "m1Pass": true,
+      "sshCalls": 2,
+      "claims": 2,
+      "rawFiles": 2,
+      "stageSha": "90dd2fb4997ee6c0142efe02cf17e23669fe5ee992dd834a14436f02588e0e06",
+      "fullSha": "b505a4742d8a7a8fc4fe6c5f8a522918c375514b366cee2bd30ec503d4a32f4d",
+      "stageParentBindingSha": "d9d00cdce0e9e163541c5fbbb52338860b364187200137338f0902e3b7e01c24",
+      "fullBindingSha": "ab1082b6399d4c857f5f41b3eb46a409f48a6ce06dce3a95f08f8cd735fec6d0",
+      "m0RawSha": "71b3c5deb4b609167685730264595c8d7f2c4477b95135e6ff8f22b823904d3a",
+      "m0StdoutSha": "6cc3a2ec7cc9aa546e04439ce38dddc10bd14bc62b699e3a6eba741beb2a730f",
+      "m0PayloadSha": "9aeecf60b07ab9e8cc78e38d091a77e4dadc62115e32632203a4eb01f57ebfd6",
+      "m1PayloadSha": "828ff2382d6ece60b103cd58b3deea909947a60ed9cef0e146d1d997966ffcc7",
+      "pbSha": "bcb405915e1cf045615ee93cc31508933871474f89e62001057cdded63832f64",
+      "abSha": "763c79ba68f91793f7c2c0accafc47f992f5ca468e3d3a018ed2ff5eb8ef52c0",
+      "sourceRollover": true,
+      "events": [
+        "CLAIM",
+        "APPEND_CONSUMED",
+        "FAKE_SSH_M0",
+        "RETAIN_RAW",
+        "PRINT_RECEIPT",
+        "APPEND_RECEIPT",
+        "CLAIM",
+        "APPEND_CONSUMED",
+        "FAKE_SSH_M1",
+        "RETAIN_RAW",
+        "PRINT_RECEIPT",
+        "APPEND_RECEIPT"
+      ]
+    },
+    "scope": "Actual native local m0 raw and PLAN retention, pinned hbOf/fullOf derivation, FULL source rollover and m1 admission using synthetic host receipts and fake transport",
+    "limits": [
+      "All authority, host responses, service facts and observed effects are synthetic. No host payload functions execute.",
+      "Parent/source/provenance equality under trusted fixture inputs does not authenticate real private authority or runtime observations.",
+      "The initial fixture RELEASE_PAYLOAD failure is preserved; canonical native parsing fixed the fixture, not the gates.",
+      "m2a runtime hints, broader recovery matrix and persistent controller/reconciliation remain separate work.",
+      "No real adapter release, actual measurement, admission or current host-state claim."
+    ],
+    "next": "Complete independently reviewed local recovery matrix and TEST_ONLY persistent controller, retaining owner-present and per-effect gates."
+  }
+}

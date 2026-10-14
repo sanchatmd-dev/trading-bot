@@ -1,0 +1,121 @@
+{
+  "schema": "r7b-j3r4-local-evidence-v1",
+  "asOf": "2026-10-12T20:42:29.173Z",
+  "status": "LOCAL_ACCEPTED_FOR_BOUNDED_HOST_TRIAL",
+  "packageId": "560d1c4606c17ab2beba8147de1c3c9992b9003f3a9b1b0d303a456f0f80fbb0",
+  "tarSha256": "56e696facf10e53eab790bedea14cb4627e8953e6c56df6fc78ce4c28e5ebeb4",
+  "runnerManifestSha256": "2b6374e77b6379a4813591bb5394442b536c4e465f54f9067d7cab0a5e227c6d",
+  "payloadFiles": 435,
+  "tarEntries": 488,
+  "tarBytes": 26841088,
+  "sourceDeltaFromRc14": [
+    "harness/fixtures/h15-product-config.mjs",
+    "harness/h15-cases.mjs"
+  ],
+  "scope": "One isolated Worker with shared imports, exact environment replacement and fresh constructors; strict result and exit checks. Product/tool/adapters/permissions/resource caps unchanged.",
+  "authorChecks": 42,
+  "independentSourceChecks": 38,
+  "independentRetentionChecks": 3,
+  "syntheticCaptureChecks": 20,
+  "independentCaptureChecks": 6,
+  "gateChecks": 26,
+  "healthChecks": 22,
+  "contractChecks": 28,
+  "j3NegativeChecks": 9,
+  "focusedOpsChecks": 11,
+  "rootRunnerChecks": 31,
+  "independentPrepNegatives": 11,
+  "localPreload": "DEFERRED_UNPROVED",
+  "localEntryFailures": 3,
+  "entryFailureMeaning": "Test entry obstacles; not proof of a host defect or Windows impossibility.",
+  "hostThreadsRequired": 2,
+  "mandatoryFullRetainedEvidence": true,
+  "syntheticPipelineScope": "Injected frames/state; protocol and hash compatibility only. No complete driver lifecycle, PostgreSQL or host proof.",
+  "hostCalls": 0,
+  "hostGoIssued": false,
+  "realPostgres": false,
+  "usage": {
+    "weeklyUsedPercent": 35,
+    "weeklyRemainingPercent": 65,
+    "shortWindow": "UNKNOWN",
+    "ownerRemainingFloorPercent": 2
+  },
+  "estimates": {
+    "wholeProjectPercent": 60,
+    "prototypePercent": 75,
+    "kind": "engineering estimates, not formal gate scores"
+  },
+  "acceptanceSha256": "f2b9b627f93c7adb56731650699ac6e487498ac47d9acd2708916f8473f6924f",
+  "freezes": [
+    {
+      "namespace": "codex-r7b-linux-pg-v8.7",
+      "files": 72,
+      "sha256": "57988aabbaa86c8b65d62fa1b58a5ee4bdeba421908c8e04ebc8fc87533c73d7"
+    },
+    {
+      "namespace": "codex-r7b-h15-single-worker-fix",
+      "files": 8,
+      "sha256": "aca99551c0c855f3d5df8739c57e75b2b244b96c4954d052588bc5cfde24c6fe"
+    },
+    {
+      "namespace": "codex-r7b-rc15-integration",
+      "files": 10,
+      "sha256": "a9e59c2a779b99835d2336c6027c7fa15d90b3d33339f51ab002a32daac4378e"
+    },
+    {
+      "namespace": "codex-r7b-lpg-pkg-rc15",
+      "files": 20,
+      "sha256": "8bb0841d893b3ab4aeb6363ef33f55776236939bb159db4378727a81c54b2fd4"
+    },
+    {
+      "namespace": "codex-r7b-rc15-audit",
+      "files": 24,
+      "sha256": "cfabfb30f00a53085f596573f87e152578c4f48949d666324e59bd1027f51385"
+    },
+    {
+      "namespace": "codex-r7b-rc15-preload-check",
+      "files": 453,
+      "sha256": "963bf5bee394b66c603e1a78ab7044bf7c1338b972734b2b9c541d46fad83997"
+    },
+    {
+      "namespace": "codex-r7b-rc15-capture-check",
+      "files": 7,
+      "sha256": "b0acc526775e088e0f1ec40b31b4389b52b9252bc5f0917f89557cd3ba2ecf8c"
+    },
+    {
+      "namespace": "codex-r7b-j3r4-gate",
+      "files": 8,
+      "sha256": "ba7a2a52f8957409fe466a07a5762d7ab3233a887906f19de529f422c10f53b1"
+    },
+    {
+      "namespace": "codex-r7b-j3r4-ops-prep",
+      "files": 472,
+      "sha256": "6ea89180f239e59a1ba320619ad3f4ce275424b6a51ece243dd4a51de498f067"
+    },
+    {
+      "namespace": "codex-r7b-j3r4-prep-work",
+      "files": 54,
+      "sha256": "9516e3dd3cd610a652bfeb495c08fee089258846fac10bb5a80f4cd009a2f6f4"
+    },
+    {
+      "namespace": "codex-r7b-j3r4-runner",
+      "files": 23,
+      "sha256": "224cd77411fc1ccc7989eeda244bfd0ab069a9235c4aaec948cac04b755041f2"
+    },
+    {
+      "namespace": "codex-r7b-j3r4-audit",
+      "files": 20,
+      "sha256": "ccca2284b70694117ab69818e273802a5888795fb93da9cdb6f584c9fa199732"
+    },
+    {
+      "namespace": "codex-r7b-j3r4-root-review",
+      "files": 3,
+      "sha256": "63a25ec68e3381fdd08842649d9a1186f9754d622a23bcc31a00e785686a0042"
+    },
+    {
+      "namespace": "codex-r7b-j3r4-go",
+      "files": 3,
+      "sha256": "821ddd3eedb5c8d20cd4a2d419077f694417261cecf2225baefaa6fae966ad05"
+    }
+  ]
+}

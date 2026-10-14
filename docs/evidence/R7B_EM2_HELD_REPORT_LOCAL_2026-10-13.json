@@ -1,0 +1,41 @@
+{
+  "schema": "r7b-em2-held-report-local-acceptance-v1",
+  "status": "LOCAL_TEST_ONLY_READ_ONLY_REPORT_ACCEPTED",
+  "asOf": "2026-10-13T00:05:21.403Z",
+  "executionReady": false,
+  "releaseAuthorized": false,
+  "pins": {
+    ".qa-local/codex-r7b-em2-held-report-v11/FILES.json": "1833dc4c54eb4576430965b424c26409dba6cd3529208cfe85f2478cd01e65b9",
+    ".qa-local/codex-r7b-em2-held-report-audit/REPORT.md": "f87277fc444b380488bd32bc3b0947649049da80f040a938db424daea943f3c8",
+    ".qa-local/codex-r7b-em2-held-report-audit2/REPORT.md": "97babc7058765b74ef84b45f9ac86a224784c49cc16f9be484244d95ec451213",
+    ".qa-local/codex-r7b-em2-held-report-verify2/REPORT.md": "fd651e356733e02663069d608cbe571c6250f36cca1e3a8994216baef89232c4",
+    ".qa-local/codex-r7b-em2-held-report-verify3/REPORT.md": "9f98fa0aa0d68a8932535334ecfbcb4b3cbfb2d66f3cb32e8bda76d974f6fb3f",
+    ".qa-local/codex-r7b-em2-held-report-verify4/REPORT.md": "e66e4ca89f2127a1d82d4768f06c1f496766089bbc42d0004b095bebd650934b"
+  },
+  "scope": "Read-only retained-evidence diagnosis for the tested STAGE/FULL archive and persistence cases, under fixed trusted roots and no concurrent writer.",
+  "independentFinalVersionEvidence": {
+    "retainedFixtureCases": 13,
+    "additionalRetainedFileAssertionGroups": 13,
+    "changedReadCases": 3,
+    "embeddedStdoutResourceCases": 2,
+    "fullAndArtifactBoundaryChecks": 5,
+    "historyIdentityAndTruncationChecks": 8
+  },
+  "findings": "F1-F3 and archive F4 were closed by independent source review. Root confirms the final F5 guard precedes native parsing and reuses bounded parsed data; two independent embedded-resource cases pass. Final negative tests cover unknown/orphan inventory, duplicate history including malformed selected history, and fully relinked contradictory receipt identities.",
+  "behavior": [
+    "No input writes, lock release, repair, consumption reset, transport or authority generation.",
+    "Missing, retained-but-unbound and bound recorded evidence remain distinct. Aggregate digest and whole-result digest remain separate.",
+    "Native pass and local aggregate result remain separate recorded assertions. Terminal RELEASE with an extant lock is not physical release proof.",
+    "Changed reads produce UNSTABLE and clear dependent bindings without retry. Unknown historical archives remain unknown; valid duplicate findings survive malformed readable history.",
+    "Exact bounded JSON validation covers archive certificates/pins and embedded stdout before native parsing."
+  ],
+  "limits": [
+    "Two matching passes establish observed stability only, not an atomic or hostile-filesystem guarantee.",
+    "Global resource or unreadable-file failure may abort the history scan; it never certifies absence.",
+    "FULL held-lock evidence uses a disclosed synthetic reconstruction from an accepted completed controller fixture, not an actual process crash.",
+    "Not every receipt variant/mode, optional hint, malformed input or resource-limit cross-product was executed. Process-kill and power-loss durability remain unproved.",
+    "Author v10 detailed resource results were overwritten and replaced by a disclosed compact account; that account is not counted as independent retained test evidence.",
+    "External PLAN/consumption backing proof, current host effects, fresh owner authority and a reviewed effectful recovery packet remain required. Real adapter/mainCLI stay locked."
+  ],
+  "next": "Verify the remaining synthetic recovery paths through the persistent FULL controller; owner-present measurement and final Preflight remain gated."
+}

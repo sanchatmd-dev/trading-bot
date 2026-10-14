@@ -1,0 +1,97 @@
+{
+  "schema": "r7b-j4r1-local-evidence-v1",
+  "asOf": "2026-10-12T21:13:47.521Z",
+  "status": "LOCAL_ACCEPTED_FOR_BOUNDED_TRIAL",
+  "packageId": "560d1c4606c17ab2beba8147de1c3c9992b9003f3a9b1b0d303a456f0f80fbb0",
+  "tarSha256": "56e696facf10e53eab790bedea14cb4627e8953e6c56df6fc78ce4c28e5ebeb4",
+  "runnerManifestSha256": "2b6374e77b6379a4813591bb5394442b536c4e465f54f9067d7cab0a5e227c6d",
+  "cases": [
+    "H-13"
+  ],
+  "packageChanged": false,
+  "packetChangedFields": [
+    "jobKind",
+    "caseIds"
+  ],
+  "configurationChangedFields": [
+    "jobBase",
+    "packageRoot"
+  ],
+  "focusedPrepChecks": 29,
+  "healthChecks": 22,
+  "rootRunnerChecks": 32,
+  "independentPrepChecks": 26,
+  "independentRunnerReconstruction": 14,
+  "simulatedH13Checks": 11,
+  "unitWitnessHelperChecks": 5,
+  "fullLocalNoExemptionStatus": "FAILED_TWO_SIMULATED_ATTEMPTS_UNPROVED",
+  "localFailedAttempts": 2,
+  "preciseInnerFailure": "UNKNOWN",
+  "sourceDifference": "Memory donor bypasses actual withDonor t1-derived accounting baseline; not a proved real PostgreSQL defect.",
+  "mandatoryFullHostRetention": true,
+  "expectedHostThreads": 1,
+  "artifactHashNormalizationAllowed": false,
+  "hostCalls": 0,
+  "hostGoIssued": false,
+  "realPostgres": false,
+  "independentArchitectureReportSha256": "16d9a671ccb9a8906a9f3ea1d02d31b5a4019e60779fd6864ecf8f107c8ff64b",
+  "acceptanceSha256": "2646f7d3bd0becfa81cf9bc1d764f37d8622ed2efea375341536f87152c70cc6",
+  "seals": [
+    {
+      "namespace": "codex-r7b-j4r1-gate",
+      "files": 4,
+      "sha256": "61ab3a9986366e270c7baa04858695dab4bcd501915be5a75b931c4fbeb88faf"
+    },
+    {
+      "namespace": "codex-r7b-j4r1-ops-prep",
+      "files": 467,
+      "sha256": "74dc36ca70aec2f12d2bc87daceb87d8f9f08d593a3d5474c8ed3bb4d4e8923b"
+    },
+    {
+      "namespace": "codex-r7b-j4r1-prep-work",
+      "files": 13,
+      "sha256": "4ab2f52f7446b3e4a6ca16e06e5e29f9c0e3ce9c736da4fcca04979bfce65b9e"
+    },
+    {
+      "namespace": "codex-r7b-j4r1-runner",
+      "files": 19,
+      "sha256": "128a051024d30aaa4e928ef21359a0efb2d772ac363fa49dab897e75efe3be7f"
+    },
+    {
+      "namespace": "codex-r7b-j4r1-prep-audit",
+      "files": 22,
+      "sha256": "ef2f8700c5efe6c98564e286468c45d1cd579a125eb224d9c891f8201e0e1fa4"
+    },
+    {
+      "namespace": "codex-r7b-j4r1-h13-tests",
+      "files": 18,
+      "sha256": "d1a9c06f799bcd4e7222a618c2f1522fef66bcc6cd2821012fabd9b44d5db9a8"
+    },
+    {
+      "namespace": "codex-r7b-j4r1-design-audit",
+      "files": 4,
+      "sha256": "d0c48a243b79c0a3d8fc29b3e79d8db151ed3e67a83b1037109d9252e3b698b4"
+    },
+    {
+      "namespace": "codex-r7b-j4r1-final-audit",
+      "files": 4,
+      "sha256": "ed637a85b8ddc62a07bba6d99e61a1eef592ba083c6dfc56421930a25083317a"
+    },
+    {
+      "namespace": "codex-r7b-j4r1-root-review",
+      "files": 1,
+      "sha256": "b7a658bf5d94464bc12fbe99b6611d39038c8c39559faad63c3de699719fde7f"
+    },
+    {
+      "namespace": "codex-r7b-j4r1-go",
+      "files": 3,
+      "sha256": "3522b56b0c79503fe8576cc6a478e2368ec804693f0731b0968e15303493fc86"
+    }
+  ],
+  "usage": {
+    "weeklyUsedPercent": 47,
+    "weeklyRemainingPercent": 53,
+    "shortWindow": "UNKNOWN",
+    "ownerRemainingFloorPercent": 2
+  }
+}

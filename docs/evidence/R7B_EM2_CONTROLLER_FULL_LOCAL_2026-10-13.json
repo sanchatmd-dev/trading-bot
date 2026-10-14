@@ -1,0 +1,35 @@
+{
+  "schema": "r7b-em2-controller-full-local-acceptance-v1",
+  "status": "LOCAL_TEST_ONLY_CONTROLLER_LINEAGE_AND_PERSISTENCE_ACCEPTED",
+  "asOf": "2026-10-12T23:08:53.434Z",
+  "executionReady": false,
+  "pins": {
+    ".qa-local/codex-r7b-em2-controller-v4/FILES.json": "c887a127db84a7c639c496ce030d4c4af3d6ca39622f8f70e3a4f1eea3bfa27d",
+    ".qa-local/codex-r7b-em2-controller-full-audit/REPORT.md": "46af5d34610b7c9753ebf6c1271d361be447e545692895d5e6162b1a3b4a8d7f",
+    ".qa-local/codex-r7b-em2-controller-full-verify/REPORT.md": "09c516b1c2790378154ca1ca605d0ddf9212a3868338d3b638adfcc2a3c826e4",
+    ".qa-local/codex-r7b-em2-controller-fault-verify/REPORT.md": "813a378100e8b07c303555c6cb2700cba4c85c422b8cdd7c3b9e7acfb677bddd",
+    ".qa-local/codex-r7b-em2-controller-boundary-verify/REPORT.md": "4284342329bda89e49f6831cfd6f814d51daebea0a305d552ac1a25253cad673"
+  },
+  "importExceptionSha256": "e4e215fa445534fa225c1c94341522446172eb86e20b5d353cc78d55ec5ce0bd",
+  "scope": "Archived STAGE parent closure, actual synthetic STAGE-to-FULL controller chain, and conservative held-lock disposition across injected persistence faults",
+  "finalVersionEvidence": {
+    "chainScriptChecks": 8,
+    "independentArchiveChecks": 6,
+    "independentDurableOrderAndResultChecks": true,
+    "persistenceExceptionBoundaries": 12,
+    "additionalChecks": [
+      "Actual Windows junction refusal",
+      "Changed owner token retained and lock held"
+    ]
+  },
+  "countsNote": "The author final result included 11 checks; the unchanged chain script independently emits 8. Independent durable order/result assertions are reported separately, not as an 11-check script replay.",
+  "lineage": "Controller state logic is unchanged from accepted v2; v3 adds archived-parent validation and FULL references. V4 changes the controller header only and records the narrow hash-checked native validation import exception.",
+  "limits": [
+    "Trusted synthetic callbacks and fixed filesystem roots only; no operational authentication or hostile callback/filesystem guarantee.",
+    "Exception tests do not prove process-kill, OS-crash or hardware power-loss durability.",
+    "Native recovery paths were separately accepted; complete recovery/retry execution through this controller remains unrun.",
+    "No reconciliation or automatic unlock API; incomplete or changed ownership holds indefinitely.",
+    "Real adapter/mainCLI remain locked. No host health, operational pins, owner-present measurement, submission or final Preflight approval."
+  ],
+  "next": "Prepare a read-only held-lock reconciliation report contract, then verify remaining local controller recovery boundaries; effectful recovery and measurement retain explicit gates."
+}

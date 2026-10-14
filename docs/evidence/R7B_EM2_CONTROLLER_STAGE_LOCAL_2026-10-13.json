@@ -1,0 +1,30 @@
+{
+  "schema": "r7b-em2-controller-stage-acceptance-v1",
+  "status": "LOCAL_TEST_ONLY_STAGE_CONTROLLER_ACCEPTED",
+  "asOf": "2026-10-12T22:51:17.258Z",
+  "executionReady": false,
+  "fullSupported": false,
+  "pins": {
+    ".qa-local/codex-r7b-em2-controller-v2/FILES.json": "634a7e297cdc57b5cb7cdc05b6d1fdda06b7c8e387ec9d74fe453968729b6be6",
+    ".qa-local/codex-r7b-em2-controller-v2/REPORT.md": "b73df2cd927dddfe72f5f42020273a97fccf833ae4b7cdcf554dd8c4762e535f",
+    ".qa-local/codex-r7b-em2-controller-final-audit/REPORT.md": "e8f4f38200fea39f30605ee49697bb606ef2716d10a8b6376cc377a00c1ae03b",
+    ".qa-local/codex-r7b-em2-controller-final-audit/RESULTS.json": "edb028fc97aa1c11b793a7401657af383d7120e8a50cc4069f048841f36f566c"
+  },
+  "scope": "Persistent STAGE admission with immutable indexed artifacts, owned epoch lock, durable claim history and deferred physical release; trusted fake IO only",
+  "checks": {
+    "replayedBaseline": 10,
+    "replayedHardening": 5,
+    "replayedRaceCases": 3,
+    "replayedFullRefusal": 1,
+    "independentLoaderPaths": 5
+  },
+  "limits": [
+    "FULL lineage and execution not implemented.",
+    "Windows hardlink refused; junction and broader persistence/process-kill faults remain unrun.",
+    "TEST_ONLY assumes trusted callbacks; not callback sandboxing or operational authority authentication.",
+    "File fsync and reopen checks do not prove hardware power-loss durability.",
+    "No reconciliation API or automatic held-lock cleanup.",
+    "Native core and real adapter remain unchanged and locked; no host contact."
+  ],
+  "next": "Implement and independently review archived STAGE parent closure for a bounded TEST_ONLY FULL controller."
+}

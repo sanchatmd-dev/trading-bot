@@ -1,0 +1,66 @@
+{
+  "schema": "r7b-em2-local-planning-evidence-v1",
+  "status": "LOCAL_READINESS_AND_PROPOSAL_COMPILER_ACCEPTED",
+  "asOf": "2026-10-12T21:50:51.841Z",
+  "executionReady": false,
+  "readiness": {
+    "schema": "r7b-em2-readiness-local-acceptance-v1",
+    "status": "LOCAL_READINESS_INVENTORY_ACCEPTED",
+    "asOf": "2026-10-12T21:44:01.310Z",
+    "executionReady": false,
+    "checksPassed": 17,
+    "independentGroupedChecks": 256,
+    "driftMutations": 220,
+    "suppliedFactVariants": 8,
+    "verifiedRecords": 110,
+    "declaredProductFiles": 83,
+    "filesSha256": "c83e5eba4515890c596d71b2875bc901f6ceff8a88742b32cfb55cf05e4d0e21",
+    "resultSha256": "188843a7f5fb1ee8090786f577f8ba1916045322fc376adeab31caea56aeadde",
+    "independentResultSha256": "7ee0bbf60c5528f02165e4317bdbcea9c103d1739f862b88ecd460a804001a41",
+    "independentReportSha256": "6e7ce85a388604a997f3b8e13036ae7e7a5984715af3da1a232e9543690e52fd",
+    "namespaceClarificationSha256": "a1d1a00afc3ae4654a96d6cb061cb81fe1b4ec1430ed46cfe1e9e418f021a924",
+    "namespaceDecision": "Retain prospective EM2/V2 names and static salts subject to explicit collision and nonconsumption proof. No current remote absence is established. No mandatory rename follows from the v3.1 source revision.",
+    "limits": [
+      "Static declared dependency inventory, not independently reconstructed product dependency graph",
+      "No integrated startup or current host state proof",
+      "No actual STAGE/FULL pins, PB, allowlist, owner GO or job",
+      "All execution/helper locks remain active"
+    ],
+    "next": "Finish the pinned local proposal compiler, then native STAGE preview and FULL/release preparation under separate bounded packets."
+  },
+  "compiler": {
+    "schema": "r7b-em2-helper-local-acceptance-v1",
+    "status": "LOCAL_PROPOSAL_COMPILER_ACCEPTED",
+    "asOf": "2026-10-12T21:49:21.493Z",
+    "executionReady": false,
+    "authorChecks": 75,
+    "independentGroupedChecks": 112,
+    "sourceRecords": 19,
+    "budgetModes": 10,
+    "filesSha256": "638684f691b90ea8809d11b4497a32a32ebb9bc6862192c332c907429703dc77",
+    "resultSha256": "c7dfb4802583e50a29e570c822be0d9a59404db5caf42a16b5c5e70e0a9b517c",
+    "independentResultSha256": "bbd81125fdda155981d6813c7719f746e22624f6a95c22ab7b9163eef928d031",
+    "independentReportSha256": "03bd733ca5bec19b74ce68ac9fa23034c388a3337a682d77787149b9bdd6b507",
+    "scope": "Deterministic source-pinned planning compiler; requirements and unfilled authority requests only",
+    "budgetScope": "Code envelopes, not measured downtime or capacity",
+    "limits": [
+      "No native STAGE/FULL pins, allowlist, PB, execution or owner approval",
+      "Structural budget validation is not authentication of a caller object; public API rejects injected models",
+      "No concurrent malicious source replacement security guarantee",
+      "Windows directory junction refusal tested independently; ordinary file symlink fixture unrun"
+    ],
+    "next": "Native STAGE preview and local runMode release-gate core under synthetic fixtures; actual executor stays locked."
+  },
+  "decisions": {
+    "readiness": "900563ff844136b3d59ebe6c57a3bcc6c88d6b817e69176ce508c508685a08c4",
+    "compiler": "531dd87c5c3f3118ad38ac6336925db94fdba0542a7fbe0399ea5c48865d59d6"
+  },
+  "nativeStagePreview": "IN_PROGRESS_NOT_ACCEPTED",
+  "executorRelease": "NOT_RELEASED",
+  "next": "Complete local native STAGE preview and test release-admission core using synthetic inputs and fake IO. Real measurement retains owner-present and per-effect gates.",
+  "estimates": {
+    "wholeProjectPercent": 60,
+    "prototypePercent": 75,
+    "kind": "Engineering estimates, not test-pass ratios"
+  }
+}

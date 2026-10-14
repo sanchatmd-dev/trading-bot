@@ -1,0 +1,313 @@
+{
+  "schema": "r7b-j3r1-local-evidence-v1",
+  "status": "LOCAL_ACCEPTED_AWAITING_OWNER_GO",
+  "date": "2026-10-13",
+  "timezone": "Asia/Bangkok",
+  "checkpointUtc": "2026-10-12T18:06:43.197Z",
+  "scope": "Local fixture preparation, source derivation and independent review only. No J3 host contact.",
+  "authorizations": {
+    "localPreparation": true,
+    "hostGO": false,
+    "j2GO": "CONSUMED",
+    "j4": "CLOSED",
+    "commitPush": false,
+    "usageFloorRemainingPercent": 2
+  },
+  "package": {
+    "candidate": "RC11",
+    "packageId": "2964b5e3bda887ee22d4d246eef63d9c84647263cced2ba589c0509ed6acb736",
+    "payloadFiles": 435,
+    "unchanged": true,
+    "tar": {
+      "sha256": "1c3cf4c84c9dc269c8f96d5be339680a063467cd905e5f77d0a35a343f48189d",
+      "bytes": 26833920
+    }
+  },
+  "orderedCases": [
+    "H-12b",
+    "H-14",
+    "H-15"
+  ],
+  "checks": {
+    "gateAuthor": {
+      "passed": 26,
+      "failed": 0
+    },
+    "inheritedHealthCopies": [
+      187,
+      187
+    ],
+    "opsAuthor": {
+      "passed": 320,
+      "failed": 0
+    },
+    "opsHealth": 22,
+    "opsJ3": 9,
+    "opsContractAndPins": 28,
+    "runnerAuthor": {
+      "passed": 136,
+      "failed": 0,
+      "freshFullRun": true
+    },
+    "runnerJ3": 6,
+    "runnerContract": 17,
+    "independent": {
+      "gateReconstructed": 3,
+      "opsReconstructed": 21,
+      "runnerReconstructed": 11,
+      "generatedByteEqual": 10,
+      "negativeChecks": 42,
+      "retentionHashChecks": 8,
+      "copiedAuthorJ3Smoke": 6,
+      "realSshSpawns": 0,
+      "full136Rerun": false
+    },
+    "cases": {
+      "actualPinnedBodies": 3,
+      "passed": 3,
+      "checks": 7,
+      "sizeSpecimens": 1,
+      "realConstructorWorkers": 4,
+      "missingModuleNegativeWorkers": 1,
+      "aggregateThreadsIncludingMain": 6,
+      "sqlSimulated": true,
+      "realPostgres": false,
+      "gatePassed": false,
+      "entry": "Direct test entry, not production suite-entry",
+      "originalPayloadHashesUnchanged": 435
+    }
+  },
+  "rework": [
+    "Initial ops result318/2: inherited negative fixtures indexed cases[3] after J3 shortened to three cases. Corrected both to cases[2], then fresh320/320 passed; original result retained.",
+    "Case attempts1/2 exposed fixture deploymentId/ancestor-attestation/POSIX-path assumptions before final attempt3 passed. All earlier artifacts retained; no RC11 or permission-grant change.",
+    "Initial root retention criterion compared pre-sanitization SHA with exported bytes. Independent R1 finding resolved through one exact pinned static-disclosure reconstruction in a separate audit copy; eight positive/negative checks passed; original criterion retained."
+  ],
+  "retention": {
+    "manualGateMandatory": true,
+    "inheritedValidatorAllowsAbsentSuiteEvidence": true,
+    "fullUndegradedEvidenceRequired": true,
+    "rawBundleImmutable": true,
+    "hashHelperIsNotAuthentication": true,
+    "onlyStaticH15DisclosureMayBeReconstructed": true,
+    "matchingWithheldRecordAndOriginalHashRequired": true,
+    "unexpectedRedaction": "ACCEPTANCE_INCOMPLETE_NO_REFETCH_OR_RETRY",
+    "hostH15Drifts": 14,
+    "localMemoryH15Drifts": 15,
+    "localPoolIdleChecks": 25,
+    "hostPoolIdleCount": "Nonempty, all zero; not fixed to local25",
+    "rawPerWorkerReturnsExported": false
+  },
+  "framing": {
+    "scope": "Representative synthetic size specimen; not a valid J3 receipt or worst-case bound",
+    "suiteArtifactBytes": 11706,
+    "stdoutBytes": 13765,
+    "stdoutFrames": 5,
+    "receiptBytes": 10635,
+    "bundleBytes": 45360
+  },
+  "risks": [
+    "Real J3 PostgreSQL/Linux, production suite-entry permissions, hostile Worker escape and host capacity remain unproved.",
+    "Synthetic systemd/readiness authority and createQuantPreflightApi UNPROVEN remain explicit.",
+    "Computed role connections6/9 is not observed capacity; current host boot/health/disk, job task peak and memory margin unknown.",
+    "Diagnosis loss, cleanup masking, inherited socket guard, filesystem TOCTOU, non-atomic snapshots, timer race and unknown-completion limitations remain."
+  ],
+  "proposedWindow": {
+    "attempts": 1,
+    "retry": false,
+    "contacts": [
+      17,
+      22
+    ],
+    "healthObservations": 2,
+    "readinessPostgresConnections": 4,
+    "httpReads": 2,
+    "workSeconds": 285,
+    "cleanupSeconds": 30,
+    "unitRuntimeMaxSeconds": 330,
+    "unitStopSeconds": 15,
+    "controllerSeconds": 420,
+    "localStartSeconds": 450,
+    "memoryMiB": 512,
+    "cpuPercent": 100,
+    "unitTasks": 32,
+    "jobPids": 26,
+    "postgresMaxConnections": 12,
+    "roleConnections": 9,
+    "scratchBytes": 1073741824,
+    "outputBytes": 1048576,
+    "uploadBytes": 26864562,
+    "keepRetainedArtifacts": true,
+    "raiseCaps": false
+  },
+  "freezes": [
+    {
+      "namespace": "codex-r7b-j3r1-gate",
+      "files": 9,
+      "sha256": "aa7363a932abb6cd912932d7ab3902b76df44ad2a6150eb8042cbb2d01e12b3f"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-ops-prep",
+      "files": 485,
+      "sha256": "965d0f55301f24878d20cfb09a336ab58b0adfee505622ea43adf4f9fbe440f5"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-runner",
+      "files": 26,
+      "sha256": "9fb0d710bc8905237e32c6e59a1acb48e657d848ce8cf3a71f3a7e128a024446"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-cases",
+      "files": 13,
+      "sha256": "f27f4253dcd8a2f1b94bd8aabf1cd584dbc7a4efbbca0141877f7e875dbf96d4"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-root-review",
+      "files": 13,
+      "sha256": "be7fa7e188891ac3c60e47315d04053903f00260b6e5fc2647dfe4088ce4427e"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-audit",
+      "files": 16,
+      "sha256": "b7a06a93d34d687b1fb91a41a7bb95c33328e6cb9c588169b4fdc2fc8b2255e3"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-plan",
+      "files": 1,
+      "sha256": "e371d148c962bf48999e885bf4875cc07753d28edcaba2dbfe3b2de42d7412bd"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-go",
+      "files": 3,
+      "sha256": "201177bf605da5bf648c168848ea655411deac834c3db8ca73ac602ac3122287"
+    }
+  ],
+  "acceptancePins": {
+    "codex-r7b-j3r1-ops-prep/FILES.json": {
+      "sha256": "98235f769636402c525bd6ce82f5ec07656b63c121caf9d90a3af65158ac54c2",
+      "bytes": 13246
+    },
+    "codex-r7b-j3r1-ops-prep/init-local.mjs": {
+      "sha256": "d6096b0c171666a06ff94b6ebc5c33f47ef5db16e8537aef0ce1da56796021da",
+      "bytes": 3233
+    },
+    "codex-r7b-j3r1-ops-prep/root-accept.mjs": {
+      "sha256": "83f8c67c52c0e487cf49571f756f25d2b006f502cbb44b06310791a9a54ee28b",
+      "bytes": 40167
+    },
+    "codex-r7b-j3r1-ops-prep/spec.local.json": {
+      "sha256": "f57bda662525895b0c323101f1a0552ccd4f7a12ad3a3b9784ef55c4fb9611e7",
+      "bytes": 19465
+    },
+    "codex-r7b-j3r1-ops-prep/command-plan.local.json": {
+      "sha256": "a21928b2bb112203c3088b9c9ae7b54bca63c9c5f8f2d35a13b92035288ae8af",
+      "bytes": 85355
+    },
+    "codex-r7b-j3r1-ops-prep/input-pins.local.json": {
+      "sha256": "5153ec6404d232faa3cda68a0944fb043c87a9112b34b7edcc0933cd66dba44a",
+      "bytes": 3354
+    },
+    "codex-r7b-j3r1-ops-prep/identify.mjs": {
+      "sha256": "103de8229b9a081ad9e7340269e363908573786476471cc75074ecb563124187",
+      "bytes": 6162
+    },
+    "codex-r7b-j3r1-ops-prep/local-package-proof.json": {
+      "sha256": "64db21652deabf9fd5b9f8115d2e369f71cd1a76f2ca56df33809d0089d6c5c4",
+      "bytes": 1333
+    },
+    "codex-r7b-j3r1-runner/FILES.json": {
+      "sha256": "35febf94d140e085db9742485081552081909ace5c03a7231181b15abcb87ac6",
+      "bytes": 3622
+    },
+    "codex-r7b-j3r1-runner/lib.mjs": {
+      "sha256": "be807ef7bba3c13da77a015cb851e7fb451662c2986cdd2911446aa853edba9a",
+      "bytes": 20185
+    },
+    "codex-r7b-j3r1-gate/constants.mjs": {
+      "sha256": "77299d0320a5b96797db0b2ad2072213349c9998e29f31a3c6b544b65170a784",
+      "bytes": 364
+    },
+    "codex-r7b-j3r1-gate/gates.mjs": {
+      "sha256": "319f5809fa5c459c1c79fcb8393b6f54dc788e30f8bf5e9a3b0bd53325b970d8",
+      "bytes": 1241
+    },
+    "codex-r7b-j3r1-runner/evidence/VALIDATION.json": {
+      "sha256": "8f39f2fd247dcf9436067f2106469d4cb806e0bc5db9a9b5cb618af491c50e03",
+      "bytes": 1555
+    },
+    "codex-r7b-j3r1-audit/FINAL-REVIEW.md": {
+      "sha256": "145efcc32200a9c8434203cae5b66981a9cef920e6a1d2b525ae8fcba0569bff",
+      "bytes": 10483
+    },
+    "codex-r7b-j3r1-audit/runner-source-results.json": {
+      "sha256": "dce28b6bc38f7bb673726dbb0e24624bac59e4b28de0be84683bd4f6ab1809a6",
+      "bytes": 4730
+    },
+    "codex-r7b-j3r1-root-review/RETENTION.md": {
+      "sha256": "d80aeb3cfe1e5f7c425ea97949ee6f8754cba0b8c45343d26d8cb6edb484ce6d",
+      "bytes": 5785
+    },
+    "codex-r7b-j3r1-root-review/retention-hash.mjs": {
+      "sha256": "a0889d8b5571f102035d2c83da8562d384bb8ce3b0b5a3c3aa4b144a5779385e",
+      "bytes": 2063
+    },
+    "codex-r7b-j3r1-root-review/FRAMING.json": {
+      "sha256": "3deea84eb6f75d813eb7b4b1dd057d23e0d03bc539dac09fad3a0bfb3f499fb6",
+      "bytes": 1111
+    },
+    "codex-r7b-j3r1-cases/entry.mjs": {
+      "sha256": "925456d9871efbd3e3ba693a48a8bfa2441898eb9f5d1fdb21fb97faaa965b0b",
+      "bytes": 9546
+    },
+    "codex-r7b-j3r1-cases/prepare.mjs": {
+      "sha256": "f209c0a3508dc59321a50d0dd86c41c730aac6b577b714e8bedffbbee9136ff5",
+      "bytes": 3428
+    },
+    "codex-r7b-j3r1-cases/execution.json": {
+      "sha256": "c78e882a80e440fa4a2d92521a9eeccab4556973256544e4d24665395491bcad",
+      "bytes": 3069
+    },
+    "codex-r7b-j3r1-decisions/DECISIONS.md": {
+      "sha256": "6c4eb96f2ea3eba63e83d9b8a913d692c2a980833ebf71f2e86392044783b803",
+      "bytes": 3929
+    },
+    "codex-r7b-j3r1-decisions/LOCAL-ACCEPTANCE.md": {
+      "sha256": "73b9a3630b76cb6a924b96480da2c956c2c3e8bebcfe2dd80f0aa65f85bb7ad3",
+      "bytes": 2746
+    }
+  },
+  "unchangedSources": {
+    "historicalFreezeEntries": 569,
+    "historicalAdditionalPins": 5,
+    "additionalSourceFreezes": 4,
+    "additionalSourceEntries": 382,
+    "j2LocalEntries": 587,
+    "j2PerEffectPins": 12,
+    "j2RunFiles": 109,
+    "j2AcceptanceRecords": 20
+  },
+  "progress": {
+    "wholeProjectPercent": 60,
+    "wholeProjectRange": [
+      55,
+      65
+    ],
+    "prototypePercent": 75,
+    "prototypeRange": [
+      70,
+      80
+    ],
+    "basis": "Engineering estimates across capabilities, not test-pass ratios; unchanged by local preparation alone"
+  },
+  "timeAndUsage": {
+    "approxStartUtc": "2026-10-12T17:23:00Z",
+    "checkpointUtc": "2026-10-12T18:06:43.197Z",
+    "runnerFullSuiteApproxMinutes": 11,
+    "weeklyUsedBefore": 63,
+    "weeklyUsedAtCheckpoint": 74,
+    "weeklyRemainingAtCheckpoint": 26,
+    "shortWindow": "UNKNOWN",
+    "sharedAccountCostNotModelSpecific": true,
+    "noSpeedupClaim": true
+  },
+  "next": "Owner decision on frozen J3-R1 GO packet: one attempt, no retry. J4 and all later effects remain closed."
+}

@@ -1,0 +1,141 @@
+{
+  "schema": "r7b-harness-reconciliation-v1",
+  "asOf": "2026-10-12T21:37:46.367Z",
+  "status": "SCOPED_HARNESS_PREREQUISITE_ACCEPTED",
+  "decision": "Root accepts the common-source carry across the four individually accepted jobs. No source-based J1/J2 rerun is required by the RC11-to-RC15 delta.",
+  "reportSha256": "1f015ec9bd73135b529d36d10f0b614a68f071c2b738a0c9db5b5df0624102a7",
+  "resultsSha256": "d006bad1309a8573ee336728c90dd50d76fd67fe2cd115f355ba6b3b35f255a7",
+  "jobs": [
+    {
+      "rawBundleSha256": "e4a087a9f1180ddce1c0a14028d57b8dfc31fc9c2009cc3224f9945551efa797",
+      "job": "J1",
+      "package": "2964b5e3bda887ee22d4d246eef63d9c84647263cced2ba589c0509ed6acb736",
+      "tool": "6837d35f9d7497bd679b0f42941d5ccb6b1ad363087cb792834f81b6702c48a2",
+      "product": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+      "cases": [
+        "startup-schema",
+        "H-2",
+        "H-3",
+        "H-6",
+        "H-8",
+        "H-10",
+        "H-11",
+        "H-12a",
+        "H-1",
+        "H-7",
+        "H-9"
+      ],
+      "artifactPresent": true,
+      "threads": 1
+    },
+    {
+      "rawBundleSha256": "1c9a673155ff3f62c46c15665bc01a129d41f6e152e3989e0ab8d2e59b117e21",
+      "job": "J2",
+      "package": "2964b5e3bda887ee22d4d246eef63d9c84647263cced2ba589c0509ed6acb736",
+      "tool": "6837d35f9d7497bd679b0f42941d5ccb6b1ad363087cb792834f81b6702c48a2",
+      "product": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+      "cases": [
+        "H-4",
+        "H-5",
+        "H-7b",
+        "H-7c",
+        "H-7d"
+      ],
+      "artifactPresent": true,
+      "threads": 1
+    },
+    {
+      "rawBundleSha256": "7249aeb360e23482817ab1fa472fdee193fc9820ae8c6680bd1556a6ac4ac9f6",
+      "job": "J3",
+      "package": "560d1c4606c17ab2beba8147de1c3c9992b9003f3a9b1b0d303a456f0f80fbb0",
+      "tool": "6837d35f9d7497bd679b0f42941d5ccb6b1ad363087cb792834f81b6702c48a2",
+      "product": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+      "cases": [
+        "H-12b",
+        "H-14",
+        "H-15"
+      ],
+      "artifactPresent": true,
+      "threads": 2
+    },
+    {
+      "rawBundleSha256": "b6755a221c990d883e0178fcda334ce9d71aa97cd6fa8ee823192f77fe068727",
+      "job": "J4",
+      "package": "560d1c4606c17ab2beba8147de1c3c9992b9003f3a9b1b0d303a456f0f80fbb0",
+      "tool": "6837d35f9d7497bd679b0f42941d5ccb6b1ad363087cb792834f81b6702c48a2",
+      "product": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+      "cases": [
+        "H-13"
+      ],
+      "artifactPresent": true,
+      "threads": 1
+    }
+  ],
+  "uniqueCases": 20,
+  "unchangedPayloads": 431,
+  "changedHarnessFiles": [
+    {
+      "path": "harness/fixtures/h15-product-config.mjs",
+      "oldSha": "3aa72543c685ff3e381b9a6d359b4053b5242d5a348ca1125186471884e7374b",
+      "newSha": "7addf7d772ad31b850cd4b2f1cfa0f166d02a8b67b33863ea803756f54c3ca83"
+    },
+    {
+      "path": "harness/fixtures/h15-world.mjs",
+      "oldSha": "024424c85d7e84b0b5a6aed6675a9d1183a647f67c5bb5fd0aceaf7fc190d188",
+      "newSha": "1328ec497696d9a068ceb7493b5254862962af5a0a791edcb04ef76000bb1ca1"
+    },
+    {
+      "path": "harness/h15-cases.mjs",
+      "oldSha": "308f3f4705e51fba7b6b42ac280efd9e182840e20deefabc5b29609763c67d1c",
+      "newSha": "76358a8572f8c49dfe92b706aafad8bbe503cf69f266e377fdfb6a1eab23034f"
+    },
+    {
+      "path": "harness/suite.mjs",
+      "oldSha": "75b891309bad4a2c0f10923d4feb262c51556219d1ae350eed91e2bfe0a4298e",
+      "newSha": "e6b0b40ecc1971451ea04b2834d4a276504b7d300d84bf3c260aa07eb53dba57"
+    }
+  ],
+  "orderedToolCodeRecomputed": true,
+  "manifestPolicyUnchanged": true,
+  "singlePackageFullRun": false,
+  "fullR7Accepted": false,
+  "measurementExecutionReady": false,
+  "locks": [
+    {
+      "code": "LOCAL_CANDIDATE_NOT_RELEASED",
+      "state": "ACTIVE",
+      "scope": "Measurement executor"
+    },
+    {
+      "code": "ENABLED_CONFIG_AND_BUDGET_REVIEW_REQUIRED",
+      "state": "ACTIVE",
+      "scope": "Historical root helper non-dry execution"
+    },
+    {
+      "code": "HARNESS_VPS_PACKET_REQUIRED",
+      "state": "LEGACY_ENTRY_STILL_LOCKED",
+      "scope": "The separately reviewed isolated harness prerequisite is satisfied; the old entry point remains locked"
+    }
+  ],
+  "limitations": [
+    "RC11 ran J1/J2; RC15 ran J3/J4. This is source-based carry, not a single-package execution of all 20 cases.",
+    "Synthetic supervision and authority do not prove integrated operational startup or production service recovery.",
+    "J3 retains its disclosed H15 static-string reconstruction in the audit copy; J4 uses direct artifact hashing without normalization.",
+    "J4 consumer lapse validation has an empty module set. Separate source pins do not turn it into non-vacuous runtime validation.",
+    "No large-host capacity, continuous stability, research admission or real holdout acceptance follows."
+  ],
+  "next": "Prepare and independently verify a locked local measurement-epoch helper and concrete effect contract. Fresh runtime facts, executor release, owner-present quiet slot, activation/recovery authority, immediate enrollment submission approval and final Preflight gates remain separate.",
+  "estimates": {
+    "wholeProjectPercent": 60,
+    "wholeProjectRange": [
+      55,
+      65
+    ],
+    "prototypePercent": 75,
+    "prototypeRange": [
+      70,
+      80
+    ],
+    "kind": "Engineering estimates, not gate or test-pass ratios"
+  }
+}

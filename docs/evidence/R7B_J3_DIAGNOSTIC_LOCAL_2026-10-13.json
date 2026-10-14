@@ -1,0 +1,86 @@
+{
+  "schema": "r7b-j3r1-diagnostic-local-v1",
+  "utc": "2026-10-12T18:43:54.354Z",
+  "status": "DIAGNOSTIC_DESIGN_ACCEPTED_FOR_LOCAL_INTEGRATION_ONLY",
+  "rootDecision": "Accept exact v2 finite mapping and proposed failureCode insertion as a local integration design. No package integration, root-cause fix, runtime acceptance or host GO.",
+  "hostOutcome": "J3-R1 FAIL_H15_ERR_ASSERTION",
+  "exactHostCause": "UNKNOWN",
+  "hypothesis": {
+    "candidate": "Real M0/m1 amendedIdle baseline is evaluated while injected local test explicitly exempts WINDOW_CLOSED",
+    "proven": false,
+    "workers": "Observed aggregate threads1 supports an early failure but does not identify the assertion"
+  },
+  "provenDiagnosticGap": "Original failureCode discards colon-bearing H15 assertion identity and returns ERR_ASSERTION. The host did not retain the original message or stack.",
+  "candidate": {
+    "scope": "31 exact colon-bearing H15 source labels only",
+    "mappingOneToOne": true,
+    "unchangedCodes": 10,
+    "renamedCodes": 21,
+    "maximumOutputBytes": 52,
+    "inputCharacterLimit": 4096,
+    "output": "Finite uppercase/underscore codes only; no suffix, path, secret or stack",
+    "failureStatusUnchanged": true,
+    "namedFailureAndAggregatePrecedenceUnchanged": true,
+    "globalDriverRegexUnchanged": true,
+    "payloadUnchanged": true
+  },
+  "checks": {
+    "originalProbe": 52,
+    "v2Author": 45,
+    "v2IndependentPipelines": 31,
+    "v2IndependentPrecedenceAndRefusal": 6,
+    "originalProbeNewlineExpectationCorrected": true
+  },
+  "review": {
+    "v1D1": "21 of 31 original labels became null in driver case code filtering",
+    "v2D1": "RESOLVED",
+    "scope": "Pure source extraction and synthetic contract/receipt/sanitizer composition, not full package execution"
+  },
+  "limitations": [
+    "Actual host cause remains unknown.",
+    "Other dynamic H15 assertions can remain generic; this does not cover every failure.",
+    "Known-value sanitizer collisions on real host values remain unknown.",
+    "No real PostgreSQL, Worker, Linux suite-entry or package execution in this diagnostic work.",
+    "A new host attempt requires a reviewed new package/operations packet and separate owner GO."
+  ],
+  "pins": {
+    "diagnostic-v2/proposed-helper.mjs": "8ffe3bbb6ccdf1fa732c3c160d24acf8cc59cb156c304591e40d6f8f5a6689e6",
+    "diagnostic-v2/results.json": "10a33eab14818b8e025ce9a0cb610fa375d680d7fc63090e77ca22466b0b6d81",
+    "diagnostic-v2-audit/results.json": "03651bc5b01560560c22b962f651bfab9b9b5ba2e540cafcaaeec2759b91ff0d"
+  },
+  "freezes": [
+    {
+      "namespace": "codex-r7b-j3r1-diagnosis",
+      "files": 1,
+      "sha256": "05e727e487461be9110bb0a1ee80e18fd2bac42f21dd260f960de54340116d7d"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-diagnostic-probe",
+      "files": 4,
+      "sha256": "30fdbc2887d3f85cf9f0bed11301c551c4eb32c0478f4761e94af7eff474576e"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-diagnostic-audit",
+      "files": 3,
+      "sha256": "b463a4bfb18aeed03cf47ea2e42226a674eee1782ed69fefbe6d2505dee6f10c"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-diagnostic-v2",
+      "files": 4,
+      "sha256": "f5d5e5513b9164814f11c4f38a0beef16e25dcec258630f75377355db49128c3"
+    },
+    {
+      "namespace": "codex-r7b-j3r1-diagnostic-v2-audit",
+      "files": 3,
+      "sha256": "dea86ba4a7e29cc1e2e40425676b499709ad226e9cba02c04f3645291f81d2c7"
+    }
+  ],
+  "usage": {
+    "weeklyUsed": 80,
+    "weeklyRemaining": 20,
+    "shortWindow": "UNKNOWN",
+    "ownerFloor": 2,
+    "sharedAccountNotExactModelCost": true
+  },
+  "next": "Bounded local integration into a new immutable harness/package candidate, focused package checks and independent review; never change RC11 or replay consumed J3-R1 GO. J4 closed."
+}

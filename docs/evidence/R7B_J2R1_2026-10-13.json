@@ -1,0 +1,370 @@
+{
+  "schema": "r7b-j2r1-host-evidence-v1",
+  "date": "2026-10-13",
+  "timezone": "Asia/Bangkok",
+  "status": "PASS",
+  "scope": "One bounded J2-R1 attempt on Linux with its own real PostgreSQL. Not full R7 acceptance, enrollment or a new measurement epoch.",
+  "jobId": "r7b-lpg-20261012-j2-5ac9b757",
+  "jobKind": "J2",
+  "packageId": "2964b5e3bda887ee22d4d246eef63d9c84647263cced2ba589c0509ed6acb736",
+  "packageChanged": false,
+  "productRevision": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+  "ownerAuthority": {
+    "explicitApproval": true,
+    "oneAttempt": true,
+    "retry": false,
+    "goPacketFreezeSha256": "926bbd9abb7bf999e5138e6f387a632eee77235012ee887eccee2b609a6857d4"
+  },
+  "timing": {
+    "startedUtc": "2026-10-12T16:52:27.254Z",
+    "endedUtc": "2026-10-12T17:14:05.434Z",
+    "startedBangkok": "2026-10-12T23:52:27.254+07:00",
+    "endedBangkok": "2026-10-13T00:14:05.434+07:00",
+    "windowMs": 1298180,
+    "totalTransportMs": 50240,
+    "startContactMs": 22375,
+    "suiteIntervalMs": 15474,
+    "driverMeasuredWallMs": 18266
+  },
+  "counts": {
+    "hostContacts": {
+      "used": 17,
+      "limit": 22
+    },
+    "health": {
+      "used": 2,
+      "limit": 2
+    },
+    "pgReadiness": {
+      "used": 4,
+      "limit": 4
+    },
+    "http": {
+      "used": 2,
+      "limit": 2
+    },
+    "starts": {
+      "used": 1,
+      "limit": 1
+    },
+    "identify": {
+      "used": 1,
+      "limit": 2
+    },
+    "status": {
+      "used": 1,
+      "limit": 3
+    },
+    "stop": {
+      "used": 0,
+      "limit": 1
+    },
+    "prove": {
+      "used": 1,
+      "limit": 2
+    },
+    "bundle": {
+      "used": 1,
+      "limit": 1
+    }
+  },
+  "acceptance": {
+    "executionPass": true,
+    "bundleAccepted": true,
+    "strictPostflightAccepted": true,
+    "chainComplete": true,
+    "limitsExceeded": [],
+    "stopExecuted": false,
+    "result": {
+      "code": "BOUND_PASS",
+      "evidenceScope": "BOUND_LINUX_V1",
+      "exitCode": 0,
+      "flags": [
+        "OUTER_PROOF_PASSED"
+      ],
+      "gatePassed": true,
+      "pass": true,
+      "realPostgres": true,
+      "runnerCode": "BOUND_PASS",
+      "secondary": [],
+      "stopPath": "DONE"
+    }
+  },
+  "cases": [
+    {
+      "code": null,
+      "endMs": 10025,
+      "evidenceSha256": "812ee9a12e5143419054603ee67bbb677632d12b53f61a183750d4544aa811ac",
+      "id": "H-4",
+      "peakClientBackends": 3,
+      "peakMemoryBytes": 172769280,
+      "peakRoleBackends": 3,
+      "peakTasks": 22,
+      "startMs": 2792,
+      "status": "PASS"
+    },
+    {
+      "code": null,
+      "endMs": 10025,
+      "evidenceSha256": "03106201cd2c9afc54894f7041b43a45ecf1eaa25e3eeff58f12049c5a53ae73",
+      "id": "H-5",
+      "peakClientBackends": null,
+      "peakMemoryBytes": null,
+      "peakRoleBackends": null,
+      "peakTasks": null,
+      "startMs": 10025,
+      "status": "PASS"
+    },
+    {
+      "code": null,
+      "endMs": 12274,
+      "evidenceSha256": "fc99a3d0a09699496797a0dbf18ef44d895648e524fe6e738696fa8ef383be2c",
+      "id": "H-7b",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 164564992,
+      "peakRoleBackends": 4,
+      "peakTasks": 23,
+      "startMs": 10025,
+      "status": "PASS"
+    },
+    {
+      "code": null,
+      "endMs": 14916,
+      "evidenceSha256": "a1fa969da453ee9c956947f192f9b0ea7124bccac502c1519263724ebef0b3d6",
+      "id": "H-7c",
+      "peakClientBackends": 2,
+      "peakMemoryBytes": 193716224,
+      "peakRoleBackends": 2,
+      "peakTasks": 21,
+      "startMs": 12274,
+      "status": "PASS"
+    },
+    {
+      "code": null,
+      "endMs": 18228,
+      "evidenceSha256": "21c07bd0c319e75c8ed37f74cd53c0f02a5057227d484fe9b19fd578e4ce1dcb",
+      "id": "H-7d",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 204197888,
+      "peakRoleBackends": 4,
+      "peakTasks": 23,
+      "startMs": 14916,
+      "status": "PASS"
+    }
+  ],
+  "measured": {
+    "unitTasksPeak": 23,
+    "unitTasksLimit": 32,
+    "jobCgroupTasksPeak": null,
+    "jobCgroupTasksPeakReason": "Not exported; unit peak does not prove job cgroup peak.",
+    "jobCgroupTasksLimit": 26,
+    "roleBackendsPeak": 4,
+    "roleBackendsLimit": 9,
+    "clientBackendsPeak": 4,
+    "backendsTotalPeak": 8,
+    "memoryPeakBytesUnit": 261664768,
+    "memoryPeakBytesJob": 206561280,
+    "memoryLimitBytes": 536870912,
+    "diskPeakBytes": 70012928,
+    "samples": 57,
+    "sampleErrors": 0
+  },
+  "firstRealRunObservations": {
+    "backendsAtMidFlight": 2,
+    "h1Codes": null,
+    "h4Codes": {
+      "crashed": "MARKED_JOB_CRASHED",
+      "extra-unmarked-running": "MARKED_JOB_COUNT",
+      "queued": "IDLE_AMENDED_MARKED",
+      "running-active": "IDLE_AMENDED_MARKED",
+      "running-claimed": "IDLE_AMENDED_MARKED",
+      "second-marked": "MARKED_JOB_COUNT",
+      "succeeded-close": "IDLE_AMENDED_MARKED",
+      "succeeded-close-unit-present": "IDLE_AMENDED_MARKED",
+      "succeeded-settled": "IDLE_AMENDED_MARKED"
+    },
+    "missing": {
+      "h1Codes": "CASE_NOT_IN_JOB"
+    },
+    "opsAtCompleting": [
+      "ACTIVE"
+    ],
+    "peakConnections": {
+      "H-4": 3
+    },
+    "peakMemoryBytes": {
+      "H-4": 172769280
+    },
+    "runningToQueued": {
+      "guardsActive": true,
+      "rowCount": 1
+    },
+    "toJsonbRoundTrip": {
+      "jobEqual": true,
+      "launchesEqual": true,
+      "ledgersEqual": true,
+      "rows": {
+        "jobs": 1,
+        "launches": 1,
+        "ledgers": 1
+      }
+    },
+    "wallMs": {
+      "H-4": 7233
+    }
+  },
+  "proof": {
+    "lockReleased": true,
+    "outerChecks": [
+      {
+        "id": "unitList",
+        "ok": true
+      },
+      {
+        "id": "cgroupDir",
+        "ok": true
+      },
+      {
+        "id": "processes",
+        "ok": true
+      },
+      {
+        "id": "postmasterFiles",
+        "ok": true
+      },
+      {
+        "id": "sysv",
+        "ok": true
+      },
+      {
+        "id": "scratchInventory",
+        "ok": true
+      },
+      {
+        "id": "runtimeDirs",
+        "ok": true
+      },
+      {
+        "id": "out",
+        "ok": true
+      },
+      {
+        "id": "scratchInventoryFinal",
+        "ok": true
+      },
+      {
+        "id": "protectedServices",
+        "ok": true
+      },
+      {
+        "id": "hostTools",
+        "ok": true
+      },
+      {
+        "id": "inputPostcheck",
+        "ok": true
+      },
+      {
+        "id": "ioLimits",
+        "ok": true
+      }
+    ],
+    "cgroupEmpty": true,
+    "processAbsent": true,
+    "socketAbsent": true,
+    "sysvSegmentAbsent": true,
+    "artifactsRetained": true,
+    "ownRuntimeRemoved": true
+  },
+  "health": {
+    "before": {
+      "mode": "PAPER_ONLY",
+      "ok": true,
+      "flags": {
+        "QUANT_RESEARCH_ENABLED": "OFF",
+        "QUANT_RESEARCH_FOUNDATION_ENABLED": "OFF",
+        "QUANT_PREFLIGHT_ENABLED": "OFF",
+        "QUANT_PROFILE_V2_ENABLED": "OFF",
+        "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": "OFF"
+      }
+    },
+    "after": {
+      "mode": "PAPER_ONLY",
+      "ok": true,
+      "flags": {
+        "QUANT_RESEARCH_ENABLED": "OFF",
+        "QUANT_RESEARCH_FOUNDATION_ENABLED": "OFF",
+        "QUANT_PREFLIGHT_ENABLED": "OFF",
+        "QUANT_PROFILE_V2_ENABLED": "OFF",
+        "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": "OFF"
+      }
+    },
+    "researchInactive": true,
+    "controllerProtectedEquivalent": true,
+    "controllerProtectedAllowances": 0
+  },
+  "resolutionAudit": {
+    "present": true,
+    "droppedResolutionAudit": false,
+    "schema": "r7b-lpg-resolution-audit-v2",
+    "source": "capture",
+    "attestationState": "active",
+    "attestationReason": null,
+    "attestationCount": 4,
+    "attestationSha256": "fbe2599be2a0682ef6795015072a75b7be40c4dcb0d730484214f1a63822b91f",
+    "ancestorsCount": 4,
+    "ancestorsSha256": "fbe2599be2a0682ef6795015072a75b7be40c4dcb0d730484214f1a63822b91f",
+    "ancestorsFileMode": "0400",
+    "postCheckChecked": 4,
+    "postCheckDifferences": 0,
+    "deniedPresent": true,
+    "deniedRecords": 4,
+    "overflow": 0,
+    "unansweredAttested": 0,
+    "attestedAnswers": 396,
+    "deniedRecordsInvalidFlag": false,
+    "problems": [],
+    "denialRecords": [
+      {
+        "api": "promises.lstat",
+        "count": 99,
+        "permission": "FileSystemRead",
+        "resourceClass": "PACKAGE_ANCESTOR:1"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 99,
+        "permission": "FileSystemRead",
+        "resourceClass": "PACKAGE_ANCESTOR:2"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 99,
+        "permission": "FileSystemRead",
+        "resourceClass": "SCRATCH_ANCESTOR:1"
+      },
+      {
+        "api": "promises.lstat",
+        "count": 99,
+        "permission": "FileSystemRead",
+        "resourceClass": "SCRATCH_ANCESTOR:2"
+      }
+    ]
+  },
+  "evidence": {
+    "runDirectory": ".qa-local/codex-r7b-j2r1-run-20261012T164837Z",
+    "runFreezeSha256": "5ef3aa73a8609588cb254a53a2c6ec38a625c2158628b59a531cffcf4a260cd0",
+    "runFrozenFiles": 109,
+    "finalAcceptanceSha256": "af40d73939bb187aba86360c72f8b906f243554c69b192c8857a7514947fa7b2",
+    "bundleSha256": "1c9a673155ff3f62c46c15665bc01a129d41f6e152e3989e0ab8d2e59b117e21",
+    "bundleBytes": 56126
+  },
+  "limitsAndNext": [
+    "One passing J2 job does not establish broad capacity or complete R7.",
+    "Synthetic systemd authority in the scoped fixtures remains a limitation; no production enrollment occurred.",
+    "F2-F4 failure-diagnosis limitations remain; a passing run does not exercise every failure path.",
+    "Current whole-host free disk and job cgroup task peak remain unknown. Existing and new retained artifacts remain.",
+    "J3 and J4 are closed; each requires its own owner GO. No further host contacts authorized by this completed attempt.",
+    "No product, Pine, Risk Manager, deployment, guard reset, optimizer, holdout, Best Inputs or Live change. No commit or push."
+  ]
+}

@@ -1,0 +1,188 @@
+{
+  "schema": "r7b-j3r4-host-evidence-v1",
+  "asOf": "2026-10-12T21:02:38.443Z",
+  "status": "J3_SCOPED_HOST_ACCEPTED",
+  "jobId": "r7b-lpg-20261012-j3-e3cd9a11",
+  "packageId": "560d1c4606c17ab2beba8147de1c3c9992b9003f3a9b1b0d303a456f0f80fbb0",
+  "scope": "H-12b, H-14 and H-15 on isolated real PostgreSQL with synthetic host facts; not full R7 acceptance",
+  "executionPass": true,
+  "bundleAccepted": true,
+  "strictPostflightAccepted": true,
+  "manualRetentionSatisfied": true,
+  "contacts": 17,
+  "starts": 1,
+  "retries": 0,
+  "stopExecuted": 0,
+  "limitsExceeded": [],
+  "cases": [
+    {
+      "id": "H-12b",
+      "sha256": "b13ae6b4dc2777e34489b20b6f2fbfc76f8938ab6a02761568f724e8246930a1",
+      "status": "PASS"
+    },
+    {
+      "id": "H-14",
+      "sha256": "2b8a5ad7ba3df9a86f1cee668f317f2836796830e8720074d028f98af0ec8af1",
+      "status": "PASS"
+    },
+    {
+      "id": "H-15",
+      "sha256": "9f9a7cc6ec027a1b88cf5d85a7b4a72ab3a606d4d4231231e4aaadacb3d7784e",
+      "status": "PASS"
+    }
+  ],
+  "fullSuiteEvidence": true,
+  "artifactHashProof": {
+    "scope": "HASH_RECONCILIATION_ONLY_NOT_ACCEPTANCE",
+    "sourceArtifactSha256": "0036d8222c6e68df21a5368c6f46b4553ad0af2c5d42eee0ef5bd6c5d2b697f5",
+    "exportedArtifactSha256": "c5e0ef2f68556f6aa8aafd9d80bf0c419f0892c0957ad5a322c9491c3ec071c5",
+    "reconstructedArtifactSha256": "0036d8222c6e68df21a5368c6f46b4553ad0af2c5d42eee0ef5bd6c5d2b697f5",
+    "normalizations": [
+      {
+        "field": "suiteEvidence.artifact.suite.results[2].evidence.syntheticGates[14]",
+        "rule": "abs-path",
+        "sourceSha256": "76358a8572f8c49dfe92b706aafad8bbe503cf69f266e377fdfb6a1eab23034f",
+        "restoredStaticDisclosure": true
+      }
+    ],
+    "rawUnmodified": true
+  },
+  "rootRetentionChecks": [
+    "complete chain and strict postflight",
+    "bound artifact and three PASS identities",
+    "original artifact and case hashes independently reconcile",
+    "all case scopes explicit",
+    "H12b guard and foreign observations",
+    "H14 bound dataset observations",
+    "H15 M0 FULL and effect fence",
+    "H15 exactly fourteen real drift refusals",
+    "H15 configuration checks and unproved startup disclosure",
+    "H15 incomplete collection and write-once boundary",
+    "H15 no retained open clients and actual idle-site evaluation",
+    "actual exactly two threads and clean attested resolution",
+    "outer proof recovery and strict healthy PAPER_ONLY",
+    "scoped capacity and missing H4 facts remain explicit"
+  ],
+  "independentReviewSha256": "de369f8718dc582f03c494701eac8a40ec1901e8f4eb7fdf7494a1c1fedeaa73",
+  "independentResultsSha256": "6a77aec36fabc9642e4cd4784138649815b3768f4022ce4f67913495b2144df0",
+  "observed": {
+    "threads": 2,
+    "poolChecks": 24,
+    "drifts": 14,
+    "peaks": {
+      "backendsTotal": 8,
+      "clientBackends": 4,
+      "cpuUsageUsec": 9868866,
+      "diskFinalBytes": 69632,
+      "diskPeakBytes": 73060352,
+      "memoryPeakBytesJob": 273219584,
+      "memoryPeakBytesUnit": 305680384,
+      "memoryPeakSource": "memory.peak",
+      "roleBackends": 4,
+      "sampleErrors": 0,
+      "sampleIntervalMs": 250,
+      "samples": 41,
+      "tasksPeak": 24,
+      "tasksPeakSource": "pids.peak",
+      "wallMs": 12688
+    },
+    "attestation": {
+      "count": 4,
+      "fileMode": "0400",
+      "postCheck": {
+        "checked": 4,
+        "differences": 0
+      },
+      "schema": "r7b-lpg-ancestors-v1",
+      "sha256": "679f375e3d31ec721d92cef40a7c7964273dc81356c1bafdd7cfab4f8e230f28"
+    },
+    "denied": {
+      "attestedAnswers": 502,
+      "overflow": 0,
+      "records": [
+        {
+          "api": "lstatSync",
+          "count": 83,
+          "permission": "FileSystemRead",
+          "resourceClass": "PACKAGE_ANCESTOR:1"
+        },
+        {
+          "api": "promises.lstat",
+          "count": 84,
+          "permission": "FileSystemRead",
+          "resourceClass": "PACKAGE_ANCESTOR:1"
+        },
+        {
+          "api": "lstatSync",
+          "count": 83,
+          "permission": "FileSystemRead",
+          "resourceClass": "PACKAGE_ANCESTOR:2"
+        },
+        {
+          "api": "promises.lstat",
+          "count": 84,
+          "permission": "FileSystemRead",
+          "resourceClass": "PACKAGE_ANCESTOR:2"
+        },
+        {
+          "api": "promises.lstat",
+          "count": 84,
+          "permission": "FileSystemRead",
+          "resourceClass": "SCRATCH_ANCESTOR:1"
+        },
+        {
+          "api": "promises.lstat",
+          "count": 84,
+          "permission": "FileSystemRead",
+          "resourceClass": "SCRATCH_ANCESTOR:2"
+        }
+      ],
+      "unansweredAttested": 0
+    },
+    "caseScope": "real PostgreSQL over synthetic host facts; operationalAuthorityValidated false; startupReadinessFacts seam and startup UNPROVEN retained",
+    "strictHealth": {
+      "researchInactive": true,
+      "stableIdentities": true,
+      "protectedIdentitiesEqual": false,
+      "protectedCanonicalEqual": false,
+      "onlyApprovedInactiveFallbackTimestampChanged": true
+    },
+    "io": {
+      "packetDevice": "8:1",
+      "appliedDevice": "8:0",
+      "rbps": 41943040,
+      "wbps": 20971520,
+      "outerIoLimitsPass": true,
+      "note": "Parent-device mapping accepted by existing bound control readback and outer ioLimits proof; not an identical raw device string."
+    }
+  },
+  "outerChecksPassed": 13,
+  "recoveryComplete": true,
+  "lockReleased": true,
+  "ownRuntimeRemoved": true,
+  "hostWindowClosed": true,
+  "runFreezeSha256": "df093b4471a389004d6fc7fc38e5c3bdae5900fba36ce3c18d15f8c6505fe215",
+  "runFiles": 109,
+  "finalAcceptanceSha256": "f840388f3f252b50310949be9ff767d0ad17be373a7484ca37500f4d2eb4fa16",
+  "reviewSha256": "79f9bb4c4f19e95d1dc0e9543416ebe201423d7b024ce83ea6fc31e3b15c7f7a",
+  "unknowns": [
+    "job cgroup task peak not separately exported; tasksPeak is unit pids.peak",
+    "per-scenario Worker raw returns not exported",
+    "no general capacity or operational authority proof"
+  ],
+  "syntheticAuthority": true,
+  "operationalAuthorityValidated": false,
+  "localEntryFailuresRemainPreserved": 3,
+  "usage": {
+    "weeklyUsedPercent": 41,
+    "weeklyRemainingPercent": 59,
+    "shortWindow": "UNKNOWN",
+    "ownerRemainingFloorPercent": 2
+  },
+  "estimates": {
+    "wholeProjectPercent": 60,
+    "prototypePercent": 75,
+    "kind": "engineering estimates, not formal gate ratios"
+  },
+  "next": "J4 local preparation, independent verification and fresh root GO under existing owner authority. No broader R7 acceptance."
+}

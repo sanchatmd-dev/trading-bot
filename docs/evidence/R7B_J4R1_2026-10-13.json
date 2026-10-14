@@ -1,0 +1,299 @@
+{
+  "schema": "r7b-j4r1-host-evidence-v1",
+  "asOf": "2026-10-12T21:31:16.487Z",
+  "status": "J4_SCOPED_HOST_ACCEPTED",
+  "jobId": "r7b-lpg-20261012-j4-b5da5862",
+  "jobKind": "J4",
+  "packageId": "560d1c4606c17ab2beba8147de1c3c9992b9003f3a9b1b0d303a456f0f80fbb0",
+  "scope": "H-13 with three product terminal paths on isolated real PostgreSQL and synthetic host facts; not full R7 acceptance",
+  "executionPass": true,
+  "bundleAccepted": true,
+  "strictPostflightAccepted": true,
+  "manualRetentionSatisfied": true,
+  "contacts": 17,
+  "starts": 1,
+  "retries": 0,
+  "stopExecuted": 0,
+  "limitsExceeded": [],
+  "cases": [
+    {
+      "id": "H-13",
+      "sha256": "7d0fba8040c3b27ac7aa219ee617aef760501e731e09be474ead0ee3ae23608d",
+      "status": "PASS"
+    }
+  ],
+  "phases": {
+    "CANCELLED_AFTER_LAUNCH": {
+      "donorRowsCopied": {
+        "job": 1,
+        "launches": 1,
+        "ledger": 1
+      },
+      "idleSiteEvaluated": true,
+      "launcher": {
+        "launches": 1,
+        "stops": 1
+      },
+      "m2b": {
+        "code": null,
+        "effects": 0,
+        "handoffDeadlineSafe": true,
+        "idle": "IDLE_AMENDED_MARKED",
+        "verdict": "M2B_PASS"
+      },
+      "marked": {
+        "botOk": true,
+        "createdOk": true,
+        "deadlineSafe": true,
+        "foreign": 0,
+        "identity": "quant-foundation-v2|PROFILE|pf2-enrollment-v1",
+        "keyed": 1,
+        "marked": 1,
+        "policyOk": true,
+        "rows": 1
+      },
+      "markedLaunches": [
+        "STOP_PROVEN"
+      ],
+      "markedOps": [
+        "SETTLED"
+      ],
+      "replays": {
+        "queued": {
+          "inserted": 0,
+          "sameJob": true,
+          "status": "QUEUED"
+        },
+        "terminal": {
+          "inserted": 0,
+          "sameJob": true,
+          "status": "CANCELLED"
+        }
+      },
+      "terminalPath": "product worker tick with switchable health and launcher terminal gate: health drop after launch, runtime settles, scheduler acknowledges stop",
+      "tickError": null
+    },
+    "CANCELLED_FROM_QUEUED": {
+      "donorRowsCopied": {
+        "job": 1,
+        "launches": 1,
+        "ledger": 1
+      },
+      "idleSiteEvaluated": true,
+      "launcher": {
+        "launches": 0,
+        "stops": 0
+      },
+      "m2b": {
+        "code": null,
+        "effects": 0,
+        "handoffDeadlineSafe": true,
+        "idle": "IDLE_AMENDED_MARKED",
+        "verdict": "M2B_PASS"
+      },
+      "marked": {
+        "botOk": true,
+        "createdOk": true,
+        "deadlineSafe": true,
+        "foreign": 0,
+        "identity": "quant-foundation-v2|PROFILE|pf2-enrollment-v1",
+        "keyed": 1,
+        "marked": 1,
+        "policyOk": true,
+        "rows": 1
+      },
+      "markedLaunches": [],
+      "markedOps": [],
+      "replays": {
+        "queued": {
+          "inserted": 0,
+          "sameJob": true,
+          "status": "QUEUED"
+        },
+        "terminal": {
+          "inserted": 0,
+          "sameJob": true,
+          "status": "CANCELLED"
+        }
+      },
+      "terminalPath": "product scheduler.cancel from QUEUED",
+      "tickError": null
+    },
+    "SUCCEEDED": {
+      "donorRowsCopied": {
+        "job": 1,
+        "launches": 1,
+        "ledger": 1
+      },
+      "idleSiteEvaluated": true,
+      "launcher": {
+        "launches": 1,
+        "stops": 1
+      },
+      "m2b": {
+        "code": null,
+        "effects": 0,
+        "handoffDeadlineSafe": true,
+        "idle": "IDLE_AMENDED_MARKED",
+        "verdict": "M2B_PASS"
+      },
+      "marked": {
+        "botOk": true,
+        "createdOk": true,
+        "deadlineSafe": true,
+        "foreign": 0,
+        "identity": "quant-foundation-v2|PROFILE|pf2-enrollment-v1",
+        "keyed": 1,
+        "marked": 1,
+        "policyOk": true,
+        "rows": 1
+      },
+      "markedLaunches": [
+        "STOP_PROVEN"
+      ],
+      "markedOps": [
+        "SETTLED"
+      ],
+      "replays": {
+        "queued": {
+          "inserted": 0,
+          "sameJob": true,
+          "status": "QUEUED"
+        },
+        "terminal": {
+          "inserted": 0,
+          "sameJob": true,
+          "status": "SUCCEEDED"
+        }
+      },
+      "terminalPath": "product worker tick: scheduler claim + QuantProfileRuntimeV2 + ledger (synthetic launcher at the OS boundary)",
+      "tickError": null
+    }
+  },
+  "fullSuiteEvidence": true,
+  "artifactSha256": "ea333df52c75c9a51f7b2cf145f7745e8a59b4df77a3ff1acf3d6d111cb1ebe7",
+  "exportedArtifactSha256": "ea333df52c75c9a51f7b2cf145f7745e8a59b4df77a3ff1acf3d6d111cb1ebe7",
+  "normalizations": [],
+  "rootRetentionChecks": [
+    "sealed complete chain and strict postflight",
+    "full artifact one H13 PASS and exact bindings",
+    "original artifact and H13 hashes match directly without normalization",
+    "scope and synthetic disclosures retained",
+    "all three product terminal shapes and exact marked/replay facts",
+    "full non-exempt m2b passes all three shapes with zero effects",
+    "main-only resolution and exact ancestor denial scope",
+    "outer proofs and complete own-runtime recovery",
+    "both health windows healthy PAPER_ONLY and research closed",
+    "applied controls and observed resources within scoped limits",
+    "missing unrelated H4 facts remain explicit"
+  ],
+  "independentReviewSha256": "8b88615cf0f88a6db9d2a94b6e81393fb87ef8d57964fcd5c0930d3115c448f0",
+  "independentResultsSha256": "025ed9431d2d0bc1aac91b01f53e6c40a9a6c27e06d055981380cf93b3b29091",
+  "resolution": {
+    "attestation": {
+      "count": 4,
+      "reason": null,
+      "sha256": "6564654a481b4eab7e22d0839785a023c2e62f1470265b5fe2a427015c473ec2",
+      "state": "active"
+    },
+    "auditCorrupt": 0,
+    "auditOverflow": 0,
+    "auditRecords": 664,
+    "auditSha256": "cb6c627219e64104f62f8ab52ace611ad7b4628e84abb4a4bf17be80641bb7e7",
+    "canaryRefused": 1,
+    "denied": {
+      "attestedAnswers": 480,
+      "overflow": 0,
+      "records": [
+        {
+          "api": "promises.lstat",
+          "count": 120,
+          "permission": "FileSystemRead",
+          "resourceClass": "PACKAGE_ANCESTOR:1"
+        },
+        {
+          "api": "promises.lstat",
+          "count": 120,
+          "permission": "FileSystemRead",
+          "resourceClass": "PACKAGE_ANCESTOR:2"
+        },
+        {
+          "api": "promises.lstat",
+          "count": 120,
+          "permission": "FileSystemRead",
+          "resourceClass": "SCRATCH_ANCESTOR:1"
+        },
+        {
+          "api": "promises.lstat",
+          "count": 120,
+          "permission": "FileSystemRead",
+          "resourceClass": "SCRATCH_ANCESTOR:2"
+        }
+      ],
+      "unansweredAttested": 0
+    },
+    "hashMismatch": 0,
+    "killRefused": 0,
+    "kind": "resolution",
+    "loadedFiles": 141,
+    "optionalAbsent": 1,
+    "outsideRoot": 0,
+    "packageId": "560d1c4606c17ab2beba8147de1c3c9992b9003f3a9b1b0d303a456f0f80fbb0",
+    "refused": 0,
+    "resolveErrors": 0,
+    "schema": "r7b-lpg-confine-v1",
+    "scopeDrift": 0,
+    "socketRefused": 0,
+    "threads": 1
+  },
+  "peaks": {
+    "backendsTotal": 8,
+    "clientBackends": 4,
+    "cpuUsageUsec": 14060076,
+    "diskFinalBytes": 61440,
+    "diskPeakBytes": 74067968,
+    "memoryPeakBytesJob": 349782016,
+    "memoryPeakBytesUnit": 392429568,
+    "memoryPeakSource": "memory.peak",
+    "roleBackends": 4,
+    "sampleErrors": 0,
+    "sampleIntervalMs": 250,
+    "samples": 53,
+    "tasksPeak": 23,
+    "tasksPeakSource": "pids.peak",
+    "wallMs": 16232
+  },
+  "cleanupMs": 645,
+  "outerChecksPassed": 13,
+  "recoveryComplete": true,
+  "lockReleased": true,
+  "ownRuntimeRemoved": true,
+  "hostWindowClosed": true,
+  "runFreezeSha256": "fc2b030e18b985af697773651446d6326c76065d698fd3d0db1ed59d17965f08",
+  "runFiles": 109,
+  "finalAcceptanceSha256": "61bf1d976ce2117086220370a48c0a6894f452114ed76f5519e31e576f272cdf",
+  "reviewSha256": "b2140e85af0863880454aaa9a6a8ef45537f3fb38ca478d53be1a49c17e7a4a7",
+  "jobTaskPeak": "UNKNOWN",
+  "syntheticAuthority": true,
+  "operationalAuthorityValidated": false,
+  "consumerSourceLapse": "VACUOUS_EMPTY_MODULES_SOURCE_KNOWN",
+  "previousLocalFullPathFailuresPreserved": 2,
+  "healthScope": "Strict point-in-time postflight; only approved inactive fallback timestamp exception, no continuous-health claim",
+  "diskMechanismScope": "Configured bounded-watchdog estimate, not measured hard-quota proof",
+  "ioDeviceMapping": {
+    "packetDevice": "8:1",
+    "appliedDevice": "8:0"
+  },
+  "usage": {
+    "weeklyUsedPercent": 52,
+    "weeklyRemainingPercent": 48,
+    "shortWindow": "UNKNOWN",
+    "ownerRemainingFloorPercent": 2
+  },
+  "estimates": {
+    "wholeProjectPercent": 60,
+    "prototypePercent": 75,
+    "kind": "engineering estimates, not formal gate ratios"
+  },
+  "next": "Local J1-J4 coverage and source reconciliation, then fresh measurement epoch readiness and concrete owner effect packet. No broader R7 acceptance or new host authority."
+}

@@ -1,0 +1,161 @@
+{
+  "schema": "r7b-j2r1-local-evidence-v1",
+  "date": "2026-10-12",
+  "status": "LOCAL_ACCEPTED_AWAITING_OWNER_GO",
+  "scope": "Local derivation and independent review only. No J2 host attempt, real PostgreSQL/Linux acceptance, deployment or full R7 completion.",
+  "packageId": "2964b5e3bda887ee22d4d246eef63d9c84647263cced2ba589c0509ed6acb736",
+  "tarSha256": "1c3cf4c84c9dc269c8f96d5be339680a063467cd905e5f77d0a35a343f48189d",
+  "packageChanged": false,
+  "cases": [
+    "H-4",
+    "H-5",
+    "H-7b",
+    "H-7c",
+    "H-7d"
+  ],
+  "inheritedFreezeVerification": {
+    "manifests": 5,
+    "entries": 569
+  },
+  "author": {
+    "gate": 26,
+    "isolatedHealthEach": 187,
+    "opsInherited": 320,
+    "opsHealth": 22,
+    "opsJ2": 9,
+    "runnerInherited": 136,
+    "runnerJ2": 6
+  },
+  "independent": {
+    "sourceFiles": 30,
+    "opsSmoke": 9,
+    "runnerSmoke": 6,
+    "generatedOutputsByteEqual": 10,
+    "recordedAcceptancePredicates": 12,
+    "accounting": 16,
+    "stateful": 39,
+    "actualInjectedJ2Cases": 5,
+    "permissionReplayJ2Cases": 5,
+    "runnerFullPass": 135,
+    "runnerFullFail": 1,
+    "runnerFocusedPass": 1,
+    "runnerFullFailureReason": "Missing historical bootstrap fixture; copied pinned fixture and replayed the exact failed body. Not a clean 136/136 full run."
+  },
+  "review": {
+    "unresolvedLocalBlockers": 0,
+    "A1": "MEDIUM import-before-pin defect fixed and independently rechecked",
+    "mockTypes": "LOW coverage gaps disclosed; stronger numeric mock variants pass all five cases; real SQL serialization remains unproved"
+  },
+  "measuredLocal": {
+    "suiteArtifactBytes": 20316,
+    "stdoutFrames": 7,
+    "stdoutBytes": 21344,
+    "representativeBundleBytes": 58768,
+    "virtualMainCalls": 11,
+    "maxVirtualOffsetSeconds": 25
+  },
+  "limitations": [
+    "Windows Node 24.19 permission replay used a test manifest with four pinned mock modules; original 435 RC11 payload entries unchanged.",
+    "No hostile worker escape, ancestor attestation answer branch, real product runtime, Linux or PostgreSQL proof.",
+    "Virtual clocks and representative framing do not prove host runtime, capacity, lease headroom or worst-case output size.",
+    "F2-F4 failure diagnosis limitations remain owner accepted; inherited filesystem TOCTOU was not adversarially tested.",
+    "SQL inventory is static for some paths; failure inventory is bounded, not exhaustive dynamic reachability."
+  ],
+  "nextGate": {
+    "ownerGO": "One J2-R1 attempt required",
+    "retry": false,
+    "J3": "CLOSED",
+    "J4": "CLOSED",
+    "contacts": [
+      17,
+      22
+    ],
+    "retainedArtifactsEstimateMB": 55,
+    "currentHostDiskFree": "UNKNOWN",
+    "jobCgroupTasksPeak": "UNKNOWN",
+    "unitTasksProjected": [
+      24,
+      26
+    ],
+    "unitTasksLimit": 32,
+    "roleConnectionsProjected": [
+      5,
+      7
+    ],
+    "roleConnectionsLimit": 9
+  },
+  "freezes": [
+    {
+      "namespace": "codex-r7b-j2r1-gate",
+      "files": 8,
+      "sha256": "04ae02a6119dca11494705ef4ea0b36e6e34712cc3ca7c82269e9377132f923a"
+    },
+    {
+      "namespace": "codex-r7b-j2r1-ops-prep",
+      "files": 483,
+      "sha256": "ded6500b7b37420bc4add4d19cacbe7e0cffe800ca646e3f6ae811c15c3ec2f9"
+    },
+    {
+      "namespace": "codex-r7b-j2r1-runner",
+      "files": 21,
+      "sha256": "b478c98f91ba757a3c152ea8c7c69545df24b8e8fc38c69bb63689b154927886"
+    },
+    {
+      "namespace": "codex-r7b-j2r1-independent",
+      "files": 11,
+      "sha256": "bca3feba326ad006c6578cc6104112d37fdbe9102a77e95e5284e879265da935"
+    },
+    {
+      "namespace": "codex-r7b-j2r1-audit",
+      "files": 62,
+      "sha256": "3d86115055f1c1cfd2bdce3098d349a124ca1f0631fa5df019fb4e20fa5070b6"
+    },
+    {
+      "namespace": "codex-r7b-j2r1-go",
+      "files": 2,
+      "sha256": "926bbd9abb7bf999e5138e6f387a632eee77235012ee887eccee2b609a6857d4"
+    }
+  ],
+  "progressEstimate": {
+    "wholeProjectPercent": 60,
+    "wholeProjectRange": [
+      55,
+      65
+    ],
+    "prototypePercent": 75,
+    "prototypeRange": [
+      70,
+      80
+    ],
+    "method": "Indicative engineering estimate across delivered capability areas and remaining acceptance/operational work; not a test-pass ratio or formal gate score."
+  },
+  "evidencePaths": [
+    ".qa-local/codex-r7b-j2r1-decisions/LOCAL-ACCEPTANCE.md",
+    ".qa-local/codex-r7b-j2r1-independent/REPORT.md",
+    ".qa-local/codex-r7b-j2r1-audit/REPORT.md"
+  ],
+  "authorizations": {
+    "localContinuation": true,
+    "usageRemainingFloorPercent": 2,
+    "hostGO": false,
+    "commit": false,
+    "push": false
+  },
+  "goPacket": {
+    "status": "REVIEWED_FROZEN_AWAITING_OWNER_GO",
+    "freezeSha256": "926bbd9abb7bf999e5138e6f387a632eee77235012ee887eccee2b609a6857d4",
+    "path": ".qa-local/codex-r7b-j2r1-go/GO-PACKET.md",
+    "rootConsistency": {
+      "documentPins": 24,
+      "unchangedRecoverySections": 5
+    },
+    "authoredBy": "Root after documentation model capacity failure; no documentation worker output"
+  },
+  "checkpoint": {
+    "utc": "2026-10-12T16:38:10Z",
+    "weeklyUsedPercent": 56,
+    "weeklyRemainingPercent": 44,
+    "shortWindow": "UNKNOWN",
+    "usageIsShared": true
+  }
+}

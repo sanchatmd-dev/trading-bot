@@ -1,0 +1,31 @@
+{
+  "schema": "r7b-em2-recovery-local-evidence-v1",
+  "decisionSha256": "49527a8bb2b10da89a2307063b845d85f0f569a6cacd0e4199b2a89848019acc",
+  "decision": {
+    "schema": "r7b-em2-recovery-local-acceptance-v1",
+    "status": "LOCAL_SYNTHETIC_RECOVERY_AND_M2A_HINTS_ACCEPTED",
+    "asOf": "2026-10-12T22:35:25.721Z",
+    "executionReady": false,
+    "toolCodeSha256": "6e240b3184f8a059c999729fb389b2702337dd236f232dc6928bf3eef321908b",
+    "sourceRecords": 122,
+    "finalAuthorChecks": 19,
+    "transportCases": 15,
+    "zeroClaimNegatives": 4,
+    "independentPriorV2Checks": 9,
+    "independentV3ExpiryChecks": 3,
+    "filesSha256": "f2bf29285765feaf983fef27681cbc29d0bf546d241d2d90324e44f9256f1a6f",
+    "resultSha256": "618e141a506c0bee63f8fa0433cf5172d0cb2adbbad7c2d78312fcc044821545",
+    "expiryAuditSha256": "a8fb55ca7b1e532966c0302e7d79c0d5b0b84b2989587c7d09db91e44a479804",
+    "expiryReportSha256": "b6b5099854adf3528d7a26ced36f06eb5f5fc2032a493318c5de573a1f5e287b",
+    "priorAuditSha256": "21a41ad8e7bd9ddbb1c89b85e200322f966e0a2f58607d308421022197ddaaeb",
+    "scope": "Actual native local m2a hint disposition and m4a/m4b/xs close admission with valid, missing, malformed and correctly pinned expired allowlists, using synthetic predecessor handoffs and fake transport",
+    "limits": [
+      "All authority, clocks, service facts, host responses and observed effects remain synthetic. No host functions execute.",
+      "FULL/m0 come from the accepted synthetic chain; m1/m3/xm predecessors are supplied test handoffs.",
+      "Earlier failed fixtures remain retained. V2 nominal-expired cases proved invalid-pin recovery only; V3 verifies native valid-expired classification.",
+      "Retry/C1/noEffect boundaries, persistent controller and explicit held-lock reconciliation remain separate proof.",
+      "No real adapter release, current host health, operational approval, admission or measurement."
+    ],
+    "next": "Independently review the TEST_ONLY persistent controller and final-version filesystem checks; actual measurement retains owner-present and per-effect gates."
+  }
+}

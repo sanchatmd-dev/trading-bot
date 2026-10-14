@@ -1,0 +1,148 @@
+{
+  "schema": "r7b-j3r2-host-evidence-v1",
+  "status": "FAIL_H15_M1_BASELINE",
+  "dateBangkok": "2026-10-13",
+  "scope": "Single isolated J3 attempt on RC13 under explicit owner-authorized root GO",
+  "cases": [
+    {
+      "code": null,
+      "endMs": 6003,
+      "evidenceSha256": "b13ae6b4dc2777e34489b20b6f2fbfc76f8938ab6a02761568f724e8246930a1",
+      "id": "H-12b",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 184143872,
+      "peakRoleBackends": 4,
+      "peakTasks": 23,
+      "startMs": 1783,
+      "status": "PASS"
+    },
+    {
+      "code": null,
+      "endMs": 9462,
+      "evidenceSha256": "2b8a5ad7ba3df9a86f1cee668f317f2836796830e8720074d028f98af0ec8af1",
+      "id": "H-14",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 214007808,
+      "peakRoleBackends": 4,
+      "peakTasks": 23,
+      "startMs": 6003,
+      "status": "PASS"
+    },
+    {
+      "code": "H15_M1_BASELINE",
+      "endMs": 13317,
+      "evidenceSha256": "735fcdeb21a47d330d9a77e53ea309816a2508ba973c4a7e3e435ad466c24926",
+      "id": "H-15",
+      "peakClientBackends": 4,
+      "peakMemoryBytes": 257187840,
+      "peakRoleBackends": 4,
+      "peakTasks": 23,
+      "startMs": 9462,
+      "status": "FAIL"
+    }
+  ],
+  "contacts": 17,
+  "starts": 1,
+  "retries": 0,
+  "stopExecuted": false,
+  "limitsExceeded": [],
+  "executionPass": false,
+  "bundleAccepted": false,
+  "postflight": {
+    "mode": "FAILURE_RECORD",
+    "accepted": false,
+    "executionPass": false,
+    "scope": "FAILURE_PATH_POINT_IN_TIME_HEALTH_ONLY",
+    "ancestorsComparedWithPrestart": true
+  },
+  "pointInTimeHealth": {
+    "status": 200,
+    "ok": true,
+    "mode": "PAPER_ONLY",
+    "queued": 0,
+    "listenerMatchesApiPidBeforeAfter": true,
+    "flags": {
+      "QUANT_RESEARCH_ENABLED": "OFF",
+      "QUANT_RESEARCH_FOUNDATION_ENABLED": "OFF",
+      "QUANT_PREFLIGHT_ENABLED": "OFF",
+      "QUANT_PROFILE_V2_ENABLED": "OFF",
+      "QUANT_PROFILE_V2_ENROLLMENT_ENABLED": "OFF"
+    },
+    "researchInactive": true
+  },
+  "outerProof": {
+    "checks": 13,
+    "allPassed": true,
+    "lockReleased": true
+  },
+  "recovery": {
+    "processAbsent": true,
+    "cgroupEmpty": true,
+    "postmasterPidAbsent": true,
+    "sysvSegmentAbsent": true,
+    "dataRemoved": true,
+    "socketDirRemoved": true,
+    "tmpRemoved": true,
+    "artifactsRetained": true
+  },
+  "resources": {
+    "backendsTotal": 8,
+    "clientBackends": 4,
+    "cpuUsageUsec": 10480849,
+    "diskFinalBytes": 61440,
+    "diskPeakBytes": 72998912,
+    "memoryPeakBytesJob": 258781184,
+    "memoryPeakBytesUnit": 314621952,
+    "memoryPeakSource": "memory.peak",
+    "roleBackends": 4,
+    "sampleErrors": 0,
+    "sampleIntervalMs": 250,
+    "samples": 39,
+    "tasksPeak": 24,
+    "tasksPeakSource": "pids.peak",
+    "wallMs": 13347,
+    "jobTaskPeak": null,
+    "jobTaskPeakReason": "Not exported"
+  },
+  "resolution": {
+    "present": true,
+    "droppedResolutionAudit": false,
+    "schema": "r7b-lpg-resolution-audit-v2",
+    "source": "capture",
+    "attestationState": "active",
+    "attestationReason": null,
+    "attestationCount": 4,
+    "attestationSha256": "bb62483f11c1e1738cead04baf1b3fe9fcbb4e1a9b9d9ebbdf11aa40ab5466a9",
+    "ancestorsCount": 4,
+    "ancestorsSha256": "bb62483f11c1e1738cead04baf1b3fe9fcbb4e1a9b9d9ebbdf11aa40ab5466a9",
+    "ancestorsFileMode": "0400",
+    "postCheckChecked": 4,
+    "postCheckDifferences": 0,
+    "deniedPresent": true,
+    "deniedRecords": 6,
+    "overflow": 0,
+    "unansweredAttested": 0,
+    "attestedAnswers": 502,
+    "deniedRecordsInvalidFlag": false
+  },
+  "suiteEvidence": {
+    "degraded": false,
+    "canonicalSha256": "e4813333744f5f5f526917465e71f1b6bb5667ed30a5ec3af1bf23a813849443",
+    "caseHashesMatch": true,
+    "realPostgres": true,
+    "gatePassed": false
+  },
+  "diagnosis": {
+    "confirmedAssertion": "H15_M1_BASELINE",
+    "exactPhaseCodeAndBlockers": "UNKNOWN_NOT_RETAINED",
+    "m0AndFullPrecedingAssertions": "Reached later baseline assertion according to pinned case control flow; detailed prior observations not retained",
+    "originalJ3R1Assertion": "UNKNOWN"
+  },
+  "evidencePins": {
+    "runFreezeSha256": "23f96c5800579e6ffdf5a87d16da3958d2d42e7e036a35129dfd404cdf5c0fab",
+    "reviewSha256": "1a87b1c1538e2eda7af6bffd1e9cb928b04f925af276e71379a6ca4f31e51eaa",
+    "finalAcceptanceSha256": "2da54f47f22e25d329a86922bf17ef1af123275d0b832347bf9bd27a84d77151",
+    "packageId": "3337651b361e248be04290fd78623a2fb78337d2126ce70646be22a6e2a5223b"
+  },
+  "next": "Diagnose retained H15_M1_BASELINE; correct and independently review before a fresh root GO. Owner already authorizes successive reviewed J3/J4 attempts; never replay unchanged failure."
+}
