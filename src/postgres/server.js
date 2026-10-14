@@ -269,6 +269,7 @@ async function userRoutes(req, res, url) {
   if(await marketOhlcvRoutes(req,res,url,marketData,json,{actor,proxy:marketProxy}))return;
   try { if (await quantBridge(req, res, url, actor, store)) return; }
   catch (error) {
+    if (/^[0-9A-Z]{5}$/.test(error?.code)) throw error;
     if (error?.code === 'QUANT_EXECUTOR_MODE_UNAVAILABLE') return json(res, 503, {code: error.code, error: 'Quant executor mode is unavailable'});
     return json(res, 503, {error: 'Quant Lab engine is unavailable'});
   }

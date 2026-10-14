@@ -521,12 +521,12 @@ test('final catch: a handler that throws null or a non-object still gets one ans
 });
 
 test('retry delay: a worker interval that leaves no pause inside the budget is logged once at creation, without request data',async()=>{
-  const off=bare({workerIntervalMs:RETRY_BUDGET_MS-79,handleRequest:async(req,res)=>{json(res,200,{ok:true});}});
+  const off=bare({workerIntervalMs:RETRY_BUDGET_MS-80,handleRequest:async(req,res)=>{json(res,200,{ok:true});}});
   const first=await off.send('/api/me/secret-path',{method:'POST'}),second=await off.send();
-  const line='API request retry is effectively off: a '+(RETRY_BUDGET_MS-79)+' ms worker interval plus up to 80 ms jitter exceeds the '+RETRY_BUDGET_MS+' ms retry budget';
+  const line='API request retry is effectively off: a '+(RETRY_BUDGET_MS-80)+' ms worker interval plus up to 80 ms jitter exceeds the '+RETRY_BUDGET_MS+' ms retry budget';
   assert.deepEqual(first.warnings,[line]);assert.deepEqual(second.warnings,[line],'once per dispatcher, not per request');
   assert.ok(!line.includes('/api/'));
-  for(const workerIntervalMs of [undefined,250,RETRY_BUDGET_MS-80]){
+  for(const workerIntervalMs of [undefined,250,RETRY_BUDGET_MS-81]){
     let runs=0;
     const {warnings,res}=await bare({workerIntervalMs,clock:()=>0,handleRequest:async(req,res)=>{if(++runs===1)throw conflict('40001');json(res,200,{runs});}}).send();
     assert.equal(res.status,200,String(workerIntervalMs));

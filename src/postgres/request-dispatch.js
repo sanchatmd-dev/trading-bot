@@ -60,7 +60,7 @@ function resetAttempt(req,res,headers){
 export function createDispatcher({newsWindowsPort,requestLimits,auth,database,store,preloadJson,handleRequest,runMarketDeferred,
   workerIntervalMs=0,pause=sleep,clock=monotonic,warn=console.warn}) {
   // The longest pause is the interval plus 80 ms of jitter. Past the budget, retry is effectively off: say so once here.
-  if(workerIntervalMs+80>RETRY_BUDGET_MS)warn(`API request retry is effectively off: a ${workerIntervalMs} ms worker interval plus up to 80 ms jitter exceeds the ${RETRY_BUDGET_MS} ms retry budget`);
+  if(workerIntervalMs+80>=RETRY_BUDGET_MS)warn(`API request retry is effectively off: a ${workerIntervalMs} ms worker interval plus up to 80 ms jitter exceeds the ${RETRY_BUDGET_MS} ms retry budget`);
   return async(req,res)=>{
     // Machine port first: no cookie, session or Origin check applies to it. It answers only its own path and only while enabled.
     try{if(await newsWindowsPort.handle(req,res))return;}

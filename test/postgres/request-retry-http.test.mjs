@@ -60,12 +60,13 @@ const PRELOAD='--import=data:text/javascript;base64,'+Buffer.from([
   'const file=process.env.CR1_RETRY_LOG,warn=console.warn;',
   "console.warn=(...args)=>{if(file&&typeof args[0]==='string'&&args[0].startsWith('API request attempt '))appendFileSync(file,args[0]+'\\n');return warn.apply(console,args);};"
 ].join('\n')).toString('base64');
-function retryLog(t){
+function retryLog(){
   const file=path.join(os.tmpdir(),'cr1-retry-'+randomUUID()+'.log');
-  fs.writeFileSync(file,'');t.after(()=>fs.rmSync(file,{force:true}));
+  fs.writeFileSync(file,'');
   const lines=()=>fs.readFileSync(file,'utf8').split('\n').filter(Boolean);
   let seen=0;
   return {
+    close:()=>fs.rmSync(file,{force:true}),
     // For a fixture that takes an explicit server environment.
     environment:{NODE_OPTIONS:PRELOAD,CR1_RETRY_LOG:file},
     // For a fixture that forks with the test's own environment: the preload is in process.env only while it starts.
@@ -86,8 +87,8 @@ function retryLog(t){
 
 test('data job GET and cancel under a committing heartbeat answer 200 instead of RETRY_TRANSACTION',async t=>{
   assert.ok(process.env.TEST_DATABASE_URL,'Isolated PostgreSQL required');
-  const log=retryLog(t);
-  const f=await log.inherit(()=>quantDataHttpFixture(process.env.TEST_DATABASE_URL));t.after(f.close);
+  const log=retryLog();
+  const f=await log.inherit(()=>quantDataHttpFixture(process.env.TEST_DATABASE_URL));t.after(f.close);t.after(log.close);
   const session=(await f.request('/api/auth/login','POST',{email:f.user.email,password:f.password})).session;
   const end=Math.floor(Date.now()/60000)*60000;
   const preview=await f.request('/api/quant/data/range-preview?bot_id='+f.user.id,'POST',{bot_id:f.user.id,start_time:end-120*60000,end_time:end,warmup_bars:20},session);
@@ -121,8 +122,8 @@ test('data job GET and cancel under a committing heartbeat answer 200 instead of
 
 test('Pine Bridge job GET and cancel under a committing row update answer 200 with one cancel audit row',async t=>{
   assert.ok(process.env.TEST_DATABASE_URL,'Isolated PostgreSQL required');
-  const log=retryLog(t);
-  const f=await log.inherit(()=>quantDataHttpFixture(process.env.TEST_DATABASE_URL));t.after(f.close);
+  const log=retryLog();
+  const f=await log.inherit(()=>quantDataHttpFixture(process.env.TEST_DATABASE_URL));t.after(f.close);t.after(log.close);
   const session=(await f.request('/api/auth/login','POST',{email:f.user.email,password:f.password})).session;
   const service=new PineBridgeService(f.store,{getProvider:()=>({provider:'fixture',model:'fixture',inputRate:.1,outputRate:.2,rateVersion:'fixture-v1'})});
   const source='//@version=6\nindicator("Fixture")\nlength=input.int(10, minval=1, maxval=20)\nbuy=ta.crossover(close,ta.ema(close,length))\nsell=ta.crossunder(close,ta.ema(close,length))';
@@ -151,8 +152,8 @@ test('Pine Bridge job GET and cancel under a committing row update answer 200 wi
 
 test('research job GET and cancel under a committing heartbeat answer 200, STOPPING and one cancel audit row',async t=>{
   assert.ok(process.env.TEST_DATABASE_URL,'Isolated PostgreSQL required');
-  const log=retryLog(t);
-  const f=await log.inherit(()=>quantResearchHttpFixture(process.env.TEST_DATABASE_URL));t.after(()=>f.close());
+  const log=retryLog();
+  const f=await log.inherit(()=>quantResearchHttpFixture(process.env.TEST_DATABASE_URL));t.after(()=>f.close());t.after(log.close);
   const M=f.minute,start=Math.floor(Date.now()/M)*M-20000*M;
   await f.seedBars({start,count:3250});
   const owner=await f.newOwner(),session=await owner.login();
@@ -178,11 +179,11 @@ test('research job GET and cancel under a committing heartbeat answer 200, STOPP
 
 test('preflight job GET and cancel under a committing heartbeat answer 200, STOPPING and one cancel audit row',async t=>{
   assert.ok(process.env.TEST_DATABASE_URL,'Isolated PostgreSQL required');
-  const log=retryLog(t);
+  const log=retryLog();
   const base=await createPf2Base(t),scenario=base.defaultScenario;
   const f=await quantPreflightHttpFixture(process.env.TEST_DATABASE_URL,{mode:'test-policy',capacityPolicy:scenario.enrollment.capacity_policy,
     syntheticSourceHash:scenario.supportedSourceHash,environment:log.environment});
-  t.after(()=>f.close());
+  t.after(()=>f.close());t.after(log.close);
   await cp(base.root,f.root,{recursive:true});
   const world=await createWorld({...f,base},{accounts:{owner:f.owner.id,bot:f.owner.id,bots:[f.owner.id]}});
   const session=await f.login(f.owner);
@@ -206,8 +207,8 @@ test('preflight job GET and cancel under a committing heartbeat answer 200, STOP
 
 test('a password change under a committing users-row update is retried and counts once in its limiter bucket',async t=>{
   assert.ok(process.env.TEST_DATABASE_URL,'Isolated PostgreSQL required');
-  const log=retryLog(t);
-  const f=await log.inherit(()=>quantDataHttpFixture(process.env.TEST_DATABASE_URL));t.after(f.close);
+  const log=retryLog();
+  const f=await log.inherit(()=>quantDataHttpFixture(process.env.TEST_DATABASE_URL));t.after(f.close);t.after(log.close);
   // A plain USER: no two-factor enrollment stands between the session and the password route.
   const password=randomUUID()+'-old',newPassword=randomUUID()+'-new';
   const user=await f.store.createUser({email:randomUUID()+'@example.test',passwordHash:await hashPassword(password),role:'USER'});
