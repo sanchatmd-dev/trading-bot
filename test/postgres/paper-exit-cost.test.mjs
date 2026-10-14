@@ -9,8 +9,9 @@ import {D,amount,down} from '../../src/money.js';
 import {config} from '../../src/config.js';
 import {hashPassword} from '../../src/security.js';
 
-// O3 (paper-exit-cost-o3-v1): exits round the removed cost once, a full close removes the whole remaining cost,
-// and realized profit uses the cost actually removed.
+// O3: exits round the removed cost once, a full close removes the whole remaining cost, and realized profit uses the
+// cost actually removed. G1: a FIFO exit larger than the open lots charges the uncovered part at the average cost of
+// the unlotted rest of the position. Fills booked under this rule carry ledgerRule paper-exit-cost-v2.
 let adminDb,db,store,databaseName;
 before(async()=>{
   assert.ok(process.env.TEST_DATABASE_URL,'TEST_DATABASE_URL is required; tests must run on real PostgreSQL');
@@ -163,7 +164,7 @@ test('E9 rule marker is stored with the broker response of new fills and keeps t
   const exit=await send(user,'e9-exit',{event:'SELL',reduce_only:true,entry:'61000'});
   for(const row of [buy,exit]){
     const response=JSON.parse(row.broker_response);
-    assert.equal(response.ledgerRule,'paper-exit-cost-o3-v1');
+    assert.equal(response.ledgerRule,'paper-exit-cost-v2');
     assert.equal(response.paper,true);assert.equal(response.status,'FILLED');
   }
 });
@@ -200,19 +201,128 @@ test('E7 property: random legacy-sized cycles never throw and keep cost represen
   assert.equal(await count(user,'ledger.cost_divergence'),0);
 });
 
-test('E10 divergence at flat: a full close with lots covering less than the position cost removes it all and writes one audit row',async()=>{
+test('E10 divergence at flat: a full close removes the whole position cost and writes ledger.cost_divergence only when lots and position disagree',async()=>{
+  // One lot 0.001 x 60000 = 60 through the worker, then quantity with no lot and cost added by SQL. Lots that cover the
+  // whole exit must match the position cost; next to unlotted quantity only lots costing more than the whole position diverge.
+  const cases=[
+    ['e10a','0','10',{lotCost:'60',positionCost:'70',uncoveredQuantity:'0'}],
+    // Legacy-style quantity with no lot at the lot's price: a normal mixed position under G1, not a divergence.
+    ['e10b','0.001','60',null],
+    ['e10c','0.001','-10',{lotCost:'60',positionCost:'50',uncoveredQuantity:'0.001'}]];
+  for(const [prefix,extraQuantity,extraCost,want] of cases){
+    const user=await account();
+    await send(user,prefix+'-buy',{event:'BUY',quantity:'0.001',entry:'60000',sl:'59000'});
+    await db.query('UPDATE ledger_positions SET quantity=quantity+$2::numeric,cost_basis=cost_basis+$3::numeric WHERE user_id=$1',[user.id,extraQuantity,extraCost]);
+    const before=await position(user);assert.equal(D(before.cost_basis).toFixed(),D(60).plus(extraCost).toFixed());
+    const exit=await send(user,prefix+'-exit',{event:'SELL',reduce_only:true,entry:'61000'});
+    assert.equal(exit.status,'FILLED',exit.error_message);
+    const flat=await position(user),fill=await fillOf(exit.id);
+    assert.equal(D(fill.delta_quantity).toFixed(),D('0.001').plus(extraQuantity).toFixed(),`${prefix} closes the whole position`);
+    assert.equal(D(flat.quantity).toFixed(),'0');assert.equal(D(flat.cost_basis).toFixed(),'0');
+    assert.equal(D(fill.realized_r).toFixed(),bookedR(fill,before.cost_basis,before.initial_risk),`${prefix} profit uses the whole position cost`);
+    const rows=await db.prepare("SELECT * FROM audit WHERE user_id=? AND event='ledger.cost_divergence'").all(user.id);
+    assert.equal(rows.length,want?1:0,`${prefix} divergence rows`);
+    if(want)assert.deepEqual(JSON.parse(rows[0].details),{signalId:exit.id,symbol:'BTCUSDT',atFlat:true,...want});
+    assert.equal(await count(user,'ledger.cost_clamped'),0);
+  }
+});
+
+// G1 fixture: quantity with no lot, as a database upgraded from schema 11 or a SQLite import holds it (0.003 at cost 150,
+// average 50000), then one lot of 0.001 at 60000 through the worker. The stop 1000 below the entry gives initial risk 1.
+async function mixedPosition(user,prefix){
+  await db.query(`INSERT INTO ledger_positions(user_id,account_id,execution_mode,broker,symbol,quantity,avg_price,stop_loss,take_profit,cost_basis,updated_at)
+    VALUES($1,'binance-global:primary','PAPER','binance-global','BTCUSDT','0.003','50000',NULL,NULL,'150',$2)`,[user.id,Date.now()]);
+  const seedEquity=D((await store.paperAccount(user.id,'binance-global')).bookEquity);
+  const buy=await send(user,prefix+'-buy',{event:'BUY',quantity:'0.001',entry:'60000',sl:'59000'});
+  assert.equal(buy.status,'FILLED',buy.error_message);
+  const before=await position(user),[lot]=await lots(user);
+  assert.equal(D(before.quantity).toFixed(),'0.004');assert.equal(D(before.cost_basis).toFixed(),'210');
+  assert.equal(D(before.initial_risk).toFixed(),'1');
+  assert.equal(D(lot.remaining_quantity).toFixed(),'0.001');assert.equal(D(lot.entry_price).toFixed(),'60000');
+  return {before,seedEquity};
+}
+const bookEquity=async user=>D((await store.paperAccount(user.id,'binance-global')).bookEquity);
+
+test('E3 G1 partial: a FIFO exit larger than the lot charges the uncovered part at the unlotted average cost',async()=>{
   const user=await account();
-  await send(user,'e10-buy',{event:'BUY',quantity:'0.001',entry:'60000',sl:'59000'});
-  // Legacy-style quantity with no lot: the position holds 0.002 and 120 cost, the single lot covers 0.001 and 60.
-  await db.query("UPDATE ledger_positions SET quantity=quantity+'0.001',cost_basis=cost_basis+60 WHERE user_id=$1",[user.id]);
-  const before=await position(user);assert.equal(D(before.cost_basis).toFixed(),'120');
-  const exit=await send(user,'e10-exit',{event:'SELL',reduce_only:true,entry:'61000'});
+  const {before,seedEquity}=await mixedPosition(user,'e3');
+  const equityBefore=await bookEquity(user);
+  const exit=await send(user,'e3-exit',{event:'SELL',reduce_only:true,quantity:'0.002',entry:'61000'});
+  assert.equal(exit.status,'FILLED',exit.error_message);
+  const after=await position(user),fill=await fillOf(exit.id);
+  assert.equal(D(fill.quote_amount).toFixed(),'122');
+  // Removed: the lot 0.001 x 60000 = 60, plus the uncovered 0.001 at the unlotted average 150 / 0.003, which is 50.
+  const removed=D(before.cost_basis).minus(after.cost_basis);
+  assert.equal(removed.toFixed(),'110');
+  assert.equal(D(after.quantity).toFixed(),'0.002');
+  assert.equal(D(after.cost_basis).toFixed(),'100','the remaining cost is the remaining unlotted share, 0.002 x 50000');
+  assert.equal(D(after.avg_price).toFixed(),'50000');
+  assert.equal(D(after.cumulative_pnl).toFixed(),'12','profit is 122 - 110; the lot cost alone would book 62');
+  assert.equal(D(fill.realized_r).toFixed(),bookedR(fill,removed,before.initial_risk));
+  assert.equal((await bookEquity(user)).minus(equityBefore).toFixed(),'12','book equity moves by the booked profit only');
+  const [lot]=await lots(user);assert.equal(lot.status,'CLOSED');assert.ok(D(lot.remaining_quantity).isZero());
+  assert.equal(await count(user,'ledger.cost_clamped'),0);
+  assert.equal(await count(user,'ledger.cost_divergence'),0);
+
+  // The rest has no lot: closing it removes the remaining 100, and the cycle from the seed to flat conserves exactly.
+  const close=await send(user,'e3-close',{event:'SELL',reduce_only:true,entry:'59000'});
+  assert.equal(close.status,'FILLED',close.error_message);
+  const flat=await position(user),closeFill=await fillOf(close.id);
+  assert.equal(D(flat.quantity).toFixed(),'0');assert.equal(D(flat.cost_basis).toFixed(),'0');
+  assert.equal(D(closeFill.quote_amount).toFixed(),'118');
+  assert.equal(D(closeFill.realized_r).toFixed(),bookedR(closeFill,'100',after.initial_risk));
+  assert.equal(D(closeFill.realized_r).toFixed(),'18');
+  // Exit proceeds 122 + 118 minus the entry cost 150 + 60 equals the booked profits 12 + 18.
+  assert.equal((await bookEquity(user)).minus(seedEquity).toFixed(),'30');
+  assert.equal(await count(user,'ledger.cost_clamped'),0);
+  assert.equal(await count(user,'ledger.cost_divergence'),0);
+});
+
+test('E4 G1 at flat: one FIFO exit of the whole mixed position removes all cost and conserves',async()=>{
+  const user=await account();
+  const {before,seedEquity}=await mixedPosition(user,'e4');
+  const exit=await send(user,'e4-exit',{event:'SELL',reduce_only:true,entry:'61000'});
   assert.equal(exit.status,'FILLED',exit.error_message);
   const flat=await position(user),fill=await fillOf(exit.id);
+  assert.equal(D(fill.delta_quantity).toFixed(),'0.004');assert.equal(D(fill.quote_amount).toFixed(),'244');
   assert.equal(D(flat.quantity).toFixed(),'0');assert.equal(D(flat.cost_basis).toFixed(),'0');
-  assert.equal(D(fill.realized_r).toFixed(),bookedR(fill,'120',before.initial_risk),'profit uses the whole position cost');
-  const rows=await db.prepare("SELECT * FROM audit WHERE user_id=? AND event='ledger.cost_divergence'").all(user.id);
-  assert.equal(rows.length,1);
-  assert.deepEqual(JSON.parse(rows[0].details),{signalId:exit.id,symbol:'BTCUSDT',lotCost:'60',positionCost:'120',atFlat:true});
+  assert.equal(D(fill.realized_r).toFixed(),bookedR(fill,'210',before.initial_risk));
+  assert.equal(D(fill.realized_r).toFixed(),'34');
+  assert.equal((await bookEquity(user)).minus(seedEquity).toFixed(),'34');
+  assert.ok((await lots(user)).every(l=>l.status==='CLOSED'&&D(l.remaining_quantity).isZero()));
+  // The lot covered only part of the exit and costs less than the whole position: the remaining 150 is the unlotted
+  // cost, so the full close is not a divergence (E10 case e10b).
+  assert.equal(await count(user,'ledger.cost_divergence'),0);
   assert.equal(await count(user,'ledger.cost_clamped'),0);
+});
+
+test('E5 a targeted exit larger than its lot still throws on a mixed position, writes nothing and never prices the unlotted part',async()=>{
+  const user=await account();
+  const {before}=await mixedPosition(user,'e5');
+  assert.equal(await store.enqueue(user.id,signal('e5-exit',{event:'SELL',reduce_only:true,quantity:'0.002',entry:'61000',target_trade_id:'e5-buy'})),true);
+  const job=await db.prepare('SELECT * FROM signals WHERE user_id=? AND trade_id=?').get(user.id,'e5-exit');
+  assert.equal(JSON.parse(job.payload).targetTradeId,'e5-buy');
+  const state=async()=>({
+    position:await position(user),lots:await lots(user),
+    fills:Number((await db.prepare('SELECT count(*) n FROM fills f JOIN signals s ON s.id=f.signal_id WHERE s.user_id=?').get(user.id)).n),
+    journal:Number((await db.prepare('SELECT count(*) n FROM paper_cash_journal WHERE user_id=?').get(user.id)).n),
+    audit:Number((await db.prepare('SELECT count(*) n FROM audit WHERE user_id=?').get(user.id)).n),
+    signal:(await db.prepare('SELECT status,broker_response FROM signals WHERE id=?').get(job.id))});
+  const unchanged=await state();
+  // The worker's risk check caps a targeted exit to its lot, so a fill above the lot is fed to the ledger directly.
+  await assert.rejects(store.recordExecution(job,{status:'FILLED',orderId:'PAPER-e5',executedQty:'0.002',quoteQty:'122',deltaFeeQuote:'0',raw:{paper:true,status:'FILLED'}},
+    {side:'SELL',quantity:'0.002',price:'61000',notional:'122'}),/Fill exceeds remaining target allocation quantity/);
+  assert.deepEqual(await state(),unchanged,'the failed fill rolled back every row');
+  assert.equal(unchanged.signal.status,'QUEUED');
+
+  // Through the worker the same signal is capped to its lot and removes only the lot cost; the unlotted part keeps its cost.
+  const worker=new ExecutionWorker({store,config});
+  for(let i=0;i<10&&(await store.health()).queued;i++)await worker.tick();
+  const filled=await db.prepare('SELECT * FROM signals WHERE id=?').get(job.id);
+  assert.equal(filled.status,'FILLED',filled.error_message);
+  assert.equal(D((await fillOf(job.id)).delta_quantity).toFixed(),'0.001');
+  const after=await position(user);
+  assert.equal(D(after.quantity).toFixed(),'0.003');assert.equal(D(after.cost_basis).toFixed(),'150');
+  assert.equal(D(after.cumulative_pnl).toFixed(),'1','61 - 60');
+  assert.ok(D(before.cost_basis).minus(after.cost_basis).eq(60));
 });
