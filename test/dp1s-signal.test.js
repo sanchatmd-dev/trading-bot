@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { spawn } from 'node:child_process';
+import vm from 'node:vm';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as H from './fixtures/dp1s-r5-signal/host.mjs';
 import * as L from './fixtures/dp1s-r5-signal/lib.mjs';
@@ -16,6 +17,7 @@ const scenarios = ['slow-stop', 'first-start', 'start-limit-recovery', 'start-li
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const identity = bytes => ({ bytes: bytes.length, sha256: sha(bytes) });
 const read = name => fs.readFileSync(path.join(fixture, name));
+const derivedRunner = 'signal-r5-derived.mjs';
 
 test('DP1-S r5 signal projection preserves frozen source and selected exports', () => {
   const manifestBytes = read('provenance.json');
@@ -40,6 +42,125 @@ test('DP1-S r5 signal projection preserves frozen source and selected exports', 
   assert.deepEqual(identity(Buffer.from(L.PRELUDE)), m.exports.PRELUDE.value);
 });
 
+test('DP1-S signal runner derivation is exact and reversible', () => {
+  const m = JSON.parse(read('derivation.json'));
+  assert.equal(m.schema, 'dp1s-r5-signal-derivation-v1');
+  assert.equal(m.original.name, 'signal-r5.mjs');
+  assert.equal(m.derived.name, derivedRunner);
+  assert.deepEqual(m.transforms, [{
+    from: 'collect=async()=>${JSON.stringify(f)},dirState=',
+    to: 'collect=async()=>(${JSON.stringify(f)}),dirState=', count: 1,
+  }]);
+  assert.deepEqual(identity(read(m.original.name)), { bytes: m.original.bytes, sha256: m.original.sha256 });
+  assert.deepEqual(identity(read(m.derived.name)), { bytes: m.derived.bytes, sha256: m.derived.sha256 });
+  let forward = read(m.original.name).toString();
+  for (const change of m.transforms) {
+    assert.equal(forward.split(change.from).length - 1, change.count);
+    forward = forward.replaceAll(change.from, change.to);
+  }
+  assert.equal(forward, read(m.derived.name).toString());
+  let reverse = forward;
+  for (const change of [...m.transforms].reverse()) {
+    assert.equal(reverse.split(change.to).length - 1, change.count);
+    reverse = reverse.replaceAll(change.to, change.from);
+  }
+  assert.equal(reverse, read(m.original.name).toString());
+});
+
+// Capture generated source before any timeout, child command or signal executes.
+// The VM sees only an in-memory filesystem and a GNU version response stub.
+function capturePayload(runner) {
+  const files = new Map();
+  const sentinel = new Error('SYNTHETIC_PAYLOAD_CAPTURED');
+  const output = path.resolve('synthetic-output');
+  const fakeFs = {
+    existsSync: () => false, mkdirSync: () => {},
+    writeFileSync: (name, text) => files.set(name, text),
+  };
+  const fakeCp = { spawnSync(command, args) {
+    assert.equal(command, 'timeout');
+    if (args[0] === '--version') return { stdout: 'timeout (GNU coreutils) synthetic stub' };
+    assert.ok(args.at(-1).endsWith('/payload.mjs'));
+    throw sentinel;
+  } };
+  const source = read(runner).toString().replace(/^import .*;\r?\n/gm, '');
+  assert.throws(() => vm.runInNewContext(source, { fs: fakeFs, path, cp: fakeCp, assert, L, H,
+    process: { platform: 'linux', argv: ['node', runner, output], execPath: process.execPath } },
+  { filename: runner, timeout: 2000 }), error => error === sentinel);
+  const payload = files.get(output + '/slow-stop/payload.mjs');
+  assert.equal(typeof payload, 'string');
+  const start = payload.indexOf('const STATE=');
+  const end = payload.indexOf('\n const event=');
+  assert.ok(start >= 0 && end > start);
+  const child = vm.runInNewContext(payload.slice(start, end) + '\nCHILD', {}, { timeout: 1000 });
+  return { payload, child };
+}
+
+function syntaxCheck(source) {
+  return spawnSync(process.execPath, ['--input-type=module', '--check'], {
+    input: source, encoding: 'utf8', timeout: 5000, maxBuffer: 64 * 1024, windowsHide: true,
+  });
+}
+
+test('DP1-S generated payload and child syntax; unchanged JSONL delimiters', () => {
+  const original = capturePayload('signal-r5.mjs');
+  const failed = syntaxCheck(original.payload);
+  assert.equal(failed.error, undefined);
+  assert.equal(failed.status, 1);
+  assert.match(failed.stderr, /SyntaxError: Unexpected token ':'/);
+  const derived = capturePayload(derivedRunner);
+  for (const [name, source] of Object.entries(derived)) {
+    const checked = syntaxCheck(source);
+    assert.equal(checked.error, undefined, name);
+    assert.equal(checked.status, 0, `${name}: ${checked.stderr}`);
+    assert.equal(checked.signal, null, name);
+  }
+  assert.equal(derived.child, original.child, 'Nested child source must remain frozen');
+  for (const [name, source, marker] of [
+    ['payload', derived.payload, ';process.on('], ['child', derived.child, ';event('],
+  ]) {
+    const start = name === 'payload' ? source.indexOf('\n const event=') + 2 : source.indexOf('const event=');
+    const end = source.indexOf(marker, start);
+    assert.ok(start >= 0 && end > start, name);
+    const records = [];
+    vm.runInNewContext(source.slice(start, end + 1) + "event('probe');", {
+      fs: { appendFileSync: (_file, record) => records.push(record) }, EVENTS: 'synthetic', log: 'synthetic',
+    }, { timeout: 1000 });
+    assert.equal(records.length, 1, name);
+    assert.equal(records[0].endsWith('\n'), true, name);
+    assert.equal(records[0].endsWith('\\n'), false, name);
+    const lines = records[0].split('\n');
+    assert.equal(lines.length, 2, name);
+    assert.equal(lines[1], '', name);
+    assert.equal(JSON.parse(lines[0]).event, 'probe', name);
+  }
+});
+
+function stderrEvidence(stderr, output) {
+  let safe = String(stderr);
+  for (const [directory, label] of [[path.dirname(output), '<fixture-temp>'], [process.cwd(), '<checkout>']]) {
+    for (const value of [directory, directory.replaceAll('\\', '/')]) safe = safe.replaceAll(value, label);
+  }
+  safe = safe.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '');
+  const bytes = Buffer.from(safe);
+  return { stderrBytes: Buffer.byteLength(stderr), stderr: bytes.subarray(0, 4096).toString('utf8'),
+    stderrTruncated: bytes.length > 4096 };
+}
+
+test('DP1-S failure stderr stays bounded and redacts synthetic fixture directories', () => {
+  const output = path.join(os.tmpdir(), 'dp1s-r5-signal-synthetic', 'results');
+  const stderr = `${output}/payload.mjs\n${process.cwd()}/test/fixture.mjs\n\u0000` + 'x'.repeat(5000);
+  const evidence = stderrEvidence(stderr, output);
+  assert.equal(evidence.stderrBytes, Buffer.byteLength(stderr));
+  assert.equal(evidence.stderrTruncated, true);
+  assert.equal(Buffer.byteLength(evidence.stderr), 4096);
+  assert.match(evidence.stderr, /<fixture-temp>/);
+  assert.match(evidence.stderr, /<checkout>/);
+  assert.ok(!evidence.stderr.includes(path.dirname(output)));
+  assert.ok(!evidence.stderr.includes(process.cwd()));
+  assert.ok(!evidence.stderr.includes('\u0000'));
+});
+
 // The detached group belongs only to this synthetic fixture. GNU timeout runs in
 // foreground mode, so payload and seam commands remain in that group. /proc
 // observations below cover this group only, not global process containment.
@@ -60,7 +181,7 @@ function liveGroup(pid) {
 }
 
 async function runFixture(output) {
-  const child = spawn(process.execPath, [path.join(fixture, 'signal-r5.mjs'), output], {
+  const child = spawn(process.execPath, [path.join(fixture, derivedRunner), output], {
     detached: true, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
   });
   let stdout = '', stderr = '', bytes = 0, failure = null;
@@ -100,7 +221,7 @@ function caseEvidence(output, scenario) {
     transport, report: JSON.parse(transport.stdout.trim()) };
 }
 
-test('DP1-S r5 Linux GNU timeout signal ordering (synthetic seam only)', {
+test('DP1-S derived r5 Linux GNU timeout signal ordering (synthetic seam only)', {
   skip: process.platform !== 'linux' ? 'Linux GNU timeout required; Windows provides integrity evidence only' : false,
   timeout: 60_000,
 }, async t => {
@@ -111,7 +232,7 @@ test('DP1-S r5 Linux GNU timeout signal ordering (synthetic seam only)', {
   try {
     const execution = await runFixture(output);
     t.diagnostic(JSON.stringify({ outer: { status: execution.status, signal: execution.signal, failure: execution.failure,
-      stdout: execution.stdout.trim().slice(0, 4096), stderrBytes: Buffer.byteLength(execution.stderr) } }));
+      stdout: execution.stdout.trim().slice(0, 4096), ...stderrEvidence(execution.stderr, output) } }));
     assert.equal(execution.failure, null);
     assert.equal(execution.signal, null);
     assert.equal(execution.status, 0);
@@ -175,7 +296,7 @@ test('DP1-S r5 Linux GNU timeout signal ordering (synthetic seam only)', {
           const e = caseEvidence(output, scenario);
           t.diagnostic(JSON.stringify({ failureEvidence: scenario, state: e.state, events: e.events,
             status: e.transport.status, signal: e.transport.signal, error: e.transport.error,
-            stderrBytes: Buffer.byteLength(e.transport.stderr), report: e.report }));
+            ...stderrEvidence(e.transport.stderr, output), report: e.report }));
         } catch (error) {
           const partial = { failureEvidence: scenario, unavailable: error.code || error.name };
           for (const name of ['state.json', 'events.jsonl', 'transport.json']) {
@@ -187,7 +308,7 @@ test('DP1-S r5 Linux GNU timeout signal ordering (synthetic seam only)', {
               if (name === 'transport.json') {
                 const transport = JSON.parse(bytes);
                 partial.transport = { status: transport.status, signal: transport.signal, error: transport.error,
-                  stdoutBytes: Buffer.byteLength(transport.stdout), stderrBytes: Buffer.byteLength(transport.stderr) };
+                  stdoutBytes: Buffer.byteLength(transport.stdout), ...stderrEvidence(transport.stderr, output) };
               }
             } catch (readError) { partial[name] = { unavailable: readError.code || readError.name }; }
           }

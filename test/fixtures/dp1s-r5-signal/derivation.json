@@ -1,0 +1,21 @@
+{
+  "schema": "dp1s-r5-signal-derivation-v1",
+  "scope": "Synthetic runner only: parenthesized collect object. Existing JSONL delimiters and frozen runtime helpers remain unchanged.",
+  "original": {
+    "name": "signal-r5.mjs",
+    "bytes": 6159,
+    "sha256": "6b94d5156f8c5df29182cbc80eb1e081fb865f0453237dc86a5c4ecaaa79fd80"
+  },
+  "derived": {
+    "name": "signal-r5-derived.mjs",
+    "bytes": 6161,
+    "sha256": "cda624db47c1c131541365e6f67c620172b7acf8d26ae074af1828b668acbb36"
+  },
+  "transforms": [
+    {
+      "from": "collect=async()=>${JSON.stringify(f)},dirState=",
+      "to": "collect=async()=>(${JSON.stringify(f)}),dirState=",
+      "count": 1
+    }
+  ]
+}

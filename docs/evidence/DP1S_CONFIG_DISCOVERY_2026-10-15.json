@@ -1,0 +1,33 @@
+{
+  "schema": "dp1s-read-only-config-discovery-v1",
+  "date": "2026-10-15",
+  "timezone": "Asia/Bangkok",
+  "scope": "Staging configuration observations only; no deployment, health or readiness acceptance",
+  "authority": "Separate bounded root GO under owner-authorized overnight continuation",
+  "firstInvocation": { "result": "GO_WINDOW local refusal", "sshConnections": 0, "cause": "PowerShell converted JSON timestamp strings to DateTime values" },
+  "secondInvocation": {
+    "timestampHandling": "ConvertFrom-Json -DateKind String preserves the exact ISO strings",
+    "payloadSha256": "8c6660551e592d92e29a06214a0b10fba8a00f25084c38835842b7818732f5fa",
+    "receiptSha256": "574e5827cd492c6e3cff503df2ed8765a637063ce705243380a5a7bf706f6324",
+    "startedAt": "2026-10-14T20:41:52.711Z",
+    "finishedAt": "2026-10-14T20:41:52.730Z",
+    "elapsedTransportMs": 941,
+    "sshConnections": 1,
+    "rc": 0,
+    "verdict": "FACTS_COLLECTED",
+    "readOnly": true,
+    "hostMutation": false
+  },
+  "observations": {
+    "uidObserved": true,
+    "unitDirectoryDerivedFromFragmentAndDropins": true,
+    "stageDirectoryMatchesExactExpectedOldTree": true,
+    "worker": { "loaded": true, "active": "active", "sub": "running", "needReload": "no", "execStartCount": 1, "dropinCount": 6 },
+    "api": { "loaded": true, "active": "active", "sub": "running", "needReload": "no", "execStartCount": 1, "dropinCount": 16 },
+    "workerRequires": ["app.slice", "basic.target"],
+    "otherRequestedWorkerDependencyListsEmpty": true,
+    "apiPortFromInitialProcessEnvironment": "UNKNOWN"
+  },
+  "rootDecision": "Accept these dated configuration facts. Allow only the two observed worker Requires edges in a future site descriptor, subject to exact PC pinning and drift checks.",
+  "open": ["watch-role mapping provenance", "final site validation", "complete DP1-S fake proof and mutation evidence", "Linux signal fixture execution", "fresh PC identity and health gates"]
+}
