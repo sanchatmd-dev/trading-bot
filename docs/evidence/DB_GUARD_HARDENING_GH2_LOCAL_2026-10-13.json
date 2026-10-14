@@ -143,6 +143,20 @@
         "test/postgres/quant-storage-retention.test.mjs": "c405596ba521b5672866a79999ccc2ec29d00266730780f1534d2a2f3ba10bec",
         "test/helpers/quant-profile-enrollment-runtime-fixture.mjs": "7c6ccf70be136975fca5be4bf6e752776885148b93189c4d05991f58227ea933"
       }
+    },
+    {
+      "packet": "PGX1",
+      "asOf": "2026-10-14T06:37:55Z",
+      "status": "CORRECTION_TEST_FIX_LOCAL_CI_PENDING",
+      "correction": "The earlier statement that the single-process database run timed out because of the local environment was wrong. CI on commit 0555330 failed its postgres job the same way.",
+      "rootCause": "Under node --test --test-isolation=none every file's top-level before() and after() is a hook of the shared root test, so all of them start together and one failing root hook fails every test. About 37 suites each create, migrate and guard their own database there. On a CI-like local server (max_connections 100) the startup peak was 65 connections and the longest CREATE DATABASE 11.7 s at b9d19e3 and 14.6 s at a577689, against 95-99 connections, 30 concurrent CREATE DATABASE and 15.1-15.7 s at 0555330, past the 15 s statement limit. Waits were WAL and file-extension I/O; no lock was ungranted.",
+      "fix": "Test only: test/helpers/root-hook-gate.mjs lets at most 4 top-level hooks run at once in one process; 37 suites import before and after from it. No src or migration change.",
+      "localEvidence": "With the gate the startup peak was 21 connections, 4 concurrent CREATE DATABASE, longest 0.8 s, and every root hook passed; a local full run was stopped at 391 passing and 1 failing test (a test fixture DROP DATABASE past 15 s under local load).",
+      "stillOpen": [
+        "CI confirmation on a pushed commit",
+        "A complete local single-process run",
+        "Fixture DROP DATABASE remains load-sensitive"
+      ]
     }
   ]
 }

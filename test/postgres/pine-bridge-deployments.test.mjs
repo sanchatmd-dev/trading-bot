@@ -1,4 +1,5 @@
-import test,{before,after} from 'node:test';
+import test from 'node:test';
+import {before,after} from '../helpers/root-hook-gate.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import net from 'node:net';

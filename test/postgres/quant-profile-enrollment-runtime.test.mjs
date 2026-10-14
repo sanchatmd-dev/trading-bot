@@ -1,4 +1,5 @@
-import test,{before,after} from 'node:test';
+import test from 'node:test';
+import {before,after} from '../helpers/root-hook-gate.mjs';
 import assert from 'node:assert/strict';
 import {PostgresDatabase} from '../../src/postgres/db.js';
 import {validateProfileEnrollmentReceipt} from '../../src/quant-research/profile-contract-v2.js';

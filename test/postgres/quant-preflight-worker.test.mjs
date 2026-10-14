@@ -1,4 +1,5 @@
-import test,{before,after,beforeEach,afterEach} from 'node:test';
+import test,{beforeEach,afterEach} from 'node:test';
+import {before,after} from '../helpers/root-hook-gate.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {existsSync} from 'node:fs';

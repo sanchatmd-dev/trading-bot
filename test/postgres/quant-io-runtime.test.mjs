@@ -1,4 +1,5 @@
-import test,{before,beforeEach,after} from 'node:test';
+import test,{beforeEach} from 'node:test';
+import {before,after} from '../helpers/root-hook-gate.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
