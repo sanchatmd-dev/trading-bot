@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {EventEmitter} from 'node:events';
+import pg from 'pg';
 import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {PostgresDatabase} from '../../src/postgres/db.js';
 import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
@@ -280,7 +281,11 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
 
  before(async()=>{
   assert.ok(process.env.TEST_DATABASE_URL,'Isolated PostgreSQL required');
-  admin=new PostgresDatabase({connectionString:process.env.TEST_DATABASE_URL});
+  // Database CREATE/DROP can wait for checkpoint fsync beyond the application's 15-second limit.
+  // Keep admin SQL bounded at 60 seconds, with 5 seconds for its response before the client fails.
+  admin=new pg.Client({connectionString:process.env.TEST_DATABASE_URL,connectionTimeoutMillis:5000,
+   statement_timeout:60000,query_timeout:65000,application_name:'quant-recovery-test-admin'});
+  await admin.connect();
   name='quant_recovery_io_'+randomUUID().replaceAll('-','');
   await admin.query('CREATE DATABASE '+name);
   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+name;
@@ -289,7 +294,7 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
   for(const file of [...baseSchemas,'quant-io-ledger-schema.sql','quant-io-runtime-schema.sql'])
    await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
   await installQuantGuards(db);
- });
+ },{timeout:120000});
  beforeEach(async()=>{
   await db.query(resetTables);
   ({policy:capacityPolicy,contract}=profileV2Fixture(2000));
@@ -301,9 +306,14 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
    authorizeTerminal:async()=>({ok:true}),clock:()=>ioNow});
  });
  after(async()=>{
-  await db?.close();
-  if(admin){if(name)await admin.query('DROP DATABASE IF EXISTS '+name);await admin.close();}
- });
+  try{await db?.close();}
+  finally{
+   if(admin){
+    try{if(name)await admin.query('DROP DATABASE IF EXISTS '+name);}
+    finally{await admin.end();}
+   }
+  }
+ },{timeout:75000});
 
  const points=[
   ['INTENT_RECORDED',false,'INTENT_RECORDED','RESERVED'],['STARTING',true,'STARTING','RESERVED'],
@@ -745,12 +755,13 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
   assert.deepEqual(await recover(fakeManager()),{recovered:[{job_id:claimed.job_id,status:'PAUSED'}],maskedUnits:[]});
  });
 
- test('database without the I/O tables recovers PROFILE v2 rows through the plain path',async()=>{
+ test('database without the I/O tables recovers PROFILE v2 rows through the plain path',{timeout:180000},async()=>{
   const bare='quant_recovery_bare_'+randomUUID().replaceAll('-','');
-  await admin.query('CREATE DATABASE '+bare);
-  const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+bare;
-  const bareDb=new PostgresDatabase({connectionString:url.toString(),max:2});
+  let bareDb;
   try{
+   await admin.query('CREATE DATABASE '+bare);
+   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+bare;
+   bareDb=new PostgresDatabase({connectionString:url.toString(),max:2});
    await bareDb.migrate();
    for(const file of baseSchemas)
     await bareDb.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
@@ -761,6 +772,9 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
    await bareDb.query(stopped,[job.job_id]);
    const result=await recoverQuantFoundation({db:bareDb,policy,manager:fakeManager(),inventory:async()=>{},settleMs:0});
    assert.deepEqual(result,{recovered:[{job_id:job.job_id,status:'PAUSED'}],maskedUnits:[]});
-  }finally{await bareDb.close();await admin.query('DROP DATABASE IF EXISTS '+bare);}
+  }finally{
+   try{await bareDb?.close();}
+   finally{await admin.query('DROP DATABASE IF EXISTS '+bare);}
+  }
  });
 });
