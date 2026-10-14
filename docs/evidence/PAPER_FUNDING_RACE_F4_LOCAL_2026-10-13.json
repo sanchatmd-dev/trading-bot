@@ -75,6 +75,7 @@
         "Lot mismatch and flat-position cost queries (G1) were not run; they need their own GO."
       ],
       "summary": "Read-only VPS check: no negative Paper cash and no F4 funding-snapshot signature on production or staging."
-    }
+    },
+    {"packet":"CI2","asOf":"2026-10-14T13:37:03Z","status":"S3_COMMITTED_PUSHED_FUNDING_RACE_NOT_FIXED_NOT_DEPLOYED","summary":"7d6edb9 (F4 slice S3) is pushed without force to origin branch codex/app3a-market-wait-checkpoint (not main): migrate() ensures the Paper ledger fence table public.paper_ledger_fence with a strict shape check, plus an offline inspect and rollback script; no application code uses the table yet. All nine CI checks passed on 7d6edb9 (read 2026-10-14 about 13:37Z); CI green proves the suites pass on CI only. Local integrated runs on that tree: database suite first run 715 tests, 708 pass, 1 fail, 6 skipped (one existing multi-worker test filled 17 of 20 signals under heavy host load; not reproduced in 8 isolated runs or 4 runs under extra load, on the new tree or its base; neither change touches that path; treated as a timing flake in that test, follow-up open), second run 715 tests, 709 pass, 0 fail, 6 skipped; unit suite 1425 tests, 1420 pass, 0 fail, 5 skipped. The funding race is NOT fixed: slice S4 (the call sites that use the fence) is written locally and under test, not committed. Fence packaging D2 (no schema version bump), D3, D5 and D12 stay provisional until the owner decides. Nothing is deployed.","stillOpen":["S4 call sites not committed; funding race not fixed","Nothing is deployed: no staging or production change, no migration applied anywhere, no host change; every host step needs its own owner GO"]}
   ]
 }
