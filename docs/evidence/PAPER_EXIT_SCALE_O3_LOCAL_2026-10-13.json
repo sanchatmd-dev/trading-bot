@@ -108,6 +108,15 @@
         "Owner decisions D1, D7-D11, D13, D14",
         "Production and staging deploy needs its own owner GO; deployed code not compared"
       ]
+    },
+    {
+      "packet": "CI1",
+      "asOf": "2026-10-14T09:28:00Z",
+      "status": "COMMITTED_PUSHED_CI_GREEN_NOT_DEPLOYED",
+      "summary": "Pushed without force to origin branch codex/app3a-market-wait-checkpoint (not main): a577689 (the O3 exit-scale fix and the W1 worker fault isolation) and 0555330 and later. CI on 4d86822 passed all nine checks (read 2026-10-14T09:28Z from the GitHub check-runs API); the earlier postgres failures were the test-harness causes PGX1-PGX3, not this fix. CI green proves the test suites pass on CI only. No staging or production change, no migration, no host change (the only host contact was the owner-approved read-only check RO1). The retry and hold rules stay provisional until the owner decides D7-D11, D13 and D14. G1 and CR1B are separate local candidates in fix rounds and are not part of these commits.",
+      "stillOpen": [
+        "Nothing is deployed; every staging or production step needs its own owner GO"
+      ]
     }
   ]
 }

@@ -14,7 +14,7 @@
 
 ### กลุ่ม B: การตรึงผลวิจัย QR-1b (result freeze)
 
-สถานะ: ผู้สมัครแบบ local ผ่านการยอมรับแล้ว แต่ยังไม่ commit ไม่ deploy และไม่ได้ migrate บน staging
+สถานะ: ผู้สมัครแบบ local ผ่านการยอมรับแล้ว commit และ push ไปที่ branch codex/app3a-market-wait-checkpoint แล้ว (ไม่ใช่ main) แต่ยังไม่ deploy และไม่ได้ migrate บน staging
 
 - D1: อนุมัติ design A หรือไม่ (trigger ในฐานข้อมูลห้ามแก้แถว terminal ของ quant_jobs) และจะห้าม DELETE ทุกแถว หรือห้ามเฉพาะแถว terminal ค่าแนะนำ: ห้าม DELETE ทุกแถว (เป็นค่าเริ่มต้นของผู้สมัคร) ผลถ้าปฏิเสธ: แหล่งไม่ระบุ
 - D2: จะเพิ่มการตรวจ REVOKE DELETE และ TRUNCATE ในหน้าต่างปรับสิทธิ์รอบหลังหรือไม่ ค่าแนะนำและผลถ้าปฏิเสธ: แหล่งไม่ระบุ
@@ -25,7 +25,7 @@
 
 ### กลุ่ม C: การเสริมความแข็งแรงของ guard ในฐานข้อมูล (GH1/GH2)
 
-สถานะ: ผู้สมัครแบบ local ผ่านการยอมรับแล้ว ยังไม่ commit ไม่ deploy และไม่ apply บน staging การ apply บน staging ต้องมี GO ของตัวเองผ่าน operations worker และต้องยืนยันก่อนว่า staging ยังเป็นนิยามเดิม
+สถานะ: ผู้สมัครแบบ local ผ่านการยอมรับแล้ว commit และ push ไปที่ branch codex/app3a-market-wait-checkpoint แล้ว (ไม่ใช่ main) แต่ยังไม่ deploy และไม่ apply บน staging การ apply บน staging ต้องมี GO ของตัวเองผ่าน operations worker และต้องยืนยันก่อนว่า staging ยังเป็นนิยามเดิม
 
 - C1: อนุมัติตัวเลือก (b) ของ GH2 สำหรับผู้สมัครบน staging หรือไม่ ผลถ้าปฏิเสธ: แหล่งไม่ระบุ
 - C2: จะ REVOKE TEMP จาก PUBLIC บนฐานข้อมูลของแอปหรือไม่ แหล่งระบุว่าปิดช่องโหว่ shadowing ทั้งกลุ่ม แต่เป็นการเปลี่ยน grant ต้องรีสตาร์ตบริการและตรวจความพร้อม และต้องมีหน้าต่าง staging ถ้าอนุมัติ ผู้รันเครื่องมือต้องเป็นเจ้าของฐานข้อมูลที่เป็น superuser หรือมีสิทธิ์ pg_read_all_stats ซึ่งการให้สิทธิ์นี้ก็เป็นการเปลี่ยน grant อีกรายการ มิฉะนั้นเครื่องมือจะปฏิเสธ (RT2) ค่าแนะนำ: แหล่งไม่ระบุ (ดูกลุ่ม E ข้อ E1 และ E2 ที่เกี่ยวข้อง)
@@ -35,7 +35,7 @@
 
 ### กลุ่ม D: commit และการเผยแพร่
 
-งานของวันนี้ยังไม่ถูก commit อยู่บน branch codex/app3a-market-wait-checkpoint การ commit หรือ push ต้องได้รับอนุญาตจากเจ้าของ สิ่งที่ขอ: ตัดสินใจว่าจะ commit หรือไม่ แหล่งไม่ระบุค่าแนะนำและผลถ้าปฏิเสธ เอกสาร readiness ระบุชัดว่าไม่อนุญาต commit, push หรือการเผยแพร่ใด ๆ
+ตอบแล้วเมื่อ 2026-10-14: เจ้าของอนุญาต commit และ push ทีละ commit เพื่อรัน CI งานจนถึง 4d86822 จึง commit และ push ไปที่ branch codex/app3a-market-wait-checkpoint แล้ว (ไม่ใช่ main) ส่วนที่ยังอยู่ในเครื่องและยังไม่ commit: รอบแก้ของ G1 และ CR1B และรอบ hardening ของ W1 การ commit หรือ push ครั้งต่อไปต้องได้รับอนุญาตจากเจ้าของทุกครั้ง เอกสาร readiness ระบุชัดว่าไม่อนุญาต commit, push หรือการเผยแพร่ใด ๆ
 
 ### กลุ่ม E: หน้าต่าง staging สำหรับ guard ของฐานข้อมูล (OPS1 ฉบับร่าง r6)
 
@@ -80,7 +80,7 @@
 
 ### กลุ่ม G: การแก้ความถูกต้องของ Paper ledger (F4, O3, G1, worker หยุดค้าง)
 
-สถานะ: การแก้ O3 (สไลซ์ S2 เฉพาะส่วน O3 ไม่รวม G1) และการแก้ W1 (สไลซ์ S1) เขียนโค้ดแล้วและผ่านการตรวจอิสระในเครื่องเมื่อ 2026-10-14 เป็น local candidate เท่านั้น ยังไม่ deploy และยังไม่ commit (บันทึก: followUp FX-O3W1 ใน `docs/evidence/PAPER_EXIT_SCALE_O3_LOCAL_2026-10-13.json`) ระหว่างรอคำตอบ โค้ดใช้ค่าแนะนำของ D7 ถึง D11 ไปก่อนแบบชั่วคราว และมีข้อตัดสินใจใหม่ D13 กับ D14 ส่วน F4 (fence) และ G1 ยังเป็นแค่การออกแบบ ยังไม่มีโค้ด เอกสารออกแบบ (FD1-r2) เป็นเอกสารส่วนตัว ที่มา: ส่วนที่ 11 "Owner decisions (merged)" D1 ถึง D12 และรายการสไลซ์ของเอกสารออกแบบ ส่วน D13 และ D14 มาจากรอบตรวจของการแก้ W1 ทุกข้อเป็นการตัดสินใจของเจ้าของ เอกสารนี้ไม่ใช่ GO
+สถานะ: การแก้ O3 (สไลซ์ S2 เฉพาะส่วน O3 ไม่รวม G1) และการแก้ W1 (สไลซ์ S1) เขียนโค้ดแล้วและผ่านการตรวจอิสระในเครื่องเมื่อ 2026-10-14 commit และ push ไปที่ branch codex/app3a-market-wait-checkpoint แล้ว (ไม่ใช่ main) แต่ยังไม่ deploy (บันทึก: followUp FX-O3W1 ใน `docs/evidence/PAPER_EXIT_SCALE_O3_LOCAL_2026-10-13.json`) ระหว่างรอคำตอบ โค้ดใช้ค่าแนะนำของ D7 ถึง D11 ไปก่อนแบบชั่วคราว และมีข้อตัดสินใจใหม่ D13 กับ D14 ส่วน F4 (fence) ยังเป็นแค่การออกแบบ ยังไม่มีโค้ด ส่วน G1 มีโค้ดแก้ในเครื่องแล้ว ผ่านการตรวจอิสระแบบมีข้อให้แก้ กำลังอยู่ในรอบแก้ ยังไม่ commit และยังไม่ push เอกสารออกแบบ (FD1-r2) เป็นเอกสารส่วนตัว ที่มา: ส่วนที่ 11 "Owner decisions (merged)" D1 ถึง D12 และรายการสไลซ์ของเอกสารออกแบบ ส่วน D13 และ D14 มาจากรอบตรวจของการแก้ W1 ทุกข้อเป็นการตัดสินใจของเจ้าของ เอกสารนี้ไม่ใช่ GO
 
 สรุปข้อบกพร่องแบบภาษาง่าย (เฉพาะ Spot/Paper ไม่เกี่ยวกับเส้นทาง Live ยืนยันแล้วในเครื่อง ยังไม่ได้แก้บน staging หรือ production): (1) F4: การถอนหรือเติมเงินทุนอ่านเงินสด Paper จาก snapshot เก่าของ request ถ้ามี fill commit ระหว่างรอ การถอนอาจทำให้เงินสดติดลบ และเงินทุนเริ่มต้นตอนสั่ง run อาจคลาดเคลื่อน (หลักฐาน `docs/evidence/PAPER_FUNDING_RACE_F4_LOCAL_2026-10-13.json`) (2) O3: ตอนออกจากสถานะ ต้นทุนที่ตัดออกอาจต้องใช้ทศนิยมเกิน 18 หลัก ระบบจึง throw error สัญญาณขาออกค้างสถานะ QUEUED โดยไม่มีข้อความหรือการแจ้งเตือน และเพราะ worker ทำงานเรียงตามเจ้าของที่เก่าที่สุด สัญญาณของเจ้าของคนอื่นจึงค้างด้วย ผลกระทบหลักอยู่ที่การกำหนดขนาดแบบ legacy webhook ส่วนเส้นทาง Pine Bridge ไม่พบความล้มเหลวในการตรวจเชิงคำนวณ (หลักฐาน `docs/evidence/PAPER_EXIT_SCALE_O3_LOCAL_2026-10-13.json`) (3) G1: ยืนยันจากการอ่านโค้ดเท่านั้น การขาย FIFO ที่ใหญ่กว่า lot ที่มีบนสถานะที่มีปริมาณไม่อยู่ใน lot ทำให้กำไรที่รับรู้สูงเกินจริงและเหลือต้นทุนค้างที่ปริมาณศูนย์ โดยไม่มี error (4) W1: exception แบบกำหนดแน่นอนเพียงตัวเดียวใน worker หยุด Paper execution ของทุกเจ้าของ โดยไม่บันทึกเหตุผล การออกแบบเสนอ release เดียวที่แบ่งเป็นสไลซ์ S1 ถึง S8 ตรวจรับแยกกัน แล้ว deploy ไป staging พร้อมกันในหน้าต่างบำรุงรักษาเดียว
 
@@ -136,7 +136,7 @@ Asked: review the draft amendment (DRAFT, NOT A GO, owner has not reviewed it) a
 
 ### B. QR-1b result freeze
 
-Source: [QR1B freeze record](evidence/QR1B_FREEZE_LOCAL_2026-10-13.json). Local candidate accepted; not committed, not deployed, no staging migration.
+Source: [QR1B freeze record](evidence/QR1B_FREEZE_LOCAL_2026-10-13.json). Local candidate accepted; committed and pushed to branch codex/app3a-market-wait-checkpoint (not main), not deployed, no staging migration.
 
 | ID | Decision | Recommended default (recommendation only) | If declined |
 | --- | --- | --- | --- |
@@ -149,7 +149,7 @@ Staging gates, none closed: physical-restore rehearsal including rollback; per-e
 
 ### C. Database guard hardening (GH1/GH2)
 
-Sources: [GH2 record](evidence/DB_GUARD_HARDENING_GH2_LOCAL_2026-10-13.json), [GH1 record](evidence/QR_GUARD_HARDENING_LOCAL_2026-10-13.json). Local candidates accepted; not committed, not deployed, no staging apply. Staging apply needs its own GO through the operations worker, and staging must first be confirmed to hold the original definitions.
+Sources: [GH2 record](evidence/DB_GUARD_HARDENING_GH2_LOCAL_2026-10-13.json), [GH1 record](evidence/QR_GUARD_HARDENING_LOCAL_2026-10-13.json). Local candidates accepted; committed and pushed to branch codex/app3a-market-wait-checkpoint (not main), not deployed, no staging apply. Staging apply needs its own GO through the operations worker, and staging must first be confirmed to hold the original definitions.
 
 | ID | Decision | Recommended default (recommendation only) | If declined |
 | --- | --- | --- | --- |
@@ -162,7 +162,7 @@ Note: a rollback silently reopens the shadow bypass (GH2-ROLLBACK-SILENT, info).
 
 ### D. Commit and publication
 
-Today's work is uncommitted on branch `codex/app3a-market-wait-checkpoint`. Commit or push needs owner authorization. Asked: decide whether to commit. Recommended default: not stated. If declined: not stated. The readiness doc ([section 5](EM2_MEASUREMENT_READINESS_2026-10-13.md)) does not authorize any commit, push or publication.
+Answered 2026-10-14: the owner authorized each commit and push for CI, so the work through 4d86822 is committed and pushed to branch `codex/app3a-market-wait-checkpoint` (not main). Still local and not committed: the G1 and CR1B fix rounds and the W1 hardening round. Any further commit or push needs owner authorization each time. The readiness doc ([section 5](EM2_MEASUREMENT_READINESS_2026-10-13.md)) does not authorize any commit, push or publication.
 
 ### E. Staging window for the database guards (OPS1 draft r6)
 
@@ -213,7 +213,7 @@ Blocks the first code slice S1 (the design requires these recorded before S1): O
 
 ### G. Paper ledger correctness fixes (F4, O3, G1, worker stall)
 
-Status: the O3 fix (slice S2, O3 part only, without G1) and the W1 fix (slice S1) are written and were independently verified on this machine on 2026-10-14. They are local candidates only: not deployed and not committed (record: followUp FX-O3W1 in `docs/evidence/PAPER_EXIT_SCALE_O3_LOCAL_2026-10-13.json`). Until the owner answers, they use the recommended defaults of D7-D11 provisionally, and they add two new decisions, D13 and D14. F4 (the fence) and G1 are still design only, with no code. The design document (FD1-r2) is private. Source: design section 11, "Owner decisions (merged)", D1-D12, plus its slice list; D13 and D14 come from the W1 review rounds. All are owner decisions here. This is not a GO.
+Status: the O3 fix (slice S2, O3 part only, without G1) and the W1 fix (slice S1) are written and were independently verified on this machine on 2026-10-14. They are committed and pushed to branch codex/app3a-market-wait-checkpoint (not main) but not deployed (record: followUp FX-O3W1 in `docs/evidence/PAPER_EXIT_SCALE_O3_LOCAL_2026-10-13.json`). Until the owner answers, they use the recommended defaults of D7-D11 provisionally, and they add two new decisions, D13 and D14. F4 (the fence) is still design only, with no code. A G1 fix exists locally, passed independent review with requested changes, is in a fix round and is not committed or pushed. The design document (FD1-r2) is private. Source: design section 11, "Owner decisions (merged)", D1-D12, plus its slice list; D13 and D14 come from the W1 review rounds. All are owner decisions here. This is not a GO.
 
 Plain-language summary of the defects (Spot/Paper only; no Live path; confirmed locally; not fixed on staging or production): (1) F4: a funding change or run reads Paper cash from a stale request snapshot. If a fill commits while the request waits, a withdrawal can drive cash negative and a bot start can record a wrong initial capital (evidence: `docs/evidence/PAPER_FUNDING_RACE_F4_LOCAL_2026-10-13.json`). (2) O3: on an exit, the removed cost can need more than 18 decimal places, so the ledger throws. The exit signal stays QUEUED with no message or notification, and because the serial worker picks the oldest owner first, other owners' signals stay QUEUED too. Legacy webhook sizing is the main exposure; the Pine Bridge path showed no failure in arithmetic checks (evidence: `docs/evidence/PAPER_EXIT_SCALE_O3_LOCAL_2026-10-13.json`). (3) G1: confirmed by reading code only. A FIFO exit larger than the available lots on a position with unlotted quantity overstates realized profit and leaves cost at zero quantity, with no error. (4) W1: one deterministic exception in the execution tick stops Paper execution for every owner and records no reason. The design proposes one release made of separately accepted slices S1-S8, deployed to staging together in one maintenance window.
 

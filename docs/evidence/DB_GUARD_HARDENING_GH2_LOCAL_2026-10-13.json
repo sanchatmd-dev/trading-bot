@@ -182,6 +182,15 @@
       "stillOpen": [
         "CI confirmation on a pushed commit"
       ]
+    },
+    {
+      "packet": "CI1",
+      "asOf": "2026-10-14T09:28:00Z",
+      "status": "COMMITTED_PUSHED_CI_GREEN_NOT_DEPLOYED",
+      "summary": "Pushed without force to origin branch codex/app3a-market-wait-checkpoint (not main): 0555330 (guard hardening, result freeze, TEMP privilege tool, GX1 wider test coverage, docs), then 1de80b6, 82dde57 and 4d86822 (test-harness fixes only). The postgres CI job failed on 0555330, 1de80b6 and 82dde57 for PGX1-PGX3; on 4d86822 all nine CI checks passed (postgres 563 s), read 2026-10-14T09:28Z from the GitHub check-runs API. CI green proves the test suites pass on CI only, not that the migrations work on a host. Nothing is deployed, no migration is applied anywhere, no host change was made (the only host contact was the owner-approved read-only VPS check); each host step needs its own owner GO.",
+      "stillOpen": [
+        "Nothing is deployed; every staging or production step needs its own owner GO"
+      ]
     }
   ]
 }
