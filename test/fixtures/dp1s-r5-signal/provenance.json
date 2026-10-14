@@ -1,0 +1,116 @@
+{
+  "schema": "dp1s-r5-signal-projection-v1",
+  "scope": "Frozen synthetic Linux GNU timeout seam only; no systemd or production proof.",
+  "originals": {
+    "lib.mjs": {
+      "bytes": 39776,
+      "sha256": "e31c644b3a10cf80cdce09728ef950a4401ac5b301b98fc7a49448378474cb72"
+    },
+    "host.mjs": {
+      "bytes": 59097,
+      "sha256": "db1847ecacb136e1005be80ff5d476b72818c7b132433fdc9586c3178c85a4ca"
+    },
+    "signal-r5.mjs": {
+      "bytes": 6159,
+      "sha256": "6b94d5156f8c5df29182cbc80eb1e081fb865f0453237dc86a5c4ecaaa79fd80"
+    },
+    "EVIDENCE.json": {
+      "bytes": 6180,
+      "sha256": "9fea067302b997bfee4c5a429ce3cb0c6ff0fa076eeb4b268e90da3e1c461031"
+    }
+  },
+  "functions": {
+    "must": {
+      "bytes": 69,
+      "sha256": "aacabc52eacc491ddbf43935f2cb8832f6199aeae83303c092be64e1d612bd6f"
+    },
+    "codeOf": {
+      "bytes": 124,
+      "sha256": "018fcb4f595e25e0aa23d09a5d5f3dca09ff03fdf1a8b2e710af546dc1750551"
+    },
+    "canon": {
+      "bytes": 197,
+      "sha256": "3b86fd1a9aac695d5320c4a97bb3447719f3984dca1b92e924ade953c000a814"
+    },
+    "sleep": {
+      "bytes": 60,
+      "sha256": "4df12355ca44f32a2330cb8c52e865f0aa0c031910b7f3959124b8fadece0a55"
+    },
+    "termPoint": {
+      "bytes": 99,
+      "sha256": "5dee85418da100fba83a3cd766d2b64f8d4c819d55fbac33cfef82819d3dc883"
+    },
+    "timeLeft": {
+      "bytes": 82,
+      "sha256": "a980da87759625cb68aba5e4148b70820169c0ef91e40ddaf5c783deebbf5450"
+    },
+    "needTime": {
+      "bytes": 63,
+      "sha256": "988424dce638e5c236d42b8ec724cd9d9ae5131106c55e2ba22eecdaa44a4979"
+    },
+    "startOut": {
+      "bytes": 241,
+      "sha256": "2e3bc4c9a5053a6587d5b55572b499230a2f0a821467b73a5a813ab8ebe2f388"
+    },
+    "stopWorker": {
+      "bytes": 311,
+      "sha256": "03cd3bdbece6ba01fe630da2e2565e7f92d636cfb15ad0a62d887b82e1fdcce8"
+    },
+    "startWorker": {
+      "bytes": 130,
+      "sha256": "fbdda1bf2232b9baa684bdc485997fe1cccc1330174903999bd7fb8621cab212"
+    },
+    "startLimitWait": {
+      "bytes": 515,
+      "sha256": "5e76bd11b152eb82828fc189beebae7cb72011668e40f7094b2d9e9bf2037e37"
+    },
+    "startWithLimit": {
+      "bytes": 335,
+      "sha256": "747a874045e086b83521893085dd812fe03a6a1f26d1d1d434028cb9cdb81ebd"
+    },
+    "rbMain": {
+      "bytes": 4699,
+      "sha256": "ec6f05ce9a29ecd042ba7739ae643c94185616ca774368fee397eed47689705c"
+    }
+  },
+  "exports": {
+    "LIMITS": {
+      "statement": {
+        "bytes": 540,
+        "sha256": "d09337188b5a2c85edebe316d4a734ed4a7d1d019a71c5ea05a4d6cc8d3b82e2"
+      },
+      "value": {
+        "bytes": 561,
+        "sha256": "8ce8722d5c4e62214f3351c7a894e22ccacc1e177976cc2caa14fee277f896b4"
+      }
+    },
+    "PRELUDE": {
+      "statement": {
+        "bytes": 749,
+        "sha256": "588262fe86b8af374d68c1ccc11b46cd1c2fe276e9300b884f74e09901164877"
+      },
+      "value": {
+        "bytes": 710,
+        "sha256": "faafca4a7cbd55bc1cd8ce1541246d78e30c9cf0c97c2c3c0fc91006c08362c8"
+      }
+    }
+  },
+  "generated": {
+    "lib.mjs": {
+      "bytes": 1401,
+      "sha256": "6e43cab1f1d5477d0f53619b63e455adfa53e3911da5148c40b5091ea11f793c"
+    },
+    "host.mjs": {
+      "bytes": 7139,
+      "sha256": "2167b0cf34e9c2d922ad1b1350c59039ba0359725117bcbb99e192f08456c100"
+    },
+    "signal-r5.mjs": {
+      "bytes": 6159,
+      "sha256": "6b94d5156f8c5df29182cbc80eb1e081fb865f0453237dc86a5c4ecaaa79fd80"
+    },
+    ".gitattributes": {
+      "bytes": 8,
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+    }
+  }
+}

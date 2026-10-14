@@ -1,0 +1,7 @@
+// Frozen DP1-S r5 synthetic signal projection. See provenance.json. No transport or deployment entry points.
+export const LIMITS={memMiB:1024,load1:1.5,queuedAgeMs:120000,processingAgeMs:60000,heartbeatMs:30000,pcValidMs:3600000,minFreeBytes:1073741824,
+ readyMs:40000,aliveMs:10000,stopMs:100000,startMs:30000,reloadMs:30000,startLimitAllowMs:20000,showMs:8000,listMs:8000,sqlTotalMs:30000,sqlConnectMs:5000,sqlQueryMs:12000,healthMs:4000,checkMs:20000,fsMs:30000,
+ heavyUnitRe:'r7b|qdqs|lpg|calibration|backfill|preflight|profile|measure|em2|research|quant',heavyProcRe:'r7b|qdqs|lpg-j|calibration|initdb|pg_ctl|pg_dump|pg_restore|pg_basebackup'};
+export const PRELUDE="import fs from 'node:fs';import cp from 'node:child_process';import crypto from 'node:crypto';import os from 'node:os';import {createRequire} from 'node:module';\n"+
+ "const H=x=>crypto.createHash('sha256').update(x).digest('hex');\nlet LIVE_OUT=null,DONE=false;const LIVE=o=>{LIVE_OUT=o;};const TERM={req:false};\n"+
+ "process.on('SIGTERM',()=>{if(LIVE_OUT&&LIVE_OUT.phase==='EFFECT'&&!DONE){TERM.req=true;return;}if(!DONE){DONE=true;const o=LIVE_OUT||{};try{process.stdout.write(JSON.stringify({job:o.job??null,mode:o.mode??null,attemptId:o.attemptId??null,namespaceSha:o.namespaceSha??null,verdict:'STOP',code:'TERMINATED',phase:o.phase??'UNKNOWN',effects:o.effects??null,pass:false})+'\\n');}catch{}}process.exit(1);});\n";

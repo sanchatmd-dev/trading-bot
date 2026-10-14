@@ -1,0 +1,294 @@
+{
+  "schema": "paper-ledger-ro2-read-only-v1",
+  "date": "2026-10-15",
+  "timezone": "Asia/Bangkok",
+  "rootDecision": "Accepted as bounded read-only observations, not deployment or continuous-health evidence",
+  "authority": "Owner delegated fresh bounded root GOs for the 2026-10-15 continuation",
+  "scriptCommit": "08b4cb80e0224835d7f379a34197b6c195a86581",
+  "payloadSha256": "6b4668f7a2273a6cfbacdf07f30a12a6bc9f72c6b54d19413acb274029f61eed",
+  "preflight": {
+    "sampledAt": "2026-10-14T20:17:34.449Z",
+    "observedProcesses": 47,
+    "busy": 0,
+    "unknown": 0,
+    "readOnly": true
+  },
+  "environments": {
+    "staging": {
+      "startedAt": "2026-10-14T20:18:38.851Z",
+      "finishedAt": "2026-10-14T20:18:39.126Z",
+      "receiptSha256": "ed7331e4784868f7baaa9566da11c7cb25ec043d85f91c0b7f97b9010cabea68",
+      "sshConnections": 1,
+      "readOnly": true,
+      "evidence": {
+        "verdict": "REPORT_COLLECTED",
+        "checkedAt": "2026-10-14T20:18:39.123Z",
+        "incomplete": false,
+        "stallSignature": false,
+        "summary": {
+          "findings": 0,
+          "exposure": 0,
+          "info": 0,
+          "review_differs": 0
+        },
+        "queries": {
+          "Q1_negative_cash": {
+            "kind": "finding",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false
+          },
+          "Q2_funding_missed_fill": {
+            "kind": "finding",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false,
+            "snapshot_refs": []
+          },
+          "Q4_stuck_queued": {
+            "kind": "finding",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false,
+            "signal_refs": [],
+            "oldest_age_ms": null
+          },
+          "Q5_o3_exposed_lots": {
+            "kind": "exposure",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false,
+            "lot_refs": []
+          },
+          "Q6_lots_exceed_position": {
+            "kind": "finding",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false
+          },
+          "Q6b_unlotted_quantity": {
+            "kind": "info",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false
+          },
+          "Q7_cost_at_flat": {
+            "kind": "finding",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false
+          },
+          "Q3_run_baselines": {
+            "kind": "review",
+            "status": "OK",
+            "count": 2,
+            "bot_refs": [
+              "525ec69cc3982155",
+              "f289b4078cf4650f"
+            ],
+            "truncated": false,
+            "differs_count": 0,
+            "differs_bot_refs": [],
+            "differs_truncated": false
+          }
+        },
+        "heartbeatAgesMsByRoleRef": {
+          "a402c4336ebfd782": [
+            111
+          ]
+        },
+        "health": {
+          "http": 200,
+          "ok": true
+        },
+        "runtime": {
+          "pg": "8.23.0",
+          "decimal": "10.6.0",
+          "from": "APP_CWD"
+        },
+        "preflightTotalMiB": 8,
+        "serverVersion": 160015
+      },
+      "paperOnly": true
+    },
+    "production": {
+      "startedAt": "2026-10-14T20:19:52.624Z",
+      "finishedAt": "2026-10-14T20:19:53.116Z",
+      "receiptSha256": "5a86756133ae5cceb0aecb0c24a54cd01e13202e8364034bffaa28b784f6591d",
+      "sshConnections": 1,
+      "readOnly": true,
+      "evidence": {
+        "verdict": "REPORT_COLLECTED",
+        "checkedAt": "2026-10-14T20:19:53.112Z",
+        "incomplete": false,
+        "stallSignature": false,
+        "summary": {
+          "findings": 0,
+          "exposure": 352,
+          "info": 1,
+          "review_differs": 0
+        },
+        "queries": {
+          "Q1_negative_cash": {
+            "kind": "finding",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false
+          },
+          "Q2_funding_missed_fill": {
+            "kind": "finding",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false,
+            "snapshot_refs": []
+          },
+          "Q4_stuck_queued": {
+            "kind": "finding",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false,
+            "signal_refs": [],
+            "oldest_age_ms": null
+          },
+          "Q5_o3_exposed_lots": {
+            "kind": "exposure",
+            "status": "OK",
+            "count": 352,
+            "bot_refs": [
+              "3ae01580a8de3ba4",
+              "4025dc345b70d2a0",
+              "303d226a80edf58c",
+              "d0103188f326017f"
+            ],
+            "truncated": true,
+            "lot_refs": [
+              "e78942ed87359ca7",
+              "93ea2c492b1ff5bc",
+              "42a343be8ee0930c",
+              "cf531faca350f417",
+              "4500ac2f5b87357b",
+              "bd7d64ff3e487ccc",
+              "02765c2f68eedb97",
+              "1346aed8db4fb59f",
+              "c71de04e9a3adfdf",
+              "8a42c0294e33d81d",
+              "e1946a66e08e8244",
+              "6d38e125d7c194df",
+              "60e9c53f091038fa",
+              "5e2d0ae92fbceac6",
+              "f2172be72a953c67",
+              "9fa1a3a4dd80466a",
+              "1367a910c66f7450",
+              "0006edb058845c99",
+              "2e3fc72ee6b49f93",
+              "7ff03a31258285d4",
+              "a0cef86fe117e219",
+              "fcc4c0ed34f3fe2f",
+              "324e0577428bdff1",
+              "e48a1effcfef708d",
+              "49e38d6c6867f506",
+              "9939acd958590bfa",
+              "fcf4477f69003a18",
+              "cb3158023b75cba0",
+              "5d770f18c64189d9",
+              "d18aa278bf4189de",
+              "85391bcdd9d5f2a9",
+              "f8391ff8645b7df8",
+              "1c7428709f053a26",
+              "4c1857e4eb91f6fc",
+              "69ab49109d3ef892",
+              "5327e97e0aeb5320",
+              "b1bcd3b90bee747c",
+              "05b645bac1195417",
+              "80f7705b172235ee",
+              "b029c8d9fad90608",
+              "a0a80b089821da93",
+              "1f8355aea698be71",
+              "3c8ba30c20c21733",
+              "9eecd1df3ef1f71d",
+              "5caf83248abf2cda",
+              "2f67475d74531946",
+              "4644ccccd088cdbd",
+              "7d77503516ba0a68",
+              "af6408c91ab12744",
+              "bee9ae040ab490ef"
+            ]
+          },
+          "Q6_lots_exceed_position": {
+            "kind": "finding",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false
+          },
+          "Q6b_unlotted_quantity": {
+            "kind": "info",
+            "status": "OK",
+            "count": 1,
+            "bot_refs": [
+              "d0103188f326017f"
+            ],
+            "truncated": false
+          },
+          "Q7_cost_at_flat": {
+            "kind": "finding",
+            "status": "OK",
+            "count": 0,
+            "bot_refs": [],
+            "truncated": false
+          },
+          "Q3_run_baselines": {
+            "kind": "review",
+            "status": "OK",
+            "count": 5,
+            "bot_refs": [
+              "4025dc345b70d2a0",
+              "d0103188f326017f",
+              "ded57d36e3bb9ece",
+              "303d226a80edf58c",
+              "3ae01580a8de3ba4"
+            ],
+            "truncated": false,
+            "differs_count": 0,
+            "differs_bot_refs": [],
+            "differs_truncated": false
+          }
+        },
+        "heartbeatAgesMsByRoleRef": {
+          "a402c4336ebfd782": [
+            11
+          ]
+        },
+        "health": {
+          "http": 200,
+          "ok": true
+        },
+        "runtime": {
+          "pg": "8.23.0",
+          "decimal": "10.6.0",
+          "from": "APP_CWD"
+        },
+        "preflightTotalMiB": 24,
+        "serverVersion": 160015
+      },
+      "paperOnly": true
+    }
+  },
+  "limits": [
+    "No service restart, deployment, migration, repair or write SQL was performed",
+    "Findings zero means none detected by these checks at the sampled time; it is not proof of absence of every accounting defect",
+    "Production O3 exposure352 remains until the reviewed fix is deployed",
+    "Production unlotted quantity count1 is informational, not an automatically authorized repair",
+    "Raw receipts, identifiers, tokens and machine locations remain in ignored local evidence"
+  ]
+}
