@@ -23,7 +23,12 @@ export class PostgresDatabase {
   async query(sql,params=[]){
     const state=this.context.getStore();
     if(!state)return this.pool.query(sql,params);
-    const result=state.tail.then(()=>state.client.query(sql,params));state.tail=result.catch(()=>{});return result;
+    if(state.closed)throw Object.assign(new Error('Transaction is closed'),{code:'25000'});
+    const result=state.tail.then(()=>{
+      // A queued branch can outlive the transaction that owns its client.
+      if(state.closed)throw Object.assign(new Error('Transaction is closed'),{code:'25000'});
+      return state.client.query(sql,params);
+    });state.tail=result.catch(()=>{});return result;
   }
   async consumeLimit(key,limit,window,now=Date.now()){
     const result=await this.limitPool.query(`INSERT INTO security_limits(key_hash,attempts,expires_at)
@@ -51,16 +56,20 @@ export class PostgresDatabase {
     return this.query(sql);
   }
   async transaction(fn,{isolation='READ COMMITTED'}={}){
-    if(this.isTransaction)return fn();
+    const parent=this.context.getStore();
+    if(parent){if(parent.closed)throw Object.assign(new Error('Transaction is closed'),{code:'25000'});return fn();}
     if(!['READ COMMITTED','SERIALIZABLE','REPEATABLE READ'].includes(isolation))throw new Error('Invalid transaction isolation');
     const client=await this.pool.connect();
+    const state={client,tail:Promise.resolve(),closed:false};
     try{
       await client.query('BEGIN ISOLATION LEVEL '+isolation);
-      const result=await this.context.run({client,tail:Promise.resolve()},fn);
+      let result;
+      // Close before COMMIT/ROLLBACK so queued branches cannot run in autocommit.
+      try{result=await this.context.run(state,fn);}finally{state.closed=true;}
       await client.query('COMMIT');
       return result;
     }catch(error){await client.query('ROLLBACK').catch(()=>{});throw error;}
-    finally{client.release();}
+    finally{state.closed=true;client.release();}
   }
   async lock(key){
     if(!this.isTransaction)throw new Error('Transaction required for account lock');
