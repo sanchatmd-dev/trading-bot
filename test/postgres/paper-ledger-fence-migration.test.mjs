@@ -367,3 +367,28 @@ test('M5b rollback waits for a running migrate() (robot:schema) and holds the ta
     assert.deepEqual((await inspectPaperLedgerFence(db)).failures,['FENCE_COLUMNS'],'the changed table is left in place');
   }finally{await holder.query('ROLLBACK').catch(()=>{});holder.release();}
 });
+
+for(const setting of ['default','origin'])test('M7d startup accepts a runtime login with session_replication_role '+setting,async()=>{
+  const {name,db}=await database('m7d_'+setting),runtime=await role('m7d_'+setting,{login:true});
+  await db.migrate();await grantRuntime(db,runtime);
+  if(setting==='origin')await admin.query('ALTER ROLE '+runtime+" SET session_replication_role='origin'");
+  // Open a new pool so the login receives the role default, as application startup does.
+  const rt=connect(name,runtime);
+  assert.equal((await rt.query("SELECT pg_catalog.current_setting('session_replication_role') AS value")).rows[0].value,'origin');
+  const before=await fingerprint(db);
+  assert.deepEqual(await requirePaperLedgerFence(rt),await inspectPaperLedgerFence(db));
+  assert.equal(await fingerprint(db),before,'startup does not change the fence');
+});
+
+for(const setting of ['replica','local'])test('M7e startup refuses a runtime login with session_replication_role '+setting+' despite an unchanged installed fence',async()=>{
+  const {name,db}=await database('m7e_'+setting),runtime=await role('m7e_'+setting,{login:true});
+  await db.migrate();await grantRuntime(db,runtime);
+  await admin.query('ALTER ROLE '+runtime+" SET session_replication_role='"+setting+"'");
+  const rt=connect(name,runtime);
+  assert.equal((await rt.query("SELECT pg_catalog.current_setting('session_replication_role') AS value")).rows[0].value,setting);
+  const before=await fingerprint(db);
+  const report=await inspectPaperLedgerFence(rt);
+  assert.equal(report.state,'INSTALLED');assert.deepEqual(report.failures,[]);
+  await assert.rejects(requirePaperLedgerFence(rt),error=>error.code==='PAPER_LEDGER_FENCE_REPLICATION_ROLE'&&/session_replication_role/.test(error.message));
+  assert.equal(await fingerprint(db),before,'refusal does not change the fence');
+});

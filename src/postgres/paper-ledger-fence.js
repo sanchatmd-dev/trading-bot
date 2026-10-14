@@ -19,6 +19,7 @@ export const FENCE_TABLE='paper_ledger_fence';
 export const PAPER_LEDGER_FENCE_ABSENT='PAPER_LEDGER_FENCE_ABSENT';
 export const PAPER_LEDGER_FENCE_OTHER='PAPER_LEDGER_FENCE_OTHER';
 export const PAPER_LEDGER_FENCE_PRIVILEGE='PAPER_LEDGER_FENCE_PRIVILEGE';
+export const PAPER_LEDGER_FENCE_REPLICATION_ROLE='PAPER_LEDGER_FENCE_REPLICATION_ROLE';
 export const PAPER_LEDGER_FENCE_VERIFY_FAILED='PAPER_LEDGER_FENCE_VERIFY_FAILED';
 export const PAPER_LEDGER_FENCE_TRANSACTION_REQUIRED='PAPER_LEDGER_FENCE_TRANSACTION_REQUIRED';
 export const FENCE_OWNER_MISMATCH='FENCE_OWNER_MISMATCH';
@@ -153,6 +154,9 @@ export async function ensurePaperLedgerFence(db){
  * RUNTIME_TOLERATED). The throw is the contract: the returned report may still read OTHER with ok false.
  */
 export async function requirePaperLedgerFence(db){
+  // A replica session bypasses foreign key enforcement without changing the catalog. Require the normal runtime setting.
+  const replicationRole=(await db.query("SELECT pg_catalog.current_setting('session_replication_role') AS role")).rows[0].role;
+  if(replicationRole!=='origin')throw refuse(PAPER_LEDGER_FENCE_REPLICATION_ROLE,'session_replication_role must be origin for the Paper ledger fence');
   const report=await inspectPaperLedgerFence(db);
   if(report.state==='ABSENT')throw refuse(PAPER_LEDGER_FENCE_ABSENT,'public.'+FENCE_TABLE+' is missing; run scripts/migrate-postgres.mjs offline before starting PostgreSQL services');
   const blocking=report.failures.filter(code=>!RUNTIME_TOLERATED.includes(code));
