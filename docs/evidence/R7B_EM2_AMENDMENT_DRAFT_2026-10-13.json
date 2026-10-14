@@ -1,0 +1,84 @@
+{
+  "schema": "r7b-em2-amendment-draft-v1",
+  "status": "DRAFT_NOT_A_GO_NO_AUTHORITY",
+  "asOf": "2026-10-13T03:45:00Z",
+  "root": "Claude Opus 5.5 root",
+  "executionReady": false,
+  "releaseAuthorized": false,
+  "ownerReviewed": false,
+  "pins": {
+    ".qa-local/claude-r7b-em2-amendment-draft/AMENDMENT-EM2-DRAFT.md": "e1671be5545d7f17c41a5699eb74bfedaa7b5cf3e9b25df600ad88dd7511747e",
+    ".qa-local/claude-r7b-em2-amendment-draft/PROPOSALS.json": "fca2e82b72fb76b0f751676e2d1e30473a873154b61c36eea027fc127d174299",
+    ".qa-local/claude-r7b-em2-amendment-draft/OPEN-QUESTIONS.md": "53867873f60d2331cae9db27e1591d53f510ed6ebfc6a8a19b3a0c695e0b1811",
+    ".qa-local/claude-r7b-em2-amendment-draft/AMENDMENT-EM2-DRAFT-r2.md": "bbfff245a98363551c123dc22ef2d57afecaf879b2b14e2c7fdb9a2c2aefd1ed",
+    ".qa-local/claude-r7b-em2-amendment-draft/PROPOSALS-r2.json": "6318e1abf48162c455ed31bfc80c8d9afd3cb012e6b045f87b59a9f32859a394",
+    ".qa-local/claude-r7b-em2-amendment-draft/OPEN-QUESTIONS-r2.md": "efc7178cd18d94695304568a6f392afde12eaaf81a4f01f88041901d09f7bd80",
+    ".qa-local/claude-r7b-em2-amendment-draft/REVISION-LOG-r2.json": "eabda12e09b6f35453b5e7d71e6597a7e99a44bbc01e5acfe6f850aa7eb6b1b2",
+    ".qa-local/claude-r7b-em2-amendment-review-fable/REVIEW.json": "cf619c771d8af23582ac943498fdab0784fd1ccacf881a6f26a3e4d595d3e9b1",
+    ".qa-local/claude-r7b-em2-q19-adrs-fixture/FILES.json": "6283f07ba59b4b9872d5dcd0e18f6e933cf699c73c871ee111c0ca653bd73d47",
+    ".qa-local/claude-r7b-em2-q19-adrs-fixture/RESULTS.json": "3b9cff983b9ccf4844d97555ed4ecf77060d9b40a9495c584892dcd62c858518",
+    "docs/EM2_MEASUREMENT_READINESS_2026-10-13.md": "29da90fffdd3c3282ce3076fb74bcf5a08b9866f8a83207ebf579631355dc0ec",
+    ".qa-local/claude-r7b-em2-decisions/AMENDMENT-DRAFT-ROOT-RECORD.json": "f898b3fd4747866f1bf7fb7bd93aee054480666cb8b2f6056e911210192561e8"
+  },
+  "process": [
+    {
+      "step": "AM1 draft r1",
+      "role": "Architecture auditor Opus 5.5/high"
+    },
+    {
+      "step": "AM1-R independent second-opinion review",
+      "role": "Fable 5.1/high (second-opinion reviewer)",
+      "findings": "1 high, 5 medium, 8 low"
+    },
+    {
+      "step": "Root source confirmation of H1, M1, M2, M3"
+    },
+    {
+      "step": "AM1 r2 revision",
+      "applied": 14,
+      "rebutted": 0
+    },
+    {
+      "step": "Q19 fixture check",
+      "role": "Tester Sonnet 5.5/medium"
+    }
+  ],
+  "rootConfirmed": [
+    {
+      "id": "M1",
+      "detail": "The KB must satisfy the submit snippet rule ^[A-Za-z0-9_-]{8,128}$ (submit.tmpl.mjs:35), which is stricter than the pins id rule (lib.mjs:454); render the submit template sha at allowlist review."
+    },
+    {
+      "id": "M2",
+      "detail": "Every execute needs release, binding and dispatch certificates; the first six binding provenance keys, including collision and readiness review hashes, must be present at every binding including STAGE (lib.mjs:775, 792), so collision and readiness reviews precede m0."
+    },
+    {
+      "id": "M3",
+      "detail": "The optional ADRS research stop while the API is down is a close-path host effect (lib.mjs:338, 367) and must be named in the measure GO."
+    },
+    {
+      "id": "LAYER",
+      "detail": "m1 checks LAYER_EXISTS (host.mjs:873) after entering EFFECT and installing the PB (864-867); only a pending enroll-layer leftover escapes m0, so a pre-m1 read is proposed; no core change."
+    }
+  ],
+  "q19": {
+    "question": "Verdict for an ADRS-unclaimed QUEUED measurement job at the close idle site",
+    "answer": "MARKED_JOB_STATE (host.mjs:541-545; MEASURE_CLOSE_VERIFY lists only SUCCEEDED and CANCELLED), so m4b can pass while mrOf refuses PREREQ_MR and A6 fails; Addendum 12 D12-2 is correct and the D10-2 comment at lib.mjs:667 is stale.",
+    "rootDecision": "No code or comment edit now: any lib or host edit voids the accepted core hash (D12-4). The amendment must tell the owner that the ADRS-unclaimed path ends without an MR, so that epoch cannot pass JF acceptance A6."
+  },
+  "openQuestions": "Q1-Q19 in OPEN-QUESTIONS-r2.md; recommended defaults are recommendations only and await owner or root decision at amendment review.",
+  "limits": [
+    "Draft only; nothing approved; 37 values need m0 or fresh host reads.",
+    "No host, collision, nonconsumption or health proof exists.",
+    "Owner has not reviewed the draft."
+  ],
+  "pinNotes": [
+    {
+      "asOf": "2026-10-13T14:33:03Z",
+      "path": "docs/EM2_MEASUREMENT_READINESS_2026-10-13.md",
+      "pinned": "29da90fffdd3c3282ce3076fb74bcf5a08b9866f8a83207ebf579631355dc0ec",
+      "current": "5e0b1ee9b21e0185d18a96af001204c40bcd4809bf0badc3144fbbbb97d192c8",
+      "note": "The pinned hash is the readiness document when this record was written. Section 7 (the Q1-Q19 owner decision table with a Thai summary) was added afterwards on purpose; the earlier bytes were not kept, so the rest of that edit is not byte-verified."
+    }
+  ]
+}

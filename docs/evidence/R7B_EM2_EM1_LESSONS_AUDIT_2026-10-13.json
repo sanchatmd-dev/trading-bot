@@ -1,0 +1,83 @@
+{
+  "schema": "r7b-em2-em1-lessons-audit-v1",
+  "status": "LOCAL_READ_ONLY_AUDIT_ACCEPTED_LESSONS_CARRIED_WITH_FINDINGS",
+  "asOf": "2026-10-13T03:07:48Z",
+  "root": "Claude Opus 5.5 root",
+  "executionReady": false,
+  "releaseAuthorized": false,
+  "pins": {
+    ".qa-local/claude-r7b-em2-lessons-audit/REPORT.json": "1daa784b3b7aecda63d1f2f47366eb655f7dfc002a180002cd17295a21abddcd",
+    "docs/evidence/R7B_MEASURE_EM1_2026-10-10.json": "2fb020b7547ec35b52e2908f7641c0ed1440650dab8a7bcc7e5ce43d203686c2",
+    "docs/evidence/R7B_MEASURE_V2_LOCAL_2026-10-10.json": "d0d14bcc24a5e7f608acb13956cd2e988d5af77b7752fdd6e1defafb7f2dbb7e",
+    "docs/evidence/R7B_MEASURE_TOOL_V3_LOCAL_2026-10-10.json": "eef8359e5f5cf049fdf1f9400b776bd55e9dda3f27d2d2b5fedbafbd8e0fa969",
+    ".qa-local/claude-r7b-em2-decisions/EM1-LESSONS-AUDIT-DECISION.json": "5e695d92f3ef37f4372c3bb946c1d600ee85639f72017658338949189f739b93"
+  },
+  "auditor": {
+    "packet": "AU1",
+    "role": "Architecture auditor Opus 5.5/high",
+    "writes": "report only",
+    "hostFunctionsRun": false
+  },
+  "hashesVerified": {
+    "em2CoreConcat": "6e240b3184f8a059c999729fb389b2702337dd236f232dc6928bf3eef321908b",
+    "measureV31Concat": "6837d35f9d7497bd679b0f42941d5ccb6b1ad363087cb792834f81b6702c48a2",
+    "delta": "Only lib.mjs and identity.json differ between v3.1 and EM2; host.mjs byte-equal"
+  },
+  "lessons": {
+    "a": {
+      "lesson": "API enabled-configuration storage-limit and dataset-root settings; m0 enabled-configuration check",
+      "verdict": "CARRIED",
+      "evidence": "EM2 enroll layer adds both settings; m0 ENABLED_CONFIG group and m1 recheck before effects",
+      "residual": "Model-based proof; a real API start with these values is unproven until an epoch runs"
+    },
+    "b": {
+      "lesson": "T1 receipt parsing lost host-listed effects",
+      "verdict": "CARRIED",
+      "evidence": "Parser accepts null blocker detail; unparsed receipts record effects null instead of an empty list; retained EM-1 raw receipts parse with 12 and 2 effects under the EM2 parser",
+      "residual": "See finding F1 for abnormal host output shapes"
+    },
+    "c": {
+      "lesson": "T2 stop failed on ActiveState=failed",
+      "verdict": "CARRIED_FOR_API",
+      "evidence": "stopApi treats inactive or failed with no main process, job or cgroup members as stopped and never runs reset-failed",
+      "residual": "Worker stop path still throws on failed (LOW); starting a failed unit without reset-failed could hit the start limit (LOW)"
+    },
+    "d": {
+      "lesson": "Leftover PB file (PB_EXISTS) and reused names",
+      "verdict": "CARRIED",
+      "evidence": "New v2 PB, layer, namespace and job names; m0 and m1 refuse PB_EXISTS; exclusive no-follow create",
+      "residual": "Remote absence of the v2 names is unproven; gate G5 collision and nonconsumption proof remains open"
+    }
+  },
+  "findings": [
+    {
+      "id": "AU1-F1",
+      "severity": "LOW_FAIL_CLOSED",
+      "rootConfirmed": "source-level, not re-run by root",
+      "detail": "Abnormal host outputs (SIGTERM or output-cap reports that add a signal key, output-leak guard output) parse locally as SCHEMA, so the local receipt shows effects null while the host-listed effects survive only in the retained raw file. Pass stays false and the lock stays held.",
+      "rootDecision": "No core change now: a fix would change the pinned core hash and require re-acceptance of the core, chain and controller evidence. Recorded as a known limitation; operators read effects from the retained raw file. Revisit before release."
+    },
+    {
+      "id": "AU1-F2",
+      "severity": "MEDIUM_RELEASE_INTEGRITY",
+      "rootConfirmed": "yes: the allowlist scope reader requires namespace .qa-local/codex-r7b-measure-v2 and codeSha equality; that directory currently holds v3 bytes (concatenated 89cdc7c9...), not the EM2 candidate (6e240b31...)",
+      "detail": "Before any release the nine EM2 files must be installed byte for byte at the declared namespace (or the namespace renamed under review), helper evidence re-run and the release bound to the EM2 core hash.",
+      "rootDecision": "Added as a release step under readiness gates G5/G6; no change now."
+    }
+  ],
+  "rootSpotChecks": [
+    "Enroll layer lines contain both storage settings",
+    "stopApi block handles failed and inactive with MainPID checks",
+    "m0 PB_EXISTS refusal present",
+    "F2 namespace mismatch reproduced by concatenated hash"
+  ],
+  "notAudited": [
+    "Literal-only leak guard",
+    "--env-file parser shape",
+    "Remote host and ledger state (G5)"
+  ],
+  "limits": [
+    "Source audit and local parsing of retained receipts only; no host proof."
+  ],
+  "asOfCorrection": "Original stamp 03:30:00Z was an unverified estimate; replaced at 03:20Z with the file write time read from the clock."
+}

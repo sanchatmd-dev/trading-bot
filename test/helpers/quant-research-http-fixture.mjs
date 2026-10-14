@@ -8,6 +8,7 @@ import {once} from 'node:events';
 import {setTimeout as delay} from 'node:timers/promises';
 import {pathToFileURL} from 'node:url';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from './quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {bindQuantStorage} from '../../src/postgres/quant-storage-retention.js';
 import {hashPassword} from '../../src/security.js';
@@ -42,6 +43,7 @@ export async function quantResearchHttpFixture(connection) {
     db=new PostgresDatabase({connectionString:target.toString()});await db.migrate();
     for(const file of ['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql','quant-research-foundation-schema.sql','quant-storage-schema.sql'])
       await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
+    await installQuantGuards(db);
     await db.query("UPDATE quant_research_executor_mode SET mode='FOUNDATION'");
     const root=path.join(directory,'datasets');
     await db.transaction(()=>bindQuantStorage(db,root));

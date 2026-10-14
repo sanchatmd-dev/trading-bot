@@ -1,0 +1,148 @@
+{
+  "schema": "gh2-hardening-local-candidate-v1",
+  "status": "LOCAL_CANDIDATE_ACCEPTED_NOT_DEPLOYED_PENDING_OWNER_DECISIONS",
+  "asOf": "2026-10-13T06:42:57Z",
+  "root": "Claude Opus 5.5 root",
+  "deployed": false,
+  "committed": false,
+  "supersedesGh1Migration": true,
+  "candidate": {
+    "src/postgres/quant-research-guard-hardening.sql": "d235956b34b3269dafb97d668ff7d72aa4978e39a3e9d5f0c7bc28b11fa7500d",
+    "src/postgres/quant-research-guard-hardening-rollback.sql": "32b62f881303d13921d5e9f621b57133f7df2d61bcbd7f8a9798d2a0ff45fea4",
+    "src/postgres/quant-research-guard-hardening-migration.js": "c666c88c87dcb997d5ca27848a05947d3c778cd39035a7b2dba2827a5e97fb64",
+    "scripts/migrate-quant-research-guard-hardening.mjs": "8d279bf28f3c7e3101642416e16dea18e1c773c8b2a4c35f0a866f1270d452b3",
+    "test/postgres/quant-research-guard-hardening.test.mjs": "e86bafee34cfcb0c1fab077ff71fba90147d740f7813ea0299d84b9bedf44b09",
+    "src/postgres/quant-io-release-guard-hardening.sql": "c764dfab41b5600531144b812335b323f926fccad1790fa7191ad30abc3c6f14",
+    "src/postgres/quant-io-release-guard-hardening-rollback.sql": "536b55c2ca09e1449f57c4195e9d14914056f3f7f0d69028027d8c7c4040a0f7",
+    "src/postgres/quant-io-release-guard-hardening-migration.js": "fb33ff3708f5977cabce1586f5135744eb3c0e3b22986f48652c23007d35df1a",
+    "scripts/migrate-quant-io-release-guard-hardening.mjs": "910a9dbf2b77d889f2a40c77f9ce6456815979fb57bff7b115803b043dc342ba",
+    "test/postgres/quant-io-release-guard-hardening.test.mjs": "7a41d3710b105fe8006f5bc2469971fc6cff5442ef87996e676b07e22b019c3e",
+    "src/postgres/quant-io-schema-install.js": "2651d7c04e575b398784b55b8aa6fefcf8f815b68aea2ee52aeb7797ec8951f1",
+    "src/postgres/bot-parent-hardening.sql": "a1d857fd6d9fa38f4681c8e7be16f5f7bd20c3bd22c89f6380db8f4b4a38d220",
+    "src/postgres/bot-parent-hardening-rollback.sql": "4adb4f30ca25370ef7ee9d13dd50981a3e61f1acbf27d92bf081bb1f4debf5db",
+    "src/postgres/bot-parent-hardening-migration.js": "f5c5ece3d9050ec4fd7249ec91b131d9f6c3b7060c07749d8e17a6095c256587",
+    "scripts/migrate-bot-parent-hardening.mjs": "93ab9cc50276e8361d5aeb17653858add6c7657e5b8e676e0b6340b6d68e9138",
+    "test/postgres/bot-parent-hardening.test.mjs": "9838eca5b11dae4dbbf1a9ba1d33dc19290f13ea8b7d426eb3ca797738f685c4"
+  },
+  "pins": {
+    ".qa-local/claude-gh2-design/DESIGN.md": "ec24036f422c60a987b029ca0151ded515175af1c42bd0cb827ef5e3067300f6",
+    ".qa-local/claude-qr1b-decisions/GH1-LOCAL-CANDIDATE-ACCEPTANCE.json": "dbeccd5e98d5e4afb4538604c33b6e295707e8760b4dcfb78bd6ec48366007ca",
+    ".qa-local/claude-qr1b-decisions/GH2-LOCAL-CANDIDATE-ACCEPTANCE.json": "22aaa5567bc42513e12145fd4dced248f68de90678cdc5cfb7cfa2e45b3384a9"
+  },
+  "changes": [
+    "GH1 migration, inspect and rollback now classify before writing and accept only an exact original or exact hardened definition with exactly one pinned search_path entry; tampered states are refused unchanged.",
+    "quant_io_foundation_release_guard(): separate hardening (two public. qualifiers, SECURITY INVOKER, pinned search_path) with exact-restore rollback and classify-first migration; not chained into foundation migration or startup.",
+    "quant-io-schema-install.js verifier accepts exactly the original or exactly the hardened release-guard definition; the other I/O functions remain original-only; trigger checks unchanged.",
+    "check_bot_parent(): same technique with one public.users qualifier; no verifier reads it."
+  ],
+  "evidence": {
+    "design": "GH2-D Architecture auditor Opus 5.5/high, option (b) recommended",
+    "author": {
+      "gh1": "15/15",
+      "releaseGuard": "18/18",
+      "botParent": "14/14",
+      "ioSuitesUnhardenedAndHardened": "runtime 57, recovery 48, profile-runtime-v2 43, foundation-migration 9, profile-enrollment 3",
+      "npmTest": "1385 pass, 0 fail, 5 skip"
+    },
+    "independent": {
+      "bodyInvariants": "hardened bodies equal originals after removing public.; rollback bodies equal originals",
+      "suites": "all targeted suites pass; freeze 13/13 with no skips",
+      "wholePostgresSuite": "620 tests: 612 pass, 5 fail, 3 skip; failures only in d6-prepare-begin-harness (verifier superuser name in report; passes with another name) and quant-research-http (passes alone)",
+      "npmTest": "1385 pass, 0 fail, 5 skip",
+      "probes": "empty, seeded and view shadows with and without pg_temp first release a job with an unresolved launch on the original and are refused after hardening; bot-parent shadows likewise",
+      "tamper": "13 owner tampers refused by the installer verification, migration and rollback with the catalog unchanged",
+      "overheadMs": {
+        "original": 0.276,
+        "hardened": 0.284
+      }
+    }
+  },
+  "ownerDecisions": [
+    "Approve option (b) hardening for a staging candidate; staging apply needs its own GO through the operations worker",
+    "Revoke TEMP from PUBLIC on the application database (closes the whole shadowing class; needs service restarts and a readiness check)",
+    "Apply GH1, GH2, bot-parent hardening and the QR-1b freeze in one offline window, each with its own migration and rollback",
+    "Later: chain hardening into fresh installs and make the hardened state mandatory"
+  ],
+  "findings": [
+    {
+      "id": "GH2-ENOENT",
+      "severity": "LOW_FAIL_CLOSED",
+      "detail": "ensureQuantIoSchema reads the hardening SQL outside its try block; a missing file raises ENOENT rather than QUANT_IO_SCHEMA_UNSUPPORTED."
+    },
+    {
+      "id": "GH2-ROLLBACK-SILENT",
+      "severity": "INFO",
+      "detail": "The verifier accepts the original definition, so a rollback silently reopens the shadow bypass; migration output records previous_state."
+    },
+    {
+      "id": "D6-HARNESS-ENV",
+      "severity": "TEST_ENV",
+      "detail": "d6-prepare-begin-harness privacy assertion fails when the local superuser is named postgres because that name appears in the report."
+    }
+  ],
+  "limits": [
+    "Throwaway local PostgreSQL only; no commit, deploy or staging apply.",
+    "Staging must be confirmed to hold the original definitions before any apply.",
+    "Defense in depth against SQL executed as the runtime role."
+  ],
+  "followUp": {
+    "packet": "FX1",
+    "status": "LOCAL_CANDIDATE_ACCEPTED_NOT_DEPLOYED",
+    "asOf": "2026-10-13T07:57:46Z",
+    "acceptanceSha256": "89717b19d339fa15a73117b06260a191742341e35f61e311548dd7a7fc813198",
+    "summary": "Shared test fixtures now install the guards; whole PostgreSQL suite 617 pass, 0 fail, 4 skip with --test-concurrency=1; ENOENT finding fixed."
+  },
+  "followUps": [
+    {
+      "packet": "RT1",
+      "status": "LOCAL_CANDIDATE_ACCEPTED_NOT_APPLIED",
+      "asOf": "2026-10-13T12:40:49Z",
+      "acceptanceSha256": "eb7d225c5ee1b31910cab79fb432dde8bcaed8d356a074830ea509affe405ce6",
+      "summary": "TEMP privilege inspect/revoke/restore tool prepared and tested locally (not applied); application paths need no TEMP; restart proof isolated so whole-suite runs stay green.",
+      "candidate": {
+        "test/postgres/quant-research-freeze.test.mjs": "9efec50ddd6ea9dd9d9368113396763195dcc7a048828fd209b36d65e205d2aa",
+        "src/postgres/temp-privilege.js": "1eab0621c60483959c1de41db1fdff02519cac8f6e88cd657d9684b09e2e59b9",
+        "scripts/postgres-temp-privilege.mjs": "45462c1a1b010f4af2ca2ab774e964f47a66dbc8d752997ebdb8cc58c6074512",
+        "test/postgres/temp-privilege.test.mjs": "b97612d992ffa960f2c94e34e7f3389e112fd33ce5a7193640d4ede9ff06e7b2"
+      }
+    },
+    {
+      "packet": "RT2",
+      "status": "LOCAL_CANDIDATE_ACCEPTED_NOT_APPLIED",
+      "asOf": "2026-10-13T14:26:45Z",
+      "acceptanceSha256": "154b7b936a19c6834ad1729528e37fb67c02ae9352e443a14bc51389fd45c5df",
+      "summary": "TEMP privilege tool now checks every login role and refuses to change the privilege while other sessions are connected or cannot be counted, unless an explicit unsafe override is given; not applied anywhere. Supersedes the RT1 hashes for the tool, CLI and test.",
+      "candidate": {
+        "src/postgres/temp-privilege.js": "08151fcd7872de65bde64e5b82c476dca976d6dd51438a3261baf5c00e5892c0",
+        "scripts/postgres-temp-privilege.mjs": "fbc3ffc88d9815a621e25b5d59ef41c59359eefd9514099372746cbbec55a19a",
+        "test/postgres/temp-privilege.test.mjs": "f71ba7d05c330e3aea3ab8783a376a1bc8b48108917f418b487605b9b44d0970"
+      }
+    },
+    {
+      "packet": "GX1",
+      "asOf": "2026-10-14T03:10:14Z",
+      "status": "LOCAL_CANDIDATE_ACCEPTED_NOT_DEPLOYED",
+      "summary": "17 more database test suites and one more shared fixture install the guards and the result freeze; one timing test fixed (GX1b). 55 database files each as its own process: 681 of 687 pass, 0 fail, 6 skip, with no guard trip by a product path. A single-process whole run timed out at CREATE DATABASE on this machine (environment).",
+      "candidate": {
+        "test/postgres/lifecycle.test.mjs": "0d471ef803e4ce78b13187582c05c72487e5582148164bc22e13871a15c11fe2",
+        "test/postgres/operations.test.mjs": "6fd572f2752b88d1fa25a212f7dba4d4fa0030d29014c0fb709a149666e4ed4d",
+        "test/postgres/phase2.test.mjs": "50ba5867f1877de008f76c3099dc1d5160d29e72c335d9cbea2c1e404ee3ade1",
+        "test/postgres/pine-bridge-deployments.test.mjs": "618a9bb77fad696746485a7a7b454de021fa5bd17415c1b58ee7f746cd5ebed1",
+        "test/postgres/pine-bridge.test.mjs": "841fa10ea745d4bf0eb1e0ffe4952d41d202cf75c295c8c434e09888ace07a82",
+        "test/postgres/risk-readiness.test.mjs": "2aad6f85aef7f9bf1227a3af7d55b4b22aa85c556c072058b9928385806268b9",
+        "test/postgres/quant-data-foundation.test.mjs": "a1037588dbba325061f617cb2b360da08f9ea0d4a53ae90247fe8bf9f3269adb",
+        "test/postgres/quant-foundation-recovery.test.mjs": "7f80c1ea5d1386de9569905fcd2ecf3d9e06d5b2c507a4163267527f5cc807b0",
+        "test/postgres/quant-io-runtime.test.mjs": "c5e43205b39235be1f2b1a71f4cee65d0859bc18e2b581afc30628ee46eacd3e",
+        "test/postgres/quant-profile-diagnostic-enqueue.test.mjs": "20a1e17acbf4a0790412a7bbb4347a418ea38bd81a04f9fa8d7c412b364a114e",
+        "test/postgres/quant-profile-enrollment-authority.test.mjs": "eda2ddfcf45a2b6c312de8748226e6ad23bc48e449fa88e60df5edd2482c9ea8",
+        "test/postgres/quant-profile-enrollment.test.mjs": "4bbcca850aac955e1f3c5cde2715b63e9c27e7a2f0d086703dcdbbb272415464",
+        "test/postgres/quant-profile-runtime-v2.test.mjs": "a84d55559d1de10ddd32b141a2159d3d99e4b622657f64d9bca2630d03a0994d",
+        "test/postgres/quant-profile.test.mjs": "de5e449ae2a484cb3f59f21dd6bd77a06a3ef1da650a0edaaba3d83073c0a87a",
+        "test/postgres/quant-research-foundation.test.mjs": "459ea9a2c19c02a0717a8af4fd4b173608432f938c948d2706dedefcdd8644bb",
+        "test/postgres/quant-research.test.mjs": "d148627e5d454f866693a68c1111954d287d4ae773c6140445228ff5661e212b",
+        "test/postgres/quant-storage-retention.test.mjs": "c405596ba521b5672866a79999ccc2ec29d00266730780f1534d2a2f3ba10bec",
+        "test/helpers/quant-profile-enrollment-runtime-fixture.mjs": "7c6ccf70be136975fca5be4bf6e752776885148b93189c4d05991f58227ea933"
+      }
+    }
+  ]
+}

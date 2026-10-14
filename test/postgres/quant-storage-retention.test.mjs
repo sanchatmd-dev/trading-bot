@@ -5,6 +5,8 @@ import {mkdtemp,readFile,rm,writeFile,utimes,mkdir,readdir} from 'node:fs/promis
 import os from 'node:os';
 import path from 'node:path';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
+import {withFreezeInsertsPaused} from '../helpers/quant-library-fixture.mjs';
 import {migrateQuantFoundation} from '../../src/postgres/quant-foundation-migration.js';
 import {assertQuantStorageOwner,maintainQuantStorage} from '../../src/postgres/quant-storage-retention.js';
 import {StorageBudget} from '../../src/quant-research/storage-budget.js';
@@ -26,6 +28,7 @@ before(async()=>{
   for(const file of ['pine-bridge-schema.sql','quant-research-schema.sql'])await db.query(await readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
   root=await mkdtemp(path.join(os.tmpdir(),'quant-retention-'));
   await migrateQuantFoundation(db,{storageRoot:root});
+  await installQuantGuards(db);
   budget=new StorageBudget({root,diskQuotaBytes:10*1024*1024,tempQuotaBytes:4*1024*1024,freeFloorBytes:0});
 });
 test('filesystem maintenance stays protected beyond an aggressive idle transaction timeout',async()=>{
@@ -111,9 +114,10 @@ async function researchJob(contract,{status='QUEUED',evaluations=0}={}){
 async function bindingRow(runId,contract,binding,changes={}){
   const row={step_id:DATASET_BINDING_STEP_ID,kind:DATASET_BINDING_KIND,parameters:binding,
     identity_hash:datasetBindingIdentity(contract,binding),next_bar:0,checkpoint:null,checkpoint_hash:null,unit_name:null,unit_token:null,...changes};
-  await db.query(`INSERT INTO quant_research_chunks(run_id,step_id,kind,parameters,identity_hash,next_bar,checkpoint,checkpoint_hash,unit_name,unit_token)
+  // Labelled test-setup exception: the jobs above may already be terminal, and the freeze refuses a child insert under a terminal run.
+  await withFreezeInsertsPaused(db,()=>db.query(`INSERT INTO quant_research_chunks(run_id,step_id,kind,parameters,identity_hash,next_bar,checkpoint,checkpoint_hash,unit_name,unit_token)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-    [runId,row.step_id,row.kind,JSON.stringify(row.parameters),row.identity_hash,row.next_bar,row.checkpoint===null?null:JSON.stringify(row.checkpoint),row.checkpoint_hash,row.unit_name,row.unit_token]);
+    [runId,row.step_id,row.kind,JSON.stringify(row.parameters),row.identity_hash,row.next_bar,row.checkpoint===null?null:JSON.stringify(row.checkpoint),row.checkpoint_hash,row.unit_name,row.unit_token]));
 }
 async function retainedNames(){
   let names;

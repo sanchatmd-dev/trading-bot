@@ -27,6 +27,8 @@ async function bounded(promise,label){let timer;try{return await Promise.race([p
 async function setup(t){
   assert.ok(process.env.TEST_DATABASE_URL,'Root-assigned isolated PostgreSQL required');
   const f=await quantResearchHttpFixture(process.env.TEST_DATABASE_URL);t.after(()=>f.close());
+  // QR-1b: every preparation, cancellation and recovery path below runs with the terminal-result freeze installed.
+  await f.db.query(await fs.readFile(new URL('../../src/postgres/quant-research-freeze.sql',import.meta.url),'utf8'));
   await f.seedBars({start,count:3250});
   const owner=await f.newOwner(),session=await owner.login();
   const budget=new StorageBudget({root:f.root,diskQuotaBytes:128*1024*1024,tempQuotaBytes:64*1024*1024,freeFloorBytes:0});
@@ -52,7 +54,15 @@ async function setup(t){
   async function enqueue(){const answer=await f.enqueue(owner,session,f.researchBody(owner,{start}));
     assert.equal(answer.status,202,JSON.stringify(answer.body));activeRun=answer.body.run_id;return answer.body;}
   const summary=id=>f.request('/api/quant/research/jobs/'+id,'GET',undefined,session);
-  const cancel=id=>f.request('/api/quant/research/jobs/'+id+'/cancel','POST',{},session);
+  // A worker heartbeat that commits while the cancel request waits for the scheduler lock makes the SERIALIZABLE request fail
+  // with 409 RETRY_TRANSACTION, the documented retryable answer; retry only that answer, a bounded number of times.
+  const cancel=async id=>{
+    for(let attempt=0;;attempt++){
+      const answer=await f.request('/api/quant/research/jobs/'+id+'/cancel','POST',{},session);
+      if(answer.status!==409||answer.body?.code!=='RETRY_TRANSACTION'||attempt>=4)return answer;
+      await new Promise(resolve=>setTimeout(resolve,50));
+    }
+  };
   const row=async id=>(await f.db.query('SELECT * FROM quant_jobs WHERE run_id=$1',[id])).rows[0];
   const foundation=async id=>(await f.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1',[id])).rows[0];
   const binding=async id=>(await f.db.query("SELECT * FROM quant_research_chunks WHERE run_id=$1 AND step_id='prepare:dataset'",[id])).rows[0];
@@ -200,8 +210,9 @@ test('A7 offline retention keeps aged bound/reused artifacts, removes orphan, re
   await f.db.query("UPDATE quant_foundation_jobs SET status='QUEUED' WHERE job_id=$1",[queued.run_id]);
   await maintainQuantStorage({db:f.db,budget:f.budget,apply:true,...offline});await artifacts(f,parameters);
   const final=f.worker(),finalJob=await claim(f,final),execution=await final.prepareResearch(finalJob);
-  await final.finish(execution,'NO_VALID_CANDIDATE',{fixture:true});
+  // The binding is removed while the run is still RUNNING: the freeze refuses a chunk delete under a terminal run.
   await f.db.query("DELETE FROM quant_research_chunks WHERE run_id=$1 AND step_id='prepare:dataset'",[queued.run_id]);
+  await final.finish(execution,'NO_VALID_CANDIDATE',{fixture:true});
   const before=await f.listing();
   await assert.rejects(maintainQuantStorage({db:f.db,budget:f.budget,apply:true,...offline}),{code:'STORAGE_REFERENCE_INVALID'});
   assert.deepEqual(await f.listing(),before);await artifacts(f,parameters);

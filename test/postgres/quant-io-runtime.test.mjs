@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {QuantFoundationScheduler} from '../../src/postgres/quant-foundation-scheduler.js';
 import {QuantIoLedger} from '../../src/postgres/quant-io-ledger.js';
 import {QuantIoRuntime,canReleaseQuantIo,QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH,quantIoUnitName} from '../../src/postgres/quant-io-runtime.js';
@@ -94,8 +95,10 @@ before(async()=>{
   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+name;
   db=new PostgresDatabase({connectionString:url.toString(),max:4});
   second=new PostgresDatabase({connectionString:url.toString(),max:4});
+  await db.migrate();
   for(const file of ['quant-foundation-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql'])
     await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
+  await installQuantGuards(db);
 });
 beforeEach(async()=>{
   await db.query('TRUNCATE quant_io_launches,quant_io_ledgers,quant_foundation_jobs,quant_foundation_owners');

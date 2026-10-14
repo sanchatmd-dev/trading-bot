@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {encryptJson,decryptJson,encryptionKeys} from '../../src/security.js';
 import {backupPostgres,postgresToolEnvironment} from '../../scripts/backup-postgres.mjs';
@@ -20,6 +21,7 @@ test('pg_dump restore preserves every row; offline key rotation backs up and rol
   t.after(async()=>{await Promise.all(dbs.map(db=>db.close()));for(const name of names)await admin.query('DROP DATABASE IF EXISTS '+name);await admin.query('DROP ROLE IF EXISTS '+role);await admin.close();fs.rmSync(dir,{recursive:true,force:true});});
   for(const name of names){await admin.query('CREATE DATABASE '+name);const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+name;dbs.push(new PostgresDatabase({connectionString:url.toString()}));}
   const [db,restored]=dbs;await db.migrate();const store=new Store(db);
+  await installQuantGuards(db);
   const user=await store.createUser({email:'restore@example.test',passwordHash:'unchanged-hash',role:'ADMIN'});
   const old=encryptionKeys('a'.repeat(64),'original'),next=encryptionKeys('b'.repeat(64),'rotated');
   await store.setWebhookSecret(user.id,'fixture',encryptJson({secret:'fixture'},old,'webhook:'+user.id));

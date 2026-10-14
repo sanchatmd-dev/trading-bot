@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {QuantResearchService} from '../../src/postgres/quant-research.js';
@@ -25,6 +26,7 @@ before(async()=>{
  const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+databaseName;
  db=new PostgresDatabase({connectionString:url.toString(),max:12});await db.migrate();
  for(const filename of ['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql','quant-research-foundation-schema.sql'])await db.query(await fs.readFile(new URL('../../src/postgres/'+filename,import.meta.url),'utf8'));
+ await installQuantGuards(db);
  assert.deepEqual((await db.query('SELECT version FROM quant_research_foundation_schema')).rows,[{version:1}]);
  assert.equal((await db.query('SELECT mode FROM quant_research_executor_mode')).rows[0].mode,'LEGACY');
  await db.query("UPDATE quant_research_executor_mode SET mode='FOUNDATION'");

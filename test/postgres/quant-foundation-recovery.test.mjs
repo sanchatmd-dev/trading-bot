@@ -7,6 +7,7 @@ import {randomUUID} from 'node:crypto';
 import {EventEmitter} from 'node:events';
 import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {QuantFoundationScheduler} from '../../src/postgres/quant-foundation-scheduler.js';
 import {QuantIoLedger} from '../../src/postgres/quant-io-ledger.js';
 import {QuantIoRuntime,canReleaseQuantIo,QUANT_IO_DIAGNOSTIC_PAYLOAD_HASH,quantIoUnitName} from '../../src/postgres/quant-io-runtime.js';
@@ -287,6 +288,7 @@ describe('I/O-aware offline recovery of a parent crash mid-terminal',()=>{
   await db.migrate();
   for(const file of [...baseSchemas,'quant-io-ledger-schema.sql','quant-io-runtime-schema.sql'])
    await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
+  await installQuantGuards(db);
  });
  beforeEach(async()=>{
   await db.query(resetTables);

@@ -4,6 +4,7 @@ import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {profileEnrollmentEvidenceFixture,insertProfileEnrollmentEvidenceFixture} from './profile-enrollment-evidence-fixture.js';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from './quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {QuantDataService} from '../../src/postgres/quant-data.js';
@@ -47,6 +48,7 @@ export async function createHarness({admin,base,executableHashes,supportedSource
   for(const file of ['pine-bridge-schema.sql','quant-research-schema.sql'])await db.query(await sqlFile(file));
   // The storage root must be empty while it is bound to the database; the datasets are copied in afterwards.
   await migrateQuantFoundation(db,{mode:'FOUNDATION',storageRoot:root});
+  await installQuantGuards(db);
   await cp(base.root,root,{recursive:true});
   const budget=new StorageBudget({root,diskQuotaBytes:128*1024*1024,tempQuotaBytes:64*1024*1024,freeFloorBytes:0});
   const rawStore=new DatasetStore({root,storageBudget:budget});

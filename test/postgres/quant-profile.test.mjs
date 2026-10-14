@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {QuantDataService} from '../../src/postgres/quant-data.js';
@@ -38,6 +39,7 @@ before(async()=>{
     'quant-research-foundation-schema.sql','quant-storage-schema.sql',
     'quant-io-ledger-schema.sql','quant-io-runtime-schema.sql'])
     await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
+  await installQuantGuards(db);
   await db.query("UPDATE quant_research_executor_mode SET mode='FOUNDATION'");
   root=await fs.mkdtemp(path.join(os.tmpdir(),'quant-profile-pg-'));
   await db.transaction(()=>bindQuantStorage(db,root));
@@ -136,6 +138,8 @@ test('real PostgreSQL schedules raw to PROFILE, fences proof, scopes status, ide
 });
 
 test('PROFILE cancellation retains the slot until work settles; offline recovery fences the old lease',async()=>{
+  // recoverQuantFoundation reads the real clock; re-anchor the suite clock forward so a long whole run cannot age out the 15 min deadline.
+  now=Math.max(now,Math.floor(Date.now()/minute)*minute+4*minute);
   const raw=(await db.query("SELECT job_id FROM quant_foundation_jobs WHERE contract->>'kind'='BACKFILL' AND status='SUCCEEDED'")).rows[0];
   const request={bot_id:owner,raw_job_id:raw.job_id,deployment_id:deploymentId};
   const queued=await db.transaction(()=>profile.enqueue(owner,request,randomUUID()));

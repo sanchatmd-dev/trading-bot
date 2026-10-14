@@ -1,0 +1,80 @@
+{
+  "schema": "paper-funding-race-local-finding-v1",
+  "status": "CONFIRMED_LOCAL_NOT_FIXED",
+  "asOf": "2026-10-13T17:15:15Z",
+  "root": "Claude Opus 5.5 root",
+  "scope": "Spot/Paper accounting only; no Live path is involved.",
+  "discovery": "Static audit CR1 (Architecture auditor) while tracing retryable 409 answers; confirmed by a local probe (Debugger) on throwaway PostgreSQL 16.15.",
+  "mechanism": "Every API request runs in one SERIALIZABLE transaction whose snapshot is taken during authentication. recordFunding (src/postgres/ledger.js:8-23) locks the owner row and then checks Paper cash for a withdrawal, but reads that cash from the request snapshot. The execution worker runs READ COMMITTED, locks the same owner row without updating it and can commit a fill while the request waits for the lock; PostgreSQL raises no serialization error, so the withdrawal check runs on stale cash.",
+  "reproduced": {
+    "race": "Bot in SETUP with funding 100/100 and a queued BUY; the worker fills 400 at 0.1 (notional 40) and is held before commit; PUT /api/risk withdraws to 20/20 and waits on the owner lock; the fill commits; the request returns 200. Paper cash ends at -20, book equity 20 against position cost 40, and the funding snapshot row records cash 20 and position cost 0, which is false.",
+    "control": "With the fill committed before the request, the same request is refused with 400 \"Paper capital withdrawal exceeds unreserved funds\" and cash stays 60.",
+    "lifecycleRun": "A bot start behind a held fill returns 200 with initial capital 100 while actual cash is 60; only baseline metadata is affected."
+  },
+  "preconditions": [
+    "Bot in SETUP (the route refuses RUNNING and PAUSED; the worker refuses fills in STOPPED)",
+    "A BUY fill for that bot commits after the request snapshot and before the request takes the owner lock",
+    "Route PUT /api/risk; the PF-4 apply path refuses any funding change (PF4_FUNDING_INVARIANT, read from code, not run)"
+  ],
+  "impact": "Paper cash can go negative and a withdrawal can exceed unreserved cash by up to the BUY notional and fees committed inside the window; later BUY fills are refused because the cash budget is negative and SELL exits still add cash. No database constraint or reconciliation found that flags the result (a search, not proof of absence).",
+  "candidateFixes": [
+    "Per-bot or per-broker Paper version row bumped by every fill and locked by funding and bot start, so a concurrent fill causes a retryable serialization failure (pairs with a bounded server-side retry); needs a schema migration",
+    "Run the worker at SERIALIZABLE (broad behaviour change)",
+    "Run the funding route and bot start at READ COMMITTED with the owner lock first (loses SERIALIZABLE protection for those routes)"
+  ],
+  "decision": "Accounting change: needs an architecture design review and an owner decision before any code. Not fixed; nothing applied to staging or production.",
+  "probe": {
+    "path": ".qa-local/claude-f4-debug/f4-probe.test.mjs",
+    "sha256": "8f8acaf8d52b2ec3fe89a5c062d03cf43819b3c00f71cfdabd1b69232fc34288",
+    "note": "Private local probe, not a committed test."
+  },
+  "notRun": [
+    "Pine Bridge signal path in SETUP",
+    "Reverse ordering",
+    "PF-4 apply under the race",
+    "Child bot variant",
+    "Staging or production check of whether this ever happened"
+  ],
+  "followUps": [
+    {
+      "packet": "RO1",
+      "asOf": "2026-10-13T18:55:01Z",
+      "ranAt": "2026-10-13T18:53:43Z",
+      "authority": "Owner GO for a read-only VPS check, 2026-10-13; one root-reviewed payload attempt after a first attempt that stopped before any database access",
+      "status": "READ_ONLY_FACTS_COLLECTED",
+      "hostChange": "none",
+      "host": "healthy; all known services in their expected state; production and staging Paper health PAPER_ONLY",
+      "production": {
+        "queuedSignals": 0,
+        "executionHeartbeatFresh": true,
+        "negativePaperCashAccounts": 0,
+        "f4Signatures": 0,
+        "o3ExposedOpenLots": 352,
+        "o3ExposedOwners": 4,
+        "o3ExposedSymbolsInFirst200Rows": {
+          "ARBUSDT": 149,
+          "ETHUSDT": 20,
+          "BTCUSDT": 19,
+          "BNBUSDT": 9,
+          "XRPUSDT": 3
+        },
+        "runningBots": 5,
+        "signalPath": "legacy webhook only (no Pine Bridge event table)"
+      },
+      "staging": {
+        "queuedSignals": 0,
+        "executionHeartbeatFresh": true,
+        "negativePaperCashAccounts": 0,
+        "f4Signatures": 0,
+        "o3ExposedOpenLots": 0,
+        "runningBots": 2
+      },
+      "limits": [
+        "The open-lot count predicts the exit failure; it does not prove it: the deployed release code of the production worker was not compared with the analysed code.",
+        "Worker logs go to a journal this account cannot read, so log counts are unknown; the heartbeat is the stall evidence.",
+        "Lot mismatch and flat-position cost queries (G1) were not run; they need their own GO."
+      ],
+      "summary": "Read-only VPS check: no negative Paper cash and no F4 funding-snapshot signature on production or staging."
+    }
+  ]
+}

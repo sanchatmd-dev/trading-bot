@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {QuantFoundationScheduler} from '../../src/postgres/quant-foundation-scheduler.js';
 import {QuantIoLedger} from '../../src/postgres/quant-io-ledger.js';
 import {canReleaseQuantIo,quantIoUnitName} from '../../src/postgres/quant-io-runtime.js';
@@ -45,8 +46,10 @@ before(async()=>{
   await admin.query('CREATE DATABASE '+name);
   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+name;
   db=new PostgresDatabase({connectionString:url.toString(),max:4});
+  await db.migrate();
   for(const file of ['quant-foundation-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql'])
     await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
+  await installQuantGuards(db);
   // Empty research adapter tables let the actual worker reconcile its other lane without research execution.
   await db.query(`CREATE TABLE quant_jobs(run_id TEXT PRIMARY KEY,status TEXT,diagnostic TEXT,
     lease_token UUID,lease_until BIGINT,updated_at BIGINT);

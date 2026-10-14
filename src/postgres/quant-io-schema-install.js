@@ -10,6 +10,9 @@ const columns={quant_io_ledgers:[['job_id','uuid'],['policy_hash','text'],['leas
 const functions=['quant_io_ledger_guard','quant_io_launch_guard','quant_io_foundation_release_guard'];
 const refused=()=>fail('QUANT_IO_SCHEMA_UNSUPPORTED');
 const normalize=value=>value.replaceAll('\r\n','\n').trim();
+const PINNED_SEARCH_PATH='search_path=pg_catalog, pg_temp';
+/** Hardened release-guard body from the trusted hardening file (read for expectations only, never installed here), or undefined. */
+const hardenedReleaseBody=text=>/CREATE OR REPLACE FUNCTION public\.quant_io_foundation_release_guard\(\) RETURNS TRIGGER\s+LANGUAGE plpgsql SECURITY INVOKER SET search_path = pg_catalog, pg_temp\s+AS \$fn\$([\s\S]*?)\$fn\$;/.exec(text)?.[1];
 
 /** Offline compatibility check. Existing guard semantics are never silently repaired. */
 export async function ensureQuantIoSchema(db){
@@ -17,6 +20,8 @@ export async function ensureQuantIoSchema(db){
  await db.maintenanceLock();
  const resources=await Promise.all(['quant-io-ledger-schema.sql','quant-io-runtime-schema.sql'].map(name=>fs.readFile(new URL('./'+name,import.meta.url),'utf8')));
  try{
+  // Read inside the guarded path: a missing or unreadable hardening file is the same refusal as any other unsupported state.
+  const hardening=hardenedReleaseBody(await fs.readFile(new URL('./quant-io-release-guard-hardening.sql',import.meta.url),'utf8'));
   await db.query('SET LOCAL search_path=public');
   const tables=(await db.query("SELECT relname,relkind,relpersistence,relrowsecurity,relforcerowsecurity,relispartition FROM pg_catalog.pg_class WHERE relnamespace='public'::regnamespace AND relname IN ('quant_io_ledgers','quant_io_launches')")).rows;
   const procedures=(await db.query("SELECT p.oid,p.proname,p.pronargs,p.prosrc,p.prosecdef,p.provolatile,p.proleakproof,p.proconfig,p.prorettype,l.lanname FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_language l ON l.oid=p.prolang WHERE p.pronamespace='public'::regnamespace AND p.proname=ANY($1::text[])",[functions])).rows;
@@ -36,10 +41,16 @@ export async function ensureQuantIoSchema(db){
    const procedure=procedures.find(row=>row.proname===name);
    const sql=resources.find(value=>value.includes('CREATE FUNCTION '+name+'()'));
    const body=sql?.split('CREATE FUNCTION '+name+'() RETURNS TRIGGER LANGUAGE plpgsql AS $$')[1]?.split('$$;')[0];
-   if(!procedure||body===undefined||procedure.pronargs!==0||procedure.prorettype!==2279||procedure.lanname!=='plpgsql'||
-      procedure.prosecdef||procedure.provolatile!=='v'||procedure.proleakproof||procedure.proconfig!==null||normalize(procedure.prosrc)!==normalize(body))throw refused();
-   const trigger=triggers.find(row=>row.tgname===name);
    const release=name==='quant_io_foundation_release_guard';
+   if(!procedure||body===undefined||procedure.pronargs!==0||procedure.prorettype!==2279||procedure.lanname!=='plpgsql'||
+      procedure.prosecdef||procedure.provolatile!=='v'||procedure.proleakproof)throw refused();
+   // Exactly the original, or (release guard only) exactly the hardened definition: pinned setting alone and the hardened body, which
+   // equals the original body once the public. qualifiers are removed. Nothing in between is accepted.
+   const original=procedure.proconfig===null&&normalize(procedure.prosrc)===normalize(body);
+   const hardened=release&&hardening!==undefined&&Array.isArray(procedure.proconfig)&&procedure.proconfig.length===1&&procedure.proconfig[0]===PINNED_SEARCH_PATH&&
+     normalize(procedure.prosrc)===normalize(hardening)&&normalize(hardening.replaceAll('public.',''))===normalize(body);
+   if(!original&&!hardened)throw refused();
+   const trigger=triggers.find(row=>row.tgname===name);
    const table=release?'quant_foundation_jobs':name==='quant_io_ledger_guard'?'quant_io_ledgers':'quant_io_launches';
    if(!trigger||trigger.relname!==table||trigger.tgfoid!==procedure.oid||trigger.tgtype!==(release?19:27)||
      !['O','A'].includes(trigger.tgenabled)||trigger.tgisinternal||trigger.tgqual!==null||trigger.tgnargs!==0||

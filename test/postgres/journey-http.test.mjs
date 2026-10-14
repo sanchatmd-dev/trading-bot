@@ -37,7 +37,10 @@ after(async()=>{
   await db?.close();
   if(admin){if(databaseName)await admin.query('DROP DATABASE IF EXISTS '+databaseName+' WITH (FORCE)');await admin.close();}
 });
-const installQuantSchema=async()=>db.transaction(async()=>db.query(await fs.readFile(new URL('../../src/postgres/quant-research-schema.sql',import.meta.url),'utf8')));
+// The QR-1b terminal-result freeze is installed too, so every fixture run is written the way the workers write one.
+const installQuantSchema=async()=>db.transaction(async()=>{
+  for(const name of ['quant-research-schema.sql','quant-research-freeze.sql'])await db.query(await fs.readFile(new URL('../../src/postgres/'+name,import.meta.url),'utf8'));
+});
 
 async function startServer(env){
   const probe=net.createServer();await new Promise(resolve=>probe.listen(0,'127.0.0.1',resolve));
@@ -193,12 +196,15 @@ const legacyContract=()=>({version:'ql3a-research-job-v1',scope:'SPT_CUSTOM_ENGI
   input_lock:lockOf(3),plan:{planned_candidates:25,candidates:[{marker:'PLAN_LEAK'}]},dataset:{start_time:1,end_time:2,bar_count:1,bars:[{time:1,close:'BAR_SECRET'}],sha256:'d'.repeat(64)}});
 const v2Contract=()=>({version:'ql3a-research-job-v2',execution_backend:'quant-foundation-v1',source_hash:'e'.repeat(64),baseline_snapshot_hash:'f'.repeat(64),
   input_lock:lockOf(8),plan:{planned_candidates:100},dataset:{start_time:1,end_time:2,content_digest:'9'.repeat(64)}});
+// A finished run is written as RUNNING, receives its checkpoints, and only then takes its terminal status (the freeze refuses a checkpoint under a terminal run).
 async function seedRun(ownerId,deploymentId,{at,status,contract,result=null,diagnostic=null,steps=[],phase='COMPLETE',attempt=1,evaluations=0}){
-  const id=randomUUID();
+  const id=randomUUID(),finalStatus=status;
+  if(steps.length>0)status='RUNNING';
   await db.query('INSERT INTO quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,status,created_at,updated_at,deadline,phase,attempt,evaluations_started,result,diagnostic) VALUES($1,$2,$2,$3,$4,$5,$6,$7,$8,$9,$9,$10,$11,$12,$13,$14,$15)',
     [id,ownerId,deploymentId,'idem-run-'+id,hash(id),hash(canonical(contract)),JSON.stringify(contract),status,at,at+900000,phase,attempt,evaluations,result&&JSON.stringify(result),diagnostic]);
   let index=0;
   for(const kind of steps)await db.query('INSERT INTO quant_job_steps(run_id,step_id,kind,parameters,result,completed_at) VALUES($1,$2,$3,$4,$5,$6)',[id,kind.toLowerCase()+':'+index,kind,JSON.stringify({index}),JSON.stringify({payload:'STEP_PAYLOAD_SECRET'}),at+index++]);
+  if(status!==finalStatus)await db.query('UPDATE quant_jobs SET status=$2 WHERE run_id=$1',[id,finalStatus]);
   return id;
 }
 const RUN_KEYS=['attempts','baseline_snapshot_hash','bot_id','bridge_domains','candidates_completed','candidates_planned','contract_hash','created_at','dataset_hash','deployment_id',

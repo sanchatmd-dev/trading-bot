@@ -6,6 +6,7 @@ import {fork} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from './quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {bindQuantStorage} from '../../src/postgres/quant-storage-retention.js';
 import {validateQuantCapacityPolicy} from '../../src/postgres/quant-capacity-policy.js';
@@ -43,6 +44,7 @@ export async function quantPreflightHttpFixture(connection,{mode='disabled',envi
     if(!missingPreflightSchema)schemas.push('quant-preflight-schema.sql');
     if(!missingEnrollmentSchema)schemas.push('quant-profile-enrollment-schema.sql');
     for(const file of schemas)await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
+    await installQuantGuards(db);
     await db.query("UPDATE quant_research_executor_mode SET mode='FOUNDATION'");
     const root=path.join(directory,'datasets');await db.transaction(()=>bindQuantStorage(db,root));
     const limits=path.join(directory,'limits.json');

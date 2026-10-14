@@ -1,0 +1,98 @@
+{
+  "schema": "r7b-em2-controller-process-kill-local-v1",
+  "status": "LOCAL_TEST_ONLY_CONTROLLER_PROCESS_KILL_HOLD_ACCEPTED",
+  "asOf": "2026-10-13T02:13:00Z",
+  "executionReady": false,
+  "releaseAuthorized": false,
+  "pins": {
+    ".qa-local/claude-r7b-em2-controller-recovery-v5/FILES.json": "65eb4b4706e4e862363aab01532293ec2016b1a6bac31e51a7ee7f54a9e2b7ae",
+    ".qa-local/claude-r7b-em2-controller-recovery-v5/RESULTS.json": "049f4744287ed6338774bbf9d44157f466d9b0f69450b162e76792726eaf4cae",
+    ".qa-local/claude-r7b-em2-controller-recovery-v5/EXPECTED.json": "1bc3c72be3c91fd092bf159cb56c6f47dde4efdcba6cd0d145c0a1083b8df3a3",
+    ".qa-local/claude-r7b-em2-controller-recovery-v5/FINDINGS.json": "c8716f30c3754cc1f7efe4858a4544009cacc2af912fe18eaf695e3ec23e5566",
+    ".qa-local/claude-r7b-em2-controller-recovery-v5-verify/FILES.json": "bfb6ef9d5129f552abb47a01944ec4b02fef14489d36efad4e891c8dcfa987e3",
+    ".qa-local/claude-r7b-em2-controller-recovery-v5-verify/RESULTS.json": "49a29beacee55ba9f843ae43f8a5312f74282ad4b3861978036d9b14a661c5e2",
+    ".qa-local/claude-r7b-em2-controller-recovery-v5-verify/REPLAY-RESULTS.json": "f60da7bee74d242f65ab13cbe40c5bfe8aa19a664d87472e01649922418f8ca0",
+    ".qa-local/claude-r7b-em2-controller-recovery-v4/FILES.json": "c251889c72822ce6cdd399231a36dfb70261f7ab1bf173d18a2c6c0813bbec2e",
+    ".qa-local/claude-r7b-em2-decisions/CONTROLLER-UNKNOWN-OUTCOME-ACCEPTANCE.json": "393043f98858b335d9b4fbd34ec4acd76974dcdba1de5ad142a20a391ae17b6c",
+    ".qa-local/codex-r7b-em2-controller-v4/FILES.json": "c887a127db84a7c639c496ce030d4c4af3d6ca39622f8f70e3a4f1eea3bfa27d",
+    ".qa-local/codex-r7b-em2-held-report-v11/FILES.json": "1833dc4c54eb4576430965b424c26409dba6cd3529208cfe85f2478cd01e65b9",
+    ".qa-local/claude-r7b-em2-decisions/CONTROLLER-PROCESS-KILL-ACCEPTANCE.json": "354866d7c83bcb26a5ac7282caf0b1858a4fc90acfb3f6f6c48dbfbb68f04508"
+  },
+  "scope": "Actual child-process termination at every persistent-controller boundary and inside the fake transport, with checks from a separate parent process",
+  "rows": {
+    "xs": [
+      "after-pre-lock-scan",
+      "after-mkdir",
+      "after-owner",
+      "after-admission",
+      "after-claim-intent",
+      "after-consumed",
+      "after-plan",
+      "in-transport",
+      "after-raw",
+      "after-native-receipt",
+      "after-release-request",
+      "before-result",
+      "after-result",
+      "after-terminal"
+    ],
+    "m4a": [
+      "after-claim-intent",
+      "in-transport",
+      "after-release-request"
+    ]
+  },
+  "results": {
+    "preLockScan": "No lock or journal; inspect FREE; one follow-on run RELEASED with 1 claim and 1 fake transport",
+    "lockedRows": 16,
+    "lockedRowInvariants": [
+      "Lock present and fresh inspect HELD, never FREE",
+      "Second run through the same and a fresh controller refused with CONTROLLER_EPOCH_HELD; zero new claims, transports, events or files",
+      "At most one CLAIM_INTENT; journal is a valid chain prefix",
+      "Held-lock report byte-stable over two reads, releaseAuthorized and executionReady false, writes nothing"
+    ]
+  },
+  "heldReportClasses": {
+    "after-mkdir": "INCOMPLETE DEPENDENT_BINDING_UNRESOLVED, OWNER_UNRESOLVED",
+    "after-owner": "INCOMPLETE OWNER_INVALID_OR_UNBOUND",
+    "after-admission..before-result": "INCOMPLETE EVIDENCE_INCOMPLETE",
+    "after-result": "INCOMPLETE aggregate PRESENT_UNBOUND",
+    "after-terminal": "OBSERVED_STABLE with empty issues while lock PRESENT"
+  },
+  "independentReplay": {
+    "runs": 1,
+    "exit": 1,
+    "rowsMatched": 17,
+    "predictionMismatches": 0,
+    "proofCalls": 884,
+    "threw": 0,
+    "failingCheck": "end-of-run childrenGone pid probe"
+  },
+  "rootDecisionOnReplayFailure": "The failing check probes process.kill(pid,0) by pid number only at the end of the whole run. Every child had a recorded SIGTERM exit event and an immediate ESRCH at kill time in both runs; the node.exe pid set was unchanged before and after; tasklist showed none of the 17 pids afterwards. Windows reuses pids and each row spawns many short PowerShell probes, so pid reuse is the likely cause; this is not proven. Root classifies it as a harness probe defect, not a controller or orphan failure, and does not count the replay as a clean PASS.",
+  "findings": [
+    {
+      "id": "HR-2",
+      "severity": "LOW_FAIL_CLOSED",
+      "detail": "After a kill between the RELEASE terminal record and unlock, the controller holds conservatively, but the held-lock report shows OBSERVED_STABLE with no issue; only lock.presence PRESENT reveals the retained lock."
+    },
+    {
+      "id": "HR-3",
+      "severity": "LOW_FAIL_CLOSED",
+      "detail": "States after CLAIM_INTENT without a native receipt (including a kill inside transport) are reported only as EVIDENCE_INCOMPLETE; in-transport is disk-identical to after-plan, so the report cannot say whether transport began."
+    },
+    {
+      "id": "H-PROBE",
+      "severity": "HARNESS",
+      "detail": "End-of-run child liveness probe uses pid only and can report reuse as alive."
+    }
+  ],
+  "limits": [
+    "Trusted synthetic callbacks and fake IO only; no host effects or operational authority.",
+    "Kills only at controller boundaries and inside fake transport; not mid-write, not between native steps without a boundary, not combined with transport/raw/allowlist faults.",
+    "Process termination is not OS crash or power loss; no fsync-loss proof.",
+    "xs and m4a only; other modes not run.",
+    "No reconciliation or unlock API; every killed attempt after lock creation holds indefinitely.",
+    "Real adapter/mainCLI remain locked."
+  ],
+  "next": "HR12 narrow held-lock report revision for HR-1, HR-2 and HR-3, then independent verification."
+}

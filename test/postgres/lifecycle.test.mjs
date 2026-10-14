@@ -2,6 +2,7 @@ import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { PostgresDatabase } from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import { Store } from '../../src/postgres/store.js';
 import { hashPassword } from '../../src/security.js';
 
@@ -17,6 +18,7 @@ describe('Bot lifecycle & session management', () => {
     target.pathname = '/' + databaseName;
     db = new PostgresDatabase({ connectionString: target.toString(), max: 5 });
     await db.migrate();
+    await installQuantGuards(db);
     store = new Store(db);
     const user = await store.createUser({ email: `lifecycle-${randomUUID()}@test.invalid`, passwordHash: await hashPassword('temporary-test-password'), role: 'USER' });
     userId = user.id;

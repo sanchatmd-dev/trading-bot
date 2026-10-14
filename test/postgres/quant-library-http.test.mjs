@@ -421,11 +421,40 @@ test('holdout independence: an earlier same-owner run on the same market that us
   assert.equal(compare.verdict,'COMPATIBLE');assert.ok(compare.runs.every(run=>run.qualification.qualified===false));
 });
 
+// QR-1b: result_protection reports DB_TRIGGER only while every freeze guard is installed and ENABLE ALWAYS.
+const GUARD_PAUSE='quant_job_terminal_no_delete';
+const detailById=async id=>(await get(server,sessionA,PATH+'/runs/'+id)).body;
+test('QR-1b freeze: protection is reported as DB_TRIGGER only while the freeze is installed and every guard is ENABLE ALWAYS',async()=>{
+  const before=await detailById(runs.pending.run_id);
+  assert.equal(before.integrity.result_protection,'APPLICATION_ONLY');assert.ok(before.limitations.provenance_gaps.includes('RESULT_NOT_DB_FROZEN'));
+  await install('quant-research-freeze.sql');
+  const frozen=await detailById(runs.pending.run_id);
+  assert.equal(frozen.integrity.result_protection,'DB_TRIGGER');assert.equal(frozen.integrity.identity_protection,'DB_TRIGGER');
+  assert.ok(!frozen.limitations.provenance_gaps.includes('RESULT_NOT_DB_FROZEN'));assert.ok(frozen.limitations.provenance_gaps.includes('NO_IMMUTABLE_FINISH_TIME'));
+  assert.deepEqual(frozen.integrity.warnings,[]);
+  const foundation=await detailById(v2.pending.run_id);assert.equal(foundation.integrity.result_protection,'DB_TRIGGER');
+  await assert.rejects(db.query("UPDATE quant_jobs SET diagnostic='X' WHERE run_id=$1",[runs.pending.run_id]),{code:'QR001'});
+  // A guard an operator disabled, or left at the default enablement (tgenabled O), no longer supports the claim.
+  await db.query('ALTER TABLE quant_jobs DISABLE TRIGGER '+GUARD_PAUSE);
+  try{assert.equal((await detailById(runs.pending.run_id)).integrity.result_protection,'APPLICATION_ONLY');}finally{await db.query('ALTER TABLE quant_jobs ENABLE TRIGGER '+GUARD_PAUSE);}
+  assert.equal((await detailById(runs.pending.run_id)).integrity.result_protection,'APPLICATION_ONLY','enabled in the default way (tgenabled O) is not ENABLE ALWAYS');
+  await db.query('ALTER TABLE quant_jobs ENABLE ALWAYS TRIGGER '+GUARD_PAUSE);
+  assert.equal((await detailById(runs.pending.run_id)).integrity.result_protection,'DB_TRIGGER');
+  // A non-terminal run keeps its own gap list: the freeze never claims anything about a run that is still writable.
+  assert.ok(!(await detailById(runs.running.run_id)).limitations.provenance_gaps.includes('RESULT_NOT_DB_FROZEN'));
+});
+
 test('tamper detection: an edited result or contract raises an integrity warning, fails G1, withdraws the development score, and never raises an error',async()=>{
   const run=make(A,{scenario:'PENDING',at:AT(30)});await seed(A,run);
   const read=async()=>(await get(server,sessionA,PATH+'/runs/'+run.run_id)).body;
   const clean=await read();assert.deepEqual(clean.integrity.warnings,[]);assert.equal(clean.evaluation.development_score.value,'3.2');
-  await db.query("UPDATE quant_jobs SET result=jsonb_set(result,'{selected,result,validation,net_return_percent}','\"99.9\"') WHERE run_id=$1",[run.run_id]);
+  // The freeze refuses these edits for every role. The isolated admin pauses it, as it does for the contract trigger below, to prove the read-time checks.
+  const editable=async edit=>{
+    await db.query('ALTER TABLE quant_jobs DISABLE TRIGGER quant_job_terminal_freeze');
+    try{await edit();}finally{await db.query('ALTER TABLE quant_jobs ENABLE ALWAYS TRIGGER quant_job_terminal_freeze');}
+  };
+  await assert.rejects(db.query("UPDATE quant_jobs SET result=jsonb_set(result,'{selected,result,validation,net_return_percent}','\"99.9\"') WHERE run_id=$1",[run.run_id]),{code:'QR001'});
+  await editable(()=>db.query("UPDATE quant_jobs SET result=jsonb_set(result,'{selected,result,validation,net_return_percent}','\"99.9\"') WHERE run_id=$1",[run.run_id]));
   const edited=await read();
   assert.equal(edited.integrity.report_matches_checkpoints,false);assert.ok(edited.integrity.checkpoint_problems.includes('SELECTED_MISMATCH'));assert.deepEqual(edited.integrity.warnings,['CHECKPOINT_MISMATCH']);
   assert.notEqual(edited.integrity.result_sha256,clean.integrity.result_sha256,'the result digest changes');assert.equal(edited.integrity.steps_digest,clean.integrity.steps_digest,'the checkpoints did not change');
@@ -436,12 +465,12 @@ test('tamper detection: an edited result or contract raises an integrity warning
   const flagged=compare.runs.find(item=>item.run_id===run.run_id);assert.equal(flagged.qualification.label,'NOT_EVALUATED');assert.equal(flagged.metrics.development_score.value,null);
   assert.equal(compare.runs.find(item=>item.run_id===runs.pending.run_id).qualification.label,'DEVELOPMENT_ONLY');
   // A fabricated candidate and an extra checkpoint are named too.
-  await db.query("UPDATE quant_jobs SET result=jsonb_set(result,'{candidates}',(result->'candidates')||'[{\"parameters\":{},\"result\":{},\"screen_reasons\":[]}]'::jsonb) WHERE run_id=$1",[run.run_id]);
+  await editable(()=>db.query("UPDATE quant_jobs SET result=jsonb_set(result,'{candidates}',(result->'candidates')||'[{\"parameters\":{},\"result\":{},\"screen_reasons\":[]}]'::jsonb) WHERE run_id=$1",[run.run_id]));
   assert.ok((await read()).integrity.checkpoint_problems.includes('CANDIDATE_COUNT_MISMATCH'));
   // The contract is immutable in the database. The isolated admin disables the trigger once to prove that the read-time hash catches an edit.
   const other=make(A,{scenario:'NO_VALID',at:AT(31)});await seed(A,other);
   await db.query('ALTER TABLE quant_jobs DISABLE TRIGGER quant_job_contract_immutable');
-  try{await db.query("UPDATE quant_jobs SET contract=jsonb_set(contract,'{capital,cash}','\"1\"') WHERE run_id=$1",[other.run_id]);}
+  try{await editable(()=>db.query("UPDATE quant_jobs SET contract=jsonb_set(contract,'{capital,cash}','\"1\"') WHERE run_id=$1",[other.run_id]));}
   finally{await db.query('ALTER TABLE quant_jobs ENABLE TRIGGER quant_job_contract_immutable');}
   const hashed=(await get(server,sessionA,PATH+'/runs/'+other.run_id)).body;
   assert.equal(hashed.integrity.contract_hash_verified,false);assert.deepEqual(hashed.integrity.warnings,['CONTRACT_HASH_MISMATCH']);assert.equal(hashed.qualification.gates[0].code,'INTEGRITY_CHECK_FAILED');

@@ -6,6 +6,7 @@ import {once} from 'node:events';
 import net from 'node:net';
 import {setTimeout as delay} from 'node:timers/promises';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {ExecutionWorker,MailWorker} from '../../src/postgres/worker.js';
 import {normalizeSignal} from '../../src/postgres/domain.js';
@@ -24,6 +25,7 @@ before(async()=>{
   await adminDb.query('CREATE DATABASE '+databaseName);
   const target=new URL(process.env.TEST_DATABASE_URL);target.pathname='/'+databaseName;url=target.toString();
   db=new PostgresDatabase({connectionString:url,max:12});await db.migrate();store=new Store(db);
+  await installQuantGuards(db);
 });
 after(async()=>{await db?.close();if(adminDb){if(databaseName)await adminDb.query('DROP DATABASE '+databaseName);await adminDb.close();}});
 const policy=(capital='100')=>({...structuredClone(config.defaultRisk),maxTradesPerDay:100,maxOpenPositions:10,blockHighVolatility:false,blockDuringNews:false,equities:{'binance-global':Number(capital)},balances:{'binance-global':Number(capital)}});

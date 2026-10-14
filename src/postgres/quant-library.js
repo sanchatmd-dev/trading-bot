@@ -28,9 +28,20 @@ const finite=value=>typeof value==='number'&&Number.isFinite(value)?value:null;
 const count=value=>Number.isSafeInteger(value)&&value>=0?value:null;
 const object=value=>isObject(value)?value:{};
 
-const PRESENT=`SELECT to_regclass('quant_jobs') IS NOT NULL AND to_regclass('quant_job_steps') IS NOT NULL AS present,
+// frozen: the QR-1b terminal-result freeze is installed and every guard is ENABLE ALWAYS (tgenabled A), for the legacy tables
+// and, where the FOUNDATION extension exists, for its binding and chunk tables as well. Only then is the stored result
+// reported as database protected. A guard an operator disabled, or a database without the freeze, reads as application only.
+const GUARDED=`(SELECT count(*) FROM pg_catalog.pg_trigger t WHERE t.tgenabled='A' AND NOT t.tgisinternal AND (t.tgrelid,t.tgname) IN `;
+const PRESENT=`SELECT f.present,f.foundation,
+ (f.present AND to_regprocedure('public.quant_research_freeze_version()') IS NOT NULL
+  AND ${GUARDED}((to_regclass('public.quant_jobs'),'quant_job_terminal_freeze'),(to_regclass('public.quant_jobs'),'quant_job_terminal_no_delete'),
+   (to_regclass('public.quant_job_steps'),'quant_job_step_terminal_insert')))=3
+  AND (to_regclass('public.quant_research_foundation') IS NULL OR to_regclass('public.quant_research_chunks') IS NULL
+   OR ${GUARDED}((to_regclass('public.quant_research_foundation'),'quant_research_binding_terminal_insert'),
+    (to_regclass('public.quant_research_chunks'),'quant_research_chunk_terminal_insert'),(to_regclass('public.quant_research_chunks'),'quant_research_chunk_terminal_freeze')))=3)) AS frozen
+FROM (SELECT to_regclass('quant_jobs') IS NOT NULL AND to_regclass('quant_job_steps') IS NOT NULL AS present,
  to_regclass('quant_foundation_jobs') IS NOT NULL AND to_regclass('quant_research_foundation') IS NOT NULL
- AND to_regclass('quant_research_chunks') IS NOT NULL AS foundation`;
+ AND to_regclass('quant_research_chunks') IS NOT NULL AS foundation) f`;
 
 // One MATERIALIZED page detoasts each contract once: the slim copy drops the source, the bars and the candidate plan, and the
 // outer select keeps only the fields the list reads. The result keeps everything except its candidate array, which is
@@ -142,21 +153,22 @@ function provenanceOf(contract,fields,found,chunks){
     foundation};
 }
 const GAP_BLOCKERS=['VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED','CUSTOM_REPAINT_EVIDENCE_REQUIRED'];
-function limitationsOf(c,row,found){
+function limitationsOf(c,row,found,frozen){
   const blockers=list(c.acceptance_blockers,20).filter(item=>typeof item==='string');
   const gaps=[];
   if(!text(c.effective_inputs_hash))gaps.push('NO_EFFECTIVE_INPUT_REVIEW_HASH');
   gaps.push('ENGINE_RELEASE_UNKNOWN');
   if(!found||!finite(object(found.metadata).cutoff))gaps.push('NO_DATA_COLLECTION_TIMESTAMP');
   if(blockers.some(item=>GAP_BLOCKERS.includes(item)))gaps.push('NO_PARITY_REPAINT_EVIDENCE');
-  if(isTerminal(row.status))gaps.push('NO_IMMUTABLE_FINISH_TIME','RESULT_NOT_DB_FROZEN');
+  if(isTerminal(row.status))gaps.push('NO_IMMUTABLE_FINISH_TIME');
+  if(isTerminal(row.status)&&!frozen)gaps.push('RESULT_NOT_DB_FROZEN');
   gaps.push('NO_BENCHMARK_OR_COMPARISON_OBJECTIVE');
   return {provenance_gaps:gaps,acceptance_blockers:blockers.map(item=>item.slice(0,100))};
 }
 
 const OBJECTIVE=Object.freeze({rule:'VALIDATION_NET_RETURN_THEN_DRAWDOWN_THEN_PARAMETERS',fixed_before_run:true,source:'ENGINE_CODE'});
 /** Everything derived from one stored run, its checkpoints and its foundation facts. */
-function analyse(row,steps,found,chunks){
+function analyse(row,steps,found,chunks,frozen=false){
   const contract=row.contract,c=object(contract),result=isObject(row.result)?row.result:null;
   const hashVerified=contractHashVerified(contract,row.contract_hash),match=reportMatchesCheckpoints(result,steps),digest=stepsDigest(steps);
   const bindingMatches=found?found.binding_contract_hash===row.contract_hash:null;
@@ -166,10 +178,10 @@ function analyse(row,steps,found,chunks){
   if(bindingMatches===false)warnings.push('FOUNDATION_BINDING_MISMATCH');
   const integrity={contract_hash:row.contract_hash,contract_hash_verified:hashVerified,result_sha256:resultSha256(row.result),...digest,
     report_matches_checkpoints:match.ok,checkpoint_problems:match.problems,foundation_binding_matches:bindingMatches,
-    identity_protection:'DB_TRIGGER',result_protection:'APPLICATION_ONLY',warnings};
+    identity_protection:'DB_TRIGGER',result_protection:frozen?'DB_TRIGGER':'APPLICATION_ONLY',warnings};
   const {fields,missing:missingFields}=compatibilityFields(row.run_id,contract);
   const failed=warnings.length>0;
-  return {row,c,result,steps,found,chunks,integrity,failed,fields,missingFields,key:compatibilityKey(fields),
+  return {row,c,result,steps,found,chunks,frozen,integrity,failed,fields,missingFields,key:compatibilityKey(fields),
     cls:classify({status:row.status,diagnostic:row.diagnostic,holdoutTooFewTrades:holdoutTooFewTrades(result)}),
     score:developmentScore({status:row.status,result,integrityFailed:failed}),
     gateInput:{status:row.status,result,blockers:c.acceptance_blockers,integrity:{contract_hash_verified:hashVerified&&bindingMatches!==false,report_matches_checkpoints:match.ok}}};
@@ -199,7 +211,7 @@ function shapeDetail(a,quality,overlap){
       contract_version:text(c.version,64),engine_family:familyOf(c),bot_id:row.bot_id,deployment_id:row.deployment_id,attempts:row.attempt,
       evaluations_started:row.evaluations_started,deadline:row.deadline},
     provenance:provenanceOf(a.row.contract,a.fields,a.found,a.chunks),integrity:a.integrity,completeness:completenessOf(a),
-    limitations:limitationsOf(c,row,a.found),evaluation:evaluationOf(a),
+    limitations:limitationsOf(c,row,a.found,a.frozen),evaluation:evaluationOf(a),
     qualification:{...quality,holdout_overlap:overlap},
     compatibility:{version:LIBRARY_VERSIONS.compatibility,key:a.key,short_key:a.key.slice(0,12),fields:a.fields,missing:a.missingFields}};
 }
@@ -265,7 +277,7 @@ export class QuantLibraryService{
     const found=flags.foundation?(await this.db.query(FOUNDATION,[runId,owner])).rows[0]??null:null;
     // The chunk rows belong to the run, which is already owner-scoped; only the foundation job row needs the owner join.
     const chunks=flags.foundation?(await this.db.query(CHUNKS,[runId])).rows:[];
-    const a=analyse(row,steps,found,chunks);
+    const a=analyse(row,steps,found,chunks,flags.frozen===true);
     let quality=qualification(a.gateInput),overlap={checked:false,overlaps:null,run_ids:[]};
     if(quality.gates.slice(0,4).every(gate=>gate.state==='PASS')){
       const own=holdoutWindow(a.c),market=marketKey(a.c);

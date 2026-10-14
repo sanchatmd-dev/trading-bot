@@ -1,0 +1,104 @@
+{
+  "schema": "r7b-em2-controller-unknown-outcome-local-v1",
+  "status": "LOCAL_TEST_ONLY_CONTROLLER_UNKNOWN_OUTCOME_HOLD_ACCEPTED",
+  "asOf": "2026-10-13T01:32:00Z",
+  "executionReady": false,
+  "releaseAuthorized": false,
+  "pins": {
+    ".qa-local/claude-r7b-em2-controller-recovery-v4/FILES.json": "c251889c72822ce6cdd399231a36dfb70261f7ab1bf173d18a2c6c0813bbec2e",
+    ".qa-local/claude-r7b-em2-controller-recovery-v4/RESULTS.json": "99bcf26404feb70f5d4d9f1689dab6ee9f5a46dd7daac5ec88277df968dbaef7",
+    ".qa-local/claude-r7b-em2-controller-recovery-v4/EXPECTED.json": "8597583f609dc35f4085279e4ca02686bbbb097609b1454e3a402447bbf89331",
+    ".qa-local/claude-r7b-em2-controller-recovery-v4-verify/FILES.json": "bf42ec119e51f4a8dfaee5220a2b7a065e83375e8a577455619cda47ec73cbe1",
+    ".qa-local/claude-r7b-em2-controller-recovery-v4-verify/RESULTS.json": "9539350a8697c80965791db4eca2ffa056e18e099b42f85011a82f6bf87b24cd",
+    ".qa-local/claude-r7b-em2-controller-recovery-v4-verify/MY-EXPECTED.json": "a33baf3fc7c023614083f426b58d20f8da81243c275f455eb0300c2bced3b47e",
+    ".qa-local/claude-r7b-em2-controller-recovery-v3/FILES.json": "72b51b6388d7b2237e2f1e9937d895528b2c3c3032d04dd751aa8b8a2884b40f",
+    ".qa-local/claude-r7b-em2-decisions/CONTROLLER-RECOVERY-ACCEPTANCE.json": "745313c0686edf7036faef880267a9c1956ffd41e04873eafd0146737b27db4d",
+    ".qa-local/codex-r7b-em2-controller-v4/FILES.json": "c887a127db84a7c639c496ce030d4c4af3d6ca39622f8f70e3a4f1eea3bfa27d",
+    ".qa-local/codex-r7b-em2-held-report-v11/FILES.json": "1833dc4c54eb4576430965b424c26409dba6cd3529208cfe85f2478cd01e65b9",
+    ".qa-local/claude-r7b-em2-decisions/CONTROLLER-UNKNOWN-OUTCOME-ACCEPTANCE.json": "393043f98858b335d9b4fbd34ec4acd76974dcdba1de5ad142a20a391ae17b6c"
+  },
+  "scope": "Unknown-transport, unconfirmed-completion and raw-retention failures through the accepted persistent controller for close modes m4a, m4b and xs with a valid operational allowlist",
+  "cases": {
+    "modes": [
+      "m4a",
+      "m4b",
+      "xs"
+    ],
+    "faults": [
+      "F1",
+      "F2",
+      "F3"
+    ],
+    "held": 9,
+    "replayHeld": 9
+  },
+  "perFault": {
+    "F1": {
+      "fault": "fake transport throws (unknown outcome)",
+      "error": "FAKE_SSH_UNKNOWN_TRANSPORT",
+      "aggregate": null,
+      "events": [
+        "ADMISSION",
+        "CLAIM_INTENT",
+        "CONSUMED",
+        "PLAN",
+        "TERMINAL"
+      ],
+      "heldReport": "INCOMPLETE EVIDENCE_INCOMPLETE"
+    },
+    "F2": {
+      "fault": "fake transport unconfirmed (nonzero status, empty stdout)",
+      "verdict": "LOCAL_COMPLETION_UNCONFIRMED",
+      "code": "TRANSPORT_COMPLETION_UNCONFIRMED",
+      "events": [
+        "ADMISSION",
+        "CLAIM_INTENT",
+        "CONSUMED",
+        "PLAN",
+        "RAW",
+        "NATIVE_RECEIPT",
+        "TERMINAL"
+      ],
+      "heldReport": "OBSERVED_STABLE"
+    },
+    "F3": {
+      "fault": "raw retention write throws",
+      "verdict": "LOCAL_RETENTION_FAILED",
+      "code": "RAW_WRITE_FAILED",
+      "events": [
+        "ADMISSION",
+        "CLAIM_INTENT",
+        "CONSUMED",
+        "PLAN",
+        "NATIVE_RECEIPT",
+        "TERMINAL"
+      ],
+      "heldReport": "INCOMPLETE HISTORY_INVALID/HISTORY_UNKNOWN/UNSUPPORTED_SEQUENCE"
+    }
+  },
+  "invariants": [
+    "Status HELD in all 9; never RELEASED",
+    "1 claim and 1 fake transport per case",
+    "TERMINAL disposition HOLD, releaseRequested false; no RELEASE_REQUEST",
+    "Lock directory and owner record retained",
+    "Fresh inspect HELD",
+    "Second run refused before claim with CONTROLLER_EPOCH_HELD; zero new claims, transports or files",
+    "Held-lock report stable across two reads, names the attempt, releaseAuthorized and executionReady false, writes nothing"
+  ],
+  "findings": [
+    {
+      "id": "HR-F3",
+      "severity": "LOW_FAIL_CLOSED",
+      "detail": "Held-lock report v11 semantics.mjs:13 rejects NATIVE_RECEIPT without a prior RAW row as UNSUPPORTED_SEQUENCE. The core legitimately writes that sequence on raw-retention failure (lib.mjs:869 sets WRITE_FAILED, lib.mjs:875 appends the native receipt). The report stays read-only and conservative but cannot bind the evidence for this case.",
+      "next": "Candidate narrow held-report revision after the process-kill matrix"
+    }
+  ],
+  "limits": [
+    "Trusted synthetic callbacks and fake IO only; no host effects or operational authority.",
+    "Close modes with a valid allowlist only; allowlist faults were not combined with transport/raw faults.",
+    "Exceptions and fake outcomes, not process kill or power loss (process kill is packet CR5).",
+    "Held locks stay held; no reconciliation or unlock API exists.",
+    "Real adapter/mainCLI remain locked."
+  ],
+  "next": "CR5 actual process-kill matrix through the persistent controller."
+}

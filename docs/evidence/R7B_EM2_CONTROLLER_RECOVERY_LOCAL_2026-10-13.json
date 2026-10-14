@@ -1,0 +1,75 @@
+{
+  "schema": "r7b-em2-controller-recovery-local-v1",
+  "status": "LOCAL_TEST_ONLY_CONTROLLER_RECOVERY_MATRIX_ACCEPTED",
+  "asOf": "2026-10-13T01:09:00Z",
+  "executionReady": false,
+  "releaseAuthorized": false,
+  "pins": {
+    ".qa-local/claude-r7b-em2-controller-recovery-v3/FILES.json": "72b51b6388d7b2237e2f1e9937d895528b2c3c3032d04dd751aa8b8a2884b40f",
+    ".qa-local/claude-r7b-em2-controller-recovery-v3/RESULTS.json": "68f538cfea84da7328190cca626ecd0e60b9ffdd3e452699fe7324e792bdffd2",
+    ".qa-local/claude-r7b-em2-controller-recovery-v3/PROOF-TRACE.json": "48bb12b98594adc6625780526f3b6b817a85de17aa5c5304a4f6e453e1c84f93",
+    ".qa-local/claude-r7b-em2-controller-recovery-v3-verify/FILES.json": "468b6a33f03df431bea6e909145c20b5cd44c50034ba92dbc2f62d98fa94a7e4",
+    ".qa-local/claude-r7b-em2-controller-recovery-v3-verify/RESULTS.json": "f022cabe4fc73bc61f4f253a98820bd1dfd6052d7b547de807867cc056b665b8",
+    ".qa-local/claude-r7b-em2-controller-recovery-v3-root/AUTHOR-REPORT.md": "b1b704dbf1a115d79d9030ffbc25ccd223f69eb220b927d403a0a1bda0e0544f",
+    ".qa-local/codex-r7b-em2-controller-recovery-v2/FILES.json": "efebdca5b14c6fee470e74f13a7fc38fdc2151395a7e42f03880caa5260a0214",
+    ".qa-local/codex-r7b-em2-controller-recovery-v2/FIRST-FAILURE.json": "e1a0bd78dd25fa84853c95cae7607797d6b6c329a194b1b933923781986b589b",
+    ".qa-local/codex-r7b-em2-controller-v4/FILES.json": "c887a127db84a7c639c496ce030d4c4af3d6ca39622f8f70e3a4f1eea3bfa27d",
+    ".qa-local/claude-r7b-em2-decisions/CONTROLLER-RECOVERY-ACCEPTANCE.json": "745313c0686edf7036faef880267a9c1956ffd41e04873eafd0146737b27db4d"
+  },
+  "result": {
+    "cases": 12,
+    "released": 12,
+    "modes": {
+      "m4a": [
+        "valid",
+        "missing",
+        "malformed",
+        "expired"
+      ],
+      "m4b": [
+        "valid",
+        "missing",
+        "malformed",
+        "expired"
+      ],
+      "xs": [
+        "valid",
+        "missing",
+        "malformed",
+        "expired"
+      ]
+    },
+    "perCase": "exactly one claim and one fake transport, durable event order and hashes, lock released, reopened FREE"
+  },
+  "filesystemProof": {
+    "calls": 336,
+    "returned": 336,
+    "maxElapsedMs": 889,
+    "timeoutMs": 5000,
+    "timeoutChanged": false
+  },
+  "independent": {
+    "freshReplayReleased": 12,
+    "replayRefusals": 12,
+    "refusalCode": "CONTROLLER_JOB_ALREADY_CLAIMED",
+    "claimsOnRefusal": 0,
+    "transportsOnRefusal": 0
+  },
+  "historicalFailure": {
+    "case": "xs/malformed in recovery-v2",
+    "status": "REFUSED",
+    "code": "CONTROLLER_REPARSE_PROOF_UNAVAILABLE",
+    "cause": "UNKNOWN",
+    "preserved": true,
+    "staticPhase": "pre-lock admission snapshot filesystem proof"
+  },
+  "limits": [
+    "Trusted synthetic callbacks and supplied prior handoffs only; no host effects or operational authority.",
+    "Two clean runs do not prove the v2 failure was transient or identify its cause; load, cold-start and antivirus conditions were not tested.",
+    "Replay refusal was proven at the pre-lock job scan only.",
+    "Unknown-transport and raw-retention outcomes through the controller were not covered here (packet CR4).",
+    "No process-kill, OS-crash or power-loss durability proof.",
+    "Real adapter/mainCLI remain locked; no measurement, submission or Preflight authority."
+  ],
+  "next": "CR4 unknown-transport and raw-retention cases through the persistent controller, then independent verification."
+}

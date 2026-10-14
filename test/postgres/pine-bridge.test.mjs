@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {PineBridgeWorker} from '../../src/postgres/pine-bridge-worker.js';
@@ -43,6 +44,7 @@ before(async()=>{
   assert.equal((await db.query("SELECT to_regclass('public.pine_sources') present")).rows[0].present,null);
   await db.transaction(()=>db.query(migration));store=new Store(db);service=new PineBridgeService(store,{defaultRisk:config.defaultRisk,getProvider});
   await db.query(await fs.readFile(new URL('../../src/postgres/pine-capture-schema.sql',import.meta.url),'utf8'));
+  await installQuantGuards(db);
 });
 after(async()=>{await db?.close();if(admin){if(databaseName)await admin.query('DROP DATABASE '+databaseName);await admin.close();}});
 async function owner(){const row=await store.createUser({email:randomUUID()+'@example.test',passwordHash:'fixture',role:'ADMIN'});await store.setRisk(row.id,structuredClone(config.defaultRisk));return row.id;}

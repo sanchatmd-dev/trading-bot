@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {QuantDataService,ingestionEngineHash} from '../../src/postgres/quant-data.js';
@@ -60,6 +61,7 @@ before(async()=>{
     'quant-research-foundation-schema.sql','quant-storage-schema.sql','quant-io-ledger-schema.sql',
     'quant-io-runtime-schema.sql','quant-profile-enrollment-schema.sql'])
     await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
+  await installQuantGuards(db);
   await db.query("UPDATE quant_research_executor_mode SET mode='FOUNDATION'");
   root=await fs.mkdtemp(path.join(os.tmpdir(),'quant-diag-pg-'));
   await db.transaction(()=>bindQuantStorage(db,root));

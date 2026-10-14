@@ -6,6 +6,7 @@ import {fork} from 'node:child_process';
 import {once} from 'node:events';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {listDeployments,DEPLOYMENT_LIST_LIMIT} from '../../src/postgres/pine-bridge-deployments.js';
@@ -27,6 +28,7 @@ before(async()=>{
   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+databaseName;
   db=new PostgresDatabase({connectionString:url.toString(),max:12});await db.migrate();
   await db.transaction(async()=>db.query(await fs.readFile(new URL('../../src/postgres/pine-bridge-schema.sql',import.meta.url),'utf8')));
+  await installQuantGuards(db);
   store=new Store(db);service=new PineBridgeService(store,{defaultRisk:config.defaultRisk,getProvider:()=>({provider:'fixture',model:'fixture'})});
 });
 after(async()=>{await db?.close();if(admin){if(databaseName)await admin.query('DROP DATABASE IF EXISTS '+databaseName+' WITH (FORCE)');await admin.close();}});

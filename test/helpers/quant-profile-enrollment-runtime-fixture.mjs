@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from './quant-guard-install.mjs';
 import {QuantFoundationScheduler} from '../../src/postgres/quant-foundation-scheduler.js';
 import {QuantIoLedger} from '../../src/postgres/quant-io-ledger.js';
 import {QuantProfileRuntimeV2} from '../../src/postgres/quant-profile-runtime-v2.js';
@@ -25,8 +26,10 @@ export async function createEnrollmentRuntimeFixture(admin){
  const db=new PostgresDatabase({connectionString:url.toString(),max:4});
  let root;
  try{
+ await db.migrate();
  for(const file of ['quant-foundation-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql',
   'quant-profile-enrollment-schema.sql'])await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
+ await installQuantGuards(db);
  root=await fs.mkdtemp(path.join(os.tmpdir(),'enrollment-runtime-'));
  const budget=new StorageBudget({root,diskQuotaBytes:128*1024*1024,tempQuotaBytes:64*1024*1024,freeFloorBytes:0});
  const store=new ResearchDatasetStore({root,storageBudget:budget,allowUnsupportedDirectorySyncForTests:true});

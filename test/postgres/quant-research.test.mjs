@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {QuantResearchService} from '../../src/postgres/quant-research.js';
@@ -22,6 +23,7 @@ before(async()=>{
  await assert.rejects(db.transaction(async()=>{await db.query(sql);throw Error('rollback');}));
  assert.equal((await db.query("SELECT to_regclass('quant_jobs') present")).rows[0].present,null);
  await db.query(sql);store=new Store(db);pine=new PineBridgeService(store,{defaultRisk:config.defaultRisk});
+ await installQuantGuards(db);
  service=new QuantResearchService({pineService:pine,clock:()=>now,supportedSourceHash:hash(source)});
 });
 after(async()=>{await db?.close();if(admin){if(databaseName)await admin.query('DROP DATABASE '+databaseName);await admin.close();}});

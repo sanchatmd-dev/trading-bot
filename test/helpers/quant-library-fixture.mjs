@@ -98,6 +98,23 @@ export function runOf({id=randomUUID(),status,scenario,diagnostic=null,at=T0+7_2
     phase:['QUEUED','RUNNING'].includes(finalStatus)?'CANDIDATES':'COMPLETE'};
 }
 
+const INSERT_GUARDS=[['quant_job_steps','quant_job_step_terminal_insert'],['quant_research_foundation','quant_research_binding_terminal_insert'],
+  ['quant_research_chunks','quant_research_chunk_terminal_insert']];
+/**
+ * The QR-1b terminal-result freeze refuses a child insert under a terminal run, as designed. These fixtures write finished
+ * runs directly as the isolated admin, so the insert guards that exist are paused for the synthetic writes and put back
+ * ENABLE ALWAYS in a finally block. Without the freeze installed this does nothing.
+ */
+export async function withFreezeInsertsPaused(db,write){
+  const paused=[];
+  for(const [table,name] of INSERT_GUARDS)
+    if((await db.query("SELECT 1 FROM pg_trigger WHERE tgrelid=to_regclass($1) AND tgname=$2 AND tgenabled='A'",['public.'+table,name])).rows.length){
+      await db.query('ALTER TABLE '+table+' DISABLE TRIGGER '+name);paused.push([table,name]);
+    }
+  try{return await write();}
+  finally{for(const [table,name] of paused)await db.query('ALTER TABLE '+table+' ENABLE ALWAYS TRIGGER '+name);}
+}
+
 /** Writes one run and its checkpoints with plain inserts. Rows carry marker strings in every column the views must never return. */
 export async function seedRun(db,run,{owner,deployment,bot=owner,leaseToken=null,attempt=1}={}){
   const contract=JSON.stringify(run.contract);
@@ -105,13 +122,16 @@ export async function seedRun(db,run,{owner,deployment,bot=owner,leaseToken=null
     phase,attempt,evaluations_started,lease_token,lease_until,result,diagnostic) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
     [run.run_id,owner,bot,deployment,MARKERS.idempotency+run.run_id,MARKERS.submission,run.contract_hash,contract,run.status,run.created_at,run.updated_at,run.created_at+900000,
       run.phase,attempt,run.steps.length,leaseToken,leaseToken?run.created_at+900000:0,run.result?JSON.stringify(run.result):null,run.diagnostic]);
-  for(const step of run.steps)await db.query('INSERT INTO quant_job_steps(run_id,step_id,kind,parameters,result,completed_at) VALUES($1,$2,$3,$4,$5,$6)',
-    [run.run_id,step.step_id,step.kind,JSON.stringify(step.parameters),JSON.stringify(step.result),step.completed_at]);
+  if(run.steps.length)await withFreezeInsertsPaused(db,async()=>{
+    for(const step of run.steps)await db.query('INSERT INTO quant_job_steps(run_id,step_id,kind,parameters,result,completed_at) VALUES($1,$2,$3,$4,$5,$6)',
+      [run.run_id,step.step_id,step.kind,JSON.stringify(step.parameters),JSON.stringify(step.result),step.completed_at]);
+  });
   return run.run_id;
 }
 
 /** The FOUNDATION rows of a v2 run: execution facts, the run to job binding and the dataset binding chunk (never read back whole). */
-export async function seedFoundation(db,run,{owner,withBinding=true,bindingHash=run.contract_hash}={}){
+export async function seedFoundation(db,run,options={}){return withFreezeInsertsPaused(db,()=>seedFoundationRows(db,run,options));}
+async function seedFoundationRows(db,run,{owner,withBinding=true,bindingHash=run.contract_hash}={}){
   const c=run.contract,d=c.dataset;
   await db.query('INSERT INTO quant_foundation_owners(owner_id) VALUES($1) ON CONFLICT DO NOTHING',[owner]);
   const request={version:'quant-foundation-research-v2',owner_id:owner,bot_id:owner,kind:'OPTIMIZE',

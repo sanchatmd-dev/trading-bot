@@ -8,6 +8,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {hashPassword} from '../../src/security.js';
 import {httpClient,enroll} from '../helpers.mjs';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {installQuantGuards} from '../helpers/quant-guard-install.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {ExecutionWorker} from '../../src/postgres/worker.js';
 import {normalizeSignal} from '../../src/postgres/domain.js';
@@ -33,6 +34,7 @@ before(async()=>{
   writerDb=new PostgresDatabase({connectionString:target.toString()});
   await db.migrate();
   await db.query(await fs.readFile(new URL('../../src/postgres/pine-bridge-schema.sql',import.meta.url),'utf8'));
+  await installQuantGuards(db);
   store=new Store(db);writer=new Store(writerDb);
 });
 after(async()=>{

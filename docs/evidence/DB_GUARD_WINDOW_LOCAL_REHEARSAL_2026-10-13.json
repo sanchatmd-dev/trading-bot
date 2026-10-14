@@ -1,0 +1,103 @@
+{
+  "schema": "db-guard-window-local-rehearsal-v1",
+  "status": "LOCAL_REHEARSAL_PASSED_NOT_A_STAGING_REHEARSAL",
+  "asOf": "2026-10-13T16:13:48Z",
+  "root": "Claude Opus 5.5 root",
+  "scope": "Database steps of the private staging window draft OPS1 r4 (guard hardening E1-E3, result freeze E4, optional TEMP revoke E5, post-checks, negative probes, rollback, re-apply, restart) run on throwaway local PostgreSQL 16.15. Host steps (writer stop and start, backup to the protected target, API switch, observation) were not applicable locally.",
+  "notAuthorized": [
+    "No staging or production apply",
+    "No GO issued or implied",
+    "No commit or push"
+  ],
+  "draft": {
+    "path": ".qa-local/claude-ops1-draft/PACKET-DRAFT-r4.md",
+    "sha256": "b1bf7328db94b8364b6c4fb906d8c25717f698e969071f3117e74714b24cb8c6",
+    "note": "Private draft, not a GO. LR1 ran against r3; r4 applies the LR1 findings and LR2 ran against r4."
+  },
+  "tools": {
+    "scripts/migrate-bot-parent-hardening.mjs": "f171da64e8cc6256d74f66ce635838573fc372767f80f305ef460a0195481663",
+    "scripts/migrate-quant-research-guard-hardening.mjs": "ca645d401692052662d866fef25a8f64d93ab8dcb238e7dd3698d661b316d4be",
+    "scripts/migrate-quant-io-release-guard-hardening.mjs": "466de6f2b378fec44f0dc5885182f8b7d5a2a9855ef2ed1e2e70b3cd33fe8732",
+    "scripts/migrate-quant-research-freeze.mjs": "e7fc7e28e9b772288aeb09911612a15797199c032223153ab4a06096e19c0126",
+    "scripts/postgres-temp-privilege.mjs": "fbc3ffc88d9815a621e25b5d59ef41c59359eefd9514099372746cbbec55a19a",
+    "src/postgres/quant-research-freeze.sql": "bb3a5ce61bfcf9c6314fc36660d171324fbc41f664ad524e2e36a6b4016fb0fc",
+    "src/postgres/quant-research-freeze-migration.js": "67d3a4cbd5221d60a9990b69ab9ccd08d10aeae0084b91a2813b38e17f4f42b5",
+    "src/postgres/temp-privilege.js": "08151fcd7872de65bde64e5b82c476dca976d6dd51438a3261baf5c00e5892c0",
+    "src/postgres/quant-io-schema-install.js": "92634c574d171b18b3a2de45a185d928d1d74c8502eb1f0f57ae75b8d025939c"
+  },
+  "preState": "Original pre-window schema built with the existing migrate scripts and the runtime grant (no hardening, no freeze, TEMP open to PUBLIC), seeded with finished, queued, running and foundation research runs.",
+  "results": {
+    "LR1": {
+      "steps": "pre-checks, in-window capture, E1-E4 installs, catalog post-checks, negative probe, E5 revoke and restore, rollback in reverse order, re-apply twice",
+      "outcome": "every step matched the draft commands and expected outputs; rollback returned E1-E3 to ORIGINAL and the freeze to ABSENT with unchanged function OIDs and run digests; TEMP refusals (sessions unverifiable, active session, another login role with TEMP, non-owner) behaved as drafted",
+      "draftDefects": 3
+    },
+    "LR2": {
+      "readOnlyInspect": "all five inspect modes issued only BEGIN READ ONLY, SELECT and ROLLBACK, with no advisory lock, before and after the installs, after the foundation migration and after a restart",
+      "tamperRefusal": "a freeze trigger altered from ENABLE ALWAYS to ENABLE made install and rollback refuse with state OTHER and left the catalog unchanged",
+      "foundationMigrationCoupling": "on the hardened database the foundation migration from the current tree succeeded and changed nothing; the same migration from the committed HEAD tree refused with QUANT_IO_SCHEMA_UNSUPPORTED",
+      "negativeProbes": "23 of 23 refused as expected on the hardened state, including temporary-table shadows of the bot-parent check, the mode guards and the release guard; the same shadows bypassed the original definitions, so the probes are meaningful",
+      "restart": "after a cluster restart the catalog, function OIDs, digests, inspect results and a probe subset were unchanged"
+    }
+  },
+  "findings": [
+    {
+      "id": "LR-DEPLOYED-TREE-REFUSES",
+      "severity": "OPERATIONAL",
+      "detail": "After E3, the foundation migration from a tree without the two-state verifier refuses with QUANT_IO_SCHEMA_UNSUPPORTED (startup paths that run the same verifier were not rehearsed); the staging window must deploy the candidate tree together with the hardening, and the deployed staging tree must be confirmed."
+    },
+    {
+      "id": "LR-FREEZE-CLI-STACK",
+      "severity": "COSMETIC",
+      "detail": "Freeze install and rollback refusals print a stack trace; the refusal text is on the Error line."
+    },
+    {
+      "id": "LR-TEMP-OPEN-WITHOUT-E5",
+      "severity": "INFO",
+      "detail": "Without E5 the runtime role keeps TEMP; the hardening alone closes the tested shadows."
+    },
+    {
+      "id": "LR-MESSAGE-NOINHERIT",
+      "severity": "COSMETIC",
+      "detail": "The TEMP tool says a NOINHERIT member of pg_read_all_stats is not a member."
+    }
+  ],
+  "notRun": [
+    "Physical restore of a staging copy and its timing",
+    "Backup as the real backup role",
+    "States that only exist on staging (OTHER or MIXED from earlier manual changes)",
+    "Domain or type shadow probes and a freeze-function shadow probe in this rehearsal (a text-domain shadow was covered by GH1 verification)",
+    "Live pg_locks sampling during the inspect runs",
+    "TRUNCATE probes on chunk and binding tables"
+  ],
+  "limits": [
+    "Fresh local install, not a restore of staging data.",
+    "Rehearsal notes and captured outputs are private under .qa-local/claude-lr1/ and .qa-local/claude-lr2/ and contain local names; this record carries none."
+  ],
+  "followUps": [
+    {
+      "packet": "LR3",
+      "asOf": "2026-10-13T17:05:42Z",
+      "status": "LOCAL_REHEARSAL_PASSED_WITH_OPERATOR_RULES",
+      "draftSha256": "559e57fa41fd5af8809e534295a3a1c384e61f9a459ca9e4271726dc7678d7b6",
+      "results": {
+        "logicalBackupRestore": "the project backup tool produced a custom archive of the hardened and frozen database; a full pg_restore into an empty database succeeded (table data loads before triggers are created) and the copy reported HARDENED three times and FROZEN with equal run and step digests, ENABLE ALWAYS triggers and 23 of 23 negative probes refused; plain custom and plain SQL dumps behaved the same",
+        "restorePreconditions": "the restore target must already have the runtime role, otherwise the restore stops at its grant",
+        "unsafeRestoreModes": "a data-only restore into a schema that already has the freeze loses rows or is refused (foreign-key order, the mode guard and the freeze refuse terminal step and chunk rows); a data-only restore with triggers disabled loads every row but leaves every trigger in plain ENABLE, so the freeze inspection reports OTHER with TRIGGER_NOT_ALWAYS",
+        "typeShadows": "18 type names as temporary domains, check domains, enums and composites: no bypass of the original or hardened guards; on the original definitions one guard failed closed with an error in the caller session; the hardened definitions were unaffected (1,008 probes)",
+        "truncate": "252 TRUNCATE statements over 63 tables as the runtime role were refused with 42501 on both the original and hardened state; the freeze has no TRUNCATE trigger, so the missing privilege is the only barrier",
+        "inspectLocks": "about 16,000 pg_locks samples across 100 inspect backends showed only AccessShareLock on relations and the backend virtual transaction id; a positive control showed the sampler detects advisory and row locks"
+      },
+      "operatorRules": [
+        "Restore only as a full restore into an empty database whose runtime role already exists.",
+        "Never use a data-only restore or disable triggers on a frozen database; afterwards the freeze inspection must report FROZEN.",
+        "Keep TRUNCATE ungranted to the runtime role; the freeze does not cover TRUNCATE."
+      ],
+      "notRun": [
+        "Restore with --clean",
+        "Restore as a separate backup role",
+        "Physical restore of a staging copy"
+      ]
+    }
+  ]
+}

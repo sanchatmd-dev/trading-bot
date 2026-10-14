@@ -1,0 +1,61 @@
+{
+  "schema": "gh1-guard-hardening-local-candidate-v1",
+  "status": "LOCAL_CANDIDATE_ACCEPTED_NOT_DEPLOYED",
+  "asOf": "2026-10-13T05:35:41Z",
+  "root": "Claude Opus 5.5 root",
+  "deployed": false,
+  "committed": false,
+  "dependsOn": ".qa-local/claude-qr1b-decisions/QR1B-LOCAL-CANDIDATE-ACCEPTANCE.json (test fixtures)",
+  "candidate": {
+    "src/postgres/quant-research-guard-hardening.sql": "d235956b34b3269dafb97d668ff7d72aa4978e39a3e9d5f0c7bc28b11fa7500d",
+    "src/postgres/quant-research-guard-hardening-rollback.sql": "32b62f881303d13921d5e9f621b57133f7df2d61bcbd7f8a9798d2a0ff45fea4",
+    "src/postgres/quant-research-guard-hardening-migration.js": "40ffbd4bb2189f13e1cce1360bf6b63242b1a6ab758e87a9ce7e1bcc3b0c07ba",
+    "scripts/migrate-quant-research-guard-hardening.mjs": "cb4af6b9437e704170c4694ab675b2580f5f961d11eccb35d338797573b80bc8",
+    "test/postgres/quant-research-guard-hardening.test.mjs": "b681bc2eae9a55e78c11df0cbdc37ec6ecb47d080b2c2b1b1df0b6e0db7270c1"
+  },
+  "change": "CREATE OR REPLACE quant_research_mode_guard() and quant_research_mode_change() with identical logic, public-qualified relations and search_path pinned to pg_catalog,pg_temp; SECURITY INVOKER kept; pure restore rollback; separate idempotent migration; applied schema files unchanged.",
+  "evidence": {
+    "author": {
+      "newTest": "12/12",
+      "npmTest": "1385 pass, 0 fail, 5 skip",
+      "cli": "install, re-install, rollback, re-rollback on a throwaway database"
+    },
+    "independent": {
+      "bodyComparison": "hardened bodies equal originals after stripping public.; rollback bodies equal originals",
+      "suites": {
+        "guardHardening": "12/12",
+        "foundation": "24 pass, 1 skip (private baseline)",
+        "freeze": "13/13",
+        "prepare": "12/12",
+        "legacyHttp": "7/7",
+        "npmTest": "1385 pass, 0 fail, 5 skip"
+      },
+      "probes": "Temporary-table, search-path and pg_temp function shadows bypass the originals and are refused after hardening; a pg_temp text-domain shadow that broke original job inserts is also closed"
+    }
+  },
+  "findings": [
+    {
+      "id": "GH1-IO-RELEASE",
+      "severity": "MEDIUM_DEFENSE_IN_DEPTH",
+      "detail": "quant_io_foundation_release_guard() (src/postgres/quant-io-runtime-schema.sql:32) reads quant_io_launches and quant_io_ledgers unqualified without a pinned search_path; an independent probe released a RUNNING job with an unresolved launch by shadowing both tables with empty temporary tables."
+    },
+    {
+      "id": "GH1-BOT-PARENT",
+      "severity": "LOW_DEFENSE_IN_DEPTH",
+      "detail": "check_bot_parent() (src/postgres/schema.sql:124) reads users unqualified; a temporary users table let a child of a non-top-level bot be inserted."
+    },
+    {
+      "id": "GH1-TEMP-PRIVILEGE",
+      "severity": "OWNER_DECISION",
+      "detail": "The runtime role holds TEMP through PUBLIC; revoking TEMP would close every shadow of this class but is a grant change requiring an owner decision and a staging window."
+    }
+  ],
+  "limits": [
+    "Throwaway local PostgreSQL only; not committed, deployed or applied anywhere.",
+    "Not wired into install paths; a deployment must run the new migration.",
+    "Shadow resistance requires an attacker able to run SQL as the runtime role; this is defense in depth."
+  ],
+  "pins": {
+    ".qa-local/claude-qr1b-decisions/GH1-LOCAL-CANDIDATE-ACCEPTANCE.json": "dbeccd5e98d5e4afb4538604c33b6e295707e8760b4dcfb78bd6ec48366007ca"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "schema": "paper-exit-scale-local-finding-v1",
+  "status": "CONFIRMED_LOCAL_NOT_FIXED",
+  "asOf": "2026-10-13T17:25:09Z",
+  "root": "Claude Opus 5.5 root",
+  "scope": "Spot/Paper ledger only; no Live path is involved.",
+  "discovery": "Risk noted by the QR-2 design review; confirmed by a Debugger with decimal simulations and PostgreSQL 16.15 probes.",
+  "mechanism": "An entry stores entry_price rounded to 18 decimal places (src/postgres/ledger.js:142). On an exit the removed cost is take times entry_price (ledger.js:178), which can need up to 36 decimal places, and the remaining cost is written through exact() (ledger.js:230), which throws \"Maximum decimal scale is 18\" (src/money.js:15). This happens when notional divided by quantity does not terminate.",
+  "reachability": {
+    "legacyWebhook": "Legacy sizing (src/postgres/risk.js:51,57,62: fixed notional, percent of equity, quote quantity) divides by price without step rounding, so most legacy-sized entries are affected: in 2,000 simulated fixed-notional cases 1,945 half exits and 956 full exits threw; most other full exits were clamped from a tiny negative cost to zero.",
+    "bridge": "The Pine Bridge path rounds quantity to the step and price to the tick with fees at 10 or 7.5 bps, so entry_price terminates and no failure was found (arithmetic only; no end-to-end Bridge probe).",
+    "mixed": "A first-in-first-out exit without a target trade can close a legacy lot on the same symbol."
+  },
+  "observedEffect": "In a PostgreSQL probe every worker tick threw and rolled back, so no wrong numbers were written, but the exit stayed QUEUED with no error message or notification, the same owner's later signals stayed QUEUED, and another owner's signal stayed QUEUED too, because the serial worker picks the oldest owner first; Paper execution stalls for everyone behind it.",
+  "relatedObservations": [
+    "A negative remaining cost after an exit is set to zero without a signal (ledger.js:204); in practice it absorbs rounding near 1e-22 but would also hide a real lot versus position divergence, while profit uses the unclamped value.",
+    "A positive residual of 18 decimal places or fewer can leave dust cost on a flat position.",
+    "cumulative_pnl resets to zero when a position goes flat (ledger.js:230); intended per position cycle, the name is misleading."
+  ],
+  "candidateFixes": [
+    "Minimal: round the removed cost to 18 decimal places on partial exits and remove the whole remaining cost on a full close; optionally replace the silent clamp with an audited reconciliation flag (no schema change).",
+    "Store each lot's remaining cost instead of a per-unit price (schema migration and backfill).",
+    "Separately: bounded retry and a terminal status with a reason for a deterministic exception in the execution worker tick, so one bad signal cannot stall every owner."
+  ],
+  "decision": "Accounting change: needs review and an owner decision before any staging use. Not fixed; nothing applied to staging or production. Whether the legacy webhook is used on staging is unknown; a read-only staging check (signals stuck QUEUED, worker log for the scale error) needs its own owner GO through the operations worker.",
+  "probes": {
+    ".qa-local/claude-o3-debug/arith.mjs": "12af5ff844ed3c100140011266ac70210b24c0e4fd8988e327e3cdb9fb381ba0",
+    ".qa-local/claude-o3-debug/sweep.mjs": "af0ea6f97a175e0ba08d33a06a519a08acc50edbe53533d65af06c5abc1ea6b7",
+    ".qa-local/claude-o3-debug/probe.mjs": "f936654004895b0c30de0e2058ae8893b8fc705c73e9a48d51382011691eebab",
+    ".qa-local/claude-o3-debug/probe2.mjs": "f68088df8e957ebfa0f3d04481b06a68ba4bc4e4544c3ae5fbd6c1f0c7159075",
+    ".qa-local/claude-o3-debug/probe3.mjs": "90feb15d85e11fc9e29cdcd55c6bde65961da61bc8d29e7245fa0201ce733cfa"
+  },
+  "notRun": [
+    "Project test suites",
+    "End-to-end Bridge probe",
+    "Multi-worker stall test",
+    "Any staging or production check"
+  ],
+  "followUps": [
+    {
+      "packet": "RO1",
+      "asOf": "2026-10-13T18:55:01Z",
+      "ranAt": "2026-10-13T18:53:43Z",
+      "authority": "Owner GO for a read-only VPS check, 2026-10-13; one root-reviewed payload attempt after a first attempt that stopped before any database access",
+      "status": "READ_ONLY_FACTS_COLLECTED",
+      "hostChange": "none",
+      "host": "healthy; all known services in their expected state; production and staging Paper health PAPER_ONLY",
+      "production": {
+        "queuedSignals": 0,
+        "executionHeartbeatFresh": true,
+        "negativePaperCashAccounts": 0,
+        "f4Signatures": 0,
+        "o3ExposedOpenLots": 352,
+        "o3ExposedOwners": 4,
+        "o3ExposedSymbolsInFirst200Rows": {
+          "ARBUSDT": 149,
+          "ETHUSDT": 20,
+          "BTCUSDT": 19,
+          "BNBUSDT": 9,
+          "XRPUSDT": 3
+        },
+        "runningBots": 5,
+        "signalPath": "legacy webhook only (no Pine Bridge event table)"
+      },
+      "staging": {
+        "queuedSignals": 0,
+        "executionHeartbeatFresh": true,
+        "negativePaperCashAccounts": 0,
+        "f4Signatures": 0,
+        "o3ExposedOpenLots": 0,
+        "runningBots": 2
+      },
+      "limits": [
+        "The open-lot count predicts the exit failure; it does not prove it: the deployed release code of the production worker was not compared with the analysed code.",
+        "Worker logs go to a journal this account cannot read, so log counts are unknown; the heartbeat is the stall evidence.",
+        "Lot mismatch and flat-position cost queries (G1) were not run; they need their own GO."
+      ],
+      "summary": "Read-only VPS check: no stall now (no queued signals, fresh heartbeat), but production Paper holds 352 open lots for 4 owners whose exit would hit the scale failure under the analysed code; staging holds none."
+    },
+    {
+      "packet": "FX-O3W1",
+      "asOf": "2026-10-14T03:10:14Z",
+      "status": "LOCAL_CANDIDATE_FIX_ACCEPTED_NOT_DEPLOYED",
+      "authority": "Owner AskUserQuestion answer 2026-10-13, verbatim option: \"ทำ fix O3+W1 ในเครื่องเลย (แนะนำ)\" (local only; no deploy, no commit)",
+      "candidate": {
+        "src/postgres/ledger.js": "cd561815764e47b79bc5ba2888ec010d7fa0321f050c361533c2659162fbd967",
+        "test/postgres/paper-exit-cost.test.mjs": "d30b2da3f66124b11cc41f9ffee5fb7a41dc63ca2b11363e880290c3e5b087d8",
+        "test/paper-exit-cost.test.js": "0bc7b89790c9c92cab8e934bc5ac09743b9726dbefc80e13caab0d0cabe71b22",
+        "src/postgres/worker.js": "499c9de866fa90df9205056a00f79315f2318a9e1dd83c8f1eb8452979613528",
+        "test/postgres/worker-fault-isolation.test.mjs": "e19dd87b0a67db42a2c8406339d6c040f218abdf5ff006ad562e1e954c5703c1"
+      },
+      "summary": "Local fixes for the exit scale failure (O3) and the worker stall (W1) were implemented and independently verified on this machine; nothing is deployed or committed.",
+      "o3": "SELL branch of recordExecution: a partial exit removes the lot cost rounded once to 18 places, a full close removes the whole position cost, profit uses the cost actually removed; a negative remainder is clamped to 0 with a ledger.cost_clamped audit row; a full close whose lots differ from the position cost by more than 1e-12 writes a ledger.cost_divergence audit row and changes no number; fills that book quantity carry ledgerRule \"paper-exit-cost-o3-v1\" (\"paper-exit-cost-v2\" stays reserved for the G1 rule); zero-quantity status updates keep the raw response unchanged. Bridge-sized exits are unchanged (E8).",
+      "w1": "ExecutionWorker.cycle() guards tick(): a deterministic failure is counted per signal, the owner waits 1 s then 5 s, and after 3 attempts a separate transaction marks the signal REJECTED \"EXECUTION_FAULT: <class>\" only if it is still QUEUED, with an order.execution_fault audit row and the normal notification, and no cash, fill, lot or journal row; other owners run meanwhile. Transient and environment faults are never counted. A fault shared by 2 or more owners within 60 s is held per fault key (see D13). A malformed payload also closes its Pine Bridge event when that table exists.",
+      "verification": "Three review rounds (Opus and Fable reviews, two Opus delta reviews, two independent Tester runs). With the old ledger rule and the new worker, a lone failing exit becomes REJECTED EXECUTION_FAULT: DECIMAL_SCALE with no accounting change while another owner fills; with the new ledger rule the exit fills. 55 database test files each as its own process: 681 of 687 pass, 0 fail, 6 skip; npm test 1390 pass, 0 fail.",
+      "provisionalDecisions": [
+        "D7 W1 retry bound: 3 attempts, backoff 1 s then 5 s",
+        "D8 W1 terminal status: REJECTED \"EXECUTION_FAULT: <class>\", in-memory counters, no schema change; bound per process",
+        "D9 O3: round once per partial exit, remove the whole remainder at a full close, no schema change",
+        "D10 clamp a negative remaining cost to 0 with a ledger.cost_clamped audit row; profit uses the cost actually removed",
+        "D11 lots first; G1 not implemented",
+        "D13 (new, root default): when counted faults with the same class and SQLSTATE hit at least 2 distinct owners within 60 s, hold those signals QUEUED with no time cap, write one worker.systemic_suspected audit row per held owner (own signal only), never reject them while held",
+        "D14 (new, root default): SQLSTATE classes 42, 28, 3D, 3F, 0A, 25, XX are environment faults, never counted, owner waits 5 s; transient faults (08, 40, 53, 55, 57, 58, named network errors, code-less connection messages) never counted, owner waits 1 s"
+      ],
+      "stillOpen": [
+        "G1 partial lot cover is not fixed",
+        "F4 funding race is not fixed",
+        "Owner decisions D1, D7-D11, D13, D14",
+        "Production and staging deploy needs its own owner GO; deployed code not compared"
+      ]
+    }
+  ]
+}

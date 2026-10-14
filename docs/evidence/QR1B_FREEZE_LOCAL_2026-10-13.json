@@ -1,0 +1,145 @@
+{
+  "schema": "qr1b-freeze-local-candidate-v1",
+  "status": "LOCAL_CANDIDATE_ACCEPTED_NOT_DEPLOYED_PENDING_OWNER_DECISIONS",
+  "asOf": "2026-10-13T05:01:38Z",
+  "root": "Claude Opus 5.5 root",
+  "deployed": false,
+  "committed": false,
+  "migrationRunOnStaging": false,
+  "baseRevision": "b9d19e37691d2940257730dd8c2f6a124c36e67a (uncommitted working tree)",
+  "candidate": {
+    "src/postgres/quant-research-freeze.sql": "bb3a5ce61bfcf9c6314fc36660d171324fbc41f664ad524e2e36a6b4016fb0fc",
+    "src/postgres/quant-research-freeze-rollback.sql": "57b5556f89f86bc441decfad3ec1981342fd53a68d733eb51f4b5fc1e141c669",
+    "src/postgres/quant-research-freeze-migration.js": "592b84f4c4d0d49c7aa82d1bfa5e5fb5518b08a805d73905a233b2d9ffd4d973",
+    "scripts/migrate-quant-research-freeze.mjs": "af2f0714556edf79960e47b5d47f85fa0a01a5a2441b225b7062250d56841f85",
+    "test/postgres/quant-research-freeze.test.mjs": "87d977f711389891e9112e94d616a1349a79a260b4f16d51c85b5cf11cba1178",
+    "src/postgres/quant-library.js": "b2946466e005b42d547722a78c5c5364002b3ed2a9ae36f4d6109ac6373585d8",
+    "test/helpers/quant-library-fixture.mjs": "8a9885449be533a9c303fb141626b013ebd96e2586454ba6ea653c5c58d59cdb",
+    "test/postgres/journey-http.test.mjs": "75d5c7211fe81d2efc42655c799576ccb562d6c92562efea1a8617ea964eb520",
+    "test/postgres/quant-library-http.test.mjs": "c5796d43db0ce2a3cd6b1c39401a024276e4ccc0a189b39c8c47c3d6c3835037",
+    "test/postgres/quant-research-prepare.test.mjs": "411716789f9345af81128fcc311379cf3e9217909ebb83cf1ffd38c5ff18432e"
+  },
+  "pins": {
+    ".qa-local/claude-qr1b-design/opus/DESIGN.md": "5b81d80570a84902de12e1e93127fb26786ade85d05ca1e734e47b51e27ed858",
+    ".qa-local/claude-qr1b-design/fable-review/REVIEW.json": "0e6719b0b2f02433954c2172d8d4be944e38d138ab110505c713118e4a81e33c",
+    ".qa-local/claude-qr1b-impl/NOTES.md": "21c81d5e395099ef6a77118509c201c17329849177510b1b393db2490fbe0dd3",
+    ".qa-local/claude-qr1b-verify/probe-results.txt": "e0c51c7e58fe7896f895662b3002e0c85f36e1f539eded11dd7fe454da14e752",
+    ".qa-local/claude-qr1b-verify/full-pg.out": "50ea45ae084e39888e122f8f975f5732239a30a99873df7d43dd21f37adff9b7",
+    ".qa-local/claude-qr1b-decisions/QR1B-LOCAL-CANDIDATE-ACCEPTANCE.json": "d1580145e09104000437c6296392ef6cdeb9c5e2e75cd56daa49e1f3b44f0cfb"
+  },
+  "design": "A: database triggers refuse UPDATE of terminal quant_jobs rows, every DELETE on quant_jobs, INSERT of steps, foundation links and chunks for terminal parents, and chunk DELETE or UPDATE for terminal parents except clearing unit_name/unit_token; SECURITY INVOKER, public-qualified relations, search_path pinned to pg_catalog,pg_temp, FOR SHARE parent lookup, ENABLE ALWAYS, SQLSTATE QR001, marker function quant_research_freeze_version(); no table or grants change; pure-DROP rollback; library reports DB_TRIGGER only when the marker and all guards are present and enabled always.",
+  "process": [
+    {
+      "step": "QD1-A design",
+      "role": "Architecture auditor Opus 5.5/high"
+    },
+    {
+      "step": "QD1-R second-opinion review",
+      "role": "Fable 5.1/high",
+      "findings": "F1 high pg_temp shadowing; F2-F4 medium; F5-F7 low"
+    },
+    {
+      "step": "Root confirmation of F1 and F2 against source"
+    },
+    {
+      "step": "QR1B-C implementation with F1-F7a",
+      "role": "Coder Sonnet 5.5/high"
+    },
+    {
+      "step": "QR1B-V independent verification",
+      "role": "Tester Sonnet 5.5/medium"
+    }
+  ],
+  "evidence": {
+    "author": {
+      "freeze": "13/13",
+      "libraryHttp": 16,
+      "journeyHttp": 9,
+      "prepare": 12,
+      "npmTest": "1385 pass, 0 fail, 5 skip"
+    },
+    "independent": {
+      "freeze": "13/13 with restart and dump/restore not skipped",
+      "editedSuites": "16, 9, 12 pass",
+      "wholePostgresSuite": "573 tests: 564 pass, 6 fail, 3 skip",
+      "npmTest": "1385 pass, 0 fail, 5 skip",
+      "adversarialProbes": 28,
+      "probesBypassing": 0
+    }
+  },
+  "unrelatedFailures": [
+    {
+      "file": "test/postgres/quant-research-http.test.mjs",
+      "count": 4,
+      "detail": "ECONNREFUSED on a loopback port only in the shared-process whole-suite run; passes 4/4 alone"
+    },
+    {
+      "file": "test/postgres/d6-prepare-begin-harness.test.mjs",
+      "count": 2,
+      "detail": "One statement timeout in the whole run; one report-privacy assertion fails alone, likely because the verifier connection user name postgres appears in the report. The file imports only db.js and the D6 harness, neither changed by this candidate; a baseline run without the candidate was not made."
+    }
+  ],
+  "ownerDecisions": [
+    "D1 approve design A; refuse every DELETE (candidate default) or only terminal rows",
+    "D2 add REVOKE DELETE and TRUNCATE checks in a later grants window",
+    "D3 whether a live negative write probe may run on staging or only on a restore rehearsal",
+    "D4 whether the append-only seal table is required before QR-2"
+  ],
+  "stagingGates": [
+    "Physical-restore rehearsal including rollback",
+    "Per-effect owner GO, one operations worker, known host health and job plan, no overlap with R7B/EM2",
+    "Backup and cold archive with writers stopped under the maintenance lock",
+    "Staging catalog read of TEMP privilege and parameter ACLs"
+  ],
+  "findings": [
+    {
+      "id": "QR1B-MODE-GUARDS",
+      "severity": "MEDIUM_DEFENSE_IN_DEPTH",
+      "detail": "Pre-existing quant_research_mode_guard and quant_research_mode_change in quant-research-foundation-schema.sql use unqualified relations without a pinned search_path, so a runtime-role TEMP table could shadow them; not changed here; needs its own packet."
+    },
+    {
+      "id": "QR1B-F7B",
+      "severity": "LOW",
+      "detail": "The foundation claim UPDATE (quant-research-foundation.js:161) has no status filter; the invariant holds by reading, but a violation would now raise inside the claim."
+    },
+    {
+      "id": "QR1B-FIXTURE",
+      "severity": "INFO",
+      "detail": "quant-research-http-fixture does not install the freeze, so its suites do not exercise it."
+    }
+  ],
+  "limits": [
+    "Local throwaway PostgreSQL 16.15 only; nothing committed, deployed or migrated on staging.",
+    "The schema owner can still disable triggers; pre-install edits are caught only by read-time checks.",
+    "Not wired into package.json or service start."
+  ],
+  "followUps": [
+    {
+      "packet": "FZ2",
+      "status": "LOCAL_CANDIDATE_ACCEPTED_NOT_DEPLOYED",
+      "asOf": "2026-10-13T11:28:31Z",
+      "acceptanceSha256": "2107cb5819170119f0b76b1c01bd6f080788a845a7bda981e0bcc1ce40b0c5f3",
+      "summary": "Freeze migration now classifies before writing and refuses unknown states; all guard CLIs gain a read-only --inspect. Earlier hashes for the freeze migration, CLI and test are superseded. Whole-suite runs must leave the restart-test variables unset.",
+      "candidate": {
+        "src/postgres/quant-research-freeze-migration.js": "67d3a4cbd5221d60a9990b69ab9ccd08d10aeae0084b91a2813b38e17f4f42b5",
+        "scripts/migrate-quant-research-freeze.mjs": "e7fc7e28e9b772288aeb09911612a15797199c032223153ab4a06096e19c0126",
+        "scripts/migrate-quant-research-guard-hardening.mjs": "ca645d401692052662d866fef25a8f64d93ab8dcb238e7dd3698d661b316d4be",
+        "scripts/migrate-quant-io-release-guard-hardening.mjs": "466de6f2b378fec44f0dc5885182f8b7d5a2a9855ef2ed1e2e70b3cd33fe8732",
+        "scripts/migrate-bot-parent-hardening.mjs": "f171da64e8cc6256d74f66ce635838573fc372767f80f305ef460a0195481663",
+        "test/postgres/quant-research-freeze.test.mjs": "0b2bdcb860f443336bbf4059685415d01b68a06ddda78ee29ff3a4f625989cba",
+        "test/postgres/quant-guard-inspect-cli.test.mjs": "6b4352abb6b32bd7ab96b606b4ef880ebb83f081e3f1ae441bea2b8d6615657d",
+        "src/postgres/quant-research-freeze.sql": "bb3a5ce61bfcf9c6314fc36660d171324fbc41f664ad524e2e36a6b4016fb0fc"
+      }
+    },
+    {
+      "packet": "A4F",
+      "status": "LOCAL_CANDIDATE_ACCEPTED_NOT_DEPLOYED",
+      "asOf": "2026-10-13T15:56:23Z",
+      "acceptanceSha256": "03e1a88c2c7f480c41aafdad5c902c37727544ccd1c8577fe83d31e91ad09234",
+      "summary": "A whole serial run found one intermittent failure of the A4 cancellation test, caused by a pre-existing race between the cancel request and the worker heartbeat, not by the freeze or the guards; the test now retries only the documented 409 RETRY_TRANSACTION answer. Supersedes the earlier hash of the prepare test.",
+      "candidate": {
+        "test/postgres/quant-research-prepare.test.mjs": "0253b59f83dceef41df6d7ae11aea68737cf073ef6da6f90729a6100cdedbd51"
+      }
+    }
+  ]
+}

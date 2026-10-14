@@ -1,0 +1,69 @@
+{
+  "schema": "r7b-em2-held-report-v12-local-v1",
+  "status": "LOCAL_TEST_ONLY_HELD_REPORT_V12_ACCEPTED",
+  "asOf": "2026-10-13T02:53:00Z",
+  "executionReady": false,
+  "releaseAuthorized": false,
+  "pins": {
+    ".qa-local/claude-r7b-em2-held-report-v12/FILES.json": "8462cb4847cd89e485f2a4b8b487e3ccfed593cba9a83aa183f6d196d4493c45",
+    ".qa-local/claude-r7b-em2-held-report-v12/RESULTS.json": "29b80263a9f712585ba8d57e3b7af87d79e2158766ab3c5d4caa7ecb8ecc72ca",
+    ".qa-local/claude-r7b-em2-held-report-v12/EXPECTED.json": "666e8a6a873539ef9a10edf0a21503c6a5a6e1f0a8f6e99a1feeae8e0c7af73e",
+    ".qa-local/claude-r7b-em2-held-report-v12/DIFF-V11.json": "c140552f2b68aafbe99cab654d0dc90e74e2a5a911cc7b644579fcf29d6ca657",
+    ".qa-local/claude-r7b-em2-held-report-v12-verify/FILES.json": "377acc2d55f8fb2dfa879998a7adf5cbd04aeb5eee85fc2d5e99955787705f87",
+    ".qa-local/claude-r7b-em2-held-report-v12-verify/RESULTS.json": "19c0c97f8ffc60de61260995267e5f2961b61844d29ca545f9a35e1336347b0d",
+    ".qa-local/codex-r7b-em2-held-report-v11/FILES.json": "1833dc4c54eb4576430965b424c26409dba6cd3529208cfe85f2478cd01e65b9",
+    ".qa-local/codex-r7b-em2-decisions/HELD-REPORT-ACCEPTANCE.json": "6dd35ac25a04c22108b988dc412c66d2e730dbf29051fe50e6ae5301189bf583",
+    ".qa-local/claude-r7b-em2-decisions/CONTROLLER-UNKNOWN-OUTCOME-ACCEPTANCE.json": "393043f98858b335d9b4fbd34ec4acd76974dcdba1de5ad142a20a391ae17b6c",
+    ".qa-local/claude-r7b-em2-decisions/CONTROLLER-PROCESS-KILL-ACCEPTANCE.json": "354866d7c83bcb26a5ac7282caf0b1858a4fc90acfb3f6f6c48dbfbb68f04508",
+    ".qa-local/claude-r7b-em2-decisions/HELD-REPORT-V12-ACCEPTANCE.json": "8887a365ca2a85dd4fa26546b1559f62ddfb2718d98b24913ac66d90ac1cdb0b"
+  },
+  "api": "buildHeldReport({journalRoot,fixtureRoot,expectedIndexSha,attemptId?}) -> canonical bytes + sha256; read-only; never unlocks, repairs, resets consumption, invokes transport or grants authority",
+  "changes": {
+    "HR-1": "Accept PLAN then NATIVE_RECEIPT without RAW only when the journal-bound native receipt strictly parses with rawFile.sha exactly WRITE_FAILED and a warnings array containing LOCAL_RAW_RETENTION_FAILED, with no prior RELEASE_REQUEST; raw role NOT_RETAINED_WRITE_FAILED; issue RAW_NOT_RETAINED. All other native-without-raw sequences remain UNSUPPORTED_SEQUENCE.",
+    "HR-2": "TERMINAL disposition RELEASE on the target with lock PRESENT and no owner mismatch adds RELEASE_RECORDED_LOCK_RETAINED.",
+    "HR-3": "Any validated attempt with CLAIM_INTENT and no NATIVE_RECEIPT adds OUTCOME_UNKNOWN_AFTER_CLAIM.",
+    "schema": "r7b-em2-held-report-v1 to r7b-em2-held-report-v2"
+  },
+  "author": {
+    "packet": "HR12",
+    "role": "Coder Sonnet 5.5/high",
+    "expectedWrittenBeforeRun": true,
+    "testRuns": 1,
+    "exit": 0,
+    "cases": 39,
+    "pass": 39,
+    "negatives": 7
+  },
+  "independent": {
+    "packet": "HR12-V",
+    "role": "Tester Sonnet 5.5/medium",
+    "diffReview": "No change beyond HR-1/2/3 and schema string",
+    "adversarialHr1Cases": 22,
+    "adversarialAccepted": 0,
+    "genuineF3": "RAW_NOT_RETAINED, raw NOT_RETAINED_WRITE_FAILED",
+    "v11VsV12Cases": 30,
+    "readOnlyBytesUnchanged": "30/30",
+    "stableTwoCalls": "30/30",
+    "consistencyChanged": 0,
+    "flagRecomputation": "30/30 matched"
+  },
+  "findings": [
+    {
+      "id": "HR12-N16",
+      "severity": "LOW_FAIL_CLOSED",
+      "detail": "If a raw file exists but no RAW row was journaled and the native receipt says WRITE_FAILED (reachable if the RAW event write fails after the raw file write), RAW_NOT_RETAINED fires while the raw role stays UNBOUND with CROSSFILE_INVALID; consistency stays INCOMPLETE. The flag and the raw role come from separate code paths."
+    },
+    {
+      "id": "HR12-HIST",
+      "severity": "INFO",
+      "detail": "HR-3 applies to every validated history attempt, not only the target; HR-1 acceptance applies to the target only, so a non-target raw-failure attempt still reports invalid history. Multi-attempt histories were not tested."
+    }
+  ],
+  "limits": [
+    "TEST_ONLY synthetic fixtures; no operational reconciliation, unlock or authority.",
+    "v11 remains accepted and frozen; v12 is a separate accepted read-only revision.",
+    "Multi-attempt history interplay not tested.",
+    "Real adapter/mainCLI remain locked."
+  ],
+  "next": "Local EM2 controller and report track has no further unrun item from the handoff; remaining EM2 work is owner-gated measurement preparation."
+}
