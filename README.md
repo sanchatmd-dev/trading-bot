@@ -1,5 +1,7 @@
 # Robot trade VPS 2.2.0 — PostgreSQL Paper staging
 
+Local integration update, 2026-10-15 (Bangkok): reviewed CX1–CX3 and test-fixture corrections are committed through `48bd05a`. The unchanged application code passed both INT-R7 suites; separate focused checks verified the fixture cleanup correction and bounded connection wait. The earlier cleanup failure remains preserved. Exact final-commit CI is pending; no host deployment follows this integration. [Evidence](docs/evidence/INT_R7_FCL_LOCAL_INTEGRATION_2026-10-15.json).
+
 Integration checkpoint, 2026-10-15 (Bangkok): both INT-R7 test suites passed, but the cleanup inventory found one generated database after a swallowed test-admin timeout. The owned cluster was fully removed afterward. CX1–CX3 integration remains held for a test-only cleanup correction and focused verification. DP1-P S2 is locally prepared and awaiting independent review. [Evidence](docs/evidence/INT_R7_UTF8_CLEANUP_GATE_2026-10-15.json).
 
 Local preparation update, 2026-10-15 (Bangkok): production-tool S1-r2 passed independent focused review; its accepted scope covers namespace separation, tagged-fill reporting and SCP directory binding. API identity guards and further proof remain open. INT-R7's PostgreSQL suite passed 740 tests with six skips and no failures; unit verification and cleanup are still running, so CX1–CX3 are not yet integrated. [Evidence](docs/evidence/DP1P_S1_LOCAL_2026-10-15.json).

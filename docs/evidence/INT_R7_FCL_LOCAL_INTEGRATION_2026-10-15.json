@@ -1,0 +1,39 @@
+{
+  "schema": "int-r7-fcl-local-integration-v1",
+  "status": "LOCAL_INTEGRATION_ACCEPTED_CI_PENDING",
+  "productCommit": "48bd05aa211a20f849205c14cc95929f5fb5fe67",
+  "commits": {
+    "CX1": "a7d6069",
+    "CX2": "343572c",
+    "CX3": "eae3ab6",
+    "TH2": "2cb18c6",
+    "FCL2": "48bd05a"
+  },
+  "behavior": [
+    "Closed transaction contexts reject later or queued work before issuing application SQL.",
+    "Fence startup verification refuses a non-origin replication role on the observed connection.",
+    "Quant bridge SQLSTATE errors reach normal transaction handling; the retry boundary warning includes equality.",
+    "Recovery and fence fixture administration has separate bounded timeouts; fence cleanup reports failures after attempting every owned resource."
+  ],
+  "evidence": {
+    "intR7Postgres": {"total": 746, "pass": 740, "fail": 0, "skipped": 6},
+    "intR7Unit": {"total": 1440, "pass": 1434, "fail": 0, "skipped": 6},
+    "intR7Overall": "FAIL: one generated database remained before teardown; preserved in INT_R7_UTF8_CLEANUP_GATE_2026-10-15.json",
+    "fcl1FocusedPostgres": {"total": 19, "pass": 19, "fail": 0, "skipped": 0, "generatedDatabasesAfter": 0, "ownedFenceRolesAfter": 0},
+    "fcl1MockedChecks": {"author": 8, "independent": 3, "semanticSwallowMutation": "KILLED"},
+    "fcl2Delta": "Only connectionTimeoutMillis:5000 added to the FCL1 administrative Client",
+    "fcl2ActualClient": {"passed": 2, "timeoutRejectionMs": 5011.5437, "timeoutRemovalMutantPendingAtMs": 8010.6364, "ownedSocketsAndListenersAfter": 0},
+    "finalFenceTestWorkingSha256": "5f9a7df5ca4994d1ddce1fd5802826eae86972c731b05248a12005a43a81d51b",
+    "reviewedFinalInputs": 19,
+    "commitInputsRawEqual": 11,
+    "commitInputsDifferOnlyByGitCrlfToLfNormalization": 8
+  },
+  "acceptanceBasis": "Unchanged application code passed the two full INT-R7 suites. FCL1 changed only fixture administration and passed independent focused PostgreSQL, failure propagation and cleanup checks. FCL2 adds only the connection wait bound and passed real-client timeout and semantic mutation checks. These separate scopes support local integration without claiming a new full suite on final fixture bytes.",
+  "limitations": [
+    "Original INT-R7 cleanup failure and initial FCL2 probe cleanup-observation failure remain preserved; neither is relabeled as a pass.",
+    "No full PostgreSQL suite or unit suite was rerun on the final FCL2 file; exact final-commit CI remains required.",
+    "CX2 is a startup observation, not enforcement on every pool checkout; that follow-up remains open.",
+    "Skipped private-fixture, optional hardening and platform-specific checks retain their original limits.",
+    "No migration, deployment, Live activation or policy acceptance follows this local integration."
+  ]
+}

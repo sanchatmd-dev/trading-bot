@@ -1,5 +1,7 @@
 # Robot trade — Project Context
 
+Local integration update, 2026-10-15 (Bangkok): CX1–CX3, TH2 and FCL2 are committed through `48bd05a`. Root accepted the passing full INT-R7 application checks together with separately scoped fixture correction evidence; the original cleanup failure is not relabeled. Exact final-commit CI remains required. Per-pool origin enforcement and independent DP1-P S2 review remain open. [Evidence](docs/evidence/INT_R7_FCL_LOCAL_INTEGRATION_2026-10-15.json).
+
 Integration checkpoint, 2026-10-15 (Bangkok): INT-R7 passed both test suites but failed the independent generated-database cleanup gate. One swallowed fence-test DROP timeout caused the residue; final owned-cluster removal succeeded and all source pins remain unchanged. CX1–CX3 integration is held for a bounded test-only correction and focused verification. DP1-P S2 is prepared locally, with independent review still pending. [Evidence](docs/evidence/INT_R7_UTF8_CLEANUP_GATE_2026-10-15.json).
 
 Local preparation update, 2026-10-15 (Bangkok): DP1-P S1-r2 is accepted only for namespace separation, tagged-fill reporting and SCP directory binding after independent focused review. Separate S2 API identity enforcement is in progress; production readiness remains open. INT-R7 has passed PostgreSQL verification with 740 passes, six skips and no failures; unit verification, cleanup and final source checks still gate CX1–CX3 integration. [Evidence](docs/evidence/DP1P_S1_LOCAL_2026-10-15.json).
