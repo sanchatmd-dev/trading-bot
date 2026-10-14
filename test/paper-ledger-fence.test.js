@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
 import {ledgerMethods,recordFunding,bumpPaperLedgerFence} from '../src/postgres/ledger.js';
 import {Store} from '../src/postgres/store.js';
 
@@ -148,10 +150,11 @@ test('U3 resume, pause, stop and reset write no fence and read no Paper accounts
   }
 });
 
-// U4 structural guard: a new Paper writer must take the Bot lock and the fence (design D1), so every SQL text in src/postgres
-// that writes paper_funding, paper_cash_journal or ledger_positions must live in recordFunding or recordExecution, after
-// the fence call. A new writer fails here until its author adds the fence and extends this list.
-const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../src/postgres');
+// U4 checks literal SQL in tracked src/postgres and scripts files, including nested files. It is not a SQL parser and
+// cannot prove arbitrary dynamically constructed SQL safe. The one known offline import has a site-specific exception.
+const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const LEDGER='src/postgres/ledger.js',IMPORT='scripts/import-postgres.mjs';
+const writerPath=name=>/^(src\/postgres|scripts)\/.*\.(js|mjs|sql)$/.test(name);
 const WRITER=/\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM|TRUNCATE(?:\s+TABLE)?|MERGE\s+INTO|COPY)\s+(?:ONLY\s+)?(?:public\.)?"?(paper_funding|paper_cash_journal|ledger_positions)\b/gi;
 const FENCE_WRITER=/\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM|TRUNCATE(?:\s+TABLE)?|MERGE\s+INTO|COPY)\s+(?:ONLY\s+)?(?:public\.)?"?paper_ledger_fence\b/gi;
 function spans(source){
@@ -161,25 +164,112 @@ function spans(source){
   return [['recordFunding',fundingStart,fundingEnd],['recordExecution',executionStart,executionEnd]];
 }
 
-test('U4 every Paper ledger writer in src/postgres is recordFunding or recordExecution, after its fence call',()=>{
-  const files=fs.readdirSync(ROOT).filter(name=>/\.(js|mjs|sql)$/.test(name));
-  assert.ok(files.includes('ledger.js')&&files.length>20,'src/postgres listing');
+const IMPORT_UPDATE="await db.query('UPDATE ledger_positions SET cost_basis=ROUND(quantity*avg_price,18)');";
+const IMPORT_INSERT="await db.query('INSERT INTO '+name(table)+'('+keys.map(name).join(',')+') VALUES('+keys.map((_,i)=>'$'+(i+1)).join(',')+')',values);";
+function importWriterIndex(source){
+  // This offline import locks maintenance and all target tables, verifies an empty target, then copies rows.
+  // Only its existing dynamic INSERT and cost-basis normalization are exempt; extra sites require review.
+  for(const text of [IMPORT_INSERT,IMPORT_UPDATE])
+    assert.equal(source.split(text).length-1,1,'import: known writer site changed or duplicated');
+  assert.equal([...source.matchAll(/\bINSERT\s+INTO\b/gi)].length,1,'import: extra INSERT writer');
+  const dynamic=[...source.matchAll(/\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM|TRUNCATE(?:\s+TABLE)?|MERGE\s+INTO|COPY)\s*['"`]\s*\+/gi)];
+  assert.equal(dynamic.length,1,'import: extra dynamic writer');
+  assert.equal(dynamic[0].index,source.indexOf(IMPORT_INSERT)+"await db.query('".length,'import: unknown dynamic writer');
+  const maintenance=source.indexOf('await db.maintenanceLock();');
+  const lock=source.indexOf("await db.query('LOCK TABLE '+tables.map(name).join(',')+' IN ACCESS EXCLUSIVE MODE');");
+  const empty=source.indexOf("for(const table of tables)assert.equal((await db.query('SELECT count(*) n FROM '+name(table))).rows[0].n,0,'Target must be empty: '+table);");
+  assert.ok(maintenance>=0&&maintenance<lock&&lock<empty&&empty<source.indexOf(IMPORT_INSERT)
+    &&source.indexOf(IMPORT_INSERT)<source.indexOf(IMPORT_UPDATE),'import: offline lock/empty-target order changed');
+  return source.indexOf(IMPORT_UPDATE)+"await db.query('".length;
+}
+function guardPaperWriters(sources){
   const found=[];
-  for(const name of files){
-    const source=fs.readFileSync(path.join(ROOT,name),'utf8');
-    for(const match of source.matchAll(WRITER))found.push({name,table:match[1].toLowerCase(),index:match.index,source});
+  for(const [name,source] of sources){
+    const importIndex=name===IMPORT?importWriterIndex(source):null;
+    for(const match of source.matchAll(WRITER)){
+      if(name===IMPORT&&match.index===importIndex&&match[1].toLowerCase()==='ledger_positions')continue;
+      found.push({name,table:match[1].toLowerCase(),index:match.index});
+    }
     // Only the shared helper writes the fence, so no caller can take it in another order or unqualified.
     const fenceWriters=[...source.matchAll(FENCE_WRITER)];
-    assert.equal(fenceWriters.length,name==='ledger.js'?1:0,name+': fence writers');
+    assert.equal(fenceWriters.length,name===LEDGER?1:0,name+': fence writers');
   }
   assert.ok(found.length>=3,'the guard still sees the known writers: '+found.map(f=>f.name+':'+f.table).join(', '));
-  const ledger=fs.readFileSync(path.join(ROOT,'ledger.js'),'utf8'),owners=spans(ledger);
+  const ledger=sources.get(LEDGER),owners=spans(ledger);
   for(const writer of found){
-    assert.equal(writer.name,'ledger.js',`${writer.name} writes ${writer.table}: add the Bot lock and the F4 fence, then list it here`);
+    assert.equal(writer.name,LEDGER,`${writer.name} writes ${writer.table}: add the Bot lock and the F4 fence, then list it here`);
     const owner=owners.find(([,start,end])=>writer.index>start&&writer.index<end);
     assert.ok(owner,`ledger.js offset ${writer.index} writes ${writer.table} outside recordFunding and recordExecution`);
     const fenceCall=ledger.indexOf('bumpPaperLedgerFence(',owner[1]);
     assert.ok(fenceCall>owner[1]&&fenceCall<writer.index,`${owner[0]} writes ${writer.table} before its fence call`);
   }
   assert.deepEqual([...new Set(found.map(f=>f.table))].sort(),['ledger_positions','paper_cash_journal','paper_funding']);
+}
+function writerFiles(root){
+  if(fs.existsSync(path.join(root,'.git'))){
+    // Never fall back on Git failure: checkout diagnostics must remain excluded without opening them.
+    return execFileSync('git',['ls-files','-z','--','src/postgres','scripts'],{cwd:root,encoding:'utf8'})
+      .split('\0').filter(writerPath);
+  }
+  // Source exports have no tracked-file inventory. Scan their contents recursively, ignoring all symlinks.
+  // Export builders must supply a curated tree; this branch cannot distinguish untracked diagnostics.
+  const files=[];
+  const visit=name=>{
+    let target=root;
+    for(const part of name.split('/')){
+      target=path.join(target,part);
+      if(!fs.existsSync(target)||fs.lstatSync(target).isSymbolicLink())return;
+    }
+    for(const entry of fs.readdirSync(target,{withFileTypes:true})){
+      const child=name+'/'+entry.name;
+      if(entry.isSymbolicLink())continue;
+      if(entry.isDirectory())visit(child);
+      else if(entry.isFile()&&writerPath(child))files.push(child);
+    }
+  };
+  visit('src/postgres');visit('scripts');
+  return files.sort();
+}
+function trackedWriterSources(){
+  const files=writerFiles(ROOT);
+  assert.ok(files.includes(LEDGER)&&files.includes(IMPORT)&&files.length>20,'tracked writer inventory');
+  return new Map(files.map(name=>[name,fs.readFileSync(path.join(ROOT,name),'utf8')]));
+}
+test('U4 source exports inventory nested files without Git and never traverse symlinks',()=>{
+  const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'paper-writer-inventory-'));
+  try{
+    const root=path.join(temporary,'export'),outside=path.join(temporary,'outside');
+    fs.mkdirSync(path.join(root,'src/postgres/nested'),{recursive:true});
+    fs.mkdirSync(path.join(root,'scripts/nested'),{recursive:true});fs.mkdirSync(outside);
+    for(const name of ['src/postgres/nested/writer.js','scripts/nested/writer.mjs','scripts/nested/writer.sql','scripts/nested/ignored.txt'])
+      fs.writeFileSync(path.join(root,name),'not executable source');
+    fs.writeFileSync(path.join(outside,'must-not-scan.js'),'not executable source');
+    fs.symlinkSync(outside,path.join(root,'scripts/linked'),'junction');
+    assert.deepEqual(writerFiles(root),['scripts/nested/writer.mjs','scripts/nested/writer.sql','src/postgres/nested/writer.js']);
+  }finally{fs.rmSync(temporary,{recursive:true,force:true});}
+});
+test('U4 tracked Paper writers take the fence in order, except the known offline import sites',()=>{
+  guardPaperWriters(trackedWriterSources());
+});
+test('U4 rejects new script, nested, import and fence writers without changing repository files',()=>{
+  const baseline=trackedWriterSources();
+  assert.doesNotThrow(()=>guardPaperWriters(baseline),'known offline import remains allowed');
+  for(const name of ['scripts/new-writer.mjs','scripts/nested/new-writer.sql','src/postgres/nested/new-writer.js']){
+    assert.ok(writerPath(name),'recursive inventory includes '+name);
+    const sources=new Map(baseline);sources.set(name,'UPDATE paper_funding SET cash_delta=0;');
+    assert.throws(()=>guardPaperWriters(sources),/writes paper_funding/,name);
+  }
+  for(const extra of ["\nawait db.query('DELETE FROM ledger_positions');",
+    '\n'+IMPORT_UPDATE,'\n'+IMPORT_INSERT,"\nawait db.query('UPDATE '+name(table)+' SET cost_basis=0');"]){
+    const sources=new Map(baseline);sources.set(IMPORT,baseline.get(IMPORT)+extra);
+    assert.throws(()=>guardPaperWriters(sources),/writes ledger_positions|import:/,'extra import writer');
+  }
+  for(const name of ['scripts/new-fence-writer.mjs',IMPORT]){
+    const sources=new Map(baseline);sources.set(name,(sources.get(name)??'')+'\nDELETE FROM public.paper_ledger_fence;');
+    assert.throws(()=>guardPaperWriters(sources),/fence writers/,name);
+  }
+  const sources=new Map(baseline);
+  sources.set(LEDGER,baseline.get(LEDGER).replace('await bumpPaperLedgerFence(store.db,userId);',''));
+  assert.notEqual(sources.get(LEDGER),baseline.get(LEDGER),'remove the funding fence call');
+  assert.throws(()=>guardPaperWriters(sources),/before its fence call/,'original ordering guard remains active');
 });
