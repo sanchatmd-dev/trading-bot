@@ -1,0 +1,39 @@
+{
+  "schema": "integration-r7-utf8-cleanup-gate-v1",
+  "status": "SUITES_PASS_CLEANUP_GATE_FAIL",
+  "integrationAccepted": false,
+  "candidateBase": "7b159a3",
+  "candidatePinsVerifiedUnchanged": 19,
+  "preparedInputsVerifiedUnchanged": 5,
+  "fixture": {
+    "scope": "Isolated local PostgreSQL 16.15",
+    "serverEncoding": "UTF8",
+    "clientEncoding": "UTF8",
+    "authentication": "SCRAM",
+    "th2AdminStatementTimeout": "1min",
+    "th2AdminQueryTimeoutMs": 65000,
+    "applicationStatementTimeout": "15s"
+  },
+  "suites": [
+    {"name": "test:postgres", "total": 746, "pass": 740, "fail": 0, "cancelled": 0, "skipped": 6, "durationMs": 1310230.5796, "exitCode": 0},
+    {"name": "test", "total": 1440, "pass": 1434, "fail": 0, "cancelled": 0, "skipped": 6, "durationMs": 595768.5077, "exitCode": 0}
+  ],
+  "cleanup": {
+    "beforeTeardownGeneratedDatabases": 1,
+    "inventoryGate": "FAIL",
+    "launcherExitCode": 1,
+    "diagnosis": "The fence migration test used the application database connection for administration. A DROP DATABASE exceeded its 15-second statement timeout while a forced checkpoint took 17.249 seconds. The teardown caught and suppressed that error.",
+    "subsequentOwnedClusterStopExitCode": 0,
+    "ownedDataAndPasswordAbsent": true,
+    "ownedPostgresProcesses": 0,
+    "ownedNodeProcesses": 0,
+    "ownedPortListeners": 0
+  },
+  "next": "Separate test-only administrative connection and visible cleanup failure handling, followed by focused isolated verification. Preserve this failed gate; hold integration.",
+  "limitations": [
+    "Successful final cluster removal does not convert the earlier database inventory gate to PASS.",
+    "Skipped private-fixture, optional hardening and platform-specific cases remain unverified by these totals.",
+    "No host deployment or final-commit CI is established by this local run.",
+    "Checkpoint timing supports the timeout diagnosis but does not exclude every environmental contributor."
+  ]
+}

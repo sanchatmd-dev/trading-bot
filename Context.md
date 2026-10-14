@@ -1,5 +1,11 @@
 # Robot trade — Project Context
 
+Integration checkpoint, 2026-10-15 (Bangkok): INT-R7 passed both test suites but failed the independent generated-database cleanup gate. One swallowed fence-test DROP timeout caused the residue; final owned-cluster removal succeeded and all source pins remain unchanged. CX1–CX3 integration is held for a bounded test-only correction and focused verification. DP1-P S2 is prepared locally, with independent review still pending. [Evidence](docs/evidence/INT_R7_UTF8_CLEANUP_GATE_2026-10-15.json).
+
+Local preparation update, 2026-10-15 (Bangkok): DP1-P S1-r2 is accepted only for namespace separation, tagged-fill reporting and SCP directory binding after independent focused review. Separate S2 API identity enforcement is in progress; production readiness remains open. INT-R7 has passed PostgreSQL verification with 740 passes, six skips and no failures; unit verification, cleanup and final source checks still gate CX1–CX3 integration. [Evidence](docs/evidence/DP1P_S1_LOCAL_2026-10-15.json).
+
+Staging follow-up, 2026-10-15: the ten-minute read-only check passed with the same worker, unchanged watched services and no new faults. The 24-hour observation remains open until at least October 16, 05:17:53.400 Bangkok; production remains unchanged. [Evidence](docs/evidence/DP1S_C02_POST10M_2026-10-15.json).
+
 Staging worker update, 2026-10-15: the trading worker now runs pinned candidate `4d86822`. Exact file verification, readiness and the immediate post-check passed. Ten-minute and 24-hour observations remain open; no new O3-rule fill was observed. Production is unchanged. [Evidence](docs/evidence/DP1S_C02_STAGING_SWITCH_2026-10-15.json). This supersedes the earlier no-deployment summary below.
 
 Read-only host checkpoint, 2026-10-15: staging and production ledger checks completed with HTTP 200 health and no detected accounting findings or stall signature. Production still has 352 O3-exposed lots; no fix was deployed. Local integration and staging-tool verification remain open. [Evidence](docs/evidence/PAPER_LEDGER_RO2_READ_ONLY_2026-10-15.json) and current [Roadmap](docs/ROADMAP.md) supersede older host-status summaries below.

@@ -1,0 +1,32 @@
+{
+  "schema": "dp1p-s1-local-v1",
+  "status": "BOUNDED_LOCAL_PREPARATION_ACCEPTED",
+  "asOf": "2026-10-15",
+  "scope": "Production-tool namespace separation, candidate tagged-fill reporting, SCP run-directory binding and staging-record boundary correction",
+  "candidate": "S1-r2",
+  "libSha256": "06bf380608cd4c22cccf7b9fe91be360b3a3feed91d3c8537926370084f9ae66",
+  "hostSha256": "fa80758461d85be5c9d47250f008e9d7fb8d56dc0486dd904f3197dfa08e2375",
+  "pureTestSha256": "3a75334de5c980e92d858bdfe81ca21ffe9babbfe3405f36ba8e01211bc67b92",
+  "independentChecks": {
+    "recordBoundaryCases": 36,
+    "positiveControls": 10,
+    "semanticMutantsKilled": 8,
+    "unchangedCopiedInputs": 8,
+    "priorJobIdPairsReviewed": 23,
+    "changedSourceAndTestSyntax": "PASS"
+  },
+  "correction": "The staging-tag guard now splits on LF, matching the actual record parser. Real LF/CRLF records still refuse; bare CR and Unicode separators inside prose do not create records.",
+  "evidenceQualification": "An earlier anchor-only mutant attempt is retained and excluded. Prior review carries only through verified byte equivalence outside the corrected line.",
+  "remaining": [
+    "API certificate, identity, forward/post checks and associated budgets",
+    "Actual tagged-fill SQL behavior on an isolated old-schema PostgreSQL fixture",
+    "Independent full synthetic port proof and applicable Linux checks",
+    "Exact production candidate integration and CI",
+    "Staging 24-hour observation and later separately bounded operational admission"
+  ],
+  "limitations": [
+    "Tagged-fill matching does not establish G1 branch coverage or accounting correctness.",
+    "No production access, operational bundle, pins, deployment or GO is accepted by this record.",
+    "S1 is not host-ready. Earlier staging and failed local evidence remain immutable."
+  ]
+}

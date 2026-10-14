@@ -1,0 +1,62 @@
+{
+  "schema": "dp1s-c02-post10m-v1",
+  "scope": "Dated read-only staging observation; 24-hour gate remains open and production unchanged",
+  "targetCommit": "4d8682203ae19b68d0cad3252bdb5200d90f2e51",
+  "job": "dp1s-post-10m",
+  "sourceSha256": "1d82e2e419837da53ce73e0cfe16e83b4ccbbed75a2c3abab2b05ee154584dda",
+  "finished": "2026-10-14T22:28:32.562Z",
+  "receiptSha256": "83e97e5bd3ae1f693836b775f2dd329ea6789e80ced2ed99fdb1b8d844813830",
+  "rawSha256": "1e8e3c62c68efa2c6d7771afbf24c7d5f56681ec14caa13a238999c2e5f84baf",
+  "transportMs": 1329,
+  "verdict": "POST_PASS",
+  "readOnly": true,
+  "triggers": [],
+  "sameWorkerProcessAsSwitch": true,
+  "worker": {
+    "active": "active",
+    "sub": "running",
+    "nRestarts": "0",
+    "newTree": true,
+    "needReload": "no"
+  },
+  "watchedUnitsUnchanged": true,
+  "health": {
+    "status": "OK",
+    "http": 200,
+    "ok": true,
+    "portSource": "ENV_FILE"
+  },
+  "queue": {
+    "queued": 0,
+    "processing": 0,
+    "liveMode": 0,
+    "heartbeatFreshRows": 1,
+    "heartbeatAgeMs": 184
+  },
+  "baseline": {
+    "faults": 0,
+    "systemic": 0,
+    "executionFault": 0
+  },
+  "info": {
+    "costClampedDelta": 0,
+    "costDivergenceDelta": 0,
+    "exposedLots": 0,
+    "exposedLotsDelta": 0,
+    "o3RuleFills": 0,
+    "staleHeartbeatRows": 0
+  },
+  "unknownRunning": 1,
+  "nextGate": {
+    "status": "OPEN",
+    "job": "dp1s-post-24h",
+    "notBeforeUtc": "2026-10-15T22:17:53.400Z",
+    "notBeforeBangkok": "2026-10-16T05:17:53.400+07:00"
+  },
+  "limitations": [
+    "No new O3-rule fill observed; no positive real-fill acceptance.",
+    "Dated observations do not establish continuous health.",
+    "Informational unknownRunning count remains one; service identity remains unknown.",
+    "No production deployment, SQL repair, schema migration or service action in this post-check."
+  ]
+}
