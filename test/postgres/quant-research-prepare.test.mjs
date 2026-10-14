@@ -54,15 +54,9 @@ async function setup(t){
   async function enqueue(){const answer=await f.enqueue(owner,session,f.researchBody(owner,{start}));
     assert.equal(answer.status,202,JSON.stringify(answer.body));activeRun=answer.body.run_id;return answer.body;}
   const summary=id=>f.request('/api/quant/research/jobs/'+id,'GET',undefined,session);
-  // A worker heartbeat that commits while the cancel request waits for the scheduler lock makes the SERIALIZABLE request fail
-  // with 409 RETRY_TRANSACTION, the documented retryable answer; retry only that answer, a bounded number of times.
-  const cancel=async id=>{
-    for(let attempt=0;;attempt++){
-      const answer=await f.request('/api/quant/research/jobs/'+id+'/cancel','POST',{},session);
-      if(answer.status!==409||answer.body?.code!=='RETRY_TRANSACTION'||attempt>=4)return answer;
-      await new Promise(resolve=>setTimeout(resolve,50));
-    }
-  };
+  // A worker heartbeat that commits while the cancel waits for the scheduler lock fails the SERIALIZABLE attempt with 40001;
+  // the request dispatcher reruns it on a fresh snapshot, so the test sends the cancel once.
+  const cancel=id=>f.request('/api/quant/research/jobs/'+id+'/cancel','POST',{},session);
   const row=async id=>(await f.db.query('SELECT * FROM quant_jobs WHERE run_id=$1',[id])).rows[0];
   const foundation=async id=>(await f.db.query('SELECT * FROM quant_foundation_jobs WHERE job_id=$1',[id])).rows[0];
   const binding=async id=>(await f.db.query("SELECT * FROM quant_research_chunks WHERE run_id=$1 AND step_id='prepare:dataset'",[id])).rows[0];

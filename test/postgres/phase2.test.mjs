@@ -179,7 +179,7 @@ test('PostgreSQL HTTP keeps cookie/MFA/CSRF, all bot pages and tenant isolation'
 test('independent OS workers share the queue; SIGKILL before commit never double-spends',async t=>{
   const a=await account('2');await store.enqueue(a.id,signal('crash-process'));
   const children=[];t.after(async()=>{await Promise.all(children.filter(c=>c.exitCode===null&&c.signalCode===null).map(async c=>{c.kill('SIGKILL');await once(c,'exit');}));});
-  const launch=crash=>{const c=fork(new URL('./worker-fixture.mjs',import.meta.url),[],{silent:true,env:{...process.env,DATABASE_URL:url,TEST_CRASH:String(crash)}});children.push(c);return c;};
+  const launch=crash=>{const c=fork(new URL('./worker-fixture.mjs',import.meta.url),[],{silent:true,env:{...process.env,DATABASE_URL:url,TEST_CRASH:String(crash),TEST_OWNER:a.id}});children.push(c);return c;};
   const doomed=launch(true);assert.equal((await once(doomed,'message'))[0],'before-commit');doomed.kill('SIGKILL');await once(doomed,'exit');
   assert.equal((await store.listSignals(a.id))[0].status,'QUEUED');assert.equal((await store.paperAccount(a.id,'binance-global')).cash,'2');
   for(let i=0;i<19;i++)await store.enqueue(a.id,signal('process-'+i));

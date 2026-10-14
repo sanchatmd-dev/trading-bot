@@ -462,10 +462,10 @@ test('Bridge HTTP endpoints enforce auth/CSRF/owner scope and strict early strat
 });
 test('owner-reviewed Paper re-arm preserves policy and daily guard after UTC rollover',async()=>{
   const a=await owner(),policy=await store.risk(a,config.defaultRisk),account='binance-global:primary';
-  await store.transitionBotState(a,'run',policy,[]);
+  await store.transitionBotState(a,'run',policy);
   await db.prepare("INSERT INTO ledger_streak(user_id,account_id,execution_mode,loss_streak) VALUES(?,?,'PAPER',?)").run(a,account,policy.pauseAfterLossStreak);
   await assert.rejects(store.rearmLossStreak(a,a,'binance-global','reviewed recent Paper losses'),/Stop the Bot/);
-  await store.transitionBotState(a,'stop',policy,[]);
+  await store.transitionBotState(a,'stop',policy);
   const today=new Date().toISOString().slice(0,10);
   await db.prepare("INSERT INTO ledger_daily(user_id,account_id,execution_mode,day,trades,notional,realized_r) VALUES(?,?,'PAPER',?,1,100,-1)").run(a,account,today);
   await assert.rejects(store.rearmLossStreak(a,a,'binance-global','reviewed recent Paper losses'),/next UTC day/);

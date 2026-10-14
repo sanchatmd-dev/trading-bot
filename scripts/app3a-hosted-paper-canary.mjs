@@ -71,7 +71,7 @@ try{
   const bot=await store.createUser({email:randomUUID()+'@example.test',passwordHash:'disabled-canary-login',role:'ADMIN'});
   const policy={...structuredClone(config.defaultRisk),sideMode:'BUY_ONLY',maxRiskPercent:1,maxSignalAgeSeconds:300,blockDuringNews:false,blockHighVolatility:false,equities:{'binance-global':1000},balances:{'binance-global':1000}};
   await store.setRisk(bot.id,policy);
-  await store.transitionBotState(bot.id,'run',policy,await store.paperAccounts(bot.id));
+  await store.transitionBotState(bot.id,'run',policy);
   await db.transaction(async()=>{
     await db.prepare('INSERT INTO pine_sources(pine_import_id,owner_id,bot_id,source_version,source_hash,source_name,source,analysis,created_at) VALUES(?,?,?,?,?,?,?,?,?)').run(original.pine_import_id,bot.id,bot.id,revision.source_version,revision.source_hash,'Approved Spot v4 canary replica',revision.source,JSON.stringify(revision.analysis),Date.now());
     await db.prepare('INSERT INTO pine_source_revisions VALUES(?,?,?,?,?,?)').run(original.pine_import_id,revision.source_version,revision.source_hash,revision.source,JSON.stringify(revision.analysis),Date.now());
@@ -136,7 +136,7 @@ try{
   report.readiness={canary_bot_id:bot.id,canary_snapshot_hash:d.snapshot_hash,evidence_hash:hash(canonical(evidence)),evidence,operator_recorded:true,owner_activation_exercised:true,runtime_protected_tables:['pine_market_bars','pine_bridge_evidence'],model,bot_policy:policy};
   report.fills=await db.prepare('SELECT s.side,f.price,f.delta_quantity,f.fee_quote FROM fills f JOIN signals s ON s.id=f.signal_id WHERE s.user_id=? ORDER BY f.signal_id').all(bot.id);
   report.duplicate_extra_fills=0;report.original_activation_changed=false;
-  await store.transitionBotState(bot.id,'stop',policy,await store.paperAccounts(bot.id));report.canary_final_state='STOPPED';
+  await store.transitionBotState(bot.id,'stop',policy);report.canary_final_state='STOPPED';
   report.passed=true;
   await fs.writeFile(resultPath,JSON.stringify(report,null,2)+'\n',{mode:0o600});
   console.log(JSON.stringify({passed:true,timing:report.timing,timeout:report.timeout,fills:fillsBefore,canary_final_state:report.canary_final_state,original_activation_changed:false}));

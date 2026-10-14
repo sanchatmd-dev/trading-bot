@@ -117,7 +117,7 @@ test('readiness target allocation stays isolated between sibling bots and matche
 
 test('readiness and worker use RUNNING frozen policy rather than subsequently saved policy',async()=>{
   const user=await account(),frozen=await store.risk(user.id,config.defaultRisk);
-  await store.transitionBotState(user.id,'run',frozen,await store.paperAccounts(user.id));
+  await store.transitionBotState(user.id,'run',frozen);
   await store.setRisk(user.id,policy('100',{maxOrderNotional:1}));
   const signal=raw(),result=await preview(user,signal);
   assert.equal(result.policySource,'LOCKED_SESSION');assert.equal(result.calculation.status,'ACCEPTED');
