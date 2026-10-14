@@ -1,0 +1,225 @@
+{
+  "schema": "dp1s-c02-staging-switch-v1",
+  "asOf": "2026-10-14T22:19:04.757Z",
+  "targetCommit": "4d8682203ae19b68d0cad3252bdb5200d90f2e51",
+  "attemptId": "c02",
+  "sourceSha256": "1d82e2e419837da53ce73e0cfe16e83b4ccbbed75a2c3abab2b05ee154584dda",
+  "namespaceSha256": "f4447e5932272622822189f1d0becbe19377509831a068629db458c6118d49fc",
+  "scope": "Staging trading worker switched; immediate post-check passed. Production unchanged. Ten-minute and 24-hour checks remain open.",
+  "mkdir": {
+    "job": "dp1s-s2-mkdir",
+    "verdict": "S2_MKDIR_PASS",
+    "code": "S2_MKDIR_PASS",
+    "pass": true,
+    "phase": "DONE",
+    "finished": "2026-10-14T22:06:38.816Z",
+    "transportMs": 1322,
+    "rc": 0,
+    "receiptSha256": "8d30341fc8f517fdcc71115470583c33884c687e14ecff0d2888a9ded8c30919",
+    "rawSha256": "a9757d003e19048375a91d9fdec5473556d940f0bf557b7a9d3e0a07fc72f646",
+    "incoming": {
+      "state": "DIR",
+      "empty": true,
+      "mode": "0700"
+    }
+  },
+  "firstTransfer": {
+    "job": "dp1s-s2-scp",
+    "verdict": "STOP",
+    "code": "SCP_FAILED",
+    "pass": false,
+    "phase": "UNKNOWN_HOST_OUTCOME",
+    "finished": "2026-10-14T22:08:29.198Z",
+    "transportMs": 4,
+    "rc": null,
+    "receiptSha256": "1be8f9db403977e50b21b57be32d7549447a4c14ae14f073b60e5991e27e9585",
+    "rawSha256": "beea6f68519f9bcca928111180a8bd1b980915602f6a3c19551cf27943d6f798",
+    "localError": "ENOENT",
+    "interpretation": "The caller working directory lacked the relative bundle directory. A harmless local process reproduced the launch error; independent review confirmed the path mismatch. The original UNKNOWN result remains unchanged. Attempt accounting does not prove a network connection.",
+    "conservativeWaitMs": 330000,
+    "notBefore": "2026-10-14T22:13:59.187Z"
+  },
+  "secondTransfer": {
+    "job": "dp1s-s2-scp-2",
+    "verdict": "S2_SCP_TRANSPORT_COMPLETE",
+    "code": "S2_SCP_TRANSPORT_COMPLETE",
+    "pass": true,
+    "phase": "DONE",
+    "finished": "2026-10-14T22:15:25.062Z",
+    "transportMs": 17113,
+    "rc": 0,
+    "receiptSha256": "13d704f3482b90dc347a645feac223e4bac54221f2f128462678f3608cb580f6",
+    "rawSha256": "3372022e97d0fbb2d5d9da77003d9f6a1a6d1a9012223f0891f5b6e536646ae3",
+    "explicitRunWorkingDirectory": true,
+    "workingDirectoryProvenance": "Operations execution-tool invocation and return, corroborated by the local diagnosis; raw SCP transport does not encode caller working directory.",
+    "unchangedInputs": true,
+    "sourceFiles": [
+      {
+        "name": "deps.tar",
+        "bytes": 23338496,
+        "sha": "c0bd614e9cb3ad1d17e51ac14bab20c0d8b4258f888cc24855684e64566e1214"
+      },
+      {
+        "name": "manifest.txt",
+        "bytes": 106268,
+        "sha": "cd31495ddb3d5d04c2dc611ad7f7e11b73ece7ab4fea322ce507ecce5ca73c7f"
+      },
+      {
+        "name": "source.tar",
+        "bytes": 17080320,
+        "sha": "e5e6dc82219bff3506427bec76d37edc1ab54bc9b1bffaa7a0e4d08b5e9b04ee"
+      }
+    ],
+    "arrivalProof": "Subsequent passing extraction checked actual host bytes."
+  },
+  "extraction": {
+    "job": "dp1s-s2-extract",
+    "verdict": "S2_EXTRACT_PASS",
+    "code": "S2_EXTRACT_PASS",
+    "pass": true,
+    "phase": "DONE",
+    "finished": "2026-10-14T22:16:36.241Z",
+    "transportMs": 5333,
+    "rc": 0,
+    "receiptSha256": "77ca9e418c703532e72e4e30578e37be3d9ad5b6be619c6a49359f2ee3511ab9",
+    "rawSha256": "29785f566c2b6ebeb10a3e4cc100c28f2c1acb00d25eb1568db0a06afb5fbfc7",
+    "effects": {
+      "partial": "CREATED",
+      "write": "WRITTEN",
+      "rename": "RENAMED"
+    },
+    "tar": {
+      "files": 983,
+      "source": 801,
+      "deps": 182
+    },
+    "tree": {
+      "files": 983,
+      "bad": 0,
+      "extra": 0,
+      "missing": 0,
+      "bytes": 39658606
+    },
+    "nodeCheck": {
+      "files": 37,
+      "ok": true
+    },
+    "fixesEqual": true,
+    "inertAtCompletion": true
+  },
+  "switch": {
+    "job": "dp1s-s3",
+    "verdict": "S3_PASS",
+    "code": "S3_PASS",
+    "pass": true,
+    "phase": "DONE",
+    "finished": "2026-10-14T22:17:53.400Z",
+    "transportMs": 12248,
+    "rc": 0,
+    "receiptSha256": "7b53e7bf7d47684f0e842b9d72cda5179dce11ddf0c1d84b241ab3a35b52b93c",
+    "rawSha256": "6be3ae6a31b5d5202625b7738c0163e1b8f943dd003a4a30a8556df2babc42a9",
+    "effects": {
+      "create": "PENDING_VERIFIED",
+      "publish": "PUBLISHED",
+      "reload": "RELOADED",
+      "stop": "STOPPED_VERIFIED",
+      "start": "STARTED_READY"
+    },
+    "loadedConfig": {
+      "ok": true,
+      "newTree": true,
+      "execSame": true,
+      "envSame": true,
+      "needReload": "no"
+    },
+    "ready": {
+      "ready": true,
+      "aliveMs": 10134,
+      "heartbeatAgeMs": 16,
+      "heartbeatRows": 1,
+      "staleHeartbeatRows": 0,
+      "health": 200,
+      "liveMode": 0
+    },
+    "loadedBytes": {
+      "files": 37,
+      "rawEqual": 37,
+      "lfOnly": 0,
+      "differ": 0,
+      "missing": 0,
+      "mtimeAfterStart": 0,
+      "ctimeAfterStartInfo": 0,
+      "ok": true,
+      "bad": []
+    },
+    "unwindRequired": false
+  },
+  "post0": {
+    "job": "dp1s-post-0",
+    "verdict": "POST_PASS",
+    "code": "POST_PASS",
+    "pass": true,
+    "phase": "DONE",
+    "finished": "2026-10-14T22:19:04.757Z",
+    "transportMs": 1407,
+    "rc": 0,
+    "receiptSha256": "dd2c92819d37b8ee15c2c0bf10d069ade44d9eb736a814b5859311fbb80b0814",
+    "rawSha256": "d983997c2664c7c808bbadfe8416f0cac8798941f6bc33ad5720d3bc49f047f0",
+    "readOnly": true,
+    "sameProcessAsSwitch": true,
+    "worker": {
+      "active": "active",
+      "sub": "running",
+      "nRestarts": "0",
+      "newTree": true
+    },
+    "watchedUnitsUnchanged": true,
+    "health": {
+      "status": "OK",
+      "http": 200,
+      "ok": true,
+      "portSource": "ENV_FILE"
+    },
+    "queue": {
+      "queued": 0,
+      "processing": 0,
+      "liveMode": 0,
+      "heartbeatFreshRows": 1,
+      "heartbeatAgeMs": 58
+    },
+    "triggers": [],
+    "info": {
+      "costClampedDelta": 0,
+      "costDivergenceDelta": 0,
+      "exposedLots": 0,
+      "exposedLotsDelta": 0,
+      "o3RuleFills": 0,
+      "staleHeartbeatRows": 0
+    }
+  },
+  "ci": {
+    "commit": "4d8682203ae19b68d0cad3252bdb5200d90f2e51",
+    "total": 9,
+    "otherApps": 0,
+    "summarySha256": "99117c8cbf8e91893bd5cd992596e8879a3279f92f4bf12e28b15f1177d32061",
+    "allCompletedSuccess": true
+  },
+  "limits": [
+    "Dated observations only; no continuous-health claim.",
+    "No new O3-rule fill observed; this is not a positive real-fill acceptance result.",
+    "The informational unknownRunning count remains one; its identity is unknown. Existing heavy-pattern and health gates passed without modification.",
+    "No production deployment, schema migration, SQL repair or API/stream/database restart occurred.",
+    "First failed transfer, GO, consume marker and raw evidence remain immutable."
+  ],
+  "nextGates": {
+    "post10m": {
+      "status": "OPEN",
+      "notBefore": "2026-10-14T22:27:53.400Z"
+    },
+    "post24h": {
+      "status": "OPEN",
+      "notBefore": "2026-10-15T22:17:53.400Z"
+    },
+    "production": "NOT_DEPLOYED; separate candidate, tooling, CI, acceptance and per-step GO required"
+  }
+}
