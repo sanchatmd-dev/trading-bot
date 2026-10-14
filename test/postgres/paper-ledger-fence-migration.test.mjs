@@ -1,4 +1,5 @@
 import test from 'node:test';
+import pg from 'pg';
 import {before,after} from '../helpers/root-hook-gate.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -59,13 +60,28 @@ const user=async db=>{const id=randomUUID();await db.query("INSERT INTO users(id
 
 before(async()=>{
   assert.ok(process.env.TEST_DATABASE_URL,'TEST_DATABASE_URL is required; isolated PostgreSQL only');
-  admin=new PostgresDatabase({connectionString:process.env.TEST_DATABASE_URL});
+  const connectionString=new URL(process.env.TEST_DATABASE_URL);connectionString.search='';
+  admin=new pg.Client({connectionString:connectionString.toString(),connectionTimeoutMillis:5000,statement_timeout:60000,query_timeout:65000});
+  try{await admin.connect();}
+  catch(error){
+    const failedAdmin=admin;admin=undefined;
+    try{await failedAdmin.end();}
+    catch(cleanupError){throw new AggregateError([error,cleanupError],'Administrative connection setup and cleanup failed');}
+    throw error;
+  }
 });
 after(async()=>{
-  for(const db of pools)await db.close().catch(()=>{});
-  for(const name of databases)await admin?.query('DROP DATABASE IF EXISTS '+name+' WITH (FORCE)').catch(()=>{});
-  for(const name of roles)await admin?.query('DROP ROLE IF EXISTS '+name).catch(()=>{});
-  await admin?.close();
+  const errors=[];
+  try{
+    for(const db of pools){try{await db.close();}catch(error){errors.push(error);}}
+    if(admin){
+      for(const name of databases){try{await admin.query('DROP DATABASE IF EXISTS '+name+' WITH (FORCE)');}catch(error){errors.push(error);}}
+      for(const name of roles){try{await admin.query('DROP ROLE IF EXISTS '+name);}catch(error){errors.push(error);}}
+    }else if(databases.length||roles.length){errors.push(new Error('Administrative connection unavailable for owned resource cleanup'));}
+  }finally{
+    if(admin){const closingAdmin=admin;admin=undefined;try{await closingAdmin.end();}catch(error){errors.push(error);}}
+  }
+  if(errors.length)throw new AggregateError(errors,'Fence migration fixture cleanup failed');
 });
 
 test('M1 migrate() on a fresh database installs the fence; a READ ONLY inspection agrees; the schema version stays 14',async()=>{
