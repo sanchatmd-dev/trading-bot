@@ -339,6 +339,44 @@ test('F-4 key: the same uncoded error type on two owners still starts the hold',
   assert.equal(lines.filter(line=>line.includes('systemic fault suspected key=OTHER:TypeError owners=2')).length,1);
 });
 
+// A thrown value with no constructor, an anonymous class or a name that is not a plain identifier all key OTHER:NONE,
+// so an odd name never reaches the key, the suspension audit or a log line.
+test('F-4 key: a missing, empty or odd constructor name keys OTHER:NONE and never reaches the audit or the log',async t=>{
+  const lines=muteErrors(t);
+  const a=await account(),b=await account(),signalA=await queue(a),signalB=await queue(b);
+  const errors=[()=>Object.assign(new Error('odd constructor fixture'),{constructor:{name:'a b@c'}}),()=>null,()=>Object.create(null),
+    ()=>new (class extends Error{})('anonymous class fixture')];
+  assert.deepEqual(errors.map(make=>make()?.constructor?.name),['a b@c',undefined,undefined,''],'the fixtures carry the names under test');
+  let round=0;
+  const {worker,clock}=harness({failing:job=>job.id===signalA.id||job.id===signalB.id,error:()=>errors[round]()});
+  for(;round<errors.length;round++){
+    await cycle(worker);await cycle(worker); // A fails, B fails, with the same kind of thrown value
+    for(const row of [signalA,signalB])assert.equal(worker.faults.get(row.id).key,'OTHER:NONE','round '+round);
+    assert.deepEqual([...worker.suspendedKeys],['OTHER:NONE'],'round '+round);
+    clock.t+=5000;
+  }
+  for(const row of [signalA,signalB])assert.equal((await status(row.id)).status,'QUEUED','held, not rejected');
+  for(const owner of [a,b]){
+    const rows=await db.prepare("SELECT details FROM audit WHERE user_id=? AND event='worker.systemic_suspected'").all(owner.id);
+    assert.equal(rows.length,1);assert.equal(JSON.parse(rows[0].details).key,'OTHER:NONE');
+    assert.ok(!rows[0].details.includes('a b@c'));
+  }
+  assert.ok(lines.some(line=>line.includes('systemic fault suspected key=OTHER:NONE owners=2')));
+  assert.ok(lines.every(line=>!line.includes('a b@c')),'the odd name is not logged');
+});
+
+// Only class OTHER without a SQLSTATE carries the constructor name; every other fault keeps its class and SQLSTATE key.
+test('F-4 key: a SQLSTATE fault, a DECIMAL_SCALE TypeError and a coded Bridge fault keep the class and SQLSTATE key',async t=>{
+  muteErrors(t);
+  const rows=[];
+  for(let i=0;i<3;i++)rows.push(await queue(await account()));
+  const errors=new Map([[rows[0].id,Object.assign(new Error('duplicate key fixture'),{code:'23505'})],[rows[1].id,new TypeError('Maximum decimal scale is 18')],
+    [rows[2].id,Object.assign(new Error('BRIDGE_NOT_READY'),{code:'BRIDGE_NOT_READY'})]]);
+  const {worker}=harness({failing:job=>errors.has(job.id),error:job=>errors.get(job.id)});
+  for(let i=0;i<3;i++)await cycle(worker); // each owner fails once and steps aside for the next
+  assert.deepEqual(rows.map(row=>worker.faults.get(row.id)?.key),['OTHER:23505','DECIMAL_SCALE:NONE','BRIDGE:NONE']);
+});
+
 test('F4: an owner whose signal was rejected is no evidence, so one live owner is not held for it',async t=>{
   const lines=muteErrors(t);
   const x=await account(),y=await account(),signalX=await queue(x);
