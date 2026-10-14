@@ -63,6 +63,10 @@ test('classification: SQLSTATE connection and transaction classes and network er
   const transient=error=>classifyExecutionFault(error).transient;
   for(const code of ['08006','40001','40P01','53300','55P03','57014','57P01','58030'])assert.equal(transient(Object.assign(new Error('x'),{code})),true,code);
   for(const code of ['ECONNRESET','ETIMEDOUT','EPIPE'])assert.equal(transient(Object.assign(new Error('x'),{code})),true,code);
+  // A network that is down or a socket that is already closed says nothing about the signal either.
+  for(const code of ['ENETDOWN','EHOSTDOWN','EADDRNOTAVAIL','EPROTO','ERR_STREAM_DESTROYED','ERR_SOCKET_CLOSED','ERR_STREAM_PREMATURE_CLOSE']){
+    assert.deepEqual(classifyExecutionFault(Object.assign(new Error('x'),{code})),{transient:true,sqlstate:null,faultClass:'OTHER'},code);
+  }
   assert.equal(transient(new Error('Connection terminated unexpectedly')),true);
   assert.equal(transient(new Error('timeout exceeded when trying to connect')),true);
   for(const code of ['23505','22003','22P02'])assert.equal(transient(Object.assign(new Error('x'),{code})),false,code);
@@ -235,10 +239,10 @@ test('W-T8 systemic: the same fault for two owners holds both signals QUEUED whi
   for(let round=0;round<6;round++){
     const healthy=await queue(c);
     await cycle(worker);await cycle(worker); // A fails, B fails
-    assert.equal(worker.suspendedKeys.has('OTHER:NONE'),true,'terminal writes are suspended while both owners fail');
+    assert.equal(worker.suspendedKeys.has('OTHER:Error'),true,'terminal writes are suspended while both owners fail');
     await cycle(worker); // C fills; another owner's commit does not lift the suspension
     assert.equal((await status(healthy.id)).status,'FILLED','a healthy owner is served in round '+round);
-    assert.equal(worker.suspendedKeys.has('OTHER:NONE'),true,'a healthy commit leaves the suspension in place in round '+round);
+    assert.equal(worker.suspendedKeys.has('OTHER:Error'),true,'a healthy commit leaves the suspension in place in round '+round);
     for(const id of bad)assert.equal((await status(id)).status,'QUEUED','held, not rejected, in round '+round);
     for(const id of bad)assert.ok(worker.faults.get(id).count<=3,'the count never grows past the bound');
     clock.t+=5000;
@@ -246,7 +250,7 @@ test('W-T8 systemic: the same fault for two owners holds both signals QUEUED whi
   assert.equal(worker.faults.get(signalA.id).count,3);assert.equal(worker.faults.get(signalB.id).count,3);
   assert.equal((await faultAudit(a.id)).length+(await faultAudit(b.id)).length,0);
   assert.equal((await outbox(a.id)).length+(await outbox(b.id)).length,0);
-  assert.ok(lines.some(line=>line.includes('systemic fault suspected key=OTHER:NONE owners=2')&&line.includes('terminal writes of this key suspended')));
+  assert.ok(lines.some(line=>line.includes('systemic fault suspected key=OTHER:Error owners=2')&&line.includes('terminal writes of this key suspended')));
   // The shared fault goes away: both signals fill, the breaker clears and nothing was rejected.
   bad.clear();
   await cycle(worker);await cycle(worker);
@@ -264,11 +268,11 @@ test('W-T9 per-key breaker: a lone fault of a different key reaches REJECTED whi
   const lines=muteErrors(t);
   const a=await account(),b=await account(),d=await account(),signalA=await queue(a),signalB=await queue(b),signalD=await queue(d);
   const {worker,clock}=harness({failing:()=>true,error:job=>job.id===signalD.id?new Error('Maximum decimal scale is 18'):new Error('injected deterministic fault')});
-  // D's first terminal write fails, so its retry has to run while the OTHER:NONE key is suspended.
+  // D's first terminal write fails, so its retry has to run while the OTHER:Error key is suspended.
   const writeFault=worker.writeFault.bind(worker);let writes=0;
   worker.writeFault=async(...args)=>{if(writes++===0)throw Object.assign(new Error('terminal fixture failure'),{code:'23505'});return writeFault(...args);};
   for(let round=0;round<3;round++){clock.t+=5000;for(let i=0;i<3;i++)await cycle(worker);} // A, B, D fail once per round
-  assert.deepEqual([...worker.suspendedKeys],['OTHER:NONE'],'only the shared key is suspended');
+  assert.deepEqual([...worker.suspendedKeys],['OTHER:Error'],'only the shared key is suspended');
   assert.equal(worker.faults.get(signalA.id).count,3);assert.equal(worker.faults.get(signalB.id).count,3);
   assert.equal((await status(signalD.id)).status,'QUEUED','the first terminal write of the lone fault failed');
   assert.equal(writes,1);assert.equal(worker.faults.get(signalD.id).terminalDue,clock.t+30000);
@@ -289,11 +293,11 @@ test('W-T9b F3 audit: a suspension writes one audit row per owner in the evidenc
   const {worker,clock}=harness({failing:job=>bad.has(job.id)});
   const suspensions=async userId=>db.prepare("SELECT * FROM audit WHERE user_id=? AND event='worker.systemic_suspected' ORDER BY id").all(userId);
   for(let round=0;round<4;round++){await cycle(worker);await cycle(worker);clock.t+=5000;}
-  assert.ok(worker.suspendedKeys.has('OTHER:NONE'));
+  assert.ok(worker.suspendedKeys.has('OTHER:Error'));
   for(const [owner,own,other] of [[a,signalA,signalB],[b,signalB,signalA]]){
     const rows=await suspensions(owner.id);
     assert.equal(rows.length,1,'one row per owner for one suspension start, however long the hold lasts');
-    assert.deepEqual(JSON.parse(rows[0].details),{key:'OTHER:NONE',ownerCount:2,signalId:own.id});
+    assert.deepEqual(JSON.parse(rows[0].details),{key:'OTHER:Error',ownerCount:2,signalId:own.id});
     assert.ok(!rows[0].details.includes(other.id)&&!rows[0].details.includes(other.user_id),'no data of the other owner');
     assert.equal(rows[0].trade_id,null);
   }
@@ -303,10 +307,10 @@ test('W-T9b F3 audit: a suspension writes one audit row per owner in the evidenc
   // Both commit: the key resumes. The same shared fault later starts a second suspension with new rows.
   bad.clear();await cycle(worker);await cycle(worker);
   assert.equal(worker.suspendedKeys.size,0);
-  assert.equal(lines.filter(line=>line.includes('terminal writes resumed key=OTHER:NONE')).length,1);
+  assert.equal(lines.filter(line=>line.includes('terminal writes resumed key=OTHER:Error')).length,1);
   const again=[await queue(a),await queue(b)];again.forEach(row=>bad.add(row.id));
   for(let round=0;round<2;round++){clock.t+=5000;await cycle(worker);await cycle(worker);}
-  assert.ok(worker.suspendedKeys.has('OTHER:NONE'));
+  assert.ok(worker.suspendedKeys.has('OTHER:Error'));
   assert.equal((await suspensions(a.id)).length,2);assert.equal((await suspensions(b.id)).length,2);
   assert.equal(JSON.parse((await suspensions(a.id))[1].details).signalId,again[0].id);
   assert.equal(lines.filter(line=>line.includes('systemic fault suspected')).length,2);
@@ -319,8 +323,8 @@ test('a failing audit write for a suspension is logged and never breaks the loop
   faulty.audit=async(userId,event,...rest)=>{if(event==='worker.systemic_suspected')throw new Error('audit fixture failure');return store.audit(userId,event,...rest);};
   const {worker,clock}=harness({workerStore:faulty,failing:job=>job.id===signalA.id||job.id===signalB.id});
   await cycle(worker);await cycle(worker);
-  assert.ok(worker.suspendedKeys.has('OTHER:NONE'));
-  assert.equal(lines.filter(line=>line.startsWith('Execution worker systemic audit write failed key=OTHER:NONE')).length,2);
+  assert.ok(worker.suspendedKeys.has('OTHER:Error'));
+  assert.equal(lines.filter(line=>line.startsWith('Execution worker systemic audit write failed key=OTHER:Error')).length,2);
   clock.t+=5000;await cycle(worker);await cycle(worker); // the loop keeps running and holding
   assert.equal(worker.faults.get(signalA.id).count,2);assert.equal(worker.faults.get(signalB.id).count,2);
   assert.equal((await status(signalA.id)).status,'QUEUED');
@@ -331,10 +335,79 @@ test('a suspension ends when evidence ages out of the window',async t=>{
   const a=await account(),b=await account(),signalA=await queue(a),signalB=await queue(b);
   const {worker,clock}=harness({failing:job=>job.id===signalA.id||job.id===signalB.id});
   await cycle(worker);await cycle(worker);
-  assert.ok(worker.suspendedKeys.has('OTHER:NONE'));
+  assert.ok(worker.suspendedKeys.has('OTHER:Error'));
   clock.t+=60001;worker.refreshSuspension(clock.t);
   assert.equal(worker.suspendedKeys.size,0);assert.equal(worker.systemic.size,0);
-  assert.equal(lines.filter(line=>line.includes('terminal writes resumed key=OTHER:NONE')).length,1);
+  assert.equal(lines.filter(line=>line.includes('terminal writes resumed key=OTHER:Error')).length,1);
+});
+
+// The key of an uncoded error carries its constructor name, so two unrelated code faults are not one systemic fault.
+test('F-4 key: a SyntaxError on one owner and a TypeError on another inside the window start no hold; each is REJECTED after the bound',async t=>{
+  const lines=muteErrors(t);
+  const a=await account(),b=await account(),signalA=await queue(a),signalB=await queue(b);
+  const {worker,clock}=harness({failing:job=>job.id===signalA.id||job.id===signalB.id,
+    error:job=>job.id===signalA.id?new SyntaxError('Unexpected token in fixture'):new TypeError('fixture is not a function')});
+  await cycle(worker);await cycle(worker); // A fails, B fails, at the same clock time
+  assert.deepEqual([...worker.systemic.keys()].sort(),['OTHER:SyntaxError','OTHER:TypeError']);
+  assert.equal(worker.suspendedKeys.size,0,'one owner per key starts no hold');
+  for(const step of [1000,5000]){clock.t+=step;await cycle(worker);await cycle(worker);}
+  for(const [owner,row] of [[a,signalA],[b,signalB]]){
+    assert.deepEqual(await status(row.id),{status:'REJECTED',error_message:'EXECUTION_FAULT: OTHER'});
+    const audit=await faultAudit(owner.id);assert.equal(audit.length,1);
+    assert.deepEqual(JSON.parse(audit[0].details),{signalId:row.id,attempts:3,faultClass:'OTHER',sqlstate:null});
+  }
+  assert.equal(worker.suspendedKeys.size,0);assert.equal(worker.systemic.size,0);assert.equal(worker.faults.size,0);
+  assert.ok(!lines.some(line=>line.includes('systemic fault suspected')));
+});
+
+test('F-4 key: the same uncoded error type on two owners still starts the hold',async t=>{
+  const lines=muteErrors(t);
+  const a=await account(),b=await account(),signalA=await queue(a),signalB=await queue(b);
+  const {worker,clock}=harness({failing:job=>job.id===signalA.id||job.id===signalB.id,error:()=>new TypeError('fixture is not a function')});
+  for(let round=0;round<3;round++){await cycle(worker);await cycle(worker);clock.t+=5000;}
+  assert.deepEqual([...worker.suspendedKeys],['OTHER:TypeError']);
+  assert.equal(worker.faults.get(signalA.id).count,3);assert.equal(worker.faults.get(signalB.id).count,3);
+  for(const row of [signalA,signalB])assert.equal((await status(row.id)).status,'QUEUED','held, not rejected');
+  assert.equal((await faultAudit(a.id)).length+(await faultAudit(b.id)).length,0);
+  assert.equal(lines.filter(line=>line.includes('systemic fault suspected key=OTHER:TypeError owners=2')).length,1);
+});
+
+// A thrown value with no constructor, an anonymous class or a name that is not a plain identifier all key OTHER:NONE,
+// so an odd name never reaches the key, the suspension audit or a log line.
+test('F-4 key: a missing, empty or odd constructor name keys OTHER:NONE and never reaches the audit or the log',async t=>{
+  const lines=muteErrors(t);
+  const a=await account(),b=await account(),signalA=await queue(a),signalB=await queue(b);
+  const errors=[()=>Object.assign(new Error('odd constructor fixture'),{constructor:{name:'a b@c'}}),()=>null,()=>Object.create(null),
+    ()=>new (class extends Error{})('anonymous class fixture')];
+  assert.deepEqual(errors.map(make=>make()?.constructor?.name),['a b@c',undefined,undefined,''],'the fixtures carry the names under test');
+  let round=0;
+  const {worker,clock}=harness({failing:job=>job.id===signalA.id||job.id===signalB.id,error:()=>errors[round]()});
+  for(;round<errors.length;round++){
+    await cycle(worker);await cycle(worker); // A fails, B fails, with the same kind of thrown value
+    for(const row of [signalA,signalB])assert.equal(worker.faults.get(row.id).key,'OTHER:NONE','round '+round);
+    assert.deepEqual([...worker.suspendedKeys],['OTHER:NONE'],'round '+round);
+    clock.t+=5000;
+  }
+  for(const row of [signalA,signalB])assert.equal((await status(row.id)).status,'QUEUED','held, not rejected');
+  for(const owner of [a,b]){
+    const rows=await db.prepare("SELECT details FROM audit WHERE user_id=? AND event='worker.systemic_suspected'").all(owner.id);
+    assert.equal(rows.length,1);assert.equal(JSON.parse(rows[0].details).key,'OTHER:NONE');
+    assert.ok(!rows[0].details.includes('a b@c'));
+  }
+  assert.ok(lines.some(line=>line.includes('systemic fault suspected key=OTHER:NONE owners=2')));
+  assert.ok(lines.every(line=>!line.includes('a b@c')),'the odd name is not logged');
+});
+
+// Only class OTHER without a SQLSTATE carries the constructor name; every other fault keeps its class and SQLSTATE key.
+test('F-4 key: a SQLSTATE fault, a DECIMAL_SCALE TypeError and a coded Bridge fault keep the class and SQLSTATE key',async t=>{
+  muteErrors(t);
+  const rows=[];
+  for(let i=0;i<3;i++)rows.push(await queue(await account()));
+  const errors=new Map([[rows[0].id,Object.assign(new Error('duplicate key fixture'),{code:'23505'})],[rows[1].id,new TypeError('Maximum decimal scale is 18')],
+    [rows[2].id,Object.assign(new Error('BRIDGE_NOT_READY'),{code:'BRIDGE_NOT_READY'})]]);
+  const {worker}=harness({failing:job=>errors.has(job.id),error:job=>errors.get(job.id)});
+  for(let i=0;i<3;i++)await cycle(worker); // each owner fails once and steps aside for the next
+  assert.deepEqual(rows.map(row=>worker.faults.get(row.id)?.key),['OTHER:23505','DECIMAL_SCALE:NONE','BRIDGE:NONE']);
 });
 
 test('F4: an owner whose signal was rejected is no evidence, so one live owner is not held for it',async t=>{
@@ -478,6 +551,24 @@ test('the Bridge event fallback runs only for an unparsable payload',async t=>{
   for(let i=0;i<3;i++)await cycle(worker);
   assert.deepEqual(await status(row.id),{status:'REJECTED',error_message:'EXECUTION_FAULT: OTHER'});
   assert.equal(await bridgeOutcome(bridge),'QUEUED');
+});
+
+test('F-3 Bridge: a network code from the Bridge preparation is a transient fault, never a rejection reason',async t=>{
+  const lines=muteErrors(t);
+  const a=await account(),bridge=await bridgedSignal(a),{row}=bridge,before=await accounting(a.id);
+  // The first query of prepareBridgeExecution fails as a reset socket would.
+  const faultyDb=Object.create(db,{prepare:{value:sql=>/FROM pine_deployments WHERE deployment_id/.test(sql)
+    ?{get:async()=>{throw Object.assign(new Error('read ECONNRESET'),{code:'ECONNRESET'});}}:db.prepare(sql)}});
+  const faulty=Object.create(store);Object.defineProperty(faulty,'db',{value:faultyDb});
+  const {worker,clock}=harness({workerStore:faulty});
+  for(let i=0;i<5;i++){await cycle(worker);clock.t+=1000;}
+  assert.deepEqual(await status(row.id),{status:'QUEUED',error_message:null});
+  assert.equal(await bridgeOutcome(bridge),'QUEUED');
+  assert.equal(worker.faults.size,0,'nothing is counted');
+  assert.equal(lines.length,5);
+  assert.ok(lines.every(line=>line.includes('signal='+row.id+' ')&&line.includes('class=OTHER transient=true')&&!line.includes('attempt=')));
+  assert.equal(Number((await db.prepare("SELECT count(*) n FROM audit WHERE user_id=? AND event='risk.rejected'").get(a.id)).n),0);
+  assert.equal((await outbox(a.id)).length,0);assert.deepEqual(await accounting(a.id),before);
 });
 
 test('W-T6 log hygiene: a line names signal, owner, SQLSTATE and class, never payload text or an email',async t=>{
