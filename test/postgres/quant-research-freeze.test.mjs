@@ -8,6 +8,7 @@ import path from 'node:path';
 import {spawn,spawnSync} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {rolePasswordClause} from '../helpers/test-role-password.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {TERMINAL} from '../../src/postgres/quant-research.js';
 import {backupPostgres,postgresToolEnvironment} from '../../scripts/backup-postgres.mjs';
@@ -31,7 +32,7 @@ before(async()=>{
   const suffix=randomUUID().replaceAll('-','');
   databaseName='robot_freeze_test_'+suffix;roleName='robot_freeze_role_'+suffix.slice(0,16);
   await admin.query('CREATE DATABASE '+databaseName);
-  await admin.query('CREATE ROLE '+roleName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');
+  await admin.query('CREATE ROLE '+roleName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE'+rolePasswordClause());
   connectionString=urlOf(databaseName);runtimeUrl=urlOf(databaseName,roleName);
   db=new PostgresDatabase({connectionString,max:6});await db.migrate();
   for(const name of ['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql','quant-research-foundation-schema.sql'])await install(name);

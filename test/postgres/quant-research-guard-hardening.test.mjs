@@ -5,6 +5,7 @@ import fs from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import pg from 'pg';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {rolePasswordClause} from '../helpers/test-role-password.mjs';
 import {Store} from '../../src/postgres/store.js';
 import {MODE_GUARDS,PINNED_SEARCH_PATH,inspectQuantResearchGuardHardening,migrateQuantResearchGuardHardening,rollbackQuantResearchGuardHardening} from '../../src/postgres/quant-research-guard-hardening-migration.js';
 import {migrateQuantResearchFreeze,rollbackQuantResearchFreeze,inspectQuantResearchFreeze} from '../../src/postgres/quant-research-freeze-migration.js';
@@ -29,7 +30,7 @@ before(async()=>{
   const suffix=randomUUID().replaceAll('-','');
   databaseName='robot_guard_test_'+suffix;roleName='robot_guard_role_'+suffix.slice(0,16);
   await admin.query('CREATE DATABASE '+databaseName);
-  await admin.query('CREATE ROLE '+roleName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');
+  await admin.query('CREATE ROLE '+roleName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE'+rolePasswordClause());
   connectionString=urlOf(databaseName);runtimeUrl=urlOf(databaseName,roleName);
   db=new PostgresDatabase({connectionString,max:6});await db.migrate();
   for(const name of ['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql','quant-research-foundation-schema.sql'])await install(name);

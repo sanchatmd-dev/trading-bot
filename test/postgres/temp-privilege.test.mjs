@@ -9,6 +9,7 @@ import {promisify} from 'node:util';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import pg from 'pg';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {rolePasswordClause} from '../helpers/test-role-password.mjs';
 import {migrateQuantFoundation} from '../../src/postgres/quant-foundation-migration.js';
 import {TEMP_PRIVILEGE_NOT_OWNER,TEMP_PRIVILEGE_REFUSED,TEMP_PRIVILEGE_SESSIONS_ACTIVE,TEMP_PRIVILEGE_SESSIONS_UNVERIFIABLE,inspectTempPrivilege,restoreTempPrivilege,revokeTempPrivilege,runtimeRoleHasTemp} from '../../src/postgres/temp-privilege.js';
 import {canonical,hash} from '../../src/pine-bridge/source.js';
@@ -37,7 +38,7 @@ before(async()=>{
   const suffix=randomUUID().replaceAll('-','');
   databaseName='robot_temp_test_'+suffix;roleName='robot_temp_role_'+suffix.slice(0,16);groupName='robot_temp_group_'+suffix.slice(0,16);
   await admin.query('CREATE DATABASE '+databaseName);
-  await admin.query('CREATE ROLE '+roleName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');
+  await admin.query('CREATE ROLE '+roleName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE'+rolePasswordClause());
   connectionString=urlOf(databaseName);runtimeUrl=urlOf(databaseName,roleName);
   db=new PostgresDatabase({connectionString,max:6});await db.migrate();
   for(const name of ['pine-bridge-schema.sql','quant-research-schema.sql'])await db.query(await read(name));
@@ -271,7 +272,7 @@ async function freshDatabase(label,ownerRole=null){
 }
 async function freshRole(label,options='LOGIN NOSUPERUSER'){
   const role='robot_temp_'+label+'_'+randomUUID().replaceAll('-','').slice(0,12);extraRoles.push(role);
-  await admin.query('CREATE ROLE '+role+' '+options);return role;
+  await admin.query('CREATE ROLE '+role+' '+options+rolePasswordClause());return role;
 }
 async function liveClient(name,role){
   const client=new pg.Client({connectionString:urlOf(name,role)});await client.connect();sessions.push(client);return client;

@@ -157,6 +157,20 @@
         "A complete local single-process run",
         "Fixture DROP DATABASE remains load-sensitive"
       ]
+    },
+    {
+      "packet": "PGX2",
+      "asOf": "2026-10-14T08:06:58Z",
+      "status": "TEST_FIX_LOCAL_CI_PENDING",
+      "findings": [
+        "CI on 1de80b6 still failed its postgres job. A fresh LF clone of 1de80b6 on a CI-like local server (max_connections 100) reproduced it: with four suites preparing at once the run still failed within 50 s (665 tests, 0 pass).",
+        "Six guard suites added on 2026-10-13 create LOGIN test roles without a password and then log in with the CI connection password; under password authentication (scram-sha-256, as the CI service uses) those logins fail with 28P01 (reproduced locally: 7 of 15 tests of one suite)."
+      ],
+      "fix": "Test only: test/helpers/root-hook-gate.mjs ROOT_HOOK_LIMIT 4 -> 1 (top-level hooks run one at a time); new test/helpers/test-role-password.mjs adds the connection password to CREATE ROLE in five suites (bot-parent-hardening, quant-io-release-guard-hardening, quant-research-guard-hardening, quant-research-freeze, temp-privilege).",
+      "localEvidence": "Clean LF clone of 1de80b6 with both changes, single process (npm run test:postgres), on a local server with password authentication and max_connections 100: 687 tests, 681 pass, 0 fail, 6 skipped, 1149 s. With only the hook limit on a trust server: 687 / 681 / 0 / 6 in 1178 s. The five patched suites alone on the password server: 15, 19, 14, 17 and 16 tests, all pass.",
+      "stillOpen": [
+        "CI confirmation on a pushed commit"
+      ]
     }
   ]
 }

@@ -9,9 +9,10 @@ import {before as nodeBefore,after as nodeAfter} from 'node:test';
  *
  * These drop-in replacements for before and after let at most ROOT_HOOK_LIMIT top-level hooks run at the same time in
  * one process. Each suite keeps its own hook, order and failure; only the start is queued. With per-file isolation every
- * file has its own process, so nothing waits.
+ * file has its own process, so nothing waits. Four at once still overloaded a 100-connection server from a clean
+ * checkout, so the hooks run one at a time; the whole run was faster that way, not slower.
  */
-export const ROOT_HOOK_LIMIT=4;
+export const ROOT_HOOK_LIMIT=1;
 let active=0;
 const waiting=[];
 

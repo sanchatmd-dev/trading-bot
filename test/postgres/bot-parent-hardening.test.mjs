@@ -8,6 +8,7 @@ import {promisify} from 'node:util';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import pg from 'pg';
 import {PostgresDatabase} from '../../src/postgres/db.js';
+import {rolePasswordClause} from '../helpers/test-role-password.mjs';
 import {BOT_PARENT_FUNCTION,PINNED_SEARCH_PATH,botParentBodies,inspectBotParentHardening,migrateBotParentHardening,rollbackBotParentHardening}
   from '../../src/postgres/bot-parent-hardening-migration.js';
 
@@ -29,7 +30,7 @@ before(async()=>{
   const suffix=randomUUID().replaceAll('-','');
   databaseName='robot_botp_test_'+suffix;roleName='robot_botp_role_'+suffix.slice(0,16);
   await admin.query('CREATE DATABASE '+databaseName);
-  await admin.query('CREATE ROLE '+roleName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');
+  await admin.query('CREATE ROLE '+roleName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE'+rolePasswordClause());
   connectionString=urlOf(databaseName);runtimeUrl=urlOf(databaseName,roleName);
   db=new PostgresDatabase({connectionString,max:6});await db.migrate();
   await db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll('robot_app',roleName));
