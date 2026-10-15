@@ -1,0 +1,255 @@
+{
+  "schema": "dp1p-linux-exact-artifact-acceptance-v1",
+  "date": "2026-10-15",
+  "rootAccepted": true,
+  "ci": {
+    "sha": "6fe7a9ec6bcc7b28a061049715deccc48bfd9907",
+    "observedAt": "2026-10-15T04:28:36.537Z",
+    "checks": [
+      {
+        "id": 116245023000,
+        "name": "gate",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T04:20:08Z",
+        "completedAt": "2026-10-15T04:20:12Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38680684367/job/116245023000",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116245023000/annotations"
+      },
+      {
+        "id": 116244339860,
+        "name": "container",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T04:17:38Z",
+        "completedAt": "2026-10-15T04:17:49Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38680684363/job/116244339860",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116244339860/annotations"
+      },
+      {
+        "id": 116244339785,
+        "name": "test (windows-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T04:17:38Z",
+        "completedAt": "2026-10-15T04:24:38Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38680684363/job/116244339785",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116244339785/annotations"
+      },
+      {
+        "id": 116244339758,
+        "name": "test (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T04:17:38Z",
+        "completedAt": "2026-10-15T04:23:17Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38680684363/job/116244339758",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116244339758/annotations"
+      },
+      {
+        "id": 116244339754,
+        "name": "postgres",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T04:17:38Z",
+        "completedAt": "2026-10-15T04:27:55Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38680684363/job/116244339754",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116244339754/annotations"
+      },
+      {
+        "id": 116244336011,
+        "name": "quant (windows-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T04:17:37Z",
+        "completedAt": "2026-10-15T04:20:05Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38680684367/job/116244336011",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116244336011/annotations"
+      },
+      {
+        "id": 116244335930,
+        "name": "quant (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T04:17:37Z",
+        "completedAt": "2026-10-15T04:19:27Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38680684367/job/116244335930",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116244335930/annotations"
+      },
+      {
+        "id": 116244290508,
+        "name": "scope",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T04:17:27Z",
+        "completedAt": "2026-10-15T04:17:34Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38680684367/job/116244290508",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116244290508/annotations"
+      },
+      {
+        "id": 116244290503,
+        "name": "qualify",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T04:17:27Z",
+        "completedAt": "2026-10-15T04:17:35Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38680684414/job/116244290503",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116244290503/annotations"
+      },
+      {
+        "id": 116244290387,
+        "name": "scope",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T04:17:27Z",
+        "completedAt": "2026-10-15T04:17:35Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38680684363/job/116244290387",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116244290387/annotations"
+      }
+    ]
+  },
+  "receipt": {
+    "schema": "dp1p-linux-carrier-receipt-v1",
+    "mode": "--qualify",
+    "status": "LINUX_EXACT_ARTIFACT_PASS",
+    "linuxQualified": true,
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v24.21.0",
+    "sourceTransport": "read-only existing Git commit; no source payload",
+    "inputCleanup": true,
+    "phase": "complete",
+    "rebuiltSourceSha256": "d414e8b5d4885a147fa038184d5edadfda3c5484fc5e3c7b42b7f1b55efa248a",
+    "negativeTests": {
+      "tests": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    "verification": {
+      "schema": "dp1p-linux-artifact-receipt-v1",
+      "commit": "70ea7f92a4547845291d32d836d3c740a0e7f1b7",
+      "mode": "--qualify",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "v24.21.0",
+      "status": "LINUX_EXACT_ARTIFACT_PASS",
+      "linuxQualified": true,
+      "validated": true,
+      "extracted": true,
+      "probeCount": 2,
+      "syntaxCount": 12,
+      "cleanup": true,
+      "postPins": true,
+      "packageEngines": [
+        {
+          "name": "decimal.js",
+          "nodeEngine": null
+        },
+        {
+          "name": "pg",
+          "nodeEngine": ">= 16.0.0"
+        },
+        {
+          "name": "pg-cloudflare",
+          "nodeEngine": null
+        },
+        {
+          "name": "pg-connection-string",
+          "nodeEngine": null
+        },
+        {
+          "name": "pg-int8",
+          "nodeEngine": ">=4.0.0"
+        },
+        {
+          "name": "pg-pool",
+          "nodeEngine": null
+        },
+        {
+          "name": "pg-protocol",
+          "nodeEngine": null
+        },
+        {
+          "name": "pg-types",
+          "nodeEngine": ">=4"
+        },
+        {
+          "name": "pgpass",
+          "nodeEngine": null
+        },
+        {
+          "name": "postgres-array",
+          "nodeEngine": ">=4"
+        },
+        {
+          "name": "postgres-bytea",
+          "nodeEngine": ">=0.10.0"
+        },
+        {
+          "name": "postgres-date",
+          "nodeEngine": ">=0.10.0"
+        },
+        {
+          "name": "postgres-interval",
+          "nodeEngine": ">=0.10.0"
+        },
+        {
+          "name": "split2",
+          "nodeEngine": ">= 10.x"
+        },
+        {
+          "name": "xtend",
+          "nodeEngine": ">=0.4"
+        }
+      ],
+      "counts": {
+        "source": 182,
+        "deps": 145,
+        "total": 327,
+        "packages": 15,
+        "closure": 12
+      },
+      "inputPins": {
+        "source.tar": "d414e8b5d4885a147fa038184d5edadfda3c5484fc5e3c7b42b7f1b55efa248a",
+        "deps.tar": "72c3e846a524ecb57abf31564dcd2df4887ef71adb4c308c515adbdcce0aacfd",
+        "manifest.txt": "4afdbc1b013e02e3f7c663d44e81d9706824fb83482865f5ddde5056a3bc4876",
+        "bundle.json": "34c826a2e93cd63c832dd7a4bdb2f7b07c2ccd85f4514bf310a3fd366d3b2845"
+      },
+      "probes": [
+        {
+          "mode": "CJS",
+          "resolved": {
+            "pg": "node_modules/pg/lib/index.js",
+            "decimal.js": "node_modules/decimal.js/decimal.js"
+          },
+          "clientConstructed": true,
+          "connectCalled": false,
+          "pool": true,
+          "decimal": "0.3"
+        },
+        {
+          "mode": "ESM",
+          "resolved": {
+            "pg": "node_modules/pg/esm/index.mjs",
+            "decimal.js": "node_modules/decimal.js/decimal.mjs"
+          },
+          "clientConstructed": true,
+          "connectCalled": false,
+          "pool": true,
+          "decimal": "0.3"
+        }
+      ],
+      "inventoryAfterExact": true,
+      "elapsedMs": 441
+    },
+    "elapsedMs": 733
+  },
+  "scope": "Exact frozen artifact qualification on recorded Linux runner; no deployment",
+  "limits": [
+    "Production installed dependency identity and current health are not established.",
+    "Optional pg-cloudflare and pg-native execution are outside this qualification.",
+    "No actual systemd recovery, application entrypoint, database connection or financial-policy acceptance occurred.",
+    "Staging 24-hour observation and owner-policy gates remain open."
+  ],
+  "preparation": "DP1P_LINUX_CARRIER_LOCAL_2026-10-15.json"
+}
