@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {requestQuantOptimize,quantOptimizeOutcome,requireQuantOptimizeConnection,QuantOptimizeDisconnected} from './quant-optimize-transport.js';
 import {legacyQuantDenied} from '../quant-research/legacy-admission.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -157,16 +158,24 @@ async function quantBridge(req, res, url, actor, store) {
   const bodyStr = bodyObj ? JSON.stringify(bodyObj) : '';
 
   let runId = null;
+  const optimize=url.pathname === '/api/quant/optimize';
+  if(optimize)requireQuantOptimizeConnection(req,res);
   if (url.pathname === '/api/quant/optimize' && bodyObj) {
       const botId = String(bodyObj.bot_id || actor.id);
       if (!(await store.ownsBot(actor.id, botId))) { json(res, 403, { error: 'Bot access denied' }); return true; }
+      requireQuantOptimizeConnection(req,res);
       runId = 'run-' + Date.now() + '-' + Math.floor(Math.random()*1000);
       await store.db.prepare(`INSERT INTO quant_research_runs(run_id, user_id, bot_id, indicators_config, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'RUNNING', ?, ?)`).run(runId, actor.id, botId, JSON.stringify(bodyObj), Date.now(), Date.now());
   }
 
+  // A disconnect observed after INSERT still rolls back the row, without an external attempt.
+  if(optimize)requireQuantOptimizeConnection(req,res);
+  if(optimize)req.quantOptimizeAttempt={completeResponse:false,rowBearing:runId!==null};
   // The upstream run cannot be undone by a rollback, so a serialization failure after this point is never retried.
   res.phase2External = true;
-  const result = await new Promise((resolve, reject) => {
+  const result = optimize ? await requestQuantOptimize({hostname:'127.0.0.1',port:7654,
+    path:url.pathname.replace('/api',''),method:req.method,
+    headers:bodyStr?{'content-type':'application/json','content-length':Buffer.byteLength(bodyStr)}:{}},bodyStr) : await new Promise((resolve, reject) => {
     const upstream = http.request({hostname: '127.0.0.1', port: 7654, path: url.pathname.replace('/api', ''), method: req.method,
       headers: bodyStr ? {'content-type': 'application/json', 'content-length': Buffer.byteLength(bodyStr)} : {}, timeout: 30000}, response => {
       let raw = '';
@@ -178,6 +187,7 @@ async function quantBridge(req, res, url, actor, store) {
     upstream.on('error', reject);
     upstream.end(bodyStr);
   });
+  if(optimize)req.quantOptimizeAttempt.completeResponse=true;
 
   if (runId) {
       if (result.status === 200 && result.body && result.body.best) {
@@ -269,7 +279,10 @@ async function userRoutes(req, res, url) {
   if(await marketOhlcvRoutes(req,res,url,marketData,json,{actor,proxy:marketProxy}))return;
   try { if (await quantBridge(req, res, url, actor, store)) return; }
   catch (error) {
+    if(error instanceof QuantOptimizeDisconnected)throw error;
     if (/^[0-9A-Z]{5}$/.test(error?.code)) throw error;
+    const outcome=url.pathname==='/api/quant/optimize'?quantOptimizeOutcome(req.quantOptimizeAttempt):null;
+    if(outcome)return json(res,503,outcome);
     if (error?.code === 'QUANT_EXECUTOR_MODE_UNAVAILABLE') return json(res, 503, {code: error.code, error: 'Quant executor mode is unavailable'});
     return json(res, 503, {error: 'Quant Lab engine is unavailable'});
   }

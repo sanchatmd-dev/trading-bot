@@ -1,4 +1,5 @@
 import {requestPathname} from './request-limits.js';
+import {quantOptimizeOutcome,QuantOptimizeDisconnected,quantOptimizeDisconnected} from './quant-optimize-transport.js';
 
 export const json = (res, status, body) => {
   if(res.phase2Buffer){res.phase2Result={status,body};return;}
@@ -94,6 +95,7 @@ export function createDispatcher({newsWindowsPort,requestLimits,auth,database,st
       // A market proxy answer runs here, after COMMIT: no database connection or snapshot is held during network I/O.
       const deferred=res.phase2Deferred;res.phase2Deferred=null;
       const result=deferred?await runMarketDeferred(deferred):res.phase2Result;
+      if(pathname==='/api/quant/optimize'&&req.quantOptimizeAttempt&&quantOptimizeDisconnected(req,res))return;
       if(result)json(res,result.status,result.body);
     }catch(error){
       // A handler may throw null or a non-object; the answer must still go out instead of the catch itself throwing.
@@ -102,9 +104,13 @@ export function createDispatcher({newsWindowsPort,requestLimits,auth,database,st
       // Only the final failure reaches here, so one request writes at most one request.error row.
       res.phase2Buffer=false;res.phase2Deferred=null;
       if(!res.headersSent){res.removeHeader('set-cookie');res.removeHeader('etag');}
+      // Only our internal pre-attempt cancellation skips the audit and response; the transaction has rolled back.
+      if(pathname==='/api/quant/optimize'&&error instanceof QuantOptimizeDisconnected&&!req.quantOptimizeAttempt&&quantOptimizeDisconnected(req,res))return;
       const retry=['40001','40P01','55P03'].includes(error.code);
       const internal=error.code&&/^[0-9A-Z]{5}$/.test(error.code);
       await store.audit(null,'request.error',null,{message:retry?'Concurrent request rolled back':internal?'Database request failed':'Request validation failed'}).catch(()=>{});
+      const outcome=pathname==='/api/quant/optimize'?quantOptimizeOutcome(req.quantOptimizeAttempt):null;
+      if(outcome){if(!res.headersSent&&!quantOptimizeDisconnected(req,res))json(res,503,outcome);return;}
       if(!res.headersSent)json(res,error.status||(retry?409:internal?503:400),{error:retry?'Concurrent update; retry the request':internal?'Request could not be completed':error.message,...(retry?{code:'RETRY_TRANSACTION'}:error.code&&!internal?{code:error.code}:{})});
     }
   };

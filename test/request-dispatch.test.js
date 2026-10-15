@@ -1,4 +1,7 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
+import {legacyQuantDenied} from '../src/quant-research/legacy-admission.js';
+import {quantOptimizeOutcome,QuantOptimizeDisconnected,requireQuantOptimizeConnection} from '../src/postgres/quant-optimize-transport.js';
 import assert from 'node:assert/strict';
 import {clientIp} from '../src/http-safety.js';
 import {createRequestLimits,API_LIMIT,WEBHOOK_SOURCE_LIMIT} from '../src/postgres/request-limits.js';
@@ -128,13 +131,13 @@ test('the machine port answers before the pipeline: no limiter, Origin, session 
 
 // Bare dispatcher with scripted router and transaction, for the error mapping and the deferred market answer.
 function bare({handleRequest,runMarketDeferred=async()=>null,audit=async()=>{},auth={checkOrigin(){},async prepareSession(){}},onPause=()=>{},
-  preload=async()=>{},workerIntervalMs,clock}){
+  preload=async()=>{},workerIntervalMs,clock,onCommit=async()=>{}}){
   const events=[],audits=[],pauses=[],steps=[],warnings=[];
   const dispatch=createDispatcher({
     newsWindowsPort:{handle:async()=>false},
     requestLimits:async()=>{steps.push('limit');return true;},
     auth:{checkOrigin(req){steps.push('origin');return auth.checkOrigin(req);},async prepareSession(req){steps.push('session');return auth.prepareSession(req);}},
-    database:{transaction:async(fn,{isolation})=>{events.push('begin:'+isolation);try{const value=await fn();events.push('commit');return value;}catch(error){events.push('rollback');throw error;}}},
+    database:{transaction:async(fn,{isolation})=>{events.push('begin:'+isolation);try{const value=await fn();await onCommit();events.push('commit');return value;}catch(error){events.push('rollback');throw error;}}},
     store:{audit:async(...args)=>{audits.push(args[3]);return audit(...args);}},
     preloadJson:async req=>{steps.push('preload');return preload(req);},
     handleRequest:async(req,res)=>{events.push('route');return handleRequest(req,res,events);},
@@ -532,4 +535,132 @@ test('retry delay: a worker interval that leaves no pause inside the budget is l
     assert.equal(res.status,200,String(workerIntervalMs));
     assert.deepEqual(warnings,['API request attempt 1 rolled back with SQLSTATE 40001; retrying'],String(workerIntervalMs));
   }
+});
+
+for(const code of ['40001','40P01','23514','55P03'])for(const completeResponse of [false,true])for(const rowBearing of [false,true])
+test(`optimize ${code} after ${completeResponse?'complete':'unknown'} response, row ${rowBearing}, retains outcome through COMMIT`,async()=>{
+  let outbound=0;
+  const answer=await bare({handleRequest:async(req,res)=>{
+    req.quantOptimizeAttempt={completeResponse,rowBearing};res.phase2External=true;outbound++;
+    json(res,completeResponse?200:503,completeResponse?{best:{params:{}}}:quantOptimizeOutcome(req.quantOptimizeAttempt));
+  },onCommit:async()=>{throw conflict(code);}}).send('/api/quant/optimize',{method:rowBearing?'POST':'GET'});
+  assert.equal(outbound,1);assert.equal(attempts(answer.events),1);assert.deepEqual(answer.pauses,[]);
+  assert.equal(answer.res.status,503);assert.deepEqual(JSON.parse(answer.res.body),quantOptimizeOutcome({completeResponse,rowBearing}));
+  assert.deepEqual(answer.audits,[{message:['40001','40P01','55P03'].includes(code)?'Concurrent request rolled back':'Database request failed'}]);
+  assert.ok(!answer.res.body.includes('RETRY_TRANSACTION'));assert.ok(!answer.res.body.includes('could not serialize'));
+  assert.ok(!answer.events.includes('deferred'));
+});
+
+test('complete optimize success remains buffered until COMMIT',async()=>{
+  let response;
+  const result=await bare({handleRequest:async(req,res)=>{
+    response=res;req.quantOptimizeAttempt={completeResponse:true,rowBearing:true};res.phase2External=true;json(res,200,{best:{}});
+  },onCommit:async()=>{assert.equal(response.headersSent,false);assert.equal(response.body,null);}}).send('/api/quant/optimize',{method:'POST'});
+  assert.equal(result.res.status,200);assert.deepEqual(JSON.parse(result.res.body),{best:{}});assert.deepEqual(result.audits,[]);
+});
+
+test('optimize outcome mapper remains scoped to exact canonical optimize pathname',async()=>{
+  for(const url of ['/api/quant/backtest','/api/quant/health','/api/quant/risk-preview','/api/quant/optimize/']){
+    const result=await bare({handleRequest:async(req,res)=>{
+      req.quantOptimizeAttempt={completeResponse:true,rowBearing:true};res.phase2External=true;throw conflict('40001');
+    }}).send(url);
+    assert.equal(result.res.status,409);assert.equal(JSON.parse(result.res.body).code,'RETRY_TRANSACTION');
+  }
+  const canonical=await bare({handleRequest:async(req,res)=>{
+    req.quantOptimizeAttempt={completeResponse:false,rowBearing:false};res.phase2External=true;throw conflict('40001');
+  }}).send('/x/../api/quant/optimize?ignored=true');
+  assert.equal(JSON.parse(canonical.res.body).code,'QUANT_SUBMISSION_OUTCOME_UNKNOWN');
+});
+
+test('only genuine disconnected pre-attempt cancellation suppresses audit and response',async()=>{
+  const result=await bare({handleRequest:async(req,res)=>{req.aborted=true;requireQuantOptimizeConnection(req,res);}})
+    .send('/api/quant/optimize');
+  assert.ok(result.events.includes('rollback'));assert.equal(result.res.status,null);assert.deepEqual(result.audits,[]);
+  for(const kind of ['forged code','connected internal','after attempt']){
+    const answer=await bare({handleRequest:async(req,res)=>{
+      if(kind!=='connected internal')req.aborted=true;
+      if(kind==='after attempt'){req.quantOptimizeAttempt={completeResponse:false,rowBearing:true};res.phase2External=true;}
+      throw kind==='forged code'?Object.assign(new Error('forged cancellation'),{code:'QUANT_REQUEST_DISCONNECTED'}):new QuantOptimizeDisconnected();
+    }}).send('/api/quant/optimize');
+    assert.equal(answer.audits.length,1,kind);
+    assert.equal(answer.res.status,kind==='after attempt'?null:400,kind);
+  }
+});
+
+// Exercise the production route body with isolated HTTP/SQL dependencies, without starting the application or engine.
+const serverSource=readFileSync(new URL('../src/postgres/server.js',import.meta.url),'utf8');
+const bridgeSource=serverSource.slice(serverSource.indexOf('async function quantBridge('),serverSource.indexOf('// Trust only the right-most address'));
+assert.ok(bridgeSource.startsWith('async function quantBridge('));
+function bridgeFixture({disconnectAt,admission='LEGACY',insertError,updateError,transportError,body={}}={}){
+  let outbound=0,inserts=0,updates=0;
+  const db={query:async sql=>{
+    if(admission==='unreadable')throw new Error('mode read failed');
+    if(sql.includes('to_regclass'))return {rows:[{present:admission==='absent table'?null:'quant_research_executor_mode'}]};
+    return {rows:admission==='missing singleton'?[]:[{mode:admission}]};
+  },prepare:sql=>({run:async()=>{
+    if(sql.startsWith('INSERT')){inserts++;if(insertError)throw insertError;if(disconnectAt==='after INSERT')request.aborted=true;}
+    if(sql.startsWith('UPDATE')){updates++;if(updateError)throw updateError;}
+  }})};
+  const route=new Function('legacyQuantDenied','readJson','requestQuantOptimize','requireQuantOptimizeConnection','json','quantPaths','http',
+    'return '+bridgeSource)(legacyQuantDenied,async()=>body,async()=>{outbound++;if(disconnectAt==='after attempt')request.aborted=true;if(transportError)throw transportError;return {status:200,body:{best:{params:{}}}};},
+    requireQuantOptimizeConnection,json,LEGACY_QUANT_PATHS,{});
+  let request;
+  const handleRequest=async(req,res)=>{
+    request=req;if(disconnectAt==='before INSERT')req.aborted=true;
+    try{await route(req,res,new URL(req.url,'http://fixture.test'),{id:'actor'}, {db,ownsBot:async()=>true});}
+    catch(error){
+      // Match the production route's error boundary; SQLSTATEs and cancellation must reach the dispatcher.
+      if(error instanceof QuantOptimizeDisconnected||/^[0-9A-Z]{5}$/.test(error?.code))throw error;
+      const outcome=quantOptimizeOutcome(req.quantOptimizeAttempt);
+      json(res,503,outcome||{code:error.code,error:'Quant executor mode is unavailable'});
+    }
+  };
+  return {handleRequest,get outbound(){return outbound;},get inserts(){return inserts;},get updates(){return updates;}};
+}
+
+for(const disconnectAt of ['before INSERT','after INSERT','after attempt'])test(`production optimize route: disconnect ${disconnectAt}`,async()=>{
+  const route=bridgeFixture({disconnectAt});const answer=await bare(route).send('/api/quant/optimize',{method:'POST'});
+  assert.equal(route.outbound,disconnectAt==='after attempt'?1:0);
+  assert.equal(route.inserts,disconnectAt==='before INSERT'?0:1);
+  assert.equal(route.updates,disconnectAt==='after attempt'?1:0);
+  assert.equal(answer.events.includes('rollback'),disconnectAt!=='after attempt');assert.deepEqual(answer.audits,[]);
+  assert.equal(answer.res.status,null,'disconnected client receives no response writes');
+});
+for(const admission of ['FOUNDATION','missing singleton','invalid','unreadable'])test(`production optimize route: ${admission} refuses before external attempt`,async()=>{
+  const route=bridgeFixture({admission});const answer=await bare(route).send('/api/quant/optimize',{method:'POST'});
+  assert.equal(route.outbound,0);assert.equal(route.inserts,0);assert.equal(answer.res.status,admission==='FOUNDATION'?409:503);
+});
+test('production optimize route: intentionally absent mode table retains legacy compatibility',async()=>{
+  const route=bridgeFixture({admission:'absent table'});const answer=await bare(route).send('/api/quant/optimize',{method:'POST'});
+  assert.equal(route.outbound,1);assert.equal(route.inserts,1);assert.equal(answer.res.status,200);
+});
+for(const code of ['40001','40P01','23514','55P03'])test(`production optimize route: INSERT ${code} sends zero; UPDATE ${code} sends once`,async()=>{
+  const rejected=bridgeFixture({insertError:conflict(code)}),before=await bare(rejected).send('/api/quant/optimize',{method:'POST'});
+  assert.equal(rejected.outbound,0);assert.equal(before.req.quantOptimizeAttempt,undefined);assert.equal(before.audits.length,1);
+  const attempted=bridgeFixture({updateError:conflict(code)}),after=await bare(attempted).send('/api/quant/optimize',{method:'POST'});
+  assert.equal(attempted.outbound,1);assert.equal(after.res.status,503);assert.equal(JSON.parse(after.res.body).code,'QUANT_RESULT_NOT_RECORDED');assert.equal(after.audits.length,1);
+});
+test('production optimize route: unknown transport plus failed COMMIT stays unknown',async()=>{
+  const route=bridgeFixture({transportError:new Error('upstream lost')});
+  const answer=await bare({...route,onCommit:async()=>{throw conflict('40P01');}}).send('/api/quant/optimize',{method:'POST'});
+  assert.equal(route.outbound,1);assert.equal(route.updates,0);assert.equal(answer.res.status,503);
+  assert.equal(JSON.parse(answer.res.body).code,'QUANT_SUBMISSION_OUTCOME_UNKNOWN');assert.equal(answer.audits.length,1);
+});
+
+test('production optimize route: POST without a runId never claims row persistence failed',async()=>{
+  const route=bridgeFixture({body:null});
+  const answer=await bare({...route,onCommit:async()=>{throw conflict('40001');}}).send('/api/quant/optimize',{method:'POST'});
+  assert.equal(route.outbound,1);assert.equal(route.inserts,0);assert.equal(answer.res.status,503);
+  assert.equal(JSON.parse(answer.res.body).code,'QUANT_REQUEST_NOT_COMPLETED');
+});
+test('production optimize route: disconnect after attempt never suppresses SQL error audit',async()=>{
+  const route=bridgeFixture({disconnectAt:'after attempt',updateError:conflict('40001')});
+  const answer=await bare(route).send('/api/quant/optimize',{method:'POST'});
+  assert.equal(route.outbound,1);assert.equal(answer.res.status,null);assert.equal(answer.audits.length,1);
+  assert.ok(answer.events.includes('rollback'));assert.deepEqual(answer.pauses,[]);
+});
+test('production optimize route: upstream cancellation string cannot erase attempted outcome',async()=>{
+  const route=bridgeFixture({transportError:Object.assign(new Error('upstream failure'),{code:'QUANT_REQUEST_DISCONNECTED'})});
+  const answer=await bare(route).send('/api/quant/optimize',{method:'POST'});
+  assert.equal(route.outbound,1);assert.equal(answer.res.status,503);assert.equal(JSON.parse(answer.res.body).code,'QUANT_SUBMISSION_OUTCOME_UNKNOWN');
 });

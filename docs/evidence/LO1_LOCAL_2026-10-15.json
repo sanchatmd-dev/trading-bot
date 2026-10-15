@@ -1,0 +1,98 @@
+{
+  "schema": "lo1-local-integration-v1",
+  "date": "2026-10-15",
+  "baseCommit": "de32052eeb2a8b4e3bd43d10c6808fca3d2fe6d4",
+  "scope": "Local legacy optimize containment; no deployment",
+  "rootAccepted": true,
+  "exactCommitCi": "PENDING",
+  "files": [
+    {
+      "path": "src/postgres/server.js",
+      "sha256": "1c693ad0e4c0fba7c7decf7b0b402534a41416b75eb7759bb6f73b9ae697468d"
+    },
+    {
+      "path": "src/postgres/request-dispatch.js",
+      "sha256": "771463c8fa0a1464a09f59cdbba10746f4631eebc1e593ebfaa12c4149e5758e"
+    },
+    {
+      "path": "src/postgres/quant-optimize-transport.js",
+      "sha256": "b7e0cb5615764b1a40e8c026d5c52b2331c7fc7a71406141b0eb762c647cda55"
+    },
+    {
+      "path": "test/postgres/quant-bridge-sqlstate.test.mjs",
+      "sha256": "6ab7222fe1678666df726692800a18454162d3c75a68e93bedf2c9233401f87c"
+    },
+    {
+      "path": "test/request-dispatch.test.js",
+      "sha256": "44ce72ba26f7c22e92579a991a01f8b16d455fc5411a24f3c84f2d42c46eb834"
+    },
+    {
+      "path": "test/quant-optimize-transport.test.js",
+      "sha256": "0df9b601557765447e38b140ddab6d6d6d325570580ad353417be30443e3d93d"
+    }
+  ],
+  "contract": {
+    "deadlineMs": 10000,
+    "clock": "monotonic",
+    "responseLimitUtf8Bytes": 1048576,
+    "transactionBoundary": "unchanged",
+    "databaseIdleTimeoutMs": 20000,
+    "outcomes": [
+      "QUANT_SUBMISSION_OUTCOME_UNKNOWN",
+      "QUANT_RESULT_NOT_RECORDED",
+      "QUANT_REQUEST_NOT_COMPLETED"
+    ],
+    "retryAdvice": false
+  },
+  "verification": {
+    "candidatePostgres": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0
+    },
+    "independentActualDisconnect": {
+      "passed": 1,
+      "rows": 0,
+      "outboundAttempts": 0,
+      "errorAudits": 0
+    },
+    "combinedPostgresDurationMs": 88295.0078,
+    "independentSourceReview": "ACCEPT_SOURCE_SCOPE",
+    "adversarialPure": 7,
+    "managedClosure": 4,
+    "independentAdditionalPure": 11,
+    "integratedPure": {
+      "passed": 95,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 874.2756
+    },
+    "sourcePins": 857,
+    "dependencyPins": 2012,
+    "finalPinsUnchanged": true,
+    "cleanup": {
+      "databases": 0,
+      "roles": 0,
+      "ownedProcesses": 0,
+      "listeners": 0,
+      "sockets": 0,
+      "dataRemoved": true,
+      "passwordRemoved": true
+    }
+  },
+  "preservedFailure": "R1 launcher failed before PostgreSQL bodies with ERR_UNSUPPORTED_ESM_URL_SCHEME; R2 used a runtime-smoked file URL. No product change was required.",
+  "limits": [
+    "Ten seconds bounds upstream waiting under normal scheduling, not remote execution, total request time or event-loop stalls.",
+    "Unknown attempts can retain RUNNING or have no row after rollback; neither proves remote execution. No recovery or idempotency added.",
+    "Actual network lost-COMMIT acknowledgement and actual GET COMMIT failure were not run; scripted seams cover outcome mapping.",
+    "Optimize UTF-8 byte limit can reject non-ASCII responses earlier than the previous character limit.",
+    "Verification intercepted upstream calls; no real optimizer or host action occurred."
+  ],
+  "localEvidence": [
+    ".qa-local/codex-lo1-r1-2026-10-15/MANIFEST.json",
+    ".qa-local/codex-lo1-r1-audit-2026-10-15/REPORT.md",
+    ".qa-local/codex-lo1-r2-verify-2026-10-15/REPORT.md",
+    ".qa-local/codex-lo1-r2-verify-2026-10-15/final-pins.json"
+  ],
+  "frozenManifestSha256": "e965b350a26c80003d4a0ba6157f6b2c2c40f892647c8f1594d894400b67a9cf"
+}
