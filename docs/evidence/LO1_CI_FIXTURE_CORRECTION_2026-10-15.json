@@ -1,0 +1,137 @@
+{
+  "schema": "lo1-ci-fixture-correction-v1",
+  "date": "2026-10-15",
+  "failedCi": {
+    "sha": "6d8cf5d539b8c791f678a8e794ace68ef710b601",
+    "observedAt": "2026-10-15T04:00:02.230Z",
+    "checks": [
+      {
+        "id": 116237169012,
+        "name": "gate",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T03:51:20Z",
+        "completedAt": "2026-10-15T03:51:23Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38678176705/job/116237169012",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116237169012/annotations"
+      },
+      {
+        "id": 116236485537,
+        "name": "quant (windows-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T03:48:48Z",
+        "completedAt": "2026-10-15T03:51:17Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38678176705/job/116236485537",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116236485537/annotations"
+      },
+      {
+        "id": 116236485467,
+        "name": "quant (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T03:48:47Z",
+        "completedAt": "2026-10-15T03:50:23Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38678176705/job/116236485467",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116236485467/annotations"
+      },
+      {
+        "id": 116236479063,
+        "name": "postgres",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T03:48:46Z",
+        "completedAt": "2026-10-15T03:59:02Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38678176852/job/116236479063",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116236479063/annotations"
+      },
+      {
+        "id": 116236478907,
+        "name": "test (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T03:48:45Z",
+        "completedAt": "2026-10-15T03:52:33Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38678176852/job/116236478907",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116236478907/annotations"
+      },
+      {
+        "id": 116236478847,
+        "name": "test (windows-latest)",
+        "status": "completed",
+        "conclusion": "failure",
+        "startedAt": "2026-10-15T03:48:45Z",
+        "completedAt": "2026-10-15T03:56:08Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38678176852/job/116236478847",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116236478847/annotations"
+      },
+      {
+        "id": 116236478806,
+        "name": "container",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T03:48:45Z",
+        "completedAt": "2026-10-15T03:48:58Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38678176852/job/116236478806",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116236478806/annotations"
+      },
+      {
+        "id": 116236437584,
+        "name": "scope",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T03:48:36Z",
+        "completedAt": "2026-10-15T03:48:42Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38678176852/job/116236437584",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116236437584/annotations"
+      },
+      {
+        "id": 116236436891,
+        "name": "scope",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-15T03:48:36Z",
+        "completedAt": "2026-10-15T03:48:44Z",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38678176705/job/116236436891",
+        "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116236436891/annotations"
+      }
+    ]
+  },
+  "rootAcceptedLocalCorrection": true,
+  "changedPath": "test/pf2-cost-v2-parity.test.js",
+  "sha256": "664ac6b767e536b80cacda501c7d61f79c70f6b5996ce6dd6a4b2da55b4a44e4",
+  "scope": "Test-only Python subprocess bound and safe diagnostics; product code unchanged",
+  "failure": {
+    "test": "isolated Python cost-v2 finalizer matches production Node outcomes",
+    "durationMs": 10073.7395,
+    "status": null,
+    "expectedStatus": 0,
+    "actualCiCause": "UNKNOWN"
+  },
+  "change": {
+    "subprocessTimeoutBeforeMs": 10000,
+    "subprocessTimeoutAfterMs": 60000,
+    "parityVectors": 17,
+    "originalVectorsAndAssertionsPreserved": true,
+    "newRetryOrSkip": false
+  },
+  "evidence": {
+    "originalIsolatedPassed": true,
+    "controlledStartupDelayMs": 11000,
+    "oldBoundControlledFailure": "ETIMEDOUT; status null; SIGTERM; empty output",
+    "authorControlsPassed": 7,
+    "independentExactTestPassed": 1,
+    "independentControlsPassed": 5,
+    "independentFixturePinsUnchanged": 2209,
+    "ownedProcessesAfter": 0
+  },
+  "limits": [
+    "A controlled delayed startup reproduces the symptom but does not establish the actual CI cause.",
+    "Full exact-commit CI remains pending.",
+    "No production cost model or parity assertion changed."
+  ],
+  "localEvidence": [
+    ".qa-local/codex-lo1-ci-python-2026-10-15/report.md",
+    ".qa-local/codex-lo1-ci-python-verify-2026-10-15/REPORT.md"
+  ]
+}

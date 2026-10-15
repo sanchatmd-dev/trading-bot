@@ -47,10 +47,18 @@ function nodeOutcome(v){
 }
 
 test('isolated Python cost-v2 finalizer matches production Node outcomes',()=>{
-  const child=spawnSync(python,[modulePath],{input:JSON.stringify(vectors),encoding:'utf8',timeout:10000,
+  // Bound interpreter startup and all 17 vectors together; keep output comparison exact.
+  const started=performance.now();
+  const child=spawnSync(python,[modulePath],{input:JSON.stringify(vectors),encoding:'utf8',timeout:60000,
     env:{...process.env,PYTHONPATH:[resolve(root,'quant_lab','src'),process.env.PYTHONPATH].filter(Boolean).join(delimiter)}});
-  assert.equal(child.status,0,child.stderr);
-  const actual=JSON.parse(child.stdout);
+  const diagnostic=JSON.stringify({status:child.status,errorCode:child.error?.code??null,signal:child.signal,
+    elapsedMs:Math.round(performance.now()-started),stdoutBytes:Buffer.byteLength(child.stdout??''),
+    stderrBytes:Buffer.byteLength(child.stderr??'')});
+  assert.ok(!child.error,`Python finalizer launch failed: ${diagnostic}`);
+  assert.equal(child.status,0,`Python finalizer exited unsuccessfully: ${diagnostic}`);
+  let actual;
+  try{actual=JSON.parse(child.stdout);}
+  catch{assert.fail(`Python finalizer returned invalid JSON: ${diagnostic}`);}
   const expected=vectors.map(nodeOutcome);
   assert.deepEqual(actual,expected);
   assert.equal(actual[0].result.order.quantity,'8.27');
