@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "packet": "PO1-r3",
+  "date": "2026-10-15",
+  "scope": "Local integration; no deployment",
+  "commit": "3d01b0330265c2608462dd42a53a99af3fdd7f87",
+  "status": "Focused local acceptance passed; exact-commit CI failed, integration closure held",
+  "inputs": {
+    "src/postgres/db.js": "e244de9adcbcb0cbd716ef9e387285b2ace048c4e4e77314f0c6c6011769132d",
+    "test/postgres/db-runtime-replication-role.test.mjs": "1ca703106ebc8d1a31e0378904148acd0980543c05678f608185f9d8fb96ec18",
+    "test/db-runtime-lease.test.js": "5c14425f15e88ac31820fc88b69f4dbda39ce117b4b5628199c8cf2335e1d096"
+  },
+  "behavior": "Every runtime main, transaction and independent limitPool checkout validates origin on that same client. Runtime activation stays enabled after a failed startup. Atomic transfer refuses discarded runtime-lock clients. FATAL/PANIC query rejection preserves the first failure and discards before caller exposure; ordinary SQL errors remain recoverable.",
+  "evidence": {
+    "postgres": {
+      "tests": 24,
+      "pass": 24,
+      "fail": 0,
+      "skip": 0,
+      "exit": 0,
+      "durationMs": 4960.611,
+      "completedAt": "2026-10-15T01:05:55.7385645Z",
+      "strictTransport": "Original strict test unchanged from failed r2: identical initial/later/outer 57P01, one release and eviction, zero later dispatch and sentinel persistence, runtime lock retained, fresh query succeeds and close unlocks"
+    },
+    "durableUnit": {
+      "pass": 13,
+      "fail": 0,
+      "skip": 0,
+      "exit": 0,
+      "independentDurationMs": 138.6568,
+      "rootIntegratedDurationMs": 125.4352
+    },
+    "sourceAudit": {
+      "lifecycleCases": 12,
+      "terminalGuardMutationFailures": 2,
+      "transferGuardMutationFailures": 3
+    },
+    "candidatePins": {
+      "total": 383,
+      "unchanged": 383
+    },
+    "cleanup": {
+      "serverEncoding": "UTF8",
+      "clientEncoding": "UTF8",
+      "generatedDatabases": 0,
+      "generatedRoles": 0,
+      "stopExit": 0,
+      "ownedProcesses": 0,
+      "listeners": 0,
+      "dataAbsent": true,
+      "passwordAbsent": true
+    }
+  },
+  "retainedFailures": [
+    "r1 unsafe runtime-lock adoption at a microtask boundary",
+    "r2 fixture setup path failure before tests",
+    "r2 PostgreSQL 23/24 and transport diagnostic failure: later dispatch before socket error, without persistence",
+    "Initial fixed-depth schedule expectation invalidated by the additional promise continuation; replaced with observed ownership invariants and both-side control"
+  ],
+  "limits": [
+    "Checkout-only: privileged changes inside a lease and raw-pool bypass remain outside the boundary",
+    "PANIC checked deterministically, not induced on PostgreSQL",
+    "Focused local suites only; no full-suite rerun or performance benchmark",
+    "No staging/production deployment or host action",
+    "Staging 24-hour observation remains open, not before 2026-10-15T22:17:53.400Z"
+  ],
+  "localReports": [
+    ".qa-local/codex-pool-origin-r3-audit-2026-10-15/REPORT.md",
+    ".qa-local/codex-pool-origin-r3-verify-2026-10-15/REPORT.md"
+  ],
+  "reportSha256": "f04fc7ce38225ce2fabf869d930872af7630e1e99a38d72b768e3440d7423709",
+  "committedInputs": {
+    "src/postgres/db.js": {
+      "sha256": "e244de9adcbcb0cbd716ef9e387285b2ace048c4e4e77314f0c6c6011769132d",
+      "rawMatch": true,
+      "lfNormalizedMatch": true
+    },
+    "test/postgres/db-runtime-replication-role.test.mjs": {
+      "sha256": "f2c097a8aa55dece61485ac0d54b411199726b10f0d63fc750bce9a4b2987cec",
+      "rawMatch": false,
+      "lfNormalizedMatch": true
+    },
+    "test/db-runtime-lease.test.js": {
+      "sha256": "5e8b73450c72ded1645c58f1b15881498e6fdfaf7a7722513b384d2b42ed5d77",
+      "rawMatch": false,
+      "lfNormalizedMatch": true
+    }
+  },
+  "exactCommitCi": {
+    "commit": "3d01b0330265c2608462dd42a53a99af3fdd7f87",
+    "observedAt": "2026-10-15T01:18:37.831Z",
+    "passedChecks": 8,
+    "failedChecks": 1,
+    "failedCheck": "postgres",
+    "runId": 38663935389,
+    "jobId": 116191416060,
+    "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38663935389/job/116191416060",
+    "postgres": {
+      "tests": 755,
+      "pass": 743,
+      "fail": 6,
+      "skip": 6,
+      "durationMs": 577034.697521
+    },
+    "finding": "Actual-class probes reproduce private-brand TypeErrors in recording Proxy and Object.create database wrappers. A five-replacement correction preserves instrumentation and assertions, but remains unintegrated and unaccepted.",
+    "next": "Verify a bounded fixture correction without weakening assertions, then rerun exact-commit CI."
+  },
+  "fixtureFollowup": {
+    "status": "Unintegrated; PostgreSQL verification blocked before test bodies",
+    "candidate": ".qa-local/codex-po1-fixture-r1-2026-10-15/INPUT-CERTIFICATE.json",
+    "independentProbeGroups": 4,
+    "exactReplacements": 5,
+    "files": 4,
+    "assertionsUnchanged": true,
+    "verification": ".qa-local/codex-po1-fixture-verify-2026-10-15/",
+    "failures": [
+      "Generated launcher parser failure before PostgreSQL started; literal replacement corrected separately",
+      "Fresh isolated PostgreSQL attempt failed in the shared PF2 hook with PF2_ENGINE_HASH_MISMATCH before the six selected bodies; executable closure of the copied fixture is incomplete or mismatched and requires verification"
+    ],
+    "exit": 1,
+    "wallSeconds": 2.4389052,
+    "endedAt": "2026-10-15T01:24:35.6324495Z",
+    "cleanup": {
+      "stopExit": 0,
+      "inventoryExit": 0,
+      "generatedDatabases": 0,
+      "generatedRoles": 0,
+      "dataAbsent": true,
+      "passwordAbsent": true,
+      "ownedProcesses": 0,
+      "listeners": 0
+    },
+    "next": "Prepare an exact complete fixture closure, independently verify the original six cases, review and integrate only after acceptance, then rerun exact-commit CI."
+  }
+}
