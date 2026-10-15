@@ -1,0 +1,159 @@
+{
+  "schema": "DP1P_PRODUCTION_IDENTITY_DIAGNOSTICS_V1",
+  "recordedAt": "2026-10-15T06:18:46.973Z",
+  "observedAt": "2026-10-15T06:13:34.963Z",
+  "status": "ROOT_ACCEPTED_SCOPED_DIAGNOSTICS_AND_METADATA",
+  "source": {
+    "manifest": "52d5233c1bf819679472b16b1b73ca2b4c29981514b4d345032bf5f832f043f8",
+    "adapter": "1de3662166bbc6cffd086024772493435b3391216680e373d5fff62eed812411",
+    "runner": "96901008dcc9175f8275f27b9c104dc73b1890fcc42348bd855bf7cde23c3dc4"
+  },
+  "localVerification": {
+    "author": 164,
+    "priorTestsUnchanged": 143,
+    "independent": 21,
+    "pinsBeforeAfter": 11,
+    "scope": "Separate local synthetic scopes; not actual host acceptance or one combined suite.",
+    "report": ".qa-local/codex-dp1p-discovery-d3-r1-audit-2026-10-15/REPORT.md"
+  },
+  "retainedFailures": {
+    "authorFirstApproach": "161/164; inline role diagnostics changed three exact UNKNOWN-object assertions. Preserved failed log/freeze refusal; top-level private diagnostics then preserved all 143 original assertions.",
+    "verifierFirstApproach": "Harness expected nine inserted lines instead of eight. Only verifier assertion corrected; frozen source unchanged.",
+    "admissionE01": {
+      "at": "2026-10-15T06:07:28.325Z",
+      "verdict": "CLEAR",
+      "sshInvocations": 1,
+      "rc": 0,
+      "receiptSha256": "639b937fa4c3592e07360385253c836818dccbb681311b46fd4f514dfcbd71ae",
+      "logLimitation": "Wrapper log parent was absent after successful runner completion. Parent created and log reconstructed from receipt; original wrapper result was not retained. No second SSH.",
+      "followUp": "Root discovery GO refused ADMISSION_STALE after the 60-second freshness limit, before any discovery GO/claim/SSH. E01 remains historical evidence; a separately approved E02 admission followed."
+    }
+  },
+  "admission": {
+    "jobId": "DP1P-D1-ADMISSION-20261015-D3-E02",
+    "at": "2026-10-15T06:12:30.206Z",
+    "verdict": "CLEAR",
+    "sshInvocations": 1,
+    "rc": 0,
+    "elapsedMs": 968,
+    "observed": 48,
+    "busy": 0,
+    "unknown": 0,
+    "pinsSha256": "cf2185410dee26003c0641679629fbed2eca56a764679261e9160ff0c9e7f100",
+    "goSha256": "2bd9e3bf92d914d8ff7ab7c70070706f4ffbf4c5c76caac24aaff2b175bb7e49",
+    "receiptSha256": "29e50829d7c18af86a695ee4bf35f9ae589f7f81354716f9dd00f5ff307f60c6",
+    "freshnessMsAtDiscoveryGo": 20470,
+    "meaning": "Listed process signatures only, not general health/capacity."
+  },
+  "discovery": {
+    "jobId": "DP1P-D1-D3-20261015-E01",
+    "sshInvocations": 1,
+    "rc": 0,
+    "elapsedMs": 1008,
+    "remoteElapsedMs": 36,
+    "stderrBytes": 0,
+    "pinsSha256": "12b8b8831e383e9f5d8cf5521e0d838fec2aa9e4e8730a3587195e9788ab9f4c",
+    "goSha256": "d1aa98cb57aa5c432276bd1b41b8f7c1763df43758508182e74b974fd3c101af",
+    "privateReceiptSha256": "f52dcd326e347770fd03a306f66db11e556a2075028cb1879847855ee56864e7",
+    "publicReceiptSha256": "853af7b466dad84cb9420d96b3589e2c00f9fd041516a4d3b1f612c8dc5517bc",
+    "roles": {
+      "WORKER": {
+        "state": "OBSERVED",
+        "loadState": "loaded",
+        "activeState": "active",
+        "processState": "OBSERVED"
+      },
+      "API": {
+        "state": "OBSERVED",
+        "loadState": "loaded",
+        "activeState": "active",
+        "processState": "OBSERVED"
+      },
+      "WATCH_1": {
+        "state": "UNKNOWN",
+        "code": "SHOW_IDENTITY_PROPERTY_MISSING"
+      },
+      "WATCH_2": {
+        "state": "UNKNOWN",
+        "code": "SHOW_IDENTITY_PROPERTY_MISSING"
+      },
+      "WATCH_3": {
+        "state": "UNKNOWN",
+        "code": "ROLE_UNBOUND"
+      },
+      "WATCH_4": {
+        "state": "UNKNOWN",
+        "code": "ROLE_UNBOUND"
+      }
+    },
+    "identityDiagnostics": {
+      "WATCH_1": {
+        "missingIdentityProperties": [
+          "EnvironmentFiles"
+        ],
+        "presentPropertyCount": 28,
+        "loadState": "loaded",
+        "activeState": "active"
+      },
+      "WATCH_2": {
+        "missingIdentityProperties": [
+          "EnvironmentFiles"
+        ],
+        "presentPropertyCount": 28,
+        "loadState": "loaded",
+        "activeState": "active"
+      }
+    },
+    "directories": [
+      {
+        "id": "SHARED_CONFIGURED_DIRECTORY",
+        "state": "OBSERVED",
+        "kind": "SYMLINK",
+        "comparisons": {
+          "WORKER": "MATCH",
+          "API": "MATCH"
+        }
+      }
+    ],
+    "files": [
+      {
+        "id": "SHARED_ENVIRONMENT_METADATA",
+        "state": "OBSERVED",
+        "size": 766,
+        "kind": "METADATA_ONLY",
+        "contentsRead": false
+      },
+      {
+        "id": "BASELINE_PACKAGE",
+        "state": "OBSERVED",
+        "size": 980,
+        "kind": "METADATA_ONLY",
+        "contentsRead": false
+      },
+      {
+        "id": "BASELINE_LOCK",
+        "state": "OBSERVED",
+        "size": 25392,
+        "kind": "METADATA_ONLY",
+        "contentsRead": false
+      }
+    ],
+    "claimsConsumed": true,
+    "openGo": false
+  },
+  "interpretation": [
+    "Both bound watches report loaded/active diagnostics but lack EnvironmentFiles; full identity remains UNKNOWN. Missing must not be equated with empty without evidence.",
+    "Observed package sizes are 980 and 25392 bytes. These facts alone do not identify contents or justify normalization or automatic cap increases.",
+    "The D2 FILE_CAP outcomes remain unchanged; D3 read metadata only.",
+    "The shared configured symlink again matched sampled worker/API process cwd. Parent/chain policy remains unproven."
+  ],
+  "next": "Review baseline representation hypotheses and documented property-output behavior before preparing any new bounded identity observation. Continue independent review of the standalone directory helper and recovery budgets.",
+  "limits": [
+    "No package or environment-file contents were read by this packet.",
+    "No installed dependencies, application closure, loaded bytes, same database, effective PORT, API certificate or complete watch inventory proof.",
+    "No service/config/database/application mutation or deployment occurred.",
+    "Staging 24-hour observation remains not before 2026-10-15T22:17:53.400Z and requires fresh success. Owner policy and owner-present research gates remain.",
+    "PM1-I1 baseline remains immutable; no new score."
+  ],
+  "privacy": "No machine paths, unit names, PIDs, ports, raw environment or keys in this tracked evidence."
+}

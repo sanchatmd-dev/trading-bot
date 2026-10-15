@@ -1,0 +1,52 @@
+{
+  "schema": "DP1P_DIRECTORY_GUARD_LOCAL_V1",
+  "date": "2026-10-15",
+  "status": "ROOT_ACCEPTED_STANDALONE_LOCAL_HELPER_ONLY",
+  "sourceManifest": "a0794b7b581fb1637e99a6e70771695eb8c8c98853f0a98865a8ab04c37788d3",
+  "sourceSha256": "11fbe3b55fd1c98730ca50e2b430824aef42cb1e76b0849ae67f8520d79a30fc",
+  "testsSha256": "8863a216e5ddba3932b68f1f525d558f89ad657f4cf4027af01c67b6c01d54ae",
+  "apiSha256": "7c0b6406dcbe18a90dd166810ed0dd646b498763258c3bba531102959ebf1009",
+  "patchSha256": "867c6c449791caf2f532a1d6b6fe9c8a8d964f92475dfd2a19d719cfa0708e0d",
+  "independentReview": ".qa-local/codex-dp1p-directory-guard-r2-independent-2026-10-15/REVIEW.md",
+  "reviewMethod": "Independent Chat in a separate worktree copied pinned inputs, reviewed the exact delta, ran synthetic checks and returned evidence to Root. Root reviewed the report and source before accepting this limited scope.",
+  "retainedFailure": {
+    "revision": "R1",
+    "authorControls": 36,
+    "independentPass": 22,
+    "independentFail": 1,
+    "finding": "P2: certificate validation accepted a symlink size inconsistent with its linkText when comparing the same malformed certificate to itself.",
+    "impactLimit": "No trusted-baseline bypass demonstrated. Certificate provenance remains the caller's responsibility.",
+    "correction": "One source line requires symlink size to equal Buffer.byteLength(mapping.linkText). Negative controls cover malformed expected, observed and both certificates."
+  },
+  "finalVerification": {
+    "copiedAuthorControls": 39,
+    "unchangedPriorControls": 36,
+    "independentControls": 23,
+    "syntaxChecks": 2,
+    "result": "PASS",
+    "sourceAndCopyPinsBeforeAfter": "MATCH",
+    "scope": "Separate local synthetic suites; not one combined suite or actual host proof.",
+    "reviewerHarnessCorrection": "Initial verifier assumed CRLF although source used LF. Only verifier corrected before suites; candidate unchanged and the 39-case suite was not repeated."
+  },
+  "contract": {
+    "mappingCount": "1 or 2 explicit mappings, shared-role deduplication",
+    "kinds": ["DIRECT", "LEAF_SYMLINK"],
+    "policy": "No parent symlinks, target chains, dot segments or unconfigured path equivalence.",
+    "pathByteCap": 512,
+    "componentCap": 16,
+    "filesystemApiCallCap": 136,
+    "monotonicBudgetMs": 2000,
+    "crossPhaseInvariants": "Paths, kinds, link text, canonical target, dev/ino/uid/gid/mode; symlink size/mtime/ctime.",
+    "informational": "Directory size/mtime/ctime may change without invariant drift."
+  },
+  "limits": [
+    "Injected filesystem/clock only; no actual host observation, mutation, SSH or GO.",
+    "Paired samples are not atomic or no-ABA proof; no kernel latency or cleanup guarantee.",
+    "No unit/process identity, installed/loaded source identity, PC readiness or production acceptance.",
+    "No host/lib integration, rollback wiring, envelope increase or phase credits approved.",
+    "The 137th-call failure branch is structurally unreachable under valid mapping grammar; no artificial API or branch coverage claim.",
+    "Parent/chain applicability to production remains unobserved.",
+    "Staging 24-hour and owner-policy gates remain separate. PM1-I1 baseline is unchanged."
+  ],
+  "next": "Review self-contained observer integration and production recovery call counts before assigning a bounded implementation slice."
+}

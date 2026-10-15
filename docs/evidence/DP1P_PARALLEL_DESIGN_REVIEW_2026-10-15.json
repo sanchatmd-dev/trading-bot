@@ -1,0 +1,115 @@
+{
+  "schema": "DP1P_PARALLEL_DESIGN_REVIEW_V1",
+  "recordedAt": "2026-10-15T06:28:46.299Z",
+  "status": "ROOT_ACCEPTED_TWO_LOCAL_PREREQUISITES_RECOVERY_LEDGER_BLOCKED",
+  "reports": [
+    {
+      "id": "alias-budget",
+      "path": ".qa-local/codex-worktree-design-reviews-2026-10-15/alias-budget.md",
+      "sha256": "3ecd383300ab7e199107fc2aceaad08a9eb4805de9203dc68bc7978f8b7d3f2c"
+    },
+    {
+      "id": "identity-gap",
+      "path": ".qa-local/codex-worktree-design-reviews-2026-10-15/identity-gap.md",
+      "sha256": "90a0a061ac72e8681fb5565ba31c8657082d6321d9f7b93b28345e2a4c4976c3"
+    },
+    {
+      "id": "directory-observer",
+      "path": ".qa-local/codex-worktree-design-reviews-2026-10-15/directory-observer.md",
+      "sha256": "33147db8af1a525fca0458f845c97bfbae9a6c64b003a5d4e5cf219d3fb676db"
+    }
+  ],
+  "facts": [
+    "Three separate worktree Chats returned scoped reports automatically under explicit owner authorization. Root retains acceptance and integration.",
+    "Root checked the frozen postMain source: unknown-S3 success can call collect twice, loadedGate twice and readiness once. The proposed distinct-anchor placement requires seven guards, exceeding the earlier four-guard proposal. These are proposed placement counts, not observed host calls.",
+    "Root checked readiness uses Date.now and can repeat its final process checks. A fixed guard count is not established if guards are inserted inside that loop.",
+    "Root checked loadedGate compares effective properties and drop-in names, but does not itself verify original fragment/drop-in file bytes at restoration. Configuration, runtime and mapping restoration must remain separate claims.",
+    "Independent raw Git calculation found LF-to-CRLF-only variants with sizes 980 and 25392, matching D3 metadata sizes. Actual package contents, line endings and hashes remain unobserved.",
+    "Upstream systemd documentation supports an explicit --all property-output candidate. Installed behavior and the actual cause of omitted EnvironmentFiles remain unknown.",
+    "Directory observer integration is a proposal. Exact helper data-module composition, shared deadlines and strict output bounds require implementation and independent verification. Some valid maximum certificates may exceed the existing output cap and must refuse."
+  ],
+  "sourceDocumentation": "https://raw.githubusercontent.com/systemd/systemd/main/man/systemctl.xml",
+  "localNextSlices": [
+    {
+      "id": "D4-P1",
+      "scope": "Only add --all in an isolated observer copy and verify strict missing-versus-empty behavior; no package cap changes."
+    },
+    {
+      "id": "D4-C1",
+      "scope": "Standalone deterministic payload composer with exact helper bytes and existing 49152-byte cap; no observer or host wiring."
+    },
+    {
+      "id": "ALIAS-CREDIT1",
+      "scope": "Pure injected credit/deadline ledger with caller-supplied limits and recovery reserves; no approved production quotas or placements."
+    }
+  ],
+  "limits": [
+    "No new host action, deployment, service change or GO in this review wave.",
+    "No production timeout or guard-credit increase approved.",
+    "Proposed code is not accepted or integrated by dispatch. Independent verification remains required.",
+    "PM1-I1 baseline is unchanged. Staging 24-hour and owner-policy gates remain separate."
+  ],
+  "updatedAt": "2026-10-15T06:37:01.242Z",
+  "localResults": {
+    "propertyOutput": {
+      "status": "ROOT_ACCEPTED_FLAG_ONLY_LOCAL_CANDIDATE",
+      "manifestSha256": "7e1c041d044710a6a918e595a678781c2cdf19033fa413608b2c841dbe97df27",
+      "adapterSha256": "c601e66c68aa0787c2b7c6dec39a2838f596f25b0a0bd86e45174698ec9a4f39",
+      "runnerSha256": "96901008dcc9175f8275f27b9c104dc73b1890fcc42348bd855bf7cde23c3dc4",
+      "sourceDelta": "Exactly eight bytes add --all. Ten other base closure files, including the original 164-test file, are unchanged.",
+      "checks": {
+        "authorOriginal": 164,
+        "authorAdded": 7,
+        "independentCopiedSuite": 171,
+        "independentControls": 7,
+        "semanticMutantsDetected": 1
+      },
+      "report": ".qa-local/codex-dp1p-d4-p1-independent-2026-10-15/REPORT.md",
+      "retentionCorrection": "The author report incorrectly states inherited fixture teardown occurred. Source and independent suite each retain 73 synthetic fixture directories and 837 files. These are inert retained evidence, not production state; no live job was observed. Acceptance covers the pinned closure, not all unpinned fixture files.",
+      "limits": "Missing stays UNKNOWN; literal empty does not prove process identity, loaded code or watch coverage. Installed-systemd behavior and actual omission cause remain unobserved. No new operational observation or GO follows local acceptance."
+    },
+    "composer": {
+      "status": "ROOT_ACCEPTED_STANDALONE_COMPOSER_ONLY",
+      "manifestSha256": "11f581b966fc3481906cc4f60cf1da6af374fcca80c647bedf220a60a8e25638",
+      "sourceSha256": "e222043554542dd81c9f55d2ecdb0d3f6af7ba2eb03d61800c99b2986a2417cc",
+      "checks": {
+        "copiedAuthor": 13,
+        "independent": 12,
+        "semanticMutantsDetected": 3,
+        "syntax": 3
+      },
+      "report": ".qa-local/codex-dp1p-d4-c1-independent-2026-10-15/REPORT.md",
+      "pinsBeforeAfter": "MATCH",
+      "boundaries": [
+        "Caller must validate configuration semantics and review top-level marker placement in its pinned template.",
+        "Returned Buffer is mutable; caller must recheck and transport the same bytes under its claim/pin protocol.",
+        "Exact helper namespace import is tested without invoking observations. No observer integration, shared deadline, transport or host acceptance."
+      ],
+      "retainedRerun": "Independent tests reran after an unused import was removed. Both passing logs are retained; implementation unchanged."
+    },
+    "recoveryLedger": {
+      "status": "ROOT_WITHHELD_GENERAL_RECOVERY_INTEGRATION",
+      "manifestSha256": "70ec5e7e2aabdb5aede0492b08c72561b636f2b45bc0b457eab8e6bc6080e294",
+      "authorControls": 12,
+      "authorMutations": 9,
+      "openQuestion": "Current refusal latches may prevent use of allocated recovery reserves after a normal-budget refusal. Resolve this contract before integration.",
+      "independent": {
+        "copiedTestsPass": 12,
+        "semanticMutationsDetected": 9,
+        "controlsPass": 13,
+        "controlsFail": 2,
+        "syntax": 2,
+        "pinsBeforeAfter": "MATCH"
+      },
+      "report": ".qa-local/codex-dp1p-alias-credit1-independent-2026-10-15/REVIEW.md",
+      "reportSha256": "f332b83711541a41bd1073cb8d8a9300e25d5326fcb953d0e1c80a8d02c715d5",
+      "finding": "P2 contract gap: a normal CREDIT_RESERVE or TIME_RESERVE refusal prevents entry to recovery despite available reserved resources. The implementation conforms to the original all-refusals-sticky API; the two failed checks assert the intended integration requirement, not a hidden implementation deviation.",
+      "rootDecision": "Revise the local contract to distinguish an irreversible stop of normal admissions from fatal observation/integrity faults. Recovery may enter once on the same ledger after normal reserve refusal only after fresh resource checks; counters and deadlines never reset. No production integration or quota change is approved.",
+      "limitations": [
+        "Drift, failed/unknown observation, invalid/backward clock, total deadline exhaustion, ticket misuse/overlap and guard overrun remain fatal.",
+        "Instantaneous admission is not an enduring effect permit. Caller cost truth, placement and approved limits remain external.",
+        "Factory-local uniqueness is not durable fencing. An unresolved ticket is not proof of an OS job."
+      ]
+    }
+  }
+}
