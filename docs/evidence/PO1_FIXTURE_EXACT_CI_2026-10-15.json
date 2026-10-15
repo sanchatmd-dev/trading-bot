@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "packet": "PO1-FIXTURE-EXACT-CI",
+  "scope": "Exact committed local integration; no deployment",
+  "status": "PASS",
+  "sha": "9b63d77dff7cf103a7e244e88d2c126e8d2eeb8c",
+  "observedAt": "2026-10-15T03:25:56.425Z",
+  "checks": [
+    {
+      "id": 116227483025,
+      "name": "gate",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T03:15:37Z",
+      "completedAt": "2026-10-15T03:15:39Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38675159185/job/116227483025",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116227483025/annotations"
+    },
+    {
+      "id": 116227025463,
+      "name": "test (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T03:13:58Z",
+      "completedAt": "2026-10-15T03:19:35Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38675159248/job/116227025463",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116227025463/annotations"
+    },
+    {
+      "id": 116227025385,
+      "name": "postgres",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T03:13:57Z",
+      "completedAt": "2026-10-15T03:25:50Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38675159248/job/116227025385",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116227025385/annotations"
+    },
+    {
+      "id": 116227025381,
+      "name": "container",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T03:13:58Z",
+      "completedAt": "2026-10-15T03:14:13Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38675159248/job/116227025381",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116227025381/annotations"
+    },
+    {
+      "id": 116227025374,
+      "name": "test (windows-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T03:13:58Z",
+      "completedAt": "2026-10-15T03:19:42Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38675159248/job/116227025374",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116227025374/annotations"
+    },
+    {
+      "id": 116227012259,
+      "name": "quant (windows-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T03:13:55Z",
+      "completedAt": "2026-10-15T03:15:34Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38675159185/job/116227012259",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116227012259/annotations"
+    },
+    {
+      "id": 116227012225,
+      "name": "quant (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T03:13:55Z",
+      "completedAt": "2026-10-15T03:15:34Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38675159185/job/116227012225",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116227012225/annotations"
+    },
+    {
+      "id": 116226971109,
+      "name": "scope",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T03:13:46Z",
+      "completedAt": "2026-10-15T03:13:52Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38675159185/job/116226971109",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116226971109/annotations"
+    },
+    {
+      "id": 116226971015,
+      "name": "scope",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T03:13:46Z",
+      "completedAt": "2026-10-15T03:13:55Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38675159248/job/116226971015",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116226971015/annotations"
+    }
+  ],
+  "limitations": [
+    "CI success does not establish host health or deployment acceptance.",
+    "Earlier six-case and incomplete-fixture failures remain historical evidence."
+  ]
+}
