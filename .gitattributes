@@ -6,3 +6,6 @@ Dockerfile text eol=lf
 quant_lab/** export-ignore
 .ql-tools/** export-ignore
 .uv-cache/** export-ignore
+# PM-1 snapshots and their calculator are byte-pinned across platforms.
+docs/progress/PM1* -text
+scripts/calculate-pm1-progress.mjs -text

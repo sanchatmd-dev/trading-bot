@@ -1,0 +1,3316 @@
+{
+  "schema": "pm1-scorecard-v1",
+  "id": "PM1-B1-2026-10-15",
+  "method": "PM-1",
+  "inventoryVersion": "PM1-I1",
+  "inventoryPath": "docs/progress/PM1_INVENTORY_V1_2026-10-15.json",
+  "inventorySha256": "233f5fbea84355998c09da09f5b74799f453e7b5cb1270cfbf4c59a880ef514a",
+  "sourceCommit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+  "branch": "codex/app3a-market-wait-checkpoint",
+  "scoredAt": "2026-10-15T02:54:56.300Z",
+  "timezone": "Asia/Bangkok",
+  "status": "COMPLETE_WITH_EXPLICIT_UNCERTAINTY",
+  "priorScorecard": null,
+  "delta": null,
+  "interpretation": "First reproducible bounded PM-1 baseline. All inventory rows are scored, including explicit UNKNOWN. Bounds reflect unreconciled evidence, not statistical confidence or estimated labor. Historical 70/85 and 60/75 are non-comparable; no regression delta is claimed.",
+  "scope": {
+    "project": "Committed Paper product roadmap including customer readiness; optional Live excluded.",
+    "prototype": "One owner, one Bot, one supported Pine, BTCUSDT Spot 1m, existing 10K-bar profile. Excludes full portfolio/export/email, broader multi-Pine, paid launch and Live."
+  },
+  "allocationRule": "Equal shares among explicitly bounded outcomes within each fixed PM-1 category. This is a planning convention, not measured labor; frozen before credits and totals. No weighting adjustment to match historical estimates.",
+  "creditRule": "Cumulative stages: I requires D, V requires D/I, T requires D/I/V. Enumerate legal assignments for UNKNOWN. A higher known stage constrains earlier unknowns but does not silently remove their UNKNOWN labels.",
+  "sourceRule": "Historical frozen one-off outcomes keep their recorded identity and contract; enduring capabilities need final-source evidence or explicitly documented carry. Missing equivalence is UNKNOWN, not inferred from a green historical label. No fresh host or application test performed for scoring.",
+  "acceptanceRule": "Named gates are reported separately and never averaged into engineering progress. Local-only targets and staging/production targets retain their original inventory boundaries.",
+  "review": {
+    "root": "Codex root",
+    "evidenceReviewers": [
+      "Architecture auditor: F01-F06",
+      "Documentation reviewer: F07-F12 and P06-03"
+    ],
+    "rootOverrides": [
+      "F12-04 D=1: reviewed DP1 Paper release contract matches frozen outcome; not customer beta.",
+      "P04-01 1111: explicitly accepted historical natural same-entry pair.",
+      "P03-03 T=0: eligible owner Save journey is known open."
+    ],
+    "arithmetic": "Independent BigInt/five-state verifier; final report recorded separately after this immutable scorecard is written."
+  },
+  "rows": [
+    {
+      "id": "F01-01",
+      "view": "project",
+      "category": "F01",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "Owner auth, CSRF and scope contract documented in durable-jobs API and APP-3A acceptance.",
+        "I": "Four auth modules unchanged from staging6320169 to faa32a4; historical author/HTTP checks retained.",
+        "V": "Full applicable request-dispatch and tenant-isolation closure not reconciled; unchanged auth modules alone insufficient.",
+        "T": "6320169 staging401/login200/CSRF403 proves historical subset; full current isolation readback not reconciled."
+      },
+      "evidenceRefs": [
+        "E001",
+        "E002",
+        "E003"
+      ],
+      "sourceIdentity": "6320169; currentfaa32a4; auth module diff empty",
+      "verifier": "Historical APP-3A root acceptance; current full auth boundary UNKNOWN",
+      "carryLimitations": "Only src/auth.js,src/auth-store.js,src/postgres/auth.js,src/postgres/auth-store.js unchanged; surrounding dispatcher changed.",
+      "nextAction": "Reconcile dispatcher/session/tenant tests and retained staging scope.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F01-02",
+      "view": "project",
+      "category": "F01",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": 0
+      },
+      "rationale": {
+        "D": "Create/lifecycle quota and readiness contracts documented.",
+        "I": "Create Bot UI and API path implemented; author8 and independent12 cases reported.",
+        "V": "Full lifecycle current-byte review not reconciled; public/bots.js changed since5e398e7.",
+        "T": "Successful authenticated Create Bot explicitly unaccepted; capacity3/3 prevents positive proof."
+      },
+      "evidenceRefs": [
+        "E004",
+        "E005"
+      ],
+      "sourceIdentity": "256251b staged; later5e398e7; currentfaa32a4",
+      "verifier": "Independent UI cases and release acceptance only; owner positive journey open",
+      "carryLimitations": "Disabled capacity control is not successful creation/lifecycle proof.",
+      "nextAction": "Owner-authorized capacity-compatible Create Bot and lifecycle journey.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F01-03",
+      "view": "project",
+      "category": "F01",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "Prototype plan defines honest supported/unavailable journey states.",
+        "I": "Shared journey, disabled controls and labels implemented; independent focused checks retained.",
+        "V": "Full shared UI source equivalence and complete desktop/mobile outcome not reconciled.",
+        "T": "Authenticated partial journey proved; release alone does not establish all labelled outcomes."
+      },
+      "evidenceRefs": [
+        "E006",
+        "E005",
+        "E004"
+      ],
+      "sourceIdentity": "5e398e7 S4; currentfaa32a4",
+      "verifier": "Root release acceptance; partial desktop/mobile inspection, P1-F open",
+      "carryLimitations": "No full journey acceptance inferred from deployment.",
+      "nextAction": "Reconcile final UI scope and P1-F behavioral evidence.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F02-01",
+      "view": "project",
+      "category": "F02",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "APP-3A defines source-bound registry/generation/compile/guide contract.",
+        "I": "Actual provider generation and approved v4 compiled artifact established; selected Bridge modules unchanged since5e398e7.",
+        "V": "Original acceptance source987adc3 to current generation closure not reconciled.",
+        "T": "Actual staged generation exists; current exact supported generated artifact/guide binding remains unreconciled."
+      },
+      "evidenceRefs": [
+        "E003",
+        "E007",
+        "E008"
+      ],
+      "sourceIdentity": "APP-3A a4341f9/987adc3; real generation533755b; currentfaa32a4",
+      "verifier": "APP-3A engineering acceptance recorded; broader later generated draft compile remained separate",
+      "carryLimitations": "Frozen oneoff generation is real; current contract carry needs exact artifact/source/effective-input closure.",
+      "nextAction": "Root decide frozen oneoff versus ongoing generator applicability, reconcile hashes.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F02-02",
+      "view": "project",
+      "category": "F02",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": 0
+      },
+      "rationale": {
+        "D": "Approved ten-input lock and S4 selection-coherence contract explicit.",
+        "I": "Complete selection guard, typed mapping, domains and snapshot paths implemented; S4 author and independent checks pass.",
+        "V": "Full round-trip final closure not independently reconciled; S4 review alone narrower than all ten-input journey.",
+        "T": "Authenticated S4 behavioral acceptance explicitly false in release record."
+      },
+      "evidenceRefs": [
+        "E005",
+        "E009",
+        "E010"
+      ],
+      "sourceIdentity": "5e2ba93 local S4; staging5e398e7; Bridge paths unchanged5e398e7..faa32a4",
+      "verifier": "Independent S4 review and root local acceptance; authenticatedJourneyAcceptance false",
+      "carryLimitations": "Effects excluded here, belong F05-02; S6 does not erase binding implementation.",
+      "nextAction": "Authenticated ten-input generation/snapshot round-trip.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F02-03",
+      "view": "project",
+      "category": "F02",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "v2 receiver identity, duplicate and targeted EXIT contract reviewed.",
+        "I": "APP-3A controlled duplicate/target tests and natural pair prove implemented transport.",
+        "V": "Full owner/Bot/dedup closure from accepted987adc3 to current not reconciled.",
+        "T": "Historical natural pair accepted, but it cannot alone prove entire duplicate/unrelated-target acceptance scope."
+      },
+      "evidenceRefs": [
+        "E003",
+        "E011"
+      ],
+      "sourceIdentity": "APP-3A987adc3; natural BUY66/EXIT85 f22f3d0 API and f2bd332 worker",
+      "verifier": "naturalSameEntryExitAccepted true; APP-3A engineering accepted",
+      "carryLimitations": "Current Bridge files unchanged since5e398e7; earlier closure not reconciled. Natural oneoff remains accepted.",
+      "nextAction": "Reconcile scoped receiver dependency changes before historical verification carry.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F03-01",
+      "view": "project",
+      "category": "F03",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "Paper risk/caps/reduce-only allocation contract defined in APP-3A/QL2A.",
+        "I": "Baseline accepted/capped/rejected decisions and natural targeted closure implemented.",
+        "V": "Accounting changed after historical baseline; full current baseline equivalence unresolved.",
+        "T": "Natural targeted pair accepted, but current accounting/capped/rejected scope lacks reconciled staging proof."
+      },
+      "evidenceRefs": [
+        "E003",
+        "E012",
+        "E011"
+      ],
+      "sourceIdentity": "QL2A92 decisions; natural BUY66 EXIT85; currentfaa32a4 includes laterO3/G1/F4",
+      "verifier": "Historical APP-3A/QL2A root accepted; natural pair accepted",
+      "carryLimitations": "Not full portfolio valuation; new accounting corrections scored separately F03-02.",
+      "nextAction": "Reconcile exact corrected accounting baseline and staging identity.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F03-02",
+      "view": "project",
+      "category": "F03",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 1,
+        "T": 1
+      },
+      "rationale": {
+        "D": "O3/G1/F4 bounded correction contracts and provisional policies documented.",
+        "I": "Corrections integrated through40e3b6b/10ad82e and837a953.",
+        "V": "Independent accounting/fencing audit and tester evidence accepted; relevant Paper modules unchanged837a953..faa32a4.",
+        "T": "Declared target local integrated code; accepted integration and exact837a953 CI9/9 satisfy that target."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E013",
+        "E014"
+      ],
+      "sourceIdentity": "6ef8045 G1;40e3b6b F4;837a953 integration; relevant Paper files unchanged to faa32a4",
+      "verifier": "Opus accounting/fencing audit, tester, root accepted integrated scope; Fable supplemental only",
+      "carryLimitations": "PO1 changed db.js later; focused correction evidence does not claim full current CI pass or staging release. Policies remain provisional.",
+      "nextAction": "Root confirm bounded accounting carry despite separate PO1 integration failure; host migration/deploy separateF12.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F03-03",
+      "view": "project",
+      "category": "F03",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 1,
+        "T": 0
+      },
+      "rationale": {
+        "D": "W1 transient/bounded rejection/systemic-hold contract documented, policy provisional.",
+        "I": "W1 and later transient fault corrections implemented and integrated.",
+        "V": "Accepted integration837a953 and independent prior W1 review; current Paper/worker correction files unchanged in bounded comparison.",
+        "T": "Staging switched4d86822, predating later W1 changes; full declared behavior not staged."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E014",
+        "E015"
+      ],
+      "sourceIdentity": "8aefbf4 later W1 transient correction; staging4d86822",
+      "verifier": "Root prior code integration accepted; staging switch accepted only pinned older candidate",
+      "carryLimitations": "Three attempts per process, counters in memory; no multiple-worker global retry bound. Policy approval separate.",
+      "nextAction": "Stage final W1 closure under authorized release and observe.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F03-04",
+      "view": "project",
+      "category": "F03",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "CX1/PO1 transaction/lease behavior and boundary defined.",
+        "I": "Current db.js implements reviewed origin and terminal failure controls, focused24PG+13unit pass.",
+        "V": "ExactCI8pass1fail;743PGpass6fail6skip. Root explicitly holds integration closure; correction unintegrated/unaccepted.",
+        "T": "No PO1 deployment; target staging not achieved."
+      },
+      "evidenceRefs": [
+        "E016",
+        "E013"
+      ],
+      "sourceIdentity": "3d01b0330265c2608462dd42a53a99af3fdd7f87; db.js e244de9adcbcb0cbd716ef9e387285b2ace048c4e4e77314f0c6c6011769132d",
+      "verifier": "Focused independent auditor/tester/root accepted; whole integration held",
+      "carryLimitations": "Checkout-only; privileged in-lease mutation/raw-pool bypass excluded. PF2_ENGINE_HASH_MISMATCH before followup bodies preserved.",
+      "nextAction": "Complete fixture closure, independently verify original6 cases, root integration and exactCI, later staging.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F03-05",
+      "view": "project",
+      "category": "F03",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 1,
+        "T": 1
+      },
+      "rationale": {
+        "D": "CX5 structural inventory and exact import exception explicitly scoped.",
+        "I": "Final guard exists; current SHA equals accepted file.",
+        "V": "Independent architecture review and root10/10 tests on exact bytes accepted.",
+        "T": "Target local test integration; integrated exact file unchanged and retained run proves it."
+      },
+      "evidenceRefs": [
+        "E017"
+      ],
+      "sourceIdentity": "test/paper-ledger-fence.test.js SHA256 f0d058a37f97f0395c46e2c2320757fd5de0dc04e89a0edda12a9e4293dc6a45",
+      "verifier": "Independent architecture auditor; root10/10 accepted2026-10-15",
+      "carryLimitations": "Structural check only, not SQL parser, dynamic SQL safety or import runtime certification.",
+      "nextAction": "None for bounded inventory outcome; preserve explicit limits.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F04-01",
+      "view": "project",
+      "category": "F04",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 1,
+        "T": 1
+      },
+      "rationale": {
+        "D": "Owner-reviewed single515bar raw BACKFILL contract and holdout cutoff explicit.",
+        "I": "Actual bounded capture completed and persisted declared dataset.",
+        "V": "Root reviewed exact run, monitor and immediate/delayed gates; retained failure fixed separately.",
+        "T": "Oneoff staging BACKFILL SUCCEEDED;17/17 immediate and17/17 delayed, closed admission."
+      },
+      "evidenceRefs": [
+        "E018"
+      ],
+      "sourceIdentity": "2026-10-06 job terminal15:06:04.744Z; finalId8 bd7e1440/pageId8 a4695cd4/rowsSha8 ac17d86f",
+      "verifier": "rootReviewed true; owner UI submission; independent local tool reviews recorded",
+      "carryLimitations": "Frozen historical achievement, not current runtime health; raw515 only, no verified execution profile/enrollment.",
+      "nextAction": "None for oneoff outcome; PF2/R7 separate.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F04-02",
+      "view": "project",
+      "category": "F04",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "Prototype chart/indicator scope explicitly bounded by MD1 exclusion.",
+        "I": "Chart and indicators implemented with served-byte and authenticated readback evidence.",
+        "V": "Current full chart/state-label closure not reconciled against2919f9b.",
+        "T": "Historical staged chart/readback proved; all current stale/limited states not reconciled."
+      },
+      "evidenceRefs": [
+        "E011",
+        "E019",
+        "E004"
+      ],
+      "sourceIdentity": "f22f3d0 chart;2919f9b indicators; currentfaa32a4",
+      "verifier": "Historical local delivery and staging release/readback accepted",
+      "carryLimitations": "Prototype only; no MD1 production-scale claim.",
+      "nextAction": "Reconcile chart/diagnostic final bytes and exact label coverage.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F04-03",
+      "view": "project",
+      "category": "F04",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": 0
+      },
+      "rationale": {
+        "D": "PF2 contract/enrollment/replay boundaries and holdout rules reviewed.",
+        "I": "Resolver/replay/envelope/enrollment/API controls implemented with local checks.",
+        "V": "Historical local source equivalence to final engine closure not reconciled.",
+        "T": "PF2 remains disabled and admitted historical runtime acceptance open."
+      },
+      "evidenceRefs": [
+        "E020",
+        "E021",
+        "E022"
+      ],
+      "sourceIdentity": "PF2 enrollment2026-10-01; combined325d335 pf2Engine fcc1303e/pf2Evaluator3fb2d465",
+      "verifier": "Independent local reviews; root S07 release accepted explicitly without PF2 activation",
+      "carryLimitations": "Synthetic supported-source/receipt tests are not actual enrollment/private-source parity; earliest sibling holdout remains.",
+      "nextAction": "R7 admission/enrollment and PF2 activation under owner gates.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F04-04",
+      "view": "project",
+      "category": "F04",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "PF3 unavailable/capability/readiness contract root-reviewed.",
+        "I": "Readiness report implemented; staging correctly reportsPF2_DISABLED.",
+        "V": "pf3-readiness-report.js and service changed since3309d07; semantic carry not reconciled.",
+        "T": "Panel deployment and partial authenticated readback proven; applicable final report not reconciled."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E004"
+      ],
+      "sourceIdentity": "0aabe14 local;3309d07 staged; currentfaa32a4",
+      "verifier": "Local engineering acceptance and hostedCI9/9; partial P1-F readback",
+      "carryLimitations": "Unavailable historical evidence remains unavailable; report does not grant readiness.",
+      "nextAction": "Reconcile PF3 changed functions/tests and authenticated final report.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F04-05",
+      "view": "project",
+      "category": "F04",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": 0
+      },
+      "rationale": {
+        "D": "PF4 deterministic preview, policy binding and confirmed-save contract reviewed.",
+        "I": "Risk proposals/service/routes implemented; local accepted68a6268 and deployedb2f0bae.",
+        "V": "pf4-proposal-service.js and risk-proposals.js changed since release; final-byte carry unresolved.",
+        "T": "Explicit owner-confirmed save journey remains open; read-only preview and running refusal do not replace save."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E004"
+      ],
+      "sourceIdentity": "68a6268 local; b2f0bae staged; currentfaa32a4",
+      "verifier": "Independent audit/local acceptance; owner P1-F pending",
+      "carryLimitations": "Never alter running Risk Manager or infer owner save from deployed panel.",
+      "nextAction": "Reconcile changes then owner-confirmed saved-policy journey under authorized stopped state.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F05-01",
+      "view": "project",
+      "category": "F05",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "QL2A supported fixed source/settings/model contract accepted.",
+        "I": "Source evaluator and independent serial projection implemented,92 decisions matched.",
+        "V": "Frozen baseline accepted, but final evaluator byte/contract equivalence not reconciled.",
+        "T": "Historical local validated baseline exists; current supported engine carry unresolved."
+      },
+      "evidenceRefs": [
+        "E012",
+        "E023"
+      ],
+      "sourceIdentity": "QL2A fixed SPT Spotv4; baseline record implementation/source/dataset hashes",
+      "verifier": "QL2A engineering root accepted2026-09-26;130/130 repaint and92/92 decisions",
+      "carryLimitations": "No selected dynamic slots; no customer/runtime Quant support; frozen achievement not revoked.",
+      "nextAction": "Reconcile fixed evaluator source/hash closure against current engine.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F05-02",
+      "view": "project",
+      "category": "F05",
+      "credits": {
+        "D": 1,
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Ten selected dimensions and empirical effect/parity acceptance explicit.",
+        "I": "Full accepted selected-input effects incomplete; confirmLookback replacement/contract decision and real-data proof open.",
+        "V": "S6 empirical TradingView axis parity remains open; mechanicalS7 freezes source signals.",
+        "T": "Staging qualification not achieved; RR unchanged realized decisions preserved."
+      },
+      "evidenceRefs": [
+        "E005",
+        "E024"
+      ],
+      "sourceIdentity": "5e398e7 S7; frozen signal vectorafda7c39566ba74a32e58ced079a0c034402b1dc6f52a2bdc0bde72001db5f92",
+      "verifier": "S7 narrow local diagnostic accepted; S6 owner/root decision open",
+      "carryLimitations": "Known incomplete acceptance scope, not evidence absence. No holdout/search/ranking credit from mechanical replay.",
+      "nextAction": "Owner dimension decision and new frozen lock if approved, then declared effects/parity proof.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F05-03",
+      "view": "project",
+      "category": "F05",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "Costs, chronological partitions and untouched holdout contract explicit.",
+        "I": "Implementation emits honestNO_VALID_CANDIDATE; historical100 and21 candidate runs leaveholdout unopened.",
+        "V": "Current final cost/partition/holdout engine closure not reconciled after later changes.",
+        "T": "Historical validated local runs exist; current contract applicability unresolved."
+      },
+      "evidenceRefs": [
+        "E025",
+        "E012",
+        "E026"
+      ],
+      "sourceIdentity": "QL2A fixed cost10bps/1bps;QL3A seed20260927;Step5seed20261002",
+      "verifier": "Accepted fixed cost baseline; root retained valid terminal outcomes; no recommendation acceptance",
+      "carryLimitations": "NO_VALID_CANDIDATE is valid success; no profitability prerequisite. Holdout untouched, no guard reset.",
+      "nextAction": "Reconcile current cost/partition/holdout implementation against retained checks.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F06-01",
+      "view": "project",
+      "category": "F06",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "Durable jobs contract specifies source/input/data/policy snapshots, progress, cancellation and recovery.",
+        "I": "Durable API/worker and immutable contracts implemented; historical local47checks and staging evidence retained.",
+        "V": "6320169 source to current recovery/guard/selection changes not reconciled.",
+        "T": "Historical rollout/progress/terminal readback exists; complete current supported cancellation/recovery staging scope unresolved."
+      },
+      "evidenceRefs": [
+        "E001",
+        "E002",
+        "E026"
+      ],
+      "sourceIdentity": "6320169 engine02aa72c44c94d1e4ec567ad3c988ef95087c98483e27db00f88a1759226c1efb; laterc3fa9e5/3309d07",
+      "verifier": "Historical local review and rollout; current source carry unresolved",
+      "carryLimitations": "Result freeze F08 separate; scheduler/resource/recovery wider scope F07 separate.",
+      "nextAction": "Map current durable-job closure to applicable independent acceptance and staged recovery.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F06-02",
+      "view": "project",
+      "category": "F06",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 1,
+        "T": 1
+      },
+      "rationale": {
+        "D": "One declared21candidate/6600bar Step5 request with owner admission and fixed input lock.",
+        "I": "Actual bounded optimizer completed21/21 and ten-dimension coverage.",
+        "V": "Root reviewed declared outcome/terminal proof; corrected readiness failure separately retained, repeat explicitly owner-approved.",
+        "T": "One staging admitted run completed17:28:50UTC Oct2; terminal readback17:45:39 and admission closed."
+      },
+      "evidenceRefs": [
+        "E026",
+        "E008",
+        "E006"
+      ],
+      "sourceIdentity": "API/tradingc3fa9e5;research3309d07 plus pinned isolated interpreter/cache; seed20261002",
+      "verifier": "Claude root dated Step5 completion and terminal proof; underlying reviewed tool receipts referenced by checkpoint",
+      "carryLimitations": "Frozen oneoff achievement; no current admission/capacity/PF2/qualified candidate claim. NO_VALID_CANDIDATE meets terminal criterion.",
+      "nextAction": "Root confirm review-record pins sufficient for frozen oneoff V; no new run required to earn profit.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F06-03",
+      "view": "project",
+      "category": "F06",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Auditor design exists but proposed deadline and outcome semantics explicitly await root acceptance.",
+        "I": "Containment proposal unimplemented; existing30s socket timeout lacks absolute bound.",
+        "V": "No containment implementation/checks; proposed focused checks unrun.",
+        "T": "No integrated correction."
+      },
+      "evidenceRefs": [
+        "E027"
+      ],
+      "sourceIdentity": "Design source frozen .qa-local/int-r6 server.js164-196/request-dispatch.js108; currentfaa32a4 not corrected",
+      "verifier": "Auditor recommendation only, root decides; no accepted implementation",
+      "carryLimitations": "No safe retries inferred; upstream outcome may remain unknown; no DB timeout increase.",
+      "nextAction": "Root approve deadline/outcome contract then bounded implementation/verification.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F07-01",
+      "view": "project",
+      "category": "F07",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 1,
+        "T": 1
+      },
+      "rationale": {
+        "D": "Reviewed W7 windows and D6 prerequisite contract include explicit bounded checks and stop rules.",
+        "I": "Historical reviewed one-off tools completed their exact diagnostic contracts.",
+        "V": "Root records W7 and D6 accepted; unsuccessful/classification history remains disclosed.",
+        "T": "W7 windows ran on supervised staging; D6 records 1100/1100 samples and its acceptance inequality."
+      },
+      "evidenceRefs": [
+        "E028",
+        "E029",
+        "E030",
+        "E008"
+      ],
+      "sourceIdentity": "W7 staging 5e398e7; D6 combined staging 325d335. One-off historical diagnostic contracts, not a promise about current source recovery.",
+      "verifier": "Historical independent tool review and Claude root acceptances recorded in handoff/Roadmap; current scoring acceptance pending root.",
+      "carryLimitations": "T applies only named recovery windows and diagnostic prerequisites. W7 I/O allowances cannot carry to R7/PF-2. D6 does not prove capacity.",
+      "nextAction": "Fresh R7 measurement and PF-2 remain separate. Root confirm this historical-outcome interpretation.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F07-02",
+      "view": "project",
+      "category": "F07",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 1,
+        "T": 1
+      },
+      "rationale": {
+        "D": "Named J1-J4 contracts and source-reconciliation boundaries explicitly reviewed.",
+        "I": "Recorded packages implement named 20 cases.",
+        "V": "SCOPED_HARNESS_PREREQUISITE_ACCEPTED explicitly accepts common-source carry.",
+        "T": "Four individually accepted supervised staging jobs retained across their package scopes."
+      },
+      "evidenceRefs": [
+        "E031",
+        "E032"
+      ],
+      "sourceIdentity": "J1/J2 package 2964b5e3bda887ee22d4d246eef63d9c84647263cced2ba589c0509ed6acb736; J3/J4 560d1c4606c17ab2beba8147de1c3c9992b9003f3a9b1b0d303a456f0f80fbb0; product eb532ffd7b127140c38c44c90cfed50f0708f81c.",
+      "verifier": "Reconciliation explicitly says root accepts common-source carry; individual verifier identities in job records. Current score acceptance pending root.",
+      "carryLimitations": "No single-package all-case execution; J3 static-string reconstruction and J4 empty consumer module set disclosed. No broad R7 qualification.",
+      "nextAction": "Fresh measurement epoch.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F07-03",
+      "view": "project",
+      "category": "F07",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 1,
+        "T": 1
+      },
+      "rationale": {
+        "D": "Native/controller/held-report/recovery contracts explicitly bounded local synthetic tooling.",
+        "I": "Accepted native chain, lineage, persistence, report and recovery matrix exist as frozen local artifacts.",
+        "V": "Independent grouped checks and separate root acceptance records retained; 26 referenced report/manifest/decision pins checked unchanged.",
+        "T": "Declared target is accepted local tooling; actual synthetic native/controller chain and recovery matrix meet that target."
+      },
+      "evidenceRefs": [
+        "E033",
+        "E034",
+        "E035",
+        "E036"
+      ],
+      "sourceIdentity": "Controller-v4 FILES c887a127db84a7c639c496ce030d4c4af3d6ca39622f8f70e3a4f1eea3bfa27d; recovery-v3 FILES 72b51b6388d7b2237e2f1e9937d895528b2c3c3032d04dd751aa8b8a2884b40f; held-report-v12 FILES 8462cb4847cd89e485f2a4b8b487e3ccfed593cba9a83aa183f6d196d4493c45.",
+      "verifier": "Historical Codex/Claude independent auditor/tester and root decisions named by retained records; current scoring acceptance pending root.",
+      "carryLimitations": "Trusted synthetic callbacks/fixed filesystem roots; no hostile filesystem guarantee, real adapter/mainCLI locked. Root may require recursive manifest-file pin validation before adopting V/T.",
+      "nextAction": "Operational effect contract, release and admitted epoch; no authority follows from local completion.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F07-04",
+      "view": "project",
+      "category": "F07",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Latest epoch amendment remains DRAFT_NOT_A_GO_NO_AUTHORITY; complete final reviewed capacity contract not reconciled.",
+        "I": "Fresh qualifying measurement is incomplete; local controller alone cannot complete this outcome.",
+        "V": "No full fresh epoch accepted.",
+        "T": "No fresh target qualification accepted."
+      },
+      "evidenceRefs": [
+        "E037",
+        "E031"
+      ],
+      "sourceIdentity": "Frozen amendment JSON at base; executionReady false.",
+      "verifier": "Scoped prerequisite accepted only; fullR7Accepted false.",
+      "carryLimitations": "J1-J4 and local EM2 cannot substitute fresh capacity measurement.",
+      "nextAction": "Root finalize reviewed amendment/effects and owner gates before admitted epoch.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F08-01",
+      "view": "project",
+      "category": "F08",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "QR-1 owner-scoped storage/inspection contract and unavailable metrics specified.",
+        "I": "Library implementation complete for narrow inspection outcome; current quant-library.js exactly matches QR1B accepted source pin.",
+        "V": "Historical source f36181c evolved; relevant UI and HTTP tests changed. Full current-byte verification carry not reconciled.",
+        "T": "Historical staging release and partial owner walkthrough exist; final-source applicability unresolved."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E004",
+        "E038",
+        "E039"
+      ],
+      "sourceIdentity": "Historical staging f36181c; current src/postgres/quant-library.js SHA256 b2946466e005b42d547722a78c5c5364002b3ed2a9ae36f4d6109ac6373585d8; git diff f36181c..faa32a4 changes public/research-library.js and related tests.",
+      "verifier": "Historical release accepted; P1-F full owner acceptance still open. Current code verification carry requires root confirmation.",
+      "carryLimitations": "Storage inspection excludes freeze, full QR-3 and qualified selection. Partial browser proof alone does not accept full journey.",
+      "nextAction": "Reconcile Library final UI/API bytes to accepted historical/CI records.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F08-02",
+      "view": "project",
+      "category": "F08",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": 0
+      },
+      "rationale": {
+        "D": "Reviewed design A and explicit trigger/migration/restart/restore contract accepted locally; owner deployment decisions remain separate.",
+        "I": "Freeze SQL, rollback, migration, CLI and Library source match latest FZ2 superseding accepted pins.",
+        "V": "Initial independent evidence accepted; later FZ2/RT1/A4F/PGX revisions change tests. Later CI green is not automatic independent final-byte acceptance.",
+        "T": "Not deployed/applied to staging; local restart/dump-restore does not satisfy staging target."
+      },
+      "evidenceRefs": [
+        "E038",
+        "E040"
+      ],
+      "sourceIdentity": "Current freeze.sql bb3a5ce61bfcf9c6314fc36660d171324fbc41f664ad524e2e36a6b4016fb0fc; migration 67d3a4cbd5221d60a9990b69ab9ccd08d10aeae0084b91a2813b38e17f4f42b5; CLI e7fc7e28e9b772288aeb09911612a15797199c032223153ab4a06096e19c0126. Freeze test current 4ee30362ddbd61a848b69ccf6acea5f98b87ef2bed9d67f8ab07a3c09fcf02bf.",
+      "verifier": "QR1B original tester Sonnet 5.5/medium, Fable review with root confirmation; later local candidates root accepted. Final revised test-equivalence decision pending root.",
+      "carryLimitations": "FZ2 resolves original migration/CLI mismatch. Initial test hashes remain superseded; GH2 CI1 4d86822 all-nine CI pass does not prove migration on host. No fresh tests run.",
+      "nextAction": "Reconcile final verification; owner D1-D4 and staging restore/GO/catalog gates.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F09-01",
+      "view": "project",
+      "category": "F09",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "PINE_EXPORT declares proposed M5-M7 workflow; approved extension alone does not prove complete root-reviewed qualified-package contract.",
+        "I": "Offline candidate utilities exist, but authenticated qualified source-bound validation outcome remains planned.",
+        "V": "No completed final package accepted under QL-4B/4C.",
+        "T": "No staging validated recommendation integration."
+      },
+      "evidenceRefs": [
+        "E041",
+        "E008",
+        "E042"
+      ],
+      "sourceIdentity": "Base documents; legacy offline export distinct from revised authenticated workflow.",
+      "verifier": "Complete contract review not established; root decide D after targeted review.",
+      "carryLimitations": "Historical QL-4 completion cannot transfer automatically to revised QL-4B/4C.",
+      "nextAction": "Eligible M4 evidence, reviewed package contract, compilation/provenance/validation.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F09-02",
+      "view": "project",
+      "category": "F09",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Export/report/SMTP dependency and statuses described; complete reviewed delivery contract not established.",
+        "I": "Matching validated export and report delivery outcome incomplete; SMTP remediation open.",
+        "V": "No revised matching delivery acceptance.",
+        "T": "No staging validated delivery with required owner receipt."
+      },
+      "evidenceRefs": [
+        "E041",
+        "E008",
+        "E043"
+      ],
+      "sourceIdentity": "Base revised M5-M7 specification; historical SMTP/outbox snapshots not current matching-export evidence.",
+      "verifier": "Historical notifier tests/receipt do not accept revised report delivery; D requires root review.",
+      "carryLimitations": "Email failure does not invalidate otherwise valid export; never infer export validity from email success.",
+      "nextAction": "Validated package, SMTP 550 remediation, matching report and confirmed owner receipt.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F09-03",
+      "view": "project",
+      "category": "F09",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Explicit review/import/start restrictions specified, but proposed workflow lacks reconciled final contract review.",
+        "I": "Authenticated revised review/import remains planned.",
+        "V": "No accepted compatible validated package handoff.",
+        "T": "No owner staging handoff meeting defined outcome."
+      },
+      "evidenceRefs": [
+        "E041",
+        "E008"
+      ],
+      "sourceIdentity": "Base revised one-Pine M5-M7 contract proposal.",
+      "verifier": "No completed revised owner handoff acceptance found; root decide D.",
+      "carryLimitations": "Guarded apply contract is not completed interface; no automatic apply or optimizer loop.",
+      "nextAction": "QL-4C validated fresh package and explicit owner review/import.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F10-01",
+      "view": "project",
+      "category": "F10",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Owner-approved QR-2 design lists valuation/funding/reconciliation, but leaves allocation/versioned return details unresolved; complete root-reviewed contract not demonstrated.",
+        "I": "Roadmap explicitly planned; current equity book equity only.",
+        "V": "No full actual portfolio reconciliation accepted.",
+        "T": "No staging QR-2 integration."
+      },
+      "evidenceRefs": [
+        "E042",
+        "E008"
+      ],
+      "sourceIdentity": "Base approved design, QR-2 planned.",
+      "verifier": "Design approval not full implementation acceptance; D review pending root.",
+      "carryLimitations": "Existing balances/ledger are foundations, not complete portfolio outcome.",
+      "nextAction": "Finalize allocation/valuation/return contract then implement QR-2.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F10-02",
+      "view": "project",
+      "category": "F10",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Approved QR-3 design requires fixed objective, common valuation and ranking rules; complete final contract not evidenced.",
+        "I": "Only minimum context-matched comparison implemented; full declared-period comparison incomplete.",
+        "V": "Minimal comparison tests cannot verify full fair comparison.",
+        "T": "Full staging comparison not delivered."
+      },
+      "evidenceRefs": [
+        "E042",
+        "E008"
+      ],
+      "sourceIdentity": "Base QR-3 partial scope; distinct prototype P06-03 below.",
+      "verifier": "Historical minimum acceptance not full QR-3; root decide D.",
+      "carryLimitations": "No double-credit for minimal comparison as completed full comparison.",
+      "nextAction": "Define complete common context and independent evidence, then QR-3.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F10-03",
+      "view": "project",
+      "category": "F10",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Approved QR-4 principles exist; fixed qualified-ranking objective and full review checks not reconciled.",
+        "I": "Roadmap QR-4 planned; no-winner safety display alone is not full selection.",
+        "V": "No qualified selection acceptance.",
+        "T": "No staging QR-4 target integration."
+      },
+      "evidenceRefs": [
+        "E042",
+        "E008"
+      ],
+      "sourceIdentity": "Base QR-4 planned.",
+      "verifier": "No complete qualified-selection acceptance; root decide D.",
+      "carryLimitations": "Development scores and historical winning candidates cannot become qualified recommendations.",
+      "nextAction": "QR-2/QR-3 and eligible independent validation before qualified selection.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F11-01",
+      "view": "project",
+      "category": "F11",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Shared Bridge pair and source-membership rules specified; complete evaluator/package fixture contract review not found.",
+        "I": "Current documented durable research implementation rejects multiple-Pine jobs; complete combined evaluation/package outcome absent.",
+        "V": "No complete isolated multi-Pine acceptance.",
+        "T": "No accepted isolated fixture for full outcome."
+      },
+      "evidenceRefs": [
+        "E041",
+        "E001",
+        "E008"
+      ],
+      "sourceIdentity": "Base documented supported one-Pine implementation and planned multi-Pine rules.",
+      "verifier": "No full fixture acceptance reconciled; root decide D.",
+      "carryLimitations": "Membership constraints and basic owner isolation alone do not complete multi-Pine evaluator support.",
+      "nextAction": "Reviewed isolated multi-source evaluator/package fixture.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F11-02",
+      "view": "project",
+      "category": "F11",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "APP-3B high-level gates name canary, workload and recovery thresholds without complete fixed observable contract.",
+        "I": "Broader APP-3B rollout remains later phase.",
+        "V": "Basic APP-3A isolation does not establish APP-3B acceptance.",
+        "T": "No staging APP-3B canary acceptance."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E044"
+      ],
+      "sourceIdentity": "Base APP-3B planned scope.",
+      "verifier": "No broad multi-Pine acceptance; root review D.",
+      "carryLimitations": "Single-owner/single-Bot tests do not establish cross-Bot shared-symbol scaling.",
+      "nextAction": "Define measured thresholds, then isolated implementation and shared-symbol Paper canary.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F12-01",
+      "view": "project",
+      "category": "F12",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "MD-1 names load/security/data-rights gates, but target concurrency and limited-state threshold remain to be agreed.",
+        "I": "Dedicated service/egress/shared limiter production-scale package remains planned.",
+        "V": "No complete target-load qualification.",
+        "T": "No production MD-1 qualification."
+      },
+      "evidenceRefs": [
+        "E008"
+      ],
+      "sourceIdentity": "Base MD-1a-e planned table.",
+      "verifier": "No complete MD-1 acceptance; root decide D.",
+      "carryLimitations": "Existing single-owner stream/cache is not shared-IP customer-scale qualification.",
+      "nextAction": "Fix target load and agreed threshold; operational/data-rights contracts.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F12-02",
+      "view": "project",
+      "category": "F12",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Revised APP-4 bounded customer beta contract not reconciled beyond high-level phase.",
+        "I": "Historical lifecycle/quotas code exists but revised full customer beta outcome remains planned.",
+        "V": "Historical APP-4 label does not establish revised contract equivalence.",
+        "T": "No revised Paper beta acceptance."
+      },
+      "evidenceRefs": [
+        "E045",
+        "E046",
+        "E008"
+      ],
+      "sourceIdentity": "Historical 2026-09-22 APP-4 foundations versus revised APP-4 phase explicitly distinguished in README.",
+      "verifier": "Historical acceptance is non-equivalent until reconciled; root decide D.",
+      "carryLimitations": "Do not erase historical code or imply new beta readiness.",
+      "nextAction": "Bound customer lifecycle/entitlement/quota contract after APP-3B.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F12-03",
+      "view": "project",
+      "category": "F12",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Customer-scale security/launch operational acceptance not fully specified/reviewed in cited high-level phases.",
+        "I": "Current baseline is single-owner staging; required beyond-baseline outcome remains open.",
+        "V": "No complete customer-scale security/operations acceptance.",
+        "T": "No customer Paper beta integration acceptance."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E045"
+      ],
+      "sourceIdentity": "Base APP-4 and public/paid Paper beta gate.",
+      "verifier": "Existing auth/isolation/local tests cannot substitute customer-scale acceptance.",
+      "carryLimitations": "No claim existing security features absent; full frozen outcome incomplete.",
+      "nextAction": "Reviewed customer operational/security contract, restore/alerts/concurrent-service checks.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    },
+    {
+      "id": "F12-04",
+      "view": "project",
+      "category": "F12",
+      "credits": {
+        "D": 1,
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Root reconciled the frozen outcome to the reviewed DP1 Paper release/rollback contract, not to customer beta. Named staged gates, source identity, dependency closure, observations and stop conditions exist. No target or weight was changed.",
+        "I": "DP1 preparation remains partial and full production correction outcome not complete.",
+        "V": "Narrow dependency/reserve/CI evidence does not accept whole production rollout.",
+        "T": "Production/policy and staging 24-hour gates remain open."
+      },
+      "evidenceRefs": [
+        "E045",
+        "E008",
+        "E047",
+        "E048",
+        "E049",
+        "E050"
+      ],
+      "sourceIdentity": "Base DP1P source/carry scope; historical staging 4d86822 is not current whole product production rollout.",
+      "verifier": "Narrow local DP1 acceptances exist; whole frozen outcome acceptance absent.",
+      "carryLimitations": "Production rollout may be separate from customer beta; root clarify frozen F12 placement before D credit, without redefining target retroactively.",
+      "nextAction": "Root reconcile DP1 contract; close dependencies, observations, policy and production GO gates.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate. Root overrides proposed D=UNKNOWN to D=1 after matching the explicitly frozen Paper rollout contract; I/V/T remain zero."
+    },
+    {
+      "id": "P01-01",
+      "view": "prototype",
+      "category": "P01",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "APP-3A defines source-bound registry/generation/compile/guide contract.",
+        "I": "Actual provider generation and approved v4 compiled artifact established; selected Bridge modules unchanged since5e398e7.",
+        "V": "Original acceptance source987adc3 to current generation closure not reconciled.",
+        "T": "Actual staged generation exists; current exact supported generated artifact/guide binding remains unreconciled."
+      },
+      "evidenceRefs": [
+        "E003",
+        "E007",
+        "E008"
+      ],
+      "sourceIdentity": "APP-3A a4341f9/987adc3; real generation533755b; currentfaa32a4",
+      "verifier": "APP-3A engineering acceptance recorded; broader later generated draft compile remained separate",
+      "carryLimitations": "Frozen oneoff generation is real; current contract carry needs exact artifact/source/effective-input closure.",
+      "nextAction": "Root decide frozen oneoff versus ongoing generator applicability, reconcile hashes.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F02-01"
+    },
+    {
+      "id": "P02-01",
+      "view": "prototype",
+      "category": "P02",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": 0
+      },
+      "rationale": {
+        "D": "Approved ten-input lock and S4 selection-coherence contract explicit.",
+        "I": "Complete selection guard, typed mapping, domains and snapshot paths implemented; S4 author and independent checks pass.",
+        "V": "Full round-trip final closure not independently reconciled; S4 review alone narrower than all ten-input journey.",
+        "T": "Authenticated S4 behavioral acceptance explicitly false in release record."
+      },
+      "evidenceRefs": [
+        "E005",
+        "E009",
+        "E010"
+      ],
+      "sourceIdentity": "5e2ba93 local S4; staging5e398e7; Bridge paths unchanged5e398e7..faa32a4",
+      "verifier": "Independent S4 review and root local acceptance; authenticatedJourneyAcceptance false",
+      "carryLimitations": "Effects excluded here, belong F05-02; S6 does not erase binding implementation.",
+      "nextAction": "Authenticated ten-input generation/snapshot round-trip.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F02-02"
+    },
+    {
+      "id": "P02-02",
+      "view": "prototype",
+      "category": "P02",
+      "credits": {
+        "D": 1,
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Ten selected dimensions and empirical effect/parity acceptance explicit.",
+        "I": "Full accepted selected-input effects incomplete; confirmLookback replacement/contract decision and real-data proof open.",
+        "V": "S6 empirical TradingView axis parity remains open; mechanicalS7 freezes source signals.",
+        "T": "Staging qualification not achieved; RR unchanged realized decisions preserved."
+      },
+      "evidenceRefs": [
+        "E005",
+        "E024"
+      ],
+      "sourceIdentity": "5e398e7 S7; frozen signal vectorafda7c39566ba74a32e58ced079a0c034402b1dc6f52a2bdc0bde72001db5f92",
+      "verifier": "S7 narrow local diagnostic accepted; S6 owner/root decision open",
+      "carryLimitations": "Known incomplete acceptance scope, not evidence absence. No holdout/search/ranking credit from mechanical replay.",
+      "nextAction": "Owner dimension decision and new frozen lock if approved, then declared effects/parity proof.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F05-02"
+    },
+    {
+      "id": "P03-01",
+      "view": "prototype",
+      "category": "P03",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": 0
+      },
+      "rationale": {
+        "D": "PF2 contract/enrollment/replay boundaries and holdout rules reviewed.",
+        "I": "Resolver/replay/envelope/enrollment/API controls implemented with local checks.",
+        "V": "Historical local source equivalence to final engine closure not reconciled.",
+        "T": "PF2 remains disabled and admitted historical runtime acceptance open."
+      },
+      "evidenceRefs": [
+        "E020",
+        "E021",
+        "E022"
+      ],
+      "sourceIdentity": "PF2 enrollment2026-10-01; combined325d335 pf2Engine fcc1303e/pf2Evaluator3fb2d465",
+      "verifier": "Independent local reviews; root S07 release accepted explicitly without PF2 activation",
+      "carryLimitations": "Synthetic supported-source/receipt tests are not actual enrollment/private-source parity; earliest sibling holdout remains.",
+      "nextAction": "R7 admission/enrollment and PF2 activation under owner gates.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F04-03"
+    },
+    {
+      "id": "P03-02",
+      "view": "prototype",
+      "category": "P03",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "PF3 unavailable/capability/readiness contract root-reviewed.",
+        "I": "Readiness report implemented; staging correctly reportsPF2_DISABLED.",
+        "V": "pf3-readiness-report.js and service changed since3309d07; semantic carry not reconciled.",
+        "T": "Panel deployment and partial authenticated readback proven; applicable final report not reconciled."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E004"
+      ],
+      "sourceIdentity": "0aabe14 local;3309d07 staged; currentfaa32a4",
+      "verifier": "Local engineering acceptance and hostedCI9/9; partial P1-F readback",
+      "carryLimitations": "Unavailable historical evidence remains unavailable; report does not grant readiness.",
+      "nextAction": "Reconcile PF3 changed functions/tests and authenticated final report.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F04-04"
+    },
+    {
+      "id": "P03-03",
+      "view": "prototype",
+      "category": "P03",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": 0
+      },
+      "rationale": {
+        "D": "PF4 deterministic preview, policy binding and confirmed-save contract reviewed.",
+        "I": "Risk proposals/service/routes implemented; local accepted68a6268 and deployedb2f0bae.",
+        "V": "pf4-proposal-service.js and risk-proposals.js changed since release; final-byte carry unresolved.",
+        "T": "Successful eligible owner preview/save acceptance remains explicitly open. The deployed panel and correct Save refusal while RUNNING do not complete this owner-journey target."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E004",
+        "E004"
+      ],
+      "sourceIdentity": "68a6268 local; b2f0bae staged; currentfaa32a4",
+      "verifier": "Independent audit/local acceptance; owner P1-F pending",
+      "carryLimitations": "Never alter running Risk Manager or infer owner save from deployed panel.",
+      "nextAction": "Reconcile changes then owner-confirmed saved-policy journey under authorized stopped state.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F04-05"
+    },
+    {
+      "id": "P04-01",
+      "view": "prototype",
+      "category": "P04",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 1,
+        "T": 1
+      },
+      "rationale": {
+        "D": "The exact same-entry natural pair was a declared prototype acceptance outcome.",
+        "I": "The supported Bridge/receiver and Paper worker produced the specified natural pair.",
+        "V": "The retained root-accepted API/ledger review verifies BUY 66 and targeted reduce-only EXIT 85, with matching entry identity.",
+        "T": "The frozen one-off outcome occurred on staging and was explicitly accepted on 2026-10-04. This does not certify current host health."
+      },
+      "evidenceRefs": [
+        "E006",
+        "E011"
+      ],
+      "sourceIdentity": "Historical chart release f22f3d0; the receipt binds its original Bot/deployment and signals 66/85.",
+      "verifier": "naturalSameEntryExitAccepted true; APP-3A engineering accepted",
+      "carryLimitations": "Current Bridge files unchanged since5e398e7; earlier closure not reconciled. Natural oneoff remains accepted.",
+      "nextAction": "No repeat required for this frozen one-off pair; current deployment and wider accounting gates remain separate.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F02-03"
+    },
+    {
+      "id": "P04-02",
+      "view": "prototype",
+      "category": "P04",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "Paper risk/caps/reduce-only allocation contract defined in APP-3A/QL2A.",
+        "I": "Baseline accepted/capped/rejected decisions and natural targeted closure implemented.",
+        "V": "Accounting changed after historical baseline; full current baseline equivalence unresolved.",
+        "T": "Natural targeted pair accepted, but current accounting/capped/rejected scope lacks reconciled staging proof."
+      },
+      "evidenceRefs": [
+        "E003",
+        "E012",
+        "E011"
+      ],
+      "sourceIdentity": "QL2A92 decisions; natural BUY66 EXIT85; currentfaa32a4 includes laterO3/G1/F4",
+      "verifier": "Historical APP-3A/QL2A root accepted; natural pair accepted",
+      "carryLimitations": "Not full portfolio valuation; new accounting corrections scored separately F03-02.",
+      "nextAction": "Reconcile exact corrected accounting baseline and staging identity.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F03-01"
+    },
+    {
+      "id": "P05-01",
+      "view": "prototype",
+      "category": "P05",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "Durable jobs contract specifies source/input/data/policy snapshots, progress, cancellation and recovery.",
+        "I": "Durable API/worker and immutable contracts implemented; historical local47checks and staging evidence retained.",
+        "V": "6320169 source to current recovery/guard/selection changes not reconciled.",
+        "T": "Historical rollout/progress/terminal readback exists; complete current supported cancellation/recovery staging scope unresolved."
+      },
+      "evidenceRefs": [
+        "E001",
+        "E002",
+        "E026"
+      ],
+      "sourceIdentity": "6320169 engine02aa72c44c94d1e4ec567ad3c988ef95087c98483e27db00f88a1759226c1efb; laterc3fa9e5/3309d07",
+      "verifier": "Historical local review and rollout; current source carry unresolved",
+      "carryLimitations": "Result freeze F08 separate; scheduler/resource/recovery wider scope F07 separate.",
+      "nextAction": "Map current durable-job closure to applicable independent acceptance and staged recovery.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F06-01"
+    },
+    {
+      "id": "P05-02",
+      "view": "prototype",
+      "category": "P05",
+      "credits": {
+        "D": "UNKNOWN",
+        "I": 0,
+        "V": 0,
+        "T": 0
+      },
+      "rationale": {
+        "D": "Latest epoch amendment remains DRAFT_NOT_A_GO_NO_AUTHORITY; complete final reviewed capacity contract not reconciled.",
+        "I": "Fresh qualifying measurement is incomplete; local controller alone cannot complete this outcome.",
+        "V": "No full fresh epoch accepted.",
+        "T": "No fresh target qualification accepted."
+      },
+      "evidenceRefs": [
+        "E037",
+        "E031"
+      ],
+      "sourceIdentity": "Frozen amendment JSON at base; executionReady false.",
+      "verifier": "Scoped prerequisite accepted only; fullR7Accepted false.",
+      "carryLimitations": "J1-J4 and local EM2 cannot substitute fresh capacity measurement.",
+      "nextAction": "Root finalize reviewed amendment/effects and owner gates before admitted epoch.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F07-04"
+    },
+    {
+      "id": "P05-03",
+      "view": "prototype",
+      "category": "P05",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": 1,
+        "T": 1
+      },
+      "rationale": {
+        "D": "One declared21candidate/6600bar Step5 request with owner admission and fixed input lock.",
+        "I": "Actual bounded optimizer completed21/21 and ten-dimension coverage.",
+        "V": "Root reviewed declared outcome/terminal proof; corrected readiness failure separately retained, repeat explicitly owner-approved.",
+        "T": "One staging admitted run completed17:28:50UTC Oct2; terminal readback17:45:39 and admission closed."
+      },
+      "evidenceRefs": [
+        "E026",
+        "E008",
+        "E006"
+      ],
+      "sourceIdentity": "API/tradingc3fa9e5;research3309d07 plus pinned isolated interpreter/cache; seed20261002",
+      "verifier": "Claude root dated Step5 completion and terminal proof; underlying reviewed tool receipts referenced by checkpoint",
+      "carryLimitations": "Frozen oneoff achievement; no current admission/capacity/PF2/qualified candidate claim. NO_VALID_CANDIDATE meets terminal criterion.",
+      "nextAction": "Root confirm review-record pins sufficient for frozen oneoff V; no new run required to earn profit.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F06-02"
+    },
+    {
+      "id": "P06-01",
+      "view": "prototype",
+      "category": "P06",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "QR-1 owner-scoped storage/inspection contract and unavailable metrics specified.",
+        "I": "Library implementation complete for narrow inspection outcome; current quant-library.js exactly matches QR1B accepted source pin.",
+        "V": "Historical source f36181c evolved; relevant UI and HTTP tests changed. Full current-byte verification carry not reconciled.",
+        "T": "Historical staging release and partial owner walkthrough exist; final-source applicability unresolved."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E004",
+        "E038",
+        "E039"
+      ],
+      "sourceIdentity": "Historical staging f36181c; current src/postgres/quant-library.js SHA256 b2946466e005b42d547722a78c5c5364002b3ed2a9ae36f4d6109ac6373585d8; git diff f36181c..faa32a4 changes public/research-library.js and related tests.",
+      "verifier": "Historical release accepted; P1-F full owner acceptance still open. Current code verification carry requires root confirmation.",
+      "carryLimitations": "Storage inspection excludes freeze, full QR-3 and qualified selection. Partial browser proof alone does not accept full journey.",
+      "nextAction": "Reconcile Library final UI/API bytes to accepted historical/CI records.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F08-01"
+    },
+    {
+      "id": "P06-02",
+      "view": "prototype",
+      "category": "P06",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": 0
+      },
+      "rationale": {
+        "D": "Reviewed design A and explicit trigger/migration/restart/restore contract accepted locally; owner deployment decisions remain separate.",
+        "I": "Freeze SQL, rollback, migration, CLI and Library source match latest FZ2 superseding accepted pins.",
+        "V": "Initial independent evidence accepted; later FZ2/RT1/A4F/PGX revisions change tests. Later CI green is not automatic independent final-byte acceptance.",
+        "T": "Not deployed/applied to staging; local restart/dump-restore does not satisfy staging target."
+      },
+      "evidenceRefs": [
+        "E038",
+        "E040"
+      ],
+      "sourceIdentity": "Current freeze.sql bb3a5ce61bfcf9c6314fc36660d171324fbc41f664ad524e2e36a6b4016fb0fc; migration 67d3a4cbd5221d60a9990b69ab9ccd08d10aeae0084b91a2813b38e17f4f42b5; CLI e7fc7e28e9b772288aeb09911612a15797199c032223153ab4a06096e19c0126. Freeze test current 4ee30362ddbd61a848b69ccf6acea5f98b87ef2bed9d67f8ab07a3c09fcf02bf.",
+      "verifier": "QR1B original tester Sonnet 5.5/medium, Fable review with root confirmation; later local candidates root accepted. Final revised test-equivalence decision pending root.",
+      "carryLimitations": "FZ2 resolves original migration/CLI mismatch. Initial test hashes remain superseded; GH2 CI1 4d86822 all-nine CI pass does not prove migration on host. No fresh tests run.",
+      "nextAction": "Reconcile final verification; owner D1-D4 and staging restore/GO/catalog gates.",
+      "decision": "Root reviewed the distinct prototype outcome and accepts the mapped stage evidence only within the frozen target and exclusions. Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate.",
+      "crossViewReference": "F08-02"
+    },
+    {
+      "id": "P06-03",
+      "view": "prototype",
+      "category": "P06",
+      "credits": {
+        "D": 1,
+        "I": 1,
+        "V": "UNKNOWN",
+        "T": "UNKNOWN"
+      },
+      "rationale": {
+        "D": "Minimal compatible-only comparison and no-qualified-winner display explicitly bounded in QR-1 release.",
+        "I": "Staging Library implements minimum comparison; historical owner walkthrough withheld incompatible metrics and showed no qualified winner.",
+        "V": "Final relevant UI/API bytes evolved after f36181c; no complete equivalence reconciliation in this review.",
+        "T": "Historical target observation exists, but final-source applicability and full acceptance remain unresolved."
+      },
+      "evidenceRefs": [
+        "E008",
+        "E004",
+        "E038"
+      ],
+      "sourceIdentity": "Historical f36181c plus Oct3 owner walkthrough. Current Library source matches QR1B pin, while UI and tests differ from initial release.",
+      "verifier": "Historical release accepted; partial owner walkthrough preserved; full P1-F remains open. Root must confirm narrow outcome acceptance/equivalence.",
+      "carryLimitations": "Unique minimal-comparison outcome; not full QR-3/QR-4/export. Inventory crossViewReference F08-01 does not mean copy F08-01 stages automatically.",
+      "nextAction": "Reconcile final Library comparison bytes and independent acceptance evidence.",
+      "decision": "Root accepts this bounded PM-1 scoring assessment, not any open product or operational gate."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E001",
+      "path": "docs/QL_3A_DURABLE_JOBS.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "da146ae49d6702ea480f5691aa07e1449052bd986f356d545869fbe46322561e",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E002",
+      "path": "docs/evidence/QL_3A_DURABLE_JOBS_STAGING_ROLLOUT_2026-09-27.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "89314c551680195e40b1dfd9a34835397568208023d9cefc8299fa6732924f27",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E003",
+      "path": "docs/APP_3A_ACCEPTANCE_2026-09-26.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "01ffcbf0918133b1530cc950cde28d4c391e080d64f0d6599de1418817176875",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E004",
+      "path": "docs/STAGING_P2_CHECKPOINT_2026-10-03.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "014e5b4e8dbe2d1cb127126a43b22a9354471c1e6d66f6a76fbdae98825e6e19",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E005",
+      "path": "docs/STEP2_S4_CONTINUATION_2026-10-05.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "6d31cb23119ac97cc59b290ff331b7c4eb5a1b208b74e1cec899eefbfb1aece0",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E006",
+      "path": "docs/STAGING_PROTOTYPE_PLAN_2026-10-01.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "f2c0adfea96c7f51efaf83bc8f93701d974ea8efeb2270c98291f1dd3288ec5a",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E007",
+      "path": "docs/evidence/APP_3A_READINESS_2026-09-26.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "757492c9d5eac93559f6eb9bcb30aa5aacef91d2900010d32203e8968c64ad46",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E008",
+      "path": "docs/ROADMAP.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "19cdc2c93f0983db6c8e7d75f7264364b60beaafc0d4648041bc1433e6e5e357",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E009",
+      "path": "docs/evidence/STEP2_S4_STAGING_RELEASE_2026-10-05.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "4a5a383e43a87ceb89850acc667896a882e253ce4a5368b9b41e5dc54aa6fb79",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E010",
+      "path": "docs/evidence/QL_3A_APPROVED_INPUT_LOCK_2026-09-27.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "7e1bb1eefe71a3100949533a82e5e70feb46e23f7b95d85de22dd525db704035",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E011",
+      "path": "docs/evidence/P2_CHART_RELEASE_F22F3D0_2026-10-04.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "b662fbf09db8f8108a75162f352bd48ade66e5e95d1aa3c046886bdda448be35",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E012",
+      "path": "docs/QL_2A_IMPLEMENTATION.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "2e8bbcc97e51795b785404c92cf34e66294c4c69e88264a21af41c1333e7577c",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E013",
+      "path": "docs/evidence/INT_R7_FCL_LOCAL_INTEGRATION_2026-10-15.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "2ca0b361aa21e3653bcc1cd13b9104cb524724bb9163e0758fdb0b435797415e",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E014",
+      "path": "docs/evidence/INT_R7_FCL_EXACT_CI_2026-10-15.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "0a6ab2dbeb31a684a3e3d0d5e2d2dc1ff81e776b8bc20d992a0078db4554736c",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E015",
+      "path": "docs/evidence/DP1S_C02_STAGING_SWITCH_2026-10-15.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "aad713e555690938cefb994a5c89a3a5ce04bdd4d8f0f67bae29cae580ecc8aa",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E016",
+      "path": "docs/evidence/PO1_LOCAL_INTEGRATION_2026-10-15.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "8136cf7ff4e9e2716faabced44d15ecbce015917bf804b0eef9a4df56adcaa67",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E017",
+      "path": "docs/evidence/PAPER_WRITER_GUARD_CX5_LOCAL_2026-10-15.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "68af8e27fa4975d72654772ad3033f69ca1e65f9ad5567df1bdf19ef6286c51c",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E018",
+      "path": "docs/evidence/B3_FIRST_BACKFILL_2026-10-06.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "86af5a9b6a87cde5462b4ca4fd4451c7b87684dc2e7c084f29ca1e43149069b2",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E019",
+      "path": "docs/evidence/P2_CHART_INDICATORS_RELEASE_2919F9B_2026-10-04.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "d96515c70964ff2ccc8d9aac854e19b8d449ef156ead6df481a17dd30a02023c",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E020",
+      "path": "docs/PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "46f5edecd3cd6c7c0264e6daeeb30e8f9a2f81b9d1cdd4de1c17afd88aeec9b9",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E021",
+      "path": "docs/PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "84b66f7656be74c1c758c779dcbced086ad1e5a3888261cf0bf421e40341e3f3",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E022",
+      "path": "docs/evidence/COMBINED_S07_STAGING_RELEASE_2026-10-08.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "e381843c0c38a9f805c92557bdbfc5233df0da8ef719d320f8d2a16ab8af0af3",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E023",
+      "path": "docs/evidence/QL_2A_BASELINE_2026-09-26.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "9200dc8fc65d7b9ed03fd57801fbfa5110c3c75c8da6386113eef2ae69b7ea04",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E024",
+      "path": "docs/evidence/STEP2_S7_MECHANICAL_REPLAY_2026-10-05.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "1fa480ce02a7f4a0dcbe975b97d54fb8330342652164e31b890aef45856116f4",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E025",
+      "path": "docs/QL_3A_IMPLEMENTATION.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "fd98932e17c917fcaa0e3dfb31f725b404aa2f6c1d5e4bf5bf79e9eb195408cf",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E026",
+      "path": "docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "437e2d6f9fb62f865325c7f3b0e9ed833c64b1fb8f7da2e163a1b13f039912cc",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E027",
+      "path": ".qa-local/codex-legacy-optimize-design-2026-10-15/REPORT.md",
+      "sha256": "0eb4a84fdfe2062c8659a34578f615e0a2bcf60deaa0a379d5131a8517d129d3",
+      "binding": "Frozen local measurement artifact; no product behavior claim"
+    },
+    {
+      "id": "E028",
+      "path": "docs/evidence/W7_WINDOW1_2026-10-07.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "231226813b8be785d3b47fbb98fbb3acbdd49a769bf35c14ad6cb417fbc01235",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E029",
+      "path": "docs/evidence/W7_WINDOW2_2026-10-07.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "1d8639b8140b7fa8bd5b3107fe3444a95de7715e8908970b6c1c1c236969d2d9",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E030",
+      "path": "docs/CLAUDE_TO_CODEX_HANDOFF_2026-10-08.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "4bad1ed8c608f90f4b54826a21ec4607e6ae555d4cda780436fc0cfbb0ee784f",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E031",
+      "path": "docs/evidence/R7B_HARNESS_RECONCILIATION_2026-10-13.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "e38be5cf1f52fe1c8fb0251e7e6f94a35de40f1d8ab804696f014dec7989e4dc",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E032",
+      "path": "docs/evidence/R7B_J1R9_2026-10-12.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "7c3e4f51712d4aada79132ed6ad07100ba99ba2afa1f45c33257bfc628b748c3",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E033",
+      "path": "docs/evidence/R7B_EM2_NATIVE_CHAIN_2026-10-13.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "f660a509c5b2b00475b4b9799cad2b83069ccc0551ae389c27d4abd84e5e1dd1",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E034",
+      "path": "docs/evidence/R7B_EM2_CONTROLLER_FULL_LOCAL_2026-10-13.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "2eb16c5f627fe3c45b09a65fa01e397d62ca76320966a7fa71a06f8e1edec233",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E035",
+      "path": "docs/evidence/R7B_EM2_CONTROLLER_RECOVERY_LOCAL_2026-10-13.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "c1e3103f6be3c28bca0a08110eeb2b7c2b40096965a5d5818e000d5a0361a6a4",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E036",
+      "path": "docs/evidence/R7B_EM2_HELD_REPORT_V12_LOCAL_2026-10-13.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "9c8d6d7db358a3aae728445a1c7fcaa00ebf37f40d924241d7851983a136810a",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E037",
+      "path": "docs/evidence/R7B_EM2_AMENDMENT_DRAFT_2026-10-13.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "b00b0e46eefc630309b18c92047627b74c9fc2dc6741396e1c5a7d46593f60ee",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E038",
+      "path": "docs/evidence/QR1B_FREEZE_LOCAL_2026-10-13.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "b67d0634df4124a9222703e91327f03c13c982329b20aea06175060b127f3e96",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E039",
+      "path": "src/postgres/quant-library.js",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "b2946466e005b42d547722a78c5c5364002b3ed2a9ae36f4d6109ac6373585d8",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E040",
+      "path": "docs/evidence/DB_GUARD_HARDENING_GH2_LOCAL_2026-10-13.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "ce8dacdd60d58353eead59b0bd944abca94569a1d192e41e96995bbb2bf21a9a",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E041",
+      "path": "docs/PINE_EXPORT.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "0abfbc4d84267d4f1e35b341176040dd4f6c29291ea3b6815086f2a5863fc0c5",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E042",
+      "path": "docs/QUANT_RESEARCH_LIBRARY.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "b9ab54507ae76cdfb861eb7b9ed5d05157537d57c87a1911e80ea2510e3280d9",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E043",
+      "path": "docs/R0_BASELINE_2026-09-24.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "c12a85d8c3c28ec77c51b1c8bae4ff401bb98d3ca7028dc4098d8f1ebfa71b8a",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E044",
+      "path": "docs/PINE_BRIDGE_ADAPTER_API.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "1f8d561ba00e9f283e1799b18a6a74587fc27b7580c214090e5855872e9a7af6",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E045",
+      "path": "README.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "776074014324dd1f2622dd938927f380f492a52934291c2b600610c9aa1efe6b",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E046",
+      "path": "Context.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "593aecab256cc82255f0d36217feaed767ffdddd09cd042b8db6c4ddceeb203c",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E047",
+      "path": "docs/evidence/DP1P_LINUX_CARRY_RESERVES_2026-10-15.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "74e7a8e43b95f611424dfc2d162bdeb985297410f0ec6f8dd4d848afdefc8ce6",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E048",
+      "path": "docs/evidence/DP1P_S2_LOCAL_AND_APPLICATION_COMMIT_2026-10-15.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "93ad099c01b0b6e3bac204c3bc79c15fcbd3efdf8056c74c2de45a52ecdaf772",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E049",
+      "path": "docs/evidence/DP1P_REAL_DEPENDENCIES_LOCAL_2026-10-15.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "f9a38b5291bad838af043ed10bec8e28a40c3ecda8b2b1f7305af6b01240710e",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E050",
+      "path": "docs/evidence/DP1S_C02_POST10M_2026-10-15.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "b482de2278112c4a8d5cbd416c939de25cd2aa5a651912a111f2cf774af08ad8",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E051",
+      "path": "docs/EM2_MEASUREMENT_READINESS_2026-10-13.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "5e0b1ee9b21e0185d18a96af001204c40bcd4809bf0badc3144fbbbb97d192c8",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E052",
+      "path": "docs/evidence/PAPER_LEDGER_RO2_READ_ONLY_2026-10-15.json",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "3f4008770e1d9f968af4242c90828505c1ac9b2d41afecb033e4bd8dc4e2636a",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E053",
+      "path": "docs/OWNER_DECISIONS_2026-10-13.md",
+      "commit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+      "sha256": "23d1361a3de5898374a22af448fba61c7f9d9f10297b3c7ddbcc40140e8e21c9",
+      "binding": "Immutable Git blob at source checkpoint"
+    },
+    {
+      "id": "E054",
+      "path": "docs/progress/PM1_ASSESSMENT_A_2026-10-15.json",
+      "sha256": "8f9afb8d293d3d8dfec3c6564b25dcc9d538e6aa4038b48f8e4bd393eab02835",
+      "binding": "Frozen local measurement artifact; no product behavior claim"
+    },
+    {
+      "id": "E055",
+      "path": "docs/progress/PM1_ASSESSMENT_B_2026-10-15.json",
+      "sha256": "4c4c7fca2f2785ccbaf163b48ff69c222a5466a3b4a5b5a8935516fc84f983ca",
+      "binding": "Frozen local measurement artifact; no product behavior claim"
+    },
+    {
+      "id": "E056",
+      "path": "scripts/calculate-pm1-progress.mjs",
+      "sha256": "bcba7b13f0fc1dd04056ca5ed5440ba3a73a8cc2f7e75c3cbc753457bc14d680",
+      "binding": "Frozen local measurement artifact; no product behavior claim"
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-BRIDGE",
+      "status": "PASS",
+      "scope": "Historical fixed supported Bridge engineering and natural same-entry Paper pair",
+      "evidencePaths": [
+        "docs/APP_3A_ACCEPTANCE_2026-09-26.md",
+        "docs/evidence/P2_CHART_RELEASE_F22F3D0_2026-10-04.json"
+      ],
+      "limitation": "Not current host health or arbitrary Pine support.",
+      "evidenceRefs": [
+        "E003",
+        "E011"
+      ]
+    },
+    {
+      "id": "G-INPUTS",
+      "status": "OPEN",
+      "scope": "Authenticated ten-input selection and all selected empirical effects/parity",
+      "evidencePaths": [
+        "docs/evidence/STEP2_S4_STAGING_RELEASE_2026-10-05.json",
+        "docs/evidence/STEP2_S7_MECHANICAL_REPLAY_2026-10-05.json"
+      ],
+      "next": "Close S4 behavioral and remaining S6/S7 acceptance within the frozen selection contract.",
+      "evidenceRefs": [
+        "E009",
+        "E024"
+      ]
+    },
+    {
+      "id": "G-PREFLIGHT",
+      "status": "BLOCKED",
+      "scope": "PF-2 target activation and accepted historical outcome",
+      "evidencePaths": [
+        "docs/PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md",
+        "docs/EM2_MEASUREMENT_READINESS_2026-10-13.md"
+      ],
+      "next": "Close capacity/enrollment and the separately authorized measurement/activation gates.",
+      "evidenceRefs": [
+        "E020",
+        "E051"
+      ]
+    },
+    {
+      "id": "G-R7",
+      "status": "OPEN",
+      "scope": "Current R7 measurement epoch and capacity qualification",
+      "evidencePaths": [
+        "docs/evidence/R7B_HARNESS_RECONCILIATION_2026-10-13.json",
+        "docs/evidence/R7B_EM2_AMENDMENT_DRAFT_2026-10-13.json"
+      ],
+      "next": "Review amendment and obtain the required successful runtime measurement; J1-J4 prerequisite success is narrower.",
+      "evidenceRefs": [
+        "E031",
+        "E037"
+      ]
+    },
+    {
+      "id": "G-PO1-CI",
+      "status": "BLOCKED",
+      "scope": "Current runtime lease integration closure",
+      "evidencePaths": [
+        "docs/evidence/PO1_LOCAL_INTEGRATION_2026-10-15.json"
+      ],
+      "next": "Verify the unintegrated fixture correction with a complete PF2 fixture and close exact-commit CI.",
+      "evidenceRefs": [
+        "E016"
+      ]
+    },
+    {
+      "id": "G-DP1-24H",
+      "status": "OPEN",
+      "scope": "Staging worker 24-hour observation",
+      "evidencePaths": [
+        "docs/evidence/DP1S_C02_POST10M_2026-10-15.json"
+      ],
+      "next": "Observe and review no earlier than 2026-10-15T22:17:53.400Z (2026-10-16 05:17:53.400 Asia/Bangkok). Time alone is not a pass.",
+      "evidenceRefs": [
+        "E050"
+      ]
+    },
+    {
+      "id": "G-PRODUCTION",
+      "status": "BLOCKED",
+      "scope": "Production Paper correction rollout",
+      "evidencePaths": [
+        "docs/evidence/DP1P_REAL_DEPENDENCIES_LOCAL_2026-10-15.json",
+        "docs/evidence/PAPER_LEDGER_RO2_READ_ONLY_2026-10-15.json"
+      ],
+      "next": "Close staging observation, policy, live identity/dependency and release gates before authorized deployment.",
+      "evidenceRefs": [
+        "E049",
+        "E052"
+      ]
+    },
+    {
+      "id": "G-FREEZE",
+      "status": "OPEN",
+      "scope": "QR-1b target migration and owner policy decisions",
+      "evidencePaths": [
+        "docs/evidence/QR1B_FREEZE_LOCAL_2026-10-13.json",
+        "docs/OWNER_DECISIONS_2026-10-13.md"
+      ],
+      "next": "Resolve the required policy and target integration gates; local evidence does not prove staging migration.",
+      "evidenceRefs": [
+        "E038",
+        "E053"
+      ]
+    },
+    {
+      "id": "G-LAUNCH",
+      "status": "OPEN",
+      "scope": "MD-1, customer Paper beta and qualified export/delivery",
+      "evidencePaths": [
+        "docs/ROADMAP.md",
+        "docs/QUANT_RESEARCH_LIBRARY.md"
+      ],
+      "next": "Implement and accept the declared remaining product and launch outcomes. Optional Live remains excluded.",
+      "evidenceRefs": [
+        "E008",
+        "E042"
+      ]
+    },
+    {
+      "id": "G-FRESH-HEALTH",
+      "status": "UNKNOWN",
+      "scope": "Current host health at scoring time",
+      "evidencePaths": [
+        "docs/evidence/DP1S_C02_POST10M_2026-10-15.json"
+      ],
+      "next": "No host access in this measurement task; historical observations are dated evidence only.",
+      "evidenceRefs": [
+        "E050"
+      ]
+    }
+  ],
+  "results": {
+    "project": {
+      "lower": {
+        "exact": "1153/25",
+        "value": 46.12,
+        "roundedPercent": 46
+      },
+      "upper": {
+        "exact": "21121/300",
+        "value": 70.40333333333334,
+        "roundedPercent": 70
+      },
+      "unknownWeight": {
+        "exact": "2177/30",
+        "value": 72.56666666666666,
+        "roundedPercent": 73
+      },
+      "singleScore": false,
+      "categories": [
+        {
+          "id": "F01",
+          "weight": 10,
+          "lower": {
+            "exact": "5/1",
+            "value": 5,
+            "roundedPercent": 5
+          },
+          "upper": {
+            "exact": "28/3",
+            "value": 9.333333333333334,
+            "roundedPercent": 9
+          },
+          "deliverables": [
+            {
+              "id": "F01-01",
+              "weight": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "5/3",
+                "value": 1.6666666666666667,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "F01-02",
+              "weight": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "5/3",
+                "value": 1.6666666666666667,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "8/3",
+                "value": 2.6666666666666665,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "F01-03",
+              "weight": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "5/3",
+                "value": 1.6666666666666667,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "F02",
+          "weight": 12,
+          "lower": {
+            "exact": "6/1",
+            "value": 6,
+            "roundedPercent": 6
+          },
+          "upper": {
+            "exact": "56/5",
+            "value": 11.2,
+            "roundedPercent": 11
+          },
+          "deliverables": [
+            {
+              "id": "F02-01",
+              "weight": {
+                "exact": "4/1",
+                "value": 4,
+                "roundedPercent": 4
+              },
+              "lower": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "4/1",
+                "value": 4,
+                "roundedPercent": 4
+              }
+            },
+            {
+              "id": "F02-02",
+              "weight": {
+                "exact": "4/1",
+                "value": 4,
+                "roundedPercent": 4
+              },
+              "lower": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "16/5",
+                "value": 3.2,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "F02-03",
+              "weight": {
+                "exact": "4/1",
+                "value": 4,
+                "roundedPercent": 4
+              },
+              "lower": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "4/1",
+                "value": 4,
+                "roundedPercent": 4
+              }
+            }
+          ]
+        },
+        {
+          "id": "F03",
+          "weight": 12,
+          "lower": {
+            "exact": "228/25",
+            "value": 9.12,
+            "roundedPercent": 9
+          },
+          "upper": {
+            "exact": "258/25",
+            "value": 10.32,
+            "roundedPercent": 10
+          },
+          "deliverables": [
+            {
+              "id": "F03-01",
+              "weight": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "6/5",
+                "value": 1.2,
+                "roundedPercent": 1
+              },
+              "upper": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              }
+            },
+            {
+              "id": "F03-02",
+              "weight": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              }
+            },
+            {
+              "id": "F03-03",
+              "weight": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "48/25",
+                "value": 1.92,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "48/25",
+                "value": 1.92,
+                "roundedPercent": 2
+              }
+            },
+            {
+              "id": "F03-04",
+              "weight": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "6/5",
+                "value": 1.2,
+                "roundedPercent": 1
+              },
+              "upper": {
+                "exact": "6/5",
+                "value": 1.2,
+                "roundedPercent": 1
+              }
+            },
+            {
+              "id": "F03-05",
+              "weight": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              }
+            }
+          ]
+        },
+        {
+          "id": "F04",
+          "weight": 10,
+          "lower": {
+            "exact": "6/1",
+            "value": 6,
+            "roundedPercent": 6
+          },
+          "upper": {
+            "exact": "46/5",
+            "value": 9.2,
+            "roundedPercent": 9
+          },
+          "deliverables": [
+            {
+              "id": "F04-01",
+              "weight": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              }
+            },
+            {
+              "id": "F04-02",
+              "weight": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "1/1",
+                "value": 1,
+                "roundedPercent": 1
+              },
+              "upper": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              }
+            },
+            {
+              "id": "F04-03",
+              "weight": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "1/1",
+                "value": 1,
+                "roundedPercent": 1
+              },
+              "upper": {
+                "exact": "8/5",
+                "value": 1.6,
+                "roundedPercent": 2
+              }
+            },
+            {
+              "id": "F04-04",
+              "weight": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "1/1",
+                "value": 1,
+                "roundedPercent": 1
+              },
+              "upper": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              }
+            },
+            {
+              "id": "F04-05",
+              "weight": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "1/1",
+                "value": 1,
+                "roundedPercent": 1
+              },
+              "upper": {
+                "exact": "8/5",
+                "value": 1.6,
+                "roundedPercent": 2
+              }
+            }
+          ]
+        },
+        {
+          "id": "F05",
+          "weight": 12,
+          "lower": {
+            "exact": "22/5",
+            "value": 4.4,
+            "roundedPercent": 4
+          },
+          "upper": {
+            "exact": "42/5",
+            "value": 8.4,
+            "roundedPercent": 8
+          },
+          "deliverables": [
+            {
+              "id": "F05-01",
+              "weight": {
+                "exact": "4/1",
+                "value": 4,
+                "roundedPercent": 4
+              },
+              "lower": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "4/1",
+                "value": 4,
+                "roundedPercent": 4
+              }
+            },
+            {
+              "id": "F05-02",
+              "weight": {
+                "exact": "4/1",
+                "value": 4,
+                "roundedPercent": 4
+              },
+              "lower": {
+                "exact": "2/5",
+                "value": 0.4,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "2/5",
+                "value": 0.4,
+                "roundedPercent": 0
+              }
+            },
+            {
+              "id": "F05-03",
+              "weight": {
+                "exact": "4/1",
+                "value": 4,
+                "roundedPercent": 4
+              },
+              "lower": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "4/1",
+                "value": 4,
+                "roundedPercent": 4
+              }
+            }
+          ]
+        },
+        {
+          "id": "F06",
+          "weight": 10,
+          "lower": {
+            "exact": "5/1",
+            "value": 5,
+            "roundedPercent": 5
+          },
+          "upper": {
+            "exact": "7/1",
+            "value": 7,
+            "roundedPercent": 7
+          },
+          "deliverables": [
+            {
+              "id": "F06-01",
+              "weight": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "5/3",
+                "value": 1.6666666666666667,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "F06-02",
+              "weight": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "upper": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "F06-03",
+              "weight": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/3",
+                "value": 0.3333333333333333,
+                "roundedPercent": 0
+              }
+            }
+          ]
+        },
+        {
+          "id": "F07",
+          "weight": 10,
+          "lower": {
+            "exact": "15/2",
+            "value": 7.5,
+            "roundedPercent": 8
+          },
+          "upper": {
+            "exact": "31/4",
+            "value": 7.75,
+            "roundedPercent": 8
+          },
+          "deliverables": [
+            {
+              "id": "F07-01",
+              "weight": {
+                "exact": "5/2",
+                "value": 2.5,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "5/2",
+                "value": 2.5,
+                "roundedPercent": 3
+              },
+              "upper": {
+                "exact": "5/2",
+                "value": 2.5,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "F07-02",
+              "weight": {
+                "exact": "5/2",
+                "value": 2.5,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "5/2",
+                "value": 2.5,
+                "roundedPercent": 3
+              },
+              "upper": {
+                "exact": "5/2",
+                "value": 2.5,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "F07-03",
+              "weight": {
+                "exact": "5/2",
+                "value": 2.5,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "5/2",
+                "value": 2.5,
+                "roundedPercent": 3
+              },
+              "upper": {
+                "exact": "5/2",
+                "value": 2.5,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "F07-04",
+              "weight": {
+                "exact": "5/2",
+                "value": 2.5,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/4",
+                "value": 0.25,
+                "roundedPercent": 0
+              }
+            }
+          ]
+        },
+        {
+          "id": "F08",
+          "weight": 6,
+          "lower": {
+            "exact": "3/1",
+            "value": 3,
+            "roundedPercent": 3
+          },
+          "upper": {
+            "exact": "27/5",
+            "value": 5.4,
+            "roundedPercent": 5
+          },
+          "deliverables": [
+            {
+              "id": "F08-01",
+              "weight": {
+                "exact": "3/1",
+                "value": 3,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "3/2",
+                "value": 1.5,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "3/1",
+                "value": 3,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "F08-02",
+              "weight": {
+                "exact": "3/1",
+                "value": 3,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "3/2",
+                "value": 1.5,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "12/5",
+                "value": 2.4,
+                "roundedPercent": 2
+              }
+            }
+          ]
+        },
+        {
+          "id": "F09",
+          "weight": 6,
+          "lower": {
+            "exact": "0/1",
+            "value": 0,
+            "roundedPercent": 0
+          },
+          "upper": {
+            "exact": "3/5",
+            "value": 0.6,
+            "roundedPercent": 1
+          },
+          "deliverables": [
+            {
+              "id": "F09-01",
+              "weight": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/5",
+                "value": 0.2,
+                "roundedPercent": 0
+              }
+            },
+            {
+              "id": "F09-02",
+              "weight": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/5",
+                "value": 0.2,
+                "roundedPercent": 0
+              }
+            },
+            {
+              "id": "F09-03",
+              "weight": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/5",
+                "value": 0.2,
+                "roundedPercent": 0
+              }
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "weight": 4,
+          "lower": {
+            "exact": "0/1",
+            "value": 0,
+            "roundedPercent": 0
+          },
+          "upper": {
+            "exact": "2/5",
+            "value": 0.4,
+            "roundedPercent": 0
+          },
+          "deliverables": [
+            {
+              "id": "F10-01",
+              "weight": {
+                "exact": "4/3",
+                "value": 1.3333333333333333,
+                "roundedPercent": 1
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "2/15",
+                "value": 0.13333333333333333,
+                "roundedPercent": 0
+              }
+            },
+            {
+              "id": "F10-02",
+              "weight": {
+                "exact": "4/3",
+                "value": 1.3333333333333333,
+                "roundedPercent": 1
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "2/15",
+                "value": 0.13333333333333333,
+                "roundedPercent": 0
+              }
+            },
+            {
+              "id": "F10-03",
+              "weight": {
+                "exact": "4/3",
+                "value": 1.3333333333333333,
+                "roundedPercent": 1
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "2/15",
+                "value": 0.13333333333333333,
+                "roundedPercent": 0
+              }
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "weight": 4,
+          "lower": {
+            "exact": "0/1",
+            "value": 0,
+            "roundedPercent": 0
+          },
+          "upper": {
+            "exact": "2/5",
+            "value": 0.4,
+            "roundedPercent": 0
+          },
+          "deliverables": [
+            {
+              "id": "F11-01",
+              "weight": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/5",
+                "value": 0.2,
+                "roundedPercent": 0
+              }
+            },
+            {
+              "id": "F11-02",
+              "weight": {
+                "exact": "2/1",
+                "value": 2,
+                "roundedPercent": 2
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/5",
+                "value": 0.2,
+                "roundedPercent": 0
+              }
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "weight": 4,
+          "lower": {
+            "exact": "1/10",
+            "value": 0.1,
+            "roundedPercent": 0
+          },
+          "upper": {
+            "exact": "2/5",
+            "value": 0.4,
+            "roundedPercent": 0
+          },
+          "deliverables": [
+            {
+              "id": "F12-01",
+              "weight": {
+                "exact": "1/1",
+                "value": 1,
+                "roundedPercent": 1
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/10",
+                "value": 0.1,
+                "roundedPercent": 0
+              }
+            },
+            {
+              "id": "F12-02",
+              "weight": {
+                "exact": "1/1",
+                "value": 1,
+                "roundedPercent": 1
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/10",
+                "value": 0.1,
+                "roundedPercent": 0
+              }
+            },
+            {
+              "id": "F12-03",
+              "weight": {
+                "exact": "1/1",
+                "value": 1,
+                "roundedPercent": 1
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/10",
+                "value": 0.1,
+                "roundedPercent": 0
+              }
+            },
+            {
+              "id": "F12-04",
+              "weight": {
+                "exact": "1/1",
+                "value": 1,
+                "roundedPercent": 1
+              },
+              "lower": {
+                "exact": "1/10",
+                "value": 0.1,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "1/10",
+                "value": 0.1,
+                "roundedPercent": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "prototype": {
+      "lower": {
+        "exact": "52/1",
+        "value": 52,
+        "roundedPercent": 52
+      },
+      "upper": {
+        "exact": "989/12",
+        "value": 82.41666666666667,
+        "roundedPercent": 82
+      },
+      "unknownWeight": {
+        "exact": "455/6",
+        "value": 75.83333333333333,
+        "roundedPercent": 76
+      },
+      "singleScore": false,
+      "categories": [
+        {
+          "id": "P01",
+          "weight": 15,
+          "lower": {
+            "exact": "15/2",
+            "value": 7.5,
+            "roundedPercent": 8
+          },
+          "upper": {
+            "exact": "15/1",
+            "value": 15,
+            "roundedPercent": 15
+          },
+          "deliverables": [
+            {
+              "id": "P01-01",
+              "weight": {
+                "exact": "15/1",
+                "value": 15,
+                "roundedPercent": 15
+              },
+              "lower": {
+                "exact": "15/2",
+                "value": 7.5,
+                "roundedPercent": 8
+              },
+              "upper": {
+                "exact": "15/1",
+                "value": 15,
+                "roundedPercent": 15
+              }
+            }
+          ]
+        },
+        {
+          "id": "P02",
+          "weight": 15,
+          "lower": {
+            "exact": "9/2",
+            "value": 4.5,
+            "roundedPercent": 5
+          },
+          "upper": {
+            "exact": "27/4",
+            "value": 6.75,
+            "roundedPercent": 7
+          },
+          "deliverables": [
+            {
+              "id": "P02-01",
+              "weight": {
+                "exact": "15/2",
+                "value": 7.5,
+                "roundedPercent": 8
+              },
+              "lower": {
+                "exact": "15/4",
+                "value": 3.75,
+                "roundedPercent": 4
+              },
+              "upper": {
+                "exact": "6/1",
+                "value": 6,
+                "roundedPercent": 6
+              }
+            },
+            {
+              "id": "P02-02",
+              "weight": {
+                "exact": "15/2",
+                "value": 7.5,
+                "roundedPercent": 8
+              },
+              "lower": {
+                "exact": "3/4",
+                "value": 0.75,
+                "roundedPercent": 1
+              },
+              "upper": {
+                "exact": "3/4",
+                "value": 0.75,
+                "roundedPercent": 1
+              }
+            }
+          ]
+        },
+        {
+          "id": "P03",
+          "weight": 20,
+          "lower": {
+            "exact": "10/1",
+            "value": 10,
+            "roundedPercent": 10
+          },
+          "upper": {
+            "exact": "52/3",
+            "value": 17.333333333333332,
+            "roundedPercent": 17
+          },
+          "deliverables": [
+            {
+              "id": "P03-01",
+              "weight": {
+                "exact": "20/3",
+                "value": 6.666666666666667,
+                "roundedPercent": 7
+              },
+              "lower": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "upper": {
+                "exact": "16/3",
+                "value": 5.333333333333333,
+                "roundedPercent": 5
+              }
+            },
+            {
+              "id": "P03-02",
+              "weight": {
+                "exact": "20/3",
+                "value": 6.666666666666667,
+                "roundedPercent": 7
+              },
+              "lower": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "upper": {
+                "exact": "20/3",
+                "value": 6.666666666666667,
+                "roundedPercent": 7
+              }
+            },
+            {
+              "id": "P03-03",
+              "weight": {
+                "exact": "20/3",
+                "value": 6.666666666666667,
+                "roundedPercent": 7
+              },
+              "lower": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "upper": {
+                "exact": "16/3",
+                "value": 5.333333333333333,
+                "roundedPercent": 5
+              }
+            }
+          ]
+        },
+        {
+          "id": "P04",
+          "weight": 20,
+          "lower": {
+            "exact": "15/1",
+            "value": 15,
+            "roundedPercent": 15
+          },
+          "upper": {
+            "exact": "20/1",
+            "value": 20,
+            "roundedPercent": 20
+          },
+          "deliverables": [
+            {
+              "id": "P04-01",
+              "weight": {
+                "exact": "10/1",
+                "value": 10,
+                "roundedPercent": 10
+              },
+              "lower": {
+                "exact": "10/1",
+                "value": 10,
+                "roundedPercent": 10
+              },
+              "upper": {
+                "exact": "10/1",
+                "value": 10,
+                "roundedPercent": 10
+              }
+            },
+            {
+              "id": "P04-02",
+              "weight": {
+                "exact": "10/1",
+                "value": 10,
+                "roundedPercent": 10
+              },
+              "lower": {
+                "exact": "5/1",
+                "value": 5,
+                "roundedPercent": 5
+              },
+              "upper": {
+                "exact": "10/1",
+                "value": 10,
+                "roundedPercent": 10
+              }
+            }
+          ]
+        },
+        {
+          "id": "P05",
+          "weight": 20,
+          "lower": {
+            "exact": "10/1",
+            "value": 10,
+            "roundedPercent": 10
+          },
+          "upper": {
+            "exact": "14/1",
+            "value": 14,
+            "roundedPercent": 14
+          },
+          "deliverables": [
+            {
+              "id": "P05-01",
+              "weight": {
+                "exact": "20/3",
+                "value": 6.666666666666667,
+                "roundedPercent": 7
+              },
+              "lower": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "upper": {
+                "exact": "20/3",
+                "value": 6.666666666666667,
+                "roundedPercent": 7
+              }
+            },
+            {
+              "id": "P05-02",
+              "weight": {
+                "exact": "20/3",
+                "value": 6.666666666666667,
+                "roundedPercent": 7
+              },
+              "lower": {
+                "exact": "0/1",
+                "value": 0,
+                "roundedPercent": 0
+              },
+              "upper": {
+                "exact": "2/3",
+                "value": 0.6666666666666666,
+                "roundedPercent": 1
+              }
+            },
+            {
+              "id": "P05-03",
+              "weight": {
+                "exact": "20/3",
+                "value": 6.666666666666667,
+                "roundedPercent": 7
+              },
+              "lower": {
+                "exact": "20/3",
+                "value": 6.666666666666667,
+                "roundedPercent": 7
+              },
+              "upper": {
+                "exact": "20/3",
+                "value": 6.666666666666667,
+                "roundedPercent": 7
+              }
+            }
+          ]
+        },
+        {
+          "id": "P06",
+          "weight": 10,
+          "lower": {
+            "exact": "5/1",
+            "value": 5,
+            "roundedPercent": 5
+          },
+          "upper": {
+            "exact": "28/3",
+            "value": 9.333333333333334,
+            "roundedPercent": 9
+          },
+          "deliverables": [
+            {
+              "id": "P06-01",
+              "weight": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "5/3",
+                "value": 1.6666666666666667,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "P06-02",
+              "weight": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "5/3",
+                "value": 1.6666666666666667,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "8/3",
+                "value": 2.6666666666666665,
+                "roundedPercent": 3
+              }
+            },
+            {
+              "id": "P06-03",
+              "weight": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              },
+              "lower": {
+                "exact": "5/3",
+                "value": 1.6666666666666667,
+                "roundedPercent": 2
+              },
+              "upper": {
+                "exact": "10/3",
+                "value": 3.3333333333333335,
+                "roundedPercent": 3
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

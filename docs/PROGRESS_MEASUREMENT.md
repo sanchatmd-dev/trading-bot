@@ -4,7 +4,7 @@
 
 Method PM-1, recorded 2026-10-15 (Asia/Bangkok) at the owner's request. Use this method for subsequent progress reviews. Roadmap continues to own scope, sequence and acceptance gates. This method grants no implementation, host, commit, push or deployment authority.
 
-The first scored baseline is **NOT SCORED**. The weights below are planning judgments selected for consistent future comparison, not measured labor shares. Freeze the deliverable inventory and evidence before publishing the first calculated percentage. Do not choose scores or weights to reproduce a previous headline.
+The first scored baseline is **COMPLETE WITH EXPLICIT UNCERTAINTY**: project 46.12–70.40%, prototype 52.00–82.42%. See the [immutable scorecard, bounds and evidence](progress/PM1_BASELINE_2026-10-15.md). No single score is justified while credits remain UNKNOWN. The weights below are planning judgments selected for consistent future comparison, not measured labor shares. Freeze the deliverable inventory and evidence before publishing the first calculated percentage. Do not choose scores or weights to reproduce a previous headline.
 
 Two incompatible historical estimates exist:
 
@@ -108,4 +108,6 @@ Diagram colors describe the labelled outcome, not an arithmetic input: green mea
 
 ## Next review
 
-Root inventories deliverables and evidence under these weights, freezes the initial scorecard, checks arithmetic and source applicability, then publishes the first PM-1 result alongside the open gates. Current method adoption changes no product acceptance or runtime state. Host evidence is collected only under the existing per-step owner GO rules; missing host evidence stays UNKNOWN or an explicitly unrun stage.
+Preparation history, 2026-10-15: [inventory PM1-I1](progress/PM1_INVENTORY_V1_2026-10-15.json) froze 40 project and 14 prototype outcomes before scoring. The owner paused evidence reconciliation, then explicitly resumed the baseline task. The [completed first baseline](progress/PM1_BASELINE_2026-10-15.md) supersedes that paused state. Preserve the frozen inventory for the next comparison unless a documented scope revision is required.
+
+For later reviews, root preserves this inventory, reconciles new evidence, freezes a new dated scorecard, checks arithmetic and source applicability, then reports changes alongside the open gates. A scope change requires an explicit inventory revision. Progress measurement changes no product acceptance or runtime state. Host evidence is collected only under the existing per-step owner GO rules; missing host evidence stays UNKNOWN or an explicitly unrun stage.

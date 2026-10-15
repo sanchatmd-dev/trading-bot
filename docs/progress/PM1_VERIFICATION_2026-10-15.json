@@ -1,0 +1,488 @@
+{
+  "inventorySha256": "233f5fbea84355998c09da09f5b74799f453e7b5cb1270cfbf4c59a880ef514a",
+  "calculatorSha256": "bcba7b13f0fc1dd04056ca5ed5440ba3a73a8cc2f7e75c3cbc753457bc14d680",
+  "checks": [
+    "PASS: all 81 D/I/V/T combinations; 48 legal, 33 rejected",
+    "PASS: mixed 54-row exact fractions and all categories",
+    "PASS: all-zero and all-UNKNOWN totals, denominator and unknown weight",
+    "PASS: duplicate/missing/extra scored rows rejected",
+    "PASS: local evidence hash, bad hash, duplicate ID, dangling ref controls",
+    "PASS: final 54 rows, 18 category totals, both views, inventory pin, 56 evidence SHA256 pins and all evidence references",
+    "PASS: 10 gate evidence path/reference bindings; committed evidence matches declared source snapshot; local evidence explicitly bound"
+  ],
+  "limitations": [
+    "No product tests, PostgreSQL, browser, host or runtime-health checks.",
+    "Evidence hashes establish byte identity, not semantic applicability or root acceptance.",
+    "E027 is ignored local evidence; hashes verify locally, but another checkout needs this retained artifact to reproduce verification."
+  ],
+  "scorecardPath": "docs/progress/PM1_BASELINE_2026-10-15.json",
+  "scorecardSha256": "ce826a1f9ec332ac48368eb0a9309303e59df415b4327b8c9ba86ae22ca882c7",
+  "independentResults": {
+    "project": {
+      "lower": "1153/25",
+      "upper": "21121/300",
+      "unknownWeight": "2177/30",
+      "singleScore": false,
+      "categories": [
+        {
+          "id": "F01",
+          "lower": "5/1",
+          "upper": "28/3",
+          "rows": [
+            {
+              "id": "F01-01",
+              "weight": "10/3",
+              "lower": "5/3",
+              "upper": "10/3"
+            },
+            {
+              "id": "F01-02",
+              "weight": "10/3",
+              "lower": "5/3",
+              "upper": "8/3"
+            },
+            {
+              "id": "F01-03",
+              "weight": "10/3",
+              "lower": "5/3",
+              "upper": "10/3"
+            }
+          ]
+        },
+        {
+          "id": "F02",
+          "lower": "6/1",
+          "upper": "56/5",
+          "rows": [
+            {
+              "id": "F02-01",
+              "weight": "4/1",
+              "lower": "2/1",
+              "upper": "4/1"
+            },
+            {
+              "id": "F02-02",
+              "weight": "4/1",
+              "lower": "2/1",
+              "upper": "16/5"
+            },
+            {
+              "id": "F02-03",
+              "weight": "4/1",
+              "lower": "2/1",
+              "upper": "4/1"
+            }
+          ]
+        },
+        {
+          "id": "F03",
+          "lower": "228/25",
+          "upper": "258/25",
+          "rows": [
+            {
+              "id": "F03-01",
+              "weight": "12/5",
+              "lower": "6/5",
+              "upper": "12/5"
+            },
+            {
+              "id": "F03-02",
+              "weight": "12/5",
+              "lower": "12/5",
+              "upper": "12/5"
+            },
+            {
+              "id": "F03-03",
+              "weight": "12/5",
+              "lower": "48/25",
+              "upper": "48/25"
+            },
+            {
+              "id": "F03-04",
+              "weight": "12/5",
+              "lower": "6/5",
+              "upper": "6/5"
+            },
+            {
+              "id": "F03-05",
+              "weight": "12/5",
+              "lower": "12/5",
+              "upper": "12/5"
+            }
+          ]
+        },
+        {
+          "id": "F04",
+          "lower": "6/1",
+          "upper": "46/5",
+          "rows": [
+            {
+              "id": "F04-01",
+              "weight": "2/1",
+              "lower": "2/1",
+              "upper": "2/1"
+            },
+            {
+              "id": "F04-02",
+              "weight": "2/1",
+              "lower": "1/1",
+              "upper": "2/1"
+            },
+            {
+              "id": "F04-03",
+              "weight": "2/1",
+              "lower": "1/1",
+              "upper": "8/5"
+            },
+            {
+              "id": "F04-04",
+              "weight": "2/1",
+              "lower": "1/1",
+              "upper": "2/1"
+            },
+            {
+              "id": "F04-05",
+              "weight": "2/1",
+              "lower": "1/1",
+              "upper": "8/5"
+            }
+          ]
+        },
+        {
+          "id": "F05",
+          "lower": "22/5",
+          "upper": "42/5",
+          "rows": [
+            {
+              "id": "F05-01",
+              "weight": "4/1",
+              "lower": "2/1",
+              "upper": "4/1"
+            },
+            {
+              "id": "F05-02",
+              "weight": "4/1",
+              "lower": "2/5",
+              "upper": "2/5"
+            },
+            {
+              "id": "F05-03",
+              "weight": "4/1",
+              "lower": "2/1",
+              "upper": "4/1"
+            }
+          ]
+        },
+        {
+          "id": "F06",
+          "lower": "5/1",
+          "upper": "7/1",
+          "rows": [
+            {
+              "id": "F06-01",
+              "weight": "10/3",
+              "lower": "5/3",
+              "upper": "10/3"
+            },
+            {
+              "id": "F06-02",
+              "weight": "10/3",
+              "lower": "10/3",
+              "upper": "10/3"
+            },
+            {
+              "id": "F06-03",
+              "weight": "10/3",
+              "lower": "0/1",
+              "upper": "1/3"
+            }
+          ]
+        },
+        {
+          "id": "F07",
+          "lower": "15/2",
+          "upper": "31/4",
+          "rows": [
+            {
+              "id": "F07-01",
+              "weight": "5/2",
+              "lower": "5/2",
+              "upper": "5/2"
+            },
+            {
+              "id": "F07-02",
+              "weight": "5/2",
+              "lower": "5/2",
+              "upper": "5/2"
+            },
+            {
+              "id": "F07-03",
+              "weight": "5/2",
+              "lower": "5/2",
+              "upper": "5/2"
+            },
+            {
+              "id": "F07-04",
+              "weight": "5/2",
+              "lower": "0/1",
+              "upper": "1/4"
+            }
+          ]
+        },
+        {
+          "id": "F08",
+          "lower": "3/1",
+          "upper": "27/5",
+          "rows": [
+            {
+              "id": "F08-01",
+              "weight": "3/1",
+              "lower": "3/2",
+              "upper": "3/1"
+            },
+            {
+              "id": "F08-02",
+              "weight": "3/1",
+              "lower": "3/2",
+              "upper": "12/5"
+            }
+          ]
+        },
+        {
+          "id": "F09",
+          "lower": "0/1",
+          "upper": "3/5",
+          "rows": [
+            {
+              "id": "F09-01",
+              "weight": "2/1",
+              "lower": "0/1",
+              "upper": "1/5"
+            },
+            {
+              "id": "F09-02",
+              "weight": "2/1",
+              "lower": "0/1",
+              "upper": "1/5"
+            },
+            {
+              "id": "F09-03",
+              "weight": "2/1",
+              "lower": "0/1",
+              "upper": "1/5"
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "lower": "0/1",
+          "upper": "2/5",
+          "rows": [
+            {
+              "id": "F10-01",
+              "weight": "4/3",
+              "lower": "0/1",
+              "upper": "2/15"
+            },
+            {
+              "id": "F10-02",
+              "weight": "4/3",
+              "lower": "0/1",
+              "upper": "2/15"
+            },
+            {
+              "id": "F10-03",
+              "weight": "4/3",
+              "lower": "0/1",
+              "upper": "2/15"
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "lower": "0/1",
+          "upper": "2/5",
+          "rows": [
+            {
+              "id": "F11-01",
+              "weight": "2/1",
+              "lower": "0/1",
+              "upper": "1/5"
+            },
+            {
+              "id": "F11-02",
+              "weight": "2/1",
+              "lower": "0/1",
+              "upper": "1/5"
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "lower": "1/10",
+          "upper": "2/5",
+          "rows": [
+            {
+              "id": "F12-01",
+              "weight": "1/1",
+              "lower": "0/1",
+              "upper": "1/10"
+            },
+            {
+              "id": "F12-02",
+              "weight": "1/1",
+              "lower": "0/1",
+              "upper": "1/10"
+            },
+            {
+              "id": "F12-03",
+              "weight": "1/1",
+              "lower": "0/1",
+              "upper": "1/10"
+            },
+            {
+              "id": "F12-04",
+              "weight": "1/1",
+              "lower": "1/10",
+              "upper": "1/10"
+            }
+          ]
+        }
+      ]
+    },
+    "prototype": {
+      "lower": "52/1",
+      "upper": "989/12",
+      "unknownWeight": "455/6",
+      "singleScore": false,
+      "categories": [
+        {
+          "id": "P01",
+          "lower": "15/2",
+          "upper": "15/1",
+          "rows": [
+            {
+              "id": "P01-01",
+              "weight": "15/1",
+              "lower": "15/2",
+              "upper": "15/1"
+            }
+          ]
+        },
+        {
+          "id": "P02",
+          "lower": "9/2",
+          "upper": "27/4",
+          "rows": [
+            {
+              "id": "P02-01",
+              "weight": "15/2",
+              "lower": "15/4",
+              "upper": "6/1"
+            },
+            {
+              "id": "P02-02",
+              "weight": "15/2",
+              "lower": "3/4",
+              "upper": "3/4"
+            }
+          ]
+        },
+        {
+          "id": "P03",
+          "lower": "10/1",
+          "upper": "52/3",
+          "rows": [
+            {
+              "id": "P03-01",
+              "weight": "20/3",
+              "lower": "10/3",
+              "upper": "16/3"
+            },
+            {
+              "id": "P03-02",
+              "weight": "20/3",
+              "lower": "10/3",
+              "upper": "20/3"
+            },
+            {
+              "id": "P03-03",
+              "weight": "20/3",
+              "lower": "10/3",
+              "upper": "16/3"
+            }
+          ]
+        },
+        {
+          "id": "P04",
+          "lower": "15/1",
+          "upper": "20/1",
+          "rows": [
+            {
+              "id": "P04-01",
+              "weight": "10/1",
+              "lower": "10/1",
+              "upper": "10/1"
+            },
+            {
+              "id": "P04-02",
+              "weight": "10/1",
+              "lower": "5/1",
+              "upper": "10/1"
+            }
+          ]
+        },
+        {
+          "id": "P05",
+          "lower": "10/1",
+          "upper": "14/1",
+          "rows": [
+            {
+              "id": "P05-01",
+              "weight": "20/3",
+              "lower": "10/3",
+              "upper": "20/3"
+            },
+            {
+              "id": "P05-02",
+              "weight": "20/3",
+              "lower": "0/1",
+              "upper": "2/3"
+            },
+            {
+              "id": "P05-03",
+              "weight": "20/3",
+              "lower": "20/3",
+              "upper": "20/3"
+            }
+          ]
+        },
+        {
+          "id": "P06",
+          "lower": "5/1",
+          "upper": "28/3",
+          "rows": [
+            {
+              "id": "P06-01",
+              "weight": "10/3",
+              "lower": "5/3",
+              "upper": "10/3"
+            },
+            {
+              "id": "P06-02",
+              "weight": "10/3",
+              "lower": "5/3",
+              "upper": "8/3"
+            },
+            {
+              "id": "P06-03",
+              "weight": "10/3",
+              "lower": "5/3",
+              "upper": "10/3"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

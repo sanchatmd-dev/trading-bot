@@ -1,0 +1,650 @@
+{
+  "schema": "pm1-proposed-evidence-review-v1",
+  "status": "PROPOSED_ROOT_ACCEPTANCE_REQUIRED",
+  "reviewer": "Codex architecture auditor /root/pm1_evidence_a",
+  "date": "2026-10-15",
+  "sourceCommit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+  "branch": "codex/app3a-market-wait-checkpoint",
+  "inventory": "docs/progress/PM1_INVENTORY_V1_2026-10-15.json",
+  "inventorySha256": "233f5fbea84355998c09da09f5b74799f453e7b5cb1270cfbf4c59a880ef514a",
+  "scope": "F01-F06 only; fixed inventory, shares, targets and criteria unchanged; no percentages calculated",
+  "rationaleOrder": [
+    "D",
+    "I",
+    "V",
+    "T"
+  ],
+  "rows": [
+    {
+      "id": "F01-01",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "rationale": [
+        "Owner auth, CSRF and scope contract documented in durable-jobs API and APP-3A acceptance.",
+        "Four auth modules unchanged from staging6320169 to faa32a4; historical author/HTTP checks retained.",
+        "Full applicable request-dispatch and tenant-isolation closure not reconciled; unchanged auth modules alone insufficient.",
+        "6320169 staging401/login200/CSRF403 proves historical subset; full current isolation readback not reconciled."
+      ],
+      "evidence": [
+        "docs/QL_3A_DURABLE_JOBS.md",
+        "docs/evidence/QL_3A_DURABLE_JOBS_STAGING_ROLLOUT_2026-09-27.json",
+        "docs/APP_3A_ACCEPTANCE_2026-09-26.md"
+      ],
+      "sourceIdentity": "6320169; currentfaa32a4; auth module diff empty",
+      "verifierRoot": "Historical APP-3A root acceptance; current full auth boundary UNKNOWN",
+      "carryLimit": "Only src/auth.js,src/auth-store.js,src/postgres/auth.js,src/postgres/auth-store.js unchanged; surrounding dispatcher changed.",
+      "nextGate": "Reconcile dispatcher/session/tenant tests and retained staging scope."
+    },
+    {
+      "id": "F01-02",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": 0,
+      "rationale": [
+        "Create/lifecycle quota and readiness contracts documented.",
+        "Create Bot UI and API path implemented; author8 and independent12 cases reported.",
+        "Full lifecycle current-byte review not reconciled; public/bots.js changed since5e398e7.",
+        "Successful authenticated Create Bot explicitly unaccepted; capacity3/3 prevents positive proof."
+      ],
+      "evidence": [
+        "docs/STAGING_P2_CHECKPOINT_2026-10-03.md",
+        "docs/STEP2_S4_CONTINUATION_2026-10-05.md"
+      ],
+      "sourceIdentity": "256251b staged; later5e398e7; currentfaa32a4",
+      "verifierRoot": "Independent UI cases and release acceptance only; owner positive journey open",
+      "carryLimit": "Disabled capacity control is not successful creation/lifecycle proof.",
+      "nextGate": "Owner-authorized capacity-compatible Create Bot and lifecycle journey."
+    },
+    {
+      "id": "F01-03",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "rationale": [
+        "Prototype plan defines honest supported/unavailable journey states.",
+        "Shared journey, disabled controls and labels implemented; independent focused checks retained.",
+        "Full shared UI source equivalence and complete desktop/mobile outcome not reconciled.",
+        "Authenticated partial journey proved; release alone does not establish all labelled outcomes."
+      ],
+      "evidence": [
+        "docs/STAGING_PROTOTYPE_PLAN_2026-10-01.md",
+        "docs/STEP2_S4_CONTINUATION_2026-10-05.md",
+        "docs/STAGING_P2_CHECKPOINT_2026-10-03.md"
+      ],
+      "sourceIdentity": "5e398e7 S4; currentfaa32a4",
+      "verifierRoot": "Root release acceptance; partial desktop/mobile inspection, P1-F open",
+      "carryLimit": "No full journey acceptance inferred from deployment.",
+      "nextGate": "Reconcile final UI scope and P1-F behavioral evidence."
+    },
+    {
+      "id": "F02-01",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "rationale": [
+        "APP-3A defines source-bound registry/generation/compile/guide contract.",
+        "Actual provider generation and approved v4 compiled artifact established; selected Bridge modules unchanged since5e398e7.",
+        "Original acceptance source987adc3 to current generation closure not reconciled.",
+        "Actual staged generation exists; current exact supported generated artifact/guide binding remains unreconciled."
+      ],
+      "evidence": [
+        "docs/APP_3A_ACCEPTANCE_2026-09-26.md",
+        "docs/evidence/APP_3A_READINESS_2026-09-26.json",
+        "docs/ROADMAP.md"
+      ],
+      "sourceIdentity": "APP-3A a4341f9/987adc3; real generation533755b; currentfaa32a4",
+      "verifierRoot": "APP-3A engineering acceptance recorded; broader later generated draft compile remained separate",
+      "carryLimit": "Frozen oneoff generation is real; current contract carry needs exact artifact/source/effective-input closure.",
+      "nextGate": "Root decide frozen oneoff versus ongoing generator applicability, reconcile hashes."
+    },
+    {
+      "id": "F02-02",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": 0,
+      "rationale": [
+        "Approved ten-input lock and S4 selection-coherence contract explicit.",
+        "Complete selection guard, typed mapping, domains and snapshot paths implemented; S4 author and independent checks pass.",
+        "Full round-trip final closure not independently reconciled; S4 review alone narrower than all ten-input journey.",
+        "Authenticated S4 behavioral acceptance explicitly false in release record."
+      ],
+      "evidence": [
+        "docs/STEP2_S4_CONTINUATION_2026-10-05.md",
+        "docs/evidence/STEP2_S4_STAGING_RELEASE_2026-10-05.json",
+        "docs/evidence/QL_3A_APPROVED_INPUT_LOCK_2026-09-27.json"
+      ],
+      "sourceIdentity": "5e2ba93 local S4; staging5e398e7; Bridge paths unchanged5e398e7..faa32a4",
+      "verifierRoot": "Independent S4 review and root local acceptance; authenticatedJourneyAcceptance false",
+      "carryLimit": "Effects excluded here, belong F05-02; S6 does not erase binding implementation.",
+      "nextGate": "Authenticated ten-input generation/snapshot round-trip."
+    },
+    {
+      "id": "F02-03",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "rationale": [
+        "v2 receiver identity, duplicate and targeted EXIT contract reviewed.",
+        "APP-3A controlled duplicate/target tests and natural pair prove implemented transport.",
+        "Full owner/Bot/dedup closure from accepted987adc3 to current not reconciled.",
+        "Historical natural pair accepted, but it cannot alone prove entire duplicate/unrelated-target acceptance scope."
+      ],
+      "evidence": [
+        "docs/APP_3A_ACCEPTANCE_2026-09-26.md",
+        "docs/evidence/P2_CHART_RELEASE_F22F3D0_2026-10-04.json"
+      ],
+      "sourceIdentity": "APP-3A987adc3; natural BUY66/EXIT85 f22f3d0 API and f2bd332 worker",
+      "verifierRoot": "naturalSameEntryExitAccepted true; APP-3A engineering accepted",
+      "carryLimit": "Current Bridge files unchanged since5e398e7; earlier closure not reconciled. Natural oneoff remains accepted.",
+      "nextGate": "Reconcile scoped receiver dependency changes before historical verification carry."
+    },
+    {
+      "id": "F03-01",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "rationale": [
+        "Paper risk/caps/reduce-only allocation contract defined in APP-3A/QL2A.",
+        "Baseline accepted/capped/rejected decisions and natural targeted closure implemented.",
+        "Accounting changed after historical baseline; full current baseline equivalence unresolved.",
+        "Natural targeted pair accepted, but current accounting/capped/rejected scope lacks reconciled staging proof."
+      ],
+      "evidence": [
+        "docs/APP_3A_ACCEPTANCE_2026-09-26.md",
+        "docs/QL_2A_IMPLEMENTATION.md",
+        "docs/evidence/P2_CHART_RELEASE_F22F3D0_2026-10-04.json"
+      ],
+      "sourceIdentity": "QL2A92 decisions; natural BUY66 EXIT85; currentfaa32a4 includes laterO3/G1/F4",
+      "verifierRoot": "Historical APP-3A/QL2A root accepted; natural pair accepted",
+      "carryLimit": "Not full portfolio valuation; new accounting corrections scored separately F03-02.",
+      "nextGate": "Reconcile exact corrected accounting baseline and staging identity."
+    },
+    {
+      "id": "F03-02",
+      "D": 1,
+      "I": 1,
+      "V": 1,
+      "T": 1,
+      "rationale": [
+        "O3/G1/F4 bounded correction contracts and provisional policies documented.",
+        "Corrections integrated through40e3b6b/10ad82e and837a953.",
+        "Independent accounting/fencing audit and tester evidence accepted; relevant Paper modules unchanged837a953..faa32a4.",
+        "Declared target local integrated code; accepted integration and exact837a953 CI9/9 satisfy that target."
+      ],
+      "evidence": [
+        "docs/ROADMAP.md",
+        "docs/evidence/INT_R7_FCL_LOCAL_INTEGRATION_2026-10-15.json",
+        "docs/evidence/INT_R7_FCL_EXACT_CI_2026-10-15.json"
+      ],
+      "sourceIdentity": "6ef8045 G1;40e3b6b F4;837a953 integration; relevant Paper files unchanged to faa32a4",
+      "verifierRoot": "Opus accounting/fencing audit, tester, root accepted integrated scope; Fable supplemental only",
+      "carryLimit": "PO1 changed db.js later; focused correction evidence does not claim full current CI pass or staging release. Policies remain provisional.",
+      "nextGate": "Root confirm bounded accounting carry despite separate PO1 integration failure; host migration/deploy separateF12."
+    },
+    {
+      "id": "F03-03",
+      "D": 1,
+      "I": 1,
+      "V": 1,
+      "T": 0,
+      "rationale": [
+        "W1 transient/bounded rejection/systemic-hold contract documented, policy provisional.",
+        "W1 and later transient fault corrections implemented and integrated.",
+        "Accepted integration837a953 and independent prior W1 review; current Paper/worker correction files unchanged in bounded comparison.",
+        "Staging switched4d86822, predating later W1 changes; full declared behavior not staged."
+      ],
+      "evidence": [
+        "docs/ROADMAP.md",
+        "docs/evidence/INT_R7_FCL_EXACT_CI_2026-10-15.json",
+        "docs/evidence/DP1S_C02_STAGING_SWITCH_2026-10-15.json"
+      ],
+      "sourceIdentity": "8aefbf4 later W1 transient correction; staging4d86822",
+      "verifierRoot": "Root prior code integration accepted; staging switch accepted only pinned older candidate",
+      "carryLimit": "Three attempts per process, counters in memory; no multiple-worker global retry bound. Policy approval separate.",
+      "nextGate": "Stage final W1 closure under authorized release and observe."
+    },
+    {
+      "id": "F03-04",
+      "D": 1,
+      "I": 1,
+      "V": 0,
+      "T": 0,
+      "rationale": [
+        "CX1/PO1 transaction/lease behavior and boundary defined.",
+        "Current db.js implements reviewed origin and terminal failure controls, focused24PG+13unit pass.",
+        "ExactCI8pass1fail;743PGpass6fail6skip. Root explicitly holds integration closure; correction unintegrated/unaccepted.",
+        "No PO1 deployment; target staging not achieved."
+      ],
+      "evidence": [
+        "docs/evidence/PO1_LOCAL_INTEGRATION_2026-10-15.json",
+        "docs/evidence/INT_R7_FCL_LOCAL_INTEGRATION_2026-10-15.json"
+      ],
+      "sourceIdentity": "3d01b0330265c2608462dd42a53a99af3fdd7f87; db.js e244de9adcbcb0cbd716ef9e387285b2ace048c4e4e77314f0c6c6011769132d",
+      "verifierRoot": "Focused independent auditor/tester/root accepted; whole integration held",
+      "carryLimit": "Checkout-only; privileged in-lease mutation/raw-pool bypass excluded. PF2_ENGINE_HASH_MISMATCH before followup bodies preserved.",
+      "nextGate": "Complete fixture closure, independently verify original6 cases, root integration and exactCI, later staging."
+    },
+    {
+      "id": "F03-05",
+      "D": 1,
+      "I": 1,
+      "V": 1,
+      "T": 1,
+      "rationale": [
+        "CX5 structural inventory and exact import exception explicitly scoped.",
+        "Final guard exists; current SHA equals accepted file.",
+        "Independent architecture review and root10/10 tests on exact bytes accepted.",
+        "Target local test integration; integrated exact file unchanged and retained run proves it."
+      ],
+      "evidence": [
+        "docs/evidence/PAPER_WRITER_GUARD_CX5_LOCAL_2026-10-15.md"
+      ],
+      "sourceIdentity": "test/paper-ledger-fence.test.js SHA256 f0d058a37f97f0395c46e2c2320757fd5de0dc04e89a0edda12a9e4293dc6a45",
+      "verifierRoot": "Independent architecture auditor; root10/10 accepted2026-10-15",
+      "carryLimit": "Structural check only, not SQL parser, dynamic SQL safety or import runtime certification.",
+      "nextGate": "None for bounded inventory outcome; preserve explicit limits."
+    },
+    {
+      "id": "F04-01",
+      "D": 1,
+      "I": 1,
+      "V": 1,
+      "T": 1,
+      "rationale": [
+        "Owner-reviewed single515bar raw BACKFILL contract and holdout cutoff explicit.",
+        "Actual bounded capture completed and persisted declared dataset.",
+        "Root reviewed exact run, monitor and immediate/delayed gates; retained failure fixed separately.",
+        "Oneoff staging BACKFILL SUCCEEDED;17/17 immediate and17/17 delayed, closed admission."
+      ],
+      "evidence": [
+        "docs/evidence/B3_FIRST_BACKFILL_2026-10-06.json"
+      ],
+      "sourceIdentity": "2026-10-06 job terminal15:06:04.744Z; finalId8 bd7e1440/pageId8 a4695cd4/rowsSha8 ac17d86f",
+      "verifierRoot": "rootReviewed true; owner UI submission; independent local tool reviews recorded",
+      "carryLimit": "Frozen historical achievement, not current runtime health; raw515 only, no verified execution profile/enrollment.",
+      "nextGate": "None for oneoff outcome; PF2/R7 separate."
+    },
+    {
+      "id": "F04-02",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "rationale": [
+        "Prototype chart/indicator scope explicitly bounded by MD1 exclusion.",
+        "Chart and indicators implemented with served-byte and authenticated readback evidence.",
+        "Current full chart/state-label closure not reconciled against2919f9b.",
+        "Historical staged chart/readback proved; all current stale/limited states not reconciled."
+      ],
+      "evidence": [
+        "docs/evidence/P2_CHART_RELEASE_F22F3D0_2026-10-04.json",
+        "docs/evidence/P2_CHART_INDICATORS_RELEASE_2919F9B_2026-10-04.json",
+        "docs/STAGING_P2_CHECKPOINT_2026-10-03.md"
+      ],
+      "sourceIdentity": "f22f3d0 chart;2919f9b indicators; currentfaa32a4",
+      "verifierRoot": "Historical local delivery and staging release/readback accepted",
+      "carryLimit": "Prototype only; no MD1 production-scale claim.",
+      "nextGate": "Reconcile chart/diagnostic final bytes and exact label coverage."
+    },
+    {
+      "id": "F04-03",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": 0,
+      "rationale": [
+        "PF2 contract/enrollment/replay boundaries and holdout rules reviewed.",
+        "Resolver/replay/envelope/enrollment/API controls implemented with local checks.",
+        "Historical local source equivalence to final engine closure not reconciled.",
+        "PF2 remains disabled and admitted historical runtime acceptance open."
+      ],
+      "evidence": [
+        "docs/PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md",
+        "docs/PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md",
+        "docs/evidence/COMBINED_S07_STAGING_RELEASE_2026-10-08.json"
+      ],
+      "sourceIdentity": "PF2 enrollment2026-10-01; combined325d335 pf2Engine fcc1303e/pf2Evaluator3fb2d465",
+      "verifierRoot": "Independent local reviews; root S07 release accepted explicitly without PF2 activation",
+      "carryLimit": "Synthetic supported-source/receipt tests are not actual enrollment/private-source parity; earliest sibling holdout remains.",
+      "nextGate": "R7 admission/enrollment and PF2 activation under owner gates."
+    },
+    {
+      "id": "F04-04",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "rationale": [
+        "PF3 unavailable/capability/readiness contract root-reviewed.",
+        "Readiness report implemented; staging correctly reportsPF2_DISABLED.",
+        "pf3-readiness-report.js and service changed since3309d07; semantic carry not reconciled.",
+        "Panel deployment and partial authenticated readback proven; applicable final report not reconciled."
+      ],
+      "evidence": [
+        "docs/ROADMAP.md",
+        "docs/STAGING_P2_CHECKPOINT_2026-10-03.md"
+      ],
+      "sourceIdentity": "0aabe14 local;3309d07 staged; currentfaa32a4",
+      "verifierRoot": "Local engineering acceptance and hostedCI9/9; partial P1-F readback",
+      "carryLimit": "Unavailable historical evidence remains unavailable; report does not grant readiness.",
+      "nextGate": "Reconcile PF3 changed functions/tests and authenticated final report."
+    },
+    {
+      "id": "F04-05",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": 0,
+      "rationale": [
+        "PF4 deterministic preview, policy binding and confirmed-save contract reviewed.",
+        "Risk proposals/service/routes implemented; local accepted68a6268 and deployedb2f0bae.",
+        "pf4-proposal-service.js and risk-proposals.js changed since release; final-byte carry unresolved.",
+        "Explicit owner-confirmed save journey remains open; read-only preview and running refusal do not replace save."
+      ],
+      "evidence": [
+        "docs/ROADMAP.md",
+        "docs/STAGING_P2_CHECKPOINT_2026-10-03.md"
+      ],
+      "sourceIdentity": "68a6268 local; b2f0bae staged; currentfaa32a4",
+      "verifierRoot": "Independent audit/local acceptance; owner P1-F pending",
+      "carryLimit": "Never alter running Risk Manager or infer owner save from deployed panel.",
+      "nextGate": "Reconcile changes then owner-confirmed saved-policy journey under authorized stopped state."
+    },
+    {
+      "id": "F05-01",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "rationale": [
+        "QL2A supported fixed source/settings/model contract accepted.",
+        "Source evaluator and independent serial projection implemented,92 decisions matched.",
+        "Frozen baseline accepted, but final evaluator byte/contract equivalence not reconciled.",
+        "Historical local validated baseline exists; current supported engine carry unresolved."
+      ],
+      "evidence": [
+        "docs/QL_2A_IMPLEMENTATION.md",
+        "docs/evidence/QL_2A_BASELINE_2026-09-26.json"
+      ],
+      "sourceIdentity": "QL2A fixed SPT Spotv4; baseline record implementation/source/dataset hashes",
+      "verifierRoot": "QL2A engineering root accepted2026-09-26;130/130 repaint and92/92 decisions",
+      "carryLimit": "No selected dynamic slots; no customer/runtime Quant support; frozen achievement not revoked.",
+      "nextGate": "Reconcile fixed evaluator source/hash closure against current engine."
+    },
+    {
+      "id": "F05-02",
+      "D": 1,
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "rationale": [
+        "Ten selected dimensions and empirical effect/parity acceptance explicit.",
+        "Full accepted selected-input effects incomplete; confirmLookback replacement/contract decision and real-data proof open.",
+        "S6 empirical TradingView axis parity remains open; mechanicalS7 freezes source signals.",
+        "Staging qualification not achieved; RR unchanged realized decisions preserved."
+      ],
+      "evidence": [
+        "docs/STEP2_S4_CONTINUATION_2026-10-05.md",
+        "docs/evidence/STEP2_S7_MECHANICAL_REPLAY_2026-10-05.json"
+      ],
+      "sourceIdentity": "5e398e7 S7; frozen signal vectorafda7c39566ba74a32e58ced079a0c034402b1dc6f52a2bdc0bde72001db5f92",
+      "verifierRoot": "S7 narrow local diagnostic accepted; S6 owner/root decision open",
+      "carryLimit": "Known incomplete acceptance scope, not evidence absence. No holdout/search/ranking credit from mechanical replay.",
+      "nextGate": "Owner dimension decision and new frozen lock if approved, then declared effects/parity proof."
+    },
+    {
+      "id": "F05-03",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "rationale": [
+        "Costs, chronological partitions and untouched holdout contract explicit.",
+        "Implementation emits honestNO_VALID_CANDIDATE; historical100 and21 candidate runs leaveholdout unopened.",
+        "Current final cost/partition/holdout engine closure not reconciled after later changes.",
+        "Historical validated local runs exist; current contract applicability unresolved."
+      ],
+      "evidence": [
+        "docs/QL_3A_IMPLEMENTATION.md",
+        "docs/QL_2A_IMPLEMENTATION.md",
+        "docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md"
+      ],
+      "sourceIdentity": "QL2A fixed cost10bps/1bps;QL3A seed20260927;Step5seed20261002",
+      "verifierRoot": "Accepted fixed cost baseline; root retained valid terminal outcomes; no recommendation acceptance",
+      "carryLimit": "NO_VALID_CANDIDATE is valid success; no profitability prerequisite. Holdout untouched, no guard reset.",
+      "nextGate": "Reconcile current cost/partition/holdout implementation against retained checks."
+    },
+    {
+      "id": "F06-01",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "rationale": [
+        "Durable jobs contract specifies source/input/data/policy snapshots, progress, cancellation and recovery.",
+        "Durable API/worker and immutable contracts implemented; historical local47checks and staging evidence retained.",
+        "6320169 source to current recovery/guard/selection changes not reconciled.",
+        "Historical rollout/progress/terminal readback exists; complete current supported cancellation/recovery staging scope unresolved."
+      ],
+      "evidence": [
+        "docs/QL_3A_DURABLE_JOBS.md",
+        "docs/evidence/QL_3A_DURABLE_JOBS_STAGING_ROLLOUT_2026-09-27.json",
+        "docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md"
+      ],
+      "sourceIdentity": "6320169 engine02aa72c44c94d1e4ec567ad3c988ef95087c98483e27db00f88a1759226c1efb; laterc3fa9e5/3309d07",
+      "verifierRoot": "Historical local review and rollout; current source carry unresolved",
+      "carryLimit": "Result freeze F08 separate; scheduler/resource/recovery wider scope F07 separate.",
+      "nextGate": "Map current durable-job closure to applicable independent acceptance and staged recovery."
+    },
+    {
+      "id": "F06-02",
+      "D": 1,
+      "I": 1,
+      "V": 1,
+      "T": 1,
+      "rationale": [
+        "One declared21candidate/6600bar Step5 request with owner admission and fixed input lock.",
+        "Actual bounded optimizer completed21/21 and ten-dimension coverage.",
+        "Root reviewed declared outcome/terminal proof; corrected readiness failure separately retained, repeat explicitly owner-approved.",
+        "One staging admitted run completed17:28:50UTC Oct2; terminal readback17:45:39 and admission closed."
+      ],
+      "evidence": [
+        "docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md",
+        "docs/ROADMAP.md",
+        "docs/STAGING_PROTOTYPE_PLAN_2026-10-01.md"
+      ],
+      "sourceIdentity": "API/tradingc3fa9e5;research3309d07 plus pinned isolated interpreter/cache; seed20261002",
+      "verifierRoot": "Claude root dated Step5 completion and terminal proof; underlying reviewed tool receipts referenced by checkpoint",
+      "carryLimit": "Frozen oneoff achievement; no current admission/capacity/PF2/qualified candidate claim. NO_VALID_CANDIDATE meets terminal criterion.",
+      "nextGate": "Root confirm review-record pins sufficient for frozen oneoff V; no new run required to earn profit."
+    },
+    {
+      "id": "F06-03",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "rationale": [
+        "Auditor design exists but proposed deadline and outcome semantics explicitly await root acceptance.",
+        "Containment proposal unimplemented; existing30s socket timeout lacks absolute bound.",
+        "No containment implementation/checks; proposed focused checks unrun.",
+        "No integrated correction."
+      ],
+      "evidence": [
+        ".qa-local/codex-legacy-optimize-design-2026-10-15/REPORT.md"
+      ],
+      "sourceIdentity": "Design source frozen .qa-local/int-r6 server.js164-196/request-dispatch.js108; currentfaa32a4 not corrected",
+      "verifierRoot": "Auditor recommendation only, root decides; no accepted implementation",
+      "carryLimit": "No safe retries inferred; upstream outcome may remain unknown; no DB timeout increase.",
+      "nextGate": "Root approve deadline/outcome contract then bounded implementation/verification."
+    }
+  ],
+  "checks": {
+    "ran": [
+      "Read-only documentation/evidence inspection",
+      "Git HEAD/status and bounded source diffs",
+      "Current CX5 file SHA256 comparison"
+    ],
+    "notRun": [
+      "Tests",
+      "Browser",
+      "Host/VPS",
+      "Runtime readback",
+      "Full transitive closure audits"
+    ]
+  },
+  "unresolvedScopeIssues": [
+    "F02-01 and F05-01 mix frozen historical achievement with ongoing capability wording; root must choose documented applicability, not relabel target after scoring.",
+    "F03-02/F03-03 scoped source carry is narrower than full current PO1 CI; root must retain failedPO1 and decide acceptance strictly within unaffected corrections.",
+    "F06-02 frozen oneoff outcome qualifies despite current admission closed; do not require profitable winner or current fulltree identity.",
+    "F04-01 public source record gives truncated dataset IDs/hashes; immutable evidence pin is available but deeper private identity closure may warrant V/T UNKNOWN if root cannot establish reviewed receipt linkage.",
+    "D1 proposals rely on historical reviewed contracts, not merely inventory text. No new product or policy acceptance granted."
+  ],
+  "evidencePins": [
+    {
+      "path": ".qa-local/codex-legacy-optimize-design-2026-10-15/REPORT.md",
+      "sha256": "0eb4a84fdfe2062c8659a34578f615e0a2bcf60deaa0a379d5131a8517d129d3",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/APP_3A_ACCEPTANCE_2026-09-26.md",
+      "sha256": "01ffcbf0918133b1530cc950cde28d4c391e080d64f0d6599de1418817176875",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/APP_3A_READINESS_2026-09-26.json",
+      "sha256": "1f4efa8eee2a897e08c0b079d223be649154cfae0d29cfc6ac06029b49f2ebaa",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/B3_FIRST_BACKFILL_2026-10-06.json",
+      "sha256": "86af5a9b6a87cde5462b4ca4fd4451c7b87684dc2e7c084f29ca1e43149069b2",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/COMBINED_S07_STAGING_RELEASE_2026-10-08.json",
+      "sha256": "e381843c0c38a9f805c92557bdbfc5233df0da8ef719d320f8d2a16ab8af0af3",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/DP1S_C02_STAGING_SWITCH_2026-10-15.json",
+      "sha256": "aad713e555690938cefb994a5c89a3a5ce04bdd4d8f0f67bae29cae580ecc8aa",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/INT_R7_FCL_EXACT_CI_2026-10-15.json",
+      "sha256": "0a6ab2dbeb31a684a3e3d0d5e2d2dc1ff81e776b8bc20d992a0078db4554736c",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/INT_R7_FCL_LOCAL_INTEGRATION_2026-10-15.json",
+      "sha256": "2ca0b361aa21e3653bcc1cd13b9104cb524724bb9163e0758fdb0b435797415e",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/P2_CHART_INDICATORS_RELEASE_2919F9B_2026-10-04.json",
+      "sha256": "d96515c70964ff2ccc8d9aac854e19b8d449ef156ead6df481a17dd30a02023c",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/P2_CHART_RELEASE_F22F3D0_2026-10-04.json",
+      "sha256": "b662fbf09db8f8108a75162f352bd48ade66e5e95d1aa3c046886bdda448be35",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/PAPER_WRITER_GUARD_CX5_LOCAL_2026-10-15.md",
+      "sha256": "68af8e27fa4975d72654772ad3033f69ca1e65f9ad5567df1bdf19ef6286c51c",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/PO1_LOCAL_INTEGRATION_2026-10-15.json",
+      "sha256": "8136cf7ff4e9e2716faabced44d15ecbce015917bf804b0eef9a4df56adcaa67",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/QL_2A_BASELINE_2026-09-26.json",
+      "sha256": "ba2ec0065e35c49b166dce28d5696aacd5a82c08d6197d12bd01fae230c79c06",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/QL_3A_APPROVED_INPUT_LOCK_2026-09-27.json",
+      "sha256": "7e1bb1eefe71a3100949533a82e5e70feb46e23f7b95d85de22dd525db704035",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/QL_3A_DURABLE_JOBS_STAGING_ROLLOUT_2026-09-27.json",
+      "sha256": "89314c551680195e40b1dfd9a34835397568208023d9cefc8299fa6732924f27",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/STEP2_S4_STAGING_RELEASE_2026-10-05.json",
+      "sha256": "4a5a383e43a87ceb89850acc667896a882e253ce4a5368b9b41e5dc54aa6fb79",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/evidence/STEP2_S7_MECHANICAL_REPLAY_2026-10-05.json",
+      "sha256": "1fa480ce02a7f4a0dcbe975b97d54fb8330342652164e31b890aef45856116f4",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/PF2_ENROLLMENT_LOCAL_CHECKPOINT_2026-10-01.md",
+      "sha256": "46f5edecd3cd6c7c0264e6daeeb30e8f9a2f81b9d1cdd4de1c17afd88aeec9b9",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/PF2_STAGING_ACCEPTANCE_PACKET_2026-10-01.md",
+      "sha256": "84b66f7656be74c1c758c779dcbced086ad1e5a3888261cf0bf421e40341e3f3",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/QL_2A_IMPLEMENTATION.md",
+      "sha256": "2e8bbcc97e51795b785404c92cf34e66294c4c69e88264a21af41c1333e7577c",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/QL_3A_DURABLE_JOBS.md",
+      "sha256": "da146ae49d6702ea480f5691aa07e1449052bd986f356d545869fbe46322561e",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/QL_3A_IMPLEMENTATION.md",
+      "sha256": "af4f246f67691424692059dc2091cb598043ff64e9a832b42ca32e09b8d27f9d",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "f9fdc47b99d3cc5c96d3805da67735ef88788e5fff8b577221844e6686c217ec",
+      "mutableRootDocument": true
+    },
+    {
+      "path": "docs/STAGING_P2_CHECKPOINT_2026-10-03.md",
+      "sha256": "014e5b4e8dbe2d1cb127126a43b22a9354471c1e6d66f6a76fbdae98825e6e19",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/STAGING_PROTOTYPE_PLAN_2026-10-01.md",
+      "sha256": "f2c0adfea96c7f51efaf83bc8f93701d974ea8efeb2270c98291f1dd3288ec5a",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/STAGING_STEP5_CHECKPOINT_2026-10-02.md",
+      "sha256": "437e2d6f9fb62f865325c7f3b0e9ed833c64b1fb8f7da2e163a1b13f039912cc",
+      "mutableRootDocument": false
+    },
+    {
+      "path": "docs/STEP2_S4_CONTINUATION_2026-10-05.md",
+      "sha256": "e71f3b3f24ec446444e6e98d9e65625e9faf1f9fdf2e72002ad03f071f969697",
+      "mutableRootDocument": false
+    }
+  ],
+  "roadmapBaseGitBlob": "0b83f0ea189a68cd858d2a3de49b014f042e3204",
+  "checkpoint": "Bounded review complete. Root owns acceptance and tracked docs. No jobs, tests, host or Git writes. Usage supplied:100% remaining, short window unknown; not independently refreshed by child. All22 assigned inventory rows covered."
+}

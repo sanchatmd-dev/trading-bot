@@ -1,0 +1,705 @@
+{
+  "schema": "pm1-inventory-v1",
+  "method": "PM-1",
+  "version": "PM1-I1",
+  "frozenAt": "2026-10-15T02:38:15.991Z",
+  "timezone": "Asia/Bangkok",
+  "sourceCommit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+  "scope": {
+    "project": "Committed Paper product roadmap including customer readiness; optional Live excluded.",
+    "prototype": "One owner, one Bot, one supported Pine, BTCUSDT Spot 1m, existing 10K-bar profile. Excludes full portfolio/export/email, broader multi-Pine, paid launch and Live."
+  },
+  "allocationRule": "Equal shares among explicitly bounded outcomes within each fixed PM-1 category. This is a planning convention, not measured labor; frozen before credits and totals. No weighting adjustment to match historical estimates.",
+  "environmentRule": "Targets follow original packet scope: delivered staging baselines stay staging; explicitly local engineering/diagnostic packets stay local; production rollout is a distinct F12-04 outcome. Local completion does not close release acceptance.",
+  "doubleCountingRule": "A project outcome appears once. Cross-view references do not add weights across views. Prototype P06-01 covers storage/reopening; P06-03 covers comparison/refusal behavior, distinct outcomes supported by the same Library package. Infrastructure references create no bonus points.",
+  "views": {
+    "project": {
+      "categories": [
+        {
+          "id": "F01",
+          "weight": 10,
+          "label": "Owner identity, Bot lifecycle and shared Web UI",
+          "deliverables": [
+            {
+              "id": "F01-01",
+              "outcome": "Owner authentication and tenant-scoped access",
+              "target": "staging",
+              "acceptance": "Authenticated access, CSRF and owner isolation are implemented, independently checked and read back in staging.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F01-02",
+              "outcome": "Bot creation and lifecycle",
+              "target": "staging",
+              "acceptance": "An authenticated owner creates a Bot and uses its supported lifecycle without bypassing capacity or readiness gates.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F01-03",
+              "outcome": "Shared UI and journey visibility",
+              "target": "staging",
+              "acceptance": "The shared desktop/mobile UI reports supported, disabled and unavailable steps accurately.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "F02",
+          "weight": 12,
+          "label": "Single-Pine registry, AI Bridge, binding and transport",
+          "deliverables": [
+            {
+              "id": "F02-01",
+              "outcome": "Single-Pine registry, AI generation and guide",
+              "target": "staging",
+              "acceptance": "A real generation produces the supported source-bound Bridge and guide with reviewed compile and registry identity.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F02-02",
+              "outcome": "Ten-input selection and round-trip",
+              "target": "staging",
+              "acceptance": "Eight selected source inputs plus ATR/RR round-trip through UI, generation and immutable snapshot with coherent deployment/research selection. Effects are scored separately in F05.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F02-03",
+              "outcome": "Versioned authenticated transport and scoped targeting",
+              "target": "staging",
+              "acceptance": "The exact Bridge reaches the receiver with owner, Bot and entry identity; duplicate and unrelated targets are refused. Paper accounting is scored in F03.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "F03",
+          "weight": 12,
+          "label": "Paper execution, risk, allocation and ledger correctness",
+          "deliverables": [
+            {
+              "id": "F03-01",
+              "outcome": "Paper risk decisions, allocation and targeted EXIT baseline",
+              "target": "staging",
+              "acceptance": "Accepted, capped and rejected entries and reduce-only exits reconcile with scoped Paper allocations and ledger evidence.",
+              "share": {
+                "numerator": 1,
+                "denominator": 5
+              }
+            },
+            {
+              "id": "F03-02",
+              "outcome": "O3/G1/F4 accounting corrections",
+              "target": "local integrated code",
+              "acceptance": "Reviewed exit-cost, unlotted FIFO and funding-fence corrections are integrated with their bounded tests; deployment is a separate F12 outcome.",
+              "share": {
+                "numerator": 1,
+                "denominator": 5
+              }
+            },
+            {
+              "id": "F03-03",
+              "outcome": "Worker transient faults, bounded rejection and systemic hold",
+              "target": "staging",
+              "acceptance": "The W1 worker behavior is integrated and read back in staging within its provisional policy; long observation and production release are separate F12 gates.",
+              "share": {
+                "numerator": 1,
+                "denominator": 5
+              }
+            },
+            {
+              "id": "F03-04",
+              "outcome": "Database transaction and runtime lease integrity",
+              "target": "staging",
+              "acceptance": "Late queued SQL is refused and runtime leases enforce origin, preserve failures and retain the maintenance lock; applicable verification and integration are complete.",
+              "share": {
+                "numerator": 1,
+                "denominator": 5
+              }
+            },
+            {
+              "id": "F03-05",
+              "outcome": "Tracked script and source writer guard",
+              "target": "local test integration",
+              "acceptance": "The structural guard covers the specified tracked JS/MJS/SQL writer inventory and exact import exceptions; no SQL-parser or dynamic-SQL safety claim.",
+              "share": {
+                "numerator": 1,
+                "denominator": 5
+              }
+            }
+          ]
+        },
+        {
+          "id": "F04",
+          "weight": 10,
+          "label": "Market ingestion, provenance and Preflight",
+          "deliverables": [
+            {
+              "id": "F04-01",
+              "outcome": "Spot ingestion and bounded BACKFILL provenance",
+              "target": "staging",
+              "acceptance": "One bounded supported raw-data capture/backfill is durable and bound to its declared source, interval and cutoff.",
+              "share": {
+                "numerator": 1,
+                "denominator": 5
+              }
+            },
+            {
+              "id": "F04-02",
+              "outcome": "Prototype charts and market-data diagnostics",
+              "target": "staging",
+              "acceptance": "The supported chart and indicators display current/stale/limited states accurately at prototype scale; production scaling is F12.",
+              "share": {
+                "numerator": 1,
+                "denominator": 5
+              }
+            },
+            {
+              "id": "F04-03",
+              "outcome": "PF-2 historical Preflight",
+              "target": "staging",
+              "acceptance": "Trusted resolution, historical replay and evidence publication complete on the supported admitted profile.",
+              "share": {
+                "numerator": 1,
+                "denominator": 5
+              }
+            },
+            {
+              "id": "F04-04",
+              "outcome": "PF-3 readiness report",
+              "target": "staging",
+              "acceptance": "Capability-scoped readiness reports blockers and provenance without converting unavailable historical evidence into readiness.",
+              "share": {
+                "numerator": 1,
+                "denominator": 5
+              }
+            },
+            {
+              "id": "F04-05",
+              "outcome": "PF-4 deterministic Risk proposals",
+              "target": "staging",
+              "acceptance": "Preview/save uses a bound current policy, read-only preview and explicit owner confirmation; running-state refusal remains enforced.",
+              "share": {
+                "numerator": 1,
+                "denominator": 5
+              }
+            }
+          ]
+        },
+        {
+          "id": "F05",
+          "weight": 12,
+          "label": "Evaluator, selected-input parity and validation semantics",
+          "deliverables": [
+            {
+              "id": "F05-01",
+              "outcome": "Supported source evaluator baseline",
+              "target": "local validated engine",
+              "acceptance": "The source-bound evaluator and serial Paper decisions match the retained supported TradingView/Node/Python baseline.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F05-02",
+              "outcome": "Selected-input empirical parity and supported effects",
+              "target": "staging qualification",
+              "acceptance": "All owner-selected source dimensions and ATR/RR meet the declared effects/parity criteria or an explicitly approved contract revision.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F05-03",
+              "outcome": "Cost, chronological validation and holdout semantics",
+              "target": "local validated engine",
+              "acceptance": "Costs, chronological partitions and untouched holdout rules produce an honest terminal qualification status, including NO_VALID_CANDIDATE.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "F06",
+          "weight": 10,
+          "label": "Optimizer, snapshots, progress and cancellation",
+          "deliverables": [
+            {
+              "id": "F06-01",
+              "outcome": "Immutable research jobs, progress and cancellation",
+              "target": "staging",
+              "acceptance": "Owner-scoped source/input/data/policy snapshots, durable progress, cancellation and terminal readback survive supported recovery.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F06-02",
+              "outcome": "Bounded optimizer execution and terminal outcome",
+              "target": "staging admitted run",
+              "acceptance": "One admitted supported job searches its declared dimensions within budget and records a durable terminal outcome; profitability is not required.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F06-03",
+              "outcome": "Legacy optimize request and transaction containment",
+              "target": "local integrated code",
+              "acceptance": "The legacy proxy has a reviewed bounded request/transaction lifetime with honest unknown outcomes and no unsafe automatic retry.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "F07",
+          "weight": 10,
+          "label": "Recovery, isolation, accounting and R7 capacity",
+          "deliverables": [
+            {
+              "id": "F07-01",
+              "outcome": "W7 recovery and D6 diagnostic admission prerequisites",
+              "target": "supervised staging",
+              "acceptance": "The bounded recovery windows and D6 prerequisite checks are reviewed with preserved unsuccessful attempts.",
+              "share": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            },
+            {
+              "id": "F07-02",
+              "outcome": "R7 J1-J4 scheduler and resource-accounting cases",
+              "target": "supervised staging",
+              "acceptance": "The named J1-J4 package scopes and their source reconciliation are accepted; this does not establish wider capacity.",
+              "share": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            },
+            {
+              "id": "F07-03",
+              "outcome": "EM2 measurement controller and recovery tooling",
+              "target": "local accepted tooling",
+              "acceptance": "The native chain, lineage, persistence, held-lock reporting and recovery matrix have accepted local evidence.",
+              "share": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            },
+            {
+              "id": "F07-04",
+              "outcome": "Fresh R7 capacity measurement and qualification",
+              "target": "supervised staging",
+              "acceptance": "A fresh admitted measurement epoch closes the declared workload/capacity gates with reviewed runtime evidence.",
+              "share": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            }
+          ]
+        },
+        {
+          "id": "F08",
+          "weight": 6,
+          "label": "Research Library and immutable artifacts",
+          "deliverables": [
+            {
+              "id": "F08-01",
+              "outcome": "Owner-scoped Library storage and inspection",
+              "target": "staging",
+              "acceptance": "Preserved terminal runs reopen with source/input/data/policy provenance and explicit unavailable metrics.",
+              "share": {
+                "numerator": 1,
+                "denominator": 2
+              }
+            },
+            {
+              "id": "F08-02",
+              "outcome": "QR-1b durable artifact freeze",
+              "target": "staging",
+              "acceptance": "Terminal artifacts and parents are protected against the specified mutations and verified after restart/restore in the target release.",
+              "share": {
+                "numerator": 1,
+                "denominator": 2
+              }
+            }
+          ]
+        },
+        {
+          "id": "F09",
+          "weight": 6,
+          "label": "Validated Best Inputs, delivery and owner handoff",
+          "deliverables": [
+            {
+              "id": "F09-01",
+              "outcome": "Qualified Best Inputs package and validation",
+              "target": "staging",
+              "acceptance": "A source-bound candidate package passes the QL-4B/QL-4C compile, provenance and validation gates before being exposed as a recommendation.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F09-02",
+              "outcome": "Export and matching email report delivery",
+              "target": "staging",
+              "acceptance": "The validated export and matching report pass the delivery/SMTP gates without exposing an unqualified recommendation.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F09-03",
+              "outcome": "Explicit review, import and owner handoff",
+              "target": "staging",
+              "acceptance": "The owner reviews a compatible validated package and explicitly imports or starts a new Bot; no automatic apply or optimizer loop.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "weight": 4,
+          "label": "Portfolio, full fair comparison and selection",
+          "deliverables": [
+            {
+              "id": "F10-01",
+              "outcome": "QR-2 actual Paper portfolio performance",
+              "target": "staging",
+              "acceptance": "A complete portfolio view reconciles actual Paper history, valuation and costs for the declared range.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F10-02",
+              "outcome": "QR-3 full fair comparison",
+              "target": "staging",
+              "acceptance": "Complete declared-period comparisons enforce compatible data, policy, cost and validation contexts.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            },
+            {
+              "id": "F10-03",
+              "outcome": "QR-4 qualified best-performance selection",
+              "target": "staging",
+              "acceptance": "Selection distinguishes development scores from qualified recommendations and refuses unsupported rankings.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "weight": 4,
+          "label": "Broader multi-Pine support and isolation",
+          "deliverables": [
+            {
+              "id": "F11-01",
+              "outcome": "Multi-Pine contracts and evaluator/package compatibility",
+              "target": "isolated accepted fixture",
+              "acceptance": "Multiple registered sources use the declared shared Bridge pair and source-bound evaluation/package rules without owner-facing activation.",
+              "share": {
+                "numerator": 1,
+                "denominator": 2
+              }
+            },
+            {
+              "id": "F11-02",
+              "outcome": "APP-3B multi-Pine Paper isolation and canary",
+              "target": "staging",
+              "acceptance": "Shared-symbol allocations, reservations, exits, workload and recovery pass the declared cross-Bot and oversell acceptance gates.",
+              "share": {
+                "numerator": 1,
+                "denominator": 2
+              }
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "weight": 4,
+          "label": "Production scaling and customer launch readiness",
+          "deliverables": [
+            {
+              "id": "F12-01",
+              "outcome": "MD-1 production market-data scaling",
+              "target": "production qualification",
+              "acceptance": "Shared-IP market load is separated and budgeted under the MD-1 operational acceptance criteria.",
+              "share": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            },
+            {
+              "id": "F12-02",
+              "outcome": "Customer lifecycle, quotas and entitlement",
+              "target": "Paper beta",
+              "acceptance": "The APP-4 customer lifecycle and entitlement/quotas pass the bounded customer Paper beta contract.",
+              "share": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            },
+            {
+              "id": "F12-03",
+              "outcome": "Customer security and launch operations",
+              "target": "Paper beta",
+              "acceptance": "Customer-scale security and operational acceptance are documented and verified beyond the existing single-owner staging baseline.",
+              "share": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            },
+            {
+              "id": "F12-04",
+              "outcome": "Reviewed Paper production rollout and observation",
+              "target": "production",
+              "acceptance": "Release identity, dependency closure, rollback and required observations pass before the production Paper correction is accepted.",
+              "share": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "prototype": {
+      "categories": [
+        {
+          "id": "P01",
+          "weight": 15,
+          "label": "Actual AI generation and guide",
+          "deliverables": [
+            {
+              "id": "P01-01",
+              "outcome": "Generate the supported Bridge and guide",
+              "target": "staging owner journey",
+              "acceptance": "A real supported-source AI generation yields the compiled/reviewed artifact and usable guide.",
+              "share": {
+                "numerator": 1,
+                "denominator": 1
+              },
+              "crossViewReference": "F02-01"
+            }
+          ]
+        },
+        {
+          "id": "P02",
+          "weight": 15,
+          "label": "Eight source inputs plus ATR/RR",
+          "deliverables": [
+            {
+              "id": "P02-01",
+              "outcome": "Ten-input round-trip and coherent selection",
+              "target": "staging owner journey",
+              "acceptance": "The eight selected slots and two Bridge values round-trip without truncation or selection drift.",
+              "share": {
+                "numerator": 1,
+                "denominator": 2
+              },
+              "crossViewReference": "F02-02"
+            },
+            {
+              "id": "P02-02",
+              "outcome": "Effects and parity of the selected dimensions",
+              "target": "staging qualification",
+              "acceptance": "Each selected dimension meets its supported-effect and empirical parity criterion.",
+              "share": {
+                "numerator": 1,
+                "denominator": 2
+              },
+              "crossViewReference": "F05-02"
+            }
+          ]
+        },
+        {
+          "id": "P03",
+          "weight": 20,
+          "label": "Historical Preflight and Risk proposals",
+          "deliverables": [
+            {
+              "id": "P03-01",
+              "outcome": "Historical Preflight on an admitted supported profile",
+              "target": "staging owner journey",
+              "acceptance": "An admitted historical run supplies trusted capability-scoped evidence.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              },
+              "crossViewReference": "F04-03"
+            },
+            {
+              "id": "P03-02",
+              "outcome": "Readiness with honest historical status",
+              "target": "staging owner journey",
+              "acceptance": "Readiness reflects actual provenance and unavailable gates.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              },
+              "crossViewReference": "F04-04"
+            },
+            {
+              "id": "P03-03",
+              "outcome": "Policy-bound Risk preview and save",
+              "target": "staging owner journey",
+              "acceptance": "The owner can preview and explicitly save an eligible proposal with current policy provenance.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              },
+              "crossViewReference": "F04-05"
+            }
+          ]
+        },
+        {
+          "id": "P04",
+          "weight": 20,
+          "label": "TradingView transport and reconciled Paper execution",
+          "deliverables": [
+            {
+              "id": "P04-01",
+              "outcome": "Real same-entry TradingView BUY and targeted EXIT",
+              "target": "staging owner journey",
+              "acceptance": "A natural same-entry pair reaches the exact owner/Bot/deployment with durable receipt identity.",
+              "share": {
+                "numerator": 1,
+                "denominator": 2
+              },
+              "crossViewReference": "F02-03"
+            },
+            {
+              "id": "P04-02",
+              "outcome": "Paper risk, isolation and ledger reconciliation",
+              "target": "staging owner journey",
+              "acceptance": "The pair reconciles with reduce-only allocation/ledger behavior and independent duplicate/cap/isolation controls.",
+              "share": {
+                "numerator": 1,
+                "denominator": 2
+              },
+              "crossViewReference": "F03-01"
+            }
+          ]
+        },
+        {
+          "id": "P05",
+          "weight": 20,
+          "label": "One admitted bounded optimization",
+          "deliverables": [
+            {
+              "id": "P05-01",
+              "outcome": "Snapshot, progress, cancel and durable result controls",
+              "target": "staging owner journey",
+              "acceptance": "The user sees bound immutable inputs, progress/cancel and durable terminal status.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              },
+              "crossViewReference": "F06-01"
+            },
+            {
+              "id": "P05-02",
+              "outcome": "Current profile capacity and admission",
+              "target": "supervised staging",
+              "acceptance": "Required admission/capacity gates for this supported profile are closed.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              },
+              "crossViewReference": "F07-04"
+            },
+            {
+              "id": "P05-03",
+              "outcome": "One bounded supported terminal run",
+              "target": "staging admitted run",
+              "acceptance": "One admitted run executes the declared search and preserves its honest terminal result; NO_VALID_CANDIDATE is valid.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              },
+              "crossViewReference": "F06-02"
+            }
+          ]
+        },
+        {
+          "id": "P06",
+          "weight": 10,
+          "label": "Durable Library and honest comparison",
+          "deliverables": [
+            {
+              "id": "P06-01",
+              "outcome": "Reopen and inspect preserved runs",
+              "target": "staging owner journey",
+              "acceptance": "Completed, failed and other terminal outcomes retain owner and research provenance when reopened.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              },
+              "crossViewReference": "F08-01"
+            },
+            {
+              "id": "P06-02",
+              "outcome": "Artifact durability and freeze",
+              "target": "staging owner journey",
+              "acceptance": "The declared immutable artifacts survive restart/restore and retain truthful freeze status.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              },
+              "crossViewReference": "F08-02"
+            },
+            {
+              "id": "P06-03",
+              "outcome": "Minimal compatible comparison and qualification display",
+              "target": "staging owner journey",
+              "acceptance": "Incompatible contexts withhold metrics; no qualified winner is shown without evidence. Full QR-3/QR-4 and export are excluded.",
+              "share": {
+                "numerator": 1,
+                "denominator": 3
+              },
+              "crossViewReference": "F08-01"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

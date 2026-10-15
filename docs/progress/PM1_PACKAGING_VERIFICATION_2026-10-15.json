@@ -1,0 +1,74 @@
+{
+  "status": "PASS",
+  "checks": [
+    "PASS: baseline, inventory and calculator unchanged from independent arithmetic snapshot",
+    "PASS: all 56 evidence pins still match",
+    "PASS: retained legacy design matches E027 SHA256 exactly",
+    "PASS: all 9 new PM1 artifacts/calculator have text unset and identical raw/clean blob hashes",
+    "PASS: bounded machine-path/private-key/token/credential-URL scan finds no matches",
+    "PASS: durable verifier equals reviewed verifier; relative calculator import resolves from docs/progress"
+  ],
+  "scorecardSha256": "ce826a1f9ec332ac48368eb0a9309303e59df415b4327b8c9ba86ae22ca882c7",
+  "bytePreservation": [
+    {
+      "path": "docs/progress/PM1_ASSESSMENT_A_2026-10-15.json",
+      "sha256": "8f9afb8d293d3d8dfec3c6564b25dcc9d538e6aa4038b48f8e4bd393eab02835",
+      "gitRawBlob": "3a69f436f468ec8b5b0115e202b78eb11495d7ac",
+      "gitCleanBlob": "3a69f436f468ec8b5b0115e202b78eb11495d7ac"
+    },
+    {
+      "path": "docs/progress/PM1_ASSESSMENT_B_2026-10-15.json",
+      "sha256": "4c4c7fca2f2785ccbaf163b48ff69c222a5466a3b4a5b5a8935516fc84f983ca",
+      "gitRawBlob": "fe357bd9d8d57ce224e376aab104c33aaa895f9c",
+      "gitCleanBlob": "fe357bd9d8d57ce224e376aab104c33aaa895f9c"
+    },
+    {
+      "path": "docs/progress/PM1_BASELINE_2026-10-15.json",
+      "sha256": "ce826a1f9ec332ac48368eb0a9309303e59df415b4327b8c9ba86ae22ca882c7",
+      "gitRawBlob": "610086d8e5f6e5f0e7bd07c86acb14064ae22908",
+      "gitCleanBlob": "610086d8e5f6e5f0e7bd07c86acb14064ae22908"
+    },
+    {
+      "path": "docs/progress/PM1_BASELINE_2026-10-15.md",
+      "sha256": "b3a9d6ce7fdba13b646d3771f1e85517abcf802bd141209de2e3b78e7e679948",
+      "gitRawBlob": "3d68af54b3786d0cf46b6cb20e732eaab70d290b",
+      "gitCleanBlob": "3d68af54b3786d0cf46b6cb20e732eaab70d290b"
+    },
+    {
+      "path": "docs/progress/PM1_INDEPENDENT_VERIFIER_2026-10-15.mjs",
+      "sha256": "4adf94770ae2942323262413b6be6fcb3f47d951f99c819245e4c7421399c845",
+      "gitRawBlob": "1af3b85d6f363e843053a81c5207bac330936a33",
+      "gitCleanBlob": "1af3b85d6f363e843053a81c5207bac330936a33"
+    },
+    {
+      "path": "docs/progress/PM1_INVENTORY_V1_2026-10-15.json",
+      "sha256": "233f5fbea84355998c09da09f5b74799f453e7b5cb1270cfbf4c59a880ef514a",
+      "gitRawBlob": "04e19c8d3e66b4b9df36966fbff1fa0cf7453cbe",
+      "gitCleanBlob": "04e19c8d3e66b4b9df36966fbff1fa0cf7453cbe"
+    },
+    {
+      "path": "docs/progress/PM1_LEGACY_DESIGN_2026-10-15.md",
+      "sha256": "0eb4a84fdfe2062c8659a34578f615e0a2bcf60deaa0a379d5131a8517d129d3",
+      "gitRawBlob": "2f9bcad3cf4a211b6b380ce21a48a0d6cb0d5e87",
+      "gitCleanBlob": "2f9bcad3cf4a211b6b380ce21a48a0d6cb0d5e87"
+    },
+    {
+      "path": "docs/progress/PM1_VERIFICATION_2026-10-15.json",
+      "sha256": "3139c3a0326943a361a8463bde595adadd1167bc1b4e00b66258463f34e78221",
+      "gitRawBlob": "27f4698bfa0cc4a9c6d402a48e247959761f1e92",
+      "gitCleanBlob": "27f4698bfa0cc4a9c6d402a48e247959761f1e92"
+    },
+    {
+      "path": "scripts/calculate-pm1-progress.mjs",
+      "sha256": "bcba7b13f0fc1dd04056ca5ed5440ba3a73a8cc2f7e75c3cbc753457bc14d680",
+      "gitRawBlob": "3143da19d8f7f068acb21ad65de92a4d57979c1b",
+      "gitCleanBlob": "3143da19d8f7f068acb21ad65de92a4d57979c1b"
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Pattern scan is bounded; not proof of absence of every secret format.",
+    "Durable verifier not executed: it writes sibling final-results.json; imported source and placement reviewed only.",
+    "Git hash-object used without -w; no index or object-store writes. No product, PG, browser or host tests."
+  ]
+}

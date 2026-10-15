@@ -1,0 +1,443 @@
+{
+  "task": "PM1 evidence B",
+  "status": "PROPOSAL_ONLY_ROOT_ACCEPTANCE_REQUIRED",
+  "base": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+  "inventory": "docs/progress/PM1_INVENTORY_V1_2026-10-15.json",
+  "scope": "Project F07-F12 and unique prototype P06-03. No weights, shares or targets changed. No headline calculation.",
+  "identityRule": "Evidence paths are read at base unless explicitly local. Root must pin these evidence blobs in its manifest. Historical scoped executions remain historical; no current host-health claim.",
+  "checks": {
+    "performed": [
+      "Read AGENTS.md, Caveman, method, inventory, checkpoint and targeted primary documents",
+      "Read-only Git HEAD/status and Library source delta",
+      "Current QR1B source hashes checked against original plus FZ2/A4F superseding candidate maps",
+      "All 26 top-level retained pin references across controller-full, controller-recovery and held-report-v12 match their accepted SHA256 values"
+    ],
+    "notRun": [
+      "Tests",
+      "Host",
+      "Browser",
+      "Git mutations",
+      "Full source-equivalence audit"
+    ],
+    "limitations": "Top-level pin equality is not recursive verification of every file named inside a FILES manifest. No test pass is newly claimed. One PowerShell query failed parsing and was corrected; one rg Windows-glob query failed and was corrected."
+  },
+  "rows": [
+    {
+      "id": "F07-01",
+      "D": 1,
+      "I": 1,
+      "V": 1,
+      "T": 1,
+      "stageRationale": {
+        "D": "Reviewed W7 windows and D6 prerequisite contract include explicit bounded checks and stop rules.",
+        "I": "Historical reviewed one-off tools completed their exact diagnostic contracts.",
+        "V": "Root records W7 and D6 accepted; unsuccessful/classification history remains disclosed.",
+        "T": "W7 windows ran on supervised staging; D6 records 1100/1100 samples and its acceptance inequality."
+      },
+      "evidence": [
+        "docs/evidence/W7_WINDOW1_2026-10-07.json",
+        "docs/evidence/W7_WINDOW2_2026-10-07.json",
+        "docs/CLAUDE_TO_CODEX_HANDOFF_2026-10-08.md",
+        "docs/ROADMAP.md"
+      ],
+      "sourceIdentity": "W7 staging 5e398e7; D6 combined staging 325d335. One-off historical diagnostic contracts, not a promise about current source recovery.",
+      "verifierRootAcceptance": "Historical independent tool review and Claude root acceptances recorded in handoff/Roadmap; current scoring acceptance pending root.",
+      "carryLimitations": "T applies only named recovery windows and diagnostic prerequisites. W7 I/O allowances cannot carry to R7/PF-2. D6 does not prove capacity.",
+      "nextGate": "Fresh R7 measurement and PF-2 remain separate. Root confirm this historical-outcome interpretation."
+    },
+    {
+      "id": "F07-02",
+      "D": 1,
+      "I": 1,
+      "V": 1,
+      "T": 1,
+      "stageRationale": {
+        "D": "Named J1-J4 contracts and source-reconciliation boundaries explicitly reviewed.",
+        "I": "Recorded packages implement named 20 cases.",
+        "V": "SCOPED_HARNESS_PREREQUISITE_ACCEPTED explicitly accepts common-source carry.",
+        "T": "Four individually accepted supervised staging jobs retained across their package scopes."
+      },
+      "evidence": [
+        "docs/evidence/R7B_HARNESS_RECONCILIATION_2026-10-13.json",
+        "docs/evidence/R7B_J1R9_2026-10-12.json"
+      ],
+      "sourceIdentity": "J1/J2 package 2964b5e3bda887ee22d4d246eef63d9c84647263cced2ba589c0509ed6acb736; J3/J4 560d1c4606c17ab2beba8147de1c3c9992b9003f3a9b1b0d303a456f0f80fbb0; product eb532ffd7b127140c38c44c90cfed50f0708f81c.",
+      "verifierRootAcceptance": "Reconciliation explicitly says root accepts common-source carry; individual verifier identities in job records. Current score acceptance pending root.",
+      "carryLimitations": "No single-package all-case execution; J3 static-string reconstruction and J4 empty consumer module set disclosed. No broad R7 qualification.",
+      "nextGate": "Fresh measurement epoch."
+    },
+    {
+      "id": "F07-03",
+      "D": 1,
+      "I": 1,
+      "V": 1,
+      "T": 1,
+      "stageRationale": {
+        "D": "Native/controller/held-report/recovery contracts explicitly bounded local synthetic tooling.",
+        "I": "Accepted native chain, lineage, persistence, report and recovery matrix exist as frozen local artifacts.",
+        "V": "Independent grouped checks and separate root acceptance records retained; 26 referenced report/manifest/decision pins checked unchanged.",
+        "T": "Declared target is accepted local tooling; actual synthetic native/controller chain and recovery matrix meet that target."
+      },
+      "evidence": [
+        "docs/evidence/R7B_EM2_NATIVE_CHAIN_2026-10-13.json",
+        "docs/evidence/R7B_EM2_CONTROLLER_FULL_LOCAL_2026-10-13.json",
+        "docs/evidence/R7B_EM2_CONTROLLER_RECOVERY_LOCAL_2026-10-13.json",
+        "docs/evidence/R7B_EM2_HELD_REPORT_V12_LOCAL_2026-10-13.json"
+      ],
+      "sourceIdentity": "Controller-v4 FILES c887a127db84a7c639c496ce030d4c4af3d6ca39622f8f70e3a4f1eea3bfa27d; recovery-v3 FILES 72b51b6388d7b2237e2f1e9937d895528b2c3c3032d04dd751aa8b8a2884b40f; held-report-v12 FILES 8462cb4847cd89e485f2a4b8b487e3ccfed593cba9a83aa183f6d196d4493c45.",
+      "verifierRootAcceptance": "Historical Codex/Claude independent auditor/tester and root decisions named by retained records; current scoring acceptance pending root.",
+      "carryLimitations": "Trusted synthetic callbacks/fixed filesystem roots; no hostile filesystem guarantee, real adapter/mainCLI locked. Root may require recursive manifest-file pin validation before adopting V/T.",
+      "nextGate": "Operational effect contract, release and admitted epoch; no authority follows from local completion."
+    },
+    {
+      "id": "F07-04",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "Latest epoch amendment remains DRAFT_NOT_A_GO_NO_AUTHORITY; complete final reviewed capacity contract not reconciled.",
+        "I": "Fresh qualifying measurement is incomplete; local controller alone cannot complete this outcome.",
+        "V": "No full fresh epoch accepted.",
+        "T": "No fresh target qualification accepted."
+      },
+      "evidence": [
+        "docs/evidence/R7B_EM2_AMENDMENT_DRAFT_2026-10-13.json",
+        "docs/evidence/R7B_HARNESS_RECONCILIATION_2026-10-13.json"
+      ],
+      "sourceIdentity": "Frozen amendment JSON at base; executionReady false.",
+      "verifierRootAcceptance": "Scoped prerequisite accepted only; fullR7Accepted false.",
+      "carryLimitations": "J1-J4 and local EM2 cannot substitute fresh capacity measurement.",
+      "nextGate": "Root finalize reviewed amendment/effects and owner gates before admitted epoch."
+    },
+    {
+      "id": "F08-01",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "stageRationale": {
+        "D": "QR-1 owner-scoped storage/inspection contract and unavailable metrics specified.",
+        "I": "Library implementation complete for narrow inspection outcome; current quant-library.js exactly matches QR1B accepted source pin.",
+        "V": "Historical source f36181c evolved; relevant UI and HTTP tests changed. Full current-byte verification carry not reconciled.",
+        "T": "Historical staging release and partial owner walkthrough exist; final-source applicability unresolved."
+      },
+      "evidence": [
+        "docs/ROADMAP.md",
+        "docs/STAGING_P2_CHECKPOINT_2026-10-03.md",
+        "docs/evidence/QR1B_FREEZE_LOCAL_2026-10-13.json",
+        "src/postgres/quant-library.js"
+      ],
+      "sourceIdentity": "Historical staging f36181c; current src/postgres/quant-library.js SHA256 b2946466e005b42d547722a78c5c5364002b3ed2a9ae36f4d6109ac6373585d8; git diff f36181c..faa32a4 changes public/research-library.js and related tests.",
+      "verifierRootAcceptance": "Historical release accepted; P1-F full owner acceptance still open. Current code verification carry requires root confirmation.",
+      "carryLimitations": "Storage inspection excludes freeze, full QR-3 and qualified selection. Partial browser proof alone does not accept full journey.",
+      "nextGate": "Reconcile Library final UI/API bytes to accepted historical/CI records."
+    },
+    {
+      "id": "F08-02",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": 0,
+      "stageRationale": {
+        "D": "Reviewed design A and explicit trigger/migration/restart/restore contract accepted locally; owner deployment decisions remain separate.",
+        "I": "Freeze SQL, rollback, migration, CLI and Library source match latest FZ2 superseding accepted pins.",
+        "V": "Initial independent evidence accepted; later FZ2/RT1/A4F/PGX revisions change tests. Later CI green is not automatic independent final-byte acceptance.",
+        "T": "Not deployed/applied to staging; local restart/dump-restore does not satisfy staging target."
+      },
+      "evidence": [
+        "docs/evidence/QR1B_FREEZE_LOCAL_2026-10-13.json",
+        "docs/evidence/DB_GUARD_HARDENING_GH2_LOCAL_2026-10-13.json"
+      ],
+      "sourceIdentity": "Current freeze.sql bb3a5ce61bfcf9c6314fc36660d171324fbc41f664ad524e2e36a6b4016fb0fc; migration 67d3a4cbd5221d60a9990b69ab9ccd08d10aeae0084b91a2813b38e17f4f42b5; CLI e7fc7e28e9b772288aeb09911612a15797199c032223153ab4a06096e19c0126. Freeze test current 4ee30362ddbd61a848b69ccf6acea5f98b87ef2bed9d67f8ab07a3c09fcf02bf.",
+      "verifierRootAcceptance": "QR1B original tester Sonnet 5.5/medium, Fable review with root confirmation; later local candidates root accepted. Final revised test-equivalence decision pending root.",
+      "carryLimitations": "FZ2 resolves original migration/CLI mismatch. Initial test hashes remain superseded; GH2 CI1 4d86822 all-nine CI pass does not prove migration on host. No fresh tests run.",
+      "nextGate": "Reconcile final verification; owner D1-D4 and staging restore/GO/catalog gates."
+    },
+    {
+      "id": "F09-01",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "PINE_EXPORT declares proposed M5-M7 workflow; approved extension alone does not prove complete root-reviewed qualified-package contract.",
+        "I": "Offline candidate utilities exist, but authenticated qualified source-bound validation outcome remains planned.",
+        "V": "No completed final package accepted under QL-4B/4C.",
+        "T": "No staging validated recommendation integration."
+      },
+      "evidence": [
+        "docs/PINE_EXPORT.md",
+        "docs/ROADMAP.md",
+        "docs/QUANT_RESEARCH_LIBRARY.md"
+      ],
+      "sourceIdentity": "Base documents; legacy offline export distinct from revised authenticated workflow.",
+      "verifierRootAcceptance": "Complete contract review not established; root decide D after targeted review.",
+      "carryLimitations": "Historical QL-4 completion cannot transfer automatically to revised QL-4B/4C.",
+      "nextGate": "Eligible M4 evidence, reviewed package contract, compilation/provenance/validation."
+    },
+    {
+      "id": "F09-02",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "Export/report/SMTP dependency and statuses described; complete reviewed delivery contract not established.",
+        "I": "Matching validated export and report delivery outcome incomplete; SMTP remediation open.",
+        "V": "No revised matching delivery acceptance.",
+        "T": "No staging validated delivery with required owner receipt."
+      },
+      "evidence": [
+        "docs/PINE_EXPORT.md",
+        "docs/ROADMAP.md",
+        "docs/R0_BASELINE_2026-09-24.md"
+      ],
+      "sourceIdentity": "Base revised M5-M7 specification; historical SMTP/outbox snapshots not current matching-export evidence.",
+      "verifierRootAcceptance": "Historical notifier tests/receipt do not accept revised report delivery; D requires root review.",
+      "carryLimitations": "Email failure does not invalidate otherwise valid export; never infer export validity from email success.",
+      "nextGate": "Validated package, SMTP 550 remediation, matching report and confirmed owner receipt."
+    },
+    {
+      "id": "F09-03",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "Explicit review/import/start restrictions specified, but proposed workflow lacks reconciled final contract review.",
+        "I": "Authenticated revised review/import remains planned.",
+        "V": "No accepted compatible validated package handoff.",
+        "T": "No owner staging handoff meeting defined outcome."
+      },
+      "evidence": [
+        "docs/PINE_EXPORT.md",
+        "docs/ROADMAP.md"
+      ],
+      "sourceIdentity": "Base revised one-Pine M5-M7 contract proposal.",
+      "verifierRootAcceptance": "No completed revised owner handoff acceptance found; root decide D.",
+      "carryLimitations": "Guarded apply contract is not completed interface; no automatic apply or optimizer loop.",
+      "nextGate": "QL-4C validated fresh package and explicit owner review/import."
+    },
+    {
+      "id": "F10-01",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "Owner-approved QR-2 design lists valuation/funding/reconciliation, but leaves allocation/versioned return details unresolved; complete root-reviewed contract not demonstrated.",
+        "I": "Roadmap explicitly planned; current equity book equity only.",
+        "V": "No full actual portfolio reconciliation accepted.",
+        "T": "No staging QR-2 integration."
+      },
+      "evidence": [
+        "docs/QUANT_RESEARCH_LIBRARY.md",
+        "docs/ROADMAP.md"
+      ],
+      "sourceIdentity": "Base approved design, QR-2 planned.",
+      "verifierRootAcceptance": "Design approval not full implementation acceptance; D review pending root.",
+      "carryLimitations": "Existing balances/ledger are foundations, not complete portfolio outcome.",
+      "nextGate": "Finalize allocation/valuation/return contract then implement QR-2."
+    },
+    {
+      "id": "F10-02",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "Approved QR-3 design requires fixed objective, common valuation and ranking rules; complete final contract not evidenced.",
+        "I": "Only minimum context-matched comparison implemented; full declared-period comparison incomplete.",
+        "V": "Minimal comparison tests cannot verify full fair comparison.",
+        "T": "Full staging comparison not delivered."
+      },
+      "evidence": [
+        "docs/QUANT_RESEARCH_LIBRARY.md",
+        "docs/ROADMAP.md"
+      ],
+      "sourceIdentity": "Base QR-3 partial scope; distinct prototype P06-03 below.",
+      "verifierRootAcceptance": "Historical minimum acceptance not full QR-3; root decide D.",
+      "carryLimitations": "No double-credit for minimal comparison as completed full comparison.",
+      "nextGate": "Define complete common context and independent evidence, then QR-3."
+    },
+    {
+      "id": "F10-03",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "Approved QR-4 principles exist; fixed qualified-ranking objective and full review checks not reconciled.",
+        "I": "Roadmap QR-4 planned; no-winner safety display alone is not full selection.",
+        "V": "No qualified selection acceptance.",
+        "T": "No staging QR-4 target integration."
+      },
+      "evidence": [
+        "docs/QUANT_RESEARCH_LIBRARY.md",
+        "docs/ROADMAP.md"
+      ],
+      "sourceIdentity": "Base QR-4 planned.",
+      "verifierRootAcceptance": "No complete qualified-selection acceptance; root decide D.",
+      "carryLimitations": "Development scores and historical winning candidates cannot become qualified recommendations.",
+      "nextGate": "QR-2/QR-3 and eligible independent validation before qualified selection."
+    },
+    {
+      "id": "F11-01",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "Shared Bridge pair and source-membership rules specified; complete evaluator/package fixture contract review not found.",
+        "I": "Current documented durable research implementation rejects multiple-Pine jobs; complete combined evaluation/package outcome absent.",
+        "V": "No complete isolated multi-Pine acceptance.",
+        "T": "No accepted isolated fixture for full outcome."
+      },
+      "evidence": [
+        "docs/PINE_EXPORT.md",
+        "docs/QL_3A_DURABLE_JOBS.md",
+        "docs/ROADMAP.md"
+      ],
+      "sourceIdentity": "Base documented supported one-Pine implementation and planned multi-Pine rules.",
+      "verifierRootAcceptance": "No full fixture acceptance reconciled; root decide D.",
+      "carryLimitations": "Membership constraints and basic owner isolation alone do not complete multi-Pine evaluator support.",
+      "nextGate": "Reviewed isolated multi-source evaluator/package fixture."
+    },
+    {
+      "id": "F11-02",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "APP-3B high-level gates name canary, workload and recovery thresholds without complete fixed observable contract.",
+        "I": "Broader APP-3B rollout remains later phase.",
+        "V": "Basic APP-3A isolation does not establish APP-3B acceptance.",
+        "T": "No staging APP-3B canary acceptance."
+      },
+      "evidence": [
+        "docs/ROADMAP.md",
+        "docs/PINE_BRIDGE_ADAPTER_API.md"
+      ],
+      "sourceIdentity": "Base APP-3B planned scope.",
+      "verifierRootAcceptance": "No broad multi-Pine acceptance; root review D.",
+      "carryLimitations": "Single-owner/single-Bot tests do not establish cross-Bot shared-symbol scaling.",
+      "nextGate": "Define measured thresholds, then isolated implementation and shared-symbol Paper canary."
+    },
+    {
+      "id": "F12-01",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "MD-1 names load/security/data-rights gates, but target concurrency and limited-state threshold remain to be agreed.",
+        "I": "Dedicated service/egress/shared limiter production-scale package remains planned.",
+        "V": "No complete target-load qualification.",
+        "T": "No production MD-1 qualification."
+      },
+      "evidence": [
+        "docs/ROADMAP.md"
+      ],
+      "sourceIdentity": "Base MD-1a-e planned table.",
+      "verifierRootAcceptance": "No complete MD-1 acceptance; root decide D.",
+      "carryLimitations": "Existing single-owner stream/cache is not shared-IP customer-scale qualification.",
+      "nextGate": "Fix target load and agreed threshold; operational/data-rights contracts."
+    },
+    {
+      "id": "F12-02",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "Revised APP-4 bounded customer beta contract not reconciled beyond high-level phase.",
+        "I": "Historical lifecycle/quotas code exists but revised full customer beta outcome remains planned.",
+        "V": "Historical APP-4 label does not establish revised contract equivalence.",
+        "T": "No revised Paper beta acceptance."
+      },
+      "evidence": [
+        "README.md",
+        "Context.md",
+        "docs/ROADMAP.md"
+      ],
+      "sourceIdentity": "Historical 2026-09-22 APP-4 foundations versus revised APP-4 phase explicitly distinguished in README.",
+      "verifierRootAcceptance": "Historical acceptance is non-equivalent until reconciled; root decide D.",
+      "carryLimitations": "Do not erase historical code or imply new beta readiness.",
+      "nextGate": "Bound customer lifecycle/entitlement/quota contract after APP-3B."
+    },
+    {
+      "id": "F12-03",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "Customer-scale security/launch operational acceptance not fully specified/reviewed in cited high-level phases.",
+        "I": "Current baseline is single-owner staging; required beyond-baseline outcome remains open.",
+        "V": "No complete customer-scale security/operations acceptance.",
+        "T": "No customer Paper beta integration acceptance."
+      },
+      "evidence": [
+        "docs/ROADMAP.md",
+        "README.md"
+      ],
+      "sourceIdentity": "Base APP-4 and public/paid Paper beta gate.",
+      "verifierRootAcceptance": "Existing auth/isolation/local tests cannot substitute customer-scale acceptance.",
+      "carryLimitations": "No claim existing security features absent; full frozen outcome incomplete.",
+      "nextGate": "Reviewed customer operational/security contract, restore/alerts/concurrent-service checks."
+    },
+    {
+      "id": "F12-04",
+      "D": "UNKNOWN",
+      "I": 0,
+      "V": 0,
+      "T": 0,
+      "stageRationale": {
+        "D": "Root reconciled the frozen outcome to the reviewed DP1 Paper release/rollback contract, not to customer beta. Named staged gates, source identity, dependency closure, observations and stop conditions exist. No target or weight was changed.",
+        "I": "DP1 preparation remains partial and full production correction outcome not complete.",
+        "V": "Narrow dependency/reserve/CI evidence does not accept whole production rollout.",
+        "T": "Production/policy and staging 24-hour gates remain open."
+      },
+      "evidence": [
+        "README.md",
+        "docs/ROADMAP.md",
+        "docs/evidence/DP1P_LINUX_CARRY_RESERVES_2026-10-15.json"
+      ],
+      "sourceIdentity": "Base DP1P source/carry scope; historical staging 4d86822 is not current whole product production rollout.",
+      "verifierRootAcceptance": "Narrow local DP1 acceptances exist; whole frozen outcome acceptance absent.",
+      "carryLimitations": "Production rollout may be separate from customer beta; root clarify frozen F12 placement before D credit, without redefining target retroactively.",
+      "nextGate": "Root reconcile DP1 contract; close dependencies, observations, policy and production GO gates."
+    },
+    {
+      "id": "P06-03",
+      "D": 1,
+      "I": 1,
+      "V": "UNKNOWN",
+      "T": "UNKNOWN",
+      "stageRationale": {
+        "D": "Minimal compatible-only comparison and no-qualified-winner display explicitly bounded in QR-1 release.",
+        "I": "Staging Library implements minimum comparison; historical owner walkthrough withheld incompatible metrics and showed no qualified winner.",
+        "V": "Final relevant UI/API bytes evolved after f36181c; no complete equivalence reconciliation in this review.",
+        "T": "Historical target observation exists, but final-source applicability and full acceptance remain unresolved."
+      },
+      "evidence": [
+        "docs/ROADMAP.md",
+        "docs/STAGING_P2_CHECKPOINT_2026-10-03.md",
+        "docs/evidence/QR1B_FREEZE_LOCAL_2026-10-13.json"
+      ],
+      "sourceIdentity": "Historical f36181c plus Oct3 owner walkthrough. Current Library source matches QR1B pin, while UI and tests differ from initial release.",
+      "verifierRootAcceptance": "Historical release accepted; partial owner walkthrough preserved; full P1-F remains open. Root must confirm narrow outcome acceptance/equivalence.",
+      "carryLimitations": "Unique minimal-comparison outcome; not full QR-3/QR-4/export. Inventory crossViewReference F08-01 does not mean copy F08-01 stages automatically.",
+      "nextGate": "Reconcile final Library comparison bytes and independent acceptance evidence."
+    }
+  ],
+  "handoff": {
+    "activeGoal": "Propose evidence-based stage credits; root accepts and integrates.",
+    "ownership": "Only new .qa-local/pm1-review-b-2026-10-15/REPORT.json written. Root and other workers own all other dirty paths.",
+    "jobs": "No child, test, host or browser job started.",
+    "usage": "Dispatch reports 100% remaining with short window unknown. No independent fresh usage read; no usage saving or exact spend claim.",
+    "next": "Root reconcile UNKNOWN contracts/source carry, pin evidence at base, then review stage decisions. No commit message needed for ignored report; suggested integrated message: docs: establish evidence-scored PM-1 baseline."
+  }
+}
