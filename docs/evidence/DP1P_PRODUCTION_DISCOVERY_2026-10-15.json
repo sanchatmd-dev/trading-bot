@@ -1,0 +1,230 @@
+{
+  "schema": "DP1P_PRODUCTION_DISCOVERY_V1",
+  "recordedAt": "2026-10-15T05:27:34.092Z",
+  "observedAt": "2026-10-15T05:23:56.673Z",
+  "status": "ROOT_ACCEPTED_CALLER_SCOPED_READ_ONLY_OBSERVATION",
+  "scope": "One process-signature admission and one systemd/proc observation of the two historically bound production roles. No host file, service, database or application changes were authorized.",
+  "applicationCandidate": {
+    "commit": "70ea7f92a4547845291d32d836d3c740a0e7f1b7",
+    "deployedByThisPacket": false,
+    "changedByThisPacket": false
+  },
+  "reviewedSource": {
+    "platformManifest": "ba7f1cf765168227167fc80461df204026eab6a9c729d74c700a565f72d39a5c",
+    "admissionRunner": "7ef865f44b9695eb328e92a3355373db1857929fa3fcdaf8bc8f460acfcb8e53",
+    "discoveryRunner": "b05e2d9289272e5d159ddb3281cbd365dcab9ddd435366727da6fc33dff795df",
+    "observer": "c8af113f01f0acd32b40fc57952a15988b1c79f3591e4e5f29623841fc6b1e95",
+    "adapter": "bba640c860e588b6002165824aa8b02cb2e925428031c5b6c96e05bec2fe4b10"
+  },
+  "localVerification": [
+    {
+      "scope": "discoveryFinal",
+      "report": ".qa-local/codex-dp1p-discovery-r3-audit-2026-10-15/REPORT.md",
+      "sha256": "d62b29848285131a528fb0c6fedc92d6fb261540ce2b57b033550998b13b8a86",
+      "independentControls": 51,
+      "copiedAuthorControls": 114,
+      "result": "PASS",
+      "scopeLimit": "Local synthetic/fake-I/O verification; counts are separate scopes, not one combined suite."
+    },
+    {
+      "scope": "admissionFinal",
+      "report": ".qa-local/codex-dp1p-admission-r2-audit-2026-10-15/REPORT.md",
+      "sha256": "d5c97dfb45a60a280f6ba268dbb87c80758e73b73ace14c541ad9a4d7bb3def8",
+      "independentControls": 12,
+      "copiedAuthorControls": 54,
+      "result": "PASS",
+      "scopeLimit": "Local synthetic/fake-I/O verification; counts are separate scopes, not one combined suite."
+    },
+    {
+      "scope": "platformCorrection",
+      "report": ".qa-local/codex-dp1p-platform-env-r1-audit-2026-10-15/REPORT.md",
+      "sha256": "7ed1c6251ba2d0b941cbbb278e1bfac08cc0c3d3bbd479a11bde43a37fbca401",
+      "independentControls": 6,
+      "copiedAuthorControls": 174,
+      "result": "PASS",
+      "scopeLimit": "Local synthetic/fake-I/O verification; counts are separate scopes, not one combined suite."
+    }
+  ],
+  "corrections": {
+    "inheritedSshConfiguration": "Replaced with pinned isolated canonical configuration and four explicit existing trust-source states plus private snapshots.",
+    "missingSystemdProperties": "Thirteen essential properties must be present; absent data remains UNKNOWN and present-empty values remain distinct.",
+    "staleGoTiming": "Fresh wall-clock GO and monotonic budget checks occur after preparation and before claim/spawn; late claimed attempts remain consumed with zero SSH.",
+    "windowsEnvironment": "Controlled local version-only checks reproduced rc255/empty in both restricted environments. Adding only PROGRAMDATA made both return the expected version. The reviewed correction forwards that variable and rejects missing/empty values on Windows before claim."
+  },
+  "retainedFailures": {
+    "admissionE01": {
+      "jobId": "DP1P-D1-ADMISSION-20261015-R2-E01",
+      "sshInvocations": 1,
+      "rc": 255,
+      "elapsedMs": 97,
+      "stdoutBytes": 0,
+      "stderrBytes": 0,
+      "observation": null,
+      "consumed": true,
+      "receiptSha256": "c17427bd2bdccec59079a4ba83d3c71c06ddbf282388ae8f05c988089b266b03",
+      "interpretation": "Failed attempt remains failed. Local startup experiment supports the narrow correction, not every possible rc255 cause."
+    },
+    "earlierUnusedGo": "A local review-path check and subsequent expiry stopped before any runner/SSH/claim. The expired unused GO was preserved before a new one was issued.",
+    "freezeBookkeeping": "A source-inventory assertion treated a generated fixtures directory as a file. The retained correction inventories regular source files; no product test failure was relabeled."
+  },
+  "admission": {
+    "jobId": "DP1P-D1-ADMISSION-20261015-R2-E02",
+    "at": "2026-10-15T05:22:52.049Z",
+    "verdict": "CLEAR",
+    "sshInvocations": 1,
+    "rc": 0,
+    "elapsedMs": 1001,
+    "observedProcesses": 46,
+    "busy": 0,
+    "unknown": 0,
+    "observerElapsedMs": 14,
+    "receiptSha256": "89d8856a0b1541b84ba117e8cdeb688483d575a2f47094ffa44f41f4ac91e0ac",
+    "pinsSha256": "1bec113c605aa4e7c7ad4f48cb0e7024390882cc76653d2e8a84046fac07b984",
+    "goSha256": "cc6182be9fe331ed7be3492b3c3ddcc22191ced020c70454db32e13b2a681fa3",
+    "meaning": "No listed busy signature in this sequential sample; not general workload absence, capacity or health."
+  },
+  "discovery": {
+    "jobId": "DP1P-D1-20261015-R3-E02",
+    "verdict": "FACTS_COLLECTED",
+    "sshInvocations": 1,
+    "rc": 0,
+    "elapsedMs": 944,
+    "pinsSha256": "761c522044f37e6c1431748cbf00f1e82a40d38187185adec0c2722b9bbffaeb",
+    "goSha256": "023f87f1f0329e63b83e015e98bae66c56de8ffc8cc948e7173ea761f19bb47e",
+    "privateObservationSha256": "ee6db24b4f3f7817ae70cc6c41e0dff802b397c6846428539bb55ec031bfb5fa",
+    "publicReceiptSha256": "e2643c38bfe0e8e7fb3f95fcf8e238a69e17adffc78f8de9ef313b2155f51843",
+    "roles": {
+      "WORKER": {
+        "state": "OBSERVED",
+        "loadState": "loaded",
+        "activeState": "active",
+        "needDaemonReload": "no",
+        "processIdentity": "OBSERVED",
+        "lifecycleSettings": {
+          "TimeoutStopUSec": {
+            "state": "OBSERVED",
+            "value": "1min"
+          },
+          "KillMode": {
+            "state": "OBSERVED",
+            "value": "control-group"
+          },
+          "KillSignal": {
+            "state": "OBSERVED",
+            "value": "15"
+          },
+          "FinalKillSignal": {
+            "state": "OBSERVED",
+            "value": "9"
+          },
+          "SendSIGKILL": {
+            "state": "OBSERVED",
+            "value": "yes"
+          },
+          "Restart": {
+            "state": "OBSERVED",
+            "value": "on-failure"
+          },
+          "RestartUSec": {
+            "state": "OBSERVED",
+            "value": "5s"
+          },
+          "StartLimitBurst": {
+            "state": "OBSERVED",
+            "value": "5"
+          },
+          "StartLimitIntervalUSec": {
+            "state": "OBSERVED",
+            "value": "10s"
+          }
+        },
+        "dependencyEdgeCount": 3,
+        "dependencyUnknownProperties": 0,
+        "dependencyApproval": "UNREVIEWED_NOT_AUTHORIZED",
+        "initialEnvironmentPortObserved": true,
+        "effectivePort": "UNKNOWN_NOT_APPLICATION_BIND_PROOF"
+      },
+      "API": {
+        "state": "OBSERVED",
+        "loadState": "loaded",
+        "activeState": "active",
+        "needDaemonReload": "no",
+        "processIdentity": "OBSERVED",
+        "lifecycleSettings": {
+          "TimeoutStopUSec": {
+            "state": "OBSERVED",
+            "value": "1min"
+          },
+          "KillMode": {
+            "state": "OBSERVED",
+            "value": "control-group"
+          },
+          "KillSignal": {
+            "state": "OBSERVED",
+            "value": "15"
+          },
+          "FinalKillSignal": {
+            "state": "OBSERVED",
+            "value": "9"
+          },
+          "SendSIGKILL": {
+            "state": "OBSERVED",
+            "value": "yes"
+          },
+          "Restart": {
+            "state": "OBSERVED",
+            "value": "on-failure"
+          },
+          "RestartUSec": {
+            "state": "OBSERVED",
+            "value": "5s"
+          },
+          "StartLimitBurst": {
+            "state": "OBSERVED",
+            "value": "5"
+          },
+          "StartLimitIntervalUSec": {
+            "state": "OBSERVED",
+            "value": "10s"
+          }
+        },
+        "dependencyEdgeCount": 4,
+        "dependencyUnknownProperties": 0,
+        "dependencyApproval": "UNREVIEWED_NOT_AUTHORIZED",
+        "initialEnvironmentPortObserved": true,
+        "effectivePort": "UNKNOWN_NOT_APPLICATION_BIND_PROOF"
+      }
+    },
+    "unboundWatchSlots": 4,
+    "fileObservations": 0,
+    "claimConsumed": true
+  },
+  "limits": [
+    "Observation is not an atomic snapshot or loaded-code proof.",
+    "Complete watch coverage, environment-file metadata, installed dependency identity, effective application PORT, dependency approval and production PC remain unproven.",
+    "Initial process PORT is not an application bind or environment-overlay proof.",
+    "Timeout termination requests alone do not prove cleanup; no timeout occurred in the accepted E02 observations.",
+    "Staging 24-hour observation remains gated until at least 2026-10-15T22:17:53.400Z and requires successful fresh observation.",
+    "Owner policy decisions, production effect approval and owner-present research gates remain separate.",
+    "PM1-I1 baseline remains immutable; this packet does not recompute its scores."
+  ],
+  "evidencePrivacy": "Machine paths, unit names, process IDs, port values, raw environment, host keys and raw transport output are excluded from this tracked receipt. Private bindings and observations remain ignored local evidence.",
+  "rootDecision": "Accept the first caller-scoped observations and the local compatibility assessment. Prepare independently reviewed D2 observations before considering a directory-identity contract adaptation. No production PC or effect is approved.",
+  "compatibilityAssessment": {
+    "report": ".qa-local/codex-dp1p-after-discovery-2026-10-15/REPORT.md",
+    "reportSha256": "44e5b3c613f74beb59ccca6d1bac7c6b09622ee4b65133f7ecd4db8ff0cb61fa",
+    "configuredAndProcessDirectoryLiteralMismatch": {
+      "WORKER": true,
+      "API": true
+    },
+    "implication": "Current DP1-P worker/API gates require literal agreement. The observed strings cannot satisfy those gates. Alias equivalence is unproven; do not choose a tree value opportunistically or run PC as discovery.",
+    "stopTimeout": {
+      "observedMs": 60000,
+      "currentLimitMs": 100000,
+      "numericConditionPasses": true,
+      "actualStopOrRecoveryExercised": false
+    },
+    "nextPacket": "Prepare D2 read-only directory-alias observations, the existing observed service dependency, explicit environment-file metadata and package/lock metadata. Use byte comparisons only if independently established production baseline hashes become available.",
+    "noImplicitApproval": "An observed dependency is not a functional-role or allowed-dependency approval. Remaining watch and installed-dependency coverage stays unknown."
+  }
+}
