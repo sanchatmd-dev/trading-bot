@@ -1,0 +1,33 @@
+{
+  "schema": "DP1P_TYPED_OBSERVER_LOCAL_V1",
+  "recordedAt": "2026-10-15T07:28:30.631Z",
+  "status": "ROOT_ACCEPTED_INJECTED_OBSERVER_ONLY",
+  "source": {
+    "manifestSha256": "40b2697caac93882bb77a96ed12c63af4a1746c410eb82c8c32ed54cb2a71552",
+    "observerSha256": "710045e010801076e7cde3d333e175d5116e0a1cd2c558c11f58c5804e55869f",
+    "parserSha256": "709c52f53eb61ef0d9f5ff5691f7c0f2d54359d2181b867c15bce5913315ca0f"
+  },
+  "independentReport": ".qa-local/codex-dp1p-typed-observer-independent-2026-10-15/REVIEW.md",
+  "independentReportSha256": "d063588973d7365d476cb8523ae3b7e601b7e76aa3299e300dddfa1975167581",
+  "independentManifestSha256": "c481c7d13dbfa7e168afedd0e88ca82fdf6f853633e6a6a82cd6153e5441ed9a",
+  "contract": "At most two injected calls: exact bound WATCH_1 service GetUnit, then Properties.Get for Service.EnvironmentFiles at the canonical returned object. Fixed flags and route constraints, original shared monotonic 22000ms deadline, per-call timeout at most 3000ms and 16384-byte raw stdout cap. Only complete successful captures may reach the accepted typed-empty parser; all other results remain UNKNOWN. Identity always remains UNKNOWN.",
+  "verification": {
+    "copiedTests": 44,
+    "copiedSemanticMutants": 6,
+    "independentFinalTests": 16,
+    "independentSemanticMutants": 3,
+    "syntaxChecks": 4,
+    "sourceCopyFilesUnchanged": 10,
+    "retainedFailure": "The first extended independent run passed fifteen and failed one mutation probe. Removing second-reply completeness checking still failed closed through the unchanged parser. The challenge moved to the first GetUnit reply, which the parser does not see. Original incomplete-second controls remain unchanged. No candidate edit or weakened expectation."
+  },
+  "reviewedNarrowing": "Service units only; present empty/nonstring session hints refuse; system manager requires empty session hints. These narrow accepted inputs. The parser dependency is already Root-accepted; pending wording in frozen author artifacts is historical.",
+  "limitations": [
+    "Trusted injected ordinary records and functions only; not a sandbox or provenance authentication.",
+    "Native spawnSync normalization and authentic complete-capture handling are absent.",
+    "Actual executable/version/options, route capability and service-owner continuity remain unknown. Two calls do not prove atomic continuity.",
+    "Clock checks detect overruns after return; they cannot preempt a blocked synchronous dependency.",
+    "No actual busctl, host, transport, operational packaging, GO, identity, PC, readiness or deployment acceptance.",
+    "PM1-I1 baseline, staging 24-hour, owner-policy and owner-present gates remain unchanged."
+  ],
+  "next": "Prepare a bounded native-capture adapter with isolated local child fixtures and independent verification before capability or operational packaging."
+}

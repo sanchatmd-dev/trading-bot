@@ -1,0 +1,76 @@
+{
+  "schema": "DP1P_WORKTREE_CLOSE_CHECKPOINT_V1",
+  "recordedAt": "2026-10-15T08:29:45.113Z",
+  "status": "OWNER_REQUESTED_STOP_AFTER_REVIEW",
+  "branch": "codex/app3a-market-wait-checkpoint",
+  "baseCommit": "9e609d7928a4211698b9e4f38c7af353c9204678",
+  "typedObserverEvidence": "DP1P_TYPED_OBSERVER_LOCAL_2026-10-15.json",
+  "nativeCapture": {
+    "status": "ROOT_ACCEPTED_LOCAL_NORMALIZATION_ONLY",
+    "sourceManifestSha256": "2455ca488a02879934f20498244335a8faf73687f834b2ae86cffb0fbbee1e7a",
+    "sourceSha256": "6667abfe6a31f98595908783f3b9a5d46380cf0275ec6600634005084d41f3c0",
+    "independentReport": ".qa-local/codex-dp1p-native-capture-independent-2026-10-15/REVIEW.md",
+    "independentReportSha256": "d8822605cb3ecfc194583683d0bdd3e8df77f391720f561b76c0e5e4f071882f",
+    "independentManifestSha256": "35ab4b2042b67ce258daf35d67bfd86323e06f87420f0d8b1dbc1f63dea1bff0",
+    "copiedTests": 16,
+    "independentTests": 9,
+    "independentMutants": 3,
+    "postPinsUnchanged": 9,
+    "nativeFixtureCalls": 18,
+    "scope": "Windows Node fixed local fixtures only; all synchronous children returned. Native provenance, unclipped bytes and trusted options remain caller prerequisites.",
+    "notProven": [
+      "Linux or installed busctl capability",
+      "Production options, original shared deadline and transport integration",
+      "Host identity, atomic continuity, PC, readiness or deployment"
+    ]
+  },
+  "packaging": {
+    "status": "ROOT_ACCEPTED_MEASUREMENT_BLOCKER_ONLY",
+    "report": ".qa-local/codex-dp1p-d4-c3-cap-independent-2026-10-15/REVIEW.md",
+    "reportSha256": "9ee7871f268fba671959cd4e8c00e5f1ef790ec18fff32d15990447037f6d426",
+    "manifestSha256": "c3febce8eb9aaac6a44ebc469cd77d385c7fd0fa6382324604fd0850fc452ca5",
+    "copiedTests": 4,
+    "sourceCopyPins": 16,
+    "rootOriginalPins": 4,
+    "templateBytes": 34869,
+    "removeMarkersBytes": 45,
+    "helperImportBytes": 11671,
+    "doubleEncodedConfigBytes": 4272,
+    "finalBytes": 50767,
+    "capBytes": 49152,
+    "overflowBytes": 1615,
+    "composerResult": "PAYLOAD_CAP",
+    "decision": "Preserve the blocked draft. Existing caps and module pins remain unchanged. No runtime acceptance or claim that all layouts fail. Revised packaging scope is deferred at the owner-requested stop; no code stripping, compression or narrower selector contract approved."
+  },
+  "placement": {
+    "status": "ROOT_REVIEWED_STATIC_MODEL_ONLY",
+    "report": ".qa-local/codex-dp1p-credit2-placement-design-2026-10-15/REPORT.md",
+    "reportSha256": "a16fc31e6f3fbf6b2b6343c255d55383e354caead09e99cb9f180393ff889a54",
+    "inputPins": 10,
+    "rootSourceReview": "Confirmed ledger fatal latches/recovery admission and existing host catch/unwind anchors. Figures remain conditional placement arithmetic, not implemented instrumentation.",
+    "normalS3ModelCredits": 11,
+    "unknownPostModelCredits": 7,
+    "reachableStableCombinedModelCredits": 20,
+    "fixedRecoveryReserveModelCredits": 11,
+    "fixedReserveTotalMinimumModelCredits": 22,
+    "quotaApproved": false,
+    "counters": "For the chosen composition, each logical guard has one helper invocation, at most eight logical process samples and at most136 directory API calls. Reader syscalls and full duration are separate.",
+    "decision": "Keep fatal drift/UNKNOWN terminal. No catch/unwind bypass or reset; guarded config-only cleanup is unavailable after fatal failure. Alias-independent restoration needs a separate reviewed authority design. No S3 reuse/reset of the discovery22-second clock.",
+    "open": [
+      "Phase-specific required process evidence, including stopped-worker state",
+      "Full guard duration, bounded readiness and one shared original deadline",
+      "Exact owned configuration bytes and restoration authority",
+      "Independent trace tests before any production wiring"
+    ]
+  },
+  "coordination": {
+    "workerTurns": "All three worktree latest turns completed; no new packet admitted after the stop request.",
+    "returnDelivery": "Two workers reported thread-not-found. Root ID still matched the environment and app listing. Owner forwarded reports and Root retrieved artifacts directly. Delivery mechanism remains unresolved; no automatic return reliability claim.",
+    "goOpen": false,
+    "hostJobsOpen": false,
+    "productionChanges": false
+  },
+  "progress": "PM1-I1 baseline remains unchanged; no rescore or inferred acceptance gain.",
+  "gates": "Staging24-hour observation, owner-policy and owner-present research gates remain separate.",
+  "next": "Resume only on owner instruction: recheck Git, ownership, runtime, usage and Roadmap; review packaging scope and placement/cleanup contract before new bounded work."
+}
