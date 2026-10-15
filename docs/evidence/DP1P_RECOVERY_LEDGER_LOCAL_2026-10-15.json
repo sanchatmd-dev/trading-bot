@@ -1,0 +1,52 @@
+{
+  "schema": "DP1P_RECOVERY_LEDGER_LOCAL_V1",
+  "recordedAt": "2026-10-15T07:02:05.338Z",
+  "status": "ROOT_ACCEPTED_REVISED_LOCAL_ACCOUNTING_CONTRACT_ONLY",
+  "source": {
+    "manifestSha256": "17ce90b46d2c76298643e5700560524841738e80529b651a23a38891377d5dbd",
+    "ledgerSha256": "d6f7300a4f47622f4fc946b7f9649dc2214641bdf711f83736d8ee0ee0cbec4b",
+    "apiSha256": "c9dfa3557ebbcb8f3903e604ce9eb30e3065ff3ed92aeaab5254e0d235ef2676",
+    "contractSha256": "bd453f448e53842dc1e487bfda3eed2082328d1a6fdc953b50999a5cba846b02"
+  },
+  "independentReport": ".qa-local/codex-dp1p-alias-credit2-independent-2026-10-15/REVIEW.md",
+  "reportSha256": "4c15fc60b38dc2985774d75af0f4ebfffffb120f64b7f46729198c29824155fc",
+  "retainedFailure": {
+    "revision": "CREDIT1",
+    "independentPass": 13,
+    "independentFail": 2,
+    "classification": "Architecture mismatch in the original all-refusals-sticky contract, not an undisclosed implementation deviation.",
+    "problem": "A normal credit/time reserve refusal also blocked entry to recovery despite remaining reserved resources.",
+    "evidence": "DP1P_PARALLEL_DESIGN_REVIEW_2026-10-15.json"
+  },
+  "correction": "Normal reserve refusal permanently closes normal admissions separately from fatal faults. Recovery may enter once on the same ledger after fresh checks for the full reserved allocation and at least one guard. Spent credits, original deadline and normal stop reason are preserved.",
+  "verification": {
+    "copiedTestsPass": 36,
+    "copiedTestsFail": 0,
+    "copiedTestsSkip": 0,
+    "semanticMutantsDetected": 15,
+    "additionalIndependentControls": 8,
+    "boundaryCombinationsWithinControls": 36,
+    "sourceCopyFilesUnchanged": 14,
+    "originalTestChange": "Exactly one superseded policy assertion in the old twelve-case suite changed. All unrelated assertions remain identical.",
+    "retainedIndependentTests": "All fifteen prior independent tests are identical apart from the import path; both formerly failing requirements now pass.",
+    "originalMutants": "All nine original mutation triples retained; six added.",
+    "attempts": "Each independent suite and mutation runner ran once, with no failed approach or implementation fix."
+  },
+  "fatalFaultsRemain": [
+    "Directory drift or failed/unknown observation",
+    "Invalid/backward clock or total deadline exhaustion",
+    "Guard overrun",
+    "Ticket misuse or overlap",
+    "Recovery credit/time exhaustion"
+  ],
+  "limitations": [
+    "Pure injected accounting only. No observer, effect, signal, actual filesystem/process/host, restoration, readiness or PC proof.",
+    "No production quota, phase placement, timeout or envelope increase is approved.",
+    "Caller must supply approved truthful costs, exact guard placement, trusted non-reentrant clock, awaited results and same-ledger ownership.",
+    "Admission is instantaneous accounting, not an enduring effect permit. Snapshots may be stale.",
+    "Factory-local uniqueness is not durable fencing or a security boundary against a caller fabricating MATCH or opening another factory.",
+    "An unresolved ticket is not evidence an OS operation is still running.",
+    "Staging 24-hour, owner-policy and owner-present gates remain separate; PM1-I1 baseline unchanged."
+  ],
+  "next": "The directory/process bridge has independent local acceptance. Review complete phase placements and budgets before production integration."
+}

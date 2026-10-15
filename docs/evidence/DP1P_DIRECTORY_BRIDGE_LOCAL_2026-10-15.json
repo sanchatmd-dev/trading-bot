@@ -1,0 +1,63 @@
+{
+  "schema": "DP1P_DIRECTORY_BRIDGE_LOCAL_V1",
+  "recordedAt": "2026-10-15T07:07:08.464Z",
+  "status": "ROOT_ACCEPTED_INJECTED_SYNCHRONOUS_BRIDGE_ONLY",
+  "source": {
+    "manifestSha256": "29ee46ccfc966971b542577756480d76c739ff1eef6f564e4d9b1d31f3328a9f",
+    "bridgeSha256": "038da9e491c8af0b5c7e6691dfb8a4505c4b6014ab44e8b415a0af4e42f62f23",
+    "apiSha256": "1dcbd36279ad84794cc8a820f4cdafa54b9164522277f84d179838fabc185b06",
+    "helperSha256": "11fbe3b55fd1c98730ca50e2b430824aef42cb1e76b0849ae67f8520d79a30fc",
+    "adapterReferenceSha256": "c601e66c68aa0787c2b7c6dec39a2838f596f25b0a0bd86e45174698ec9a4f39"
+  },
+  "independentReport": ".qa-local/codex-dp1p-d4-c2-independent-2026-10-15/REVIEW.md",
+  "independentReportSha256": "e326f5c80d34bf9534063eec071d43a60b57f5a05e5ac0cf9f5c4f122397cc46",
+  "independentManifestSha256": "049260dc45da477f00ab8710f9bd9009a8df45575943c4b08d83453765efbcc2",
+  "verification": {
+    "copiedTests": 16,
+    "independentFinalTests": 15,
+    "semanticMutantsDetected": 6,
+    "syntaxChecks": 4,
+    "sourceCopyFilesUnchanged": 12,
+    "retainedFailure": "Initial independent run passed one and failed fourteen because the tester supplied lowercase mapping IDs rejected by the unchanged helper. Only fixture IDs were corrected; the final fifteen controls passed. No assertion or implementation changed, and the copied sixteen-case suite was not repeated."
+  },
+  "contract": [
+    "Initial stat/cwd samples for eligible WORKER and API, exactly one registry helper observation, then final cwd/stat samples for each eligible role.",
+    "Unknown roles do not cause guessed PID reads. Directory certificate and per-role comparisons remain separate.",
+    "Shared monotonic deadline starts from the caller-provided original time. A latched budget/clock failure discards the certificate and prior MATCH states even when helper error handling sanitizes the exception.",
+    "Helper keeps its own two-second and 136-directory-API-call limits. Process sample counts are separate."
+  ],
+  "readerBoundary": "The bridge receives readBounded as an injected dependency. The referenced adapter contains bounded non-following/non-blocking file flags and finally-close, but this review did not integrate or execute that actual reader. Future wiring must preserve those semantics and provenance.",
+  "limitations": [
+    "No actual filesystem/process/host, runner, transport, payload assembly, output projection or output-cap verification.",
+    "No MainPID re-query at the end, loaded-source identity, PC readiness, atomicity or no-ABA guarantee.",
+    "Synchronous clock checks do not preempt a stalled operating-system call. Dependencies and clock must be trusted and non-reentrant.",
+    "COMPLETED means sampling completed, not that every role matched or production is safe.",
+    "No production quota, timeout, envelope, restart or restoration approval.",
+    "Staging 24-hour, owner-policy and owner-present gates remain separate; PM1-I1 baseline unchanged."
+  ],
+  "next": "Prepare the bounded dedicated raw-template seam and verify its exact reader, clock, projection and final-size behavior before any runner wiring.",
+  "packagingAssessment": {
+    "status": "INERT_MEASUREMENTS_ONLY_NOT_RUNNABLE_PAYLOAD",
+    "report": ".qa-local/codex-dp1p-d4-c3-packaging-design-2026-10-15/DESIGN.md",
+    "reportSha256": "43687096e407529eba9e068195f1e26384a9adc95ef4ca1fd86399aabdc64f12",
+    "allModulesBase64": {
+      "representativeLowerBound": 48830,
+      "dedicatedGrammarMaximumLowerBound": 52466,
+      "fullD3GrammarMaximumLowerBound": 71258
+    },
+    "rawAdapterTemplate": {
+      "representativeLowerBound": 41717,
+      "dedicatedGrammarMaximumLowerBound": 45353,
+      "fullD3GrammarMaximumLowerBound": 64145
+    },
+    "payloadCap": 49152,
+    "omittedCosts": "New clock, reader, profile, result projection and entry glue are not included; final bytes require fresh measurement.",
+    "syntheticCertificateShape": {
+      "compactBytes": 44925,
+      "prettyBytes": 54084,
+      "remoteCap": 24576,
+      "meaning": "Inert unvalidated certificate-shape example, not a host observation; full valid-input grammar cannot promise successful output."
+    },
+    "rootDecision": "Prepare a dedicated WORKER/API raw-template seam under separately reviewed changes, preserving original files and module bytes. No cap increase, code stripping or operational approval."
+  }
+}

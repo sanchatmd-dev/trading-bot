@@ -1,0 +1,155 @@
+{
+  "schema": "DP1P_PROPERTY_OBSERVATION_V1",
+  "recordedAt": "2026-10-15T06:53:31.719Z",
+  "observedAt": "2026-10-15T06:48:25.593Z",
+  "status": "ROOT_ACCEPTED_SCOPED_FACTS_IDENTITY_GAP_REMAINS",
+  "source": {
+    "manifest": "7e1c041d044710a6a918e595a678781c2cdf19033fa413608b2c841dbe97df27",
+    "adapter": "c601e66c68aa0787c2b7c6dec39a2838f596f25b0a0bd86e45174698ec9a4f39",
+    "runner": "96901008dcc9175f8275f27b9c104dc73b1890fcc42348bd855bf7cde23c3dc4",
+    "localReview": "DP1P_PARALLEL_DESIGN_REVIEW_2026-10-15.json",
+    "change": "Only adds --all to the fixed systemctl property query."
+  },
+  "retainedAttempts": {
+    "E01": {
+      "admissionAt": "2026-10-15T06:39:44.782Z",
+      "admission": "CLEAR",
+      "observed": 47,
+      "busy": 0,
+      "unknown": 0,
+      "admissionSsh": 1,
+      "admissionReceipt": "30ab8e47c4f39675d7a2d4176acf4b68f72c947de2453c88ae3d0ed34fd69852",
+      "discoveryGoAt": "2026-10-15T06:40:01.823Z",
+      "discoveryAdmissionAgeMs": 17041,
+      "discovery": "FRESH_GO_REFUSED_DURING_LOCAL_PREFLIGHT",
+      "refusalAt": "2026-10-15T06:41:23.553Z",
+      "goAgeMs": 81730,
+      "remainingMs": 38270,
+      "runnerInvocations": 0,
+      "discoverySsh": 0,
+      "claimReceiptObservationSnapshots": 0,
+      "logSha256": "ca95b5a29b783667e9da549c2ed6e6852cc156fa5e67ad6173c3b1d1d7476d2f"
+    },
+    "rootReviewCorrection": "E02 root review initially retained the E01 discovery namespace in two comparisons and failed ENOENT before GO. Only explicit namespace expectations were corrected; no host action occurred.",
+    "E02Preparation": "New namespaces and separately reviewed one-command wrappers complete preflight and invoke the unchanged accepted runner once. Freshness, timeouts and output caps remain unchanged; no automatic retry."
+  },
+  "admission": {
+    "jobId": "DP1P-D1-ADMISSION-20261015-D4P1-E02",
+    "at": "2026-10-15T06:47:54.878Z",
+    "verdict": "CLEAR",
+    "sshConnections": 1,
+    "rc": 0,
+    "elapsedMs": 982,
+    "observed": 50,
+    "busy": 0,
+    "unknown": 0,
+    "pinsSha256": "09290d0c5aabaa363018b552a1b886d6b33b58540e9cbf88b3b869210db52a82",
+    "receiptSha256": "36aa55ec60185ee09b0e393d56725deb1f6db076bbadf28f71aaa3a07a1d7465",
+    "goSha256": "5f837fd185322efcea901a2942ba9daabb5c6b333b31c4d6544c658972b8a3b1",
+    "meaning": "Listed process signatures only, not general health or capacity."
+  },
+  "discovery": {
+    "jobId": "DP1P-D1-D4P1-20261015-E02",
+    "pinsSha256": "e86d6755863bf611ab49f87e7b3360550bbb5657242695cff714efe3b55c1a26",
+    "goAt": "2026-10-15T06:48:07.753Z",
+    "goSha256": "d2d85a9412b6b28b2527b9fc0cf147f7b759872975f258cbc9e16e0872c9e3dd",
+    "admissionAgeMsAtGo": 12875,
+    "sshAttempts": 1,
+    "rc": 0,
+    "elapsedMs": 1017,
+    "remoteElapsedMs": 50,
+    "stderrBytes": 0,
+    "privateReceiptSha256": "f2dd320dfd52d7c7f4b01d711c1512f36f67240ad9fb23775ba5efdf6a30b9a5",
+    "publicReceiptSha256": "48596102ff11a2538637057b08a061621f7a3ddbedde084bd6e0a8dbd13e0961",
+    "logSha256": "9cfe5135257e866ec46263e683d421d78311e0c42450fbde246f663ab1e3e362",
+    "claimsConsumed": true,
+    "openGo": false,
+    "postManifestEntriesUnchanged": 20
+  },
+  "facts": {
+    "roles": {
+      "WORKER": {
+        "state": "OBSERVED",
+        "loadState": "loaded",
+        "activeState": "active",
+        "processState": "OBSERVED"
+      },
+      "API": {
+        "state": "OBSERVED",
+        "loadState": "loaded",
+        "activeState": "active",
+        "processState": "OBSERVED"
+      }
+    },
+    "watchDiagnostics": {
+      "WATCH_1": {
+        "state": "UNKNOWN",
+        "code": "SHOW_IDENTITY_PROPERTY_MISSING",
+        "missingIdentityProperties": [
+          "EnvironmentFiles"
+        ],
+        "presentPropertyCount": 28,
+        "loadState": "loaded",
+        "activeState": "active"
+      },
+      "WATCH_2": {
+        "state": "UNKNOWN",
+        "code": "SHOW_IDENTITY_PROPERTY_MISSING",
+        "missingIdentityProperties": [
+          "EnvironmentFiles"
+        ],
+        "presentPropertyCount": 28,
+        "loadState": "loaded",
+        "activeState": "active"
+      }
+    },
+    "unboundWatchRoles": [
+      "WATCH_3",
+      "WATCH_4"
+    ],
+    "boundUnitSuffixes": "All four explicitly bound names end in .service; this suffix alone is not identity proof.",
+    "files": [
+      {
+        "id": "SHARED_ENVIRONMENT_METADATA",
+        "state": "OBSERVED",
+        "size": 766,
+        "kind": "METADATA_ONLY",
+        "contentsRead": false
+      },
+      {
+        "id": "BASELINE_PACKAGE",
+        "state": "OBSERVED",
+        "size": 980,
+        "kind": "METADATA_ONLY",
+        "contentsRead": false
+      },
+      {
+        "id": "BASELINE_LOCK",
+        "state": "OBSERVED",
+        "size": 25392,
+        "kind": "METADATA_ONLY",
+        "contentsRead": false
+      }
+    ],
+    "directory": {
+      "count": 1,
+      "kind": "SYMLINK",
+      "sampledWorker": "MATCH",
+      "sampledApi": "MATCH"
+    }
+  },
+  "interpretation": [
+    "Adding --all did not resolve omitted EnvironmentFiles for either bound watch. Missing remains UNKNOWN; it must not be synthesized as an empty value.",
+    "The result does not establish why the property is omitted. Installed systemd version, typed property value and unsupported-versus-empty semantics remain unobserved.",
+    "Package sizes remain 980 and 25392 bytes, with no content read or hash comparison.",
+    "WORKER/API process and directory observations retain sampled, non-atomic limitations."
+  ],
+  "next": "Prepare and independently verify the injected typed observer and measure complete module payload feasibility. Parser, ledger and bridge acceptance remain local prerequisites; actual capability and production integration remain open.",
+  "limits": [
+    "No environment/package content reads, service/config/database mutation, deployment, PC or loaded-code acceptance.",
+    "No timeout/freshness/output-cap relaxation or automatic cap increase/retry.",
+    "Staging 24-hour not before 2026-10-15T22:17:53.400Z still requires fresh successful observation and Root acceptance.",
+    "Owner-policy and owner-present research gates remain separate. PM1-I1 baseline is unchanged."
+  ],
+  "privacy": "No machine paths, raw unit names, PIDs, ports, credentials or environment values in this tracked record."
+}

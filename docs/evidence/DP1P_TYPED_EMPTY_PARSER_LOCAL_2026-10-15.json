@@ -1,0 +1,41 @@
+{
+  "schema": "DP1P_TYPED_EMPTY_PARSER_LOCAL_V1",
+  "recordedAt": "2026-10-15T07:10:48.265Z",
+  "status": "ROOT_ACCEPTED_NARROW_LOCAL_PARSER_ONLY",
+  "source": {
+    "manifestSha256": "d8b998b7f15d2f18f02618d05a48230f1a75bf36c9a226813f61277151fa4c92",
+    "parserSha256": "709c52f53eb61ef0d9f5ff5691f7c0f2d54359d2181b867c15bce5913315ca0f",
+    "testsSha256": "12abb645fe6bb7cf36e607103b6b796d8683544bda2226bc2ccaff69956a6268",
+    "apiSha256": "1917e522c138484db4cb332eb8097e4d55f8d44a782990fe1ecd3d5f4a918a53",
+    "sourceReferenceSha256": "815e6826cdcecc42667c37482f1c337d096b9a7265dfca812d709ec5983023e5"
+  },
+  "independentReport": ".qa-local/codex-dp1p-typed-empty-independent-2026-10-15/REVIEW.md",
+  "reportSha256": "900d9f79cd85a918bac5e31e41769173272f8f67855954897c596c404f3f3e1d",
+  "contract": "Only complete successful raw-buffer results with status 0, null error/signal, empty stderr, strict round-tripping UTF-8 and at most 16384 stdout bytes can match the complete literal v a(sb) 0 with ASCII outer whitespace. Success is fixed WATCH_1 TYPED_EMPTY/count 0/diagnosticOnly true/identityState UNKNOWN. All other ordinary input remains fixed UNKNOWN.",
+  "verification": {
+    "copiedTests": 27,
+    "candidateSemanticMutationsWithinCopiedTests": 5,
+    "independentTests": 13,
+    "additionalSemanticMutationsWithinIndependentTests": 6,
+    "syntaxChecks": 2,
+    "sourceCopyFilesUnchanged": 7,
+    "independentBoundarySweep": "All 128 ASCII bytes at both outer boundaries, Unicode/BOM/invalid UTF-8, prefixes/trailing/doubled/NUL output, metadata/stderr/cap failures, fixed public shapes and immutability.",
+    "attempts": "Each suite ran once without failed approach or implementation change."
+  },
+  "upstreamBasis": {
+    "url": "https://raw.githubusercontent.com/systemd/systemd/v252/src/busctl/busctl.c",
+    "ranges": "523–592 and 1909–1915",
+    "meaning": "Independent source inspection supports the selected terse method-call success grammar. This is source-derived, not execution evidence.",
+    "rawUpstreamSourceHashCaptured": false,
+    "installedVersionKnown": false
+  },
+  "limitations": [
+    "Caller must provide authentic complete capture metadata and raw bytes; complete:true is an assertion, not independent truncation detection.",
+    "Normal records only; accessors, proxies, concurrent mutation and false provenance are outside the contract.",
+    "Nonempty replies deliberately remain UNKNOWN. CLI error text does not establish unsupported property/interface.",
+    "No installed busctl/systemd, capability, D-Bus query, GetUnit object binding, argv, deadline, process capture, transport or host proof.",
+    "No role identity, watch coverage, readiness, PC or production upgrade follows a typed-empty diagnostic.",
+    "Staging 24-hour, owner-policy and owner-present gates remain separate; PM1-I1 baseline unchanged."
+  ],
+  "next": "Prepare and independently verify the bounded injected typed observer; actual executable/bus capability and operational packaging remain separate gates."
+}
