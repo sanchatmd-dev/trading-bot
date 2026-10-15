@@ -1,0 +1,46 @@
+{
+  "schema": "dp1p-combined-synthetic-v1",
+  "at": "2026-10-15T00:13:04.009Z",
+  "status": "ROOT_ACCEPTED_SCOPED_COMBINED_SYNTHETIC_EVIDENCE",
+  "hostSha256": "6301993b2a68001835ba0cc988c9bc0e885730ff86ce275db9b20f76a8cfa7b4",
+  "applicationCommit": "70ea7f92a4547845291d32d836d3c740a0e7f1b7",
+  "full": {
+    "cases": 137,
+    "passed": 136,
+    "failed": 1,
+    "skipped": 0,
+    "exit": 1,
+    "wallSeconds": 710.9896133,
+    "resultSha256": "020b910907adebd2d2614ebb79fb744bcffd253ed210c916980b1ae494c6eff8",
+    "failure": "Inherited health-port fixture expected the SITE override to pass. The exact inner identity code of that failed observation was not retained."
+  },
+  "focused": {
+    "independentChecks": 5,
+    "passed": 5,
+    "failed": 0,
+    "resultSha256": "055a5da7685629e3248bbd62f803df5cc0c45ff74a4a0a77ff03e787eb2997f1",
+    "reviewSha256": "78fdc8d57d303ef7bc8e67a136f09c17fdb60f198c8dba555691b47bbee6976b",
+    "observations": [
+      "ENV_FILE with valid API identity passes.",
+      "Missing PORT with preserved old mtime refuses API_DB_PORT.",
+      "Valid PORT with healthy SITE override refuses API_PORT_SITE."
+    ],
+    "siteGuardRemoval": "Actual-host guard deletion produced PC_PASS/API_IDENTITY_OK with healthy SITE; the refusal assertion killed this mutant.",
+    "source": "All 17 inherited inputs remain unchanged; the focused fixture preserves the exact setup and serialized-payload helper prefix."
+  },
+  "interpretation": "The 136 unchanged full-proof passes and separately corrected focused cases are accepted together. The original full run remains failed; no single 137/137 passing run is claimed. Runtime source was not changed by the fixture correction.",
+  "cleanup": {
+    "fullOwnedProcesses": 0,
+    "fullListeners": 0,
+    "fullJunctions": 0,
+    "focusOwnedProcesses": 0,
+    "focusListeners": 0,
+    "focusJunctions": 0
+  },
+  "limits": [
+    "The bundle contains 182 actual source files and only two synthetic fake-PG dependency files; installed dependencies are not qualified.",
+    "Real old-schema SQL compatibility and applicable Linux/systemd/signal behavior remain separate checks.",
+    "Fresh production observations, staging 24-hour acceptance and existing policy decisions remain open."
+  ],
+  "effects": "Local fixture execution only; no production deployment or host GO."
+}

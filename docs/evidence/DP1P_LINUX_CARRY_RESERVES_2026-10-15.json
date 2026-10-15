@@ -1,0 +1,125 @@
+{
+  "schema": "dp1p-linux-carry-reserve-v1",
+  "at": "2026-10-15T00:21:50.797Z",
+  "status": "ROOT_ACCEPTED_QUALIFIED_SIGNAL_CARRY_AND_CURRENT_RESERVES",
+  "source": {
+    "currentHost": "6301993b2a68001835ba0cc988c9bc0e885730ff86ce275db9b20f76a8cfa7b4",
+    "currentLib": "9a68031ee3d4e741b06c964a8bd4de8842a142676d5c786395e440689fb0516f",
+    "reserve": "2192f98167aad2e5d85cd5816bd4ea2f87ba167345e63291bb843ac24fd17e81",
+    "signal": "6b94d5156f8c5df29182cbc80eb1e081fb865f0453237dc86a5c4ecaaa79fd80",
+    "mutantHost": "723d852f9ea68a8fca73225036b49b7f53809958e143833a8b8b42be6f3f0ef8"
+  },
+  "reserve": {
+    "cases": 14,
+    "passed": 14,
+    "mutationPassed": 13,
+    "mutationFailed": 1,
+    "semanticObservation": {
+      "out": {
+        "phase": "EFFECT",
+        "pass": false,
+        "effects": {
+          "create": "ATTEMPTED",
+          "publish": "NOT_ATTEMPTED",
+          "reload": "NOT_ATTEMPTED",
+          "stop": "NOT_ATTEMPTED",
+          "start": "NOT_ATTEMPTED"
+        },
+        "noRetry": true,
+        "pre": {
+          "fail": [],
+          "queue": null,
+          "otherNeedReload": {
+            "needReload": 0
+          },
+          "closure": {
+            "ok": true
+          }
+        },
+        "newTree": {
+          "files": 1
+        },
+        "code": "FIXTURE_EFFECT_REACHED",
+        "unwind": {
+          "done": false,
+          "code": "FIXTURE_UNWIND"
+        },
+        "elapsedMs": 0,
+        "budgetMs": 251999
+      },
+      "effects": 1,
+      "stops": 0,
+      "starts": 0
+    },
+    "budgets": {
+      "COLLECT_MS": 182000,
+      "FIRST_EFFECT_MS": 222000,
+      "CONFIG_RESTORE_MS": 100000,
+      "UNWIND_FULL_MS": 410000,
+      "RB_PRE_MS": 410000,
+      "START_LIMIT_SECTION_MS": 212000,
+      "READY_MS": 90000,
+      "KILL_AFTER_SEC": 268
+    }
+  },
+  "signal": {
+    "freshLinuxExecution": false,
+    "historicalCommit": "5698fa1bd49c772e6be7ef481c4b1e70e1c64036",
+    "historicalRun": "38635206165",
+    "historicalJob": "116096555167",
+    "historicalEvidence": "DP1S_DERIVED_LINUX_SIGNAL_2026-10-15.json",
+    "scenarios": [
+      {
+        "scenario": "slow-stop",
+        "status": 124,
+        "signal": null,
+        "error": null,
+        "code": "TERMINATED",
+        "phase": "EFFECT",
+        "starts": 1
+      },
+      {
+        "scenario": "first-start",
+        "status": 124,
+        "signal": null,
+        "error": null,
+        "code": "TERMINATED",
+        "phase": "EFFECT",
+        "starts": 1
+      },
+      {
+        "scenario": "start-limit-recovery",
+        "status": 124,
+        "signal": null,
+        "error": null,
+        "code": "TERMINATED",
+        "phase": "EFFECT",
+        "starts": 2
+      },
+      {
+        "scenario": "start-limit-exhaustion",
+        "status": 0,
+        "signal": null,
+        "error": null,
+        "code": "RB_START_LIMIT_WAIT",
+        "phase": "EFFECT",
+        "starts": 1
+      }
+    ],
+    "applicability": "Twelve helpers and PRELUDE are byte-identical. Two rbMain API additions are unobserved by fixed signal seams; three added API limits are unused. All four scaled budgets are identical.",
+    "scope": "Historical scaled TERM ordering, stop/start recovery and exhaustion seams only."
+  },
+  "evidence": {
+    "REPORT.md": "f977451487d6c72d3fc1dbb20d9a29be54f5b950da71d0af786a67299099b5b9",
+    "EVIDENCE.json": "c57c92b1011cac5aa6e5d7a981b0dfe9974db197e7844066b9baaa0db5ed035d",
+    "FINAL.json": "0296caa6b57e8996c38746fd7fb735e5171385ba638e67aeafe3b5e92bf1c6a4",
+    "control/reserve-r5-results.json": "0f36550c4c88096deeadeb86a406d3e3f5c5a6d37989676fcd8afe18dc959d39",
+    "mutant/reserve-r5-results.json": "3d91110dd5e16ec2942cce2535f751c78ebdc13f8f88f4979251c7911ecf12e6"
+  },
+  "limits": [
+    "No fresh DP1-P Linux execution is claimed.",
+    "No actual systemctl, collection/API timing or production 268-second grace under load is proved.",
+    "Actual dependency qualification, fresh operational identity, staging 24-hour observation and policy gates remain separate."
+  ],
+  "effects": "Local synchronous source/VM checks only; no background service or host action."
+}

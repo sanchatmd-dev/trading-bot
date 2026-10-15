@@ -1,0 +1,72 @@
+{
+  "schema": "dp1p-historical-schema-sql-v1",
+  "at": "2026-10-15T00:19:25.555Z",
+  "status": "ROOT_ACCEPTED_LOCAL_SQL_COMPATIBILITY",
+  "source": {
+    "base": "ff5a9d1fec9e071e1f2ea4d53d3e6514f4e18a7f",
+    "schemaSha": "5948e703ef2e781964be6f32cdd1d207f774feb6bb83633bfdc97274188d9108",
+    "pins": {
+      "lib.mjs": "9a68031ee3d4e741b06c964a8bd4de8842a142676d5c786395e440689fb0516f",
+      "host.mjs": "6301993b2a68001835ba0cc988c9bc0e885730ff86ce275db9b20f76a8cfa7b4"
+    },
+    "SQL": {
+      "meta": "/*dp1p:meta*/ SELECT (extract(epoch from clock_timestamp())*1000)::bigint::text AS now_ms, current_setting('transaction_read_only') AS ro",
+      "queue": "/*dp1p:queue*/ SELECT status, count(*)::int AS n, min(received_at)::text AS oldest FROM signals WHERE status IN ('QUEUED','PROCESSING') GROUP BY status",
+      "live": "/*dp1p:live*/ SELECT count(*)::int AS n FROM signals WHERE execution_mode='LIVE'",
+      "heartbeat": "/*dp1p:heartbeat*/ SELECT last_tick::text AS last_tick FROM worker_heartbeats WHERE role='execution'",
+      "baseline": "/*dp1p:baseline*/ SELECT (SELECT count(*)::int FROM signals WHERE status='REJECTED' AND error_message LIKE 'EXECUTION_FAULT:%') AS faults, (SELECT COALESCE(max(id),0)::text FROM signals) AS max_signal, (SELECT COALESCE(max(id),0)::text FROM audit) AS max_audit",
+      "audit": "/*dp1p:audit*/ SELECT event, count(*)::int AS n FROM audit WHERE event IN ('worker.systemic_suspected','order.execution_fault','ledger.cost_clamped','ledger.cost_divergence') GROUP BY event",
+      "exposed": "/*dp1p:exposed*/ SELECT count(*)::int AS n FROM ledger_position_allocations WHERE execution_mode='PAPER' AND status='OPEN' AND remaining_quantity>0 AND scale(trim_scale(remaining_quantity*entry_price))>18",
+      "candidateFills": "/*dp1p:candidateFills*/ SELECT count(*)::int AS n FROM signals WHERE id>$1::bigint AND status='FILLED' AND execution_mode='PAPER' AND broker_response LIKE '%paper-exit-cost-v2%'"
+    }
+  },
+  "verification": {
+    "queries": 8,
+    "individualFillControls": 11,
+    "zeroMatchControls": 1,
+    "checkRecords": 13,
+    "semanticMutants": 3,
+    "wrongCounts": [
+      1,
+      5,
+      5
+    ],
+    "correctCount": 3,
+    "readOnlySnapshot": true,
+    "remainingDatabases": 0,
+    "exit": 0,
+    "probeSeconds": 1.7257829
+  },
+  "historicalMarker": {
+    "value": "paper-exit-cost-o3-v1",
+    "commit": "32bc24f1f90df0b269ae2affcdd1c9a9d1889cec",
+    "path": "src/postgres/ledger.js",
+    "line": 235,
+    "blob": "f64d28875e5e5cb2c39d03ea02918c5a395e454a"
+  },
+  "evidence": {
+    "results.json": "b3d54f1017f3de8725590e31aed07a43b62b6ea0f46cfdb3e54e57c7be6f92f4",
+    "seeded-expectations.json": "c1c0902464089dcd6f4d19b7e3870c9b6c734247bcd4e7b09c9bc6b8647c1108",
+    "REPORT.md": "7fda5764e791864450e7cfe091c15bc0dd617abeb73655c37b751be94fb04c68",
+    "cleanup.txt": "e5ac775fd91b258ba7c55fd6a0d655ef5628cdb30ff19b8e82b323d9ce5afc0f",
+    "preflight-delta.json": "e13368081fdd0df2fdadbbd6fb03cdc5d659d9dbe3699f372d0da4cdea83bc7f",
+    "historical-marker-provenance.txt": "d5f27ab3221dac533390777cbe736ca2ae4e5e08e16655e476bf692749053355"
+  },
+  "prior": {
+    "status": "Preserved; generic paper-exit-cost-v1 scope only.",
+    "resultSha256": "c52b5a63673429e53e7c3c63da754b28d51e911e9afeca4ec91c8a5e1f933ccd"
+  },
+  "cleanup": {
+    "ownedPostgres": 0,
+    "ownedNode": 0,
+    "listeners": 0,
+    "dataRemoved": true,
+    "passwordRemoved": true
+  },
+  "limits": [
+    "TEXT LIKE counts malformed text containing the v2 substring; this does not validate JSON or marker authenticity.",
+    "SQL compatibility and predicate checks do not establish booking correctness or production readiness.",
+    "Applicable Linux evidence, actual installed dependencies, staging 24-hour observation and production/policy gates remain separate."
+  ],
+  "effects": "Fresh isolated local PostgreSQL only; no host action or production change."
+}

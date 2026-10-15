@@ -1,0 +1,82 @@
+{
+  "schema": "dp1p-real-dependencies-local-v1",
+  "at": "2026-10-15T00:30:29.386Z",
+  "status": "ROOT_ACCEPTED_LOCAL_INERT_DEPENDENCY_ARTIFACT",
+  "commit": "70ea7f92a4547845291d32d836d3c740a0e7f1b7",
+  "oldBase": "ff5a9d1fec9e071e1f2ea4d53d3e6514f4e18a7f",
+  "tool": {
+    "builder": "ba9c286cd4f18bad4bd05a4ebf76f42bcae6a9cba0b4f70606b36ffa3d1082bd",
+    "host": "6301993b2a68001835ba0cc988c9bc0e885730ff86ce275db9b20f76a8cfa7b4",
+    "lib": "9a68031ee3d4e741b06c964a8bd4de8842a142676d5c786395e440689fb0516f"
+  },
+  "packageSha256": "5a778581a93471a03855be123e7fb06a9c67e87c04320cb3dd81549784d8caef",
+  "lockSha256": "5df4eda59d12f9a3a6c8fa4d58de0ff82a6a425e56b7cfa3d1d17bea46ee637e",
+  "archive": {
+    "sha256": "72c3e846a524ecb57abf31564dcd2df4887ef71adb4c308c515adbdcce0aacfd",
+    "bytes": 869376,
+    "files": 145,
+    "deterministicRepeat": true,
+    "roundtrip": true,
+    "mode": "0644",
+    "uid": 0,
+    "gid": 0,
+    "mtime": 0,
+    "hiddenLockIncluded": true
+  },
+  "artifacts": {
+    "source.tar": {
+      "sha256": "d414e8b5d4885a147fa038184d5edadfda3c5484fc5e3c7b42b7f1b55efa248a",
+      "bytes": 7937024
+    },
+    "deps.tar": {
+      "sha256": "72c3e846a524ecb57abf31564dcd2df4887ef71adb4c308c515adbdcce0aacfd",
+      "bytes": 869376
+    },
+    "manifest.txt": {
+      "sha256": "4afdbc1b013e02e3f7c663d44e81d9706824fb83482865f5ddde5056a3bc4876",
+      "bytes": 33159
+    },
+    "bundle.json": {
+      "sha256": "34c826a2e93cd63c832dd7a4bdb2f7b07c2ccd85f4514bf310a3fd366d3b2845",
+      "bytes": 2813
+    }
+  },
+  "checks": {
+    "packages": 15,
+    "dependencyFiles": 145,
+    "dependencyBytes": 753931,
+    "sourceFilesExactToGit": 182,
+    "manifestEntries": 327,
+    "closureSyntaxPasses": 12,
+    "extractedImportProbes": [
+      "CJS pg/decimal",
+      "ESM pg/decimal"
+    ],
+    "databaseConnections": 0,
+    "inventoryAfterExact": true,
+    "originalsUnchanged": true
+  },
+  "audit": {
+    "initialFailure": "Audit helper omitted release/ normalization for source-manifest lookup; no candidate defect was established. Original failure retained.",
+    "correction": "Exactly one required release/ prefix stripped after independent archive parsing; output identities changed. Dependency paths and existing parser checks unchanged.",
+    "evidence": {
+      "REPORT-R2.md": "979b04e7955f2ddc71fd3d1160f656b6d4c39afae45d7f68a262c521011a835c",
+      "RESULTS-R2.json": "a6a26a4318639712bd02a293d0f9a1cb722ced887ed66f30c8714afaed8ab1fc",
+      "FINAL-INVENTORY.json": "b5b086d90bee7d3d66be2fa42163d57ee756bd9fa6dc87e67a626c4ceb44076f",
+      "DELTA-R2.json": "9683dd4cf504ef7c6da07ceefcb698a934b02f54c314fee84ec2f8d8151d34d8",
+      "FAILURE.json": "64441e32781565da89ffad538833bfa6ef3af76c6cc06bd2d0601bc0b4f7c8ed"
+    }
+  },
+  "installation": {
+    "reexecutedByAuditor": false,
+    "ignoreScripts": true,
+    "note": "Package metadata includes prepublish. The limited name scan does not certify absence of all lifecycle metadata."
+  },
+  "limits": [
+    "This is Windows local inert-artifact qualification, not Linux execution or production installed-dependency identity.",
+    "Optional pg-cloudflare behavior was not exercised; optional pg-native is absent and its getter was not accessed.",
+    "Declared static closure and filename/metadata checks do not establish all computed imports or arbitrary platform behavior.",
+    "Fresh operational observations, staging 24-hour acceptance and policy gates remain separate."
+  ],
+  "effects": "Local package installation, archive generation, extraction and bounded import/syntax probes only. No operational site, pins, service or database connection."
+}
