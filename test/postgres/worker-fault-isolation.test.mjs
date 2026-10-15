@@ -200,7 +200,7 @@ test('a success clears the counter and the quarantine even when the heartbeat wr
   const lines=muteErrors(t);
   const a=await account(),signalA=await queue(a);
   let heartbeatDown=false;
-  const faultyDb=Object.create(db,{prepare:{value:sql=>/worker_heartbeats/.test(sql)&&heartbeatDown?{run:async()=>{throw new Error('heartbeat fixture failure');}}:db.prepare(sql)}});
+  const faultyDb=Object.create(db,{transaction:{value:db.transaction.bind(db)},prepare:{value:sql=>/worker_heartbeats/.test(sql)&&heartbeatDown?{run:async()=>{throw new Error('heartbeat fixture failure');}}:db.prepare(sql)}});
   const faulty=Object.create(store);Object.defineProperty(faulty,'db',{value:faultyDb});
   let fail=true;
   const {worker,clock}=harness({workerStore:faulty,failing:job=>job.id===signalA.id&&fail});
@@ -557,7 +557,7 @@ test('F-3 Bridge: a network code from the Bridge preparation is a transient faul
   const lines=muteErrors(t);
   const a=await account(),bridge=await bridgedSignal(a),{row}=bridge,before=await accounting(a.id);
   // The first query of prepareBridgeExecution fails as a reset socket would.
-  const faultyDb=Object.create(db,{prepare:{value:sql=>/FROM pine_deployments WHERE deployment_id/.test(sql)
+  const faultyDb=Object.create(db,{transaction:{value:db.transaction.bind(db)},prepare:{value:sql=>/FROM pine_deployments WHERE deployment_id/.test(sql)
     ?{get:async()=>{throw Object.assign(new Error('read ECONNRESET'),{code:'ECONNRESET'});}}:db.prepare(sql)}});
   const faulty=Object.create(store);Object.defineProperty(faulty,'db',{value:faultyDb});
   const {worker,clock}=harness({workerStore:faulty});

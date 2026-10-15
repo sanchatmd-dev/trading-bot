@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "packet": "PO1-FIXTURE-R2",
+  "date": "2026-10-15",
+  "sourceCommit": "faa32a43bd6aa9342c349b155b2ea6c23ec296a7",
+  "scope": "Local test-fixture correction only; no deployment",
+  "status": "Root accepts focused local correction; final exact-commit CI pending",
+  "cause": "The earlier copied fixture omitted all 24 quant_lab engine inputs. The first actual read failed ENOENT for quant_lab/src/robot_quant/__init__.py before any selected body ran. The full fixture now uses Git blobs directly. Archive export-ignore reproduces this omission mechanism; the original copy ancestry is not fully established.",
+  "change": "Three recording Proxies bind only transaction to the actual PostgresDatabase instance. Two Object.create fixtures add an own transaction delegate bound to the instance. Query recording, prepare fault injection and all assertions remain unchanged.",
+  "inputs": {
+    "manifestSha256": "3eed7d0f60bf5ad217b74e0c19e8e9e323e8a517497eb3d464974da82b0bd883",
+    "sourceFiles": 843,
+    "dependencyFiles": 2012,
+    "engineInputs": 80,
+    "evaluatorInputs": 14,
+    "overlays": [
+      {
+        "source": "test/postgres/pf3-readiness-http.test.mjs",
+        "base": "3d01b03",
+        "sourceSha256": "3439eb508dd1e64ff0d9401eb3766b6c4c568e5af452bd5c93d2c0825c3bd9e3",
+        "output": "pf3-readiness-http.test.mjs",
+        "outputSha256": "701f136d926d703fea046b7639c1cc0e0b40eb64bc5df98d1bec6d7c575a3bb2",
+        "replacements": 1,
+        "from": "value.bind(receiver)",
+        "to": "value.bind(prop==='transaction'?target:receiver)"
+      },
+      {
+        "source": "test/postgres/pf3-readiness-service.test.mjs",
+        "base": "3d01b03",
+        "sourceSha256": "4e5ef06a9a449215f35052097b38b2ab1d77e0dea322e938f45c683642e00426",
+        "output": "pf3-readiness-service.test.mjs",
+        "outputSha256": "3cdb160a35dafad58661e53b5cb9c17703af8b4d7e2107b8f3c4b167a143771c",
+        "replacements": 1,
+        "from": "value.bind(receiver)",
+        "to": "value.bind(prop==='transaction'?target:receiver)"
+      },
+      {
+        "source": "test/postgres/pf4-proposals-http.test.mjs",
+        "base": "3d01b03",
+        "sourceSha256": "f52faa71a289e09e9d5056ea4831c706eb709174972891ba2c6b8a8ab7708a55",
+        "output": "pf4-proposals-http.test.mjs",
+        "outputSha256": "2875eff5a056b3a19aa615d73421e23f5a045f5e1c2908ff033f23debb0d4394",
+        "replacements": 1,
+        "from": "value.bind(receiver)",
+        "to": "value.bind(prop==='transaction'?target:receiver)"
+      },
+      {
+        "source": "test/postgres/worker-fault-isolation.test.mjs",
+        "base": "3d01b03",
+        "sourceSha256": "9805e363604a46126c9c0835eda55490e205a394d5f7a94e024b90e13a698c98",
+        "output": "worker-fault-isolation.test.mjs",
+        "outputSha256": "75dedfa11334be4fa7d7ece1e7b5876fe13ba8101ab6191aa9b7aee99e282e39",
+        "replacements": 2,
+        "from": "Object.create(db,{prepare:",
+        "to": "Object.create(db,{transaction:{value:db.transaction.bind(db)},prepare:"
+      }
+    ]
+  },
+  "verification": {
+    "tests": 6,
+    "pass": 6,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 36827.7041,
+    "launcherWallSeconds": 37.7918442,
+    "completedAt": "2026-10-15T03:11:05.1179079Z",
+    "actualSourceProbeGroups": 4,
+    "sourceAndDependencyPinsBeforeAfter": "PASS",
+    "encoding": "UTF8",
+    "generatedDatabasesBeforeAfter": 0,
+    "generatedRolesBeforeAfter": 0,
+    "cleanup": "PASS: stopped PostgreSQL; spawned Node exited; no owned process, listener, data or password remains"
+  },
+  "artifacts": {
+    "REPORT.md": {
+      "path": ".qa-local/codex-po1-fixture-r2-verify-2026-10-15/REPORT.md",
+      "sha256": "8074967afc1e7ffac1e0b0c7fdbb4e7f186b6d9e70a48b6b64bb9540398338e9"
+    },
+    "focused.log": {
+      "path": ".qa-local/codex-po1-fixture-r2-verify-2026-10-15/focused.log",
+      "sha256": "e63f81a5b6e1d2453d3d2e82eb695962970b40a3bef056a1c9b2337af40208de"
+    },
+    "focused-exit.txt": {
+      "path": ".qa-local/codex-po1-fixture-r2-verify-2026-10-15/focused-exit.txt",
+      "sha256": "abd816fa8e3cc32f60bf9f38fb8367532db68c56fec28b3d56055c284aba2693"
+    },
+    "post-source-preflight.log": {
+      "path": ".qa-local/codex-po1-fixture-r2-verify-2026-10-15/post-source-preflight.log",
+      "sha256": "656464f3d857c72cf216d261d93c3ebac36f5c72a59806781cd88ddbd7ebcdb8"
+    },
+    "post-independent.log": {
+      "path": ".qa-local/codex-po1-fixture-r2-verify-2026-10-15/post-independent.log",
+      "sha256": "ee7d67d787f4fe83f96d260548b025cbbf6e5a156e0d62f22199ec47a0f8520e"
+    },
+    "final-audit.json": {
+      "path": ".qa-local/codex-po1-fixture-r2-verify-2026-10-15/final-audit.json",
+      "sha256": "20c9230f904ea2fac8de8ba8d92bc4f92d999fe4c7fa65c7da6020343fd86aef"
+    },
+    "cleanup.txt": {
+      "path": ".qa-local/codex-po1-fixture-r2-verify-2026-10-15/cleanup.txt",
+      "sha256": "9862e61439207427ee3724c6797ef5e91cc3f3b28dbd63352d6ef510cd3379ba"
+    }
+  },
+  "limitations": [
+    "No broad local suite rerun; exact-commit CI is required separately.",
+    "Original failed CI and prior failed fixture attempt remain unchanged.",
+    "No product source, host or operational acceptance changed."
+  ]
+}

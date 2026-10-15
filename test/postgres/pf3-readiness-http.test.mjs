@@ -375,7 +375,7 @@ test('the service issues SET TRANSACTION READ ONLY first and then SELECT stateme
   const statements=[];
   const recorded=new Proxy(f.db,{get(target,prop,receiver){
     if(prop==='query')return (sql,params)=>{statements.push(String(sql));return target.query(sql,params);};
-    const value=Reflect.get(target,prop,receiver);return typeof value==='function'?value.bind(receiver):value;}});
+    const value=Reflect.get(target,prop,receiver);return typeof value==='function'?value.bind(prop==='transaction'?target:receiver):value;}});
   const {Store}=await import('../../src/postgres/store.js');
   const service=new ReadinessService({store:new Store(recorded),defaultRisk:config.defaultRisk,preflightEnabled:false,pineBridgeEnabled:true});
   assert.equal((await service.report(f.owner.id,f.owner.id)).verdict,'CAPABILITY_UNAVAILABLE');

@@ -397,7 +397,7 @@ test('service invariants: a funding change during the save rolls the whole save 
   const statements=[];
   const recorded=new Proxy(f.db,{get(target,prop,receiver){
     if(prop==='query')return (sql,params)=>{statements.push(String(sql));return target.query(sql,params);};
-    const value=Reflect.get(target,prop,receiver);return typeof value==='function'?value.bind(receiver):value;}});
+    const value=Reflect.get(target,prop,receiver);return typeof value==='function'?value.bind(prop==='transaction'?target:receiver):value;}});
   const store=new Store(recorded);
   const observed=new ProposalService({store,defaultRisk:config.defaultRisk,pineBridgeEnabled:true,
     readinessService:new ReadinessService({store,defaultRisk:config.defaultRisk,preflightEnabled:false,pineBridgeEnabled:true})});
