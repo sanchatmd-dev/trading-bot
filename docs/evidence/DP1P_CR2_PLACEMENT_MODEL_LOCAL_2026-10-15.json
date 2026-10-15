@@ -1,0 +1,133 @@
+{
+  "schema": "DP1P_CR2_PLACEMENT_MODEL_LOCAL_V1",
+  "recordedAt": "2026-10-15T13:06:18Z",
+  "status": "ROOT_ACCEPTED_LOCAL_MODEL_ONLY",
+  "scope": "CREDIT2 placement adapter and trace model (four rounds), pure and injected, per CONTRACT-PROPOSAL sections 1-7. A model, not wiring: no host.mjs/lib.mjs changes, no quota, timeout or GO.",
+  "source": {
+    "rootDecision": {
+      "path": ".qa-local/claude-dp1p-cr2-judge/ROOT-DECISION.json",
+      "sha256": "1bb3058f5f0cb9c0308a1dfc1d56cab044a23665d1e31532f52fcd10e6a5bc44"
+    },
+    "round1Review": {
+      "path": ".qa-local/claude-dp1p-cr2-judge/M1-ROOT-REVIEW.json",
+      "sha256": "1e2c266a3e0ce72e891098ee0f246b91261d0e8ea634e949b53a530587a2860a"
+    },
+    "round2Review": {
+      "path": ".qa-local/claude-dp1p-cr2-judge/M2-ROOT-REVIEW.json",
+      "sha256": "8a805c554ea1413e5569c7f8ff5b75de93945cffa6c080dc37816f7ba3865f58"
+    },
+    "round3Review": {
+      "path": ".qa-local/claude-dp1p-cr2-judge/M3-ROOT-REVIEW.json",
+      "sha256": "242bf43f0fdd7bbb5ead4a097319b035519c4597072e51da30fb2d7cedbbcf8d"
+    },
+    "rootAcceptance": {
+      "path": ".qa-local/claude-dp1p-cr2-judge/CR2-MODEL-ROOT-ACCEPTANCE.json",
+      "sha256": "9cc03eb26bf7097aa6072a621da17003cc8b6777d9c42da055ba1a2750cbdfb3"
+    },
+    "proposal": {
+      "sha256Prefix": "44f9d24ec440"
+    },
+    "placement": {
+      "sha256": "e5276d6a12bd6c9afaefa9921afbf2b9340c643b8e6a12530c101258853427ad"
+    },
+    "patchVsR3": "ee60c0217170",
+    "phaseTableSha256": "3aea11910cbea82e67b60bec829e92cf0a22fe9e42bb93aa1a653c6df2a357c1",
+    "pinnedDeps": {
+      "ledger": "d6f7300a4f47622f4fc946b7f9649dc2214641bdf711f83736d8ee0ee0cbec4b",
+      "bridge": "038da9e491c8af0b5c7e6691dfb8a4505c4b6014ab44e8b415a0af4e42f62f23"
+    }
+  },
+  "derivedNotApproved": {
+    "normalGuards": 8,
+    "T": 14,
+    "R": 6,
+    "worstNplusR": 13,
+    "postGuards": 2,
+    "productionStates": 23,
+    "note": "Ledger arithmetic also admits T13/R5 on the worst path; R6 is a conservative policy. Every number is derived, not approved. OD3/OD4: values only after host-class measurement and owner approval."
+  },
+  "decisions": {
+    "RD1": "OFF_MAPPING accepted provisionally; test 15 with the real bridge.mjs met the condition for MATCH, OFF_MAPPING and NOT_ON_MAPPING row shapes.",
+    "RD2": "remoteStartedAt deadline mapping accepted for the model with frozen C2 unchanged; an explicit deadlineAt bridge revision would need its own decision.",
+    "RD3": "G5b included (OLD-set NOT_ON_MAPPING check before G5).",
+    "RD6": "DEFERRED to wiring: Assumption A bindings and OLD/NEW certificate provenance; the model uses synthetic pins.",
+    "RD7": "DEFERRED: guardMs terms and readiness constants need host-class measurement under a later operations GO; the model takes plan values as injected parameters with no defaults."
+  },
+  "ownerDecisions": {
+    "OD1": "หยุดและรายงาน (stop and report): accept stop-and-report after FATAL; production may stay in a partial state until an operator acts.",
+    "OD2": "Rollback job แยก ขอ GO ทุกครั้ง (separate rollback job, ask for GO every time).",
+    "OD2b": "ฉันต้องติดต่อได้ตลอดช่วง S3 (owner must be reachable for the whole S3 window; root alerts on stop; owner decides rollback GO).",
+    "OD3_OD4": "วัดบนเครื่องจริงก่อน แล้วให้ผมอนุมัติ (measure on the real host class first, then owner approves limits and credits).",
+    "note": "Owner chose the recommended option for OD1 and OD2. OD3/OD4 values are not yet approved."
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "verdict": "NOT_ACCEPTED_FIX_ROUND_REQUIRED",
+      "placement": "b7c2d5792514",
+      "tests": "24/24; mutations 21/21 killed",
+      "auditorFindings": "M1 MEDIUM productionState says stopped after a failed/uncertain stop; M2 MEDIUM originA unchecked; L1-L6."
+    },
+    {
+      "round": 2,
+      "verdict": "NOT_ACCEPTED_SMALL_FIX_ROUND_REQUIRED",
+      "placement": "27561d814062 (41644 B)",
+      "tests": "31/31; mutations 41/41 killed",
+      "auditorFindings": "M1, M2, L1-L6 fixed; N1 LOW (clock throw after allowed beginGuard skips finishGuard); N2-N4 INFO."
+    },
+    {
+      "round": 3,
+      "verdict": "NOT_ACCEPTED_TINY_FIX_ROUND_REQUIRED",
+      "placement": "e04d23502e27",
+      "tests": "35/35; mutations 54/54 killed",
+      "auditorFindings": "N1-N3 and plan rule fixed; L1 LOW (an UNCERTAIN first recovery start overwritten by the retry record); I1 text."
+    },
+    {
+      "round": 4,
+      "verdict": "ACCEPTED_LOCAL_MODEL_ONLY",
+      "placement": "e5276d6a12bd",
+      "tests": "36/36; mutations 62/62 killed; root rerun 36 pass 0 fail",
+      "auditorFindings": "L1 verified by the tester (9 L1 cases written before reading coder tests) and a root patch read; no fourth Opus round (proportionate to one LOW)."
+    }
+  ],
+  "verification": {
+    "manifestEntriesMatchedDisk": "8/8",
+    "test15": "Real pinned bridge.mjs over fake helper/filesystem/reader gives MATCH, DISAGREEMENT (OFF_MAPPING) and DIRECTORY_ROLE_UNKNOWN (NOT_ON_MAPPING); latch at D confirmed (T15b).",
+    "reviewers": {
+      "coder": "Sonnet 5.5/high all rounds",
+      "tester": "Sonnet 5.5/medium each round",
+      "auditor": "Opus 5.5/high rounds 1-3 (round 4 verified by tester and root patch read). Fable 5.1 not used; substituted by Opus 5.5 after two Fable fallbacks to claude-opus-4-8 on 2026-10-15. The design panel second draft was Opus 5.5 substituted for Fable."
+    }
+  },
+  "limitations": [
+    "Local model only; not staging, not production; not wiring.",
+    "The model trusts the adapter-supplied performed flags.",
+    "Derived numbers (T, R, G) are not approved quotas or timeouts.",
+    "No real host measurements (roleObsMs, pCapMs, compare, slack, readiness constants).",
+    "Real stop probe and observedAt/startAtMs production are not built."
+  ],
+  "openGatesBeforeWiring": [
+    "RD6 Assumption A bindings and trusted OLD/NEW certificate provenance",
+    "RD7 host-class measurements (operations GO)",
+    "Owner approval of measured limits/credits (OD3/OD4)",
+    "Adapter must set performed from evidence",
+    "host.mjs wiring: remove Date.now and ctx.t0||Date.now() fallbacks, make the catch unwind unreachable after a fault",
+    "C3R-2 payload margin (224 B) re-check if wiring adds bytes",
+    "Target-host Node version"
+  ],
+  "facts": {
+    "noHostStep": true,
+    "noGo": true,
+    "noCommit": true,
+    "noSsh": true,
+    "noRunnerWiring": true,
+    "noHostMjsLibMjsEdits": true,
+    "workflows": [
+      "wf_edd036da-271",
+      "wf_c30b14b0-842",
+      "wf_baa2f13f-c3e",
+      "wf_308a9c53-e07",
+      "wf_254fbf20-d8f"
+    ]
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "schema": "DP1P_C3R_PACKAGING_LOCAL_V1",
+  "recordedAt": "2026-10-15T13:06:18Z",
+  "status": "ROOT_ACCEPTED_LOCAL_CANDIDATE_ONLY",
+  "scope": "C3R-1: dedicated WORKER/API D4-C3 packaging only (C1L composer, E2 bridge template line, regenerated template, measurements, 13 synthetic tests). Not runtime seam, not runner, not host.",
+  "source": {
+    "rootDecision": {
+      "path": ".qa-local/claude-dp1p-c3r-judge/ROOT-DECISION.json",
+      "sha256": "dd0d7db4cf3e3d61d159c34274b7efe7a8eef6c6e8b343ebae42db24e9df21e7"
+    },
+    "rootAcceptance": {
+      "path": ".qa-local/claude-dp1p-c3r-judge/C3R-1-ROOT-ACCEPTANCE.json",
+      "sha256": "12820d5b15ec50efd5661e2c676fa6d6b88b1ad914a90ac49fd742b05202f7b0"
+    },
+    "measurements": {
+      "path": ".qa-local/claude-dp1p-c3r-judge/MEASUREMENTS.json",
+      "sha256": "00d72fe772e64f0c3bb90c56fbda2a01be362ac4fa00f5dc6dd10bd55f0d9b9c"
+    },
+    "composerC1L": {
+      "sha256": "b11f141ffff04cd6b82002123ae2f15afb9de9572f8b461d0e6471790f336503",
+      "bytes": 6289,
+      "transformation": "d4-literal-b64-runtime-json-parse-v2"
+    },
+    "template": {
+      "sha256": "80c7e45567ccd2a02d7c39289fe84763ec1a2d933d5ef827c76bd88587cf860c",
+      "bytes": 32918
+    },
+    "witnessPayloadSha256": "0d4c729a9256be6319594ad6dcc082ed1da565a8e0af7be16923a694e2ca68c5",
+    "manifest": {
+      "sha256": "d44501f4634449297da1f37ca34ea85c2f77a53202998df24f9c6f60bc83e04e",
+      "entries": 18
+    },
+    "frozenSeamManifestSha256": "524b160201c4c9c0357f1570847cc8d4efb72ea1586d4e02d318840bcd45e450"
+  },
+  "decision": {
+    "chosen": "Levers a+b with encoding E2 (literal-b64-runtime-v1), dedicated WORKER/API profile only. New pinned trust root C1L; frozen C1 (e2220435...) not edited. Runtime data: specifier byte-identical to the frozen one.",
+    "floor": "1024 bytes headroom at the grammar-maximum witness after remaining wiring; below the floor freeze and return the measured blocker.",
+    "leverCNotPreApproved": true,
+    "unchangedCaps": {
+      "payload": 49152,
+      "remotePublic": 24576,
+      "private": 65536
+    }
+  },
+  "measured": {
+    "baselinePayloadBytes": 50767,
+    "baselineHeadroom": -1615,
+    "helperDeclBytes": {
+      "before": 11671,
+      "after": 8921
+    },
+    "bridgeExprBytes": {
+      "before": 8258,
+      "after": 6307
+    },
+    "templateBytes": {
+      "before": 34869,
+      "after": 32918
+    },
+    "witnessPayloadBytes": 46066,
+    "headroom": 3086,
+    "floor": 1024,
+    "wiringAllowance": 2062,
+    "shortConfigPayloadBytes": 43112,
+    "derived": "All numbers are derived by local measurement; none is an approved limit."
+  },
+  "verification": {
+    "tests": "13/13 coder; root rerun 13 pass 0 fail",
+    "manifestEntriesMatchedDisk": "18/18",
+    "testerChecks": "6/6 PASS, independent re-derivation before reading coder code",
+    "mutantsCaught": "5 of 5 (a-e), 0 survivors",
+    "rootPatchRead": "c1l.patch read, no defect",
+    "reviewers": {
+      "coder": "Sonnet 5.5/high",
+      "tester": "Sonnet 5.5/medium",
+      "secondReviewer": "Dispatched as Fable 5.1/high; 3 turns claude-fable-5-1 then 35 turns runtime fallback to claude-opus-4-8 (not a team model) after a safety-classifier cut. Labelled non-Fable; not counted as a Fable review. No HIGH/MEDIUM; LOW-1 missing REPORT.md (root wrote it), LOW-2 Buffer global dependency (design-accepted).",
+      "designPanelAlternativeDraft": "Dispatched as Fable 5.1/high; first 17 assistant turns claude-fable-5-1, last 18 turns runtime fallback to claude-opus-4-8 (not a team model). Mixed provenance; not counted as a Fable result; the decision does not depend on it.",
+      "designPanelOtherDraft": "Opus 5.5"
+    }
+  },
+  "acceptedChanges": [
+    "F1: C1 HELPER_ROUNDTRIP replaced by moduleLiteral PIN_MISMATCH plus checkLiteral LITERAL_BYTES/LITERAL_SPECIFIER",
+    "New refusal codes MODULE_NOT_ASCII, MODULE_MARKER, LITERAL_DECODE, LITERAL_BYTES, LITERAL_SPECIFIER, EMBED_ANCHOR, EMBED_LITERAL",
+    "PAYLOAD_CAP now checked after R5 (error precedence only)",
+    "LITERAL_DECODE also rejects non-canonical escape spelling"
+  ],
+  "ownerInstructionRecorded": "ทำงานต่อได้เลย เริ่มจากข้อ 1 (continue; start with item 1: choose the revised DP1-P D4-C3 packaging contract; preserve caps and frozen modules unless a specific reviewed change is authorized)",
+  "limitations": [
+    "Local candidate only; not staging, not production.",
+    "Runtime seam is not covered here (see the C3R-2 record).",
+    "Output fit: OUTPUT_CAP is UNKNOWN at grammar max (certificate 44925 > 24576); the current contract allows it.",
+    "Target-host Node version and base64 data: module import support are UNKNOWN.",
+    "Runtime cost of E2 base64 decode inside the 22 s budget is not measured.",
+    "Template/payload execution is not proven; the composePayload R5 tamper path is covered only by direct-function tests."
+  ],
+  "openGatesBeforeWiring": [
+    "C3R-2 runtime seam (separate record)",
+    "Target-host Node base64 data: import check through a later separately authorized operations step",
+    "Runner wiring slice",
+    "Operations GO"
+  ],
+  "facts": {
+    "noHostStep": true,
+    "noGo": true,
+    "noCommit": true,
+    "noSsh": true,
+    "noRunnerWiring": true,
+    "frozenSeamUnchanged": true,
+    "gitTrackedUnchanged": true,
+    "workflow": "wf_15e47608-8a9"
+  }
+}

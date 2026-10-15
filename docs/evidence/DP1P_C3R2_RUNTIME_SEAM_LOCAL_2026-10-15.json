@@ -1,0 +1,149 @@
+{
+  "schema": "DP1P_C3R2_RUNTIME_SEAM_LOCAL_V1",
+  "recordedAt": "2026-10-15T13:06:18Z",
+  "status": "ROOT_ACCEPTED_LOCAL_CANDIDATE_ONLY",
+  "scope": "C3R-2 (three implementation rounds): dedicated WORKER/API D4-C3 template entry span d4-template-result-v2, runtime seam and synthetic tests. Not runner wiring, transport, host or GO.",
+  "source": {
+    "rootDecision": {
+      "path": ".qa-local/claude-dp1p-c3r2-design/ROOT-DECISION.json",
+      "sha256": "f9339721f07470626414f07adc0473e5f5dd6867685b24e61488ea8035b23ec2"
+    },
+    "round1Review": {
+      "path": ".qa-local/claude-dp1p-c3r2-design/R1-ROOT-REVIEW.json",
+      "sha256": "35a991d2e3d11b5c927a8d69d0ddaae7cb6219dda5b29a7e6d17ccda1f4220da"
+    },
+    "round2Review": {
+      "path": ".qa-local/claude-dp1p-c3r2-design/R2-ROOT-REVIEW.json",
+      "sha256": "4e69c5ed6bfdd2b7bec1ce3dbaff11ec83babc663a15e543343673fb71cc8867"
+    },
+    "rootAcceptance": {
+      "path": ".qa-local/claude-dp1p-c3r2-design/C3R-2-ROOT-ACCEPTANCE.json",
+      "sha256": "d3acf9cea78f7a3323a2d78c5bd0ff75a7d7ac81a556a2c8995ae93d0e724d32"
+    },
+    "design": {
+      "sha256Prefix": "ac20ab36d127"
+    },
+    "template": {
+      "sha256": "5e15fe4b088ebf7e37b6eaa07afc00c5473eff8ae539f2bbf1e6257bfcad788c",
+      "bytes": 34756,
+      "prefix0to27627Sha256Prefix": "c3c4f7f455de"
+    },
+    "entryFragment": {
+      "sha256": "cac8299d01b5bd01b511d44b38ba8b231df45c7f5b768e88307b861a2b354f76",
+      "bytes": 7129
+    },
+    "parseRemoteReference": {
+      "sha256": "e74f95928b7fefc6730395a6ce9d8379d00ce32333acfa51b135b3e7a77467a4"
+    },
+    "tests": {
+      "sha256": "a6d9adceeed7cd5ffd510fb3203814c1becf2202c46c865a59d59681af93180c"
+    },
+    "manifest": {
+      "sha256": "186bda2b8addbeade66bdea9b0bcd2898ee2f3fb6d2de5fa52abad7179844565",
+      "entries": 29
+    },
+    "composerC1L": "b11f141ffff0 (unchanged from C3R-1)"
+  },
+  "decision": {
+    "schemaRename": "d4-template-result-v2 (remote/private) and d4-template-public-v2 (public); never accept v1 where v2 is expected or the reverse",
+    "surfacedCodes": [
+      "REMOTE_ENV",
+      "LINUX_REQUIRED",
+      "D4_CONFIG",
+      "D4_RESULT",
+      "D4_BRIDGE_REFUSED"
+    ],
+    "otherCodesCollapseTo": "D4_UNKNOWN",
+    "fallbackO5b": "Used once, in round 2: parseRemote moved out of the template into parse-remote-reference.mjs (takes checkResult as a parameter). Collapsing REFUSED codes (fallback a) was not approved.",
+    "publicView": "Runner-side, later separately pinned slice; not written.",
+    "unchanged": "Template bytes [0,27627) unchanged; caps 49152/24576/65536; floor 1024."
+  },
+  "measured": {
+    "grammarMaxPayloadBytes": 47904,
+    "headroom": 1248,
+    "floor": 1024,
+    "marginOverFloor": 224,
+    "shortPayloadBytes": 44950,
+    "shortHeadroom": 4202,
+    "cap": 49152,
+    "derived": "Derived by local measurement; not approved limits."
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "verdict": "NOT_ACCEPTED_FIX_ROUND_REQUIRED",
+      "template": "34700 B 16cfef7f2ea0",
+      "headroom": 1304,
+      "tests": "41/41, 72 template-evaluating cases, 0 tripwire hits",
+      "tester": "PASS 5/5; mutants M1-M10 plus 5 extra killed",
+      "auditorFindings": "M1 MEDIUM (dependency values unchecked, real IO reachable); L1-L4 LOW. Root confirmed M1, L2, L3."
+    },
+    {
+      "round": 2,
+      "verdict": "NOT_ACCEPTED_SMALL_FIX_ROUND_REQUIRED",
+      "template": "34706 B c35eb415f098",
+      "headroom": 1298,
+      "tests": "44/44, 81 template-evaluating cases, 0 tripwire hits",
+      "tester": "PASS 6/6; extra 7/7",
+      "auditorFindings": "M1, L1-L4 fixed; new N1 LOW (getter/Proxy dependency re-read, real fs/spawn reachable). Root also found N2, same class on the wrapper (not reachable from the production CONFIG, which is plain JSON)."
+    },
+    {
+      "round": 3,
+      "verdict": "ACCEPTED_LOCAL_CANDIDATE_TEMPLATE_RUNTIME_SEAM",
+      "template": "34756 B 5e15fe4b088e",
+      "headroom": 1248,
+      "tests": "47/47, 111 template-evaluating cases, 0 real-IO tripwire hits; root rerun 47 pass 0 fail",
+      "tester": "Independent rebuild equal; 31 mutants killed; extra X1-X7 pass",
+      "auditorFindings": "N1 and N2 fixed; no new LOW or higher; plain-JSON outcomes byte-identical r2 vs r3 on 11 cases."
+    }
+  ],
+  "verification": {
+    "manifestEntriesMatchedDisk": "29/29",
+    "rootRerun": "node --test --test-concurrency=1 c3r2.test.mjs: 47 pass 0 fail",
+    "reviewers": {
+      "coder": "Sonnet 5.5/high all rounds",
+      "tester": "Sonnet 5.5/medium each round",
+      "auditor": "Opus 5.5/high each round. Fable 5.1 substituted by Opus 5.5 (root deviation, ROOT-DECISION O10) because two consecutive Fable dispatches on 2026-10-15 fell back mid-run to claude-opus-4-8 (not a team model).",
+      "designPanelFableRuntimeFallback": "The C3R design alternative draft (Fable 5.1/high) fell back to claude-opus-4-8 for its last 18 turns; recorded in the C3R-1 record, not counted as a Fable result."
+    }
+  },
+  "weakCoverage": [
+    "M1/M2 (collect startedAt or bridge clock replaced by performance.now) are killed only by the C3 latch test; near-equivalent because the global latch enforces the budget from REMOTE_STARTED_AT",
+    "JOB_ID regex edge is killed in the coder suite only by H1; tester X1 covers it"
+  ],
+  "notesForRunnerSlice": [
+    "INFO-1: the JSON snapshot judges a non-plain wrapper by its JSON form; the runner must pass plain JSON data",
+    "INFO-2: jobIdOf echoes a regex-valid live jobId on UNKNOWN paths; no IO or bindings effect",
+    "parseRemote reference must be pinned and publicView written runner-side",
+    "D13 (O9, deferred): an import-phase fault gives no stdout; the runner must map missing/invalid/multi-line stdout to UNKNOWN REMOTE_NO_RESULT",
+    "Any later entry-span change needs a new measurement (margin 224 B)"
+  ],
+  "limitations": [
+    "Local candidate only; not staging, not production; synthetic fakes only.",
+    "Linux O_NOFOLLOW/O_NONBLOCK numeric bits not proven (win32 run).",
+    "Target-host Node version and base64 data: import not proven.",
+    "E2 decode cost inside the 22 s budget not measured.",
+    "Real /proc, systemctl and filesystem behavior and stalled syscalls not proven.",
+    "Runner wiring, transport and claim not done."
+  ],
+  "openGatesBeforeWiring": [
+    "Runner slice pinning parse-remote-reference and writing publicView",
+    "Target-host Node version check (operations GO)",
+    "O9/D13 runner mapping decision",
+    "Re-measure if the entry span changes"
+  ],
+  "facts": {
+    "noHostStep": true,
+    "noGo": true,
+    "noCommit": true,
+    "noSsh": true,
+    "noRunnerWiring": true,
+    "noPayloadFileOnDisk": true,
+    "workflows": [
+      "wf_db32e042-f65",
+      "wf_124f4a36-584",
+      "wf_ff0e2f64-2f2",
+      "wf_47963ed2-ec7"
+    ]
+  }
+}

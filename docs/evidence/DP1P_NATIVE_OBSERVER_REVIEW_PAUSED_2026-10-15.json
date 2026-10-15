@@ -1,0 +1,55 @@
+{
+  "schema": "DP1P_NATIVE_OBSERVER_REVIEW_PAUSED_V1",
+  "recordedAt": "2026-10-15T13:06:18Z",
+  "status": "PAUSED_BY_OWNER",
+  "scope": "NOBS-R item 3: native observer packaging and capability review. Review only; nothing implemented.",
+  "source": {
+    "rootDecision": {
+      "path": ".qa-local/claude-dp1p-nobs-review/ROOT-DECISION.json",
+      "sha256": "20af629fdc152c99cb7b02e3d68e2af957e1eb89a5aeceb87f75cbf971fe8b3d"
+    },
+    "review": {
+      "path": ".qa-local/claude-dp1p-nobs-review/REVIEW.md",
+      "sha256Prefix": "121c581a3da2"
+    }
+  },
+  "review": {
+    "author": "Opus 5.5/high architecture auditor (wf_b197ab2b-d66)",
+    "findings": "F1-F10 and gaps G1-G2 accepted by root as stated; all fail closed; no HIGH.",
+    "decisiveGap": "G2: even a perfect run leaves WATCH identity UNKNOWN, so the NOBS line only distinguishes a missing from an empty EnvironmentFiles property and clears no identity gate by itself."
+  },
+  "ownerDecision": {
+    "OD1": "Pause (recommended). No host steps for NOBS; WATCH identity stays UNKNOWN; review and conditional decisions retained for later.",
+    "question": "Continue the NOBS line (local slice now, then a capability host job and an observation host job, each with its own GO) or pause it with WATCH identity stated as UNKNOWN. Root recommendation was to pause: it cannot prove identity and costs two host steps."
+  },
+  "conditionalRootDecisionsIfResumed": {
+    "RD1": "Successor observer/parser with a WATCH_1..WATCH_4 allowlist and minimal diff, fresh independent review (no relabel hack)",
+    "RD2": "Placement B: separate WATCH observer payload, own job ID and GO, same runner transport",
+    "RD3": "Identity tuple plus sha256 at observation time",
+    "RD4": "New composer C1N with the C1L R3/R4/R5 rules; C1L stays frozen",
+    "RD5": "Cap 4 busctl calls per payload",
+    "RD6": "Linux CI fake-busctl job later, separate decision",
+    "RD7": "Fix F5/F6 in the successor observer",
+    "RD8": "CAP uses the call form for Manager.Version and accepts UNKNOWN_FAMILY"
+  },
+  "limitations": [
+    "Nothing implemented or executed; no busctl run.",
+    "WATCH identity remains UNKNOWN.",
+    "Conditional decisions are not authorization and need re-confirmation if the owner resumes."
+  ],
+  "openGates": [
+    "Owner decision to resume NOBS",
+    "Local successor observer slice with fresh independent review",
+    "Capability host job GO",
+    "Observation host job GO"
+  ],
+  "facts": {
+    "noHostStep": true,
+    "noGo": true,
+    "noCommit": true,
+    "noSsh": true,
+    "noRunnerWiring": true,
+    "noBusctlExecution": true,
+    "noWiring": true
+  }
+}
