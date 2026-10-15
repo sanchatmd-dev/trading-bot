@@ -1,13 +1,43 @@
 import pg from 'pg';
 import {AsyncLocalStorage} from 'node:async_hooks';
 import fs from 'node:fs/promises';
-import {ensurePaperLedgerFence} from './paper-ledger-fence.js';
+import {ensurePaperLedgerFence,PAPER_LEDGER_FENCE_REPLICATION_ROLE} from './paper-ledger-fence.js';
 
 // int8 is used for timestamps and identifiers only. NUMERIC keeps pg's string parser.
 const parseInteger=value=>{const number=Number(value);if(!Number.isSafeInteger(number))throw new Error('Integer exceeds JavaScript safe range');return number;};
 const types={getTypeParser:(oid,format)=>oid===20?parseInteger:pg.types.getTypeParser(oid,format)};
 
 export class PostgresDatabase {
+  #runtimeOrigin=false;
+  // Checkout-only enforcement does not prevent privileged changes within an existing lease.
+  async #checkout(pool){
+    const client=await pool.connect();let released=false,failure=null,rejectFailure;
+    const failed=new Promise((resolve,reject)=>{rejectFailure=reject;});failed.catch(()=>{});
+    const release=error=>{if(released)return;if(error&&!failure)failure=error;released=true;client.removeListener('error',onError);client.release(error);};
+    const onError=error=>{if(!failure)failure=error;rejectFailure(failure);release(failure);};
+    client.once('error',onError);
+    const query=(...args)=>Promise.race([Promise.resolve().then(()=>{if(failure)throw failure;return client.query(...args);}),failed]).catch(error=>{
+      // A backend FATAL/PANIC can reject its query before the later socket error event.
+      if(error?.severity==='FATAL'||error?.severity==='PANIC'){
+        if(!failure)failure=error;rejectFailure(failure);release(failure);
+      }
+      throw failure||error;
+    });
+    const lease={client,query,release,transfer:handler=>{if(failure||released)throw failure||new Error('Database lease is already released');client.on('error',handler);client.removeListener('error',onError);released=true;}};
+    try{
+      if(this.#runtimeOrigin){
+        const result=await query("SELECT pg_catalog.current_setting('session_replication_role') AS role");
+        if(result?.rows?.length!==1||result.rows[0]?.role!=='origin')
+          throw Object.assign(new Error('session_replication_role must be origin for the Paper ledger fence'),{code:PAPER_LEDGER_FENCE_REPLICATION_ROLE});
+      }
+      return lease;
+    }catch(error){release(error);throw error;}
+  }
+  async #poolQuery(pool,sql,params){
+    if(!this.#runtimeOrigin)return pool.query(sql,params);
+    const lease=await this.#checkout(pool);
+    try{return await lease.query(sql,params);}catch(error){lease.release(error);throw error;}finally{lease.release();}
+  }
   constructor({connectionString=process.env.DATABASE_URL,max=Number(process.env.PG_POOL_SIZE||5)}={}){
     if(!connectionString)throw new Error('DATABASE_URL is required');
     if(!Number.isInteger(max)||max<1||max>50)throw new Error('Invalid PG_POOL_SIZE');
@@ -22,23 +52,23 @@ export class PostgresDatabase {
   get isTransaction(){return !!this.context.getStore();}
   async query(sql,params=[]){
     const state=this.context.getStore();
-    if(!state)return this.pool.query(sql,params);
+    if(!state)return this.#poolQuery(this.pool,sql,params);
     if(state.closed)throw Object.assign(new Error('Transaction is closed'),{code:'25000'});
     const result=state.tail.then(()=>{
       // A queued branch can outlive the transaction that owns its client.
       if(state.closed)throw Object.assign(new Error('Transaction is closed'),{code:'25000'});
-      return state.client.query(sql,params);
+      return state.query(sql,params);
     });state.tail=result.catch(()=>{});return result;
   }
   async consumeLimit(key,limit,window,now=Date.now()){
-    const result=await this.limitPool.query(`INSERT INTO security_limits(key_hash,attempts,expires_at)
+    const result=await this.#poolQuery(this.limitPool,`INSERT INTO security_limits(key_hash,attempts,expires_at)
       SELECT $1,1,$2 WHERE EXISTS(SELECT 1 FROM security_limits WHERE key_hash=$1) OR (SELECT count(*) FROM security_limits)<10000
       ON CONFLICT(key_hash) DO UPDATE SET attempts=CASE WHEN security_limits.expires_at<=$3 THEN 1 ELSE security_limits.attempts+1 END,
       expires_at=CASE WHEN security_limits.expires_at<=$3 THEN $2 ELSE security_limits.expires_at END RETURNING attempts`,[key,now+window,now]);
     return !!result.rows[0]&&result.rows[0].attempts<=limit;
   }
   async touchSession(tokenHash,now,idle){
-    const result=await this.limitPool.query('UPDATE sessions SET last_seen=$1 WHERE token_hash=$2 AND expires_at>$1 AND last_seen>$3',[now,tokenHash,now-idle]);
+    const result=await this.#poolQuery(this.limitPool,'UPDATE sessions SET last_seen=$1 WHERE token_hash=$2 AND expires_at>$1 AND last_seen>$3',[now,tokenHash,now-idle]);
     return result.rowCount===1;
   }
   prepare(sql){
@@ -59,32 +89,36 @@ export class PostgresDatabase {
     const parent=this.context.getStore();
     if(parent){if(parent.closed)throw Object.assign(new Error('Transaction is closed'),{code:'25000'});return fn();}
     if(!['READ COMMITTED','SERIALIZABLE','REPEATABLE READ'].includes(isolation))throw new Error('Invalid transaction isolation');
-    const client=await this.pool.connect();
-    const state={client,tail:Promise.resolve(),closed:false};
+    const lease=this.#runtimeOrigin?await this.#checkout(this.pool):null;
+    const client=lease?lease.client:await this.pool.connect();
+    const query=(...args)=>lease?lease.query(...args):client.query(...args);
+    const state={client,query,tail:Promise.resolve(),closed:false};
     try{
-      await client.query('BEGIN ISOLATION LEVEL '+isolation);
+      await query('BEGIN ISOLATION LEVEL '+isolation);
       let result;
       // Close before COMMIT/ROLLBACK so queued branches cannot run in autocommit.
       try{result=await this.context.run(state,fn);}finally{state.closed=true;}
-      await client.query('COMMIT');
+      await query('COMMIT');
       return result;
     }catch(error){await client.query('ROLLBACK').catch(()=>{});throw error;}
-    finally{state.closed=true;client.release();}
+    finally{state.closed=true;if(lease)lease.release();else client.release();}
   }
   async lock(key){
     if(!this.isTransaction)throw new Error('Transaction required for account lock');
     await this.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[key]);
   }
   async runtimeLock(){
+    this.#runtimeOrigin=true;
     if(this.runtimeClient)return;
     if(this.pool.options.max<2)throw new Error('Runtime PG_POOL_SIZE must be at least 2 (one connection holds the maintenance lock)');
-    const client=await this.pool.connect();
-    const {rows}=await client.query("SELECT pg_try_advisory_lock_shared(hashtextextended('robot:maintenance',0)) ok");
-    if(!rows[0].ok){client.release();throw new Error('Database maintenance in progress');}
-    this.runtimeClient=client;
-    // A lost runtime lock must stop this process; it must not continue against a
-    // database that an offline migration/rotation could now exclusively own.
-    client.on('error',()=>{console.error('Runtime database lock lost');process.exit(1);});
+    const lease=await this.#checkout(this.pool),client=lease.client;
+    try{
+      const {rows}=await lease.query("SELECT pg_try_advisory_lock_shared(hashtextextended('robot:maintenance',0)) ok");
+      if(!rows[0].ok)throw new Error('Database maintenance in progress');
+      // Hold this exact client until close(); losing the runtime lock remains fail-stop.
+      lease.transfer(()=>{console.error('Runtime database lock lost');process.exit(1);});
+      this.runtimeClient=client;
+    }catch(error){lease.release(error);throw error;}
   }
   async maintenanceLock(){
     if(!this.isTransaction)throw new Error('Maintenance requires a transaction');
