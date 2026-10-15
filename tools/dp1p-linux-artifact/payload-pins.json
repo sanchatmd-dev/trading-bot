@@ -1,0 +1,14 @@
+{
+  "deps.tar.gz": {
+    "bytes": 183815,
+    "sha256": "a749948146895df35101100c0a8ea938c1643461a3e111edd37864685ba4153c"
+  },
+  "manifest.txt": {
+    "bytes": 33159,
+    "sha256": "4afdbc1b013e02e3f7c663d44e81d9706824fb83482865f5ddde5056a3bc4876"
+  },
+  "bundle.json": {
+    "bytes": 2813,
+    "sha256": "34c826a2e93cd63c832dd7a4bdb2f7b07c2ccd85f4514bf310a3fd366d3b2845"
+  }
+}

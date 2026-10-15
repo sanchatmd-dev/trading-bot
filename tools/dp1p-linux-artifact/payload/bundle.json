@@ -1,0 +1,76 @@
+{
+  "schema": "dp1p-bundle-v2",
+  "commit": "70ea7f92a4547845291d32d836d3c740a0e7f1b7",
+  "lockRef": "70ea7f92a4547845291d32d836d3c740a0e7f1b7",
+  "lockEqual": true,
+  "depFields": [
+    "dependencies",
+    "devDependencies",
+    "optionalDependencies",
+    "engines"
+  ],
+  "reviewed": {
+    "commit": "70ea7f92a4547845291d32d836d3c740a0e7f1b7",
+    "closureFiles": 12,
+    "closureEqual": true,
+    "fixEqual": true,
+    "depsEqual": true,
+    "lockEqual": true,
+    "packageJsonByteEqual": true
+  },
+  "files": [
+    {
+      "name": "deps.tar",
+      "bytes": 869376,
+      "sha": "72c3e846a524ecb57abf31564dcd2df4887ef71adb4c308c515adbdcce0aacfd"
+    },
+    {
+      "name": "manifest.txt",
+      "bytes": 33159,
+      "sha": "4afdbc1b013e02e3f7c663d44e81d9706824fb83482865f5ddde5056a3bc4876"
+    },
+    {
+      "name": "source.tar",
+      "bytes": 7937024,
+      "sha": "d414e8b5d4885a147fa038184d5edadfda3c5484fc5e3c7b42b7f1b55efa248a"
+    }
+  ],
+  "manifestSha": "4afdbc1b013e02e3f7c663d44e81d9706824fb83482865f5ddde5056a3bc4876",
+  "counts": {
+    "source": 182,
+    "deps": 145,
+    "total": 327
+  },
+  "fix": {
+    "src/postgres/ledger.js": "902fd426bd41d83300cb4f5739f5426fb9361abf2e3232df6bf6f48b179a911f",
+    "src/postgres/worker.js": "63d76b2530724992955f5cef17b39698c20a469d674dda2b716ec2752c570dee"
+  },
+  "closure": {
+    "src/config.js": "cdf6fa877786b83f3cdd8e7af92ecd4a025f2d364fc7a63bb5a2b75effe65d4e",
+    "src/domain.js": "034bd9d6874b7308a0a543ff20606aca2ce4980ae15bbcf5b75359adf55dd107",
+    "src/money.js": "3e3b7a80fd25cb5be30fbb262c1466b26b6c6b53ecfaf34a30233f0b2e82bdcf",
+    "src/notifier.js": "a76d7c280f1960eba4546f1d473f373eac23a440365ecd25faeeca4aa5fa572a",
+    "src/postgres/auth-store.js": "7d1c6e44c8c42d457448be2cf3b1b814da294c08e221a62c7933279545a07258",
+    "src/postgres/db.js": "5719d19fc93b68903d6aad966fb3bca136799c261c0bd66cfa44cdc6ee6cf8fb",
+    "src/postgres/ledger.js": "902fd426bd41d83300cb4f5739f5426fb9361abf2e3232df6bf6f48b179a911f",
+    "src/postgres/risk.js": "f0d8959a1560011d6359a24042e6755bd539fb8ba5eeeaf920b2c16258506e83",
+    "src/postgres/store.js": "68b72c84555a60e2417a332334c81d95896210633c0b7f7eb94284d841b885a9",
+    "src/postgres/worker-main.js": "cbf0dc30511389525368ceded230dd854793d49ac22f34a5edcd39291e434637",
+    "src/postgres/worker.js": "63d76b2530724992955f5cef17b39698c20a469d674dda2b716ec2752c570dee",
+    "src/security.js": "e289786d3ae85f6f076ccd6659755d2be320606397a1b4f793cc9d423c14b6dd"
+  },
+  "check": [
+    "src/config.js",
+    "src/domain.js",
+    "src/money.js",
+    "src/notifier.js",
+    "src/postgres/auth-store.js",
+    "src/postgres/db.js",
+    "src/postgres/ledger.js",
+    "src/postgres/risk.js",
+    "src/postgres/store.js",
+    "src/postgres/worker-main.js",
+    "src/postgres/worker.js",
+    "src/security.js"
+  ]
+}

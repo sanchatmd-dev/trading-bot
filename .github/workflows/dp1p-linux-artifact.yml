@@ -1,0 +1,66 @@
+name: DP1-P exact artifact Linux
+on:
+  push:
+    paths:
+      - 'tools/dp1p-linux-artifact/.gitattributes'
+      - 'tools/dp1p-linux-artifact/artifact-core.mjs'
+      - 'tools/dp1p-linux-artifact/negative.test.mjs'
+      - 'tools/dp1p-linux-artifact/payload/bundle.json'
+      - 'tools/dp1p-linux-artifact/payload/deps.tar.gz'
+      - 'tools/dp1p-linux-artifact/payload/manifest.txt'
+      - 'tools/dp1p-linux-artifact/payload-pins.json'
+      - 'tools/dp1p-linux-artifact/probe.cjs'
+      - 'tools/dp1p-linux-artifact/probe.mjs'
+      - 'tools/dp1p-linux-artifact/rebuild-source.mjs'
+      - 'tools/dp1p-linux-artifact/run-ci.mjs'
+      - 'tools/dp1p-linux-artifact/verify.mjs'
+      - '.github/workflows/dp1p-linux-artifact.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify exact carrier bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum --check <<'PINS'
+          2ea486f633ff89de8c8c5818b07c89b7b8abd7a1e480e83a9138f02f72426eda  tools/dp1p-linux-artifact/.gitattributes
+          ad09b03c447e54f10e2c40ac85ba07aaa25516c16d28c9aecf6b0ae23efb821b  tools/dp1p-linux-artifact/artifact-core.mjs
+          896f70644addae2f7e4c64395818f80adcffe58fa49503710b0bc5509db1ca45  tools/dp1p-linux-artifact/negative.test.mjs
+          34c826a2e93cd63c832dd7a4bdb2f7b07c2ccd85f4514bf310a3fd366d3b2845  tools/dp1p-linux-artifact/payload/bundle.json
+          a749948146895df35101100c0a8ea938c1643461a3e111edd37864685ba4153c  tools/dp1p-linux-artifact/payload/deps.tar.gz
+          4afdbc1b013e02e3f7c663d44e81d9706824fb83482865f5ddde5056a3bc4876  tools/dp1p-linux-artifact/payload/manifest.txt
+          ca971be38ef40da9ab200007ab461469f7227052373d8a8cacd8e63c4524f982  tools/dp1p-linux-artifact/payload-pins.json
+          682117b7cab297baed818a575757a0be5727d0faa872083e8307b7424e9c6fb4  tools/dp1p-linux-artifact/probe.cjs
+          39337626653ca31f91942baddbb0314899337c1dc27da2ee84afaea4ec6c8eeb  tools/dp1p-linux-artifact/probe.mjs
+          bcffca33e66fdb6afdb882de066a76efe5d40f728939031bcd6c7689c656432c  tools/dp1p-linux-artifact/rebuild-source.mjs
+          8d9453958b7114a66c74598c05e4a0209957a9738bdd9d87fb9e0ebdc277221c  tools/dp1p-linux-artifact/run-ci.mjs
+          5fa0e82a2a00d72068b6c32bf051de7bf3a4e4cabda048ebeb93e84102e9caf6  tools/dp1p-linux-artifact/verify.mjs
+          PINS
+      - name: Qualify reconstructed exact archive
+        shell: bash
+        run: node tools/dp1p-linux-artifact/run-ci.mjs --qualify "$GITHUB_WORKSPACE" "$RUNNER_TEMP/dp1p-linux-artifact-receipt.json"
+      - name: Publish sanitized receipt
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const file=path.join(process.env.RUNNER_TEMP,'dp1p-linux-artifact-receipt.json');
+          const result=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):{status:'FAIL',linuxQualified:false,error:{code:'RECEIPT_NOT_CREATED'}};
+          const json=JSON.stringify(result);
+          console.log('::notice title=DP1-P exact-artifact receipt::'+json.replace(/%/g,'%25').replace(/\r/g,'%0D').replace(/\n/g,'%0A'));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'```json\n'+json+'\n```\n');
+          NODE

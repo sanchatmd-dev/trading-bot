@@ -1,0 +1,95 @@
+{
+  "schema": "dp1p-linux-carrier-preparation-v1",
+  "date": "2026-10-15",
+  "rootAcceptedPreparation": true,
+  "linuxExecution": "PENDING",
+  "applicationCandidate": "70ea7f92a4547845291d32d836d3c740a0e7f1b7",
+  "lo1Prerequisite": "3a5597614f782c11ec7616b2894ce037a0d714f2",
+  "publication": [
+    {
+      "path": "tools/dp1p-linux-artifact/.gitattributes",
+      "sha256": "2ea486f633ff89de8c8c5818b07c89b7b8abd7a1e480e83a9138f02f72426eda"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/artifact-core.mjs",
+      "sha256": "ad09b03c447e54f10e2c40ac85ba07aaa25516c16d28c9aecf6b0ae23efb821b"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/negative.test.mjs",
+      "sha256": "896f70644addae2f7e4c64395818f80adcffe58fa49503710b0bc5509db1ca45"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/payload/bundle.json",
+      "sha256": "34c826a2e93cd63c832dd7a4bdb2f7b07c2ccd85f4514bf310a3fd366d3b2845"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/payload/deps.tar.gz",
+      "sha256": "a749948146895df35101100c0a8ea938c1643461a3e111edd37864685ba4153c"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/payload/manifest.txt",
+      "sha256": "4afdbc1b013e02e3f7c663d44e81d9706824fb83482865f5ddde5056a3bc4876"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/payload-pins.json",
+      "sha256": "ca971be38ef40da9ab200007ab461469f7227052373d8a8cacd8e63c4524f982"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/probe.cjs",
+      "sha256": "682117b7cab297baed818a575757a0be5727d0faa872083e8307b7424e9c6fb4"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/probe.mjs",
+      "sha256": "39337626653ca31f91942baddbb0314899337c1dc27da2ee84afaea4ec6c8eeb"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/rebuild-source.mjs",
+      "sha256": "bcffca33e66fdb6afdb882de066a76efe5d40f728939031bcd6c7689c656432c"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/run-ci.mjs",
+      "sha256": "8d9453958b7114a66c74598c05e4a0209957a9738bdd9d87fb9e0ebdc277221c"
+    },
+    {
+      "path": "tools/dp1p-linux-artifact/verify.mjs",
+      "sha256": "5fa0e82a2a00d72068b6c32bf051de7bf3a4e4cabda048ebeb93e84102e9caf6"
+    },
+    {
+      "path": ".github/workflows/dp1p-linux-artifact.yml",
+      "sha256": "4d90bef0e2333f1ea449649844706ac6a0392741b0f34ae84080b25ec4c550c3"
+    }
+  ],
+  "frozenManifestSha256": "15f81ca8e03768b3222ef237d4466ed13a41ce806828663197d319cfd29b3f1b",
+  "sourceArchivePublished": false,
+  "sourceReconstruction": {
+    "readOnlyGit": true,
+    "exactByteEqualityVerifiedLocally": true,
+    "sha256": "d414e8b5d4885a147fa038184d5edadfda3c5484fc5e3c7b42b7f1b55efa248a"
+  },
+  "verification": {
+    "independentLocalControls": 23,
+    "independentAdditionalChecks": 15,
+    "sourceFiles": 182,
+    "dependencyFiles": 145,
+    "manifestEntries": 327,
+    "packages": 15,
+    "declaredClosure": 12,
+    "postPins": true,
+    "cleanup": true,
+    "nonLinuxRefusal": true
+  },
+  "preservedFailures": [
+    "Initial source-payload publication stopped because historical documentation contains a machine location; source bytes are now reconstructed only in ephemeral runner storage.",
+    "The first sanitized Git launcher failed on the Windows null-device config path. An owned empty regular configuration file corrected that launcher; prior failure remains retained."
+  ],
+  "limits": [
+    "Linux execution and dependency probes remain pending.",
+    "No application entrypoint, database connection, service operation or deployment is authorized by this carrier.",
+    "Optional pg-cloudflare and pg-native paths, production installed dependencies and systemd timing are outside this qualification.",
+    "Forced cancellation cleanup and arbitrary malicious dependencies are not sandbox guarantees."
+  ],
+  "localEvidence": [
+    ".qa-local/codex-dp1p-linux-artifact-2026-10-15/REPORT-FINAL.md",
+    ".qa-local/codex-dp1p-linux-artifact-audit-2026-10-15/REPORT.md"
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "schema": "lo1-exact-ci-v1",
+  "sha": "3a5597614f782c11ec7616b2894ce037a0d714f2",
+  "observedAt": "2026-10-15T04:17:03.608Z",
+  "checks": [
+    {
+      "id": 116241311815,
+      "name": "gate",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T04:06:43Z",
+      "completedAt": "2026-10-15T04:06:46Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38679576578/job/116241311815",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116241311815/annotations"
+    },
+    {
+      "id": 116240856456,
+      "name": "test (windows-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T04:05:06Z",
+      "completedAt": "2026-10-15T04:12:22Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38679576601/job/116240856456",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116240856456/annotations"
+    },
+    {
+      "id": 116240856323,
+      "name": "container",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T04:05:06Z",
+      "completedAt": "2026-10-15T04:05:23Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38679576601/job/116240856323",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116240856323/annotations"
+    },
+    {
+      "id": 116240856291,
+      "name": "postgres",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T04:05:06Z",
+      "completedAt": "2026-10-15T04:16:11Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38679576601/job/116240856291",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116240856291/annotations"
+    },
+    {
+      "id": 116240856287,
+      "name": "test (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T04:05:05Z",
+      "completedAt": "2026-10-15T04:10:48Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38679576601/job/116240856287",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116240856287/annotations"
+    },
+    {
+      "id": 116240848035,
+      "name": "quant (ubuntu-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T04:05:03Z",
+      "completedAt": "2026-10-15T04:06:37Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38679576578/job/116240848035",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116240848035/annotations"
+    },
+    {
+      "id": 116240847992,
+      "name": "quant (windows-latest)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T04:05:04Z",
+      "completedAt": "2026-10-15T04:06:40Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38679576578/job/116240847992",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116240847992/annotations"
+    },
+    {
+      "id": 116240806247,
+      "name": "scope",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T04:04:54Z",
+      "completedAt": "2026-10-15T04:05:01Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38679576578/job/116240806247",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116240806247/annotations"
+    },
+    {
+      "id": 116240805898,
+      "name": "scope",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-15T04:04:54Z",
+      "completedAt": "2026-10-15T04:05:02Z",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/38679576601/job/116240805898",
+      "annotationsUrl": "https://api.github.com/repos/sanchatmd-dev/trading-bot/check-runs/116240805898/annotations"
+    }
+  ],
+  "rootAccepted": true,
+  "scope": "Exact-commit integration CI; no deployment",
+  "localEvidence": "LO1_LOCAL_2026-10-15.json",
+  "preservedFailureAndCorrection": "LO1_CI_FIXTURE_CORRECTION_2026-10-15.json"
+}
