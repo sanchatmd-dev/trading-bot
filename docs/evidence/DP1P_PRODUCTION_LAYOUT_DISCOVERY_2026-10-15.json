@@ -1,0 +1,141 @@
+{
+  "schema": "DP1P_PRODUCTION_LAYOUT_DISCOVERY_V1",
+  "recordedAt": "2026-10-15T05:51:31.567Z",
+  "observedAt": "2026-10-15T05:48:38.242Z",
+  "status": "ROOT_ACCEPTED_SCOPED_OBSERVATIONS_WITH_EXPLICIT_UNKNOWNS",
+  "source": {
+    "manifest": "cc43eba98ba375474cd5b8c1129f616e906e070e4171a8d53df67f391a1b8b36",
+    "adapter": "34f4ad12a5164afe6dc961478145c1c4e6e052c6f7181199114318377c57e3db",
+    "runner": "9ef1d4dbe785b54afea09992013945e75a28b567e21e63e53fc8b554e1372de1"
+  },
+  "localVerification": {
+    "authorControls": 143,
+    "unchangedPriorControls": 117,
+    "independentDirectoryControls": 11,
+    "exactFileCapControls": 10,
+    "pinsBeforeAndAfter": 11,
+    "scope": "Separate synthetic scopes; not one combined test suite or actual host proof."
+  },
+  "reviews": [
+    ".qa-local/codex-dp1p-discovery-d2-r1-audit-2026-10-15/REPORT.md",
+    ".qa-local/codex-dp1p-d2-filecaps-audit-2026-10-15/REPORT.md"
+  ],
+  "baselineHypothesis": {
+    "commit": "ff5a9d1fec9e071e1f2ea4d53d3e6514f4e18a7f",
+    "provenance": "Historical owner/Codex production observation in docs/R0_BASELINE_2026-09-24.md and Context.md; root independently verified raw Git package/lock hashes.",
+    "installedBytesProven": false,
+    "loadedCodeProven": false
+  },
+  "admission": {
+    "jobId": "DP1P-D1-ADMISSION-20261015-D2-E01",
+    "at": "2026-10-15T05:47:33.462Z",
+    "verdict": "CLEAR",
+    "sshInvocations": 1,
+    "rc": 0,
+    "elapsedMs": 996,
+    "observed": 48,
+    "busy": 0,
+    "unknown": 0,
+    "receiptSha256": "fdeeaf64af1c0142dda3372a21e5ab789bf7c79c9b06e6621e86311fb4203c32",
+    "pinsSha256": "9bc11e86641bb9f65d9bd45980a9efed6b729f3f5eabaa5af5886b4ee0253abd",
+    "goSha256": "9613e55fe7ce31c3bf4c966c4afb0ac182c7731d9a80c03f8aade944b10b9840",
+    "meaning": "Listed process-signature sample only; not general health or capacity."
+  },
+  "discovery": {
+    "jobId": "DP1P-D1-D2-20261015-E01",
+    "startedAt": "2026-10-15T05:48:37.044Z",
+    "finishedAt": "2026-10-15T05:48:38.242Z",
+    "verdict": "FACTS_COLLECTED",
+    "sshInvocations": 1,
+    "rc": 0,
+    "elapsedMs": 1036,
+    "remoteElapsedMs": 46,
+    "stderrBytes": 0,
+    "pinsSha256": "24b82c19e9aa5dab0cc0907b849761bb2a5fcde4df6853a9668566b505fa38c4",
+    "goSha256": "5df707c43decb9e8b84a93bbae9641922c1d5555909ee056e37a331e011c2a1d",
+    "privateReceiptSha256": "fb49274f5ec3c40207bab8bd765eccbd81dd84c53c62ce95aee2dda4d323eb4b",
+    "publicReceiptSha256": "485c53a9e979601b49164e4ad2e5cb4431a63be1509a7593c835430913156f7c",
+    "roles": {
+      "WORKER": {
+        "state": "OBSERVED",
+        "loadState": "loaded",
+        "activeState": "active",
+        "processState": "OBSERVED"
+      },
+      "API": {
+        "state": "OBSERVED",
+        "loadState": "loaded",
+        "activeState": "active",
+        "processState": "OBSERVED"
+      },
+      "WATCH_1": {
+        "state": "UNKNOWN",
+        "code": "SHOW_IDENTITY_PROPERTY_MISSING"
+      },
+      "WATCH_2": {
+        "state": "UNKNOWN",
+        "code": "SHOW_IDENTITY_PROPERTY_MISSING"
+      },
+      "WATCH_3": {
+        "state": "UNKNOWN",
+        "code": "ROLE_UNBOUND"
+      },
+      "WATCH_4": {
+        "state": "UNKNOWN",
+        "code": "ROLE_UNBOUND"
+      }
+    },
+    "directory": {
+      "state": "OBSERVED",
+      "kind": "SYMLINK",
+      "comparison": {
+        "WORKER": "MATCH",
+        "API": "MATCH"
+      },
+      "meaning": "Configured symlink resolved to sampled process cwd for both known roles. Sampled stability only, not atomic/no-ABA or loaded-code proof."
+    },
+    "files": [
+      {
+        "id": "SHARED_ENVIRONMENT_METADATA",
+        "state": "OBSERVED",
+        "size": 766,
+        "contentsRead": false
+      },
+      {
+        "id": "BASELINE_PACKAGE",
+        "state": "UNKNOWN",
+        "code": "FILE_CAP"
+      },
+      {
+        "id": "BASELINE_LOCK",
+        "state": "UNKNOWN",
+        "code": "FILE_CAP"
+      }
+    ],
+    "claimsConsumed": true,
+    "openGo": false
+  },
+  "packageComparison": {
+    "expectedRawCaps": {
+      "packageJson": 953,
+      "packageLockJson": 24686
+    },
+    "outcome": "Both files exceeded reviewed caps before content open. No observed hash, byte mismatch conclusion or installed dependency identity is available.",
+    "capIncreased": false,
+    "retried": false
+  },
+  "retainedLocalReviewCorrection": "Initial root binding comparison omitted the required new-namespace SSH config path change. Replaced with an explicit exact new-path assertion; all remaining fields stayed compared. No GO or host call occurred during the local review failure.",
+  "rootDecision": "Accept the observed alias relationship and environment metadata with explicit watch/package unknowns. Prepare bounded missing-property diagnostics and metadata-only package observations; no automatic cap increase or identity-gate relaxation.",
+  "limits": [
+    "Bound watch roles remain UNKNOWN because essential systemd properties were absent; unknown is not inactive or absent.",
+    "Two other watch slots remain unbound; complete protection inventory is unproven.",
+    "Environment metadata does not establish content, effective PORT or same database.",
+    "The observer does not re-read unit MainPID at the end; sampled process identity is not an atomic unit-wide identity.",
+    "Production literal directory gates remain unchanged. Alias contract adaptation needs independent review.",
+    "Installed dependencies, application closure, loaded code, API certificate, staging 24-hour observation and owner policy gates remain open.",
+    "Staging observation is not eligible before 2026-10-15T22:17:53.400Z and still requires fresh success.",
+    "No service, config, database or application change, deployment or Live activation occurred.",
+    "PM1-I1 baseline remains immutable; no score recomputation."
+  ],
+  "privacy": "Machine paths, unit names, process IDs, ports, keys and raw environment are excluded; exact bindings remain ignored local evidence."
+}
