@@ -1,0 +1,47 @@
+{
+  "schema": "dp1s-c02-post24h-root-acceptance-v1",
+  "acceptedAt": "2026-10-16T09:53:22.756Z",
+  "status": "ACCEPTED_DATED_STAGING_OBSERVATION",
+  "gate": "G-DP1-24H",
+  "gateStatus": "PASS",
+  "scope": "Root accepts the retained read-only staging observation after its 24-hour minimum, with independent local evidence verification. This does not authorize any next host step or close production, policy, identity or positive-fill gates.",
+  "observation": {
+    "path": "docs/evidence/DP1S_C02_POST24H_2026-10-16.json",
+    "sha256": "bb35d0a3a07324518aa00c0fe576d76b0d0f83feb87b48ba5cfc95d4cf5d9dc7",
+    "receiptSha256": "fd1697d70149b57e8e011d1df60f3b3c4dac786858bb62eee96545586325c068",
+    "rawSha256": "5704549c6e0a3815898cf403ee028d580943ab95166f1d505097f5b324394265",
+    "finished": "2026-10-16T09:47:35.439Z",
+    "elapsedSinceSwitchMs": 127781220,
+    "targetCommit": "4d8682203ae19b68d0cad3252bdb5200d90f2e51"
+  },
+  "independentVerification": {
+    "passed": true,
+    "assertions": 205,
+    "negativeGoControlsIncluded": 2,
+    "reportSha256": "8c87105949723ce38e21a5975bbc0b0e5fd03f48dcc3c758a0997576657b2384",
+    "resultsSha256": "7dc5fcb98c541bc9d617ff1c6d386390e5cca0392f01e15a4e95dc7a13391256",
+    "verifierSha256": "7fe11c2af8c69d0016c35801bc7e8a0f573dc1d9abfea37e90323cb30dd70076",
+    "scope": "Local receipt, original pins, RUNLOG prefix, GO timing, transport integrity, safe/public projection and observation criteria. No additional host access.",
+    "retainedVerifierCorrections": "Two initial verifier failures assumed absent receipt fields and unprojected baseline fields. Only the verifier was corrected to the retained schema; observation evidence and product code were not changed."
+  },
+  "rootReview": {
+    "receiptLinksPassed": true,
+    "observationCriteriaPassed": true,
+    "independentReportAndVerifierReviewed": true,
+    "preflightException": "All original file pins matched. The no-argument proposal JSON bytes matched exactly; only the terminal console LF versus stored CRLF differed. No pinned source, cap, deadline or host gate changed.",
+    "authority": "Fresh explicit owner GO in chat on 2026-10-16 for this staging read-only observation only.",
+    "goConsumed": true,
+    "nextHostGoOpen": false
+  },
+  "limitations": [
+    "One dated sample after the minimum does not establish continuous 24-hour health.",
+    "No new O3-rule fill observed; no positive real-fill acceptance.",
+    "Service identity remains unknown; informational unknownRunning is not identity proof.",
+    "Watched-unit comparisons use original PC pins; the observation does not reconstruct intervening changes.",
+    "No production deployment, SQL repair, schema migration, rollback or service action in this post-check.",
+    "Connection count and process cleanup are supported by the operator report and local execution evidence, not an independent network trace.",
+    "The observation retains its original ROOT_REVIEW_REQUIRED field as the pre-acceptance snapshot; this separate record supplies the root decision.",
+    "PM-1 S1 remains the latest scored result. This gate closure does not automatically rescore project or prototype progress."
+  ],
+  "nextWork": "Local DP1-P wiring prerequisites remain: RD6 bindings and certificate provenance, runner projection and time/fault handling. RD7 host-class measurements require a separate operations packet and owner GO; limits and credits require subsequent owner approval. Native observer remains paused."
+}

@@ -1,0 +1,65 @@
+{
+  "schema": "dp1s-c02-post24h-v1",
+  "scope": "Dated read-only staging observation after the 24-hour minimum; independent review and root acceptance are recorded separately. Production unchanged.",
+  "targetCommit": "4d8682203ae19b68d0cad3252bdb5200d90f2e51",
+  "job": "dp1s-post-24h",
+  "sourceSha256": "1d82e2e419837da53ce73e0cfe16e83b4ccbbed75a2c3abab2b05ee154584dda",
+  "finished": "2026-10-16T09:47:35.439Z",
+  "receiptSha256": "fd1697d70149b57e8e011d1df60f3b3c4dac786858bb62eee96545586325c068",
+  "rawSha256": "5704549c6e0a3815898cf403ee028d580943ab95166f1d505097f5b324394265",
+  "transportMs": 1664,
+  "verdict": "POST_PASS",
+  "readOnly": true,
+  "triggers": [],
+  "sameWorkerProcessAsSwitch": true,
+  "worker": {
+    "active": "active",
+    "sub": "running",
+    "nRestarts": "0",
+    "newTree": true,
+    "needReload": "no"
+  },
+  "watchedUnitsUnchanged": true,
+  "health": {
+    "status": "OK",
+    "http": 200,
+    "ok": true,
+    "portSource": "ENV_FILE"
+  },
+  "queue": {
+    "queued": 0,
+    "processing": 0,
+    "liveMode": 0,
+    "heartbeatFreshRows": 1,
+    "heartbeatAgeMs": 190
+  },
+  "baseline": {
+    "faults": 0,
+    "systemic": 0,
+    "executionFault": 0
+  },
+  "info": {
+    "costClampedDelta": 0,
+    "costDivergenceDelta": 0,
+    "exposedLots": 0,
+    "exposedLotsDelta": 0,
+    "o3RuleFills": 0,
+    "staleHeartbeatRows": 0
+  },
+  "unknownRunning": 1,
+  "observationStartedAt": "2026-10-16T09:47:34.620Z",
+  "elapsedSinceSwitchMs": 127781220,
+  "elapsedSource": "Remote observation startedAt minus accepted S3 receipt finished",
+  "notBeforeUtc": "2026-10-15T22:17:53.400Z",
+  "nextGate": {
+    "status": "ROOT_REVIEW_REQUIRED",
+    "description": "Independent local receipt review and root acceptance of this staging observation; no next host job authorized"
+  },
+  "limitations": [
+    "One dated sample after the minimum does not establish continuous 24-hour health.",
+    "No new O3-rule fill observed; no positive real-fill acceptance.",
+    "Service identity remains unknown; informational unknownRunning is not identity proof.",
+    "Watched-unit comparisons use original PC pins; the observation does not reconstruct intervening changes.",
+    "No production deployment, SQL repair, schema migration, rollback or service action in this post-check."
+  ]
+}

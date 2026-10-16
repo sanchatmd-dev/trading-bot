@@ -279,12 +279,13 @@ other platform to bypass a stop. The only exception is the owner-triggered
 API-credit continuation below. No exact token balance or guaranteed future task
 cost can be inferred from percentages.
 
-Reserve 15 percentage points as a project policy, not a platform guarantee. Above
-30%, admit only short checkpointable slices with aggregate reservations below the
-known remaining-minus-reserve budget. Above 15% up to 30%, one tiny task at a time.
-At or below 15%, stop admitting new work, save a safe checkpoint under the handoff
+Owner updated the usage floor to 3% on 2026-10-16. Reserve 3 percentage points as
+a project policy, not a platform guarantee. Above 30%, admit only short
+checkpointable slices with aggregate reservations below the known
+remaining-minus-reserve budget. Above 3% up to 30%, one tiny task at a time.
+At or below 3%, stop admitting new work, save a safe checkpoint under the handoff
 rules above and start no new substantive task; resume only after refreshed usage
-is above 15% or the owner explicitly changes the threshold for a named continuation.
+is above 3% or the owner explicitly changes the threshold for a named continuation.
 Unknown short-window data means provisional small slices, no long unattended runs
 or guaranteed completion. Unknown all usage means local read-only
 planning/checkpoint only until refreshed.
@@ -294,8 +295,8 @@ that an owner-triggered API-credit continuation (below) may run in Astra on the
 owner's API credits; it never buys credits or enables auto-reload.
 
 The bands bind Claude ultracode workflows. Above 30%, the reservation covers the
-whole wave of agents. Above 15% up to 30%, run no fan-out: one tiny task with at
-most one agent. At or below 15%, or with all usage unknown, start no workflow.
+whole wave of agents. Above 3% up to 30%, run no fan-out: one tiny task with at
+most one agent. At or below 3%, or with all usage unknown, start no workflow.
 Unknown short-window data allows only small provisional waves, never long
 unattended runs. Workflow scripts cannot read usage, so root admits a whole
 workflow run on one fresh reading only when its estimated cost for every stage
@@ -306,7 +307,7 @@ workflow and stops admitting at a band change.
 Claude meters Fable 5.1 in its own weekly Fable bucket as well as the shared
 windows. Before each Fable dispatch, read that bucket and apply the same bands and
 reserve to it, in addition to the all-models windows. If the Fable bucket is at or
-below 15% remaining, or unknown, dispatch no Fable role: substitute the matching
+below 3% remaining, or unknown, dispatch no Fable role: substitute the matching
 Opus or Sonnet role (architecture auditor for the reviewer and designer;
 documentation for the checker, or tester when the drift concerns test evidence)
 and record the substitution in the packet. A stage that planned a Fable agent still
@@ -362,7 +363,7 @@ and how budget is measured; it changes no other rule.
 2. Before handoff: root stops dispatch and confirms no child is active, saves a
    checkpoint under the compact/resume rules to an ignored `.qa-local/` file, then
    runs `node tools/claude-chat/handoff.mjs <checkpoint>` (added by CHAT-2). At or
-   below the 15% stop band root may still save the checkpoint and, on an explicit
+   below the 3% stop band root may still save the checkpoint and, on an explicit
    owner instruction, run that command. It starts no other work.
 3. During continuation: the Astra session is the only commander and the only
    writer of this checkout; the Claude Code root does not write, dispatch or run
