@@ -1,0 +1,51 @@
+{
+  "schema": "DP1P_METADATA_P2_CHAIN_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_LOCAL_P2_CHAIN_WITH_LIMITS",
+  "root": "Claude",
+  "order": "P2 package, then stage-one materializer M2, then pure finalizer P2 r2, then stage-two adapter P2; each pins only the previous accepted hash",
+  "package": {
+    "manifestSha256": "9dd26ced6c8db215a9b471fa29120668a794bbb554d1d414ee8656b6ec0d3ef3",
+    "members": 41,
+    "roles": 11,
+    "changeFromP1": "Only the runner and the launcher are replaced, by the accepted SSH wiring candidates; the other 39 members are byte copies.",
+    "independentStaticChecks": 26
+  },
+  "materializerM2": {
+    "sha256": "678f5f31a573d090f3a90a2543a13e8e502d9abc354f3a3885d97ec708199541",
+    "change": "Anchored to P2; reads the bound SSH file through the accepted reader and compares the retained snapshot at every recheck.",
+    "independentCases": 164,
+    "independentPassed": 164,
+    "independentControls": 12
+  },
+  "pureFinalizerP2R2": {
+    "sha256": "a22ed0b8bad3575653d22e206479795eaffff4e861f274e42d5fc32c211004c6",
+    "change": "Pins P2 and M2 and imports its helper modules from the P2 package.",
+    "rejectedRevision": "r1 kept imports from the P1 package and was not accepted.",
+    "independentCases": 53,
+    "independentPassed": 53,
+    "independentControls": 12
+  },
+  "adapterP2": {
+    "sha256": "57da91ec1afdd57c58384df02671ea622c71eeae66dbc3dbf1929ada49f4c930",
+    "change": "Authenticates the P2 closure before importing the P2 r2 finalizer; reads the bound SSH file through the accepted reader with snapshot rechecks.",
+    "independentCases": 131,
+    "independentPassed": 131,
+    "independentControls": 8,
+    "reviews": "No high or medium finding from the Opus auditor or the Fable reviewer."
+  },
+  "limitations": [
+    "Synthetic stage-one and admission inputs on NTFS with Node 24.19.0 only",
+    "The installed SSH binary was not read; the shared two-link profile was tested only through copies that change the fixed hash and size",
+    "Files are read again by module import after authentication, as in the earlier adapter",
+    "A change after the final SSH read is not detected",
+    "No private stage-one preparation, admission, GO or host step"
+  ],
+  "earlierChainImmutable": true,
+  "installedSshRead": false,
+  "newHostSteps": 0,
+  "newGo": false,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
