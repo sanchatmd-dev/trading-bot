@@ -1,0 +1,47 @@
+{
+  "schema": "dp1p-http-c1-local-acceptance-v1",
+  "status": "ACCEPTED_LOCAL_TRUSTED_HTTP_COMPOSITION",
+  "acceptedAt": "2026-10-16T14:16:34.130Z",
+  "acceptance": "Root source/report/harness review plus frozen independent evidence; root did not rerun the author or independent suites.",
+  "authority": {
+    "host": false,
+    "production": false,
+    "READY": false,
+    "GO": false
+  },
+  "pm1": "S1 unchanged; no new scorecard or percentage inference.",
+  "execution": "Trusted inert local fixtures only; no real network, database, host, private inputs or clock measurement. Broad suites and CI not run.",
+  "scope": "HTTP-L1 r2 through unchanged SQL-C1 healthPort and accepted TF1/TF3 fixture boundary; synthetic driver settlement only.",
+  "source": {
+    "sha256": "95176f62e05926693c62a8de48b141d939cc4c1a38324a71d23bf2d960a70582",
+    "manifestSha256": "af4cb6c0980d86f3033c0c252c2daae9d755d76b80c1435de58952a5f1a01862"
+  },
+  "author": {
+    "tests": 17,
+    "controlsIncluded": 2
+  },
+  "independent": {
+    "assertions": 196,
+    "groups": 10,
+    "positiveControlBaselines": 2,
+    "semanticControlKills": 2,
+    "counts": "Controls are separate from 196 matrix assertions; groups are representative, not exhaustive.",
+    "rootHashChecks": 38,
+    "reportSha256": "b8603e9104de7b8d830e8ed64b3802c911517fc934d95d751f8a5bb07fcb3397",
+    "resultsSha256": "a4069f73b68f43204416aaa09bb99cc21013c04c07fbf2e18a40984144e6db13",
+    "manifestSha256": "54dbfa13e466efd0a1115f12b2f65adc017138d6e280e9801e7f5a5861d6c1fa"
+  },
+  "behavior": [
+    "One captured private scope uses the exact active parent and health envelope; mutable evidence holders are not runtime authority. Nested boundary/admission/ledger traps remain uncalled.",
+    "Actual fake settlement is awaited. First fatal identity, local revocation and stable unresolved chains retain their tested semantics.",
+    "Additional wrapper publication guard covers its own await continuation; SQL and HTTP outcome holders remain separate.",
+    "Optional health creates no HTTP lifecycle. Only explicit settled pre-response failure yields unreachable facts; other settled errors suppress final identity."
+  ],
+  "controlsQualification": "Removing the wrapper publication guard produces a port-channel violation; outer TF3 still blocks aggregate publication. No global unsafe escape is claimed.",
+  "limits": [
+    "Private clone/stale parent, wrong active child and clone/rebound envelope injections remain source-only.",
+    "Pending STOPPED, exhaustive endpoint/overflow combinations, early-return/reset-deadline controls and malformed final TF3 bypass were not run.",
+    "No actual HTTP/SQL transport, cancellation/server settlement, decompression bounds, provenance, approved limits, RD7 or production wiring."
+  ],
+  "next": "Retain fixture composition as a local reference; real adapters require independently evidenced resource settlement and target authority."
+}

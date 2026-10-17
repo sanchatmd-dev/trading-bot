@@ -1,0 +1,71 @@
+{
+  "schema": "dp1p-local-acceptance-v1",
+  "approvedBy": "root",
+  "decision": "ACCEPTED_LOCAL_SOURCE_AND_SYNTHETIC_RUNNER",
+  "manifestSha256": "2cd2a673fa66724abb5a9b111d3186413ab7b6ef282e2cd547620724d5dcddbb",
+  "modulesSha256": "428f7dee3f0dcc3ea2bde30850cb7e5b0f0c785284c03e7fa8b052fdcb5a6b28",
+  "modules": [
+    {
+      "name": "run.mjs",
+      "pin": "runnerSha256",
+      "sha256": "708aa26d7543a65932aa234ed333f23c5a8733d2e4685ebe4d39da76147baa25"
+    },
+    {
+      "name": "observer.mjs",
+      "pin": "observerSha256",
+      "sha256": "b0d390e39ae9f3e9afbea9ae2f31b793cc47011cd32eb4698e5b74dfe459c3d1"
+    },
+    {
+      "name": "transport.mjs",
+      "pin": "transportSha256",
+      "sha256": "9a92f431c6fde4d4cde8bbc5ac69caf8aba8be5394c75e62699686037761e34a"
+    },
+    {
+      "name": "validate.mjs",
+      "pin": "validatorSha256",
+      "sha256": "1cdce077dedf4937e9af720870f1f8f01f1f67e068d114fb6004da775936de24"
+    },
+    {
+      "name": "native-entry.mjs",
+      "pin": "nativeEntrySha256",
+      "sha256": "aca6f0eb74bffc2d6f584021ad2cbd98c817e02d1b98c582a9c0f3164f358aae"
+    },
+    {
+      "name": "build.mjs",
+      "pin": "builderSha256",
+      "sha256": "eb08c0515ca45063943b044b96bfe2920f2a8ff862db7123cebc4713524028a6"
+    },
+    {
+      "name": "envelope.mjs",
+      "pin": "envelopeSha256",
+      "sha256": "c8ff33d7273ed8bd8d92589e11a504f526085a7bc416886430262948c9faba74"
+    }
+  ],
+  "assemblyManifestSha256": "b856f55ae94e17ddce0b978c52e51a50c696d13e656b093f9569374885ada432",
+  "independentManifestSha256": "7b9a300c9212f8cedea5b1d7f5382e06f4bb760ded8dd7f7a8a2ad0a5aa30574",
+  "manifestMembersChecked": 1682,
+  "assemblyDeclarations": 8,
+  "syntheticGeneratedBytes": 9336,
+  "envelopeCases": 71,
+  "envelopeControls": 3,
+  "runnerScenarios": 77,
+  "runnerControlsIncluded": 3,
+  "limits": [
+    "Local synthetic runner and envelope evidence; native adapter and emitted source were not executed.",
+    "Final clock failure preserves the consumed claim and raw files but does not persist the underlying SSH exit code in a receipt. This remains a STOP requiring exact-job review; no settlement inference is permitted.",
+    "Transport termination requests and controller capture do not certify remote settlement.",
+    "The bootstrap uses the existing wrapper shape with UNQUALIFIED_EXISTING_TRANSPORT. Target binary bytes, versions, health, exact supervisor behavior and loaded-image provenance remain unobserved.",
+    "This source acceptance grants neither execution nor production readiness. Fresh admission CLEAR, concrete private binding review and a separate root GO remain required."
+  ],
+  "activeGo": null,
+  "date": "2026-10-17",
+  "slice": "BOOTSTRAP-B1B-R5",
+  "historicalDefects": [
+    "r3 stdin error followed by coherent close0 could pass; r4 corrected it.",
+    "r4 backward final clock was clamped to zero and could pass; r5 corrected all monotonic reads."
+  ],
+  "harnessHistory": "Independent r5 passed 63 checks, then stopped at the second incorrect error-code expectation. The r6 harness corrects only pre-observer/native-entry drift expectations and passes all 77 checks. The prior snapshots remain preserved.",
+  "hostExecution": false,
+  "productionReady": false,
+  "pm1Rescored": false
+}

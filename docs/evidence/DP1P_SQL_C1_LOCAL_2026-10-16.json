@@ -1,0 +1,42 @@
+{
+  "schema": "dp1p-sql-c1-local-acceptance-v1",
+  "status": "ACCEPTED_LOCAL_TRUSTED_COMPOSITION",
+  "acceptedAt": "2026-10-16T13:45:39.569Z",
+  "scope": "Pure trusted TF1/TF3/SQL-L1 r2 fixture composition; no actual SQL driver, host or TF2 integration.",
+  "source": {
+    "adapterSha256": "95cd5ddd5d6b4e261b00a9f5ff66e29d1d4ea3f9f0c27a207bbbaf5b58b497ac",
+    "authorManifestSha256": "a001356695da14118308271efca6f56d4ab0dd2907801bbcb754a3abbe9eb897"
+  },
+  "authorChecks": {
+    "tests": 21,
+    "controlsIncluded": 3,
+    "rerunByRoot": false
+  },
+  "independentVerification": {
+    "families": 14,
+    "namedChecks": 16,
+    "assertions": 190,
+    "failedChecks": 0,
+    "meaningfulControlsIncluded": 3,
+    "inputPins": 27,
+    "rootHashChecks": 65,
+    "reportSha256": "85c7398b2916a8c1d63af29d55bf8c2668dc40d2ac986d3ef83275a6cfc9a6d4",
+    "resultsSha256": "60acc556155f50c06f3c2ab970c776adefb49ec4b0537cd10030bc7671d3090d",
+    "manifestSha256": "9d791bfca156d41273fa2c772dbe6946d4e2d50654b996a221386c491fd91bac"
+  },
+  "behavior": [
+    "The SQL lifecycle receives the fixed TF3 child envelope within one exact TF1 parent. No nested admission, post or ledger operation was observed through explicit traps.",
+    "Pending operations remain pending across the enclosing layers. Only actual scripted lifecycle settlement permits final outcome propagation; stable UNRESOLVED cannot be resumed by later mutation of retained raw records.",
+    "Original first-fatal identity and local revocation remain distinct. No new SQL or health/identity suffix begins after fatal or unresolved resource evidence.",
+    "Validated scalar facts are detached from raw completion references. SQL, queue, scoped-child and parent outcome channels preserve their separate meanings."
+  ],
+  "qualifications": [
+    "Counts overlap: controls and scripted fault cases are included in 190 assertions, not additional independent coverage.",
+    "Trusted inert fixtures and native Promises only; private binding injections without an exported seam were source-reviewed rather than dynamically tested. This is not hostile-caller authentication.",
+    "Reset-deadline mutation and exhaustive queue/parent endpoint combinations were not run. Eight SQL substep endpoints and their plus-one cases were covered.",
+    "The first independent control setup failure is preserved; it was corrected without candidate changes and was not counted as a behavioral kill.",
+    "Synthetic terminal/closed resource flags do not prove actual database or server termination, cancellation, clock mapping, freshness, approved limits, READY or GO."
+  ],
+  "next": "Complete HTTP-L1 fake model and independent verification. Actual driver, target capability, RD6/RD7, production authority and wiring remain separate gates.",
+  "pm1": "Unchanged; no scorecard rescore."
+}

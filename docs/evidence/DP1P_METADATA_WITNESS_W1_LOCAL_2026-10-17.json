@@ -1,0 +1,55 @@
+{
+  "schema": "DP1P_METADATA_WITNESS_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_LOCAL_HELPERS_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-witness-model-2026-10-17",
+  "modules": [
+    {
+      "name": "boundary.mjs",
+      "sha256": "46e69379db184950a69191955463d9232e81e54e67fb52708a4c2b2bb985ea1a"
+    },
+    {
+      "name": "witness.mjs",
+      "sha256": "6f28b8c8a068c6678857cdc4cf2c8a8abd0e506d756dbf245a2dc4fb7cea8a93"
+    }
+  ],
+  "sourceManifestSha256": "4dead40bb76a612fdd7868caf530992fc5fedccf0bebf42e484d4d683f0cc5c1",
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-witness-independent-2026-10-17",
+    "manifestSha256": "a01865dc6238259859fed4ed045de01f79472e6e6f8b64312d4839a87278e5a6",
+    "checks": 59,
+    "extractionChecksIncluded": 3,
+    "controlsIncluded": 2,
+    "controlKinds": [
+      "Source mutation removing complete-size equality.",
+      "Incorrect caller construction replacing the original boundary before the second phase."
+    ]
+  },
+  "rootChecks": [
+    "Reviewed boundary and witness source, extraction report and independent harness/result.",
+    "Verified 23 manifest members across source and independent evidence.",
+    "Reran 33 author fake-IO scenario groups; counts overlap independent checks."
+  ],
+  "scope": [
+    "One frozen original 15-second boundary with sticky fatal identity; outer equality remains allowed.",
+    "Byte-identical health parser and guarded call; stream changes only fatal-state access.",
+    "Real crypto over fake IO; original caps, ordered cleanup, complete size and identity checks retained.",
+    "One synthetic asynchronous composition uses the actual accepted r3 capture and the same boundary."
+  ],
+  "limits": [
+    "No full metadata observer, expected-pin orchestration, native IO, actual children or host execution.",
+    "Canonical pathname binding, actual OS races and malformed capability behavior remain separate.",
+    "File witnesses do not attest loaded images or binary source provenance.",
+    "No final publication, persistence durability, Linux supervision or production qualification."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 65,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "hostExecutionAuthorized": false,
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Compose the metadata observer locally with the accepted boundary, witnesses and capture, preserving one original budget and explicit synthetic test seams."
+}

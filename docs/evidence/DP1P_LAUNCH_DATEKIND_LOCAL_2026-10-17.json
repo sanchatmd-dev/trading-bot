@@ -1,0 +1,21 @@
+{
+  "schema": "dp1p-local-acceptance-v1",
+  "date": "2026-10-17",
+  "slice": "LAUNCHER-GO-DATEKIND",
+  "decision": "ACCEPTED_GO_PARSER_CORRECTION",
+  "problem": "PowerShell 7.6.5 converts ISO JSON timestamp strings to DateTime by default. The launcher's subsequent ParseExact fails. Source-extracted preflight reproduces the failure before any controller launch.",
+  "change": "Only the GO JSON parser adds -DateKind String. Freshness limits, source/trust checks, raw drains and controller lifetime remain unchanged.",
+  "admissionCandidateSha256": "0a9dd89ec46da9362c621354163371b9f2e5fa1491f1537b3e6ef3082662addf",
+  "bootstrapCandidateSha256": "d03b135b06c0f184ddad86104dcd29ffc00937507c8fced5b6d480d016afb1ad",
+  "diagnosisManifestSha256": "3ecd7f318700f019e61c19ce29be187239afedb74d0b491b041ac463569764e9",
+  "independentManifestSha256": "098ce8f8091d98d69dc75dfea34d73a293d5f4313680aa3cad9276f0d0058e3d",
+  "independentCases": 26,
+  "reverseControlsIncluded": 2,
+  "diagnosisCases": 3,
+  "rootManifestMembersChecked": 15,
+  "expiredGoStillRefused": true,
+  "historicalExceptionRecovered": false,
+  "hostExecution": false,
+  "productionReady": false,
+  "pm1Rescored": false
+}

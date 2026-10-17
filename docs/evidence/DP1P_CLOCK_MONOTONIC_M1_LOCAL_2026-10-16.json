@@ -1,0 +1,95 @@
+{
+  "schema": "dp1p-clock-monotonic-m1-local-v1",
+  "status": "ACCEPTED_LOCAL_FINITE_MONOTONIC_ADAPTER",
+  "acceptedAt": "2026-10-16T15:17:47.840Z",
+  "scope": "Finite captured synthetic typed samples through the actual unchanged packaged TF1 sample seam. This is not a real clock producer.",
+  "source": {
+    "adapterSha256": "f76cb62450f7ea6aa290296bad3293152373783982bdc3f72d85872ffc9455cb",
+    "manifestSha256": "51d5dbe46ad31f371392163de836df61968ba85d096a7b73fa6e76b1e5bda03b",
+    "clockSha256": "630ba536611482b348c237e56a683b53b9b68ef12664959a573b7ad08609346b",
+    "boundarySha256": "b3dbda6adc98f5bbc4a97e010d6bfc443951db301365a96e85f9d3bcd68292e8",
+    "rootDecisionSha256": "3270035c7d4f90c69647533fef4a97a8d0091dede19e1bd313c6920491fed31f"
+  },
+  "authorTests": 28,
+  "independent": {
+    "directTests": 176,
+    "directAssertions": 937,
+    "controls": 2,
+    "semanticKills": 2,
+    "resetControlQualification": "Recreating the budget loses comparator history; the actual TF1 still blocks backward time. No global unsafe escape claimed.",
+    "graphCases": 7,
+    "graphAssertionCalls": 83,
+    "includesOneExpectedControlFailure": true,
+    "graphOutcomes": [
+      {
+        "name": "positive",
+        "status": "PASS",
+        "consumed": 27,
+        "processCalls": 1,
+        "heartbeatCalls": 1
+      },
+      {
+        "name": "parentpost domain",
+        "status": "PASS",
+        "fatal": "CLOCK_INVALID",
+        "consumed": 27,
+        "processCalls": 0,
+        "heartbeatCalls": 0
+      },
+      {
+        "name": "parentpost backward",
+        "status": "PASS",
+        "fatal": "CLOCK_BACKWARD",
+        "consumed": 27,
+        "processCalls": 0,
+        "heartbeatCalls": 0
+      },
+      {
+        "name": "parentpost expired",
+        "status": "PASS",
+        "fatal": "HARD_DEADLINE",
+        "consumed": 27,
+        "processCalls": 0,
+        "heartbeatCalls": 0
+      },
+      {
+        "name": "SQL ordinary",
+        "status": "PASS"
+      },
+      {
+        "name": "SQL fatal",
+        "status": "PASS"
+      },
+      {
+        "name": "pending HTTP local revoke",
+        "status": "PASS",
+        "processCalls": 0,
+        "heartbeatCalls": 0
+      }
+    ],
+    "earlyDiagnosisControl": "Fixture-level unsafe alternative detected; not an adapter or production source mutation.",
+    "rootHashChecks": 25,
+    "directReportSha256": "4e0b4da96deebfe0586972ec0d627ce1debdb39dbab5a2f27c265981f18fef0c",
+    "directManifestSha256": "350e3c65155322c8e50624b170d27a78c421ec8c027bdbabb108f1fb6ea493fb",
+    "directResultsSha256": "8bf0f652fec9523c557fdc1f54c639aa95882f7b1080e1619d5512ba77b312c6",
+    "graphReportSha256": "149c784e6f41e7e4bc7d194f6a0d0b8cf4e4263f2b506b6b018f00d6549a3512",
+    "graphManifestSha256": "cd72e4cec206b2f2c9453a3efbc5c9dcd6e5dd80ef4e160eb92e0b67717e5a87",
+    "graphResultsSha256": "a50961b75c0fb22de4076150533b6d0d5329811260e213664912793a2fc9d3dd",
+    "counts": "Tests, assertions and controls overlap. Report scopes separately."
+  },
+  "behavior": [
+    "Construction validates and captures detached data, creates one original budget and one exact TF1 boundary, and consumes no sample. No reset or producer callback is exposed.",
+    "Original origin/deadline/reserves remain fixed. Domain refusal maps to CLOCK_INVALID, backward to CLOCK_BACKWARD, exhaustion to CLOCK_THROW, and valid expired numeric samples reach TF1 HARD_DEADLINE.",
+    "First fatal identity persists and prevents additional sampling. Schema membership and fixed UNKNOWN qualifications do not authenticate clocks.",
+    "Actual graph baseline consumes 27 explicit samples; C1 and E1 run once each only after outer completion. Parent-post domain, backward and expired faults retain inner facts but reject exact fatal and suppress both diagnostics.",
+    "Focused SQL ordinary/fatal and HTTP local-revocation suppression remain intact."
+  ],
+  "history": "One graph harness SyntaxError was corrected only in the fixture; initial failure retained. No candidate defect or control kill was claimed from it.",
+  "notRun": [
+    "Full 196-assertion HTTP matrix under this adapter; optional health, STOPPED, all fault stages, ticket replay, sync/thenable and exhaustive boundaries.",
+    "Native loader, broad suites and CI.",
+    "Actual capture provenance, resolution, suspend/discontinuity semantics, RD7, limits or production integration."
+  ],
+  "next": "Review the pinned host source for a bounded stop-and-report successor and clock wiring plan. Preserve separate rollback authority and do not replace all Date.now uses with one clock.",
+  "pm1": "S1 unchanged."
+}

@@ -1,0 +1,88 @@
+{
+  "schema": "DP1P_METADATA_ENVELOPE_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_ENVELOPE_E1_LOCAL",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-envelope-model-2026-10-17",
+  "sourceManifestSha256": "432e5d921e885606cb9fb59fdc8d79d38d13d40136aa2bb1cede9d869cd03bb5",
+  "envelopeSha256": "39c583d63ba8df01e38b255039b137f621626b8f61850a1fedff7dfc1e57652a",
+  "modules": [
+    {
+      "name": "config.mjs",
+      "sha256": "4bbf39ba05267479b2e1a708f19b958a328301c995a7382a39af6c0ef02a9848"
+    },
+    {
+      "name": "version-data.mjs",
+      "sha256": "dfb5dada7c53f241f5c1fd56a6363de096f0ef595434ea2669cb8204e3d8132a"
+    },
+    {
+      "name": "witness/boundary.mjs",
+      "sha256": "46e69379db184950a69191955463d9232e81e54e67fb52708a4c2b2bb985ea1a"
+    },
+    {
+      "name": "witness/witness.mjs",
+      "sha256": "6f28b8c8a068c6678857cdc4cf2c8a8abd0e506d756dbf245a2dc4fb7cea8a93"
+    },
+    {
+      "name": "capture/plan.mjs",
+      "sha256": "e5f135141a8f1bdb6cc20247778f8b8822134eeb08110aeb6688afdc8c24af36"
+    },
+    {
+      "name": "capture/capture.mjs",
+      "sha256": "1a5b2a500ee288e1a92080ef8288ff731a14df8bd7762a20efe76a4479f57e44"
+    },
+    {
+      "name": "capture/validate.mjs",
+      "sha256": "a7037f2c37b1ab45673fe4deb2dfdd23ce1c4a4941f94c73e67947ef0e875cb6"
+    },
+    {
+      "name": "observe-metadata.mjs",
+      "sha256": "318a6ba0c4051e0f17ee4c701a3957c2dcbd9c71a70562b0dfeb60f6827ddce6"
+    },
+    {
+      "name": "validate-observer.mjs",
+      "sha256": "6955db2c6eb6de905576e70f512e6ecfbba9ac9a9309efce6d971b767b10b904"
+    },
+    {
+      "name": "memory-sink.mjs",
+      "sha256": "91627fba5ca565ca565ef14d67d4144359d2573ae56cc2fc78b4ee40d8e794f0"
+    },
+    {
+      "name": "native-entry.mjs",
+      "sha256": "46bb0f64454980eb425ae597d0cfc2a549fcb669d2b1d58c96426a9d44aa3342"
+    }
+  ],
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-envelope-independent-2026-10-17",
+    "manifestSha256": "f47075684db37f043430faf746a0d15bda9eca59a52435fb06dd9306a8154154",
+    "checks": 64,
+    "controlsIncluded": 1
+  },
+  "rootChecks": [
+    "Reviewed the complete envelope and independent fixture, assertions and status-guard control.",
+    "Verified all 42 source and independent manifest members and eleven selected runtime hashes.",
+    "Checked diagnostic/acceptance separation, exact raw counts and hashes, canonical JSON plus LF, detached frozen candidate and the existing public allowlist."
+  ],
+  "scope": [
+    "Pure parser over the ten-field trusted raw producer record.",
+    "Diagnostic parsing may retain a valid COMPLETE or INCOMPLETE candidate on nonzero exit without granting acceptance.",
+    "Acceptance additionally requires COMPLETE, exit zero, null signal and error, no requested termination, and empty stderr.",
+    "Independent COMPLETE and UNKNOWN fixtures use the actual selected pure graph with explicit trusted witness stubs; no target hash observation is claimed.",
+    "A combined retained-byte boundary of 65,536 succeeds for diagnostic parsing; 65,537 is refused. Nonempty stderr always refuses acceptance."
+  ],
+  "limits": [
+    "Raw rc alone does not prove OS close, stream drains or producer authenticity.",
+    "No runner, current freshness, GO, transport, native output, target execution or durable publication qualification.",
+    "No concurrent SharedArrayBuffer mutation or hostile Proxy isolation proof; no maximal schema-valid stdout-only payload claim.",
+    "Canonical raw bytes and exact internal hashes do not authenticate an untrusted producer."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 48,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "hostExecutionAuthorized": false,
+  "productionReady": false,
+  "next": "Implement and independently verify a pure historical bootstrap lineage helper, then fresh admission/release lineage and the authenticated runner."
+}

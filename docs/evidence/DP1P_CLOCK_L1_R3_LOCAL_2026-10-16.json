@@ -1,0 +1,51 @@
+{
+  "schema": "dp1p-clock-l1-r3-local-acceptance-v1",
+  "status": "ACCEPTED_LOCAL_PURE_COMPARATORS",
+  "acceptedAt": "2026-10-16T14:16:34.130Z",
+  "acceptance": "Root source/report/harness review plus frozen independent evidence; root did not rerun the author or independent suites.",
+  "authority": {
+    "host": false,
+    "production": false,
+    "READY": false,
+    "GO": false
+  },
+  "pm1": "S1 unchanged; no new scorecard or percentage inference.",
+  "execution": "Trusted inert local fixtures only; no real network, database, host, private inputs or clock measurement. Broad suites and CI not run.",
+  "scope": "Typed monotonic budgets, epoch intervals and raw process identity under separate synthetic caller premises. No clock mapping or authenticity resolver.",
+  "source": {
+    "sha256": "630ba536611482b348c237e56a683b53b9b68ef12664959a573b7ad08609346b",
+    "manifestSha256": "8ca9696460240596c6897b9eaf16f9a46638531e515cd1b426b63488e2d9bc32"
+  },
+  "author": {
+    "tests": 109,
+    "controlsIncluded": 9,
+    "r3RegressionsIncluded": 39
+  },
+  "independent": {
+    "assertions": 176,
+    "groups": 9,
+    "positiveControlBaselines": 4,
+    "semanticControlKills": 4,
+    "counts": "Controls are separate from the 176 matrix assertions. Groups and assertions overlap; earlier runs are not added.",
+    "rootHashChecks": 86,
+    "reportSha256": "af9f856e6d5f327aaf1b800a7f6513f88e1adeb9bc9a6dd0ff2d2d3a0709e698",
+    "resultsSha256": "f3f4e9c22c0d197990965f91e9c85d68dce0f581471108f257c762472f1369a2",
+    "manifestSha256": "8bdc521ad4bda3a8c38ceda64c82897fd6a3aa490fd091fd03dbb947d825f485"
+  },
+  "behavior": [
+    "Exact all-own-key schemas include hidden fields and reject extra symbols. Dense provenance arrays and named binding validation preserve missing/malformed precedence.",
+    "Complete process records and context require matching top-level and binding targets. Raw decimal ticks never pass through Number.",
+    "Original monotonic context is detached and cannot be replaced. Backward samples fail without advancing the prior sample; zero remaining grants no admission.",
+    "Freshness compares the whole signed interval with checked arithmetic. Expiry equality is expired; file ordering does not prove loaded-code identity."
+  ],
+  "history": [
+    "r1 target-coherence failure and r2 hidden-extra-field failure remain immutable. Independent r3 tests cover both repairs.",
+    "Author first-run helper error is retained separately; final tests corrected the fixture without relaxing expectations."
+  ],
+  "limits": [
+    "Trusted inert data only; no arbitrary getters/proxies or modified-built-in guarantees.",
+    "Deadline-reset and detached-capture mutation controls were not run independently; their behavior was tested directly.",
+    "No actual mapping, receipt authenticity, precision/drift/suspend calibration, approved limits or TF1/TF2/TF3 integration."
+  ],
+  "next": "Define a bounded local consumer contract before composition; actual clock provenance and target measurements remain separate gates."
+}

@@ -1,0 +1,103 @@
+{
+  "schema": "DP1P_METADATA_EMISSION_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_EMIT_R2_LOCAL",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-emission-model-r2-2026-10-17",
+  "sourceManifestSha256": "55feca089bc2e099cac60328d12a99aacd0741baff7ec9911c77e1487fff24ba",
+  "modules": [
+    {
+      "name": "config.mjs",
+      "sha256": "4bbf39ba05267479b2e1a708f19b958a328301c995a7382a39af6c0ef02a9848"
+    },
+    {
+      "name": "version-data.mjs",
+      "sha256": "dfb5dada7c53f241f5c1fd56a6363de096f0ef595434ea2669cb8204e3d8132a"
+    },
+    {
+      "name": "witness/boundary.mjs",
+      "sha256": "46e69379db184950a69191955463d9232e81e54e67fb52708a4c2b2bb985ea1a"
+    },
+    {
+      "name": "witness/witness.mjs",
+      "sha256": "6f28b8c8a068c6678857cdc4cf2c8a8abd0e506d756dbf245a2dc4fb7cea8a93"
+    },
+    {
+      "name": "capture/plan.mjs",
+      "sha256": "e5f135141a8f1bdb6cc20247778f8b8822134eeb08110aeb6688afdc8c24af36"
+    },
+    {
+      "name": "capture/capture.mjs",
+      "sha256": "1a5b2a500ee288e1a92080ef8288ff731a14df8bd7762a20efe76a4479f57e44"
+    },
+    {
+      "name": "capture/validate.mjs",
+      "sha256": "a7037f2c37b1ab45673fe4deb2dfdd23ce1c4a4941f94c73e67947ef0e875cb6"
+    },
+    {
+      "name": "observe-metadata.mjs",
+      "sha256": "318a6ba0c4051e0f17ee4c701a3957c2dcbd9c71a70562b0dfeb60f6827ddce6"
+    },
+    {
+      "name": "validate-observer.mjs",
+      "sha256": "6955db2c6eb6de905576e70f512e6ecfbba9ac9a9309efce6d971b767b10b904"
+    },
+    {
+      "name": "memory-sink.mjs",
+      "sha256": "91627fba5ca565ca565ef14d67d4144359d2573ae56cc2fc78b4ee40d8e794f0"
+    },
+    {
+      "name": "native-entry.mjs",
+      "sha256": "46bb0f64454980eb425ae597d0cfc2a549fcb669d2b1d58c96426a9d44aa3342"
+    }
+  ],
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-emission-independent-r2-2026-10-17",
+    "manifestSha256": "26bcf598ef9731c94575d1dd8c630f598afb5361540f46e056371479ab943f57",
+    "eventRegressionChecks": 24,
+    "eventControlIncluded": 1,
+    "defaultActualGraphRefusalCases": 1,
+    "completionChecks": 19,
+    "completionRegressionIncluded": 14,
+    "completionNewIncluded": 5,
+    "completionControlsIncluded": 2,
+    "sourceChecks": 11
+  },
+  "rootChecks": [
+    "Reviewed the exact four-site native-entry delta and all independent reports and correction controls.",
+    "Verified 66 manifest members across the r2 candidate and independent packet.",
+    "Confirmed ten dependencies remain byte-identical to accepted native binding r2.",
+    "Historical r1 author tests were replayed at root; r2 results are independent-worker evidence, not a claimed root replay."
+  ],
+  "scope": [
+    "One Buffer containing canonical candidate JSON and exactly one LF, with a 65536-byte complete wire cap.",
+    "Original retained W1 boundary checks before write and after callback plus required drain; no clock reset or new timer policy.",
+    "Provisional nonzero exit before the first await; pending work, reentry, late stream errors and preexisting nonzero exit cannot become success.",
+    "Drain events count only after this write starts; any observed prewrite stream fault suppresses COMPLETE and INCOMPLETE writes.",
+    "Schema-valid UNKNOWN-child diagnostics remain nonpass and never authorize another child.",
+    "Actual-default-graph refusal uses real crypto on tiny fixture bytes; successful and UNKNOWN graph fixtures use explicitly synthetic witnesses."
+  ],
+  "history": {
+    "r1Accepted": false,
+    "reason": "A synthetic prewrite drain could satisfy a subsequent false write return. Native feasibility was not established. Root required write-start gating and prewrite stream-fault refusal.",
+    "r1ManifestSha256": "e5a2f885bbf6c610613e1d9cfa1476ed71e65ad97fc1127698654f8312f7887f",
+    "completionManifestSha256": "d76f8f6d7f30db43d447ab3c7d447f5d9c13ae646b5f204816165076fe1688ff"
+  },
+  "limits": [
+    "Local event-model and external VM fixtures only; no actual stdout, OS child, native target success or host execution.",
+    "Wire saturation fixtures use explicit schema stubs; no schema-valid worst-case layout bound is claimed.",
+    "The trusted witness fixtures do not establish target file hashes or loaded-image identity.",
+    "No exhaustive event or Proxy/capability proof, durable publication, controller settlement, assembly or runner acceptance.",
+    "Never-callback remains unresolved/nonzero; the outer transport remains an unqualified backstop."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 53,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "hostExecutionAuthorized": false,
+  "activeGo": null,
+  "supervisorQualification": "UNKNOWN",
+  "productionReady": false,
+  "next": "Build and independently verify the pinned eleven-module source assembly, then metadata envelope/runner before fresh admission and a bounded host GO."
+}

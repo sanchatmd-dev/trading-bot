@@ -1,0 +1,24 @@
+{
+  "schema": "dp1p-native-receipt-r2-local-v1",
+  "status": "ACCEPTED_PURE_RECEIPT_VALIDATION_ONLY",
+  "acceptedAt": "2026-10-16T19:06:49.631Z",
+  "verifierSha256": "aee2ba86522791c8ca33e329c9a1795dec38fb9fa9e0e45fc0470289a3f40d4e",
+  "supervisorSha256": "da1cdb2896d411e976beaf9047b3542d45281b33681a5866f0de7d679cd90590",
+  "checks": {
+    "independentCases": 83,
+    "harnessAssertionCalls": 98,
+    "rootHashChecks": 24,
+    "manifestSha256": "96ebc4790f02af3b6de96557d069408f8c9719efc4d72b03c4a9eac312afa70f",
+    "reportSha256": "7924db84a4f30066da2fe88f3916f2f1649cbde07e0510c705d886593cf47634"
+  },
+  "correction": "The preserved r1 verifier accepted a tampered stdout hash. R2 verifies original raw Buffer hash/count, lossless UTF-8, canonical JSON line, exact schemas, trusted expected source/binary/version/PID/platform/architecture and unchanged consumed state on refusal.",
+  "scope": "Pure verification and supervisor import without execution. Known hidden own data fields remain supported; caller-record accessors are rejected without getter invocation. Parsed JSON null-field controls are not executable getter tests.",
+  "limitations": [
+    "No r2 native child, containment or durable cross-process replay test ran. Supervisor termination/grace ownership remains unqualified.",
+    "Expected values and raw buffers are trusted controller inputs; matching fields are not runtime attestation or clock provenance.",
+    "Arithmetic and native probe source unchanged; the historical r1 native observation remains separate unaccepted evidence."
+  ],
+  "next": "Qualify owned-child supervision and durable replay before another native observation, then prepare the independent target bootstrap chain.",
+  "rea": "PAUSED",
+  "hostActions": 0
+}

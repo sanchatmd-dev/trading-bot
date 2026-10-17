@@ -1,0 +1,52 @@
+{
+  "schema": "DP1P_METADATA_RUNNER_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_RUNNER_R3_LOCAL_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-runner-model-r3-2026-10-17/",
+  "sourceSha256": "0ddbb2dfc8f9b2f84899d9e45e78ac088f4cb422e52152c0ed871eb09d010996",
+  "sourceManifestSha256": "7284eecbe049f1af6b5b6bd4230475d28ab3e06f9cbb55a37e0132d29c5b9f83",
+  "independent": [
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-runner-independent-r3-2026-10-17/",
+      "manifestSha256": "4b4b545542fc01938fa6b720a78d67f792564e537d852d91948c4a679b1b18e4",
+      "scenarioGroups": 25,
+      "reverseControlsIncluded": 1,
+      "history": "Twelve earlier completion scenarios replayed against R3 plus thirteen focused cases; earlier counts are not added again."
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-runner-cli-independent-r3-2026-10-17/",
+      "manifestSha256": "c58f8ea2170cbcf6cb6adcc4a7dfef7de066db86d1848220b5dcb4fcef909fc6",
+      "scenarioGroups": 10,
+      "reverseControlsIncluded": 1
+    }
+  ],
+  "rootChecks": [
+    "Verified all 162 source and independent manifest members",
+    "Reviewed runner source and independent harnesses, reports and explicit seams",
+    "Confirmed forty package files unchanged from prior candidate; only run.mjs changed"
+  ],
+  "scope": [
+    "Actual L1, L2-A, L2, A2 and E1 helpers exercised with a synthetic authenticated release and fixed 41-file inventory",
+    "Original budget and independent admission/GO freshness checks preserve nonpass after final clock or post-pin failure",
+    "Canonical selected-file point checks and bounded ancestry reject tested hardlink, symlink, realpath and ABSENT drift",
+    "Malformed raw records preserve safely available Buffer prefixes within a combined 65536-byte cap, with observed and retained facts separate",
+    "One transport attempt, explicit claim and receipt effects, minimal CLI projection and nonzero tested failure exits"
+  ],
+  "limits": [
+    "COMPLETE uses an explicit trusted witness seam; actual W1 target hashes and assembled remote execution are not established",
+    "Copied launcher is still a synthetic refusal placeholder; final package closure and controller integration are not accepted by this record",
+    "No native Windows identity, short-name, race immunity, OS close, stdout completion, SSH, current host health or GO is established",
+    "Pending stdout callback, every argv combination and all signal/timer failure permutations are untested",
+    "A receipt write exception can leave partial or success-looking bytes; actual controller exit and raw output evidence must gate root acceptance",
+    "Transport attempt does not prove remote contact or settlement; actualContact remains UNKNOWN after an attempt"
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 32,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Independently review controller lifecycle, then qualify bounded inert local execution and verify the complete package before a fresh host admission."
+}

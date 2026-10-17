@@ -1,0 +1,37 @@
+{
+  "schema": "DP1P_METADATA_TERMINATION_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_O1_TERMINATION_SYNTHETIC_COMPOSITION",
+  "sourceReview": "DP1P_METADATA_OBSERVER_O1_R3_LOCAL_2026-10-17.json",
+  "directory": ".qa-local/codex-dp1p-native-metadata-termination-composition-2026-10-17",
+  "manifestSha256": "8893c37915154df740d5a72a33dd045bb7443cb11f0c9aa671d2593d06c21d7a",
+  "independent": {
+    "scenarios": 11,
+    "forgedPassMutationsWithinScenarios": 22,
+    "controlsRun": 0,
+    "sourceSnapshotPairs": 9
+  },
+  "rootChecks": [
+    "Reviewed every scenario and its assertions against actual frozen observer/capture/W1 modules.",
+    "Verified all 14 evidence manifest members."
+  ],
+  "scope": [
+    "TERM or KILL requests followed by exit zero remain NONPASS.",
+    "Four close/drain UNKNOWN combinations prevent later captures and after/POST work.",
+    "Original clock expiry and nonfinite faults preserve available receipts and first capture failure.",
+    "Direct KILL after timer failure preserves earlier stdin failure when present."
+  ],
+  "limits": [
+    "No real timers, children, native IO, OS termination, Linux settlement or transport were tested.",
+    "No single-guard mutation control was claimed because remaining timeout and elapsed guards were redundant."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 59,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "hostExecutionAuthorized": false,
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Complete and independently verify the fixed native binding, then source assembly and emission."
+}

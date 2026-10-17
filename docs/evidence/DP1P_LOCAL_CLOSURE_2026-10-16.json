@@ -1,0 +1,40 @@
+{
+  "schema": "dp1p-local-source-closure-acceptance-v1",
+  "status": "ACCEPTED_LOCAL_ASSEMBLED_SOURCE_GRAPH",
+  "acceptedAt": "2026-10-16T14:29:14.831Z",
+  "scope": "Self-contained local HTTP-C1 source graph with seven selected modules. This is not a deployment bundle, payload-cap qualification or actual driver integration.",
+  "selection": "Six original modules remain byte-identical. Readiness uses the accepted TF3-COPY r3 successor at the old relative basename solely to preserve imports; manifest records both original and selected hashes.",
+  "source": {
+    "entrySha256": "c014b08493616ac0874bc1c8d53223ae70fb4c78c3e65c55334a811e49bb1332",
+    "manifestSha256": "b16ca739d7f677e5232f5cdbde9529fa9d9fe79810acf012f5a88bcca3c1831b",
+    "sourceMapSha256": "55e8ee2f272701ce63edfa01926155d5d9d3f22902037cc71664c56ef6ebc91d",
+    "selectedReadinessSha256": "557f74470bb353702675260c3994a7719814aa6eaa17fb172e7241e68b1e9fc8",
+    "modules": 7,
+    "packagedFileIdentifiers": 8,
+    "resolvedImportEdges": 11,
+    "onlyExternalImport": "node:util"
+  },
+  "independent": {
+    "matrixAssertions": 196,
+    "groups": 10,
+    "hiddenIdentityAssertions": 22,
+    "positiveControlBaselines": 2,
+    "semanticControlKills": 2,
+    "counts": "The matrix, focused hidden-identity regression and controls are separate scopes, not a sum of independent scenarios.",
+    "baseline": "Actual packaged entry and module files loaded under a restricted VM. No fallback to original sources or baseline source substitution. Mutant controls alone replace the packaged wrapper in memory.",
+    "rootHashChecks": 57,
+    "reportSha256": "9aeece10050bcf82d0d41404f2326aa992ecf337797eba762d17c68384c4a16b",
+    "resultsSha256": "76677db2b85620303af009e9dde5f75a2c9d0d2641dbd19a9b216f5e54e44316",
+    "manifestSha256": "dd0261151d76411bb0d0a2ef1d608e7cfd87a30cb1fd981f84f122f754552e03"
+  },
+  "behavior": "Required and optional health, pending settlement, SQL suppression, shared checked clock, original fatal/local revoke, wrapper publication and detached facts preserve their tested semantics. Full packaged identity path retains all four non-enumerable input values in a frozen complete output.",
+  "limits": [
+    "Original historical directories remain immutable and still contain their recorded r2 imports. New local work must select this closure explicitly.",
+    "TF2/ledger and clock-consumer integration, native OS-loader behavioral suite, broad suites and CI were not run. Author native ESM entry load was structural only.",
+    "Actual HTTP/SQL lifecycle, cancellation/server settlement, trusted provenance, clock mapping, RD7, owner-approved limits and production wiring remain open.",
+    "Wrapper publication mutation proves a port-channel defect while outer TF3 still blocks aggregate facts.",
+    "No host, deployment, production, READY or GO acceptance."
+  ],
+  "next": "Define a bounded clock-consumer contract against this pinned graph. Do not invent correlation, provenance, quotas or authority from the local model.",
+  "pm1": "S1 unchanged."
+}

@@ -1,0 +1,42 @@
+{
+  "schema": "dp1p-epoch-a1-local-v1",
+  "status": "ACCEPTED_LOCAL_S3_PIN_TIME_REJECTION",
+  "acceptedAt": "2026-10-16T17:38:53.339Z",
+  "source": {
+    "hostSha256": "3f6f5ac40efc5bd957024e01034d31d1aead072bef428653a7be81b986faa3a4",
+    "portSha256": "8be36ddaba285468d868cecc1c13a208ef118ee83fe4c4011165128b7a0ba1ab",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "a7a006fb8a661a27ed1ffb588e9bf5827fb95a36a76f16b38bf61962f5dd0d3b"
+  },
+  "scope": "Only new pinGateS3 and sole S3 callsite. Existing entryGate, legacy pinGate, driver, duration port and cap values unchanged.",
+  "behavior": [
+    "Known own data fields require signed safe-integer pcAtMs and nonnegative safe-integer pcValidMs before one epoch sample. Accessor inputs refuse without getter invocation; hidden own data is allowed.",
+    "Invalid clock or unsafe subtraction refuses PC_TIME_SCHEMA; negative age refuses PC_FUTURE; age above cap retains PC_STALE. Zero and exact-cap ages remain valid.",
+    "PINS/API precedence and later unit/process/config/dependency refusals remain. Actual apiPinMatches executes in independent gate and full-S3 fixtures.",
+    "Full S3 future refusal occurs after retained precollection evidence and before any effects. Date throw yields STOP with null elapsed. Positive inclusive-cap fixture preserves original duration origin/deadline.",
+    "Actual extracted derivePins retains remote facts.startedAt as pcAtMs; controller receipt.finished remains distinct. This is lineage, not clock trust."
+  ],
+  "checks": {
+    "authorTests": 30,
+    "independentCases": 50,
+    "independentDirectAndLineageCases": 47,
+    "independentS3Cases": 3,
+    "totalAssertionCalls": 126,
+    "caseAssertionCalls": 122,
+    "controlAssertionCalls": 4,
+    "expectedControlFailuresIncluded": 1,
+    "semanticControls": 1,
+    "rootHashChecks": 24,
+    "reportSha256": "7cf0cf45979f02846d21dec73c6a8d9e1f33686f9a1304fa12d2b1a5201868ca",
+    "manifestSha256": "28be177713308df597f65fc85bf15b92bc8294a8ba1f5cc3a9df97bd62211bdf"
+  },
+  "corrections": "Independent positive fixture initially failed NOT_READY_TREE because fake cwd did not switch the new worker PID; only owned helper corrected, attempt retained.",
+  "limitations": [
+    "Conservative negative-age rejection does not establish zero skew, authenticated PC receipts, controller/host agreement or valid operational GO. No tolerance or typed point-interval provenance was invented.",
+    "Additional outer/envelope reruns and exhaustive later-field combinations not run; exact parity and prior PRESTOP evidence remain separately scoped.",
+    "No real clock, host, process, environment, DB/network, production, broad CI or deployment execution."
+  ],
+  "next": "Review the remaining S3 heartbeat timestamp arithmetic and association gate for a bounded conservative local contract; preserve unknown writer/process/clock provenance.",
+  "rea": "PAUSED",
+  "pm1": "S1 unchanged."
+}

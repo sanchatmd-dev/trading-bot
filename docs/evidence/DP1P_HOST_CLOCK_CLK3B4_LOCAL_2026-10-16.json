@@ -1,0 +1,51 @@
+{
+  "schema": "dp1p-host-api-routing-clk3b4-local-v1",
+  "status": "ACCEPTED_LOCAL_API_ROUTING_AND_S3_COMPOSITION",
+  "acceptedAt": "2026-10-16T16:59:55.188Z",
+  "scope": "New collectS3 and three narrow S3 edits connect the accepted API chain to one original duration boundary. Extracted source with inert external helpers only.",
+  "source": {
+    "hostSha256": "43a59a524e743088a187831653dfd7f77fa33b4efa5e91645058bf87a4b9d3b3",
+    "portSha256": "25ed195b38c36ce65889cdd21ca76e045e39874e35edb616948c3479633761ed",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "89626888e0115a30449997d08725eaf4f7e32190b67f07f10e883842a5f6e3ac",
+    "decisionSha256": "9717614f42ddf7ee8f7c1fc73c1864020b065d69f0c10f1e59823b3d185e6c0f"
+  },
+  "behavior": [
+    "The API window opens before initial API unit inspection. Preidentity errors finalize a cached scalar report before exact rethrow; accepted identity owns later reporting.",
+    "Every API exception suppresses later collection health/SQL. Ordinary identity false preserves collection behavior, then actual gateFresh blocks S3 effects.",
+    "S3 retains API work on STOP. Earlier entry failure leaves API work IDLE, which does not establish absence of earlier reads on other paths.",
+    "Actual API and readiness functions compose successfully with the accepted port and original TF1. An outer post CLOCK_INVALID retains raw inner S3_PASS but rejects the exact fatal object.",
+    "All legacy host functions outside the three S3 edits, port and lib are unchanged. The unchanged one-argument payload still fails closed with zero helpers and zero Date calls; it is not deployable."
+  ],
+  "author": {
+    "cases": 8
+  },
+  "independent": {
+    "directCases": 41,
+    "directAssertionCalls": 282,
+    "directCaseAssertionCalls": 273,
+    "directControlAssertionCalls": 9,
+    "expectedMutationFailuresIncluded": 3,
+    "semanticControls": 3,
+    "compositionCases": 9,
+    "compositionAssertionCalls": 56,
+    "compositionMutationControls": 0,
+    "rootHashChecks": 31,
+    "directReportSha256": "c801d8e609da62705db266a6d15c6bdd13c288a0b1876c1a283a814b24e51167",
+    "directManifestSha256": "63813f32bc50eb9cb9c551c19b7dc0d80ddca2bf6b95fdbfa2a9e9ffe11b3156",
+    "compositionReportSha256": "23de68bc57e9aad1d683d529b38d7741ea78de40c7ab2b765b90d4d155f56a11",
+    "compositionManifestSha256": "85f100efaaf06ab033a7f219aeec69358455dbe0e11aca776fbd761f3a9686ac",
+    "harnessCorrections": "Three retained composition corrections: inactive worker omitted DB, negative sample means CLOCK_INVALID, payload fixture needed budget.remoteMs. No candidate defect found."
+  },
+  "notRun": [
+    "Composition mutation controls, arbitrary parent/window combinations and dedicated arithmetic-opening-error fixture.",
+    "Earlier non-API collection internals, ordinary-success health/SQL internals, real clocks, filesystem/process/environment/network/DB, actual producer provenance, operational settlement, broad CI or deployment."
+  ],
+  "limitations": [
+    "Constant finite samples in the positive composition fixture produce elapsed zero; this is not runtime timing evidence.",
+    "Cleanup uncertainty and unmeasured throwing-close duration remain. Original budget and fixed fixture limits do not authorize operational quotas.",
+    "Payload qualification, real clock/epoch association and production wiring remain open. No READY, GO, rollback authority or REA installation."
+  ],
+  "next": "Inventory remaining S3 clock-domain and producer gates against this exact source set; choose one bounded local contract before implementation. No production wiring or new runtime measurement is admitted.",
+  "pm1": "S1 unchanged."
+}

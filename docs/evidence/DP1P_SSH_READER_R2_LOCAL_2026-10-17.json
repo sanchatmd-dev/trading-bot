@@ -1,0 +1,48 @@
+{
+  "schema": "DP1P_SSH_READER_R2_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_LOCAL_READER_ONLY",
+  "sourceSha256": "4cbcc43d2bb3672a6a500fffc058e83228ce82e84a9d7d99f2e7d8330d9fcc23",
+  "authorFocusedChecks": 41,
+  "independentInjectedCases": 16,
+  "independentControls": 1,
+  "actualWindowsInertCases": 10,
+  "actualWindowsControls": 0,
+  "authorChecksAddedToIndependent": false,
+  "priorPartialVerificationCases": 0,
+  "manifestSha256": [
+    "544cbeaf00fe95dda85a6186fe6f63513478b653f26334d7431287886c13da45",
+    "a4d85e8726080890fee32ec8c92b36b851edbaaad5cb6c9d240d3eade0af301c",
+    "bed470907bce96d5739ff335235f5209cb58633241831a167f9c2f3b5a8d397c",
+    "67c4ba932e2c0a450cb7d346f1ec58642216e53e84cd53095a8b4b6a2dd240d6"
+  ],
+  "verifiedManifestMembers": 33,
+  "correction": "Malformed or accessor-backed snapshot facts refuse before equality. C0, DEL and C1 controls refuse in raw paths.",
+  "sharedPolicy": "Fixed authenticated SSH hash, size and exactly two links; separator-only spelling. Other files retain strict readers.",
+  "windowsFixturePolicy": "Original production constants refuse inert two-link fixture. Separate harness copy changes only fixed hash and size, with reverse source-hash proof.",
+  "verifiedBoundaries": [
+    "strict and shared reader/recheck",
+    "empty identity and accessor refusal",
+    "wrong hash and link count",
+    "FD and final path identity drift",
+    "ancestor identity drift",
+    "sentinel overflow and short EOF",
+    "close failure refusal",
+    "detached buffer ownership",
+    "malformed profile link count",
+    "raw dot, duplicate separator, case and control refusal"
+  ],
+  "limitations": [
+    "Focused cases, not an exhaustive filesystem or alias matrix",
+    "Injected close attempts are not native closure proof",
+    "No concurrent alias-write or image-at-spawn attestation",
+    "Installed SSH profile and all four consumer integrations remain unqualified"
+  ],
+  "consumerWiring": false,
+  "installedSshRead": false,
+  "newHostSteps": 0,
+  "newGo": false,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}

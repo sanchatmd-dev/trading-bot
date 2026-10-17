@@ -1,0 +1,84 @@
+{
+  "schema": "DP1P_METADATA_RELEASE_LINEAGE_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_RELEASE_LINEAGE_L2_LOCAL",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-release-lineage-model-2026-10-17",
+  "sourceManifestSha256": "2b43039c6fb1309545564c05db8e635be705f515f503b1e53c5589c6d6518367",
+  "modules": [
+    {
+      "name": "release-lineage.mjs",
+      "sha256": "54ba19e35c7d460294b1cd5141896ed5c3912634e980c474df488df4e914cef8"
+    },
+    {
+      "name": "canonical-transport.mjs",
+      "sha256": "e863a584980e4141020fdbc773a56f0b54263b625f238f24db2c48ba4f19ef97"
+    },
+    {
+      "name": "bootstrap/lineage.mjs",
+      "sha256": "b741e679e7230e7890628bd3a4a90abe99a5657107ae0fcfa79e5343a6fa4f86"
+    },
+    {
+      "name": "bootstrap/validate-observation.mjs",
+      "sha256": "1cdce077dedf4937e9af720870f1f8f01f1f67e068d114fb6004da775936de24"
+    },
+    {
+      "name": "admission/admission-lineage.mjs",
+      "sha256": "96cf15588cf71637a8e435a71ea825dd9e28f8e6926e124d805b2a21531f6b9a"
+    },
+    {
+      "name": "admission/validate-observation.mjs",
+      "sha256": "df13db54f31766f848fe17ade54c7c6dd4749296bead88c63937506b128e771c"
+    },
+    {
+      "name": "metadata/config.mjs",
+      "sha256": "4bbf39ba05267479b2e1a708f19b958a328301c995a7382a39af6c0ef02a9848"
+    },
+    {
+      "name": "metadata/capture/plan.mjs",
+      "sha256": "e5f135141a8f1bdb6cc20247778f8b8822134eeb08110aeb6688afdc8c24af36"
+    }
+  ],
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-release-lineage-independent-2026-10-17",
+    "manifestSha256": "9dac74509970e62910c664b766fe1c2c05ede2fee8ec77cd4b0ce0222bca71c4",
+    "checks": 46,
+    "controlsIncluded": 1,
+    "fixtureRework": "One owned encoder error was corrected before the passing run; no candidate guard changed."
+  },
+  "completion": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-release-lineage-completion-2026-10-17",
+    "manifestSha256": "6b728a47d568ebeece10ca56e4013bed0d6445fc51df49bf174117b0d74fb870",
+    "checks": 45,
+    "controlsIncluded": 1
+  },
+  "rootChecks": [
+    "Reviewed the full release helper and both independent harnesses/fixture encoders.",
+    "Verified all 75 manifest members across source and two independent packets.",
+    "Reviewed the exact whole-module canonical SSH extraction and fully reanchored grammar tests, plus the six accepted dependency-copy checks."
+  ],
+  "scope": [
+    "Pure authenticated release DAG under an externally selected new PINS anchor, using actual accepted L1 and L2-A helpers.",
+    "Historical bootstrap config prerequisites remain distinct from new admission/release facts.",
+    "All three authenticated route hashes, aliases, selected Node facts, SSH executable hashes and ordered trust descriptors agree.",
+    "Canonical config bytes and exact controller/review/artifact schemas are checked; returned private data is detached and frozen.",
+    "rootReviewedFreshness records the authenticated root assertion; freshnessEstablished and executionAuthorized remain false."
+  ],
+  "erratum": "The frozen author report calls L2-A provisional. Both L1 r2 and L2-A were root accepted before this acceptance; their source copies are unchanged.",
+  "limits": [
+    "Synthetic source/artifact placeholders prove hash and schema relationships, not assembled code acceptance or complete runtime closure.",
+    "Controller manifest fields refer to root-reviewed evidence; this helper does not read those referenced files or prove OS events. Controller output references are distinct from remote output.",
+    "No current time, 120-second age enforcement, native close/drains, live route/trust, GO or host execution is established.",
+    "Selected source-cap equality and input overflows were tested; exhaustive caps, hostile Proxy/concurrent mutation and resource limits are not qualified.",
+    "Root prelaunch closure verification, runner and generic launcher implementation/tests, fresh admission and an exact bounded GO remain open."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 42,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "hostExecutionAuthorized": false,
+  "productionReady": false,
+  "next": "Freeze the package-owned file map, derive the authenticated runner, and verify a generic launcher without embedding the PINS hash in its source."
+}

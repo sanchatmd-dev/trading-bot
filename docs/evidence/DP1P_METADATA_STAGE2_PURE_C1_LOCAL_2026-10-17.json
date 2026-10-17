@@ -1,0 +1,58 @@
+{
+  "schema": "DP1P_METADATA_STAGE2_PURE_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_STAGE2_PURE_C1_LOCAL_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "candidate": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-stage2-pure-model-2026-10-17/",
+    "source": "finalizer.mjs",
+    "sha256": "7b654064e673828a4450f426453afbccf6dc64eefd56431473cd5881ca41bd2e"
+  },
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-stage2-pure-independent-2026-10-17/",
+    "manifestSha256": "7a10d5cdcd79d7612885cae17a1d6ac5adfd6a0d7eaf0db840b2c7594728d9d9",
+    "cases": 31,
+    "controls": 1,
+    "borrowedAuthorFixtureConstruction": true,
+    "independentAssertionsAndReanchoring": true
+  },
+  "rootChecks": {
+    "manifestMembers": {
+      "candidate": 9,
+      "independent": 57
+    },
+    "originalAndCopiedPackageFiles": 41,
+    "sourceReviewed": true,
+    "harnessReviewed": true,
+    "staticImports": [
+      "node:crypto",
+      "../codex-dp1p-native-metadata-package-p1-2026-10-17/package/package-map.mjs",
+      "../codex-dp1p-native-metadata-package-p1-2026-10-17/package/assembly/build-source.mjs",
+      "../codex-dp1p-native-metadata-package-p1-2026-10-17/package/assembly/inventory.mjs",
+      "../codex-dp1p-native-metadata-package-p1-2026-10-17/package/lineage/release-lineage.mjs"
+    ],
+    "dynamicImports": 0
+  },
+  "outcomes": [
+    "External root authorization binds successful stage-one completion and observed process/publication/layout facts",
+    "All ten stage-one inputs, fixed 41-file closure and eleven artifact roles are authenticated",
+    "Actual A2 rebuild matches source/config bytes; actual L1, admission and L2 validators establish the supplied lineage",
+    "Exactly six detached output Buffers and deterministic PINS are returned without GO or execution authority",
+    "Reanchored failures are refused; admission age 120000 ms passes and 120001 ms is refused"
+  ],
+  "limits": [
+    "Pure results do not authenticate the caller wall clock, root-observed OS facts or current filesystem/trust state",
+    "Caller must authenticate the fixed helper closure before module evaluation",
+    "Fixtures are synthetic; filesystem publication, actual private inputs and host execution remain separate",
+    "Structural containers are frozen, but returned Buffer contents remain mutable and require owned snapshots in the adapter",
+    "The focused matrix does not exhaust every malformed date, cap, Proxy or concurrency condition"
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 22,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Implement and independently verify the bounded local filesystem adapter for six-file finalization, before actual private preparation or fresh admission."
+}

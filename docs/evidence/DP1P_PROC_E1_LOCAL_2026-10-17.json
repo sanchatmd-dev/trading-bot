@@ -1,0 +1,43 @@
+{
+  "schema": "dp1p-proc-e1-local-v1",
+  "status": "ACCEPTED_LOCAL_CONDITIONAL_PROCESS_START_ARITHMETIC",
+  "acceptedAt": "2026-10-16T17:56:58.436Z",
+  "source": {
+    "hostSha256": "3d7339e79d48b5cee324a3619583b3cc43fa17e39a141d2832a49ad55903a22a",
+    "portSha256": "8be36ddaba285468d868cecc1c13a208ef118ee83fe4c4011165128b7a0ba1ab",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "d50908130aa7926ee4e7524f990091f0ffed2dc332e6f1ac685c96c91c703da0"
+  },
+  "scope": "Only new procStartMsS3 and five syntactic S3 call substitutions. Legacy process helper/callers, all other host code, port and lib unchanged.",
+  "behavior": [
+    "Same two UTF-8 reads and paths/order; returned text is validated after both reads. IO throws preserve exact ordinary/falsy payload and original read count.",
+    "Unsigned decimal raw ticks and exactly one valid btime key replace permissive Number coercion. Exact BigInt multiplication/addition must fit Number.MAX_SAFE_INTEGER before scalar conversion.",
+    "PROC_STAT refuses malformed syntax/duplicate keys; PROC_START_RANGE refuses derived overflow. Historical multiplier10 remains an explicit unqualified 100Hz assumption.",
+    "Actual full S3 executes six dynamic parser calls from five syntactic sites. Early worker failure blocks effects; ordinary API parser failure follows identity-false/gateFresh; readiness failure retains prior effects without ready publication.",
+    "Actual API post-read fatal wins over parser syntax/range error and preserves exact outer fatal identity; this is not cancellation or earliest inner-read containment."
+  ],
+  "checks": {
+    "authorTests": 35,
+    "independentCases": 54,
+    "directCases": 48,
+    "compositionCases": 6,
+    "totalAssertionCalls": 168,
+    "caseAssertionCalls": 163,
+    "controlAssertionCalls": 5,
+    "expectedControlFailuresIncluded": 2,
+    "semanticControls": 2,
+    "rootHashChecks": 23,
+    "reportSha256": "da053b32cb5b33b92b17e095e21073d6141832ca0d2dc560dba9f69d83d42e66",
+    "manifestSha256": "1855fc9c405513bb834920b88a3af08c33fb42b819e70a1c30cc03c90b0585dd"
+  },
+  "controls": "Restored Number coercion and removed derived-range guard fail syntax/range assertions after valid positive controls.",
+  "corrections": "Author initial 33/35 had delimiter-test and reused-fixture control mistakes; fixture-only correction yielded35/35. Independent packet had no source/harness failure.",
+  "limitations": [
+    "Safe arithmetic does not establish actual USER_HZ, process-start accuracy, boot/namespace/target binding, clock discontinuity/precision or loaded-code association.",
+    "Native kernel/runtime and broad CI unrun. Additional unchanged outer-after-PASS/envelope reruns omitted; earlier scoped evidence retained.",
+    "No actual host/process/environment/clock/DB/network, deployment or GO."
+  ],
+  "next": "Audit the complete selected local S3 source set and deployment prerequisites; identify the next concrete local integration or external evidence gate without manufacturing clock provenance.",
+  "rea": "PAUSED",
+  "pm1": "S1 unchanged."
+}

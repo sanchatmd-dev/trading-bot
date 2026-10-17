@@ -1,0 +1,71 @@
+{
+  "schema": "dp1p-tf2-local-acceptance-v1",
+  "acceptedAt": "2026-10-16T10:51:30.417Z",
+  "status": "ACCEPTED_LOCAL_TF2_R2",
+  "scope": "Pure placement model using accepted TF1 r2 and pinned recovery ledger under trusted injected-adapter assumptions. This supersedes the candidate pending-review status only; it does not accept host wiring.",
+  "source": {
+    "placementSha256": "e5a5d5fa5a5221f681a8ebefe4fa37220b3c4879eb0298032993b4f201bcc475",
+    "phaseTableSha256": "3aea11910cbea82e67b60bec829e92cf0a22fe9e42bb93aa1a653c6df2a357c1",
+    "manifestSha256": "b0528774c89bfcfe059e01c37632ba52aa45deca0fcf93d0cd21e8a8fdbc11dc",
+    "apiSha256": "f05e2f982ac35b56eac37d1eb1d7376f645bdea3959a10bddad37368989cae28"
+  },
+  "behavior": [
+    "Private factory binds fresh ledger and exact boundary clock/origin; no registry bypass or job reopen is exposed. Phase table and credit arithmetic remain unchanged.",
+    "Callback admission and completion preserve the first fatal, original phase and scoped deadlines. Actual pending native-Promise settlement precedes completion. Successful guard-to-effect order remains synchronous.",
+    "Every admitted failed guard finishes UNKNOWN once and retains its credit. A guard-body BUDGET records sanitized context while actual ledger failure controls the terminal result.",
+    "Fatal effect paths retain exact trusted rejected performed evidence per attempt. Ordinary throws remain UNCERTAIN and do not authorize a retry."
+  ],
+  "verification": {
+    "authorCopiedRegressions": 36,
+    "authorFocusedCases": 21,
+    "independentPassed": 230,
+    "independentFailed": 0,
+    "guardIdsCovered": 19,
+    "guardFatalReturnThrowCases": 114,
+    "forbiddenEffects": 0,
+    "pinsRechecked": 143,
+    "candidateManifestFilesRechecked": 143,
+    "reportSha256": "96114c7816d3747f56f1d72a7c00581b401c42336f2bff3b2ec8f87564d7cde6",
+    "resultsSha256": "45043c7378bd30199054208bfc709b59f7631c499385192d25554d5e13c2bf3c",
+    "mutationReviewSha256": "6150995754991e3129b46c8ccf4647f0166e30cf11594ec21e470392fd85afc3",
+    "independentEvidenceHashesSha256": "d29333f554c0c200bfbcac00212b81c126723d428ff08f237232c604cb576a44",
+    "survivorAuditReportSha256": "c5f9f6f4ab939e839ed9447f345ec2b243b617c2fdea7148e3619dae036d5fbb",
+    "survivorResultsSha256": "7b390c5b5d721db46baf6c35a4574a125f642dfb2702b04fb9cf40c291145441",
+    "deadlineEqualityEvidenceSha256": "000d15265940b3fd2d43b47bd788b71f050a78ef4f9063fbcd864ccf73ece903"
+  },
+  "mutationAccounting": {
+    "originalControls": 62,
+    "authorAssertionCandidates": 58,
+    "authorSurvivors": 4,
+    "sourceAndRawIntendedAssertionMappings": 53,
+    "diagnosticReplayControls": [
+      "S02b"
+    ],
+    "staticPolicyControls": [
+      "M15a",
+      "M15b"
+    ],
+    "validationPrecedenceOnly": [
+      "S04a",
+      "S04b"
+    ],
+    "additionalAuditorDistinctions": {
+      "R02b": "Valid late-ledger case changes readiness admission and recovery routing.",
+      "M02": "Exact deadline changes H count and bodyFailure, while gateway still prevents unsafe bridge execution."
+    },
+    "qualifiedRedundancy": {
+      "R02a": "Original origin binding and monotonic clock floor retain future-origin defense.",
+      "R07b": "Persistent fatal and live admission retain callback cutoff; two extra cached ledger snapshots remain observable."
+    },
+    "all62BehavioralKillsClaim": false,
+    "independentReplayLimit": "Most 53 mappings use source and existing frozen execution evidence. M01 accounting and S02b diagnostics were independently replayed; the auditor separately replayed the four survivors."
+  },
+  "limitations": [
+    "This focused matrix is not exhaustive over every BUDGET, deadline, malformed shape and optional route combination.",
+    "Standalone exported mapper and readiness helpers retain legacy contracts; TF1 containment belongs to placement wrappers.",
+    "Trusted inert adapters and native Promises are required; arbitrary Proxy/thenable and nonsettling containment are unproved.",
+    "Caps are synthetic and unapproved. No actual host clock mapping, PostgreSQL, HTTP, native capture, transport, production integration, deployment or new host GO.",
+    "Root accepts local composition eligibility only. PM-1 S1 and operational gates remain unchanged."
+  ],
+  "next": "Review and implement the smallest synthetic TF2/TF3 composition contract, then independently verify it before host-adapter design."
+}

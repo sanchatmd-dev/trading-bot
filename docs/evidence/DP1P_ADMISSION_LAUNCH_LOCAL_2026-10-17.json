@@ -1,0 +1,31 @@
+{
+  "schema": "dp1p-local-acceptance-v1",
+  "date": "2026-10-17",
+  "slice": "ADMISSION-CONTROLLER-LAUNCH",
+  "decision": "ACCEPTED_BOUNDED_LOCAL_LAUNCHER",
+  "sourceSha256": "ea6fde246e3f9b234618d3582b30bfed6f91adb4d1bc5cf478977b9853546800",
+  "sourceManifestSha256": "351bea470a177ffa000ba84559e44c0e6eb82dba25b6fed0d19498d6c9c8d021",
+  "independentDrainManifestSha256": "033ac30a549bddf9e7a96d64ebcec079fbb96d92f71d0f38070cbe8db491e376",
+  "independentInertManifestSha256": "8d9fb6b62d721f5c290db94707f233479a376fbd5f273c79c6c329a508c42339",
+  "rootManifestMembersChecked": 44,
+  "checks": {
+    "drainCases": 10,
+    "drainAssertions": 82,
+    "inertControllerCases": 3,
+    "inertControllerAssertions": 71,
+    "inertControllersSettled": 3
+  },
+  "observed": [
+    "Binary stdout and stderr retain exact bytes; actual nonzero controller exit is recorded.",
+    "Concurrent drains count and hash the complete observed streams while limiting each retained stream to 262144 bytes; overflow remains nonacceptance.",
+    "The original 50000 ms controller timeout requests termination only for the captured controller; the tested controller and both drains settled. Remote settlement remains UNKNOWN on timeout."
+  ],
+  "limitations": [
+    "Independent integrated fixtures replaced private preflight and job directory only. Actual private source, environment, trust and fresh GO checks still require root review before execution.",
+    "Controller capture completion does not imply exit zero, a CLEAR admission receipt or remote settlement.",
+    "Local tests do not qualify a target native clock, service health, capacity or production deployment."
+  ],
+  "hostExecution": false,
+  "productionReady": false,
+  "pm1Rescored": false
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "dp1p-pg-e1-local-client-evidence-v1",
+  "status": "ACCEPTED_LOCAL_SYNTHETIC_CLIENT_EVENT_EVIDENCE",
+  "acceptedAt": "2026-10-16T11:40:30.084Z",
+  "scope": "Unchanged installed pg Client JavaScript evaluated with injected streams, protocol frames and controlled scheduling. No database, real transport or server qualification.",
+  "localVersions": {
+    "pg": "8.23.0",
+    "pg-protocol": "1.16.0"
+  },
+  "actualTargetVersion": "UNKNOWN",
+  "evidence": {
+    "authorProbeSha256": "14dfbc321e4c53d6eae6d4606259f7fc27c582c29a085d499ca51dddc40ca416",
+    "authorManifestSha256": "f1c37860380359fd9949a661fdd1a70855d22e5a6bb46743fcc8400074733ff2",
+    "independentReportSha256": "2c2d67a7d7e60a31ee43028465cfb13d6f0b96e48a164ef03c1cdcbb4dae1841",
+    "independentManifestSha256": "cf060564a160c5e732d6d9c75b385fa0a7631d0272c8c4f94f8a07d3c0a7dae9",
+    "verificationSha256": "2cabf86cde68541dfe6b0ffc6569543f93aea3db66e254233fb82bd2d6f60d60",
+    "traceSha256": "fecf7458be6aa9c958b5d8ca91a4e9928b084c30b1201fe8f1cabae9b4346fa8",
+    "rootHashChecks": 102
+  },
+  "checks": {
+    "authorScenarios": 6,
+    "independentScenarios": 7,
+    "independentTraceAssertions": 19,
+    "behavioralControls": 2,
+    "evaluatedJavaScriptSources": 30,
+    "inputPins": 45,
+    "candidateArtifacts": 11,
+    "sourceAndCandidateUnchanged": true,
+    "successfulProhibitedEffects": 0,
+    "baselineDeniedEnvironmentAttempts": 7,
+    "additionalDeliberateGuardDenials": 4,
+    "pendingFakeTimers": 0,
+    "pendingFakeTicks": 0,
+    "openSyntheticStreams": 0
+  },
+  "findings": [
+    "Success follows injected ReadyForQuery; CommandComplete alone does not settle the simple query. Callback ordering is confirmed only under the exercised synthetic scheduling.",
+    "Backend error and non-pipeline query timeout reject before protocol-idle or transport-close evidence. Timeout initiates no cancellation or transport cutoff in this profile.",
+    "The cached transaction status remains stale between correlated protocol messages, including during a pending rollback.",
+    "Idle end sends Terminate and waits for injected close. Active non-pipeline end invokes destroy and still waits for close.",
+    "Active cancel opens a second synthetic connection and returns undefined without acknowledgment. Later target completion is injected by the fixture."
+  ],
+  "qualifications": [
+    "Scenario and assertion counts overlap and must not be added into unique behavioral cases.",
+    "Controls alter source only in VM memory; their subsequent fixture disposal is not evidence of production cleanup authority.",
+    "The VM uses trusted host helpers and is not an adversarial sandbox. Its wrapper-creation timeout and finite scheduler do not prove general execution containment.",
+    "Controlled scheduling is not a full native event loop. Injected close is not a real network event or server acknowledgment.",
+    "Pool, pipeline, native, authentication, TLS, paged portals, connection timeout, actual cancellation, backend termination, RD7 and target version/provenance remain untested."
+  ],
+  "authority": "D2 remains unchanged: no new post-fatal query, rollback, close, cancel or destroy. D3 server termination remains UNKNOWN. No READY, quota, host GO or production wiring acceptance.",
+  "next": "Use these client semantics when reviewing an actual-driver contract; do not infer resource or server settlement from Promise rejection or cached status.",
+  "pm1": "Unchanged."
+}

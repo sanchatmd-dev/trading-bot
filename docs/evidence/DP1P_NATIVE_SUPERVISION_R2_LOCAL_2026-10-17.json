@@ -1,0 +1,39 @@
+{
+  "schema": "dp1p-local-evidence-v1",
+  "task": "SUPERVISION-C1-R2",
+  "date": "2026-10-17",
+  "decision": "ACCEPTED_LOCAL_OWNED_CHILD_SUPERVISION",
+  "gitBase": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": {
+    "controllerSha256": "44eeae97cf365e5bc5e74a0c129fd9947a361b516ab30194971e76164226b77b",
+    "captureSha256": "2cadfb8c869ae475cdb7947c93f4a5d1249534d1c0ebe0d7183a20c4399e51d7"
+  },
+  "verification": {
+    "independentControllerVMScenarios": 12,
+    "independentLifecycleCases": 8,
+    "independentActualControlCases": 7,
+    "independentReceiptControls": 9,
+    "finalDistinctPassingCases": 36,
+    "finalLifecycleAssertionCalls": 72,
+    "actualInertChildExecutions": 9,
+    "settledInertChildren": 9,
+    "ownFixtureSyntaxFailures": 1,
+    "nativeClockObservations": 0,
+    "rootManifestMembersChecked": 54,
+    "rootReplayEEXISTChecked": true,
+    "independentManifestSha256": "9c1e20098c53c5d987fbfa27ca15d49125d6a97c7739b3e409e3f64e3eb5ef18"
+  },
+  "correction": "Controller publication and binary-hash errors now wait for the retained child settlement before returning or throwing. First failure and exception identity remain unchanged.",
+  "limits": [
+    "Only the selected local Windows Node and tested child lifecycle paths are covered.",
+    "Sequential claim-helper replay is covered; concurrent races and full native-CLI replay are not.",
+    "Injected persistence failures do not prove real disk-error behavior with an unresolved child.",
+    "No hard real-time, suspend-inclusive, remote supervisor, Linux or production qualification follows."
+  ],
+  "evidence": {
+    "candidate": ".qa-local/codex-dp1p-native-clock-supervision-r2-2026-10-17",
+    "independent": ".qa-local/codex-dp1p-native-supervision-independent-r3-2026-10-17"
+  },
+  "next": "One fresh local native self-observation may run under a separate root release in a new exclusive namespace.",
+  "rea": "PAUSED"
+}

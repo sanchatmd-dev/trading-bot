@@ -1,0 +1,48 @@
+{
+  "schema": "dp1p-host-api-identity-clk3b3-local-v1",
+  "status": "ACCEPTED_LOCAL_API_IDENTITY_TERMINAL_REPORTING",
+  "acceptedAt": "2026-10-16T16:45:47.658Z",
+  "scope": "Only new apiIdentityFactsS3 assembled with actual accepted certificate/observation/read/walker functions and original TF1/port in restricted fixtures. No collect or S3 routing.",
+  "source": {
+    "hostSha256": "1a4bd31f470a5da5fa68aa4b2272dbd7b17dfa34260b2f1903ed455a6dc4de26",
+    "portSha256": "25ed195b38c36ce65889cdd21ca76e045e39874e35edb616948c3479633761ed",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "eca800a8666c929fa936ffe7b5b68794916d608587e2fb20bcad01122a1a1872",
+    "decisionSha256": "3a707ee2c87e445c664652cb0e00698d76c7a6d56fd307c1f756292919011554"
+  },
+  "behavior": [
+    "Caller-owned shared work counters never reset; both observations, certificate files and public traversal use one supplied API window and captured certificate caps.",
+    "Exact report schema has seven writable scalar fields. Valid preflight permits cached finalization even for prelatched fatal; malformed report inputs cannot be promised finalization.",
+    "Actual cached live stop and exact window-owned stop are terminal. Cleanup uncertainty is terminal with exact primary, including falsy values, or a fixed fallback when no primary exists. Code strings do not confer terminal authority.",
+    "Ordinary identity mismatches retain legacy false/code behavior. Terminal outcome is selected before cached report finalization and exact rethrow.",
+    "Incoming cleanup failure performs no body IO or new sample. Failure reporting never samples; throwing-close elapsed time remains unknown.",
+    "Private context is non-enumerable; report and returned work contain detached scalar counters. Final checkpoint precedes successful identity publication. Existing functions, port and lib are unchanged."
+  ],
+  "author": {
+    "tests": 10,
+    "qualification": "A synthetic argv mismatch was corrected in the fixture; no implementation retry."
+  },
+  "independent": {
+    "cases": 67,
+    "caseAssertionCalls": 298,
+    "controlAssertionCalls": 9,
+    "totalAssertionCalls": 307,
+    "expectedMutationFailuresIncluded": 3,
+    "semanticControls": 3,
+    "rootHashChecks": 25,
+    "reportSha256": "e2052f19342c86416ff98e85230c53f7ecc8abf618553bf45dbacda0ad109fb7",
+    "manifestSha256": "8276c577012a1b5ea768517e2ff4ec0d20170652c02f8c0f654ec4122659b2a3",
+    "harnessCorrections": "Two incorrect sample expectations were corrected and retained: throwing close has no terminal sample, and protected input access followed two initial samples in its fixture."
+  },
+  "notRun": [
+    "Final-checkpoint deletion control, dedicated pure hash throw, malformed second-unit returns, extra-symbol report and comprehensive work variants, arbitrary backward clock.",
+    "Collect/S3/outer integration, real process/environment/filesystem/clock behavior, producer provenance, actual settlement, RD7, approved limits, broad CI and production."
+  ],
+  "limitations": [
+    "Trusted synchronous nonmutation of work/report is required. Report finalization is not guaranteed for invalid report/work inputs.",
+    "A throwing close leaves cleanup duration and closure state unknown. Conditional identity assembly does not establish actual loaded code or process/epoch provenance.",
+    "No deployment, READY, GO or rollback authority. REA remains paused."
+  ],
+  "next": "Define the narrow collect/S3 routing integration, preserving partial API reports and preventing later health/SQL work after a terminal API phase.",
+  "pm1": "S1 unchanged."
+}

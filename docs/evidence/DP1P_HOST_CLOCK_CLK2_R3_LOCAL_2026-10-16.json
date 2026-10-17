@@ -1,0 +1,58 @@
+{
+  "schema": "dp1p-host-readiness-clock-clk2-r3-local-v1",
+  "status": "ACCEPTED_LOCAL_S3_READINESS_DURATION_WIRING",
+  "acceptedAt": "2026-10-16T16:06:34.039Z",
+  "scope": "Copied S3 readiness duration path with one original injected TF1 boundary and restricted extracted-source fixtures. This is not a deployable payload.",
+  "source": {
+    "hostSha256": "b638e4601f47b81186a0bba143cc274d67a46ace574f810dc902d7377efc8024",
+    "portSha256": "629742f00e810b43ceaaebb3178d2172ff2b466e148cac5378465fd42c666396",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "12d7c320a465c875f974265cf15f23202d3090f6cf98f14f36eacfddd3fd1136",
+    "contractSha256": "59cf5db9c625da988e2ee22c1e34a934219b025b35d368ff3ee8accfa257cb51",
+    "settlementDecisionSha256": "0bb0d8b22f11daed05ba944421094872c6ca1c333c5ff9514fc105c9b0e6a927"
+  },
+  "behavior": [
+    "Atomic one-shot binding captures readyMs and aliveMs as own data before effects. Failed binding leaves all work unavailable; existing fatal wins without sampling.",
+    "One readiness window intersects its checked duration with the original normal deadline and exact optional active parent deadline. Parent changes refuse before sampling. Neither process changes nor inactivity reset the job/window deadline.",
+    "PID or process-start changes reset only stability after a fresh checkpoint; known ineligible observations clear stability. The unchanged sleep(1000) requires at least 1000ms remaining.",
+    "SQL, health and sleep await actual settlement, then checkpoint on both fulfillment and rejection. Fatal, parent and expiry precedence precedes releasing values or exact rejection values, including falsy values.",
+    "Final publication and business-failure returns checkpoint before returning. Legacy process, epoch and heartbeat predicates remain unqualified.",
+    "Actual S3 timeout, rejection, fatal and backward-clock fixtures retain partial STARTED evidence, null failure elapsed and STOP_REPORT without automatic unwind. Outer post failure preserves inner PASS as raw outcome but rejects the exact original fatal.",
+    "Legacy readiness, unwind, rbMain, postMain and lib are byte-identical to accepted CLK1. The unchanged one-argument serialized envelope fails closed before helpers and Date reads."
+  ],
+  "author": {
+    "tests": 55,
+    "originalTests": 22,
+    "newSettlementTests": 33,
+    "qualification": "The first run had three fixture failures because a default replaced explicit undefined; the fixture-only correction is preserved."
+  },
+  "independent": {
+    "coreCases": 63,
+    "coreTotalAssertionCalls": 261,
+    "expectedMutationFailuresIncluded": 4,
+    "controls": 4,
+    "compositionCases": 8,
+    "compositionAssertionCalls": 88,
+    "coreReportSha256": "17201ef10056d730afee7a31ef79d90eae4dd270cda2c15aa7de9a435eaba19e",
+    "coreManifestSha256": "4bd519d36408d5235297d5815fdcd16f8d8879374dbacc9311d89a9329d0e163",
+    "compositionReportSha256": "5a165defc5e4914ec8969d57640cd16a95d1ee764c252b8255cdc840a7ba77b4",
+    "compositionManifestSha256": "3654e129105e16d17a99bcc670ce1c08381fc1a51961614a5e14fd837741f4c5",
+    "rootHashChecks": 35
+  },
+  "history": [
+    "R1 failed-bind publication and extra final process read defects remain preserved.",
+    "R2 SQL rejection masked a latched fatal at the readiness interface. Health calls stayed zero; no outer TF1 failure or unsafe continuation was claimed.",
+    "Independent initial control survivors, a non-applied control and harness corrections remain recorded; only the final four intended semantic kills count."
+  ],
+  "notRun": [
+    "Exhaustive legacy predicate permutations, arithmetic and synchronous helper boundaries; additional elapsed/reset-window mutations.",
+    "Real clocks, producer provenance, actual SQL/HTTP/native settlement, RD7 measurements, approved operational limits, real PRELUDE/OS loader, broad CI and production wiring."
+  ],
+  "limitations": [
+    "Already-entered helper internals may continue until settlement; this is not earliest-fault containment or cancellation.",
+    "Other host duration paths and epoch/process/heartbeat association remain open. Trusted fixture boundary identity is not runtime capability authentication.",
+    "No host, production, deployment, READY, GO or rollback authority. REA remains paused."
+  ],
+  "next": "Map the remaining S3 duration dependencies and define a bounded API filesystem duration migration on this pinned successor, keeping epoch expiry and process mapping separate.",
+  "pm1": "S1 unchanged."
+}

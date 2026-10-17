@@ -1,0 +1,58 @@
+{
+  "schema": "DP1P_METADATA_ADMISSION_LINEAGE_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_ADMISSION_LINEAGE_L2_A_LOCAL",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-admission-lineage-model-2026-10-17",
+  "sourceManifestSha256": "319bbd62008c1854bc665e1c4ef16be58e9960bbee4289837d8fe9a4a64b67ee",
+  "modules": [
+    {
+      "name": "admission-lineage.mjs",
+      "sha256": "96cf15588cf71637a8e435a71ea825dd9e28f8e6926e124d805b2a21531f6b9a"
+    },
+    {
+      "name": "validate-observation.mjs",
+      "sha256": "df13db54f31766f848fe17ade54c7c6dd4749296bead88c63937506b128e771c"
+    }
+  ],
+  "extractionSha256": "61380e47a3a34ebf9234588067c8fccb896c54587b66c57159a9cc901a9537a4",
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-admission-lineage-independent-2026-10-17",
+    "manifestSha256": "be95db84354a7cbba8bacdc0e2b531315262f969196086d2950c4707972accb6",
+    "checks": 81,
+    "controlsIncluded": 1
+  },
+  "historicalCompatibility": {
+    "recordSha256": "19b3e1cfd5331afa0a6b45f661bbe4a1be690b698a92c1d878c7a4c5385762bc",
+    "passed": true,
+    "newHostCalls": 0,
+    "privateSummaryDisclosed": false
+  },
+  "rootChecks": [
+    "Reviewed the complete pure helper and independent harness, including AST-derived whole-file extraction and producer field inventories.",
+    "Verified all 25 final source/test manifest members.",
+    "Locally checked the previously authenticated historical A02 receipt/PINS/binding against the selected helper without disclosing private facts or contacting the host."
+  ],
+  "scope": [
+    "Pure exact admission producer schemas and external hash-anchor relationships.",
+    "The extracted observation validator preserves the original function, helper and ISO bytes; it never imports the native runner.",
+    "Authenticated output count/hash claims remain claims: this producer has no retained raw stdout input for this helper to rehash.",
+    "Private detached frozen output has freshnessEstablished=false and executionAuthorized=false."
+  ],
+  "limits": [
+    "Remote timestamp validation retains the original Date.parse behavior, including calendar-overflow acceptance; it is not a canonical remote clock or freshness proof. Local receipt timestamps are checked separately.",
+    "No live route/trust/file/code/GO/controller authenticity or native close/drain proof follows.",
+    "Historical A02 compatibility does not make it a fresh admission for a new job.",
+    "Exhaustive byte-cap equality, Proxy/concurrent mutation and resource-depth cases remain unqualified.",
+    "Full L2 release composition and the authenticated runner remain separate gates."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 45,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "hostExecutionAuthorized": false,
+  "productionReady": false,
+  "next": "Finish and independently verify the L2 release composition, then derive the authenticated metadata runner."
+}

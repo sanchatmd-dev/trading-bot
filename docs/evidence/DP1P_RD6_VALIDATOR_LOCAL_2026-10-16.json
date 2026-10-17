@@ -1,0 +1,42 @@
+{
+  "schema": "dp1p-rd6-validator-local-acceptance-v1",
+  "acceptedAt": "2026-10-16T10:14:55.131Z",
+  "status": "ACCEPTED_LOCAL_STATIC_CONSISTENCY_VALIDATOR",
+  "scope": "Pure bounded JSON validation and derived frozen model pins only. No actual receipt provenance, freshness, host wiring or authorization.",
+  "source": {
+    "validatorSha256": "ef74efdab6217dfa4b34f0875d5475cd0306b8b71d6906429dc912a575790e49",
+    "validatorBytes": 10228,
+    "manifestSha256": "60c973857c678afe5d119965762ba10c5e07dbed4a7d19cfae383ec035c0c53b",
+    "contractSha256": "f64337ac9721840defb9d7b9a2e39fe57af0d35bd9914c8d9a97ca415ff17600"
+  },
+  "behavior": [
+    "Strict bounded JSON rejects duplicate decoded keys, prototype keys, nonfinite values, unknown fields and malformed schemas.",
+    "Receipt and certificate canonical digests must match independently trusted context; normalized role bindings, source/context/evidence identities and API process identity must agree.",
+    "OLD and NEW keep one API mapping; worker configured and resolved paths differ. Shared components cannot contain conflicting identity metadata.",
+    "Success derives detached recursively frozen pins; refusal contains no partial pins or raw input fragments."
+  ],
+  "verification": {
+    "authorTests": 77,
+    "authorMutationsDetected": 10,
+    "independentChecks": 33,
+    "independentBehaviorGroups": 24,
+    "independentMutationControls": 8,
+    "independentCapabilityChecks": 1,
+    "independentEffectCalls": 0,
+    "inputFilesUnchanged": 15,
+    "rootManifestFilesVerified": 9,
+    "rootReadSourceContractAndIndependentTests": true,
+    "reportSha256": "ae623cef88de14151bc82d80c0c3b894725d23ddb0a20e27734833c79f775fda",
+    "resultsSha256": "a6513950fb98e4e43da57b9da9ac4c6607faf1ec031401c527bf18bc4047bd4b",
+    "testSourceSha256": "ec3d263f9207f35fb0dfb581b113b864f2a4fff379ebe24c02efb923ca06f6d5",
+    "evidenceHashesSha256": "96bd1a236cc66c4bd6dc124c551080bce06966cb72271db1298830b6010fd3fa"
+  },
+  "limitations": [
+    "Controlling both inputs permits fabricated agreement. This validator does not authenticate the caller or evidence origin.",
+    "Actual OLD/NEW certificates, independently reviewed receipt/context, NEW filesystem identity, API identity and freshness remain operational RD6 gates.",
+    "Directory size and times are informational; symlink metadata remains invariant.",
+    "No real receipts, private selectors, host, PostgreSQL, payload reconstruction, RD7 measurement, deployment or production wiring was tested.",
+    "LOCAL_VALIDATED is not readiness or GO. PM-1 S1 is unchanged."
+  ],
+  "next": "Use only after root establishes a trusted context from separately reviewed evidence; actual wiring and RD7 measurements retain their gates."
+}

@@ -1,0 +1,94 @@
+{
+  "schema": "DP1P_METADATA_OBSERVER_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_O1_R3_LOCAL_COMPOSITION_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-observer-compose-r3-2026-10-17",
+  "modules": [
+    {
+      "name": "config.mjs",
+      "sha256": "4bbf39ba05267479b2e1a708f19b958a328301c995a7382a39af6c0ef02a9848"
+    },
+    {
+      "name": "version-data.mjs",
+      "sha256": "dfb5dada7c53f241f5c1fd56a6363de096f0ef595434ea2669cb8204e3d8132a"
+    },
+    {
+      "name": "witness/boundary.mjs",
+      "sha256": "46e69379db184950a69191955463d9232e81e54e67fb52708a4c2b2bb985ea1a"
+    },
+    {
+      "name": "witness/witness.mjs",
+      "sha256": "6f28b8c8a068c6678857cdc4cf2c8a8abd0e506d756dbf245a2dc4fb7cea8a93"
+    },
+    {
+      "name": "capture/plan.mjs",
+      "sha256": "e5f135141a8f1bdb6cc20247778f8b8822134eeb08110aeb6688afdc8c24af36"
+    },
+    {
+      "name": "capture/capture.mjs",
+      "sha256": "1a5b2a500ee288e1a92080ef8288ff731a14df8bd7762a20efe76a4479f57e44"
+    },
+    {
+      "name": "capture/validate.mjs",
+      "sha256": "a7037f2c37b1ab45673fe4deb2dfdd23ce1c4a4941f94c73e67947ef0e875cb6"
+    },
+    {
+      "name": "observe-metadata.mjs",
+      "sha256": "d5e5fc95c30578431185b7ffc03d2c09e368942f68fd491e3c25336b01d5b29a"
+    },
+    {
+      "name": "validate-observer.mjs",
+      "sha256": "6955db2c6eb6de905576e70f512e6ecfbba9ac9a9309efce6d971b767b10b904"
+    }
+  ],
+  "sourceManifestSha256": "bf1027b43db1807dec96e760fed8a5f5e38b68d8e21404090e18a6dfa38d61f8",
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-observer-independent-r3-2026-10-17",
+    "manifestSha256": "030a191320747723294faa8e1d559fb5e130ec6159b8c9060d364c04a7a52286",
+    "checks": 74,
+    "dependencyChecksIncluded": 7,
+    "finalizationControlIncluded": 1,
+    "sourceSnapshotPairs": 15
+  },
+  "rootChecks": [
+    "Reviewed final observer, outer validator, independent report and finalization control.",
+    "Verified 38 manifest members across source and independent packets.",
+    "Replayed 55 author groups with zero native IO or actual children."
+  ],
+  "scope": [
+    "One original boundary across PRE, canonical identity, before witnesses, four sequential metadata captures, after witnesses, POST and finalization.",
+    "Own nonenumerable health data is explicitly normalized; strict outer data survives detached copy and JSON roundtrip.",
+    "Final boundary read occurs after candidate validation, cloning and roundtrip validation.",
+    "Failure retains available partial evidence and suppresses later launches and POST.",
+    "Full private capture records are retained once; public output uses an explicit allowlist."
+  ],
+  "byteWitness": {
+    "rawBytes": 32768,
+    "wholeCandidateUtf8Bytes": 50232,
+    "privateCandidateCapBytes": 65536,
+    "meaning": "One valid synthetic specimen; not a proof for every layout or exact cap saturation."
+  },
+  "history": [
+    "r1 canonical undefined equality false success remains preserved.",
+    "r2 nonenumerable health data loss remains preserved.",
+    "Debugger reran a historical evidence-writing harness contrary to ownership; all 19 historical manifest members independently remain byte-identical."
+  ],
+  "limits": [
+    "Synthetic trusted witness seam establishes orchestration only; actual target hashes and native behavior are not qualified.",
+    "TERM/KILL composition, full runner, native binding, transport and host execution were not tested by this packet.",
+    "Prerequisite and root-decision hash authentication remains a caller gate.",
+    "Exact 65536-byte valid saturation, exhaustive Proxy/reentrancy and plain-data traversal limits were not tested.",
+    "Pending persistence blocks the next launch; observer does not expose the inner capture state and has no hard cancellation guarantee."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 60,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "hostExecutionAuthorized": false,
+  "activeGo": null,
+  "supervisorQualification": "UNKNOWN",
+  "productionReady": false,
+  "next": "Review the bounded native-binding contract, then implement and independently verify binding/source assembly and runner prerequisites before a metadata host GO."
+}

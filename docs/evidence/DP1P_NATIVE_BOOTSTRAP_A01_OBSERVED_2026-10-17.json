@@ -1,0 +1,72 @@
+{
+  "schema": "dp1p-operation-review-v1",
+  "approvedBy": "root",
+  "decision": "ACCEPTED_BOUNDED_BOOTSTRAP_OBSERVATION",
+  "jobId": "DP1P-D1-BOOTSTRAP-NATIVE-20261017-A01",
+  "receiptSha256": "cd349eb71dfd69cb6ba340ffbfefa56824b603cd721b4ab9a5646293a5ccb917",
+  "pinsSha256": "99db4e4feb1c7c17f904d85ff0120083b182d20d6688670aff8b653eead7d411",
+  "goSha256": "ce4951390feba77e210ff7d6566a602c335193ff26049d449d3bbc7cd8418860",
+  "executionManifestSha256": "b628af606dcb48f315558145acc4d792ead9185ef4400ee817307241473e9c4f",
+  "manifestMembersChecked": 4,
+  "metadata": {
+    "nodeVersion": "v24.21.0",
+    "uvVersion": "1.52.1",
+    "platform": "linux",
+    "arch": "x64",
+    "executableMatches": true
+  },
+  "binaries": [
+    {
+      "label": "NODE",
+      "bytes": 126595440,
+      "beforeSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
+      "afterSha256": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c"
+    },
+    {
+      "label": "ENV",
+      "bytes": 48072,
+      "beforeSha256": "886e5fa8be716b03eeda48856e0f04493f2969fc148fb7812594ffac647fa050",
+      "afterSha256": "886e5fa8be716b03eeda48856e0f04493f2969fc148fb7812594ffac647fa050"
+    },
+    {
+      "label": "TIMEOUT",
+      "bytes": 39880,
+      "beforeSha256": "12690a043dfd555a6c14ccc1564f5649c18f1762c0d6ff66729948130898ec52",
+      "afterSha256": "12690a043dfd555a6c14ccc1564f5649c18f1762c0d6ff66729948130898ec52"
+    }
+  ],
+  "pre": {
+    "load1": "0.00",
+    "memAvailableKiB": "6929940",
+    "loadSha256": "7bb26117f4853a1b173c79aa6e7fd75c5146d793169f5dab2d9b6588cadf6365",
+    "memSha256": "d39071bf26772d3d0c5f8422e41a80a683f77d82a827f9b0714ecf066da58f8b"
+  },
+  "post": {
+    "load1": "0.00",
+    "memAvailableKiB": "6902472",
+    "loadSha256": "95e7169a567c4f8116d0fd925999ddf7a4b6dbb41c083377a1ea197949ba8c71",
+    "memSha256": "85f836e04550f328ce3be43c2351b2a769205d2f6748c17c54e1283383b92621"
+  },
+  "controllerActuallyClosed": true,
+  "controllerExitCode": 0,
+  "drainsSettled": true,
+  "controllerElapsedMs": 3263,
+  "runnerElapsedMs": 3132,
+  "remoteStdoutBytes": 2407,
+  "stderrBytes": 0,
+  "binaryIdentity": "OBSERVED_FILE_BYTES_ONLY",
+  "bootstrapWrapperIdentity": "UNQUALIFIED_EXISTING_TRANSPORT",
+  "supervisorQualification": "UNKNOWN",
+  "serviceHealth": "NOT_ASSESSED",
+  "nativeProbeExecuted": false,
+  "productionReady": false,
+  "limitations": [
+    "The selected file bytes and canonical executable match were observed; loaded-image/build-source attestation is not established.",
+    "PRE and POST health are bounded point samples for this experiment, not continuing admission, host capacity or broad service health.",
+    "PATH-resolved bootstrap wrappers remain unqualified. Exact absolute ENV/TIMEOUT version and owned-child behavior require a separate reviewed qualification.",
+    "No target native clock probe, accuracy/resolution/suspend qualification, S3 deployment or production effect follows."
+  ],
+  "next": "Design and independently verify a bounded absolute supervisor qualification before a fresh target native clock probe.",
+  "date": "2026-10-17",
+  "pm1Rescored": false
+}

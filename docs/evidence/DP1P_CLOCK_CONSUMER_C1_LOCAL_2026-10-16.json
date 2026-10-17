@@ -1,0 +1,64 @@
+{
+  "schema": "dp1p-clock-consumer-c1-local-acceptance-v1",
+  "status": "ACCEPTED_LOCAL_PROCESS_DIAGNOSTIC",
+  "acceptedAt": "2026-10-16T14:47:28.461Z",
+  "scope": "Pure post-observation process diagnostic using unchanged sameProcess, plus independently tested integration after the actual packaged outer boundary Promise. No runtime clock coupling or target authenticity.",
+  "source": {
+    "consumerSha256": "5cce475898ec6429aa4d17d008607d673da49fa9e145708ff3281498e429de0f",
+    "manifestSha256": "9fbb0da56fc96bd356fe7cabb45d3bfbca33458e9ea9ff7762099f5f5148b394",
+    "clockSha256": "630ba536611482b348c237e56a683b53b9b68ef12664959a573b7ad08609346b",
+    "graphManifestSha256": "b16ca739d7f677e5232f5cdbde9529fa9d9fe79810acf012f5a88bcca3c1831b"
+  },
+  "contract": {
+    "rootDecisionSha256": "33fad9d36fab7ffc717ea0c05a1af93f1892a1f95bb1d8da39b31bdcb63573fe",
+    "precedenceClarificationSha256": "defdc644690240be746a9ab54f62f8f9f96a6b143e5379c6a41a189e678f6ea2",
+    "outerCompletionSha256": "a17fd7711f29303ac778ef2fe1f1b01b3fdf1d11a5c7bec7fc6afcf22c8c6569"
+  },
+  "author": {
+    "tests": 77,
+    "controlsIncluded": 3,
+    "rootRerun": false
+  },
+  "independent": {
+    "directTests": 283,
+    "directAssertions": 2042,
+    "directControlBaselines": 2,
+    "directSemanticKills": 2,
+    "graphAssertions": 287,
+    "graphGroups": 10,
+    "successfulDiagnoses": 6,
+    "returnedFailuresBypassed": 5,
+    "originalRejectionsPreserved": 6,
+    "parentPost": {
+      "baseline": "PASS; one diagnostic",
+      "adverse": "PASS; inner OBSERVED_FACTS, outer CLOCK_THROW, original fatal preserved, zero diagnostics",
+      "assertionCalls": 19,
+      "counts": "Includes one deliberately failing control assertion; not nineteen positive passes.",
+      "translationControl": "SEMANTIC_KILL"
+    },
+    "counts": "Tests, assertions, groups and repeated graph controls overlap. Scopes are reported separately and must not be summed as independent scenarios.",
+    "rootHashChecks": 60,
+    "reportSha256": "10c13e2fc1f475e0e0c21e61c6feee6a42e63724e5ff0300bba223e970616461",
+    "directResultsSha256": "729c2c626f1f85af1e4a01706632cd2115d0e1c2bd31231d7532ab110969ed94",
+    "graphResultsSha256": "2439213b5d8fe23487de18b2952b6cdad4198b8aee1f3d91d94ca5f29064c217",
+    "manifestSha256": "ec8e3e54871c3e67eb51e6c10feed3ade0ca402eb02407a4f1e339372467a483",
+    "parentPostReportSha256": "e2d82bf99b9ffdef0ac73e07a6660712d9bee6df8b6e022c136565be292f3c4a",
+    "parentPostResultsSha256": "d37f61ac52920690cabc189503df07a6b6a0aaf8a8514681645d14b397611242",
+    "parentPostManifestSha256": "ca122f578cd1bfb283a61ba6eba7e943d55dd43930c84be14939e495942ae290"
+  },
+  "behavior": [
+    "Validates complete successful graph facts and explicit external synthetic process premises using all own data descriptors. Hidden known fields survive; accessors and extra keys reject without getter invocation.",
+    "SCHEMA precedes complete-record SELF_BINDING, then missing premises. Exact observed PID and raw ticks must bind before sameProcess executes.",
+    "The 256-digit comparator limit is diagnostic-only; original graph results remain unchanged.",
+    "Every output is fixed, detached and frozen with targetProvenance UNKNOWN, including SAME.",
+    "Integration waits for the outer parent post-check. Original returned failures and exact rejection identity remain separate; diagnostics add no clock samples, admissions or driver calls."
+  ],
+  "limitations": [
+    "Actual target/boot/namespace association and provenance remain unproved. Conditional SAME is not authenticated identity.",
+    "Consumer has no live-boundary awareness and cannot detect later faults. Integration wrapper behavior is independently tested in a fixture, not added to product code.",
+    "Independent hidden-spread consumer mutation, parent-post overrun alternative, exhaustive combinations and native-loader/broad/CI suites were not run.",
+    "No host, real clocks, network, database, private inputs, deployment, READY, GO or production acceptance."
+  ],
+  "next": "Define a separate conditional heartbeat-interval diagnostic contract. Do not invent precision, clock correlation, writer ownership or approved freshness limits from existing graph scalars.",
+  "pm1": "S1 unchanged."
+}

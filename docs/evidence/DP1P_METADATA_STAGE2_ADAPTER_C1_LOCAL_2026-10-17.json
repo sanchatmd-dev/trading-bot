@@ -1,0 +1,81 @@
+{
+  "schema": "DP1P_METADATA_STAGE2_ADAPTER_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_STAGE2_ADAPTER_C1_LOCAL_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-stage2-adapter-model-2026-10-17/",
+    "file": "finalize-stage2.mjs",
+    "sha256": "e0c70e735f462295e80880aa9683a17bffb1b18aa7c7203f8a9240df953bce34"
+  },
+  "independent": [
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-stage2-adapter-independent-2026-10-17/",
+      "manifestSha256": "f55a2cd964a2864934a2c93be06433f6305acf775c0c4fdf8c23a81a7bb557a7",
+      "members": 52,
+      "cases": 5,
+      "controls": 0
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-stage2-adapter-independent-r2-2026-10-17/",
+      "manifestSha256": "b111a963e491fe01d353edfe529f163327728bf7fca432881adbb7bb8b81f3e2",
+      "members": 54,
+      "cases": 18,
+      "controls": 1
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-stage2-adapter-independent-r3-2026-10-17/",
+      "manifestSha256": "cbeeb7677893dcb8d6fccb21c29ff62f90f375672d306f6431feb02cda9df198",
+      "members": 52,
+      "cases": 11,
+      "controls": 0
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-stage2-adapter-windows-2026-10-17/",
+      "manifestSha256": "6d2dee075ba379c8bf1821ca6ec0bd0868fde3928e52f325a66f25ae90fd415b",
+      "members": 41,
+      "cases": 1,
+      "controls": 0
+    }
+  ],
+  "rootChecks": {
+    "fullSourceAndHarnessReview": true,
+    "exactR4ReaderAndTableSlices": 8,
+    "verifiedIndependentManifestMembers": 199,
+    "originalPackageFiles": 41,
+    "copiedPackageFiles": 123,
+    "staticBuiltinImports": 5,
+    "fixedDynamicImports": 1
+  },
+  "scope": {
+    "vmCases": 34,
+    "controls": 1,
+    "actualWindowsSyntheticCases": 1,
+    "actualWindowsFinalizeCalls": 1,
+    "actualWindowsElapsedMs": 1659
+  },
+  "outcomes": [
+    "The fixed finalizer and 41-file dependency closure are authenticated before non-builtin evaluation.",
+    "The actual pure builder validates root authorization, successful stage-one completion, current admission and source/route lineage.",
+    "Six exclusive files preserve exact input bytes and PINS; the final layout contains sixteen files and an empty controller directory.",
+    "Write, sync, close, readback, clock and source/trust failures retain partial evidence and report STOP with completed-write counts.",
+    "A control removing the final recheck falsely finalizes changed package bytes; the original refuses.",
+    "Whole CLI pending publication stays nonzero; success followed by a stream error remains nonzero after a repeated callback."
+  ],
+  "limits": [
+    "One actual Windows profile uses synthetic history, admission, root approval and stage-one facts; it is not actual private preparation or host evidence.",
+    "The ten-second budget is cooperative and cannot preempt blocking filesystem calls.",
+    "Point checks do not prove race immunity; a retained PINS or six files alone never proves successful finalization.",
+    "Focused tests do not exhaust every path alias, profile, stdout error, filesystem race or malformed argument.",
+    "Actual root observation, fresh admission and separately issued GO remain required before host execution."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 19,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "actualSshInvocationsThisSlice": 0,
+  "productionReady": false,
+  "next": "Prepare and independently review actual private stage-one inputs, then obtain fresh admission and a separate bounded metadata GO."
+}

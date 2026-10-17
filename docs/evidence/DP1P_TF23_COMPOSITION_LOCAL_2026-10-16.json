@@ -1,0 +1,49 @@
+{
+  "schema": "dp1p-tf23-composition-local-acceptance-v1",
+  "acceptedAt": "2026-10-16T11:18:18.177Z",
+  "scope": "Local synthetic model evidence only. No host wiring, approved limits, actual database or transport qualification.",
+  "verification": {
+    "independentTf2Cases": 230,
+    "independentCompositionCases": 40,
+    "independentTargetedCases": 22,
+    "totalPassed": 292,
+    "totalFailed": 0,
+    "forbiddenVmEffects": 0,
+    "uniquePinsRechecked": 64,
+    "reportSha256": "a5b732f527988a0d3bc77a1be6f5c56d2ffbe9fe95c2598e5eb1fe6bc04485c4",
+    "tf2ResultsSha256": "a3c3c72162911f3e48aa5924f9fa0fe75eac398571e4d7e89696c6c207709153",
+    "compositionResultsSha256": "384574b82a565bdbc321eb757bf58f1acd680df79514f8fc91da1f053e2acf16",
+    "targetedResultsSha256": "1a3eac85a5ffa78f9083e4e347b133d00619fc5063ac2de0eb3c67bd707a5bef",
+    "controlsSha256": "d41860a4203b9178040edbfdfe2afba307f0e54dae285e2af54f7395d90fe34f",
+    "executionManifestSha256": "86a1c7819587b13efda62103426b7ba5eb9bef761208a6aa89548c6e35cbe64f"
+  },
+  "limitations": [
+    "Counts include controls and historical failure reproduction; they are not exhaustive coverage.",
+    "Ordinary native Promises and trusted inert adapters are required. Arbitrary-object safety and nonsettling containment are unproved.",
+    "Production recovery remains a separate rollback job under owner authority; model recovery routes do not grant production authority.",
+    "Actual RD6 provenance, RD7 measurements, approved limits, clock mapping, SQL/HTTP lifecycle, native transport and payload compatibility remain open. PM-1 S1 is unchanged."
+  ],
+  "status": "ACCEPTED_LOCAL_TF23_COMPOSITION_R2_WITH_TF2_R3",
+  "source": {
+    "compositionProbeSha256": "0c5df4467d8fb47e74188a4f762eb25a3209aa9ef9304190fff54f9c1d752bb4",
+    "fixturePolicySha256": "7f39824d35721c0958752a30b6ed590bf4483929b66277372b9d865b0799d2c2",
+    "authorManifestSha256": "bd77da033f0f54cb3e4535062f31a09f83d4e8a600877901b29f332feb218a32",
+    "verifiedPlacementSha256": "3bd9b042dc6c186bf2204058b6b1dd912cdafc492f7552ba8bf684aef4ee3682"
+  },
+  "behavior": [
+    "Captures the exact active readiness parent ticket before await; child reads share its deadline without nested admission or extra guard credits.",
+    "Returns observation facts or failure only. A separate explicit synthetic fixture policy supplies test readiness; no policy means failure.",
+    "Actual late or rejected child outcomes are retained before cutoff. Pending native Promises reach actual settlement, and first fatal suppresses later callbacks.",
+    "NORMAL, POST and RECOVERY synthetic identities and accounting match independent noncomposed baselines. Exact parent shortage refuses before the adapter; equality admits the full cap. Partial clipping of an admitted fixed-cap parent is unreachable under TF1 admission checks."
+  ],
+  "authorChecks": {
+    "mainCases": 25,
+    "controls": 3
+  },
+  "independentControls": {
+    "behavioral": 2,
+    "identityContractRefusal": 1
+  },
+  "history": "Original 40-case composition review exposed an inherited TF2 diagnostic gap. TF2 r3 repairs it; all 40 cases and both behavioral controls were rerun against r3. Prior author and independent failure evidence remains preserved.",
+  "next": "Continue the reviewed SQL settlement contract with a pure fake driver. This acceptance does not establish real driver cleanup, server settlement or host readiness."
+}

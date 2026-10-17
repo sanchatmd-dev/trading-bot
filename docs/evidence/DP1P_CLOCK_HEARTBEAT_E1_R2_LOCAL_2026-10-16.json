@@ -1,0 +1,60 @@
+{
+  "schema": "dp1p-clock-heartbeat-e1-local-v1",
+  "status": "ACCEPTED_LOCAL_CONDITIONAL_HEARTBEAT_DIAGNOSTIC",
+  "acceptedAt": "2026-10-16T15:05:40.116Z",
+  "scope": "Pure diagnostic at an explicitly supplied DB sample, integrated with the actual packaged graph only in isolated fixtures.",
+  "source": {
+    "consumerSha256": "5f22fd8cc9ed868758f638e330db3f814ae4943ff016bf33def611562193e2d1",
+    "manifestSha256": "e37cafb4247e6829ea5ff5ed292aa505f9dde038e59cf89afa8c64464a5855af",
+    "clockSha256": "630ba536611482b348c237e56a683b53b9b68ef12664959a573b7ad08609346b",
+    "graphManifestSha256": "b16ca739d7f677e5232f5cdbde9529fa9d9fe79810acf012f5a88bcca3c1831b"
+  },
+  "history": {
+    "r1": "FAILED: Symbol endpoints threw TypeError instead of INVALID/SCHEMA. Root reproduced four positions; independent r1 reproduction covered heartbeat lower. Original evidence remains unchanged.",
+    "r2": "Only two Number.isSafeInteger guards added before endpoint ordering.",
+    "author": "136 passing tests; includes 54 new endpoint cases and three inherited controls. One initial test expectation corrected.",
+    "independentHarness": "Initial graph and parent-post fixture used process premises; corrected only fixture to heartbeat schema. Initial failures retained and not counted as candidate defects or control kills."
+  },
+  "independent": {
+    "directTests": 316,
+    "directAssertions": 3225,
+    "consumerControls": 3,
+    "consumerSemanticKills": 3,
+    "graphAssertions": 287,
+    "graphGroups": 10,
+    "successDiagnoses": 6,
+    "failureBypasses": 5,
+    "exactRejections": 6,
+    "inheritedGraphControls": 2,
+    "hiddenIdentityAssertionsWithoutConsumer": 22,
+    "parentPost": {
+      "baselineCalls": 1,
+      "faultCalls": 0,
+      "code": "CLOCK_THROW",
+      "originalFatalIdentity": true,
+      "assertionCalls": 19,
+      "includesExpectedControlFailure": true,
+      "translationControl": "SEMANTIC_KILL"
+    },
+    "counts": "Overlapping tests, assertions and controls are separate scopes; do not sum as independent scenarios.",
+    "rootHashChecks": 62,
+    "reportSha256": "475c6f90f81ece428f1d3f721ef1526e1cb6435299cc41ff14447b743e1f8013",
+    "manifestSha256": "83e41074dc5e36285ebd35bebde6aec18bf63851b056fc6d28ec7419ea040b8b",
+    "directResultsSha256": "22faff236aa59a747ca6a136cbc740d4991e84218bca1426aba2084241a0c6a3",
+    "graphResultsSha256": "2439213b5d8fe23487de18b2952b6cdad4198b8aee1f3d91d94ca5f29064c217",
+    "parentPostResultsSha256": "e704a52bbf33d5304b28df8df7d2ca340b64273e491b317a8fd2e0978c9548c7"
+  },
+  "behavior": [
+    "Validates all own data descriptors and complete graph facts before comparison; missing and malformed premises remain distinct.",
+    "Requires named raw scalar equality and interval containment before unchanged freshness comparison; never invents or narrows intervals.",
+    "FRESH retains the full interval and applies only at the supplied DB sample. Target provenance, clock provenance, writer ownership and cap approval remain UNKNOWN.",
+    "Integration waits for the outer parent post-check, bypasses returned failures and preserves exact rejection identity without additional IO, admissions or samples."
+  ],
+  "notRun": [
+    "Default-interval and early-diagnosis source mutations; exhaustive combinations; proxies or modified built-ins.",
+    "Native loader, broad suites and CI.",
+    "Real clock precision, mapping, provenance, writer association, operational caps, RD7 and production."
+  ],
+  "next": "Define the bounded monotonic clock-to-TF1 consumer contract, preserving original origin/deadline and first fatal identity. No host operation or production wiring is authorized.",
+  "pm1": "S1 unchanged."
+}

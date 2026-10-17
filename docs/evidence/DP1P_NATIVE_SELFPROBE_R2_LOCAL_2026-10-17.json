@@ -1,0 +1,35 @@
+{
+  "schema": "dp1p-native-observation-evidence-v1",
+  "task": "NATIVE-CLOCK-P1-R2-LOCAL",
+  "date": "2026-10-17",
+  "decision": "ACCEPTED_ONE_LOCAL_NATIVE_OBSERVATION",
+  "platform": "win32",
+  "architecture": "x64",
+  "nodeVersion": "v24.19.0",
+  "uvVersion": "1.52.1",
+  "binarySha256": "3602f2bb1a10f2cbab4c36886218a33c1ab3db87290e73b033c46c77147d0237",
+  "sourceSha256": "edf12e547c713ee69a64129528c71273c172c96fb4b1d1bc53db4f1e3a5c31a7",
+  "sourceBytes": 3543,
+  "stdoutBytes": 8764,
+  "stderrBytes": 0,
+  "exitCode": 0,
+  "actualCloseObserved": true,
+  "terminationRequested": false,
+  "clockReads": 69,
+  "timers": 4,
+  "samples": 68,
+  "status": "OBSERVED",
+  "code": "CAPTURE_COMPLETE",
+  "ledgerChallengeCount": 1,
+  "rootStrictReceiptRevalidation": true,
+  "evidence": {
+    "directory": ".qa-local/codex-dp1p-native-selfprobe-r2-a01-2026-10-17",
+    "manifestSha256": "e7d54a6d2bbff7ef5acff2fd691272aa7f7b08048873c121637226677eca358e"
+  },
+  "limits": [
+    "One local Windows observation, not target Linux or production evidence.",
+    "Accuracy, resolution, suspend behavior, binary-to-source provenance and target authenticity remain unqualified.",
+    "No original S3 capture or cross-process continuity is established."
+  ],
+  "rea": "PAUSED"
+}

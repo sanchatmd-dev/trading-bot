@@ -1,0 +1,58 @@
+{
+  "schema": "dp1p-s3-inject1-local-v1",
+  "status": "ACCEPTED_SYNTHETIC_FULL_MODULE_CALLER_ONLY",
+  "acceptedAt": "2026-10-16T18:31:36.511Z",
+  "callerSha256": "25ff0ed6891b20dcdf57e23b1626bc7d6e2eea8a6c252eb787b5af8485da7760",
+  "loaderSha256": "2b16eae46c064f3db9765c06080be8e7efd9b9d3b70381e9672191d581197a80",
+  "selectedSources": [
+    {
+      "identity": "selected:host",
+      "sha256": "3d7339e79d48b5cee324a3619583b3cc43fa17e39a141d2832a49ad55903a22a"
+    },
+    {
+      "identity": "selected:port",
+      "sha256": "8be36ddaba285468d868cecc1c13a208ef118ee83fe4c4011165128b7a0ba1ab"
+    },
+    {
+      "identity": "selected:boundary",
+      "sha256": "b3dbda6adc98f5bbc4a97e010d6bfc443951db301365a96e85f9d3bcd68292e8"
+    },
+    {
+      "identity": "fixture:m1",
+      "sha256": "f76cb62450f7ea6aa290296bad3293152373783982bdc3f72d85872ffc9455cb"
+    },
+    {
+      "identity": "accepted:clock",
+      "sha256": "630ba536611482b348c237e56a683b53b9b68ef12664959a573b7ad08609346b"
+    }
+  ],
+  "scope": "One fixture M1 original boundary and duration port; exact selected full modules linked without source rewriting or host-function substitution; actual outer invokeAsync awaited.",
+  "checks": {
+    "independentCases": 7,
+    "harnessAssertionCalls": 70,
+    "expectedControlFailuresIncluded": 1,
+    "callerBypassControlsKilled": 1,
+    "separateFiniteArrayProbes": 10,
+    "rootHashChecks": 52,
+    "reportSha256": "c9c02cc3f1c25efd9cc3f27e307f93f1eda83bb60ebe5af25f2fcbb4a86dd273",
+    "manifestSha256": "dd404dbb138062540af0bb648c7083549915decf68d56ffe1bf4ec7bc8a4d1a5",
+    "capabilitiesSha256": "da39ae27e039fac4a0a73aef9f33ed0162466f374b5abc4bb313f04af0ab25d1",
+    "completeFixtureManifestSha256": "f5cc7ec2c26ac3885286dc144f41eefe3b3c09a18bb7bcbe6d2b4dcea09aad38"
+  },
+  "observations": [
+    "Full synthetic S3_PASS with API SUCCEEDED and STARTED_READY; raw outcome identity and original deadlines retained.",
+    "For this fixture only, 133 finite samples complete; 132 retain inner S3_PASS then outer CLOCK_THROW. Final typed mismatch retains inner PASS then exact CLOCK_INVALID.",
+    "Early domain, backward and exhausted faults suppress create/publish/reload/stop/start; repeated calls preserve the original fatal and capability trace.",
+    "Caller-only outer-post bypass control returns inner PASS incorrectly and is detected. Fixed resolver rejects unmapped imports; representative unknown fixture calls deny."
+  ],
+  "limitations": [
+    "Fixed synthetic hash/epoch, nonfiring timers, ASCII Bytes and inert SQL/HTTP/systemctl capabilities establish conditional control flow only. No native settlement, timeout or provenance proof.",
+    "Finite sample count is specific to this fixture; it is not a runtime bound or general S3 requirement. One-boundary factory counts are structural checks, not new instrumentation.",
+    "Node VM is not an arbitrary-code security boundary. Full lib and PRELUDE are not loaded; no native producer, loader, serializer or transport qualification.",
+    "Producer remains UNRESOLVED; applicable S3 input cap remains CAP_NOT_ASSESSED. Historical D4 cap does not apply by inference.",
+    "Author four linkage cases and debugger one full positive are separate prior evidence; independent seven cases do not imply broader suites or CI passed."
+  ],
+  "next": "Review remaining producer/capture and native prerequisites and choose one bounded local contract without inventing policy or operational authority.",
+  "rea": "PAUSED",
+  "pm1": "S1 unchanged."
+}

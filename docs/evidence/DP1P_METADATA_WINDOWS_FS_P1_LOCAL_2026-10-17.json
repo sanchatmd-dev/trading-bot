@@ -1,0 +1,44 @@
+{
+  "schema": "DP1P_METADATA_WINDOWS_FS_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_WINDOWS_FS_P1_LOCAL_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "packageManifestSha256": "2e6a5910f5c023ee2b0168e4f22474d765feea752a3a4e2c75014afca7d3f92d",
+  "independent": [
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-windows-fs-p1-2026-10-17/",
+      "manifestSha256": "d3ef598897a75481adf6f83713056479c295a6d96b975faab9a7e6bf1ef10723",
+      "cases": 1
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-windows-fs-completion-p1-2026-10-17/",
+      "manifestSha256": "3d8d70837d7579504cea3b253c3997196a0da5d94781914ed88f0ebf39678d26",
+      "cases": 2
+    }
+  ],
+  "rootChecks": [
+    "Verified247 manifest members and reviewed both harnesses",
+    "Compared123 selected copies with accepted P1:122 exact and one exact intentional appended launcher comment",
+    "Confirmed native spawn blocked before runner module evaluation and zero fallback spawn observed"
+  ],
+  "outcomes": [
+    "Real Windows filesystem and path checks reached injected transport once per case",
+    "Malformed raw response retained claim, snapshots, raw files and refusal receipt",
+    "Conditional COMPLETE passed real post-pin reads and wrote the receipt",
+    "Postcontact launcher drift returned STOP/POST_PIN_DRIFT while preserving captured candidate and raw bytes"
+  ],
+  "limits": [
+    "Transport, clocks, remote metadata and selected-binary witnesses are synthetic; no host or native target success",
+    "One local filesystem profile does not prove universal Windows aliases, short names, reparse providers or race immunity",
+    "Actual CLI, controller, current private inputs and release authorization are separate gates",
+    "No retry or claim reset occurred; the drift copy remains changed only within its evidence directory"
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 28,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Prepare and independently review a local stage-one materializer for immutable source/config/bootstrap copies before new admission."
+}

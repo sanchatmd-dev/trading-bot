@@ -1,0 +1,61 @@
+{
+  "schema": "dp1p-serialize-w1-local-v1",
+  "status": "ACCEPTED_SERIALIZER_WITNESS_WIRING_INCOMPLETE",
+  "acceptedAt": "2026-10-16T18:41:46.960Z",
+  "scope": "Exact selected native ESM library imports after complete top-level review; serializer calls only. Emitted payload parsed, never executed, evaluated or linked.",
+  "selectedHostSha256": "3d7339e79d48b5cee324a3619583b3cc43fa17e39a141d2832a49ad55903a22a",
+  "selectedLibSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+  "specimens": [
+    {
+      "name": "payload-ascii.txt",
+      "utf8Bytes": 90024,
+      "rawSha256": "8b56d7c961890215465aea9a7d420a5e68705e0a048c5d16ec44d58eb0794599",
+      "normalizedSha256": "18d923650a125f1f045ebc0e5d3b7ff210179bb2b99bd03c5db84db8183da342",
+      "functionCount": 85,
+      "s3Arguments": [
+        "B"
+      ]
+    },
+    {
+      "name": "payload-unicode.txt",
+      "utf8Bytes": 90051,
+      "rawSha256": "e33f6dbf3070e2dd5f3e7e3215a5cb873937e1a2ae74781b27cf0eccdcb86c3f",
+      "normalizedSha256": "18d923650a125f1f045ebc0e5d3b7ff210179bb2b99bd03c5db84db8183da342",
+      "functionCount": 85,
+      "s3Arguments": [
+        "B"
+      ]
+    }
+  ],
+  "checks": {
+    "independentFirstProcessAssertionCalls": 492,
+    "independentSecondProcessAssertionCalls": 495,
+    "distinctTextControls": 8,
+    "controlsRepeatedInEachProcess": true,
+    "rootHashChecks": 37,
+    "reportSha256": "c19d521dcf8cc3c0a0154e0043f96a68e354e9cdf0a19c5116add290bdac9191",
+    "manifestSha256": "5404fbafd42d775451eace1ba18d769d77fa6c28f9cc96db58be6517dfe83411",
+    "authorManifestSha256": "a9b1f8f5a21ac5a11cf9ba2f245192e85628ee3e9d43837d219aa196a974dfde",
+    "parser": {
+      "version": "8.17.0",
+      "sha256": "f4ecbb1935ad718f988d8463ec28dedefa31329b397e29c68c8cf6a3050459cd"
+    }
+  },
+  "finding": "SERIALIZER_WIRING_INCOMPLETE: exact payload calls s3Main(B); selected S3 requires duration and refuses its absence. No duration construction or injection exists in this emitted envelope.",
+  "verified": [
+    "Two exact inert JSON specimens have stable UTF-8 bytes across same-process repeats and separate processes. Thai/emoji/newline roundtrip retains one B declaration.",
+    "All 85 serialized function slices and order match actual selected HOST namespace function.toString.",
+    "Independent B-line masking agrees with actual codeShaOf; raw identities differ while normalized identity agrees.",
+    "Copied-text body-byte, B-only, duplicate-B and syntax controls produce expected identity/shape/parser results. These are not behavioral mutation tests.",
+    "AST confirms missing-duration call, catch STOP envelope and terminal null-time/separate-owner-recovery fields."
+  ],
+  "limitations": [
+    "Native ESM import observed locally; emitted PRELUDE, signal handlers, host bodies and transport never invoked. Syntax is not lexical closure or runtime proof.",
+    "Specimen byte sizes are not a general payload bound; applicable input cap remains CAP_NOT_ASSESSED. Existing 60000 limit applies to output JSON only.",
+    "Producer, native clock continuity/suspend/provenance, target mapping, native SQL/HTTP settlement and delivery qualification remain unresolved.",
+    "No private inputs, real GO, host operation, production change, REA installation or Git write. No broad CI rerun."
+  ],
+  "next": "Resolve native producer/capture selection and target-evidence requirements before any delivery wiring. Preserve original one-boundary contract; do not substitute a default clock or infer target authority from this witness.",
+  "rea": "PAUSED",
+  "pm1": "S1 unchanged."
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "dp1p-prestop-c1-local-v1",
+  "status": "ACCEPTED_LOCAL_PRESTOP_COMPLETION_GUARDS",
+  "acceptedAt": "2026-10-16T17:30:20.839Z",
+  "source": {
+    "hostSha256": "2938c198f0cac8388597ad5c6194a2e6b705066462159926f9d82f0b166e081e",
+    "portSha256": "8be36ddaba285468d868cecc1c13a208ef118ee83fe4c4011165128b7a0ba1ab",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "7d687fdb71e4f3cb58e24d16b4dc5886000f496b10948b11220c3249a6503de0",
+    "contractSha256": "4fbc2c698e4d905ab1190d50609e988d32a84a089a4b11c63ec7eb52a8d4814d"
+  },
+  "scope": "Only the separate S3 pre-stop SQL completion boundary and independent original-budget window. Existing API, collection, readiness, effect ordering, reserve gates, catch and lib unchanged.",
+  "behavior": [
+    "Snapshot-only one-shot pre-stop window captures current exact parent and original normal deadline without a new cap or origin. Private sticky stops preserve actual fatal precedence.",
+    "Actual helper fulfillment/rejection is checked before queue decoding or sqlBeforeStop publication. Query-time fatal preserves earlier create/publish/reload markers but prevents stop/start and automatic unwind.",
+    "Pending query remains pending until helper settlement. Outer TF1 rejects exact fatal and retains inner STOP report; S3 report itself carries code, not error object identity.",
+    "Normal deadline equality permits query completion but original BEFORE_STOP reserve may still refuse restart. Falsy ordinary rejection and pure decode, idle and TERM refusal retain prior behavior.",
+    "One-argument payload and missing method fail before helpers; actual outer late post preserves raw inner PASS but rejects exact fatal."
+  ],
+  "checks": {
+    "authorInitial": "9/10; fixture failure preserved",
+    "authorRepair": "10/10; copied fixture only, candidate unchanged",
+    "independentCases": 28,
+    "compositionCases": 20,
+    "windowCases": 8,
+    "totalAssertionCalls": 240,
+    "caseAssertionCalls": 237,
+    "controlAssertionCalls": 3,
+    "expectedControlFailuresIncluded": 1,
+    "semanticControls": 1,
+    "rootHashChecks": 36,
+    "reportSha256": "adc3d2780068d5f74c6194d57c7ae7ece72ab442141b347701e1187e07eb9cfa",
+    "manifestSha256": "9ad9ff3630eb0c414121c883e6411b805393fc7cf2eaedc824976e8bf7f21001",
+    "repairReportSha256": "2f2727d8455dd3b225ccef97292359553cda1298fc630d596c921ea994e973a3"
+  },
+  "corrections": [
+    "Author fixture omitted dbUrlSha and conflated pre-stop/readiness three-query calls; independent debugger repaired copied fixture in one run.",
+    "Independent harness initially used the wrong queueFacts argument signature; owned fixture corrected, original attempt retained."
+  ],
+  "limitations": [
+    "Post-check deletion exposes a payload getter after fatal; later guards still block stop. No stop escape is claimed.",
+    "Separate synchronous-throw helper fixture, extra malformed bind/overflow variants and cause mutation not run.",
+    "No native SQL settlement/cancellation, actual clock/epoch/process provenance, host/PRELUDE execution, operational quota, broad CI or deployment proof."
+  ],
+  "next": "Review the remaining epoch admission and process/heartbeat association gates. Specify the next bounded local contract without inventing runtime provenance or clock tolerances.",
+  "rea": "PAUSED",
+  "pm1": "S1 unchanged."
+}

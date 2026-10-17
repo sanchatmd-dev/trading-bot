@@ -1,0 +1,40 @@
+{
+  "schema": "dp1p-clock-stop-checkpoint-v1",
+  "status": "PREPARED_COLLECT_C1_NOT_ACCEPTED",
+  "recordedAt": "2026-10-16T17:09:13.762Z",
+  "reason": "Owner usage floor reached at 3% remaining; no new work admitted.",
+  "lastAccepted": "DP1P_HOST_CLOCK_CLK3B4_LOCAL_2026-10-16.json",
+  "candidate": {
+    "hostSha256": "594a36ae766880f7146260492138d417f538190d30688b72e5a89391327c95ef",
+    "portSha256": "1889efcc0a195ef7b609112628a731a3cdd09c9eabb84831e94a8aeb9beaa7d7",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "f8ff2d0532def97dfd89a18239cbba4959ceea4ed207e0769a6241de554ca0ee"
+  },
+  "checks": {
+    "authorCases": 14,
+    "independentDirectCases": 18,
+    "independentAssertionCalls": 63,
+    "caseAssertionCalls": 60,
+    "controlAssertionCalls": 3,
+    "expectedControlFailuresIncluded": 1,
+    "semanticControls": 1,
+    "rootHashChecks": 22,
+    "reportSha256": "d4758450b37c8a707cb6fb637cce159e950108f722495449ba143cb33f502973",
+    "manifestSha256": "748706702e267357af1605247837518b67652ff2252781b8847a327e5c4167b9"
+  },
+  "findings": [
+    "Deferred health completion preserves exact fatal and suppresses health publication and SQL. Removing the health post-check exposes the payload getter even though SQL pre-check still suppresses SQL.",
+    "Direct ordinary/falsy SQL error and decoder handling, original normal equality, sticky private stop, fatal precedence and active-parent loss passed.",
+    "No candidate defect found within executed cases. Three harness bootstrap schema errors were corrected before candidate cases."
+  ],
+  "notRun": [
+    "Successor S3 positive/outer-post/missing-method envelope. Prior B4 evidence does not certify the successor.",
+    "Active-parent deadline equality/replacement/new-parent variants, ordinary reopen refusal, SQL deadline/parent rejection combinations and no-db SQL branch.",
+    "Complete exact source-diff normalization outside executed parity checks, broad CI, real host/clock/producer/DB/network settlement and production."
+  ],
+  "next": "After fresh Git/runtime/usage verification above the owner floor, finish the focused independent window and actual successor S3 supplement, review exact source parity, then decide acceptance. Do not rerun old frozen evidence writers.",
+  "constraints": [
+    "REA paused; no host operation, production change, new GO, commit or push in this continuation.",
+    "PM-1 S1 unchanged. Native producer, epoch/process/heartbeat association, payload qualification and operational limits remain open."
+  ]
+}

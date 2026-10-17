@@ -1,0 +1,42 @@
+{
+  "schema": "dp1p-epoch-h1-local-v1",
+  "status": "ACCEPTED_LOCAL_S3_HEARTBEAT_TIME_REJECTION",
+  "acceptedAt": "2026-10-16T17:47:10.195Z",
+  "source": {
+    "hostSha256": "0716458ca51ab2f5ca5c5439517ed8539ca308facec3a76a0cbb3c3727aeeec3",
+    "portSha256": "8be36ddaba285468d868cecc1c13a208ef118ee83fe4c4011165128b7a0ba1ab",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "15b67efe3ae8d53eb6eea87de56d5783fb40ba37d82d34e64d817396383a60c8"
+  },
+  "scope": "New queueFactsS3 guard and only three S3 decoder call substitutions: collect, readiness and pre-stop. Legacy queueFacts, recovery, port, lib, writer and schema unchanged.",
+  "behavior": [
+    "Validate required own data fields in ordinary dense inert rows/arrays, signed safe integer strings, checked subtraction and existing nonnegative safe cap. Hidden required data works; accessors and holes refuse without getters.",
+    "All schema/arithmetic checks precede future classification. Any future heartbeat refuses the complete result; no filtering, clamping or guessed grace. Valid data delegates to unchanged queueFacts, retaining empty/equality/stale behavior.",
+    "Actual S3 collect future refusal precedes pre/effects; pre-stop refusal retains earlier reload but prevents sqlBeforeStop/stop; readiness refusal retains earlier stop/start while suppressing readiness health and ready publication.",
+    "Direct sqlSoft=true retains ordinary SQL_UNAVAILABLE/no-queue semantics. In all three phases, fulfilled/rejected query-time actual fatal wins before decoding; outer TF1 preserves exact fatal and raw inner STOP."
+  ],
+  "checks": {
+    "authorTests": 43,
+    "independentCases": 84,
+    "directCases": 73,
+    "compositionCases": 11,
+    "totalAssertionCalls": 186,
+    "caseAssertionCalls": 181,
+    "controlAssertionCalls": 5,
+    "expectedMutationFailuresIncluded": 2,
+    "semanticControls": 2,
+    "rootHashChecks": 23,
+    "reportSha256": "39bbc7682574172fbe1a119c642bd154107decbedae6b53d6f1e126674e001c0",
+    "manifestSha256": "57f916b277db56f15cb1833782ac1cbae071297740eda0c4d23cfbe7998dcc77"
+  },
+  "controls": "Removing future refusal and filtering future rows both fail the explicit whole-result refusal assertion after a valid baseline.",
+  "limitations": [
+    "Repository application Date.now writer and DB clock_timestamp query can differ; this source relationship does not establish deployed bytes or observed skew.",
+    "No calibrated age, authentic writer/process association, approved tolerance or changed cap/slack. Trusted inert nonmutation and ordinary same-realm objects remain premises.",
+    "Hostile Proxy/built-in mutation and unrelated SQL-column exhaustiveness excluded. Additional envelope/outer-after-PASS rerun omitted; exact unchanged parity and prior evidence remain separately scoped.",
+    "No native DB/host/clock/network execution, server settlement/cancellation, broad CI, operational GO or deployment qualification."
+  ],
+  "next": "Review remaining process-start epoch conversion and producer requirements; admit only a bounded local contract supported by existing source, without inventing tick-rate or clock provenance.",
+  "rea": "PAUSED",
+  "pm1": "S1 unchanged."
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "dp1p-sql-l1-r2-local-acceptance-v1",
+  "status": "ACCEPTED_LOCAL_FAKE_DRIVER_MODEL",
+  "acceptedAt": "2026-10-16T11:37:45.358Z",
+  "scope": "Pure serial fake-driver lifecycle with trusted inert records and native Promises. No actual SQL driver or host qualification.",
+  "source": {
+    "lifecycleSha256": "90c9697c9884d4aefd7bef0f2a415f7bab9be757df25b7f056a8842b0d98ce61",
+    "authorManifestSha256": "121c0dd6fd7bce4a7721288f68cd6ffe61f3c4c33288fbafc7fd42134e15491c"
+  },
+  "authorChecks": {
+    "total": 125,
+    "functional": 120,
+    "controls": 5,
+    "rerunByIndependentReviewer": false
+  },
+  "independentVerification": {
+    "passed": 202,
+    "failed": 0,
+    "groups": 14,
+    "confirmedBehavioralControls": 4,
+    "redundantControlNotCountedAsKill": 1,
+    "forbiddenVmEffects": 0,
+    "inputPinsBeforeAfter": 49,
+    "rootHashChecks": 97,
+    "reportSha256": "c6e5b322f6c37de33cd3646d7e2bebfe0927d5c7e25ac46c7885514ca02ca3a4",
+    "resultsSha256": "e55618a3fc56855792ee387c8650bfb66565325a3d9e70af35a8795128c4460c",
+    "manifestSha256": "c40f8bbe8c8876bd9a8c0ed8e95e26f85910af5e8485d9a566320fbacb492580"
+  },
+  "behavior": [
+    "Each driver invocation requires explicit idle/work-zero evidence and the expected connection/transaction phase. Missing evidence cannot reuse stale authorization.",
+    "Validated scalar fact rows are copied and frozen. Mutations to retained raw outcomes cannot change final facts.",
+    "Pending native operations block progression. Results settle only with the required explicit synthetic lifecycle evidence; query Promise settlement alone is insufficient.",
+    "First fatal prevents further driver calls and clock samples. Only an already-started operation may finish. Ordinary teardown requires live authority, resource evidence and budget.",
+    "The actual accepted TF1 checked-clock witness preserves shared CLOCK_THROW identity. Full TF1/TF3 composition is a separate next packet."
+  ],
+  "history": "Frozen r1 remains not accepted. Independent paired cases reproduce its busy-resource progression and raw-row alias defects; r2 prevents both.",
+  "qualifications": [
+    "202 includes historical defect reproduction and control classifications; it is not an exhaustive coverage measure.",
+    "The omitted fatal-check control is redundant under the shared checked clock and is not counted as a behavioral kill.",
+    "Capability requires the shared checked clock; an unlatched raw throwing provider is unsupported.",
+    "UNRESOLVED has no later resource-notification/resume API. Inert pending fixtures do not establish operational containment or cancellation.",
+    "Real server transaction termination, target capability, clock correlation, approved limits, RD7 and production wiring remain unproved.",
+    "Separate reset-deadline and parallel-rollback mutants, real close timeout and driver event streams were not tested. No READY or production cleanup authority is granted."
+  ],
+  "next": "Implement and independently verify the reviewed pure SQL/TF3 composition contract. Actual driver integration remains gated.",
+  "pm1": "Unchanged; no scorecard rescore."
+}

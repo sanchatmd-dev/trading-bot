@@ -1,0 +1,48 @@
+{
+  "schema": "dp1p-s3-closure1-static-v1",
+  "status": "ACCEPTED_INERT_PINNED_SOURCE_ASSEMBLY",
+  "acceptedAt": "2026-10-16T18:10:01.376Z",
+  "sourceMapSha256": "d6d759621891566e40049dd9252830e4b7812aae709af680f254cff05cee7da9",
+  "bindingsSha256": "cd04e57584f991d35431a421a32d7154c937ebe48125eae6d3d1195971a1cdfb",
+  "manifestSha256": "b256665560b2a5516eac8c7badd46eacd93324b117e5cf43b6920de5357f2133",
+  "scope": "Four complete exact module copies with conservative AST identifier-reference inventory and explicitly unresolved bindings. Not executable wiring or a complete runtime closure.",
+  "modules": {
+    "hostSha256": "3d7339e79d48b5cee324a3619583b3cc43fa17e39a141d2832a49ad55903a22a",
+    "portSha256": "8be36ddaba285468d868cecc1c13a208ef118ee83fe4c4011165128b7a0ba1ab",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "boundarySha256": "b3dbda6adc98f5bbc4a97e010d6bfc443951db301365a96e85f9d3bcd68292e8"
+  },
+  "checks": {
+    "authorStaticTests": 7,
+    "independentAssertionCalls": 145,
+    "expectedControlFailuresIncluded": 3,
+    "staticControls": 3,
+    "rootHashChecks": 23,
+    "reportSha256": "1e9f96d6e8d8134e9f0fb377333be4c5f0a4e137ed139cfc76093127ab6498d0",
+    "manifestSha256": "70fa0606317c3d5445bf8d8ae59797713f72988a2edc141a993cbd2eaf49fb4e"
+  },
+  "staticFacts": {
+    "moduleCount": 4,
+    "perDeclarationHostEdges": 384,
+    "conservativeReachableDeclarations": 63,
+    "perFunctionDynamicExpressions": 393,
+    "parser": "Existing Node24.19.0 internal Acorn8.17.0",
+    "parserSourceSha256": "f4ecbb1935ad718f988d8463ec28dedefa31329b397e29c68c8cf6a3050459cd",
+    "fileBytes": {
+      "host": 95546,
+      "port": 6948,
+      "lib": 42673,
+      "boundary": 5567
+    }
+  },
+  "limitations": [
+    "Function-wide local unions, shadowing, member/callback dispatch and arbitrary injected targets prevent complete lexical/free-variable/runtime closure proof. Zero unclassified identifiers is not such proof.",
+    "Full modules retain operational capabilities but were not imported or executed. No pruning, launcher, private configuration, PRELUDE or producer instantiated.",
+    "Producer/capture remains UNRESOLVED; explicit caller must own one original boundary, port injection, outer await/post and original fatal identity.",
+    "CAP_NOT_ASSESSED: these are file sizes, not serialized payload sizes; no applicable S3 input policy/witness supplied. D4 C3R cap is unrelated.",
+    "Static lost-edge/tampered-copy/false-producer controls test manifest assertions only; no runtime containment, native capability, provenance or deployment claim."
+  ],
+  "next": "Define the next explicit synthetic injection or producer-evidence packet against this exact assembly; do not wire a production clock or change the existing fail-closed payload without qualified inputs.",
+  "rea": "PAUSED",
+  "pm1": "S1 unchanged."
+}

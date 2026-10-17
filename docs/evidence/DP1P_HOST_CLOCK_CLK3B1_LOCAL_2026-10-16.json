@@ -1,0 +1,44 @@
+{
+  "schema": "dp1p-host-api-walker-clk3b1-local-v1",
+  "status": "ACCEPTED_LOCAL_API_WALKER_WITH_OWED_CLOSE",
+  "acceptedAt": "2026-10-16T16:26:45.250Z",
+  "scope": "Only new apiPublicFactsS3, composed with accepted apiReadFileS3 and actual TF1/port in restricted fake-handle fixtures. Existing host functions, port and lib remain byte-identical.",
+  "source": {
+    "hostSha256": "026ef19f3715a2bedbb75209fe089c55eb3f8b05de4cf934b94bf5a846c081cb",
+    "portSha256": "25ed195b38c36ce65889cdd21ca76e045e39874e35edb616948c3479633761ed",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "a208af7a4d9c674476aa3c163d5b6707cb643cf8433509fe00e6f0da0d1f3f95",
+    "decisionSha256": "36446a4c9b3d30007bbe724cd3a9656938a94548fe0423d7d4ddca4d93fe1255"
+  },
+  "behavior": [
+    "A successfully acquired directory enters a protected region before its post-open check. Every acquired handle receives exactly one owed close, nested handles inner-to-outer, including after fatal/timeout.",
+    "After close, cached assertLive errors outrank body and close errors; otherwise exact primary then exact close error is retained, including falsy values. No post-close clock sample occurs on an existing error path.",
+    "A close exception records DIRECTORY_CLOSE_FAILED; closure remains unknown and close is not retried. Reusing that work record refuses before IO.",
+    "Cumulative nodes, files and bytes share the existing captured caps and one original API window. Manifest-local counts remain distinct. Performed entries and file bytes survive terminal post-checks.",
+    "A final checkpoint precedes manifest publication after handles close. No identity/collect/S3 callsite uses the new walker yet."
+  ],
+  "authorTests": 25,
+  "independent": {
+    "cases": 45,
+    "caseAssertionCalls": 185,
+    "controlAssertionCalls": 9,
+    "totalAssertionCalls": 194,
+    "expectedMutationFailuresIncluded": 3,
+    "semanticControls": 3,
+    "qualification": "Controls detect an unprotected post-open check, suppression of owed close by a fatal guard and a close error masking the actual first fatal.",
+    "rootHashChecks": 24,
+    "reportSha256": "673ac479bb7fb1277558685ad8287ba4525e8b7ce5e630144b544d22e3fecb11",
+    "manifestSha256": "b1b387fc8358868083c57135d25942f75df800c91db2943d28ab8a9f090014a6"
+  },
+  "notRun": [
+    "Exhaustive walker overflow/path/TOCTOU and all combined body/close faults; broad prior port regressions.",
+    "Native handle ownership and cleanup behavior, real filesystem/clock, identity/collect/S3 integration, runtime producer provenance, RD7, approved caps, broad CI and production."
+  ],
+  "limitations": [
+    "On an existing ordinary or close error, cleanup duration is unmeasured. A close exception proves neither successful closure nor a leak.",
+    "Trusted native-like records and inert fake handles only; no earliest-fault containment or arbitrary callback security claim.",
+    "No deployment, READY, GO, rollback or cleanup-success authority. REA remains paused."
+  ],
+  "next": "Define the bounded API observation and identity successor using these accepted read/walk helpers, with terminal stop propagation and detached partial reports before collect integration.",
+  "pm1": "S1 unchanged."
+}

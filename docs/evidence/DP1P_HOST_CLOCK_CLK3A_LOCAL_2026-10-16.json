@@ -1,0 +1,45 @@
+{
+  "schema": "dp1p-host-api-fs-clock-clk3a-local-v1",
+  "status": "ACCEPTED_LOCAL_API_READ_HELPER_AND_CLOCK_WINDOW",
+  "acceptedAt": "2026-10-16T16:17:08.970Z",
+  "scope": "New extracted apiReadFileS3 and extended duration port only. Existing host functions and library are unchanged; no S3 API integration or directory acquisition.",
+  "source": {
+    "hostSha256": "57946d159f2ea35b0d10f2723fcafa29fdfdc00c2682827d95df93e62156f4dc",
+    "portSha256": "25ed195b38c36ce65889cdd21ca76e045e39874e35edb616948c3479633761ed",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "f4e3a2a497ae03b870aa09f1d1a1374175a65e74721bdb95bd6bedc1f2bce120",
+    "decisionSha256": "f235406974b2255d2070c9554aee0ec5531d19a3a5ba63175abe77bb4d124a35"
+  },
+  "behavior": [
+    "Atomic binding captures API duration, file and byte caps through own data descriptors. Hidden values work; accessors and malformed values reject without publishing a partial binding.",
+    "One API window shares the original boundary and intersects its own cap with the original normal and optional exact parent deadline. Timeout/parent stop retains exact identity and forbids further window sampling; existing boundary fatal outranks it.",
+    "Direct IO and IO helpers are checked before and after return or throw. Exact ordinary and falsy thrown values survive only after a valid post-check.",
+    "Attempted files and actual returned bytes are retained before terminal post-read checks. Throwing reads do not invent a completed byte count. Safe arithmetic and captured cumulative caps are enforced.",
+    "FIRST_EFFECT, BEFORE_STOP, readiness, elapsed and API window coexist on one boundary in a focused regression baseline.",
+    "All prior host function bytes and lib remain identical to CLK2 r3. Existing legacy APIs still use their old paths until a separate integration packet."
+  ],
+  "authorTests": 31,
+  "independent": {
+    "cases": 93,
+    "totalAssertionCalls": 378,
+    "expectedControlFailuresIncluded": 2,
+    "controlBaselines": 3,
+    "semanticKills": 2,
+    "survivors": 1,
+    "controlQualification": "Removing the shared post-IO checks survived the selected next-IO suppression assertion because the next pre-check still blocked. This is not an independent-necessity or global-escape claim. A late length-mismatch precedence control was not run.",
+    "rootHashChecks": 26,
+    "reportSha256": "2a3aadfb2569a402c364a7bc69a5baf9c23a33d93d7275af55e9ad9e0c29c4bb",
+    "manifestSha256": "7cab54cd6f6debbe2c6ab44c51181add7f2c6837df831dfbb2b6911701dcc0ae"
+  },
+  "notRun": [
+    "Exhaustive numeric/prototype/path and hash-helper fault permutations; full prior suites; the late read-length mismatch control.",
+    "Directory traversal and acquired-handle cleanup, collect/API identity/S3 integration, real filesystem, real clock and producer provenance, native settlement, RD7, approved operational caps, broad CI and production."
+  ],
+  "limitations": [
+    "Trusted inert fixture helpers and boundary only; no arbitrary-object security or actual filesystem TOCTOU guarantee.",
+    "File/byte caps retain their existing scope; this is not proof that every process/config read is cumulatively charged.",
+    "No deployment, READY, GO or recovery authority. REA remains paused."
+  ],
+  "next": "Specify and verify the smallest directory-walker successor, including already-acquired handle cleanup and exact fault precedence, before API identity or collect integration.",
+  "pm1": "S1 unchanged."
+}

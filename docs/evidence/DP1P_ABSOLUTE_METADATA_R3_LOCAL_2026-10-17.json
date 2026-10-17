@@ -1,0 +1,62 @@
+{
+  "schema": "DP1P_ABSOLUTE_METADATA_CAPTURE_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_LOCAL_SYNTHETIC_UNIT_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-absolute-metadata-model-r3-2026-10-17",
+  "modules": [
+    {
+      "name": "plan.mjs",
+      "sha256": "e5f135141a8f1bdb6cc20247778f8b8822134eeb08110aeb6688afdc8c24af36"
+    },
+    {
+      "name": "capture.mjs",
+      "sha256": "1a5b2a500ee288e1a92080ef8288ff731a14df8bd7762a20efe76a4479f57e44"
+    },
+    {
+      "name": "validate.mjs",
+      "sha256": "a7037f2c37b1ab45673fe4deb2dfdd23ce1c4a4941f94c73e67947ef0e875cb6"
+    }
+  ],
+  "sourceManifestSha256": "aeb9787fcacf447a2026af0741f1eb7eeb995114d551a23697443d2c87057ad1",
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-absolute-metadata-independent-r3-2026-10-17",
+    "manifestSha256": "fb90ec7c07850e4e8ac65db9d1f6a7bb05639d8299988af1190be0e01960313b",
+    "regressionScenarios": 43,
+    "newCombinedFaultScenarios": 2,
+    "sourceChecks": 3,
+    "controlsIncludedInRegression": 2,
+    "forgedPassMutationsWithinCombinedScenarios": 6
+  },
+  "rootChecks": [
+    "Reviewed source and exact r3 validator delta.",
+    "Verified 22 manifest members across final source and independent packets.",
+    "Earlier r2 author suite rerun: 33 synthetic groups passed; r3 author reports 34. These overlap independent scenarios.",
+    "Confirmed r1 late-completion and persistence falsepasses; preserved original evidence.",
+    "Confirmed r2 combined-fault receipt rejection; r3 preserves truthful first failure without permitting PASS."
+  ],
+  "behavior": [
+    "Four exact sequential utility commands, maximum one live child, shared aggregate raw cap.",
+    "Explicit NODE pathname; observed file byte/hash pins remain fixed, canonical binding remains caller-owned.",
+    "Strict 1000ms capture completion and original-boundary post-persistence check.",
+    "Immutable capture-only persistence evidence is separate from the returned publication receipt.",
+    "Unresolved child or persistence ownership blocks another command; arbitrary signal text is redacted."
+  ],
+  "limits": [
+    "Synthetic injected capabilities only; no native children or host execution in this unit.",
+    "Caller must supply the original stateful checked boundary and actual canonical descriptor.",
+    "An unresolved persistence capability has no hard cancellation guarantee; caller watchdog and final durable publication remain unqualified.",
+    "No PRE/POST witness orchestration, version observation, runner or native adapter integration yet.",
+    "No Linux supervisor, loaded-image, source provenance, clock accuracy or production qualification."
+  ],
+  "historicalErratum": "Frozen r2 author checkpoint says 67 weekly used; dispatch was 67% remaining and 33% used.",
+  "usage": {
+    "weeklyRemainingPercent": 65,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "hostExecutionAuthorized": false,
+  "activeGo": null,
+  "productionReady": false,
+  "next": "ABS-WITNESS-W1: extract and independently verify shared boundary and bounded health/file witnesses before full metadata observer composition."
+}

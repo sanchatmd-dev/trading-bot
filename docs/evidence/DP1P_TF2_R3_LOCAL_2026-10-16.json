@@ -1,0 +1,48 @@
+{
+  "schema": "dp1p-tf2-r3-local-acceptance-v1",
+  "acceptedAt": "2026-10-16T11:18:18.177Z",
+  "scope": "Local synthetic model evidence only. No host wiring, approved limits, actual database or transport qualification.",
+  "verification": {
+    "independentTf2Cases": 230,
+    "independentCompositionCases": 40,
+    "independentTargetedCases": 22,
+    "totalPassed": 292,
+    "totalFailed": 0,
+    "forbiddenVmEffects": 0,
+    "uniquePinsRechecked": 64,
+    "reportSha256": "a5b732f527988a0d3bc77a1be6f5c56d2ffbe9fe95c2598e5eb1fe6bc04485c4",
+    "tf2ResultsSha256": "a3c3c72162911f3e48aa5924f9fa0fe75eac398571e4d7e89696c6c207709153",
+    "compositionResultsSha256": "384574b82a565bdbc321eb757bf58f1acd680df79514f8fc91da1f053e2acf16",
+    "targetedResultsSha256": "1a3eac85a5ffa78f9083e4e347b133d00619fc5063ac2de0eb3c67bd707a5bef",
+    "controlsSha256": "d41860a4203b9178040edbfdfe2afba307f0e54dae285e2af54f7395d90fe34f",
+    "executionManifestSha256": "86a1c7819587b13efda62103426b7ba5eb9bef761208a6aa89548c6e35cbe64f"
+  },
+  "limitations": [
+    "Counts include controls and historical failure reproduction; they are not exhaustive coverage.",
+    "Ordinary native Promises and trusted inert adapters are required. Arbitrary-object safety and nonsettling containment are unproved.",
+    "Production recovery remains a separate rollback job under owner authority; model recovery routes do not grant production authority.",
+    "Actual RD6 provenance, RD7 measurements, approved limits, clock mapping, SQL/HTTP lifecycle, native transport and payload compatibility remain open. PM-1 S1 is unchanged."
+  ],
+  "status": "ACCEPTED_LOCAL_TF2_R3",
+  "source": {
+    "placementSha256": "3bd9b042dc6c186bf2204058b6b1dd912cdafc492f7552ba8bf684aef4ee3682",
+    "manifestSha256": "5c18ef25a457e12800efb469ce27dda347cf39015ed8f34e57ef3f3e4aa3f924",
+    "apiSha256": "d0b57e5be4517cf62ab9c2a247f1131113af074bc09f4a9ae3d6322454fe271e"
+  },
+  "supersedes": {
+    "record": "DP1P_TF2_PLACEMENT_LOCAL_2026-10-16.json",
+    "r2SourceSha256": "e5a5d5fa5a5221f681a8ebefe4fa37220b3c4879eb0298032993b4f201bcc475",
+    "finding": "A second pre-admission BUDGET in recovery-entry TERM escaped the business catch and became FATAL/INTERNAL. No callback or recovery bypass occurred. Frozen r2 evidence remains intact."
+  },
+  "change": "Only NORMAL recovery-entry TERM private TIME_RESERVE, with no prior fatal, returns STOP_REPORT/TIME_RESERVE after one terminal close. Expected CLOSED is bookkeeping; boundary or non-CLOSED ledger faults during close retain fatal precedence. No retry, recovery entry, credit refund, global catch or phase-table change.",
+  "authorChecks": {
+    "targeted": 17,
+    "regressions": 57
+  },
+  "controls": {
+    "restoredOldBranch": "Positive baseline passes; exact horizon fails the intended terminal and code assertion.",
+    "removedClosePrecedence": "Clean edge passes; real close-clock fault fails the intended fatal-cause assertion.",
+    "historical62Campaign": "Not rerun or recertified. All 62 source-anchor occurrence counts remain unchanged; prior classifications are retained as historical evidence."
+  },
+  "next": "Use this exact local successor for further synthetic composition. Real host adapters remain separately gated."
+}

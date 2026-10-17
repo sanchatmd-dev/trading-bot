@@ -1,0 +1,65 @@
+{
+  "schema": "DP1P_METADATA_STAGE1_MATERIALIZER_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_STAGE1_MATERIALIZER_R4_LOCAL_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "candidate": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-stage1-materializer-model-r4-2026-10-17/",
+    "source": "prepare-stage1.mjs",
+    "sha256": "3cc60e1a2ffcf80bd03cb2fef069721f2b7a9999218681cb0add9a4dcf7d2138"
+  },
+  "packageManifestSha256": "2e6a5910f5c023ee2b0168e4f22474d765feea752a3a4e2c75014afca7d3f92d",
+  "independent": [
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-stage1-materializer-independent-r2-2026-10-17/",
+      "manifestSha256": "9f6efa16742767495a5b959e0c2fb9551054d215b3fdc091be1c6e2c2bc3b830",
+      "cases": 11,
+      "controls": 1
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-stage1-materializer-independent-r3-2026-10-17/",
+      "manifestSha256": "99ada36f6b1fb90018834cf56f133b8637736b3399e019facf98066e0ea572d4",
+      "cases": 16,
+      "controls": 1
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-stage1-materializer-independent-r4-2026-10-17/",
+      "manifestSha256": "e3d0bd733c86d0309d48e1693ae68e195818c85191874d7023e9201fac2359d7",
+      "cases": 7,
+      "controls": 0
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-stage1-materializer-windows-2026-10-17/",
+      "manifestSha256": "e044504d641b0dfa634b73bcf385f9c39baed05af0e54603c5065186fe5d9317",
+      "cases": 1,
+      "controls": 0
+    }
+  ],
+  "rootChecks": [
+    "Reviewed complete source, publication fix and independent harnesses",
+    "Verified 233 independent manifest members and 164 package copies; five candidate manifest members were verified separately",
+    "Confirmed fixed 41-file and 11-role tables and four allowed dynamic imports against accepted P1",
+    "Rechecked the Windows fixture historical anchors and source/config hashes without invoking preparation again"
+  ],
+  "outcomes": [
+    "The prior pending stdout callback defect is corrected: publication begins nonzero and errors remain sticky",
+    "Actual A2 and L1 compose ten immutable files, an empty controller directory and an external record",
+    "Tested profile, schema, alias, source/trust drift and publication failures stop without retry or cleanup",
+    "One real Windows filesystem preparation completed in 2261 ms; source 47675 bytes and config 544 bytes"
+  ],
+  "limits": [
+    "Synthetic historical and trust inputs do not qualify the real host or authorize execution",
+    "VM cases substitute filesystem, process, POSIX paths and deterministic randomness; the Windows case uses actual local APIs and fresh randomness",
+    "A late failure may retain a record that says PREPARED; successful public completion and a root review are required, never the record alone",
+    "Point-in-time file checks do not establish race immunity or every Windows alias/reparse profile",
+    "Operational CLI capture, actual private input preparation, current admission, release PINS and GO remain separate"
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 24,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Implement and independently verify stage-two release finalization before fresh admission, then prepare authenticated real stage-one inputs."
+}

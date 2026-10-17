@@ -1,0 +1,64 @@
+{
+  "schema": "DP1P_METADATA_BOOTSTRAP_LINEAGE_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_BOOTSTRAP_LINEAGE_L1_R2_LOCAL",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-bootstrap-lineage-model-r2-2026-10-17",
+  "sourceManifestSha256": "fc2f76c62b1e2005b0671bae04c427cb8fbb425cd22e42e1ec3e093d8281a65a",
+  "modules": [
+    {
+      "name": "lineage.mjs",
+      "sha256": "b741e679e7230e7890628bd3a4a90abe99a5657107ae0fcfa79e5343a6fa4f86"
+    },
+    {
+      "name": "validate-observation.mjs",
+      "sha256": "1cdce077dedf4937e9af720870f1f8f01f1f67e068d114fb6004da775936de24"
+    }
+  ],
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-bootstrap-lineage-independent-r2-2026-10-17",
+    "manifestSha256": "eba0d68649e7304095741b1efae7b57b1a90196a8abc7b2b483cdda4a1147a13",
+    "checks": 90,
+    "controlsIncluded": 1,
+    "sourceCheckIncluded": 1
+  },
+  "historicalCompatibility": {
+    "recordSha256": "6a2363f7c9def0cf7fc266bf31e9c5d2a11e6eb1792fdf6de7a95037ed538a88",
+    "passed": true,
+    "newHostCalls": 0,
+    "privateSummaryDisclosed": false
+  },
+  "rootChecks": [
+    "Reviewed the complete L1 helper, exact single array/object correction and independent test harness.",
+    "Verified 26 final source/test manifest members; copied observation validator remains byte-identical to the selected accepted producer.",
+    "Ran one additional local compatibility check on the previously authenticated historical receipt, root review, PINS and binding. Source/input hashes remained unchanged and no private summary was disclosed."
+  ],
+  "scope": [
+    "Pure four-record historical bootstrap lineage under externally selected hash anchors.",
+    "Exact selected producer schemas, authenticated hash links, reconstructed original config and canonical observation wire, receipt/review agreement and structural route/trust facts.",
+    "Private detached frozen summary always reports freshnessEstablished=false and executionAuthorized=false."
+  ],
+  "history": {
+    "r1Accepted": false,
+    "sourceManifestSha256": "9868c8e6aca646ac38282d5c5ed2c6e8d2acdefba9e3095e3baadf28c794b8eb",
+    "reproductionManifestSha256": "7127022c9e950afbcca8540fb1cdbd7f63674986ef5b1ef9d2bf3ddfbd114586",
+    "reason": "A numeric-key object could replace the selected limitations array after legitimate reanchoring. The external anchor still refused changed bytes under the original anchor; this was a schema mismatch, not an anchor bypass or authority upgrade.",
+    "correction": "Deep equality now preserves array/object type before comparing keys and values."
+  },
+  "limits": [
+    "External anchors must come from the trusted selected release; self-consistent hashes do not establish root authority.",
+    "Named code and GO hashes are structural historical facts; this helper does not read or authenticate those artifact bytes.",
+    "Historical private-byte compatibility does not establish current route, trust-file state, admission freshness, OS events or permission to execute.",
+    "Exact input-cap equality for every record, exhaustive Proxy/concurrent mutation/resource bounds and cross-platform path grammar are not qualified.",
+    "Fresh admission, L2 release lineage, exact runner/artifact checks and a new bounded GO remain separate prerequisites."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 46,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "hostExecutionAuthorized": false,
+  "productionReady": false,
+  "next": "Finish the pure admission lineage component, then integrate and independently verify the L2 release chain and authenticated runner."
+}

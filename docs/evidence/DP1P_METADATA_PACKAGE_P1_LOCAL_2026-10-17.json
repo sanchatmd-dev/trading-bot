@@ -1,0 +1,65 @@
+{
+  "schema": "DP1P_METADATA_PACKAGE_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_PACKAGE_P1_LOCAL_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-package-p1-2026-10-17/",
+  "sourceManifestSha256": "2e6a5910f5c023ee2b0168e4f22474d765feea752a3a4e2c75014afca7d3f92d",
+  "runtimeInventoryCandidateSha256": "875aad84b9485ecf2ca49f200a0a4d7630a3541de7877d3f061f6cb34e2298a3",
+  "packageFiles": 41,
+  "sourceCopies": {
+    "runnerR3Files": 40,
+    "acceptedC1Launcher": 1,
+    "originalFrozenProvenance": 37
+  },
+  "staticGraph": {
+    "modules": 39,
+    "relativeImportDeclarations": 61,
+    "distinctRelativeModuleRequests": 60,
+    "builtinImports": 32,
+    "dynamicImports": 0,
+    "cycles": 0,
+    "explanation": "run.mjs imports native-transport.mjs twice. VM dependency requests deduplicate that specifier; declaration count remains61."
+  },
+  "independent": [
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-package-preflight-p1-2026-10-17/",
+      "manifestSha256": "baa5da14dacaf3af59058369a01ffcc21231d6a9d12097f10f2f3baebf5ef3b4",
+      "checks": 5,
+      "scope": "Actual41 package files with AST-extracted preflight; historical/source/executable fixture data remain placeholders."
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-package-runner-p1-2026-10-17/",
+      "manifestSha256": "b0eee358813c70741f022416d6f75df960733f7d11fb1bcc37de0d84adada4bf",
+      "checks": 5,
+      "scope": "Actual L1/L2-A/L2/A2/E1 with final41 files, synthetic filesystem and trusted witness seam."
+    }
+  ],
+  "rootChecks": [
+    "Verified177 manifest members across package/preflight/runner evidence",
+    "Independently compared every package byte with accepted source and every original frozen copy with its design anchor",
+    "Parsed all39 modules with VM and separately checked dynamic imports with Acorn without evaluating package code",
+    "Reviewed preflight reanchoring and runner fixture assertions on actual C1 launcher bytes"
+  ],
+  "outcomes": [
+    "Complete preflight and conditional runner success passed on the final package",
+    "Reanchored inventory omission and role mismatch refused before contact",
+    "Postcontact launcher drift preserved raw bytes and candidate while returning STOP",
+    "CLI projection retained one minimal JSON line"
+  ],
+  "limits": [
+    "The package remains a local accepted source bundle, not an authenticated executable release or GO",
+    "Actual Windows runner filesystem composition and current private release materialization remain pending",
+    "COMPLETE uses a trusted witness seam; target hashes and remote assembled execution are not observed",
+    "Preflight and runner composition use separate synthetic fixtures; historical evidence validity is exercised only by the runner helper fixture",
+    "No new host execution, current health, remote settlement or production readiness"
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 29,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Verify bounded actual Windows runner filesystem composition with injected transport before preparing the immutable release and fresh admission."
+}

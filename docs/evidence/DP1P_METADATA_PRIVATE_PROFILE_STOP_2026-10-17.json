@@ -1,0 +1,120 @@
+{
+  "schema": "DP1P_METADATA_PRIVATE_PROFILE_STOP_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_CONFIRMED_LOCAL_PROFILE_BLOCKER_NO_GO",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "operationsReportSha256": "640b229d54434cc60bf33f3f96e2f76ccefdadb7dcaa3e4a43ef8b69c9ebc7ee",
+  "rootDiagnosticSha256": "0939eb9f80934f1c1ef3aadfa432e50c1e0bd5951682328710c5e163152474f8",
+  "facts": [
+    {
+      "label": "ssh",
+      "regular": true,
+      "bytes": 1256448,
+      "nlink": 2,
+      "sha256": "98d447730047f5df91373e852d057928a921c3d1e89938700ab656ba84b19dc8",
+      "expectedHashMatches": true,
+      "rawLexicallyCanonical": false,
+      "rawMatchesNative": false,
+      "resolvedMatchesNative": true,
+      "ancestors": 4,
+      "symlinks": 0,
+      "canonicalMismatches": 0
+    },
+    {
+      "label": "canonicalSshConfig",
+      "regular": true,
+      "bytes": 116,
+      "nlink": 1,
+      "sha256": "f216e5b9229cbc8a6892209beb435ea5bfb86889222f31a1d2d1122975c003d4",
+      "expectedHashMatches": true,
+      "rawLexicallyCanonical": true,
+      "rawMatchesNative": true,
+      "resolvedMatchesNative": true,
+      "ancestors": 12,
+      "symlinks": 0,
+      "canonicalMismatches": 0
+    },
+    {
+      "label": "trust-0",
+      "regular": true,
+      "bytes": 837,
+      "nlink": 1,
+      "sha256": "c710ea2310a65b208e1a9ddae6aea4a9bba9b4714b7ac5f8f9063cea928e8c67",
+      "expectedHashMatches": true,
+      "rawLexicallyCanonical": true,
+      "rawMatchesNative": true,
+      "resolvedMatchesNative": true,
+      "ancestors": 4,
+      "symlinks": 0,
+      "canonicalMismatches": 0
+    },
+    {
+      "label": "trust-1",
+      "absent": true,
+      "missing": true,
+      "rawLexicallyCanonical": true,
+      "parentCanonical": true,
+      "ancestors": 3,
+      "symlinks": 0,
+      "canonicalMismatches": 0
+    },
+    {
+      "label": "trust-2",
+      "absent": true,
+      "missing": true,
+      "rawLexicallyCanonical": true,
+      "parentCanonical": true,
+      "ancestors": 2,
+      "symlinks": 0,
+      "canonicalMismatches": 0
+    },
+    {
+      "label": "trust-3",
+      "absent": true,
+      "missing": true,
+      "rawLexicallyCanonical": true,
+      "parentCanonical": true,
+      "ancestors": 2,
+      "symlinks": 0,
+      "canonicalMismatches": 0
+    },
+    {
+      "label": "localNode",
+      "regular": true,
+      "bytes": 92825416,
+      "nlink": 1,
+      "sha256": "3602f2bb1a10f2cbab4c36886218a33c1ab3db87290e73b033c46c77147d0237",
+      "expectedHashMatches": true,
+      "rawLexicallyCanonical": true,
+      "rawMatchesNative": true,
+      "resolvedMatchesNative": true,
+      "ancestors": 3,
+      "symlinks": 0,
+      "canonicalMismatches": 0
+    }
+  ],
+  "scope": {
+    "releaseDraftCreated": false,
+    "materializerInvocations": 0,
+    "newJobDirectories": 0,
+    "newGo": 0,
+    "sshInvocations": 0,
+    "identityFileRead": false,
+    "existingEvidenceChanged": false
+  },
+  "interpretation": [
+    "The authenticated SSH executable still matches its historical hash.",
+    "Its two hard links and noncanonical lexical slash spelling are outside the accepted strict reader profile.",
+    "The resolved path matches the native canonical path; this does not authorize changing the reader or route.",
+    "The selected local Node, canonical SSH configuration and trust files satisfy the observed strict profile.",
+    "Prior synthetic local acceptance remains valid within its recorded scope; actual private preparation is not accepted."
+  ],
+  "next": "Review a narrow installed-SSH file profile across materializer, finalizer, preflight and runner, then independently test and rebuild affected pinned sources before another private preparation attempt.",
+  "usage": {
+    "weeklyRemainingPercent": 19,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "rea": "PAUSED",
+  "productionReady": false
+}

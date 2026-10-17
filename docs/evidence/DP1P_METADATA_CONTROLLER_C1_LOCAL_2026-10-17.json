@@ -1,0 +1,88 @@
+{
+  "schema": "DP1P_METADATA_CONTROLLER_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_CONTROLLER_C1_LOCAL_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-launcher-controller-model-2026-10-17/",
+  "sourceSha256": "5397024cb5d2bcbb1fbc74b18e0283096757ec4dab7db9c548524fd2b3b9f24b",
+  "sourceManifestSha256": "1694686914c391f877d133e51d63dc814423dc5c98035f16ff8c0008aa2d7719",
+  "independent": [
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-controller-independent-2026-10-17/",
+      "manifestSha256": "871e0ceb02218d0a87ccb91e4679c9f3449a7c8ea92d257de844eb8f30fbcd38",
+      "fakeLifecycleCases": 15,
+      "additionalReverseControls": 1
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-controller-io-independent-2026-10-17/",
+      "manifestSha256": "c96ce9c13f059ac8241b86aa611ce257317dd5295cd018f1de6909ffca9e1fb3",
+      "checks": 12,
+      "reverseControlsIncluded": 1
+    },
+    {
+      "directory": ".qa-local/codex-dp1p-native-metadata-controller-inert-2026-10-17/",
+      "manifestSha256": "96a566fe5dad39a2c56b4819c71137d68e29f60b164364b52c90952637b5424c",
+      "nativeCases": 3,
+      "nodeStarts": 3,
+      "remainingOwnedProcesses": 0
+    }
+  ],
+  "rootChecks": [
+    "Verified all 68 source and independent manifest members",
+    "Reviewed source, fake lifecycle seams and actual IO/inert preparation and verification harnesses",
+    "Confirmed byte-exact preservation of accepted R4 functions, tables and C# plus exact 28 private and 13 public fields",
+    "Confirmed inert preflight substitution reverses to exact original UTF8 bytes; controller body and original timing unchanged"
+  ],
+  "nativeLocal": [
+    {
+      "case": "binary_exit7",
+      "capture": "COMPLETE",
+      "controllerExit": 7,
+      "scriptExit": 0,
+      "elapsedMs": 108
+    },
+    {
+      "case": "dual_overflow",
+      "capture": "NONPASS",
+      "controllerExit": 0,
+      "scriptExit": 1,
+      "retainedBytesPerStream": 262144,
+      "observedStdoutBytes": 400000,
+      "observedStderrBytes": 400001,
+      "elapsedMs": 111
+    },
+    {
+      "case": "original_timeout",
+      "capture": "SETTLEMENT_UNKNOWN",
+      "controllerExit": -1,
+      "scriptExit": 1,
+      "elapsedMs": 50074,
+      "outerObservedMs": 50579,
+      "localClosed": true,
+      "drainsSettled": true,
+      "remoteSettlement": "UNKNOWN_STOP_EXACT_JOB_RECOVERY_REQUIRED"
+    }
+  ],
+  "scope": [
+    "Two full preflights with identity agreement before one fixed controller start",
+    "Concurrent binary drains preserve full observed hashes/counts and bounded retained prefixes",
+    "Nullable creation/start/publication facts distinguish attempts from confirmed effects",
+    "On-disk resultPersisted is null; the public projection becomes true only after the exclusive writer returns",
+    "Capture completion is separate from child exit success, metadata acceptance and remote settlement"
+  ],
+  "limits": [
+    "Native cases substitute synthetic preflight and inert run.mjs; they do not qualify a complete metadata release or operational launcher invocation",
+    "No host execution, current admission, SSH, installed capability or production readiness established",
+    "Native exceptional start, blocked drain, flush/close failure and publication delivery are not fully qualified; fake and IO results remain distinct",
+    "File checks do not prove adversarial race immunity or universal identity; synchronous operations are not hard real-time guarantees",
+    "Two native verifier setup errors were corrected without rerunning native cases; no candidate fix was needed"
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 30,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Integrate the fixed 41-file package and independently verify source closure and complete synthetic preflight/runner composition before any fresh host admission."
+}

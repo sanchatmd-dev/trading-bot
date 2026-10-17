@@ -1,0 +1,44 @@
+{
+  "schema": "dp1p-collect-c1-local-v1",
+  "status": "ACCEPTED_LOCAL_COLLECTION_COMPLETION_GUARDS",
+  "acceptedAt": "2026-10-16T17:18:41.834Z",
+  "source": {
+    "hostSha256": "594a36ae766880f7146260492138d417f538190d30688b72e5a89391327c95ef",
+    "portSha256": "1889efcc0a195ef7b609112628a731a3cdd09c9eabb84831e94a8aeb9beaa7d7",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "f8ff2d0532def97dfd89a18239cbba4959ceea4ed207e0769a6241de554ca0ee",
+    "contractSha256": "8d58a670133597865e71aa93f8c0cabb67f40e6339ad6b2d5b3eaa7fbb97712a"
+  },
+  "scope": "Exact extracted collectS3 health/SQL completion guards, one original-boundary collection window and S3 required-method check. Existing API/readiness and legacy paths unchanged.",
+  "behavior": [
+    "One-shot snapshot-only window captures original normal deadline and exact parent ticket without new origin, cap or clock sample. Equality is permitted; parent/time stops retain private identity; actual fatal takes precedence.",
+    "Both helper fulfillment and rejection receive post-checks before publication or sqlSoft handling. Health pending until settlement preserves exact fatal, exposes no result getter and starts no SQL.",
+    "Ordinary and falsy SQL errors and pure decoder errors retain legacy soft/rethrow behavior when the post-check is valid. No-db branch adds no synthetic SQL samples.",
+    "API work remains API-scoped. Collection failure does not promise publication of partial precollection facts. No automatic unwind or failure-time clock sampling is added.",
+    "Actual successor S3/API/readiness/gateFresh/port/TF1 composition passes. Outer post retains raw inner PASS but rejects exact original fatal. Unchanged one-argument payload remains fail-closed and not deployable."
+  ],
+  "checks": {
+    "authorCases": 14,
+    "independentDirectCases": 18,
+    "directAssertionCalls": 63,
+    "expectedMutationFailuresIncluded": 1,
+    "semanticControls": 1,
+    "supplementCases": 15,
+    "supplementAssertionCalls": 68,
+    "supplementCompositionCases": 4,
+    "supplementWindowCases": 11,
+    "rootHashChecks": 28,
+    "directReportSha256": "d4758450b37c8a707cb6fb637cce159e950108f722495449ba143cb33f502973",
+    "directManifestSha256": "748706702e267357af1605247837518b67652ff2252781b8847a327e5c4167b9",
+    "supplementReportSha256": "3a859cbe3a219b453d0c48ca4c224dcd35b3440f5c1abc3813734eb73fe95978",
+    "supplementManifestSha256": "e901f11e67093f59e6baabf5eb7ee45b3cdbaf5c33772c4c989de203138178ba"
+  },
+  "limitations": [
+    "The meaningful omitted-post control exposes a health getter after fatal; SQL is still blocked by its own pre-check.",
+    "Restricted inert fixtures only; no real host, clock/epoch provenance, native SQL settlement, cancellation, operational quota or deployment proof.",
+    "Pre-stop SQL and earlier collection helpers remain outside this slice. Broad CI and operational validation not run. Prior harness bootstrap corrections are preserved."
+  ],
+  "next": "Define a bounded local contract for the separate pre-stop SQL completion boundary before admitting implementation.",
+  "rea": "PAUSED",
+  "pm1": "S1 unchanged."
+}

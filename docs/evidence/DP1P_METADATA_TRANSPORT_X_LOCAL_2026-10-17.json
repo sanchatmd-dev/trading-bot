@@ -1,0 +1,40 @@
+{
+  "schema": "DP1P_METADATA_TRANSPORT_EXTRACTION_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_TRANSPORT_X_EXTRACTION_LOCAL",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-transport-extraction-model-2026-10-17/",
+  "sourceManifestSha256": "24bc6ec64a93932b5e1a7dffffb49ca10a9820bd2f53f9d64dc99ab2fd37c192",
+  "nativeTransportSha256": "808fb473b2347f3584221b347c14ce01a60c362b113b392527a1307318a66ddd",
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-transport-extraction-independent-2026-10-17/",
+    "manifestSha256": "d7341c181759d11509f8715733e70600182c535f44701307112f0912ddcd5fe2",
+    "checks": 23,
+    "controlsIncluded": 1,
+    "fixtureRework": "One missing closing brace in the independent harness was repaired; no candidate change."
+  },
+  "rootChecks": [
+    "Verified all20 source/independent manifest members",
+    "Reviewed complete native transport and independent harness",
+    "Independent AST reconstructed whole module byte-identically from accepted bootstrap r5 declarations"
+  ],
+  "scope": [
+    "Exact extraction only:2 builtin imports and8 selected declarations",
+    "One fake child per invocation, existing command/options, ten-field raw contract, combined65536-byte retention and observed hashes preserved",
+    "Synthetic errors, limits, signals and late events preserve original producer behavior"
+  ],
+  "limits": [
+    "SIGKILL request/error may resolve before actual OS close or stream drains; child error may resolve without kill",
+    "rc0 and a returned result do not prove SSH connection or settlement",
+    "Timer-method exceptions, all event permutations, native Windows/SSH and real controller completion remain untested",
+    "Outer wrapper remains UNQUALIFIED_EXISTING_TRANSPORT; no new metadata host execution"
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 40,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Complete authenticated runner and generic launcher, then independent verification before release."
+}

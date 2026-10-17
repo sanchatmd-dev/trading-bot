@@ -1,0 +1,45 @@
+{
+  "schema": "dp1p-tf1-local-acceptance-v1",
+  "acceptedAt": "2026-10-16T10:20:53.578Z",
+  "status": "ACCEPTED_LOCAL_TF1_R2",
+  "scope": "Pure monotonic boundary and callback gateway only, under trusted adapter assumptions. No placement or host integration.",
+  "source": {
+    "boundarySha256": "b3dbda6adc98f5bbc4a97e010d6bfc443951db301365a96e85f9d3bcd68292e8",
+    "boundaryBytes": 5567,
+    "manifestSha256": "84188dcc1e3440383aa32d0eb27918580b446b275da11339f346db71d1153b61",
+    "contractSha256": "23081d815e4fd3da9ed8a404835ee2391fa64d034efcb6ff91adc568143b0f0d"
+  },
+  "behavior": [
+    "Keeps one original origin, including zero, and checked monotonic samples with safe integer arithmetic. Normal reserve refusal remains separate from fatal hard deadline and captured operation overrun.",
+    "Checks both callback resolution and rejection, retains raw settled outcome before post-check, and latches the first private fatal identity.",
+    "R2 rechecks fatal after then-property inspection. A nonnative then body cannot begin after that fatal. An already-running trusted native Promise still reaches actual settlement before the gateway rejects.",
+    "No new callback or clock sample follows a latched fatal; cached snapshot and outcome remain readable. Concurrent admission is refused."
+  ],
+  "verification": {
+    "authorTests": 40,
+    "independentUniqueBehaviorCases": 48,
+    "independentPassed": 48,
+    "independentFailed": 0,
+    "independentMutationsDetected": 7,
+    "verifiedManifestAndInputPins": 16,
+    "candidateFilesUnchanged": 9,
+    "rootReviewedSourceDiffAndIndependentTests": true,
+    "reportSha256": "26a165e65fc0a6f80539819b9584dfe66970b8b5b27393841a114b73def3c08e",
+    "resultsSha256": "b959b4b4ca27c2d8a10f619b7a054e7dd6561e0fccef3cb3c415c8471454e239",
+    "mutationsSha256": "6fd5024a74a168b9cb3306965a2dee3b27c0b5d0163cbdf16d80c5b4d41cf21b",
+    "independentManifestSha256": "82b180f86fb1fd87fccdc5561f5b2ca11a4d3fd2fc0adbcaafe47f5fd8bb11e1"
+  },
+  "revisionHistory": {
+    "r1Status": "NOT_ACCEPTED_F1_FATAL_CUTOFF_FAILURE",
+    "r1SourceSha256": "5c1a72a2019e4ef65f82fc9cdee648e2aebd7384821182d90e4b321e783a023a",
+    "finding": "A then getter could latch fatal and return a function that r1 still invoked. The original failed evidence is preserved; restoration of the flaw is detected by the r2 mutation control."
+  },
+  "limitations": [
+    "Clock, phase and caps are trusted inputs, not authority. Native Promise subclass/species behavior also relies on trusted adapters. This is not an arbitrary-object sandbox.",
+    "Nonnative thenables after fatal are not assimilated and have no settlement guarantee. Nonsettling callbacks have no containment or cancellation proof.",
+    "Raw outcome retention is not effect verification and does not imply performed:NO.",
+    "No placement, ledger, bridge, host, PostgreSQL, browser, SSH, actual limits, deployment or production wiring was tested.",
+    "The host wall-clock and catch-unwind paths remain unchanged; TF2 integration and later host gates are still required. PM-1 S1 is unchanged."
+  ],
+  "next": "Implement the reviewed pure TF2 placement successor with private ledger-clock provenance and independent cutoff tests; preserve frozen sources and measured-approval gates."
+}

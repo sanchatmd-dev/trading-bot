@@ -1,0 +1,103 @@
+{
+  "schema": "DP1P_METADATA_NATIVE_BINDING_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_NATIVE_M1_R2_LOCAL_BINDING",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-native-binding-model-r2-2026-10-17",
+  "modules": [
+    {
+      "name": "config.mjs",
+      "sha256": "4bbf39ba05267479b2e1a708f19b958a328301c995a7382a39af6c0ef02a9848"
+    },
+    {
+      "name": "version-data.mjs",
+      "sha256": "dfb5dada7c53f241f5c1fd56a6363de096f0ef595434ea2669cb8204e3d8132a"
+    },
+    {
+      "name": "witness/boundary.mjs",
+      "sha256": "46e69379db184950a69191955463d9232e81e54e67fb52708a4c2b2bb985ea1a"
+    },
+    {
+      "name": "witness/witness.mjs",
+      "sha256": "6f28b8c8a068c6678857cdc4cf2c8a8abd0e506d756dbf245a2dc4fb7cea8a93"
+    },
+    {
+      "name": "capture/plan.mjs",
+      "sha256": "e5f135141a8f1bdb6cc20247778f8b8822134eeb08110aeb6688afdc8c24af36"
+    },
+    {
+      "name": "capture/capture.mjs",
+      "sha256": "1a5b2a500ee288e1a92080ef8288ff731a14df8bd7762a20efe76a4479f57e44"
+    },
+    {
+      "name": "capture/validate.mjs",
+      "sha256": "a7037f2c37b1ab45673fe4deb2dfdd23ce1c4a4941f94c73e67947ef0e875cb6"
+    },
+    {
+      "name": "observe-metadata.mjs",
+      "sha256": "318a6ba0c4051e0f17ee4c701a3957c2dcbd9c71a70562b0dfeb60f6827ddce6"
+    },
+    {
+      "name": "validate-observer.mjs",
+      "sha256": "6955db2c6eb6de905576e70f512e6ecfbba9ac9a9309efce6d971b767b10b904"
+    },
+    {
+      "name": "memory-sink.mjs",
+      "sha256": "91627fba5ca565ca565ef14d67d4144359d2573ae56cc2fc78b4ee40d8e794f0"
+    },
+    {
+      "name": "native-entry.mjs",
+      "sha256": "73bbb501b7f1d37ae04614c11f07ab47c74db1260d894d771eb290955ef250d7"
+    }
+  ],
+  "sourceManifestSha256": "416028027920b1b9e080046274d0aca0114f245aeac5c1cfd31977d50e06d44b",
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-native-binding-independent-r2-2026-10-17",
+    "manifestSha256": "be9ffdda6f276b9cb7df3fb63dfd4fc8ae7ba3db16484a67b95b52952f03980b",
+    "o1RegressionChecks": 74,
+    "o1ControlIncluded": 1,
+    "terminationRegressionScenarios": 11,
+    "newSessionSourceChecks": 15,
+    "newActualGraphVmChecks": 4
+  },
+  "completion": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-native-binding-completion-2026-10-17",
+    "manifestSha256": "a0ef63d5ad2ccac5948dbaef68aecf4d1ece631243680a5d9ec3807543a16b9c",
+    "sinkChecks": 12,
+    "sinkControlIncluded": 1,
+    "vmChecks": 8,
+    "bindingControlIncluded": 1
+  },
+  "rootChecks": [
+    "Reviewed exact two-module delta, native mapping, sink, session source and independent reports/controls.",
+    "Verified 91 manifest members across source and two independent packets.",
+    "Replayed 66 author graph groups and seven stub-VM groups; both exited zero."
+  ],
+  "scope": [
+    "One actual W1 boundary is retained in an internal frozen session, with the existing pure observer compatibility API.",
+    "Native public API accepts config only, fixes capabilities and returns candidate only, including valid partial INCOMPLETE evidence.",
+    "No second guard or post-return clock read changes the original fatal classification.",
+    "Ordered capture snapshots are retained by reference in a private IN_MEMORY_ONLY sink; late returned receipt fields remain authoritative.",
+    "Actual default-graph VM refusals use real crypto and tiny synthetic bytes; separate observer-stub tests verify fixed wiring."
+  ],
+  "history": [
+    "Rejected r1 nested bridge changed OBSERVER_TIME into CLOCK_INVALID, with no demonstrated false COMPLETE. The root-selected bridge design was replaced by the single original session boundary."
+  ],
+  "limits": [
+    "No full native VM success, target-hash success, actual OS IO, real child, Linux settlement, host or transport qualification.",
+    "Missing fstatSync, exhaustive metadata and sink primitive negatives were not tested.",
+    "Missing closeSync leaves an unresolved fake handle in its negative fixture; no cleanup or OS settlement claim follows.",
+    "Candidate return does not certify native return timing or publication; emission and original-deadline stdout completion remain pending.",
+    "Capture persistence means memory retention only, not remote durable storage."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 57,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "hostExecutionAuthorized": false,
+  "activeGo": null,
+  "supervisorQualification": "UNKNOWN",
+  "productionReady": false,
+  "next": "Implement and independently test one-record stdout emission using the retained original boundary; then pinned source assembly and metadata envelope/runner."
+}

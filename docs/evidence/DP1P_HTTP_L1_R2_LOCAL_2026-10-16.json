@@ -1,0 +1,49 @@
+{
+  "schema": "dp1p-http-l1-r2-local-acceptance-v1",
+  "status": "ACCEPTED_LOCAL_FAKE_HTTP_MODEL",
+  "acceptedAt": "2026-10-16T13:59:33.063Z",
+  "scope": "Pure HTTP request/body lifecycle with trusted inert records and native Promises; no actual HTTP client or TF3 composition.",
+  "source": {
+    "lifecycleSha256": "dd64cb232fc9e350805504a0eb973a8cce35ec727862ee2c916c06aa4effb388",
+    "authorManifestSha256": "68af1bb763b94e8aa376708e5f889acec78d72db4a6282945aecd8ac7cd55df8"
+  },
+  "authorChecks": {
+    "tests": 52,
+    "controlsIncluded": 6,
+    "rerunByRoot": false
+  },
+  "independentVerification": {
+    "assertions": 329,
+    "groups": 15,
+    "failedGroups": 0,
+    "positiveControlBaselines": 6,
+    "semanticControlKills": 6,
+    "counts": "329 assertion calls belong to the focused matrix; control replays are reported separately, not summed as independent scenarios.",
+    "sourceFilesVerified": 13,
+    "inputPinsVerified": 18,
+    "rootHashChecks": 38,
+    "reportSha256": "e1417b7f36d9d8b8fc028aa9114be7a91587628ef343c75d272625b2358df6e4",
+    "resultsSha256": "7e4d0c7b2d616f02961f0bf1f0a81320b813a5d5b244696d6a0c2a87897e4e5b",
+    "controlsSha256": "86b269a9b23693284bed578f50a42d74b4df8266070df72b8b50554a994a941d",
+    "manifestSha256": "7f1e175bcb2a26d6ad1e533e6a5c6e4f4959ddddcc3ae4c0b7bfbe033546c659"
+  },
+  "behavior": [
+    "Fatal and local refusal are rechecked after asynchronous continuations and before publication. Historical r1 returned facts through this gap; r2 preserves the original fatal/refusal identity.",
+    "A trusted factory with no precreated resources and zero actual driver entries rejects before request. Once any driver entry occurred, missing settlement evidence remains unresolved.",
+    "Present bodies require bounded chunk observation, including an empty final chunk. Header-level terminal DONE is an unsupported success phase and rejects without new IO when terminal evidence is valid.",
+    "Terminal REUSABLE resources can complete without socket closure; incomplete, conflicting or stale resource records cannot authorize progression. No abort, cancel, close, drain, retry or redirect effects exist."
+  ],
+  "history": {
+    "r1": "NOT_ACCEPTED; paired independent fatal/revoke failures preserved and replayed.",
+    "r2RootReview": "Added explicit final reachable=true publication check; initial r2 source/manifest preserved.",
+    "independentHarness": "Initial missing-resource fixture error preserved; corrected without candidate changes."
+  },
+  "qualifications": [
+    "Guard mutation removes several checks together; six kills do not prove every check independently necessary.",
+    "Trusted synthetic resource attestations do not establish real fetch/HTTP/server settlement, pool behavior, compressed wire bounds, decompression costs or cancellation.",
+    "No target runtime/clock mapping/RD7/approved limits/host/production/READY/GO acceptance. Broad suites and CI not run.",
+    "No real network, database, timers, browser or production data was used."
+  ],
+  "next": "Review a bounded HTTP/TF3 composition contract after this acceptance; continue clock-domain comparator verification. Actual integration remains gated.",
+  "pm1": "Unchanged; no scorecard rescore."
+}

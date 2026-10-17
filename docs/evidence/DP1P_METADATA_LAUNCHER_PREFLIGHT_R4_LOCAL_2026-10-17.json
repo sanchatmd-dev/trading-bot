@@ -1,0 +1,49 @@
+{
+  "schema": "DP1P_METADATA_LAUNCHER_PREFLIGHT_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_LAUNCHER_PREFLIGHT_R4_LOCAL_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-launcher-model-r4-2026-10-17/",
+  "sourceSha256": "f56fb2200d32df326ebee56f7d0fa35080dfc21f3de00350f29dc01aa9475977",
+  "sourceManifestSha256": "1e7e0556799c6dfc02f92f3f0e4d80fe4002a7dab9e02bfd9fb694bf992d6d64",
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-launcher-preflight-independent-r4-2026-10-17/",
+    "manifestSha256": "9df536fbe0a20bc62f4b5a3420a6c4eb60a5e1899838de2d6e5ee5b5a4f893f2",
+    "checks": 19,
+    "positiveChecks": 8,
+    "exactCodeRefusals": 11,
+    "reverseControlsIncluded": 2,
+    "fixtureIndependence": "Fixture-construction prefix reused; assertions, table comparisons and refusal expectations independently authored."
+  },
+  "rootChecks": [
+    "Verified449 manifest members across source and independent evidence",
+    "Reviewed preflight functions, hash relationships and independent assertions",
+    "Confirmed41 fixed package rows,11 roles and unchanged accepted C# drain text"
+  ],
+  "scope": [
+    "Generic external PINS and local Node hash selection with fixed package closure before JavaScript evaluation",
+    "Canonical path/ancestor checks, bounded selected files and conservative provider no-link profile",
+    "Anchored current release relationships, freshness/state gates and explicit Boolean/numeric-zero review types",
+    "Fully reanchored malformed type fixtures and hardlinked selected Node refusal"
+  ],
+  "history": [
+    "R2 full fixture exposed a real local hardlink alias in inert data; R3 added conservative link refusal",
+    "R2 PowerShell coercion accepted malformed review types; R4 matches strict Boolean/numeric-zero semantics. Actual L2 already rejected them before SSH."
+  ],
+  "limits": [
+    "The executable entry still refuses as LAUNCHER_IMPLEMENTATION_INCOMPLETE; controller integration is not accepted",
+    "Synthetic package and historical placeholders do not establish actual L2 or final executable package closure",
+    "No actual controller start, Add-Type, SSH, native close/drains, current host health or execution GO",
+    "No universal file identity, short-name, case-sensitive directory or adversarial race proof; hardlinked selected files stop this profile",
+    "Independent hardlink test covers local Node/alias; separately rebound trust alias is author fixture evidence",
+    "Numeric0.0 is accepted like JavaScript number0; malformed strings and Booleans are rejected"
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 34,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Derive and independently test the one-start controller lifecycle, then integrate the final package and reverify source closure."
+}

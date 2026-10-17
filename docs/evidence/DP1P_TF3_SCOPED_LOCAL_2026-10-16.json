@@ -1,0 +1,44 @@
+{
+  "schema": "dp1p-tf3-local-acceptance-v1",
+  "acceptedAt": "2026-10-16T10:49:09.426Z",
+  "status": "ACCEPTED_LOCAL_TF3_R2",
+  "scope": "Pure scoped child-call helper and injected observation sequence against accepted TF1 r2. No TF2 or host integration.",
+  "source": {
+    "scopedCallsSha256": "43a4e5a86d70ceee3a648a6ddfafe8729a8cbaa99f5d86ade5c5190a7d8f6b20",
+    "readinessSequenceSha256": "8321c90e70e18c37d32ba74295933fd590e802ff09b5beaf26fefd6cb88b6095",
+    "manifestSha256": "a0b8f4ec79c23dd47a95fafda9876563a7ac7306fe4c569262d21d0e1e110900",
+    "apiSha256": "796450bacee6a940097255bae803f9ae050678ef7fb79f3aae78bf5b9284f3de"
+  },
+  "behavior": [
+    "Binds one scope to the exact active parent ticket. Captured child caps and remaining required envelope cannot extend the parent deadline.",
+    "Serial queue, optional health and final identity reads retain actual outcomes, preserve the first fatal and suppress suffix callbacks after failure. Pending native Promises reach actual settlement; revocation does not claim cancellation.",
+    "Returns detached observation facts only. No READY, GO, provenance or performed determination follows.",
+    "R2 rejects custom prototypes before asynchronous return can assimilate an inherited thenable. Inert ordinary or null-prototype raw records are permitted; the fact schema separately requires ordinary records."
+  ],
+  "verification": {
+    "authorTests": 36,
+    "independentUniqueBehaviorCases": 42,
+    "independentPassed": 42,
+    "independentFailed": 0,
+    "independentMutationsDetected": 5,
+    "verifiedInputPins": 19,
+    "candidateFilesUnchanged": 10,
+    "rootReviewedSourceDiffAndIndependentTests": true,
+    "reportSha256": "fecdfae6bdf886e3bac8fe8209d49df5f51b74195ac859ae53f87a7d87ee3e50",
+    "resultsSha256": "861c4ac9c739ab17085240e0ee24f25474e0cb5324eea66cddbd5b0cf9afdf55",
+    "mutationsSha256": "962e416a3a129fcefdd3dffa13db6d6d38864292b79fe0fa44859754ed3590df",
+    "independentManifestSha256": "21120f4916e2e17dc970ac28ef60a2dfdfdebecdefc4e4b63d3519e4c7cd32b6"
+  },
+  "revisionHistory": {
+    "r1Status": "NOT_ACCEPTED_INHERITED_THENABLE_F1",
+    "r1SourceSha256": "d7b8dbfb6d41ac2cb21deb33cf1d925947be12967f13175a8dedff4f1b07580d",
+    "finding": "Custom-prototype inherited thenables could be assimilated after the child post-check. R2 rejects them; restoring the flaw fails the independent control. Original evidence is preserved."
+  },
+  "limitations": [
+    "Trusted unmodified built-in prototypes, inert data and ordinary native Promises are required. This is not an arbitrary Proxy, accessor or Promise-subclass sandbox.",
+    "No actual PostgreSQL, HTTP, native capture, transport, process clock-domain mapping or nonsettling-operation containment was tested.",
+    "Observed timestamps and process fields are facts, not validated freshness or identity.",
+    "No TF2 integration, production wiring, approved limits, host action, readiness acceptance or PM-1 rescore."
+  ],
+  "next": "Review TF2 independently, then verify bounded local composition with synthetic ports before considering host adapter and measurement gates."
+}

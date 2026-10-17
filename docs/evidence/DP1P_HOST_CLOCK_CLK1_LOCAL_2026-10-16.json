@@ -1,0 +1,53 @@
+{
+  "schema": "dp1p-host-clock-wiring-clk1-local-v1",
+  "status": "ACCEPTED_LOCAL_TWO_GATE_CLOCK_WIRING",
+  "acceptedAt": "2026-10-16T15:40:03.561Z",
+  "scope": "Only S3 first-effect and before-stop duration gates, successful elapsed time and five cached fatal checks in a copied host source. Explicit injected actual TF1 fixture boundary; no deployable payload.",
+  "source": {
+    "hostSha256": "c67d8e0b14939ea2245f3457e19dce00e2a265a5ca9d8a69be5aabde8d4d7f45",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "portSha256": "0101e5caf82b0e886e671db8465456cbb6e825719a8e91a96d25044bef16260f",
+    "manifestSha256": "5fb62612cf6312036866f519d3423e767d0fa46962771dc4e0a461db58d11f85",
+    "rootDecisionSha256": "fd4e616c77f86139f351138335f2ff058600953fc3995d46883a0c71c8ab6014",
+    "precedenceSha256": "2ffecca65c671ce9768c47fdc0f477836147d6f01712da3bb19cb98d51f42fa2"
+  },
+  "behavior": [
+    "One-shot port captures existing TF1 methods and original origin/deadlines. Named budget values must match original total and reserve; no new boundary or default origin.",
+    "Two gates each sample once against original normal deadline; successful elapsed samples once from original origin before PASS. Existing fatal wins over argument or reuse errors without additional sampling.",
+    "Cached fatal guards precede five named effect markers. Catch retains partial evidence and reports STOP; this report preserves a code, not an error object.",
+    "Actual outer invokeAsync late-post failure retains inner S3_PASS outcome but rejects the exact original fatal.",
+    "Unchanged library still invokes s3Main with one argument: missing port fails closed before helpers or Date. This successor is intentionally not deployable."
+  ],
+  "authorTests": 14,
+  "independent": {
+    "cases": 39,
+    "caseAssertions": 164,
+    "controlReplayCalls": 6,
+    "totalAssertionCalls": 170,
+    "expectedControlFailuresIncluded": 2,
+    "sourceControls": 2,
+    "semanticKills": 2,
+    "controlQualification": "Wall-gate and missing pre-start guard controls detect incorrect effect markers. Later checks may still block PASS; no global unsafe escape claim.",
+    "oneArgumentEnvelope": {
+      "helpers": 0,
+      "dateReads": 0,
+      "result": "UNCLASSIFIED_STOP/UNKNOWN with STOP_REPORT and null host timestamps"
+    },
+    "rootHashChecks": 23,
+    "reportSha256": "a64bb6bba09cba8bf78fc6baa44b49ef654758e8fcbf53ae2c2e4c2adafad042",
+    "resultsSha256": "0c6a6953bf1a15c437b61e543490cf469a7de88c840ff829d1447b92bd1f3b65",
+    "manifestSha256": "23d88ef6531d75bfa9f54800b641046cca2cd6298274cb72426eb8cc2fcac586"
+  },
+  "notRun": [
+    "Expanded scalar/prototype matrix, method replacement instrumentation and reset-origin/reread-budget/late-finish mutations.",
+    "All outer-post variants, real prelude/exit/native/broad/CI tests.",
+    "Actual clocks, producer provenance, helper settlement, RD7, approved limits and operational wiring."
+  ],
+  "limitations": [
+    "Legacy readiness wall-clock origin and all other host helpers remain unchanged. This is not full clock migration or earliest-fault containment.",
+    "Arbitrary supplied capability authenticity is outside this trusted fixture contract.",
+    "No host, production, deployment, READY, GO or rollback authority."
+  ],
+  "next": "Define the bounded readiness duration migration on this successor, keeping process/heartbeat/epoch assumptions separate and preserving original job deadlines.",
+  "pm1": "S1 unchanged."
+}

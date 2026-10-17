@@ -1,0 +1,41 @@
+{
+  "schema": "dp1p-local-evidence-v1",
+  "task": "BOOTSTRAP-B1A-R3",
+  "date": "2026-10-17",
+  "decision": "ACCEPTED_LOCAL_INJECTED_OBSERVER_ONLY",
+  "gitBase": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": {
+    "observerSha256": "b0d390e39ae9f3e9afbea9ae2f31b793cc47011cd32eb4698e5b74dfe459c3d1",
+    "validatorSha256": "1cdce077dedf4937e9af720870f1f8f01f1f67e068d114fb6004da775936de24"
+  },
+  "verification": {
+    "independentCasesPassed": 53,
+    "harnessAssertionCalls": 184,
+    "caseAssertionCalls": 180,
+    "newMeaningfulControls": 1,
+    "priorUnchangedObserverControls": 3,
+    "rootManifestMembersChecked": 10,
+    "independentManifestSha256": "7b847ba71f39a1627c27d16e48b55b921e8842475e8249308adb82bd4143f139",
+    "nativeExecutions": 0,
+    "childExecutions": 0
+  },
+  "corrections": [
+    "Post-call clock checks and exactly-once owned descriptor close survive IO failures.",
+    "Identically truncated two-pass reads no longer count as complete binary evidence.",
+    "The receipt validator requires an executable permission bit, matching the observer."
+  ],
+  "observations": [
+    "Independent fixtures cover two-pass hash and metadata consistency, PRE/POST health, fixed original deadline and strict binding.",
+    "Read-call and byte-cap boundaries use generated bounded chunks; they do not measure host capacity."
+  ],
+  "limits": [
+    "Native adapter, source assembly, runner and SSH transport are not accepted by this decision.",
+    "Private identity metadata must be removed from public projections.",
+    "No binary authenticity, wrapper qualification, service health, production readiness or approved S3 capacity follows."
+  ],
+  "evidence": {
+    "candidate": ".qa-local/codex-dp1p-native-bootstrap-observer-r3-2026-10-17",
+    "independent": ".qa-local/codex-dp1p-native-bootstrap-independent-r3-2026-10-17"
+  },
+  "rea": "PAUSED"
+}

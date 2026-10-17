@@ -1,0 +1,49 @@
+{
+  "schema": "dp1p-tf3-copy-r3-local-acceptance-v1",
+  "status": "ACCEPTED_LOCAL_COPY_CORRECTION_UNINTEGRATED",
+  "acceptedAt": "2026-10-16T14:23:07.498Z",
+  "problem": "Known non-enumerable own data fields pass the original descriptor schema but object spread removes them, allowing OBSERVED_FACTS with incomplete queue/health/identity records.",
+  "change": "Only the spread return is replaced by explicit validated primitive copies for all three stages. Source around that replacement is byte-for-byte unchanged. Schema, order, fatal/refusal handling and finally revoke remain unchanged.",
+  "source": {
+    "originalSha256": "8321c90e70e18c37d32ba74295933fd590e802ff09b5beaf26fefd6cb88b6095",
+    "candidateSha256": "557f74470bb353702675260c3994a7719814aa6eaa17fb172e7241e68b1e9fc8",
+    "candidateManifestSha256": "a5390e4d33c62ef97ca3bdff0acad1bed16f9e273c1f12ce929b5947e8f29472",
+    "rootReproductionSha256": "9fb88b48200409cd1ff25beb8f89c7326c66e27d7824eebd923d09a58c3c314b"
+  },
+  "author": {
+    "tests": 44,
+    "controlsIncluded": 3,
+    "rootRerun": false
+  },
+  "independent": {
+    "direct": {
+      "tests": 57,
+      "assertions": 528,
+      "positiveBaselines": 3,
+      "historicalSpreadKills": 3
+    },
+    "httpGraph": {
+      "assertions": 196,
+      "groups": 10,
+      "positiveBaselines": 2,
+      "semanticControlKills": 2,
+      "scope": "Only readiness source is substituted in the restricted VM. All other HTTP-C1/SQL-C1/TF1/TF3/HTTP-L1/SQL-L1 dependency bytes remain pinned."
+    },
+    "counts": "Tests and assertions overlap; direct, graph and control counts are not summed as independent scenarios.",
+    "rootHashChecks": 61,
+    "reportSha256": "b2a1e5727cb3e6f1e940b1c28d575684b9d4c5a405ecd34f428b7d1d3bb9a76f",
+    "directResultsSha256": "2a1abd92bb6d47b41c6055df44c84fa9a2cfdedd9c4e5000e383ead77775adad",
+    "graphResultsSha256": "a4069f73b68f43204416aaa09bb99cc21013c04c07fbf2e18a40984144e6db13",
+    "manifestSha256": "6f9c722fce0ca67380e0ee1eb04347717f57a62dcfb11cd098bcec3581b39206"
+  },
+  "history": "Independent expected-block CRLF/LF setup mismatch stopped before tests; corrected harness expectation and retained ATTEMPTS.json. No candidate defect or control kill is attributed to that setup failure.",
+  "qualification": [
+    "Earlier accepted evidence stays bound to its historical source graph and tested inputs. The newly confirmed hidden-field limitation must not be omitted when using frozen r2.",
+    "This accepts a local successor and synthetic HTTP graph substitution only. Disk imports still refer to frozen r2; no accepted file was overwritten.",
+    "TF2 and SQL-only graph substitution, broad suites and CI were not run.",
+    "No hostile Proxy support, actual IO/clock/driver settlement/provenance/RD7/approved limits/production/READY/GO claim.",
+    "HTTP wrapper control is a port-channel result; outer TF3 still blocks aggregate facts."
+  ],
+  "next": "Use this successor in a separately pinned local graph before clock-consumer composition; define the consumer contract without inventing target provenance or clock mappings.",
+  "pm1": "S1 unchanged."
+}

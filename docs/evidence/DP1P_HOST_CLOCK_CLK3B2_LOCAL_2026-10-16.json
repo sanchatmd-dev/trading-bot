@@ -1,0 +1,47 @@
+{
+  "schema": "dp1p-host-api-observation-clk3b2-local-v1",
+  "status": "ACCEPTED_LOCAL_API_OBSERVATION_CLOCK_BOUNDARIES",
+  "acceptedAt": "2026-10-16T16:35:11.408Z",
+  "scope": "Only new apiObservationS3, composed with the accepted read helper and original TF1/port in restricted inert fixtures. Every existing host function, port and lib is unchanged.",
+  "source": {
+    "hostSha256": "d54e445eb1ca6ca0fc3575c4f4339f97b284c220f4e14b61b8555de9cad36b71",
+    "portSha256": "25ed195b38c36ce65889cdd21ca76e045e39874e35edb616948c3479633761ed",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "118b03aca27c78e53a69e69a09037a92692c3db5c45e6a031ee60c14fe3fd484",
+    "decisionSha256": "8685ca7012467fb4b1434d1447cab35beafdc0e362692b3028707d7936aac24c"
+  },
+  "behavior": [
+    "Ten named IO helper boundaries check both actual return and throw before later helpers or validation. Exact fatal/local stop outranks operation errors; valid post-checks preserve ordinary and falsy throws.",
+    "Legacy short-circuit ordering is preserved. Config files use the accepted read helper with the same work/window and without a redundant sample pair.",
+    "The environ read retains its separate 1048576-byte cap and does not add cumulative file/byte charges. A late invalid buffer produces Clock stop before the legacy cap error.",
+    "Private db/port/identity result shape is preserved only inside the caller interface; reports contain fixed assertions, codes and counters, not private values.",
+    "Final checkpoint precedes result return. Pure validation/hash throws do not add a terminal sample or claim precedence over unobserved later faults.",
+    "Prior cleanup failure refuses before IO; work counters are not reset. Identity/collect/S3 still use the old route."
+  ],
+  "authorTests": 42,
+  "independent": {
+    "cases": 136,
+    "caseAssertionCalls": 422,
+    "controlAssertionCalls": 9,
+    "totalAssertionCalls": 431,
+    "expectedMutationFailuresIncluded": 3,
+    "semanticControls": 3,
+    "baselineClockSamples": 33,
+    "baselineQualification": "One API opening, twenty observation IO pre/post samples, eleven accepted read-helper samples and one final publication sample.",
+    "rootHashChecks": 25,
+    "reportSha256": "c3c3eac92addf405bdbdf8bfcfab9f81723121c4b79211ef586c7aecb50cdf34",
+    "manifestSha256": "52f45cb479471929d39dd10cb545e83d291bb08b52157855b4c33a343969f071",
+    "harnessCorrection": "An initial nested sample expectation was corrected to measure no added terminal sample; the original failed harness result is retained."
+  },
+  "notRun": [
+    "Exhaustive parser/predicate/schema/extreme-value permutations and full prior regression suites.",
+    "Identity/collect/S3 integration, native process/environment/filesystem/clock behavior, producer provenance, actual settlement, RD7, approved caps, broad CI and production."
+  ],
+  "limitations": [
+    "Nested helper internals remain uninstrumented and unqualified; this is helper-boundary evidence.",
+    "Original process/epoch/environment association remains unchanged and unqualified. Private-return compatibility does not authorize logging.",
+    "No deployment, READY, GO or rollback authority. REA remains paused."
+  ],
+  "next": "Define API identity assembly with terminal-fault propagation and cached detached partial counters, then validate it before collect/S3 integration.",
+  "pm1": "S1 unchanged."
+}

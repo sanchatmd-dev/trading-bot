@@ -1,0 +1,50 @@
+{
+  "schema": "DP1P_METADATA_FOUNDATION_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_CONFIG_VERSION_FOUNDATION_ONLY",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-observer-model-2026-10-17",
+  "modules": [
+    {
+      "name": "config.mjs",
+      "sha256": "4bbf39ba05267479b2e1a708f19b958a328301c995a7382a39af6c0ef02a9848"
+    },
+    {
+      "name": "version-data.mjs",
+      "sha256": "dfb5dada7c53f241f5c1fd56a6363de096f0ef595434ea2669cb8204e3d8132a"
+    }
+  ],
+  "sourceManifestSha256": "f0910961c9dcd5a0963b999aa08c9debff7e9c6074cd3aa8c78859addbd21c48",
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-foundation-independent-2026-10-17",
+    "manifestSha256": "bc091fb6b117a5e6baaa589b6357d4f375649142dfcb3d5308c70826a50c6708",
+    "checks": 61,
+    "sourceCopyChecksIncluded": 5,
+    "permissiveParserControlsIncluded": 1
+  },
+  "rootChecks": [
+    "Reviewed config/version source and independent report/control.",
+    "Verified 27 manifest members across source and independent packets.",
+    "Five W1/r3 helper copies remain exact; nine independent source/snapshot pairs match."
+  ],
+  "scope": [
+    "Strict detached and frozen configuration, expected runtime metadata and path agreement.",
+    "Individual receipt revalidation before constrained SELF_REPORTED GNU version identification.",
+    "Unknown/malformed banners and help do not expose raw content or enable behavior."
+  ],
+  "limits": [
+    "Full observer orchestration and outer validator are not part of this acceptance.",
+    "Prerequisite and root-decision hashes have shape validation only; authentication is a future caller gate.",
+    "Canonical pathname, loaded-image identity, native IO, real child settlement and target behavior remain unqualified.",
+    "Proxy/reentrant traps and exhaustive receipt mutations were not tested."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 63,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "hostExecutionAuthorized": false,
+  "activeGo": null,
+  "productionReady": false,
+  "next": "Complete and independently verify the O1 observer composition in its separate new directory."
+}

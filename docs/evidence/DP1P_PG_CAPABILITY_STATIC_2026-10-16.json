@@ -1,0 +1,27 @@
+{
+  "schema": "dp1p-pg-capability-static-review-v1",
+  "status": "ROOT_REVIEWED_LOCAL_SOURCE_ONLY",
+  "reviewedAt": "2026-10-16T11:33:12Z",
+  "scope": "Public installed JavaScript source inspection only. This record contains no execution, database, server or target-host qualification.",
+  "localVersions": {"pg": "8.23.0", "pg-protocol": "1.16.0"},
+  "actualTargetVersion": "UNKNOWN",
+  "evidence": {
+    "reportSha256": "d20147e61f82ca84cd46984ea3f3c1402d14a3df38b0e803d421e0342d9ccce1",
+    "inputPinsSha256": "4df6cf43accc749e7c6dc1746d2fcd364c77008aa63379203c98cb49750e17a9",
+    "pinsRechecked": 12,
+    "allPinsMatched": true,
+    "clientSourceSha256": "992c12d10cd42ece06b0b224601fa783a02ed08f3ace8bd8089cc441b6308abf",
+    "rootReview": "Confirmed the decisive client source branches for ReadyForQuery, backend error, query timeout, cancel and end. No tests were executed for this static record."
+  },
+  "findings": [
+    "The active non-pipeline query_timeout branch reports a client error without sending cancellation or destroying the active connection.",
+    "A backend error can reject a query before the next ReadyForQuery message.",
+    "Client.end with an active non-pipeline query invokes stream.destroy; it is not a passive settlement wait.",
+    "Active-query cancellation opens a separate connection and returns no server settlement acknowledgment from the cancel method.",
+    "getTransactionStatus returns the last received ReadyForQuery status and can remain stale during a subsequent query.",
+    "Client Promise settlement, cleared queue state or socket closure alone does not establish server transaction termination."
+  ],
+  "authority": "No new post-fatal query, rollback, close, cancel or destroy is approved. Waiting for an already-started operation remains distinct from initiating cleanup.",
+  "next": "A separately admitted local probe executes pinned client code with synthetic streams and a controlled scheduler to inspect client event ordering. Real server closure, target capabilities, approved limits and RD7 measurements remain open.",
+  "pm1": "Unchanged; this source review does not rescore project or prototype progress."
+}

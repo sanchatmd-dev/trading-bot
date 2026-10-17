@@ -1,0 +1,49 @@
+{
+  "schema": "dp1p-host-stop-report-sr1-local-v1",
+  "status": "ACCEPTED_LOCAL_EXTRACTED_SOURCE_SUCCESSOR",
+  "acceptedAt": "2026-10-16T15:29:02.457Z",
+  "scope": "Copied S3 host failure tail and library payload/public projection. Extracted-source VM evidence only; original host and library remain unchanged.",
+  "source": {
+    "hostSha256": "b8d50d93ac3c2809a2b11f8bd8501b560d86379f67f8a91367f406b2d218f5aa",
+    "libSha256": "e504c05c7155edb03762cb1bab5450cfeadfca29cb2483928ea5e16e59552695",
+    "manifestSha256": "6f8b088ad81a759326d0329135be94f3c8ccf8d64a76623d1eb283b0abf6bf27",
+    "originalHostSha256": "6301993b2a68001835ba0cc988c9bc0e885730ff86ce275db9b20f76a8cfa7b4",
+    "originalLibSha256": "9a68031ee3d4e741b06c964a8bd4de8842a142676d5c786395e440689fb0516f",
+    "rootDecisionSha256": "f23257d077534bec3ae3e369d1b321aaf14ad0bc357c9c1c2e911d4bebee5851"
+  },
+  "authority": "OD2 requires recovery through a separate rollback job with its own owner GO. Removing all automatic S3 catch-unwind does not authorize any rollback.",
+  "behavior": [
+    "S3 catch returns STOP_REPORT with retained phase, partial evidence and effect markers; no automatic unwind or new host clock read after this catch.",
+    "Failed/escaped S3 envelope preserves LIVE_OUT or identity-only fallback, null host timestamps and separate-rollback requirement. OUTPUT_CAP preserves cause/effects and marks incomplete evidence.",
+    "S3 public projection exposes terminal/recovery. Null timestamps and missing facts remain non-authoritative; STOP remains non-PASS. Controller transport receipt time is distinct from host time.",
+    "Successful operations and conservative reserves remain unchanged. unwind and rbMain bytes are unchanged."
+  ],
+  "author": {
+    "extractedTests": 17,
+    "syntaxChecks": 2
+  },
+  "independent": {
+    "extractedCases": 17,
+    "positiveCaseAssertions": 142,
+    "controlReplayAssertionCalls": 9,
+    "totalAssertionCalls": 151,
+    "expectedControlFailuresIncluded": 3,
+    "controls": 3,
+    "semanticKills": 3,
+    "fullRunJob": "Exact extracted function and embedded parser/projection with fake gates, context and transport; no authentication or real transport qualification.",
+    "rootHashChecks": 23,
+    "reportSha256": "b38d893e53462ba7f3add0cc33ad997cc5deb151d5838a816dd4a1930945fd85",
+    "resultsSha256": "7b37a2b77245aaf0f6be515c8177b7cdea1d40aef87f0fbf696d0bc5093b8564",
+    "manifestSha256": "42d5c70e4a785229117613ecda2a0b10e1920f621a745dcf0e0b9e176e2c0fea",
+    "counts": "Separate overlapping scopes; 151 is not a count of positive passes."
+  },
+  "limitations": [
+    "No-new-clock/no-recovery guarantee starts at s3Main catch or outer escaped handler, not the earliest underlying fault.",
+    "Inner helper catches/finally, SQL/readiness internals and SIGTERM prelude remain open. TERM is injected, not an actual signal.",
+    "Real modules and PRELUDE were never executed. Process exit, native loader, broad suites and CI were not run.",
+    "Original duration/epoch/proc clock assumptions, actual settlement, capture provenance, RD7, approved limits and production wiring remain open.",
+    "No host, production, deployment, rollback, READY or GO action."
+  ],
+  "next": "Choose the next bounded clock-wiring slice on this exact successor, separating duration budgeting from epoch and process identity. Identify any target-evidence gates before implementation.",
+  "pm1": "S1 unchanged."
+}

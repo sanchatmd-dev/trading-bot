@@ -1,0 +1,152 @@
+{
+  "schema": "DP1P_METADATA_ASSEMBLY_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_ASSEMBLY_A2_LOCAL_FIXED_SOURCE",
+  "gitHead": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "source": ".qa-local/codex-dp1p-native-metadata-assembly-model-r2-2026-10-17",
+  "runtimeSource": ".qa-local/codex-dp1p-native-metadata-assembly-model-r2-2026-10-17/runtime",
+  "modules": [
+    {
+      "name": "config.mjs",
+      "sha256": "4bbf39ba05267479b2e1a708f19b958a328301c995a7382a39af6c0ef02a9848"
+    },
+    {
+      "name": "version-data.mjs",
+      "sha256": "dfb5dada7c53f241f5c1fd56a6363de096f0ef595434ea2669cb8204e3d8132a"
+    },
+    {
+      "name": "witness/boundary.mjs",
+      "sha256": "46e69379db184950a69191955463d9232e81e54e67fb52708a4c2b2bb985ea1a"
+    },
+    {
+      "name": "witness/witness.mjs",
+      "sha256": "6f28b8c8a068c6678857cdc4cf2c8a8abd0e506d756dbf245a2dc4fb7cea8a93"
+    },
+    {
+      "name": "capture/plan.mjs",
+      "sha256": "e5f135141a8f1bdb6cc20247778f8b8822134eeb08110aeb6688afdc8c24af36"
+    },
+    {
+      "name": "capture/capture.mjs",
+      "sha256": "1a5b2a500ee288e1a92080ef8288ff731a14df8bd7762a20efe76a4479f57e44"
+    },
+    {
+      "name": "capture/validate.mjs",
+      "sha256": "a7037f2c37b1ab45673fe4deb2dfdd23ce1c4a4941f94c73e67947ef0e875cb6"
+    },
+    {
+      "name": "observe-metadata.mjs",
+      "sha256": "318a6ba0c4051e0f17ee4c701a3957c2dcbd9c71a70562b0dfeb60f6827ddce6"
+    },
+    {
+      "name": "validate-observer.mjs",
+      "sha256": "6955db2c6eb6de905576e70f512e6ecfbba9ac9a9309efce6d971b767b10b904"
+    },
+    {
+      "name": "memory-sink.mjs",
+      "sha256": "91627fba5ca565ca565ef14d67d4144359d2573ae56cc2fc78b4ee40d8e794f0"
+    },
+    {
+      "name": "native-entry.mjs",
+      "sha256": "46bb0f64454980eb425ae597d0cfc2a549fcb669d2b1d58c96426a9d44aa3342"
+    }
+  ],
+  "buildArtifacts": [
+    {
+      "name": "build-source.mjs",
+      "sha256": "382ec85658c3344c2e3a550d3bb6d7e59d94115a8638e6165231bdb488eae526",
+      "offlineOnly": false
+    },
+    {
+      "name": "inventory.mjs",
+      "sha256": "eabc0981c7e913d51b6b73077308e3b9bcf118fd732c4ec01a8ed58485d2bcf5",
+      "offlineOnly": false
+    },
+    {
+      "name": "plan.mjs",
+      "sha256": "3fb1a6b36c0ec62896f0452b8feecf582d35f268fe054ec81423561cbb6b02e0",
+      "offlineOnly": false
+    },
+    {
+      "name": "pins.mjs",
+      "sha256": "e898afff5611f7acd7d1c72582976d380792b690caafd61548c31dccad41c38d",
+      "offlineOnly": false
+    },
+    {
+      "name": "generate-plan.mjs",
+      "sha256": "857829b5cc188760d8c6bc932ded42eeea56bf392d43ed587001f73218bca3f7",
+      "offlineOnly": true
+    }
+  ],
+  "sourceManifestSha256": "4f7d3e450fdcc15afa516fb617f174b6322a7bfb5a2ece373679cdb6fa733d2a",
+  "planSha256": "f10ae13ebf170ee089dc1b59d714fb2e0b9632831b56982034e375bb39c9cc2b",
+  "eligibility": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-assembly-eligibility-review-2026-10-17",
+    "reportSha256": "5a520606c7116bfedd857c4035709212da785e7399bc4a07502a9886dcefb31f",
+    "evidenceSha256": "6ec82372e08c1d0573aae3fae694888bb90e4cdcb4a64e864469ce0dbb2f0e09",
+    "selectedModules": 11,
+    "writeFormsInspected": 121,
+    "method": "Conservative name-wide target scan plus selected-source review; not a general scope proof."
+  },
+  "independent": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-assembly-independent-r2-2026-10-17",
+    "manifestSha256": "7e9acb3f86521c0297edd2ac9991388000cb0fcbe17f2cbeed152feaed4b446f",
+    "staticChecks": 9,
+    "staticControlsIncluded": 3,
+    "defaultGraphComparisons": 1
+  },
+  "completion": {
+    "directory": ".qa-local/codex-dp1p-native-metadata-assembly-completion-2026-10-17",
+    "manifestSha256": "4bac1f9d838776954c49a176d61b3e36ac53a2b440cbba97052aa4a9aa8a5883",
+    "staticChecks": 18,
+    "behaviorComparisons": 6,
+    "vmRunsWithinComparisons": 12
+  },
+  "rootChecks": [
+    "Reviewed generator, pure builder and exact private-plan correction.",
+    "Reviewed independently derived original/output AST, retained-body/import/export/order/tail comparison and three parseable corruption controls.",
+    "Reviewed complete-wire and event-trace parity on the default graph, plus six pending/backpressure/original-clock comparisons.",
+    "Verified 84 manifest members across source and two independent packets and all eleven runtime hashes against accepted EMIT-R2."
+  ],
+  "specimen": {
+    "sourceBytes": 47637,
+    "configBytes": 506,
+    "sourceHeadroomBytes": 17899,
+    "sourceCapBytes": 65536,
+    "configCapBytes": 65536,
+    "outputWireCapSeparate": true,
+    "sourceExactCapAccepted": true,
+    "sourceCapPlusOneRefused": true
+  },
+  "scope": [
+    "Eleven byte-exact runtime modules, one strict lexical closure and namespace instance per module, fixed single emitMetadata tail.",
+    "Offline AST plan generation; pure runtime building has no parser, fs, eval, dynamic import or native observation.",
+    "Exact source Buffer snapshots and a private parsed snapshot of the canonical plan bytes checked against the fixed pin.",
+    "Independent AST proof derives originals afresh rather than trusting the generated plan as expected output.",
+    "Assembled and unassembled default-graph fixtures use real crypto on tiny fake bytes; no fabricated target-hash success.",
+    "Config and complete executable source caps remain independent; source sizes do not establish output-wire sizes."
+  ],
+  "history": {
+    "a1Accepted": false,
+    "reason": "An input Proxy hook changed an import map after the plan hash check; the builder emitted different source while reporting the original plan pin. No generated source was executed in that reproduction.",
+    "rejectedSourceManifestSha256": "2d2256591e0e625df01a0f4c4b317daad398aba016dd9b5eeeac550b06332e4d",
+    "reproductionManifestSha256": "5aeea42d9e6a519cbe470a03f670ee5d1d8501038eebff3a0b524465296aead6"
+  },
+  "limits": [
+    "This is a fixed selected-source linker, not a general ESM bundler, scope engine or hostile-runtime proof.",
+    "The offline inspector permits variable initializer calls. Exact selected source pins and renewed eligibility review, not a generic initializer filter, are the safety boundary. Changed selected initializer bytes are refused by the builder.",
+    "Full COMPLETE and UNKNOWN assembled sessions, assembled late error/reentry and pending collection were not exercised. Accepted emitter evidence and exact body/wiring proof remain separate from these missing assembled cases.",
+    "No actual stdout, child, target native success, host execution, transport qualification or durable publication.",
+    "Envelope, authenticated runner, fresh admission and exact bounded GO remain required before a metadata host job."
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 50,
+    "shortWindow": "UNKNOWN",
+    "ownerStopFloorPercent": 3
+  },
+  "activeGo": null,
+  "hostExecutionAuthorized": false,
+  "supervisorQualification": "UNKNOWN",
+  "productionReady": false,
+  "next": "Implement and independently verify the pure metadata envelope, then derive the authenticated runner under a separate bounded local contract."
+}

@@ -1,0 +1,95 @@
+{
+  "schema": "dp1p-clock-local-checkpoint-v1",
+  "status": "LOCAL_SLICES_COMPLETE_EXTERNAL_PREREQUISITES_OPEN",
+  "at": "2026-10-16T18:43:54.879Z",
+  "branch": "codex/app3a-market-wait-checkpoint",
+  "head": "4bddbd5357636f7f6a2a7ca2de50204dcd581a52",
+  "upstreamMatched": true,
+  "accepted": [
+    {
+      "task": "COLLECT-C1",
+      "file": "DP1P_COLLECT_C1_LOCAL_2026-10-17.json",
+      "sha256": "86d0b51072873c395274f5d2a9c3c88df587f6bd2eaf2953b9ad6aca70956337"
+    },
+    {
+      "task": "PRESTOP-C1",
+      "file": "DP1P_PRESTOP_C1_LOCAL_2026-10-17.json",
+      "sha256": "67c90646496d3c631e290ae30d5f425a96157a1667c5230a97fbc76664b8d311"
+    },
+    {
+      "task": "EPOCH-A1",
+      "file": "DP1P_EPOCH_A1_LOCAL_2026-10-17.json",
+      "sha256": "60ed3127791755ced88035a0105f1221e267e8e30b320635084cf6706834acb9"
+    },
+    {
+      "task": "EPOCH-H1",
+      "file": "DP1P_EPOCH_H1_LOCAL_2026-10-17.json",
+      "sha256": "929b21ad2452ad0f57bcdbf8c82821ff015e787841c13816927eb9e259beb3d6"
+    },
+    {
+      "task": "PROC-E1",
+      "file": "DP1P_PROC_E1_LOCAL_2026-10-17.json",
+      "sha256": "1a3cd650a0ca1d5a9c4bc0afb979e30bca6846e05eb4a6445f361befb69c3a7b"
+    },
+    {
+      "task": "S3-CLOSURE1",
+      "file": "DP1P_S3_CLOSURE1_STATIC_2026-10-17.json",
+      "sha256": "149fc3aeafd5205aa6d3c9da79efec9180a4fe4236af60eef96e3a94445db862"
+    },
+    {
+      "task": "S3-INJECT1",
+      "file": "DP1P_S3_INJECT1_LOCAL_2026-10-17.json",
+      "sha256": "88683eecdd4f86991d407b367c4a781d797f9b71f26ad09aca16ca8d58da1156"
+    },
+    {
+      "task": "SERIALIZE-W1",
+      "file": "DP1P_SERIALIZE_W1_LOCAL_2026-10-17.json",
+      "sha256": "2d5db024787327f1df6bc56c578618c9afa1e94184eaeaf1d1006a67e190b5af"
+    }
+  ],
+  "usage": {
+    "weeklyRemainingPercent": 87,
+    "shortWindow": "UNKNOWN",
+    "ownerFloorPercent": 3,
+    "reasonForCheckpoint": "The completed local chain reaches unresolved producer/capture and target-evidence prerequisites, not the usage floor."
+  },
+  "runtime": {
+    "ownedClockJobs": 0,
+    "postgresProcesses": 0,
+    "sshProcesses": 0,
+    "otherNodeProcesses": 10,
+    "otherNodeOwnership": "UNCLASSIFIED",
+    "remote": "NOT_INSPECTED",
+    "activeChildren": 0
+  },
+  "git": {
+    "trackedDirty": [
+      "README.md",
+      "Context.md",
+      "docs/ROADMAP.md",
+      "docs/TIME_MANAGEMENT.md"
+    ],
+    "untrackedEvidenceFilesIncludingThis": 37,
+    "ownerUntrackedFiles": 3,
+    "ownerHashesUnchanged": true,
+    "diffCheck": "PASS",
+    "commit": "NOT_RUN",
+    "push": "NOT_RUN",
+    "freshCI": "NOT_RUN"
+  },
+  "remainingGates": [
+    "Select and qualify the native monotonic producer and original capture, including source/session continuity, suspend behavior, integer conversion and target/job/attempt provenance. Finite fixture labels do not establish these.",
+    "Acquire bounded target evidence for process tick frequency, boot/PID namespace, epoch correlation uncertainty and heartbeat writer association. The retained 100Hz assumption is unqualified.",
+    "RD7 measurements and OD3/OD4 owner decisions remain required for operational limits. No input payload cap is selected by the serializer witness.",
+    "Qualify native SQL/HTTP settlement, SIGTERM, delivery dependency closure, loader/serializer wiring and transport before any applicable host or production action."
+  ],
+  "authority": {
+    "newHostGO": false,
+    "productionAction": false,
+    "rollbackGO": false,
+    "limitsApproved": false,
+    "rea": "PAUSED"
+  },
+  "next": "Root must resolve the native producer/capture and measurement contract against the existing input-needs record before delivery wiring. Any target operation needs an exact reviewed bounded packet and applicable owner GO. Preserve one original boundary; no default clock, guessed limits or automatic recovery.",
+  "pm1": "S1 unchanged; no rescore."
+}

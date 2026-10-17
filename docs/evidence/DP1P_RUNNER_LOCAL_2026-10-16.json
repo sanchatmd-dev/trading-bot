@@ -1,0 +1,42 @@
+{
+  "schema": "dp1p-runner-local-acceptance-v1",
+  "acceptedAt": "2026-10-16T10:08:04.583Z",
+  "status": "ACCEPTED_LOCAL_COMPLETE_TEXT_RUNNER",
+  "scope": "Pinned CONFIG-null loader, complete-text parser and public projection only. No native capture, transport, host wiring or deployment.",
+  "source": {
+    "runnerSha256": "4d3421fb713245f34846a8fe82a3ce824fa123624f8d3f9d908dc705ac2eb313",
+    "runnerBytes": 5183,
+    "manifestSha256": "2528ed894196fbea4f46006b9b43658628b5d8864518608c707cc1ddbfd70d08",
+    "contractSha256": "95e8004eb1091e367e190dc47560285e81271f830c2207fcf63ec01e956c991c",
+    "inputPinsSha256": "628a24f0559e59e444b1195ea9feae449d194d6df28c5fb84043cb302b38dd6f"
+  },
+  "behavior": [
+    "Uses unchanged accepted template checkResult and capText with the pinned parseRemote reference; no duplicated result allowlist.",
+    "Expected job and binding digest come from a detached validated snapshot of the trusted sent wrapper.",
+    "Malformed, absent, noncanonical, oversized or mismatched remote text becomes UNKNOWN REMOTE_NO_RESULT.",
+    "Local source pin/import failures are LOCAL_REFUSAL, not fabricated remote results.",
+    "Public output contains only the exact eight fields and state/code summaries; readiness remains NOT_ASSESSED."
+  ],
+  "verification": {
+    "authorReplayNodeTestResults": 8,
+    "independentTests": 12,
+    "independentMutantsKilled": 3,
+    "allInputPinsUnchanged": 18,
+    "unexpectedGuardedIo": 0,
+    "rootManifestFilesVerified": 8,
+    "rootReadSourceAndIndependentTests": true,
+    "reportSha256": "e5a9fe433529b7052b84a3a21ffb652e4a67cea391a914f026f6461306889735",
+    "resultsSha256": "e45bc179ee19bdc9bc281bc955fc2c81ae402bffea7071d72c5369127982b7a2",
+    "testSourceSha256": "2ec193a6cd6774af52d39461b24f68a9af5143fcb066baa6fa8b54ad411542a6",
+    "evidenceHashesSha256": "81b33492c6ef108625df2dd760537a6484639bedffcac5f74d840b23c10f598c"
+  },
+  "limitations": [
+    "Trusted actually-sent wrapper provenance, native capture completeness/authenticity and transport success remain caller responsibilities.",
+    "No CONFIG-nonnull payload, Linux/native process, database, browser or host execution.",
+    "Transparent proxies cannot be identified portably; reflection traps may run caller code. This is not an arbitrary-object sandbox.",
+    "Accepted remote UNKNOWN has no binding certificate; job binding is checked without claiming certificate identity.",
+    "No readiness, production identity, measured quota or operational GO follows from local acceptance.",
+    "PM-1 S1 has not been rescored."
+  ],
+  "next": "Integrate only through a separately reviewed transport/capture and binding contract after the remaining local and operational prerequisites."
+}
