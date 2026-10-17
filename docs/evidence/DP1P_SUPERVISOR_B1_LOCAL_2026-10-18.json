@@ -1,0 +1,46 @@
+{
+  "schema": "DP1P_SUPERVISOR_B1_LOCAL_V1",
+  "date": "2026-10-18",
+  "stampUtc": "2026-10-17T17:02:02Z",
+  "root": "Claude",
+  "decision": "ROOT_ACCEPTED_B1_DESIGN_PROBE_SOURCES_AND_BEHAVIOUR_RUNTIME_LOCAL",
+  "roadmapStep": "Absolute supervisor stage B1 (local design and build) after the first metadata read C01",
+  "sourceReview": {
+    "method": "An Opus architecture auditor and an independent Fable reviewer read the public GNU coreutils 9.4 timeout and env sources and the Node 24.21.0 process and child_process documents; root confirmed the cited source lines",
+    "profile": "env -i PATH=/usr/bin:/bin LC_ALL=C timeout --foreground --signal=TERM --kill-after=5s 2s node --max-old-space-size=64 --input-type=module -",
+    "expected": {"NORMAL": 0, "TERM": 124, "KILL": 137},
+    "conditions": "Eleven adopted conditions, including: codes 125-127 and start-up race codes never count as a pass or as proof of a reap; READY.ppid must equal the direct child pid; a blocked or ignored TERM gives UNKNOWN; only ENOENT on the probe's /proc stat after close counts as absence"
+  },
+  "design": {
+    "method": "An Opus draft and an independent Fable draft, judged by an Opus auditor; root adopted the Opus draft with twelve grafts",
+    "shape": "One behaviour package for three inert probe cases (NORMAL, TERM, KILL) with the case as configuration; fixed probe bytes; the observer may send one SIGTERM at its watchdog and never SIGKILL; the expected 124 and 137 stay scenario results inside an accepted envelope and never loosen SSH, controller or runner success checks; the 120 s window gates are unchanged"
+  },
+  "ownerDecisions": "The owner accepted all ten design decisions as recommended: three separate windows in the order NORMAL, TERM, KILL, each with its own GO; the outer transport exception extended to behaviour jobs; the coreutils 9.4 residual risks accepted; UNKNOWN stops B2 and recovery needs its own GO; NOT_EXECUTED may be prepared again as a new job; no TERM or KILL rehearsal; the 15 s observer boundary kept; shrink first if the source passes 64 KiB; the same health basis and REA-paused statement per window; exec-failure and race codes give UNKNOWN",
+  "probeSources": {
+    "id": "DP1P_B2_PROBE_V1",
+    "sha256": {
+      "NORMAL": "c499706deeb0150d14220344999e265d9ac5e93a2da89719ae0d99ee012e5f4f",
+      "TERM": "de3382ab30f6cb549b648b2d0344245be3723405c7ce75052305163681fae6ed",
+      "KILL": "6bb192b33ea0317539a5ebed17a8804d8616208193bfa5808bf8a15ddbc1b884"
+    },
+    "evidence": "Author suite 106 pass, 0 fail, 1 skip (real signal delivery); an independent tester re-derived every hash and the static gate refused 60 planted forbidden constructs; an Opus audit found no blocking issue; root read all three sources"
+  },
+  "behaviourRuntime": {
+    "rounds": "Three rounds. R1 passed the safety review but let some unexpected output give NONPASS instead of UNKNOWN and treated a read error after a successful open as absence; R2 and R3 closed those gaps",
+    "evidence": "Final author suite 743 pass, 0 fail, 1 skip, rerun by root; independent matrices with mutation controls killed every non-equivalent mutant; two Opus auditors (one replacing the paused Fable second opinion) confirmed one child only, one SIGTERM only, no SIGKILL and no file write",
+    "assembledSourceBytes": {"NORMAL": 60204, "TERM": 60202, "KILL": 60202, "cap": 65536}
+  },
+  "limits": [
+    "All work was local with synthetic inputs and fake process, procfs and clock capabilities",
+    "Real signal delivery, timeout exit codes, Linux procfs and pipe behaviour can be shown only on the target in B2",
+    "A backward clock read after READY loses the diagnostic but still gives UNKNOWN",
+    "Supervisor qualification remains UNKNOWN; this record holds verdicts and hashes only"
+  ],
+  "fable": "Paused by the owner on 2026-10-17 until re-allowed; the planned Fable second opinion was replaced by an Opus auditor",
+  "next": "Assembly B-ASM, package P3B, the derived stage-one, finalizer, adapter and window tools, and dry runs, all local; each B2 window then needs a fresh admission and its own owner GO",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
