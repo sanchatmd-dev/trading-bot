@@ -1,0 +1,66 @@
+{
+  "schema": "DP1P_RELEASE_WINDOW_TOOLS_LOCAL_V1",
+  "date": "2026-10-17",
+  "root": "Claude",
+  "decision": "ROOT_ADOPTED_WINDOW_DESIGN_AND_ACCEPTED_TWO_LOCAL_CANDIDATES_A03_PREPARED_NO_GO",
+  "problem": "After a fresh admission finishes, the metadata runner must start its SSH contact within 120 seconds and within 80 seconds of the metadata GO approval. Root review, stage-two finalization, the GO write and the launcher start all have to fit inside that window.",
+  "design": {
+    "method": "One Opus draft and one independent Fable draft, judged by a separate Opus auditor; root confirmed the cited gate lines in the accepted code.",
+    "chosen": "A pre-armed operations session waits for root tickets. Root command A writes the admission GO and reviews the result against criteria fixed in advance. Root makes one live decision. Root command B then writes the release inputs, runs the accepted stage-two adapter and writes the metadata GO.",
+    "keyFacts": [
+      "Contact deadline is the earlier of admission finish plus 120 seconds and metadata GO approval plus 80 seconds.",
+      "The runner must reach its contact gate within 4 seconds of its first budget sample.",
+      "Controller evidence and stage-two finalization run only after root reviews the admission, as the release-lineage contract requires.",
+      "Admission finish time is the admission receipt time."
+    ]
+  },
+  "acceptedLocalCandidates": {
+    "windowLibrary": {
+      "sha256": "2ca21095996f29eac2ac80722f84ddda7e5c867235c8b057805366bccabef664",
+      "role": "Pure checks and builders: 68 admission predicates, release inputs, both GO shapes, deadlines and the window contract.",
+      "authorPassed": 295,
+      "authorFailures": 0,
+      "independentNewCases": 108,
+      "independentNewFailures": 0,
+      "mutantsKilledIndependent": "26 of 26"
+    },
+    "opsSession": {
+      "sha256": "0d3ca156b4e3d17eaf6bad2ab445c08cbb475124b1a6a3ff7a0d3314cfec4790",
+      "role": "Single pre-armed process that starts each launcher once, only after a verified root ticket.",
+      "authorPassed": 214,
+      "authorFailures": 0,
+      "authorSkips": 1,
+      "independentNewCases": 87,
+      "independentNewFailures": 0,
+      "mutantsKilledIndependent": "28 of 28"
+    },
+    "reviews": "Each passed one correction round after an independent tester and an Opus audit; the operations session also had a Fable second opinion. Root confirmed every counted finding against the code.",
+    "limits": [
+      "Synthetic inputs only; REAL mode has never run",
+      "A crash of the operations session while a launcher runs leaves the launcher outcome unknown",
+      "These are local candidates, not production or host acceptance"
+    ]
+  },
+  "admissionA03": {
+    "status": "PREPARED_NO_GO",
+    "ownerAuthority": "Owner approved local A03 preparation on real private inputs in chat on 2026-10-17",
+    "externalPinsSha256": "17651940d122cfa8c9e5aa961e374a937b83b653607aae9af93af4f627d7dac9",
+    "launcherSha256": "945e531b4c394ca3970ecfdb2705fe7800d68cce9977d6436fe01ac635cda21d",
+    "method": "The preparation script and launcher are exact substitutions of the accepted A02 versions (job name, prior namespace, pins); reverse substitution recovers the A02 bytes. One operations-worker run, exit 0, no SSH connection.",
+    "rootChecks": "Six job files; code and SSH config copies equal A02; binding differs only in the three namespace fields; trust 1 present and 3 absent at preparation time; launcher parses with 0 errors on PowerShell 7.6.5; not executed."
+  },
+  "inProgress": [
+    "Root commands A and B, the post-window review tool and the dry-run harness are built and independently reviewed; one correction round is running",
+    "Synthetic dry runs completed the whole chain with the metadata GO 14 to 18 seconds after admission finish; these are not real timings"
+  ],
+  "pendingOwner": [
+    "PowerShell 7.6.5 MSI install with Microsoft Update off (owner at the PC, UAC)",
+    "Real-turn dry runs on the installed PowerShell",
+    "A fresh bounded owner GO for the release window: one admission SSH and one metadata SSH, one attempt each"
+  ],
+  "newHostSteps": 0,
+  "newGo": false,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
