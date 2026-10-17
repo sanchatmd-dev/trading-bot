@@ -304,6 +304,11 @@ fits the known remaining-minus-reserve budget; larger work runs as separate
 workflows with a fresh reading before each. Root reads usage again after every
 workflow and stops admitting at a band change.
 
+Owner rule (2026-10-17): one workflow runs at most three lanes, where a lane is
+one parallel chain of agents inside the workflow. Each lane works in its own
+package, and no two lanes of one workflow touch the same package. Design work
+whose parts reference each other is never split into separate lanes.
+
 Claude meters Fable 5.1 in its own weekly Fable bucket as well as the shared
 windows. Before each Fable dispatch, read that bucket and apply the same bands and
 reserve to it, in addition to the all-models windows. If the Fable bucket is at or
