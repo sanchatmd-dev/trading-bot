@@ -1,0 +1,36 @@
+{
+  "schema": "DP1P_METADATA_STAGE1_PRIVATE_C01_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_PRIVATE_STAGE1_PREPARED_ADMISSION_MISSING_NO_GO",
+  "root": "Claude",
+  "ownerAuthority": "Owner approved the local private stage-one preparation in chat on 2026-10-17",
+  "jobId": "DP1P-D1-METADATA-NATIVE-20261017-C01",
+  "materializerSha256": "678f5f31a573d090f3a90a2543a13e8e502d9abc354f3a3885d97ec708199541",
+  "packageManifestSha256": "9dd26ced6c8db215a9b471fa29120668a794bbb554d1d414ee8656b6ec0d3ef3",
+  "result": {
+    "status": "PREPARED_ADMISSION_MISSING_NO_GO",
+    "exitCode": 0,
+    "jobFiles": 10,
+    "controllerDirectoryEmpty": true,
+    "executionAuthorized": false,
+    "sshInvocations": 0,
+    "currentAdmissionMissing": true
+  },
+  "installedSshProfile": "The installed SSH binary passed the pinned shared two-link profile through the accepted reader, with the real fixed hash and size. This is a local point check, not image-at-spawn attestation.",
+  "attempts": [
+    "R1 stopped before the materializer started because a generated wrapper had an invalid executable path; no outputs were created",
+    "R2 used a root-written, hash-pinned one-shot wrapper and completed"
+  ],
+  "verification": "One operations run; root read the stdout and status directly and re-hashed all ten files against the record; an independent tester passed 33 of 33 output checks.",
+  "limitations": [
+    "Stage one only: admission is missing and no GO exists",
+    "No SSH connection, network access or key read",
+    "Current host health and service identity remain unknown",
+    "Freshness for later stages is checked when admission and stage two run"
+  ],
+  "newHostSteps": 0,
+  "newGo": false,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
