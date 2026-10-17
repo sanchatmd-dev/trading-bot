@@ -1,0 +1,50 @@
+{
+  "schema": "DP1P_SSH_PS_HELPER_F1_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_LOCAL_HELPER_ONLY",
+  "root": "Claude",
+  "sourceSha256": "a9815cb5d5abbe8a79b47465046ae60e95bc49ff33962ad234af92df650cc8a8",
+  "runtime": "PowerShell 7.6.5 on .NET 10.0.11, NTFS fixture volume",
+  "actualWindowsInertCases": 149,
+  "passed": 136,
+  "failed": 0,
+  "skipped": 1,
+  "recordOnly": 12,
+  "controls": 4,
+  "controlsOk": 4,
+  "independentSourceReviews": 2,
+  "reviewFindings": "No blocker or high finding. Opus auditor: 3 low. Fable reviewer: 2 medium and 3 low; one medium not confirmed by a root compression probe, the other is a launcher wiring requirement.",
+  "rootChecks": 8,
+  "fixturePolicy": "Original constants refuse an inert two-link fixture. A separate copy changes only the fixed shared hash and size, with a reverse source-hash proof.",
+  "verifiedBoundaries": [
+    "strict single-link and pinned two-link success, including the second link name",
+    "separator-only spelling for the shared profile; strict raw spelling exact",
+    "wrong hash, size, link count, case, drive-letter case, short name and junction ancestor refusal",
+    "dot, duplicate separator, trailing dot or space, stream, prefix and control character refusal",
+    "snapshot comparison refuses rewrite, recreate, attribute change, extra link and spelling change",
+    "no handle remains after success or refusal",
+    "returned bytes are detached; public surface has no setters or constructors",
+    "every refusal is the fixed SSH_PROFILE_REFUSAL message without path text"
+  ],
+  "wiringRequirements": [
+    "Use the type returned by the launcher's own compilation and refuse a pre-existing helper type",
+    "Keep terminating errors and prove a helper refusal stops the launcher before process start",
+    "Compare snapshot paths with the bound SSH path and keep the route hash pin",
+    "Require PowerShell 7; Windows PowerShell 5.1 cannot compile the helper",
+    "Record that the installed SSH volume is NTFS and that the bound spelling matches on-disk case"
+  ],
+  "limitations": [
+    "Point checks only; no concurrent-writer or race immunity",
+    "No image-at-spawn attestation",
+    "Equality does not prove that a snapshot came from an OS read",
+    "File symlink case not run without administrator privilege",
+    "Installed SSH not read; consumer wiring not started"
+  ],
+  "consumerWiring": false,
+  "installedSshRead": false,
+  "newHostSteps": 0,
+  "newGo": false,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}

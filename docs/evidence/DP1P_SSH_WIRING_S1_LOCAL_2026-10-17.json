@@ -1,0 +1,39 @@
+{
+  "schema": "DP1P_SSH_WIRING_S1_LOCAL_V1",
+  "date": "2026-10-17",
+  "decision": "ROOT_ACCEPTED_LOCAL_RUNNER_AND_LAUNCHER_CANDIDATES_WITH_LIMITS",
+  "root": "Claude",
+  "runner": {
+    "sha256": "6ad0730d3d355aede4fcfa2d1c0f26f8981eb40b85ec50686999d715ae48919d",
+    "change": "Inlines the accepted Node SSH reader, retains the first SSH snapshot and compares it at every recheck; the raw spawn path and receipt keys are unchanged.",
+    "authorCases": 41,
+    "independentCases": 41,
+    "independentPassed": 41,
+    "independentControls": 8,
+    "auditFindings": "No blocker or high. One medium recorded as a limit: SSH drift after capture reports TRUST_DRIFT with an unresolved diagnostic binding instead of the earlier post-pin label; the verdict stays STOP."
+  },
+  "launcher": {
+    "sha256": "eed66d84f44ab521ac483968e9c273e0dbce8187cfe5c3a0c5435ec0269ee10b",
+    "change": "Embeds the accepted PowerShell helper, checks the executing launcher path, refuses a pre-existing helper type, compiles once after closure and GO/time gates, and compares the two preflight SSH snapshots before the claim.",
+    "authorCases": 45,
+    "independentCases": 53,
+    "independentPassed": 49,
+    "independentRecordOnly": 4,
+    "independentControls": 9,
+    "auditFindings": "No blocker or high from the Opus auditor or the Fable reviewer. Recorded limits: run only in a fresh PowerShell 7 process without a profile and with the exact canonical launcher path; a refusal does not say which check failed."
+  },
+  "limitations": [
+    "Point checks on NTFS with PowerShell 7.6.5 and Node 24.19.0 only",
+    "Inert SSH fixtures only; the installed SSH binary was not read",
+    "Shared two-link profile tested only through copies that change the fixed hash and size",
+    "No real transport, process start, controller body after the claim, race immunity or image-at-spawn attestation",
+    "Not yet packaged; materializer, finalizer and adapter still use the earlier package"
+  ],
+  "consumerWiring": "RUNNER_AND_LAUNCHER_CANDIDATES_ONLY",
+  "installedSshRead": false,
+  "newHostSteps": 0,
+  "newGo": false,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
