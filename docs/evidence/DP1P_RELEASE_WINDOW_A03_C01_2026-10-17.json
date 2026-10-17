@@ -1,0 +1,32 @@
+{
+  "schema": "DP1P_RELEASE_WINDOW_A03_C01_V1",
+  "date": "2026-10-17",
+  "root": "Claude",
+  "decision": "ROOT_ACCEPTED_WINDOW_COMPLETE_OBSERVED_METADATA_GO_CONSUMED",
+  "ownerAuthority": "Owner sent GO in chat for the bounded window W-A03-C01 after reviewing the request: one read-only admission SSH and one read-only metadata SSH, one attempt each, no retry, valid for 60 minutes",
+  "preparation": {
+    "tools": "Window library, operations session, root commands A and B, post-window review and dry-run harness, each accepted locally with limits after independent tests and audits",
+    "powershell": "PowerShell 7.6.5 installed by the owner with Microsoft Update off; pinned by hash and Microsoft signatures; the launcher test suite gave the same results as before",
+    "dryRuns": "Five consecutive green real-turn dry runs on synthetic worlds with the real operations worker and live root decisions; root turn at most 10.8 s, metadata GO at most 13.6 s after admission finish",
+    "contract": "Window contract built and checked in REAL mode on the real admission and metadata job files; route equality between the admission and metadata jobs confirmed before the window"
+  },
+  "window": {
+    "admission": {"job": "DP1P-D1-ADMISSION-NATIVE-20261017-A03", "verdict": "CLEAR", "sshConnections": 1, "rc": 0, "busy": 0, "unknown": 0, "receiptSha256": "a47969b4bd1400d82353842c7a43397acc0a7773046f157a5f568b133eb6df55"},
+    "rootDecision": "The verdict line matched the expected table; root decided to release 9.6 s after it",
+    "stageTwo": "The accepted adapter finalized the metadata job once; metadata GO approved 12.1 s after admission finish",
+    "metadata": {"job": "DP1P-D1-METADATA-NATIVE-20261017-C01", "verdict": "OBSERVED_METADATA", "postPinsValid": true, "envelopeAccepted": true, "rc": 0, "elapsedMs": 2027, "stderrBytes": 0, "diagnosticStatus": "VALID", "diagnosticBinding": "VERIFIED_AT_CAPTURE"},
+    "timing": "Runner claim 15.0 s after admission finish; the gate allowed up to the earlier of 120 s after admission finish and 80 s after metadata GO approval",
+    "postWindowReview": "METADATA_CONTACT_COMPLETE",
+    "cleanup": "No SSH process remained after the window"
+  },
+  "limits": [
+    "One bounded process sample and one read-only metadata read only",
+    "Service health is not assessed; supervisor qualification and bootstrap wrapper identity remain unqualified",
+    "Raw outputs stay private and local; this record holds verdicts and hashes only",
+    "The owner GO is consumed; any further host step needs a new owner GO"
+  ],
+  "newHostSteps": 2,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
