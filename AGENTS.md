@@ -308,6 +308,14 @@ Owner rule (2026-10-17): one workflow runs at most three lanes, where a lane is
 one parallel chain of agents inside the workflow. Each lane works in its own
 package, and no two lanes of one workflow touch the same package. Design work
 whose parts reference each other is never split into separate lanes.
+Owner clarification (2026-10-17), to go faster while saving tokens: an agent that
+only reads a package and writes in its own report directory does not touch that
+package, so up to three such reviewers may run in parallel. Size each verify
+panel to risk: one tester for low-risk tools and documents; a tester and an Opus
+auditor for high-risk logic such as runners, lineage and verdicts; add a Fable
+second opinion only for host-adjacent and GO packets, unless root records a reason
+in the packet. A fix round re-verifies only the changed files, with one rerun of
+the existing suite, and a narrow fix may use the coder at medium effort.
 
 Claude meters Fable 5.1 in its own weekly Fable bucket as well as the shared
 windows. Before each Fable dispatch, read that bucket and apply the same bands and
