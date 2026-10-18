@@ -1,0 +1,45 @@
+{
+  "schema": "DP1P_SUPERVISOR_B1_BUILD_LOCAL_V1",
+  "date": "2026-10-18",
+  "stampUtc": "2026-10-18T15:31:32Z",
+  "root": "Claude",
+  "decision": "ROOT_ACCEPTED_B1_BUILD_CHAIN_LOCAL_WITH_LIMITS_DRY_RUNS_IN_PROGRESS",
+  "roadmapStep": "Absolute supervisor stage B1 (local build) after the B1 design record DP1P_SUPERVISOR_B1_LOCAL_2026-10-18",
+  "method": "Each tool was built by a coder in its own new directory as a derived copy with a reverse-replace diff proof against its accepted base, then verified by an independent tester; tools with high-risk logic also had an Opus architecture auditor, and the host-adjacent tools (AD-P3B, W4B) had a Fable second opinion confirmed by root or Opus before use. Root read every packet, re-derived the key diffs and wrote a decision record for each acceptance. Interrupted runs were kept as untrusted partial directories and rebuilt in fresh directories.",
+  "accepted": [
+    {"id": "B-ASM", "role": "behaviour assembly", "sha256": "9afbf42807708711929e25b8b3ed456fc983a8facc03d6f68f7da42e2ea6c1e9", "note": "accepted assembly record; assembled observer about 60 KB under the 64 KiB cap"},
+    {"id": "P3B R3", "role": "behaviour package (runner, envelope, lineage, launcher)", "sha256": "69d42ecf767d8a953689c850a0764cf093b010235616279786b83ca20508a91a", "note": "package manifest, 47 members; launcher 852638ac9133bea9689004ac6a32c1b9a33814d81168259b7723f0cf87526c75; three correction rounds"},
+    {"id": "M3B R2", "role": "stage-one materializer", "sha256": "b7f80b3925c0305a6b0911c406dc47bb0c52d6f5d483f6a2ed0e2171657d6074"},
+    {"id": "F3B", "role": "pure stage-two finalizer", "sha256": "8c2b07329cb9b4cf2c453dbcdb15b209b5688d6725a8646a4065ab9ff68f31c4", "note": "import proof b6af2761e4a2e0fa096981b4bdb26a8f6c949804c37e2084bb110737d87e8c3d (31-file closure)"},
+    {"id": "AD-P3B", "role": "stage-two adapter", "sha256": "0b808a802c2b731a18e20c206c122abb512f4e160fdb653f41d2c34af69ff443", "note": "authenticates the finalizer import closure before import"},
+    {"id": "W2B R2", "role": "window library", "sha256": "bb25a8fef135c3397d45478e28c6b001fea0fe825b73170d7c61af9fe1057e2c", "note": "case-bound contract and GO, chain ledger"},
+    {"id": "W3B", "role": "operations session", "sha256": "e5d8e9fadd472374fd607ee2bad0f032b0babf513319bc1c14f7de30de35e518", "note": "denies the P3B launcher hash in SYNTHETIC mode"},
+    {"id": "W4B R2", "role": "root commands and prior review", "sha256": "79e07f494b6b02df0f5f558ef8dfa77c4c694d9015d11c05f511fc6ac1082424", "note": "prior-review.mjs; root-common 8f3fc1e5b66be717e666856d65933efdd8960d27ecb07291ebff070ad09b6ee1, release c5d6f7637b15cef99ea94fe830a5711760a501a2d74884bd1864dc9678bb2c0f, admit 04183cc1d0fac35d6db6a47ae16d4e61a1b3a5c1324e65eeeb9247522fd03a0a, stop a04b483f86adede0b0db6fa6363a0fc24dec07f01112a8df6514abbcc1bfdaf9, build-contract 636c10ba9fc7cac8c921b46a9fcfc516b1bc5c60abf0b951388fd4449569baca; one correction round"},
+    {"id": "W5B R2", "role": "post-window review", "sha256": "11f04c28defd1d403441277ad0d482fd6ba8e2ce263cc2a8cfe403a16b6fe6ff", "note": "contract case binding, truncation and pre-contact checks"},
+    {"id": "W6B R2", "role": "dry-run harness", "sha256": "e88dfd42863436345c0e5c066a659a9b034a1da977a50742557e6041aebfb10f", "note": "behaviour stub ab9b1af4e06b57c3bbdebc184ba419f1d2dc27072fbf19380921b4d81d5ab459; one correction round"}
+  ],
+  "keyRules": [
+    "The prior review that lets the next window start is written only from a separate root acceptance record that names the prior job, case, receipt, window decision hash, review tool pin, review output hash and class, and only for the next case in the order C01, NORMAL PASS, TERM PASS",
+    "Behaviour job identifiers carry their case, and the chain ledger must list C01 first, then each earlier behaviour job in case order, ending with the stage-one prior job",
+    "The review's window class comes only from the post-window review output, and the review's controller block comes from the prior release review",
+    "The window contract case must equal the GO, job configuration and receipt case wherever the case is trusted"
+  ],
+  "dryRuns": {
+    "synthetic": "Every result class (PASS, NONPASS, UNKNOWN, NOT_EXECUTED), a GO_CAP refusal and a NORMAL -> TERM -> KILL chain reached the post-window review through the real pinned tools; only the remote target, the A03 remote and the behaviour launcher were stubs",
+    "realTurn": "DRY-1 started: run d1 (NORMAL) passed with the single operations worker and a live root decision. Root turn 13.7 s, GO age 18.7 s of the 75 s cap, ticket-to-claim 2.3 s of 25 s, runner pre-contact 1.5 s of 4 s, adapter 2.4 s of 10 s. Four more consecutive passing runs are required; the count must be re-established under any new root, because root turn time belongs to the commander.",
+    "budgets": "The runner's 4 s pre-contact budget and the adapter's 10 s budget are kept with a quiet-machine rule: dry runs and real windows run with no other agent or heavy local process; a quiet-machine run over 3 s or 7 s respectively opens a budget review before any real window"
+  },
+  "limits": [
+    "All work was local with synthetic inputs; real signal delivery, timeout exit codes and target behaviour can be shown only in the B2 windows",
+    "The P3B behaviour launcher is never executed in dry runs (the operations session denies its hash in SYNTHETIC mode); the real C01 metadata launcher preflight of about 2.8 s is the reference",
+    "A local runner refusal before any contact is classed UNKNOWN rather than NOT_EXECUTED (the runner's refusal line has six keys and the review expects seven); this cannot produce a false pass, but UNKNOWN stops B2 for an owner decision",
+    "A remote that stalls until the transport timeout ends UNKNOWN by design",
+    "The prior-review tool has not yet been run on the real C01 records; that is the first step of NORMAL preparation"
+  ],
+  "next": "Finish DRY-1 (five consecutive green real-turn runs including TERM and KILL), then prepare NORMAL: the C01 acceptance record, prior review on the real C01 inputs, a fresh admission A04, stage one on real inputs, the real window contract and a GO request; the NORMAL window then needs a fresh owner GO",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
