@@ -1,0 +1,28 @@
+{
+  "schema": "DP1P_B2_WINDOW_TERM_V1",
+  "date": "2026-10-19",
+  "stampUtc": "2026-10-18T18:27:14Z",
+  "root": "Claude",
+  "decision": "ROOT_ACCEPTED_WINDOW_COMPLETE_BEHAVIOUR_PASS_TERM_GO_CONSUMED",
+  "goId": "W-A05-T01",
+  "ownerAuthority": "The owner sent 'GO W-A05-T01' in chat after reviewing the request: one read-only admission SSH, root stage two and the TERM behaviour GO, and one inert TERM probe over one SSH connection; one attempt each, no retry; an UNKNOWN result stops B2",
+  "preparation": "After the NORMAL PASS, root wrote the NORMAL acceptance record, the prior review for TERM passed on the real NORMAL window records, and admission A05 and the TERM stage-one job were prepared locally without any SSH; the TERM window contract carries the chain ledger C01 and NORMAL",
+  "window": {
+    "admission": "A05 CLEAR, one SSH, rc 0",
+    "rootDecision": "The admission line matched the expected table; root released 9.7 s after it",
+    "stageTwo": "The adapter finalized the TERM job once; the behaviour GO was 13.1 s old at approval",
+    "launch": "The launcher reported CAPTURE_COMPLETE with exit 0, closed, no timeout or kill, drains settled",
+    "observation": "Under env -i and timeout --foreground --signal=TERM --kill-after=5s 2s, the inert TERM probe reported READY with its parent equal to the timeout process; at the 2-second limit timeout sent TERM, the probe recorded that it handled TERM, and timeout exited with code 124 and no signal about 2.0 seconds after start. The observer itself requested neither TERM nor KILL. The capture settled and the process was absent afterwards",
+    "postWindowReview": "BEHAVIOUR_PASS (CAPTURE_COMPLETE, OBSERVED_BEHAVIOUR, SCENARIO_PASS), case TERM",
+    "cleanup": "No SSH process remained after the window"
+  },
+  "limits": [
+    "One TERM case only; the KILL case needs its own fresh admission, stage one and owner GO",
+    "Timeout and env identities are self-reported GNU coreutils 9.4, not qualified",
+    "Service health is not assessed; not supervisor qualification or production readiness"
+  ],
+  "newHostSteps": 2,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
