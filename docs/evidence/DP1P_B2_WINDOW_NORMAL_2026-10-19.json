@@ -1,0 +1,33 @@
+{
+  "schema": "DP1P_B2_WINDOW_NORMAL_V1",
+  "date": "2026-10-19",
+  "stampUtc": "2026-10-18T18:10:33Z",
+  "root": "Claude",
+  "decision": "ROOT_ACCEPTED_WINDOW_COMPLETE_BEHAVIOUR_PASS_NORMAL_GO_CONSUMED",
+  "goId": "W-A04-N01",
+  "ownerAuthority": "The owner sent 'GO W-A04-N01' in chat after reviewing the request: one read-only admission SSH, root stage two and the NORMAL behaviour GO, and one inert NORMAL probe over one SSH connection; one attempt each, no retry; an UNKNOWN result stops B2",
+  "preparation": {
+    "tools": "The B1 tools (behaviour package P3B, materializer M3B, finalizer F3B, adapter AD-P3B, window library W2B, operations session W3B, root commands W4B R3, post-window review W5B, dry-run harness W6B R3), each accepted locally with limits after independent tests; see DP1P_SUPERVISOR_B1_BUILD_LOCAL_2026-10-18",
+    "realInputDefect": "Preparing the window on the real records found that a root tool still capped the renamed prior receipt at 16 KiB, below the real 17,663-byte C01 receipt; a one-line fix (W4B R3) passed an independent test before the window",
+    "dryRuns": "Five consecutive green real-turn dry runs on the corrected tools (NORMAL, TERM, KILL, NORMAL, TERM) with the single operations worker and live root decisions; worst root turn 10.2 s, worst behaviour GO age 18.4 s of the 75 s cap",
+    "machine": "The owner paused another project's tests so the computer was quiet; the runner and adapter budgets are load-sensitive"
+  },
+  "window": {
+    "admission": "A04 CLEAR, one SSH, rc 0",
+    "rootDecision": "The admission line matched the expected table; root released 13.4 s after it",
+    "stageTwo": "The adapter finalized the NORMAL job once; the behaviour GO was 16.7 s old at approval",
+    "launch": "The launcher reported CAPTURE_COMPLETE with exit 0, closed, no timeout or kill, drains settled",
+    "observation": "Under env -i and timeout --foreground --signal=TERM --kill-after=5s 2s, the inert NORMAL probe started, reported READY with its parent equal to the timeout process, finished with DONE, and the timeout process exited with code 0 and no signal. No TERM or KILL was requested. The capture settled and the process was absent afterwards. Node v24.21.0 on Linux x64; executable hash unchanged",
+    "postWindowReview": "BEHAVIOUR_PASS (CAPTURE_COMPLETE, OBSERVED_BEHAVIOUR, SCENARIO_PASS), case NORMAL",
+    "cleanup": "No SSH process remained after the window"
+  },
+  "limits": [
+    "One NORMAL case only; the TERM and KILL cases each need their own fresh admission, stage one and owner GO",
+    "Timeout and env identities are self-reported GNU coreutils 9.4, not qualified",
+    "Service health is not assessed; supervisor qualification and bootstrap wrapper identity remain unqualified; not production readiness"
+  ],
+  "newHostSteps": 2,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
