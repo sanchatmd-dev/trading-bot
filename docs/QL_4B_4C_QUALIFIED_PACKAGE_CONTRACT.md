@@ -1,6 +1,6 @@
 # QL-4B/QL-4C qualified Best Inputs package contract
 
-Status: owner decisions OD-1 to OD-18 recorded 2026-10-19 (section 10). Root accepted the other rules on
+Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10). Root accepted the other rules on
 2026-10-19 after independent review. Implementation has not started, and nothing in this contract grants a
 recommendation, apply, email or Bot action by itself. It does not change the Roadmap. Each implementation step still needs its own gates and approvals.
 
@@ -328,6 +328,13 @@ Pass rule, all required:
      `BI_HOLDOUT_OVERLAPS_SEARCHED_DATA`. See OD-10.
    - Where a PF-2 R3 owner-registered boundary exists for the Bot, the holdout starts at or after it.
      The boundary is authoritative where present. Code `BI_HOLDOUT_BEFORE_REGISTERED_BOUNDARY`. See OD-9.
+   - The holdout window does not overlap any window that a QR-3 comparison or a QR-4 selection of the same
+     owner and the same market used. Such a window counts as exposed data for this check, because ranking
+     finalists on it makes it selection data. [SRC: ROADMAP § Report range and research capacity contract;
+     QR-3 contract, docs/QR_3_FAIR_COMPARISON_CONTRACT.md § 7; QR-4 contract,
+     docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md § 13.3] Code `BI_HOLDOUT_EXPOSED_BY_SELECTION`. The check
+     reads the one exposure register that both contracts share. An empty register is valid. An absent or
+     unreadable register fails this check with `BI_EXPOSURE_REGISTER_UNAVAILABLE`. See OD-19.
 6. The requesting owner owns the run. [SRC: QRL § Research record and storage, "Storage access checks
    owner authorization on every read/export"] Foreign or absent run: `NOT_FOUND` (404).
 
@@ -527,6 +534,10 @@ fixture rule]
   test results, trade and sample counts, drawdown, Win Rate, Profit Factor, cost assumptions, holdout
   window, limitations and validation status. [SRC: ROADMAP § Step 5 deliverables, item 2, applied to
   the review screen]
+- Note on the READY label (OD-20): "best within the selected scope" on a READY package describes the
+  scope of that one package only. A cross-run label belongs to a QR-4 selection record
+  (docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md § 11) or to a QR-3 comparison record
+  (docs/QR_3_FAIR_COMPARISON_CONTRACT.md § 6.6).
 - Pine-only source inputs separate from the Bridge pair; the Bridge pair is shown in Bot Risk Manager
   Bridge Settings separately from hard Policy limits and Capital. [SRC: ROADMAP § Step 5 deliverables,
   item 2; § Identity and provenance]
@@ -619,8 +630,8 @@ another optimization or a post-export Paper cycle. [SRC: ROADMAP § Five-step us
 
 ## 10. Decisions
 
-The owner decided every item below on 2026-10-19 and chose the recommended option for every item.
-Each outcome is part of this contract.
+The owner decided OD-1 to OD-19 on 2026-10-19 and chose the recommended option for every item. OD-20 is
+a root decision of the same day. Each outcome is part of this contract.
 
 | ID | Decision | Decided outcome (2026-10-19) |
 | --- | --- | --- |
@@ -642,6 +653,8 @@ Each outcome is part of this contract.
 | OD-16 | Retention of refused packages | Keep the manifest and the gate report only. |
 | OD-17 | Supersession of validated packages | Owner archive action only, if added at all. |
 | OD-18 | G7 source for a new engine version | Derived from the completion reason and the contract version. Never a free flag. |
+| OD-19 | Windows used by QR-3 comparisons and QR-4 selections in Gate B0 (amendment decided 2026-10-19; QR-3 OD-C8, QR-4 OD-S8) | Yes. Such windows count as exposed data for the holdout-independence check in 5.0 item 5. Code `BI_HOLDOUT_EXPOSED_BY_SELECTION`. |
+| OD-20 | Scope of the READY label "best within the selected scope" (root amendment decided 2026-10-19; QR-4 RO-1) | The label describes one package's own scope. Cross-run labels belong to the QR-4 selection record and the QR-3 comparison record. |
 
 ## 11. Test and evidence plan
 
@@ -686,6 +699,10 @@ Build the evaluator as a pure module in the style of `derive.js`: no clock, no I
     override sets G7; a supplied flag is ignored, and G7 is computed from the derivation only.
 18. Episode gate (OD-4): while the versioned episode gate is unavailable, a package gives
     `BI_EPISODE_GATE_UNAVAILABLE`, never `PASS`. The count-failure code is defined with that gate version.
+19. Comparison exposure (OD-19): a holdout window that overlaps a window used by an earlier QR-3 comparison
+    or QR-4 selection of the same owner and the same market gives `BI_HOLDOUT_EXPOSED_BY_SELECTION`; the
+    same window under another market or another owner does not. An empty register passes; an absent or
+    unreadable register gives `BI_EXPOSURE_REGISTER_UNAVAILABLE`.
 
 ### 11.2 Isolated PostgreSQL (throwaway cluster, one file per process)
 
