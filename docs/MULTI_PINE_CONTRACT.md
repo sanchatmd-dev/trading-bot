@@ -2,8 +2,9 @@
 
 Status: owner decisions OD-MP-1 to OD-MP-11 recorded 2026-10-19. Root decisions RD-MP-4, RD-MP-5,
 RD-MP-7, RD-MP-8, RD-MP-9 and RD-MP-10 recorded the same day; RD-MP-1, RD-MP-2, RD-MP-3 and RD-MP-6
-are made in the first implementation packet. Root accepted the other rules on 2026-10-19 after
-independent review. Implementation has not started; this contract is not a GO, and nothing here
+were decided the same day (RD-MP-1 to RD-MP-11 decided; RD-MP-12 open, and section 11.4 item 1 requires it before acceptance; RC-MP-1 clarifies 3.3). Root accepted the
+other rules on 2026-10-19 after independent review. The S1 pure member-set builder (src/multi-pine) is root-accepted as local engineering
+evidence and not wired; no other implementation has started; this contract is not a GO, and nothing here
 activates a multi-Pine Bot or exposes multi-Pine results to the owner before APP-3B.
 
 Feature: PM-1 F11-01 "Multi-Pine contracts and evaluator/package compatibility". Target: isolated
@@ -130,6 +131,7 @@ package binding that ends `EXPORT_INTERNAL`.
 - `MULTI_PINE` member count is 2 to `MP_MAX_MEMBERS`, which is 3 (OD-MP-1). Zero members:
   `MP_MEMBERSHIP_EMPTY`. Above the limit: `MP_MEMBER_COUNT_EXCEEDED`. These refusals fire only at
   member-set freeze on the internal path; connect, analyze and generate routes are not changed.
+- A single member is not a multi-Pine set: the internal builder refuses it with `MP_NOT_MULTI_PINE`.
 - Two members with equal `(source_hash, effective_inputs_hash)` refuse with
   `MP_MEMBER_DUPLICATE_LOGIC` at freeze only (OD-MP-3). Basis: "must not execute one logical event
   twice on a Bot". [SRC: PEX § Export selection]
@@ -141,19 +143,24 @@ package binding that ends `EXPORT_INTERNAL`.
 
   ```text
   member_set {
+    version,              -- `mp-member-set-v1`
     member_set_id, owner_id, bot_id, mode: MULTI_PINE, pine_count,
     members: [member records, 3.1, ascending ordinal],
+    content_digest,       -- RC-MP-1: canonical digest of members, pair and order, without member_set_id
     membership_hash,      -- SHA-256 of canonical [{pine_import_id, source_version, source_hash}] in ordinal order
     bridge_pair: {atr_multiplier, rr},   -- section 4
     bridge_atr_period: 14,
     market: {broker: binance-global, symbol: BTCUSDT, timeframe: "1"},
     exit_version, execution_model_hash, policy_hash, funding_cutoff, capital_basis_hash,
+    same_bar_order,       -- `exit-first-ordinal-v1` (5.5)
     fixture: true,        -- set at birth, never cleared; F11-01 creates no non-fixture set
     set_hash,             -- SHA-256 of canonical record without set_hash and created_at
     created_at            -- ISO-8601 UTC, server clock
   }
   ```
 
+- RC-MP-1 (root clarification, 2026-10-19): the record also carries `content_digest`, the canonical digest of members, shared pair and order WITHOUT `member_set_id`. Freeze-or-load returns the existing set of the same Bot when `content_digest` is equal (idempotent re-freeze); it never creates a second set for equal content.
+- `content_digest` covers exactly these keys, as coded: `version`, `owner_id`, `bot_id`, `mode`, `pine_count`, `members`, `membership_hash`, `bridge_pair`, `bridge_atr_period`, `market`, `exit_version`, `execution_model_hash`, `policy_hash`, `funding_cutoff`, `capital_basis_hash`, `same_bar_order`, `fixture`. That is every content field: members, shared pair, same_bar_order, version, policy, capital, funding, model, owner and Bot. It never covers `member_set_id` or `created_at` (nor `set_hash`).
 - Canonicalisation and hashing reuse `canonical` and `hash` from `src/pine-bridge/source.js`, as PKG
   § 3.1 does.
 - The member set is insert-only. Any membership, source, effective-input, deployment snapshot, pair,
@@ -168,15 +175,18 @@ package binding that ends `EXPORT_INTERNAL`.
 - Each member needs its own `deployment_id`. [SRC: PEX § Export selection] One deployment binds
   exactly one execution symbol and timeframe. [SRC: ADP § Separate capabilities, "Bridge execution
   per deployment"]
-- Exactly one deployment per member in a set. Missing: `MP_MEMBER_DEPLOYMENT_MISSING`. Two named for
+- The caller names exactly one `deployment_id` per member (M3). The builder validates that it exists, is `DRAFT` and has the same owner, Bot, `pine_import_id` and `source_version` as the member. Other `DRAFT` rows of the same member are allowed and ignored. A deployment in any state other than `DRAFT` is refused. Exactly one deployment per member in a set. Missing: `MP_MEMBER_DEPLOYMENT_MISSING`. Two named for
   one member: `MP_MEMBER_DEPLOYMENT_AMBIGUOUS`.
-- Every member deployment has the same `market`; otherwise `MP_MARKET_MIXED`.
-- Member deployments stay `DRAFT`; F11-01 never activates them (OD-MP-7). `EXIT_ONLY` or `REVOKED`
-  members refuse `MP_MEMBER_DEPLOYMENT_NOT_ELIGIBLE`. Each needs a `pine_bridge_evidence` row bound to
+- Every member deployment has the same `market`; otherwise `MP_MARKET_MIXED`. Under the M4 restriction this cannot fire in F11-01; the check stays as defence in depth.
+- Market restriction (M4): only `binance-global`, `BTCUSDT`, timeframe `1`. Any other market is `MP_INPUT_INVALID` with field `market.unsupported`.
+- Member deployments stay `DRAFT`; F11-01 never activates them (OD-MP-7). `READY`, `EXIT_ONLY` or `REVOKED`
+  members (any state other than `DRAFT`) refuse `MP_MEMBER_DEPLOYMENT_NOT_ELIGIBLE`. Each needs a `pine_bridge_evidence` row bound to
   its own `snapshot_hash` and `artifact_hash`, validated by the existing `validateEvidence`;
   otherwise `MP_MEMBER_EVIDENCE_MISSING`.
 - Each member deployment's `snapshot.membership` equals the member-set membership; otherwise
-  `MP_MEMBER_SET_STALE` (same logic as `freshSnapshot` `STALE_MEMBERSHIP`).
+  `MP_MEMBER_SET_STALE` (same logic as `freshSnapshot` `STALE_MEMBERSHIP`); the snapshot membership is compared unsorted.
+- `bot_state` freshness (M1): `buildMemberSet` and `memberSetFreshness` take a required input `bot_state {policy_hash, capital_basis_hash, funding_cutoff}`, read on the server like `freshSnapshot`: `policy_hash` = hash(canonical(locked or default policy)); `capital_basis_hash` = hash(canonical(paper accounts mapped to {broker, configuredEquity, configuredBalance}, in store order)); `funding_cutoff` = COALESCE(max(id), 0) of the Bot's Paper funding rows. A difference from the frozen set is `MP_MEMBER_SET_STALE` with the field named. Missing `bot_state` is `MP_INPUT_INVALID`.
+- An evidence row whose `deployment_id` is not among the deployments is `MP_INPUT_INVALID` with field `evidence[i].deployment_id` (M6).
 
 ## 4. Shared Bridge pair
 
@@ -315,8 +325,8 @@ member under tight cash; recording it makes the bias visible, not fair.
 
 - New version `ql3a-research-job-multi-v1` (and a matching foundation-executor version if that
   executor is used), built by a pure builder. One-Pine versions are not modified (exact-key
-  validator, immutable terminal runs, CODE fact 14). Root decides the final names in the first
-  implementation packet (RD-MP-1).
+  validator, immutable terminal runs, CODE fact 14). The final names are frozen by RD-MP-1
+  (section 14).
 - Fields: every Bot-level field of the one-Pine contract (owner, Bot, policy hash, capital, funding
   cutoff, model, rules, engine hash, dataset, split, budget, seed), plus `mode`, `pine_count`,
   `member_set_id`, `set_hash`, `membership_hash`, `members` (3.1), `bridge_domains`,
@@ -335,8 +345,7 @@ member under tight cash; recording it makes the bias visible, not fair.
 - Thresholds come from the run's own frozen `rules`. [SRC: PKG § 5] `NO_VALID_CANDIDATE` remains a
   valid outcome. [SRC: PKG § 5.0]
 - Storage: the run binds `member_set_id`, not one `deployment_id`. Because `quant_jobs.deployment_id`
-  is `NOT NULL`, storage needs a schema decision, which root makes in the first implementation packet
-  (RD-MP-2).
+  is `NOT NULL`, storage follows the RD-MP-2 outcome (section 14: separate internal run store).
 
 ## 6. Package binding (multi-Pine)
 
@@ -452,7 +461,7 @@ code collides with an existing code in `src` or `public` at revision `2a6554f`.
 | `NOT_FOUND`, `BOT_ACCESS_DENIED` | ownership | Per PKG § 7.3. |
 | `BI_*` package codes | PKG gates | Per PKG, applied per member where 6.3 says. |
 
-### 8.2 New codes (prefix `MP_`; root confirms the prefix in the first implementation packet, RD-MP-1)
+### 8.2 New codes (prefix `MP_`; prefix frozen by RD-MP-1, section 14)
 
 | Code | Stage | Retryable | Meaning |
 | --- | --- | --- | --- |
@@ -460,13 +469,13 @@ code collides with an existing code in `src` or `public` at revision `2a6554f`.
 | `MP_MEMBER_COUNT_EXCEEDED` | member set | no | More than `MP_MAX_MEMBERS` (3). |
 | `MP_MEMBER_DUPLICATE_LOGIC` | member set | no | Equal source hash and effective-input hash (OD-MP-3). |
 | `MP_MEMBER_FOREIGN_BOT` | member set | no | Member resolves to another Bot. |
-| `MP_MEMBER_DEPLOYMENT_MISSING` | member set | no | A member has no deployment of its current source version. |
+| `MP_MEMBER_DEPLOYMENT_MISSING` | member set | no | No deployment named for a member, or the named id is absent or belongs to another import or source version. |
 | `MP_MEMBER_DEPLOYMENT_AMBIGUOUS` | member set | no | Two deployments named for one member. |
-| `MP_MEMBER_DEPLOYMENT_NOT_ELIGIBLE` | member set | no | Member deployment `EXIT_ONLY` or `REVOKED`. |
+| `MP_MEMBER_DEPLOYMENT_NOT_ELIGIBLE` | member set | no | Member deployment `READY`, `EXIT_ONLY` or `REVOKED` (any state other than `DRAFT`). |
 | `MP_MEMBER_EVIDENCE_MISSING` | member set | no | No valid Bridge evidence row for a member deployment. |
-| `MP_MEMBER_SET_STALE` | member set, run, export read | no | Membership, member snapshot or pair changed since freeze. |
+| `MP_MEMBER_SET_STALE` | member set, run, export read | no | Membership, member snapshot, pair, or Bot policy, capital or funding (`bot_state`) changed since freeze. |
 | `MP_BRIDGE_PAIR_DIVERGENT` | member set | no | A member deployment pair differs from the shared pair. |
-| `MP_MARKET_MIXED` | member set | no | Members bind different markets. |
+| `MP_MARKET_MIXED` | member set | no | Members bind different markets (unreachable while only binance-global BTCUSDT 1m is allowed, M4). |
 | `MP_EXIT_VERSION_MIXED` | member set | no | Members bind different exit versions. |
 | `MP_EXECUTION_MODEL_MIXED` | member set | no | Members' evidence uses different execution models. |
 | `MP_SOURCE_SLOTS_FORBIDDEN` | admission, C3 | no | Source slots requested or present. |
@@ -477,6 +486,8 @@ code collides with an existing code in `src` or `public` at revision `2a6554f`.
 | `MP_COMBINED_BASELINE_FAILED` | C4 | no | Combined replay differs from the Node/Paper oracle. |
 | `MP_CROSS_SOURCE_TARGET` | combined replay | no | Defect guard; count must stay 0. |
 | `MP_FIXTURE_ONLY` | internal admission | no | Internal path called without `fixture = true`. |
+| `MP_INPUT_INVALID` | member set | no | Builder input is malformed or incomplete; the diagnostic names the field (for example `bot_state`, `market.unsupported`, `evidence[i].deployment_id`). |
+| `MP_NOT_MULTI_PINE` | member set | no | Fewer than 2 members (a single member is One-Pine). |
 | `MP_OWNER_FACING_FORBIDDEN` | any owner route | no | An owner route tried to read or act on a multi-Pine set, run or package as actionable. |
 
 ## 9. Statuses
@@ -583,14 +594,14 @@ Internal surface (OD-MP-8):
 | F27 export idempotency | second build for the same run | same `export_id` |
 | F28 run blocker | terminal multi run | `MULTI_PINE_REQUIRES_APP_3B` in blockers; `owner_recommendation_ready` false; counts per member sum to Bot counts |
 | F29 zero-signal member | member 2 emits no native signal | `MP_MEMBER_NO_SIGNALS` |
-| F30 QR exclusion | fixture multi package offered to a non-fixture QR-3 comparison and a customer QR-4 selection | `QR3_FIXTURE_PARTICIPANT`; `QR4_FIXTURE_PARTICIPANT` or `QR4_MULTI_PINE_PARTICIPANT` |
+| F30 QR exclusion | fixture multi package offered to a non-fixture QR-3 comparison and a customer QR-4 selection | `QR3_FIXTURE_PARTICIPANT`; `QR4_FIXTURE_PARTICIPANT` or `QR4_MULTI_PINE_PARTICIPANT`; F30 is split: QR-3 half counts toward F11-01 acceptance, QR-4 half is an explicit acceptance carry-over (RD-MP-6) |
 
 ### 11.4 Acceptance bar for F11-01
 
 F11-01 is accepted for its target only when all hold:
 
 1. This contract is reviewed, the decisions in section 13 are recorded and every root decision in
-   section 14 marked "first implementation packet" is made and recorded.
+   section 14 is made and recorded.
 2. Cases F1 to F30 pass in the isolated fixture with the source-bound combined Python evaluator (not
    the Node stub), with an evidence record: commit, engine hash, set hash, package hash, codes, UTC
    stamps; no secrets, machine paths or raw logs.
@@ -642,21 +653,24 @@ Owner decisions, all decided 2026-10-19 as the recommended option.
 
 ## 14. Root decisions
 
-Root decisions recorded 2026-10-19. Where the outcome is "first implementation packet", root makes
-the decision in that packet, records it there and updates this table.
+Root decisions recorded 2026-10-19. RD-MP-1, RD-MP-2, RD-MP-3 and RD-MP-6 were decided on 2026-10-19 (UTC) as recorded below.
+F30 is split. The QR-3 half counts toward F11-01 acceptance. The QR-4 half is an explicit acceptance carry-over and
+F11-01 acceptance must not claim it. RC-MP-1 is a root clarification of 3.3 (in-place edit).
 
 | ID | Item | Outcome | Decided by | Date |
 | --- | --- | --- | --- | --- |
-| RD-MP-1 | Contract version names (`ql3a-research-job-multi-v1`, foundation-executor version) and the `MP_` code prefix | Root decides in the first implementation packet. The names in this contract are working names. | Root | 2026-10-19 |
-| RD-MP-2 | Run storage: nullable `quant_jobs.deployment_id` versus a member-set run table; any schema change follows the migration, protected-backup and rehearsal rules and runs only on a local throwaway cluster in F11-01 | Root decides in the first implementation packet. | Root | 2026-10-19 |
-| RD-MP-3 | Member-set storage location (table versus fixture-only artifact) for the internal service | Root decides in the first implementation packet. | Root | 2026-10-19 |
+| RD-MP-1 | Contract version names (`ql3a-research-job-multi-v1`, foundation-executor version) and the `MP_` code prefix | Option A: freeze `ql3a-research-job-multi-v1` and the `MP_` prefix. Member set record version `mp-member-set-v1` inside `set_hash`. Combined evaluator id `mp-combined-paper-v1`. `same_bar_order` `exit-first-ordinal-v1`. | Root | 2026-10-19 |
+| RD-MP-2 | Run storage: nullable `quant_jobs.deployment_id` versus a member-set run table; any schema change follows the migration, protected-backup and rehearsal rules and runs only on a local throwaway cluster in F11-01 | Option B: a separate internal run store that no owner reader, worker, mode-guard or QR-3 participant lookup can see. Table slice later. | Root | 2026-10-19 |
+| RD-MP-3 | Member-set storage location (table versus fixture-only artifact) for the internal service | Option A: insert-only member-set table in the same later extension as RD-MP-2. Pure builder first. | Root | 2026-10-19 |
 | RD-MP-4 | The Node stub through the worker `evaluate` seam is mechanics-only; the combined Python evaluator is required for acceptance (11.4 item 2) | Confirmed as written. | Root | 2026-10-19 |
 | RD-MP-5 | Commit status of the PKG amendment (OD-19, OD-20) before this contract cites it as binding | Committed in `2fd1b5b`. Section 6.3 cites PKG § 5.0 item 5 with OD-19 (`BI_HOLDOUT_EXPOSED_BY_SELECTION`, `BI_EXPOSURE_REGISTER_UNAVAILABLE`). | Root | 2026-10-19 |
-| RD-MP-6 | Reconcile with QR-3 and QR-4, whose files state accepted status; confirm codes `QR3_FIXTURE_PARTICIPANT`, `QR4_FIXTURE_PARTICIPANT`, `QR4_MULTI_PINE_PARTICIPANT` before F30 binds them | Root decides in the first implementation packet. | Root | 2026-10-19 |
+| RD-MP-6 | Reconcile with QR-3 and QR-4, whose files state accepted status; confirm codes `QR3_FIXTURE_PARTICIPANT`, `QR4_FIXTURE_PARTICIPANT`, `QR4_MULTI_PINE_PARTICIPANT` before F30 binds them | Option A: no new QR-3 code. F30 is split: QR-3 half checked in F11-01; QR-4 half is an explicit acceptance carry-over (section 14 note). | Root | 2026-10-19 |
 | RD-MP-7 | Packet routing for implementation | High-risk slice (accounting, parity, isolation): coder plus tester plus Opus auditor; a second-opinion review only if root records a reason. | Root | 2026-10-19 |
 | RD-MP-8 | Whether F11-01 fixture acceptance moves PM-1 D for F11-01; Roadmap and Time Management updates at the checkpoint | Root decides D at acceptance. | Root | 2026-10-19 |
 | RD-MP-9 | APP-3B carry-over: scope `activateDeployment` retirement per `pine_import_id` (CODE fact 11) | Record in the Roadmap APP-3B row or the F11-02 contract. | Root | 2026-10-19 |
 | RD-MP-10 | Whether `MULTI_PINE_REQUIRES_APP_3B` as a run-contract blocker is a capability blocker that B0 and G6 for export tolerate on the internal path only (6.3), and the PKG wording for that exception | On the `EXPORT_INTERNAL` path only, the blocker neither refuses Gate B0 nor fails G6 for export at C4; every other capability blocker still refuses. On the `EXPORT_INTERNAL` path only, G7 may fail only because the run's contract version is the multi-Pine research contract version, which is never listed among the versions whose G7 derives `PASS` (`OWNER_RECOMMENDATION_NOT_READY`). The completion reason must still be the one that derives G7 `PASS` (OD-18, RC-11). PKG § 4.4, § 5.0 items 1 and 2 and § 5.4 carry the matching root clarification. | Root | 2026-10-19 |
+| RD-MP-11 | Table slice carry-over: member-set table constraint | The table slice adds `UNIQUE(owner_id, bot_id, content_digest)` and does freeze-or-load as insert-or-load in one transaction. | Root | 2026-10-19 |
+| RD-MP-12 | Where `exit_version` is stored | Root decides before the service slice; open. | Root (open) | 2026-10-19 |
 
 ## 15. Independent test plan
 
@@ -671,7 +685,7 @@ override exists inside a gate module. [SRC basis: PKG § 11]
 - T-M2: `set_hash` and `membership_hash` stable across key order; any single member field change
   changes `set_hash`.
 - T-M3: each 8.2 refusal at set and admission stages has one negation test with exactly the expected
-  code; missing or wrong-type input fails with a code, never passes, never throws uncaught.
+  code; missing or wrong-type input fails with a code, never passes, never throws uncaught. `MP_MARKET_MIXED` is exempt while M4 makes it unreachable; root accepted its removal from the S1 code list.
 - T-M4: every emitted code matches `^[A-Z][A-Z0-9_]{1,63}$`.
 
 ### 15.2 Combined evaluator (Python, no database)
@@ -744,4 +758,4 @@ marks the fixture accepted; root decides.
 - R7: `activateDeployment` retires every other READY route of the Bot; unchanged here, it must be
   scoped per member before APP-3B can activate several members.
 - R8: QR-3, QR-4 and the PKG OD-19/OD-20 amendment are committed in `2fd1b5b`;
-  RD-MP-6 still reconciles the QR-3 and QR-4 codes in the first implementation packet.
+  RD-MP-6 (section 14) records the QR-3 and QR-4 code reconciliation.

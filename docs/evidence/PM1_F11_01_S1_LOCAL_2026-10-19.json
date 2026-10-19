@@ -1,0 +1,35 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "04ef785",
+  "scope": "Local implementation of slice S1 of docs/MULTI_PINE_CONTRACT.md for PM-1 row F11-01: a pure, fixture-only multi-Pine member-set builder. It builds a member set from server rows (memberships, named DRAFT deployments, evidence and the Bot state), checks freshness against the frozen set, computes the content digest without the set id and decides freeze-or-load. The module is pure: no database, network, file or clock access. It is not wired into any route, worker or view, it activates no deployment, and it shows the owner nothing.",
+  "method": "A coder wrote the slice from the contract and the root decisions RD-MP-1 (option A), RD-MP-2 (option B), RD-MP-3 (option A), RD-MP-6 (option A) and clarification RC-MP-1. An independent architecture auditor (Opus 5.5) reviewed it; an independent tester (Sonnet 5.5) ran single-edit mutations after each review. Two fix rounds followed (the second was narrow and checked by the tester). Root ruled on the review findings (live Bot state in freshness, named deployment per member, BTCUSDT Spot 1m only, numeric ordering of creation times, unsorted membership compare, orphan evidence refusal, impossible dates) and recorded the contract text. Nobody verified their own work.",
+  "files": {
+    "src/multi-pine/codes.js": "d60b8732c4dfd2fe1843f608bbd9059b8ccf941834cf4df49fcc9f207a6c3afb",
+    "src/multi-pine/member-set.js": "f71ecd5327ca581958f04beaac17cfc21f28c1d658ed7f3e6ca4b340dfd4b5a5",
+    "test/multi-pine-member-set.test.js": "c6bc55fe065c5a82644e3d890477d0fbc0852b1cbd1010f706c23008d46bdbd4"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "42 tests pass, 0 fail. Covered fixture cases: F1, F2, F14, F15, F26, the pure part of F10 and F11, T-M1 to T-M4 and RC-MP-1 idempotency.",
+  "mutations": {
+    "initial": "18 of 18 killed.",
+    "round1": "19 of 19 killed.",
+    "round2": "2 of 2 killed."
+  },
+  "limits": [
+    "Pure builder only: the member-set table, the internal run store, the combined evaluator, the package path and the service do not exist yet.",
+    "RD-MP-12 (where exit_version is stored) is open and must be decided before the service slice; section 11.4 item 1 requires it before F11-01 acceptance.",
+    "The table slice must add UNIQUE(owner_id, bot_id, content_digest) with insert-or-load in one transaction (RD-MP-11).",
+    "bot_state is an input; the service must read it on the server as section 3.4 states.",
+    "No staging readback and no PostgreSQL run."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports, the rulings and the final diff and accepted the slice as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and activates nothing."
+  }
+}
