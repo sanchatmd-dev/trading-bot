@@ -16,14 +16,16 @@
       ],
       "verification": {
         "differentialProbe": "On the retained real checkpoint market data with synthetic entry/exit flags (219 decisions), the baseline and current code produced byte-identical serial projections in Node and Python under the frozen policy; a control with the news guard enabled diverged, so the probe is sensitive.",
-        "targetedSuites": "Python 186 passed; Node 100 and 55 passed, 0 failed."
+        "targetedSuites": "Python 186 passed; Node 100 and 55 passed, 0 failed.",
+        "independence": "The auditor wrote the differential probe scripts; a separate tester ran them and the targeted suites."
       },
       "limits": [
         "The 92 recorded decisions and 130/130 repaint observations were not re-observed on the current code: the two TradingView chart exports used by the accepted run are not in the repository.",
         "Some closure members (analytics.py, contracts.py, domain.js, pine-bridge readiness/registry/market) are not covered by the QL-2A implementation pins.",
         "No evidence about current production Paper ledger cost behaviour.",
         "Node and Python runtime versions are not pinned by the QL-2A record.",
-        "The news-guard semantics differ from the baseline for any policy with blockDuringNews=true."
+        "The news-guard semantics differ from the baseline for any policy with blockDuringNews=true.",
+        "After this record, the release-lineage merge changed quant_lab/src/robot_quant/__init__.py (lazy exports); the probe was not rerun on the merged tree."
       ]
     },
     "F05-03": {
@@ -59,5 +61,11 @@
   "go": null,
   "productionQualified": false,
   "rea": "PAUSED",
-  "pm1": "S1_UNCHANGED"
+  "pm1": "S1_UNCHANGED",
+  "method": "Independent roles per row: an architecture auditor (Opus 5.5) reconciled clauses to code and diffs; a separate tester (Sonnet 5.5) ran the planned tests and rechecked decisive claims; new tests were written by a coder and verified by a different tester with single-edit product mutations and byte-verified restore. Nobody verified their own work.",
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports and accepted the reconciliation facts, the new tests and the stated limits of this record. Acceptance is local engineering evidence only; it changes no PM-1 credit by itself."
+  }
 }

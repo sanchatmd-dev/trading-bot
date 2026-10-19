@@ -32,5 +32,11 @@
   "go": null,
   "productionQualified": false,
   "rea": "PAUSED",
-  "pm1": "S1_UNCHANGED"
+  "pm1": "S1_UNCHANGED",
+  "method": "Independent roles per row: an architecture auditor (Opus 5.5) reconciled clauses to code and diffs; a separate tester (Sonnet 5.5) ran the planned tests and rechecked decisive claims; new tests were written by a coder and verified by a different tester with single-edit product mutations and byte-verified restore. Nobody verified their own work.",
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports and accepted the reconciliation facts, the new tests and the stated limits of this record. Acceptance is local engineering evidence only; it changes no PM-1 credit by itself."
+  }
 }

@@ -66,5 +66,10 @@
   "go": null,
   "productionQualified": false,
   "rea": "PAUSED",
-  "pm1": "S1_UNCHANGED"
+  "pm1": "S1_UNCHANGED",
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports and accepted the reconciliation facts, the new tests and the stated limits of this record. Acceptance is local engineering evidence only; it changes no PM-1 credit by itself."
+  }
 }

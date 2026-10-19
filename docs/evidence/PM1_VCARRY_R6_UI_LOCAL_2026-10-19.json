@@ -1,0 +1,41 @@
+{
+  "schema": "PM1_ROW_RECONCILIATION_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "818a46b",
+  "method": "Independent roles per row: an architecture auditor (Opus 5.5) reconciled clauses to code and diffs; a separate tester (Sonnet 5.5) ran the planned tests and rechecked decisive claims; new tests were written by a coder and verified by a different tester with single-edit product mutations and byte-verified restore. Nobody verified their own work.",
+  "scope": "Verification carry of PM-1 F01-03 (shared UI and journey visibility, target staging) with Node UI tests only (no browser), and two UI fixes. Evidence for a later successor scorecard; no staging readback.",
+  "rows": {
+    "F01-03": {
+      "outcome": "Shared UI and journey visibility",
+      "reconciliation": "Carry reconciled with gaps. Journey labels, explicit unavailable states, the research admission chip, the no-qualified-winner claim, disabled controls and Thai/English labels match their server sources; 228 Node UI tests passed across 16 files.",
+      "fixes": {
+        "setupGuide": {
+          "commit": "ca11d99",
+          "summary": "The setup guide now shows Bridge-dependent steps as unavailable when a release disables the Bridge (bridge_enabled false or missing).",
+          "tests": "4 new cases (English and Thai); 3 of 3 mutations killed."
+        },
+        "journeyCopy": {
+          "commit": "eaa86d4",
+          "summary": "Owner decision D2: the next-step texts of journey steps 2 to 5 now state what is done and what is still open, each with cited evidence; an independent evidence review checked every changed string.",
+          "tests": "Journey UI 19 of 19 and related UI suites passed."
+        }
+      },
+      "limits": [
+        "Rendered desktop and mobile layout was not checked in a browser.",
+        "Staging still serves the earlier UI bytes, so the two fixes are not on staging.",
+        "No staging readback."
+      ]
+    }
+  },
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the reconciliation, both fixes and their independent checks and accepted them as local engineering evidence."
+  },
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
