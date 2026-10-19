@@ -1,0 +1,61 @@
+{
+  "schema": "PM1_ROW_RECONCILIATION_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "138644cd0ff29687853a5360f3f5654a2a1e0f0e",
+  "scope": "Local reconciliation of PM-1 rows F05-01 and F05-03 (target: local validated engine) on the current branch. Evidence for a later successor scorecard; this record changes no PM-1 credit, gate or runtime state.",
+  "rows": {
+    "F05-01": {
+      "outcome": "Supported source evaluator baseline (QL-2A)",
+      "decision": "ACCEPTED_LOCAL_CARRY_RECONCILIATION_FROZEN_POLICY_SCOPE",
+      "baselineCommit": "238a539",
+      "findings": [
+        "13 of the 16 files pinned by docs/evidence/QL_2A_BASELINE_2026-09-26.json are byte-identical at the base revision.",
+        "quant_lab/src/robot_quant/risk_evaluator.py and src/postgres/risk.js changed only in the news-window guard (missing news data no longer rejects an entry). The frozen QL-2A policy has blockDuringNews=false, so the guard is not reached.",
+        "src/postgres/ledger.js changed (Paper ledger fencing, fee reservation and exit-cost rounding) but is not imported by the QL-2A Node oracle or the Python replay closure."
+      ],
+      "verification": {
+        "differentialProbe": "On the retained real checkpoint market data with synthetic entry/exit flags (219 decisions), the baseline and current code produced byte-identical serial projections in Node and Python under the frozen policy; a control with the news guard enabled diverged, so the probe is sensitive.",
+        "targetedSuites": "Python 186 passed; Node 100 and 55 passed, 0 failed."
+      },
+      "limits": [
+        "The 92 recorded decisions and 130/130 repaint observations were not re-observed on the current code: the two TradingView chart exports used by the accepted run are not in the repository.",
+        "Some closure members (analytics.py, contracts.py, domain.js, pine-bridge readiness/registry/market) are not covered by the QL-2A implementation pins.",
+        "No evidence about current production Paper ledger cost behaviour."
+      ]
+    },
+    "F05-03": {
+      "outcome": "Cost, chronological validation and holdout semantics (QL-3A)",
+      "decision": "ACCEPTED_ENGINE_CLOSURE_RECONCILED_AND_CLAUSE_TESTS_ADDED",
+      "acceptedEngine": "c3fa9e5 (same research engine as worker 3309d07)",
+      "findings": [
+        "Engine drift since acceptance is limited to an enqueue selection-coherence check, a two-line change in quant-research.js and the news guard; the cost replay path is byte-unchanged.",
+        "Research runs use only the v1 Paper cost model; no research path imports the v2 cost model or the PF-2 replay.",
+        "The no-overlap-with-earlier-holdout condition is a recorded Step 5 fact, not a contract rule, and is excluded from this row's contract."
+      ],
+      "verification": {
+        "postgresSuites": "Five existing research PostgreSQL files on a CI-like local PostgreSQL 16.15 cluster: 78 passed, 0 failed, 2 skipped in-test.",
+        "newTests": {
+          "files": {
+            "test/postgres/quant-research-clauses.test.mjs": "d78a21b5289d2f3035377293fbe4ce069f05cb71acabe75b966656fa2286a27e",
+            "test/helpers/quant-research-clauses-fixture.mjs": "7ab09cca7cbcef814b3af284b1734ab9ac7f83ccc25b5c27cf3776240a9aa6e8"
+          },
+          "result": "22 passed, 0 failed on unmodified code (author and independent tester runs).",
+          "clauses": "C1 cost model frozen from deployment evidence; C6 screens and ranking; C7 sensitivity before holdout; C9 holdout acceptance and reason codes; C10 worker report fields and completion reasons; C11 live Paper counters, positions, sessions and signals unchanged; stress and holdout evaluate exactly the selected candidate.",
+          "mutationEvidence": "An independent tester applied 19 single-edit mutations to the worker, contract and enqueue code, one at a time with byte-verified restore; all 19 made at least one new test fail. Product file hashes equal the base revision afterwards.",
+          "review": "Independent architecture review: acceptable with minor findings; the medium finding (finalist identity) and three low findings were fixed and re-verified."
+        }
+      },
+      "limits": [
+        "The foundation research path, the invalid-evaluation-response branch and the two in-test skipped cases are not covered by this evidence.",
+        "Historical B1-B3 runs were not replayed; their tracked evidence does not record the cost values used.",
+        "Allocations and fills tables are not seeded in the C11 check."
+      ]
+    }
+  },
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
