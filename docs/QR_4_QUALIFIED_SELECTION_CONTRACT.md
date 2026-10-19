@@ -654,7 +654,8 @@ It is not a QR-4 label and never a QR-4 input.
    a label itself. Text (OD-S17): "Best of N compared strategies within the selected scope" and
    "Tied for best of N compared strategies within the selected scope". Both texts keep the sourced
    phrase "within the selected scope" [SRC: ROADMAP § Report and research behavior].
-3. The words "best", "top", "winner" and "optimal" never appear without the scope phrase. Outside a
+3. The words "best", "top", "winner" and "optimal" never appear without the scope phrase; the fixed
+   no-winner sentence of section 8.3 is the only exception (16.3 item 2). Outside a
    selection record they appear only in the QL4 READY package label and in the QR-3 comparison labels on a
    QR-3 comparison record (QR-3 contract § 6.5 T3, § 6.6 R3). They never appear on a library,
    run, development or QR-2 view. [SRC: ROADMAP § Report and research behavior, "never universally
@@ -1029,6 +1030,9 @@ RC-S16 record the shape that the S1 module expects. Root fixes the final form wh
 | RC-S15 | Registration check order: `QR4_NO_ELIGIBLE_PARTICIPANT` first, then the dependencies in the table order of section 1.3, then the registry tolerances. | 1.3, 16.4 |
 | RC-S16 | A repeated `run_id` in the universe refuses the whole registration with `QR4_DUPLICATE_PARTICIPANT`. One universe row per run. The caller picks the current package of each run. | 4.3 |
 | RC-S17 | `prior_selection_ids` comes from the server context as a required list. The request has no such key. | 8.1 |
+| RC-S18 | A development-only participant (label NOT_EVALUATED, NO_SCREENED_CANDIDATE or DEVELOPMENT_ONLY) gets `QR4_DEVELOPMENT_SCORE_NOT_RANKABLE` with the first failing gate or the label as detail; a `QUALIFIED` label with a failing gate, unchecked integrity or a run that did not succeed gets `QR4_PARTICIPANT_NOT_QUALIFIED` (from the independent section 16 test pass) | 4.1, 4.2 | Root | 2026-10-19 |
+| RC-S19 | The development view accepts only the query parameters limit, offset, page_size and include_gates, and an evaluation request accepts only its listed keys; every other key is refused | 3.3, 5.4 | Root | 2026-10-19 |
+| RC-S20 | An imported bundle in the universe gets `QR4_PARTICIPANT_NOT_READY` with detail IMPORTED_BUNDLE; a metric of the wrong type is treated as missing (`QR4_METRIC_MISSING`) | 4.2, 7.1, 10 | Root | 2026-10-19 |
 
 ### 17.4 Open owner items
 
