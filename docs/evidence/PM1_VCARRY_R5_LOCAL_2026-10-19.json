@@ -25,6 +25,21 @@
         "SPOT_ADAPTATION_REQUIRED exists only in prompt text and has no code path.",
         "No staging readback."
       ]
+    },
+    "F04-04": {
+      "outcome": "PF-3 readiness report",
+      "newTests": {
+        "files": {
+          "test/postgres/pf3-legacy-news-evidence.test.mjs": "546122fd8c6971f771199d475b191b1f1ce764c0ebc9f17c33c09f3db9abf58b"
+        },
+        "result": "3 passed on the merged branch.",
+        "covers": "Evidence recorded under the older news rule and bound to an older engine and evaluator is never READY: the report gives CAPABILITY_UNAVAILABLE with the HISTORICAL_ENGINE_CHANGED capability blocker and full provenance, keeps the old news rejection classified as a policy skip, and accepts the same evidence under the live engine as a control.",
+        "mutations": "4 of 4 killed; a fifth mutation that removes risk_evaluator.py from one engine list is equivalent because a second list adds it back."
+      },
+      "limits": [
+        "The first version of the test was written on a pre-merge tree and failed on the merged evaluator binding; the fixed test builds the older world consistently.",
+        "No staging readback."
+      ]
     }
   },
   "newHostSteps": 0,
