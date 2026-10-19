@@ -9,6 +9,7 @@ const types={getTypeParser:(oid,format)=>oid===20?parseInteger:pg.types.getTypeP
 
 export class PostgresDatabase {
   #runtimeOrigin=false;
+  #lockLost=()=>{console.error('Runtime database lock lost');process.exit(1);};
   // Checkout-only enforcement does not prevent privileged changes within an existing lease.
   async #checkout(pool){
     const client=await pool.connect();let released=false,failure=null,rejectFailure;
@@ -116,7 +117,7 @@ export class PostgresDatabase {
       const {rows}=await lease.query("SELECT pg_try_advisory_lock_shared(hashtextextended('robot:maintenance',0)) ok");
       if(!rows[0].ok)throw new Error('Database maintenance in progress');
       // Hold this exact client until close(); losing the runtime lock remains fail-stop.
-      lease.transfer(()=>{console.error('Runtime database lock lost');process.exit(1);});
+      lease.transfer(this.#lockLost);
       this.runtimeClient=client;
     }catch(error){lease.release(error);throw error;}
   }
@@ -217,7 +218,12 @@ export class PostgresDatabase {
     if(!exists||(await this.query('SELECT version FROM schema_version')).rows[0]?.version!==14)throw new Error('Initialize/import schema 14 offline before starting PostgreSQL services');
   }
   async close(){
-    if(this.runtimeClient){await this.runtimeClient.query("SELECT pg_advisory_unlock_shared(hashtextextended('robot:maintenance',0))");this.runtimeClient.release();this.runtimeClient=null;}
+    const client=this.runtimeClient;
+    if(client){await client.query("SELECT pg_advisory_unlock_shared(hashtextextended('robot:maintenance',0))");
+      // Once unlock resolves the handler is swapped for an inert one: a later FATAL on the released backend is not lock loss.
+      // A FATAL in the same socket chunk as the unlock reply can still hit the old handler: fail-stop at shutdown, never lock loss while running.
+      // The inert handler outlives release and is harmless: every lease attaches its own error handler.
+      client.on('error',()=>{}).removeListener('error',this.#lockLost);client.release();this.runtimeClient=null;}
     await Promise.all([this.pool.end(),this.limitPool.end()]);
   }
 }

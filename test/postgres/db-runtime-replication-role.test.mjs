@@ -27,7 +27,9 @@ test('runtime origin validation covers each independent checkout',{timeout:12000
     await t.test('closed context refuses before a new checkout; privileged in-lease changes remain outside boundary',async()=>{const db=make();await db.runtimeLock();let release,late,nested=false;const wait=new Promise(r=>release=r);await db.transaction(async()=>{late=(async()=>{await wait;await assert.rejects(db.query('SELECT 1'),{code:'25000'});await assert.rejects(db.transaction(()=>{nested=true;}),{code:'25000'});})();});let checkouts=0;const original=db.pool.connect.bind(db.pool);db.pool.connect=(...args)=>{checkouts++;return original(...args);};release();await late;assert.equal(checkouts,0);assert.equal(nested,false);await db.transaction(async()=>{await db.query('SET LOCAL session_replication_role=replica');assert.equal((await db.query(setting)).rows[0].role,'replica','Checkout-only boundary: privileged changes inside the lease are not prevented');});await close(db);});
   }finally{
     const errors=[];for(const db of instances){try{await db.close();}catch(e){errors.push(e);}}
-    try{if(created)await admin.query('DROP DATABASE '+name+' WITH (FORCE)');}catch(e){errors.push(e);}finally{try{await admin.end();}catch(e){errors.push(e);}}
+    // pool.end() resolves before backend sockets close. FORCE on a runtime backend that has not yet read Terminate sends FATAL 57P01,
+    // and that error event reaches the runtime-lock-lost handler (process.exit). Let this database's backends leave first.
+    try{if(created&&!errors.length){for(let i=0;i<100&&(await admin.query('SELECT count(*)::int n FROM pg_stat_activity WHERE datname=$1',[name])).rows[0].n;i++)await new Promise(r=>setTimeout(r,50));await admin.query('DROP DATABASE '+name+' WITH (FORCE)');}}catch(e){errors.push(e);}finally{try{await admin.end();}catch(e){errors.push(e);}}
     if(errors.length)throw new AggregateError(errors,'Runtime-origin fixture cleanup failed');
   }
 });
