@@ -1,0 +1,36 @@
+{
+  "schema": "PM1_ROW_RECONCILIATION_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "c066604",
+  "scope": "Owner decision D1 for PM-1 row F06-01 (immutable research jobs): document scope of graceful-termination recovery and make the foundation stop terminal in code. Local only; no deployment, migration, staging readback, host step or GO.",
+  "ownerDecision": "2026-10-19 ~12:10Z, option (a): the durable-jobs recovery clause applies to legacy mode; foundation graceful worker termination is terminal.",
+  "contract": "docs/QL_3A_DURABLE_JOBS.md recovery paragraph (amended).",
+  "productChange": {
+    "file": "src/postgres/quant-research-foundation.js",
+    "summary": "Stop checks (RESEARCH_INTERRUPTED) as the first statement of three fenced callbacks in the foundation research path: chunk-row creation, chunk commit and the FINISH commit. Backfill, preflight and profile paths are unchanged.",
+    "sha256": "1b879b7cb7e4360dec04e38791c19eaa8d93b7f6c8e5ea6ee5de7d47f94e1c51",
+    "engineHashImpact": "The file is a FOUNDATION engine file, so the foundation engine hash changes; queued or resumed foundation research jobs created on an older engine fail closed after a later deployment of this code."
+  },
+  "tests": {
+    "files": {
+      "test/postgres/quant-research-graceful-stop.test.mjs": "86c12031bc91e0355e103ff22b4c5c9f1f589bd9e7d1e40fe58b59d3c389aefc",
+      "test/helpers/quant-research-graceful-stop-fixture.mjs": "c43e6d8e568a78fe4b87995f4552b799c129a5156d018e399266db7512827747"
+    },
+    "result": "7 passed, 0 failed: legacy stop stays recoverable and resumes after lease expiry; foundation stop ends research FAILED RESEARCH_INTERRUPTED and foundation CANCELLED after stop proof, with checkpoints unchanged; no CANCELLED without stop proof; a late chunk answer, an abort at finish entry and an abort between steps commit nothing; SIGTERM and SIGINT wiring awaits worker.stop().",
+    "related": "Foundation 24 (+1 existing skip), prepare 12, contract guards 21, clauses 22, preflight worker 10 and engine-files 4 suites pass with the change.",
+    "mutations": "An independent tester applied 8 single-edit mutations (each guard removed, legacy aborted check, stop reason, diagnostic code, acknowledgement without stop proof, unawaited worker stop) with byte-verified restore; all 8 were caught.",
+    "review": "Independent architecture review: placement correct, no change for normal runs, lease loss, cancellation or recovery; the finish gap it found was fixed and re-verified."
+  },
+  "limits": [
+    "A stop that lands while a commit transaction is already running cannot undo that commit (documented residual window).",
+    "Backfill and preflight paths have the same check gap and are outside this clause.",
+    "The SIGTERM wiring test matches source text, not runtime behaviour.",
+    "No staging readback."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}

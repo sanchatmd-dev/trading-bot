@@ -256,6 +256,8 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
   if(chunk&&(chunk.identity_hash!==digest||chunk.kind!==kind||canonical(chunk.parameters)!==canonical(parameters)))throw fail('CHECKPOINT_PARAMETER_MISMATCH');
   if(chunk?.checkpoint&&(hash(canonical(chunk.checkpoint))!==chunk.checkpoint_hash||chunk.checkpoint.next_bar!==chunk.next_bar))throw fail('RESEARCH_CHECKPOINT_CORRUPT');
   if(!chunk)await this.fenced(job,async row=>{
+   // Foundation stop is terminal: no new chunk row or evaluation count after the abort.
+   if(this.controller?.signal.aborted)throw fail('RESEARCH_INTERRUPTED');
    if(row.evaluations_started>=job.contract.max_evaluations)throw fail('EVALUATION_BUDGET_EXCEEDED');
    await this.db.query('INSERT INTO quant_research_chunks(run_id,step_id,kind,parameters,identity_hash) VALUES($1,$2,$3,$4,$5)',[job.run_id,id,kind,JSON.stringify(parameters),digest]);
    await this.db.query('UPDATE quant_jobs SET evaluations_started=evaluations_started+1,phase=$2,updated_at=$3 WHERE run_id=$1',[job.run_id,kind,this.clock()]);
@@ -282,6 +284,8 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
    if((until===end)!==Boolean(answer.result))throw fail('INVALID_RESEARCH_CHUNK_RESPONSE');
    if(answer.result)this.validateResult(answer.result,parameters,kind);
    await this.fenced(job,async()=>{
+    // Foundation stop is terminal: an answer that arrives after the abort never commits.
+    if(this.controller?.signal.aborted)throw fail('RESEARCH_INTERRUPTED');
     await this.db.query('UPDATE quant_research_chunks SET next_bar=$3,checkpoint=$4,checkpoint_hash=$5,unit_name=NULL,unit_token=NULL WHERE run_id=$1 AND step_id=$2',[job.run_id,id,until,JSON.stringify(checkpoint),hash(canonical(checkpoint))]);
     if(answer.result)await this.db.prepare('INSERT INTO quant_job_steps(run_id,step_id,kind,parameters,result,completed_at) VALUES(?,?,?,?,?,?)').run(job.run_id,id,kind,JSON.stringify(parameters),JSON.stringify(answer.result),this.clock());
    });
@@ -300,6 +304,8 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
  async finish(job,status,result,diagnostic=null){
   if(Buffer.byteLength(JSON.stringify(result))>job.foundation.contract.budget.max_output_bytes)throw fail('FOUNDATION_OUTPUT_TOO_LARGE');
   await this.scheduler.fenced(job.foundation,'FINISH',async(row,now)=>{
+   // Foundation stop is terminal: an abort that lands before the FINISH commit ends the job FAILED, never SUCCEEDED.
+   if(this.controller?.signal.aborted)throw fail('RESEARCH_INTERRUPTED');
    const q=(await this.db.query('SELECT * FROM quant_jobs WHERE run_id=$1 FOR UPDATE',[job.run_id])).rows[0];
    if(q.status!=='RUNNING'||q.lease_token!==job.lease_token)throw fail('RESEARCH_LEASE_LOST');
    await this.db.query("UPDATE quant_jobs SET status=$2,phase='COMPLETE',result=$3,diagnostic=$4,lease_token=NULL,lease_until=0,updated_at=$5 WHERE run_id=$1",[job.run_id,status,JSON.stringify(result),diagnostic,now]);

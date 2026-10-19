@@ -11,12 +11,17 @@
       "reconciliation": "Carry reconciled; no defect. Eight later commits on the mapped files preserve the contract; the plan-capacity check gained a serializable retry.",
       "existingTests": "12 planned commands passed.",
       "newTests": {
-        "files": { "test/postgres/bot-lifecycle-gates.test.mjs": "8d5784d3faf912ed3c745577089317381a4502772939aea209114a52233f89bb" },
+        "files": {
+          "test/postgres/bot-lifecycle-gates.test.mjs": "8d5784d3faf912ed3c745577089317381a4502772939aea209114a52233f89bb"
+        },
         "result": "8 passed, 0 failed on unmodified code.",
         "covers": "Create response shape and audit, plan capacity refusal without insert, concurrent creates with one slot left, risk policy frozen while running or paused, six unsupported lifecycle transitions without state or audit change, run refused without funded Paper capital, worker refusals for stopped and paused Bots, and Paper activation refused for a stopped Bot.",
         "mutations": "14 of 14 killed."
       },
-      "limits": ["Higher plan limits above the hard cap of five profiles and expired-license fallback are not asserted.", "No staging readback."]
+      "limits": [
+        "Higher plan limits above the hard cap of five profiles and expired-license fallback are not asserted.",
+        "No staging readback."
+      ]
     },
     "F02-02": {
       "outcome": "Ten-input selection and round-trip",
@@ -32,7 +37,10 @@
         "mutations": "13 of 14 killed; the survivor drops a comparison field that the code copies from the snapshot, so it is equivalent."
       },
       "openOwnerDecision": "docs/PINE_BRIDGE_ADAPTER_API.md says the input list shows every eligible numeric input and the AI does not finalize the selection; the code limits choices to the AI analysis proposal. No test asserts either side until the owner decides.",
-      "limits": ["The deployment snapshot has no database-level immutability guard; immutability rests on the absence of writers and the hash recheck.", "No staging readback."]
+      "limits": [
+        "The deployment snapshot has no database-level immutability guard; immutability rests on the absence of writers and the hash recheck.",
+        "No staging readback."
+      ]
     },
     "F06-01": {
       "outcome": "Immutable research jobs, progress and cancellation",
@@ -47,8 +55,11 @@
         "covers": "Frozen contract and hash rechecks before steps and commits, database immutability triggers for job contracts and foundation bindings, and fail-closed refusal after an engine change in legacy and foundation modes with the exact codes each mode uses.",
         "mutations": "11 of 12 killed; the survivor removes one of two redundant hash rechecks, so it is equivalent."
       },
-      "openOwnerDecision": "docs/QL_3A_DURABLE_JOBS.md says graceful termination leaves the uncommitted step recoverable after lease expiry. In foundation mode a graceful worker stop ends the job FAILED, tied to the supervised child stop proof. The failure is closed with no late write. Owner options: scope the document clause to legacy mode, or design a foundation resume after stop proof.",
-      "limits": ["Foundation mode reports engine drift as AUTHORIZATION_REVOKED or FOUNDATION_FORBIDDEN at claim and fenced writes, not QUANT_ENGINE_CHANGED; tests pin the actual codes.", "No staging readback."]
+      "limits": [
+        "Foundation mode reports engine drift as AUTHORIZATION_REVOKED or FOUNDATION_FORBIDDEN at claim and fenced writes, not QUANT_ENGINE_CHANGED; tests pin the actual codes.",
+        "No staging readback."
+      ],
+      "ownerDecision": "Decided 2026-10-19: the durable-jobs recovery clause applies to legacy mode; in foundation mode a graceful worker stop is terminal (research FAILED with RESEARCH_INTERRUPTED, foundation CANCELLED after stop proof). Implemented with stop checks before chunk creation, chunk commit and the final commit, pinned by test/postgres/quant-research-graceful-stop.test.mjs; see docs/evidence/PM1_D1_GRACEFUL_STOP_LOCAL_2026-10-19.json."
     }
   },
   "newHostSteps": 0,

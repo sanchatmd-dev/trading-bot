@@ -21,7 +21,9 @@
       "limits": [
         "The 92 recorded decisions and 130/130 repaint observations were not re-observed on the current code: the two TradingView chart exports used by the accepted run are not in the repository.",
         "Some closure members (analytics.py, contracts.py, domain.js, pine-bridge readiness/registry/market) are not covered by the QL-2A implementation pins.",
-        "No evidence about current production Paper ledger cost behaviour."
+        "No evidence about current production Paper ledger cost behaviour.",
+        "Node and Python runtime versions are not pinned by the QL-2A record.",
+        "The news-guard semantics differ from the baseline for any policy with blockDuringNews=true."
       ]
     },
     "F05-03": {
