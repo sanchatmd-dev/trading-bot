@@ -1,0 +1,59 @@
+{
+  "schema": "PM1_ROW_RECONCILIATION_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "5362576c19f95cdc98a95bb0cb11ab915dfd3564",
+  "scope": "Local reconciliation of the verification carry for PM-1 rows F01-02, F02-02 and F06-01 (targets: staging) and new test-only assertions for their untested clauses. Evidence for a later successor scorecard; this record changes no PM-1 credit, gate or runtime state, and no staging readback was performed.",
+  "method": "Same as PM1_VCARRY_R0_APP3A_LOCAL_2026-10-19.json: independent auditor reconciliation and tester run of existing tests on a CI-like local PostgreSQL 16.15 cluster, then coder-written test-only files and independent single-edit mutations of product code with byte-verified restore. No product code changed.",
+  "rows": {
+    "F01-02": {
+      "outcome": "Bot creation and lifecycle",
+      "reconciliation": "Carry reconciled; no defect. Eight later commits on the mapped files preserve the contract; the plan-capacity check gained a serializable retry.",
+      "existingTests": "12 planned commands passed.",
+      "newTests": {
+        "files": { "test/postgres/bot-lifecycle-gates.test.mjs": "8d5784d3faf912ed3c745577089317381a4502772939aea209114a52233f89bb" },
+        "result": "8 passed, 0 failed on unmodified code.",
+        "covers": "Create response shape and audit, plan capacity refusal without insert, concurrent creates with one slot left, risk policy frozen while running or paused, six unsupported lifecycle transitions without state or audit change, run refused without funded Paper capital, worker refusals for stopped and paused Bots, and Paper activation refused for a stopped Bot.",
+        "mutations": "14 of 14 killed."
+      },
+      "limits": ["Higher plan limits above the hard cap of five profiles and expired-license fallback are not asserted.", "No staging readback."]
+    },
+    "F02-02": {
+      "outcome": "Ten-input selection and round-trip",
+      "reconciliation": "Carry reconciled; no code regression against the accepted S4 source.",
+      "existingTests": "13 planned commands passed.",
+      "newTests": {
+        "files": {
+          "test/postgres/pine-bridge-selection-gates.test.mjs": "d438c0c024743fd292a2acaa4a8a0df701545a4dda53281c92aeb46a9444d418",
+          "test/helpers/pine-bridge-selection-gates-fixture.mjs": "b1c73da13a2433c24429fe9f044e2d8ce062439d110a75d839a4a32336d03403"
+        },
+        "result": "11 passed, 0 failed on unmodified code.",
+        "covers": "Generate refusals before any write, job row or provider call; deployment snapshot hash recheck on read in research and readiness; selection coherence between the deployment and research enqueue.",
+        "mutations": "13 of 14 killed; the survivor drops a comparison field that the code copies from the snapshot, so it is equivalent."
+      },
+      "openOwnerDecision": "docs/PINE_BRIDGE_ADAPTER_API.md says the input list shows every eligible numeric input and the AI does not finalize the selection; the code limits choices to the AI analysis proposal. No test asserts either side until the owner decides.",
+      "limits": ["The deployment snapshot has no database-level immutability guard; immutability rests on the absence of writers and the hash recheck.", "No staging readback."]
+    },
+    "F06-01": {
+      "outcome": "Immutable research jobs, progress and cancellation",
+      "reconciliation": "Carry reconciled except one contract conflict, recorded for the owner.",
+      "existingTests": "12 planned commands passed.",
+      "newTests": {
+        "files": {
+          "test/postgres/quant-research-contract-guards.test.mjs": "a972cc87051f94e98df6e51bd054b65607eb0c89685ad779bf6a72f56e74d1b1",
+          "test/helpers/quant-research-contract-guards-fixture.mjs": "3ddb2f759bf5c6e870f349a3d740dca8bedeb7eaa529082d2339d2a1ee51e9e0"
+        },
+        "result": "21 passed, 0 failed on unmodified code.",
+        "covers": "Frozen contract and hash rechecks before steps and commits, database immutability triggers for job contracts and foundation bindings, and fail-closed refusal after an engine change in legacy and foundation modes with the exact codes each mode uses.",
+        "mutations": "11 of 12 killed; the survivor removes one of two redundant hash rechecks, so it is equivalent."
+      },
+      "openOwnerDecision": "docs/QL_3A_DURABLE_JOBS.md says graceful termination leaves the uncommitted step recoverable after lease expiry. In foundation mode a graceful worker stop ends the job FAILED, tied to the supervised child stop proof. The failure is closed with no late write. Owner options: scope the document clause to legacy mode, or design a foundation resume after stop proof.",
+      "limits": ["Foundation mode reports engine drift as AUTHORIZATION_REVOKED or FOUNDATION_FORBIDDEN at claim and fenced writes, not QUANT_ENGINE_CHANGED; tests pin the actual codes.", "No staging readback."]
+    }
+  },
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
