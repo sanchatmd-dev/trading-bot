@@ -1,0 +1,37 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "720b4336479549c37c1d815a991366f697761c33",
+  "scope": "Local implementation of the pure QL-4B/QL-4C package-gate module for PM-1 row F09-01: Gate B0 (build eligibility), Gates C1 to C4 (compile, logic, provenance, validation), Gate Q (qualification record), the stored export-status transitions, derived freshness and the READY predicate, against docs/QL_4B_4C_QUALIFIED_PACKAGE_CONTRACT.md at commit 10b340d (owner decisions OD-1 to OD-19, root decision OD-20, root clarifications RC-1 to RC-11). The module is pure: no database, network, file or clock access. It is not wired into any route, worker or user interface, and it produces no owner-visible state.",
+  "method": "A coder wrote the module and its tests from the contract. Four fix rounds followed. In each round an independent architecture auditor (Opus 5.5) reviewed the changes against the contract, and an independent tester (Sonnet 5.5) applied single-edit mutations to the module, one at a time with byte-verified restore. Root ruled on every open interpretation (rulings R1 to R20, S1 to S11 and U1 to U4) and recorded the rulings that change contract meaning as RC-1 to RC-11. Nobody verified their own work. In round 2 the auditor ran the suite while the mutation run was active; the auditor reran on the settled file, root confirmed that its sha256 equals the restored file, and later rounds ran the mutation stage only after the review.",
+  "files": {
+    "src/quant-library/package-gates.js": "21fec1f4ba2fc27cb24f2a2583cfbc2ce0d659c57410d11aca95b6cf7d5a5fa2",
+    "test/quant-library-package-gates.test.js": "3a9d3c992b28ebb992c6850b79f132450b86b6f3d4f32ccb1f152893681bd650"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "51 tests pass, 0 fail, 0 todo (node --test --test-isolation=none test/quant-library-package-gates.test.js). The Pine Bridge template tests still pass (35 of 35), because Gate C2 compares indicator.pine byte for byte with the deterministic template output.",
+  "mutations": {
+    "round1": "19 of 20 killed; the survivor was a test gap, closed in round 2.",
+    "round2": "31 of 32 killed; the survivor was a test gap, closed in round 3.",
+    "round3": "25 killed; 4 survivors are equivalent (redundant guards).",
+    "round4": "6 of 7 killed; the survivor (empty membership) was closed by a root-added test, and the same mutant then fails 1 test."
+  },
+  "covers": "Exact gate codes and order, the closed retryable list, the five-attempt limit, B0 at build only, holdout independence including the shared exposure register (same owner and market, entries at or before the run's creation time, an absent or malformed register refused), the internal multi-Pine path (only MULTI_PINE_REQUIRES_APP_3B tolerated; G7 fails only through the unlisted multi-Pine contract version), trace reproduction, dataset metadata, frozen library versions, exit-version refusal, clearance records bound to their evidence digest, win-rate fabrication and comparison, replay-state refusal (BI_REPLAY_STATE_UNAVAILABLE), REPLAY_MISMATCH first among freshness codes, and that a fixture or internal package is never READY and never a G8 source.",
+  "limits": [
+    "Pure module only: no builder, evaluator, database table, route or user interface uses it yet.",
+    "Input field names are a provisional interface until best-inputs-manifest-v1 freezes them.",
+    "The multi-Pine contract version is a placeholder until RD-MP-1 names it.",
+    "The evaluator must produce the trace-reproduction record in the shape this module reads.",
+    "The library view in src/quant-library/derive.js still reads the stored owner-recommendation flag for G7; aligning it with OD-18 is separate work.",
+    "No staging readback and no PostgreSQL run."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports, the rulings and the final diff and accepted the module and tests as local engineering evidence for F09-01. Acceptance changes no PM-1 credit by itself and grants no recommendation, apply, email or Bot action."
+  }
+}
