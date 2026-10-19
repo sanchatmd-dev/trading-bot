@@ -902,7 +902,7 @@ RD-1 to RD-10 the same day. Each outcome is part of this contract.
 | RD-2 | Exit semantics version in context (C8) or in the subject | In the context, field C8. | Root | 2026-10-19 |
 | RD-3 | Final context field review C1 to C16 against both research contract builders: `risk_percent` grouping (code `cost_model`), capital mapping from code `{equity, cash}`, `timestamp_semantics` source | Root reviews C1 to C16 against both builders at implementation; the field list stays as written until that review. | Root | 2026-10-19 |
 | RD-4 | PM-1 credit | D credit only after root accepts this contract; I, V, T only from implementation evidence; no double credit for P06-03. | Root | 2026-10-19 |
-| RD-5 | End-of-window rule and metric emission of the evaluator | Root confirms from the evaluator source whether it can emit the bar-close grid, fees, exposure, rejected intents and completed episodes; until then V8 holds. | Root | 2026-10-19 |
+| RD-5 | End-of-window rule and metric emission of the evaluator | Root confirms from the evaluator source whether it can emit the bar-close grid, fees, exposure, rejected intents and completed episodes; until then V8 holds. Checked 2026-10-19 (QR-4 RO-8): for cost model paper-close-v1 the evaluator fills entries and every exit at the signal bar close with adverse slippage, rounds BUY prices up and EXIT prices down to the tick, rounds quantity down to the step, marks an open position at the last close without liquidation and orders same-bar fills by sequence. The research path emits counts only; the pure FE-1 evaluator emits the needed records but is not wired, so V8 still holds until the evaluation job (S3) emits them under a versioned closure. | Root | 2026-10-19 |
 | RD-6 | Read budget numbers: participant count, contract bytes, read p95 | Root fixes the numbers with the API slice (S4); the v1 participant count stays 2 to 4. | Root | 2026-10-19 |
 | RD-7 | Job class design | One shared fixed-input new-period backtest job class with QR-4, `run_id`/`parent_run_id` lineage, QS-1 budget and cancel/recovery. | Root | 2026-10-19 |
 | RD-8 | K1 reading | Confirmed: F10-02 acceptance can be met with `NO_QUALIFIED_RESULT`. | Root | 2026-10-19 |
@@ -934,7 +934,7 @@ names the sections edited in place.
 | RC-C16 | Relative periods 1W to 3Y are end-anchored at the last completed bar end; `start_ms` makes them start-anchored; anchor shown and frozen | 4.1 | Root | 2026-10-19 |
 | RC-C17 | YTD at exactly January 1 00:00 UTC is refused `QR3_PERIOD_INVALID` | 4.1 | Root | 2026-10-19 |
 | RC-C18 | V4 first grid point is `NAV(start)` = `initial_cash` | 5.1 V4 | Root | 2026-10-19 |
-| RC-C19 | Tick rounding is adverse (buy up, sell down) until RD-5 confirms the evaluator | 5.1 V6 | Root | 2026-10-19 |
+| RC-C19 | Tick rounding is adverse (buy up, sell down); RD-5 confirmed this is the evaluator rule for paper-close-v1 on 2026-10-19 | 5.1 V6 | Root | 2026-10-19 |
 | RC-C20 | `initial_cash` below one quantity step: benchmark row null `QR3_METRIC_UNAVAILABLE` detail `NO_UNITS_AFFORDABLE`, excess return null, comparison not refused | 5.3 B1 | Root | 2026-10-19 |
 | RC-C21 | Tie chaining is single linkage over adjacent sorted gaps | 6.5 T1a | Root | 2026-10-19 |
 | RC-C22 | Tie groups use competition ranks (1,1,3) | 6.5 T2 | Root | 2026-10-19 |

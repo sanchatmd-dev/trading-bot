@@ -1,0 +1,37 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "1ce7454",
+  "scope": "Local implementation of FE-1, the first packet after the QR-4 RO-8 feasibility check, for PM-1 rows F10-02 and F10-03: a pure fixed-input evaluator (quant_lab/src/robot_quant/fixed_eval.py) that runs one frozen parameter set on a new window without any search, reusing the engine's signal, Paper replay and period functions, and emits the records the QR-3 and QR-4 contracts need (bar-close fills with fee and slippage cost, NAV, return and drawdown, exposure, flat-to-flat episodes beside closed allocations, rejected intents with orphan exits split out, echoed engine and dataset hashes and lineage ids). It is outside every engine-hash closure, is not wired into any worker or job, and writes no run row.",
+  "method": "The RO-8 feasibility check (independent architecture auditor, Opus 5.5) found the gaps and proposed FE-1. A coder wrote it; an independent auditor reviewed it twice; an independent tester ran single-edit mutations after each review and, in the last round, fuzzed the command-line driver. Root ruled on every finding (frozen dataset ATR, initial equity separate from cash, closed search refusal, exact policy keys, row time and capacity limits, a driver that always emits one JSON object with no traceback). Nobody verified their own work.",
+  "files": {
+    "quant_lab/src/robot_quant/fixed_eval.py": "7594891bb7e7d26a5c53e10a887ca2d22a40710df2d023e7c69afcdec5c676e1",
+    "quant_lab/tests/test_fixed_eval.py": "715ad380e9e9ca988de3453001db58bf9666fe268b6e748c2383e71802c83f65",
+    "test/fixed-eval-qr3-parity.test.js": "a08fa30493f324778dd60bdd413d839713ccfad40051ee349b80a88ef26ce36f"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "pytest tests/test_fixed_eval.py: 192 passed; full quant_lab suite: 511 passed; node --test test/fixed-eval-qr3-parity.test.js: 8 passed. The engine-hash closures (LEGACY, FOUNDATION, INGESTION, PF-2 engine and PF-2 evaluator) were recomputed before and after every round and did not change.",
+  "parity": "With the frozen dataset ATR and the same capital, a fixed-input run equals the research engine's HOLDOUT path for the same window (fills and metrics), and its fills valued by the QR-3 valuation module give the same end NAV, return and drawdown; each fill's fee and slippage cost is recomputed independently in the Node test.",
+  "mutations": {
+    "initial": "15 of 16 killed (one only by the Node parity test); the survivor and that pytest gap were closed in round 1.",
+    "round1": "20 of 25 killed; 2 test gaps closed in round 2, 3 equivalent.",
+    "round2": "15 of 16 killed; 1 equivalent.",
+    "round3": "3 of 4 killed; the survivor (allow_nan) has no reachable NaN source and stays as defence in depth."
+  },
+  "limits": [
+    "Pure evaluator only: lineage resolution, the zero-search worker mode, the QS-1 evaluation job class and admission (FE-2, QR-3 S3) do not exist yet.",
+    "Its result must not reach a run row until a versioned evaluation closure includes fixed_eval.py (FE-2 requirement).",
+    "Valid for cost model paper-close-v1 only.",
+    "The mode id (RO-7), the binding to the parent contract instead of the live deployment and the scope capital rule are root decisions before FE-2.",
+    "No staging readback and no PostgreSQL run."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports, the rulings and the final diff and accepted FE-1 as local engineering evidence. Acceptance changes no PM-1 credit by itself and starts no evaluation."
+  }
+}
