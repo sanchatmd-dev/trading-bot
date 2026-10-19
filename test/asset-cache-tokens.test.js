@@ -33,7 +33,7 @@ const PINNED={
   '/research-job.js':['rj1','ffd1319d6cb583f4'],
   '/journey.js':['pa1','8afa02a6c985b4d3'],
   '/overview.js':['ov1','4a6b152db44a2a2d'],
-  '/setup-guide.js':['sg1','0dd4be17dc729d4f'],
+  '/setup-guide.js':['sg2','2a4297c04f483dc8'],
   '/research-nav.js':['rn1','4de9b9e136d0c461'],
   '/preflight-runner.js':['r7ui6','380a5bf2e40ec318']
 };

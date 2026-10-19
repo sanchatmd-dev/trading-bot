@@ -43,7 +43,8 @@
     const analyzed=drafted||((bridge?.sources?.count||0)>0&&(jobs.by_status?.SUCCEEDED||0)>0);
     const policy=typeof runReadiness==='function'?runReadiness('SETUP',riskOf()):{ready:!!riskOf()};
     const verdict=data?.report?.verdict,session=sessionOf(data?.id);
-    const bridgeState=done=>!data?'loading':data.bridgeError?'unknown':done?'done':'todo';
+    // A disabled Bridge (bridge_enabled not true) reads like a failed Bridge read: unavailable, never todo.
+    const bridgeState=done=>!data?'loading':data.bridgeError||bridge?.bridge_enabled!==true?'unknown':done?'done':'todo';
     return {
       bot:'done',analyze:bridgeState(analyzed),draft:bridgeState(drafted),activate:bridgeState((by.READY||0)>0),
       alert:!data?'loading':data.signalsError?'unknown':Array.isArray(data.signals)&&data.signals.length?'done':'todo',
