@@ -2,7 +2,7 @@
   "schema": "DP1P_N1_LOCAL_PROGRESS_V1",
   "date": "2026-10-19",
   "root": "Codex",
-  "decision": "ROOT_ACCEPTED_N1_LOCAL_CONTRACT_SOURCE_MAPPING_ADAPTER_GENERATOR_FRAMING_AND_CAPTURE",
+  "decision": "ROOT_ACCEPTED_N1_LOCAL_COMPONENTS_ONLY",
   "baseRevision": "46e92cc794c1d1058f9fd7ff5f3d471cab541a92",
   "contract": {
     "sha256": "1250ffbc08c4ed0878d39ffb9c5c31fabb7a97fe2a95d6535cf71473cef32095",
@@ -140,7 +140,7 @@
   "productionQualified": false,
   "rea": "PAUSED",
   "pm1": "S1_UNCHANGED",
-  "checkpointBaseRevision": "31f883f42709f57745f7dbacfce33c37c5b370c7",
+  "checkpointBaseRevision": "f01d72536d4b20a41e31903f628c865e7b989b6e",
   "observerArchitecture": {
     "status": "ROOT_ADOPTED_LOCAL_PLACEMENT_AMENDMENT",
     "decision": {
@@ -199,5 +199,49 @@
     "reviewRework": "The original candidate was rejected on two reproduced blockers. A tester assertion used reference equality for a copied receipt; the assertion was corrected, its initial result retained, and the narrow rerun passed.",
     "limits": "Trusted ordinary non-Proxy inputs, non-reentrant adapters and an upstream serialized byte cap remain required. Source authentication, selected binary association, outer late-fault guard wiring, complete closure, output fit, native timing and semantic Clock acceptance remain separate gates."
   },
-  "next": "R3C observer configuration, orchestration, memory sink and outer validation; R3D checked emission; then complete assembly, package and window closures."
+  "next": "Define and independently validate the outer N1 observation schema, then separately review orchestration and emission integration before complete assembly, package and window closure.",
+  "configurationParser": {
+    "status": "ROOT_ACCEPTED_R3C1_LOCAL_PURE_DATA",
+    "manifestSha256": "8858d156f128ac53bebc0626208f4be6faef710514a3c628de1560d4011f1031",
+    "implementation": {
+      "sha256": "a3317dc68392f9a046c7956d63dac9d9f6ec6372dae5d739674181467dca5a08",
+      "bytes": 4200
+    },
+    "evidence": {
+      "authorSuiteIndependentRerun": 19,
+      "independentChecks": 12,
+      "allFinalChecksPassed": true,
+      "testerPins": 14,
+      "staticAuditMembers": 10,
+      "staticAudit": "No blocker within the adopted pure-data contract."
+    },
+    "behavior": "Caps the input Buffer before copying, reflection, decoding or parsing; verifies the trusted expected digest before parsing; requires canonical JSON and base64 with exact source count/hash; returns immutable detached configuration with the original builder-owned vector. Supplied metadata is normalized without observing a runtime.",
+    "wireCapBytes": 65536,
+    "sourceCapBytes": 32768,
+    "execution": "Pure data fixtures only; source payloads were never evaluated.",
+    "reviewRework": "One independent test used the wrong vector argument index; the initial result was retained and the corrected independent suite passed without candidate changes.",
+    "limits": "Expected digest trust, complete source provenance, selected binary identity and lineage authorization remain caller obligations. This parser grants no execution or GO authority. Ordinary caller and uncompromised builtin assumptions remain."
+  },
+  "memoryRetention": {
+    "status": "ROOT_ACCEPTED_R3C2_LOCAL_PURE_MEMORY",
+    "manifestSha256": "b03ab92aaf7f530b4055b099eaa54412bdc9c2035bcc58263e77b5758530ccce",
+    "implementation": {
+      "sha256": "5eb5a401fecc83ca96d1b4956d5dcc275449755a413572c22757aba383b3fa31",
+      "bytes": 2152
+    },
+    "evidence": {
+      "authorSuiteIndependentRerun": 18,
+      "independentChecks": 12,
+      "allPassed": true,
+      "testerPins": 20,
+      "staticAuditMembers": 13,
+      "staticAudit": "No blocker within the adopted immutable retention and correspondence contract.",
+      "rework": 0
+    },
+    "behavior": "Retains one recursively frozen evidence snapshot per instance. An invalid or repeated persist permanently faults the instance without overwriting history. Read-only correspondence checks invoke the accepted receipt validator before comparing historical serialized evidence. A clean snapshot can correspond to a later UNKNOWN receipt without promoting its status.",
+    "serializedEvidenceCapBytes": 65536,
+    "maximumSnapshots": 1,
+    "execution": "Synthetic receipt JSON and pure functions only; no capture or lifecycle code executed.",
+    "limits": "Memory retention is not durable storage, challenge consumption, Clock acceptance or a substitute for the original boundary and late-fault guard. Trusted context provenance and ordinary caller assumptions remain."
+  }
 }
