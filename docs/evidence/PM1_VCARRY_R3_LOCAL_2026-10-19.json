@@ -1,0 +1,95 @@
+{
+  "schema": "PM1_ROW_RECONCILIATION_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "c6b5ef7",
+  "scope": "Local reconciliation of the verification carry for PM-1 rows F04-02, F04-03, F04-04, F04-05, F08-01 and F08-02 (targets: staging), one Library defect fix, and new test-only assertions for untested clauses. Evidence for a later successor scorecard; no PM-1 credit, gate or runtime state changes, and no staging readback was performed.",
+  "method": "Independent architecture auditors mapped accepted clauses to current code and diffs; independent testers ran the planned existing tests (PostgreSQL files on a CI-like local PostgreSQL 16.15 cluster) and rechecked decisive claims. Coders wrote test-only files; independent testers then applied single-edit product mutations one at a time with byte-verified restore.",
+  "rows": {
+    "F04-02": {
+      "outcome": "Prototype charts and market-data diagnostics",
+      "reconciliation": "Carry reconciled; no defect.",
+      "existingTests": "8 planned commands passed.",
+      "newTests": {
+        "files": {
+          "test/market-chart-states.test.js": "9b8de4c99cc8e54af147a5840a5332da910faf03d261e872c843a4f66831c680",
+          "test/postgres/market-chart-states.test.mjs": "9b9b9f42992052161e3cd502b80f282cf137f71a78bd241163e5d16661ebd190"
+        },
+        "result": "3 and 3 passed.",
+        "covers": "Limited state while candles are shown, HTTP 429 from the request limiter mapped to limited, stale stored answers through the HTTP route, rate-limit retry text and the 60-second back-off.",
+        "mutations": "14 of 14 killed."
+      },
+      "limits": [
+        "Label wording is pinned from code because the documents name the states only.",
+        "Two PostgreSQL cases depend on one-minute request windows.",
+        "No staging readback."
+      ]
+    },
+    "F04-03": {
+      "outcome": "PF-2 historical Preflight",
+      "reconciliation": "Not reconciled: the accepted staging release lineage (325d335, now eb532ff) was not an ancestor of this branch, which lacked the evaluator binding refusals and the PF-2 runtime DELETE revoke. Existing tests at the branch head pass but prove only the branch behaviour.",
+      "ownerDecision": "2026-10-19: merge eb532ff into this branch (in progress in a separate worktree, with conflict resolution, test adaptation, independent review and full suites before integration).",
+      "openOwnerDecision": "The PF-2 acceptance packet calls the published result a valid immutable envelope, but quant_foundation_jobs.result has no database freeze; immutability rests on the lease fence and readback validation. Options: amend the wording or add a database freeze.",
+      "limits": [
+        "No staging readback."
+      ]
+    },
+    "F04-04": {
+      "outcome": "PF-3 readiness report",
+      "reconciliation": "Carry reconciled; no defect.",
+      "existingTests": "All planned commands passed.",
+      "limits": [
+        "Legacy missing-news evidence is exercised but not decisively asserted.",
+        "No staging readback."
+      ]
+    },
+    "F04-05": {
+      "outcome": "PF-4 deterministic Risk proposals",
+      "reconciliation": "Carry reconciled; no defect.",
+      "existingTests": "Planned commands passed; one optional harness was not run.",
+      "newTests": {
+        "files": {
+          "test/postgres/pf4-apply-run-race.test.mjs": "ea3070c94fa4f19badcf3b85c5df839ca1999d211cd9234fe8aefe51a471a9af"
+        },
+        "result": "3 passed in each of 4 runs.",
+        "covers": "A proposal apply racing a Bot run never leaves the session running on the old policy while the new policy is saved, with a deterministic lock order.",
+        "mutations": "8 of 10 killed; the two survivors remove ledger fence bumps that protect a different race (fills against saves) already covered elsewhere."
+      },
+      "limits": [
+        "No staging readback."
+      ]
+    },
+    "F08-01": {
+      "outcome": "Owner-scoped Library storage and inspection",
+      "reconciliation": "Carry reconciled; one defect found and fixed: the comparison view showed an empty shared-context block because the compare API returned no market, dataset or cost fields (fixed in c066604, 3 of 3 mutations killed).",
+      "newTests": {
+        "files": {
+          "test/research-library-detail-lines.test.js": "76fb6c98c3431afd1a06807ad8250361c6ff23aa9149dfecb59520161589f444",
+          "test/postgres/quant-library-gap-branches.test.mjs": "e59f09d1b6ef711b942843c79b38378d48f273f775187609bb0f237dd398aa6e"
+        },
+        "result": "5 and 7 passed.",
+        "covers": "The Bot-of-this-run detail line and chips, a disabled foundation freeze guard reported as not database-frozen, and the holdout-overlap rule for unreadable market or window shapes.",
+        "mutations": "15 of 16 killed after one added case; the survivor needs a mixed table-presence state that the schema files cannot produce."
+      },
+      "limits": [
+        "The staging lineage lacks the comparison fix until a later release.",
+        "No staging readback."
+      ]
+    },
+    "F08-02": {
+      "outcome": "QR-1b durable artifact freeze",
+      "reconciliation": "Carry reconciled; no defect. The restart readback case ran locally with FREEZE_TEST_PG_BIN set (18 of 18); CI does not set it, so CI results are not restart evidence.",
+      "limits": [
+        "Physical restore rehearsal is operations scope.",
+        "TRUNCATE protection is privilege-only.",
+        "The merge of the release lineage changes how the freeze tests see runtime DELETE; their redesign is part of the merge work.",
+        "No staging readback."
+      ]
+    }
+  },
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
