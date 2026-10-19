@@ -11,10 +11,10 @@ const BANNER='Staging preview (P0). This page shows what runs on this staging re
 // Exact owner-approved static copy. A change here must be a deliberate product decision.
 const SPEC=[
   {n:1,title:'AI chatbot Bridge',view:'quant',now:'Quant Lab → Build Pine Bridge: inspect inputs locally (no AI), then Analyze/Generate sends the authorized indicator to the configured AI provider and returns a draft Pine with a guide.',next:'Re-verify one fresh end-to-end AI job on this release.'},
-  {n:2,title:'Ten numeric inputs',view:'quant',now:'Contract supports 2–10 slots: up to eight selected numeric source inputs plus Bridge ATR Multiplier and RR.',next:'Select a supported source with eight eligible numeric inputs and round-trip all ten through UI, generated Pine and stored snapshot.'},
-  {n:3,title:'Preflight and Risk settings',view:'risk',now:'Risk manager → Order Preview: saved or hypothetical Draft authority, Generic or Bridge mode, venue filters and cost estimates. A preview saves nothing.',next:'Historical Preflight on staging (PF-2/R7), PF-3 report and PF-4 deterministic recommendations with before/after values and explicit save.'},
-  {n:4,title:'Real signals and Paper execution',view:'signals',now:'Trade log shows each signal from receipt through the Risk decision to the simulated Paper fill. Live trading stays locked.',next:'Trace one real TradingView BUY and targeted EXIT with ledger evidence in a bounded observation window.'},
-  {n:5,title:'Quant optimizer',view:'quant',now:'Research job: prepare ten inputs from a preserved run, choose the dataset, then review the frozen request. Submission requires open research admission and server readiness checks.',next:'One owner-confirmed bounded research job with a declared budget and holdout rules. Independent historical Preflight gates remain separate; results still require acceptance.'},
+  {n:2,title:'Ten numeric inputs',view:'quant',now:'Contract supports 2–10 slots: up to eight selected numeric source inputs plus Bridge ATR Multiplier and RR.',next:'Owner decision on the slot-10 input and runtime acceptance of selection coherence. All ten bindings already read back on staging, and a local replay showed Bridge ATR Multiplier and RR change the exit targets.'},
+  {n:3,title:'Preflight and Risk settings',view:'risk',now:'Risk manager → Order Preview: saved or hypothetical Draft authority, Generic or Bridge mode, venue filters and cost estimates. A preview saves nothing.',next:'Historical Preflight on staging (PF-2/R7), which is not yet enabled, and owner acceptance. PF-3 report and PF-4 deterministic recommendations with before/after values and explicit save are already on staging.'},
+  {n:4,title:'Real signals and Paper execution',view:'signals',now:'Trade log shows each signal from receipt through the Risk decision to the simulated Paper fill. Live trading stays locked.',next:'A real TradingView BUY and targeted EXIT are already traced with ledger evidence (2026-10-03). Still open: the old open QL-3A allocation and owner acceptance.'},
+  {n:5,title:'Quant optimizer',view:'quant',now:'Research job: prepare ten inputs from a preserved run, choose the dataset, then review the frozen request. Submission requires open research admission and server readiness checks.',next:'One bounded job already ended with no valid candidate (2026-10-02). Next: a new owner-confirmed bounded research job with a declared budget and holdout rules, once admission reopens. Independent historical Preflight gates remain separate; results still require acceptance.'},
   {n:6,title:'Quant Library and selection',view:'quant',now:'Research Library lists every preserved run with provenance, including failed, insufficient and cancelled runs. Development scores are not recommendations; no qualified winner exists.',next:'Full QR-3 comparison objectives and QR-4 validation-gated reporting (QL-4B/QL-4C).'}
 ];
 const HASH_A='a'.repeat(64),HASH_B='b'.repeat(64),HASH_C='c'.repeat(64);
@@ -86,9 +86,9 @@ test('index.html adds the journey nav right after Overview, a hidden page with t
     assert.equal(section.querySelector('.jr-banner p').textContent,BANNER);
     assert.ok(section.querySelector('#journeyRoot'));
     assert.equal(section.querySelector('[style]'),null,'the CSP forbids inline styles');
-    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/research-library.js?v=rel20261007','/journey.js?v=pa1'].map(part=>html.indexOf(part));
+    const order=['/i18n.js?v=','/app.js?v=','/pine-bridge.js?v=','/research-library.js?v=rel20261007','/journey.js?v=jd2'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'journey.js loads after i18n.js, app.js, pine-bridge.js and research-library.js');
-    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=r7ui5/);
+    assert.match(html,/styles-v2\.css\?v=pa1/);assert.match(html,/i18n\.js\?v=r7ui7/);
   }finally{dom.window.close();}
 });
 
