@@ -1,6 +1,6 @@
 # QL-4B/QL-4C qualified Best Inputs package contract
 
-Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10). Root accepted the other rules on
+Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10); root clarifications RC-1 to RC-11 recorded the same day (section 10.1). Root accepted the other rules on
 2026-10-19 after independent review. Implementation has not started, and nothing in this contract grants a
 recommendation, apply, email or Bot action by itself. It does not change the Roadmap. Each implementation step still needs its own gates and approvals.
 
@@ -256,7 +256,7 @@ validation with the listed code.
 | Robustness | Sensitivity and cost-stress passed | [SRC: ROADMAP § Data readiness, "Recommendation" row]; CODE: G3 | `SENSITIVITY_FAILED`, `COST_STRESS_FAILED` |
 | Holdout result | Run's own `rules`: at least 5 test closed trades, return not negative, test drawdown at most the rule limit (20% today) | CODE: worker lines 131 to 134, `RULES` | `HOLDOUT_NOT_EVALUATED`, `INSUFFICIENT_TEST_TRADES`, `NEGATIVE_HOLDOUT_RETURN`, `TEST_DRAWDOWN_EXCEEDED` |
 | Holdout independence | Section 5.0 rule 5 | Section 5.0 | Section 5.0 |
-| Episode coverage | At least 5 flat-to-flat episodes per partition. The versioned gate is required before the first real package (OD-4). | [SRC: ROADMAP § Data readiness, "Position episodes" row] | `BI_EPISODE_GATE_UNAVAILABLE` |
+| Episode coverage | At least 5 flat-to-flat episodes per partition. The versioned gate is required before the first real package (OD-4). A fixture package is exempt and is never READY (RC-10). | [SRC: ROADMAP § Data readiness, "Position episodes" row] | `BI_EPISODE_GATE_UNAVAILABLE` |
 | Cost model | A version with accepted evaluator parity; V2 refused until V2 parity passes | [SRC: ROADMAP PF-2 row] | `BI_COST_MODEL_UNSUPPORTED` |
 | Data window | `spot-dataset-v1`, `binance-global`, `BTCUSDT`, timeframe `1`, closed bars by cutoff, warm-up included, no gaps or duplicates, dataset readable with matching hash | [SRC: FND § Shared interfaces; QRL § Research record and storage, "Missing/deleted archived data must explicitly disable exact reproduction"] | `BI_DATASET_UNAVAILABLE`, `BI_DATASET_HASH_MISMATCH`, `BI_MARKET_SCOPE_INVALID` |
 | Engine identity | Run `engine_hash` recorded; validator records its own engine hash | [SRC: QRL § "Reproduction"]; CODE: `QUANT_ENGINE_CHANGED` | `BI_ENGINE_HASH_MISMATCH` |
@@ -288,6 +288,17 @@ A new research contract version is required, because the V2 validator demands th
 list (section 2, item 5). Under the split, the new version freezes only candidate evidence blockers and
 refuses admission while a capability blocker exists.
 
+A clearance record clears a native-parity blocker only when its evidence hash equals the digest of the
+native-parity evidence. It clears a repaint blocker only when its evidence hash equals the digest of the
+repaint evidence (RC-7).
+
+One exception to the admission rule for capability blockers applies on the `EXPORT_INTERNAL` path
+only. There the multi-Pine research contract version freezes the capability blocker
+`MULTI_PINE_REQUIRES_APP_3B` at admission, and that blocker neither refuses B0 nor fails G6 for
+export at C4 (RC-11; docs/MULTI_PINE_CONTRACT.md § 5.8, RD-MP-10). Every other capability blocker
+still refuses admission, B0 and C4. An internal package is never qualifiable and never READY, so this
+exception grants no capability.
+
 ## 5. Gates
 
 Gate order and thresholds are fixed before any result is seen. [SRC: QRL § Strategy Comparison, "A
@@ -302,6 +313,9 @@ Thresholds are read from the run's own frozen `rules`, never from current code c
 of `RULES` cannot retro-qualify or retro-disqualify a run. A differing current `RULES` is recorded as
 `RULES_VERSION_DIFFERS` in `limitations` (informational).
 
+The current `RULES` are a required input of the check, so the check can make that comparison
+(RC-9). The `RULES_VERSION_DIFFERS` rule does not change.
+
 Codes use upper snake case matching `^[A-Z][A-Z0-9_]{1,63}$`; existing codes are reused where the
 meaning is the same.
 
@@ -309,14 +323,24 @@ meaning is the same.
 
 Purpose: decide if a private `EXPORT_CANDIDATE` may be built at all.
 
+Gate B0 runs only at build. A validation attempt runs C1 to C4 and Q and never re-runs B0 (RC-3).
+
 Pass rule, all required:
 
-1. Library gates G1 to G5 and G7 are `PASS`.
+1. Library gates G1 to G5 and G7 are `PASS`. On the `EXPORT_INTERNAL` path only, G7 may fail only
+   because the run's contract version is the multi-Pine research contract version, which is never
+   listed among the versions whose G7 derives `PASS` (`OWNER_RECOMMENDATION_NOT_READY`). The
+   completion reason must still be the one that derives G7 `PASS` (OD-18, RC-11).
 2. G6 for build purposes: no capability blocker remains (`BI_CAPABILITY_BLOCKER_PRESENT`); only
    candidate evidence blockers (4.4) may remain. G8 may fail only with `QL4C_VALIDATION_NOT_AVAILABLE`.
    (B0 cannot require full G6 PASS, because the evidence that clears G6 exists only after the build.)
+   On the `EXPORT_INTERNAL` path only, the capability blocker `MULTI_PINE_REQUIRES_APP_3B` does not
+   refuse B0 (RC-11; docs/MULTI_PINE_CONTRACT.md, RD-MP-10). Every other capability blocker still
+   refuses.
 3. Mode is `ONE_PINE`, or mode is `MULTI_PINE` and the package is created internal (`EXPORT_INTERNAL`
    path, section 6). [SRC: ROADMAP § Governing phase sequence, QL-4C and APP-3B rows]
+   A `MULTI_PINE` run without the internal path fails B0 with `BI_MULTI_PINE_INTERNAL_ONLY`. The
+   admission code `MULTI_PINE_RESEARCH_NOT_SUPPORTED` keeps its research meaning (RC-1).
 4. Binding tuple complete (3.2).
 5. Holdout independence, an extension of G5:
    - No earlier run of the owner has an overlapping holdout window. CODE: `derive.js` G5
@@ -335,6 +359,10 @@ Pass rule, all required:
      docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md § 13.3] Code `BI_HOLDOUT_EXPOSED_BY_SELECTION`. The check
      reads the one exposure register that both contracts share. An empty register is valid. An absent or
      unreadable register fails this check with `BI_EXPOSURE_REGISTER_UNAVAILABLE`. See OD-19.
+     An exposure record counts only when its `at_utc` is at or before the durable creation time of the
+     run. The check filters records by the same owner and the same market. A malformed entry is treated
+     as an unreadable register (`BI_EXPOSURE_REGISTER_UNAVAILABLE`). Neither OD-19 code is retryable
+     (RC-2).
 6. The requesting owner owns the run. [SRC: QRL § Research record and storage, "Storage access checks
    owner authorization on every read/export"] Foreign or absent run: `NOT_FOUND` (404).
 
@@ -413,6 +441,10 @@ evidence. The record states the method and the operator role (OD-2).
 | Exit version equals the evaluated deployment exit version and is supported; an unsupported version is refused (OD-6) | `BI_EXIT_VERSION_UNSUPPORTED` |
 | Fixture label honest: engineering scope or fixture request implies `fixture = true` | `BI_FIXTURE_LABEL_MISSING` |
 
+The trace check uses an evaluator-produced reproduction record. The record holds, for each trace file,
+the recomputed steps digest. An absent record or a digest difference gives `BI_RESULT_MISMATCH`. For the
+holdout trace the code is `HOLDOUT_MISMATCH`. Both codes are non-retryable (RC-4).
+
 A fixture package can pass C3. It can never be READY or a G8 source (sections 5.5 and 6.3).
 
 ### 5.4 Gate C4: validation (evidence and freshness)
@@ -433,11 +465,17 @@ Rules from sources:
 | Native signal parity: 100% match, 0 missing/additional events, 0-bar shift [SRC: ADP, row "Native signal parity"] | `BI_PARITY_EVIDENCE_MISSING` (retryable), `BI_NATIVE_SIGNAL_PARITY_FAILED` |
 | Bridge protection parity: 100% against the bound exit version; SL/TP difference 0 ticks [SRC: ADP, row "Bridge protection parity"] | `BI_BRIDGE_PARITY_FAILED` |
 | Repaint: at least 100 closed-bar observations, 0 changed native flags; one full-history recomputation insufficient [SRC: ADP, row "Repaint evidence"] | `BI_REPAINT_EVIDENCE_MISSING` (retryable), `BI_REPAINT_FLAGS_CHANGED` |
-| Quant baseline: coverage 100%; accept/cap/reject match 100%; 0 venue-step quantity difference; cash within 1 minor unit [SRC: ADP, row "Quant baseline"] | `BI_QUANT_BASELINE_FAILED` |
+| Quant baseline: coverage 100%; accept/cap/reject match 100%; 0 venue-step quantity difference; cash within 1 minor unit [SRC: ADP, row "Quant baseline"] | `BI_QUANT_BASELINE_FAILED` (a missing baseline gives this code too; non-retryable) |
 | Every evidence record names the same source hash, effective-input hash, dataset and engine as the package | `BI_PARITY_SCOPE_MISMATCH` |
 | Freshness tuple F equals current server state | `BI_SOURCE_VERSION_STALE`, `BI_MEMBERSHIP_CHANGED`, `BI_POLICY_SNAPSHOT_MISMATCH`, `BI_DEPLOYMENT_CHANGED`, `BI_SELECTION_CHANGED` |
 | Bridge pair inside the run's recorded domains and the Bot's current permitted Bridge bounds; hard limits untouched [SRC: PEX § Candidate and risk prerequisites, "The optimizer cannot raise hard limits or disable locked guards"] | `BI_BRIDGE_PAIR_OUT_OF_BOUNDS` |
-| All candidate evidence blockers cleared (4.4) | `ACCEPTANCE_BLOCKERS_PRESENT` (retryable) |
+| All candidate evidence blockers cleared (4.4); on the `EXPORT_INTERNAL` path only, `MULTI_PINE_REQUIRES_APP_3B` does not fail G6 for export (RC-11) | `ACCEPTANCE_BLOCKERS_PRESENT` (retryable) |
+
+A missing quant baseline gives `BI_QUANT_BASELINE_FAILED`. This code is non-retryable, and the retryable
+list in 6.1 stays closed (RC-5).
+
+On the `EXPORT_INTERNAL` path only, the capability blocker `MULTI_PINE_REQUIRES_APP_3B` does not fail G6
+for export at C4 (RC-11; docs/MULTI_PINE_CONTRACT.md, RD-MP-10). Every other blocker still fails G6.
 
 ### 5.5 Gate Q: qualification record
 
@@ -448,17 +486,22 @@ record.
 
 Library G8 becomes `PASS` for a run only when a PASS `ql4c_validation` record exists for a package of
 that run with `fixture = false` and mode `ONE_PINE`. [SRC for G8 meaning: CODE `derive.js` "Gate G8 (an
-accepted QL-4C validation record)"] `QUALIFIED_TOTAL` and `QUALIFIED_WINNER` then derive from those
-records and stay 0 and null until one exists.
+accepted QL-4C validation record)"] `QUALIFIED_TOTAL` then derives from those records and stays 0
+until one exists. `QUALIFIED_WINNER` stays null in F09-01 (RC-6).
 
 G7 (`owner_recommendation_ready`) for a new engine version is derived from the completion reason and the
-contract version. It is never a free flag written by the engine (OD-18).
+contract version. It is never a free flag written by the engine (OD-18). The completion reason that
+derives G7 `PASS` is `RESEARCH_CANDIDATE_PENDING_ACCEPTANCE` (section 4.3, research run row). The
+listed contract versions are named with the next research contract version (OD-12).
 
 Only qualified results may receive a best-in-scope label, and the label is "best within the selected
 scope", never universal. [SRC: QRL § Strategy Comparison and Best Performance; ROADMAP § Report and
 research behavior]
 
 Rule changes create a new version and never re-label earlier records.
+
+Invalid attempt metadata refuses the call. The call records no attempt and changes no status (RC-6).
+The qualified winner stays null in F09-01, because ranking across runs belongs to QR-4.
 
 ## 6. Statuses and transitions
 
@@ -501,6 +544,8 @@ per `export_id`. If the fifth attempt fails with retryable codes only, the statu
 with `BI_ATTEMPTS_EXHAUSTED` (OD-7). A failed
 measurement (for example `BI_NATIVE_SIGNAL_PARITY_FAILED`) is non-retryable.
 
+Gate B0 is not part of a validation attempt (RC-3). A retry never re-runs B0.
+
 An APP-3B release of an `EXPORT_INTERNAL` package needs a new `export_id` with `parent_export_id` and a
 full new validation. Apply (F09-03) is an audit event referencing `export_id`, not a status.
 
@@ -516,6 +561,11 @@ Freshness changes after validation, so it is derived at read time and never writ
 for the package; the read then shows `STALE` with `REPLAY_MISMATCH` (OD-15, section 8). A stale or incompatible candidate cannot be applied. [SRC:
 PEX § Generated artifacts, apply paragraph] Because freshness is derived, a reverted change shows READY
 again (OD-8). The apply audit event stores the F snapshot it checked.
+
+When a replay mismatch exists, list `REPLAY_MISMATCH` first among the freshness codes (RC-8). If the
+replay state is unreadable or not a boolean, the read is refused with `BI_REPLAY_STATE_UNAVAILABLE`.
+That state is never labelled `REPLAY_MISMATCH`, and `BI_REPLAY_STATE_UNAVAILABLE` is not a C4
+freshness code.
 
 ### 6.3 READY predicate (consumed by F09-02 and F09-03)
 
@@ -590,7 +640,8 @@ another optimization or a post-export Paper cycle. [SRC: ROADMAP § Five-step us
 - Research records and required evidence are immutable and cannot be removed as ordinary cache.
   [SRC: QRL § Research record and storage]
 - Package files are content-addressed and written once in protected versioned storage. The export row,
-  status events, replay events, compile records, evidence-clearance records and validation records are insert-only.
+  status events, replay events, compile records, evidence-clearance records, reproduction records and
+  validation records are insert-only.
   Update and delete are refused by `BEFORE UPDATE OR DELETE` triggers with `ENABLE ALWAYS`,
   `SECURITY INVOKER` and pinned `search_path`, following the QR-1b freeze pattern. The SQLSTATE for
   this freeze is assigned by root in the project error namespace (OD-14).
@@ -656,6 +707,28 @@ a root decision of the same day. Each outcome is part of this contract.
 | OD-19 | Windows used by QR-3 comparisons and QR-4 selections in Gate B0 (amendment decided 2026-10-19; QR-3 OD-C8, QR-4 OD-S8) | Yes. Such windows count as exposed data for the holdout-independence check in 5.0 item 5. Code `BI_HOLDOUT_EXPOSED_BY_SELECTION`. |
 | OD-20 | Scope of the READY label "best within the selected scope" (root amendment decided 2026-10-19; QR-4 RO-1) | The label describes one package's own scope. Cross-run labels belong to the QR-4 selection record and the QR-3 comparison record. |
 
+### 10.1 Root clarifications (2026-10-19)
+
+The owner decisions OD-1 to OD-19 do not change. The root recorded the following clarifications on
+2026-10-19, after the independent review of the first gate-module implementation and of the
+multi-Pine contract (docs/MULTI_PINE_CONTRACT.md). Each clarification is also written in the named
+section. RC-11 is the only exception to the OD-3 split model. It applies to the `EXPORT_INTERNAL`
+path only and never makes a package qualifiable or READY.
+
+| ID | Clarification | Sections changed | Decided by | Date |
+| --- | --- | --- | --- | --- |
+| RC-1 | A `MULTI_PINE` run without the internal path fails B0 with `BI_MULTI_PINE_INTERNAL_ONLY`. The admission code `MULTI_PINE_RESEARCH_NOT_SUPPORTED` keeps its research meaning. | 5.0 item 3 | Root | 2026-10-19 |
+| RC-2 | An exposure record counts only when its `at_utc` is at or before the durable creation time of the run. The check filters by the same owner and the same market. A malformed entry is an unreadable register (`BI_EXPOSURE_REGISTER_UNAVAILABLE`). Neither OD-19 code is retryable. | 5.0 item 5 | Root | 2026-10-19 |
+| RC-3 | Gate B0 runs only at build. A validation attempt runs C1 to C4 and Q and never re-runs B0. | 5.0, 6.1 | Root | 2026-10-19 |
+| RC-4 | The trace check uses an evaluator-produced reproduction record (per trace file, the recomputed steps digest). An absent record or a digest difference gives `BI_RESULT_MISMATCH` (holdout trace: `HOLDOUT_MISMATCH`). Non-retryable. | 5.3 | Root | 2026-10-19 |
+| RC-5 | A missing quant baseline gives `BI_QUANT_BASELINE_FAILED`, which is non-retryable. The retryable list stays closed. | 5.4 | Root | 2026-10-19 |
+| RC-6 | Invalid attempt metadata refuses the call. It records no attempt and changes no status. The qualified winner stays null in F09-01 (cross-run ranking is QR-4). | 5.5 | Root | 2026-10-19 |
+| RC-7 | A clearance record clears a native-parity blocker only when its evidence hash equals the digest of the native-parity evidence, and a repaint blocker only with the digest of the repaint evidence. | 4.4 | Root | 2026-10-19 |
+| RC-8 | When a replay mismatch exists, `REPLAY_MISMATCH` is listed first among the freshness codes. An unreadable or non-boolean replay state refuses the read with `BI_REPLAY_STATE_UNAVAILABLE`. That state is never labelled `REPLAY_MISMATCH`, and the code is not a C4 freshness code. | 6.2 | Root | 2026-10-19 |
+| RC-9 | The current `RULES` are a required input of the check. The `RULES_VERSION_DIFFERS` rule is unchanged. | 5 intro | Root | 2026-10-19 |
+| RC-10 | The episode-gate test applies to a non-fixture package. | 4.3, 11.1 item 18 | Root | 2026-10-19 |
+| RC-11 | On the `EXPORT_INTERNAL` path only, the multi-Pine research contract freezes the capability blocker `MULTI_PINE_REQUIRES_APP_3B` at admission, and the blocker neither refuses B0 nor fails G6 for export at C4. On the `EXPORT_INTERNAL` path only, G7 may fail only because the run's contract version is the multi-Pine research contract version, which is never listed among the versions whose G7 derives `PASS` (`OWNER_RECOMMENDATION_NOT_READY`). The completion reason must still be the one that derives G7 `PASS` (OD-18). Every other capability blocker still refuses. Source: docs/MULTI_PINE_CONTRACT.md, RD-MP-10. | 4.4, 5.0 items 1 and 2, 5.4, 11.1 item 20 | Root | 2026-10-19 |
+
 ## 11. Test and evidence plan
 
 Engineering acceptance and recommendation acceptance are separate. [SRC: ROADMAP § Governing phase
@@ -697,12 +770,21 @@ Build the evaluator as a pure module in the style of `derive.js`: no clock, no I
     recommendation block.
 17. G7 is derived from the completion reason and the contract version (OD-18). No input flag, field or
     override sets G7; a supplied flag is ignored, and G7 is computed from the derivation only.
-18. Episode gate (OD-4): while the versioned episode gate is unavailable, a package gives
+18. Episode gate (OD-4): while the versioned episode gate is unavailable, a non-fixture package gives
     `BI_EPISODE_GATE_UNAVAILABLE`, never `PASS`. The count-failure code is defined with that gate version.
+    The test does not apply to a fixture package (RC-10).
 19. Comparison exposure (OD-19): a holdout window that overlaps a window used by an earlier QR-3 comparison
     or QR-4 selection of the same owner and the same market gives `BI_HOLDOUT_EXPOSED_BY_SELECTION`; the
     same window under another market or another owner does not. An empty register passes; an absent or
     unreadable register gives `BI_EXPOSURE_REGISTER_UNAVAILABLE`.
+20. Internal-path blocker exception (RC-11): a `MULTI_PINE` internal fixture whose only capability
+    blocker is `MULTI_PINE_REQUIRES_APP_3B` passes B0 and the C4 blocker check and ends
+    `EXPORT_INTERNAL`, never READY. The same blocker on a run without the internal path gives
+    `BI_MULTI_PINE_INTERNAL_ONLY`. Any other capability blocker on the internal path gives
+    `BI_CAPABILITY_BLOCKER_PRESENT`. On the internal path, a G7 failure with any other completion
+    reason or any other contract version refuses B0 with `OWNER_RECOMMENDATION_NOT_READY`. The
+    multi-Pine research contract version is never listed among the versions whose G7 derives `PASS`
+    before APP-3B.
 
 ### 11.2 Isolated PostgreSQL (throwaway cluster, one file per process)
 
