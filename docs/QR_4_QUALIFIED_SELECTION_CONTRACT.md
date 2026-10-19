@@ -2,7 +2,10 @@
 
 Status: owner decisions OD-S1 to OD-S20 recorded 2026-10-19; root decided RO-1 to RO-12 the same day.
 Root accepted the other rules after independent review.
-Implementation has not started; nothing here grants a ranking, label, recommendation, apply or Bot action.
+Implementation status: the S1 pure module (`src/selection/`) and its test file are root-accepted as local
+engineering evidence. Nothing is wired to a route, a table or a worker. Root clarifications from the S1 review are in
+section 17.3, and the open owner item OD-S3 is in section 17.4.
+Nothing here grants a ranking, label, recommendation, apply or Bot action.
 This contract is not a GO. It changes no Roadmap row by itself and earns no PM-1 credit by itself.
 
 Feature: PM-1 F10-03 "QR-4 qualified best-performance selection". Target: staging.
@@ -97,6 +100,10 @@ The scorecard gives F10-03 no credit: D UNKNOWN, I 0, V 0, T 0. [SRC: SC row F10
 | An exposure registry that exists and is readable (section 13.3) | Window checks need it | Registration refuses `QR4_EXPOSURE_REGISTRY_UNAVAILABLE` |
 | QS-1 admission for the evaluation runs [SRC: QRL § Periods and data admission] | Heavy work shares the global budget | Evaluation waits in the queue, or the selection ends `SELECTION_INCOMPLETE` |
 
+Registration checks run in this order (RC-S15). First `QR4_NO_ELIGIBLE_PARTICIPANT`. Then the
+dependencies in the table order above. Then the registry tolerances (`QR4_OBJECTIVE_UNKNOWN`, section 6.1).
+So with no READY package the refusal is always `QR4_NO_ELIGIBLE_PARTICIPANT`, whatever else is missing.
+
 QR-2 is not a ranking input. QR-2 never feeds the standardized evaluation mode, and it has no ranking or
 best output. QR-4 may cite a QR-2 view only as actual-history context. [SRC: QR2 § 1.3]
 
@@ -175,9 +182,15 @@ structure. The only place that shows development scores cannot express an order 
 
 - D1 Rows are ordered by `created_at` and then `run_id`, the order of the compare route today (CODE: LIB
   line 311). The route accepts no sort parameter. A request with `sort`, `order_by`, `rank`, `top` or
-  `best` is refused with `QR4_DEVELOPMENT_SCORE_NOT_RANKABLE` before any row is read.
+  `best` is refused with `QR4_DEVELOPMENT_SCORE_NOT_RANKABLE` before any row is read. Joined or
+  digit-suffixed forms (`sortby`, `rankby`, `top10`, `best3`, `leader`) are refused the same way. Any
+  other query key that is not on the allow-list of development-view parameters is refused too (RC-S12).
 - D2 No row carries a rank number, a medal, an arrow, or a "leader" or "winner" field. No response field
-  name contains `rank`, `best`, `top` or `winner`, except the fixed `qualified_winner: null` echo.
+  name contains `rank`, `best`, `top`, `winner` or `leader`, except the fixed `qualified_winner: null`
+  echo. A name is split into word tokens on every run of characters that are not letters (digits and
+  underscores split too). A token is flagged when it starts with `rank`, `best`, `top`, `winner` or
+  `leader`. So `stop_loss` and `desktop` pass, and `top10`, `bestscore` and `winnerid` are flagged
+  (RC-S12).
 - D3 Every row shows `score_basis: VALIDATION_NET_RETURN_PERCENT` and `score_kind: DEVELOPMENT_ONLY` next
   to the value. The note "Development score: in-sample selection, not a recommendation" (CODE: UI line
   105) stays.
@@ -219,6 +232,18 @@ run of the owner on a participant's source overlaps the evaluation part of W, th
 a failed first start writes no exposure record (RO-12). The selection's own exposure record and its own
 evaluation runs never fail its recheck.
 
+If the list of searched windows of the owner cannot be read (or one entry is unreadable), the step is
+blocked with `QR4_EXPOSURE_REGISTRY_UNAVAILABLE`, detail `SEARCHED_WINDOWS_UNREADABLE`. This is a
+refusal at registration. At a recheck it blocks the guarded step, which may be tried again later. It never
+ends the selection (RC-S2). Only a readable overlap ends the selection.
+
+Fixture selections (RC-S7, OD-S15). A request with `fixture = true` admits fixture packages only. The
+checks change as follows. E6 is flipped: a non-fixture package gives `QR4_FIXTURE_PARTICIPANT`, detail
+`NOT_FIXTURE_IN_FIXTURE_SELECTION`. E2 uses the READY predicate with fixture true instead of fixture
+false. E3 reads the fixture validation record through the same G8 predicate. E1 requires a succeeded run
+and its integrity check, and it does not require the development label check. A fixture selection has no
+label and an internal view only. Customer selections are unchanged.
+
 | Check | Rule | Fail code |
 | --- | --- | --- |
 | E1 Library gates | Qualification label `QUALIFIED`: G1 to G8 all `PASS`, with the detail-level integrity check, not the list row's unchecked integrity (CODE: DERIVE `qualification`; LIB `load`) | `QR4_PARTICIPANT_NOT_QUALIFIED`, with the first failing gate code copied exactly |
@@ -255,7 +280,9 @@ visible and named, and it is never ranked.
 - Participant count: 2 to 4 (OD-S6). The upper bound mirrors the compare route (CODE: LIB
   `COMPARE_RUN_COUNT`) and limits compute and multiple-comparison risk. Fewer than 2 eligible packages
   gives `QR4_TOO_FEW_PARTICIPANTS`. More than 4 gives `QR4_TOO_MANY_PARTICIPANTS`, and nothing is
-  truncated silently. A repeated `export_id` gives `QR4_DUPLICATE_PARTICIPANT`.
+  truncated silently. A repeated `export_id` gives `QR4_DUPLICATE_PARTICIPANT`. A repeated `run_id` anywhere in the universe
+  gives the same code and refuses the whole registration. The universe has one row per run, and the
+  caller picks the current package of each run (RC-S16).
 - After registration no participant is added, removed or replaced. Suppose a participant becomes
   ineligible before its evaluation run starts. Then the whole selection ends `SELECTION_INCOMPLETE` with
   `QR4_PARTICIPANT_STALE`. The ranking never drops a participant silently.
@@ -283,10 +310,10 @@ fails E5 with the mismatch list (the same shape as `compatibilityMismatches` in 
 | `data_model` | Equal `data_profile`, `price_tick`, `quantity_step` | CODE: DERIVE compat field `data_model` |
 | `cost_model` | One admitted cost model version, `fee_bps`, `slippage_bps`. V1 only until V2 parity | [SRC: QL4 § 5.3, `BI_COST_MODEL_UNSUPPORTED`] |
 | `capital` | One declared `equity` and `cash` for every evaluation run | [SRC: QRL § Strategy Comparison, "capital"] |
-| `policy` | One risk policy snapshot (`policy_version`, `policy_hash`). In v1 the package policy of each participant must equal it (OD-S7) | [SRC: ROADMAP § Report and research behavior, "within owner risk limits"] |
-| `rules` | In v1 every participant was qualified under the same frozen `rules` hash, else `QR4_RULES_VERSION_MIXED` (OD-S7) | [SRC basis: QL4 § 5, "Thresholds are read from the run's own frozen rules"] |
+| `policy` | One risk policy snapshot (`policy_version`, `policy_hash`). In v1 the package policy of each participant must equal it (OD-S7). The policy comes from a server context input `policy_snapshot` `{policy_hash, max_drawdown_percent}` (a decimal string or null), never from the request. `policy_max_drawdown_percent` in the scope is copied from it. A missing or unreadable snapshot gives `QR4_FILTER_INVALID`, detail `POLICY_SNAPSHOT_UNREADABLE` (RC-S6) | [SRC: ROADMAP § Report and research behavior, "within owner risk limits"] |
+| `rules` | In v1 every participant was qualified under the same frozen `rules` hash, else `QR4_RULES_VERSION_MIXED` (OD-S7). `rules_hash` = SHA-256 of the canonical JSON of the `rules` object. A hash that is not equal to the digest of its `rules` gives `QR4_RULES_VERSION_MIXED`, detail `RULES_HASH_MISMATCH` (RC-S5) | [SRC basis: QL4 § 5, "Thresholds are read from the run's own frozen rules"] |
 | `valuation` | QR-3 standardized valuation `qr3-valuation-std-v1` and Buy & Hold `qr3-bh-close-same-cost-v1` (QR-3 contract § 5.1, § 5.3) | [SRC: QRL § Strategy Comparison, "Define benchmark trade timing/costs and funding treatment explicitly"] |
-| `engine` | All evaluation runs record one engine hash. A difference ends the selection `SELECTION_INCOMPLETE` with `QR4_ENGINE_MISMATCH` | [SRC: QRL § Research record and storage, "Reproduction"] |
+| `engine` | This row applies to evaluation runs only. E5 compares no engine between participants (RC-S14). All evaluation runs record one engine hash. A difference ends the selection `SELECTION_INCOMPLETE` with `QR4_ENGINE_MISMATCH` | [SRC: QRL § Research record and storage, "Reproduction"] |
 
 Sources, strategies and selected inputs differ between participants. A selection compares exactly that
 difference.
@@ -361,6 +388,12 @@ difference.
   unknown id is refused (`QR4_OBJECTIVE_UNKNOWN`, `QR4_CUSTOM_WEIGHTS_REFUSED`). A registry change makes a
   new version and never relabels earlier outcomes. [SRC basis: QL4 § 5.5, "Rule changes create a new
   version and never re-label earlier records"]
+- The tie tolerances (`return_pp`, `drawdown_pp`, with their unit) are part of the registry entry and not
+  of the request. A request objective carries only its `id`. Any other key, a tolerance key inside the
+  filters included, is refused with `INVALID_FIELDS` (detail `TOLERANCE_IN_REQUEST` for a tolerance key).
+  While the owner has not set the OD-S3 values, the registry tolerances are null and every registration
+  refuses `QR4_OBJECTIVE_UNKNOWN`, detail `TIE_TOLERANCES_NOT_SET`. A tolerance that is not a decimal in
+  the range 0 to 100 gives the same code with detail `TIE_TOLERANCES_INVALID` (RC-S1).
 - The registration stores copies of the objective id, all of its parameter values and the filter
   values. It does not store references to current code constants. [SRC basis: QL4 § 5]
 - A filter value may be stricter than, but never weaker than, the matching threshold in any
@@ -409,8 +442,11 @@ every ranking. A resampling method can come in a later version.
 
 ### 7.1 Pure ranking function
 
-`rankSelection(registration, evaluations) -> outcome` is a pure module in the style of DERIVE. It uses no
-clock, no I/O and no random source. Its inputs are plain values and its outputs are whitelisted.
+`rankSelection(registration, evaluations, {window_dataset_hash}) -> outcome` is a pure module in the style
+of DERIVE. It uses no clock, no I/O and no random source. Its inputs are plain values and its outputs are
+whitelisted. The third argument is the frozen W dataset hash from the freeze record. A missing or
+different value gives `SELECTION_INCOMPLETE` with `BI_DATASET_HASH_MISMATCH`. `replayOutcome` (section
+13.2) takes the same object as its fourth argument (RC-S8).
 
 1. Suppose any participant has no terminal evaluation, a missing required metric or an integrity
    failure. Then the outcome is `SELECTION_INCOMPLETE` with the code from section 10. There is no
@@ -431,15 +467,20 @@ clock, no I/O and no random source. Its inputs are plain values and its outputs 
 6. Otherwise, let `low` be the lowest drawdown inside the group. The secondary group is every member
    with `value - low <= tie_tolerance_drawdown_pp`. One member gives `BEST_IN_SCOPE`, decided by the
    secondary key, and the view says so. More than one member gives `TIED_IN_SCOPE` with the tied set.
-7. Other passing participants get dense ranks by the same keys. The same tolerance rule applies against
-   the member directly above. Tied participants share a rank.
+7. Other passing participants get dense ranks by the same keys. Tied participants share a rank. Each
+   rank after 1 repeats the anchored procedure of items 4 to 6 on the set that remains after the members
+   of the ranks above are removed: its top is the highest primary value that remains, and its tolerance
+   groups are anchored on that top and on the lowest drawdown inside its group. So the ranks do not depend
+   on input order (RC-S13).
 8. The output holds:
    - the outcome code;
    - the ordered list of passing participants, with ranks and the deciding key;
    - the list of participants that did not pass, with their codes;
    - the tie tolerances used and `registration_hash`;
    - the evaluation run ids and result hashes;
-   - the ruleset ids and `outcome_hash`.
+   - `window_dataset_hash` (RC-S8);
+   - the fixed sentence "No statistical significance is claimed." when the ranking is not empty (RC-S10);
+   - the ruleset ids and `outcome_hash`. The hash covers the whole body, `window_dataset_hash` included.
 
 The tolerance values are registered parameters of the objective (OD-S3).
 
@@ -479,6 +520,9 @@ SELECTION_REGISTERED --first evaluation start  -> SELECTION_EVALUATING
 SELECTION_REGISTERED --owner cancel            -> SELECTION_CANCELLED
 SELECTION_REGISTERED --participant ineligible  -> SELECTION_INCOMPLETE (QR4_PARTICIPANT_STALE)
 SELECTION_REGISTERED --window recheck fails    -> SELECTION_INCOMPLETE (QR4_WINDOW_EXPOSED or QR4_WINDOW_OVERLAPS_SEARCHED_DATA)
+SELECTION_REGISTERED --DEADLINE_PASSED         -> SELECTION_INCOMPLETE (QR4_ADMISSION_REFUSED)
+SELECTION_REGISTERED --WINDOW_DATA_UNAVAILABLE -> SELECTION_INCOMPLETE (QR4_WINDOW_DATA_UNAVAILABLE)
+SELECTION_EVALUATING --PARTICIPANT_INELIGIBLE  -> SELECTION_INCOMPLETE (QR4_PARTICIPANT_STALE)
 SELECTION_EVALUATING --all evaluations done    -> SELECTION_COMPLETED or SELECTION_INCOMPLETE
 SELECTION_EVALUATING --owner cancel            -> SELECTION_CANCELLED
 SELECTION_EVALUATING --deadline passed         -> SELECTION_INCOMPLETE (QR4_ADMISSION_REFUSED or QR4_EVALUATION_FAILED)
@@ -486,11 +530,20 @@ SELECTION_EVALUATING --window recheck fails    -> SELECTION_INCOMPLETE (QR4_WIND
 SELECTION_COMPLETED, SELECTION_INCOMPLETE, SELECTION_CANCELLED -> terminal
 ```
 
+The first line of the three added rows covers a deadline that passes before any evaluation starts. The
+second covers W history that is unavailable before the first start. The third covers a participant that
+becomes ineligible during evaluation. There is no `WINDOW_DATA_UNAVAILABLE` row from
+`SELECTION_EVALUATING`: the row `all evaluations done` with the code of section 10 covers it (RC-S3). The
+`all evaluations done` row to `SELECTION_INCOMPLETE` accepts only the codes of section 10. An unknown
+code, or `QR4_EXPOSURE_REGISTRY_UNAVAILABLE`, gives `QR4_TRANSITION_INVALID`, detail `CODE_NOT_ALLOWED`
+(RC-S2).
+
 A terminal selection is never run again or ranked again in place. A new attempt is a new `selection_id`
 with a new W that is not exposed. [SRC basis: QRL § Explicit follow-up jobs, "never overwrite the
 original"] Each selection records `prior_selection_count` and `prior_selection_ids` for the owner, so
 repeated selections are disclosed as multiple comparisons [SRC basis: QRL § Strategy Comparison,
-"record prior searches"].
+"record prior searches"]. The server supplies `prior_selection_ids` in the context as a required list.
+The request has no such key (RC-S17).
 
 ### 8.2 Derived read overlays
 
@@ -523,7 +576,7 @@ the same. A refusal at registration writes no selection row and starts no run.
 | `QR4_PARTICIPANT_NOT_READY` | E2 fails. Detail = QL4 status or freshness code | Registration, evaluation start |
 | `QR4_PARTICIPANT_NOT_QUALIFIED` | E1 fails. Detail = first failing gate code | Registration, evaluation start |
 | `QR4_VALIDATION_BINDING_MISMATCH` | E3 fails | Registration, evaluation start |
-| `QR4_FIXTURE_PARTICIPANT` | A fixture package in a customer selection | Registration |
+| `QR4_FIXTURE_PARTICIPANT` | A fixture package in a customer selection, or (detail `NOT_FIXTURE_IN_FIXTURE_SELECTION`) a non-fixture package in a fixture selection (RC-S7) | Registration |
 | `QR4_MULTI_PINE_PARTICIPANT` | A multi-Pine package before APP-3B [SRC: QL4 § 7.2] | Registration |
 | `QR4_DEVELOPMENT_SCORE_NOT_RANKABLE` | Any request to rank, sort or label by development score, or a development-only run as participant | Registration, read |
 | `QR4_OWN_HOLDOUT_NOT_COMPARABLE` | Any request to rank by participants' own holdout results | Registration, read |
@@ -532,10 +585,11 @@ the same. A refusal at registration writes no selection row and starts no run.
 | `QR4_TOO_FEW_PARTICIPANTS`, `QR4_TOO_MANY_PARTICIPANTS`, `QR4_DUPLICATE_PARTICIPANT` | Count outside 2 to 4, or a repeated `export_id` | Registration |
 | `QR4_UNIVERSE_TOO_LARGE` | Universe above the read budget. Never truncated | Registration |
 | `QR4_SCOPE_INCOMPATIBLE` | A scope field differs. The fields are listed | Registration |
-| `QR4_RULES_VERSION_MIXED` | Participants qualified under different frozen `rules` | Registration |
+| `QR4_RULES_VERSION_MIXED` | Participants qualified under different frozen `rules`, or a `rules_hash` that is not the digest of its `rules` (detail `RULES_HASH_MISMATCH`, RC-S5) | Registration |
 | `BI_MARKET_SCOPE_INVALID` | Market not BINANCE:BTCUSDT Spot 1m [SRC: QL4 § 5.1] | Registration |
-| `QR4_OBJECTIVE_UNKNOWN`, `QR4_CUSTOM_WEIGHTS_REFUSED` | Objective not in the registry, or a custom formula, weights or sort key | Registration |
-| `QR4_FILTER_INVALID` | A filter value is missing, has the wrong type, or is weaker than a participant's `rules` or the scope policy | Registration |
+| `QR4_OBJECTIVE_UNKNOWN`, `QR4_CUSTOM_WEIGHTS_REFUSED` | Objective not in the registry, or a custom formula, weights or sort key. `QR4_OBJECTIVE_UNKNOWN` with detail `TIE_TOLERANCES_NOT_SET` (or `TIE_TOLERANCES_INVALID`) also covers a registry entry whose tie tolerances are not set (RC-S1) | Registration |
+| `QR4_FILTER_INVALID` | A filter value is missing, has the wrong type, or is weaker than a participant's `rules` or the scope policy. Detail `POLICY_SNAPSHOT_UNREADABLE` when the policy snapshot is missing or unreadable (RC-S6) | Registration |
+| `INVALID_FIELDS` | The request or the server context has a field that is not allowed or not readable. Details: `REQUESTER_UNREADABLE`, `REQUESTER_NOT_OWNER`, `PRIOR_SELECTIONS_UNREADABLE`, `EXISTING_REGISTRATIONS_UNREADABLE`, and `TOLERANCE_IN_REQUEST` (RC-S4) | Registration, any |
 | `QR4_REGISTRATION_IMMUTABLE` | Any change request to a registered selection | Any |
 | `QR4_WINDOW_INVALID` | W is not a UTC half-open completed-bar interval, or does not fit the registered window kind | Registration |
 | `QR4_WINDOW_OVER_CAPACITY` | W total bars above the current limit | Registration |
@@ -546,7 +600,7 @@ the same. A refusal at registration writes no selection row and starts no run.
 | `QR4_QR3_CONTEXT_UNAVAILABLE` | QR-3 standardized valuation or benchmark method not implemented | Registration |
 | `QR4_EVALUATION_MODE_UNAVAILABLE` | Fixed-input evaluation mode not implemented | Registration |
 | `QR4_EPISODE_GATE_UNAVAILABLE` | QL4 OD-4 episode gate not available | Registration |
-| `QR4_EXPOSURE_REGISTRY_UNAVAILABLE` | Exposure registry absent or unreadable. An empty registry is valid | Registration |
+| `QR4_EXPOSURE_REGISTRY_UNAVAILABLE` | Exposure registry absent or unreadable. An empty registry is valid. Detail `SEARCHED_WINDOWS_UNREADABLE` when the list of searched windows cannot be read; at a recheck this blocks the step and never ends the selection (RC-S2) | Registration, recheck (blocks) |
 | `QR4_EVALUATION_SEARCH_REFUSED` | Evaluation request with a search dimension, bound or budget | Evaluation |
 | `QR4_SELECTION_EXISTS` | Same registration key repeated. Returns the existing `selection_id` | Registration |
 | `QR4_APPLY_REFUSED` (403) | Any apply, import, Bot start, email enqueue or alert step sent to a QR-4 route | Any |
@@ -567,10 +621,10 @@ metric must never become zero"]
 | W data not available yet (prospective, before close plus cutoff) | Stays `SELECTION_REGISTERED`. No evaluation | none (waiting) |
 | W history unavailable at the venue or cache | `SELECTION_INCOMPLETE` | `QR4_WINDOW_DATA_UNAVAILABLE` |
 | Gap, duplicate or incomplete bar in W | `SELECTION_INCOMPLETE`. No repair and no resampling [SRC: QRL § Periods and data admission] | `QR4_WINDOW_DATA_GAP` |
-| Frozen W dataset hash differs at evaluation | `SELECTION_INCOMPLETE` | `BI_DATASET_HASH_MISMATCH` |
+| Frozen W dataset hash differs at evaluation, or the hash is not supplied to `rankSelection` or `replayOutcome` (RC-S8) | `SELECTION_INCOMPLETE` | `BI_DATASET_HASH_MISMATCH` |
 | Evaluation run FAILED, TIMED_OUT or CANCELLED | `SELECTION_INCOMPLETE`. The other results stay hidden | `QR4_EVALUATION_FAILED` |
 | Required metric absent in a terminal evaluation | `SELECTION_INCOMPLETE` | `QR4_METRIC_MISSING` |
-| Evaluation integrity check fails (contract hash, checkpoints) | `SELECTION_INCOMPLETE` | `INTEGRITY_CHECK_FAILED` (CODE: DERIVE G1 code) |
+| Evaluation integrity check fails (contract hash, checkpoints), or the stored registration is unreadable or altered (`registration_hash` differs; details `REGISTRATION_UNREADABLE`, `REGISTRATION_HASH`) | `SELECTION_INCOMPLETE` | `INTEGRITY_CHECK_FAILED` (CODE: DERIVE G1 code) |
 | Engine hashes differ between evaluation runs | `SELECTION_INCOMPLETE` | `QR4_ENGINE_MISMATCH` |
 | Buy & Hold not computable on W | `SELECTION_INCOMPLETE` | `QR4_BENCHMARK_UNAVAILABLE` |
 | Participant becomes ineligible before its evaluation starts | `SELECTION_INCOMPLETE` | `QR4_PARTICIPANT_STALE` |
@@ -607,7 +661,8 @@ It is not a QR-4 label and never a QR-4 input.
    best"; CODE: DERIVE "No view applies a best, top or winner label"]
 4. The scope statement is always shown beside the label. It covers:
    - asset, W dates (UTC), and evaluation, warm-up and total bars;
-   - risk profile id, costs, capital, coverage and evaluation basis;
+   - risk profile id, costs, capital, coverage and evaluation basis. Coverage is
+     `{participants_compared, universe_runs, evaluation_bars_each}` (RC-S9);
    - objective id, filters and tie tolerances;
    - participant count, the universe with exclusion codes, and `prior_selection_count`.
    [SRC: QRL § Strategy Comparison, "Reports state asset, dates, risk profile, costs, coverage and
@@ -616,7 +671,8 @@ It is not a QR-4 label and never a QR-4 input.
    A claim about another period needs new independent data." [SRC: ROADMAP § Report and research
    behavior; § Report range]
 6. Fixed sentences: "No statistical significance is claimed." and "This is not a profitability claim or
-   a forecast." [SRC basis: AGENTS.md scope guard; QL4 § 7.2, no global-optimum claim]
+   a forecast." The no-significance sentence is stored in the outcome body as `no_significance_sentence`
+   whenever the ranking is not empty, so `outcome_hash` covers it (RC-S10). [SRC basis: AGENTS.md scope guard; QL4 § 7.2, no global-optimum claim]
 7. While `WINNER_NOT_READY` or `SELECTION_REPLAY_MISMATCH` applies, the label is suppressed and the view
    shows the overlay code.
 8. The library `qualified_winner` field stays null permanently, because a library has no selection scope
@@ -664,6 +720,10 @@ UTC time and outcome. [SRC basis: QL4 § 7.3] Only the owner may register (OD-S1
 | Import, apply or start | Never from a selection | `QR4_APPLY_REFUSED` | Only the F09-03 action on the package, under the QL4 § 7.3 guards |
 | Email | Never from a selection | `QR4_APPLY_REFUSED` | Only F09-02 for each `export_id` |
 
+Route names are an exact-case allow-list: `register`, `cancel`, `replay_outcome`, `open_package`, `list`
+and `detail`. Any other name, a different case included, is refused (RC-S11). A requester that is not readable, or is not the
+owner, is refused with `INVALID_FIELDS` (section 9, RC-S4).
+
 No selection action applies inputs, changes a Bot, starts a session, enqueues email, starts another
 selection or starts an optimization. [SRC: QRL § Strategy Comparison, "Viewing a report never starts or
 changes a Bot"; § Explicit follow-up jobs; ROADMAP § Report and research behavior]
@@ -676,7 +736,7 @@ changes a Bot"; § Explicit follow-up jobs; ROADMAP § Report and research behav
   - the selection registration, with `registration_hash` = SHA-256 of canonical JSON;
   - the universe and participant rows;
   - the status events;
-  - the outcome (one per selection, with `outcome_hash`);
+  - the outcome (one per selection, with `outcome_hash`, over a body that holds `window_dataset_hash`);
   - the replay events and the window exposures.
   `BEFORE UPDATE OR DELETE` triggers refuse update and delete. The triggers use `ENABLE ALWAYS`,
   `SECURITY INVOKER` and a pinned `search_path`, following the QR-1b freeze pattern. [SRC basis: QL4 § 8;
@@ -693,8 +753,9 @@ changes a Bot"; § Explicit follow-up jobs; ROADMAP § Report and research behav
 
 ### 13.2 Replay
 
-- Outcome replay: run `rankSelection` again on the frozen registration and the frozen evaluation
-  results. An equal `outcome_hash` is a pass. A difference writes an append-only
+- Outcome replay: run `rankSelection` again on the frozen registration, the frozen evaluation
+  results and the frozen W dataset hash from the freeze record (`replayOutcome` takes the same
+  `{window_dataset_hash}` object, RC-S8). An equal `outcome_hash` is a pass. A difference writes an append-only
   `SELECTION_REPLAY_MISMATCH` event and suppresses the label. The stored outcome is never edited.
 - Evaluation replay: an exact replay of an evaluation run, requested by the owner, is a new run with
   `parent_run_id`. Mismatches are reported and recorded as a replay event. [SRC: QRL § Explicit follow-up
@@ -716,7 +777,9 @@ changes a Bot"; § Explicit follow-up jobs; ROADMAP § Report and research behav
   QR-3 comparison create) runs at SERIALIZABLE isolation. A writer at a lower isolation level would
   bypass the recheck.
 - Later selections refuse an overlap (`QR4_WINDOW_EXPOSED`). An empty registry is valid. Only an absent
-  or unreadable registry refuses registration.
+  or unreadable registry refuses registration. An unreadable list of searched windows
+  (`QR4_EXPOSURE_REGISTRY_UNAVAILABLE`, detail `SEARCHED_WINDOWS_UNREADABLE`) refuses registration and
+  blocks a recheck step. It never ends the selection (RC-S2).
 - Window race: a registration is not an exposure. So, between registration and the outcome write,
   another QR-3 comparison or QR-4 selection may expose the evaluation part of W, and a new run of the
   owner may search over it. The recheck of section 4.1 runs at each evaluation start and before the
@@ -940,3 +1003,35 @@ change as its own change.
 | RO-10 | Acceptance records | At the checkpoint, root records engineering acceptance and recommendation acceptance separately in Roadmap and Time Management. This contract earns no PM-1 D credit by itself. | Root | 2026-10-19 |
 | RO-11 | Second review of the final text | Done. Root accepted the other rules after independent review under the AGENTS.md verify panel rules. | Root | 2026-10-19 |
 | RO-12 | Window recheck at evaluation start and outcome write (from the final checks) | At each evaluation start and before the outcome write QR-4 rechecks the evaluation part of W against the exposure register and against the windows of other runs of the owner on the participant sources. Each recheck shares one SERIALIZABLE transaction with the step it guards, and every register writer, QR-3 included, runs at SERIALIZABLE isolation (sections 4.1, 8.1, 13.3). A failed recheck ends the selection `SELECTION_INCOMPLETE` with `QR4_WINDOW_EXPOSED` or `QR4_WINDOW_OVERLAPS_SEARCHED_DATA`. This tightens the accepted window rule and closes the gap between registration and the outcome write. | Root | 2026-10-19 |
+
+### 17.3 Root clarifications (2026-10-19, S1 review)
+
+Root recorded these clarifications after the S1 review of the pure module (`src/selection/`, not committed).
+Each row is also applied in place in the section it names. None changes an owner decision. Rows RC-S6 and
+RC-S16 record the shape that the S1 module expects. Root fixes the final form when the module is wired.
+
+| ID | Clarification | Sections |
+| --- | --- | --- |
+| RC-S1 | The registry holds the tie tolerances (`return_pp`, `drawdown_pp`, unit). They are null while the owner has not set the OD-S3 values. A null or invalid tolerance refuses with `QR4_OBJECTIVE_UNKNOWN`, detail `TIE_TOLERANCES_NOT_SET` or `TIE_TOLERANCES_INVALID` (a decimal in 0 to 100 is valid). A request objective carries only `id`. | 6.1, 9 |
+| RC-S2 | An unreadable list of searched windows gives `QR4_EXPOSURE_REGISTRY_UNAVAILABLE`, detail `SEARCHED_WINDOWS_UNREADABLE`. It refuses at registration and blocks the guarded step at a recheck. It never ends the selection. The row `all evaluations done` accepts only the codes of section 10. | 4.1, 8.1, 9, 13.3 |
+| RC-S3 | Three transition rows are added to section 8.1: `SELECTION_REGISTERED` with `DEADLINE_PASSED` gives `QR4_ADMISSION_REFUSED`; with `WINDOW_DATA_UNAVAILABLE` gives `QR4_WINDOW_DATA_UNAVAILABLE`; `SELECTION_EVALUATING` with `PARTICIPANT_INELIGIBLE` gives `QR4_PARTICIPANT_STALE`. All end `SELECTION_INCOMPLETE`. | 8.1 |
+| RC-S4 | `INVALID_FIELDS` carries these details: `REQUESTER_UNREADABLE`, `REQUESTER_NOT_OWNER`, `PRIOR_SELECTIONS_UNREADABLE`, `EXISTING_REGISTRATIONS_UNREADABLE` (the earlier-selection and earlier-registration lists are required arrays), and `TOLERANCE_IN_REQUEST`. | 6.1, 9 |
+| RC-S5 | `rules_hash` is the SHA-256 of the canonical JSON of the `rules` object. A hash that is not that digest gives `QR4_RULES_VERSION_MIXED`, detail `RULES_HASH_MISMATCH`. | 5.2, 9 |
+| RC-S6 | The policy is a server context input `policy_snapshot` `{policy_hash, max_drawdown_percent}` (a decimal string or null). It is not a request key. The scope field `policy_max_drawdown_percent` is copied from it. A missing or unreadable snapshot gives `QR4_FILTER_INVALID`, detail `POLICY_SNAPSHOT_UNREADABLE`. The real snapshot schema is confirmed at wiring. | 5.2, 9 |
+| RC-S7 | OD-S15 fixture path. `fixture = true` admits fixture packages only: E6 flipped, E2 with fixture true, E3 through the same G8 predicate, E1 as a succeeded run plus the integrity check. A non-fixture package gives `QR4_FIXTURE_PARTICIPANT`, detail `NOT_FIXTURE_IN_FIXTURE_SELECTION`. No label and an internal view only. Open for root: whether this production path needs a server environment gate or an owner GO. | 4.1, 9 |
+| RC-S8 | `rankSelection` and `replayOutcome` take `{window_dataset_hash}` from the freeze record. A missing or different value gives `BI_DATASET_HASH_MISMATCH`. The outcome body holds `window_dataset_hash` and `outcome_hash` covers it. The route or worker supplies the value. | 7.1, 10, 13.1, 13.2 |
+| RC-S9 | Coverage in the scope statement is `{participants_compared, universe_runs, evaluation_bars_each}`. | 11.2 |
+| RC-S10 | The sentence "No statistical significance is claimed." is stored in the outcome body as `no_significance_sentence` when the ranking is not empty. | 6.3, 7.1, 11.2 |
+| RC-S11 | Route names are an exact-case allow-list: `register`, `cancel`, `replay_outcome`, `open_package`, `list`, `detail`. Any other name is refused. The `objective_registry` context value is server-side only. A route never passes a request-derived value there. | 12.2 |
+| RC-S12 | D1: a query key that is not on the allow-list of development-view parameters is refused, and joined or digit-suffixed rank words are refused with `QR4_DEVELOPMENT_SCORE_NOT_RANKABLE`. D2: field names split into word tokens on every non-letter run. A token is flagged by prefix `rank`, `best`, `top`, `winner` or `leader`. `stop_loss` and `desktop` pass. The wording follows the S1 audit of 2026-10-20 and is confirmed when the code is fixed. | 3.3 |
+| RC-S13 | 7.1 item 7: each rank after 1 repeats the anchored procedure of items 4 to 6 on the set that remains, so ranks do not depend on input order. | 7.1 |
+| RC-S14 | The `engine` row of section 5.2 applies to evaluation runs only. E5 compares no engine between participants. | 5.2 |
+| RC-S15 | Registration check order: `QR4_NO_ELIGIBLE_PARTICIPANT` first, then the dependencies in the table order of section 1.3, then the registry tolerances. | 1.3, 16.4 |
+| RC-S16 | A repeated `run_id` in the universe refuses the whole registration with `QR4_DUPLICATE_PARTICIPANT`. One universe row per run. The caller picks the current package of each run. | 4.3 |
+| RC-S17 | `prior_selection_ids` comes from the server context as a required list. The request has no such key. | 8.1 |
+
+### 17.4 Open owner items
+
+| ID | Open item | Status |
+| --- | --- | --- |
+| OD-S3 | The owner sets the two tie tolerance values (`return_pp` and `drawdown_pp`) before the first selection. The example values 0.5 pp in section 17.1 are not decided values. Until the owner sets them, the registry tolerances stay null and every registration refuses `QR4_OBJECTIVE_UNKNOWN`, detail `TIE_TOLERANCES_NOT_SET` (RC-S1). | Open. Owner to decide |

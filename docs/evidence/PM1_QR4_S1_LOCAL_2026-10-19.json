@@ -1,0 +1,44 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "280ae32",
+  "scope": "Local implementation of slice S1 of docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md for PM-1 row F10-03: a pure ranking and eligibility module (src/selection/) with registration, eligibility checks E1 to E6, the common-window rules and the RO-12 recheck as pure functions, the objective qr4-objective-lexi-v1 and filters, ranking with ties and outcomes, transitions, overlays, replay, labels and route guards. It is pure, not wired into any route, table or worker, and shows the owner nothing.",
+  "method": "A coder wrote the module from the contract; an independent architecture auditor (Opus 5.5) reviewed it twice; an independent tester (Sonnet 5.5) ran single-edit mutations after each review. Root ruled on every finding and recorded the contract clarifications RC-S1 to RC-S17. One value is the owner's: the two tie tolerances (OD-S3), which stay unset, so every registration is refused until the owner sets them. Nobody verified their own work.",
+  "files": {
+    "src/selection/codes.js": "529498b334e6dc0dfa5ab13357ff7378de42c791a1ab79b358971b512f5ff5b8",
+    "src/selection/eligibility.js": "0cb6173111b3cc12c84fb20942727bdd25de32b1403fa826775521d345f76342",
+    "src/selection/hash.js": "2c2de11890aad8e5fd3556a1b28ba8f3a09e66cd25ee4fb5c1b66262833e5913",
+    "src/selection/index.js": "2e72402a8f69ea8f1b9b84890c834f1a9730256c36501cf36e060c88690d7d94",
+    "src/selection/labels.js": "d00be0ad60b99ae0d86af4f0d900e8b52ef9090c071a0e0f701e80e53003923d",
+    "src/selection/lifecycle.js": "c7efbc2ee4c7ccf2efecc7eb805a0ced71f3d026517d1000fd0a3d1d835eac08",
+    "src/selection/objective.js": "b4371d994fb94c8a4780e5b62bf943f589a4a04dddc63a895b0f2b4d46ec7349",
+    "src/selection/ranking.js": "bda558351865cd0ba70dff6cf49e2dc14ee3aa48d874f87bfe4920c2ddbccca5",
+    "src/selection/registration.js": "a41d5cc896bfcdfa9a7f714da2dae54353e76735d444d34366d5734bc9cb0ec8",
+    "src/selection/window.js": "20e091caa620121dbb865e31949f414c67013331e2eab02ad74e9e41a59bebd4",
+    "test/qr4-qualified-selection.test.js": "9725d33f4de54fdb4d32cb97b7b9ce08d96185c1ebe21a491890a923661dc316"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "56 tests: 54 pass, 0 fail, 2 todo (the OD-S3 tolerance values and a deferred validation-record field name).",
+  "mutations": {
+    "initial": "35 of 41 killed; gaps closed in round 1.",
+    "round1": "50 of 54 killed; real gaps closed in round 2.",
+    "round2": "20 of 22 killed; 2 near-equivalent."
+  },
+  "limits": [
+    "Pure module only: tables, the evaluation job, the API and the view do not exist yet.",
+    "The tie tolerances are unset until the owner decides OD-S3.",
+    "The development-view parameter and evaluation-request key allow-lists are root choices that the contract does not list.",
+    "Whether a fixture selection writes an exposure record or counts toward prior selections is open for a later slice.",
+    "The coder wrote the tests; an independent section 16 test pass is still needed before acceptance of the row.",
+    "No staging readback and no PostgreSQL run."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports, the rulings and the final diff and accepted the slice as local engineering evidence for F10-03. Acceptance changes no PM-1 credit by itself and grants no ranking or label to the owner."
+  }
+}
