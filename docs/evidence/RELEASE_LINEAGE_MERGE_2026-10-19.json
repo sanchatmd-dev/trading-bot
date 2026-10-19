@@ -1,0 +1,61 @@
+{
+  "schema": "RELEASE_LINEAGE_MERGE_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "ownerDecision": "2026-10-19: merge eb532ff into codex/app3a-market-wait-checkpoint (option a); no deployment.",
+  "commits": {
+    "merge": "743f836",
+    "testAdaptation": "c685398",
+    "branchTipMerge": "2ffcefa"
+  },
+  "releaseAncestor": "eb532ff is an ancestor of 2ffcefa",
+  "verification": {
+    "npmTest": "1554 passed, 0 failed, 6 skipped",
+    "testPostgres": "885 + 7 passed, 0 failed, 6 skipped (per-file run plus isolation-none run)",
+    "pytest": "319 passed",
+    "host": "Windows, local PostgreSQL 16.15 cluster mirroring CI",
+    "reviews": [
+      "Architecture review of conflict resolution and auto-merge: NEEDS_FIX, then ACCEPTABLE_WITH_MINOR after test adaptation",
+      "Final architecture review: foundation file equals base + release patch + D1 patch (patch-id proof)",
+      "Second-opinion review (Fable 5.1): no lost or weakened protection; corrected the engine-identity claim"
+    ]
+  },
+  "engineIdentityLF": {
+    "FOUNDATION": {
+      "eb532ff": "07b1eea8b03eae428e219c3dd1af83fd5eaeb86823f932a49dae0cb281f29bbd",
+      "merged": "7c10135451d8deae067d7a8fc8ee7f0eb0508d6c10c5b607df81d9f273b6e759"
+    },
+    "INGESTION": {
+      "eb532ff": "686e9552376ad90351cb330b5c322173e8faa8e77e51841640d167a98b89e6d2",
+      "merged": "d5364563dfcbd064560c1ba91a499008f1f71ed230807b9aee7cdbe9b01561f1"
+    },
+    "PF2_ENGINE": {
+      "eb532ff": "2120418a0247cb51f27ed405b0687949f34319622e28fbfe79cc5ac37b4c8703",
+      "merged": "5bfd1bfac70066238c17e3beb3e1bcd68c84e1b8fea8ad808c31fc2d4babbd87"
+    },
+    "LEGACY": {
+      "both": "988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a"
+    },
+    "PF2_EVALUATOR": {
+      "both": "3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada"
+    },
+    "cause": "D1 change in src/postgres/quant-research-foundation.js"
+  },
+  "freezeEvidence": {
+    "test": "test/postgres/quant-research-freeze.test.mjs",
+    "sha256At2ffcefa": "c0ee4747c3eddda77722e633312c0d779b0a92590aa48ccdb9f50b357b6cabd3",
+    "model": "Two layers: runtime DELETE on quant_jobs and quant_research_chunks fails with 42501 at the privilege layer; the QR001 freeze triggers are proven through a dedicated test role that holds DELETE.",
+    "runs": "17 passed + 1 skipped by default; 18 passed with FREEZE_TEST_PG_BIN set"
+  },
+  "deployNote": "docs/RELEASE_LINEAGE_MERGE_2026-10-19.md",
+  "openItems": [
+    "Confirm the order of the three guard-hardening migrations against the private window draft before a window packet.",
+    "PF-2 F04-03 reconciliation can now be repeated on the merged bytes.",
+    "O3: PF-2 published-result immutability wording versus a database freeze."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "deployed": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
