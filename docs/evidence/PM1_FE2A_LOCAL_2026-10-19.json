@@ -1,0 +1,39 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "5289d90",
+  "scope": "Local implementation of FE-2a, the pure part of FE-2 (QR-3 slice S3 and QR-4 RO-7): the fixed-input evaluation contract builder and validator (mode FIXED_INPUT_EVAL, zero search, lineage, v1 policy equality, dataset binding), the versioned evaluation closure fixed-eval-closure-v1 with its hash, and a terminal-envelope job wrapper around the FE-1 evaluator. Nothing is imported by a runtime root, no worker or route runs it, and the existing engine-hash closures are unchanged.",
+  "method": "Root accepted the FE-2 design decisions D1 to D6 (an independent architecture auditor, Opus 5.5, proposed them). A coder wrote FE-2a; the auditor reviewed it; an independent tester (Sonnet 5.5) ran single-edit mutations; one narrow fix round followed with a second tester check. The five existing engine hashes (LEGACY, FOUNDATION, INGESTION, PF-2 engine, PF-2 evaluator) were recomputed before and after each round and did not change. Nobody verified their own work.",
+  "files": {
+    "src/quant-research/fixed-eval-contract.js": "7eb00d79b78e7a3631b44c4f7b90226c05026955a993669fa49af2579da6ebf4",
+    "src/postgres/quant-fixed-eval-engine.js": "793ea569077cd73caeb5c7bf61e98db552d533287c61dd72634b05b991e490c0",
+    "quant_lab/src/robot_quant/fixed_eval_job.py": "ede7ae165de96d822802377afaaa9cde3ca7443f6f35b00b4db6dbb43680cc64",
+    "quant_lab/src/robot_quant/fixed_eval.py": "b9ed2edebb04fde8cef4b4b63cc15792dae9b10fcbc391764c89f9f623ca0fda",
+    "quant_lab/tests/test_fixed_eval_job.py": "d6a1a5092a08a5fa90729ec7088d39aa00831eb1e0ff57f961606764365c5cfe",
+    "quant_lab/tests/test_fixed_eval.py": "316c8abb889b497e0ec498510987e197e5fab3a49efc1836a217c70288bad9c3",
+    "test/fixed-eval-contract.test.js": "773baa59a11fe5de6dacc5b8b7138bbcab60bed1249691b87c6fa18b670e2705",
+    "test/fixed-eval-engine.test.js": "c830ed4d07ada193bf4045111f7ec33fb56197aef7009527f41d4075324d6f2e",
+    "test/fixed-eval-qr3-parity.test.js": "02d67397bef2ee6d326c82111eb2af132a41dada9f5599dc3163569de0c3c1c6"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "node --test on the FE-2a JS tests and the parity test: 36 pass; pytest on test_fixed_eval.py and test_fixed_eval_job.py: 233 pass.",
+  "mutations": {
+    "initial": "15 of 16 killed.",
+    "round1": "11 of 13 killed; 1 equivalent and 1 low gap (a getter on parent_policy in the getter-trap test)."
+  },
+  "limits": [
+    "FE-2b (worker branch, admission, cancel, recovery and the runtime import) is not built; it rotates the FOUNDATION, INGESTION and PF-2 engine hashes when deployed, so it needs a release plan and an owner GO.",
+    "The eval job must stay unreachable until the shared exposure register exists (QR-3 S2).",
+    "Capacity at 10K bars on the VPS is unmeasured.",
+    "No staging readback and no PostgreSQL run."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports and the final diff and accepted FE-2a as local engineering evidence. It changes no PM-1 credit by itself and starts no evaluation."
+  }
+}

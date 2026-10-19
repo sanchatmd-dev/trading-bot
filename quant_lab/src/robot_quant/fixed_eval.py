@@ -48,11 +48,11 @@ rejection, orphans included, so its counts sum to ``total``.
 Precision: ``metrics`` come from ``mark_period`` at 80 digits (``metrics_precision``).
 They are not string-comparable with prec-28 parent metrics; compare as decimals.
 
-Closure: this module is outside every engine hash closure (LEGACY, FOUNDATION,
-INGESTION, PF2 engine, PF2 evaluator); the output says so in
-``evaluator_closure: "NOT_IN_ENGINE_CLOSURE"``. ``engine_hash`` is only echoed from the
-contract. A result of this module must not reach a run row until a versioned
-evaluation closure exists (FE-2 requirement).
+Closure: this module is outside every research engine hash closure (LEGACY, FOUNDATION,
+INGESTION, PF2 engine, PF2 evaluator). It belongs to the versioned evaluation closure
+``fixed-eval-closure-v1`` (FE-2), and the output says so in
+``evaluator_closure: "fixed-eval-closure-v1"``. ``engine_hash`` is only echoed from the
+contract; the caller computes the closure hash and compares it.
 
 Driver: ``python fixed_eval.py`` reads one JSON request from stdin and writes one JSON
 object to stdout. It exits 0 with ``{"result": ...}`` and exits 1 with ``{"error": <code>}``
@@ -77,7 +77,7 @@ from robot_quant.ql3a import mark_period
 from robot_quant.spt_custom_evaluator import CATALOG, CustomSignalInputs, evaluate_bars
 
 VERSION = "fixed-eval-v1"
-EVALUATOR_CLOSURE = "NOT_IN_ENGINE_CLOSURE"
+EVALUATOR_CLOSURE = "fixed-eval-closure-v1"
 MINUTE_MS = 60000
 MAX_ROWS = 10000
 MAX_REQUEST_BYTES = 8 * 1024 * 1024

@@ -152,7 +152,7 @@ for(const dataset of DATASETS){
       assert.equal(result.exposure.bars_in_market,ledger.inMarket);
       same(result.exposure.fraction,new Money(ledger.inMarket).div(result.exposure.bars).toDecimalPlaces(18,Money.ROUND_HALF_EVEN),'exposure fraction');
       same(result.open_position.quantity,ledger.held,'independent end position');
-      assert.equal(result.evaluator_closure,'NOT_IN_ENGINE_CLOSURE');
+      assert.equal(result.evaluator_closure,'fixed-eval-closure-v1');
       assert.equal(result.metrics_precision,80);
       same(valued.exposure_percent,new Money(result.exposure.fraction).mul(100).toDecimalPlaces(12,Money.ROUND_HALF_EVEN),'exposure percent');
       same(valued.end_position.quantity,result.open_position.quantity,'end position quantity');

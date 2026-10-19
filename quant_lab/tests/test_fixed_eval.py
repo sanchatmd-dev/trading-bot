@@ -139,7 +139,7 @@ def test_open_position_at_end_is_marked_not_liquidated():
         "orphan_exits": {"warmup_entry": 0, "refused_entry": 0},
         "by_event_type_and_reason": [],
     }
-    assert out["evaluator_closure"] == "NOT_IN_ENGINE_CLOSURE"
+    assert out["evaluator_closure"] == "fixed-eval-closure-v1"
     assert out["metrics_precision"] == 80
 
 
