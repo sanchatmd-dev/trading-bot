@@ -1,6 +1,6 @@
 # QR-2 actual Paper portfolio performance contract
 
-Status: owner decisions O1-O16, D4 and OD-Q1, OD-Q8, OD-Q9, OD-Q10, OD-Q13, OD-Q14, OD-Q15 recorded 2026-10-19; root decided R-A to R-F, OD-Q6, OD-Q12 and OD-Q17 the same day. Root accepted the other rules after independent review. Implementation has not started; nothing here changes the ledger, the Overview tile or any Bot.
+Status: owner decisions O1-O16, D4 and OD-Q1, OD-Q8, OD-Q9, OD-Q10, OD-Q13, OD-Q14, OD-Q15, OD-Q18 recorded 2026-10-19; root decided R-A to R-F, OD-Q6, OD-Q12 and OD-Q17 the same day. Root accepted the other rules after independent review. Root clarifications RC-Q1 to RC-Q23 from the QR-2 S0/S1 review are recorded in section 15 (2026-10-19); they change no owner decision. The S1 pure library (src/portfolio) is root-accepted as local engineering evidence; it is not wired into any route, worker or view. Nothing here changes the ledger, the Overview tile or any Bot.
 
 This contract grants no capability, is not a GO and earns no PM-1 credit by itself. Commit, CI, deployment and acceptance are separate facts. The decisions are listed in the "Decisions" table in section 15.
 
@@ -80,6 +80,10 @@ Price states and age (age = `T - bar_time` in ms): [SRC: OD § F, O1; BARS const
 
 `carry_ms` (900 s) is the hard cutoff (O1). A price older than `carry_ms` is `UNAVAILABLE`, never carried.
 
+Root clarification RC-Q17 (age first): the age test runs before the integrity verification of the bar. A bar older than `carry_ms` is `UNAVAILABLE` with the information reason `PRICE_OLDER_THAN_CARRY` and its integrity is reported unverified; it is not read as `PRICE_INTEGRITY_FAILED`.
+
+Root clarification RC-Q9: a malformed `bar_time` in the candidate set is a conservative whole-set `PRICE_INTEGRITY_FAILED` (fail closed); no other bar is substituted.
+
 ### 2.2 What the bar provenance proves
 
 Both writers store `provenance.retrieved_at`, the fetch time, taken before the INSERT and the commit. [CODE: `src/pine-bridge/market-data.js` lines 55, 75; `scripts/stream-pine-bars.mjs` line 47] `retrieved_at > T` proves the bar was not stored at T. `retrieved_at <= T` is a lower bound only. Older rows may lack the field.
@@ -94,7 +98,7 @@ A change of option is a new method id and never rewrites a frozen report.
 
 ### 2.4 Clock and ordering states
 
-`FUTURE_TIMESTAMP` (a ledger row stamped after the report read time) and `FILL_BEFORE_BAR` block the affected account. `ORDER_UNPROVEN` and `ORDER_AMBIGUOUS` are in 6.4.
+`FUTURE_TIMESTAMP` (a ledger row stamped after the report read time) and `FILL_BEFORE_BAR` block the affected account. Root clarification RC-Q17: `FILL_BEFORE_BAR` is defined for slice S2 as `fills.received_at` earlier than the signal bar close; it is `FILL_BEFORE_BAR_UNCHECKED` (information) when the signal has no bar time. Until S2 it stays a todo. `ORDER_UNPROVEN` and `ORDER_AMBIGUOUS` are in 6.4.
 
 ### 2.5 Market value, NAV and exposure (identities)
 
@@ -119,7 +123,7 @@ Reserved and available cash: `available_cash = cash - reserved_notional - reserv
 
 ### 2.6 Event time and range boundaries
 
-- Event time is `paper_funding.at`, `paper_cash_journal.at` or `fills.received_at`. These are ledger write times, not market or signal times. A late booking is valued at its booking time.
+- Event time is `paper_funding.at`, `paper_cash_journal.at` or `fills.received_at`. These are ledger write times, not market or signal times. A late booking is valued at its booking time. Root clarification RC-Q15: a fill and its paired journal row are one event at `fills.received_at`; the journal row's own `at` is not used for ordering, and `inputs_hash` filters journal rows by the paired fill's `received_at`. Same millisecond (RC-Q17): a funding row sorts before a fill.
 - State at instant t uses events with event time `< t`. Flows in a range are those in `[from, to)`.
 - Reason: ROADMAP freezes UTC half-open intervals, and O9 sets an exclusive end at 00:00Z. [SRC: ROADMAP § Report range and research capacity contract; OD § F, O9] A flow window `(T0, T1]` would give a flow at exactly the next 00:00Z to two periods. The rule `[from, to)` counts a flow at `from` once and gives a flow at `to` to the next range.
 
@@ -162,18 +166,18 @@ It needs prices only at the range ends. A denominator `<= 0` gives `NON_POSITIVE
 
 ### 3.4 Drawdown
 
-Drawdown is computed on the flow-neutral TWR index, so a withdrawal is not a drawdown. Grid `qr2-grid-daily-events-v1` (OD-Q13): resolved `from`, every 00:00Z inside the range, every fill and flow time, and `as_of`. The label says "sampled; intraday extremes between grid points are not included". Any unvalued grid point while a position is open gives `DRAWDOWN_GRID_UNVALUED`; no gap is skipped. This drawdown is distinct from the analytics `REALIZED_FIFO_EXCLUDING_CASH_FLOWS` and from the PHASE0 realized drawdown; their labels never match. [SRC: docs/PHASE0.md; CODE `analyticsCapital`]
+Drawdown is computed on the flow-neutral TWR index, so a withdrawal is not a drawdown. Grid `qr2-grid-daily-events-v1` (OD-Q13): resolved `from`, every 00:00Z inside the range, every fill and flow time, and `as_of`. The label says "sampled; intraday extremes between grid points are not included". Root clarification RC-Q17: the grid end is the resolved `to` (not `as_of`), and drawdown is a positive fraction of the peak. Any unvalued grid point while a position is open gives `DRAWDOWN_GRID_UNVALUED`; no gap is skipped. This drawdown is distinct from the analytics `REALIZED_FIFO_EXCLUDING_CASH_FLOWS` and from the PHASE0 realized drawdown; their labels never match. [SRC: docs/PHASE0.md; CODE `analyticsCapital`]
 
 ### 3.5 Period boundaries (O9) and coverage start
 
 - UTC, exclusive end at 00:00:00.000Z. Day; ISO week from Monday 00:00Z, labelled "Week (Mon-Sun, UTC)"; calendar month; calendar year; custom `[from 00:00Z, to + 1 day 00:00Z)`. These are QR-2's own window functions; the analytics rolling 7 days must not share the label.
 - All Time Registered "begins at registration with actual coverage". [SRC: ROADMAP § Report range; QRL § Periods and data admission] Resolved coverage starts at `max(from, users.created_at)` (CODE: SCHEMA `users.created_at BIGINT NOT NULL`) and the view reports `first_funding_at` beside it (OD-Q1). The first TWR sub-period with value zero before the first funding row is skipped by the empty sub-period rule, so returns equal a first-funding start. Legacy history before `S_cash` keeps its 6.3 state, so a legacy account is never silently shortened.
-- `to` must not be later than the request time. `to <= from` is refused `QR2_RANGE_INVALID`. A `from` before coverage start gives the requested and resolved intervals with `COVERAGE_STARTS_AFTER_REQUEST`. Shorter history never becomes a longer report through synthetic rows. [SRC: QRL § Periods and data admission]
+- A `to` later than the request time is resolved to the request time; the response shows the flag `RANGE_END_AT_REQUEST_TIME` and keeps the requested range in the header next to the resolved range (OD-Q18, owner, 2026-10-19). `to <= from` is refused `QR2_RANGE_INVALID`. A `from` before coverage start gives the requested and resolved intervals with `COVERAGE_STARTS_AFTER_REQUEST`. Shorter history never becomes a longer report through synthetic rows. [SRC: QRL § Periods and data admission] Root clarification RC-Q17: coverage starting at or after `to` gives resolved range `null` and `UNAVAILABLE` with `COVERAGE_STARTS_AFTER_REQUEST`. Root clarification RC-Q22 (period start instant): a range whose `from` equals the request time (a current period requested at its exact start) resolves to `null` with status `UNAVAILABLE` and reason `RANGE_EMPTY_AT_REQUEST_TIME`, without an exception; a range whose `from` is later than the request time stays refused `QR2_RANGE_INVALID`. Tests cover current Day, Week, Month, Year and a custom range with `to` after the request time, and both `from` cases of RC-Q22.
 - The view reports `as_of` and `event_time_basis: LEDGER_WRITE_TIME`. The cutoff is never moved for a missing price; only the numbers that need the price become null.
 
 ### 3.6 Periods affected by legacy history or ledger violations
 
-- A period that starts before the cash seed `S_cash` (6.3) has no return, `LEGACY_FUNDING_HISTORY_UNAVAILABLE`.
+- A period that starts before the cash seed `S_cash` (6.3) has no return, `LEGACY_FUNDING_HISTORY_UNAVAILABLE`. Root clarification RC-Q17: a period starting exactly at `S_cash` also gets this label, and `nav_from = S_cash + 1` when an M2 row exists.
 - A period that intersects a ledger-invariant violation span (6.5) has no return, `LEDGER_INVARIANT_VIOLATED` (O16). Money facts stay visible and labelled.
 
 ### 3.7 Never provided
@@ -248,7 +252,9 @@ Inputs:
 
 - Fills joined to `signals` (side, symbol, `trade_id`, payload), ordered by `(received_at, signal_id, cumulative_quantity)`; R3c verifies the order against commit order.
 - Stored lots: every `ledger_position_allocations` row of the scope, using only fields that no code updates after INSERT (`position_id`, `entry_signal_id`, `entry_trade_id`, `filled_quantity`, `entry_price`, `opened_at`, `symbol`). Replay rebuilds `remaining_quantity` and `status` only.
-- L1 binding (exact): per signal, BUY fills by `cumulative_quantity` bind pairwise to its lots by `(opened_at, position_id)`; a bound pair needs `filled_quantity = delta_quantity` and `entry_price = round18((quote_amount + fee_quote) / delta_quantity)`. Violations: `LOT_BINDING_MISMATCH`, `NO_LOT` (BUY before the lot table, not a failure), `ORPHAN_LOT` (a lot with no BUY fill).
+- L1 binding (exact): per signal, BUY fills by `cumulative_quantity` bind pairwise to its lots by `(opened_at, position_id)`; a bound pair needs `filled_quantity = delta_quantity` and `entry_price = round18((quote_amount + fee_quote) / delta_quantity)`. Violations: `LOT_BINDING_MISMATCH`, `NO_LOT` (BUY strictly before the lot-table cutoff, not a failure), `ORPHAN_LOT` (a lot with no BUY fill).
+- Root clarification RC-Q17 (L1 bind-to-last): `NO_LOT` applies only to BUY fills earlier than the account's earliest lot `opened_at`; a later unbound BUY is `LOT_BINDING_MISMATCH` (`SPLIT_NULL` for the symbol). Root clarification RC-Q18 (lost lot table): `cutoff = min(earliest lot opened_at, lotTableBoundary when recorded)`. An unbound BUY at or after the cutoff is `LOT_BINDING_MISMATCH` (`SPLIT_NULL`); only a BUY strictly before the cutoff may be `NO_LOT`. Tests: lots `[]` with `lotTableBoundary` 1000 and a BUY at 5000 gives `LOT_BINDING_MISMATCH`; a BUY exactly at the earliest lot `opened_at` gives `LOT_BINDING_MISMATCH`. The event note of a BUY classified `LOT_BINDING_MISMATCH` is `LOT_MISSING`, never `NO_LOT`.
+- Root clarification RC-Q13 (lot `entry_price` epochs): lots opened before the recorded lot-fee boundary use the earlier formula `round18(quote_amount / delta_quantity)` (fee excluded, as written by 9a87ab6); lots at or after it use `round18((quote_amount + fee_quote) / delta_quantity)` (b74ba50). The boundary is an input parameter like the other epoch boundaries. If it is absent and a lot fails the current formula, report `LOT_EPOCH_UNKNOWN` and `SPLIT_NULL` for the symbol (fail closed, visible).
 
 Rule epochs:
 
@@ -260,9 +266,11 @@ Rule epochs:
 
 - The epoch of a fill is chosen by its `received_at` against a per-environment boundary that root records from deployment evidence (OD-Q6). The `ledgerRule` marker is corroboration only, because it is per signal and can be overwritten (section 5).
 - A fill whose epoch is unknown, or whose replay under its epoch does not reconcile, makes the account `LEDGER_RULE_UNREPLAYABLE` from that fill onward. Replay never tries a different epoch to make a fill reconcile.
+- Root clarification RC-Q17: `LEDGER_RULE_UNREPLAYABLE` means an unknown epoch, or a replay closure (RT) failure at that fill. R3c stays diagnostic and never sets it. Marker versus boundary: the boundary wins; a marker that `DISAGREES` is information and is counted.
+- Root clarification RC-Q14 (E0 pre-lot fills): a fill before the recorded lot-table boundary replays with `targetTradeId` ignored, as the ledger booked it. If that boundary is absent, the current halt stays.
 - Every future ledger-rule change must introduce a new marker value and a new epoch row.
 
-E0 SELL steps (mirror `b9d19e3` LEDGER lines 145-230). Steps 1 to 5 are the same as the E2 steps below.
+E0 SELL steps (mirror `b9d19e3` LEDGER lines 145-230). Steps 1 to 5 are the same as the E2 steps below. Root clarification RC-Q17: E1 reuses `PARTIAL_LOT_COVERAGE` with the uncovered amount.
 
 6. Removed cost: `allocated > 0` gives `removed = allocated`, not rounded; a FIFO exit with `still_to_close > 0` reports `PARTIAL_LOT_COVERAGE` with the uncovered quantity. `allocated = 0` reports `NO_LOT_FALLBACK`, and gives `removed = cost` when the new quantity is zero, else `round18(cost × q / old_quantity)`.
 7. `cost -= removed`; if `cost < 0`, set `cost = 0` and report `COST_CLAMPED` with the amount. `removed` does not change, so profit uses the unclamped removed cost.
@@ -273,14 +281,14 @@ E2 SELL steps (mirror LEDGER lines 167-249):
 
 1. `q > quantity` is `SELL_EXCEEDS_POSITION`.
 2. Target from the stored payload: candidates are replay-open lots with `entry_trade_id = target OR position_id = target`; none is `TARGET_UNRESOLVED`. Without a target, all replay-open lots of the symbol.
-3. Order by `opened_at`, ties by `position_id`; a tie that changes the outcome is `LOT_ORDER_AMBIGUOUS` (G5).
+3. Order by `opened_at`, ties by `position_id`; a tie that changes the outcome is `LOT_ORDER_AMBIGUOUS` (G5). Root clarification RC-Q17: a tie group consumed in part with different entry prices gives `SPLIT_NULL`; equal entry prices are information only, and R6 compares the group's summed remaining quantity.
 4. Consume: `take = min(remaining, still_to_close)`; `allocated += take × entry_price` (unrounded).
 5. A target with `still_to_close > 0` is `TARGET_OVERFILL`.
 6. Removed cost: new quantity zero gives `removed = cost` (and `ledger.cost_divergence` is expected in the audit table when lot cost and position cost differ by more than 1e-12); FIFO with `still_to_close > 0` and `allocated > 0` gives `removed = round18(allocated + (cost - allocated) × still_to_close / (old_quantity - Σ taken))`, reported as `G1_UNLOTTED_CHARGED`; else `allocated > 0` gives `round18(allocated)`; else `round18(cost × q / old_quantity)`, reported as `NO_LOT_FALLBACK`.
-7. `cost -= removed`; if `cost < 0`, set `cost = 0`, `removed = prior cost`, report `COST_CLAMPED` with the amount, and expect a `ledger.cost_clamped` audit row.
+7. `cost -= removed`; if `cost < 0`, set `cost = 0`, `removed = prior cost`, report `COST_CLAMPED` with the amount, and expect a `ledger.cost_clamped` audit row. Root clarification RC-Q6 (per cycle, OD-Q10): a replayed `COST_CLAMPED` finding carries the position-cycle bounds `{symbol, from: cycle open time, to: flat time or null while open}`. `SPLIT_NULL` applies only to ranges that intersect that cycle. Root clarification RC-Q6 (cumulative values, round 4): for a clamp cycle of a symbol, the cumulative realized PnL (`nav.realized` and any cumulative realized or cost balance of that symbol) is null at every instant at or after the cycle's `from` time, because it contains the clamped cycle's PnL. A range delta wholly after a closed cycle that does not need those cumulative values stays available. NAV, cash and returns are not affected. Tests: a range before, inside and after a clamped cycle; cumulative realized PnL null at and after the cycle start.
 8. `quantity -= q`; realized PnL `+= quote - removed - fee`.
 
-Under E0 a `COST_CLAMPED` event breaks the identity by the clamped amount; check RI records that amount as a labelled E0 difference instead of failing (section 5).
+Under E0 a `COST_CLAMPED` event breaks the identity by the clamped amount; check RI records that amount as a labelled E0 difference instead of failing (section 5). Root clarification RC-Q4: parity is tested against frozen read-only copies of the `recordExecution` SELL branches of `b9d19e3` (E0) and `a577689` (E1), and against E2, with the same random-sequence method (section 13).
 
 Replay is a pure function over decimal strings and is the reporting source of quantity, cost, realized PnL and fees at any instant. The analytics `fifoAnalytics` ignores targets; if its realized PnL differs, the view shows `REALIZED_METHOD_DIFFERS_FROM_ANALYTICS` with both values. NAV, money PnL and returns do not depend on the lot method.
 
@@ -291,7 +299,8 @@ Markers M1 (`legacy_float = 1`), M2 (`LEGACY_BASELINE` funding row), M3 (a fill 
 - `S_cash` = the `at` of the last M2 row, else account start. NAV, TWR, N1 and N2 run only at or after `S_cash`. Before it: `RECONCILIATION_UNAVAILABLE_LEGACY`; R1 and R2 are information only.
 - `S_cost` = the first instant at or after `S_cash`, and after the last M1 fill, at which every symbol's replayed quantity is exactly zero. Cost, realized and unrealized PnL, R5-R7, R13 and R3c run only after `S_cost`. Between the seeds: cash, quantity, NAV and returns are shown if R1, R2 and R4 hold; cost and PnL split are `COST_UNVERIFIED_LEGACY`.
 - Any M3 marker at or after `S_cash` is `RECONCILIATION_FAILED`.
-- Legacy dust: a nonzero replayed quantity where the ledger shows zero is `LEGACY_DUST` with the exact amount, and `S_cost` does not exist. No epsilon.
+- Legacy dust: a nonzero replayed quantity where the ledger shows zero is `LEGACY_DUST` with the exact amount, and `S_cost` does not exist. No epsilon. Root clarification RC-Q7: `LEGACY_DUST` applies only when the account has an M1 fill (`has_m1`); otherwise the difference is a plain R4 quantity failure.
+- Root clarification RC-Q17 (`nav_from`): `nav_from = S_cash + 1` when an M2 row exists. A fill without `quote_amount` and with `legacy_float = 1` uses `quantity × price` unrounded, labelled `QUOTE_FROM_PRICE_LEGACY`. A non-legacy fill without `quote_amount` is `QR2_INPUT_INVALID`.
 
 No legacy tolerance such as 1e-12 is used. The alternative "every marked account `RECONCILIATION_UNAVAILABLE_LEGACY` for all numbers" is not selected (O7).
 
@@ -299,11 +308,15 @@ No legacy tolerance such as 1e-12 is used. The alternative "every marked account
 
 Per Bot, both writers take the `users` lock before any insert (section 5), and `paper_snapshots.id` and `paper_funding.id` are identity values allocated after the lock. Snapshot id order is commit order. Each ledger event writes exactly one snapshot of its account. R3c compares each snapshot after `S_cost` with the replayed cash, book equity and position cost after the consumed events: `MATCH`, `FUNDING_SNAPSHOT_STALE` (the F4 signature), `FILL_SNAPSHOT_MISMATCH`, `ORDER_UNPROVEN`. Method id `commit-order-snapshot-id-v1`, with the single worker clock assumption.
 
+Root clarification RC-Q17: R3c aligns snapshots to the replayed events by tail alignment and emits one `SNAPSHOT_COUNT_MISMATCH` when the counts differ. A funding snapshot mismatch without the F4 signature gets the new diagnostic code `FUNDING_SNAPSHOT_MISMATCH`. Root clarification RC-Q16: after a replay halt R3c returns `NOT_RUN` with reason `REPLAY_HALTED`.
+
 R3c stays a diagnostic. A snapshot mismatch does not open a violation span: snapshots are not inputs to NAV or returns, and the harmful F4 effect is caught by N1 and N2. With the fence deployed, `FUNDING_SNAPSHOT_STALE` is expected only on pre-fence history.
 
 ### 6.5 Ledger-invariant gates N1, N2 and the F4 effect
 
 N1 cash floor (replayed cash `>= 0` after every event) and N2 configured-equity floor (`Σ equity_delta + Σ journal cash_delta >= 0` after every `CONFIGURATION` row), both over commit order after `S_cash`. A failure makes the account `LEDGER_INVARIANT_VIOLATED`. The violation span runs from the violating event to the first later event after which N1 and N2 hold again; returns for periods that intersect it are null; NAV and facts stay visible (O16). QR-2 does not fix, lock, refuse or correct anything about F4.
+
+Root clarification RC-Q1 (span rule): a span opens only at an event where N1 fires or N2 fires; N2 is evaluated only at `CONFIGURATION` rows. The span closes at the first later event after which `cash >= 0` and the equity floor `>= 0`. Test: cash-only `LEGACY_BASELINE` 150, then BUY 100, gives no span and no overlay. Root clarification RC-Q17: the span end is inclusive. Root clarification RC-Q1 extension (legacy baseline): in the N2 equity floor a `LEGACY_BASELINE` row adds its `(cash_delta - equity_delta)` as configured equity, so a cash-only legacy seed is not an invariant violation. Test: baseline 150/0, BUY 100 at 200, deposit 10/10 at 300 gives no span and no overlay.
 
 ### 6.6 Check table
 
@@ -322,13 +335,13 @@ Gates:
 | R2 | Journal `cash_delta` = BUY `-(quote_amount + fee_quote)`, SELL `quote_amount - fee_quote` | after `S_cash` | `RECONCILIATION_FAILED` |
 | R4 | Replayed quantity per symbol = `ledger_positions.quantity` at the cutoff; replayed cash = `paperAccount().cash` | always | `RECONCILIATION_FAILED`; `LEGACY_DUST` reported |
 | R5 | Σ stored open lot remaining + replayed unlotted = `ledger_positions.quantity` | after `S_cost` | `SPLIT_NULL` |
-| R6 | Replayed remaining and status per `position_id` = stored; L1 holds; no `ORPHAN_LOT` | after `S_cost` | `SPLIT_NULL` |
+| R6 | Replayed remaining and status per `position_id` = stored; L1 holds; no `ORPHAN_LOT`. RC-Q18 gate visibility: the `LOT_ORDER_AMBIGUOUS` `SPLIT_NULL` finding is appended to `gates.R6.failures` and `ok` is recomputed; when R6 is `NOT_RUN` with `S_COST_UNAVAILABLE`, the `replay.binding` `SPLIT_NULL` findings (`LOT_EPOCH_UNKNOWN`, `LOT_BINDING_MISMATCH`, `ORPHAN_LOT`) are still recorded as information findings | after `S_cost` | `SPLIT_NULL` |
 | R7 | Replayed cost per symbol = `ledger_positions.cost_basis` (`COST_DRIFT`) | after `S_cost` | `SPLIT_NULL` |
 | R11 | Σ `fee_quote` = replay fees; the analytics `fee_bps` overlay is excluded, and a caller that passes one is refused `QR2_FEE_OVERLAY_REFUSED` | after `S_cash` | `RECONCILIATION_FAILED` |
 | RT | Replay closure: no `SELL_EXCEEDS_POSITION`, `TARGET_UNRESOLVED`, `TARGET_OVERFILL`, `SCALE_DIVERGENCE`, `LEDGER_RULE_UNREPLAYABLE` | always | `RECONCILIATION_FAILED` from that fill |
 | RC | No `FUTURE_TIMESTAMP`, no `FILL_BEFORE_BAR` | always | `RECONCILIATION_FAILED` |
-| RI | Identity `cash + cost = F_cash + R` after every replay event and at `from` and `to`; `money_pnl = ΔR + ΔU`; E0 clamp amounts recorded, not failed | after `S_cost` (cash part after `S_cash`) | `ACCOUNT_UNAVAILABLE` (`QR2_IDENTITY_BROKEN`) |
-| RX | Each counted row belongs to that Bot and to `PAPER`; no signal, journal key, funding id or position key appears in two Bot views of one total; a total equals the exact per-currency sum of its parts | always (totals from S4) | total refused (`QR2_CROSS_BOT_ROW`, `QR2_TOTAL_MISMATCH`) |
+| RI | Replay self-check from `S_cost` (RC-Q5, RC-Q17: absolute from `S_cost`): identity `cash + cost = F_cash + R` after every replay event and at `from` and `to`; over the range `money_pnl = ΔR + ΔU + E0 clamp amount`; E0 clamp amounts recorded, not failed. A range identity break gives `QR2_IDENTITY_BROKEN` | after `S_cost` (cash part after `S_cash`) | `ACCOUNT_UNAVAILABLE` (`QR2_IDENTITY_BROKEN`) |
+| RX | Each counted row belongs to that Bot and to `PAPER`; no signal, journal key, funding id or position key appears in two Bot views of one total; a total equals the exact per-currency sum of its parts | always (totals from S4) | total refused (`QR2_CROSS_BOT_ROW`, `QR2_TOTAL_MISMATCH`); RC-Q2: any counted row of another Bot refuses the whole view `QR2_CROSS_BOT_ROW` (fail closed, no number produced); `QR2_TOTAL_MISMATCH` stays S4; RC-Q19: a counted row without `user_id`, or without both `broker` and `account_id`, is refused `QR2_CROSS_BOT_ROW` with reason `SCOPE_FIELD_MISSING` (fail closed) |
 | RP | No Live or non-Paper row enters any number | always | view refused (`QR2_NON_PAPER_ROW`) |
 | N1 | Cash floor over commit order | after `S_cash` | `LEDGER_INVARIANT_VIOLATED` |
 | N2 | Configured-equity floor over commit order | after `S_cash` | `LEDGER_INVARIANT_VIOLATED` |
@@ -337,16 +350,18 @@ Diagnostics and information (reported, audited when abnormal, never gating):
 
 | Id | Check | Note |
 | --- | --- | --- |
-| R3c | Commit-order snapshot check (6.4) | `FUNDING_SNAPSHOT_STALE`, `FILL_SNAPSHOT_MISMATCH`, `ORDER_UNPROVEN` |
+| R3c | Commit-order snapshot check (6.4) | `FUNDING_SNAPSHOT_STALE`, `FUNDING_SNAPSHOT_MISMATCH`, `FILL_SNAPSHOT_MISMATCH`, `ORDER_UNPROVEN`, `SNAPSHOT_COUNT_MISMATCH`; `NOT_RUN` with `REPLAY_HALTED` |
 | R8 | `bookEquity - cash - positionCost = Σ equity_delta - Σ cash_delta` | unbacked configured equity line |
 | R9 | NAV = cash + Σ rounded market values | library self-check; failure `REPORT_INTERNAL_ERROR` |
 | R10 | NAV change = flows + realized + change in unrealized | library self-check, also covered by RI |
 | R13 | Σ open `remaining × entry_price` versus `cost_basis` per symbol | stated bound `0.5e-18 × Σ filled_quantity` since the symbol was last flat |
-| R14 | `ledger.cost_clamped` and `ledger.cost_divergence` audit rows in range, listed with their signals; each clamp cycle is `SPLIT_NULL` for that position cycle (OD-Q10) | NAV and returns kept |
-| R15 | Pending orders at request time | `PENDING_ORDERS_PRESENT`; `UNKNOWN` or `feeReservationUnknown` gives `PENDING_ORDER_UNCERTAIN` |
+| R14 (S2) | `ledger.cost_clamped` and `ledger.cost_divergence` audit rows in range, listed with their signals; each clamp cycle is `SPLIT_NULL` for that position cycle (OD-Q10) | NAV and returns kept |
+| R15 (S2) | Pending orders at request time | `PENDING_ORDERS_PRESENT`; `UNKNOWN` or `feeReservationUnknown` gives `PENDING_ORDER_UNCERTAIN` |
 | Events | `NO_LOT`, `NO_LOT_FALLBACK`, `G1_UNLOTTED_CHARGED`, `PARTIAL_LOT_COVERAGE` (E0), `RESIDUAL_COST_AT_FLAT` (E0), `COST_CLAMPED`, `LOT_ORDER_AMBIGUOUS`, `UNLOTTED_QUANTITY` | each with fill key and amount |
 
 Decimal rules: inputs are NUMERIC(38,18) strings parsed with `D`; ledger quantities and cash are compared unrounded; only market value is rounded; no epsilon in any gate; the analytics near-flat normalisation is not used. Each failure returns the account, the first failing event and both compared values, so a tester can reproduce it from the tables.
+
+Root clarifications RC-Q3, RC-Q8, RC-Q17 for the gates: `accountStatus` receives the range end and uses `reconciliationBlocks(effects, to)`. R1 duplicate fill or journal keys follow the `S_cash` information/failure split by row time (RC-Q8). Exposure is rounded to 12 places half-even. A number with a value and a gating label is `PARTIAL`; `PRICE_STALE` stays `COMPLETE` with its reason. NAV for `ORDER_AMBIGUOUS` is shown as a proxy. `UNLOTTED_QUANTITY` stays reported as implemented. Allocation item 11 and `QR2_TOTAL_MISMATCH` stay S4; R14 and R15 stay S2.
 
 ### 6.7 Findings and audit after commit
 
@@ -407,6 +422,8 @@ Response fields: per symbol: quantity, unlotted quantity, cost basis, price, pri
 
 View header on every status: `requested_range`, `resolved_range`, `as_of`, `first_funding_at`, `event_time_basis`, price source and age policy, `fx: NONE`, currency, method, grid and contract ids, declaration version, ledger rule epochs met, `basis`, `execution`, `historical_simulation: false`, `qualified_evidence: false`.
 
+Root clarification RC-Q11 (exact header key names, snake_case): the validator requires `price_policy` (`{fresh_ms, carry_ms}`), `contract_id`, `declaration_version`, `ledger_rule_epochs`, `lot_epochs`, `fee_source`, `alloc_method`, plus the fields above. Root clarification RC-Q21 (validator): a null or empty `contract_id` is refused; `ledger_rule_epochs` and `lot_epochs` must be arrays; `alloc_method` must equal the module constant; a null `declaration_version` stays allowed until S4. Root clarification RC-Q23 (resolved-range flags): the flags of the resolved range travel in the header key `range_flags`; the validator requires `range_flags` to contain `RANGE_END_AT_REQUEST_TIME` when the requested `to` is later than the resolved `to`. Root clarification RC-Q10: the header builder spreads method fields before the fixed label fields so a method can never override a label.
+
 ### 8.2 Label enforcement in code
 
 Required `basis` argument (`'ACTUAL_PAPER_LEDGER'` only); `execution: 'PAPER_SIMULATED_FILLS'`; `historical_simulation: false`; a unit-tested response validator that refuses a missing, foreign or mixed basis; import-graph and no-query tests against research tables; UI badges from API fields.
@@ -437,11 +454,13 @@ Fixed notices in English and Thai: "Actual Paper ledger history of this Bot. Fil
 
 | Level | Value | Meaning |
 | --- | --- | --- |
-| Request | `REFUSED` | Invalid or unsafe request. No view. Codes: `QR2_RANGE_INVALID`, `QR2_NOT_OWNER`, `QR2_NON_PAPER_ROW`, `QR2_CURRENCY_MIX`, `QR2_RANGE_ADMISSION_REFUSED`, `QR2_FEE_OVERLAY_REFUSED`. |
+| Request | `REFUSED` | Invalid or unsafe request. No view. Codes: `QR2_RANGE_INVALID`, `QR2_NOT_OWNER`, `QR2_NON_PAPER_ROW`, `QR2_CURRENCY_MIX`, `QR2_RANGE_ADMISSION_REFUSED`, `QR2_FEE_OVERLAY_REFUSED`, `QR2_CROSS_BOT_ROW` (RC-Q2), `QR2_INPUT_INVALID` (RC-Q17). |
 | View, account, number | `COMPLETE` | Every gate passed; every needed price `FRESH` or `STALE`; no unresolved legacy, rule epoch, coverage or pending-order reason. |
 | | `PARTIAL` | Some numbers null with reasons (for example `UNSUPPORTED_MARKET`, `SPLIT_NULL`, `COST_UNVERIFIED_LEGACY`, a stale grid point). Shows count and share of valued grid points. |
 | | `UNAVAILABLE` | `RECONCILIATION_FAILED`, `ACCOUNT_UNAVAILABLE`, no ledger rows, or every needed price missing. |
 | Overlay | `LEDGER_INVARIANT_VIOLATED`, `RECONCILIATION_UNAVAILABLE_LEGACY` | Shown with any level; returns null across the span or before `S_cash`. |
+
+Root clarification RC-Q3: a range that ends at or before the failing fill gives `PARTIAL` with the information reason `RECONCILIATION_FAILED_AFTER_RANGE`; a range that reaches the failing fill gives `UNAVAILABLE`. Root clarification RC-Q5: a range identity break gives `ACCOUNT_UNAVAILABLE` with `QR2_IDENTITY_BROKEN`.
 
 The status rolls up from account to Bot (worst of its accounts) to owner total (worst of its Bots). The owner total is unavailable whenever the declaration is missing or refused. RO1 facts mean many real accounts are expected to be `PARTIAL`; that is the intended outcome, not a QR-2 defect.
 
@@ -485,7 +504,7 @@ Unit (pure):
 
 1. Replay set (L1 binding, Bridge EXIT by `position_id`, target equal to `entry_trade_id` with two lots, `TARGET_UNRESOLVED`, `TARGET_OVERFILL`, `NO_LOT_FALLBACK`, `COST_CLAMPED`, `LOT_ORDER_AMBIGUOUS`), run under E0 and E2. E0 also covers `PARTIAL_LOT_COVERAGE`, `RESIDUAL_COST_AT_FLAT`, `SCALE_DIVERGENCE`; E2 covers `G1_UNLOTTED_CHARGED`, zero-cost lots as no lots, ledger fix O3 rounding and the full-close removal.
 2. Epoch selection: a fill before and after the boundary; a signal whose marker was overwritten by a zero-quantity status update is still assigned by the boundary; an unknown epoch gives `LEDGER_RULE_UNREPLAYABLE`; replay never retries another epoch.
-3. Identity property test (1 000 random E2 sequences of BUY, partial SELL, full SELL, targeted SELL, G1 over-lot SELL, zero-cost lots, clamp): `cash + cost = F_cash + R` after every event. An E0 clamp records the expected difference.
+3. Identity property test (1 000 random E2 sequences of BUY, partial SELL, full SELL, targeted SELL, G1 over-lot SELL, zero-cost lots, clamp): `cash + cost = F_cash + R` after every event. An E0 clamp records the expected difference. Root clarifications RC-Q4 and RC-Q12: the same random-sequence parity runs for E0 and E1 against frozen read-only copies of the `b9d19e3` and `a577689` SELL branches under `test/fixtures/qr2-ledger-epochs/` (header names the commit and states a frozen copy for parity only), as for E2; the E0 parity run must reach the `RESIDUAL_COST_AT_FLAT` branch (RC-Q20; add a generator case if needed); parity also compares the ledger `cumulative_pnl` per position cycle (reset at flat) and the journal `cash_delta`.
 4. Legacy: `S_cash` and `S_cost` placement; negative pre-baseline cash does not trigger N1; `LEGACY_DUST` prevents `S_cost`; M3 after `S_cash` fails; a 1e-13 legacy quantity difference is `LEGACY_DUST`, not accepted.
 5. Commit order: R3c `MATCH`; `FUNDING_SNAPSHOT_STALE` on the F4 row set; `ORDER_UNPROVEN` on equal `received_at`.
 6. N1 and N2 on the F4 table (expect -20 and -20); a later SELL keeps the flags and the span.
@@ -575,5 +594,35 @@ All dates 2026-10-19. "Owner" means the owner decided it as recommended. "Root" 
 | OD-Q6 | Ledger rule epoch boundaries per environment | Root records boundaries from deployment evidence: E0 for pre-fix fills, E1 only where a577689 ran, E2 from the v2 deployment; unknown or non-reconciling fill gives `LEDGER_RULE_UNREPLAYABLE`. Boundaries are needed before staging evidence (S9). | root | 2026-10-19 |
 | OD-Q12 | Numeric read budget per view | Measure replay cost in S2, fix maximum ledger rows per account history and grid points per view before S3 acceptance; refuse `QR2_RANGE_ADMISSION_REFUSED`, never truncate. | root | 2026-10-19 |
 | OD-Q17 | Staging deployment of the F4, ledger fix O3, G1 and W1 fixes before QR-2 staging integration | Required, confirmed from deployment evidence. QR-2 logic does not need the fixes (epochs), but the branch already carries 40e3b6b, whose API and worker refuse to start without the fence table. | root | 2026-10-19 |
+| OD-Q18 | Requested `to` later than the request time | Resolved to the request time; flag `RANGE_END_AT_REQUEST_TIME`; the header keeps the requested range next to the resolved range. Supersedes the earlier refusal. | owner | 2026-10-19 |
+
+### Root clarifications (2026-10-19)
+
+Root rulings on the QR-2 S0/S1 review. They fix or clarify contract meaning, change no owner decision (O1-O16, D4, OD-Q rows) and are not a GO. The matching in-place edits are marked "Root clarification RC-Qn" in the named sections.
+
+| ID | Clarification | Sections changed | Decided by | Date |
+| --- | --- | --- | --- | --- |
+| RC-Q1 | N2 span: opens only at an event where N1 or N2 fires; N2 evaluated only at CONFIGURATION rows; closes at the first later event with cash >= 0 and equity floor >= 0; cash-only LEGACY_BASELINE 150 then BUY 100 gives no span; a LEGACY_BASELINE row adds (cash_delta - equity_delta) as configured equity in N2. | 6.5 | root | 2026-10-19 |
+| RC-Q2 | Any counted row of another Bot refuses the whole view with `QR2_CROSS_BOT_ROW` (fail closed, no number). | 6.6 RX, 10 | root | 2026-10-19 |
+| RC-Q3 | `accountStatus` takes the range end and uses `reconciliationBlocks(effects, to)`: range ending at or before the failing fill is PARTIAL with `RECONCILIATION_FAILED_AFTER_RANGE`; reaching it is UNAVAILABLE. | 6.6, 10 | root | 2026-10-19 |
+| RC-Q4 | Epoch oracles: frozen read-only fixtures of the b9d19e3 (E0) and a577689 (E1) SELL branches; same random-sequence parity as E2. | 6.2, 13 item 3 | root | 2026-10-19 |
+| RC-Q5 | RI kept as a replay self-check from S_cost; a range identity break (money_pnl = dR + dU + E0 clamp) sets ACCOUNT_UNAVAILABLE `QR2_IDENTITY_BROKEN`. | 6.6 RI, 10 | root | 2026-10-19 |
+| RC-Q6 | A replayed COST_CLAMPED sets SPLIT_NULL only for ranges intersecting the clamped position cycle (bounds on the finding); matches OD-Q10. Cumulative realized PnL (nav.realized and any cumulative realized or cost balance of that symbol) is null at and after the cycle start; a range delta wholly after a closed cycle that needs no cumulative value stays available; NAV, cash and returns unaffected. | 6.2 E2 step 7 | root | 2026-10-19 |
+| RC-Q7 | LEGACY_DUST only when has_m1 is true; otherwise a plain R4 quantity failure. | 6.3 | root | 2026-10-19 |
+| RC-Q8 | R1 duplicate fill or journal keys follow the S_cash information/failure split by row time. | 6.6 | root | 2026-10-19 |
+| RC-Q9 | Malformed bar_time keeps the conservative whole-set integrity failure (fail closed). | 2.1 | root | 2026-10-19 |
+| RC-Q18 | Lost lot table: bindLots cutoff = min(earliest lot opened_at, lotTableBoundary); unbound BUY at or after cutoff is LOT_BINDING_MISMATCH (SPLIT_NULL), event note LOT_MISSING; gate visibility of LOT_ORDER_AMBIGUOUS in R6 failures and information findings when R6 NOT_RUN. | 6.2, 6.6 R6 | root | 2026-10-19 |
+| RC-Q19 | RX: a counted row without user_id, or without both broker and account_id, is refused QR2_CROSS_BOT_ROW with reason SCOPE_FIELD_MISSING. | 6.6 RX | root | 2026-10-19 |
+| RC-Q20 | E0 parity must reach the RESIDUAL_COST_AT_FLAT branch. | 13 item 3 | root | 2026-10-19 |
+| RC-Q21 | Header validator: non-empty contract_id, array epochs, alloc_method equals module constant; null declaration_version allowed until S4. | 8.1 | root | 2026-10-19 |
+| RC-Q11 | Exact header keys: price_policy {fresh_ms, carry_ms}, contract_id, declaration_version, ledger_rule_epochs, lot_epochs, fee_source, alloc_method. Builder spreads method fields before fixed labels (Q10). | 8.1 | root | 2026-10-19 |
+| RC-Q22 | Period start instant: from equal to request time resolves to null, UNAVAILABLE, RANGE_EMPTY_AT_REQUEST_TIME, no exception; from later than request time stays QR2_RANGE_INVALID. | 3.5 | root | 2026-10-19 |
+| RC-Q23 | Header key range_flags carries the resolved-range flags; validator requires RANGE_END_AT_REQUEST_TIME in it when requested to is later than resolved to. | 8.1 | root | 2026-10-19 |
+| RC-Q12 | Parity also compares ledger cumulative_pnl per position cycle (reset at flat) and journal cash_delta. | 13 item 3 | root | 2026-10-19 |
+| RC-Q13 | Lot entry_price epochs: before the lot-fee boundary round18(quote/delta); at or after it (notional + fee)/qty; absent boundary and a lot fails the current formula gives LOT_EPOCH_UNKNOWN and SPLIT_NULL for the symbol. | 6.2 | root | 2026-10-19 |
+| RC-Q14 | E0 fill before the recorded lot-table boundary replays with targetTradeId ignored; absent boundary keeps the halt. | 6.2 | root | 2026-10-19 |
+| RC-Q15 | A fill and its journal row are one event at fills.received_at; inputs_hash filters journal rows by the paired fill's received_at. | 2.6 | root | 2026-10-19 |
+| RC-Q16 | R3c after a replay halt returns NOT_RUN with reason REPLAY_HALTED. | 6.4 | root | 2026-10-19 |
+| RC-Q17 | Todo rulings: age first (PRICE_OLDER_THAN_CARRY); L1 bind-to-last and NO_LOT limit; E1 PARTIAL_LOT_COVERAGE; LEDGER_RULE_UNREPLAYABLE meaning; boundary beats marker; nav_from = S_cash + 1 and period at S_cash; QUOTE_FROM_PRICE_LEGACY and QR2_INPUT_INVALID; FUNDING_SNAPSHOT_MISMATCH; funding sorts before a fill in the same ms; LOT_ORDER_AMBIGUOUS split; RI absolute from S_cost; grid end = resolved to; drawdown positive fraction of peak; PARTIAL versus PRICE_STALE COMPLETE; exposure round12 half-even; R3c tail alignment and SNAPSHOT_COUNT_MISMATCH; NAV proxy for ORDER_AMBIGUOUS; inclusive span end; coverage start at or after to gives null range and COVERAGE_STARTS_AFTER_REQUEST. Out of S1, still todo: allocation item 11 and RX QR2_TOTAL_MISMATCH (S4), R14/R15 and FILL_BEFORE_BAR (S2; FILL_BEFORE_BAR_UNCHECKED information when no bar time). | 2.1, 2.4, 2.6, 3.4, 3.5, 3.6, 6.2, 6.3, 6.4, 6.5, 6.6, 10 | root | 2026-10-19 |
 
 Items closed by other decisions: OD-Q2 (O7), OD-Q3 (6.4, refusal only when the order changes the result), OD-Q4 (O15), OD-Q5 (O1), OD-Q7 (O3 and O11), OD-Q11 (R-A and R-B), OD-Q16 (D4).

@@ -1,0 +1,46 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "ca6abb1",
+  "scope": "Local implementation of slice S1 of docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md for PM-1 row F10-01: a pure library that replays a Paper account from its fills, journal, fundings and lots by ledger rule epoch (E0, E1, E2), runs the reconciliation and invariant checks, resolves prices and periods, and computes NAV, money PnL, time-weighted and money-weighted returns, drawdown and exposure with exact decimals, plus the response header and its validator. The library is pure: no database, network, file or clock access. It is not wired into any route, worker or view, and it changes no ledger, Overview tile or Bot.",
+  "method": "A coder wrote the slice from the contract in a separate worktree, and root applied its patch after git apply --check. An independent architecture auditor (Opus 5.5) and a second-opinion reviewer on another model (Fable 5.1) reviewed the first version; an independent tester (Sonnet 5.5) ran single-edit mutations in a separate worktree. Four fix rounds followed, then a small root fix. In each round the auditor reviewed only the changes, and the mutation run started after the review, in the separate worktree. Root ruled on every open interpretation and recorded the rulings that change contract meaning as root clarifications RC-Q1 to RC-Q23 in the contract. One choice changed owner-visible meaning; the owner decided it in chat (OD-Q18: a requested end later than the request time resolves to the request time with the flag RANGE_END_AT_REQUEST_TIME). Nobody verified their own work.",
+  "files": {
+    "src/portfolio/qr2-checks.js": "d4d6cc53d45b360b7c0f5af8d632b50bde312bb1cd886a661d91e68b5b170404",
+    "src/portfolio/qr2-constants.js": "29b9425bb3065126d96e8996f33338f16c8f9a8c53182feb41f0b6df3a251dd0",
+    "src/portfolio/qr2-labels.js": "5ee84331be0040b42e0db52c066bf6aee0069c675c0d5f31b1035b8c7243ab21",
+    "src/portfolio/qr2-periods.js": "33b9dfea956635e161e9853d8341d06929a3102db40a48fada24fe4d596e4b08",
+    "src/portfolio/qr2-price.js": "75ff9049e6086d6079c444f9ba23b2ae643143acf829efabc7d4fc821b83c63a",
+    "src/portfolio/qr2-replay.js": "0a59df06ce4e7a8d9568e36805f65299c0331358217ce8a3fc85974d7b3fc1a7",
+    "src/portfolio/qr2-returns.js": "1e989068b2823b85433c13ea510e56f24ac767e6741fb1be68f1d38ba674e9ac",
+    "test/qr2-portfolio-performance.test.js": "21dea7de0be21bc5509a5a8c044124e97fed3bd52b8fbb3cea85f8798015aed5",
+    "test/fixtures/qr2-ledger-epochs/record-execution-a577689-e1.js": "d3dee980d0a282e9b5c8a4e6380f3bbeb3d496c434f201717b5741661fc3a954",
+    "test/fixtures/qr2-ledger-epochs/record-execution-b9d19e3-e0.js": "110e6090668f94e9d338e7ea431d6c41042303c0cb63a06fdcdc79309f4f3949"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "110 tests: 106 pass, 0 fail, 4 todo. The todo tests name later slices: allocation and QR2_TOTAL_MISMATCH (S4), R14 and R15 (S2), FILL_BEFORE_BAR (S2).",
+  "parity": "Random-sequence replay parity runs against the current src/postgres/ledger.js recordExecution for epoch E2 and against frozen read-only copies of the recordExecution method at b9d19e3 (E0) and a577689 (E1), including realized PnL per position cycle and journal cash.",
+  "mutations": {
+    "initial": "36 of 51 killed; 2 equivalent, 13 test gaps closed in fix round 1.",
+    "round1": "29 of 30 killed; the gap was closed in round 2.",
+    "round2": "20 of 21 killed; the gap was closed in round 3.",
+    "round3": "14 of 15 killed; the survivor became equivalent after round 4.",
+    "round4": "10 killed, 1 equivalent.",
+    "rootFix": "After the last root fix (hidden identity fields and boundary tests) both new boundary mutants fail 1 test each."
+  },
+  "limits": [
+    "Pure library only: no reader (S2), job (S3), API (S4) or view (S5) exists yet.",
+    "The lot-fee and lot-table boundaries are inputs; each environment's real values must be recorded before S2, otherwise the library reports LOT_EPOCH_UNKNOWN or keeps the E0 target halt.",
+    "Header fields contract_id, declaration_version, ledger_rule_epochs and lot_epochs must be supplied by S3.",
+    "The read budget of the replay was not measured.",
+    "No staging readback and no PostgreSQL run."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports, the rulings and the final diff and accepted the slice as local engineering evidence for F10-01. Acceptance changes no PM-1 credit by itself."
+  }
+}
