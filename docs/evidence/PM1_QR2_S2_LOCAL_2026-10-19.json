@@ -1,0 +1,40 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "a9776d2",
+  "scope": "Local implementation of slice S2 of docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md for PM-1 row F10-01: an owner-scoped, read-only PostgreSQL reader that feeds the committed pure library src/portfolio from existing tables (no migration), the S2 audit findings with de-duplication, and the boundary record module. It is not wired into any route, worker or view.",
+  "method": "An independent architecture auditor (Opus 5.5) designed the slice; root accepted its decisions. A coder wrote it; the auditor and a second-opinion reviewer on another model (Fable 5.1) reviewed it; independent testers ran the PostgreSQL tests on throwaway local clusters and single-edit mutations after each review. Two fix rounds followed. Root ruled on every finding (no foreign data on a refused view, option R prefetch, error propagation, provisional read limit, audit key, evidence allow-list, retrieved_at guard). Nobody verified their own work.",
+  "files": {
+    "src/postgres/qr2-reader.js": "279a16d6c176ed7dd9bb72e5bd78ebb2c0c04ad277e23dd08a2007d853a26a95",
+    "src/postgres/qr2-audit.js": "228417fa3f6f18053ba5328e521eeedba365eecdb17bfbf9f1287d9309cdb4e6",
+    "src/portfolio/qr2-boundaries.js": "2ef9cbab3eb90e6da11ea4a910de868ad8a2b83bc9939fc6e4a9c79f0c3a8ac7",
+    "src/portfolio/qr2-checks.js": "497249ac808407dd5d2d4755c36e5b05ec86fb15ef47c7c3cdb11e717988cd35",
+    "test/helpers/qr2-reader-fixture.mjs": "a5c322377862b0258bc058124363725846158c3365abe6b79c238eaa5103bb6e",
+    "test/postgres/qr2-reader.test.mjs": "fe98392d1e6ec6caee2d077a15b605e90f87311451b18cc98aeaa43ba21c427c",
+    "test/postgres/qr2-reader-facts.test.mjs": "f4c957d75779e4d9cf7c9931df3d7376d79378035af19291c758cd7122612cbb",
+    "test/postgres/qr2-audit.test.mjs": "5e2fd4dee4f48ee2ea1f7efd1b5b627b7ee188a06792e38bdd3a6efe29715981",
+    "test/qr2-portfolio-performance.test.js": "269b820834ae245dcd7587e36ee2255ffaf39338e40427a90d641a7a2a5bf20c"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "On an isolated PostgreSQL 16.15 cluster, one file per process: qr2-reader 27/27, qr2-reader-facts 9/9, qr2-audit 5/5. QR-2 unit file: 113 tests, 111 pass, 0 fail, 2 todo (S4).",
+  "mutations": {
+    "round1": "reader mutations: owner filter, READ ONLY, isolation assertion, budget order and boundary default killed.",
+    "round2": "10 of 12 killed; 1 gap closed in round 3.",
+    "round3": "4 of 5 killed; 1 equivalent."
+  },
+  "limits": [
+    "Real per-environment boundary records (lot fee, lot table, epochs) are not recorded; they need host evidence under an owner GO, so the reader fails closed today.",
+    "The provisional read limit of 5000 ledger rows reflects a measured cost that grows about quadratically; S3 must optimise the replay before larger accounts.",
+    "No route, job or view uses the reader (S3 to S6).",
+    "No staging readback."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports, the rulings and the final diff and accepted the slice as local engineering evidence for F10-01. Acceptance changes no PM-1 credit by itself and shows the owner nothing."
+  }
+}

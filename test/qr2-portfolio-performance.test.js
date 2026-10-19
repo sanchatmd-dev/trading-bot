@@ -7,7 +7,8 @@ import {QR2_METHODS,QR2_PRICE_POLICY,QR2_WEEK_LABEL,round12} from '../src/portfo
 import {resolvePrice,valuePosition,priceReference,verifyBarRow} from '../src/portfolio/qr2-price.js';
 import {replayAccount,bindLots,stateAt,epochOfFill,lotMethodsMet,ledgerRuleEpochsMet,markerCounts} from '../src/portfolio/qr2-replay.js';
 import {legacySeeds,navSeeded,costSeeded,runGates,checkR1,checkR4,checkIdentity,checkLedgerInvariants,checkCommitOrder,
-  checkRowScope,checkCrossViewKeys,effectsOf,reconciliationBlocks,intersectsSpan,splitNullFor,worstStatus,unbackedEquityLine,checkR13,checkR6} from '../src/portfolio/qr2-checks.js';
+  checkRowScope,checkCrossViewKeys,effectsOf,reconciliationBlocks,intersectsSpan,splitNullFor,worstStatus,unbackedEquityLine,checkR13,checkR6,checkRC,signalBarTime} from '../src/portfolio/qr2-checks.js';
+import {r14Listing,r15Pending,attributionOf,fillFacts,markerOf} from '../src/postgres/qr2-reader.js';
 import {navAt,clampCumulativeNull,exposure,flowsIn,moneyPnl,twr,modifiedDietz,gridPoints,rangePerformance,applySplitNull,accountStatus} from '../src/portfolio/qr2-returns.js';
 import {periodWindow,customWindow,resolveRange,allTimeWindow,firstFundingAt} from '../src/portfolio/qr2-periods.js';
 import {numberField,buildHeader,validateResponse,inputsHash,rowsDigest,auditDedupKey,selectAuditKeys} from '../src/portfolio/qr2-labels.js';
@@ -18,7 +19,7 @@ import {frozenLedgerE1} from './fixtures/qr2-ledger-epochs/record-execution-a577
 // hand-computed literals (derivations in the comments); the exception is the parity tests, whose references are the real ledger
 // code of this tree (E2) and the frozen read-only recordExecution copies of b9d19e3 (E0) and a577689 (E1). Fixture hashes use an
 // independent canonical-JSON implementation, not the code under test. Root rulings RC-Q1 to RC-Q19 (contract section 15) are
-// pinned in the "fix round" blocks near the end (round 3 rulings T1-T9 in the last one); only the four S2/S4 items stay todo.
+// pinned in the "fix round" blocks near the end (round 3 rulings T1-T9 in the last one); only the two S4 items stay todo (R14, R15, FILL_BEFORE_BAR and the attribution and slippage labels are real tests since S2; the reader itself is tested in test/postgres/qr2-reader*.test.mjs).
 
 const sortedJson=v=>Array.isArray(v)?'['+v.map(sortedJson).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+sortedJson(v[k])).join(',')+'}':JSON.stringify(v);
 const sha=text=>createHash('sha256').update(text).digest('hex');
@@ -1916,11 +1917,83 @@ test('11 allocation (INDEPENDENT_ACCOUNTS sum, SHARED_HYPOTHETICAL, no declarati
 test('RX total equals the exact per-currency sum of its parts (QR2_TOTAL_MISMATCH)',{todo:'S4: owner totals belong to S4; only the row-level and cross-view key parts of RX exist in S1'},()=>{
   assert.ok(true);
 });
-test('R14 audit rows (ledger.cost_clamped, ledger.cost_divergence in range) and R15 pending orders',{todo:'S2: R14 reads the audit table and R15 needs exposure() at request time, both read by the S2 reader; the replay-derived clamp SPLIT_NULL (RC-Q6) is done in S1'},()=>{
-  assert.ok(true);
+test('R14 audit rows (ledger.cost_clamped, ledger.cost_divergence): listed with their own SELL signals and fills; unparseable rows counted; foreign signals not listed (S2b)',()=>{
+  const fills=[{signal_id:7,cumulative_quantity:'0.5',side:'SELL',symbol:'BTCUSDT',received_at:2000},{signal_id:6,cumulative_quantity:'1',side:'BUY',symbol:'BTCUSDT',received_at:1000}];
+  const auditRows=[
+    {id:1,ts:2001,event:'ledger.cost_clamped',trade_id:'T7',details:JSON.stringify({signalId:7,symbol:'BTCUSDT',clamped:'2'})},
+    {id:2,ts:1001,event:'ledger.cost_divergence',trade_id:'T6',details:JSON.stringify({signalId:6,symbol:'BTCUSDT'})},   // a BUY signal: not an own SELL
+    {id:3,ts:5,event:'ledger.cost_clamped',trade_id:'T?',details:'not json'},
+    {id:4,ts:6,event:'ledger.cost_clamped',trade_id:'T?',details:JSON.stringify({symbol:'BTCUSDT'})},
+    {id:5,ts:7,event:'ledger.cost_clamped',trade_id:'T9',details:JSON.stringify({signalId:999,symbol:'BTCUSDT'})}       // another Bot's signal
+  ];
+  const listing=r14Listing({auditRows,fills,range:{from:1500,to:3000}});
+  assert.deepEqual(listing.rows.map(r=>[r.id,r.event,r.signal_id,r.fill_keys,r.in_range]),[[1,'ledger.cost_clamped',7,['7:0.5'],true]]);
+  assert.deepEqual(listing.unparseable.map(u=>[u.id,u.reason]),[[3,'DETAILS_NOT_PARSEABLE'],[4,'SIGNAL_ID_MISSING']]);
+  assert.equal(r14Listing({auditRows,fills,range:{from:0,to:1500}}).rows[0].in_range,false);
+  // The replay names the audit rows its rule writes; a missing one is listed as information.
+  const replay={events:[{kind:'FILL',key:'7:0.5',expected_audit:['ledger.cost_clamped','ledger.cost_divergence']}]};
+  assert.deepEqual(r14Listing({auditRows,fills,replay,range:null}).expected_missing,[{event_key:'7:0.5',event:'ledger.cost_divergence',code:'AUDIT_ROW_MISSING_FOR_REPLAYED_EVENT'}]);
 });
-test('FILL_BEFORE_BAR (2.4)',{todo:'S2: fills.received_at earlier than the signal bar close is RC RECONCILIATION_FAILED; FILL_BEFORE_BAR_UNCHECKED (information) when the signal has no bar time; needs the signal fields the S2 reader loads'},()=>{
-  assert.ok(true);
+test('R15 pending orders (S2b): present, UNKNOWN or an unknown fee reservation is PENDING_ORDER_UNCERTAIN; available cash only at the request time',()=>{
+  const exposure={reservedNotional:'600',reservedFees:'0.6',feeReservationUnknown:false,uncertain:false};
+  const order={id:1,side:'BUY',symbol:'BTCUSDT',status:'SUBMITTED'};
+  const ok=r15Pending({pending:[order],exposure,resolvedTo:5000,requestTime:5000,cash:'10000'});
+  assert.deepEqual([ok.codes,ok.uncertain,ok.available_cash],[['PENDING_ORDERS_PRESENT'],false,'9399.4']);
+  assert.deepEqual(r15Pending({pending:[],exposure:{...exposure,reservedNotional:'0',reservedFees:'0'},resolvedTo:5000,requestTime:5000,cash:'10000'}).codes,[]);
+  assert.equal(r15Pending({pending:[order],exposure,resolvedTo:4000,requestTime:5000,cash:'10000'}).available_cash_reason,'RESERVATION_HISTORY_NOT_RECORDED');
+  assert.deepEqual(r15Pending({pending:[{...order,status:'UNKNOWN'}],exposure,resolvedTo:5000,requestTime:5000,cash:'10000'}).codes,['PENDING_ORDERS_PRESENT','PENDING_ORDER_UNCERTAIN']);
+  assert.equal(r15Pending({pending:[order],exposure:{...exposure,feeReservationUnknown:true},resolvedTo:5000,requestTime:5000,cash:'10000'}).uncertain,true);
+  const thrown=r15Pending({pending:[order],exposure:null,exposureError:true,resolvedTo:5000,requestTime:5000,cash:'10000'});
+  assert.deepEqual([thrown.uncertain,thrown.available_cash,thrown.available_cash_reason],[true,null,'PENDING_ORDER_UNCERTAIN']);
+});
+test('attribution and slippage labels (8.3, 8.4): bridge.deployment_id, else WEBHOOK, else ATTRIBUTION_UNKNOWN; slippage unknown is never zero; the marker parse is corroboration only',()=>{
+  assert.deepEqual(attributionOf(JSON.stringify({bridge:{deployment_id:'d1'}})),{tag:'BRIDGE',deployment_id:'d1'});
+  assert.deepEqual(attributionOf('{}'),{tag:'WEBHOOK'});assert.deepEqual(attributionOf({bridge:{}}),{tag:'WEBHOOK'});
+  assert.deepEqual(attributionOf('nope'),{tag:'ATTRIBUTION_UNKNOWN'});assert.deepEqual(attributionOf('[1]'),{tag:'ATTRIBUTION_UNKNOWN'});
+  const facts=fillFacts([{signal_id:1,cumulative_quantity:'1',payload:'{}',slippage_bps:'1.5',has_intent:true},{signal_id:2,cumulative_quantity:'1',payload:'{}',slippage_bps:null,has_intent:false},{signal_id:3,cumulative_quantity:'1',payload:'{}',slippage_bps:'0',has_intent:false}]);
+  assert.deepEqual(facts.slippage.by_fill.map(f=>[f.label,f.slippage_bps]),[['MODELED_SLIPPAGE_ALREADY_INCLUDED','1.5'],['SLIPPAGE_UNKNOWN',null],['SLIPPAGE_UNKNOWN',null]]);
+  assert.equal(markerOf(JSON.stringify({ledgerRule:'paper-exit-cost-v2'})),'paper-exit-cost-v2');
+  assert.equal(markerOf('not json'),null);assert.equal(markerOf(null),null);assert.equal(markerOf('{}'),null);
+});
+test('FILL_BEFORE_BAR (2.4, S2b): a fill earlier than its signal bar close fails RC; a signal without a bar time is FILL_BEFORE_BAR_UNCHECKED information',()=>{
+  const bridge=barTime=>JSON.stringify({bridge:{bar_time:barTime,deployment_id:'d'}});
+  const fills=[
+    {signal_id:1,cumulative_quantity:'1',received_at:5000,payload:bridge(4000)},      // after the bar close: passes
+    {signal_id:2,cumulative_quantity:'1',received_at:5000,payload:bridge(5000)},      // exactly at the bar close: passes
+    {signal_id:3,cumulative_quantity:'1',received_at:5000,payload:bridge(5001)},      // one ms before the bar close: FILL_BEFORE_BAR
+    {signal_id:4,cumulative_quantity:'1',received_at:5000,payload:'{}'},              // webhook: unchecked
+    {signal_id:5,cumulative_quantity:'1',received_at:5000,payload:'not json'},        // unparseable: unchecked
+    {signal_id:6,cumulative_quantity:'1',received_at:5000}                            // no payload: unchecked
+  ];
+  const rc=checkRC({fills,readTime:9000});
+  assert.equal(rc.ok,false);
+  assert.deepEqual(rc.failures.map(f=>[f.code,f.event_key,f.bar_time,f.time,f.effect]),[['FILL_BEFORE_BAR','3:1',5001,5000,'RECONCILIATION_FAILED']]);
+  assert.deepEqual(rc.information,[{check:'RC',code:'FILL_BEFORE_BAR_UNCHECKED',effect:null,event_key:'4:1',count:3}]);
+  assert.equal(checkRC({fills:fills.slice(0,2),readTime:9000}).ok,true);
+  assert.equal(checkRC({fills:fills.slice(0,2),readTime:9000}).information.length,0);
+  assert.equal(signalBarTime(bridge(0)),null);assert.equal(signalBarTime({bridge:{bar_time:'7'}}),null);assert.equal(signalBarTime(bridge(7)),7);
+  // A fill that fails the check blocks the account through the gate runner (RECONCILIATION_FAILED, whole account).
+  const g=golden();
+  const marked=g.fills.map((f,i)=>i===0?{...f,payload:bridge(Number(f.received_at)+1)}:f);
+  const replay=run({fundings:g.fundings,fills:marked,journal:g.journal,lots:g.storedLots},'E2');
+  const seeds=legacySeeds({fundings:g.fundings,fills:marked,replay,accountStart:0});
+  const gated=runGates({replay,seeds,fundings:g.fundings,journal:g.journal,fills:marked,storedLots:g.storedLots,stored:g.stored,snapshots:g.snapshots,scope:SCOPE,readTime:10000});
+  assert.equal(gated.gates.RC.failures[0].code,'FILL_BEFORE_BAR');
+  assert.equal(gated.effects.failed_whole_account,true);
+});
+
+test('runGates (S2 fix round 2): the flat information carries the RC information; an RC that did not run has an empty information list',()=>{
+  const g=golden();
+  const replay=run({fundings:g.fundings,fills:g.fills,journal:g.journal,lots:g.storedLots},'E2');
+  const seeds=legacySeeds({fundings:g.fundings,fills:g.fills,replay,accountStart:0});
+  const input={replay,seeds,fundings:g.fundings,journal:g.journal,fills:g.fills,storedLots:g.storedLots,stored:g.stored,snapshots:g.snapshots,scope:SCOPE};
+  const withTime=runGates({...input,readTime:10000});
+  assert.ok(withTime.gates.RC.information.length>0,'the golden fills carry no bar time');
+  assert.deepEqual(withTime.information.filter(f=>f.check==='RC'),withTime.gates.RC.information);
+  assert.equal(withTime.information.filter(f=>f.check==='RC')[0].code,'FILL_BEFORE_BAR_UNCHECKED');
+  const noTime=runGates(input);
+  assert.deepEqual(noTime.gates.RC,{id:'RC',ok:null,not_run:'NO_READ_TIME',failures:[],information:[]});
+  assert.equal(noTime.information.some(f=>f.check==='RC'),false);
 });
 
 test('constants: method ids stay as written in contract 7.4',()=>{

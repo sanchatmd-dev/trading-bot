@@ -107,16 +107,32 @@ export function checkR11({fills,replay,sCash,feeOverlayBps}){
   return {id:'R11',ok,effect:EFFECT.RECONCILIATION_FAILED,failures:ok?[]:[failure('R11',EFFECT.RECONCILIATION_FAILED,{event_key:null,expected:stored.toFixed(),actual:replayed.toFixed()})],information:[]};
 }
 
-// RC (2.4): FUTURE_TIMESTAMP, a ledger row stamped after the report read time. FILL_BEFORE_BAR is not implemented (todo).
+// RC (2.4): FUTURE_TIMESTAMP, a ledger row stamped after the report read time, and FILL_BEFORE_BAR (RC-Q17, S2), a fill whose received_at is
+// earlier than the close of the signal bar. The signal bar close is payload.bridge.bar_time (a Pine Bridge signal; bar_time is the bar close
+// and a verified bar is never in the future, so a later fill is expected). A fill whose signal has no bar time (a webhook signal, an
+// unparseable payload) cannot be checked: one FILL_BEFORE_BAR_UNCHECKED information item carries the count and the first fill key (D7).
+export function signalBarTime(payload){
+  let object=payload;
+  if(typeof payload==='string'){try{object=JSON.parse(payload||'{}');}catch{return null;}}
+  const time=object&&typeof object==='object'?object.bridge?.bar_time:undefined;
+  return Number.isSafeInteger(time)&&time>0?time:null;
+}
 export function checkRC({fundings=[],journal=[],fills=[],snapshots=[],lots=[],readTime}){
-  const failures=[];
+  const failures=[],information=[];
   const probe=(rows,field,label,keyOf)=>{for(const row of rows)if(Number(row[field])>readTime)failures.push(failure('RC',EFFECT.RECONCILIATION_FAILED,{code:'FUTURE_TIMESTAMP',event_key:keyOf(row),table:label,time:Number(row[field]),expected:'<= '+readTime,actual:Number(row[field])}));};
   probe(fundings,'at','paper_funding',r=>'F:'+r.id);
   probe(journal,'at','paper_cash_journal',r=>fillKey(r.signal_id,r.cumulative_quantity));
   probe(fills,'received_at','fills',r=>fillKey(r.signal_id,r.cumulative_quantity));
   probe(snapshots,'at','paper_snapshots',r=>'S:'+r.id);
   probe(lots,'opened_at','ledger_position_allocations',r=>'P:'+r.position_id);
-  return {id:'RC',ok:failures.length===0,effect:EFFECT.RECONCILIATION_FAILED,failures,information:[]};
+  let unchecked=0,firstUnchecked=null;
+  for(const fill of fills){
+    const barTime=signalBarTime(fill.payload),key=fillKey(fill.signal_id,fill.cumulative_quantity);
+    if(barTime===null){unchecked++;if(firstUnchecked===null)firstUnchecked=key;continue;}
+    if(Number(fill.received_at)<barTime)failures.push(failure('RC',EFFECT.RECONCILIATION_FAILED,{code:'FILL_BEFORE_BAR',event_key:key,table:'fills',time:Number(fill.received_at),bar_time:barTime,expected:'>= '+barTime,actual:Number(fill.received_at)}));
+  }
+  if(unchecked)information.push({check:'RC',code:'FILL_BEFORE_BAR_UNCHECKED',effect:null,event_key:firstUnchecked,count:unchecked});
+  return {id:'RC',ok:failures.length===0,effect:EFFECT.RECONCILIATION_FAILED,failures,information};
 }
 
 // RP: no Live or non-Paper row enters any number; the whole view is refused QR2_NON_PAPER_ROW.
@@ -127,15 +143,17 @@ export function checkRC({fundings=[],journal=[],fills=[],snapshots=[],lots=[],re
 // SCOPE_FIELD_MISSING; a missing column never passes as "no mismatch". Positions and snapshots are compared, not counted.
 const COUNTED_TABLES=new Set(['fundings','journal','fills','lots']);
 const present=value=>value!==undefined&&value!==null;
+// Primary key of an offending row (table-specific). Only the reader hashes it into an audit event key; it never leaves the reader as a value.
+const rowKeyOf=row=>String(row.id??row.position_id??(row.signal_id!==undefined?row.signal_id+':'+row.cumulative_quantity:null)??(String(row.account_id)+'|'+String(row.symbol)+'|'+String(row.execution_mode)));
 export function checkRowScope({scope,tables}){
   const refused=[],crossBot=[];
   for(const [table,rows] of Object.entries(tables)){
     for(const row of rows||[]){
-      if(row.execution_mode!==undefined&&row.execution_mode!=='PAPER')refused.push({check:'RP',code:'QR2_NON_PAPER_ROW',table,actual:row.execution_mode});
+      if(row.execution_mode!==undefined&&row.execution_mode!=='PAPER')refused.push({check:'RP',code:'QR2_NON_PAPER_ROW',table,actual:row.execution_mode,row_key:rowKeyOf(row)});
       if((row.user_id!==undefined&&row.user_id!==scope.user_id)||(row.broker!==undefined&&row.broker!==scope.broker)||(row.account_id!==undefined&&row.account_id!==scope.broker+':primary'))
-        crossBot.push({check:'RX',code:'QR2_CROSS_BOT_ROW',table,expected:scope.user_id+'/'+scope.broker,actual:(row.user_id??'?')+'/'+(row.broker??'?')});
+        crossBot.push({check:'RX',code:'QR2_CROSS_BOT_ROW',table,expected:scope.user_id+'/'+scope.broker,actual:(row.user_id??'?')+'/'+(row.broker??'?'),row_key:rowKeyOf(row)});
       else if(COUNTED_TABLES.has(table)&&!(present(row.user_id)&&(present(row.broker)||present(row.account_id))))
-        crossBot.push({check:'RX',code:'QR2_CROSS_BOT_ROW',reason:'SCOPE_FIELD_MISSING',table,expected:scope.user_id+'/'+scope.broker,actual:(row.user_id??'?')+'/'+(row.broker??row.account_id??'?')});
+        crossBot.push({check:'RX',code:'QR2_CROSS_BOT_ROW',reason:'SCOPE_FIELD_MISSING',table,expected:scope.user_id+'/'+scope.broker,actual:(row.user_id??'?')+'/'+(row.broker??row.account_id??'?'),row_key:rowKeyOf(row)});
     }
   }
   return {refused:refused.length?'QR2_NON_PAPER_ROW':null,cross_bot:crossBot.length>0,findings:[...refused,...crossBot]};
@@ -422,7 +440,7 @@ export function runGates({replay,seeds,fundings=[],journal=[],fills=[],storedLot
     R6:checkR6({replay,storedLots,seeds}),
     R7:checkR7({replay,stored,seeds}),
     R11:checkR11({fills,replay,sCash:seeds.s_cash}),
-    RC:readTime===undefined?{id:'RC',ok:null,not_run:'NO_READ_TIME',failures:[]}:checkRC({fundings,journal,fills,snapshots,lots:storedLots,readTime}),
+    RC:readTime===undefined?{id:'RC',ok:null,not_run:'NO_READ_TIME',failures:[],information:[]}:checkRC({fundings,journal,fills,snapshots,lots:storedLots,readTime}),
     RI:checkIdentity({replay,seeds}),
     N:checkLedgerInvariants({replay,seeds}),
     R3c:checkCommitOrder({replay,snapshots,seeds})
@@ -457,7 +475,7 @@ export function runGates({replay,seeds,fundings=[],journal=[],fills=[],storedLot
     findings.push(failure('R14',EFFECT.SPLIT_NULL,{code:'COST_CLAMPED',symbol:f.symbol??null,event_key:f.event_key,amount:f.amount,...(cycle?{cycle:{...cycle}}:{})}));
   }
   findings.push(...unrunR6);
-  information.push(...gates.R1.information,...gates.R2.information);
+  information.push(...gates.R1.information,...gates.R2.information,...(gates.RC.information||[]));
   // RC-Q2: a row of another Bot refuses the whole view like a non-Paper row (fail closed); no number is produced.
   const refused=rowScope.refused??(rowScope.cross_bot?'QR2_CROSS_BOT_ROW':null);
   const effects=effectsOf({findings,spans:gates.N.spans,replay,refused});
