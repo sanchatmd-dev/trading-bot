@@ -1,0 +1,35 @@
+{
+  "schema": "PM1_ROW_RECONCILIATION_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "910b8f9",
+  "scope": "Round 5: verification carry of PM-1 F02-01 (single-Pine registry, AI generation and guide) with fake providers only, and new test-only assertions. Evidence for a later successor scorecard; no credit or runtime change; no real provider call, TradingView compile or staging readback.",
+  "rows": {
+    "F02-01": {
+      "outcome": "Single-Pine registry, AI generation and guide",
+      "reconciliation": "Carry reconciled; no product defect. The core generation files are byte-identical to the accepted APP-3A source; since the real generation release only an AI quota hook and a deployments list route changed.",
+      "existingTests": "68 Node and 28 + 15 PostgreSQL planned tests passed.",
+      "newTests": {
+        "files": {
+          "test/pine-bridge-refusals.test.js": "a9103efcaaf584a5b97a7b8631004d305d26cdef3ece37cee71a2702d4434f97",
+          "test/postgres/pine-bridge-generation-gaps.test.mjs": "d9db6c0979628a1e6e2e38d33afd21a70e6ce30b4daef534ab20496b45710bf2",
+          "test/helpers/pine-bridge-generation-gaps-fixture.mjs": "370e41b5bc8d55d439203d2cfe754cb9ef322512473138959e333a090d00bf49"
+        },
+        "result": "21 and 17 passed.",
+        "covers": "Source-version conflict codes, assembly refusals (identifier collision, deployment id, market), the setup guide phrases, the artifact hash computed from the integrated Pine, provider refusal codes and the OpenAI-compatible HTTP mapping through fake transports, and the worker deadline and Retry-After branches.",
+        "mutations": "15 of 15 run mutations killed (one listed mutation was not run)."
+      },
+      "docDrift": "The adapter document named an older guide version; corrected to bridge-guide-v4. The document permits retries on explicit retryable 5xx and slower sweep and heartbeat intervals, while the code never retries 5xx and uses 5-second intervals; the code is stricter and the tests pin it.",
+      "limits": [
+        "Real provider output and TradingView compile are staging scope and were not exercised.",
+        "SPOT_ADAPTATION_REQUIRED exists only in prompt text and has no code path.",
+        "No staging readback."
+      ]
+    }
+  },
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
