@@ -1,0 +1,143 @@
+{
+  "schema": "DP1P_N1_LOCAL_PROGRESS_V1",
+  "date": "2026-10-19",
+  "root": "Codex",
+  "decision": "ROOT_ACCEPTED_N1_C0_CONTRACT_AND_N1_S1_SOURCE_MAPPING_LOCAL_ONLY",
+  "baseRevision": "46e92cc794c1d1058f9fd7ff5f3d471cab541a92",
+  "contract": {
+    "sha256": "1250ffbc08c4ed0878d39ffb9c5c31fabb7a97fe2a95d6535cf71473cef32095",
+    "bytes": 15225,
+    "independentInputPins": 20,
+    "independentStaticChecks": 8,
+    "correction": "The digest and byte count bind the complete immutable Buffer transmitted to inner Node, including INPUT, transformed arithmetic and the revised entry.",
+    "correctedDiffIndependentlyVerified": true,
+    "profile": "env -i PATH=/usr/bin:/bin LC_ALL=C timeout --foreground --signal=TERM --kill-after=5s 2s node --max-old-space-size=64 --input-type=module -",
+    "framing": "A bounded READY frame precedes the unchanged canonical Clock witness. READY.ppid binds the timeout child; witness metadata.pid binds READY.pid. Stream and frame hashes stay separate.",
+    "clockReads": 69,
+    "sampleCount": 68,
+    "sequentialTimerRequests": 4,
+    "timerRequestMs": 10,
+    "sourceCapBytes": 32768,
+    "stdoutCapBytes": 16384,
+    "stderrCapBytes": 1024,
+    "observerSourceCapBytes": 65536,
+    "transportCombinedCapBytes": 65536,
+    "timing": "Forty milliseconds of requested delays is nominal arithmetic only, not a completion or scheduling guarantee."
+  },
+  "sourceMapping": {
+    "tag": "v24.21.0",
+    "annotatedTag": "f37d7da830134b5314a14ced553273786a2bb4cd",
+    "commit": "955266bfdd854cd280dffd47548673914484e4c0",
+    "uvVersion": "1.52.1",
+    "method": "Official HTTPS raw source at an immutable commit, with retained exact byte counts and SHA256; independently reviewed by an architecture auditor.",
+    "githubReportedTagSignature": "verified/valid; not independently verified",
+    "sourcePins": [
+      {
+        "path": "lib/internal/process/per_thread.js",
+        "url": "https://raw.githubusercontent.com/nodejs/node/955266bfdd854cd280dffd47548673914484e4c0/lib/internal/process/per_thread.js",
+        "bytes": 16578,
+        "sha256": "f3bca509ca9ae6be403fcbc0133c45760c6cc76f21f890c8f494f2934efc9e7b"
+      },
+      {
+        "path": "src/node_process_methods.cc",
+        "url": "https://raw.githubusercontent.com/nodejs/node/955266bfdd854cd280dffd47548673914484e4c0/src/node_process_methods.cc",
+        "bytes": 28926,
+        "sha256": "4ba467781cdaf3a892abaa8a5aadeda01395622570d4bd623ee13ca13ccf1bcf"
+      },
+      {
+        "path": "src/node_process.h",
+        "url": "https://raw.githubusercontent.com/nodejs/node/955266bfdd854cd280dffd47548673914484e4c0/src/node_process.h",
+        "bytes": 3909,
+        "sha256": "92d60126064d1f132ec7179d957a7baee2aa4cb5d47cf8f4505a2ec29c0308d6"
+      },
+      {
+        "path": "deps/uv/src/unix/core.c",
+        "url": "https://raw.githubusercontent.com/nodejs/node/955266bfdd854cd280dffd47548673914484e4c0/deps/uv/src/unix/core.c",
+        "bytes": 50911,
+        "sha256": "18bfd5f2045417f8ace5d76e222bf7441b31ead5fc2cbaf6225965e0afea8767"
+      },
+      {
+        "path": "deps/uv/src/unix/linux.c",
+        "url": "https://raw.githubusercontent.com/nodejs/node/955266bfdd854cd280dffd47548673914484e4c0/deps/uv/src/unix/linux.c",
+        "bytes": 73200,
+        "sha256": "215185d94697e05cd75ba9466bb9ea93076769a7767218d4183eaf0723ccf2d2"
+      },
+      {
+        "path": "deps/uv/include/uv/version.h",
+        "url": "https://raw.githubusercontent.com/nodejs/node/955266bfdd854cd280dffd47548673914484e4c0/deps/uv/include/uv/version.h",
+        "bytes": 1831,
+        "sha256": "a859f2c21f7887d45b0372109ebc91759a6f8c408c7cbf2a12f9bbe579be403b"
+      },
+      {
+        "path": "src/node_version.h",
+        "url": "https://raw.githubusercontent.com/nodejs/node/955266bfdd854cd280dffd47548673914484e4c0/src/node_version.h",
+        "bytes": 4247,
+        "sha256": "bd056729fddf4bfa58687036219f07417c334c4ecfcb513ac256fa254451bfc9"
+      },
+      {
+        "path": "lib/internal/bootstrap/node.js",
+        "url": "https://raw.githubusercontent.com/nodejs/node/955266bfdd854cd280dffd47548673914484e4c0/lib/internal/bootstrap/node.js",
+        "bytes": 16158,
+        "sha256": "ccca20c9ef99635d61e8506153a449ecea9eebfedea0ad045dfe650fd5b5b34d"
+      },
+      {
+        "path": "deps/uv/src/unix/internal.h",
+        "url": "https://raw.githubusercontent.com/nodejs/node/955266bfdd854cd280dffd47548673914484e4c0/deps/uv/src/unix/internal.h",
+        "bytes": 19209,
+        "sha256": "959e3ce94dd0a1c12f090f40aac1f0cc9287b199eff4ed6dd9e2e944963a06ff"
+      }
+    ],
+    "conclusion": "The reviewed JavaScript, fast and slow C++, libuv precise and Linux branches lead to CLOCK_MONOTONIC. PRECISE=0 and FAST=1 were confirmed from the defining header.",
+    "targetBinaryProvenance": "UNKNOWN",
+    "backendFailureLimit": "clock_gettime failure can return zero without a separate error flag. A zero prefix followed by positive readings may satisfy order and progress checks; the witness cannot prove a failure-free backend."
+  },
+  "implementation": {
+    "status": "ROOT_ACCEPTED_N1_R1B_PURE_ADAPTER_LOCAL_ONLY",
+    "manifestSha256": "82f624b411f5bb886535dbaa6398749793ecc470dcba9848915b0ca7689f1f3c",
+    "adapterSha256": "8a4147dbcee4f10bee014f7e96fd8dab8420343c6fc96c42a602b54875df493b",
+    "scope": "Pure framing and witness adapter with synthetic inputs only. It returns CANDIDATE_ONLY and does not publish acceptance or mutate caller replay state.",
+    "evidence": {
+      "originalAuthorRerun": 103,
+      "originalIndependentChecks": 40,
+      "correctedAuthorRerun": 105,
+      "correctedFocusedIndependentChecks": 12,
+      "allPassed": true,
+      "architectureAudit": "No blocker within the trusted-caller pure scope; its unbounded replay-copy note was corrected and independently verified."
+    },
+    "correction": "Replaced full replay-history copying with intrinsic membership lookup for the current challenge and a zero-or-one-element temporary Set.",
+    "limits": "Trusted ordinary caller values and uncompromised built-ins are required. No complete result classifier, durable replay publication, native settlement, absence or authenticated outer acceptance is supplied.",
+    "next": "Integrate the accepted local adapter and source generator into a separately reviewed N1 observer, then assembly, package and window tools."
+  },
+  "sourceGenerator": {
+    "status": "ROOT_ACCEPTED_N1_R2B_LOCAL_ONLY",
+    "manifestSha256": "7c2911a464923acd48889e03672d556d943e16ba17eb2fb2a6c58e761ff53cff",
+    "builderSha256": "bd00a3307584ffde0283fdced0c09c04d5e5b8cb988ac01fa214913428634ca6",
+    "entrySha256": "b028c88b34a1e88d86a2be106c4a94fe28a7fb0729e2f68e88fc6936e2da82fa",
+    "evidence": {
+      "authorRerun": 33,
+      "independentChecks": 20,
+      "allPassed": true,
+      "independentlyVerifiedPins": 14,
+      "architectureAudit": "No blocker within fixed-profile local source and entry scope."
+    },
+    "execution": "FAKE_VM_ONLY; emitted entry never ran with a real process, clock or timer.",
+    "corrections": "Bounded scalar strings and exact target versions before regex, JSON or allocation; separated a conservative field-width bound from a reachable integer example.",
+    "sourceMaximumBytes": 4894,
+    "readyMaximumBytes": 488,
+    "witnessConservativeMaximumBytes": 11320,
+    "stdoutConservativeMaximumBytes": 11808,
+    "reachableExampleStdoutBytes": 11791,
+    "limit": "Returned source Buffer is mutable. Transport must retain a private snapshot and revalidate hash/length before sending exactly those bytes. These inner bounds do not prove observer envelope, escaping, stderr, transport, native timing or RSS bounds."
+  },
+  "gates": [
+    "N1 outer transport exception remains proposed, not inferred from local adoption.",
+    "Fresh applicable health and admission are required for any future host window.",
+    "Complete observer/package closure, escaped receipt fit, native timing and settlement remain unproved.",
+    "RD7 and owner-approved limits, original S3 capture, owner-present S3 and separate rollback authority remain gated."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
