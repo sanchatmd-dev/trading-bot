@@ -5,6 +5,7 @@ import {canonical,hash} from '../src/pine-bridge/source.js';
 import {LIBRARY_CLASSES,LIBRARY_GROUPS,COMPATIBILITY_FIELDS,GATE_NAMES,classify,candidateAggregates,developmentScore,compatibilityFields,compatibilityKey,
   compatibilityMismatches,holdoutWindow,windowsOverlap,marketKey,qualification,contractHashVerified,resultSha256,stepsDigest,reportMatchesCheckpoints,
   metrics,candidateView,selectedView,holdoutTooFewTrades,selectedReasons,QUALIFIED_TOTAL,QUALIFIED_WINNER} from '../src/quant-library/derive.js';
+import {ownerRecommendationGate,OWNER_RECOMMENDATION_CONTRACT_VERSIONS,RECOMMENDATION_COMPLETION_REASON} from '../src/quant-library/package-gates.js';
 import {contractOf,outcomeOf,runOf,hex,metricsOf,parameters,MINUTE,T0,FIXTURE_LABEL} from './helpers/quant-library-fixture.mjs';
 
 // Every run below is a LABELLED FIXTURE (see test/helpers/quant-library-fixture.mjs). None is a research result.
@@ -186,20 +187,56 @@ test('qualification: the eight gates in order with fixed names and reason codes'
   assert.deepEqual(q.gates.map(gate=>gate.gate),['G1','G2','G3','G4','G5','G6','G7','G8']);
   assert.deepEqual(q.gates.map(gate=>gate.name),[...GATE_NAMES]);
   assert.equal(GATE_NAMES.length,8);assert.equal(q.version,'library-qualification-v1');
-  // Every gate except G7 and G8 passes in this fixture (G7 needs owner_recommendation_ready).
+  // Every gate except G7 and G8 passes in this fixture (G7 needs a listed contract version, OD-18).
   assert.equal(states(q),'PASS PASS PASS PASS PASS PASS FAIL FAIL');
   assert.deepEqual(q.gates.map(gate=>gate.code),[null,null,null,null,null,null,'OWNER_RECOMMENDATION_NOT_READY','QL4C_VALIDATION_NOT_AVAILABLE']);
   assert.equal(q.qualified,false);assert.equal(q.label,'DEVELOPMENT_ONLY');
 });
 
-test('qualification: a fixture that passes G1 to G7 is still not qualified, because G8 has no source',()=>{
+test('qualification: a supplied owner_recommendation_ready flag no longer passes G7 (OD-18)',()=>{
   const ready=passing();ready.result={...ready.result,owner_recommendation_ready:true};
+  const q=qualification(ready);
+  assert.equal(states(q),'PASS PASS PASS PASS PASS PASS FAIL FAIL');
+  assert.equal(q.gates[6].code,'OWNER_RECOMMENDATION_NOT_READY');
+  assert.equal(q.qualified,false);assert.equal(q.label,'DEVELOPMENT_ONLY');
+  for(const version of ['ql3a-research-job-v1','ql3a-research-job-v2','ql3a-research-job-multi-v1',null,undefined,7])
+    assert.equal(qualification({...ready,contractVersion:version}).gates[6].state,'FAIL','unlisted version '+String(version));
+});
+
+test('qualification: G7 passes only for the PASS completion reason and a listed contract version; G8 still fails',()=>{
+  const listed=OWNER_RECOMMENDATION_CONTRACT_VERSIONS[0];
+  const ready=passing({contractVersion:listed});
+  assert.equal(ready.result.completion_reason,RECOMMENDATION_COMPLETION_REASON);
   const q=qualification(ready);
   assert.equal(states(q),'PASS PASS PASS PASS PASS PASS PASS FAIL');
   assert.equal(q.gates[7].code,'QL4C_VALIDATION_NOT_AVAILABLE');
-  assert.equal(q.qualified,false);assert.notEqual(q.label,'QUALIFIED');assert.equal(q.label,'DEVELOPMENT_ONLY');
-  // No input changes G8.
+  assert.equal(q.qualified,false);assert.equal(q.label,'DEVELOPMENT_ONLY');
   for(const extra of [{status:'SUCCEEDED'},{blockers:[]},{holdoutOverlap:{overlaps:false}},{integrity:null}])assert.equal(qualification({...ready,...extra}).gates[7].state,'FAIL');
+  const other={...ready,result:{...ready.result,completion_reason:'CANDIDATE_FAILED_CHECKS',owner_recommendation_ready:true}};
+  assert.equal(qualification(other).gates[6].state,'FAIL','wrong completion reason');
+});
+
+test('qualification: derive.js and package-gates.js agree on G7 for a set of fixtures',()=>{
+  const pass=RECOMMENDATION_COMPLETION_REASON,versions=[...OWNER_RECOMMENDATION_CONTRACT_VERSIONS,'ql3a-research-job-v1','ql3a-research-job-v2','ql3a-research-job-multi-v1','',null,undefined,5];
+  const reasons=[pass,'CANDIDATE_FAILED_CHECKS','NO_VALID_TRAIN_VALIDATION_CANDIDATE','',null,undefined];
+  const flags=[true,false,undefined];
+  let count=0;
+  for(const version of versions)for(const reason of reasons)for(const flag of flags){
+    const result={completion_reason:reason,owner_recommendation_ready:flag};
+    const gate=ownerRecommendationGate({result,contract:{version}});
+    const q=qualification({status:'SUCCEEDED',result,contractVersion:version}).gates[6];
+    assert.equal(q.state,gate.state,[version,reason,flag].join('|'));assert.equal(q.code,gate.code);count+=1;
+  }
+  assert.ok(count>100);
+  assert.equal(qualification({status:'SUCCEEDED',result:null,contractVersion:OWNER_RECOMMENDATION_CONTRACT_VERSIONS[0]}).gates[6].state,'FAIL','no result');
+});
+
+test('qualification: a caller passing a listed contract version with the PASS reason gets G7 PASS, no database',()=>{
+  const base=passing({contractVersion:OWNER_RECOMMENDATION_CONTRACT_VERSIONS[0]});
+  assert.equal(base.result.completion_reason,RECOMMENDATION_COMPLETION_REASON);
+  assert.equal(qualification(base).gates[6].state,'PASS');
+  assert.equal(qualification({...base,contractVersion:'ql3a-research-job-v2'}).gates[6].state,'FAIL');
+  assert.equal(qualification({...base,contractVersion:undefined}).gates[6].state,'FAIL');
 });
 
 test('qualification: G1 to G5 stop at the first failure and later gates are NOT_REACHED; G6 to G8 are always evaluated',()=>{
@@ -300,9 +337,10 @@ test('integrity: an edited report, an edited checkpoint set or a flipped holdout
   check('PENDING',result=>{result.selected={...result.selected,parameters:{...result.selected.parameters,rr:9}};},'SELECTED_MISMATCH');
 });
 
-test('derive.js is a pure module: it imports only the hash helpers and touches no clock, file or database',()=>{
+test('derive.js is a pure module: it imports only the hash helpers and the pure owner-recommendation module (G7, OD-18) and touches no clock, file or database',()=>{
   const source=fs.readFileSync(new URL('../src/quant-library/derive.js',import.meta.url),'utf8');
-  assert.deepEqual([...source.matchAll(/^import .* from '([^']+)'/gm)].map(match=>match[1]),['../pine-bridge/source.js']);
+  assert.deepEqual([...source.matchAll(/^import .* from '([^']+)'/gm)].map(match=>match[1]),['../pine-bridge/source.js','./owner-recommendation.js']);
+  assert.ok(!source.includes('package-gates'),'derive.js must not import package-gates.js (module cycle)');
   for(const banned of ['Date.now','new Date','Math.random','process.','fs.','await ','fetch(','.query(','require(','localStorage'])assert.ok(!source.includes(banned),'forbidden in derive.js: '+banned);
 });
 

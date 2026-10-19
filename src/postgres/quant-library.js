@@ -97,7 +97,7 @@ function shapeListRow(row){
   const c=object(row.c),r=isObject(row.r)?row.r:null;
   const {library_class,library_group}=classify({status:row.status,diagnostic:row.diagnostic,holdoutTooFewTrades:holdoutTooFewTrades(r)});
   const {fields}=compatibilityFields(row.run_id,c);
-  const quality=qualification({status:row.status,result:r,blockers:c.acceptance_blockers});
+  const quality=qualification({status:row.status,result:r,blockers:c.acceptance_blockers,contractVersion:c.version});
   return {run_id:row.run_id,created_at:row.created_at,finished_at:finishedAt(row),status:row.status,phase:text(row.phase,64),library_class,library_group,
     completion_reason:text(r?.completion_reason,64),diagnostic:text(row.diagnostic,120),contract_version:text(c.version,64),engine_family:familyOf(c),
     market:marketOf(c),dataset:datasetOf(fields),source_hash:text(c.source_hash,128),input_lock_hash:text(object(c.input_lock).lock_hash,128),
@@ -185,7 +185,7 @@ function analyse(row,steps,found,chunks,frozen=false){
   return {row,c,result,steps,found,chunks,frozen,integrity,failed,fields,missingFields,key:compatibilityKey(fields),
     cls:classify({status:row.status,diagnostic:row.diagnostic,holdoutTooFewTrades:holdoutTooFewTrades(result)}),
     score:developmentScore({status:row.status,result,integrityFailed:failed}),
-    gateInput:{status:row.status,result,blockers:c.acceptance_blockers,integrity:{contract_hash_verified:hashVerified&&bindingMatches!==false,report_matches_checkpoints:match.ok}}};
+    gateInput:{status:row.status,result,blockers:c.acceptance_blockers,contractVersion:c.version,integrity:{contract_hash_verified:hashVerified&&bindingMatches!==false,report_matches_checkpoints:match.ok}}};
 }
 function completenessOf(a){
   const {row,c,result,found,chunks,steps}=a,v2=familyOf(c)==='FOUNDATION',missing=[];

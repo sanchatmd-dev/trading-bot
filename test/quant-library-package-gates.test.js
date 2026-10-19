@@ -1413,7 +1413,7 @@ test('the gate module reads no clock, no file, no network and no database',()=>{
   const source=fs.readFileSync(new URL('../src/quant-library/package-gates.js',import.meta.url),'utf8');
   for(const forbidden of ['Date.now','new Date(','process.','node:fs','node:net','node:http','fetch(','import(','require(','Math.random','randomUUID','setTimeout','setInterval'])
     assert.ok(!source.includes(forbidden),'no '+forbidden);
-  assert.deepEqual([...source.matchAll(/^import .* from '([^']+)'/gm)].map(match=>match[1]),['../pine-bridge/source.js','../pine-bridge/template.js','./derive.js']);
+  assert.deepEqual([...source.matchAll(/^import .* from '([^']+)'/gm)].map(match=>match[1]),['../pine-bridge/source.js','../pine-bridge/template.js','./owner-recommendation.js','./derive.js']);
   assert.ok(!/\bimport\s*\(/.test(source)&&!/\bexport\s+\*\s+from/.test(source));
 });
 

@@ -1,5 +1,6 @@
 import {canonical,hash} from '../pine-bridge/source.js';
 import {assemble} from '../pine-bridge/template.js';
+import {RECOMMENDATION_COMPLETION_REASON,OWNER_RECOMMENDATION_CONTRACT_VERSIONS,ownerRecommendationGate} from './owner-recommendation.js';
 import {isObject,isCompleted,selectedOf,selectedReasons,holdoutWindow,windowsOverlap,classify,candidateAggregates,holdoutTooFewTrades,metrics,marketKey,MINUTE} from './derive.js';
 
 /**
@@ -20,7 +21,7 @@ export const MANIFEST_SCHEMA='best-inputs-manifest-v1';
 export const CODE_PATTERN=/^[A-Z][A-Z0-9_]{1,63}$/;
 export const MAX_VALIDATION_ATTEMPTS=5;
 export const ENGINEERING_SCOPE='SPT_CUSTOM_ENGINEERING_ONLY';
-export const RECOMMENDATION_COMPLETION_REASON='RESEARCH_CANDIDATE_PENDING_ACCEPTANCE';
+export {RECOMMENDATION_COMPLETION_REASON,OWNER_RECOMMENDATION_CONTRACT_VERSIONS,ownerRecommendationGate};
 export const MODES=Object.freeze(['ONE_PINE','MULTI_PINE']);
 export const STATUS=Object.freeze({NO_VALID_CANDIDATE:'NO_VALID_CANDIDATE',EXPORT_CANDIDATE:'EXPORT_CANDIDATE',EXPORT_INTERNAL:'EXPORT_INTERNAL',
   EXPORT_VALIDATED:'EXPORT_VALIDATED',EXPORT_REFUSED:'EXPORT_REFUSED'});
@@ -39,15 +40,9 @@ export const CAPABILITY_BLOCKERS=Object.freeze(['CUSTOMER_QUANT_CAPABILITY_NOT_R
 export const CANDIDATE_BLOCKERS=Object.freeze(['VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED','CUSTOM_REPAINT_EVIDENCE_REQUIRED']);
 const CANDIDATE_BLOCKER_SET=new Set(CANDIDATE_BLOCKERS);
 /**
- * Contract versions whose runs may derive G7 PASS (OD-18, with OD-3 and OD-12). The contract names no version for the next
- * research contract, so the single entry below is a placeholder that must be replaced when that version is named. The two
- * contract versions in use today (ql3a-research-job-v1 and ql3a-research-job-v2) are absent on purpose: no run of either can
- * pass G7.
- */
-export const OWNER_RECOMMENDATION_CONTRACT_VERSIONS=Object.freeze(['ql3a-research-job-v3']);
-/**
- * RC-11: the multi-Pine research contract version and its one capability blocker. Both names are placeholders until
- * docs/MULTI_PINE_CONTRACT.md RD-MP-1 freezes them. The version is never listed in OWNER_RECOMMENDATION_CONTRACT_VERSIONS: no
+ * RC-11: the multi-Pine research contract version and its one capability blocker. Root froze 'ql3a-research-job-multi-v1'
+ * (RD-MP-1, option A); the value is final for F11-01. The blocker name stays a placeholder until docs/MULTI_PINE_CONTRACT.md
+ * freezes it. The version is never listed in OWNER_RECOMMENDATION_CONTRACT_VERSIONS: no
  * multi-Pine run derives G7 PASS before APP-3B. The blocker is tolerated on the EXPORT_INTERNAL path only (internalPath).
  */
 export const MULTI_PINE_CONTRACT_VERSION='ql3a-research-job-multi-v1';
@@ -216,12 +211,6 @@ export function searchedWindow(contract){
 
 /* ---- G7 and G8 (sections 5.5, OD-18) ---- */
 
-/** G7 is derived from the completion reason and the contract version only. result.owner_recommendation_ready is ignored. */
-export function ownerRecommendationGate(run){
-  const ok=isObject(run)&&isObject(run.result)&&run.result.completion_reason===RECOMMENDATION_COMPLETION_REASON&&isObject(run.contract)&&
-    OWNER_RECOMMENDATION_CONTRACT_VERSIONS.includes(run.contract.version);
-  return Object.freeze(ok?{gate:'G7',state:'PASS',code:null}:{gate:'G7',state:'FAIL',code:'OWNER_RECOMMENDATION_NOT_READY'});
-}
 const validationRecordPasses=record=>isObject(record)&&record.fixture===false&&text(record.export_id)&&sha(record.package_hash)&&sha(record.binding_hash)&&
   Array.isArray(record.gate_results)&&['C1','C2','C3','C4'].every(name=>record.gate_results.some(item=>isObject(item)&&item.gate===name&&item.state==='PASS'));
 /** Items are {run_id, mode, record}. G8 passes for a run only with a PASS ql4c_validation record of a non-fixture ONE_PINE package. */

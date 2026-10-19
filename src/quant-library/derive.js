@@ -1,4 +1,5 @@
 import {canonical,hash} from '../pine-bridge/source.js';
+import {ownerRecommendationGate} from './owner-recommendation.js';
 
 /**
  * Pure derivation layer of the Quant Research Library (QR-1 view, minimum QR-3 comparison, QR-4 qualification
@@ -241,7 +242,7 @@ export const marketKey=contract=>{const market=pick(contract?.snapshot?.market,[
 export const GATE_NAMES=Object.freeze(['COMPLETED_EVALUATION','SCREENED_CANDIDATE','ROBUSTNESS','HOLDOUT_RESULT','HOLDOUT_INDEPENDENT',
   'BLOCKERS_CLEARED','OWNER_RECOMMENDATION_READY','QL4C_VALIDATION']);
 const failedOf=(reasons,names)=>names.filter(name=>reasons.includes(name)).join(',')||null;
-export function qualification({status,result=null,blockers=null,integrity=null,holdoutOverlap=null}={}){
+export function qualification({status,result=null,blockers=null,integrity=null,holdoutOverlap=null,contractVersion=null}={}){
   const gates=[],reasons=selectedReasons(result);
   const add=(index,state,reason=null)=>gates.push({gate:'G'+(index+1),name:GATE_NAMES[index],state,code:state==='PASS'?null:reason});
   let open=true;
@@ -258,7 +259,9 @@ export function qualification({status,result=null,blockers=null,integrity=null,h
   run(4,()=>holdoutOverlap===null?'HOLDOUT_INDEPENDENCE_NOT_CHECKED':holdoutOverlap.overlaps===true?'HOLDOUT_WINDOW_REUSED':null);
   if(Array.isArray(blockers)&&blockers.length===0)add(5,'PASS');
   else add(5,'FAIL',Array.isArray(blockers)?'ACCEPTANCE_BLOCKERS_PRESENT':'BLOCKERS_UNKNOWN');
-  if(isObject(result)&&result.owner_recommendation_ready===true)add(6,'PASS');else add(6,'FAIL','OWNER_RECOMMENDATION_NOT_READY');
+  // G7 is derived by owner-recommendation.js (OD-18) from the completion reason and the contract version; result.owner_recommendation_ready is ignored.
+  const g7=ownerRecommendationGate({result,contract:{version:contractVersion}});
+  if(g7.state==='PASS')add(6,'PASS');else add(6,'FAIL',g7.code);
   add(7,'FAIL','QL4C_VALIDATION_NOT_AVAILABLE');
   const qualified=gates.every(gate=>gate.state==='PASS');
   const label=gates[0].state!=='PASS'?'NOT_EVALUATED':gates[1].state!=='PASS'?'NO_SCREENED_CANDIDATE':qualified?'QUALIFIED':'DEVELOPMENT_ONLY';
