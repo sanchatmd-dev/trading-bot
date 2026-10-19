@@ -56,8 +56,11 @@ The package gains an owner-downloadable data folder:
 
 ```text
 inputs.json
-strategy.pine
+indicator.pine
+indicator.json
+risk-profile.json
 setup-guide.md
+validation.html
 quant-data/
   manifest.json
   metrics.json
@@ -66,6 +69,10 @@ quant-data/
   decisions.csv
   validation.json
 ```
+
+The owner decided this file set on 2026-10-19. The
+[package contract](QL_4B_4C_QUALIFIED_PACKAGE_CONTRACT.md#41-files) defines the
+content and gates of each file.
 
 The manifest contains artifact schemas/checksums, dataset and engine references,
 IDs, inputs/policy/cost assumptions, periods and limitations. Large OHLCV/signal

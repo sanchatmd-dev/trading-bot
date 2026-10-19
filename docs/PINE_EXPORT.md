@@ -22,7 +22,7 @@ Expose Webhook ready, Optimization supported and Export validated as independent
 - Export only an indicator with proven Quant capability under the [stage-specific numerical scope/parity gates](PINE_BRIDGE_ADAPTER_API.md), with an immutable run and baseline, out-of-sample and cost-stress evidence. A generated/compiled Bridge alone does not prove this capability. Do not promise arbitrary Python/Pine conversion.
 - Capture requested settings, the account/bot policy snapshot, permitted optimization bounds and their versions. The optimizer cannot raise hard limits or disable locked guards. VPS execution still rechecks current policy and cash.
 - Declare equity basis, fees/slippage/spread, market-rule rounding, indicator warm-up, candle/session conventions and stop/exit assumptions. Map costs explicitly; Pine's fixed-tick slippage cannot be silently treated as a dynamic percentage model.
-- Freeze `bridge-exit-v1` and its Paper/Quant fill model in the package: signal-bar close/ATR levels, next-bar protection, SL-before-TP-before-native priority and execution-bar close with adverse slippage/fees. Reports distinguish trigger levels from modeled fill prices and explain that protection is evaluated at bar close.
+- Freeze the bridge-exit version of the evaluated deployment (`bridge-exit-v1` for legacy artifacts, `bridge-exit-v2` for new artifacts) and its Paper/Quant fill model in the package, and refuse an unsupported version ([package contract](QL_4B_4C_QUALIFIED_PACKAGE_CONTRACT.md#32-source-binding-tuple)). The rest of this bullet describes `bridge-exit-v1` semantics (for `bridge-exit-v2`, see [the Adapter API](PINE_BRIDGE_ADAPTER_API.md)): signal-bar close/ATR levels, next-bar protection, SL-before-TP-before-native priority and execution-bar close with adverse slippage/fees. Reports distinguish trigger levels from modeled fill prices and explain that protection is evaluated at bar close.
 - Validate the selected source's indicator/signal/transaction timing and sizing on matched datasets. Track source-specific validation separately from strategy profitability. Changing any material assumption marks that evidence stale.
 - The initial UI is operator/private tooling with Risk Policy, Optimization Bounds, Validation Results and Export & Deployment views; customer access requires the scoped APIs and isolation gates in the roadmap.
 
@@ -67,10 +67,12 @@ Email is a notification and review aid; it does not apply values to a Bot or sta
 - `indicator.pine`: complete private indicator with approved numeric defaults and Bridge values; preserve logic, source notices and every unselected input. Step 2 preserves original bytes; Step 5 permits only the selected numeric default edits and Bridge changes, disclosed in the diff.
 - `indicator.json`: indicator identity/version, selected numeric slots, fixed input snapshot, `alert_source`, bridge-exit version, calculation/fill assumptions and supported chart symbol/timeframe.
 - `risk-profile.json`: versioned risk snapshot; never overrides current server hard limits automatically.
-- `setup.md`: source-specific TradingView condition, message, symbol/timeframe and webhook setup instructions. Keep webhook credentials outside shareable packages.
+- `setup-guide.md`: source-specific TradingView condition, message, symbol/timeframe and webhook setup instructions. Keep webhook credentials outside shareable packages.
 - `validation.html`: parity results for the selected source and disclosure of execution differences.
 
-These files form the Best Inputs package; they do not add extra user-facing delivery categories beyond the package and Email Report.
+The [package contract](QL_4B_4C_QUALIFIED_PACKAGE_CONTRACT.md#41-files) holds the canonical file set (owner decision 2026-10-19). `validation.html` is the human rendering; `quant-data/validation.json` is the machine record.
+
+These files and `quant-data/` form the Best Inputs package; they do not add extra user-facing delivery categories beyond the package and Email Report.
 
 The source must be visible in the export preview, package metadata, indicator header and eventual deployment/log UI. APP-3A adds `alert_source` to the dedicated versioned webhook contract; the current legacy receiver is not assumed to validate it.
 
