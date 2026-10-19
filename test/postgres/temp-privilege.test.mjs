@@ -44,7 +44,7 @@ before(async()=>{
   for(const name of ['pine-bridge-schema.sql','quant-research-schema.sql'])await db.query(await read(name));
   assert.equal(await migrateQuantFoundation(db),'LEGACY');
   // The repo grant script, with the throwaway role: broad DML, no ownership, TEMP left at the PUBLIC default. The ORIGINAL release guard stays installed.
-  await db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll('robot_app',roleName));
+  await db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll(":'runtime_role'","'"+roleName+"'"));
   rt=new PostgresDatabase({connectionString:runtimeUrl,max:2});
 });
 after(async()=>{

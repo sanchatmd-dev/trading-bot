@@ -19,12 +19,19 @@ import {runOf,seedRun,seedFoundation,hex,T0} from '../helpers/quant-library-fixt
 // Every row is a LABELLED FIXTURE (synthetic, never a research result).
 const STATUSES=['SUCCEEDED','NO_VALID_CANDIDATE','FAILED','CANCELLED','TIMED_OUT'];
 const QR=FREEZE_SQLSTATE;
-let admin,db,rt,databaseName,roleName,connectionString,runtimeUrl,store;
+let admin,db,rt,dl,databaseName,roleName,deleterName,connectionString,runtimeUrl,deleterUrl,store;
 const databases=[];
 const sourceDir=new URL('../../src/postgres/',import.meta.url);
 const install=async name=>db.transaction(async()=>db.query(await fs.readFile(new URL(name,sourceDir),'utf8')));
 const urlOf=(name,user)=>{const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+name;if(user)url.username=user;return url.toString();};
 const refused=(promise,code=QR)=>assert.rejects(promise,{code});
+// Two layers guard a protected table against DELETE. Layer 1 is the PostgreSQL privilege: the release grant script revokes runtime DELETE on
+// quant_jobs and quant_research_chunks, and the privilege check runs before any trigger, so the runtime role gets 42501 (DENIED) and never reaches
+// the freeze. Layer 2 is the freeze trigger (QR001). The runtime role proves layer 1; a LOGIN role that holds DELETE on those two tables
+// ("deleter": the repo grants plus an explicit GRANT DELETE, never a superuser, owner or TRIGGER/TRUNCATE holder) proves layer 2.
+const DENIED='42501';
+const grantScript=async role=>(await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll(":'runtime_role'","'"+role+"'");
+const DELETE_GRANT=role=>'GRANT DELETE ON TABLE public.quant_jobs, public.quant_research_chunks TO '+role;
 
 before(async()=>{
   assert.ok(process.env.TEST_DATABASE_URL,'TEST_DATABASE_URL is required; isolated PostgreSQL only');
@@ -32,19 +39,23 @@ before(async()=>{
   const suffix=randomUUID().replaceAll('-','');
   databaseName='robot_freeze_test_'+suffix;roleName='robot_freeze_role_'+suffix.slice(0,16);
   await admin.query('CREATE DATABASE '+databaseName);
+  deleterName='robot_freeze_del_'+suffix.slice(0,16);
   await admin.query('CREATE ROLE '+roleName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE'+rolePasswordClause());
-  connectionString=urlOf(databaseName);runtimeUrl=urlOf(databaseName,roleName);
+  await admin.query('CREATE ROLE '+deleterName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE'+rolePasswordClause());
+  connectionString=urlOf(databaseName);runtimeUrl=urlOf(databaseName,roleName);deleterUrl=urlOf(databaseName,deleterName);
   db=new PostgresDatabase({connectionString,max:6});await db.migrate();
   for(const name of ['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql','quant-research-foundation-schema.sql'])await install(name);
-  // The repo grant script, with the throwaway role: broad SELECT/INSERT/UPDATE/DELETE, no TRUNCATE, no TRIGGER, no ownership.
-  await db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll('robot_app',roleName));
-  rt=new PostgresDatabase({connectionString:runtimeUrl,max:6});
+  // The repo grant script, with the throwaway role: SELECT/INSERT/UPDATE everywhere, DELETE except on the protected tables, no TRUNCATE, no TRIGGER, no ownership.
+  await db.query(await grantScript(roleName));
+  // The deleter: the same grants plus DELETE on the two protected tables the freeze triggers guard, so layer 2 stays provable.
+  await db.query(await grantScript(deleterName));await db.query(DELETE_GRANT(deleterName));
+  rt=new PostgresDatabase({connectionString:runtimeUrl,max:6});dl=new PostgresDatabase({connectionString:deleterUrl,max:6});
   store=new Store(db);
 });
 after(async()=>{
-  await rt?.close().catch(()=>{});await db?.close().catch(()=>{});await shared?.close().catch(()=>{});
+  await rt?.close().catch(()=>{});await dl?.close().catch(()=>{});await db?.close().catch(()=>{});await shared?.close().catch(()=>{});
   for(const name of databases)await admin?.query('DROP DATABASE IF EXISTS '+name+' WITH (FORCE)').catch(()=>{});
-  if(admin){await admin.query('DROP DATABASE IF EXISTS '+databaseName+' WITH (FORCE)');await admin.query('DROP ROLE IF EXISTS '+roleName);await admin.close();}
+  if(admin){await admin.query('DROP DATABASE IF EXISTS '+databaseName+' WITH (FORCE)');await admin.query('DROP ROLE IF EXISTS '+roleName);await admin.query('DROP ROLE IF EXISTS '+deleterName);await admin.close();}
 });
 
 async function newOwner(label,target=db,targetStore=store){
@@ -143,11 +154,20 @@ test('catalog: ENABLE ALWAYS guards, invoker functions with a pinned search_path
   assert.equal((await db.query('SELECT public.quant_research_freeze_version() v')).rows[0].v,FREEZE_MARKER);
   const role=(await db.query('SELECT rolsuper,rolcreaterole,rolcreatedb,rolbypassrls,rolreplication FROM pg_roles WHERE rolname=$1',[roleName])).rows[0];
   assert.deepEqual(role,{rolsuper:false,rolcreaterole:false,rolcreatedb:false,rolbypassrls:false,rolreplication:false});
-  for(const table of ['quant_jobs','quant_job_steps','quant_research_foundation','quant_research_chunks']){
-    const facts=(await db.query(`SELECT pg_get_userbyid(relowner)=$2 AS owner,has_table_privilege($2,oid,'TRIGGER') AS trigger,has_table_privilege($2,oid,'TRUNCATE') AS truncate,
-      has_table_privilege($2,oid,'UPDATE') AS update,has_table_privilege($2,oid,'DELETE') AS delete FROM pg_class WHERE oid=$1::regclass`,['public.'+table,roleName])).rows[0];
-    assert.deepEqual(facts,{owner:false,trigger:false,truncate:false,update:true,delete:true},table);
+  // Layer 1: the release grant revokes runtime DELETE on quant_jobs and quant_research_chunks; the other two tables keep DELETE for the runtime.
+  // The deleter holds DELETE on all four (layer 2 proof) and, like the runtime role, no ownership, TRIGGER or TRUNCATE.
+  const DELETE_FACT={quant_jobs:false,quant_job_steps:true,quant_research_foundation:true,quant_research_chunks:false};
+  for(const table of Object.keys(DELETE_FACT)){
+    for(const [who,delet] of [[roleName,DELETE_FACT[table]],[deleterName,true]]){
+      const facts=(await db.query(`SELECT pg_get_userbyid(relowner)=$2 AS owner,has_table_privilege($2,oid,'TRIGGER') AS trigger,has_table_privilege($2,oid,'TRUNCATE') AS truncate,
+        has_table_privilege($2,oid,'UPDATE') AS update,has_table_privilege($2,oid,'DELETE') AS delete FROM pg_class WHERE oid=$1::regclass`,['public.'+table,who])).rows[0];
+      assert.deepEqual(facts,{owner:false,trigger:false,truncate:false,update:true,delete:delet},table+' '+(who===roleName?'runtime':'deleter'));
+    }
   }
+  const deleterRole=(await db.query('SELECT rolsuper,rolcreaterole,rolcreatedb,rolbypassrls,rolreplication FROM pg_roles WHERE rolname=$1',[deleterName])).rows[0];
+  assert.deepEqual(deleterRole,{rolsuper:false,rolcreaterole:false,rolcreatedb:false,rolbypassrls:false,rolreplication:false});
+  const deleterReport=await inspectQuantResearchFreeze(db,{runtimeRole:deleterName});
+  assert.equal(deleterReport.ok,true,deleterReport.failures.join());
   // The foreign keys that reference quant_jobs never cascade a delete.
   assert.equal((await db.query("SELECT count(*)::int n FROM pg_constraint WHERE contype='f' AND confrelid='public.quant_jobs'::regclass AND confdeltype NOT IN ('a','r')")).rows[0].n,0);
   const version=Number((await db.query("SELECT current_setting('server_version_num') v")).rows[0].v);
@@ -164,7 +184,7 @@ test('catalog: ENABLE ALWAYS guards, invoker functions with a pinned search_path
   assert.deepEqual(await guardRows().then(rows=>rows.map(row=>row.tgenabled)),FREEZE_GUARDS.map(()=>'A'));
 });
 
-test('the runtime role cannot edit a terminal run in any form; every refusal carries one SQLSTATE and changes nothing',async()=>{
+test('the runtime role cannot edit a terminal run in any form; every refusal carries one SQLSTATE per role and changes nothing',async()=>{
   const before=await digests();
   for(const status of STATUSES){
     const id=preRuns[status].run_id,other=STATUSES.find(item=>item!==status);
@@ -181,13 +201,17 @@ test('the runtime role cannot edit a terminal run in any form; every refusal car
         SELECT run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,'FAILED',created_at,updated_at,deadline FROM quant_jobs WHERE run_id=$1
         ON CONFLICT (run_id) DO UPDATE SET diagnostic='EDITED'`,[id]],
       ["MERGE INTO quant_jobs t USING (SELECT $1::text AS run_id) s ON t.run_id=s.run_id WHEN MATCHED THEN UPDATE SET diagnostic='EDITED'",[id]],
-      ['DELETE FROM quant_jobs WHERE run_id=$1',[id]],
       ['INSERT INTO quant_job_steps(run_id,step_id,kind,parameters,result,completed_at) VALUES($1,$2,$3,$4,$5,$6)',[id,'candidate:999','CANDIDATE','{}','{}',1]]];
     for(const [sql,params] of edits)await assert.rejects(rt.query(sql,params),{code:QR},status+': '+sql.slice(0,60));
+    // DELETE of a terminal run: the runtime role is stopped by the privilege (42501); a role that holds DELETE reaches the freeze trigger (QR001).
+    await assert.rejects(rt.query('DELETE FROM quant_jobs WHERE run_id=$1',[id]),{code:DENIED},status+': runtime DELETE privilege');
+    await assert.rejects(dl.query('DELETE FROM quant_jobs WHERE run_id=$1',[id]),{code:QR},status+': DELETE trigger');
   }
-  await refused(rt.query('DELETE FROM quant_jobs WHERE run_id=$1',[preRuns.zeroStep.run_id]));
+  await refused(rt.query('DELETE FROM quant_jobs WHERE run_id=$1',[preRuns.zeroStep.run_id]),DENIED);
+  await refused(dl.query('DELETE FROM quant_jobs WHERE run_id=$1',[preRuns.zeroStep.run_id]));
   await refused(rt.query("UPDATE quant_jobs SET diagnostic='EDITED' WHERE run_id=$1",[preRuns.zeroStep.run_id]));
-  await refused(rt.query('DELETE FROM quant_jobs'));
+  await refused(rt.query('DELETE FROM quant_jobs'),DENIED);
+  await refused(dl.query('DELETE FROM quant_jobs'));
   // The earlier immutability triggers keep their own behaviour on the same run.
   await assert.rejects(rt.query('UPDATE quant_job_steps SET result=$2 WHERE run_id=$1',[preRuns.SUCCEEDED.run_id,'{}']),/Completed Quant checkpoint is immutable/);
   assert.deepEqual(await digests(),before,'no row changed');
@@ -259,7 +283,10 @@ test('FOUNDATION extension: chunks and the binding row of a terminal run are fro
   assert.equal((await rt.query("UPDATE quant_research_chunks SET next_bar=1200,checkpoint='{\"n\":1}'::jsonb,checkpoint_hash=$2,unit_name='unit.service',unit_token=$3 WHERE run_id=$1 AND step_id='candidate:000'",
     [cancelled.run_id,hex('cp'),unit])).rowCount,1);
   await rt.query("INSERT INTO quant_research_chunks(run_id,step_id,kind,parameters,identity_hash) VALUES($1,'candidate:001','CANDIDATE','{}',$2)",[cancelled.run_id,hex('c1')]);
-  assert.equal((await rt.query("DELETE FROM quant_research_chunks WHERE run_id=$1 AND step_id='candidate:001'",[cancelled.run_id])).rowCount,1);
+  // The runtime role holds no DELETE on quant_research_chunks (42501, row kept); the RUNNING parent leaves the chunk delete open for a role that holds DELETE.
+  await refused(rt.query("DELETE FROM quant_research_chunks WHERE run_id=$1 AND step_id='candidate:001'",[cancelled.run_id]),DENIED);
+  assert.equal((await db.query("SELECT count(*)::int n FROM quant_research_chunks WHERE run_id=$1 AND step_id='candidate:001'",[cancelled.run_id])).rows[0].n,1);
+  assert.equal((await dl.query("DELETE FROM quant_research_chunks WHERE run_id=$1 AND step_id='candidate:001'",[cancelled.run_id])).rowCount,1);
   // The run is cancelled while its unit is still recorded (as in the service).
   await rt.query("UPDATE quant_jobs SET status='CANCELLED',phase='COMPLETE',lease_token=NULL,lease_until=0 WHERE run_id=$1",[cancelled.run_id]);
   const before=await digests();
@@ -271,12 +298,15 @@ test('FOUNDATION extension: chunks and the binding row of a terminal run are fro
     ['UPDATE quant_research_chunks SET unit_token=gen_random_uuid() WHERE run_id=$1',[cancelled.run_id]],
     ["UPDATE quant_research_chunks SET unit_name=NULL,unit_token=NULL,checkpoint='{}'::jsonb WHERE run_id=$1 AND step_id='candidate:000'",[cancelled.run_id]],
     ["UPDATE quant_research_chunks c SET checkpoint='{}'::jsonb FROM quant_jobs j WHERE j.run_id=c.run_id AND c.run_id=$1",[cancelled.run_id]],
-    ['DELETE FROM quant_research_chunks WHERE run_id=$1',[cancelled.run_id]],
-    ["DELETE FROM quant_research_chunks WHERE run_id=$1 AND step_id='prepare:dataset'",[cancelled.run_id]],
     ["INSERT INTO quant_research_chunks(run_id,step_id,kind,parameters,identity_hash) VALUES($1,'candidate:009','CANDIDATE','{}',$2)",[cancelled.run_id,hex('c9')]],
     ["INSERT INTO quant_research_chunks(run_id,step_id,kind,parameters,identity_hash) VALUES($1,'candidate:000','CANDIDATE','{}',$2) ON CONFLICT (run_id,step_id) DO UPDATE SET checkpoint='{}'::jsonb",[cancelled.run_id,hex('c0')]],
     ['DELETE FROM quant_research_foundation WHERE run_id=$1',[cancelled.run_id]]])
     await assert.rejects(rt.query(sql,params),{code:sql.startsWith('DELETE FROM quant_research_foundation')?'P0001':QR},sql);
+  // Chunk DELETE under a terminal parent: 42501 for the runtime role (privilege layer), QR001 for a role that holds DELETE (trigger layer).
+  for(const sql of ['DELETE FROM quant_research_chunks WHERE run_id=$1',"DELETE FROM quant_research_chunks WHERE run_id=$1 AND step_id='prepare:dataset'"]){
+    await assert.rejects(rt.query(sql,[cancelled.run_id]),{code:DENIED},'runtime: '+sql);
+    await assert.rejects(dl.query(sql,[cancelled.run_id]),{code:QR},'deleter: '+sql);
+  }
   assert.deepEqual(await digests(),before);
   // The recovery clear (src/postgres/quant-foundation-recovery.js): same predicate, both unit columns to NULL.
   assert.equal((await rt.query('UPDATE quant_research_chunks SET unit_name=NULL,unit_token=NULL WHERE run_id=$1 AND unit_token=$2 AND unit_name IS NOT NULL',[cancelled.run_id,unit])).rowCount,1);
@@ -295,7 +325,7 @@ test('FOUNDATION extension: chunks and the binding row of a terminal run are fro
 test('search_path hardening: a TEMP table named like a research table, seeded RUNNING, does not fool any guard',async()=>{
   const facts=(await db.query("SELECT has_database_privilege($1,current_database(),'TEMP') AS temp",[roleName])).rows[0];
   assert.equal(facts.temp,true,'the role holds TEMP (default PUBLIC privilege), so the shadow attack is possible');
-  const terminal=preRuns.SUCCEEDED.run_id,shadowBefore=await digests(),client=await rt.pool.connect();
+  const terminal=preRuns.SUCCEEDED.run_id,shadowBefore=await digests(),client=await rt.pool.connect(),delClient=await dl.pool.connect();
   try{
     await client.query('CREATE TEMP TABLE quant_jobs(run_id text,status text)');
     await client.query('CREATE TEMP TABLE quant_job_steps(run_id text,step_id text)');
@@ -307,20 +337,30 @@ test('search_path hardening: a TEMP table named like a research table, seeded RU
       ['INSERT INTO public.quant_job_steps(run_id,step_id,kind,parameters,result,completed_at) VALUES($1,$2,$3,$4,$5,$6)',[terminal,'shadow:1','CANDIDATE','{}','{}',1]],
       ["INSERT INTO public.quant_research_chunks(run_id,step_id,kind,parameters,identity_hash) VALUES($1,'shadow:2','CANDIDATE','{}',$2)",[cancelled.run_id,hex('s2')]],
       ["UPDATE public.quant_research_chunks SET checkpoint='{\"shadow\":true}'::jsonb WHERE run_id=$1",[cancelled.run_id]],
-      ['DELETE FROM public.quant_research_chunks WHERE run_id=$1',[cancelled.run_id]],
       ['INSERT INTO public.quant_research_foundation(run_id,job_id,contract_hash) VALUES($1,$2,$3)',[terminal,forgedJob,preRuns.SUCCEEDED.contract_hash]],
       ["UPDATE public.quant_jobs SET diagnostic='SHADOW' WHERE run_id=$1",[terminal]]];
     for(const [sql,params] of attempts)await assert.rejects(client.query(sql,params),{code:QR},sql);
     // Also with the temp schema searched first explicitly, and with a hostile search_path on the session.
     await client.query('SET search_path = pg_temp, public');
     await assert.rejects(client.query('INSERT INTO public.quant_job_steps(run_id,step_id,kind,parameters,result,completed_at) VALUES($1,$2,$3,$4,$5,$6)',[terminal,'shadow:3','CANDIDATE','{}','{}',1]),{code:QR});
-  }finally{client.release(true);}
+    // DELETE: the runtime role is stopped by the privilege before any trigger; the deleter, with the same shadow tables, is stopped by the guards.
+    for(const sql of ['DELETE FROM public.quant_research_chunks WHERE run_id=$1','DELETE FROM public.quant_jobs WHERE run_id=$1'])
+      await assert.rejects(client.query(sql,[cancelled.run_id]),{code:DENIED},sql);
+    await delClient.query('CREATE TEMP TABLE quant_jobs(run_id text,status text)');
+    await delClient.query('CREATE TEMP TABLE quant_job_steps(run_id text,step_id text)');
+    await delClient.query("INSERT INTO pg_temp.quant_jobs VALUES($1,'RUNNING'),($2,'RUNNING')",[terminal,cancelled.run_id]);
+    assert.equal((await delClient.query('SELECT status FROM quant_jobs WHERE run_id=$1',[terminal])).rows[0].status,'RUNNING','control: the shadow wins for the deleter too');
+    await assert.rejects(delClient.query('DELETE FROM public.quant_research_chunks WHERE run_id=$1',[cancelled.run_id]),{code:QR});
+    await assert.rejects(delClient.query('DELETE FROM public.quant_jobs WHERE run_id=$1',[terminal]),{code:QR});
+    await delClient.query('SET search_path = pg_temp, public');
+    await assert.rejects(delClient.query('DELETE FROM public.quant_research_chunks WHERE run_id=$1',[cancelled.run_id]),{code:QR});
+  }finally{client.release(true);delClient.release(true);}
   assert.deepEqual(await digests(),shadowBefore,'no row changed');
   assert.equal((await db.query("SELECT count(*)::int n FROM quant_job_steps WHERE step_id LIKE 'shadow:%'")).rows[0].n,0);
 });
 
-// Restart proof on its OWN throwaway cluster. The shared test cluster is never stopped or restarted: under --test-isolation=none every
-// file of the suite shares it, and a restart would kill the open connections of the other files (finding FZ2-RESTART-ISOLATION).
+// Restart proof on its OWN throwaway cluster. The shared test cluster is never stopped or restarted: every file of the suite uses the same
+// cluster, and a restart would kill the open connections of the other files (finding FZ2-RESTART-ISOLATION).
 // FREEZE_TEST_PG_BIN (a PostgreSQL bin directory) or FREEZE_TEST_PG_CTL (the path of pg_ctl, its directory is used) enables the proof;
 // without either it is skipped. FREEZE_TEST_PGDATA is no longer read: the data directory is created and removed by the test.
 const PG_BIN=process.env.FREEZE_TEST_PG_BIN||(process.env.FREEZE_TEST_PG_CTL?path.dirname(process.env.FREEZE_TEST_PG_CTL):'');
@@ -332,7 +372,7 @@ const freePort=()=>new Promise((resolve,reject)=>{const server=net.createServer(
 test('restart readback: after its own throwaway cluster is stopped and started again the digests, the guards (tgenabled A) and the refusals are the same',{skip:!PG_BIN},async t=>{
   const dir=await fs.mkdtemp(path.join(os.tmpdir(),'robot-freeze-restart-')),data=path.join(dir,'data');
   const sharedStart=(await admin.query('SELECT pg_postmaster_start_time() AS started')).rows[0].started.getTime();
-  let own,ownRuntime,started=false;
+  let own,ownRuntime,ownDeleter,started=false;
   try{
     assert.equal(runTool('initdb',['-D',data,'-U','robot_restart_su','-A','trust','-E','UTF8','--locale=C']),0,'initdb');
     const port=await freePort();
@@ -340,36 +380,39 @@ test('restart readback: after its own throwaway cluster is stopped and started a
     await fs.appendFile(path.join(data,'postgresql.conf'),`\nport = ${port}\nlisten_addresses = '127.0.0.1'\nunix_socket_directories = ''\nmax_connections = 40\nshared_buffers = 16MB\n`);
     assert.equal(runTool('pg_ctl',['-D',data,'-l',path.join(dir,'postgres.log'),'-w','-t','120','start']),0,'cluster started');started=true;
     const ownUrl=(user,name='postgres')=>`postgres://${user}@127.0.0.1:${port}/${name}`;
-    const role='robot_restart_role',ownAdmin=new PostgresDatabase({connectionString:ownUrl('robot_restart_su')});
-    try{await ownAdmin.query('CREATE DATABASE robot_restart_db');await ownAdmin.query('CREATE ROLE '+role+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');}finally{await ownAdmin.close();}
+    const role='robot_restart_role',deleter='robot_restart_del',ownAdmin=new PostgresDatabase({connectionString:ownUrl('robot_restart_su')});
+    try{await ownAdmin.query('CREATE DATABASE robot_restart_db');await ownAdmin.query('CREATE ROLE '+role+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');await ownAdmin.query('CREATE ROLE '+deleter+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');}finally{await ownAdmin.close();}
     own=new PostgresDatabase({connectionString:ownUrl('robot_restart_su','robot_restart_db'),max:4});await own.migrate();
     for(const name of ['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql','quant-research-foundation-schema.sql'])
       await own.transaction(async()=>own.query(await fs.readFile(new URL(name,sourceDir),'utf8')));
-    await own.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll('robot_app',role));
+    await own.query(await grantScript(role));await own.query(await grantScript(deleter));await own.query(DELETE_GRANT(deleter));
     // Pre-freeze rows, as in the "as found" test, then the freeze.
     const owner=await newOwner('freeze-restart',own,new Store(own)),seeded={};
     for(const [status,options] of Object.entries(specs())){seeded[status]=make(owner,options);await seedRun(own,seeded[status],{owner:owner.id,deployment:owner.deployment});}
     seeded.zeroStep=make(owner,{status:'FAILED',diagnostic:'OWNER_UNAVAILABLE',at:T0+6e6});await seedRun(own,seeded.zeroStep,{owner:owner.id,deployment:owner.deployment});
     const report=await migrateQuantResearchFreeze(own,{runtimeRole:role});
     assert.equal(report.ok,true,report.failures.join());
-    ownRuntime=new PostgresDatabase({connectionString:ownUrl(role,'robot_restart_db'),max:2});
+    ownRuntime=new PostgresDatabase({connectionString:ownUrl(role,'robot_restart_db'),max:2});ownDeleter=new PostgresDatabase({connectionString:ownUrl(deleter,'robot_restart_db'),max:2});
     const snapshot=async target=>({rows:await digests(target),guards:await guardRows(target),functions:await functionDigests(target),acl:await acls(target)});
     const before=await snapshot(own);
     assert.ok(before.guards.length>=FREEZE_GUARDS.length&&before.guards.every(row=>row.tgenabled==='A'));
     assert.equal((await own.query('SELECT count(*)::int n FROM quant_jobs')).rows[0].n,STATUSES.length+1,'the proof runs on real rows');
     const startedAt=(await own.query('SELECT pg_postmaster_start_time() AS started')).rows[0].started.getTime();
-    await ownRuntime.close();await own.close();own=null;ownRuntime=null;
+    await ownRuntime.close();await ownDeleter.close();await own.close();own=null;ownRuntime=null;ownDeleter=null;
     // restart = fast stop, then start with the settings recorded in postgresql.conf.
     assert.equal(runTool('pg_ctl',['-D',data,'restart','-m','fast','-w','-t','120']),0,'own cluster restarted');
     own=new PostgresDatabase({connectionString:ownUrl('robot_restart_su','robot_restart_db'),max:4});
-    ownRuntime=new PostgresDatabase({connectionString:ownUrl(role,'robot_restart_db'),max:2});
+    ownRuntime=new PostgresDatabase({connectionString:ownUrl(role,'robot_restart_db'),max:2});ownDeleter=new PostgresDatabase({connectionString:ownUrl(deleter,'robot_restart_db'),max:2});
     assert.ok((await own.query('SELECT pg_postmaster_start_time() AS started')).rows[0].started.getTime()>startedAt,'the postmaster really restarted');
     assert.deepEqual(await snapshot(own),before);
     await refused(ownRuntime.query("UPDATE quant_jobs SET diagnostic='EDITED' WHERE run_id=$1",[seeded.SUCCEEDED.run_id]));
-    await refused(ownRuntime.query('DELETE FROM quant_jobs WHERE run_id=$1',[seeded.zeroStep.run_id]));
+    // After the restart both layers still hold: the privilege (runtime role, 42501) and the guard (a role that holds DELETE, QR001).
+    await refused(ownRuntime.query('DELETE FROM quant_jobs WHERE run_id=$1',[seeded.zeroStep.run_id]),DENIED);
+    await refused(ownDeleter.query('DELETE FROM quant_jobs WHERE run_id=$1',[seeded.zeroStep.run_id]));
+    assert.deepEqual(await snapshot(own),before,'the refused edits and deletes changed nothing');
     assert.equal((await inspectQuantResearchFreeze(own,{runtimeRole:role})).ok,true);
   }finally{
-    await ownRuntime?.close().catch(()=>{});await own?.close().catch(()=>{});
+    await ownRuntime?.close().catch(()=>{});await ownDeleter?.close().catch(()=>{});await own?.close().catch(()=>{});
     if(started&&runTool('pg_ctl',['-D',data,'stop','-m','fast','-w','-t','60'])!==0)runTool('pg_ctl',['-D',data,'stop','-m','immediate','-w','-t','60']);
     await fs.rm(dir,{recursive:true,force:true,maxRetries:10,retryDelay:200}).catch(error=>t.diagnostic('scratch cluster not removed: '+error.message));
   }
@@ -388,16 +431,18 @@ test('dump and restore: the restored database keeps every guard ENABLE ALWAYS an
     child.on('error',()=>resolve(null));child.on('exit',resolve);});
   if(status===null){t.skip('pg_restore unavailable');return;}
   assert.equal(status,0);
-  const restored=new PostgresDatabase({connectionString:urlOf(restoredName)}),restoredRuntime=new PostgresDatabase({connectionString:urlOf(restoredName,roleName)});
+  const restored=new PostgresDatabase({connectionString:urlOf(restoredName)}),restoredRuntime=new PostgresDatabase({connectionString:urlOf(restoredName,roleName)}),restoredDeleter=new PostgresDatabase({connectionString:urlOf(restoredName,deleterName)});
   try{
     assert.deepEqual(await guardRows(restored),await guardRows(db));assert.ok((await guardRows(restored)).every(row=>row.tgenabled==='A'));
     assert.deepEqual(await functionDigests(restored),await functionDigests(db));
     assert.deepEqual(await digests(restored),await digests(db));
     assert.equal((await inspectQuantResearchFreeze(restored,{runtimeRole:roleName})).ok,true);
     await refused(restoredRuntime.query("UPDATE quant_jobs SET diagnostic='EDITED' WHERE run_id=$1",[preRuns.SUCCEEDED.run_id]));
-    await refused(restoredRuntime.query('DELETE FROM quant_jobs WHERE run_id=$1',[preRuns.zeroStep.run_id]));
+    // The restored ACLs keep the revoke (runtime 42501) and the deleter's grant reaches the restored guard (QR001).
+    await refused(restoredRuntime.query('DELETE FROM quant_jobs WHERE run_id=$1',[preRuns.zeroStep.run_id]),DENIED);
+    await refused(restoredDeleter.query('DELETE FROM quant_jobs WHERE run_id=$1',[preRuns.zeroStep.run_id]));
     await refused(restoredRuntime.query('INSERT INTO quant_job_steps(run_id,step_id,kind,parameters,result,completed_at) VALUES($1,$2,$3,$4,$5,$6)',[preRuns.SUCCEEDED.run_id,'late:2','CANDIDATE','{}','{}',1]));
-  }finally{await restoredRuntime.close();await restored.close();}
+  }finally{await restoredRuntime.close();await restoredDeleter.close();await restored.close();}
 });
 
 test('rollback is a data-free DROP; edits work again; a second install restores the guards and leaves the data as it is',async()=>{

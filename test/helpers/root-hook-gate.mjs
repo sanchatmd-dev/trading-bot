@@ -1,7 +1,8 @@
 import {before as nodeBefore,after as nodeAfter} from 'node:test';
 
 /**
- * PGX1: `npm run test:postgres` runs every PostgreSQL suite in one process (node --test --test-isolation=none). There a
+ * PGX1 (history): `npm run test:postgres` used to run every PostgreSQL suite in one process (node --test --test-isolation=none).
+ * Since 4d86822 it runs one process per file, and only test/postgres-isolation-none/ still shares one process. There a
  * top-level before() or after() of each file is a hook of the shared root test: every file's hook starts at the same moment,
  * and one failing root hook fails every test of the run, not only the tests of its own file. With about 40 suites each
  * creating, migrating and guarding its own database at once, the server reached max_connections and a CREATE DATABASE

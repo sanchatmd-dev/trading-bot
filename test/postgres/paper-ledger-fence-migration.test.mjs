@@ -38,7 +38,7 @@ async function role(label,{login=false}={}){
   await admin.query('CREATE ROLE '+name+(login?' LOGIN':' NOLOGIN')+' NOSUPERUSER NOCREATEDB NOCREATEROLE'+(login?rolePasswordClause():''));
   roles.push(name);return name;
 }
-const grantRuntime=async(db,name)=>db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll('robot_app',name));
+const grantRuntime=async(db,name)=>db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll(":'runtime_role'","'"+name+"'"));
 const version=async db=>(await db.query('SELECT version FROM schema_version')).rows[0].version;
 const present=async(db,table)=>(await db.query('SELECT to_regclass($1) present',['public.'+table])).rows[0].present!==null;
 const dropFence=db=>db.query('DROP TABLE IF EXISTS public.paper_ledger_fence');

@@ -45,7 +45,7 @@ before(async()=>{
   for(const name of ['pine-bridge-schema.sql','quant-research-schema.sql'])await db.query(await read(name));
   assert.equal(await migrateQuantFoundation(db),'LEGACY');
   // The repo grant script, with the throwaway role: broad DML, no ownership, TEMP left at the PUBLIC default.
-  await db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll('robot_app',roleName));
+  await db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll(":'runtime_role'","'"+roleName+"'"));
 });
 after(async()=>{
   for(const client of sessions)await client.end().catch(()=>{});

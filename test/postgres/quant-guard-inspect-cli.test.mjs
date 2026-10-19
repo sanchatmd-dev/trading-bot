@@ -35,7 +35,7 @@ before(async()=>{
   db=new PostgresDatabase({connectionString,max:6});await db.migrate();
   for(const name of ['pine-bridge-schema.sql','quant-research-schema.sql'])await db.query(await fs.readFile(new URL(name,sourceDir),'utf8'));
   assert.equal(await migrateQuantFoundation(db),'LEGACY');
-  await db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll('robot_app',roleName));
+  await db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll(":'runtime_role'","'"+roleName+"'"));
 });
 after(async()=>{
   await db?.close().catch(()=>{});

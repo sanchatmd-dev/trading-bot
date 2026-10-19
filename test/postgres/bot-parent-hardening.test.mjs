@@ -36,7 +36,7 @@ before(async()=>{
   await admin.query('CREATE ROLE '+roleName+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE'+rolePasswordClause());
   connectionString=urlOf(databaseName);runtimeUrl=urlOf(databaseName,roleName);
   db=new PostgresDatabase({connectionString,max:6});await db.migrate();
-  await db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll('robot_app',roleName));
+  await db.query((await fs.readFile(new URL('../../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll(":'runtime_role'","'"+roleName+"'"));
   // LABELLED FIXTURES: T1 and T2 and S are top-level users, B1 is a bot of T1 (slot 2).
   for(const id of ['T1','T2','S'])await db.query("INSERT INTO public.users(id,email,password_hash,created_at) VALUES($1,$1||'@example.test','unused-fixture-hash',1)",[id]);
   await db.query("INSERT INTO public.users(id,email,password_hash,created_at,parent_user_id,bot_slot_index) VALUES('B1','B1@example.test','NO_LOGIN',1,'T1',2)");
