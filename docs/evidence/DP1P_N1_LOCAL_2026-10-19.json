@@ -2,7 +2,7 @@
   "schema": "DP1P_N1_LOCAL_PROGRESS_V1",
   "date": "2026-10-19",
   "root": "Codex",
-  "decision": "ROOT_ACCEPTED_N1_C0_CONTRACT_AND_N1_S1_SOURCE_MAPPING_LOCAL_ONLY",
+  "decision": "ROOT_ACCEPTED_N1_LOCAL_CONTRACT_SOURCE_MAPPING_ADAPTER_GENERATOR_FRAMING_AND_CAPTURE",
   "baseRevision": "46e92cc794c1d1058f9fd7ff5f3d471cab541a92",
   "contract": {
     "sha256": "1250ffbc08c4ed0878d39ffb9c5c31fabb7a97fe2a95d6535cf71473cef32095",
@@ -139,5 +139,65 @@
   "go": null,
   "productionQualified": false,
   "rea": "PAUSED",
-  "pm1": "S1_UNCHANGED"
+  "pm1": "S1_UNCHANGED",
+  "checkpointBaseRevision": "31f883f42709f57745f7dbacfce33c37c5b370c7",
+  "observerArchitecture": {
+    "status": "ROOT_ADOPTED_LOCAL_PLACEMENT_AMENDMENT",
+    "decision": {
+      "sha256": "24576fd2feabb815ac6da06e6b79ae9d0b54a9de637dce0115e207d808453b4c",
+      "bytes": 3031
+    },
+    "placement": "The remote observer certifies lifecycle and retained bytes only. CAPTURE_OBSERVED carries DEFERRED_LOCAL witness validation and NOT_EVALUATED Clock semantics. Final local Clock review requires authenticated complete outer evidence, R1b semantics and all publication gates.",
+    "schemas": "Every future package, runner, envelope, finalizer, adapter and window layer must require exact new N1 schemas. Legacy B2 success aliases and NORMAL case translation are forbidden.",
+    "failureRule": "UNKNOWN takes precedence. A diagnostic NONPASS classifier has not been accepted."
+  },
+  "frameDecoder": {
+    "status": "ROOT_ACCEPTED_R3A_LOCAL_PURE",
+    "manifestSha256": "c06af252502b9d4e5d9ed24862bb99a1f18dd610dfc259f74de127e55d07de53",
+    "implementation": {
+      "sha256": "1b80f652d50b6783bda33561b65026020e6d9d458944d85eb23ecac878b066e6",
+      "bytes": 4660
+    },
+    "evidence": {
+      "authorSuiteIndependentRerun": 82,
+      "independentChecks": 35,
+      "chunkReconstructions": 512,
+      "allPassed": true,
+      "audit": "Nine inventory and nine input pins matched; no blocker in the pure decoder scope."
+    },
+    "scope": "Canonical READY bindings, PID correspondence, retained byte offsets, strict UTF-8 and separate stream/frame hashes. The second frame remains opaque.",
+    "limits": "Chunk reconstruction does not prove native event ordering or timing. This decoder supplies no lifecycle or Clock semantic verdict."
+  },
+  "capture": {
+    "status": "ROOT_ACCEPTED_R3B_R1_LOCAL_FAKE_CAPABILITIES_ONLY",
+    "manifestSha256": "9c16cf3d39ab774fec993ecd56eb791b71b6b313d5bf3ff24c7c3c4861048288",
+    "captureImplementation": {
+      "sha256": "51b3d80081b6ec40e549a7f73312a6a66c1ce05e8ca719fc3ec592e7a8780502",
+      "bytes": 9034
+    },
+    "validatorImplementation": {
+      "sha256": "a8c3fc10c861a26679a770129e158e72e5849204064c733339cb02a4f389ed42",
+      "bytes": 5873
+    },
+    "evidence": {
+      "authorChecks": 14,
+      "authorCompletionPermutations": 120,
+      "authorFocusedChecks": 4,
+      "independentRegressionChecks": 15,
+      "independentFocusedChecks": 12,
+      "architectureFocusedChecks": 13,
+      "allFinalChecksPassed": true,
+      "testerPins": 40,
+      "auditorPins": 31
+    },
+    "corrections": [
+      "Authenticate the exact builder-owned vector and private source before any spawn or proc effect; retain immediate-before-write hash and length checks.",
+      "Require publication time to be at least evidence end time whenever both are present, including UNKNOWN receipts."
+    ],
+    "behavior": "Wait for close, both stream ends, stdin callback and stdin finish. Preserve the first fault during persistence and expose a private late-fault guard. Keep historical evidence immutable while permitting the final receipt to become UNKNOWN. Anchor the one-TERM watchdog to the original start; suppress signals when clock eligibility cannot be proved.",
+    "execution": "Injected fake capabilities only. No native probe, process, clock, timer or host execution.",
+    "reviewRework": "The original candidate was rejected on two reproduced blockers. A tester assertion used reference equality for a copied receipt; the assertion was corrected, its initial result retained, and the narrow rerun passed.",
+    "limits": "Trusted ordinary non-Proxy inputs, non-reentrant adapters and an upstream serialized byte cap remain required. Source authentication, selected binary association, outer late-fault guard wiring, complete closure, output fit, native timing and semantic Clock acceptance remain separate gates."
+  },
+  "next": "R3C observer configuration, orchestration, memory sink and outer validation; R3D checked emission; then complete assembly, package and window closures."
 }
