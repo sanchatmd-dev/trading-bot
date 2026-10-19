@@ -145,6 +145,8 @@ Source: [QR1B freeze record](evidence/QR1B_FREEZE_LOCAL_2026-10-13.json). Local 
 | D3 | Live negative write probe on staging, or restore rehearsal only | Not stated | Not stated |
 | D4 | Append-only seal table required before QR-2 | Not stated | Not stated |
 
+D4 (append-only seal table) is decided: not required for derive-on-read QR-2 slices S1-S5; required, as the D4 seal table or S7, before a frozen report claims input immutability. See section 15 of [docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md](QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md).
+
 Staging gates, none closed: physical-restore rehearsal including rollback; per-effect owner GO, one operations worker, known host health and job plan, no overlap with R7B/EM2; backup and cold archive with writers stopped under the maintenance lock; staging catalog read of TEMP privilege and parameter ACLs. Finding QR1B-MODE-GUARDS (medium, defense in depth) needs its own packet.
 
 ### C. Database guard hardening (GH1/GH2)
@@ -187,6 +189,8 @@ Fact for the owner, not a new question (draft section 7.1; public rehearsal reco
 Draft Q9 is closed in the draft and is not listed. Draft risks K8 and K22 also touch E2 and C2; the draft states them as risks, not as decisions.
 
 ### F. QR-2 Paper Portfolio Performance design
+
+Update 2026-10-19: the owner decided O1-O16 as the recommended defaults below, with 900 s read as a hard cutoff for O1. The owner also decided section B item D4 (append-only seal table: not required for derive-on-read slices S1-S5; required, as the D4 seal table or S7, before a frozen report claims input immutability) and the added items OD-Q1, OD-Q8, OD-Q9, OD-Q10, OD-Q13, OD-Q14 and OD-Q15. All are recorded in section 15 of [docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md](QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md). This is not a GO.
 
 Status: local design only. No code has been written. The design document is private. Source: design section 12, "Owner decisions (merged)", O1-O16. All are owner decisions here; the design lists three root-level items that are not owner decisions (the audit dedup key, the after-commit hook in `request-dispatch.js`, and whether to dispatch the read-only staging count). This is not a GO.
 

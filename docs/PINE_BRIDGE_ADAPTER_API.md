@@ -170,7 +170,7 @@ Apply stage-specific thresholds. Return a reviewable draft without waiting for Q
 Return mappings, Bridge block when eligible, bindings, instruction versions, diagnostics and a concise webhook guide. Keep BUY and scoped reduce-only exits distinct; the worker controls fills, inventory, quantity and risk. Never output secrets, change policy, start a Bot or claim live deployment.
 ```
 
-The runtime AI instructions use `bridge-prompt-v3` and `bridge-guide-v3` for the Spot-only requirement and long-only SPT mapping rule. The current JSON-only runtime can diagnose Futures dependencies but cannot perform the proposed source adaptation; that capability remains separate work. Previously generated drafts retain their recorded instruction versions and require a fresh reviewed generation if the mapping or source inputs change.
+The runtime AI instructions use `bridge-prompt-v3` and `bridge-guide-v4` for the Spot-only requirement and long-only SPT mapping rule. The current JSON-only runtime can diagnose Futures dependencies but cannot perform the proposed source adaptation; that capability remains separate work. Previously generated drafts retain their recorded instruction versions and require a fresh reviewed generation if the mapping or source inputs change.
 
 ## Implemented API additions (APP-3A)
 
