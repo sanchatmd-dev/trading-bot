@@ -9,6 +9,7 @@ import {validateBackfillState} from '../quant-research/foundation-contract.js';
 import {buildProfile,authorizeProfileV2Stop} from './quant-profile.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
 import {canReleaseQuantIo,QUANT_IO_DIAGNOSTIC_REASONS} from './quant-io-runtime.js';
+import {sanitizeProfileChildDiagnostic} from '../quant-research/profile-child-diagnostic.js';
 import {validateBar} from './pine-bridge-market.js';
 import {resolveHistoricalPreflight} from '../quant-research/preflight-resolver.js';
 import {runHistoricalPreflight} from '../quant-research/preflight-replay.js';
@@ -20,10 +21,22 @@ import {RESEARCH_V2_VERSIONS,DATASET_BINDING_STEP_ID,DATASET_BINDING_KIND,
 
 const identity=(contract,parameters,kind)=>hash(canonical({contract,parameters,kind}));
 
+// Only the Node test runner can register a capture. No constructor option or environment setting enables it.
+const preflightTestCaptures=process.execArgv.includes('--test')?new WeakMap():null;
+export function capturePreflightRunChunkForTest(worker){
+ if(!preflightTestCaptures)throw Error('Preflight capture requires node --test --test-isolation=none');
+ if(preflightTestCaptures.has(worker))throw Error('Preflight capture already installed');
+ const capture={runChunk:null};preflightTestCaptures.set(worker,capture);
+ return {get runChunk(){return capture.runChunk;},release(){
+  if(preflightTestCaptures.get(worker)===capture)preflightTestCaptures.delete(worker);
+  capture.runChunk=null;
+ }};
+}
+
 /** Reason allowlist of the PROFILE V2 terminal log: the I/O diagnostic reasons plus the worker's own PROFILE reasons. */
 export const QUANT_PROFILE_TERMINAL_LOG_REASONS=Object.freeze([...QUANT_IO_DIAGNOSTIC_REASONS,'PROFILE_STOP_REQUESTED',
  'PROFILE_COMPUTE_DEADLINE','QUANT_PROFILE_POLICY_MISMATCH','QUANT_IO_LAUNCH_CONFIGURATION_REQUIRED','PROFILE_DEADLINE_NEAR',
- 'PROFILE_V2_DISABLED']);
+ 'PROFILE_V2_DISABLED','QUANT_IO_LAUNCH_UNCERTAIN','PROFILE_ENROLLMENT_DENIED','PROFILE_ENROLLMENT_TICKET_INVALID']);
 
 /** Smallest PG_POOL_SIZE of a worker with health recovery, for every job kind. The recovery probe runs through
  * db.pool.query, so it needs a connection outside the scheduler transaction that called health. Peak demand of a running
@@ -322,13 +335,14 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
  }
  async runProfileV2(job,{signal,emergency,beforeTerminal}){
   const foundation=job.foundation,operationId='op-'+foundation.lease_token;
-  const started=performance.now();let logged=false,terminalDiagnostic=null;
+  const started=performance.now();let logged=false,terminalDiagnostic=null,childDiagnostic=null;
   const log=diagnostic=>{
    if(logged)return;
    const proof=['MEASURED_FINAL_SETTLED','UNKNOWN_FINAL_CHARGED','NO_START_PROVEN','UNCONFIRMED'].includes(diagnostic?.proof)?diagnostic.proof:'UNCONFIRMED';
    const reason=QUANT_PROFILE_TERMINAL_LOG_REASONS.includes(diagnostic?.reason)?diagnostic.reason:'UNKNOWN';
    const record={jobId:foundation.job_id,proof,reason:reason==='COMPLETE'&&proof!=='MEASURED_FINAL_SETTLED'?'UNKNOWN':reason};
    for(const field of ['drainMs','elapsedMs','barrierMs'])if(Number.isSafeInteger(diagnostic?.[field])&&diagnostic[field]>=0)record[field]=diagnostic[field];
+   if(childDiagnostic)record.childDiagnostic=sanitizeProfileChildDiagnostic(childDiagnostic);
    logged=true;try{this.terminalLog(JSON.stringify(record));}catch{}
   };
   try{
@@ -340,7 +354,8 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
    this.profileOperations.set(foundation.job_id,{leaseToken:foundation.lease_token,operationId});
    const answer=await this.profileRuntimeV2.run({jobId:foundation.job_id,leaseToken:foundation.lease_token,
     operationId,expectedRevision:0,ownerId:foundation.owner_id,signal,emergency,beforeTerminal,
-    onTerminalDiagnostic:diagnostic=>{terminalDiagnostic=diagnostic;}});
+    onTerminalDiagnostic:diagnostic=>{terminalDiagnostic=diagnostic;},
+    onChildDiagnostic:diagnostic=>{childDiagnostic=sanitizeProfileChildDiagnostic(diagnostic);}});
    // elapsedMs always spans this worker run, including the terminal. Terminal evidence supplies only available timings.
    log({...terminalDiagnostic,proof:answer?.proof,reason:terminalDiagnostic?.reason??'COMPLETE',
     elapsedMs:Math.max(0,Math.round(performance.now()-started))});
@@ -391,13 +406,16 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
      if(cleared.rowCount!==1)throw fail('FOUNDATION_LEASE_LOST');
     }});
    let running=false;
+   const runChunk=async(input,options)=>{
+    if(running)throw fail('PF2_RUNNER_FAILED');
+    if(this.clock()>=foundation.deadline_at)throw fail('PF2_DEADLINE_EXCEEDED');
+    running=true;try{return await runner.runChunk(input,options);}finally{running=false;}
+   };
+   const capture=preflightTestCaptures?.get(this);
+   if(capture)capture.runChunk=runChunk;
    const envelope=await runHistoricalPreflight({resolved,research:this.service.datasetStore,signal,clock:this.clock,
     resume:foundation.checkpoint?.state,onCheckpoint:token=>this.checkpointToken(foundation,token),
-    runChunk:async(input,options)=>{
-     if(running)throw fail('PF2_RUNNER_FAILED');
-     if(this.clock()>=foundation.deadline_at)throw fail('PF2_DEADLINE_EXCEEDED');
-     running=true;try{return await runner.runChunk(input,options);}finally{running=false;}
-    }});
+    runChunk});
    await runner.settled();
    if(runner.unconfirmed)throw Object.assign(fail('QUANT_PROCESS_STOP_UNCONFIRMED'),{stopped:false});
    if(Buffer.byteLength(canonical(envelope))>foundation.contract.budget.max_output_bytes)throw fail('PF2_LIMIT_EXCEEDED');

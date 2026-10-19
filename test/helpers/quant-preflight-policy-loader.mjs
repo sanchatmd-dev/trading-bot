@@ -21,7 +21,7 @@ registerHooks({load(url,context,nextLoad){
   return {format:'module',shortCircuit:true,source:[
     "import {readFileSync} from 'node:fs';",
     'import {validateQuantCapacityPolicy} from '+JSON.stringify(real)+';',
-    'export {validateQuantCapacityPolicy,createProfileRuntimeHealth} from '+JSON.stringify(real)+';',
+    'export {assertCapacityPolicyEvaluator,validateQuantCapacityPolicy,createProfileRuntimeHealth} from '+JSON.stringify(real)+';',
     'export async function loadQuantCapacityPolicy(filename=process.env.QUANT_CAPACITY_POLICY_FILE){',
     "  return validateQuantCapacityPolicy(JSON.parse(readFileSync(filename,'utf8')));",
     '}',

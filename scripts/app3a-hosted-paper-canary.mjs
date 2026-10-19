@@ -87,7 +87,7 @@ try{
   report.activation=await db.transaction(()=>activateDeployment(service,bot.id,d.deployment_id));
   const secret=randomUUID();await store.setWebhookSecret(bot.id,secret,encryptJson({secret},config.keyring,'webhook:'+bot.id));
   await db.query('CREATE ROLE robot_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE');roleCreated=true;
-  await db.query(await fs.readFile(new URL('grant-postgres-runtime.sql',import.meta.url),'utf8'));
+  await db.query((await fs.readFile(new URL('grant-postgres-runtime.sql',import.meta.url),'utf8')).replaceAll(":'runtime_role'","'robot_app'"));
   const runtimeUrl=new URL(url);runtimeUrl.username='robot_app';
   runtime=new PostgresDatabase({connectionString:runtimeUrl.toString()});
   for(const table of ['pine_market_bars','pine_bridge_evidence'])await assert.rejects(runtime.query('DELETE FROM '+table),{code:'42501'});

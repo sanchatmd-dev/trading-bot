@@ -11,6 +11,8 @@ import {DatasetStore} from '../../src/quant-research/dataset-store.js';
 import {ResearchDatasetStore} from '../../src/quant-research/research-dataset-store.js';
 import {resolveHistoricalPreflight} from '../../src/quant-research/preflight-resolver.js';
 import {config} from '../../src/config.js';
+import {pf2ExecutableHashes} from '../../src/quant-research/preflight-resolver.js';
+import {profileV2Fixture} from '../helpers/profile-v2-fixture.js';
 
 // Actual application HTTP. Enabled cases use only the labeled test policy loader;
 // they do not certify native Linux startup, private source parity or enrollment.
@@ -67,6 +69,18 @@ test('actual app startup refuses requested enrollment without PROFILE v2',async 
 test('actual app with test policy loader refuses missing preflight schema before listener',async t=>{
   const f=await fixture(t,{mode:'test-policy',missingPreflightSchema:true,expectStartupFailure:true});
   assert.equal(f.startup.ready,false);assert.match(f.startup.output,/PREFLIGHT_SCHEMA_REQUIRED/);
+});
+
+test('actual app refuses a capacity policy written for another PF-2 evaluator before listener',async t=>{
+  const live=(await pf2ExecutableHashes()).evaluator_hash,stale=profileV2Fixture().policy;
+  assert.notEqual(stale.scope.evaluator_hash,live);
+  for(const environment of [{},{QUANT_PREFLIGHT_ENABLED:'0',QUANT_PROFILE_V2_ENABLED:'1',QUANT_PROFILE_V2_ENROLLMENT_ENABLED:'1'}]){
+    const f=await fixture(t,{mode:'test-policy',capacityPolicy:stale,environment,expectStartupFailure:true});
+    assert.equal(f.startup.ready,false);assert.equal(f.startup.exited,true);assert.notEqual(f.startup.exitCode,0);
+    assert.match(f.startup.output,/CAPACITY_POLICY_EVALUATOR_MISMATCH/,JSON.stringify(environment));
+  }
+  const f=await fixture(t,{mode:'test-policy'});
+  assert.equal(f.policy.scope.evaluator_hash,live);assert.equal(f.startup.ready,true);
 });
 
 test('actual app with test policy loader refuses missing enrollment extension before listener',async t=>{

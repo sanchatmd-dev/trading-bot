@@ -13,7 +13,8 @@ import {createResourceHealth,loopbackHealthProbe} from '../quant-research/resour
 import {createSchedulerHealth} from '../quant-research/scheduler-health.js';
 import {currentCgroupGroup,prepareCgroupIo,validateIoControls} from '../quant-research/io-controls.js';
 import {assertQuantWorkerUnit,loadQuantRecoveryPolicy} from './quant-foundation-recovery.js';
-import {loadQuantCapacityPolicy} from './quant-capacity-policy.js';
+import {assertCapacityPolicyEvaluator,loadQuantCapacityPolicy} from './quant-capacity-policy.js';
+import {pf2ExecutableHashes} from '../quant-research/preflight-resolver.js';
 import {assertProfileV2Configuration,wireQuantProfileV2} from './quant-profile-wiring.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
 import {config,assertProductionConfig} from '../config.js';
@@ -27,6 +28,8 @@ if(preflightEnabled&&!foundation)throw Error('PREFLIGHT requires foundation mode
 if(enrollmentEnabled&&!profileV2Enabled)throw Error('PROFILE enrollment requires PROFILE V2');
 const recoveryPolicy=profileV2Enabled?await loadQuantRecoveryPolicy():undefined;
 const capacityPolicy=profileV2Enabled||preflightEnabled?await loadQuantCapacityPolicy():undefined;
+// Enrollment and PREFLIGHT bind the policy to the evaluator of this tree before any database work.
+if(enrollmentEnabled||preflightEnabled)assertCapacityPolicyEvaluator(capacityPolicy,(await pf2ExecutableHashes()).evaluator_hash);
 if(foundation)await assertQuantWorkerUnit(process.env.QUANT_WORKER_UNIT,{policy:recoveryPolicy,profileV2Enabled});
 const db=new PostgresDatabase();await db.runtimeLock();await db.verifySchema();
 const rows=(await db.query('SELECT version FROM quant_job_schema')).rows;

@@ -19,6 +19,16 @@ export function validateQuantCapacityPolicy(value){
  return policy;
 }
 
+/**
+ * PROFILE V2 enrollment and PREFLIGHT start only with a policy written for the PF-2 evaluator of the running
+ * tree. The caller passes pf2ExecutableHashes().evaluator_hash; a stale or mistyped scope refuses the start.
+ */
+export function assertCapacityPolicyEvaluator(policy,evaluatorHash){
+ if(typeof evaluatorHash!=='string'||!/^[a-f0-9]{64}$/.test(evaluatorHash)||policy?.scope?.evaluator_hash!==evaluatorHash)
+  throw fail('CAPACITY_POLICY_EVALUATOR_MISMATCH',503);
+ return policy;
+}
+
 /** The runtime has two actions; unknown actions never reach the health probe. */
 export function createProfileRuntimeHealth(health){
  if(typeof health!=='function')throw fail('QUANT_PROFILE_HEALTH_CALLBACK_REQUIRED');

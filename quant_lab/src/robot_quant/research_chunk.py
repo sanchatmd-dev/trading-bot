@@ -13,10 +13,6 @@ from collections import Counter
 from dataclasses import asdict
 from decimal import Decimal, InvalidOperation, localcontext
 
-from robot_quant.bridge_replay import BridgeBar, PaperModel
-from robot_quant.paper_state import PaperState, finite_decimal
-from robot_quant.spt_custom_evaluator import CustomOptimizationPlan, SptCustomEvaluator
-
 IPC_LIMIT = 8 * 1024 * 1024
 STATE_LIMIT = 1024 * 1024
 STATE_VERSION = "research-chunk-v1"
@@ -227,6 +223,8 @@ class StreamingMetrics:
                         for name, p in self.periods.items()}}
 
     def import_state(self, state, next_bar):
+        from robot_quant.paper_state import finite_decimal
+
         if set(state) != {"cash", "quantity", "entries", "periods"} or set(state["periods"]) != set(self.periods) or len(state["entries"]) > 1000:
             raise ValueError("INVALID_METRICS_STATE")
         self.cash, self.quantity = finite_decimal(state["cash"]), finite_decimal(state["quantity"])
@@ -253,6 +251,12 @@ class StreamingMetrics:
 
 def evaluate_chunk(request, *, trace=None):
     """Advance only supplied rows; optional trace sink is unavailable through IPC."""
+    # The CLI primes I/O telemetry and waits for supervisor stdin release first.
+    # Readiness proves I/O accounting, not successful evaluator initialization.
+    from robot_quant.bridge_replay import BridgeBar, PaperModel
+    from robot_quant.paper_state import PaperState
+    from robot_quant.spt_custom_evaluator import CustomOptimizationPlan, SptCustomEvaluator
+
     if set(request) != {"contract", "parameters", "kind", "rows", "checkpoint"}:
         raise ValueError("INVALID_RESEARCH_CHUNK_REQUEST")
     contract, parameters, kind, rows, checkpoint = (request[k] for k in ("contract", "parameters", "kind", "rows", "checkpoint"))

@@ -249,6 +249,11 @@ test('harness measures prepare and BEGIN under every contention kind and reports
     assert.equal(report.contention[role].processes,1,role);assert.equal(report.contention[role].reported,1,role);
   }
   assert.ok(Object.values(report.contention).reduce((sum,entry)=>sum+entry.ops,0)>0);
+  // The cancel contender keeps its own owner fixture. With the measured owner's bot, every decoy would meet the
+  // one-active-enrollment guard and the contention would silently shrink, so require admitted operations and no refusal.
+  assert.ok(report.contention.cancel.ops>0,JSON.stringify(report.contention.cancel));
+  for(const [role,entry] of Object.entries(report.contention))
+    assert.equal(entry.errors.PROFILE_ENROLLMENT_ALREADY_ACTIVE??0,0,role);
   // Every sample job was released: nothing holds the global slot after the run.
   const held=(await db.query("SELECT count(*)::int n FROM quant_foundation_jobs WHERE status IN ('QUEUED','PAUSED','RUNNING','STOPPING')")).rows[0].n;
   assert.equal(held,0);

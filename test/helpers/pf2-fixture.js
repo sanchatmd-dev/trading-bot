@@ -144,11 +144,14 @@ export async function createPf2Base(t,{bar:makeBar=bar}={}){
     return storesFor(copy);
   };
 
-  /** Enrollment contract + result over the shared datasets; overrides model, deployment, owner. */
+  /**
+   * Enrollment contract + result over the shared datasets; overrides model, deployment, owner. The capacity policy
+   * and the evidence name the live PF-2 evaluator unless a case asks for an enrollment made for another one.
+   */
   base.buildEnrollment=async({sourceHash,settingsHash,model:enrolledModel=model,venue,provenanceSha,snapshotHash,
-    owner=OWNER,bot=BOT,deploymentId=venue.market.deployment_id,edit})=>{
+    owner=OWNER,bot=BOT,deploymentId=venue.market.deployment_id,evaluatorHash=executables.evaluator_hash,edit})=>{
     const scope={venue:'binance-global',market:'SPOT',symbol:'BTCUSDT',timeframe:'1',source_profile:'SPT_CUSTOM',
-      execution_model:'paper-close-v1',source_hash:sourceHash,settings_hash:settingsHash,evaluator_hash:sha('c')};
+      execution_model:'paper-close-v1',source_hash:sourceHash,settings_hash:settingsHash,evaluator_hash:evaluatorHash};
     const policy={version:'quant-capacity-v2',environment:'staging',scope,
       evidence:{calibration_sha256:sha('d'),parity_sha256:sha('e')},max_raw_bars:50000,max_chunk_bars:1000,
       budget:{candidates:1,max_evaluations:1,max_runtime_ms:900000,max_output_bytes:8388608,max_state_bytes:1048576},
@@ -166,7 +169,7 @@ export async function createPf2Base(t,{bar:makeBar=bar}={}){
     const contract={version:'quant-foundation-v2',completion_mode:'pf2-enrollment-v1',owner_id:owner,bot_id:bot,kind:'PROFILE',dataset:clone(rawReference),
       engine_hash:sha('f'),snapshot_hash:snapshotHash,budget:{...capacity.budget,chunk_bars:capacity.chunk_bars},
       capacity,profile};
-    const evidence={source_hash:sourceHash,effective_inputs_hash:settingsHash,evaluator_hash:sha('c'),
+    const evidence={source_hash:sourceHash,effective_inputs_hash:settingsHash,evaluator_hash:evaluatorHash,
       execution_model_hash:hash(canonical(enrolledModel)),metadata_hash:profile.metadata_hash,
       raw_provenance_sha256:provenanceSha,seed_bars:500};
     const binding=await verifyEnrollmentBindingV2({rawReference,researchReference,evidence,

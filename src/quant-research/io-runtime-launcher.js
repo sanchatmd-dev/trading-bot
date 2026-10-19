@@ -8,6 +8,7 @@ import {hash,canonical} from '../pine-bridge/source.js';
 import {assertIoStorageDevice,readCgroupIo,readCgroupIoLimits,systemdIoProperties,validateIoControls} from './io-controls.js';
 import {stopQuantUnit} from './process-supervisor.js';
 import {StorageBudget} from './storage-budget.js';
+import {observeLauncherStderr} from './profile-child-diagnostic.js';
 import {validateFoundationRequestV2} from './foundation-contract-v2.js';
 import {validateTerminalPolicy} from './capacity-contract.js';
 import {parseCgroupEvents,inspectCgroupFrozen,parseMemoryWriteback,quiescenceWindowMs,
@@ -561,6 +562,8 @@ export function createIoRuntimeLauncher(options={}){
           }
         }
       });
+      // Observe only after the existing consumers; output limits and protocol retain sole control.
+      const childDiagnostic=observeLauncherStderr(child);
       const ready=(async()=>{
         const deadline=Date.now()+3000;
         while(!closed&&Date.now()<deadline){
@@ -719,6 +722,7 @@ export function createIoRuntimeLauncher(options={}){
           })();
           return terminatePromise;
         },
+        childDiagnostic:childDiagnostic.snapshot,
         closed:closure,ready
       };
       return Object.freeze(handle);

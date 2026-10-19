@@ -64,3 +64,10 @@ test('enrollment has a separate default-off POST route and preserves service err
   f.service.enqueueEnrollment=async()=>{throw error;};
   await assert.rejects(f.request(path,{enrollment:true,method:'POST',body}),value=>value===error);
 });
+test('enrollment route passes the fixed active-enrollment 409 refusal through for the dispatcher',async()=>{
+  const f=fixture(),path='/api/quant/data/profile-enrollments',body={bot_id:'bot-a',raw_job_id:id,deployment_id:'deployment-a'};
+  const refusal=Object.assign(Error('PROFILE_ENROLLMENT_ALREADY_ACTIVE'),{code:'PROFILE_ENROLLMENT_ALREADY_ACTIVE',status:409});
+  f.service.enqueueEnrollment=async()=>{throw refusal;};
+  await assert.rejects(f.request(path,{enrollment:true,method:'POST',body}),error=>error===refusal&&error.status===409);
+  assert.equal(f.calls.length,0);
+});

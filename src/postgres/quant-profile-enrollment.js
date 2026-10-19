@@ -117,9 +117,9 @@ export async function beginProfileCompletionLocked({db,job,attempt,clock,monoton
  return completion;
 }
 
-/** Terminal runtime on the attempt's high-water clock. Monotonic elapsed is the floor of every charge. Wall elapsed
- * also counts while the wall clock never stepped back in this attempt, so a forward wall step raises the charge
- * (conservative) and a backward step can neither lower it nor enroll. A charge never drops below an earlier one.
+/** Terminal runtime on the attempt's high-water clock. Safe monotonic elapsed is a floor for each charge. Wall elapsed
+ * also counts while neither clock has raised an anomaly in this attempt, so a forward wall step raises the charge
+ * (conservative) and a backward step prevents enrollment without lowering the charge. A charge never drops below an earlier one.
  * A wall reading whose elapsed total would not be a safe integer is a clock anomaly too. It is never stored, so the
  * monotonic floor still charges and no later charge is lost to one absurd reading. A finite monotonic reading whose
  * elapsed total is not a safe integer is the same anomaly: its term is dropped and the elapsed already charged stays,

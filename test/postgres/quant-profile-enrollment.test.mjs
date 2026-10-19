@@ -138,11 +138,13 @@ test('offline enrollment extension installs exactly and admission builds marked 
  const disabled=new QuantProfileService({capacityPolicy});assert.equal(disabled.profileV2Enabled,false);assert.equal(disabled.enrollmentEnabled,false);
  await assert.rejects(disabled.enqueueEnrollment(owner,body,randomUUID()),{code:'PROFILE_ENROLLMENT_DISABLED'});
  await db.transaction(()=>enrollment.get(owner,queued.job_id,true));
+ // Unmarked PROFILE rows fill the queue; marked rows would meet the one-active-enrollment guard before the queue cap.
+ const {completion_mode:ignored,...unmarked}=stored.contract;void ignored;
  const rollback=Error('rollback');
  await assert.rejects(serial(async()=>{
   await db.query(`INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at)
    SELECT gen_random_uuid(),$1,'limit-fixture-'||n,$2,$3,'QUEUED',$4,$5 FROM generate_series(1,20) n`,
-   [owner,JSON.stringify(stored.contract),stored.contract_hash,now,now+900000]);
+   [owner,JSON.stringify(unmarked),stored.contract_hash,now,now+900000]);
   await assert.rejects(enrollment.enqueueEnrollment(owner,body,randomUUID()),{code:'FOUNDATION_QUEUE_FULL'});
   throw rollback;
  }),error=>error===rollback);
@@ -152,6 +154,69 @@ test('offline enrollment extension installs exactly and admission builds marked 
    enabled:true,supportedSourceHash:hash(source),capacityPolicy:changed,profileV2Enabled:true,enrollmentEnabled:true});
   await assert.rejects(serial(()=>rejected.enqueueEnrollment(owner,body,randomUUID())),{code:'QUANT_CAPACITY_POLICY_INVALID'});
  }
+});
+test('one active enrollment per owner and bot: a new key is refused with 409, the same key replays, terminal states free the slot',async()=>{
+ const refusal=error=>error.code==='PROFILE_ENROLLMENT_ALREADY_ACTIVE'&&error.status===409;
+ const activeEnrollments=async()=>(await db.query(`SELECT count(*)::int n FROM quant_foundation_jobs WHERE owner_id=$1
+  AND contract->>'bot_id'=$1 AND status IN ('QUEUED','PAUSED','RUNNING','STOPPING') AND contract->>'completion_mode'='pf2-enrollment-v1'`,[owner])).rows[0].n;
+ const footprint=async()=>(await db.query(`SELECT (SELECT count(*) FROM quant_foundation_jobs)::int jobs,
+  (SELECT count(*) FROM quant_io_ledgers)::int ledgers,(SELECT count(*) FROM quant_io_launches)::int launches`)).rows[0];
+ const set=(id,sql,...values)=>db.query('UPDATE quant_foundation_jobs SET '+sql+' WHERE job_id=$1',[id,...values]);
+ const cancelQueued=()=>db.query("UPDATE quant_foundation_jobs SET status='CANCELLED' WHERE owner_id=ANY($1::text[]) AND status='QUEUED'",[[owner,foreign]]);
+ // Direct insert of an active marked row, as the unmarked fixture below does.
+ const plant=(ownerId,contract)=>db.query(`INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at)
+  VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)`,[randomUUID(),ownerId,randomUUID(),JSON.stringify(contract),hash(canonical(contract)),now,now+900000]);
+ assert.equal(await activeEnrollments(),0);
+ const key=randomUUID(),first=await serial(()=>enrollment.enqueueEnrollment(owner,body,key));
+ const before=await footprint(),token=randomUUID();
+ // Every active status blocks a new key and creates no job, ledger or launch; the original key keeps replaying its job.
+ for(const [status,move] of [['QUEUED',null],['PAUSED',()=>set(first.job_id,"status='PAUSED'")],
+  ['RUNNING',()=>set(first.job_id,"status='RUNNING',lease_token=$2,lease_until=$3,run_started_at=$4,worker_id='fixture-worker'",token,now+60000,now)],
+  ['STOPPING',()=>set(first.job_id,"status='STOPPING',stop_reason='CANCELLED',lease_until=NULL")]]){
+  if(move)await move();
+  assert.equal((await row(first.job_id)).status,status);
+  await assert.rejects(serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID())),refusal);
+  assert.equal((await serial(()=>enrollment.enqueueEnrollment(owner,body,key))).job_id,first.job_id);
+  assert.deepEqual(await footprint(),before);
+ }
+ await set(first.job_id,"status='CANCELLED',lease_token=NULL,lease_until=NULL,stop_reason=NULL");
+ assert.equal(await activeEnrollments(),0);
+ assert.equal((await serial(()=>enrollment.enqueueEnrollment(owner,body,key))).job_id,first.job_id);
+ const second=await serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID()));
+ assert.notEqual(second.job_id,first.job_id);assert.equal(await activeEnrollments(),1);
+ await assert.rejects(serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID())),refusal);
+ // A succeeded enrollment frees the slot, and an active unmarked (diagnostic) PROFILE job neither blocks nor counts.
+ await set(second.job_id,"status='SUCCEEDED'");
+ const {completion_mode:ignored,...unmarked}=(await row(second.job_id)).contract;void ignored;
+ await db.query(`INSERT INTO quant_foundation_jobs(job_id,owner_id,idempotency_key,contract,contract_hash,status,created_at,deadline_at)
+  VALUES($1,$2,$3,$4,$5,'QUEUED',$6,$7)`,[randomUUID(),owner,randomUUID(),JSON.stringify(unmarked),hash(canonical(unmarked)),now,now+900000]);
+ await serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID()));
+ assert.equal(await activeEnrollments(),1);
+ await cancelQueued();assert.equal(await activeEnrollments(),0);
+ // The guard is per owner and bot: an active enrollment of another bot of this owner, or of this bot id under another owner, does not block.
+ const marked=(await row(first.job_id)).contract;
+ await db.query('INSERT INTO quant_foundation_owners(owner_id) VALUES($1) ON CONFLICT DO NOTHING',[foreign]);
+ await plant(owner,{...marked,bot_id:'other-bot-'+randomUUID()});
+ await plant(foreign,{...marked,owner_id:foreign});
+ assert.equal(await activeEnrollments(),0);
+ await serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID()));
+ assert.equal(await activeEnrollments(),1);
+ await cancelQueued();assert.equal(await activeEnrollments(),0);
+ // Two simultaneous new keys: one job commits; the loser is refused by the guard or loses the serialization race (40001).
+ const race=await Promise.allSettled([serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID())),
+  serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID()))]);
+ assert.equal(race.filter(result=>result.status==='fulfilled').length,1);
+ const loser=race.find(result=>result.status==='rejected').reason;
+ assert.ok(refusal(loser)||loser.code==='40001',String(loser.code));
+ assert.equal(await activeEnrollments(),1);
+ await cancelQueued();
+ // A transaction that is open before the winner commits but takes its snapshot after it meets the guard itself, not 40001.
+ let committed;const afterWinner=new Promise(resolve=>{committed=resolve;});
+ const winner=serial(()=>enrollment.enqueueEnrollment(owner,body,randomUUID())).finally(committed);
+ const late=serial(async()=>{await afterWinner;return enrollment.enqueueEnrollment(owner,body,randomUUID());});
+ await Promise.all([winner,assert.rejects(late,refusal)]);
+ assert.equal(await activeEnrollments(),1);
+ await cancelQueued();
 });
 test('exact schema verification rejects shape, trigger, function, constraint and shadow FK drift',async()=>{
  const {assertQuantProfileEnrollmentSchema}=await import('../../src/postgres/quant-profile-enrollment-migration.js');

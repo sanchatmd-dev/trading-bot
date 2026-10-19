@@ -25,6 +25,8 @@ import {fileURLToPath} from 'node:url';
  *   read    API-style reads (QuantProfileService.get in SERIALIZABLE transactions) of the measured job. Each holds
  *           the scheduler row and the job row for its transaction, plus --hold-ms.
  *   cancel  API-style enrollment enqueues of a decoy (these hash the executable closure) and owner cancels of it.
+ *           Every cancel contender has its own owner and bot fixture, because the product allows one active enrollment
+ *           per owner and bot and refuses a second decoy of the measured owner.
  *   claim   scheduler claim polls (scheduler table lock and the running-job check).
  *   hash    executable-closure hashing (CPU and file reads).
  *   vacuum  VACUUM (ANALYZE) of the scheduler and job tables every --vacuum-interval-ms. This is a conservative
@@ -296,21 +298,9 @@ const timed=(probe,key,fn)=>async(...args)=>{
   const start=performance.now();
   try{return await fn(...args);}finally{probe[key]+=performance.now()-start;}
 };
-async function installFixture(m,db,root){
-  const read=name=>fs.readFile(new URL('../src/postgres/'+name,import.meta.url),'utf8');
-  await db.migrate();
-  // The Pine Bridge and Quant research extensions, as their migration scripts install them on an empty database.
-  await db.transaction(async()=>{
-    await db.maintenanceLock();await db.verifySchema();
-    await db.query(await read('pine-bridge-schema.sql'));await db.query(await read('quant-research-schema.sql'));
-  });
-  await m.migrateQuantFoundation(db,{mode:'FOUNDATION',storageRoot:root});
-  const {canonical,hash}=m,sourceHash=hash(SOURCE),input=syntheticAnalysis(m);
-  const policy=capacityPolicy(sourceHash,input.analysis.effective_inputs_hash);
-  const probe={closure:0,schema:0,authority:0,lock:0,inBegin:false};
-  const tickets=m.createProfileEnrollmentTicketAuthority({readExecutableHash:timed(probe,'closure',()=>m.ingestionEngineHash()),
-    releaseGuard:()=>db.runtimeClient,isTransaction:()=>db.isTransaction});
-  const {store,researchStore,data,profile}=apiServices(m,db,root,{sourceHash,policy,enrollmentTicketVerifier:tickets.assert});
+/** One Pine owner that is its own bot, with a READY deployment and its bridge evidence. */
+async function installOwner(m,store,db,sourceHash,input){
+  const {canonical,hash}=m;
   const now=Date.now(),owner=(await store.createUser({email:randomUUID()+'@example.test',passwordHash:'d6-fixture',role:'ADMIN'})).id;
   const risk={...structuredClone(m.config.defaultRisk),paperTrading:true,requireReduceOnlySell:true,
     equities:{'binance-global':1000},balances:{'binance-global':1000}};
@@ -340,6 +330,27 @@ async function installFixture(m,db,root){
     references:{tradingview:'synthetic-fixture-only',source_review:'synthetic-fixture-only',paper_fixture:'synthetic-fixture-only'}};
   await db.prepare('INSERT INTO pine_bridge_evidence VALUES(?,?,?,?,?)').run(deploymentId,snapshotHash,JSON.stringify(evidence),
     hash(canonical(evidence)),now);
+  return {owner,deploymentId,snapshot};
+}
+async function installFixture(m,db,root,decoyCount){
+  const read=name=>fs.readFile(new URL('../src/postgres/'+name,import.meta.url),'utf8');
+  await db.migrate();
+  // The Pine Bridge and Quant research extensions, as their migration scripts install them on an empty database.
+  await db.transaction(async()=>{
+    await db.maintenanceLock();await db.verifySchema();
+    await db.query(await read('pine-bridge-schema.sql'));await db.query(await read('quant-research-schema.sql'));
+  });
+  await m.migrateQuantFoundation(db,{mode:'FOUNDATION',storageRoot:root});
+  const {canonical,hash}=m,sourceHash=hash(SOURCE),input=syntheticAnalysis(m);
+  const policy=capacityPolicy(sourceHash,input.analysis.effective_inputs_hash);
+  const probe={closure:0,schema:0,authority:0,lock:0,inBegin:false};
+  const tickets=m.createProfileEnrollmentTicketAuthority({readExecutableHash:timed(probe,'closure',()=>m.ingestionEngineHash()),
+    releaseGuard:()=>db.runtimeClient,isTransaction:()=>db.isTransaction});
+  const {store,researchStore,data,profile}=apiServices(m,db,root,{sourceHash,policy,enrollmentTicketVerifier:tickets.assert});
+  const {owner,deploymentId,snapshot}=await installOwner(m,store,db,sourceHash,input);
+  // One more owner per cancel contender: the product allows one active enrollment per owner and bot.
+  const decoyTargets=[];
+  for(let index=0;index<decoyCount;index++)decoyTargets.push(await installOwner(m,store,db,sourceHash,input));
   // Synthetic closed 1m bars in place of the exchange: the harness never makes a network request.
   const fetchHistory=(range,{onPage}={})=>{
     const first=range.start_time-range.warmup_bars*MINUTE;
@@ -355,6 +366,13 @@ async function installFixture(m,db,root){
   const raw=await db.transaction(()=>data.enqueue(owner,{bot_id:owner,start_time:end-20*MINUTE,end_time:end,warmup_bars:500,cutoff},
     randomUUID()));
   if(await worker.tick()!==true)throw failure('D6_FIXTURE_INGESTION_FAILED');
+  const decoys=[];
+  for(const target of decoyTargets){
+    const decoyRaw=await db.transaction(()=>data.enqueue(target.owner,{bot_id:target.owner,start_time:end-20*MINUTE,end_time:end,warmup_bars:500,cutoff},
+      randomUUID()));
+    if(await worker.tick()!==true)throw failure('D6_FIXTURE_INGESTION_FAILED');
+    decoys.push({owner:target.owner,body:{bot_id:target.owner,raw_job_id:decoyRaw.job_id,deployment_id:target.deploymentId}});
+  }
   // The production wiring binds tickets to the runtime maintenance lock and builds this authority object.
   await db.runtimeLock();
   const assertSchema=await m.loadQuantProfileEnrollmentSchemaAssertion();
@@ -369,6 +387,11 @@ async function installFixture(m,db,root){
   const contract=(await db.query('SELECT contract FROM quant_foundation_jobs WHERE job_id=$1',[first.job_id])).rows[0].contract;
   const result=await m.buildProfileV2({contract,policy,rawStore:researchStore.raw,researchStore,now:Date.now()});
   await worker.scheduler.cancel(owner,first.job_id);
+  // Each decoy fixture must admit and cancel one enrollment before a contender relies on it.
+  for(const decoy of decoys){
+    const admitted=await serial(db,()=>profile.enqueueEnrollment(decoy.owner,decoy.body,randomUUID()));
+    await worker.scheduler.cancel(decoy.owner,admitted.job_id);
+  }
   // Lock-wait probe: the BEGIN transaction's scheduler table lock statement, on this instance only.
   const query=db.query.bind(db);
   db.query=async(sql,params)=>{
@@ -377,7 +400,7 @@ async function installFixture(m,db,root){
     try{return await query(sql,params);}finally{probe.lock+=performance.now()-start;}
   };
   const bytes=value=>Buffer.byteLength(typeof value==='string'?value:canonical(value));
-  return {m,db,root,worker,profile,io,ledger,probe,policy,owner,body,sourceHash,result,resultHash:hash(canonical(result)),
+  return {m,db,root,worker,profile,io,ledger,probe,policy,owner,body,decoys,sourceHash,result,resultHash:hash(canonical(result)),
     engineHash:contract.engine_hash,failures:{frame_check:{},prepare:{},begin:{}},heartbeat:{started:0,errors:{}},strayQueued:0,
     sizes:{raw_bars:520,source_bytes:bytes(SOURCE),analysis_bytes:bytes(input.analysis),snapshot_bytes:bytes(snapshot),
       contract_bytes:bytes(contract),result_bytes:bytes(result)}};
@@ -413,7 +436,7 @@ const resume=(children,target,jitterMs)=>{
 };
 
 async function startContenders(options,url,f,identity,children){
-  const init={url,identity,root:f.root,owner:f.owner,body:f.body,policy:f.policy,sourceHash:f.sourceHash,
+  const init={url,identity,root:f.root,owner:f.owner,body:f.body,decoys:f.decoys,policy:f.policy,sourceHash:f.sourceHash,
     holdMs:options['hold-ms'],thinkMs:options['think-ms'],vacuumIntervalMs:options['vacuum-interval-ms']};
   const ready=[];
   for(const role of ROLES)for(let index=0;index<options[role];index++){
@@ -449,8 +472,8 @@ async function release(f,job){
 async function runSample(f,children,options){
   const {m,db,worker,profile,io,probe,owner,body}=f;
   // Only a decoy whose cancel failed three times can still be queued; cancel it so the claim takes this sample's job.
-  const stray=(await db.query("SELECT job_id FROM quant_foundation_jobs WHERE status IN ('QUEUED','PAUSED')")).rows;
-  for(const row of stray)await worker.scheduler.cancel(owner,row.job_id);
+  const stray=(await db.query("SELECT job_id,owner_id FROM quant_foundation_jobs WHERE status IN ('QUEUED','PAUSED')")).rows;
+  for(const row of stray)await worker.scheduler.cancel(row.owner_id,row.job_id);
   f.strayQueued+=stray.length;
   const queued=await serial(db,()=>profile.enqueueEnrollment(owner,body,randomUUID()));
   const claimed=await worker.scheduler.claim('d6-measure');
@@ -625,7 +648,7 @@ async function measure(options,url,target){
     const checked=await checkDatabase(db,target,options);
     const environment=await environmentFacts(db,checked);
     root=await fs.mkdtemp(path.join(os.tmpdir(),'d6-harness-'));
-    const f=await installFixture(m,db,root);
+    const f=await installFixture(m,db,root,options.cancel);
     await startContenders(options,url,f,checked.identity,children);
     await pause(children);
     const samples=[],total=options.warmup+options.samples;
@@ -657,10 +680,12 @@ async function contenderOperation(m,db,init,count){
   const hold=async()=>{if(init.holdMs)await db.query('SELECT pg_sleep($1)',[init.holdMs/1000]);};
   if(init.role==='read')return target=>serial(db,async()=>{await profile.get(init.owner,target,false);await hold();});
   if(init.role==='cancel')return async()=>{
-    const decoy=await serial(db,()=>profile.enqueueEnrollment(init.owner,init.body,randomUUID()));
+    // This contender's own owner and bot: a decoy of the measured owner would be refused while a sample job is active.
+    const target=init.decoys[init.index];
+    const decoy=await serial(db,()=>profile.enqueueEnrollment(target.owner,target.body,randomUUID()));
     // A decoy must not stay queued: the measuring process claims the oldest queued job between samples.
     for(let attempt=1;;attempt++){
-      try{await serial(db,async()=>{await profile.get(init.owner,decoy.job_id,true);await hold();});return;}
+      try{await serial(db,async()=>{await profile.get(target.owner,decoy.job_id,true);await hold();});return;}
       catch(error){if(attempt>=3)throw error;count(error);}
     }
   };

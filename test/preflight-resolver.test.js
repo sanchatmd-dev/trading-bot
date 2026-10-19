@@ -623,6 +623,26 @@ test('PF-2 S3 trusted resolver',async t=>{
       venue_metadata_hash:w.plan.snapshot.venue_metadata_hash});
   });
 
+  await t.test('enrollment evaluator identity: an enrollment made for another evaluator is refused before any dataset read',async()=>{
+    // The stale enrollment is consistent with its own capacity policy; only its evaluator differs from the plan's.
+    const stale=world(await base.scenario({enrollmentOptions:{evaluatorHash:sha('c')}}));
+    assert.equal(stale.scenario.enrollment.capacity_policy.scope.evaluator_hash,sha('c'));
+    assert.equal(stale.scenario.enrollment.result.binding.evidence.evaluator_hash,sha('c'));
+    assert.notEqual(stale.plan.snapshot.signal.evaluator_hash,sha('c'));
+    await rejectsWith(stale.resolve(),'PF2_EVALUATOR_HASH_MISMATCH');
+    assert.equal(stale.callNames().at(-1),'enrollment.find');
+    assert.equal(stale.recordKinds().includes('deployment_snapshot'),false);
+    assert.equal(stale.reads.length,0);
+    // Equal identities resolve as before; the declared limitation stays until the next envelope version.
+    const same=world();
+    assert.equal(same.scenario.enrollment.result.binding.evidence.evaluator_hash,same.plan.snapshot.signal.evaluator_hash);
+    const out=await same.resolve();
+    assert.equal(out.identities.enrollment_evaluator_hash,out.identities.evaluator_hash);
+    assert.equal(out.identities.evaluator_hash,base.executables.evaluator_hash);
+    assert.ok(PF2_LIMITATIONS.includes('ENROLLMENT_EVALUATOR_IDENTITY_NOT_BOUND'));
+    assert.deepEqual(out.limitations,[...PF2_LIMITATIONS]);
+  });
+
   await t.test('warm-up: derived warm-up must cover 1006 bars and five slow EMAs',async()=>{
     // Plan-only datasets (no store read happens before this gate).
     for(const [warmup,code] of [[1400,'PF2_WARMUP_INSUFFICIENT'],[1505,'PF2_WARMUP_INSUFFICIENT'],

@@ -23,8 +23,10 @@ role, different code roots per service, and Node argument-loaded environment
 files instead of the assumed systemd EnvironmentFile arrangement. Establish
 reviewed per-service rollback/configuration evidence and complete separate
 bootstrap gates before W7 re-entry. The original G1 record is not complete.
-The release remains `28d6f7e`; one attempt per case, Spot/Paper-only and the
-separate D6/R7 gates remain unchanged. The sections below retain the audited
+The release for these steps is the one that carries the held branches (CX-A
+research-chunk readiness and CX-B PF-2 backlog, including the hardened grant
+script); the release record names its commit. One attempt per case, Spot/Paper-only
+and the separate D6/R7 gates remain unchanged. The sections below retain the audited
 procedure and historical preparation status, subject to this amendment.
 
 ## Original preparation record
@@ -66,7 +68,7 @@ The owner authorizes each mutating effect by name before execution: new release
 code on all three staging services; dependency installation with network access
 (package scripts disabled); the offline schema installation (additive and not
 reversible) and, where it applies, the executor-mode switch; the runtime grant
-script and the DELETE revoke below; the recovery and capacity policy rewrites;
+script below, which now carries the DELETE revoke; the recovery and capacity policy rewrites;
 the worker unit drop-in; the two immutable diagnostic job rows; the staging
 downtime and the period with API admission off; and a rollback that is argued
 statically, not rehearsed. The owner records a GO time before the drain, before
@@ -189,9 +191,9 @@ therefore refused. Use a fresh idempotency key for every case.
 4. Before any step with owner credentials, prove that the owner environment and
    the owner database client reach the same database as the runtime role (equal
    database name, port and server start time); stop on a mismatch. Because the
-   installation cannot be undone, also confirm before it that the grant script
-   names the staging runtime role and that the owner database client is psql 10
-   or later (the grants run as one transaction). Back up the
+   installation cannot be undone, also confirm before it that the owner database
+   client is psql 10 or later and that the operator has the staging runtime role
+   name for the psql variable `runtime_role`. Back up the
    database/configuration under the existing staging procedure.
    Run `node scripts/migrate-quant-foundation.mjs --mode=FOUNDATION` offline with
    the schema owner and the reviewed dataset root. The installer has its own idle
@@ -207,17 +209,28 @@ therefore refused. Use a fresh idempotency key for every case.
    database without a storage namespace requires an empty dataset root; if a
    failed installation leaves only the storage marker file in an otherwise empty
    root with no namespace row, only a separate root-authorized step may move that
-   file aside. Then, before any runtime-role read of the new tables, reapply the
-   runtime grant script as the schema owner in one transaction that first takes
-   the database maintenance lock (it fails while any API or worker holds the
-   database) and ends with a reviewed `REVOKE DELETE` of the runtime role on the
-   foundation job, owner and scheduler tables, the legacy job and research chunk
-   tables, both I/O tables, the enrollment receipts, the storage namespace and
-   the executor mode. Record the previous DELETE grants first; a rollback restores
-   exactly those. SELECT, INSERT and UPDATE stay: no runtime statement deletes
-   from these tables. The revoke is not durable: the grant script grants DELETE
-   on all tables, so every later run of it must repeat the same revoke until the
-   script itself carries it.
+   file aside. Record the runtime role's current DELETE grants on the ten tables
+   named below. Then, before any runtime-role read of the new tables, reapply the
+   runtime grant script as the schema owner:
+   `psql -v ON_ERROR_STOP=1 -v runtime_role=<staging runtime role> -f scripts/grant-postgres-runtime.sql`.
+   The role comes only from that variable; there is no default, so a missing
+   variable or an unknown role stops the script before any change. The script is
+   one transaction that first tries the product's maintenance lock
+   (`robot:maintenance`, the lock of migration, restore and key rotation) and
+   fails at once, without waiting, while any API or worker holds the database.
+   The DELETE revoke is now in the script: it grants DELETE only on tables other
+   than the foundation job, owner and scheduler tables, the legacy job and
+   research chunk tables, both I/O tables, the enrollment receipts, the storage
+   namespace and the executor mode; it revokes DELETE on those ten to clear older
+   grants; and before COMMIT it checks that the runtime role cannot DELETE from
+   any of them, so the result does not depend on statement order or on earlier
+   grants. The same final check refuses to commit while the runtime role can
+   INSERT, UPDATE or DELETE on the read-only version and provenance tables,
+   including through PUBLIC or another role. SELECT, INSERT and UPDATE stay: no runtime statement deletes from
+   these tables. Rollback caveat: copies of the grant script from before this
+   change grant DELETE on every table. After any rollback that reapplies such a
+   copy, reapply this script, or restore exactly the DELETE grants recorded
+   above.
 5. `LOCK TABLE ... IN EXCLUSIVE MODE` needs table-level UPDATE, DELETE or
    TRUNCATE privilege, or ownership; column grants do not count. The helper locks
    the scheduler table, the worker claim updates it and enrollment completion
@@ -226,8 +239,9 @@ therefore refused. Use a fresh idempotency key for every case.
    true, and table-level SELECT, INSERT and UPDATE on the foundation job and owner
    tables and on both I/O tables. A missing privilege fails closed as
    `QUANT_DIAGNOSTIC_FAILED` with `sqlstate` 42501. After the DELETE revoke,
-   UPDATE alone carries these locks; also record DELETE false on the revoked
-   tables.
+   UPDATE alone carries these locks. The script already refuses to commit if
+   DELETE remains on any of the ten tables; still record DELETE false on them as
+   the runtime role.
 6. Verify the real release root, storage binding, block-device identity, free
    space, cgroup delegation, I/O controls and current health. The dataset root
    must be on ext4. The host-derived drain need is 2,000 ms plus the dirty-expire
@@ -336,7 +350,8 @@ SIGKILL fails acceptance. A safe fallback is not a measured-completion pass.
 ## D6 and the gate it blocks
 
 D6 is the Linux measurement of the enrollment prepare and BEGIN cost (p99 under
-contention), which sets the reserve a marked job needs before its terminal. It
+contention), which the acceptance inequality below checks against the time a marked
+job has before its terminal. It
 applies to marked enrollment jobs only. The PROFILE V2 runtime
 (`src/postgres/quant-profile-runtime-v2.js`) marks a job only when its contract
 carries `completion_mode: 'pf2-enrollment-v1'`. Only a marked job runs the
@@ -351,13 +366,22 @@ D6 therefore neither blocks nor is measured by the W7 cases C1 and C2. It blocks
 the durable enrollment proof (R7) and with it staging activation. Before R7,
 measure prepare plus BEGIN on this host under contention (API reads and cancels
 holding the scheduler row, the scheduler lock wait, autovacuum, the executable
-closure hash) and set the marked reserve to the measured p99 plus a margin;
-below that reserve a marked job takes the diagnostic cancellation path, which
-still settles measured.
+closure hash). There is no marked-reserve field and no diversion to the
+cancellation path. D6 instead validates an acceptance inequality:
+`worst_case_total.ms + 1100 + M <= runtime_max_ms - 5000 - terminal_drain_ms - tail_margin_ms - S`.
+Here 1100 ms is the poll interval (100 ms) plus the deadline slack (1000 ms), M
+is the root's margin and S is the spawn-to-frame time on staging (cold start,
+readiness and compute). With the W7 terminal block (70000 / 45000 / 5000) the
+right side is 15000 ms minus S, and no policy value can enlarge it;
+`tail_margin_ms` is not a reserve, and raising it shrinks the window. An
+overrun is fail-closed: the final state is unknown, the completion runtime is
+charged, the job ends CANCELLED / UNKNOWN_FINAL_CHARGED and nothing enrolls. If
+D6 fails the inequality, stop: no retry under the same pins. Choose a code lever
+with owner approval; it needs an engine rotation and a D6 rerun.
 
 ## Durable enrollment and R7 API proof
 
-After W7 passes and D6 has set the marked reserve, enable the reviewed
+After W7 passes and D6 passes the acceptance inequality above, enable the reviewed
 staging-only configuration in the API and dedicated worker:
 `PINE_BRIDGE_ENV=staging`, `PAPER_TRADING=true`,
 `PINE_BRIDGE_ENABLED=1`, `QUANT_RESEARCH_ENABLED=1`,
@@ -365,6 +389,27 @@ staging-only configuration in the API and dedicated worker:
 `QUANT_PROFILE_V2_ENROLLMENT_ENABLED=1`. Keep `QUANT_PREFLIGHT_ENABLED=0` until
 the enrollment below passes. Data admission derives from the research and
 foundation flags; there is no separate `QUANT_DATA_ENABLED` flag.
+
+Evaluator identity binding. Since `432b328` the capacity policy's
+`scope.evaluator_hash` is bound to the running evaluator: at worker and API
+startup (A) and when the PF-2 resolver reads an enrollment (D). The limitation
+string `ENROLLMENT_EVALUATOR_IDENTITY_NOT_BOUND` remains only for envelope
+compatibility; remove it with the next envelope version bump. Expected startup
+refusals when `QUANT_PROFILE_V2_ENROLLMENT_ENABLED=1` or
+`QUANT_PREFLIGHT_ENABLED=1`:
+
+- `CAPACITY_POLICY_EVALUATOR_MISMATCH`: the policy's evaluator differs from the
+  release tree. Fix it by issuing a new capacity policy that carries the
+  evaluator hash computed from the exported release tree's blob bytes (the
+  combined release: `3fb2d465`). Never change code or flags to get past it.
+- `PF2_ENGINE_HASH_MISMATCH`: the process could not read the PF-2 engine files,
+  including the `quant_lab` Python evaluator files, which an enrollment-enabled
+  API now reads at start. Verify that the release tree holds them before turning
+  enrollment on.
+
+With both flags off, as on staging today, no check runs. The resolver check (D)
+reuses `PF2_EVALUATOR_HASH_MISMATCH`, like the plan check; a fresh plan on this
+code that still gets it means a stale enrollment: re-enroll.
 
 Using the authenticated owner session and CSRF protection, send exactly one
 `POST /api/quant/data/profile-enrollments` with a fresh idempotency key and

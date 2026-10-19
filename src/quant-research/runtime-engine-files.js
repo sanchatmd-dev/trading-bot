@@ -72,6 +72,7 @@ export const QUANT_RUNTIME_ENGINE_FILES=Object.freeze([
   'src/quant-research/preflight-runtime.js',
   'src/quant-research/process-supervisor.js',
   'src/quant-research/profile-contract-v2.js',
+  'src/quant-research/profile-child-diagnostic.js',
   'src/quant-research/profile-contract.js',
   'src/quant-research/profile-pipeline-v2.js',
   'src/quant-research/research-contract-v2.js',

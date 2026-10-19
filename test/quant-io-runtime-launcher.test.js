@@ -12,7 +12,7 @@ import {
 } from '../src/quant-research/io-runtime-launcher.js';
 import {terminalReadbackDigest} from '../src/quant-research/io-terminal.js';
 import {validateTerminalPolicy,capacityPolicyHash} from '../src/quant-research/capacity-contract.js';
-import {canonical} from '../src/pine-bridge/source.js';
+import {canonical,hash} from '../src/pine-bridge/source.js';
 import {profileV2Fixture} from './helpers/profile-v2-fixture.js';
 import {StorageBudget} from '../src/quant-research/storage-budget.js';
 
@@ -235,6 +235,42 @@ async function terminateWith(host,{timeoutMs=30000,terminate={},launcher:launche
   return {handle,result:await handle.terminate({bound,commit:async()=>{host.log.push('commit');},...terminate})};
 }
 const before=(log,first,second)=>log.findIndex(line=>line.startsWith(first))<log.findIndex(line=>line.startsWith(second));
+test('native child diagnostics attach after existing consumers and never infer stop proof',async()=>{
+ const host=fakeHost(),handle=await spawnHandle(host);
+ assert.equal(host.child.stderr.listenerCount('data'),2);
+ assert.equal(handle.childDiagnostic().closeObserved,false);
+ host.child.stderr.emit('data',Buffer.from('PROFILE_OPEN_BAR\n'));
+ assert.equal(handle.childDiagnostic().code,'UNKNOWN');
+ host.child.emit('close',1,null);
+ const diagnostic=handle.childDiagnostic();assert.equal(diagnostic.code,'PROFILE_OPEN_BAR');
+ assert.equal(diagnostic.exitStatus,1);assert.equal(diagnostic.childKernelStatusKnown,false);
+ assert.equal(await handle.closed,1);assert.equal(host.log.some(line=>line.startsWith('child.kill')),false);
+});
+test('native diagnostic observation preserves existing combined output limit and kill',async()=>{
+ const host=fakeHost(),handle=await spawnHandle(host);
+ // Real process close arrives asynchronously after kill, not inside the data consumer.
+ host.child.kill=signal=>{host.log.push('child.kill '+signal);return true;};
+ host.child.stderr.emit('data',Buffer.alloc(65537));
+ host.closeChild();
+ assert.equal(host.log.filter(line=>line==='child.kill SIGKILL').length,1);
+ assert.equal(handle.childDiagnostic().truncated,true);assert.equal(handle.childDiagnostic().code,'UNKNOWN');
+});
+test('native observation preserves accepted/result stdout frames and successful launcher exit',async()=>{
+ const host=fakeHost(),{policy,contract}=profileV2Fixture(600);
+ policy.environment='staging';contract.capacity.environment='staging';contract.capacity.policy_hash=capacityPolicyHash(policy);
+ const budget=fakeBudget(host),payload=canonical({version:'profile-v2-provisional',jobId:'11111111-2222-4333-8444-555555555555',
+  operationId:'operation-00001',contract,policy,storage:{root:budget.root,diskQuotaBytes:budget.diskQuotaBytes,
+   tempQuotaBytes:budget.tempQuotaBytes,freeFloorBytes:budget.freeFloorBytes}});
+ const launcher=createIoRuntimeLauncher({protocol:'profile-v2-provisional',ioControls:controls,storageBudget:budget,
+  timeoutMs:30000,allowUnsupportedPlatformForTests:true,seams:host.seams});
+ const handle=(await launcher.prepare({unitName,payload})).spawnPrepared();await handle.ready;handle.release();
+ const frame={version:'synthetic-transport-frame',result:{evaluator_admission:false}};
+ host.child.stdout.emit('data',Buffer.from(`QUANT_PROFILE_ACCEPTED_V2 ${hash(payload)}\n${canonical(frame)}\n`));
+ assert.deepEqual(await handle.accepted,{unitName,payloadHash:hash(payload)});assert.deepEqual(await handle.profileResult,frame);
+ host.child.emit('close',0,null);assert.equal(await handle.closed,0);
+ assert.equal(handle.childDiagnostic().code,'UNKNOWN');assert.equal(handle.childDiagnostic().exitStatus,0);
+ assert.equal(host.log.some(line=>line.startsWith('child.kill')),false);
+});
 /** FTR-1c-D F1: prepare() refuses a host whose vm sysctls the drain cannot cover. To exercise the terminate-time
  * re-check, the host passes prepare() with the default sysctls and then drifts to `options` once the unit is ready.
  */
