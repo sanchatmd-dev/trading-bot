@@ -1,7 +1,9 @@
 # QR-3 full fair comparison contract
 
 Status: owner decisions OD-C1 to OD-C22 recorded 2026-10-19; root decided RD-1 to RD-10 the same day. Root
-accepted the other rules after independent review. Implementation has not started; nothing here grants a
+accepted the other rules after independent review. Root recorded clarifications RC-C1 to RC-C27 on 2026-10-19
+from the S1 review (section 15, "Root clarifications"); two owner items stay open (OPEN-1, OPEN-2) and fail
+closed. The S1 pure module (src/comparison) is root-accepted as local engineering evidence and is not wired into any route, worker or view. Nothing here grants a
 ranking, label, recommendation, apply or Bot action. This contract is not a GO. Each implementation step
 still needs its own gates and approvals.
 
@@ -205,7 +207,9 @@ into:
 | C16 | `validation_protocol` | Hash of the comparison `rules` (adequacy, risk filter, sensitivity and cost-stress rules), `ledger_initialization` and the evaluation contract version | [SRC: INV F10-02, "validation contexts"]; CODE: DERIVE `validation_protocol` |
 
 Key: `context_key = hash(canonical({version:'qr3-context-std-v1', ...C1..C16}))`, same canonical hashing as
-DERIVE `compatibilityKey`. An unreadable field is `MISSING:<participant_id>` and never matches.
+DERIVE `compatibilityKey`. An unreadable field is `MISSING:<participant_id>` and never matches. A sub-key
+inside a field that this table does not list is unreadable (`MISSING:<participant_id>`) until RD-3 decides the
+field content (RC-C6).
 
 Subject fields (may differ, always disclosed): source hash and version, source contract version, fixed
 strategy hash, parameter values and Bridge ATR/RR pair, dimension set, warm-up bar count, originating run and
@@ -232,7 +236,9 @@ registration date and funding flows are disclosed differences, not context. [SRC
 
 Reuse DERIVE `compatibilityMismatches`: per differing context field, list the field and each participant's short
 value. Metrics of an excluded participant are withheld (CODE: LIB `compareRun` returns base fields only when
-incompatible). This applies to the new modes.
+incompatible). This applies to the new modes. Metrics are also hidden for `EXCLUDED_COVERAGE`,
+`EXCLUDED_INTEGRITY` and `UNAVAILABLE` (RC-C26). `compareToDeclared` normalises the declared context through
+the same readers as a participant context before it compares (RC-C7).
 
 ---
 
@@ -244,6 +250,9 @@ incompatible). This applies to the new modes.
   Custom. Week is seven days; months and years use calendar boundaries and month-end clamping in the report
   timezone; YTD starts January 1. Freeze UTC half-open intervals with completed bars. [SRC: ROADMAP § Report
   range, period-first UI]
+- Anchors (RC-C16): the relative periods 1 Week to 3 Years end at the end of the last completed bar (end-anchored).
+  A supplied `start_ms` makes them start-anchored instead. The anchor is shown and frozen with the interval.
+  YTD at exactly January 1 00:00 UTC has an empty window and is refused `QR3_PERIOD_INVALID` (RC-C17).
 - Show requested period, evaluation, warm-up and total bars, available history, stage limit, capability and
   admission result. Never silently change timeframe or downsample. [SRC: same]
 - All Available is bounded by venue history, evaluator, mode, storage and admission; show and confirm its
@@ -266,7 +275,8 @@ incompatible). This applies to the new modes.
 ### 4.3 Data gaps and coverage
 
 - G1 (SRC) Gaps, duplicates and incomplete bars are rejected [SRC: ROADMAP row QD-1]. Missing archived data
-  disables exact reproduction; never use replacement candles. [SRC: QRL § Research record and storage]
+  disables exact reproduction; never use replacement candles. [SRC: QRL § Research record and storage] A bar
+  counts for the period only when `complete === true` (RC-C8).
 - G2 `STANDARDIZED`: the shared dataset must be gapless over `[start - W_max, end)`, else
   `QR3_DATASET_GAPPED` with the gap intervals. No interpolation, forward fill or shortening.
 - G3 `ACTUAL_BOT`: price gaps follow QR2 § 2.1 and § 11 unchanged. An `UNAVAILABLE` QR-2 view is
@@ -289,20 +299,32 @@ incompatible). This applies to the new modes.
   only; no intent, fill or position exists before `start`. [SRC basis: CODE `ledger_initialization`]
 - V3 No deposits or withdrawals inside the window. Return = `NAV(end) / NAV(start) - 1`. Any flow refuses the
   evaluation `QR3_FLOW_IN_WINDOW`.
-- V4 Valuation grid `qr3-grid-bar-close-v1`: every bar close in `[start, end)`. Drawdown uses this grid.
+- V4 Valuation grid `qr3-grid-bar-close-v1`: every bar close in `[start, end)`. Drawdown uses this grid. The
+  first grid point is `NAV(start)` = `initial_cash` (RC-C18).
 - V5 End treatment `MARK_AT_END_CLOSE`: an open position at `end` is marked at the close of the last bar before
   `end` and not liquidated. A simulated liquidation exists only as a separately labelled line. [SRC: QRL
   § Portfolio Performance] Decision OD-C10.
 - V6 Fees and slippage come only from the context cost model, applied by the evaluator at fill time. Total fees
-  and total modeled slippage are information lines, never subtracted again. [SRC basis: QR2 § 8.4]
+  and total modeled slippage are information lines, never subtracted again. [SRC basis: QR2 § 8.4] Tick rounding is
+  adverse (a buy rounds up, a sell rounds down) until RD-5 confirms the evaluator rule (RC-C19). Fills on the
+  same bar are ordered by an explicit `sequence` field; a same-bar fill without `sequence` refuses
+  `QR3_METRIC_UNAVAILABLE` with detail `FILL_ORDER_UNKNOWN` (RC-C9).
 - V7 Decimal strings: money at 18 places half-even per position per instant; returns rounded once at output to
   12 places, matching QR-2 rounding ids. Ranking compares unrounded canonical decimals, so `1.50` equals
-  `1.5`. [SRC basis: QR2 § 7.4]
+  `1.5`. [SRC basis: QR2 § 7.4] Money, metric and threshold inputs of type `number` (including context capital
+  and costs and the spec drawdown limit, tie band and confidence) are refused `QR3_SPEC_INCOMPLETE` with detail
+  `NUMBER_NOT_DECIMAL_STRING` (RC-C10). This refusal applies to the declared context and the spec; in a participant
+  context a number is unreadable (`MISSING:<id>`) and excludes that participant with `QR3_CONTEXT_MISMATCH`. Every `*_exact` field is the unrounded value at 80 digits
+  (RC-C14).
 - V8 The evaluator's end-of-window rule and its ability to emit the bar-close grid, fees, exposure, rejected
   intents and completed episodes are not shown in the sources read. Until root confirms them from the evaluator
   source (decision RD-5), `valuation.end_treatment` carries `VALUATION_BASIS_UNCONFIRMED`, each missing metric
   is null with `METRIC_NOT_RECORDED`, and every participant fails the evaluation check (no ranking). This is a
-  gap, never a pass.
+  gap, never a pass. Status (RC-C2): a participant whose evaluation record exists but fails the evaluation check
+  is `DEVELOPMENT_EVIDENCE` with `VALUATION_BASIS_UNCONFIRMED` and/or `METRIC_NOT_RECORDED`; recorded metrics
+  stay visible, each missing one is null with its reason, the participant is never ranked, and later checks are
+  `NOT_REACHED`. `NOT_EVALUATED` applies only when no record exists. The metrics V8 requires are those the S1
+  module implements.
 
 ### 5.2 Actual-Bot valuation
 
@@ -315,7 +337,9 @@ Requirement: Buy & Hold on the same price and cost basis, with timing, costs and
 
 - B1 One buy at the first evaluation bar under the context fill model: verified close of that bar with the
   context adverse slippage, tick rounding and fee. Quantity: all `initial_cash` after fee, rounded down to
-  `quantity_step`; residual cash stays cash. Decision OD-C11.
+  `quantity_step`; residual cash stays cash. Decision OD-C11. If `initial_cash` is below one quantity step, the
+  benchmark row is null with `QR3_METRIC_UNAVAILABLE` detail `NO_UNITS_AFFORDABLE`, excess return is null and
+  the comparison is not refused (RC-C20).
 - B2 No further trades. Marked on the same grid and end treatment (V4, V5). No exit fee unless the separately
   labelled simulated liquidation line is shown. Decision OD-C12.
 - B3 No funding inside the window (V3).
@@ -343,17 +367,20 @@ thresholds fixed before any result is seen. [SRC: PKG § 5]
   before any participant evaluation on the window starts.
 - F3 Every evaluation record used for ranking references `comparison_id` and `spec_hash` and was created after
   `frozen_at_utc`. A stored result created earlier is development evidence only (M4, section 7). Decision
-  OD-C5.
+  OD-C5. Strictness (RC-C1): the record inputs `record_comparison_id` and `record_spec_hash` must equal
+  `comparison_id` and `spec_hash`, else `QR3_RESULT_PREDATES_SPEC` (unreadable: `QR3_INTEGRITY_FAILED`).
+  `created_at` must be strictly later than `frozen_at`; equal times predate the spec.
 - F4 The spec is immutable. A change of objective, filters, period or participants is a new comparison with
   `parent_comparison_id`; the earlier comparison and its exposures stay. A change request is refused
-  `QR3_SPEC_IMMUTABLE`.
+  `QR3_SPEC_IMMUTABLE`. The outcome decision refuses duplicate participant ids (`DUPLICATE_RUN_ID`) and a
+  `spec_hash` that differs from the recomputed hash (`QR3_SPEC_IMMUTABLE`) (RC-C13).
 - F5 The objective comes from a versioned registry only. Unknown id: `QR3_OBJECTIVE_UNKNOWN`. No free weights,
   no ad-hoc metric, no owner-authored tie-break order. An objective in `ACTUAL_BOT` mode is refused
   `QR3_OBJECTIVE_NOT_ALLOWED`.
 - F6 Thresholds are read from the frozen spec, never from current code constants. A later registry change
   records `RULES_VERSION_DIFFERS` (informational) and never re-labels a frozen comparison. [SRC basis: PKG § 5]
 - F7 The owner may only tighten a filter at spec time (higher episode minimum, lower drawdown
-  limit) relative to the registry defaults. A looser value is refused `QR3_FILTER_LOOSENED`. Decision OD-C21.
+  limit) relative to the registry defaults. A looser value is refused `QR3_FILTER_LOOSENED`. Decision OD-C21. Tie band: see OPEN-1 in section 15.
 - F8 The comparison screen shows no participant metric for the comparison window before the
   spec is frozen. It shows only the compatibility verdict, mismatches, library class and qualification label.
 
@@ -361,7 +388,8 @@ thresholds fixed before any result is seen. [SRC: PKG § 5]
 
 - Primary metric: net return percent over the evaluation window after costs (5.1), higher is better.
 - Risk filter: maximum drawdown percent on grid V4 at most the spec limit (default the owner risk limit). Above
-  the limit: `FILTERED_RISK`, never ranked.
+  the limit: `FILTERED_RISK`, never ranked. The registry default is `min(20, owner_max_drawdown_percent)`, where
+  `owner_max_drawdown_percent` is an input (RC-C15).
 - No composite or weighted score. No secondary metric changes the order: this objective has no tie-break
   (decision OD-C1).
 
@@ -381,7 +409,10 @@ evidence. [SRC: ROADMAP § Data readiness and candidate outcomes]
 - S4 Closed allocations are not episodes. They are shown as information (`closed_trades`). [SRC: ROADMAP § Data
   readiness]
 - S5 While the versioned episode gate does not exist, the episode count is unknown and adequacy is FAIL
-  with `QR3_EPISODE_GATE_NOT_AVAILABLE`, never a pass. [SRC basis: PKG § 5, unknown is FAIL; PKG OD-4]
+  with `QR3_EPISODE_GATE_NOT_AVAILABLE`, never a pass. [SRC basis: PKG § 5, unknown is FAIL; PKG OD-4] A
+  malformed adequacy spec refuses the comparison outcome with `QR3_SPEC_INCOMPLETE` and never becomes
+  `INADEQUATE_EVIDENCE`. `QR3_EPISODE_GATE_NOT_AVAILABLE` applies only when the gate is absent; an available
+  gate with an unreadable episode count gives `QR3_METRIC_UNAVAILABLE` (RC-C11).
 
 ### 6.4 Uncertainty (requirement SRC; method by decision OD-C2)
 
@@ -391,18 +422,28 @@ resample count, block length, confidence and seed in the spec; output is the int
 Deterministic for a given spec and dataset. The report states it is an approximation, not a guarantee. The
 interval is required for a sole best label.
 
+Method details (RC-C23): stationary block bootstrap; a new block starts with probability 1/`block_length` at
+each step; the series is circular; both participants use the same resampled indices; the statistic is the
+difference of the compounded returns; the interval tails are index `floor(R*(1-c)/2)` of the sorted statistics
+for `R` resamples at confidence `c`; the first day return is measured against the initial NAV. The function
+itself requires `0 < confidence < 1`, `resamples <= MAX_RESAMPLES` (20000) and `block_length <= MAX_BLOCK` (3650), else
+`QR3_SPEC_INCOMPLETE` (RC-C12). A hand-derived non-degenerate golden fixture pins the method.
+
 Robustness shown beside it: the source run's sensitivity rows and cost stress (`ENGINE_DEFINED_2X_FEE_AND_SLIPPAGE`)
 as stored, labelled as source-run validation data.
 
 If the spec names no approved method, or the method is not implemented, the field is
 `UNCERTAINTY_METHOD_NOT_APPROVED` and no sole best label is shown (outcome at most `QUALIFIED_TIE` or
-`NO_QUALIFIED_RESULT`).
+`NO_QUALIFIED_RESULT`). The top two groups then merge exactly as in the interval-unavailable case: ranks
+`[1,1,3]` and both top labels are `TIED_BEST_LABEL` (RC-C4).
 
 ### 6.5 Ties (requirement SRC "Allow ties"; decision OD-C3)
 
 - T1 Two eligible participants tie when the primary metric difference is below the spec tie band (0.50
   percentage points), or when the uncertainty interval of their difference includes zero.
-- T2 A tie group shares one rank. No tie-break chosen after results; no random or creation-time tie-break.
+- T1a Ties chain by single linkage over the gaps between adjacent sorted values: a gap below the band joins the
+  next value to the group (RC-C21).
+- T2 A tie group shares one rank, competition style (ranks 1,1,3) (RC-C22). No tie-break chosen after results; no random or creation-time tie-break.
 - T3 A tied top rank gives `QUALIFIED_TIE`; no single best label; each member may be labelled "tied best
   within the selected scope".
 
@@ -414,10 +455,16 @@ Allowed:
   behavior, "Rank only qualified results"]
 - R2 Order by the frozen objective only, after risk filter and adequacy, using exact decimals. [SRC: same]
 - R3 Label the single top participant "best within the selected scope", never universally best. The scope
-  string lists asset, resolved period, risk profile, cost model and context key. [SRC: same; PKG § 5.5]
+  string lists asset, resolved period, risk profile, cost model and context key. [SRC: same; PKG § 5.5] The label
+  validator accepts only the exact label text; any case or spacing variant is `R3 LABEL_WITHOUT_SELECTED_SCOPE`,
+  and any other non-null label is refused (`X1 LABEL` for a participant that is not eligible, `X4 LABEL` on an
+  actual-Bot row, else `R3 LABEL_NOT_ALLOWED`) (RC-C3). It allows participant
+  metrics only when the lifecycle is `COMPLETE`; `undefined`, `FAILED` and `CANCELLED` carry none (RC-C5).
 - R4 Show rank beside the benchmark and the uncertainty interval.
 - R5 A ranking needs at least two `ELIGIBLE_QUALIFIED` participants; one alone gets the label only as "only
-  qualified participant within the selected scope", never as a winner over others. Decision OD-C18.
+  qualified participant within the selected scope", never as a winner over others. Decision OD-C18. With exactly one `ELIGIBLE_QUALIFIED` participant there is no rank,
+  only the R5 label, and `only_qualified_participant_id` is set. The outcome value stays as implemented and is
+  open: see OPEN-2 in section 15.
 
 Forbidden:
 
@@ -461,6 +508,7 @@ create reads and appends the register in one SERIALIZABLE transaction (QR-4 cont
 evaluation the window is selection data for every participant, including a winner. A later independence claim
 needs a new disjoint window. The participant's library detail shows
 `HOLDOUT_EXPOSED_BY_COMPARISON` with comparison or selection ids where a source holdout overlaps an exposure.
+`HOLDOUT_EXPOSED_BY_COMPARISON` keeps the class `DEVELOPMENT_EVIDENCE` (RC-C25).
 Library G5 and package B0 read this register (decision OD-C8). The QR-4 selection exposure records (QR-4
 contract § 13.3) are part of the same register. Every reader (the QR-3 evidence class, the QR-4 window
 check, library G5 and package B0) reads both kinds for the same owner and the same market. Root fixes the
@@ -493,10 +541,10 @@ evaluate; it is listed with its reason counts and `QR3_NO_SCREENED_CANDIDATE`, a
 | | `CANCELLED` | Owner cancelled; exposure events already written stay. |
 | Outcome (`COMPLETE` only) | `QUALIFIED_RANKING` | At least two `ELIGIBLE_QUALIFIED` participants and a single top participant outside any tie (R5 for one). |
 | | `QUALIFIED_TIE` | Top rank is a tie group, or no approved uncertainty method separates the top two. |
-| | `NO_QUALIFIED_RESULT` | No participant is `ELIGIBLE_QUALIFIED`. Valid. Today every comparison ends here (1.2 item 7). |
+| | `NO_QUALIFIED_RESULT` | No participant is `ELIGIBLE_QUALIFIED`, or (interim, open owner item OPEN-2) exactly one is, with `only_qualified_participant_id` set and no rank. Valid. Today every comparison ends here (1.2 item 7). |
 | | `INADEQUATE_EVIDENCE` | Every evaluated participant is `INADEQUATE_SAMPLE`. Valid. |
 | | `ACTUAL_HISTORY_SIDE_BY_SIDE` | `ACTUAL_BOT` mode. No ranking by definition. |
-| Derived at read | `STALE` | A participant integrity check now fails, a participant row is unreadable, a later exposure changed an evidence class, or a `REPLAY_MISMATCH` exists. Shown with the first differing code; stored numbers never rewritten. [SRC basis: PKG § 6.2] |
+| Derived at read | `STALE` | A participant integrity check now fails, a participant row is unreadable, a later exposure changed an evidence class, or a `REPLAY_MISMATCH` exists. Shown with the first differing code; stored numbers never rewritten. [SRC basis: PKG § 6.2] The `STALE`, replay-mismatch and `ACTUAL_BOT` checks are not in the S1 module and stay todo for slices S2, S4 and QR-2 S3 (RC-C27). |
 
 ### 8.2 Participant status
 
@@ -557,6 +605,12 @@ New:
 `QL4C_VALIDATION_NOT_AVAILABLE`), `QR3_NO_SCREENED_CANDIDATE`, `QR3_EPISODE_GATE_NOT_AVAILABLE`,
 `QR3_SAMPLE_INADEQUATE`, `QR3_RISK_FILTER_FAILED`, `QR3_METRIC_UNAVAILABLE`, `METRIC_NOT_RECORDED`,
 `QR3_BENCHMARK_DATA_UNAVAILABLE`, `HOLDOUT_EXPOSED_BY_COMPARISON`.
+
+Unnamed conditions (RC-C24): a metric that cannot be computed uses `QR3_METRIC_UNAVAILABLE` with a detail
+string; a malformed or missing spec field uses `QR3_SPEC_INCOMPLETE`; an objective in `ACTUAL_BOT` mode uses
+`QR3_OBJECTIVE_NOT_ALLOWED`. Details seen so far: `FILL_ORDER_UNKNOWN`, `NO_UNITS_AFFORDABLE`,
+`NUMBER_NOT_DECIMAL_STRING`, `TIE_BAND_FIXED`. `QR3_SPEC_IMMUTABLE` is also used for a recomputed `spec_hash`
+mismatch (RC-C13).
 
 ### 9.3 Limitations (informational)
 
@@ -720,6 +774,22 @@ acceptance cases.
     preorder consistent with the objective.
 20. Stored-result view (M4): aligned period resolves; off by one bar refuses `QR3_PERIOD_NOT_PARTITION_ALIGNED`;
     block is always `DEVELOPMENT_EVIDENCE` and unranked.
+21. Root clarification tests (RC-C1 to RC-C27): ranks `[1,1,3]` with both top labels `TIED_BEST_LABEL` when the
+    method is not approved; label case and spacing variants refused; label metrics refused for lifecycle
+    `undefined`, `FAILED` and `CANCELLED`; F3 id and hash mismatch, unreadable record, and equal
+    `created_at` and `frozen_at`; V8 participant with a record gets `DEVELOPMENT_EVIDENCE` and later checks
+    `NOT_REACHED` (updates test 13); bootstrap input bounds; duplicate participant ids; `spec_hash` mismatch;
+    unlisted context sub-key; normalised declared context; bar with `complete !== true`; same-bar fills with and
+    without `sequence`; number inputs refused; malformed adequacy spec; `*_exact` at 80 digits; drawdown default
+    with a lower owner limit; relative periods end- and start-anchored; YTD at January 1; first grid point
+    `NAV(start)`; adverse tick rounding; `NO_UNITS_AFFORDABLE`; tie chaining; hand-derived non-degenerate
+    bootstrap golden; hidden metrics for `EXCLUDED_*` and `UNAVAILABLE`.
+22. Mutation-gap tests: duplicate bars at `end_ms` ignored by `checkDatasetGaps`; tie band 0.51 and 0.6 per
+    OPEN-1; `min_episodes_floor` equal to `min_episodes_ranking` accepted; resamples 20000 accepted and 20001
+    refused; bootstrap tails with 999 resamples at 0.95; hand-derived bootstrap bounds with block restart;
+    `dailyReturns` with an unsorted `navSeries`; `round18` half-even tie at the 19th decimal; SELL fill with a
+    nonzero fee; exposure event at exactly `as_of_ms` counted; `EXCLUDED_COVERAGE` hides metrics; gate state
+    `PASS` with `pass:false` is FAIL; `initial_inventory` `'2'` and `'0.5'` give `QR3_SPEC_INCOMPLETE`.
 
 ### 13.2 Isolated PostgreSQL (throwaway cluster, one file per process)
 
@@ -838,3 +908,50 @@ RD-1 to RD-10 the same day. Each outcome is part of this contract.
 | RD-8 | K1 reading | Confirmed: F10-02 acceptance can be met with `NO_QUALIFIED_RESULT`. | Root | 2026-10-19 |
 | RD-9 | Synchronize docs after owner decisions | PKG amended (OD-19, OD-20); QRL comparison section and ROADMAP QR-3 status text follow; Roadmap and Time Management at the checkpoint. | Root | 2026-10-19 |
 | RD-10 | Independent review before acceptance | Done before acceptance; the review result is evidence, not acceptance. | Root | 2026-10-19 |
+
+### Root clarifications (2026-10-19)
+
+Root clarified these points from the QR-3 S1 review. None changes an owner decision OD-C1 to OD-C22. Each row
+names the sections edited in place.
+
+| ID | Clarification | Sections changed | Decided by | Date |
+| --- | --- | --- | --- | --- |
+| RC-C1 | F3 record inputs `record_comparison_id` and `record_spec_hash` must equal `comparison_id` and `spec_hash`, else `QR3_RESULT_PREDATES_SPEC` (unreadable: `QR3_INTEGRITY_FAILED`); `created_at` strictly later than `frozen_at` | 6.1 F3, 13.1 item 21 | Root | 2026-10-19 |
+| RC-C2 | V8: a participant with a record that fails the evaluation check is `DEVELOPMENT_EVIDENCE` with `VALUATION_BASIS_UNCONFIRMED` and/or `METRIC_NOT_RECORDED`; recorded metrics visible, missing ones null with reason, never ranked, later checks `NOT_REACHED`; `NOT_EVALUATED` only with no record; required metrics are those the S1 module implements | 5.1 V8, 13.1 items 13 and 21 | Root | 2026-10-19 |
+| RC-C3 | Label validator accepts only the exact label text; case or spacing variants are `R3 LABEL_WITHOUT_SELECTED_SCOPE`; any other non-null label is refused (`X1 LABEL` for a participant that is not eligible, else `R3 LABEL_NOT_ALLOWED`) | 6.6 R3, 13.1 item 21 | Root | 2026-10-19 |
+| RC-C4 | Uncertainty method not approved: merge the top two groups as in the interval-unavailable case; ranks `[1,1,3]`, both top labels `TIED_BEST_LABEL` | 6.4, 13.1 item 21 | Root | 2026-10-19 |
+| RC-C5 | Label validator allows participant metrics only when lifecycle is `COMPLETE` (`undefined`, `FAILED`, `CANCELLED` refused) | 6.6 R3, 13.1 item 21 | Root | 2026-10-19 |
+| RC-C6 | Context sub-key not listed in 3.2 is unreadable (`MISSING:<id>`) until RD-3 is decided | 3.2 | Root | 2026-10-19 |
+| RC-C7 | `compareToDeclared` normalises the declared context through the same readers as a participant context | 3.4 | Root | 2026-10-19 |
+| RC-C8 | A bar counts for the period only when `complete === true` | 4.3 G1 | Root | 2026-10-19 |
+| RC-C9 | Same-bar fills sort by an explicit `sequence` field; missing `sequence` refuses `QR3_METRIC_UNAVAILABLE` detail `FILL_ORDER_UNKNOWN` | 5.1 V6, 9.2 | Root | 2026-10-19 |
+| RC-C10 | Money, metric and threshold inputs (context capital and costs, spec drawdown limit, tie band, confidence) of type `number` refused `QR3_SPEC_INCOMPLETE` detail `NUMBER_NOT_DECIMAL_STRING` in the declared context and the spec; in a participant context a number is unreadable and excludes the participant (`QR3_CONTEXT_MISMATCH`) | 5.1 V7, 9.2 | Root | 2026-10-19 |
+| RC-C11 | Malformed adequacy spec refuses the outcome with `QR3_SPEC_INCOMPLETE` (never `INADEQUATE_EVIDENCE`); `QR3_EPISODE_GATE_NOT_AVAILABLE` only when the gate is absent; an unreadable episode count with the gate available is `QR3_METRIC_UNAVAILABLE` | 6.3 S5 | Root | 2026-10-19 |
+| RC-C12 | `pairedBootstrapInterval` requires `0 < confidence < 1`, `resamples <= MAX_RESAMPLES` (20000), `block_length <= MAX_BLOCK` (3650), else `QR3_SPEC_INCOMPLETE` | 6.4 | Root | 2026-10-19 |
+| RC-C13 | Outcome decision refuses duplicate participant ids (`DUPLICATE_RUN_ID`) and a `spec_hash` that differs from the recomputed hash (`QR3_SPEC_IMMUTABLE`); for a standardized comparison it also re-validates the frozen spec (mode `STANDARDIZED`, valid content against the registry defaults, canonical form equal to the supplied spec, matching hash), else `QR3_SPEC_INCOMPLETE` detail `SPEC` | 6.1 F4, 9.2 | Root | 2026-10-19 |
+| RC-C14 | Every `*_exact` field is the unrounded value at 80 digits | 5.1 V7 | Root | 2026-10-19 |
+| RC-C15 | Registry drawdown default is `min(20, owner_max_drawdown_percent)`, input `owner_max_drawdown_percent` | 6.2 | Root | 2026-10-19 |
+| RC-C16 | Relative periods 1W to 3Y are end-anchored at the last completed bar end; `start_ms` makes them start-anchored; anchor shown and frozen | 4.1 | Root | 2026-10-19 |
+| RC-C17 | YTD at exactly January 1 00:00 UTC is refused `QR3_PERIOD_INVALID` | 4.1 | Root | 2026-10-19 |
+| RC-C18 | V4 first grid point is `NAV(start)` = `initial_cash` | 5.1 V4 | Root | 2026-10-19 |
+| RC-C19 | Tick rounding is adverse (buy up, sell down) until RD-5 confirms the evaluator | 5.1 V6 | Root | 2026-10-19 |
+| RC-C20 | `initial_cash` below one quantity step: benchmark row null `QR3_METRIC_UNAVAILABLE` detail `NO_UNITS_AFFORDABLE`, excess return null, comparison not refused | 5.3 B1 | Root | 2026-10-19 |
+| RC-C21 | Tie chaining is single linkage over adjacent sorted gaps | 6.5 T1a | Root | 2026-10-19 |
+| RC-C22 | Tie groups use competition ranks (1,1,3) | 6.5 T2 | Root | 2026-10-19 |
+| RC-C23 | Bootstrap method fixed as implemented (stationary, restart 1/`block_length`, circular, same indices, difference of compounded returns, tails `floor(R*(1-c)/2)`, first day against initial NAV) plus a hand-derived non-degenerate golden | 6.4, 13.1 item 21 | Root | 2026-10-19 |
+| RC-C24 | Unnamed conditions use `QR3_METRIC_UNAVAILABLE` with detail, `QR3_SPEC_INCOMPLETE`, `QR3_OBJECTIVE_NOT_ALLOWED` as implemented | 9.2 | Root | 2026-10-19 |
+| RC-C25 | `HOLDOUT_EXPOSED_BY_COMPARISON` keeps the class `DEVELOPMENT_EVIDENCE` | 7 | Root | 2026-10-19 |
+| RC-C26 | Metrics hidden for `EXCLUDED_INCOMPATIBLE`, `EXCLUDED_COVERAGE`, `EXCLUDED_INTEGRITY` and `UNAVAILABLE` | 3.4 | Root | 2026-10-19 |
+| RC-C27 | `STALE`, replay-mismatch and `ACTUAL_BOT` checks stay todo for slices S2, S4 and QR-2 S3 | 8.1 | Root | 2026-10-19 |
+
+Mutation-gap tests (ruling E) are listed in 13.1 item 22.
+
+Open owner items (todo marked OWNER; fail closed until the owner decides):
+
+- OPEN-1 (F7 wider tie band). OD-C3 fixes the band at 0.50 percentage points. Interim behaviour: a band narrower
+  than 0.50 is refused `QR3_FILTER_LOOSENED`; a wider band is refused `QR3_SPEC_INCOMPLETE` with detail
+  `TIE_BAND_FIXED`. Only the owner may change this.
+- OPEN-2 (R5 single qualified participant outcome). OD-C18 fixes the label. Interim behaviour: exactly one
+  `ELIGIBLE_QUALIFIED` participant gets no rank, only the R5 label, and `only_qualified_participant_id` is set.
+  The outcome value stays as implemented. The owner decides whether a new outcome `SINGLE_QUALIFIED_RESULT` is
+  added.

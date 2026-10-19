@@ -1,0 +1,43 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "71e8ddf",
+  "scope": "Local implementation of slice S1 of docs/QR_3_FAIR_COMPARISON_CONTRACT.md for PM-1 row F10-02: a pure comparison module with the context and subject split, the period resolver, standardized valuation (qr3-valuation-std-v1), the Buy & Hold benchmark (qr3-bh-close-same-cost-v1), the evidence class including exposure-register input, sample adequacy, ties, the paired bootstrap uncertainty interval, the outcome decision, the comparison label validator and the stored-result view. The module is pure: no database, network, file or clock access. It is not wired into any route, worker or view, and it shows the owner nothing.",
+  "method": "A coder wrote the slice from the contract. An independent architecture auditor (Opus 5.5) reviewed it and proposed rulings for every open interpretation; an independent tester (Sonnet 5.5) ran single-edit mutations after each review. Three fix rounds followed: the first two were reviewed again by the auditor, and root reviewed the diff of the narrow third round before its mutation run. Root ruled on every open interpretation and recorded the rulings that change contract meaning as root clarifications RC-C1 to RC-C27 in the contract. Two choices change owner-visible meaning and stay open for the owner (OPEN-1: a tie band wider than 0.50; OPEN-2: the outcome when exactly one participant is eligible); both fail closed today. Nobody verified their own work.",
+  "files": {
+    "src/comparison/common.js": "eb1488f8ed29f914874d82a9d2c59814e678f40babd04c31370ba929358ae089",
+    "src/comparison/context.js": "82cca6c366358a835bce264790e741024ac269a71a5c468e4fa70da106f0bce2",
+    "src/comparison/evidence.js": "1a8238bb95658b5e5fcbff0fb3e4ac19f4889273f99c325cbcf8d43a64b6e799",
+    "src/comparison/index.js": "8f73ef3b38f4731f4127fddf22130402f6480946c1e3ad6984ab2b031eb04d63",
+    "src/comparison/labels.js": "083721a301efa6127f2b7a140d0419b6d4ec6d501d5d27fe2be084a3860798aa",
+    "src/comparison/period.js": "90ea7cfd285867f140a6bd988507132706704c6632c069a9666ddc5a0db85656",
+    "src/comparison/ranking.js": "0eec027d87e3e01071c70a3c4236c6a6d3ad0b2cd1ecb03bb57026c879c27765",
+    "src/comparison/valuation.js": "0bc7a8d7087d7434ac7fae0fb83f4bb0f9ce164053537fd8ea463431e6d40d8a",
+    "test/qr3-fair-comparison.test.js": "1a8ae8d06532a3a2fe893c4115bcf070a6e062e2b4d5df6361eeaa7bc1db0337"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "110 tests: 105 pass, 0 fail, 5 todo. The todo tests are the two open owner items, STALE derivation (slice S2), replay mismatch (slice S4) and actual-Bot checks (after QR-2 S3). Expected values are hand-derived, and the bootstrap goldens were cross-checked with a separate integer-only oracle.",
+  "mutations": {
+    "initial": "45 of 60 killed; 2 equivalent, 13 test gaps closed in fix round 1.",
+    "round1": "39 of 41 killed; 1 equivalent, 1 gap closed in round 2.",
+    "round2": "14 of 16 killed; 1 likely equivalent, 1 gap closed in round 3.",
+    "round3": "9 of 9 killed."
+  },
+  "limits": [
+    "Pure module only: tables and the shared exposure register (S2), the evaluation job class (S3), the API (S4) and the view (S5) do not exist yet.",
+    "Whether the evaluator can emit the bar-close fills, fees, exposure, rejected intents and episode counts that valuation needs is open (RD-5); the module fails closed without them, so every participant is development evidence today.",
+    "Tick rounding is adverse (buy up, sell down) until RD-5 confirms the evaluator's rule.",
+    "The label validator is a word-list guard; the S5 rendered-view checks remain required.",
+    "Two owner items are open and fail closed (OPEN-1, OPEN-2).",
+    "No staging readback and no PostgreSQL run."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-19",
+    "statement": "Root reviewed the agent reports, the rulings and the final diff and accepted the slice as local engineering evidence for F10-02. Acceptance changes no PM-1 credit by itself and grants no ranking, label or recommendation to the owner."
+  }
+}
