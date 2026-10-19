@@ -1,0 +1,60 @@
+{
+  "schema": "PM1_ROW_RECONCILIATION_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "43e17c10c5dc4fcfa1d9694e8a6a26a242a70212",
+  "scope": "Local reconciliation of the verification carry for PM-1 rows F01-01, F02-03 and F03-01 (targets: staging) and new test-only assertions for their untested clauses. Evidence for a later successor scorecard; this record changes no PM-1 credit, gate or runtime state, and no staging readback was performed.",
+  "method": "Per row, an independent architecture auditor mapped the accepted contract clauses to the current code and diffs since the accepted source; an independent tester ran the planned existing tests on a CI-like local PostgreSQL 16.15 cluster and rechecked the auditor's decisive claims. A coder then added test-only files for the clauses without decisive assertions, and an independent tester applied single-edit mutations to the product code, one at a time with byte-verified restore. No product code changed.",
+  "rows": {
+    "F01-01": {
+      "outcome": "Owner authentication and tenant-scoped access",
+      "reconciliation": "Carry reconciled; no defect. Every owner route stays behind the session requirement, CSRF and Origin checks run on unsafe methods along the canonical request path, and code reading found an owner filter on every owner-scoped route.",
+      "existingTests": "21 planned commands passed; the quant profile HTTP file skipped its only case because a private fixture is absent.",
+      "newTests": {
+        "files": {
+          "test/postgres/owner-isolation-http.test.mjs": "1da33732df42065408644b086bb309eaa83298912dd2abc65b8aeb74688ce942",
+          "test/helpers/owner-isolation-http-fixture.mjs": "002c7ecc0137c54c526390b0c1ca80edee5ab5f782e2cfaca312eda4ac64c26e"
+        },
+        "result": "13 passed, 0 failed on unmodified code.",
+        "covers": "Unauthenticated 401, wrong CSRF 403 and foreign-owner refusal without data leak or side effect for research jobs, Pine Bridge jobs, captures, memberships and activation, Bot PATCH, Bot sessions, signal notes, cross-user analytics, quant runs, the admin API for a USER role, and venue refresh before any network fetch.",
+        "mutations": "12 of 12 killed."
+      },
+      "limits": ["The research enqueue Bot-authorize layer alone is masked by the owner-scoped deployment lookup (layered defence).", "Step-up flows and the audit route are outside this slice.", "No staging readback."]
+    },
+    "F02-03": {
+      "outcome": "Versioned authenticated transport and scoped targeting",
+      "reconciliation": "Carry reconciled; no defect. The webhook route is identical to the accepted APP-3A source and receiver semantics are unchanged apart from the news-risk fact on entries.",
+      "existingTests": "9 planned commands passed.",
+      "newTests": {
+        "files": {
+          "test/postgres/pine-bridge-receiver-refusals.test.mjs": "f75e0f532a633d89b3b7423c3f0cd14cdcf05d4fcdf9b00540a0454027d9ccb3"
+        },
+        "result": "8 passed, 0 failed on unmodified code.",
+        "covers": "Wrong schema version on a route, unknown webhook secret, inactive Bot and inactive owner, entry reference from another deployment, a new EXIT for a fully closed allocation, the same event id across the two route versions, and a changed redelivery while the event is still pending.",
+        "mutations": "9 of 11 killed, including the pending-conflict check after one fix round added its test; the two survivors remove one of two redundant checks (an equivalent mutation and a near-equivalent one), so they are not test gaps."
+      },
+      "limits": ["Cross-route behaviour for the same event id is pinned as current behaviour; the documents do not state it.", "Deployments carry no route or contract-version pin (unchanged since the accepted source; not a cited clause).", "No staging readback."]
+    },
+    "F03-01": {
+      "outcome": "Paper risk decisions, allocation and targeted EXIT baseline",
+      "reconciliation": "Carry reconciled; no defect. The accepted APP-3A and QL-2A sources are identical for src; later changes are the accepted news guard and the separately scored O3, G1, F4 and W1 accounting corrections.",
+      "existingTests": "14 planned commands passed.",
+      "newTests": {
+        "files": {
+          "test/postgres/paper-risk-reasons.test.mjs": "6db3430d31342eb1119d25e777b10bd4abc0e6eef87642eeea8cf23bfc640f72",
+          "test/helpers/paper-risk-reasons-fixture.mjs": "88498432f449b97341797ca384c4dec0d6ffac2113bb71fdf6f70aa2a790aaaa"
+        },
+        "result": "19 passed, 0 failed on unmodified code.",
+        "covers": "Capped entries with exact reason and capped quantity, quantity-step rounding, and rejections for no sizing budget, maximum open positions, maximum risk percent and below one quantity step, each with no fill or allocation.",
+        "mutations": "13 of 13 killed."
+      },
+      "limits": ["Reason strings are pinned from code because the documents describe behaviour only.", "Free equity as the only binding cap is unreachable on the worker path and is pinned by a pure test.", "The 92-decision QL-2A equivalence carries by code identity, not a re-run.", "No staging readback."]
+    }
+  },
+  "processNote": "These slices ran without a separate architecture auditor on the new test files because usage was near the floor; independent mutation evidence and root review substitute for it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}
