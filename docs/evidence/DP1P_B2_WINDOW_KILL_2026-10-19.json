@@ -1,0 +1,114 @@
+{
+  "schema": "DP1P_B2_WINDOW_KILL_CODEX_V1",
+  "date": "2026-10-19",
+  "stampUtc": "2026-10-19T03:15:37.569Z",
+  "root": "Codex",
+  "decision": "ROOT_ACCEPTED_WINDOW_COMPLETE_BEHAVIOUR_PASS_KILL_GO_CONSUMED",
+  "goId": "W-A06-K01",
+  "ownerAuthority": "The owner supplied a fresh continuous-work and continuous-GO instruction in this Codex chat after the initial no-GO handoff. Root applied it to the previously described KILL window only after its own five consecutive dry runs passed. One admission and one probe SSH, one attempt each, no retry; UNKNOWN stops B2.",
+  "dryRuns": {
+    "ids": [
+      "e6",
+      "e7",
+      "e8",
+      "e9",
+      "e10"
+    ],
+    "cases": [
+      "NORMAL",
+      "TERM",
+      "KILL",
+      "NORMAL",
+      "TERM"
+    ],
+    "checksEach": 18,
+    "worst": {
+      "rootTurnProxyMs": 14501,
+      "goAgeMs": 17662,
+      "pMs": 1816,
+      "preContactMs": 1047,
+      "adapterMs": 2716,
+      "opsLifetimeProxyMs": 61290
+    },
+    "measurementLimit": "Root turn and ops lifetime are file-time proxies. Separate root stdout and actual operations exit results were reviewed."
+  },
+  "window": {
+    "admission": {
+      "job": "A06",
+      "verdict": "CLEAR",
+      "rc": 0,
+      "elapsedMs": 1151
+    },
+    "release": {
+      "goAgeMs": 13759,
+      "readbackVerified": true
+    },
+    "launcher": {
+      "code": "CAPTURE_COMPLETE",
+      "exit": 0,
+      "closed": true,
+      "drainsSettled": true
+    },
+    "observation": {
+      "case": "KILL",
+      "verdict": "OBSERVED_BEHAVIOUR",
+      "scenarioResult": "PASS",
+      "timeoutExitCode": 137,
+      "timeoutSignal": null,
+      "timeoutDurationMs": 7009.232239999999,
+      "records": [
+        "READY",
+        "TERM_IGNORED"
+      ],
+      "readyParentMatchesTimeout": true,
+      "observerRequestedTerm": false,
+      "observerRequestedKill": false,
+      "settlement": "SETTLED",
+      "probeAbsence": "ABSENT",
+      "postPinsValid": true,
+      "stdoutBytes": 5117,
+      "stderrBytes": 0
+    },
+    "review": {
+      "class": "BEHAVIOUR_PASS",
+      "codes": [
+        "CAPTURE_COMPLETE",
+        "OBSERVED_BEHAVIOUR",
+        "SCENARIO_PASS"
+      ],
+      "anomalies": []
+    }
+  },
+  "checks": {
+    "admissionClear": true,
+    "rootAdmit": true,
+    "rootRelease": true,
+    "opsExit": true,
+    "receipt": true,
+    "launch": true,
+    "review": true,
+    "capture": true,
+    "retention": true
+  },
+  "evidence": {
+    "receiptSha256": "eb0bdbee6bf5730a64c60c519d80de2744b8ea6ee12abee85b16b97de5310ddd",
+    "launchResultSha256": "45d360e1e42582098c008f630c0681a0263aec660759ab6ecbf874fce119e08c",
+    "reviewSha256": "366796ac52814d1841157ec8c362300efba9bb38c864679a443504d4b518092b",
+    "reviewToolSha256": "11f04c28defd1d403441277ad0d482fd6ba8e2ce263cc2a8cfe403a16b6fe6ff",
+    "reviewInputSha256": "1db094d6f10c4707cb32789e29b1fafc987f05158efb4bb8a834cf2823d5825f",
+    "ownerGoSha256": "d566d5da5ba4cdb64da2fa83947db380cbbaabfc76b4cb69a49159b4c64c0d27",
+    "ownerScopeSha256": "d75fa1099388949fc2c6bb992dbc8dbc7df335086861dd4816f3f9ddfa8cfcf0",
+    "dryRunsSha256": "d57d8cc34cb8fee749f5dc5351865e11804d42307ca4ac538f22f06d0940f711"
+  },
+  "limits": [
+    "Three bounded probe cases now passed; this is not service health, full supervisor qualification or production readiness.",
+    "The existing transport field actualContact remains UNKNOWN, as in the accepted NORMAL and TERM records; the window result is BEHAVIOUR_PASS, not BEHAVIOUR_UNKNOWN. No independent authenticated transport-contact claim is added.",
+    "Timeout/env hashes and behaviour were observed under the existing coreutils 9.4 profile; complete binary provenance, clock qualification, settlement qualification, RD7/owner-approved limits and production S3 remain separately gated."
+  ],
+  "newHostSteps": 2,
+  "b2CasesComplete": true,
+  "goStatus": "CONSUMED",
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED",
+  "productionQualified": false
+}
