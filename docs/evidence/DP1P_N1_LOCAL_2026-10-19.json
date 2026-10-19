@@ -140,7 +140,7 @@
   "productionQualified": false,
   "rea": "PAUSED",
   "pm1": "S1_UNCHANGED",
-  "checkpointBaseRevision": "f01d72536d4b20a41e31903f628c865e7b989b6e",
+  "checkpointBaseRevision": "1db9a6ab5fe1022610eda98f94d505819ae43ea1",
   "observerArchitecture": {
     "status": "ROOT_ADOPTED_LOCAL_PLACEMENT_AMENDMENT",
     "decision": {
@@ -199,7 +199,7 @@
     "reviewRework": "The original candidate was rejected on two reproduced blockers. A tester assertion used reference equality for a copied receipt; the assertion was corrected, its initial result retained, and the narrow rerun passed.",
     "limits": "Trusted ordinary non-Proxy inputs, non-reentrant adapters and an upstream serialized byte cap remain required. Source authentication, selected binary association, outer late-fault guard wiring, complete closure, output fit, native timing and semantic Clock acceptance remain separate gates."
   },
-  "next": "Define and independently validate the outer N1 observation schema, then separately review orchestration and emission integration before complete assembly, package and window closure.",
+  "next": "Define the remaining full outer observation contract: self-process and executable association, partial-evidence ordering, original-boundary and final-publication facts, and authenticated producer/context correspondence. Review that pure contract before any separate orchestration or emission integration. D4 health applicability and all host gates remain open.",
   "configurationParser": {
     "status": "ROOT_ACCEPTED_R3C1_LOCAL_PURE_DATA",
     "manifestSha256": "8858d156f128ac53bebc0626208f4be6faef710514a3c628de1560d4011f1031",
@@ -243,5 +243,85 @@
     "maximumSnapshots": 1,
     "execution": "Synthetic receipt JSON and pure functions only; no capture or lifecycle code executed.",
     "limits": "Memory retention is not durable storage, challenge consumption, Clock acceptance or a substitute for the original boundary and late-fault guard. Trusted context provenance and ordinary caller assumptions remain."
+  },
+  "observationCore": {
+    "status": "ACCEPTED_LOCAL_PURE_OBSERVATION_CORE",
+    "manifestSha256": "c105d615984f466b850c19fac91e2b77eb2230f48c429856c7c6618b3884f21f",
+    "implementation": {
+      "sha256": "1c3be82f551442e072e5e58c52b92022a2db4ae8c7b13b22b5c1f16c70059e2f",
+      "bytes": 2268
+    },
+    "contract": {
+      "sha256": "ed5c480b99acb709df811ef57c00dcc25555fbf2b11dbd2dbc7250401778a2e9",
+      "bytes": 10133
+    },
+    "rootDecision": {
+      "sha256": "00352258094030308f7f209a796fe671b25c961781b5c98cdb2dc0e393615647",
+      "bytes": 1846
+    },
+    "evidence": {
+      "authorChecks": 18,
+      "independentChecks": 10,
+      "allPassed": true,
+      "independentReport": {
+        "sha256": "92546e6769b046a938fa1e4cce2b675736abf2661698fa54b885bfcca6099327",
+        "bytes": 4702
+      },
+      "staticAuditReport": {
+        "sha256": "0dd3b6e5e21f5d9e58eba135cd123e974a226f052f8a85f8d67cc7e8a4ca200f",
+        "bytes": 3617
+      },
+      "inventoryMembers": 12
+    },
+    "execution": "Synthetic supplied data and pure functions only; no source payload, native process or host execution.",
+    "schema": "N1_NATIVE_CAPTURE_OBSERVATION_CORE_V1",
+    "wireCapBytes": 65536,
+    "behavior": "Authenticates bounded bytes before parsing, validates the exact capture receipt, preserves nested serialization order and historical failures, and returns detached frozen data. Outer collection remains INCOMPLETE and captureState remains UNKNOWN even when the nested receipt is CAPTURE_OBSERVED.",
+    "limits": "This distinct CORE schema cannot satisfy the full outer observation schema. Digest and context provenance remain caller obligations. No health, binary identity, publication, retention, Clock or authority fact is established. Component limits do not prove complete envelope or source fit."
+  },
+  "suppliedDataPredicates": {
+    "status": "ACCEPTED_LOCAL_PURE_DATA_PREDICATES",
+    "manifestSha256": "a4c277e91b7ea1f55f408c1006e07dd8c686c286e84496acff1519cd1f8cce88",
+    "implementation": {
+      "sha256": "872455722074fffff6d31d4e73868e5064ad5050043585a959613109c7d10661",
+      "bytes": 4851
+    },
+    "contract": {
+      "sha256": "006a07c5923ca8c2b381b547727fdef1b9af24e53c14e6731a6b2e74ecba357e",
+      "bytes": 9570
+    },
+    "rootDecision": {
+      "sha256": "f38398354795eeed4315d881816393ba905ad1bf7c54d650c7331f751de1e858",
+      "bytes": 2069
+    },
+    "evidence": {
+      "authorChecks": 19,
+      "independentChecks": 10,
+      "allPassed": true,
+      "independentReport": {
+        "sha256": "69476dd7c78f0f99c96d534b684e48d00b881dccacc08925be5d372c3bb45a62",
+        "bytes": 6106
+      },
+      "staticAuditReport": {
+        "sha256": "f793f4eb376a8be1e3a494a7bc5790ae5f25d0440ef36494457a655be3890c49",
+        "bytes": 4426
+      },
+      "inventoryMembers": 8,
+      "auditReconciliation": {
+        "sha256": "22fe56dba3dc5462a4842242235af445d7205489c61c6053cce55b20fb6af8b4",
+        "bytes": 2336
+      },
+      "followupNegativeChecks": 45,
+      "followupResults": {
+        "sha256": "cbaa83eea1d1cf7ed228df409e23623bda540ecc4d368837d5a25162806260b6",
+        "bytes": 8797
+      },
+      "reviewResolution": "An initial static newline concern was disproved by 45 independent expected rejections against the unchanged candidate. The auditor withdrew the finding; original report and reconciliation are both retained. No candidate code correction was needed."
+    },
+    "execution": "Synthetic supplied data and pure functions only; no source payload, native process or host execution.",
+    "healthPolicy": "B2_NUMERIC_REFERENCE_V1",
+    "binaryProfile": "N1_FIXED_BINARY_PROFILE_V1",
+    "behavior": "Checks decimal load and memory inequalities with exact bounded integer arithmetic, fixed selected binary pins, supplied witness count/hash/identity fields and exact before/after identity strings. Rejects jointly altered expected pins and witnesses; outputs are detached and frozen.",
+    "limits": "The B2 numeric reference is a local comparison only; D4 applicability and current health remain open. Supplied hashes are not observations. Executable permission bits do not prove regular-file type, symlink safety or loaded identity. Pair equality does not prove uninterrupted identity. No COMPLETE, CLEAR, Clock or GO follows."
   }
 }
