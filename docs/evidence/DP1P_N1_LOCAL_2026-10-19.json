@@ -140,7 +140,7 @@
   "productionQualified": false,
   "rea": "PAUSED",
   "pm1": "S1_UNCHANGED",
-  "checkpointBaseRevision": "1db9a6ab5fe1022610eda98f94d505819ae43ea1",
+  "checkpointBaseRevision": "ee4675f2cf627b90e41b669921f0fb3d8ded5783",
   "observerArchitecture": {
     "status": "ROOT_ADOPTED_LOCAL_PLACEMENT_AMENDMENT",
     "decision": {
@@ -199,7 +199,7 @@
     "reviewRework": "The original candidate was rejected on two reproduced blockers. A tester assertion used reference equality for a copied receipt; the assertion was corrected, its initial result retained, and the narrow rerun passed.",
     "limits": "Trusted ordinary non-Proxy inputs, non-reentrant adapters and an upstream serialized byte cap remain required. Source authentication, selected binary association, outer late-fault guard wiring, complete closure, output fit, native timing and semantic Clock acceptance remain separate gates."
   },
-  "next": "Define the remaining full outer observation contract: self-process and executable association, partial-evidence ordering, original-boundary and final-publication facts, and authenticated producer/context correspondence. Review that pure contract before any separate orchestration or emission integration. D4 health applicability and all host gates remain open.",
+  "next": "Specify separately reviewable producer evidence requirements and final-emission acceptance requirements. The original screened broad orchestration dispatch remains closed; no execution or integration authority follows from parser acceptance. D2 transport applicability, D4 health applicability, fresh admission, full package fit, native timing and Clock/production gates remain open.",
   "configurationParser": {
     "status": "ROOT_ACCEPTED_R3C1_LOCAL_PURE_DATA",
     "manifestSha256": "8858d156f128ac53bebc0626208f4be6faef710514a3c628de1560d4011f1031",
@@ -323,5 +323,59 @@
     "binaryProfile": "N1_FIXED_BINARY_PROFILE_V1",
     "behavior": "Checks decimal load and memory inequalities with exact bounded integer arithmetic, fixed selected binary pins, supplied witness count/hash/identity fields and exact before/after identity strings. Rejects jointly altered expected pins and witnesses; outputs are detached and frozen.",
     "limits": "The B2 numeric reference is a local comparison only; D4 applicability and current health remain open. Supplied hashes are not observations. Executable permission bits do not prove regular-file type, symlink safety or loaded identity. Pair equality does not prove uninterrupted identity. No COMPLETE, CLEAR, Clock or GO follows."
+  },
+  "fullObservationDataValidator": {
+    "status": "ACCEPTED_LOCAL_PURE_FULL_OBSERVATION_VALIDATOR",
+    "manifestSha256": "5e81f44ba1ebcb5172b261d45a9721297c8f7a7658b09ea36e1f9353634a708b",
+    "implementation": {
+      "sha256": "0e15b7ca97ec0bc16490e5ed80dce8f62932e434703f030c84ec21c535802d5d",
+      "bytes": 12180
+    },
+    "contract": {
+      "sha256": "65142d9176dcb9c3841206a666376640829137ca675e76846b94a519073ccb09",
+      "bytes": 15520
+    },
+    "mandatoryAmendment": {
+      "sha256": "0987d51061a97734f2d049dc0950a570e961301adfd3ffc409920e54f750bd05",
+      "bytes": 1602
+    },
+    "rootDecision": {
+      "sha256": "cbd27be6fff920dfe36f8472847087f7da647eff39504b04a4b198ab029bdc11",
+      "bytes": 2915
+    },
+    "schema": "N1_NATIVE_CAPTURE_OBSERVATION_V1",
+    "wireCapBytes": 65535,
+    "evidence": {
+      "authorChecks": 22,
+      "independentChecks": 12,
+      "allPassed": true,
+      "independentReport": {
+        "sha256": "3bb7b869e4ba2394c078f6e203008fa8b8990c6d0889a8ec3a7b5df0750c62ce",
+        "bytes": 6925
+      },
+      "independentResults": {
+        "sha256": "b89895bb604a914079bebace9375406ced8e97ac76ddb541adce8064d870fec5",
+        "bytes": 1721
+      },
+      "staticAuditReport": {
+        "sha256": "314123f68b67a4f2ecc52a69f972e6b4fe1fe2b3631236654f831aba53c81f01",
+        "bytes": 6175
+      },
+      "inventoryMembers": 15
+    },
+    "authorMeasurements": {
+      "combinedMaxRawSelfStdoutBytes": 49554,
+      "overCapCombinationBytes": 65882
+    },
+    "independentMeasurements": {
+      "largeValidBytes": 49554,
+      "overCapBytes": 65882,
+      "reducedValidBytes": 57694
+    },
+    "behavior": "Validates independently selected config and capture context, raw self-process records, supplied executable association, eleven retained stages, partial binary evidence, failure ordering and original-boundary claims. Recomputes COMPLETE only for mutually consistent supplied records. Preserves nested receipt serialization and returns detached frozen data.",
+    "mandatoryChecks": "Finite lastRecordedMs bounds capture start and later times; recorded nested boundary fatal cannot clear or change; READY pid differs from observer pid.",
+    "limits": "COMPLETE is a supplied-data consistency claim, not authenticated execution, current health, Clock qualification or GO. Publication remains NOT_ATTEMPTED/EXTERNAL_REQUIRED. Producer provenance, actual bounded collection and final emission require separate evidence. The admitted specimen does not prove all individually maximal components or the assembled source fit.",
+    "execution": "Synthetic data and pure functions only; no source payload, native process, host or lifecycle execution.",
+    "next": "Specify separately reviewable producer evidence requirements and final-emission acceptance requirements. The original screened broad orchestration dispatch remains closed; no execution or integration authority follows from parser acceptance."
   }
 }
