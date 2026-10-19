@@ -90,6 +90,7 @@ const marketOf=c=>{const m=object(object(c.snapshot).market);return text(m.broke
 const datasetOf=fields=>isObject(fields.dataset)?{start_time:fields.dataset.start_time,end_time:fields.dataset.end_time,warmup_bars:fields.dataset.warmup_bars,
   bar_count:fields.dataset.bar_count,digest_kind:text(fields.dataset.digest_kind),digest:text(fields.dataset.digest,128)}:null;
 const plain=value=>typeof value==='string'?value.slice(0,120):typeof value==='boolean'?value:finite(value);
+const costOf=c=>({fee_bps:plain(object(c.model).fee_bps),slippage_bps:plain(object(c.model).slippage_bps)});
 const finishedAt=row=>isTerminal(row.status)?row.updated_at:null;
 
 function shapeListRow(row){
@@ -101,7 +102,7 @@ function shapeListRow(row){
     completion_reason:text(r?.completion_reason,64),diagnostic:text(row.diagnostic,120),contract_version:text(c.version,64),engine_family:familyOf(c),
     market:marketOf(c),dataset:datasetOf(fields),source_hash:text(c.source_hash,128),input_lock_hash:text(object(c.input_lock).lock_hash,128),
     engine_hash:text(c.engine_hash,128),policy_hash:text(object(c.snapshot).policy_hash,128),
-    cost:{fee_bps:plain(object(c.model).fee_bps),slippage_bps:plain(object(c.model).slippage_bps)},
+    cost:costOf(c),
     candidates:{planned:count(object(c.plan).planned_candidates),evaluated:row.evaluated,screen_passed:r?row.passed:null},
     development_score:developmentScore({status:row.status,result:r}),qualification:{qualified:quality.qualified,label:quality.label},
     integrity_checked:false,compatibility_key:compatibilityKey(fields).slice(0,12)};
@@ -224,7 +225,8 @@ function compareRun(a,quality,compatible){
   if(!compatible)return base;
   const aggregate=candidateAggregates(a.result?.candidates),evaluated=isCompleted(row.status)&&a.result!==null;
   const selected=selectedOf(a.result),view=selectedView(selected);
-  return {...base,disclosed:{bot_id:row.bot_id,deployment_id:row.deployment_id,baseline_snapshot_hash:text(c.baseline_snapshot_hash,128),search:searchOf(c),
+  // A compatible comparison reports the shared context with the same derivation as the list rows: market, dataset window and cost model.
+  return {...base,market:marketOf(c),dataset:datasetOf(a.fields),cost:costOf(c),disclosed:{bot_id:row.bot_id,deployment_id:row.deployment_id,baseline_snapshot_hash:text(c.baseline_snapshot_hash,128),search:searchOf(c),
       domains:isObject(object(c.input_lock).domains)?Object.entries(c.input_lock.domains).sort(([x],[y])=>x<y?-1:x>y?1:0).slice(0,20).map(domainOf):[]},
     metrics:evaluated?{candidates:{planned:count(object(c.plan).planned_candidates),evaluated:a.steps.filter(step=>step.kind==='CANDIDATE').length,
       screen_passed:aggregate.screen_passed},reason_counts:aggregate.reason_counts,development_score:a.score,
