@@ -19,8 +19,9 @@ Children do not spawn children, dispatch peers, change scope or approve their ow
 acceptance. Use bounded independent assignments only; default one or two children,
 maximum three concurrently, within the runtime's available slots. A Codex root
 keeps that three-child maximum. A Claude root in ultracode sizes fan-out under
-Models and dispatch instead of the one-or-two default: up to six concurrent agents,
-of which at most three write; one writer per file is unchanged.
+Models and dispatch instead of the one-or-two default: up to ten concurrent agents,
+counting local and cloud agents together, of which at most six write; one writer
+per file is unchanged (owner rule, 2026-10-19).
 
 Read README.md, Context.md, docs/ROADMAP.md and docs/TIME_MANAGEMENT.md for current
 scope. Follow docs/AGENT_TEAM.md and .agents/TASK_PACKET_TEMPLATE.md. Roadmap owns
@@ -168,12 +169,23 @@ Every workflow agent is a child under every rule in this file. Each agent() call
 passes the model and effort of the role it fills, from the Claude column or the
 Fable table; root does not dispatch an agent without a named role. Each brief
 carries the assignment fields under File, Git and browser ownership plus the
-Caveman and packet rules. Limits per root: at most three concurrent writing
-agents, one writer per file; read-only and verify agents may raise the total to
-six concurrent agents, within the runtime's own workflow cap. Writers with
-worktree isolation never commit, push or merge; root treats worktree creation and
-cleanup as its own Git operations and integrates their diffs serially under the
-Git rules. Children never start workflows of their own.
+Caveman and packet rules. Limits per root (owner rule, 2026-10-19): at most ten
+concurrent agents, counting local workflow agents, background agents and cloud
+agents together, of which at most six write; one writer per file, and no two
+concurrent writers touch the same file. Read-only and verify agents fill the rest,
+within the runtime's own workflow cap. Writers with worktree isolation never
+commit, push or merge; root treats worktree creation and cleanup as its own Git
+operations and integrates their diffs serially under the Git rules. Children never
+start workflows of their own.
+
+Cloud agents (remote isolation) work only from a pushed revision and never read
+ignored `.qa-local/` evidence, keys or host credentials. They never commit, push,
+open pull requests or create remote branches; they return a unified patch, and
+root applies it with `git apply --check` and verifies it before integration. Cloud
+agents never do host, VPS, browser or TradingView work, and an LLM agent daemon
+is never installed on the VPS. Mutation runs that temporarily edit product files
+stay serialized and run only while no other local agent runs tests that load those
+files.
 
 No workflow agent uses the browser or TradingView, and no workflow agent writes
 Git. A release-clerk commit or push is a separate serial dispatch outside any
@@ -197,7 +209,7 @@ acceptance. The worker never approves its own result.
 Keep fan-out proportionate to the task and gated by the usage bands; never start a
 swarm only because a workflow can. For routine workers, use one first; add a second
 child only for independent files with enough usage and integration margin. Retain
-the maximum of three concurrent writers and one writer per file. Pilot three to five
+the writer limit above and one writer per file. Pilot three to five
 comparable small slices before expanding routine-worker dispatch. Record task
 scope, observed account usage before/after, elapsed time, rework and defects;
 shared usage percentages are not exact model costs and parallel work can obscure
