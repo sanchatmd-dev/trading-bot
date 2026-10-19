@@ -44,7 +44,7 @@ jobs:
       - run: uv run --no-sync pytest
       - run: node --test test/pf2-cost-v2-parity.test.js
         working-directory: ${{ github.workspace }}
-      - run: node --test test/preflight-resolver.test.js test/preflight-replay.test.js
+      - run: node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js
         working-directory: ${{ github.workspace }}
         env:
           PF2_REQUIRE_PYTHON: '1'

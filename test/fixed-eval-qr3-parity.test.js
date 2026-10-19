@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {resolve,dirname,delimiter} from 'node:path';
+import {resolve,dirname,delimiter,isAbsolute} from 'node:path';
 import {Money} from '../src/money.js';
 import {valueRun} from '../src/comparison/valuation.js';
 
@@ -15,7 +15,15 @@ import {valueRun} from '../src/comparison/valuation.js';
  */
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const localPython=resolve(root,'quant_lab','.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python');
-const python=process.env.QUANT_RESEARCH_PYTHON || (existsSync(localPython)?localPython:'python');
+// Only an absolute interpreter is spawned (as in preflight-replay): a bare name can resolve through an installer alias.
+const configuredPython=process.env.QUANT_RESEARCH_PYTHON;
+const python=configuredPython?(isAbsolute(configuredPython)?configuredPython:null):(existsSync(localPython)?localPython:null);
+const probe=python===null?null:spawnSync(python,['-B','-s','-c','import robot_quant.fixed_eval'],{encoding:'utf8',timeout:180000,
+  env:{...process.env,PYTHONPATH:[resolve(root,'quant_lab','src'),process.env.PYTHONPATH].filter(Boolean).join(delimiter)}});
+const pythonReady=probe!==null&&!probe.error&&probe.status===0;
+const NO_PYTHON='python runtime or quant dependencies unavailable here (set QUANT_RESEARCH_PYTHON to an absolute path or create quant_lab/.venv)';
+// PF2_REQUIRE_PYTHON=1 (the Quant Lab CI job) turns a would-be skip into a failure.
+const needPython=t=>{if(pythonReady)return false;assert.notEqual(process.env.PF2_REQUIRE_PYTHON,'1','PF2_REQUIRE_PYTHON=1: '+NO_PYTHON);t.skip(NO_PYTHON);return true;};
 const modulePath=resolve(root,'quant_lab','src','robot_quant','fixed_eval.py');
 const MINUTE=60000;
 const T0=1_800_000_000_000; // open time of bar 0; the engine time of bar i is T0+(i+1)*MINUTE
@@ -116,7 +124,8 @@ const DATASETS=[
 
 for(const dataset of DATASETS){
   for(const kind of ['EVALUATION','EVALUATION_STRESS']){
-    test(`fixed evaluator equals QR-3 valueRun: ${dataset.name} ${kind}`,()=>{
+    test(`fixed evaluator equals QR-3 valueRun: ${dataset.name} ${kind}`,t=>{
+  if(needPython(t))return;
       const rows=syntheticRows(dataset.count,dataset.seed,dataset.amplitude);
       const contract={rows,model:MODEL,policy:POLICY,initial_cash:'10000',initial_equity:'10000',broker:'binance-global',symbol:'BTCUSDT',deployment_id:'fe1',
         engine_hash:'e'.repeat(64),dataset_sha256:'d'.repeat(64),parent_run_id:'parent-1',selection_id:'selection-1'};
@@ -153,7 +162,8 @@ for(const dataset of DATASETS){
   }
 }
 
-test('open position at the cut is marked, not liquidated',()=>{
+test('open position at the cut is marked, not liquidated',t=>{
+  if(needPython(t))return;
   const dataset=DATASETS[0];
   const rows=syntheticRows(dataset.count,dataset.seed,dataset.amplitude);
   const contract={rows,model:MODEL,policy:POLICY,initial_cash:'10000',initial_equity:'10000',broker:'binance-global',symbol:'BTCUSDT',deployment_id:'fe1'};
@@ -163,7 +173,8 @@ test('open position at the cut is marked, not liquidated',()=>{
   assert.ok(result.open_position.open_episode!==null);
 });
 
-test('stress run charges more cost than the plain run on the same signals',()=>{
+test('stress run charges more cost than the plain run on the same signals',t=>{
+  if(needPython(t))return;
   const dataset=DATASETS[1];
   const rows=syntheticRows(dataset.count,dataset.seed,dataset.amplitude);
   const contract={rows,model:MODEL,policy:POLICY,initial_cash:'10000',initial_equity:'10000',broker:'binance-global',symbol:'BTCUSDT',deployment_id:'fe1'};
