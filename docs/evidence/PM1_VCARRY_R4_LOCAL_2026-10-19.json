@@ -1,0 +1,45 @@
+{
+  "schema": "PM1_ROW_RECONCILIATION_V1",
+  "date": "2026-10-19",
+  "root": "Claude",
+  "baseRevision": "ca11d99",
+  "scope": "Round 4: F04-03 re-reconciliation after the release-lineage merge, the owner decisions O1 (F02-02 input list) and O3 (F04-03 published-result wording), and a server test for the O1 rule. Evidence for a later successor scorecard; no credit, gate or runtime change; no staging readback.",
+  "rows": {
+    "F04-03": {
+      "outcome": "PF-2 historical Preflight",
+      "reconciliation": "Carry reconciled with one documented gap. The accepted source 325d335 and the release eb532ff are now ancestors of the branch. Since 325d335 the PF-2 closure changed only through the graceful-stop guards in quant-research-foundation.js, which preflight jobs do not reach; the effect is an engine-hash rotation. Evaluator binding A + D and the runtime DELETE revoke are present and tested.",
+      "existingTests": "21 planned commands passed, including the isolation-none pf2-proof-gaps file.",
+      "engineIdentityLF": {
+        "pf2Engine": "5bfd1bfac70066238c17e3beb3e1bcd68c84e1b8fea8ad808c31fc2d4babbd87",
+        "pf2Evaluator": "3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada"
+      },
+      "ownerDecision": "O3 (2026-10-19): the PF-2 packet no longer calls the published result immutable; it is protected by the lease fence and re-validation on every read, and quant_foundation_jobs.result has no database freeze.",
+      "limits": [
+        "A coherent rewrite of the published result that passes the validator is not detected by the database (documented under O3).",
+        "The PM-1 S1 source identity for this row still names the earlier engine hash and must be updated on re-scoring.",
+        "No staging readback."
+      ]
+    },
+    "F02-02": {
+      "outcome": "Ten-input selection and round-trip",
+      "ownerDecision": "O1 (2026-10-19): the adapter document now matches the code. The input list shows the inputs the latest analysis of the source version proposes; an omitted input cannot be selected and a binding outside the proposal is refused with INPUT_REVIEW_REQUIRED; each analysis creates the next source version, so a different proposal needs a new analysis; the analysis never makes the selection.",
+      "newTests": {
+        "files": {
+          "test/postgres/pine-bridge-input-proposal-rule.test.mjs": "81aa431cab122a192da052744dd55199deb6b9d2470a1e4bfbc87bbf75c878fd"
+        },
+        "result": "4 passed.",
+        "covers": "A binding outside the latest proposal is refused before any write or provider call; a binding inside it is accepted; the latest successful analysis wins over an older one.",
+        "mutations": "7 of 8 killed; the survivor drops the source-version filter, which no route can exercise because an older version is refused as stale first."
+      },
+      "limits": [
+        "Two cases seed a second analysis row directly, because the route always creates a new source version.",
+        "No staging readback."
+      ]
+    }
+  },
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rea": "PAUSED",
+  "pm1": "S1_UNCHANGED"
+}

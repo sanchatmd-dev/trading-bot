@@ -431,10 +431,12 @@ conflicting legacy holdout; never infer a boundary from test data.
 Send one `POST /api/quant/data/preflights` with a fresh idempotency key and
 `{bot_id, deployment_id, profile_job_id}` using the exact enrollment job above.
 Observe it through `GET /api/quant/data/preflights/{job_id}`. Require successful
-worker completion, a valid immutable envelope, unchanged idempotent response,
+worker completion, a valid result envelope, unchanged idempotent response,
 strict development-only range and `holdout_accessed=false`,
 `orders_executed=false`, `evaluator_admission=false`. API-only activation does
 not grant V2 evaluator parity, optimization or a Bot start.
+
+The published result is protected by the lease fence and by re-validation against the stored plan on every read; quant_foundation_jobs.result has no database-level freeze (owner decision, 2026-10-19). A coherent rewrite that still passes the validator would therefore not be detected by the database; this packet does not claim byte-level immutability of the stored result.
 
 ## Failure and completion record
 
