@@ -140,7 +140,7 @@
   "productionQualified": false,
   "rea": "PAUSED",
   "pm1": "S1_UNCHANGED",
-  "checkpointBaseRevision": "ee4675f2cf627b90e41b669921f0fb3d8ded5783",
+  "checkpointBaseRevision": "8275b0ac424076a362b4ad106c84e49a22bfb146",
   "observerArchitecture": {
     "status": "ROOT_ADOPTED_LOCAL_PLACEMENT_AMENDMENT",
     "decision": {
@@ -199,7 +199,7 @@
     "reviewRework": "The original candidate was rejected on two reproduced blockers. A tester assertion used reference equality for a copied receipt; the assertion was corrected, its initial result retained, and the narrow rerun passed.",
     "limits": "Trusted ordinary non-Proxy inputs, non-reentrant adapters and an upstream serialized byte cap remain required. Source authentication, selected binary association, outer late-fault guard wiring, complete closure, output fit, native timing and semantic Clock acceptance remain separate gates."
   },
-  "next": "Specify separately reviewable producer evidence requirements and final-emission acceptance requirements. The original screened broad orchestration dispatch remains closed; no execution or integration authority follows from parser acceptance. D2 transport applicability, D4 health applicability, fresh admission, full package fit, native timing and Clock/production gates remain open.",
+  "next": "Use the adopted evidence matrix to define an exact independently reviewed terminal-evidence contract and permitted producer scope before implementation. Existing data-correspondence tests do not authorize lifecycle integration or reopen the screened broad dispatch. D2/D4, fresh admission, source/output fit, native timing and Clock/production gates remain open.",
   "configurationParser": {
     "status": "ROOT_ACCEPTED_R3C1_LOCAL_PURE_DATA",
     "manifestSha256": "8858d156f128ac53bebc0626208f4be6faef710514a3c628de1560d4011f1031",
@@ -377,5 +377,61 @@
     "limits": "COMPLETE is a supplied-data consistency claim, not authenticated execution, current health, Clock qualification or GO. Publication remains NOT_ATTEMPTED/EXTERNAL_REQUIRED. Producer provenance, actual bounded collection and final emission require separate evidence. The admitted specimen does not prove all individually maximal components or the assembled source fit.",
     "execution": "Synthetic data and pure functions only; no source payload, native process, host or lifecycle execution.",
     "next": "Specify separately reviewable producer evidence requirements and final-emission acceptance requirements. The original screened broad orchestration dispatch remains closed; no execution or integration authority follows from parser acceptance."
+  },
+  "producerEvidenceRequirements": {
+    "status": "ROOT_ADOPTED_LOCAL_EVIDENCE_REQUIREMENTS",
+    "requirements": {
+      "sha256": "9256fc9bc63621cd43e82eaf15de838d55104e19a0c2bfb66206246b705e51fc",
+      "bytes": 15364
+    },
+    "independentReview": {
+      "sha256": "bc2d53dd94ca072f67f71de27bbd69364585251aab093d15c4f0771d3f5ebc24",
+      "bytes": 7341
+    },
+    "rootAdoption": {
+      "sha256": "e46dd1947836eddbecc1a49acb379c783ea4d8e94ed911d37c6f0bd6701efc20",
+      "bytes": 2036
+    },
+    "verifiedInputPins": 18,
+    "scope": "Requirements for independently selected producer provenance, observed record associations, historical memory correspondence, original late-fault guard ownership, separate body/transport hash domains and externally authenticated terminal settlement.",
+    "limits": "These requirements are not implemented producer or terminal facts. The emitted body cannot attest its own future delivery. D2 transport applicability and D4 health applicability remain owner-policy gates; source closure, event coverage and authentic execution remain separate technical gates."
+  },
+  "dataCorrespondenceTests": {
+    "status": "ACCEPTED_LOCAL_SYNTHETIC_DATA_CORRESPONDENCE",
+    "manifestSha256": "b9ad2931ad4f9bfe9cfc464db3bdf96eab4e4027e2d00dc75e4c66b6f3e15e72",
+    "test": {
+      "sha256": "eb2781746250f5a0e3a4573b8dc2a9587b4491a7b3d8d764a41b0baeab7369d3",
+      "bytes": 11667
+    },
+    "results": {
+      "sha256": "c1fc2f6e6a340b106745472ae0045622998ac01fbb66dc8573835e5d2794cccf",
+      "bytes": 282
+    },
+    "caseLedger": {
+      "sha256": "162823c63522b76309f7f94cd38578a7980b70d78e9edeb92588b95ba57c8b9d",
+      "bytes": 28392
+    },
+    "report": {
+      "sha256": "23536b1c6cc515370298a2349693b63b2ea2b6f2e9374dfa8fad21e6dc010597",
+      "bytes": 6516
+    },
+    "staticAudit": {
+      "sha256": "8df8a040e165197cdcd9c3a7594c7b8b1bceb8c1d95147382f6a60d9f9c1757c",
+      "bytes": 5129
+    },
+    "rootDecision": {
+      "sha256": "d07c8e6ccf0511b85c7e78b54584f9267393dc99d2703524d5e9589a6af7bfc0",
+      "bytes": 2072
+    },
+    "cases": 12,
+    "allPassed": true,
+    "suiteRuns": 1,
+    "authorSuitesRun": 0,
+    "corrections": 0,
+    "inventoryMembers": 18,
+    "exactCopiedInputs": 9,
+    "outcome": "Memory correspondence and full-observation parsing are recorded separately. Valid altered or reordered history can parse while failing memory correspondence. Final UNKNOWN preserves clean history without promotion. Duplicate or invalid persistence permanently faults the sink; failed read-only correspondence does not. Caller mutation cannot alter detached results or retained history.",
+    "execution": "Test-only composition of accepted pure modules and synthetic records. No runtime interface changes, capture or private-guard invocation, producer, emitter, native process or host action.",
+    "limits": "No authentic COMPLETE, actual late-event chronology, terminal delivery, current health, Clock semantics, replay qualification or GO is established."
   }
 }
