@@ -36,12 +36,15 @@ export async function authFixture(t,{smtp=false}={}){
     MASTER_ENCRYPTION_KEY:'a'.repeat(64),ENCRYPTION_KEY_ID:'k1',ENCRYPTION_PREVIOUS_KEYS:'{}',
     ADMIN_EMAIL:'admin@example.test',ADMIN_BOOTSTRAP_PASSWORD:'temporary-test-password',SMTP_HOST:smtp?'127.0.0.1':'',SMTP_PORT:'1'}});
   let output='',exited=false;server.stdout.on('data',x=>output+=x);server.stderr.on('data',x=>output+=x);
+  // A startup crash is emitted as a Worker 'error' event, never on its stderr.
+  server.on('error',error=>output+=String(error?.stack||error));
   const exit=once(server,'exit');server.on('exit',()=>exited=true);
   let db;
   t.after(async()=>{db?.close();if(!exited)await server.terminate();await exit;fs.rmSync(dir,{recursive:true,force:true});});
-  let ready=false;
-  for(let i=0;i<100&&!exited;i++){try{ready=(await fetch(base+'/healthz')).ok;}catch{}if(ready)break;await delay(50);}
-  assert.ok(ready,output);db=new DatabaseSync(dbPath);db.exec('PRAGMA busy_timeout=5000');
+  // Bound the wait by wall time, not a poll count: a loaded Windows runner can stall server startup past 100 polls (about 6-8 s).
+  let ready=false;const started=Date.now();
+  while(!exited&&Date.now()-started<60000){try{ready=(await fetch(base+'/healthz')).ok;}catch{}if(ready)break;await delay(50);}
+  assert.ok(ready,`Server not healthy after ${Date.now()-started} ms${exited?' (worker exited)':''}\n${output}`);db=new DatabaseSync(dbPath);db.exec('PRAGMA busy_timeout=5000');
   return {request:httpClient(base),base,db,dbPath,dir};
 }
 export async function enroll(request,session,password='temporary-test-password'){
