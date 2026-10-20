@@ -151,7 +151,8 @@ const requestOf=(owner,set,{startDays=10,fixture=false,over={}}={})=>({owner_id:
   filters:{drawdown_limit_percent:'20',episode_floor:5,beats_buy_and_hold:false},admission_deadline_ms:BASE+startDays*DAY+1000*MS+DAY,universe:set.members,...over});
 const contextOf=(owner,over={})=>({dependencies:{qr3_context:true,evaluation_mode:true,episode_gate_version:'ql4-episode-gate-v1'},universe_cap:20,requester_owner_id:owner.id,
   policy_snapshot:{policy_hash:POLICY,max_drawdown_percent:null},objective_registry:TEST_REGISTRY,fixture_selections_allowed:true,...over});
-const SELECTION_TABLES_SQL=['quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events'];
+const SELECTION_TABLES_SQL=['quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events','quant_selection_window_freezes',
+  'quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events'];
 const counts=async target=>Object.fromEntries(await Promise.all(SELECTION_TABLES_SQL.map(async table=>[table,(await target.query(`SELECT count(*)::int n FROM public.${table}`)).rows[0].n])));
 const researchDigest=async target=>(await target.query(`SELECT encode(sha256(convert_to((SELECT COALESCE(string_agg(row_to_json(j)::text,'|' ORDER BY j.run_id),'') FROM quant_jobs j)
   ||(SELECT COALESCE(string_agg(row_to_json(e)::text,'|' ORDER BY e.export_id),'') FROM bi_exports e)
@@ -227,7 +228,8 @@ test('registration: stores the hashed body, stamps the database clock, replaces 
   assert.equal(registrationHashOf({...JSON.parse(row.body_canonical),registration_hash:row.registration_hash}),row.registration_hash,'the pure module reproduces the same hash from the parsed body');
   assert.equal(row.registration_hash,reg.registration_hash);assert.equal(row.registration_key,reg.registration_key);assert.equal(Number(row.registered_at_ms),reg.registered_at_ms);
   assert.deepEqual([row.window_kind,Number(row.start_ms),Number(row.end_ms),row.warmup_bars,row.evaluation_bars,row.total_bars],['PROSPECTIVE',reg.window.start_ms,reg.window.end_ms,200,1000,1200]);
-  assert.deepEqual(await counts(db),{quant_selection_registrations:1,quant_selection_universe:3,quant_selection_participants:3,quant_selection_status_events:1});
+  assert.deepEqual(await counts(db),{quant_selection_registrations:1,quant_selection_universe:3,quant_selection_participants:3,quant_selection_status_events:1,quant_selection_window_freezes:0,
+    quant_selection_evaluation_starts:0,quant_selection_outcomes:0,quant_selection_replay_events:0});
   const read=await readSelection(rt,{owner_id:OWNER.id,selection_id:reg.selection_id});
   assert.equal(read.ok,true,JSON.stringify(read));
   const sel=read.selection;
@@ -525,7 +527,7 @@ const probeInsert=async(event,status,code,outcome=null,seq=2,selection=null)=>{
   finally{await rt.query('ROLLBACK TO SAVEPOINT probe');await rt.query('RELEASE SAVEPOINT probe');}
 };
 
-test('transitions: from SELECTION_REGISTERED the database accepts exactly what the pure lifecycle accepts; FIRST_EVALUATION_START is refused until S2-2',async()=>{
+test('transitions: from SELECTION_REGISTERED the database accepts exactly what the pure lifecycle accepts; FIRST_EVALUATION_START is refused without its register row (exposure_bind)',async()=>{
   const selection=(await registerNext());assert.equal(selection.ok,true);
   const events=['FIRST_EVALUATION_START','OWNER_CANCEL','PARTICIPANT_INELIGIBLE','WINDOW_RECHECK_FAILED','DEADLINE_PASSED','WINDOW_DATA_UNAVAILABLE','ALL_EVALUATIONS_DONE'];
   const statuses=['SELECTION_REGISTERED','SELECTION_EVALUATING','SELECTION_COMPLETED','SELECTION_INCOMPLETE','SELECTION_CANCELLED'];
@@ -725,7 +727,8 @@ test('the retry is bounded: a serialization failure that never clears is thrown 
   const guarded={...rt,isTransaction:false,transaction:async()=>{attempts++;throw Object.assign(Error('guard'),{code:QR004,constraint:'quant_selection_registration_clock'});}};
   const refusedOnce=await registerSelection(guarded,{request:requestOf(owner,set,{startDays:73}),context:contextOf(owner)});
   assert.deepEqual([refusedOnce.ok,refusedOnce.code,attempts],[false,'QR4_WINDOW_INVALID',1]);
-  assert.deepEqual(Object.keys(GUARD_REFUSALS).sort(),['quant_selection_exposure_bind','quant_selection_participant_member','quant_selection_participant_ready','quant_selection_registration_clock','quant_selection_registration_complete',
+  assert.deepEqual(Object.keys(GUARD_REFUSALS).sort(),['quant_selection_exposure_bind','quant_selection_first_start_complete','quant_selection_freeze_order','quant_selection_outcome_complete','quant_selection_outcome_order','quant_selection_participant_member',
+    'quant_selection_participant_ready','quant_selection_registration_clock','quant_selection_registration_complete','quant_selection_replay_order','quant_selection_start_deadline','quant_selection_start_order','quant_selection_start_ready',
     'quant_selection_status_transition','quant_selection_universe_member']);
   await assert.rejects(registerSelection({...rt,isTransaction:true},{request:requestOf(owner,set,{startDays:74}),context:contextOf(owner)}),/own SERIALIZABLE transaction/);
 });

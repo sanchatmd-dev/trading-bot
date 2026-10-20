@@ -3,14 +3,17 @@ import {canonical} from '../pine-bridge/source.js';
 import {buildRegistration,registrationHashOf} from '../selection/registration.js';
 import {registrationBody} from '../selection/hash.js';
 import {CODES,REQUIRED_MARKET,MINUTE,isObject,isInt,text,refuse,byCreation,byText} from '../selection/codes.js';
-import {checkCancel} from '../selection/lifecycle.js';
-import {readExposures,toComparisonEntries} from './exposure-register.js';
+import {checkCancel,transitionSelection} from '../selection/lifecycle.js';
+import {recheckWindow} from '../selection/window.js';
+import {rankSelection,replayOutcome as replayRanking} from '../selection/ranking.js';
+import {EXPOSURE_CODES,appendExposures,readExposures,readExposuresLocked,toComparisonEntries} from './exposure-register.js';
 
 /**
- * QR-4 S2-1 selection store: the registration path of the qualified-selection tables (src/postgres/quant-selection.sql). It holds the only
+ * QR-4 selection store for the qualified-selection tables (src/postgres/quant-selection.sql). Slice S2-1 is the registration path: the only
  * writers of the registration (registerSelection) and of the owner cancel (cancelSelection), the owner-scoped read (readSelection) and the
- * searched-window reader (readSearchedWindows). No route, worker or pure-module change; the exposure recheck, freeze, start, outcome and
- * replay writers are slice S2-2.
+ * searched-window reader (readSearchedWindows). Slice S2-2 is the RO-12 path at the end of this file: freezeWindow, startEvaluation (the first start
+ * also appends the QR4_SELECTION exposure row), writeOutcome, replaySelectionOutcome, markWindowDataUnavailable and findOrphanSelectionExposures. No route,
+ * worker or pure-module change.
  *
  * Every write runs in its own SERIALIZABLE transaction and retries a serialization failure (40001) from the first statement, at most three
  * times, rerunning every read and every pure check. A QR004 guard is never retried: it is mapped by the guard name the database raised
@@ -22,6 +25,8 @@ import {readExposures,toComparisonEntries} from './exposure-register.js';
  */
 export const SERIALIZATION_RETRIES=3;
 export const SERIALIZATION_FAILURE='40001';
+/** writeOutcome without a usable evaluation list throws an Error with this code and retryable=true; nothing was written and no terminal state was stored. */
+export const EVALUATIONS_UNAVAILABLE='EVALUATIONS_UNAVAILABLE';
 /** A registration whose transaction took longer than this between its first clock read and its insert is refused before any row (the database guard allows 60 s). */
 export const REGISTRATION_SLOW_LIMIT_MS=50000;
 export const REGISTRATION_TOO_SLOW='REGISTRATION_TOO_SLOW';
@@ -45,7 +50,15 @@ export const GUARD_REFUSALS=Object.freeze({
   quant_selection_status_transition:[CODES.QR4_TRANSITION_INVALID,'STATUS_TRANSITION_GUARD'],
   quant_selection_exposure_bind:[CODES.INTEGRITY_CHECK_FAILED,'quant_selection_exposure_bind'],
   quant_selection_registration_complete:[CODES.INTEGRITY_CHECK_FAILED,'quant_selection_registration_complete'],
-  quant_selection_universe_member:[CODES.INTEGRITY_CHECK_FAILED,'quant_selection_universe_member']});
+  quant_selection_universe_member:[CODES.INTEGRITY_CHECK_FAILED,'quant_selection_universe_member'],
+  quant_selection_freeze_order:[CODES.QR4_TRANSITION_INVALID,'FREEZE_ORDER'],
+  quant_selection_start_order:[CODES.QR4_TRANSITION_INVALID,'START_ORDER'],
+  quant_selection_start_deadline:[CODES.QR4_ADMISSION_REFUSED,'START_DEADLINE_GUARD'],
+  quant_selection_start_ready:[CODES.QR4_PARTICIPANT_STALE,'START_READY_GUARD'],
+  quant_selection_outcome_order:[CODES.INTEGRITY_CHECK_FAILED,'quant_selection_outcome_order'],
+  quant_selection_outcome_complete:[CODES.INTEGRITY_CHECK_FAILED,'quant_selection_outcome_complete'],
+  quant_selection_first_start_complete:[CODES.INTEGRITY_CHECK_FAILED,'quant_selection_first_start_complete'],
+  quant_selection_replay_order:[CODES.INTEGRITY_CHECK_FAILED,'quant_selection_replay_order']});
 
 class Refused extends Error {constructor(refusal){super(refusal.code);this.refusal=refusal;}}
 
@@ -76,7 +89,8 @@ export function registrationBodyText(registration){
  * [{owner_id, source_hash, run_id, kind, window:{start_ms,end_ms}}] that src/selection/window.js reads, or null when any run cannot be read
  * (the pure module then reports SEARCHED_WINDOWS_UNREADABLE). Windows are half-open [start_ms, end_ms) from the dataset start, warm-up
  * included (RC-S26): train [0, train_end), validation [train_end, validation_end), holdout [validation_end, test_end) bars. The kind is
- * RESEARCH_RUN for every run until slice S3 adds the evaluation-run marker. A run without a readable dataset start or split makes the
+ * RESEARCH_RUN for every run until slice S3 adds the evaluation-run marker (S3 must-do: research runs and evaluation runs must be told apart here, so an
+ * evaluation run of another selection is judged by its own rule and not as searched data by accident). A run without a readable dataset start or split makes the
  * whole list unreadable.
  */
 export async function readSearchedWindows(db,{owner_id:owner,source_hashes:sources}={}){
@@ -227,7 +241,8 @@ const eventOf=row=>({seq:row.seq,event:row.event,status:row.status,code:row.code
  * Owner-scoped read of one selection in a READ ONLY snapshot. An absent selection and one of another owner are the same NOT_FOUND. The stored
  * body is verified before it is returned: text hash, parse, and registrationHashOf of the parsed registration (INTEGRITY_CHECK_FAILED with the
  * details REGISTRATION_UNREADABLE or REGISTRATION_HASH otherwise). Returns {ok:true, selection} with the current status (the last event), the parsed
- * registration (registration_hash included, ready for recheckWindow), the universe, participant and event rows.
+ * registration (registration_hash included, ready for recheckWindow), the universe, participant and event rows, the freeze, the starts, the stored outcome
+ * row and replay_mismatch (true when a SELECTION_REPLAY_MISMATCH row exists for the selection).
  */
 export async function readSelection(db,{owner_id:owner,selection_id:selectionId}={}){
   if(!text(owner)||typeof selectionId!=='string'||!UUID.test(selectionId))return refuse(CODES.NOT_FOUND);
@@ -247,9 +262,17 @@ export async function readSelection(db,{owner_id:owner,selection_id:selectionId}
     const events=(await db.query(`SELECT seq,event,status,code,detail,outcome,completed_evaluation_run_ids,at_ms FROM public.quant_selection_status_events WHERE selection_id=$1 ORDER BY seq`,[selectionId])).rows.map(eventOf);
     const last=events[events.length-1]??null;
     if(last===null)return refuse(CODES.INTEGRITY_CHECK_FAILED,'STATUS_LOG_EMPTY');
+    const freezeRow=(await db.query('SELECT dataset_hash,start_ms,end_ms,bars_total,frozen_at_ms FROM public.quant_selection_window_freezes WHERE selection_id=$1',[selectionId])).rows[0]??null;
+    const freeze=freezeRow&&{dataset_hash:freezeRow.dataset_hash,start_ms:num(freezeRow.start_ms),end_ms:num(freezeRow.end_ms),bars_total:freezeRow.bars_total,frozen_at_ms:num(freezeRow.frozen_at_ms)};
+    const starts=(await db.query('SELECT export_id,evaluation_run_id,parent_run_id,dataset_hash,engine_hash,started_at_ms FROM public.quant_selection_evaluation_starts WHERE selection_id=$1 ORDER BY export_id',[selectionId])).rows
+      .map(item=>({...item,started_at_ms:num(item.started_at_ms)}));
+    const outcomeRow=(await db.query('SELECT outcome,outcome_hash,body_canonical,created_at_ms FROM public.quant_selection_outcomes WHERE selection_id=$1',[selectionId])).rows[0]??null;
+    const outcomeStored=outcomeRow&&{...outcomeRow,created_at_ms:num(outcomeRow.created_at_ms)};
+    // The fact the labels read (SELECTION_REPLAY_MISMATCH overlay): true when any replay event of this selection was stored.
+    const replayMismatch=(await db.query('SELECT 1 FROM public.quant_selection_replay_events WHERE selection_id=$1 LIMIT 1',[selectionId])).rows.length>0;
     return {ok:true,selection:{selection_id:row.selection_id,owner_id:row.owner_id,fixture:row.fixture,status:last.status,code:last.code,outcome:last.outcome,seq:last.seq,
       window_kind:row.window_kind,start_ms:num(row.start_ms),end_ms:num(row.end_ms),registered_at_ms:num(row.registered_at_ms),frozen_at_ms:num(row.frozen_at_ms),
-      admission_deadline_ms:num(row.admission_deadline_ms),registration_key:row.registration_key,registration_hash:row.registration_hash,registration,universe,participants,events}};
+      admission_deadline_ms:num(row.admission_deadline_ms),registration_key:row.registration_key,registration_hash:row.registration_hash,registration,universe,participants,events,freeze,starts,outcome_row:outcomeStored,replay_mismatch:replayMismatch}};
   });
 }
 
@@ -283,3 +306,298 @@ export async function cancelSelection(db,{owner_id:owner,selection_id:selectionI
 }
 
 export const TERMINAL_STATUSES=Object.freeze([...TERMINAL]);
+
+/* ---- S2-2: window freeze, evaluation starts (RO-12 rechecks), outcome and replay ---- */
+
+const EXPOSURE_ERRORS=new Set([...Object.values(EXPOSURE_CODES),'42P01']);
+const blocked=(code,detail)=>({action:'BLOCK',refusal:refuse(code,detail,{blocked:true})});
+const ending=(event,code,detail)=>({action:'END',event,code,detail});
+const marketOf=owner=>({owner_id:owner,...REQUIRED_MARKET});
+
+async function lastEvent(tx,selectionId){
+  return (await tx.query('SELECT seq,status FROM public.quant_selection_status_events WHERE selection_id=$1 ORDER BY seq DESC LIMIT 1',[selectionId])).rows[0]??null;
+}
+async function insertEvent(tx,selectionId,seq,{event,status,code=null,detail=null,outcome=null,completed=[]}){
+  await tx.query(`INSERT INTO public.quant_selection_status_events(selection_id,seq,event,status,code,detail,outcome,completed_evaluation_run_ids) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
+    [selectionId,seq,event,status,code,detail===null?null:String(detail).slice(0,200),outcome,completed]);
+}
+/** The status event that ends a selection INCOMPLETE; the tuple is judged by the pure lifecycle first, so the writer never offers the database an edge the lifecycle refuses. */
+async function endWith(tx,selectionId,last,{event,code,detail}){
+  const decided=transitionSelection(last.status,{kind:event,to:'SELECTION_INCOMPLETE',code});
+  if(decided.ok!==true)return decided;
+  await insertEvent(tx,selectionId,Number(last.seq)+1,{event,status:'SELECTION_INCOMPLETE',code,detail});
+  return {ok:false,ended:true,status:'SELECTION_INCOMPLETE',code,detail:detail??null,event};
+}
+const validIds=(owner,selectionId)=>text(owner)&&typeof selectionId==='string'&&UUID.test(selectionId);
+
+/** The export ids among exportIds whose participant is no longer a validated one-Pine export of the owner (the predicate of the start_ready guard). */
+async function notReady(tx,selectionId,exportIds){
+  return (await tx.query(`SELECT p.export_id FROM public.quant_selection_participants p JOIN public.quant_selection_registrations r ON r.selection_id=p.selection_id
+    WHERE p.selection_id=$1 AND p.export_id=ANY($2::uuid[]) AND NOT (
+      EXISTS(SELECT 1 FROM public.bi_exports x WHERE x.export_id=p.export_id AND x.owner_id=r.owner_id AND x.run_id=p.run_id AND x.mode='ONE_PINE' AND x.fixture=r.fixture AND x.package_hash=p.package_hash)
+      AND (SELECT e.status FROM public.bi_status_events e WHERE e.export_id=p.export_id ORDER BY e.seq DESC LIMIT 1)='EXPORT_VALIDATED'
+      AND EXISTS(SELECT 1 FROM public.ql4c_validation v WHERE v.export_id=p.export_id AND v.package_hash=p.package_hash AND v.fixture=r.fixture AND v.validated_at_utc=p.validated_at_utc))`,
+    [selectionId,exportIds])).rows.map(row=>row.export_id);
+}
+
+/**
+ * The RO-12 judgement of one guarded step, run inside the SERIALIZABLE transaction after the register lock was taken and the register was read under it.
+ * stage EVALUATION_START (first start from SELECTION_REGISTERED, later starts from SELECTION_EVALUATING) or OUTCOME_WRITE (SELECTION_EVALUATING). Returns
+ * {action:'OK', first, last, frozen, participant} to proceed, {action:'BLOCK', refusal} when the step must not run and the selection stays open (rolled back or
+ * nothing written: an unreadable register or searched list, a missing freeze, a status that does not allow the step, a stored row that disagrees), or
+ * {action:'END', event, code, detail, last} when the selection ends INCOMPLETE (an observed overlap, a stale participant, a passed deadline).
+ * QR4-side check of the exposure order: before the first start the register holds no row of this selection (an orphan row blocks the step); from the
+ * second step on it holds exactly one, over the registered window, and the selection has its FIRST_EVALUATION_START event.
+ */
+async function judgeStep(tx,{owner,selectionId,registration,read,stage,exportId=null,participantCheck=null}){
+  const row=(await tx.query('SELECT registration_hash,admission_deadline_ms FROM public.quant_selection_registrations WHERE selection_id=$1 AND owner_id=$2',[selectionId,owner])).rows[0];
+  if(!row||row.registration_hash!==registration.registration_hash)return blocked(CODES.INTEGRITY_CHECK_FAILED,'REGISTRATION_CHANGED');
+  const last=await lastEvent(tx,selectionId);
+  if(!last)return blocked(CODES.INTEGRITY_CHECK_FAILED,'STATUS_LOG_EMPTY');
+  const allowed=stage==='EVALUATION_START'?['SELECTION_REGISTERED','SELECTION_EVALUATING']:['SELECTION_EVALUATING'];
+  if(!allowed.includes(last.status))return blocked(CODES.QR4_TRANSITION_INVALID,'STATUS_'+last.status);
+  const frozen=(await tx.query('SELECT dataset_hash FROM public.quant_selection_window_freezes WHERE selection_id=$1',[selectionId])).rows[0]?.dataset_hash??null;
+  if(frozen===null)return blocked(CODES.QR4_TRANSITION_INVALID,'WINDOW_NOT_FROZEN');
+  const first=last.status==='SELECTION_REGISTERED';
+  // The deadline is judged before the exposure-order checks, so a passed deadline can end a selection that those checks would otherwise block for good.
+  if(stage==='EVALUATION_START'){
+    const clock=num((await tx.query('SELECT public.quant_selection_now_ms() AS now_ms')).rows[0].now_ms);
+    if(clock===null)return blocked(CODES.INTEGRITY_CHECK_FAILED,'CLOCK_UNREADABLE');
+    if(clock>num(row.admission_deadline_ms))return {...ending('DEADLINE_PASSED',CODES.QR4_ADMISSION_REFUSED,'ADMISSION_DEADLINE'),last};
+  }
+  const own=read?.ok===true?read.rows.filter(item=>item.kind==='QR4_SELECTION'&&item.selection_id===selectionId):[];
+  if(first&&own.length>0)return blocked(CODES.INTEGRITY_CHECK_FAILED,'ORPHAN_EXPOSURE');
+  if(!first){
+    if(read?.ok===true&&(own.length!==1||own[0].owner_id!==owner||own[0].start_ms!==registration.window.start_ms||own[0].end_ms!==registration.window.end_ms))return blocked(CODES.INTEGRITY_CHECK_FAILED,'EXPOSURE_MISSING');
+    const started=(await tx.query("SELECT 1 FROM public.quant_selection_status_events WHERE selection_id=$1 AND event='FIRST_EVALUATION_START'",[selectionId])).rows;
+    if(started.length!==1)return blocked(CODES.INTEGRITY_CHECK_FAILED,'EXPOSURE_WITHOUT_START');
+  }
+  const sources=[...new Set(registration.participants.map(item=>item.source_hash))];
+  const searched=await readSearchedWindows(tx,{owner_id:owner,source_hashes:sources});
+  const decided=recheckWindow({registration,exposure_register:toComparisonEntries(read),searched_windows:searched,stage});
+  if(decided.ok!==true)return decided.ends_selection===true?{...ending('WINDOW_RECHECK_FAILED',decided.code,decided.detail),last}:blocked(decided.code,decided.detail);
+  const starts=(await tx.query('SELECT export_id FROM public.quant_selection_evaluation_starts WHERE selection_id=$1',[selectionId])).rows;
+  if(stage==='OUTCOME_WRITE'){
+    if(starts.length!==registration.participants.length)return blocked(CODES.QR4_TRANSITION_INVALID,'EVALUATIONS_NOT_ALL_STARTED');
+    return {action:'OK',first:false,last,frozen};
+  }
+  const participant=registration.participants.find(item=>item.export_id===exportId);
+  if(!participant)return blocked(CODES.INVALID_FIELDS,'EXPORT_ID');
+  if(starts.some(item=>item.export_id===exportId))return blocked(CODES.QR4_TRANSITION_INVALID,'ALREADY_STARTED');
+  // The first start re-judges every participant; a later start its own participant (the database guard start_ready repeats the predicate).
+  const stale=await notReady(tx,selectionId,first?registration.participants.map(item=>item.export_id):[exportId]);
+  if(stale.length>0)return {...ending('PARTICIPANT_INELIGIBLE',CODES.QR4_PARTICIPANT_STALE,'NOT_READY:'+stale[0]),last};
+  if(typeof participantCheck==='function'){
+    const verdict=await participantCheck(tx,{registration,participant,first});
+    if(verdict)return {...ending('PARTICIPANT_INELIGIBLE',CODES.QR4_PARTICIPANT_STALE,String(verdict.detail??'PARTICIPANT_CHECK').slice(0,120)),last};
+  }
+  return {action:'OK',first,last,frozen,participant};
+}
+
+/** A step the database refused with a QR004 start guard that the writer's own check should have caught first (a race): the selection ends in a new transaction. */
+const GUARD_ENDINGS=Object.freeze({
+  quant_selection_start_deadline:['DEADLINE_PASSED',CODES.QR4_ADMISSION_REFUSED,'START_DEADLINE_GUARD'],
+  quant_selection_start_ready:['PARTICIPANT_INELIGIBLE',CODES.QR4_PARTICIPANT_STALE,'START_READY_GUARD']});
+async function endAfterGuard(db,owner,selectionId,error,retries){
+  const mapped=error?.code==='QR004'&&Object.hasOwn(GUARD_ENDINGS,error.constraint??'')?GUARD_ENDINGS[error.constraint]:undefined;
+  if(!mapped)return null;
+  const [event,code,detail]=mapped;
+  return serializable(db,async()=>{
+    const row=(await db.query('SELECT 1 FROM public.quant_selection_registrations WHERE selection_id=$1 AND owner_id=$2',[selectionId,owner])).rows[0];
+    if(!row)return refuse(CODES.NOT_FOUND);
+    const last=await lastEvent(db,selectionId);
+    if(!last||TERMINAL.includes(last.status))return refuse(CODES.QR4_TRANSITION_INVALID,'TERMINAL');
+    return endWith(db,selectionId,last,{event,code,detail});
+  },retries);
+}
+
+/** The refusal of a database error in a write of this section, or null. */
+function stepRefusal(error){
+  if(error?.code==='23505'){
+    if(error.constraint==='quant_selection_evaluation_starts_pkey')return refuse(CODES.QR4_TRANSITION_INVALID,'ALREADY_STARTED');
+    if(error.constraint==='quant_selection_evaluation_starts_run_key')return refuse(CODES.INVALID_FIELDS,'EVALUATION_RUN_ID_TAKEN');
+    if(error.constraint==='quant_selection_status_events_pkey')return refuse(CODES.QR4_TRANSITION_INVALID,'CONCURRENT_EVENT');
+    if(error.constraint==='quant_selection_window_freezes_pkey')return refuse(CODES.QR4_TRANSITION_INVALID,'ALREADY_FROZEN');
+    if(error.constraint==='quant_selection_outcomes_pkey')return refuse(CODES.QR4_TRANSITION_INVALID,'OUTCOME_EXISTS');
+  }
+  // A QR4_SELECTION register row of another owner already names this selection id (the register keeps one row per selection id): a refusal, the selection stays open.
+  if(error?.code==='23505'&&error.constraint==='quant_exposure_register_qr4_unique')return refuse(CODES.INTEGRITY_CHECK_FAILED,'EXPOSURE_SELECTION_TAKEN',{blocked:true});
+  if(EXPOSURE_ERRORS.has(error?.code))return refuse(CODES.QR4_EXPOSURE_REGISTRY_UNAVAILABLE,'REGISTRY_UNREADABLE',{blocked:true});
+  return refusalOfError(error);
+}
+
+/**
+ * T-FREEZE: stores the dataset hash of the closed window W once, while the selection is SELECTION_REGISTERED (before the first start). The window columns
+ * repeat the registration. The guard refuses it before the window has closed by the database stamp. Returns {ok:true, dataset_hash, frozen_at_ms}.
+ */
+export async function freezeWindow(db,{owner_id:owner,selection_id:selectionId,dataset_hash:datasetHash,retries=SERIALIZATION_RETRIES}={}){
+  if(!validIds(owner,selectionId))return refuse(CODES.NOT_FOUND);
+  if(typeof datasetHash!=='string'||!SHA256.test(datasetHash))return refuse(CODES.INVALID_FIELDS,'DATASET_HASH');
+  try{
+    return await serializable(db,async()=>{
+      const row=(await db.query('SELECT start_ms,end_ms,total_bars FROM public.quant_selection_registrations WHERE selection_id=$1 AND owner_id=$2',[selectionId,owner])).rows[0];
+      if(!row)return refuse(CODES.NOT_FOUND);
+      const last=await lastEvent(db,selectionId);
+      if(!last||last.status!=='SELECTION_REGISTERED')return refuse(CODES.QR4_TRANSITION_INVALID,'STATUS_'+(last?.status??'NONE'));
+      const stored=(await db.query('INSERT INTO public.quant_selection_window_freezes(selection_id,dataset_hash,start_ms,end_ms,bars_total) VALUES($1,$2,$3,$4,$5) RETURNING frozen_at_ms',
+        [selectionId,datasetHash,row.start_ms,row.end_ms,row.total_bars])).rows[0];
+      return {ok:true,selection_id:selectionId,dataset_hash:datasetHash,frozen_at_ms:num(stored.frozen_at_ms)};
+    },retries);
+  }catch(error){const refusal=stepRefusal(error);if(refusal!==null)return refusal;throw error;}
+}
+
+/** RC-S27: a window data gap found before the first start ends the selection on the REGISTERED to INCOMPLETE edge with QR4_WINDOW_DATA_UNAVAILABLE. */
+export async function markWindowDataUnavailable(db,{owner_id:owner,selection_id:selectionId,retries=SERIALIZATION_RETRIES}={}){
+  if(!validIds(owner,selectionId))return refuse(CODES.NOT_FOUND);
+  try{
+    return await serializable(db,async()=>{
+      const row=(await db.query('SELECT 1 FROM public.quant_selection_registrations WHERE selection_id=$1 AND owner_id=$2',[selectionId,owner])).rows[0];
+      if(!row)return refuse(CODES.NOT_FOUND);
+      const last=await lastEvent(db,selectionId);
+      if(!last)return refuse(CODES.INTEGRITY_CHECK_FAILED,'STATUS_LOG_EMPTY');
+      if(TERMINAL.includes(last.status))return refuse(CODES.QR4_TRANSITION_INVALID,'TERMINAL');
+      return endWith(db,selectionId,last,{event:'WINDOW_DATA_UNAVAILABLE',code:CODES.QR4_WINDOW_DATA_UNAVAILABLE,detail:'WINDOW_DATA_UNAVAILABLE'});
+    },retries);
+  }catch(error){const refusal=stepRefusal(error);if(refusal!==null)return refusal;throw error;}
+}
+
+/**
+ * T-START1 and T-STARTn (RO-12, contract 4.1 and 13.3): starts the evaluation of one participant in its own SERIALIZABLE transaction. The registration is read
+ * first in its own snapshot (it is immutable and the transaction verifies its hash). In the write transaction the register lock is the first statement
+ * (appendExposures, whose check runs under the lock): the register and the searched windows are rechecked (recheckWindow, EVALUATION_START), and only then
+ *   - from SELECTION_REGISTERED the QR4_SELECTION exposure row of the evaluation part of W is appended, FIRST_EVALUATION_START is written and the evaluation
+ *     start row follows (the status guard binds the event to that register row; the commit check C3 repeats it);
+ *   - from SELECTION_EVALUATING only the evaluation start row is written (the check saw the selection already started: no second register row).
+ * A failed recheck ends the selection (WINDOW_RECHECK_FAILED with QR4_WINDOW_EXPOSED or QR4_WINDOW_OVERLAPS_SEARCHED_DATA) and writes no exposure row. A passed
+ * admission deadline, or a participant that is no longer validated (or the optional participantCheck(tx,{registration,participant,first}) hook returning a
+ * truthy {detail}), ends it too (DEADLINE_PASSED, PARTICIPANT_INELIGIBLE). An unreadable register, an unreadable searched list, a missing freeze or a
+ * stored row that disagrees blocks the step: nothing is written, the selection stays open, the answer has blocked:true.
+ * Returns {ok:true, first, evaluation_run_id, ...}, {ok:false, ended:true, ...} or a refusal.
+ */
+export async function startEvaluation(db,{owner_id:owner,selection_id:selectionId,export_id:exportId,evaluation_run_id:runId,participantCheck=null,now=undefined,internal=false,retries=SERIALIZATION_RETRIES}={}){
+  if(!validIds(owner,selectionId))return refuse(CODES.NOT_FOUND);
+  // A caller-supplied application clock is accepted only with the internal option (tests and tools); the register at_ms is otherwise always Date.now.
+  if(now!==undefined&&(internal!==true||typeof now!=='function'))return refuse(CODES.INVALID_FIELDS,'NOW');
+  const clockNow=now===undefined?Date.now:now;
+  if(typeof exportId!=='string'||!UUID.test(exportId)||!text(runId)||runId.length>200)return refuse(CODES.INVALID_FIELDS,'IDENTIFIERS');
+  const pre=await readSelection(db,{owner_id:owner,selection_id:selectionId});
+  if(!pre.ok)return pre;
+  const registration=pre.selection.registration,window=registration.window;
+  try{
+    return await serializable(db,async()=>{
+      const carried={};
+      const appended=await appendExposures(db,{...marketOf(owner),now:clockNow,events:[{kind:'QR4_SELECTION',window:{start_ms:window.start_ms,end_ms:window.end_ms},selection_id:selectionId}],
+        check:async read=>{
+          const judged=await judgeStep(db,{owner,selectionId,registration,read,stage:'EVALUATION_START',exportId,participantCheck});
+          // The first start proceeds to the append (null); every other result is carried out as the check refusal.
+          if(judged.action==='OK'&&judged.first){carried.judged=judged;return null;}
+          return judged;
+        }});
+      let judged;
+      if(appended.ok)judged=carried.judged;
+      else if(appended.code===EXPOSURE_CODES.CHECK_REFUSED)judged=appended.refusal;
+      else return refuse(CODES.INTEGRITY_CHECK_FAILED,'EXPOSURE_EVENT');
+      if(judged.action==='BLOCK')return judged.refusal;
+      if(judged.action==='END')return endWith(db,selectionId,judged.last,judged);
+      let seq=Number(judged.last.seq);
+      if(judged.first)await insertEvent(db,selectionId,++seq,{event:'FIRST_EVALUATION_START',status:'SELECTION_EVALUATING'});
+      await db.query(`INSERT INTO public.quant_selection_evaluation_starts(selection_id,export_id,evaluation_run_id,parent_run_id,dataset_hash,engine_hash) VALUES($1,$2,$3,$4,$5,$6)`,
+        [selectionId,exportId,runId,judged.participant.run_id,judged.frozen,registration.scope.engine]);
+      return {ok:true,selection_id:selectionId,export_id:exportId,evaluation_run_id:runId,parent_run_id:judged.participant.run_id,first:judged.first,exposure:judged.first?appended.rows[0]:null};
+    },retries);
+  }catch(error){
+    const ended=await endAfterGuard(db,owner,selectionId,error,retries);
+    if(ended!==null)return ended;
+    const refusal=stepRefusal(error);if(refusal!==null)return refusal;throw error;
+  }
+}
+
+/**
+ * T-OUT (RO-12): ranks and stores the outcome in one SERIALIZABLE transaction whose first statement is the lock-first register read (readExposuresLocked).
+ * The same recheck as a start (stage OUTCOME_WRITE) runs before anything is ranked: a failed one ends the selection and ranks nothing, an unreadable one blocks
+ * the write. All participants must have an evaluation start. The evaluations come from the evaluations array or from readEvaluations(tx,{selection,window_dataset_hash}),
+ * called inside the transaction (slice S3 reads them from the research rows); rankSelection (the pure ranking module) decides, and its result is stored:
+ * a completed ranking writes the outcome row (canonical text of the result without outcome_hash, hashed) and then ALL_EVALUATIONS_DONE to SELECTION_COMPLETED;
+ * an incomplete one writes ALL_EVALUATIONS_DONE to SELECTION_INCOMPLETE with the ranking code and the completed evaluation run ids. No register row is written.
+ * Returns {ok:true, status, outcome, outcome_hash, ranking} or a refusal or an ended answer.
+ */
+export async function writeOutcome(db,{owner_id:owner,selection_id:selectionId,evaluations=null,readEvaluations=null,retries=SERIALIZATION_RETRIES}={}){
+  if(!validIds(owner,selectionId))return refuse(CODES.NOT_FOUND);
+  const pre=await readSelection(db,{owner_id:owner,selection_id:selectionId});
+  if(!pre.ok)return pre;
+  const registration=pre.selection.registration;
+  try{
+    return await serializable(db,async()=>{
+      const read=await readExposuresLocked(db,marketOf(owner));
+      const judged=await judgeStep(db,{owner,selectionId,registration,read,stage:'OUTCOME_WRITE'});
+      if(judged.action==='BLOCK')return judged.refusal;
+      if(judged.action==='END')return endWith(db,selectionId,judged.last,judged);
+      const list=typeof readEvaluations==='function'?await readEvaluations(db,{selection:pre.selection,window_dataset_hash:judged.frozen}):evaluations;
+      // A missing or non-array list is not evidence of a failed evaluation: nothing is written (the transaction rolls back), so the selection stays open and the caller may retry.
+      if(!Array.isArray(list))throw Object.assign(Error('The evaluation list is unavailable; nothing was written'),{code:EVALUATIONS_UNAVAILABLE,retryable:true});
+      const ranked=rankSelection(registration,list,{window_dataset_hash:judged.frozen});
+      const seq=Number(judged.last.seq)+1;
+      if(ranked.status==='SELECTION_COMPLETED'){
+        const {outcome_hash:outcomeHash,...rest}=ranked;
+        const body=canonical(rest);
+        if(sha(body)!==outcomeHash)return refuse(CODES.INTEGRITY_CHECK_FAILED,'OUTCOME_HASH');
+        const decided=transitionSelection('SELECTION_EVALUATING',{kind:'ALL_EVALUATIONS_DONE',to:'SELECTION_COMPLETED',outcome:ranked.outcome});
+        if(decided.ok!==true)return decided;
+        await db.query('INSERT INTO public.quant_selection_outcomes(selection_id,outcome,outcome_hash,body_canonical) VALUES($1,$2,$3,$4)',[selectionId,ranked.outcome,outcomeHash,body]);
+        await insertEvent(db,selectionId,seq,{event:'ALL_EVALUATIONS_DONE',status:'SELECTION_COMPLETED',outcome:ranked.outcome});
+        return {ok:true,selection_id:selectionId,status:'SELECTION_COMPLETED',outcome:ranked.outcome,outcome_hash:outcomeHash,ranking:ranked};
+      }
+      const decided=transitionSelection('SELECTION_EVALUATING',{kind:'ALL_EVALUATIONS_DONE',to:'SELECTION_INCOMPLETE',code:ranked.code});
+      if(decided.ok!==true)return decided;
+      await insertEvent(db,selectionId,seq,{event:'ALL_EVALUATIONS_DONE',status:'SELECTION_INCOMPLETE',code:ranked.code,detail:ranked.problems?.[0]?.detail??null,completed:ranked.completed_evaluation_ids});
+      return {ok:false,ended:true,status:'SELECTION_INCOMPLETE',code:ranked.code,detail:ranked.problems?.[0]?.detail??null,event:'ALL_EVALUATIONS_DONE',ranking:ranked};
+    },retries);
+  }catch(error){const refusal=stepRefusal(error);if(refusal!==null)return refusal;throw error;}
+}
+
+/**
+ * Outcome replay (contract 13.2). The stored outcome, the registration and the frozen dataset hash are read in one READ ONLY snapshot, the evaluations come from
+ * the evaluations array or from readEvaluations(tx,{selection,window_dataset_hash}) and the ranking is made again by the pure module. An equal outcome_hash
+ * returns {ok:true, match:true} and writes nothing. A different one (or a recomputation that is no longer complete) writes one SELECTION_REPLAY_MISMATCH row
+ * in a SERIALIZABLE transaction and returns {ok:true, match:false, event}. The stored outcome row is never changed.
+ */
+export async function replaySelectionOutcome(db,{owner_id:owner,selection_id:selectionId,evaluations=null,readEvaluations=null,retries=SERIALIZATION_RETRIES}={}){
+  if(!validIds(owner,selectionId))return refuse(CODES.NOT_FOUND);
+  const replayed=await readSnapshot(db,async()=>{
+    const read=await readSelection(db,{owner_id:owner,selection_id:selectionId});
+    if(!read.ok)return read;
+    const stored=read.selection.outcome_row;
+    if(!stored)return refuse(CODES.NOT_FOUND,'NO_OUTCOME');
+    if(sha(stored.body_canonical)!==stored.outcome_hash)return refuse(CODES.INTEGRITY_CHECK_FAILED,'OUTCOME_HASH');
+    const frozen=read.selection.freeze?.dataset_hash??null;
+    const list=typeof readEvaluations==='function'?await readEvaluations(db,{selection:read.selection,window_dataset_hash:frozen}):evaluations;
+    // Same rule as writeOutcome: a missing or non-array list is not evidence of a different outcome, so no mismatch row is written and the caller may retry.
+    if(!Array.isArray(list))throw Object.assign(Error('The evaluation list is unavailable; nothing was written'),{code:EVALUATIONS_UNAVAILABLE,retryable:true});
+    return {ok:true,decided:replayRanking(read.selection.registration,list,stored.outcome_hash,{window_dataset_hash:frozen}),stored_outcome_hash:stored.outcome_hash};
+  });
+  if(replayed.ok!==true)return replayed;
+  if(replayed.decided.match===true)return {ok:true,match:true,selection_id:selectionId,stored_outcome_hash:replayed.stored_outcome_hash,recomputed_outcome_hash:replayed.decided.recomputed_outcome_hash};
+  const recomputed=replayed.decided.recomputed_outcome_hash;
+  try{
+    return await serializable(db,async()=>{
+      const owned=(await db.query('SELECT 1 FROM public.quant_selection_registrations WHERE selection_id=$1 AND owner_id=$2',[selectionId,owner])).rows[0];
+      if(!owned)return refuse(CODES.NOT_FOUND);
+      const row=(await db.query(`INSERT INTO public.quant_selection_replay_events(selection_id,kind,stored_outcome_hash,recomputed_outcome_hash) VALUES($1,'SELECTION_REPLAY_MISMATCH',$2,$3) RETURNING replay_event_id,at_ms`,
+        [selectionId,replayed.stored_outcome_hash,recomputed])).rows[0];
+      return {ok:true,match:false,selection_id:selectionId,replay_event_id:row.replay_event_id,at_ms:num(row.at_ms),stored_outcome_hash:replayed.stored_outcome_hash,recomputed_outcome_hash:recomputed};
+    },retries);
+  }catch(error){const refusal=stepRefusal(error);if(refusal!==null)return refusal;throw error;}
+}
+
+/**
+ * QR4-side audit of the exposure order (no trigger sits on the register table): the QR4_SELECTION register rows of the owner whose selection has no
+ * registration of the owner or no FIRST_EVALUATION_START status event. Read only; an empty list is the healthy state. Such a row still counts as an exposure for
+ * every other reader (it can only make windows less available), and the start of its own selection is blocked with ORPHAN_EXPOSURE.
+ */
+export async function findOrphanSelectionExposures(db,{owner_id:owner}={}){
+  if(!db||typeof db.query!=='function'||!text(owner))return null;
+  return (await db.query(`SELECT x.exposure_id,x.selection_id,x.start_ms,x.end_ms FROM public.quant_exposure_register x WHERE x.kind='QR4_SELECTION' AND x.owner_id=$1
+    AND NOT EXISTS(SELECT 1 FROM public.quant_selection_status_events e JOIN public.quant_selection_registrations r ON r.selection_id=e.selection_id
+      WHERE e.selection_id::text=x.selection_id AND r.owner_id=x.owner_id AND e.event='FIRST_EVALUATION_START') ORDER BY x.at_ms,x.exposure_id`,[owner])).rows
+    .map(row=>({exposure_id:row.exposure_id,selection_id:row.selection_id,start_ms:num(row.start_ms),end_ms:num(row.end_ms)}));
+}

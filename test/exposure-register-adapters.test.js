@@ -9,7 +9,7 @@ import {CODES as QR3_CODES,REQUIRED_MARKET} from '../src/comparison/common.js';
 import {exposuresOverlapping} from '../src/comparison/evidence.js';
 import {CODES as QR4_CODES} from '../src/selection/codes.js';
 import {overlapsExposure} from '../src/selection/window.js';
-import {EXPOSURE_CODES,EXPOSURE_KINDS,appendExposures,readExposures,toComparisonEntries,toPackageEntries} from '../src/postgres/exposure-register.js';
+import {EXPOSURE_CODES,EXPOSURE_KINDS,appendExposures,readExposures,readExposuresLocked,toComparisonEntries,toPackageEntries} from '../src/postgres/exposure-register.js';
 import {contractOf,metricsOf,parameters,hex,MINUTE} from './helpers/quant-library-fixture.mjs';
 
 /*
@@ -249,4 +249,23 @@ test('the reader needs a complete owner and market, reports an absent table as u
   const source=fs.readFileSync(new URL('../src/postgres/exposure-register.js',import.meta.url),'utf8');
   assert.deepEqual([...source.matchAll(/^import .* from '([^']+)'/gm)].map(match=>match[1]),['node:crypto','../pine-bridge/source.js']);
   assert.ok(!/\bDELETE\b|\bUPDATE\b|\bTRUNCATE\b/.test(source.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/.*$/gm,'')),'the module never issues an UPDATE, DELETE or TRUNCATE');
+});
+
+test('readExposuresLocked: validates before any statement, locks first, confirms SERIALIZABLE, then reads and writes nothing',async()=>{
+  for(const input of [{},{owner_id:OWNER},{owner_id:OWNER,broker:'b',symbol:'s'},{owner_id:'',broker:'b',symbol:'s',timeframe:'1'}]){
+    const db=fakeDb();assert.deepEqual(await readExposuresLocked(db,input),{ok:false,code:EXPOSURE_CODES.INPUT_INVALID,rows:null});assert.equal(db.calls.length,0,'no statement before validation');
+  }
+  await assert.rejects(readExposuresLocked(fakeDb({isTransaction:false}),{owner_id:OWNER,...MARKET}),/caller transaction/);
+  await assert.rejects(readExposuresLocked(null,{owner_id:OWNER,...MARKET}),/caller transaction/);
+  const db=fakeDb({rows:[qr4({exposure_id:'00000000-0000-4000-8000-0000000000bb'})]}),found=await readExposuresLocked(db,{owner_id:OWNER,...MARKET});
+  assert.equal(found.ok,true);assert.equal(found.rows[0].selection_id,'sel-1');
+  assert.match(db.calls[0].sql,/^LOCK TABLE public.quant_exposure_register IN SHARE ROW EXCLUSIVE MODE$/);
+  assert.match(db.calls[1].sql,/current_setting\('transaction_isolation'\)/);
+  assert.match(db.calls[2].sql,/to_regclass/);assert.match(db.calls[3].sql,/^SELECT version FROM public.quant_exposure_register_schema$/);assert.match(db.calls[4].sql,/^SELECT exposure_id/);
+  assert.equal(db.calls.length,5);assert.equal(db.calls.some(item=>/^INSERT/.test(item.sql)),false,'a locked read writes nothing');
+  // below SERIALIZABLE: QR003 after the lock and before any read
+  const weak=fakeDb({isolation:'read committed'});
+  await assert.rejects(readExposuresLocked(weak,{owner_id:OWNER,...MARKET}),error=>error.code==='QR003');assert.deepEqual(weak.calls.map(item=>item.sql.split(' ')[0]),['LOCK','SELECT']);
+  // an unreadable register is ok:false, never an empty list
+  assert.deepEqual(await readExposuresLocked(fakeDb({registerPresent:false}),{owner_id:OWNER,...MARKET}),{ok:false,code:EXPOSURE_CODES.UNAVAILABLE,rows:null});
 });

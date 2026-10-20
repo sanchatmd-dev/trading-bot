@@ -1,7 +1,7 @@
--- QR-4 S2-1 qualified-selection registration tables (local candidate; applied offline and separately from the version-1 extensions;
--- docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md RC-S21 to RC-S27).
--- Slice S2-1 holds the marker, the registration, the universe rows, the participants and the status event log. The window freeze, the evaluation
--- starts, the outcome and the replay events (S2-2, the RO-12 rechecks) are added to this same uninstalled file by the next slice.
+-- QR-4 S2 qualified-selection tables (local candidate; applied offline and separately from the version-1 extensions;
+-- docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md RC-S21 to RC-S28).
+-- Slice S2-1 holds the marker, the registration, the universe rows, the participants and the status event log. Slice S2-2 adds the window freeze, the
+-- evaluation starts, the outcome and the replay events (the RO-12 rechecks run in src/postgres/selection-store.js, under the register lock).
 --
 -- Database guards, for any role that cannot disable triggers or change a table owner:
 --   QR002  UPDATE, DELETE and TRUNCATE are refused on every table of this file (function quant_selection_insert_only, ENABLE ALWAYS);
@@ -10,11 +10,16 @@
 --   QR004  an INSERT that breaks the selection rules is refused. Every QR004 is raised USING CONSTRAINT = '<guard name>', so the writer maps the
 --          failure by guard name and not by message text. Guard names: quant_selection_registration_clock, quant_selection_universe_member,
 --          quant_selection_participant_ready, quant_selection_participant_member, quant_selection_status_transition, quant_selection_exposure_bind
---          (S2-1: FIRST_EVALUATION_START is refused until S2-2 binds it to the exposure register row) and quant_selection_registration_complete
---          (deferred commit check C1).
--- S2-2 must-dos (recorded, not built here): FIRST_EVALUATION_START needs an EVALUATING-origin oracle, and the QR4_SELECTION exposure register
--- rows are registered only after FIRST_EVALUATION_START. The QR4_SELECTION register guard refuses a row whose selection has no
--- FIRST_EVALUATION_START status event.
+--          (FIRST_EVALUATION_START needs the one register row of the selection, written by the same transaction), quant_selection_registration_complete (C1),
+--          quant_selection_freeze_order, quant_selection_start_order, quant_selection_start_deadline, quant_selection_start_ready, quant_selection_outcome_order,
+--          quant_selection_outcome_complete (C2), quant_selection_first_start_complete (C3) and quant_selection_replay_order.
+-- The QR4_SELECTION exposure register row is written only together with FIRST_EVALUATION_START: the writer appends it under the register lock in the same
+-- SERIALIZABLE transaction and then inserts the event, whose guard requires that row (written by this transaction), and C3 requires it again at commit. No
+-- trigger sits on the register table (another extension's table, and it also carries QR-3 rows), so a register row written by other means is not stopped by
+-- this file; the application refuses it (selection-store.js) and findOrphanSelectionExposures lists it.
+-- A freeze, an evaluation start, an outcome, a replay event and the FIRST_EVALUATION_START event are refused when the registration row was written by the
+-- same transaction or one of its subtransactions (quant_selection_in_this_transaction), so an early SET CONSTRAINTS IMMEDIATE then DEFERRED cannot run the
+-- later steps inside the registration transaction; the exposure bind uses the same helper for the register row.
 -- Guards take no advisory lock and no row lock (the runtime role has no UPDATE on these tables). Every writer is SERIALIZABLE; a second writer of
 -- the same next seq or the same registration key ends with a primary or unique key violation or with 40001, never a row the committed state
 -- would refuse. The application retries 40001 from the start of its transaction, at most three times.
@@ -33,7 +38,7 @@
 -- Every function is SECURITY INVOKER, qualifies each name and pins search_path, so a session TEMP table or function named like a selection object
 -- can never be used in its place. All triggers are ENABLE ALWAYS, so session_replication_role=replica skips none.
 -- This file is not idempotent by itself: src/postgres/quant-selection-migration.js classifies the live catalog first and runs it only over ABSENT.
--- Rollback: src/postgres/quant-selection-rollback.sql drops exactly the objects created here.
+-- Rollback: src/postgres/quant-selection-rollback.sql drops exactly the objects created here (nine tables and 22 functions; the triggers go with the tables).
 -- Requires the base users table, the version-1 research extension (quant_jobs), the exposure register extension and the Best Inputs package
 -- extension (bi_exports, bi_status_events, ql4c_validation).
 
@@ -175,6 +180,80 @@ CREATE TABLE public.quant_selection_status_events(
  CONSTRAINT quant_selection_status_events_at_ms_check CHECK(at_ms>=0 AND at_ms<=253402300799999)
 );
 
+-- S2-2: the frozen dataset of W, one row per selection. The columns repeat the registered window; the guard requires equality.
+CREATE TABLE public.quant_selection_window_freezes(
+ selection_id UUID NOT NULL,
+ dataset_hash TEXT NOT NULL,
+ start_ms BIGINT NOT NULL,
+ end_ms BIGINT NOT NULL,
+ bars_total INTEGER NOT NULL,
+ frozen_at_ms BIGINT NOT NULL,
+ CONSTRAINT quant_selection_window_freezes_pkey PRIMARY KEY(selection_id),
+ CONSTRAINT quant_selection_window_freezes_selection_id_fkey FOREIGN KEY(selection_id) REFERENCES public.quant_selection_registrations(selection_id),
+ CONSTRAINT quant_selection_window_freezes_hash_check CHECK(dataset_hash ~ '^[0-9a-f]{64}$'),
+ CONSTRAINT quant_selection_window_freezes_window_check CHECK(start_ms>=0 AND start_ms%60000=0 AND end_ms>start_ms AND end_ms%60000=0 AND end_ms<=253402300800000),
+ CONSTRAINT quant_selection_window_freezes_bars_check CHECK(bars_total>=1),
+ CONSTRAINT quant_selection_window_freezes_frozen_at_check CHECK(frozen_at_ms>=0 AND frozen_at_ms<=253402300799999)
+);
+
+-- S2-2: one row per started participant evaluation. evaluation_run_id has no foreign key here (slice S3 adds the quant_jobs link to this same file).
+CREATE TABLE public.quant_selection_evaluation_starts(
+ selection_id UUID NOT NULL,
+ export_id UUID NOT NULL,
+ evaluation_run_id TEXT NOT NULL,
+ parent_run_id TEXT NOT NULL,
+ dataset_hash TEXT NOT NULL,
+ engine_hash TEXT NOT NULL,
+ started_at_ms BIGINT NOT NULL,
+ CONSTRAINT quant_selection_evaluation_starts_pkey PRIMARY KEY(selection_id,export_id),
+ CONSTRAINT quant_selection_evaluation_starts_run_key UNIQUE(evaluation_run_id),
+ CONSTRAINT quant_selection_evaluation_starts_participant_fkey FOREIGN KEY(selection_id,export_id) REFERENCES public.quant_selection_participants(selection_id,export_id),
+ CONSTRAINT quant_selection_evaluation_starts_run_id_check CHECK(pg_catalog.length(evaluation_run_id)>0 AND pg_catalog.length(evaluation_run_id)<=200),
+ CONSTRAINT quant_selection_evaluation_starts_parent_check CHECK(pg_catalog.length(parent_run_id)>0),
+ CONSTRAINT quant_selection_evaluation_starts_dataset_check CHECK(dataset_hash ~ '^[0-9a-f]{64}$'),
+ CONSTRAINT quant_selection_evaluation_starts_engine_check CHECK(engine_hash ~ '^[0-9a-f]{64}$'),
+ CONSTRAINT quant_selection_evaluation_starts_started_at_check CHECK(started_at_ms>=0 AND started_at_ms<=253402300799999)
+);
+
+-- S2-2: the stored ranking outcome, one row per selection. body_canonical is the canonical text of the outcome without outcome_hash.
+CREATE TABLE public.quant_selection_outcomes(
+ selection_id UUID NOT NULL,
+ outcome TEXT NOT NULL,
+ outcome_hash TEXT NOT NULL,
+ body_canonical TEXT NOT NULL,
+ created_at_ms BIGINT NOT NULL,
+ CONSTRAINT quant_selection_outcomes_pkey PRIMARY KEY(selection_id),
+ CONSTRAINT quant_selection_outcomes_selection_id_fkey FOREIGN KEY(selection_id) REFERENCES public.quant_selection_registrations(selection_id),
+ CONSTRAINT quant_selection_outcomes_outcome_check CHECK(outcome IN ('BEST_IN_SCOPE','TIED_IN_SCOPE','NO_QUALIFYING_STRATEGY','INADEQUATE_EVIDENCE')),
+ CONSTRAINT quant_selection_outcomes_hash_check CHECK(outcome_hash ~ '^[0-9a-f]{64}$'),
+ CONSTRAINT quant_selection_outcomes_body_size_check CHECK(pg_catalog.octet_length(body_canonical)<=262144),
+ CONSTRAINT quant_selection_outcomes_body_hash_check CHECK(pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(body_canonical,'UTF8')),'hex')=outcome_hash),
+ CONSTRAINT quant_selection_outcomes_body_json_check CHECK(pg_catalog.jsonb_typeof(body_canonical::pg_catalog.jsonb)='object'),
+ CONSTRAINT quant_selection_outcomes_body_no_hash_check CHECK(NOT (body_canonical::pg_catalog.jsonb ? 'outcome_hash')),
+ CONSTRAINT quant_selection_outcomes_body_version_check CHECK(COALESCE(body_canonical::pg_catalog.jsonb->>'version'='qr4-outcome-v1',false)),
+ CONSTRAINT quant_selection_outcomes_body_status_check CHECK(COALESCE(body_canonical::pg_catalog.jsonb->>'status'='SELECTION_COMPLETED',false)),
+ CONSTRAINT quant_selection_outcomes_body_outcome_check CHECK(COALESCE(body_canonical::pg_catalog.jsonb->>'outcome'=outcome,false)),
+ CONSTRAINT quant_selection_outcomes_body_selection_check CHECK(COALESCE(body_canonical::pg_catalog.jsonb->>'selection_id'=selection_id::text,false)),
+ CONSTRAINT quant_selection_outcomes_body_evaluations_check CHECK(COALESCE(pg_catalog.jsonb_typeof(body_canonical::pg_catalog.jsonb->'evaluations')='array',false)),
+ CONSTRAINT quant_selection_outcomes_created_at_check CHECK(created_at_ms>=0 AND created_at_ms<=253402300799999)
+);
+
+-- S2-2: an outcome replay that did not reproduce the stored outcome_hash (an equal replay writes no row).
+CREATE TABLE public.quant_selection_replay_events(
+ replay_event_id UUID NOT NULL DEFAULT pg_catalog.gen_random_uuid(),
+ selection_id UUID NOT NULL,
+ kind TEXT NOT NULL,
+ stored_outcome_hash TEXT NOT NULL,
+ recomputed_outcome_hash TEXT,
+ at_ms BIGINT NOT NULL,
+ CONSTRAINT quant_selection_replay_events_pkey PRIMARY KEY(replay_event_id),
+ CONSTRAINT quant_selection_replay_events_selection_id_fkey FOREIGN KEY(selection_id) REFERENCES public.quant_selection_outcomes(selection_id),
+ CONSTRAINT quant_selection_replay_events_kind_check CHECK(kind='SELECTION_REPLAY_MISMATCH'),
+ CONSTRAINT quant_selection_replay_events_stored_check CHECK(stored_outcome_hash ~ '^[0-9a-f]{64}$'),
+ CONSTRAINT quant_selection_replay_events_recomputed_check CHECK(recomputed_outcome_hash IS NULL OR (recomputed_outcome_hash ~ '^[0-9a-f]{64}$' AND recomputed_outcome_hash<>stored_outcome_hash)),
+ CONSTRAINT quant_selection_replay_events_at_ms_check CHECK(at_ms>=0 AND at_ms<=253402300799999)
+);
+
 CREATE FUNCTION public.quant_selection_version() RETURNS TEXT
  LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp
 AS $fn$ SELECT 'quant-selection-v1'::text $fn$;
@@ -215,6 +294,31 @@ AS $fn$ SELECT ARRAY[
  'SELECTION_EVALUATING>WINDOW_RECHECK_FAILED>SELECTION_INCOMPLETE>QR4_WINDOW_EXPOSED',
  'SELECTION_EVALUATING>WINDOW_RECHECK_FAILED>SELECTION_INCOMPLETE>QR4_WINDOW_OVERLAPS_SEARCHED_DATA'
 ]::text[] $fn$;
+
+-- True when the row version with this xmin was written by the current transaction or one of its subtransactions: the writer is still in progress
+-- and the row is visible to this session, so it is its own. Only the low 32 bits of the xid are stored (a freeze keeps the raw xmin), so the
+-- 64-bit id is rebuilt from the current transaction id by circular distance. A frozen or system xid (below 3) is never the current transaction,
+-- and a negative distance is an earlier transaction, so the answer is false. A row older than 2^31 transactions may be rebuilt to a wrong
+-- 64-bit id; the status lookup then raises invalid_parameter_value or answers something other than in progress, and the helper answers false.
+-- Own copy for this extension (the same logic as the QR-3 helper of quant-comparison.sql); the S2-2 guards use it to refuse a step written by the
+-- transaction that wrote the registration (the registration commits first, C1).
+CREATE FUNCTION public.quant_selection_in_this_transaction(row_xmin xid) RETURNS boolean
+ LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+AS $fn$
+DECLARE row_id BIGINT; current_id BIGINT; distance BIGINT;
+BEGIN
+ row_id := row_xmin::text::bigint;
+ IF row_id < 3 THEN RETURN false; END IF;
+ current_id := pg_catalog.pg_current_xact_id()::text::bigint;
+ distance := ((row_id - current_id + 2147483648) % 4294967296 + 4294967296) % 4294967296 - 2147483648;
+ IF distance < 0 OR current_id + distance <= 0 THEN RETURN false; END IF;
+ IF distance = 0 THEN RETURN true; END IF;
+ BEGIN
+  RETURN pg_catalog.pg_xact_status((current_id + distance)::text::pg_catalog.xid8) IS NOT DISTINCT FROM 'in progress';
+ EXCEPTION WHEN invalid_parameter_value THEN
+  RETURN false;
+ END;
+END $fn$;
 
 CREATE FUNCTION public.quant_selection_insert_only() RETURNS trigger
  LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
@@ -327,14 +431,20 @@ BEGIN
 END $fn$;
 
 -- QR004 quant_selection_status_transition: seq = last + 1; the tuple (last status, event, status, code) is a row of quant_selection_transitions();
--- nothing follows a terminal status. FIRST_EVALUATION_START is refused (quant_selection_exposure_bind) until S2-2 binds it to the register row.
+-- nothing follows a terminal status. Every event after seq 1 is refused while the registration row was written by the current transaction or one of its
+-- subtransactions (FIRST_EVALUATION_START under quant_selection_exposure_bind, any other event under this guard); FIRST_EVALUATION_START is also bound to the register row.
 CREATE FUNCTION public.quant_selection_guard_status_event() RETURNS trigger
  LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
 AS $fn$
-DECLARE last_seq INTEGER; last_status TEXT;
+DECLARE last_seq INTEGER; last_status TEXT; reg RECORD;
 BEGIN
- IF NOT EXISTS (SELECT 1 FROM public.quant_selection_registrations r WHERE r.selection_id = NEW.selection_id) THEN
+ SELECT r.owner_id, r.broker, r.symbol, r.timeframe, r.start_ms, r.end_ms, public.quant_selection_in_this_transaction(r.xmin) AS in_register INTO reg
+   FROM public.quant_selection_registrations r WHERE r.selection_id = NEW.selection_id;
+ IF NOT FOUND THEN
   RAISE EXCEPTION 'A status event needs its registration' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_status_transition';
+ END IF;
+ IF NEW.seq > 1 AND reg.in_register AND NEW.event IS DISTINCT FROM 'FIRST_EVALUATION_START' THEN
+  RAISE EXCEPTION 'A status event after the first cannot run in the transaction that wrote the registration' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_status_transition';
  END IF;
  SELECT e.seq, e.status INTO last_seq, last_status FROM public.quant_selection_status_events e WHERE e.selection_id = NEW.selection_id ORDER BY e.seq DESC LIMIT 1;
  IF FOUND THEN
@@ -351,7 +461,28 @@ BEGIN
   RAISE EXCEPTION 'The status transition is not listed' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_status_transition';
  END IF;
  IF NEW.event = 'FIRST_EVALUATION_START' THEN
-  RAISE EXCEPTION 'FIRST_EVALUATION_START needs the exposure register row of the selection (not installed in slice S2-1)' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_exposure_bind';
+  -- The exposure of the evaluation window is registered only together with the first evaluation start: exactly one QR4_SELECTION register row of this
+  -- selection, owner and market, over the registered evaluation window, written by this transaction or one of its subtransactions
+  -- (quant_selection_in_this_transaction on the row xmin). An older row (an orphan written before the start) or a row of another window never satisfies the bind.
+  -- The registration row was read above (reg); the registration transaction itself is refused first.
+  IF reg.in_register THEN
+   RAISE EXCEPTION 'FIRST_EVALUATION_START cannot run in the transaction that wrote the registration' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_exposure_bind';
+  END IF;
+  IF (SELECT pg_catalog.count(*) FROM public.quant_exposure_register x WHERE x.kind = 'QR4_SELECTION' AND x.selection_id = NEW.selection_id::text) IS DISTINCT FROM 1
+     OR NOT EXISTS (SELECT 1 FROM public.quant_exposure_register x WHERE x.kind = 'QR4_SELECTION' AND x.selection_id = NEW.selection_id::text AND x.owner_id = reg.owner_id
+       AND x.broker = reg.broker AND x.symbol = reg.symbol AND x.timeframe = reg.timeframe AND x.start_ms = reg.start_ms AND x.end_ms = reg.end_ms
+       AND public.quant_selection_in_this_transaction(x.xmin)) THEN
+   RAISE EXCEPTION 'FIRST_EVALUATION_START needs the exposure register row of the selection, written by the same transaction' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_exposure_bind';
+  END IF;
+ END IF;
+ IF NEW.event = 'ALL_EVALUATIONS_DONE' THEN
+  -- A completed selection needs its stored outcome with the same outcome value; every completed evaluation id of an incomplete one is a started evaluation.
+  IF NEW.status = 'SELECTION_COMPLETED' AND NOT EXISTS (SELECT 1 FROM public.quant_selection_outcomes o WHERE o.selection_id = NEW.selection_id AND o.outcome = NEW.outcome) THEN
+   RAISE EXCEPTION 'A completed selection needs its stored outcome with the same outcome value' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_outcome_order';
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_catalog.unnest(NEW.completed_evaluation_run_ids) AS c(id) WHERE NOT EXISTS (SELECT 1 FROM public.quant_selection_evaluation_starts s WHERE s.selection_id = NEW.selection_id AND s.evaluation_run_id = c.id)) THEN
+   RAISE EXCEPTION 'A completed evaluation run id must be a started evaluation of the selection' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_outcome_order';
+  END IF;
  END IF;
  RETURN NEW;
 END $fn$;
@@ -414,6 +545,186 @@ BEGIN
  IF EXISTS (SELECT 1 FROM public.quant_exposure_register x WHERE x.kind = 'QR4_SELECTION' AND x.selection_id = NEW.selection_id::text) THEN
   RAISE EXCEPTION 'A registration commits before any exposure register row of the selection' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_registration_complete';
  END IF;
+ -- S2-2 tables: a registration commits before any freeze, evaluation start, outcome or replay event of the selection.
+ IF EXISTS (SELECT 1 FROM public.quant_selection_window_freezes f WHERE f.selection_id = NEW.selection_id)
+    OR EXISTS (SELECT 1 FROM public.quant_selection_evaluation_starts s WHERE s.selection_id = NEW.selection_id)
+    OR EXISTS (SELECT 1 FROM public.quant_selection_outcomes o WHERE o.selection_id = NEW.selection_id)
+    OR EXISTS (SELECT 1 FROM public.quant_selection_replay_events e WHERE e.selection_id = NEW.selection_id) THEN
+  RAISE EXCEPTION 'A registration commits before any freeze, evaluation start, outcome or replay event of the selection' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_registration_complete';
+ END IF;
+ RETURN NULL;
+END $fn$;
+
+CREATE FUNCTION public.quant_selection_stamp_freeze() RETURNS trigger
+ LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+AS $fn$
+BEGIN
+ NEW.frozen_at_ms := public.quant_selection_now_ms();
+ RETURN NEW;
+END $fn$;
+
+CREATE FUNCTION public.quant_selection_stamp_start() RETURNS trigger
+ LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+AS $fn$
+BEGIN
+ NEW.started_at_ms := public.quant_selection_now_ms();
+ RETURN NEW;
+END $fn$;
+
+CREATE FUNCTION public.quant_selection_stamp_outcome() RETURNS trigger
+ LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+AS $fn$
+BEGIN
+ NEW.created_at_ms := public.quant_selection_now_ms();
+ RETURN NEW;
+END $fn$;
+
+-- QR004 quant_selection_freeze_order: the frozen dataset of W is written once, while the selection is SELECTION_REGISTERED (before the first start), not
+-- before the window has closed by the database stamp, and over exactly the registered window and bar count.
+CREATE FUNCTION public.quant_selection_guard_freeze() RETURNS trigger
+ LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+AS $fn$
+DECLARE reg RECORD; latest TEXT;
+BEGIN
+ SELECT r.start_ms, r.end_ms, r.total_bars, public.quant_selection_in_this_transaction(r.xmin) AS in_register INTO reg FROM public.quant_selection_registrations r WHERE r.selection_id = NEW.selection_id;
+ IF NOT FOUND OR NEW.start_ms IS DISTINCT FROM reg.start_ms OR NEW.end_ms IS DISTINCT FROM reg.end_ms OR NEW.bars_total IS DISTINCT FROM reg.total_bars THEN
+  RAISE EXCEPTION 'A window freeze must repeat the registered window and bar count of an existing registration' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_freeze_order';
+ END IF;
+ IF reg.in_register THEN
+  RAISE EXCEPTION 'A window freeze cannot run in the transaction that wrote the registration' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_freeze_order';
+ END IF;
+ SELECT e.status INTO latest FROM public.quant_selection_status_events e WHERE e.selection_id = NEW.selection_id ORDER BY e.seq DESC LIMIT 1;
+ IF latest IS DISTINCT FROM 'SELECTION_REGISTERED' THEN
+  RAISE EXCEPTION 'A window freeze needs the status SELECTION_REGISTERED' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_freeze_order';
+ END IF;
+ IF NEW.frozen_at_ms < reg.end_ms THEN
+  RAISE EXCEPTION 'The window data cannot be frozen before the window has closed' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_freeze_order';
+ END IF;
+ RETURN NEW;
+END $fn$;
+
+-- QR004 quant_selection_start_order: an evaluation start needs the status SELECTION_EVALUATING (the first start writes FIRST_EVALUATION_START before this
+-- row), the frozen dataset, the participant of the registration, the dataset hash of the freeze, the registered engine hash and the participant run as parent.
+-- QR004 quant_selection_start_deadline: not after the admission deadline by the database stamp. QR004 quant_selection_start_ready: the export of the
+-- participant is still a validated one-Pine export of the owner (the same predicate as quant_selection_participant_ready).
+CREATE FUNCTION public.quant_selection_guard_start() RETURNS trigger
+ LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+AS $fn$
+DECLARE reg RECORD; part RECORD; pkg RECORD; latest TEXT; frozen TEXT;
+BEGIN
+ SELECT r.owner_id, r.fixture, r.admission_deadline_ms, r.body_canonical::pg_catalog.jsonb -> 'scope' ->> 'engine' AS engine,
+   public.quant_selection_in_this_transaction(r.xmin) AS in_register INTO reg FROM public.quant_selection_registrations r WHERE r.selection_id = NEW.selection_id;
+ SELECT p.run_id, p.package_hash, p.validated_at_utc INTO part FROM public.quant_selection_participants p WHERE p.selection_id = NEW.selection_id AND p.export_id = NEW.export_id;
+ IF reg.owner_id IS NULL OR part.run_id IS NULL THEN
+  RAISE EXCEPTION 'An evaluation start needs a registered participant' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_start_order';
+ END IF;
+ IF reg.in_register THEN
+  RAISE EXCEPTION 'An evaluation start cannot run in the transaction that wrote the registration' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_start_order';
+ END IF;
+ SELECT e.status INTO latest FROM public.quant_selection_status_events e WHERE e.selection_id = NEW.selection_id ORDER BY e.seq DESC LIMIT 1;
+ IF latest IS DISTINCT FROM 'SELECTION_EVALUATING' THEN
+  RAISE EXCEPTION 'An evaluation start needs the status SELECTION_EVALUATING' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_start_order';
+ END IF;
+ SELECT f.dataset_hash INTO frozen FROM public.quant_selection_window_freezes f WHERE f.selection_id = NEW.selection_id;
+ IF frozen IS NULL OR NEW.dataset_hash IS DISTINCT FROM frozen THEN
+  RAISE EXCEPTION 'An evaluation start needs the frozen dataset hash of W' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_start_order';
+ END IF;
+ IF NEW.parent_run_id IS DISTINCT FROM part.run_id OR NEW.engine_hash IS DISTINCT FROM reg.engine THEN
+  RAISE EXCEPTION 'An evaluation start needs the participant run as parent and the registered engine hash' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_start_order';
+ END IF;
+ IF NEW.started_at_ms > reg.admission_deadline_ms THEN
+  RAISE EXCEPTION 'The admission deadline has passed' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_start_deadline';
+ END IF;
+ SELECT x.owner_id, x.run_id, x.mode, x.fixture, x.package_hash INTO pkg FROM public.bi_exports x WHERE x.export_id = NEW.export_id;
+ SELECT e.status INTO latest FROM public.bi_status_events e WHERE e.export_id = NEW.export_id ORDER BY e.seq DESC LIMIT 1;
+ IF pkg.owner_id IS DISTINCT FROM reg.owner_id OR pkg.run_id IS DISTINCT FROM part.run_id OR pkg.mode IS DISTINCT FROM 'ONE_PINE' OR pkg.fixture IS DISTINCT FROM reg.fixture
+    OR pkg.package_hash IS DISTINCT FROM part.package_hash OR latest IS DISTINCT FROM 'EXPORT_VALIDATED'
+    OR NOT EXISTS (SELECT 1 FROM public.ql4c_validation v WHERE v.export_id = NEW.export_id AND v.package_hash = part.package_hash AND v.fixture = reg.fixture AND v.validated_at_utc = part.validated_at_utc) THEN
+  RAISE EXCEPTION 'The participant export is no longer a validated one-Pine export of the selection owner' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_start_ready';
+ END IF;
+ RETURN NEW;
+END $fn$;
+
+-- QR004 quant_selection_outcome_order: the outcome is stored while the selection is SELECTION_EVALUATING, over the registration hash, the frozen dataset hash
+-- and the fixture flag of the selection, and its evaluations are exactly the started evaluations (participant_count of them, same export, parent run and
+-- evaluation run id).
+CREATE FUNCTION public.quant_selection_guard_outcome() RETURNS trigger
+ LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+AS $fn$
+DECLARE reg RECORD; body pg_catalog.jsonb; latest TEXT; frozen TEXT;
+BEGIN
+ SELECT r.registration_hash, r.fixture, r.participant_count, public.quant_selection_in_this_transaction(r.xmin) AS in_register INTO reg FROM public.quant_selection_registrations r WHERE r.selection_id = NEW.selection_id;
+ IF NOT FOUND THEN
+  RAISE EXCEPTION 'An outcome needs its registration' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_outcome_order';
+ END IF;
+ IF reg.in_register THEN
+  RAISE EXCEPTION 'An outcome cannot be stored in the transaction that wrote the registration' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_outcome_order';
+ END IF;
+ SELECT e.status INTO latest FROM public.quant_selection_status_events e WHERE e.selection_id = NEW.selection_id ORDER BY e.seq DESC LIMIT 1;
+ IF latest IS DISTINCT FROM 'SELECTION_EVALUATING' THEN
+  RAISE EXCEPTION 'An outcome needs the status SELECTION_EVALUATING' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_outcome_order';
+ END IF;
+ body := NEW.body_canonical::pg_catalog.jsonb;
+ SELECT f.dataset_hash INTO frozen FROM public.quant_selection_window_freezes f WHERE f.selection_id = NEW.selection_id;
+ IF body ->> 'registration_hash' IS DISTINCT FROM reg.registration_hash OR frozen IS NULL OR body ->> 'window_dataset_hash' IS DISTINCT FROM frozen
+    OR body -> 'fixture' IS DISTINCT FROM pg_catalog.to_jsonb(reg.fixture) OR pg_catalog.jsonb_typeof(body -> 'evaluations') IS DISTINCT FROM 'array'
+    OR pg_catalog.jsonb_array_length(body -> 'evaluations') IS DISTINCT FROM reg.participant_count THEN
+  RAISE EXCEPTION 'The outcome must repeat the registration hash, the frozen dataset hash and the fixture flag, and hold one evaluation per participant' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_outcome_order';
+ END IF;
+ IF (SELECT pg_catalog.count(*) FROM public.quant_selection_evaluation_starts s WHERE s.selection_id = NEW.selection_id) IS DISTINCT FROM reg.participant_count
+    OR EXISTS (
+     (SELECT e.item ->> 'export_id', e.item ->> 'run_id', e.item ->> 'evaluation_run_id' FROM pg_catalog.jsonb_array_elements(body -> 'evaluations') AS e(item)
+      EXCEPT SELECT s.export_id::text, s.parent_run_id, s.evaluation_run_id FROM public.quant_selection_evaluation_starts s WHERE s.selection_id = NEW.selection_id)
+     UNION ALL
+     (SELECT s.export_id::text, s.parent_run_id, s.evaluation_run_id FROM public.quant_selection_evaluation_starts s WHERE s.selection_id = NEW.selection_id
+      EXCEPT SELECT e.item ->> 'export_id', e.item ->> 'run_id', e.item ->> 'evaluation_run_id' FROM pg_catalog.jsonb_array_elements(body -> 'evaluations') AS e(item))) THEN
+  RAISE EXCEPTION 'The outcome evaluations must be exactly the started evaluations of the selection' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_outcome_order';
+ END IF;
+ RETURN NEW;
+END $fn$;
+
+-- QR004 quant_selection_replay_order: a replay mismatch names the stored outcome hash of the selection, and is not written by the transaction that wrote the registration.
+CREATE FUNCTION public.quant_selection_guard_replay() RETURNS trigger
+ LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+AS $fn$
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM public.quant_selection_outcomes o WHERE o.selection_id = NEW.selection_id AND o.outcome_hash = NEW.stored_outcome_hash) THEN
+  RAISE EXCEPTION 'A replay mismatch needs the stored outcome hash of the selection' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_replay_order';
+ END IF;
+ IF EXISTS (SELECT 1 FROM public.quant_selection_registrations r WHERE r.selection_id = NEW.selection_id AND public.quant_selection_in_this_transaction(r.xmin)) THEN
+  RAISE EXCEPTION 'A replay mismatch cannot be stored in the transaction that wrote the registration' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_replay_order';
+ END IF;
+ RETURN NEW;
+END $fn$;
+
+-- C3 quant_selection_first_start_complete, a DEFERRABLE INITIALLY DEFERRED constraint trigger on every status event (it acts on FIRST_EVALUATION_START only):
+-- at commit the selection holds a frozen dataset, at least one evaluation start and still the one register row bound to the start.
+CREATE FUNCTION public.quant_selection_check_first_start_complete() RETURNS trigger
+ LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+AS $fn$
+BEGIN
+ IF NEW.event IS DISTINCT FROM 'FIRST_EVALUATION_START' THEN
+  RETURN NULL;
+ END IF;
+ IF NOT EXISTS (SELECT 1 FROM public.quant_selection_evaluation_starts s WHERE s.selection_id = NEW.selection_id)
+    OR NOT EXISTS (SELECT 1 FROM public.quant_selection_window_freezes f WHERE f.selection_id = NEW.selection_id)
+    OR (SELECT pg_catalog.count(*) FROM public.quant_exposure_register x WHERE x.kind = 'QR4_SELECTION' AND x.selection_id = NEW.selection_id::text) IS DISTINCT FROM 1 THEN
+  RAISE EXCEPTION 'The first evaluation start commits with a frozen dataset, an evaluation start and its exposure register row' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_first_start_complete';
+ END IF;
+ RETURN NULL;
+END $fn$;
+
+-- C2 quant_selection_outcome_complete, a DEFERRABLE INITIALLY DEFERRED constraint trigger on the outcome: at commit the latest status event of the selection
+-- is SELECTION_COMPLETED with the outcome value of the stored outcome.
+CREATE FUNCTION public.quant_selection_check_outcome_complete() RETURNS trigger
+ LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+AS $fn$
+DECLARE last_status TEXT; last_outcome TEXT;
+BEGIN
+ SELECT e.status, e.outcome INTO last_status, last_outcome FROM public.quant_selection_status_events e WHERE e.selection_id = NEW.selection_id ORDER BY e.seq DESC LIMIT 1;
+ IF last_status IS DISTINCT FROM 'SELECTION_COMPLETED' OR last_outcome IS DISTINCT FROM NEW.outcome THEN
+  RAISE EXCEPTION 'A stored outcome commits with the SELECTION_COMPLETED status event of the same outcome' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_outcome_complete';
+ END IF;
  RETURN NULL;
 END $fn$;
 
@@ -465,3 +776,50 @@ ALTER TABLE public.quant_selection_universe ENABLE ALWAYS TRIGGER quant_selectio
 ALTER TABLE public.quant_selection_participants ENABLE ALWAYS TRIGGER quant_selection_participants_guard;
 ALTER TABLE public.quant_selection_status_events ENABLE ALWAYS TRIGGER quant_selection_status_events_guard;
 ALTER TABLE public.quant_selection_registrations ENABLE ALWAYS TRIGGER quant_selection_registrations_complete;
+
+-- S2-2 tables: the same freeze, SERIALIZABLE, stamp and guard triggers as the S2-1 tables.
+CREATE TRIGGER quant_selection_window_freezes_no_change BEFORE UPDATE OR DELETE ON public.quant_selection_window_freezes FOR EACH ROW EXECUTE FUNCTION public.quant_selection_insert_only();
+CREATE TRIGGER quant_selection_window_freezes_no_truncate BEFORE TRUNCATE ON public.quant_selection_window_freezes FOR EACH STATEMENT EXECUTE FUNCTION public.quant_selection_insert_only();
+CREATE TRIGGER quant_selection_evaluation_starts_no_change BEFORE UPDATE OR DELETE ON public.quant_selection_evaluation_starts FOR EACH ROW EXECUTE FUNCTION public.quant_selection_insert_only();
+CREATE TRIGGER quant_selection_evaluation_starts_no_truncate BEFORE TRUNCATE ON public.quant_selection_evaluation_starts FOR EACH STATEMENT EXECUTE FUNCTION public.quant_selection_insert_only();
+CREATE TRIGGER quant_selection_outcomes_no_change BEFORE UPDATE OR DELETE ON public.quant_selection_outcomes FOR EACH ROW EXECUTE FUNCTION public.quant_selection_insert_only();
+CREATE TRIGGER quant_selection_outcomes_no_truncate BEFORE TRUNCATE ON public.quant_selection_outcomes FOR EACH STATEMENT EXECUTE FUNCTION public.quant_selection_insert_only();
+CREATE TRIGGER quant_selection_replay_events_no_change BEFORE UPDATE OR DELETE ON public.quant_selection_replay_events FOR EACH ROW EXECUTE FUNCTION public.quant_selection_insert_only();
+CREATE TRIGGER quant_selection_replay_events_no_truncate BEFORE TRUNCATE ON public.quant_selection_replay_events FOR EACH STATEMENT EXECUTE FUNCTION public.quant_selection_insert_only();
+CREATE TRIGGER quant_selection_window_freezes_00_serializable BEFORE INSERT ON public.quant_selection_window_freezes FOR EACH ROW EXECUTE FUNCTION public.quant_selection_require_serializable();
+CREATE TRIGGER quant_selection_evaluation_starts_00_serializable BEFORE INSERT ON public.quant_selection_evaluation_starts FOR EACH ROW EXECUTE FUNCTION public.quant_selection_require_serializable();
+CREATE TRIGGER quant_selection_outcomes_00_serializable BEFORE INSERT ON public.quant_selection_outcomes FOR EACH ROW EXECUTE FUNCTION public.quant_selection_require_serializable();
+CREATE TRIGGER quant_selection_replay_events_00_serializable BEFORE INSERT ON public.quant_selection_replay_events FOR EACH ROW EXECUTE FUNCTION public.quant_selection_require_serializable();
+CREATE TRIGGER quant_selection_window_freezes_01_stamp BEFORE INSERT ON public.quant_selection_window_freezes FOR EACH ROW EXECUTE FUNCTION public.quant_selection_stamp_freeze();
+CREATE TRIGGER quant_selection_evaluation_starts_01_stamp BEFORE INSERT ON public.quant_selection_evaluation_starts FOR EACH ROW EXECUTE FUNCTION public.quant_selection_stamp_start();
+CREATE TRIGGER quant_selection_outcomes_01_stamp BEFORE INSERT ON public.quant_selection_outcomes FOR EACH ROW EXECUTE FUNCTION public.quant_selection_stamp_outcome();
+CREATE TRIGGER quant_selection_replay_events_01_stamp BEFORE INSERT ON public.quant_selection_replay_events FOR EACH ROW EXECUTE FUNCTION public.quant_selection_stamp_event();
+CREATE TRIGGER quant_selection_window_freezes_guard BEFORE INSERT ON public.quant_selection_window_freezes FOR EACH ROW EXECUTE FUNCTION public.quant_selection_guard_freeze();
+CREATE TRIGGER quant_selection_evaluation_starts_guard BEFORE INSERT ON public.quant_selection_evaluation_starts FOR EACH ROW EXECUTE FUNCTION public.quant_selection_guard_start();
+CREATE TRIGGER quant_selection_outcomes_guard BEFORE INSERT ON public.quant_selection_outcomes FOR EACH ROW EXECUTE FUNCTION public.quant_selection_guard_outcome();
+CREATE TRIGGER quant_selection_replay_events_guard BEFORE INSERT ON public.quant_selection_replay_events FOR EACH ROW EXECUTE FUNCTION public.quant_selection_guard_replay();
+CREATE CONSTRAINT TRIGGER quant_selection_status_events_first_start_complete AFTER INSERT ON public.quant_selection_status_events DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.quant_selection_check_first_start_complete();
+CREATE CONSTRAINT TRIGGER quant_selection_outcomes_complete AFTER INSERT ON public.quant_selection_outcomes DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.quant_selection_check_outcome_complete();
+
+ALTER TABLE public.quant_selection_window_freezes ENABLE ALWAYS TRIGGER quant_selection_window_freezes_no_change;
+ALTER TABLE public.quant_selection_window_freezes ENABLE ALWAYS TRIGGER quant_selection_window_freezes_no_truncate;
+ALTER TABLE public.quant_selection_window_freezes ENABLE ALWAYS TRIGGER quant_selection_window_freezes_00_serializable;
+ALTER TABLE public.quant_selection_window_freezes ENABLE ALWAYS TRIGGER quant_selection_window_freezes_01_stamp;
+ALTER TABLE public.quant_selection_window_freezes ENABLE ALWAYS TRIGGER quant_selection_window_freezes_guard;
+ALTER TABLE public.quant_selection_evaluation_starts ENABLE ALWAYS TRIGGER quant_selection_evaluation_starts_no_change;
+ALTER TABLE public.quant_selection_evaluation_starts ENABLE ALWAYS TRIGGER quant_selection_evaluation_starts_no_truncate;
+ALTER TABLE public.quant_selection_evaluation_starts ENABLE ALWAYS TRIGGER quant_selection_evaluation_starts_00_serializable;
+ALTER TABLE public.quant_selection_evaluation_starts ENABLE ALWAYS TRIGGER quant_selection_evaluation_starts_01_stamp;
+ALTER TABLE public.quant_selection_evaluation_starts ENABLE ALWAYS TRIGGER quant_selection_evaluation_starts_guard;
+ALTER TABLE public.quant_selection_outcomes ENABLE ALWAYS TRIGGER quant_selection_outcomes_no_change;
+ALTER TABLE public.quant_selection_outcomes ENABLE ALWAYS TRIGGER quant_selection_outcomes_no_truncate;
+ALTER TABLE public.quant_selection_outcomes ENABLE ALWAYS TRIGGER quant_selection_outcomes_00_serializable;
+ALTER TABLE public.quant_selection_outcomes ENABLE ALWAYS TRIGGER quant_selection_outcomes_01_stamp;
+ALTER TABLE public.quant_selection_outcomes ENABLE ALWAYS TRIGGER quant_selection_outcomes_guard;
+ALTER TABLE public.quant_selection_replay_events ENABLE ALWAYS TRIGGER quant_selection_replay_events_no_change;
+ALTER TABLE public.quant_selection_replay_events ENABLE ALWAYS TRIGGER quant_selection_replay_events_no_truncate;
+ALTER TABLE public.quant_selection_replay_events ENABLE ALWAYS TRIGGER quant_selection_replay_events_00_serializable;
+ALTER TABLE public.quant_selection_replay_events ENABLE ALWAYS TRIGGER quant_selection_replay_events_01_stamp;
+ALTER TABLE public.quant_selection_replay_events ENABLE ALWAYS TRIGGER quant_selection_replay_events_guard;
+ALTER TABLE public.quant_selection_status_events ENABLE ALWAYS TRIGGER quant_selection_status_events_first_start_complete;
+ALTER TABLE public.quant_selection_outcomes ENABLE ALWAYS TRIGGER quant_selection_outcomes_complete;

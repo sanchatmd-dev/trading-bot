@@ -24,7 +24,7 @@ import {canonical} from '../../src/pine-bridge/source.js';
 import {PACKAGE_FILES} from '../../src/quant-library/package-gates.js';
 import {FIXTURE_LABEL,hex,T0} from '../helpers/quant-library-fixture.mjs';
 
-// QR-4 S2-1: install lifecycle, guards, grants and rollback of the qualified-selection registration tables, proven on a throwaway PostgreSQL
+// QR-4 S2: install lifecycle, guards, grants and rollback of the qualified-selection tables (S2-1 registration, S2-2 freeze, starts, outcome, replay), proven on a throwaway PostgreSQL
 // cluster as real non-owner LOGIN roles with the repo grants. Every row is a LABELLED FIXTURE (synthetic, never a research result).
 // The grants come from scripts/grant-postgres-runtime.sql.
 const run=promisify(execFile);
@@ -67,7 +67,7 @@ const selectionObjects=async target=>(await target.query(`SELECT
   (SELECT count(*)::int FROM pg_class WHERE relnamespace='public'::regnamespace AND relname LIKE 'quant\\_selection\\_%') relations,
   (SELECT count(*)::int FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname LIKE 'quant\\_selection\\_%') functions,
   (SELECT count(*)::int FROM pg_trigger WHERE NOT tgisinternal AND tgname LIKE 'quant\\_selection\\_%') triggers`)).rows[0];
-const NONE={relations:0,functions:0,triggers:0},ALL={relations:16,functions:12,triggers:22};
+const NONE={relations:0,functions:0,triggers:0},ALL={relations:25,functions:22,triggers:44};
 const guardRows=async target=>(await target.query(`SELECT t.tgname,t.tgenabled,t.tgtype FROM pg_trigger t WHERE NOT t.tgisinternal AND t.tgname LIKE 'quant\\_selection\\_%' ORDER BY t.tgname`)).rows;
 const rowDigest=async(target,table)=>(await target.query(`SELECT count(*)::int n,encode(sha256(convert_to(COALESCE(string_agg(row_to_json(t)::text,'|' ORDER BY row_to_json(t)::text),''),'UTF8')),'hex') d FROM public.${table} t`)).rows[0];
 const allDigests=async target=>Object.fromEntries(await Promise.all(SELECTION_TABLES.map(async table=>[table,await rowDigest(target,table)])));
@@ -193,7 +193,7 @@ const requestOf=(owner,set,{startDays=10,fixture=false,over={}}={})=>({owner_id:
   filters:{drawdown_limit_percent:'20',episode_floor:5,beats_buy_and_hold:false},admission_deadline_ms:BASE+startDays*DAY+1000*MS+DAY,universe:set.members,...over});
 const contextOf=(owner,over={})=>({dependencies:{qr3_context:true,evaluation_mode:true,episode_gate_version:'ql4-episode-gate-v1'},universe_cap:20,requester_owner_id:owner.id,
   policy_snapshot:{policy_hash:POLICY,max_drawdown_percent:null},objective_registry:TEST_REGISTRY,fixture_selections_allowed:true,...over});
-const SELECTION_TABLES_SQL=['quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events'];
+const SELECTION_TABLES_SQL=[...SELECTION_TABLES];
 const counts=async target=>Object.fromEntries(await Promise.all(SELECTION_TABLES_SQL.map(async table=>[table,(await target.query(`SELECT count(*)::int n FROM public.${table}`)).rows[0].n])));
 const researchDigest=async target=>(await target.query(`SELECT encode(sha256(convert_to((SELECT COALESCE(string_agg(row_to_json(j)::text,'|' ORDER BY j.run_id),'') FROM quant_jobs j)
   ||(SELECT COALESCE(string_agg(row_to_json(e)::text,'|' ORDER BY e.export_id),'') FROM bi_exports e)
@@ -266,19 +266,20 @@ test('install: ABSENT to INSTALLED in one transaction; the base schema, other ta
   const report=await migrateQuantSelection(db,{runtimeRole:roleName}).catch(error=>error);
   // The runtime role has no grants yet, so only the missing-privilege checks may be reported by an inspection; the install itself does not require grants.
   assert.ok(!(report instanceof Error),String(report));assert.equal(report.ok,true,report.failures?.join());assert.equal(report.previous_state,'ABSENT');
-  assert.equal(report.facts.state,'INSTALLED');assert.equal(report.facts.marker,SELECTION_MARKER);assert.equal(report.facts.guards.length,22);
+  assert.equal(report.facts.state,'INSTALLED');assert.equal(report.facts.marker,SELECTION_MARKER);assert.equal(report.facts.guards.length,44);
   assert.ok(report.facts.guards.every(item=>item.enabled==='A'),'every guard is ENABLE ALWAYS');
   assert.deepEqual((await db.query("SELECT relname FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY 1")).rows.map(row=>row.relname).filter(name=>!baseTables.includes(name)),
-    [...SELECTION_TABLES,'quant_selection_schema'].sort(),'exactly the five selection tables were added');
+    [...SELECTION_TABLES,'quant_selection_schema'].sort(),'exactly the nine selection tables were added');
   assert.deepEqual(await acl(),aclBefore,'no existing grant changed');
-  assert.deepEqual(await selectionObjects(db),ALL,'five tables, eleven indexes, twelve functions and twenty-two triggers');
+  assert.deepEqual(await selectionObjects(db),ALL,'nine tables, sixteen indexes, twenty-two functions and forty-four triggers');
   assert.equal((await db.query('SELECT version FROM schema_version')).rows[0].version,14,'the base schema version stays 14');
   assert.deepEqual((await db.query('SELECT version FROM quant_selection_schema')).rows,[{version:1}]);
   assert.equal((await db.query('SELECT public.quant_selection_version() v')).rows[0].v,SELECTION_MARKER);
   assert.deepEqual((await guardRows(db)).map(row=>[row.tgname,row.tgenabled,row.tgtype]).sort(),SELECTION_GUARDS.map(item=>[item[0],'A',item[3]]).sort());
-  assert.equal(SELECTION_GUARDS.filter(item=>item[2]==='quant_selection_insert_only').length,10,'a row and a statement freeze trigger on each of the five tables');
-  assert.equal(SELECTION_GUARDS.filter(item=>item[2]==='quant_selection_require_serializable').length,5,'a SERIALIZABLE insert trigger on each of the five tables');
-  assert.equal(SELECTION_GUARDS.filter(item=>item[4]).length,1,'one deferred constraint trigger (C1)');
+  assert.equal(SELECTION_GUARDS.filter(item=>item[2]==='quant_selection_insert_only').length,18,'a row and a statement freeze trigger on each of the nine tables');
+  assert.equal(SELECTION_GUARDS.filter(item=>item[2]==='quant_selection_require_serializable').length,9,'a SERIALIZABLE insert trigger on each of the nine tables');
+  assert.equal(SELECTION_GUARDS.filter(item=>item[4]).length,3,'three deferred constraint triggers (C1, C2, C3)');
+  assert.deepEqual(SELECTION_GUARDS.filter(item=>item[4]).map(item=>item[0]).sort(),['quant_selection_outcomes_complete','quant_selection_registrations_complete','quant_selection_status_events_first_start_complete']);
   assert.ok((await db.query(`SELECT p.prosecdef,p.proconfig FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname LIKE 'quant\\_selection\\_%'`)).rows
     .every(row=>row.prosecdef===false&&row.proconfig.length===1&&row.proconfig[0]==='search_path=pg_catalog, pg_temp'),'every function is SECURITY INVOKER with the pinned search_path');
   // the trigger order: the SERIALIZABLE check fires first, then the clock stamp, then the guard
@@ -295,6 +296,33 @@ test('install: ABSENT to INSTALLED in one transaction; the base schema, other ta
   assert.deepEqual(raised,Object.keys(GUARD_REFUSALS).sort(),'the guard names raised by the SQL equal the GUARD_REFUSALS keys');
 });
 
+test('transaction-membership helper: own xid true, earlier or system xid false, a future-looking xid answers false and never raises; the install text qualifies gen_random_uuid',async()=>{
+  const answer=async(offset,fixed=null)=>probe(db,async()=>{
+    const current=BigInt((await db.query('SELECT pg_current_xact_id()::text x')).rows[0].x);
+    const target=fixed===null?(current+BigInt(offset))%4294967296n:BigInt(fixed);
+    return (await db.query('SELECT public.quant_selection_in_this_transaction($1::text::xid) v',[target.toString()])).rows[0].v;
+  });
+  assert.equal(await answer(0),true,'the current transaction id');
+  assert.equal(await answer(-1),false,'an earlier transaction id');
+  assert.equal(await answer(0,0),false,'invalid xid');
+  assert.equal(await answer(0,2),false,'frozen xid');
+  assert.equal(await answer(1000000),false,'a future-looking xid');
+  assert.equal(await answer(2000000000),false,'a far future-looking xid');
+  // a subtransaction id of the current transaction counts as the current transaction (a row written after a SAVEPOINT)
+  const sub=await probe(db,async()=>{
+    await db.query('SAVEPOINT s1');
+    const subId=(await db.query('SELECT pg_current_xact_id()::text x')).rows[0].x;
+    await db.query('CREATE TEMP TABLE qs_sub_probe(x integer) ON COMMIT DROP');
+    await db.query('INSERT INTO qs_sub_probe VALUES(1)');
+    const row=(await db.query('SELECT public.quant_selection_in_this_transaction(xmin) v FROM qs_sub_probe')).rows[0].v;
+    return {row,subId};
+  });
+  assert.equal(sub.row,true,'a row written inside a savepoint is still written by this transaction');
+  const text=await sqlText('quant-selection.sql');
+  assert.equal(/[^.]gen_random_uuid\(\)/.test(text),false,'every gen_random_uuid() in the install text is schema-qualified');
+  assert.ok(text.includes('pg_catalog.gen_random_uuid()'));
+});
+
 test('installed: every tampered object classifies OTHER and is reported; a replaced marker function is never executed',async()=>{
   const noop="CREATE FUNCTION public.qsm_noop() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$;";
   const R='ALTER TABLE public.quant_selection_registrations ';
@@ -306,6 +334,8 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
     ['participant guard body replaced',body('quant_selection_guard_participant'),'FUNCTION_DEFINITION:quant_selection_guard_participant:BODY'],
     ['completeness check body replaced',body('quant_selection_check_registration_complete'),'FUNCTION_DEFINITION:quant_selection_check_registration_complete:BODY'],
     ['transition table replaced',"CREATE OR REPLACE FUNCTION public.quant_selection_transitions() RETURNS text[] LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp AS $$ SELECT ARRAY['>REGISTER>SELECTION_REGISTERED>','SELECTION_REGISTERED>OWNER_CANCEL>SELECTION_COMPLETED>']::text[] $$",'FUNCTION_DEFINITION:quant_selection_transitions:BODY'],
+    ['transaction-membership helper body replaced',"CREATE OR REPLACE FUNCTION public.quant_selection_in_this_transaction(row_xmin xid) RETURNS boolean LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$ BEGIN RETURN false; END $$",'FUNCTION_DEFINITION:quant_selection_in_this_transaction:BODY'],
+    ['transaction-membership helper re-owned','CREATE ROLE qsm_other NOLOGIN; ALTER FUNCTION public.quant_selection_in_this_transaction(xid) OWNER TO qsm_other','OWNER_MISMATCH:quant_selection_in_this_transaction'],
     ['clock function replaced',"CREATE OR REPLACE FUNCTION public.quant_selection_now_ms() RETURNS bigint LANGUAGE sql SET search_path = pg_catalog, pg_temp AS $$ SELECT 0::bigint $$",'FUNCTION_DEFINITION:quant_selection_now_ms:BODY'],
     ['clock function made STABLE (a frozen clock)','ALTER FUNCTION public.quant_selection_now_ms() STABLE','FUNCTION_DEFINITION:quant_selection_now_ms:ATTRIBUTES'],
     ['guard made SECURITY DEFINER','ALTER FUNCTION public.quant_selection_guard_status_event() SECURITY DEFINER','FUNCTION_DEFINITION:quant_selection_guard_status_event:SECURITY_DEFINER'],
@@ -315,6 +345,24 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
     ['freeze trigger disabled','ALTER TABLE public.quant_selection_universe DISABLE TRIGGER quant_selection_universe_no_change','TRIGGER_NOT_ALWAYS:quant_selection_universe_no_change'],
     ['guard trigger origin only','ALTER TABLE public.quant_selection_status_events ENABLE TRIGGER quant_selection_status_events_guard','TRIGGER_NOT_ALWAYS:quant_selection_status_events_guard'],
     ['stamp trigger replica only','ALTER TABLE public.quant_selection_registrations ENABLE REPLICA TRIGGER quant_selection_registrations_01_stamp','TRIGGER_NOT_ALWAYS:quant_selection_registrations_01_stamp'],
+    ['freeze guard body replaced',body('quant_selection_guard_freeze'),'FUNCTION_DEFINITION:quant_selection_guard_freeze:BODY'],
+    ['start guard body replaced',body('quant_selection_guard_start'),'FUNCTION_DEFINITION:quant_selection_guard_start:BODY'],
+    ['outcome guard body replaced',body('quant_selection_guard_outcome'),'FUNCTION_DEFINITION:quant_selection_guard_outcome:BODY'],
+    ['replay guard body replaced',body('quant_selection_guard_replay'),'FUNCTION_DEFINITION:quant_selection_guard_replay:BODY'],
+    ['first start check body replaced',body('quant_selection_check_first_start_complete'),'FUNCTION_DEFINITION:quant_selection_check_first_start_complete:BODY'],
+    ['outcome check body replaced',body('quant_selection_check_outcome_complete'),'FUNCTION_DEFINITION:quant_selection_check_outcome_complete:BODY'],
+    ['start stamp made SECURITY DEFINER','ALTER FUNCTION public.quant_selection_stamp_start() SECURITY DEFINER','FUNCTION_DEFINITION:quant_selection_stamp_start:SECURITY_DEFINER'],
+    ['start guard trigger origin only','ALTER TABLE public.quant_selection_evaluation_starts ENABLE TRIGGER quant_selection_evaluation_starts_guard','TRIGGER_NOT_ALWAYS:quant_selection_evaluation_starts_guard'],
+    ['outcome stamp trigger dropped','DROP TRIGGER quant_selection_outcomes_01_stamp ON public.quant_selection_outcomes','TRIGGER_MISSING:quant_selection_outcomes_01_stamp'],
+    ['first start check dropped','DROP TRIGGER quant_selection_status_events_first_start_complete ON public.quant_selection_status_events','TRIGGER_MISSING:quant_selection_status_events_first_start_complete'],
+    ['first start check made immediate','DROP TRIGGER quant_selection_status_events_first_start_complete ON public.quant_selection_status_events; CREATE CONSTRAINT TRIGGER quant_selection_status_events_first_start_complete AFTER INSERT ON public.quant_selection_status_events FOR EACH ROW EXECUTE FUNCTION public.quant_selection_check_first_start_complete(); ALTER TABLE public.quant_selection_status_events ENABLE ALWAYS TRIGGER quant_selection_status_events_first_start_complete','TRIGGER_SHAPE:quant_selection_status_events_first_start_complete'],
+    ['outcome check made immediate','DROP TRIGGER quant_selection_outcomes_complete ON public.quant_selection_outcomes; CREATE CONSTRAINT TRIGGER quant_selection_outcomes_complete AFTER INSERT ON public.quant_selection_outcomes FOR EACH ROW EXECUTE FUNCTION public.quant_selection_check_outcome_complete(); ALTER TABLE public.quant_selection_outcomes ENABLE ALWAYS TRIGGER quant_selection_outcomes_complete','TRIGGER_SHAPE:quant_selection_outcomes_complete'],
+    ['outcome body hash check dropped','ALTER TABLE public.quant_selection_outcomes DROP CONSTRAINT quant_selection_outcomes_body_hash_check','TABLE_DEFINITION:quant_selection_outcomes:CONSTRAINTS'],
+    ['replay recomputed check dropped','ALTER TABLE public.quant_selection_replay_events DROP CONSTRAINT quant_selection_replay_events_recomputed_check','TABLE_DEFINITION:quant_selection_replay_events:CONSTRAINTS'],
+    ['evaluation run id unique dropped','ALTER TABLE public.quant_selection_evaluation_starts DROP CONSTRAINT quant_selection_evaluation_starts_run_key','TABLE_DEFINITION:quant_selection_evaluation_starts:'],
+    ['window freeze foreign key dropped','ALTER TABLE public.quant_selection_window_freezes DROP CONSTRAINT quant_selection_window_freezes_selection_id_fkey','TABLE_DEFINITION:quant_selection_window_freezes:CONSTRAINTS'],
+    ['replay column collation changed','ALTER TABLE public.quant_selection_replay_events ALTER COLUMN kind TYPE text COLLATE "C"','TABLE_DEFINITION:quant_selection_replay_events:COLLATION'],
+    ['replay table re-owned','CREATE ROLE qsm_other NOLOGIN; ALTER TABLE public.quant_selection_replay_events OWNER TO qsm_other','OWNER_MISMATCH:quant_selection_replay_events'],
     ['truncate trigger dropped','DROP TRIGGER quant_selection_participants_no_truncate ON public.quant_selection_participants','TRIGGER_MISSING:quant_selection_participants_no_truncate'],
     ['stamp trigger dropped','DROP TRIGGER quant_selection_status_events_01_stamp ON public.quant_selection_status_events','TRIGGER_MISSING:quant_selection_status_events_01_stamp'],
     ['SERIALIZABLE trigger dropped','DROP TRIGGER quant_selection_registrations_00_serializable ON public.quant_selection_registrations','TRIGGER_MISSING:quant_selection_registrations_00_serializable'],
@@ -436,7 +484,7 @@ test('grants: the repo grant script lists the QR-4 tables; the runtime role gets
   if(version>=150000)assert.equal((await db.query("SELECT has_parameter_privilege($1,'session_replication_role','SET') v",[roleName])).rows[0].v,false);
   // inspect with the runtime role passes, and names the role that broke the boundary (the privilege checks are the shared inspection module)
   const ok=await inspectQuantSelection(db,{runtimeRole:roleName});assert.equal(ok.ok,true,ok.failures.join());
-  assert.equal(ok.facts.runtime_role.tables.length,5);assert.deepEqual(ok.facts.runtime_role.privileged_members,[]);
+  assert.equal(ok.facts.runtime_role.tables.length,9);assert.deepEqual(ok.facts.runtime_role.privileged_members,[]);
   const deleter=await inspectQuantSelection(db,{runtimeRole:deleterName});
   assert.ok(deleter.failures.includes('RUNTIME_ROLE_WRITE_PRIVILEGE:quant_selection_registrations:DELETE')&&deleter.failures.includes('RUNTIME_ROLE_WRITE_PRIVILEGE:quant_selection_registrations:UPDATE'),deleter.failures.join());
   assert.ok(deleter.failures.includes('RUNTIME_ROLE_WRITE_PRIVILEGE:quant_selection_schema:DELETE'));
@@ -480,7 +528,7 @@ test('SERIALIZABLE only: an INSERT into any selection table under READ COMMITTED
   for(const table of [...SELECTION_TABLES,'quant_selection_schema'])
     for(const isolation of ['READ COMMITTED','REPEATABLE READ'])
       await assert.rejects(db.transaction(async()=>db.query(`INSERT INTO public.${table} DEFAULT VALUES`),{isolation}),{code:QR003},table+' '+isolation);
-  assert.deepEqual(await counts(db),{quant_selection_registrations:0,quant_selection_universe:0,quant_selection_participants:0,quant_selection_status_events:0});
+  assert.deepEqual(await counts(db),Object.fromEntries(SELECTION_TABLES.map(table=>[table,0])));
 });
 
 test('insert-only: UPDATE, DELETE and TRUNCATE are refused at both layers on every table; the replication role cannot skip a guard; no row changes',async()=>{
@@ -488,7 +536,7 @@ test('insert-only: UPDATE, DELETE and TRUNCATE are refused at both layers on eve
   FIRST_SELECTION=await registerSelection(rt,{request:requestOf(OWNER_A,SET_A,{startDays:10}),context:contextOf(OWNER_A)});
   assert.equal(FIRST_SELECTION.ok,true,JSON.stringify(FIRST_SELECTION));
   const digests=await allDigests(db);
-  assert.deepEqual(Object.values(digests).map(item=>item.n),[1,3,3,1]);
+  assert.deepEqual(Object.values(digests).map(item=>item.n),[1,3,3,1,0,0,0,0]);
   const columns={quant_selection_registrations:'owner_id',quant_selection_universe:'run_id',quant_selection_participants:'run_id',quant_selection_status_events:'event',quant_selection_schema:'version'};
   for(const [table,column] of Object.entries(columns)){
     // layer 1: the runtime role has no UPDATE, DELETE or TRUNCATE privilege
@@ -568,7 +616,7 @@ test('the CLI: install, second install, --inspect exit codes, usage errors and r
   const absent=await inspect();assert.equal(absent.code,0,absent.stderr);assert.equal(absent.report.facts.state,'ABSENT');
   assert.deepEqual(await catalogDigest(cliDb),before,'--inspect writes nothing');
   const badRole=await inspect(['--runtime-role=no_such_role_qsm']);assert.equal(badRole.code,1);assert.ok(badRole.report.failures.includes('RUNTIME_ROLE_MISSING'));
-  const installed=await cli([],cliUrl);assert.equal(installed.code,0,installed.stderr);assert.match(installed.stdout,/Quant selection tables ready: quant-selection-v1; state=INSTALLED; previous state=ABSENT; guards=22/);
+  const installed=await cli([],cliUrl);assert.equal(installed.code,0,installed.stderr);assert.match(installed.stdout,/Quant selection tables ready: quant-selection-v1; state=INSTALLED; previous state=ABSENT; guards=44/);
   const second=await cli([],cliUrl);assert.equal(second.code,0,second.stderr);assert.match(second.stdout,/previous state=INSTALLED/);
   const settled=await inspect();assert.equal(settled.code,0,settled.stderr);assert.equal(settled.report.facts.state,'INSTALLED');assert.equal(settled.report.ok,true);
   const ungranted=await inspect(['--runtime-role='+roleName]);assert.equal(ungranted.code,1);
@@ -612,7 +660,7 @@ test('dump and restore: the restored database keeps every guard ENABLE ALWAYS, t
   assert.equal(status,0);
   const restored=track(new PostgresDatabase({connectionString:serialOf(restoredName)})),restoredDeleter=track(new PostgresDatabase({connectionString:serialOf(restoredName,deleterName)}));
   const restoredRuntime=ser(track(new PostgresDatabase({connectionString:serialOf(restoredName,roleName)})));
-  assert.deepEqual(await guardRows(restored),await guardRows(db));assert.equal((await guardRows(restored)).length,22);assert.ok((await guardRows(restored)).every(row=>row.tgenabled==='A'));
+  assert.deepEqual(await guardRows(restored),await guardRows(db));assert.equal((await guardRows(restored)).length,44);assert.ok((await guardRows(restored)).every(row=>row.tgenabled==='A'));
   assert.deepEqual(await allDigests(restored),await allDigests(db),'every stored row came back, frozen_at_ms and at_ms included');
   assert.equal((await classifyQuantSelection(restored)).state,'INSTALLED');
   const report=await inspectQuantSelection(restored,{runtimeRole:roleName});assert.equal(report.ok,true,report.failures.join());

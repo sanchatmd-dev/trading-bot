@@ -4,12 +4,12 @@ import {classifyQuantExposureRegister} from './quant-exposure-register-migration
 import {classifyBestInputsPackage} from './best-inputs-package-migration.js';
 
 /**
- * QR-4 slice S2-1: insert-only qualified-selection registration tables (marker, registrations, universe, participants, status events).
+ * QR-4 slices S2-1 and S2-2: insert-only qualified-selection tables (marker, registrations, universe, participants, status events, window freezes, evaluation starts, outcomes, replay events).
  * Offline only: the maintenance lock excludes every participating API and worker. The selection tables are their own extension (marker
  * table quant_selection_schema, version 1); the base schema_version stays 14. The install needs the version-1 research extension
  * (quant_job_schema version 1), the base users table, the exposure register extension (INSTALLED) and the Best Inputs package extension
- * (INSTALLED, the participant foreign key and guard read its tables). Nothing calls this module from db.migrate. Slice S2-2 extends
- * the same uninstalled SQL file and this module with the freeze, start, outcome and replay tables.
+ * (INSTALLED, the participant foreign key and guard read its tables). Nothing calls this module from db.migrate. Slice S2-2 added the freeze, start,
+ * outcome and replay tables to the same uninstalled SQL file and to this module; slice S3 extends them again.
  *
  * Both directions CLASSIFY the live catalog before they write anything, because the SQL is plain CREATE statements and an unclassified
  * install could collide with, or silently accept, a foreign object that carries a selection name. The states are:
@@ -31,26 +31,57 @@ export const INSERT_GUARD_SQLSTATE='QR004';
 export const SERIALIZABLE_SQLSTATE='QR003';
 export const PINNED_SEARCH_PATH='search_path=pg_catalog, pg_temp';
 export const MARKER_TABLE='quant_selection_schema';
-/** The insert-only record tables of slice S2-1, in the order the grant script and the inspection use. S2-2 appends its four tables. */
-export const SELECTION_TABLES=Object.freeze(['quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events']);
-/** Every table name the grant script lists as insert-only for QR-4 (S2-1 creates the first four; the grant script skips a table that does not exist). */
-export const SELECTION_GRANT_TABLES=Object.freeze([...SELECTION_TABLES,'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events']);
+/** The insert-only record tables, in the order the grant script and the inspection use (S2-1 first, then the four tables of S2-2). */
+export const SELECTION_TABLES=Object.freeze(['quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events',
+  'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events']);
+/** Every table name the grant script lists as insert-only for QR-4. */
+export const SELECTION_GRANT_TABLES=Object.freeze([...SELECTION_TABLES]);
 const TABLES=[MARKER_TABLE,...SELECTION_TABLES];
 /** The QR004 guard names (USING CONSTRAINT) that the application maps by name, never by message text. */
 export const SELECTION_GUARD_NAMES=Object.freeze(['quant_selection_registration_clock','quant_selection_universe_member','quant_selection_participant_ready','quant_selection_participant_member',
-  'quant_selection_status_transition','quant_selection_exposure_bind','quant_selection_registration_complete']);
-const FUNCTIONS=Object.freeze(['quant_selection_version','quant_selection_now_ms','quant_selection_transitions','quant_selection_insert_only','quant_selection_require_serializable',
+  'quant_selection_status_transition','quant_selection_exposure_bind','quant_selection_registration_complete','quant_selection_freeze_order','quant_selection_start_order','quant_selection_start_deadline',
+  'quant_selection_start_ready','quant_selection_outcome_order','quant_selection_outcome_complete','quant_selection_first_start_complete','quant_selection_replay_order']);
+const FUNCTIONS=Object.freeze(['quant_selection_version','quant_selection_now_ms','quant_selection_in_this_transaction','quant_selection_transitions','quant_selection_insert_only','quant_selection_require_serializable',
   'quant_selection_stamp_registration','quant_selection_stamp_event','quant_selection_guard_registration','quant_selection_guard_universe','quant_selection_guard_participant',
-  'quant_selection_guard_status_event','quant_selection_check_registration_complete']);
+  'quant_selection_guard_status_event','quant_selection_check_registration_complete','quant_selection_stamp_freeze','quant_selection_stamp_start','quant_selection_stamp_outcome',
+  'quant_selection_guard_freeze','quant_selection_guard_start','quant_selection_guard_outcome','quant_selection_guard_replay','quant_selection_check_first_start_complete','quant_selection_check_outcome_complete']);
 const col=(name,type,notNull,def=null)=>({name,type,notNull,def});
 // pg_trigger.tgtype bits: ROW 1, BEFORE 2, INSERT 4, DELETE 8, UPDATE 16, TRUNCATE 32. A constraint trigger is AFTER ROW INSERT, deferrable and initially deferred.
 const COLUMNS=Object.freeze({
+ quant_selection_evaluation_starts:[col("selection_id","uuid",true),col("export_id","uuid",true),col("evaluation_run_id","text",true),col("parent_run_id","text",true),col("dataset_hash","text",true),col("engine_hash","text",true),col("started_at_ms","bigint",true)],
+ quant_selection_outcomes:[col("selection_id","uuid",true),col("outcome","text",true),col("outcome_hash","text",true),col("body_canonical","text",true),col("created_at_ms","bigint",true)],
  quant_selection_participants:[col("selection_id","uuid",true),col("export_id","uuid",true),col("position","smallint",true),col("run_id","text",true),col("package_hash","text",true),col("source_hash","text",true),col("rules_hash","text",true),col("validation_package_hash","text",true),col("validated_at_utc","text",true)],
  quant_selection_registrations:[col("selection_id","uuid",true),col("owner_id","text",true),col("fixture","boolean",true),col("broker","text",true),col("symbol","text",true),col("timeframe","text",true),col("window_kind","text",true),col("start_ms","bigint",true),col("end_ms","bigint",true),col("warmup_bars","integer",true),col("evaluation_bars","integer",true),col("total_bars","integer",true),col("participant_count","smallint",true),col("admission_deadline_ms","bigint",true),col("registered_at_ms","bigint",true),col("frozen_at_ms","bigint",true),col("registration_key","text",true),col("registration_hash","text",true),col("body_canonical","text",true)],
+ quant_selection_replay_events:[col("replay_event_id","uuid",true,"gen_random_uuid()"),col("selection_id","uuid",true),col("kind","text",true),col("stored_outcome_hash","text",true),col("recomputed_outcome_hash","text",false),col("at_ms","bigint",true)],
  quant_selection_schema:[col("version","integer",true)],
  quant_selection_status_events:[col("selection_id","uuid",true),col("seq","integer",true),col("event","text",true),col("status","text",true),col("code","text",false),col("detail","text",false),col("outcome","text",false),col("completed_evaluation_run_ids","text[]",true,"'{}'::text[]"),col("at_ms","bigint",true)],
- quant_selection_universe:[col("selection_id","uuid",true),col("position","smallint",true),col("run_id","text",true),col("member_kind","text",true),col("universe_status","text",true),col("first_code","text",false),col("export_id","uuid",false)]});
+ quant_selection_universe:[col("selection_id","uuid",true),col("position","smallint",true),col("run_id","text",true),col("member_kind","text",true),col("universe_status","text",true),col("first_code","text",false),col("export_id","uuid",false)],
+ quant_selection_window_freezes:[col("selection_id","uuid",true),col("dataset_hash","text",true),col("start_ms","bigint",true),col("end_ms","bigint",true),col("bars_total","integer",true),col("frozen_at_ms","bigint",true)]});
 const CONSTRAINTS=Object.freeze({
+ quant_selection_evaluation_starts:{
+  quant_selection_evaluation_starts_dataset_check:["c","CHECK ((dataset_hash ~ '^[0-9a-f]{64}$'::text))"],
+  quant_selection_evaluation_starts_engine_check:["c","CHECK ((engine_hash ~ '^[0-9a-f]{64}$'::text))"],
+  quant_selection_evaluation_starts_parent_check:["c","CHECK ((length(parent_run_id) > 0))"],
+  quant_selection_evaluation_starts_participant_fkey:["f","FOREIGN KEY (selection_id, export_id) REFERENCES quant_selection_participants(selection_id, export_id)"],
+  quant_selection_evaluation_starts_pkey:["p","PRIMARY KEY (selection_id, export_id)"],
+  quant_selection_evaluation_starts_run_id_check:["c","CHECK (((length(evaluation_run_id) > 0) AND (length(evaluation_run_id) <= 200)))"],
+  quant_selection_evaluation_starts_run_key:["u","UNIQUE (evaluation_run_id)"],
+  quant_selection_evaluation_starts_started_at_check:["c","CHECK (((started_at_ms >= 0) AND (started_at_ms <= '253402300799999'::bigint)))"]},
+ quant_selection_outcomes:{
+  quant_selection_outcomes_body_evaluations_check:["c","CHECK (COALESCE((jsonb_typeof(((body_canonical)::jsonb -> 'evaluations'::text)) = 'array'::text), false))"],
+  quant_selection_outcomes_body_hash_check:["c","CHECK ((encode(sha256(convert_to(body_canonical, 'UTF8'::name)), 'hex'::text) = outcome_hash))"],
+  quant_selection_outcomes_body_json_check:["c","CHECK ((jsonb_typeof((body_canonical)::jsonb) = 'object'::text))"],
+  quant_selection_outcomes_body_no_hash_check:["c","CHECK ((NOT ((body_canonical)::jsonb ? 'outcome_hash'::text)))"],
+  quant_selection_outcomes_body_outcome_check:["c","CHECK (COALESCE((((body_canonical)::jsonb ->> 'outcome'::text) = outcome), false))"],
+  quant_selection_outcomes_body_selection_check:["c","CHECK (COALESCE((((body_canonical)::jsonb ->> 'selection_id'::text) = (selection_id)::text), false))"],
+  quant_selection_outcomes_body_size_check:["c","CHECK ((octet_length(body_canonical) <= 262144))"],
+  quant_selection_outcomes_body_status_check:["c","CHECK (COALESCE((((body_canonical)::jsonb ->> 'status'::text) = 'SELECTION_COMPLETED'::text), false))"],
+  quant_selection_outcomes_body_version_check:["c","CHECK (COALESCE((((body_canonical)::jsonb ->> 'version'::text) = 'qr4-outcome-v1'::text), false))"],
+  quant_selection_outcomes_created_at_check:["c","CHECK (((created_at_ms >= 0) AND (created_at_ms <= '253402300799999'::bigint)))"],
+  quant_selection_outcomes_hash_check:["c","CHECK ((outcome_hash ~ '^[0-9a-f]{64}$'::text))"],
+  quant_selection_outcomes_outcome_check:["c","CHECK ((outcome = ANY (ARRAY['BEST_IN_SCOPE'::text, 'TIED_IN_SCOPE'::text, 'NO_QUALIFYING_STRATEGY'::text, 'INADEQUATE_EVIDENCE'::text])))"],
+  quant_selection_outcomes_pkey:["p","PRIMARY KEY (selection_id)"],
+  quant_selection_outcomes_selection_id_fkey:["f","FOREIGN KEY (selection_id) REFERENCES quant_selection_registrations(selection_id)"]},
  quant_selection_participants:{
   quant_selection_participants_export_fkey:["f","FOREIGN KEY (export_id, package_hash) REFERENCES bi_exports(export_id, package_hash)"],
   quant_selection_participants_package_hash_check:["c","CHECK ((package_hash ~ '^[0-9a-f]{64}$'::text))"],
@@ -96,6 +127,13 @@ const CONSTRAINTS=Object.freeze({
   quant_selection_registrations_registered_at_check:["c","CHECK (((registered_at_ms >= 0) AND (registered_at_ms <= '253402300799999'::bigint)))"],
   quant_selection_registrations_window_check:["c","CHECK (((start_ms >= 0) AND ((start_ms % (60000)::bigint) = 0) AND (end_ms > start_ms) AND ((end_ms % (60000)::bigint) = 0) AND (end_ms <= '253402300800000'::bigint)))"],
   quant_selection_registrations_window_kind_check:["c","CHECK ((window_kind = ANY (ARRAY['PROSPECTIVE'::text, 'FORWARD_PAST'::text])))"]},
+ quant_selection_replay_events:{
+  quant_selection_replay_events_at_ms_check:["c","CHECK (((at_ms >= 0) AND (at_ms <= '253402300799999'::bigint)))"],
+  quant_selection_replay_events_kind_check:["c","CHECK ((kind = 'SELECTION_REPLAY_MISMATCH'::text))"],
+  quant_selection_replay_events_pkey:["p","PRIMARY KEY (replay_event_id)"],
+  quant_selection_replay_events_recomputed_check:["c","CHECK (((recomputed_outcome_hash IS NULL) OR ((recomputed_outcome_hash ~ '^[0-9a-f]{64}$'::text) AND (recomputed_outcome_hash <> stored_outcome_hash))))"],
+  quant_selection_replay_events_selection_id_fkey:["f","FOREIGN KEY (selection_id) REFERENCES quant_selection_outcomes(selection_id)"],
+  quant_selection_replay_events_stored_check:["c","CHECK ((stored_outcome_hash ~ '^[0-9a-f]{64}$'::text))"]},
  quant_selection_schema:{
   quant_selection_schema_pkey:["p","PRIMARY KEY (version)"],
   quant_selection_schema_version_check:["c","CHECK ((version = 1))"]},
@@ -123,20 +161,43 @@ const CONSTRAINTS=Object.freeze({
   quant_selection_universe_run_key:["u","UNIQUE (selection_id, run_id)"],
   quant_selection_universe_selection_id_fkey:["f","FOREIGN KEY (selection_id) REFERENCES quant_selection_registrations(selection_id)"],
   quant_selection_universe_status_check:["c","CHECK ((universe_status = ANY (ARRAY['PARTICIPANT'::text, 'QUALIFIED_STALE'::text, 'EXCLUDED'::text])))"],
-  quant_selection_universe_status_code_check:["c","CHECK (((universe_status = 'PARTICIPANT'::text) = (first_code IS NULL)))"]}});
+  quant_selection_universe_status_code_check:["c","CHECK (((universe_status = 'PARTICIPANT'::text) = (first_code IS NULL)))"]},
+ quant_selection_window_freezes:{
+  quant_selection_window_freezes_bars_check:["c","CHECK ((bars_total >= 1))"],
+  quant_selection_window_freezes_frozen_at_check:["c","CHECK (((frozen_at_ms >= 0) AND (frozen_at_ms <= '253402300799999'::bigint)))"],
+  quant_selection_window_freezes_hash_check:["c","CHECK ((dataset_hash ~ '^[0-9a-f]{64}$'::text))"],
+  quant_selection_window_freezes_pkey:["p","PRIMARY KEY (selection_id)"],
+  quant_selection_window_freezes_selection_id_fkey:["f","FOREIGN KEY (selection_id) REFERENCES quant_selection_registrations(selection_id)"],
+  quant_selection_window_freezes_window_check:["c","CHECK (((start_ms >= 0) AND ((start_ms % (60000)::bigint) = 0) AND (end_ms > start_ms) AND ((end_ms % (60000)::bigint) = 0) AND (end_ms <= '253402300800000'::bigint)))"]}});
 const INDEXES=Object.freeze({
+ quant_selection_evaluation_starts_pkey:"CREATE UNIQUE INDEX quant_selection_evaluation_starts_pkey ON public.quant_selection_evaluation_starts USING btree (selection_id, export_id)",
+ quant_selection_evaluation_starts_run_key:"CREATE UNIQUE INDEX quant_selection_evaluation_starts_run_key ON public.quant_selection_evaluation_starts USING btree (evaluation_run_id)",
+ quant_selection_outcomes_pkey:"CREATE UNIQUE INDEX quant_selection_outcomes_pkey ON public.quant_selection_outcomes USING btree (selection_id)",
  quant_selection_participants_pkey:"CREATE UNIQUE INDEX quant_selection_participants_pkey ON public.quant_selection_participants USING btree (selection_id, export_id)",
  quant_selection_participants_position_key:"CREATE UNIQUE INDEX quant_selection_participants_position_key ON public.quant_selection_participants USING btree (selection_id, \"position\")",
  quant_selection_participants_run_key:"CREATE UNIQUE INDEX quant_selection_participants_run_key ON public.quant_selection_participants USING btree (selection_id, run_id)",
  quant_selection_registrations_owner_frozen:"CREATE INDEX quant_selection_registrations_owner_frozen ON public.quant_selection_registrations USING btree (owner_id, frozen_at_ms)",
  quant_selection_registrations_owner_key_key:"CREATE UNIQUE INDEX quant_selection_registrations_owner_key_key ON public.quant_selection_registrations USING btree (owner_id, registration_key)",
  quant_selection_registrations_pkey:"CREATE UNIQUE INDEX quant_selection_registrations_pkey ON public.quant_selection_registrations USING btree (selection_id)",
+ quant_selection_replay_events_pkey:"CREATE UNIQUE INDEX quant_selection_replay_events_pkey ON public.quant_selection_replay_events USING btree (replay_event_id)",
  quant_selection_schema_pkey:"CREATE UNIQUE INDEX quant_selection_schema_pkey ON public.quant_selection_schema USING btree (version)",
  quant_selection_status_events_pkey:"CREATE UNIQUE INDEX quant_selection_status_events_pkey ON public.quant_selection_status_events USING btree (selection_id, seq)",
  quant_selection_universe_export_key:"CREATE UNIQUE INDEX quant_selection_universe_export_key ON public.quant_selection_universe USING btree (selection_id, export_id)",
  quant_selection_universe_pkey:"CREATE UNIQUE INDEX quant_selection_universe_pkey ON public.quant_selection_universe USING btree (selection_id, \"position\")",
- quant_selection_universe_run_key:"CREATE UNIQUE INDEX quant_selection_universe_run_key ON public.quant_selection_universe USING btree (selection_id, run_id)"});
+ quant_selection_universe_run_key:"CREATE UNIQUE INDEX quant_selection_universe_run_key ON public.quant_selection_universe USING btree (selection_id, run_id)",
+ quant_selection_window_freezes_pkey:"CREATE UNIQUE INDEX quant_selection_window_freezes_pkey ON public.quant_selection_window_freezes USING btree (selection_id)"});
 export const SELECTION_GUARDS=Object.freeze([
+ ["quant_selection_evaluation_starts_00_serializable","quant_selection_evaluation_starts","quant_selection_require_serializable",7,false],
+ ["quant_selection_evaluation_starts_01_stamp","quant_selection_evaluation_starts","quant_selection_stamp_start",7,false],
+ ["quant_selection_evaluation_starts_guard","quant_selection_evaluation_starts","quant_selection_guard_start",7,false],
+ ["quant_selection_evaluation_starts_no_change","quant_selection_evaluation_starts","quant_selection_insert_only",27,false],
+ ["quant_selection_evaluation_starts_no_truncate","quant_selection_evaluation_starts","quant_selection_insert_only",34,false],
+ ["quant_selection_outcomes_00_serializable","quant_selection_outcomes","quant_selection_require_serializable",7,false],
+ ["quant_selection_outcomes_01_stamp","quant_selection_outcomes","quant_selection_stamp_outcome",7,false],
+ ["quant_selection_outcomes_complete","quant_selection_outcomes","quant_selection_check_outcome_complete",5,true],
+ ["quant_selection_outcomes_guard","quant_selection_outcomes","quant_selection_guard_outcome",7,false],
+ ["quant_selection_outcomes_no_change","quant_selection_outcomes","quant_selection_insert_only",27,false],
+ ["quant_selection_outcomes_no_truncate","quant_selection_outcomes","quant_selection_insert_only",34,false],
  ["quant_selection_participants_00_serializable","quant_selection_participants","quant_selection_require_serializable",7,false],
  ["quant_selection_participants_guard","quant_selection_participants","quant_selection_guard_participant",7,false],
  ["quant_selection_participants_no_change","quant_selection_participants","quant_selection_insert_only",27,false],
@@ -147,18 +208,29 @@ export const SELECTION_GUARDS=Object.freeze([
  ["quant_selection_registrations_guard","quant_selection_registrations","quant_selection_guard_registration",7,false],
  ["quant_selection_registrations_no_change","quant_selection_registrations","quant_selection_insert_only",27,false],
  ["quant_selection_registrations_no_truncate","quant_selection_registrations","quant_selection_insert_only",34,false],
+ ["quant_selection_replay_events_00_serializable","quant_selection_replay_events","quant_selection_require_serializable",7,false],
+ ["quant_selection_replay_events_01_stamp","quant_selection_replay_events","quant_selection_stamp_event",7,false],
+ ["quant_selection_replay_events_guard","quant_selection_replay_events","quant_selection_guard_replay",7,false],
+ ["quant_selection_replay_events_no_change","quant_selection_replay_events","quant_selection_insert_only",27,false],
+ ["quant_selection_replay_events_no_truncate","quant_selection_replay_events","quant_selection_insert_only",34,false],
  ["quant_selection_schema_00_serializable","quant_selection_schema","quant_selection_require_serializable",7,false],
  ["quant_selection_schema_no_change","quant_selection_schema","quant_selection_insert_only",27,false],
  ["quant_selection_schema_no_truncate","quant_selection_schema","quant_selection_insert_only",34,false],
  ["quant_selection_status_events_00_serializable","quant_selection_status_events","quant_selection_require_serializable",7,false],
  ["quant_selection_status_events_01_stamp","quant_selection_status_events","quant_selection_stamp_event",7,false],
+ ["quant_selection_status_events_first_start_complete","quant_selection_status_events","quant_selection_check_first_start_complete",5,true],
  ["quant_selection_status_events_guard","quant_selection_status_events","quant_selection_guard_status_event",7,false],
  ["quant_selection_status_events_no_change","quant_selection_status_events","quant_selection_insert_only",27,false],
  ["quant_selection_status_events_no_truncate","quant_selection_status_events","quant_selection_insert_only",34,false],
  ["quant_selection_universe_00_serializable","quant_selection_universe","quant_selection_require_serializable",7,false],
  ["quant_selection_universe_guard","quant_selection_universe","quant_selection_guard_universe",7,false],
  ["quant_selection_universe_no_change","quant_selection_universe","quant_selection_insert_only",27,false],
- ["quant_selection_universe_no_truncate","quant_selection_universe","quant_selection_insert_only",34,false]
+ ["quant_selection_universe_no_truncate","quant_selection_universe","quant_selection_insert_only",34,false],
+ ["quant_selection_window_freezes_00_serializable","quant_selection_window_freezes","quant_selection_require_serializable",7,false],
+ ["quant_selection_window_freezes_01_stamp","quant_selection_window_freezes","quant_selection_stamp_freeze",7,false],
+ ["quant_selection_window_freezes_guard","quant_selection_window_freezes","quant_selection_guard_freeze",7,false],
+ ["quant_selection_window_freezes_no_change","quant_selection_window_freezes","quant_selection_insert_only",27,false],
+ ["quant_selection_window_freezes_no_truncate","quant_selection_window_freezes","quant_selection_insert_only",34,false]
 ]);
 
 export const FREEZE_TRIGGERS=Object.freeze(SELECTION_GUARDS.filter(item=>item[2]==='quant_selection_insert_only'));

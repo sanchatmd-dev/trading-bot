@@ -1,0 +1,41 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "1480385",
+  "scope": "Local implementation of sub-slice S2-2 of docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md (RC-S21 to RC-S27, RC-S29): window freezes, evaluation starts, outcomes and replay events join the uninstalled QR-4 selection install; the first evaluation start rechecks the window under the exposure register lock (RO-12) and binds exactly one QR4_SELECTION register row in the same transaction; later starts and the outcome write read the register lock-first (readExposuresLocked); nothing after the registration may be written in the registration transaction. Tie tolerances stay unset (OD-S3). Nothing is installed on staging and no route or job calls the writers.",
+  "method": "An architecture auditor (Opus 5.5) wrote the S2 design and root decided RC-S21 to RC-S27. A coder (Sonnet 5.5) wrote S2-2; an independent architecture auditor (Opus 5.5) reviewed rounds 1 and 2 and a second-opinion reviewer (Fable 5.1) reviewed round 1, and root confirmed every Fable finding before acting on it; an independent tester (Sonnet 5.5) ran single-edit mutations after each of three rounds. Root ruled on every finding. A sole-runner tester then ran, with nothing else active, every test file that imports a changed module of the three slices of this wave (found with git grep): 54 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (804 tests, 0 fail; 3 skipped by environment gates in files this wave did not change: one non-loopback address check and two TEMP-privilege suites), the full unit suite (2150 tests, 0 fail, 6 skipped by platform gates, 9 todo) and the grant text test. Two later test-only assertions (one QR-3 reader case and one S3b import-scanner case) were checked by an independent tester (Sonnet 5.5) with their target mutations, both killed. Root then added the four S2-2 tables to the PostgreSQL grant test list and reran that file. Nobody verified their own work.",
+  "files": {
+    "src/postgres/quant-selection.sql": "5a3fea41228bd2bacdcf30cfbf73862cfed95d4d2c82da3117943f6dc9728757",
+    "src/postgres/quant-selection-migration.js": "94d2db3a7c11c8a9d5d0de9f3a0acee808aaad09120613fad3b3a8839d0f95da",
+    "src/postgres/quant-selection-rollback.sql": "d793add5333fe7df24ac896c41f33c299d722e0afc227698b334efdebfa4f302",
+    "src/postgres/selection-store.js": "3796c21ee070f5d49e4bb0dcb6ebdac15892913843c08d66bc4cf38423e2ebf7",
+    "src/postgres/exposure-register.js": "fa1723fe0d4310ced61a621da454c4a9d673de0201df7c4150ef97b4591891eb",
+    "test/exposure-register-adapters.test.js": "db3c39a6091c7101cb6df4ebbed527d9d9bcab642b7309aaa987838dea1b60b5",
+    "test/postgres/quant-selection.test.mjs": "5376c8af45b01a7bacd6f9bd5eb4e61a1d75972539254a3c14e1f8476f279351",
+    "test/postgres/quant-selection-register.test.mjs": "ff6eb24e264cce2cc7faedd376430239df86bd42baa60cc989a2a7e37ca10f79",
+    "test/postgres/quant-selection-recheck.test.mjs": "ee5caff48a0dad385220584a9e56fdcf0dde3e3167b4bbf377dca6e31b342019",
+    "test/postgres/runtime-grants.test.mjs": "8d1906d22b327664357b81907e0d5cec547bae1d10106238eedbcd3a5be337cb"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "quant-selection 16 of 16, quant-selection-register 26 of 26 and quant-selection-recheck 23 of 23 pass with 0 skipped; the exposure register adapter tests pass in the unit suite; the PostgreSQL grant test passes with the eight QR-4 tables listed.",
+  "mutations": {
+    "round1": "14 killed, 3 survived: the commit-check zero-row clauses for starts, outcomes and replays, which the same-transaction refusal of round 2 makes unreachable; they stay as a backstop.",
+    "round2": "6 of 7 killed; the survivor sits behind the freeze check and is unreachable.",
+    "round3": "3 of 3 killed (rollback helper drop, replay evaluation-list refusal, the later-event refusal in the registration transaction)."
+  },
+  "limits": [
+    "The commit-check zero-row clauses for starts, outcomes and replays are not reachable by any write the guards allow; they are a backstop only.",
+    "The tie tolerances (OD-S3) are unset; outcomes in the tests use an injected test registry.",
+    "QR-4 S3 must tell research runs and evaluation runs apart in readSearchedWindows.",
+    "No install was run on any environment."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S2-2 as local engineering evidence for the QR-4 row (F10-03). Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}

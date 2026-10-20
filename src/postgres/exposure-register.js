@@ -72,6 +72,23 @@ export async function readExposures(db,{owner_id:owner,broker,symbol,timeframe}=
   return {ok:true,code:null,rows};
 }
 
+/**
+ * Lock-first reader for a guarded step that does not append (the later RO-12 rechecks of QR-4: each evaluation start after the first, and the outcome
+ * write). Inside the caller's SERIALIZABLE transaction the first statement is LOCK TABLE ... SHARE ROW EXCLUSIVE, the same lock appendExposures takes, so
+ * the read that follows already sees every committed register writer and a register writer that is still open makes this transaction wait for it
+ * (deterministic wait, not a 40001 loop). Then the transaction isolation is confirmed (QR003 otherwise) and the owner's rows are read by readExposures.
+ * Input is validated before any statement. Returns {ok, code, rows} like readExposures; an unreadable register is ok:false, never an empty list.
+ * The same residual risk as appendExposures applies to the lock (see the module comment). Nothing is written.
+ */
+export async function readExposuresLocked(db,{owner_id:owner,broker,symbol,timeframe}={}){
+  if(!db||typeof db.query!=='function'||db.isTransaction!==true)throw Error('A locked exposure register read requires the caller transaction');
+  if(!text(owner)||!text(broker)||!text(symbol)||!text(timeframe))return {ok:false,code:EXPOSURE_CODES.INPUT_INVALID,rows:null};
+  await db.query('LOCK TABLE '+TABLE+' IN SHARE ROW EXCLUSIVE MODE');
+  const isolation=(await db.query("SELECT current_setting('transaction_isolation') AS level")).rows[0].level;
+  if(isolation!=='serializable')throw Object.assign(Error('Quant exposure register locked reads require a SERIALIZABLE transaction'),{code:'QR003'});
+  return readExposures(db,{owner_id:owner,broker,symbol,timeframe});
+}
+
 const rowsOf=input=>Array.isArray(input)?input:(isObject(input)&&input.ok===true&&Array.isArray(input.rows)?input.rows:null);
 function normalizedRows(input){
   const rows=rowsOf(input);

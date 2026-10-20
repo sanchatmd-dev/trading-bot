@@ -22,10 +22,11 @@ const SCHEMAS=['pine-bridge-schema.sql','quant-research-schema.sql','quant-found
 const INSERT_ONLY=['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records','bi_evidence_records',
   'bi_clearances','bi_trace_reproductions','ql4c_validation'];
 // The record tables of the QR-3 comparison, QR-4 selection (first four tables in slice S2-1) and F11 member set extensions: the same insert-only rule.
-// The quant-comparison.sql install adds the seven QR-3 S2c tables (S2c-1 and S2c-2); later QR-4 slices add theirs to this list.
+// The quant-comparison.sql install adds the seven QR-3 S2c tables (S2c-1 and S2c-2) and the quant-selection.sql install the eight QR-4 S2 tables (S2-1 and S2-2).
 const EXTENSION_INSERT_ONLY=['quant_comparison_specs','quant_comparison_participants','quant_comparison_status_events','quant_comparison_evaluations','quant_comparison_benchmarks',
   'quant_comparison_outcomes','quant_comparison_replay_events',
   'quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events',
+  'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events',
   'mp_member_sets','mp_member_set_members'];
 const EXTENSION_MARKERS=['quant_comparison_schema','quant_selection_schema','mp_member_set_schema'];
 // What psql -v runtime_role=<role> does for :'runtime_role'.
