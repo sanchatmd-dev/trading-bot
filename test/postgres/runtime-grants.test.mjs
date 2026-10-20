@@ -5,21 +5,22 @@ import {randomUUID} from 'node:crypto';
 import pg from 'pg';
 import {PostgresDatabase} from '../../src/postgres/db.js';
 
-// scripts/grant-postgres-runtime.sql on real PostgreSQL: the runtime role may never DELETE the ten PF-2 quarantine,
+// scripts/grant-postgres-runtime.sql on real PostgreSQL: the runtime role may never DELETE the eleven protected quarantine,
 // accounting and provenance tables, yet keeps table-level UPDATE, which LOCK TABLE ... IN EXCLUSIVE MODE needs on the
 // scheduler during enrollment completion. The script takes its role from the psql variable runtime_role and runs in one
 // transaction under the maintenance lock. test/postgres-runtime-grants.test.js checks the same script as text.
 const PROTECTED=['quant_foundation_jobs','quant_foundation_owners','quant_foundation_scheduler','quant_jobs',
   'quant_research_chunks','quant_io_ledgers','quant_io_launches','quant_profile_enrollment_receipts',
-  'quant_storage_namespace','quant_research_executor_mode'];
-// The same extension schemas, in the same order, as test/helpers/quant-preflight-http-fixture.mjs.
+  'quant_storage_namespace','quant_research_executor_mode','quant_exposure_register'];
+// The same extension schemas, in the same order, as test/helpers/quant-preflight-http-fixture.mjs, plus
+// quant-exposure-register.sql (the PROTECTED loop asserts every protected table is installed).
 const SCHEMAS=['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql',
   'quant-research-foundation-schema.sql','quant-storage-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql',
-  'quant-preflight-schema.sql','quant-profile-enrollment-schema.sql'];
+  'quant-preflight-schema.sql','quant-profile-enrollment-schema.sql','quant-exposure-register.sql'];
 // What psql -v runtime_role=<role> does for :'runtime_role'.
 const withRole=(sql,role)=>sql.replaceAll(":'runtime_role'","'"+role.replaceAll("'","''")+"'");
 
-test('runtime grants: DELETE is refused on the ten PF-2 tables while scheduler UPDATE and its EXCLUSIVE lock remain',
+test('runtime grants: DELETE is refused on the eleven protected tables while scheduler UPDATE and its EXCLUSIVE lock remain',
   {skip:process.env.TEST_DATABASE_URL?false:'TEST_DATABASE_URL is required (isolated PostgreSQL only)'},async t=>{
   const admin=new PostgresDatabase({connectionString:process.env.TEST_DATABASE_URL}),suffix=randomUUID().replaceAll('-','');
   const name='robot_grants_'+suffix,role='robot_grants_role_'+suffix,idle='robot_grants_idle_'+suffix;
@@ -80,7 +81,7 @@ test('runtime grants: DELETE is refused on the ten PF-2 tables while scheduler U
   assert.equal(await privilege(role,'quant_foundation_scheduler','UPDATE'),true);
   await db.transaction(async()=>{await db.query('SET LOCAL ROLE '+role);await db.query('LOCK TABLE quant_foundation_scheduler IN EXCLUSIVE MODE');});
   // Read-only provenance stays read-only; elsewhere the runtime keeps DELETE (sessions).
-  for(const table of ['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars'])
+  for(const table of ['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars','quant_exposure_register_schema'])
     for(const kind of ['INSERT','UPDATE','DELETE'])assert.equal(await privilege(role,table,kind),false,table+' '+kind);
   for(const table of ['sessions','auth_challenges','password_resets','security_mail','mfa_recovery','user_security',
     'worker_heartbeats','security_limits'])assert.equal(await privilege(role,table,'DELETE'),true,table+' keeps the runtime DELETE');

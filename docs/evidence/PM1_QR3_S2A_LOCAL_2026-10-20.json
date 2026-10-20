@@ -1,0 +1,40 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "e434aa3",
+  "scope": "Local implementation of slice S2a of docs/QR_3_FAIR_COMPARISON_CONTRACT.md for PM-1 row F10-02: the shared exposure register as an offline PostgreSQL extension (insert-only table quant_exposure_register with a QR3_COMPARISON or QR4_SELECTION kind, marker table, guard triggers, rollback that runs only on an empty register, and an install, inspect and rollback tool), plus src/postgres/exposure-register.js with the one writer, the one reader and the adapters to the entry shapes of the committed QR-3, QR-4 and package B0 pure modules. The runtime grant script protects the register (no DELETE) and makes its marker read-only. Nothing is installed on staging, and no route, worker or view writes or reads the register yet.",
+  "method": "An architecture auditor (Opus 5.5) wrote the S2 design and root accepted options D1 to D13 (recorded as RC-C28 to RC-C36). A coder (Sonnet 5.5) wrote S2a. An independent architecture auditor (Opus 5.5) and a second-opinion reviewer (Fable 5.1, transcript model verified) reviewed round 1; an independent tester (Sonnet 5.5) ran the PostgreSQL suite, the tool and the grant script on a throwaway cluster after each round. Round 2 fixed the findings (grant test lists, an upper bound on window times, one clock read per call, throws on a missing or invalid register, owner checks by role membership, marker and trigger checks) and was rechecked by the Opus auditor, then the tester ran six single-edit mutations. Reviews and mutation runs were serialized. Root ruled on every finding and made two comment-only edits after the tester run (a stale schema-list comment and the ruling date). Nobody verified their own work.",
+  "files": {
+    "src/postgres/quant-exposure-register.sql": "38db3510f5ec4c98ee36e1443a4459fc71da69328953956c6204a56a0109846c",
+    "src/postgres/quant-exposure-register-rollback.sql": "81b0921a35626a364425459cf1b16412cc26073412ef7babc149cf9fba0805a6",
+    "src/postgres/quant-exposure-register-migration.js": "52b873c498a831b99fda57b9ecaf7ca95e21828ec63a703d11c9c833dd6f1c43",
+    "src/postgres/exposure-register.js": "211c1dc6e950ca8d7af254c6b2c23ca10d0198be0fec9ed9b17418582ad14ad2",
+    "scripts/migrate-quant-exposure-register.mjs": "60745ef00b09b6e75d9b257b616c12f1e85397130fdefdf3e9a9b5a4713e8d98",
+    "scripts/grant-postgres-runtime.sql": "4b74a0e6fe0e92f3ad52d2bb0e21dc40aae9af92321b0ddf25750ca46f5a483b",
+    "test/postgres/quant-exposure-register.test.mjs": "b54c998860e0999b4a63ca7a999b2f1ffa0dc1ba0665450aada60a5cfd5aeb6f",
+    "test/exposure-register-adapters.test.js": "671300b01abf3d1ec6f810c5f756ce9f94d41989945a242e9f1c9b619bb6fc10",
+    "test/postgres-runtime-grants.test.js": "043211316c6865b792d4569a97ebae1820d03294d8add02373b3f40881460572",
+    "test/postgres/runtime-grants.test.mjs": "d5e13635418622afd49df689b2302ea67fef7ae45c0dc8134e80e2ef590ec081"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "Throwaway PostgreSQL 16.15 cluster (scram-sha-256, 100 connections, one test file per process, PostgreSQL tools on PATH): test/postgres/quant-exposure-register.test.mjs 17 of 17 pass with 0 skipped; test/postgres/runtime-grants.test.mjs 1 of 1. Without a database: the adapter and grant text tests pass, and root reran them with the package renderer and gate tests (88 of 88). The tool was run on a throwaway database: inspect, install, a repeated install, rollback and reinstall all exit 0; after the grant script, inspect with the runtime role reports no failures and the role holds only INSERT, SELECT and UPDATE on the register.",
+  "mutations": {
+    "round2": "6 of 6 killed (no upper bound in the table check, no upper bound in the row reader, an unavailable register returning ok:false, one clock read per event, and exact-name owner checks for the table and for the functions)."
+  },
+  "limits": [
+    "Register only: library G5 v2 (S2b), the QR-3 comparison tables (S2c), the evaluation job class (S3) and the API (S4) do not exist yet, so nothing writes exposure rows.",
+    "Not installed on staging. Staging needs one later data-model window with a fresh owner GO naming every step (RC-C36).",
+    "Known gaps for the shared hardening backlog: membership in a superuser or bypass-RLS role is not checked; the QR-1b freeze inspection still matches the table owner by exact name.",
+    "The backup and restore test skips when the PostgreSQL tools are not on PATH.",
+    "Constraint text is verified on PostgreSQL 16 only; another major version may classify as OTHER and fail closed."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the design, the agent reports, the rulings and the final diff and accepted S2a as local engineering evidence for F10-02. Acceptance changes no PM-1 credit by itself, installs nothing and writes no exposure row."
+  }
+}

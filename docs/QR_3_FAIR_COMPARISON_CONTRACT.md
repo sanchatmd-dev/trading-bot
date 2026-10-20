@@ -3,7 +3,7 @@
 Status: owner decisions OD-C1 to OD-C22 recorded 2026-10-19; root decided RD-1 to RD-10 the same day. Root
 accepted the other rules after independent review. Root recorded clarifications RC-C1 to RC-C27 on 2026-10-19
 from the S1 review (section 15, "Root clarifications"); two owner items stay open (OPEN-1, OPEN-2) and fail
-closed. The S1 pure module (src/comparison) is root-accepted as local engineering evidence and is not wired into any route, worker or view. Nothing here grants a
+closed. The S1 pure module (src/comparison) is root-accepted as local engineering evidence and is not wired into any route, worker or view. Root split slice S2 into S2a, S2b and S2c on 2026-10-20 (RC-C28). S2a, the shared exposure register extension with its one writer, one reader and adapters, is root-accepted as local engineering evidence; it is not installed on staging, and no route, worker or view writes or reads it yet. Nothing here grants a
 ranking, label, recommendation, apply or Bot action. This contract is not a GO. Each implementation step
 still needs its own gates and approvals.
 
@@ -843,6 +843,10 @@ acceptance cases.
 | S5 | UI and notices | JSDOM, mobile and Thai checks; owner Thai review (decision OD-C19) |
 | S6 | Staging evidence 13.4 | Root acceptance |
 
+Root split S2 (RC-C28): S2a is the exposure register extension (`src/postgres/quant-exposure-register.sql`, its rollback
+and offline tool, `src/postgres/exposure-register.js`, grants); S2b is library G5 v2 reading the register; S2c is the QR-3
+comparison tables. S2a is local only. Staging follows in one later data-model window (RC-C36).
+
 ---
 
 ## 14. Known risks
@@ -955,3 +959,24 @@ Open owner items (todo marked OWNER; fail closed until the owner decides):
   `ELIGIBLE_QUALIFIED` participant gets no rank, only the R5 label, and `only_qualified_participant_id` is set.
   The outcome value stays as implemented. The owner decides whether a new outcome `SINGLE_QUALIFIED_RESULT` is
   added.
+
+### Root decisions for slice S2 (2026-10-20)
+
+Root accepted the S2 design options below after an independent architecture review, and the S2a review rounds.
+None changes an owner decision.
+
+| ID | Decision | Sections | Who | Date |
+| --- | --- | --- | --- | --- |
+| RC-C28 | S2 is split into S2a (register extension, writer, reader, adapters), S2b (library G5 v2) and S2c (QR-3 comparison tables); each slice has its own review | 13.5 | Root | 2026-10-20 |
+| RC-C29 | One shared table `quant_exposure_register` in its own extension with a `kind` discriminator (`QR3_COMPARISON`, `QR4_SELECTION`), the market as three columns and a half-open minute-aligned window `[start_ms, end_ms)` with warm-up excluded and `end_ms` at most 253402300800000; marker table `quant_exposure_register_schema` version 1 | 7 | Root | 2026-10-20 |
+| RC-C30 | Register rows are insert-only: UPDATE, DELETE and TRUNCATE fail with SQLSTATE `QR002`; an INSERT outside a SERIALIZABLE transaction fails with `QR003`; the triggers fire ALWAYS | 7, 10 | Root | 2026-10-20 |
+| RC-C31 | One writer (`appendExposures`): its first statement locks the register in SHARE ROW EXCLUSIVE mode, it reads the clock once per call, and a missing or invalid register throws so the caller's transaction aborts. Only a refused overlap check (`EXPOSURE_CHECK_REFUSED`) and invalid input events (`EXPOSURE_EVENT_INVALID`, found before any statement runs) return `ok:false`; the caller must stop on `ok:false` | 7, 9.1 | Root | 2026-10-20 |
+| RC-C32 | QR-3 appends one event per participant and window inside the spec-freeze (create) SERIALIZABLE transaction; a cancel keeps the events; an `ACTUAL_BOT` comparison writes no exposure | 6.1, 7 | Root | 2026-10-20 |
+| RC-C33 | Library G5 v2 counts an exposure only when `at_ms` is at or before the run creation time; a later overlap is shown as the informational `HOLDOUT_EXPOSED_BY_COMPARISON` flag and does not change G5 | 7 | Root | 2026-10-20 |
+| RC-C34 | Rollback runs only on an empty register; with rows it refuses and changes nothing | 10 | Root | 2026-10-20 |
+| RC-C35 | Grants: the register is protected (no DELETE, TRUNCATE or TRIGGER for the runtime role) and keeps table UPDATE only to carry the writer lock; the marker table is read-only. Accepted residual risk: that UPDATE also permits a stronger table lock, bounded by the statement and idle-in-transaction timeouts, as for the scheduler table | 7, 10 | Root | 2026-10-20 |
+| RC-C36 | S2 is local only. Staging needs one later data-model window after S3 and S4 local acceptance, covering the QR-1b freeze, the register, the QR-3 tables and a grant reapply, each checked by `--inspect`, with one fresh owner GO naming all steps, the operations worker only and a restore rehearsal | 13.5 | Root | 2026-10-20 |
+
+Known gaps recorded for the shared hardening backlog (not blocking S2a): the install inspection checks the runtime
+role's own superuser and bypass-RLS attributes but not membership in a role that has them; the QR-1b freeze
+inspection matches the table owner by exact name instead of role membership.

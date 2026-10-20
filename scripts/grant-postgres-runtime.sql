@@ -15,12 +15,16 @@ DECLARE
   -- PF-2 quarantine, accounting and provenance rows must survive runtime actions. These extensions are optional,
   -- so only installed tables are touched. SELECT, INSERT and table-level UPDATE stay: in particular, UPDATE on
   -- quant_foundation_scheduler carries LOCK TABLE ... IN EXCLUSIVE MODE during enrollment completion.
+  -- The same holds for quant_exposure_register: its UPDATE only carries the writer LOCK TABLE ... IN SHARE ROW EXCLUSIVE MODE;
+  -- a database trigger refuses every row UPDATE (QR002). It is insert-only evidence, so the runtime never gets DELETE.
+  -- Accepted residual risk (root ruling 2026-10-20): that UPDATE also allows LOCK TABLE ... ACCESS EXCLUSIVE, bounded by the statement and
+  -- idle-in-transaction timeouts, as for the scheduler.
   protected CONSTANT TEXT[] := ARRAY['quant_foundation_jobs','quant_foundation_owners','quant_foundation_scheduler',
     'quant_jobs','quant_research_chunks','quant_io_ledgers','quant_io_launches',
-    'quant_profile_enrollment_receipts','quant_storage_namespace','quant_research_executor_mode'];
+    'quant_profile_enrollment_receipts','quant_storage_namespace','quant_research_executor_mode','quant_exposure_register'];
   -- Versions and provenance the runtime validates but never rewrites (the Pine tables exist only with the extension).
   read_only CONSTANT TEXT[] := ARRAY['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars',
-    'pine_capture_schema'];
+    'pine_capture_schema','quant_exposure_register_schema'];
   item TEXT;
 BEGIN
   IF NOT pg_try_advisory_xact_lock(hashtextextended('robot:maintenance',0)) THEN
