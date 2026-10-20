@@ -98,8 +98,10 @@ export async function classifyQuantResearchFreeze(db){
   const owners=new Map((await db.query(`SELECT c.relname,c.relowner FROM pg_catalog.pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relkind='r' AND c.relname=ANY($1)`,[TABLES])).rows
     .map(row=>[row.relname,row.relowner]));
   const anchorOwner=owners.get(ANCHOR_TABLE)??null;
-  // The anchor must be an ordinary table; when it is not (missing, a view, a partitioned table), the ownership check cannot run and that is a problem, never a silent skip.
-  if(anchorOwner===null)problems.push('OWNER_ANCHOR_UNAVAILABLE:'+ANCHOR_TABLE);
+  // The anchor must be an ordinary table: when a relation of that name is not one (a view, a partitioned table), or freeze functions exist
+  // without it, the ownership check cannot run and that is a problem, never a silent skip. A database without the anchor and without any
+  // freeze function (base schema only) has nothing to freeze and nothing to judge, so it stays ABSENT.
+  if(anchorOwner===null){if(tables.includes(ANCHOR_TABLE)||functions.length>0)problems.push('OWNER_ANCHOR_UNAVAILABLE:'+ANCHOR_TABLE);}
   else{
     for(const table of tables)if(owners.get(table)!==anchorOwner)problems.push('OWNER_MISMATCH:'+table);
     for(const row of functions)if(row.proowner!==anchorOwner)problems.push('OWNER_MISMATCH:'+row.proname);
