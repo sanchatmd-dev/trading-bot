@@ -187,6 +187,15 @@ is never installed on the VPS. Mutation runs that temporarily edit product files
 stay serialized and run only while no other local agent runs tests that load those
 files.
 
+Owner rule (2026-10-20): every worktree session root opens, local or cloud, names
+the root session in its brief (the root's current session name, for example
+"Root: astra-vps-trade-bot-v2") and sends its own result back to that root when
+its work ends: branch, commit, changed paths, checks run and their results, open
+risks and next action. A local session sends it with the cross-session message
+tool. A cloud session that cannot message another session puts the same packet in
+its final reply, and root reads it from that session's transcript. Root never
+waits on the owner to relay a result.
+
 No workflow agent uses the browser or TradingView, and no workflow agent writes
 Git. A release-clerk commit or push is a separate serial dispatch outside any
 workflow, under the Git rules below, or root runs it; Git integration above means
