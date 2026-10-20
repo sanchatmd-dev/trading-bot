@@ -3,7 +3,7 @@
 Status: owner decisions OD-C1 to OD-C22 recorded 2026-10-19; root decided RD-1 to RD-10 the same day. Root
 accepted the other rules after independent review. Root recorded clarifications RC-C1 to RC-C27 on 2026-10-19
 from the S1 review (section 15, "Root clarifications"); two owner items stay open (OPEN-1, OPEN-2) and fail
-closed. The S1 pure module (src/comparison) is root-accepted as local engineering evidence and is not wired into any route, worker or view. Root split slice S2 into S2a, S2b and S2c on 2026-10-20 (RC-C28). S2a, the shared exposure register extension with its one writer, one reader and adapters, is root-accepted as local engineering evidence; it is not installed on staging, and no route, worker or view writes or reads it yet. Nothing here grants a
+closed. The S1 pure module (src/comparison) is root-accepted as local engineering evidence and is not wired into any route, worker or view. Root split slice S2 into S2a, S2b and S2c on 2026-10-20 (RC-C28). Root decided the S2c table design the same day (RC-C37 to RC-C42). S2a, the shared exposure register extension with its one writer, one reader and adapters, is root-accepted as local engineering evidence; it is not installed on staging, and no route, worker or view writes or reads it yet. Nothing here grants a
 ranking, label, recommendation, apply or Bot action. This contract is not a GO. Each implementation step
 still needs its own gates and approvals.
 
@@ -976,6 +976,17 @@ None changes an owner decision.
 | RC-C34 | Rollback runs only on an empty register; with rows it refuses and changes nothing | 10 | Root | 2026-10-20 |
 | RC-C35 | Grants: the register is protected (no DELETE, TRUNCATE or TRIGGER for the runtime role) and keeps table UPDATE only to carry the writer lock; the marker table is read-only. Accepted residual risk: that UPDATE also permits a stronger table lock, bounded by the statement and idle-in-transaction timeouts, as for the scheduler table | 7, 10 | Root | 2026-10-20 |
 | RC-C36 | S2 is local only. Staging needs one later data-model window after S3 and S4 local acceptance, covering the QR-1b freeze, the register, the QR-3 tables and a grant reapply, each checked by `--inspect`, with one fresh owner GO naming all steps, the operations worker only and a restore rehearsal | 13.5 | Root | 2026-10-20 |
+| RC-C37 | S2c is its own offline extension (`quant-comparison` version 1, marker `quant_comparison_schema`) that requires the exposure register installed. It comes in two sub-slices inside the same uninstalled version 1 file before any staging step: S2c-1 (specs, participants, status events, the create path and the owner read) and S2c-2 (evaluation records with the F3 trigger, benchmarks, outcomes and replay events) | 13.5 | Root | 2026-10-20 |
+| RC-C38 | SQLSTATE plan as PKG RC-25: `QR002` for edits, `QR003` for a write outside SERIALIZABLE, `QR004` for insert guards, mapped by guard (freeze order to `QR3_RESULT_PREDATES_SPEC`, status transition to `QR3_NOT_CANCELLABLE`, create completeness to `QR3_INTEGRITY_FAILED`). Every QR-3 write is SERIALIZABLE | 9, 10 | Root | 2026-10-20 |
+| RC-C39 | Freeze and creation times of comparison rows come from the database clock in insert triggers and strictly increase within a comparison; the register `at_ms` keeps the application clock (RC-C31), and the two clocks are never compared | 6.1, 10 | Root | 2026-10-20 |
+| RC-C40 | A deferred commit check makes the create atomic: the declared participant count, only the `SPEC_FROZEN` first event, no result rows, and exactly one register event per participant with the same owner, market, window, run and source hash | 6.1, 7 | Root | 2026-10-20 |
+| RC-C41 | Prior exposure is recorded per participant inside the create transaction from the locked register read; a later exposure only makes a read `STALE` | 7, 8.1 | Root | 2026-10-20 |
+| RC-C42 | Status is an insert-only event log with a transition guard; bodies are canonical text with a SHA-256 check; version 1 accepts `STANDARDIZED` only (`ACTUAL_BOT` follows QR-2 S3, OD-C20); result rows that break F3 are refused in the database; rollback runs only while every table is empty; an optional request key is unique per owner; the tables join the insert-only grant list | 2, 6.1, 8, 10 | Root | 2026-10-20 |
+
+Owner items raised by the S2c design (fail closed until decided): which owner account holds staging fixture
+comparisons, since every comparison writes real exposure rows that are kept for the owner lifetime (OD-C22); how
+account deletion relates to those insert-only rows; and OPEN-2, which should be decided before S2c-2 fixes the outcome
+values.
 
 Known gaps recorded for the shared hardening backlog (not blocking S2a): the install inspection checks the runtime
 role's own superuser and bypass-RLS attributes but not membership in a role that has them; the QR-1b freeze

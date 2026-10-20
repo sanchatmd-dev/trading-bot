@@ -1,6 +1,6 @@
 # QL-4B/QL-4C qualified Best Inputs package contract
 
-Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10); root clarifications RC-1 to RC-11 recorded the same day (section 10.1); root decisions RC-12 to RC-24 for the package builder recorded 2026-10-20 (section 10.2). Root accepted the other rules on
+Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10); root clarifications RC-1 to RC-11 recorded the same day (section 10.1); root decisions RC-12 to RC-29 for the package builder recorded 2026-10-20 (section 10.2). Root accepted the other rules on
 2026-10-19 after independent review. The pure gate module (`src/quant-library/package-gates.js`) and the slice S1 pure renderer
 (`src/quant-library/package-render.js`) are root-accepted as local engineering evidence and are wired into no route,
 worker, table or view; no package can be built, stored or shown yet. Nothing in this contract grants a
@@ -751,6 +751,11 @@ rounds of the S1 renderer. The owner decisions OD-1 to OD-20 do not change.
 | RC-22 | B0 reads the exposure register through one reader port (`src/postgres/exposure-register.js`); while the register is not installed the reader is unavailable and B0 fails closed with `BI_EXPOSURE_REGISTER_UNAVAILABLE` | 5.0 item 5 | Root | 2026-10-20 |
 | RC-23 | `validation.html` is rendered at build from the build-time `validation.json`; live parity is shown at read time from evidence rows, so one run keeps one package and a retry keeps the same bytes | 4.1, 6.2 | Root | 2026-10-20 |
 | RC-24 | One export per run (`UNIQUE(owner_id, run_id)`) with `parent_export_id` null until APP-3B revisits the key. `exit_version` comes from the evaluated deployment and is never defaulted | 3.1, 3.2 | Root | 2026-10-20 |
+| RC-25 | One SQLSTATE plan for the insert-only extensions (exposure register, package builder, QR-3 comparison, multi-Pine member set): `QR001` research freeze; `QR002` an edit (UPDATE, DELETE or TRUNCATE); `QR003` a write outside a SERIALIZABLE transaction; `QR004` an insert precondition guard, which each writer maps by the guard that raised it (the builder maps it to `BI_TRANSITION_INVALID`). No other QR code is assigned. RC-15 is read with this row | 6, 8 | Root | 2026-10-20 |
+| RC-26 | Every write to a builder table runs in a SERIALIZABLE transaction (otherwise `QR003`) and retries a serialization failure a bounded number of times; guards also serialize per export with a transaction advisory lock | 6.1, 8 | Root | 2026-10-20 |
+| RC-27 | The database enforces the 6.1 graph: an `EXPORT_CANDIDATE` event after an attempt needs a failed attempt with retryable codes only and fewer than five attempts; `EXPORT_REFUSED` needs a non-retryable code, or the fifth retryable-only failure with `BI_ATTEMPTS_EXHAUSTED`; no attempt follows a non-retryable failure or a pass. An export commits only with its first status event and exactly the twelve package files. A clearance needs the evidence record of the matching kind and hash. A run contract without a scope is refused | 4.1, 4.4, 6.1 | Root | 2026-10-20 |
+| RC-28 | A fixture export may hold a `ql4c_validation` row and reach `EXPORT_VALIDATED` (11.1 item 1); the READY and G8 readers count only non-fixture one-Pine exports (4.3, 6.3) | 4.3, 5.5, 6.3 | Root | 2026-10-20 |
+| RC-29 | The install inspection of each new extension uses one shared module that checks ownership by membership (tables, functions and schema `public`), every forbidden privilege held through any role the runtime role can reach, membership in a superuser or bypass-RLS role, and CREATE on schema `public`. The exposure register and research freeze tools adopt it in a later hardening slice | 8 | Root | 2026-10-20 |
 
 ## 11. Test and evidence plan
 
