@@ -129,7 +129,10 @@ test('PostgreSQL HTTP keeps cookie/MFA/CSRF, all bot pages and tenant isolation'
   const server=fork(new URL('../../src/postgres/server.js',import.meta.url),[],{silent:true,env:{...process.env,DATABASE_URL:url,HOST:'127.0.0.1',PORT:String(port),PUBLIC_ORIGIN:base,SMTP_HOST:'',PAPER_TRADING:'true'}});
   let output='',exited=false;server.stdout.on('data',b=>output+=b);server.stderr.on('data',b=>output+=b);server.on('exit',()=>exited=true);server.on('error',e=>output+=e.stack);
   t.after(async()=>{if(exited)console.error(output);if(!exited){server.kill('SIGTERM');await once(server,'exit');}});
-  let ready=false;for(let i=0;i<100&&!exited;i++){try{ready=(await fetch(base+'/api/auth/config')).ok;}catch{}if(ready)break;await delay(50);}assert.ok(ready,output);
+  // Bound the wait by wall time, not a poll count: a loaded Windows runner can stall server startup past 100 polls (about 6-8 s).
+  let ready=false;const started=Date.now();
+  while(!exited&&Date.now()-started<60000){try{ready=(await fetch(base+'/api/auth/config')).ok;}catch{}if(ready)break;await delay(50);}
+  assert.ok(ready,`Server not ready after ${Date.now()-started} ms${exited?' (server exited)':''}\n${output}`);
   const login=await request('/api/auth/login','POST',{email:a.email,password:'temporary-test-password'});assert.equal(login.status,200,JSON.stringify(login.body));
   assert.ok(login.cookies.some(c=>c.includes('HttpOnly')));const mfa=await enroll(request,login.session);
   const parallel=await Promise.all(['/api/me','/api/signals','/api/positions','/api/me/webhook-secret','/api/analytics/summary'].map(endpoint=>request(endpoint,'GET',undefined,login.session)));

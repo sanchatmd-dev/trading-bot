@@ -20,16 +20,19 @@ test('HTTP integration: auth, paper webhook, duplicate, stale, risk, tenant isol
     stdout:true,stderr:true
   });
   let output='';child.stdout.on('data',x=>output+=x);child.stderr.on('data',x=>output+=x);
+  // A startup crash is emitted as a Worker 'error' event, never on its stderr.
+  child.on('error',error=>output+=String(error?.stack||error));
   const exited=once(child,'exit');
   let exitCode=null;child.on('exit',code=>{exitCode=code;});
   t.after(async()=>{if(exitCode===null){await child.terminate();await exited;}fs.rmSync(dir,{recursive:true,force:true});});
   const base=`http://127.0.0.1:${port}`;
-  let ready=false;
-  for(let i=0;i<100;i++){
+  // Bound the wait by wall time, not a poll count: a loaded Windows runner can stall server startup past 100 polls (about 6-8 s).
+  let ready=false;const started=Date.now();
+  while(exitCode===null&&Date.now()-started<60000){
     try{ready=(await fetch(base+'/healthz')).ok;}catch{}
-    if(ready)break;if(exitCode!==null)break;await delay(50);
+    if(ready)break;await delay(50);
   }
-  assert.equal(ready,true,output);
+  assert.equal(ready,true,`Server not healthy after ${Date.now()-started} ms${exitCode!==null?' (worker exited)':''}\n${output}`);
   const loginPage=await (await fetch(base+'/')).text();
   assert.match(loginPage,/showLoginPassword/);
   assert.match(loginPage,/autocomplete="current-password"/);
