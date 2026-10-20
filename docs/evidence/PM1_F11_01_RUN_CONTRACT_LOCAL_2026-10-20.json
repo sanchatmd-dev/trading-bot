@@ -1,0 +1,32 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "027b320",
+  "scope": "Local implementation of the multi-Pine research run contract builder (docs/MULTI_PINE_CONTRACT.md 5.8, RD-MP-1, RD-MP-18) for PM-1 row F11-01: a pure builder and exact-key validator for ql3a-research-job-multi-v1 bound to a frozen member set. No storage, service, route, worker or view uses it.",
+  "method": "A coder (Sonnet 5.5) wrote the module from the contract; an independent architecture auditor (Opus 5.5) reviewed round 1 and found that the rules, the capital, the evaluation cap and the sample floor did not follow the one-Pine path; root ruled; the coder fixed them; an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, every test file that imports a changed module of this batch (found with git grep): 22 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (392 tests, 0 fail; 2 skipped by the TEMP-privilege environment gate in a file this batch did not change), the full unit suite (2214 tests, 0 fail, 6 skipped by platform gates, 9 todo) and the grant text test; every changed file had the same hash before and after. Nobody verified their own work.",
+  "files": {
+    "src/multi-pine/run-contract.js": "099653c2bddf6f3c14175a59ae29e0aa79350f90a451fc505b1a015b3e239e56",
+    "test/multi-pine-run-contract.test.js": "2742f814ab8b4daa01371163400350e043ee35a02ed45da0c2db0ae3e6d7c256"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/multi-pine-run-contract.test.js 30 of 30 pass; with the member-set and package-gate tests 124 of 124; engine-hash closures unchanged.",
+  "mutations": {
+    "round1": "12 of 12 killed; the import-guard mutation was skipped because it needs an edit to another file.",
+    "round2": "8 of 9 killed; the survivor (the builder rules pre-check) is equivalent because the final contract check refuses the same rules with the same field."
+  },
+  "limits": [
+    "The validator cannot recompute the set hash, the members or the capital: only the builder binds them to the frozen set.",
+    "The candidate plan, the planned candidate count and the evaluation cap are not part of this contract yet.",
+    "Capital account amounts are hashed as given; the later service must pass the server-read accounts unchanged.",
+    "No storage, service or route exists; nothing runs a multi-Pine research job."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted the run contract builder as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}
