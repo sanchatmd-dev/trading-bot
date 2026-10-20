@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import {inspectRuntimeRole} from './runtime-role-inspection.js';
+import {foreignKeyTriggerFailures} from './fk-trigger-inspection.js';
 
 /**
  * QR-3 S2a exposure register. Offline only: the maintenance lock excludes every participating API and worker.
@@ -14,6 +15,8 @@ import {inspectRuntimeRole} from './runtime-role-inspection.js';
  *              constraint or index, overload or orphan with a register name, a relation or function owned by a role other than the
  *              owner of the marker table: OWNER_MISMATCH:<name>, a column whose collation is not the database default:
  *              TABLE_DEFINITION:<table>:COLLATION).
+ * Foreign keys are judged by their internal referential-integrity triggers too (fk-trigger-inspection.js): a disabled, dropped or reshaped one, on an extension
+ * table or on a referenced table, classifies OTHER (TABLE_DEFINITION:<table>:FOREIGN_KEY_TRIGGERS). A referenced base table with a disabled RI trigger fails closed.
  * Run the tool as the schema owner with the default search_path: the deparsed foreign key text names users unqualified only when public is
  * on the search_path, otherwise the install classifies OTHER and is refused (loud, no write).
  * OTHER is refused with no write. Install on INSTALLED is a no-op. Rollback on ABSENT is a no-op. Rollback is refused while any
@@ -130,6 +133,8 @@ async function tableDifferences(db,relation,table){
     FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class ic ON ic.oid=i.indexrelid WHERE i.indrelid=$1 ORDER BY ic.relname`,[relation.oid])).rows;
   const wantedIndexes=Object.entries(INDEXES).filter(([,def])=>def.includes(' ON public.'+table+' '));
   if(indexes.length!==wantedIndexes.length||indexes.some(row=>INDEXES[row.relname]!==row.def||!row.indisvalid||!row.indisready))reasons.push('INDEXES');
+  // A disabled or missing internal foreign key trigger (DISABLE TRIGGER ALL by a superuser) leaves the constraint text intact but unenforced. Both sides of each key are checked.
+  if((await foreignKeyTriggerFailures(db,relation.oid,Object.entries(wanted).filter(([,item])=>item[0]==='f').map(([name])=>name))).length)reasons.push('FOREIGN_KEY_TRIGGERS');
   return reasons;
 }
 

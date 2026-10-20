@@ -1,0 +1,40 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "50ffd6a",
+  "scope": "Local hardening slice (PKG RC-33): the classifiers of the exposure register, builder, QR-3 comparison, QR-4 selection and multi-Pine member set extensions check the internal foreign-key triggers of their keys through the new shared module src/postgres/fk-trigger-inspection.js. No DDL or function body changed; a fresh install of every extension still classifies INSTALLED.",
+  "method": "The QR-2 S4-1 review found that a classifier ignored disabled foreign-key triggers; root ruled the same check for every extension. A coder (Sonnet 5.5) wrote the shared module and the tamper tests; an independent architecture auditor (Opus 5.5) reviewed it and found that the set compare and the referenced-side flags had no test; root ruled; the coder added them; an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, every test file that imports a changed module or runs a changed CLI of this batch (found with git grep): 13 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (242 tests, 0 fail, 0 skipped), the full unit suite (2214 tests, 0 fail, 6 skipped by platform gates, 9 todo) and the grant text test; every changed file had the same hash before and after. Nobody verified their own work.",
+  "files": {
+    "src/postgres/fk-trigger-inspection.js": "4c9c62e49409cc21b2c2d73cf67e7742fad39b0b39e928e7358896b6a14d9b36",
+    "src/postgres/quant-exposure-register-migration.js": "1434ab8b78a3efa68ceaff4bf77312e0ed1ab3e46f318f14eb6d6b7e4dc67285",
+    "src/postgres/quant-comparison-migration.js": "063b665c75917a819f81b11278e32fa073ff6637352a2375dbb7bc06d434e3e6",
+    "src/postgres/quant-selection-migration.js": "1f9b4ea21ccfc54e6f07cbd4c8a8969cbe2d8b61668458d61be4b9abbc054f0a",
+    "src/postgres/mp-member-set-migration.js": "cab2c6900dafcee354ff0b5a30fc54115e38e8ef96117aa6ecad3cc3053fc4e1",
+    "src/postgres/best-inputs-package-migration.js": "b2ac1a70319e1928058edcd5ae86d89ce547f5f6885506c9340991f206b08eb7",
+    "test/postgres/quant-exposure-register.test.mjs": "ec91879aca95b39335a81e11724dbef88dcca94749d7e2581d11231342274125",
+    "test/postgres/quant-comparison.test.mjs": "3fc9b8d7187f1f6975a4dce2afd3d476507e12a2d2a98fedbe1eb0cf801efc19",
+    "test/postgres/quant-selection.test.mjs": "0cb8c1050ff3a5f66cc4ef3ca9ab68616b2cb349e04991bce36ad5fae195cc3d",
+    "test/postgres/mp-member-set.test.mjs": "5c921e40c903dbc998bfd869797218a8a2fc3b9a6bc20481337f2829dd99a3da",
+    "test/postgres/best-inputs-package.test.mjs": "8403cbd2a4f749260f5a1dc9589b57ed3b91dd403632394a243522e16bd71aeb"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "The five extension PostgreSQL files pass with 0 skipped: exposure register 19, QR-3 comparison 20, QR-4 selection 17, member set 23, builder 27; a fresh install of each still classifies INSTALLED.",
+  "mutations": {
+    "round1": "4 of 5 killed; the found-versus-wanted compare survived and got tests in round 2.",
+    "round2": "3 of 3 killed (set compare, trigger function compare, referenced-side deferrable flags)."
+  },
+  "limits": [
+    "A database whose referenced base table has a disabled or altered foreign-key trigger now classifies these extensions OTHER and refuses install and rollback until it is repaired.",
+    "The QR-2 capital model keeps its own copy of the check.",
+    "No install or inspection was run on any environment."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted the foreign-key trigger hardening as local engineering evidence for the extension rows (F09-01, F10-02, F10-03, F11-01). Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}

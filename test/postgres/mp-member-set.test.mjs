@@ -349,6 +349,70 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
   assert.equal((await classifyMpMemberSet(db)).state,'INSTALLED','every tamper was rolled back');
 });
 
+test('installed: the internal foreign key triggers are judged on every member-set table, on a referenced table and one trigger at a time; the keys of other extensions are not judged',async()=>{
+  const KEY_COUNT=5;
+  const keys=(await db.query(`SELECT k.oid AS key_oid,k.conname,c.relname AS child,r.relname AS parent FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid JOIN pg_class r ON r.oid=k.confrelid
+    WHERE k.contype='f' AND c.relnamespace='public'::regnamespace AND c.relname LIKE ANY($1) ORDER BY k.conname`,[['mp\\_member\\_set%']])).rows;
+  assert.equal(keys.length,KEY_COUNT,'every foreign key of the extension: '+keys.map(key=>key.conname).join());
+  const riOf=async key=>(await db.query(`SELECT t.tgname,c.relname FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid WHERE t.tgisinternal AND t.tgconstraint=$1 ORDER BY t.tgname`,[key.key_oid])).rows;
+  const tampered=statements=>probe(db,async()=>{for(const statement of statements)await db.query(statement);return {classification:await classifyMpMemberSet(db),report:await inspectMpMemberSet(db)};});
+  const flagged=(found,child)=>found.classification.problems.some(item=>item.startsWith('TABLE_DEFINITION:'+child+':')&&item.split(':')[2].split('+').includes('FOREIGN_KEY_TRIGGERS'));
+  const refused=(found,child,label)=>{
+    assert.equal(found.classification.state,'OTHER',label+': '+found.classification.problems.join());
+    assert.ok(flagged(found,child),label+': '+found.classification.problems.join());
+    assert.equal(found.report.ok,false,label);assert.equal(found.report.facts.state,'OTHER',label);
+  };
+  // A fresh install has exactly four RI triggers per key, all enabled, and classifies INSTALLED.
+  assert.equal((await classifyMpMemberSet(db)).state,'INSTALLED');
+  for(const key of keys){
+    const triggers=await riOf(key);
+    assert.equal(triggers.length,4,key.conname+': two triggers on the referencing table and two on the referenced table');
+    assert.deepEqual(triggers.map(item=>item.relname).sort(),[key.child,key.child,key.parent,key.parent].sort(),key.conname);
+  }
+  // DISABLE TRIGGER ALL on an extension table: the constraint text stays, the enforcement is gone.
+  for(const child of new Set(keys.map(key=>key.child)))refused(await tampered(['ALTER TABLE public.'+child+' DISABLE TRIGGER ALL']),child,'DISABLE TRIGGER ALL on '+child);
+  // DISABLE TRIGGER ALL on a referenced table (users, quant_jobs, an earlier extension table, a parent of the same extension): fail closed for every key that points at it.
+  for(const parent of new Set(keys.map(key=>key.parent))){
+    const found=await tampered(['ALTER TABLE public.'+parent+' DISABLE TRIGGER ALL']);
+    const children=new Set(keys.filter(key=>key.parent===parent).map(key=>key.child));
+    assert.equal(found.classification.state,'OTHER','DISABLE TRIGGER ALL on referenced '+parent);
+    for(const child of children)assert.ok(flagged(found,child),'referenced '+parent+' -> '+child+': '+found.classification.problems.join());
+    assert.equal(found.report.ok,false,parent);
+  }
+  // One named RI trigger of one key, each of the four in turn: disabled, and (for the first and last) enabled for replicas only or always.
+  for(const key of keys){
+    const triggers=await riOf(key);
+    for(const item of triggers)
+      refused(await tampered(['ALTER TABLE public.'+item.relname+' DISABLE TRIGGER "'+item.tgname+'"']),key.child,'disable '+item.tgname+' of '+key.conname);
+    refused(await tampered(['ALTER TABLE public.'+triggers[0].relname+' ENABLE REPLICA TRIGGER "'+triggers[0].tgname+'"']),key.child,'replica-only '+triggers[0].tgname+' of '+key.conname);
+    refused(await tampered(['ALTER TABLE public.'+triggers[3].relname+' ENABLE ALWAYS TRIGGER "'+triggers[3].tgname+'"']),key.child,'always '+triggers[3].tgname+' of '+key.conname);
+  }
+  // A trigger whose deferrable flags differ from the constraint's (the constraint is not deferrable).
+  // Both sides: the referencing triggers (on the child) and the referenced triggers (on the parent). A self-referencing key has both sides on one table.
+  const flagKey=keys.find(key=>key.child!==key.parent)||keys[0];
+  for(const column of ['tgdeferrable','tginitdeferred'])
+    for(const side of ['child','parent']){
+      const found=await tampered(['UPDATE pg_catalog.pg_trigger SET '+column+'=true WHERE tgisinternal AND tgconstraint='+flagKey.key_oid+' AND tgrelid=\'public.'+flagKey[side]+'\'::regclass']);
+      refused(found,flagKey.child,column+' differs from the constraint on the '+side+' side of '+flagKey.conname);
+    }
+  // The set compare: a referenced-side RI trigger of the first key removed from pg_trigger, pointed at another RI function, or given another tgtype. Each is rolled back.
+  const refSide=(await db.query(`SELECT t.oid::text AS trigger_oid,t.tgtype FROM pg_catalog.pg_trigger t JOIN pg_catalog.pg_constraint k ON k.oid=t.tgconstraint
+    WHERE t.tgisinternal AND t.tgconstraint=$1 AND t.tgrelid=k.confrelid AND t.tgtype=9`,[keys[0].key_oid])).rows;
+  assert.equal(refSide.length,1,'one RI_FKey_noaction_del trigger on the referenced side of '+keys[0].conname);
+  const refOid=refSide[0].trigger_oid;
+  refused(await tampered(['DELETE FROM pg_catalog.pg_trigger WHERE oid='+refOid]),keys[0].child,'referenced-side trigger row removed from pg_trigger');
+  refused(await tampered(["UPDATE pg_catalog.pg_trigger SET tgfoid=(SELECT p.oid FROM pg_catalog.pg_proc p WHERE p.proname='RI_FKey_noaction_upd' AND p.pronamespace='pg_catalog'::regnamespace) WHERE oid="+refOid]),keys[0].child,'referenced-side trigger function changed to another RI function');
+  refused(await tampered(['UPDATE pg_catalog.pg_trigger SET tgtype=17 WHERE oid='+refOid]),keys[0].child,'referenced-side trigger tgtype changed');
+  // Every other foreign key of the database is not judged here: disabling all its RI triggers by name leaves this extension INSTALLED.
+  const own=new Set(keys.map(key=>key.conname));
+  const others=(await db.query(`SELECT t.tgname,c.relname FROM pg_trigger t JOIN pg_constraint k ON k.oid=t.tgconstraint JOIN pg_class c ON c.oid=t.tgrelid
+    WHERE t.tgisinternal AND k.contype='f' AND k.conname<>ALL($1)`,[[...own]])).rows;
+  assert.ok(others.length>0,'a foreign key of another table exists to disable');
+  const unrelated=await tampered(others.map(item=>'ALTER TABLE public.'+item.relname+' DISABLE TRIGGER "'+item.tgname+'"'));
+  assert.equal(unrelated.classification.state,'INSTALLED',unrelated.classification.problems.join());
+  assert.equal((await classifyMpMemberSet(db)).state,'INSTALLED','every tamper was rolled back');
+});
+
 test('offline only: the install and the rollback need the maintenance lock, their own transaction and the Pine Bridge extension',async()=>{
   const before=await catalogDigest(db);
   const holder=new PostgresDatabase({connectionString});
