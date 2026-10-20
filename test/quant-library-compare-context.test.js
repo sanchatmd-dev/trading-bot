@@ -28,9 +28,9 @@ const compareRun=index=>({...BASE(index),market:MARKET,dataset:DATASET,cost:COST
   disclosed:{bot_id:'bot-1',deployment_id:'dep-1',baseline_snapshot_hash:H('f'),search:{algorithm:'axis-covered-seeded-grid-v1',seed:7,requested_budget:100,planned_candidates:100,grid_combinations:105},domains:[]},
   metrics:{candidates:{planned:100,evaluated:100,screen_passed:3},reason_counts:{},development_score:{value:'3.20',basis:'VALIDATION_NET_RETURN_PERCENT',reason:null},
     selected:{parameters:{rr:1.5},train:metrics('4.1',9),validation:metrics('3.20',8)}},metrics_reason:null});
-const compareOk={version:'quant-library-compare-v1',verdict:'COMPATIBLE',rules:{compatibility:'library-compat-v1',qualification:'library-qualification-v1'},mismatches:[],
+const compareOk={version:'quant-library-compare-v1',verdict:'COMPATIBLE',rules:{compatibility:'library-compat-v1',qualification:'library-qualification-v2'},mismatches:[],
   qualified_total:0,qualified_winner:null,runs:[compareRun(2),compareRun(3)]};
-const compareNo={version:'quant-library-compare-v1',verdict:'INCOMPATIBLE',rules:{compatibility:'library-compat-v1',qualification:'library-qualification-v1'},
+const compareNo={version:'quant-library-compare-v1',verdict:'INCOMPATIBLE',rules:{compatibility:'library-compat-v1',qualification:'library-qualification-v2'},
   mismatches:[{field:'dataset',values:[{run_id:ID(2),value:'{"bar_count":1000}'},{run_id:ID(3),value:'{"bar_count":2000}'}]}],qualified_total:0,qualified_winner:null,
   runs:[BASE(2),BASE(3,{compatibility_key:'bbbbbbbbbbbb'})]};
 

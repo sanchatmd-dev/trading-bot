@@ -56,7 +56,7 @@ function detailBody(botId){
       holdout_evaluated:false,dimension_coverage_percent:100,candidate_count:100,screen_passed:3,reason_counts:{},development_score:listRun.development_score,
       selected:{parameters:{rr:1.5},train:metrics('4.1',9),validation:metrics('3.20',8),screen_reasons:[],sensitivity:[],cost_stress:null,test:null},
       candidates:[],candidates_truncated:false,stored_values_verified:true},
-    qualification:{version:'library-qualification-v1',qualified:false,label:'DEVELOPMENT_ONLY',gates:[gate(0,'PASS'),gate(1,'PASS'),gate(2,'PASS'),gate(3,'FAIL','HOLDOUT_NOT_EVALUATED'),
+    qualification:{version:'library-qualification-v2',qualified:false,label:'DEVELOPMENT_ONLY',gates:[gate(0,'PASS'),gate(1,'PASS'),gate(2,'PASS'),gate(3,'FAIL','HOLDOUT_NOT_EVALUATED'),
       gate(4,'NOT_REACHED'),gate(5,'FAIL','ACCEPTANCE_BLOCKERS_PRESENT'),gate(6,'FAIL','OWNER_RECOMMENDATION_NOT_READY'),gate(7,'FAIL','QL4C_VALIDATION_NOT_AVAILABLE')],
       holdout_overlap:{checked:false,overlaps:null,run_ids:[]}},
     compatibility:{version:'library-compat-v1',key:H('k'),short_key:'kkkkkkkkkkkk',fields:{},missing:[]}};

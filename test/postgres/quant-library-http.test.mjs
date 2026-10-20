@@ -28,6 +28,8 @@ before(async()=>{
   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+databaseName;
   db=new PostgresDatabase({connectionString:url.toString(),max:12});await db.migrate();
   await install('pine-bridge-schema.sql');
+  // G5 (library-qualification-v2) reads the shared exposure register; an absent register reads as HOLDOUT_INDEPENDENCE_NOT_CHECKED.
+  await install('quant-exposure-register.sql');
   store=new Store(db);
 });
 after(async()=>{
@@ -82,7 +84,7 @@ test('absent research tables: the list reads as empty, a run is not found, and a
   assert.equal((await db.query("SELECT to_regclass('quant_jobs') present")).rows[0].present,null);
   const answer=await get(server,sessionA,PATH);
   assert.equal(answer.status,200,JSON.stringify(answer.body));
-  assert.deepEqual(answer.body,{version:'quant-library-v1',rules:{classes:'library-class-v1',compatibility:'library-compat-v1',qualification:'library-qualification-v1'},
+  assert.deepEqual(answer.body,{version:'quant-library-v1',rules:{classes:'library-class-v1',compatibility:'library-compat-v1',qualification:'library-qualification-v2'},
     schema_present:false,admission_enabled:false,totals:{all:0,ACTIVE:0,COMPLETED:0,INSUFFICIENT:0,FAILED:0,CANCELLED:0},qualified_total:0,qualified_winner:null,next_before:null,runs:[]});
   const id=randomUUID();
   for(const path of [PATH+'/runs/'+id,PATH+'/compare?run_id='+id+'&run_id='+randomUUID()]){
@@ -243,8 +245,10 @@ test('detail: provenance, integrity, completeness, evaluation, qualification and
   assert.deepEqual(e.reason_counts,{VALIDATION_BELOW_BASELINE_OR_ZERO:5});assert.deepEqual(e.development_score,{value:'3.2',basis:'VALIDATION_NET_RETURN_PERCENT',reason:null});
   assert.equal(e.candidates.length,6);assert.deepEqual(Object.keys(e.candidates[0]),['index','parameters','train','validation','screen_reasons']);
   assert.equal(e.selected.validation.net_return_percent,'3.2');assert.equal(e.selected.sensitivity.length,2);assert.equal(e.selected.test.closed_trades,9);assert.deepEqual(e.selected.screen_reasons,[]);
-  assert.equal(body.qualification.version,'library-qualification-v1');assert.equal(body.qualification.qualified,false);assert.equal(body.qualification.label,'DEVELOPMENT_ONLY');
+  assert.equal(body.qualification.version,'library-qualification-v2');assert.equal(body.qualification.qualified,false);assert.equal(body.qualification.label,'DEVELOPMENT_ONLY');
   assert.equal(GATES(body),'PASS PASS PASS PASS PASS FAIL FAIL FAIL');assert.deepEqual(body.qualification.holdout_overlap,{checked:true,overlaps:false,run_ids:[]});
+  assert.deepEqual(body.qualification.exposure,{checked:true,overlaps:false,comparison_ids:[],selection_ids:[],later:{overlaps:false,comparison_ids:[],selection_ids:[]}},'an empty register is valid');
+  assert.deepEqual(body.qualification.flags,[]);
   assert.equal(body.compatibility.version,'library-compat-v1');assert.match(body.compatibility.key,/^[a-f0-9]{64}$/);assert.equal(body.compatibility.short_key,body.compatibility.key.slice(0,12));
   assert.deepEqual(Object.keys(body.compatibility.fields).length,13);assert.deepEqual(body.compatibility.missing,[]);
   noMarkers(body,[B.id,runs.foreign.run_id]);

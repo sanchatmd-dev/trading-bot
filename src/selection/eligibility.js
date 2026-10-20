@@ -8,7 +8,7 @@ import {CODES,CODE_PATTERN,isObject,isInt,isSha,text,canonical,deepFreeze,market
  *
  * member: {kind, owner_id, run_id, created_at_ms, run_status, source_hash, market, qualification, integrity_checked, package,
  *   validation_records, scope, rules_hash, data_windows, registered_boundary_ms}
- *   qualification is the library-qualification-v1 result (label, gates G1 to G8); integrity_checked is true only for a detail
+ *   qualification is the library-qualification-v2 result (label, gates G1 to G8); integrity_checked is true only for a detail
  *   read, never for a list row. package: {export_id, package_hash, status, binding, current, replay_mismatch}.
  *   validation_records: [{run_id, mode, record}] (the ql4c_validation records of the owner).
  * context: {owner_id, requester_owner_id, scope, fixture} where scope is the registered scope (qr4-scope-v1) and fixture is true for a
@@ -17,7 +17,7 @@ import {CODES,CODE_PATTERN,isObject,isInt,isSha,text,canonical,deepFreeze,market
  *   validation record through the same G8 predicate, and E1 needs only a succeeded, integrity-checked run (a fixture run never
  *   qualifies in the library). Such a selection never gets a label and shows only in the internal view.
  */
-export const QUALIFICATION_VERSION='library-qualification-v1';
+export const QUALIFICATION_VERSION='library-qualification-v2';
 export const GATE_ORDER=Object.freeze(['G1','G2','G3','G4','G5','G6','G7','G8']);
 export const CHECKS=Object.freeze(['E1','E2','E3','E4','E5','E6']);
 /** Evaluation priority of the first failing code. The specific fixture and multi-Pine codes come before the general package codes. */

@@ -1,0 +1,43 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "7b5211c",
+  "scope": "Local implementation of slice S2b of docs/QR_3_FAIR_COMPARISON_CONTRACT.md (RC-C33, RC-C44) for PM-1 row F10-02: library-qualification-v2 replaces v1; gate G5 counts exposures of either kind from the shared exposure register (same owner and market, at_ms at or before the run creation time) and gives HOLDOUT_EXPOSED_BY_COMPARISON, with earlier-run reuse taking precedence and an absent or unreadable register or an unaligned holdout start giving HOLDOUT_INDEPENDENCE_NOT_CHECKED. The library reader reads the register inside its READ ONLY transaction whenever the own window and market are readable and discloses exposures as informational flags with ids. The QR-4 eligibility version follows. qualified_total stays 0 (G8).",
+  "method": "An architecture auditor (Opus 5.5) wrote the S2 design and root accepted D6 and D7. A coder (Sonnet 5.5) wrote S2b; an independent architecture auditor (Opus 5.5) reviewed three rounds (round 1 found the disclosure limited to runs that pass G1 to G4); an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, fifteen PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (quant-library-http 16, gap-branches 7, compare-context 1, g5-register 11, mp-member-set-store 14, mp-member-set 22, quant-research-freeze 22, quant-exposure-register 18, best-inputs-package 26, quant-comparison 19, quant-comparison-create 12, quant-selection 15, quant-selection-register 26, qr2-reader 27, runtime-grants 1; fail 0 and skipped 0 in each), the grant text test and the full unit suite (2120 tests, 0 fail, 6 skipped), plus five single-edit mutations (all killed). Root ruled on every finding. Nobody verified their own work.",
+  "files": {
+    "src/quant-library/derive.js": "db21366e27d679232f9b0cc71aa62e28c72312fc94cd8cf162b17cdce5c200ed",
+    "src/postgres/quant-library.js": "9ba2c2417a4d7d4a834a708ca5154ac9f2d9bd94233c5b96c8112d5604d3ca36",
+    "src/selection/eligibility.js": "cad669e97311dd766c93c73b41fc27c6e533c746ac58b7f38b9a8582425c342e",
+    "test/quant-library-derive.test.js": "709aece4a4e693e5e111b0aef3dd2934165c69f847a0e089be5c27b60e8a9637",
+    "test/qr4-qualified-selection.test.js": "b094c4388338b484d510f3f46b204fa27f0ac8bb2c180e3e035c9930a7218eba",
+    "test/qr4-independent.test.js": "266f64493679ed127592e5882832ab5c179821c1a81253efb680eedb2bdd2039",
+    "test/quant-library-ui.test.js": "470bafed786c0c434829bdf726e13ab463fc8138e04bcb60dba541dcb42cf614",
+    "test/research-library-detail-lines.test.js": "7adf6a4f7e9c0df1eb71354079fbbe1a960c9ee9a633d29a7741d7adaf85ce51",
+    "test/quant-library-compare-context.test.js": "d005e355445e8245f7e5c4a8b1c6911788d640b18a390a71d53330627a61633c",
+    "test/postgres/quant-library-http.test.mjs": "ae5c6627dd5ab8567eeef64db9b98c5b5437c34c2d11b8a9e87a5eed4bfd6eff",
+    "test/postgres/quant-library-gap-branches.test.mjs": "4c36bce87d36fe71a6e44aba39025916fe2fd62bd1d8c503e760728910e67366",
+    "test/postgres/quant-library-g5-register.test.mjs": "ba4caad51137ff05b50f72ef76637e7fff05a2f9f83f204b39e3a3445e738d2b"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "quant-library-derive 28 of 28, qr4-qualified-selection 54 with 2 todo, qr4-independent 45 of 45 and the PostgreSQL library files (http 16, gap-branches 7, compare-context 1, g5-register 11) pass; engine-hash closures unchanged.",
+  "mutations": {
+    "round1": "15 of 15 killed.",
+    "round2": "4 of 4 killed.",
+    "round3": "The denied-SELECT positive control killed in the sole-runner pass."
+  },
+  "limits": [
+    "Deploy order: the exposure register extension and the grant reapply must precede any deployment of this library code; otherwise the library detail and compare views fail closed with a permission error.",
+    "The library responses change version string to library-qualification-v2 and gain qualification.exposure and qualification.flags; the UI does not show the flags yet.",
+    "The compare view carries G5 but not the informational flags.",
+    "No staging readback."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S2b as local engineering evidence for F10-02. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}

@@ -57,7 +57,8 @@ const SCOPE={market:clone(MARKET),data_model:{data_profile:'spot-klines-1m',pric
   capital:{equity:'10000',cash:'10000'},policy:{policy_version:'risk-v1',policy_hash:POLICY},valuation:{valuation:'qr3-valuation-std-v1',benchmark:'qr3-bh-close-same-cost-v1'},engine:ENGINE};
 const W={kind:'PROSPECTIVE',start_ms:T0+DAY,end_ms:T0+DAY+1000*MS,warmup_bars:200};
 const GATES=['G1','G2','G3','G4','G5','G6','G7','G8'];
-const qual=()=>({version:'library-qualification-v1',qualified:true,label:'QUALIFIED',gates:GATES.map(gate=>({gate,name:'N_'+gate,state:'PASS',code:null}))});
+const NO_EXPOSURE={overlaps:false,comparison_ids:[],selection_ids:[],later:{overlaps:false,comparison_ids:[],selection_ids:[]}};
+const qual=()=>({version:'library-qualification-v2',qualified:true,label:'QUALIFIED',gates:GATES.map(gate=>({gate,name:'N_'+gate,state:'PASS',code:null}))});
 const range=(fromDays,toDays)=>({start_ms:T0-fromDays*DAY,end_ms:T0-toDays*DAY});
 
 function member(i,over={}){
@@ -426,7 +427,7 @@ test('eligibility: one negation per check gives the expected code (test 12)',()=
 });
 test('eligibility: never-participants are refused (test 12)',()=>{
   const real=qualification({status:'SUCCEEDED',result:{holdout_evaluated:true,selected:{screen_reasons:[]}},blockers:[],integrity:{contract_hash_verified:true,report_matches_checkpoints:true},
-    holdoutOverlap:{overlaps:false},contractVersion:'none'});
+    holdoutOverlap:{overlaps:false},exposure:NO_EXPOSURE,contractVersion:'none'});
   assert.equal(real.qualified,false,'DERIVE G8 always fails');
   const devOnly=member(1,{qualification:real});
   const out=eligibility(devOnly);
@@ -478,7 +479,7 @@ test('E3: a G8 record that names another package_hash gives QR4_VALIDATION_BINDI
 });
 test('current real state: DERIVE gate G8 always fails, so every registration gives QR4_NO_ELIGIBLE_PARTICIPANT (test 14)',()=>{
   const real=qualification({status:'SUCCEEDED',result:{holdout_evaluated:true,selected:{screen_reasons:[]}},blockers:[],integrity:{contract_hash_verified:true,report_matches_checkpoints:true},
-    holdoutOverlap:{overlaps:false},contractVersion:'none'});
+    holdoutOverlap:{overlaps:false},exposure:NO_EXPOSURE,contractVersion:'none'});
   assert.equal(real.gates[7].code,'QL4C_VALIDATION_NOT_AVAILABLE');
   const out=register(3,{},{},()=>({qualification:real}));
   assert.equal(out.ok,false);
@@ -1006,7 +1007,7 @@ test('OD-S3: tie tolerances are registry constants; the product registry holds n
 
 test('refusal order follows the table of 1.3: no eligible participant first, then the dependencies, then the tolerances (L10, 16.4 item 2)',()=>{
   const real=qualification({status:'SUCCEEDED',result:{holdout_evaluated:true,selected:{screen_reasons:[]}},blockers:[],integrity:{contract_hash_verified:true,report_matches_checkpoints:true},
-    holdoutOverlap:{overlaps:false},contractVersion:'none'});
+    holdoutOverlap:{overlaps:false},exposure:NO_EXPOSURE,contractVersion:'none'});
   // Staging today: no G8 source, no episode gate, no QR-3 facts, no registry values, an unreadable register. The first row of 1.3 wins.
   const staging=register(3,{},{dependencies:{},exposure_register:null,objective_registry:undefined},()=>({qualification:real}));
   assert.deepEqual([staging.ok,staging.code],[false,'QR4_NO_ELIGIBLE_PARTICIPANT']);
@@ -1198,7 +1199,7 @@ test('code coverage: every listed code is triggered here by its own call; every 
   // Self-contained: each entry builds its own inputs, so the test does not depend on the order or the success of any other test.
   const reg=regOf(3),two=regOf(2),ok3=[{net:'3',dd:'3'},{net:'2',dd:'3'},{net:'1',dd:'3'}];
   const real=qualification({status:'SUCCEEDED',result:{holdout_evaluated:true,selected:{screen_reasons:[]}},blockers:[],integrity:{contract_hash_verified:true,report_matches_checkpoints:true},
-    holdoutOverlap:{overlaps:false},contractVersion:'none'});
+    holdoutOverlap:{overlaps:false},exposure:NO_EXPOSURE,contractVersion:'none'});
   const mutated=fn=>{const list=evaluations(reg,ok3);fn(list[0]);return rankSelection(reg,list);};
   const withWindow=(ctx,fix=null)=>buildRegistration(request(members(3,fix),{admission_deadline_ms:W.start_ms+30000*MS}),context(ctx));
   const research=(over={})=>({owner_id:OWNER,source_hash:sha('src2'),run_id:'run-late',kind:'RESEARCH_RUN',window:{start_ms:reg.window.start_ms,end_ms:reg.window.start_ms+MS},...over});

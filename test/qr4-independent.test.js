@@ -43,7 +43,7 @@ function mkMember(i, patch) {
   const m = {
     kind: 'RESEARCH_RUN', owner_id: OWNER, run_id: 'run-' + id, export_id: exportId, created_at_ms: R - 1000 * MIN + i * MIN,
     run_status: 'SUCCEEDED', source_hash: hex(c) , market: {...S.REQUIRED_MARKET}, library_class: 'QUALIFIED',
-    qualification: {version: 'library-qualification-v1', label: 'QUALIFIED', qualified: true, gates: GATES.map(g => ({...g}))},
+    qualification: {version: 'library-qualification-v2', label: 'QUALIFIED', qualified: true, gates: GATES.map(g => ({...g}))},
     integrity_checked: true,
     package: {export_id: exportId, package_hash: pkgHash, status: 'EXPORT_VALIDATED',
       binding: {mode: 'ONE_PINE', fixture: false, membership: memberOf, pine_import_id: 'pi-' + id, source_version: 1, source_hash: hex('c'),
@@ -408,7 +408,7 @@ test('16.1-12 eligibility: a clean member is a PARTICIPANT; one negation per che
 });
 
 test('16.1-12 never participants: development-only at highest score, failed run, imported bundle, QR-2 actual history, evaluation run', () => {
-  const dev = elig(m => { m.qualification = {version: 'library-qualification-v1', label: 'DEVELOPMENT_ONLY', qualified: false, gates: GATES.map((g, k) => k === 7 ? {gate: 'G8', state: 'FAIL', code: 'QL4C_VALIDATION_NOT_AVAILABLE'} : g)}; m.development_score = '999'; m.package = null; m.validation_records = []; });
+  const dev = elig(m => { m.qualification = {version: 'library-qualification-v2', label: 'DEVELOPMENT_ONLY', qualified: false, gates: GATES.map((g, k) => k === 7 ? {gate: 'G8', state: 'FAIL', code: 'QL4C_VALIDATION_NOT_AVAILABLE'} : g)}; m.development_score = '999'; m.package = null; m.validation_records = []; });
   assert.equal(dev.eligible, false); assert.equal(dev.code, 'QR4_DEVELOPMENT_SCORE_NOT_RANKABLE');
   for (const label of ['NOT_EVALUATED', 'NO_SCREENED_CANDIDATE']) {
     const r = elig(m => { m.qualification.label = label; m.qualification.qualified = false; });
@@ -467,7 +467,7 @@ test('16.1-13 E3 through buildRegistration: a G8 record naming another package_h
 /* ---------- 14 current real state ---------- */
 test('16.1-14 with G8 failing everywhere every registration gives QR4_NO_ELIGIBLE_PARTICIPANT (first in refusal order, RC-S15)', () => {
   const devOnly = m => {
-    m.qualification = {version: 'library-qualification-v1', label: 'DEVELOPMENT_ONLY', qualified: false, gates: GATES.map(g => g.gate === 'G8' ? {gate: 'G8', state: 'FAIL', code: 'QL4C_VALIDATION_NOT_AVAILABLE'} : g)};
+    m.qualification = {version: 'library-qualification-v2', label: 'DEVELOPMENT_ONLY', qualified: false, gates: GATES.map(g => g.gate === 'G8' ? {gate: 'G8', state: 'FAIL', code: 'QL4C_VALIDATION_NOT_AVAILABLE'} : g)};
     m.validation_records = [];
   };
   const r = build(goodMembers(3, devOnly));

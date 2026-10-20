@@ -3,7 +3,7 @@
 Status: owner decisions OD-C1 to OD-C22 recorded 2026-10-19; root decided RD-1 to RD-10 the same day. Root
 accepted the other rules after independent review. Root recorded clarifications RC-C1 to RC-C27 on 2026-10-19
 from the S1 review (section 15, "Root clarifications"); two owner items stay open (OPEN-1, OPEN-2) and fail
-closed. The S1 pure module (src/comparison) is root-accepted as local engineering evidence and is not wired into any route, worker or view. Root split slice S2 into S2a, S2b and S2c on 2026-10-20 (RC-C28). Root decided the S2c table design the same day (RC-C37 to RC-C43); sub-slice S2c-1 (specs, participants, status events, the create path and the owner read) is root-accepted as local engineering evidence and is not installed on staging. S2a, the shared exposure register extension with its one writer, one reader and adapters, is root-accepted as local engineering evidence; it is not installed on staging, and no route, worker or view writes or reads it yet. Nothing here grants a
+closed. The S1 pure module (src/comparison) is root-accepted as local engineering evidence and is not wired into any route, worker or view. Root split slice S2 into S2a, S2b and S2c on 2026-10-20 (RC-C28). Root decided the S2c table design the same day (RC-C37 to RC-C43); sub-slice S2c-1 (specs, participants, status events, the create path and the owner read) is root-accepted as local engineering evidence and is not installed on staging. Slice S2b (library G5 v2 reading the register, RC-C44) is root-accepted as local engineering evidence the same day. S2a, the shared exposure register extension with its one writer, one reader and adapters, is root-accepted as local engineering evidence; it is not installed on staging, and no route, worker or view writes or reads it yet. Nothing here grants a
 ranking, label, recommendation, apply or Bot action. This contract is not a GO. Each implementation step
 still needs its own gates and approvals.
 
@@ -107,7 +107,7 @@ participants, filters) was frozen before the first metric was computed. [SRC bas
    exposure, no rejected-intent count and no episode list.
 6. CODE: LIB `limitationsOf` always adds `NO_BENCHMARK_OR_COMPARISON_OBJECTIVE`. No benchmark code exists in
    `src`.
-7. CODE: `library-qualification-v1` G8 always fails `QL4C_VALIDATION_NOT_AVAILABLE`; G7 cannot pass for the
+7. CODE: `library-qualification-v2` (S2b, 2026-10-20; v1 before) G8 always fails `QL4C_VALIDATION_NOT_AVAILABLE`; G7 cannot pass for the
    current engine; G6 cannot pass for runs of either research contract version. [SRC: PKG § 2 items 3 to 5]
    No participant can be qualified today, so every full comparison today ends without a ranking.
 8. CODE: G5 `HOLDOUT_INDEPENDENT` checks holdout overlap against earlier holdout-evaluated runs of the same
@@ -845,7 +845,7 @@ acceptance cases.
 
 Root split S2 (RC-C28): S2a is the exposure register extension (`src/postgres/quant-exposure-register.sql`, its rollback
 and offline tool, `src/postgres/exposure-register.js`, grants); S2b is library G5 v2 reading the register; S2c is the QR-3
-comparison tables. S2a is local only. Staging follows in one later data-model window (RC-C36).
+comparison tables. S2a, S2b and S2c-1 are local only. Staging follows in one later data-model window (RC-C36).
 
 ---
 
@@ -983,6 +983,7 @@ None changes an owner decision.
 | RC-C41 | Prior exposure is recorded per participant inside the create transaction from the locked register read; a later exposure only makes a read `STALE` | 7, 8.1 | Root | 2026-10-20 |
 | RC-C42 | Status is an insert-only event log with a transition guard; bodies are canonical text with a SHA-256 check; version 1 accepts `STANDARDIZED` only (`ACTUAL_BOT` follows QR-2 S3, OD-C20); result rows that break F3 are refused in the database; rollback runs only while every table is empty; an optional request key is unique per owner; the tables join the insert-only grant list | 2, 6.1, 8, 10 | Root | 2026-10-20 |
 | RC-C43 | S2c-1 result. The create transaction holds only the create rows: a status event after `SPEC_FROZEN` needs a later transaction, and the commit check counts only register rows written by the create transaction (both hold after an early SET CONSTRAINTS ALL IMMEDIATE). A status event time is the database clock or one millisecond after the previous event, whichever is later; S2c-2 result rows refuse an equal or earlier time and use the same create-transaction rule. Accepted residual: a register row written later for an existing comparison id is not blocked by this extension; it can only add exposure | 6.1, 7, 10 | Root | 2026-10-20 |
+| RC-C44 | S2b result. `library-qualification-v2` replaces v1. G5 counts an exposure of either kind of the same owner and market whose `at_ms` is at or before the run creation time and whose window overlaps the own holdout, giving `HOLDOUT_EXPOSED_BY_COMPARISON`; an earlier-run reuse (`HOLDOUT_WINDOW_REUSED`) takes precedence, and an absent or unreadable register or a holdout start that is not minute aligned gives `HOLDOUT_INDEPENDENCE_NOT_CHECKED`. The register is read whenever the own holdout window and market are readable, so the detail discloses an exposure as an informational flag with its ids also for later overlaps and when G5 is not itself the exposure code; the compare view carries G5 but not the flags. A register error such as a missing grant fails the detail and compare views closed. Deploy order: the register extension and the grant reapply must precede any deployment of this library code | 7, 13.5 | Root | 2026-10-20 |
 
 Owner items raised by the S2c design (fail closed until decided): which owner account holds staging fixture
 comparisons, since every comparison writes real exposure rows that are kept for the owner lifetime (OD-C22); how

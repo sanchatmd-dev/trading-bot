@@ -12,7 +12,7 @@ import {ownerRecommendationGate} from './owner-recommendation.js';
  * source in this release, so no run can be qualified and no view may name a winner.
  */
 export const LIBRARY_VERSIONS=Object.freeze({list:'quant-library-v1',run:'quant-library-run-v1',compare:'quant-library-compare-v1',
-  classes:'library-class-v1',compatibility:'library-compat-v1',qualification:'library-qualification-v1'});
+  classes:'library-class-v1',compatibility:'library-compat-v1',qualification:'library-qualification-v2'});
 export const LIBRARY_GROUPS=Object.freeze(['ACTIVE','COMPLETED','INSUFFICIENT','FAILED','CANCELLED']);
 export const LIBRARY_CLASSES=Object.freeze({IN_PROGRESS:'ACTIVE',CANCELLED:'CANCELLED',TIMED_OUT:'FAILED',INSUFFICIENT_DATA:'INSUFFICIENT',
   FAILED:'FAILED',CANDIDATE_PENDING_ACCEPTANCE:'COMPLETED',INSUFFICIENT_EVIDENCE:'INSUFFICIENT',NO_VALID_CANDIDATE:'COMPLETED'});
@@ -225,24 +225,56 @@ function checkSelected(result,steps,byId,used,problems,candidates,same){
   }else if(holdout||present(selected.test))problems.add('HOLDOUT_MISMATCH');
 }
 
-/** Holdout window of a run: the bar times of the last split, from the first holdout bar to the last. */
+/** Holdout window of a run: the bar times of the last split, from the first holdout bar to the last. Null when the dataset start is not minute aligned. */
 export function holdoutWindow(contract){
   const start=contract?.dataset?.start_time,split=contract?.split;
   if(!Number.isSafeInteger(start)||!isObject(split)||!Number.isSafeInteger(split.validation_end)||!Number.isSafeInteger(split.test_end)||
      split.validation_end<0||split.test_end<=split.validation_end)return null;
+  // A holdout that does not start on a minute boundary cannot be compared with a register window, so it reads as unreadable.
+  if(start%MINUTE!==0)return null;
   return {start_time:start+split.validation_end*MINUTE,end_time:start+(split.test_end-1)*MINUTE};
 }
 export const windowsOverlap=(a,b)=>a!==null&&b!==null&&a.start_time<=b.end_time&&b.start_time<=a.end_time;
 export const marketKey=contract=>{const market=pick(contract?.snapshot?.market,['broker','symbol','timeframe']);return market?canonical(market):null;};
 
-/** library-qualification-v1. Eight gates, fixed before any result is seen. A gate is PASS, FAIL or NOT_REACHED (G2 to G5
+/** Exposure-register overlap of a run's holdout window (library-qualification-v2, G5; QR-3 contract 9.2). entries are register rows
+ * in the comparison shape (toComparisonEntries): {owner_id, market_key, window:{start_ms,end_ms} half-open, kind, at_ms,
+ * comparison_id | selection_id}. window is holdoutWindow() of the run (inclusive first and last bar open time). An exposure of the same
+ * owner and the same market counts when its at_ms is at or before createdAtMs (the run creation time, so a later comparison or selection
+ * never changes an earlier verdict); one recorded later is reported apart as informational and never changes G5. Both kinds count.
+ * Returns null when any input cannot be read (the gate then reads HOLDOUT_INDEPENDENCE_NOT_CHECKED); never throws. */
+export const EXPOSURE_CODE='HOLDOUT_EXPOSED_BY_COMPARISON';
+const MAX_EXPOSURE_IDS=20;
+const idsOf=list=>[...new Set(list)].sort((a,b)=>a<b?-1:a>b?1:0).slice(0,MAX_EXPOSURE_IDS);
+export function holdoutExposure(input){
+  const {window=null,owner=null,market=null,createdAtMs=null,entries=null}=isObject(input)?input:{};
+  if(!isObject(window)||!Number.isSafeInteger(window.start_time)||!Number.isSafeInteger(window.end_time)||!text(owner)||!text(market)||
+     !Number.isSafeInteger(createdAtMs)||!Array.isArray(entries))return null;
+  const counted={comparison_ids:[],selection_ids:[]},later={comparison_ids:[],selection_ids:[]};
+  for(const entry of entries){
+    if(!isObject(entry)||!isObject(entry.window)||!Number.isSafeInteger(entry.window.start_ms)||!Number.isSafeInteger(entry.window.end_ms)||
+       !Number.isSafeInteger(entry.at_ms)||!text(entry.owner_id)||!text(entry.market_key))return null;
+    const comparison=entry.kind==='QR3_COMPARISON',id=comparison?entry.comparison_id:entry.kind==='QR4_SELECTION'?entry.selection_id:null;
+    if(!text(id))return null;
+    if(entry.owner_id!==owner||entry.market_key!==market)continue;
+    if(!(entry.window.start_ms<=window.end_time&&window.start_time<entry.window.end_ms))continue;
+    (entry.at_ms<=createdAtMs?counted:later)[comparison?'comparison_ids':'selection_ids'].push(id);
+  }
+  const view=group=>({overlaps:group.comparison_ids.length+group.selection_ids.length>0,comparison_ids:idsOf(group.comparison_ids),selection_ids:idsOf(group.selection_ids)});
+  return {...view(counted),later:view(later)};
+}
+
+/** library-qualification-v2. Eight gates, fixed before any result is seen. A gate is PASS, FAIL or NOT_REACHED (G2 to G5
  * after an earlier failure of G1 to G4; G6 to G8 are always evaluated). integrity is null when it was not checked (list
- * rows); holdoutOverlap is null when no earlier run was looked up. G8 has no source in this release and always fails, so
- * qualified is always false. */
+ * rows); holdoutOverlap is null when no earlier run was looked up. exposure is the holdoutExposure() result, or null when the
+ * shared exposure register was absent or unreadable. G5 reads, in this order: no earlier-run lookup is HOLDOUT_INDEPENDENCE_NOT_CHECKED,
+ * an overlapping earlier run is HOLDOUT_WINDOW_REUSED, an unreadable register is HOLDOUT_INDEPENDENCE_NOT_CHECKED, a counted exposure
+ * of a comparison or selection is HOLDOUT_EXPOSED_BY_COMPARISON. v2 replaces v1: the gates are derived at read and none is stored.
+ * G8 has no source in this release and always fails, so qualified is always false. */
 export const GATE_NAMES=Object.freeze(['COMPLETED_EVALUATION','SCREENED_CANDIDATE','ROBUSTNESS','HOLDOUT_RESULT','HOLDOUT_INDEPENDENT',
   'BLOCKERS_CLEARED','OWNER_RECOMMENDATION_READY','QL4C_VALIDATION']);
 const failedOf=(reasons,names)=>names.filter(name=>reasons.includes(name)).join(',')||null;
-export function qualification({status,result=null,blockers=null,integrity=null,holdoutOverlap=null,contractVersion=null}={}){
+export function qualification({status,result=null,blockers=null,integrity=null,holdoutOverlap=null,exposure=null,contractVersion=null}={}){
   const gates=[],reasons=selectedReasons(result);
   const add=(index,state,reason=null)=>gates.push({gate:'G'+(index+1),name:GATE_NAMES[index],state,code:state==='PASS'?null:reason});
   let open=true;
@@ -256,7 +288,8 @@ export function qualification({status,result=null,blockers=null,integrity=null,h
   run(1,()=>selectedOf(result)?null:'NO_SCREENED_CANDIDATE');
   run(2,()=>failedOf(reasons,['SENSITIVITY_FAILED','COST_STRESS_FAILED']));
   run(3,()=>result?.holdout_evaluated!==true?'HOLDOUT_NOT_EVALUATED':failedOf(reasons,['INSUFFICIENT_TEST_TRADES','NEGATIVE_HOLDOUT_RETURN','TEST_DRAWDOWN_EXCEEDED']));
-  run(4,()=>holdoutOverlap===null?'HOLDOUT_INDEPENDENCE_NOT_CHECKED':holdoutOverlap.overlaps===true?'HOLDOUT_WINDOW_REUSED':null);
+  run(4,()=>holdoutOverlap===null?'HOLDOUT_INDEPENDENCE_NOT_CHECKED':holdoutOverlap.overlaps===true?'HOLDOUT_WINDOW_REUSED':
+    !isObject(exposure)||typeof exposure.overlaps!=='boolean'?'HOLDOUT_INDEPENDENCE_NOT_CHECKED':exposure.overlaps?EXPOSURE_CODE:null);
   if(Array.isArray(blockers)&&blockers.length===0)add(5,'PASS');
   else add(5,'FAIL',Array.isArray(blockers)?'ACCEPTANCE_BLOCKERS_PRESENT':'BLOCKERS_UNKNOWN');
   // G7 is derived by owner-recommendation.js (OD-18) from the completion reason and the contract version; result.owner_recommendation_ready is ignored.

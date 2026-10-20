@@ -2,7 +2,8 @@ import {fail} from '../pine-bridge/source.js';
 import {LIBRARY_VERSIONS,LIBRARY_GROUPS,QUALIFIED_TOTAL,QUALIFIED_WINNER,isObject,classify,isTerminal,isCompleted,selectedOf,
   holdoutTooFewTrades,candidateAggregates,developmentScore,candidateView,selectedView,compatibilityFields,compatibilityKey,
   compatibilityMismatches,contractHashVerified,resultSha256,stepsDigest,reportMatchesCheckpoints,holdoutWindow,windowsOverlap,
-  marketKey,qualification} from '../quant-library/derive.js';
+  marketKey,qualification,holdoutExposure,EXPOSURE_CODE} from '../quant-library/derive.js';
+import {readExposures,toComparisonEntries} from './exposure-register.js';
 
 /**
  * Quant Research Library (QR-1 view, minimum QR-3 comparison, QR-4 qualification presentation). Three GET routes, all
@@ -10,6 +11,12 @@ import {LIBRARY_VERSIONS,LIBRARY_GROUPS,QUALIFIED_TOTAL,QUALIFIED_WINNER,isObjec
  * comparison of two to four runs. Every statement runs after SET TRANSACTION READ ONLY inside the request transaction, so a
  * write or a row lock would fail loudly. Nothing is saved, started or applied here, and no executor mode is consulted: the
  * views stay readable while research admission is closed and in LEGACY or FOUNDATION mode.
+ *
+ * Gate G5 (library-qualification-v2) also reads the shared exposure register, with readExposures inside the same READ ONLY transaction
+ * (the only register access here). The register is read for every run whose own holdout window and market are readable, even when G1 to G4
+ * fail, so that an exposure is disclosed as a flag. An absent or unreadable register leaves G5 as HOLDOUT_INDEPENDENCE_NOT_CHECKED; a SQLSTATE
+ * error of the read (for example 42501, grants not reapplied) passes through like any other platform error, so the detail and compare views
+ * fail closed, also for a run that fails G1 to G4.
  *
  * Contracts hold the Pine source and up to 10,000 market bars. They never leave the database in full: the list reads a slim
  * projection once per row, and every response is built from whitelisted fields (never source, bars, idempotency keys,
@@ -84,6 +91,19 @@ const EARLIER=`WITH earlier AS MATERIALIZED (SELECT j.run_id,j.created_at,
  FROM quant_jobs j WHERE j.owner_id=$1 AND j.run_id<>$2 AND (j.created_at,j.run_id)<($3::bigint,$2::text) AND j.result->'holdout_evaluated'='true'::jsonb)
  SELECT run_id,k#>'{snapshot,market}' AS market,k->'split' AS split,k#>'{dataset,start_time}' AS start_time FROM earlier ORDER BY created_at,run_id`;
 
+const emptyExposureGroup=()=>({overlaps:null,comparison_ids:[],selection_ids:[]});
+/** The exposure-register part of the independence lookup, for the detail view. checked is false when the register was not read. */
+const exposureView=exposure=>exposure===null?{checked:false,...emptyExposureGroup(),later:emptyExposureGroup()}
+  :{checked:true,overlaps:exposure.overlaps,comparison_ids:exposure.comparison_ids,selection_ids:exposure.selection_ids,later:exposure.later};
+/** Informational flag. An exposure recorded after the run was created never changes G5 and is always listed. A counted exposure is listed
+ * too whenever G5 is not itself HOLDOUT_EXPOSED_BY_COMPARISON (G5 NOT_REACHED, or HOLDOUT_WINDOW_REUSED taking precedence). */
+const exposureFlags=(exposure,quality)=>{
+  if(exposure===null)return [];
+  const g5=quality.gates[4],counted=!(g5.state==='FAIL'&&g5.code===EXPOSURE_CODE);
+  const ids=(later,now)=>[...new Set([...later,...(counted?now:[])])].sort((x,y)=>x<y?-1:x>y?1:0).slice(0,20);
+  const comparison_ids=ids(exposure.later.comparison_ids,exposure.comparison_ids),selection_ids=ids(exposure.later.selection_ids,exposure.selection_ids);
+  return comparison_ids.length+selection_ids.length>0?[{code:EXPOSURE_CODE,informational:true,comparison_ids,selection_ids}]:[];
+};
 const emptyTotals=()=>({all:0,...Object.fromEntries(LIBRARY_GROUPS.map(group=>[group,0]))});
 const familyOf=c=>c.execution_backend==='quant-foundation-v1'||c.version==='ql3a-research-job-v2'?'FOUNDATION':c.version==='ql3a-research-job-v1'?'LEGACY':null;
 const marketOf=c=>{const m=object(object(c.snapshot).market);return text(m.broker)&&text(m.symbol)&&text(m.timeframe)?{broker:m.broker,symbol:m.symbol,timeframe:m.timeframe}:null;};
@@ -204,7 +224,7 @@ function evaluationOf(a){
     selected:selectedView(selectedOf(result)),candidates:list.map(candidateView),
     candidates_truncated:Array.isArray(result?.candidates)&&result.candidates.length>MAX_CANDIDATES,stored_values_verified:!a.failed};
 }
-function shapeDetail(a,quality,overlap){
+function shapeDetail(a,quality,overlap,exposure){
   const {row,c}=a;
   return {version:LIBRARY_VERSIONS.run,qualified_total:QUALIFIED_TOTAL,qualified_winner:QUALIFIED_WINNER,
     run:{run_id:row.run_id,created_at:row.created_at,finished_at:finishedAt(row),status:row.status,phase:text(row.phase,64),library_class:a.cls.library_class,
@@ -213,7 +233,7 @@ function shapeDetail(a,quality,overlap){
       evaluations_started:row.evaluations_started,deadline:row.deadline},
     provenance:provenanceOf(a.row.contract,a.fields,a.found,a.chunks),integrity:a.integrity,completeness:completenessOf(a),
     limitations:limitationsOf(c,row,a.found,a.frozen),evaluation:evaluationOf(a),
-    qualification:{...quality,holdout_overlap:overlap},
+    qualification:{...quality,holdout_overlap:overlap,exposure:exposureView(exposure),flags:exposureFlags(exposure,quality)},
     compatibility:{version:LIBRARY_VERSIONS.compatibility,key:a.key,short_key:a.key.slice(0,12),fields:a.fields,missing:a.missingFields}};
 }
 
@@ -280,26 +300,33 @@ export class QuantLibraryService{
     // The chunk rows belong to the run, which is already owner-scoped; only the foundation job row needs the owner join.
     const chunks=flags.foundation?(await this.db.query(CHUNKS,[runId])).rows:[];
     const a=analyse(row,steps,found,chunks,flags.frozen===true);
-    let quality=qualification(a.gateInput),overlap={checked:false,overlaps:null,run_ids:[]};
+    let quality=qualification(a.gateInput),overlap={checked:false,overlaps:null,run_ids:[]},exposure=null;
+    const own=holdoutWindow(a.c),market=marketKey(a.c);
+    // The register is read whenever the own holdout window and market are readable, so a later or counted exposure is disclosed even when
+    // G1 to G4 fail. It sits in the same READ ONLY transaction. A market that is not three text fields cannot be looked up.
+    if(own&&market){
+      const where=marketOf(a.c),read=where?await readExposures(this.db,{owner_id:owner,...where}):null,entries=read?.ok===true?toComparisonEntries(read):null;
+      exposure=entries===null?null:holdoutExposure({window:own,owner,market,createdAtMs:Number(row.created_at),entries});
+    }
+    // Only inside the G1 to G4 block does the exposure reach qualification(), so G5 logic is unchanged.
     if(quality.gates.slice(0,4).every(gate=>gate.state==='PASS')){
-      const own=holdoutWindow(a.c),market=marketKey(a.c);
       if(own&&market){
         const ids=(await this.db.query(EARLIER,[owner,runId,row.created_at])).rows.filter(other=>{
           const shape={snapshot:{market:other.market},split:other.split,dataset:{start_time:other.start_time}},key=marketKey(shape),window=holdoutWindow(shape);
           return (key===null||key===market)&&(window===null||windowsOverlap(own,window));
         }).map(other=>other.run_id);
         overlap={checked:true,overlaps:ids.length>0,run_ids:ids.slice(0,20)};
-        quality=qualification({...a.gateInput,holdoutOverlap:{overlaps:overlap.overlaps}});
+        quality=qualification({...a.gateInput,holdoutOverlap:{overlaps:overlap.overlaps},exposure});
       }else quality=qualification({...a.gateInput,holdoutOverlap:null});
     }
-    return {a,quality,overlap};
+    return {a,quality,overlap,exposure};
   }
   detail(owner,runId){
     return this.read(async()=>{
       const flags=(await this.db.query(PRESENT)).rows[0];
       if(!flags.present)throw fail('NOT_FOUND',404);
-      const {a,quality,overlap}=await this.load(owner,runId,flags);
-      return shapeDetail(a,quality,overlap);
+      const {a,quality,overlap,exposure}=await this.load(owner,runId,flags);
+      return shapeDetail(a,quality,overlap,exposure);
     });
   }
   compare(owner,runIds){

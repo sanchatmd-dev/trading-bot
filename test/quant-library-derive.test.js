@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {canonical,hash} from '../src/pine-bridge/source.js';
 import {LIBRARY_CLASSES,LIBRARY_GROUPS,COMPATIBILITY_FIELDS,GATE_NAMES,classify,candidateAggregates,developmentScore,compatibilityFields,compatibilityKey,
   compatibilityMismatches,holdoutWindow,windowsOverlap,marketKey,qualification,contractHashVerified,resultSha256,stepsDigest,reportMatchesCheckpoints,
-  metrics,candidateView,selectedView,holdoutTooFewTrades,selectedReasons,QUALIFIED_TOTAL,QUALIFIED_WINNER} from '../src/quant-library/derive.js';
+  metrics,candidateView,selectedView,holdoutTooFewTrades,selectedReasons,QUALIFIED_TOTAL,QUALIFIED_WINNER,holdoutExposure,EXPOSURE_CODE,LIBRARY_VERSIONS} from '../src/quant-library/derive.js';
 import {ownerRecommendationGate,OWNER_RECOMMENDATION_CONTRACT_VERSIONS,RECOMMENDATION_COMPLETION_REASON} from '../src/quant-library/package-gates.js';
 import {contractOf,outcomeOf,runOf,hex,metricsOf,parameters,MINUTE,T0,FIXTURE_LABEL} from './helpers/quant-library-fixture.mjs';
 
@@ -172,13 +172,16 @@ test('holdout window: the bar times of the last split; the windows of a v1 and a
   assert.equal(windowsOverlap(window,shifted),true,'one shared bar is an overlap');
   assert.equal(windowsOverlap(window,{start_time:window.end_time+MINUTE,end_time:window.end_time+5*MINUTE}),false);
   for(const bad of [null,{},{dataset:{start_time:1},split:{validation_end:5,test_end:5}},{dataset:{start_time:'1'},split:{validation_end:1,test_end:5}},{dataset:{start_time:1},split:{validation_end:-1,test_end:5}}])assert.equal(holdoutWindow(bad),null);
+  assert.equal(holdoutWindow({dataset:{start_time:T0+1},split:{validation_end:1,test_end:5}}),null,'a start that is not minute aligned has no window');
+  assert.deepEqual(holdoutWindow({dataset:{start_time:T0},split:{validation_end:1,test_end:5}}),{start_time:T0+MINUTE,end_time:T0+4*MINUTE});
   assert.equal(windowsOverlap(null,window),false);assert.equal(windowsOverlap(window,null),false);
   assert.equal(marketKey(v1),canonical({broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'}));assert.equal(marketKey({}),null);assert.equal(marketKey(null),null);
 });
 
+const NO_EXPOSURE={overlaps:false,comparison_ids:[],selection_ids:[],later:{overlaps:false,comparison_ids:[],selection_ids:[]}};
 const passing=(overrides={})=>{
   const result=outcomeOf(contractOf(base),'PENDING').result;
-  return {status:'SUCCEEDED',result,blockers:[],integrity:{contract_hash_verified:true,report_matches_checkpoints:true},holdoutOverlap:{overlaps:false},...overrides};
+  return {status:'SUCCEEDED',result,blockers:[],integrity:{contract_hash_verified:true,report_matches_checkpoints:true},holdoutOverlap:{overlaps:false},exposure:NO_EXPOSURE,...overrides};
 };
 const states=q=>q.gates.map(gate=>gate.state).join(' ');
 
@@ -186,7 +189,7 @@ test('qualification: the eight gates in order with fixed names and reason codes'
   const q=qualification(passing());
   assert.deepEqual(q.gates.map(gate=>gate.gate),['G1','G2','G3','G4','G5','G6','G7','G8']);
   assert.deepEqual(q.gates.map(gate=>gate.name),[...GATE_NAMES]);
-  assert.equal(GATE_NAMES.length,8);assert.equal(q.version,'library-qualification-v1');
+  assert.equal(GATE_NAMES.length,8);assert.equal(q.version,'library-qualification-v2');assert.equal(LIBRARY_VERSIONS.qualification,'library-qualification-v2');
   // Every gate except G7 and G8 passes in this fixture (G7 needs a listed contract version, OD-18).
   assert.equal(states(q),'PASS PASS PASS PASS PASS PASS FAIL FAIL');
   assert.deepEqual(q.gates.map(gate=>gate.code),[null,null,null,null,null,null,'OWNER_RECOMMENDATION_NOT_READY','QL4C_VALIDATION_NOT_AVAILABLE']);
@@ -254,12 +257,19 @@ test('qualification: G1 to G5 stop at the first failure and later gates are NOT_
     ['negative holdout',{status:'NO_VALID_CANDIDATE',result:outcomeOf(contractOf(base),'HOLDOUT_NEGATIVE').result},'PASS PASS PASS FAIL NOT_REACHED PASS FAIL FAIL','NEGATIVE_HOLDOUT_RETURN','DEVELOPMENT_ONLY'],
     ['holdout reused',{holdoutOverlap:{overlaps:true}},'PASS PASS PASS PASS FAIL PASS FAIL FAIL','HOLDOUT_WINDOW_REUSED','DEVELOPMENT_ONLY'],
     ['independence not checked',{holdoutOverlap:null},'PASS PASS PASS PASS FAIL PASS FAIL FAIL','HOLDOUT_INDEPENDENCE_NOT_CHECKED','DEVELOPMENT_ONLY'],
+    ['exposed by a comparison or selection',{exposure:{...NO_EXPOSURE,overlaps:true,comparison_ids:['c1']}},'PASS PASS PASS PASS FAIL PASS FAIL FAIL','HOLDOUT_EXPOSED_BY_COMPARISON','DEVELOPMENT_ONLY'],
+    ['register absent or unreadable',{exposure:null},'PASS PASS PASS PASS FAIL PASS FAIL FAIL','HOLDOUT_INDEPENDENCE_NOT_CHECKED','DEVELOPMENT_ONLY'],
+    ['register result malformed',{exposure:{overlaps:'no'}},'PASS PASS PASS PASS FAIL PASS FAIL FAIL','HOLDOUT_INDEPENDENCE_NOT_CHECKED','DEVELOPMENT_ONLY'],
+    ['window reused is reported before the register',{holdoutOverlap:{overlaps:true},exposure:{...NO_EXPOSURE,overlaps:true}},'PASS PASS PASS PASS FAIL PASS FAIL FAIL','HOLDOUT_WINDOW_REUSED','DEVELOPMENT_ONLY'],
+    ['no earlier-run lookup is reported before the register',{holdoutOverlap:null,exposure:{...NO_EXPOSURE,overlaps:true}},'PASS PASS PASS PASS FAIL PASS FAIL FAIL','HOLDOUT_INDEPENDENCE_NOT_CHECKED','DEVELOPMENT_ONLY'],
+    ['a later exposure never changes G5',{exposure:{...NO_EXPOSURE,later:{overlaps:true,comparison_ids:['c9'],selection_ids:[]}}},'PASS PASS PASS PASS PASS PASS FAIL FAIL','NONE','DEVELOPMENT_ONLY'],
     ['blockers present',{blockers:['VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED']},'PASS PASS PASS PASS PASS FAIL FAIL FAIL','ACCEPTANCE_BLOCKERS_PRESENT','DEVELOPMENT_ONLY'],
     ['blockers unknown',{blockers:null},'PASS PASS PASS PASS PASS FAIL FAIL FAIL','BLOCKERS_UNKNOWN','DEVELOPMENT_ONLY']];
   for(const [name,change,expected,code,label] of cases){
     const q=qualification(passing(change));
     assert.equal(states(q),expected,name);
-    assert.ok(q.gates.some(gate=>gate.code&&gate.code.includes(code)),name+': '+code);
+    if(code!=='NONE')assert.ok(q.gates.some(gate=>gate.code&&gate.code.includes(code)),name+': '+code);
+    else assert.equal(q.gates[4].code,null,name);
     assert.equal(q.label,label,name);assert.equal(q.qualified,false,name);
   }
   const holdoutOff=passing();holdoutOff.result={...holdoutOff.result,holdout_evaluated:false};
@@ -273,6 +283,59 @@ test('qualification: the list reads no integrity and no earlier run, and still n
   const q=qualification({status:'SUCCEEDED',result:passing().result,blockers:[]});
   assert.equal(states(q),'PASS PASS PASS PASS FAIL PASS FAIL FAIL');
   assert.equal(q.gates[4].code,'HOLDOUT_INDEPENDENCE_NOT_CHECKED');assert.equal(q.label,'DEVELOPMENT_ONLY');
+});
+
+test('qualification: the list reads no register, so G5 stays NOT_CHECKED even when holdoutOverlap is given',()=>{
+  const q=qualification({status:'SUCCEEDED',result:passing().result,blockers:[],holdoutOverlap:{overlaps:false}});
+  assert.equal(q.gates[4].code,'HOLDOUT_INDEPENDENCE_NOT_CHECKED');
+});
+
+// holdoutExposure (G5 register overlap). Window is the run holdout, inclusive bar times; a register entry is half-open [start_ms,end_ms).
+const EXP_OWNER='owner-a',EXP_MARKET=canonical({broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'}),CREATED=T0+1000*MINUTE;
+const HOLD={start_time:T0+100*MINUTE,end_time:T0+199*MINUTE};
+const entry=(over={})=>({owner_id:EXP_OWNER,market_key:EXP_MARKET,window:{start_ms:T0+150*MINUTE,end_ms:T0+160*MINUTE},kind:'QR3_COMPARISON',at_ms:CREATED-MINUTE,comparison_id:'cmp-1',...over});
+const selectionEntry=(over={})=>({owner_id:EXP_OWNER,market_key:EXP_MARKET,window:{start_ms:T0+150*MINUTE,end_ms:T0+160*MINUTE},kind:'QR4_SELECTION',at_ms:CREATED-MINUTE,selection_id:'sel-1',...over});
+const exposureOf=(entries,over={})=>holdoutExposure({window:HOLD,owner:EXP_OWNER,market:EXP_MARKET,createdAtMs:CREATED,entries,...over});
+const NONE={overlaps:false,comparison_ids:[],selection_ids:[]};
+
+test('holdoutExposure: counts an overlapping exposure of either kind recorded at or before the run creation',()=>{
+  assert.deepEqual(exposureOf([]),{...NONE,later:NONE},'an empty register is valid and counts nothing');
+  assert.deepEqual(exposureOf([entry()]),{overlaps:true,comparison_ids:['cmp-1'],selection_ids:[],later:NONE});
+  assert.deepEqual(exposureOf([selectionEntry()]),{overlaps:true,comparison_ids:[],selection_ids:['sel-1'],later:NONE},'a QR-4 selection counts too');
+  const both=exposureOf([entry({comparison_id:'cmp-b'}),entry({comparison_id:'cmp-a'}),entry({comparison_id:'cmp-a',at_ms:CREATED-5*MINUTE}),selectionEntry()]);
+  assert.deepEqual([both.comparison_ids,both.selection_ids],[['cmp-a','cmp-b'],['sel-1']],'sorted, one id per comparison');
+  assert.equal(exposureOf([entry({at_ms:CREATED})]).overlaps,true,'at_ms equal to the creation time counts');
+});
+
+test('holdoutExposure: a later exposure is informational and never counts',()=>{
+  const later=exposureOf([entry({at_ms:CREATED+1,comparison_id:'cmp-late'})]);
+  assert.deepEqual(later,{...NONE,later:{overlaps:true,comparison_ids:['cmp-late'],selection_ids:[]}});
+  assert.equal(qualification(passing({exposure:later})).gates[4].state,'PASS');
+  const mixed=exposureOf([entry({comparison_id:'cmp-old'}),entry({at_ms:CREATED+MINUTE,comparison_id:'cmp-late'}),selectionEntry({at_ms:CREATED+MINUTE})]);
+  assert.deepEqual([mixed.overlaps,mixed.comparison_ids,mixed.later.comparison_ids,mixed.later.selection_ids],[true,['cmp-old'],['cmp-late'],['sel-1']]);
+  assert.equal(EXPOSURE_CODE,'HOLDOUT_EXPOSED_BY_COMPARISON');
+});
+
+test('holdoutExposure: window arithmetic is half-open entry against inclusive holdout; owner and market must match',()=>{
+  const at=(start,end)=>exposureOf([entry({window:{start_ms:start,end_ms:end}})]).overlaps;
+  assert.equal(at(T0+199*MINUTE,T0+200*MINUTE),true,'exposure of the last holdout bar overlaps');
+  assert.equal(at(T0+200*MINUTE,T0+210*MINUTE),false,'exposure starting one bar after the holdout does not');
+  assert.equal(at(T0+90*MINUTE,T0+100*MINUTE),false,'exposure ending where the holdout starts does not (half-open)');
+  assert.equal(at(T0+90*MINUTE,T0+101*MINUTE),true,'exposure covering the first holdout bar does');
+  assert.equal(at(T0+50*MINUTE,T0+300*MINUTE),true,'exposure that contains the holdout does');
+  assert.equal(exposureOf([entry({owner_id:'owner-b'})]).overlaps,false,'another owner');
+  assert.equal(exposureOf([entry({market_key:canonical({broker:'binance-global',symbol:'ETHUSDT',timeframe:'1'})})]).overlaps,false,'another market');
+});
+
+test('holdoutExposure: any unreadable input gives null, never a pass, and nothing throws',()=>{
+  const good=[entry()];
+  for(const bad of [{window:null},{window:{start_time:1}},{window:{start_time:'1',end_time:2}},{owner:''},{owner:null},{market:null},{createdAtMs:null},{createdAtMs:1.5},{createdAtMs:'5'},{entries:null},{entries:{}}])
+    assert.equal(exposureOf(good,bad),null,JSON.stringify(bad));
+  for(const broken of [null,'x',{},{...entry(),window:null},{...entry(),window:{start_ms:'1',end_ms:2}},{...entry(),at_ms:null},{...entry(),at_ms:1.5},{...entry(),owner_id:''},{...entry(),market_key:null},
+    {...entry(),kind:'OTHER'},{...entry(),comparison_id:''},{...entry(),comparison_id:null},{...entry(),kind:'QR4_SELECTION'}])
+    assert.equal(exposureOf([entry(),broken]),null,'a broken entry makes the whole read unreadable: '+JSON.stringify(broken));
+  assert.equal(holdoutExposure(),null);assert.equal(holdoutExposure(null),null);
+  assert.equal(qualification(passing({exposure:exposureOf(good,{entries:null})})).gates[4].code,'HOLDOUT_INDEPENDENCE_NOT_CHECKED');
 });
 
 test('integrity: contract hash, result digest and checkpoint digest are deterministic and sensitive to every edit',()=>{

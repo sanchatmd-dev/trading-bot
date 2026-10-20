@@ -61,7 +61,7 @@ function detailOf(item,{warnings=[],withScore=true}={}){
       dimension_coverage_percent:100,candidate_count:100,screen_passed:withScore?3:0,reason_counts:{INSUFFICIENT_VALIDATION_TRADES:97},development_score:bad?{value:null,basis:'VALIDATION_NET_RETURN_PERCENT',reason:'INTEGRITY_CHECK_FAILED'}:item.development_score,
       selected:withScore?{parameters:{rr:1.5,emaFastInput:30},train:metrics('4.1',9),validation:metrics('3.20',8),screen_reasons:[],sensitivity:[],cost_stress:null,test:null}:null,
       candidates:[{index:0,parameters:{rr:1,emaFastInput:30},train:metrics('-0.5',7),validation:metrics('0',0,'0'),screen_reasons:['INSUFFICIENT_VALIDATION_TRADES']}],candidates_truncated:false,stored_values_verified:!bad},
-    qualification:{version:'library-qualification-v1',qualified:false,label:item.qualification.label,gates:[gate(0,'PASS'),gate(1,withScore?'PASS':'FAIL',withScore?null:'NO_SCREENED_CANDIDATE'),
+    qualification:{version:'library-qualification-v2',qualified:false,label:item.qualification.label,gates:[gate(0,'PASS'),gate(1,withScore?'PASS':'FAIL',withScore?null:'NO_SCREENED_CANDIDATE'),
       gate(2,withScore?'PASS':'NOT_REACHED'),gate(3,'FAIL','HOLDOUT_NOT_EVALUATED'),gate(4,'NOT_REACHED'),gate(5,'FAIL','ACCEPTANCE_BLOCKERS_PRESENT'),
       gate(6,'FAIL','OWNER_RECOMMENDATION_NOT_READY'),gate(7,'FAIL','QL4C_VALIDATION_NOT_AVAILABLE')],holdout_overlap:{checked:false,overlaps:null,run_ids:[]}},
     compatibility:{version:'library-compat-v1',key:H('k'),short_key:'kkkkkkkkkkkk',fields:{},missing:[]}};

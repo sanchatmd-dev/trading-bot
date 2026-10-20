@@ -37,6 +37,7 @@ before(async()=>{
   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+databaseName;
   db=new PostgresDatabase({connectionString:url.toString(),max:6});await db.migrate();
   await install('pine-bridge-schema.sql');
+  await install('quant-exposure-register.sql');
   store=new Store(db);service=new QuantLibraryService(db);
   A=await newOwner('qgap-a');B=await newOwner('qgap-b');
   await install('quant-research-schema.sql');
