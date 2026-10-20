@@ -20,6 +20,7 @@ import {createRequestLimits} from './request-limits.js';
 import {json,createDispatcher,LEGACY_QUANT_PATHS,oncePerRequest} from './request-dispatch.js';
 import {overviewRoute} from './overview.js';
 import {qr2PerformanceRoute,createQr2Slot} from './qr2-routes.js';
+import {createQr2ComputePool} from './qr2-compute-pool.js';
 import { PostgresDatabase } from './db.js';
 import {requirePaperLedgerFence} from './paper-ledger-fence.js';
 import {Auth} from './auth.js';
@@ -64,6 +65,7 @@ const pineBridgeEnabled=process.env.PINE_BRIDGE_ENABLED==='1';
 // QR-2 per-Bot performance route (RC-Q32): off unless QR2_PERFORMANCE_ENABLED=1; one computation slot per process (RC-Q30).
 const qr2PerformanceEnabled=process.env.QR2_PERFORMANCE_ENABLED==='1';
 const qr2Slot=createQr2Slot();
+const qr2Compute=createQr2ComputePool();
 const pineCaptureEnabled=process.env.PINE_BRIDGE_CAPTURE_ENABLED==='1';
 if(pineCaptureEnabled&&(!pineBridgeEnabled||process.env.PINE_BRIDGE_ENV!=='staging'))throw new Error('Pine capture requires an explicitly configured staging Bridge');
 const pineCapturePublicOrigin=process.env.PINE_CAPTURE_PUBLIC_ORIGIN||'';
@@ -292,7 +294,7 @@ async function userRoutes(req, res, url) {
   }
   if (req.method !== 'GET' && (url.pathname === '/api/me/webhook-secret' || url.pathname.startsWith('/api/brokers/')) || url.pathname === '/api/me/password') await auth.sensitive(req);
   if (await overviewRoute(req, res, url, actor, {store, json, defaultRisk: config.defaultRisk})) return;
-  if (await qr2PerformanceRoute(req, res, url, actor, {store, auth, json, enabled: qr2PerformanceEnabled, slot: qr2Slot})) return;
+  if (await qr2PerformanceRoute(req, res, url, actor, {store, auth, json, enabled: qr2PerformanceEnabled, slot: qr2Slot, compute: qr2Compute})) return;
   if (req.method === 'GET' && url.pathname === '/api/bots') {
     const plan = await store.activePlan(actor.id);
     const quota = getQuota(plan);
@@ -1003,6 +1005,7 @@ const shutdown = async () => {
   const closed = new Promise(resolve => server.close(resolve));
   server.closeIdleConnections();
   await Promise.all([worker.stop(), closed]);
+  await qr2Compute.close();
   await store.close();
 };
 process.on('SIGTERM', shutdown);

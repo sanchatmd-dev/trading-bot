@@ -1,16 +1,16 @@
 import {hasPermission} from '../permissions.js';
 import {getQuota} from './quotas.js';
-import {readQr2Account} from './qr2-reader.js';
+import {readQr2Snapshot} from './qr2-reader.js';
 import {writeQr2Audit} from './qr2-audit.js';
 import {QR2_BOUNDARY_RECORD_UNRECORDED} from '../portfolio/qr2-boundaries.js';
 import {QR2_DAY_MS,Qr2Error} from '../portfolio/qr2-constants.js';
 import {periodWindow,customWindow,allTimeWindow,utcMidnight} from '../portfolio/qr2-periods.js';
-import {composePerformanceResponse,refusalAnswer} from '../portfolio/qr2-response.js';
+import {refusalAnswer} from '../portfolio/qr2-response.js';
 
 // QR-2 S3a: GET /api/paper-performance (contract 8.1; root rulings RC-Q28 to RC-Q33, 2026-10-20).
 // Phase 1 runs inside the SERIALIZABLE request transaction and only reads: session and own:read passed before this route, then the
 // parameters, the Bot scope, the bounds, the admin step-up and the admin audit row. Phase 2 runs after COMMIT through res.phase2Deferred:
-// the standalone reader opens its own REPEATABLE READ, READ ONLY transaction, the computation runs outside any transaction, and one
+// the standalone reader opens its own REPEATABLE READ, READ ONLY transaction, the computation runs outside any transaction in a worker thread (S3b, RC-Q35), and one
 // function res.phase2AfterCommit (the audit writer) is registered for the dispatcher to run after the answer is sent. This module
 // imports no quant-research code and never calls legacyQuantDenied (O8: the legacy Quant gate is not applied to QR-2). It writes
 // no Paper row, no fence row and no exposure event; its only write is the admin audit row.
@@ -18,6 +18,8 @@ import {composePerformanceResponse,refusalAnswer} from '../portfolio/qr2-respons
 export const QR2_PERFORMANCE_PATH='/api/paper-performance';
 export const QR2_MAX_CUSTOM_DAYS=3660;
 export const QR2_ADMIN_READ_EVENT='qr2.admin_read';
+// Pool failures that answer with Retry-After (a later request spawns a fresh worker): deadline, crash, heap limit, spawn failure.
+const RETRY_AFTER_KINDS=Object.freeze(['timeout','crash','heap','spawn']);
 const PARAMETERS=new Set(['bot_id','broker','period','from','to']);
 const BROKERS=['binance-global','binance-th','innovestx','settrade'];
 const PERIODS=['DAY','WEEK','MONTH','YEAR','ALL_TIME','CUSTOM'];
@@ -96,12 +98,13 @@ function answerOfError(error,phase=1){
 }
 
 /**
- * deps: {store, auth, json, enabled, slot, boundaries?, limits?, clock?, readAccount?, writeAudit?}. readAccount and writeAudit exist for
- * tests; the product uses the defaults. Returns false when the route is off or the path is not this one (the router then answers 404).
+ * deps: {store, auth, json, enabled, slot, compute, boundaries?, limits?, clock?, readSnapshot?, writeAudit?}. compute is the QR-2 compute
+ * pool (qr2-compute-pool.js, RC-Q35): the product passes it, there is no in-thread default, and a missing one answers 503. readSnapshot and
+ * writeAudit exist for tests; the product uses the defaults. Returns false when the route is off or the path is not this one (the router then answers 404).
  */
 export async function qr2PerformanceRoute(req,res,url,actor,deps){
   const {store,auth,json,enabled,slot,boundaries=QR2_BOUNDARY_RECORD_UNRECORDED,limits,clock=Date.now,
-    readAccount=readQr2Account,writeAudit=writeQr2Audit}=deps;
+    readSnapshot=readQr2Snapshot,writeAudit=writeQr2Audit,compute}=deps;
   if(url.pathname!==QR2_PERFORMANCE_PATH||enabled!==true)return false;
   if(req.method!=='GET'){json(res,405,{error:'Method not allowed'});return true;}
   const answer=({status,body})=>{json(res,status,body);return true;};
@@ -148,15 +151,29 @@ export async function qr2PerformanceRoute(req,res,url,actor,deps){
         if(typeof res.setHeader==='function')res.setHeader('Retry-After','2');
         return refusalAnswer('QR2_RANGE_ADMISSION_REFUSED',{limit:'concurrency',max:1});
       }
-      let view;
-      try{view=await readAccount(store,{ownerId,botId,broker,from,to,requestTime,boundaries,limits});}
+      // Read: the standalone reader transaction opens and closes here. Compute: the worker thread (RC-Q35), never the event loop.
+      let read;
+      try{read=await readSnapshot(store,{ownerId,botId,broker,from,to,requestTime,boundaries,limits});}
       catch(error){return answerOfError(error,2);}
-      let body;
-      try{body=composePerformanceResponse(view,{requestTime});}
-      catch{return refusalAnswer('QR2_RESPONSE_INVALID');}
-      // Registered only now: the reader transaction has committed and the answer is built. The dispatcher runs it after the answer is sent.
-      if(Array.isArray(view.audit_findings)&&view.audit_findings.length)res.phase2AfterCommit=()=>writeAudit(store,{findings:view.audit_findings,botId,broker});
-      return {status:200,body};
+      let result;
+      try{result=await compute.run(read.snapshot,read.input);}
+      catch(error){
+        // A pool failure (timeout, crash, heap, spawn, busy, closed, clone) or a missing pool: one fixed answer, no internal text.
+        if(RETRY_AFTER_KINDS.includes(error?.kind)&&typeof res.setHeader==='function')res.setHeader('Retry-After','2');
+        return refusalAnswer('QR2_REPORT_FAILED');
+      }
+      if(!result||typeof result!=='object'||typeof result.ok!=='boolean')return refusalAnswer('QR2_REPORT_FAILED');
+      if(!result.ok){
+        if(result.kind==='qr2'&&typeof result.code==='string')
+          return answerOfError(Object.assign(new Qr2Error(result.code),result.detail!==undefined?{detail:result.detail}:{}),2);
+        if(result.kind==='response')return refusalAnswer('QR2_RESPONSE_INVALID');
+        return refusalAnswer('QR2_REPORT_FAILED');
+      }
+      if(!result.body||typeof result.body!=='object')return refusalAnswer('QR2_REPORT_FAILED');
+      // Registered only after a successful computation: the reader transaction has committed and the answer is built. The dispatcher runs it
+      // after the answer is sent. A timeout, crash or failed computation never reaches this line, so it never writes an audit row.
+      if(Array.isArray(result.auditFindings)&&result.auditFindings.length)res.phase2AfterCommit=()=>writeAudit(store,{findings:result.auditFindings,botId,broker});
+      return {status:200,body:result.body};
     }catch{return refusalAnswer('QR2_REPORT_FAILED');}
     finally{if(release)release();}
   };

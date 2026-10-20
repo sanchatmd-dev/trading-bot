@@ -10,15 +10,19 @@ import {createQr2Database,createOwner,createBot,policyFor,book,insertBars,barOf,
 import {enroll} from '../helpers.mjs';
 import {hashPassword} from '../../src/security.js';
 import {qr2PerformanceRoute,createQr2Slot,QR2_PERFORMANCE_PATH,QR2_ADMIN_READ_EVENT} from '../../src/postgres/qr2-routes.js';
+import {readQr2Snapshot} from '../../src/postgres/qr2-reader.js';
+import {executeQr2Job} from '../../src/postgres/qr2-compute-worker.js';
 import {runMarketDeferred} from '../../src/postgres/market-ohlcv.js';
 import {afterCommitFailureCount} from '../../src/postgres/request-dispatch.js';
 import {validateResponse} from '../../src/portfolio/qr2-labels.js';
 import {Qr2Error} from '../../src/portfolio/qr2-constants.js';
 
 // QR-2 S3a route (RC-Q28 to RC-Q33; design tests H1 to H15). Isolated local PostgreSQL only (TEST_DATABASE_URL). Two groups:
-// HTTP: the unchanged server.js (forked by the fixture, QR2_PERFORMANCE_ENABLED=1, product boundary record UNRECORDED), real auth and the
+// HTTP: server.js with the S3b compute pool (server.js:68, real worker thread) (forked by the fixture, QR2_PERFORMANCE_ENABLED=1, product boundary record UNRECORDED), real auth and the
 // SERIALIZABLE dispatcher. IN-PROCESS: the route function on a Store with the S2 fixture ledger and the LOCAL_FIXTURE_E2 test record, driven
 // like the dispatcher drives it (phase 1, then the deferred function through the real runMarketDeferred, then the after-commit function).
+// S3b: the route computes through an injected compute; the IN-PROCESS tests inject an in-thread executeQr2Job; the HTTP tests compute through the server's real worker pool. The worker pool has its own files
+// (test/qr2-compute-pool.test.js, test/postgres/qr2-compute-http.test.mjs).
 // Every direct-SQL write below is a labelled fixture or fault made by the test, never by the product.
 const PW='Qr2-route-'+randomUUID();
 const PATH=QR2_PERFORMANCE_PATH;
@@ -331,10 +335,13 @@ async function drive(query,actor,deps={}){
   const url=new URL('http://localhost'+PATH+'?'+query);
   const res={phase2Buffer:true,phase2Result:null,phase2Deferred:null,phase2AfterCommit:null};
   const json=(r,status,body)=>{r.phase2Result={status,body};};
-  const handled=await qr2PerformanceRoute({method:'GET',headers:{}},res,url,actor,{store,auth:{sensitive:async()=>{}},json,enabled:true,slot:createQr2Slot(),boundaries:LOCAL_FIXTURE_E2,...deps});
+  const handled=await qr2PerformanceRoute({method:'GET',headers:{}},res,url,actor,{store,auth:{sensitive:async()=>{}},json,enabled:true,slot:createQr2Slot(),boundaries:LOCAL_FIXTURE_E2,compute:inlineCompute,...deps});
   const result=res.phase2Deferred?await runMarketDeferred(res.phase2Deferred):res.phase2Result;
   return {handled,result,res,hook:()=>res.phase2AfterCommit};
 }
+// S3b: the route computes through an injected compute (the product passes the worker pool). These tests run the same pure computation in-thread;
+// the pool itself is covered by test/qr2-compute-pool.test.js and test/postgres/qr2-compute-http.test.mjs.
+const inlineCompute={run:async(snapshot,input)=>executeQr2Job({snapshot,input})};
 const pending=()=>{let release;const gate=new Promise(r=>{release=r;});return {gate,release};};
 
 before(async()=>{fx=await createQr2Database('robot_qr2_route');({store}=fx);owner=await createOwner(store);});
@@ -360,8 +367,8 @@ test('H7 concurrency: a second request while one holds the slot is refused 429 a
   const slot=createQr2Slot();
   const gate=pending();
   let started;const startedSignal=new Promise(r=>{started=r;});
-  const slow=async(...args)=>{started();await gate.gate;return (await import('../../src/postgres/qr2-reader.js')).readQr2Account(...args);};
-  const first=drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{slot,readAccount:slow});
+  const slow=async(...args)=>{started();await gate.gate;return readQr2Snapshot(...args);};
+  const first=drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{slot,readSnapshot:slow});
   await startedSignal;
   assert.equal(slot.busy,1);
   const second=await drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{slot});
@@ -372,7 +379,7 @@ test('H7 concurrency: a second request while one holds the slot is refused 429 a
   assert.equal(done.result.status,200);assert.equal(done.result.body.account.nav.value,'10016');
   assert.equal(slot.busy,0);
   // An internal error releases the slot too.
-  const boom=await drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{slot,readAccount:async()=>{throw new Error('relation "x" does not exist');}});
+  const boom=await drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{slot,readSnapshot:async()=>{throw new Error('relation "x" does not exist');}});
   assert.equal(boom.result.status,503);assert.equal(slot.busy,0);
   assert.equal((await drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{slot})).result.status,200);
 });
@@ -428,21 +435,21 @@ test('H12 an injected cross-Bot row: 200 with status REFUSED, the code and count
 
 test('H14 an internal throw in phase 2 gives 503 QR2_REPORT_FAILED and never a MARKET_ code; an invalid composition gives 500 QR2_RESPONSE_INVALID',async()=>{
   const {bot}=await tradedBot();
-  const thrown=await drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{readAccount:async()=>{throw Object.assign(new Error('SELECT secret FROM x'),{code:'XX000'});}});
+  const thrown=await drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{readSnapshot:async()=>{throw Object.assign(new Error('SELECT secret FROM x'),{code:'XX000'});}});
   assert.equal(thrown.result.status,503);
   assert.deepEqual(thrown.result.body,{code:'QR2_REPORT_FAILED',error:'Performance report could not be produced'});
   assert.equal(JSON.stringify(thrown.result.body).includes('MARKET_'),false);
   // The deferred function never throws: called bare it returns the answer, so the market runner has nothing to convert.
   const url=new URL('http://localhost'+PATH+'?bot_id='+bot.id+'&period=DAY');
   const res={phase2Buffer:true};
-  await qr2PerformanceRoute({method:'GET',headers:{}},res,url,bot.owner,{store,auth:{},json:()=>{},enabled:true,slot:createQr2Slot(),readAccount:async()=>{throw new Error('x');}});
+  await qr2PerformanceRoute({method:'GET',headers:{}},res,url,bot.owner,{store,auth:{},json:()=>{},enabled:true,slot:createQr2Slot(),readSnapshot:async()=>{throw new Error('x');}});
   assert.deepEqual(await res.phase2Deferred(),{status:503,body:{code:'QR2_REPORT_FAILED',error:'Performance report could not be produced'}});
   // A reader that returns a view the composer cannot validate fails closed.
-  const badView=await drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{readAccount:async()=>({refused:null})});
+  const badView=await drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{compute:{run:async()=>({ok:false,kind:'response'})}});
   assert.equal(badView.result.status,500);assert.equal(badView.result.body.code,'QR2_RESPONSE_INVALID');
   for(const code of ['QR2_READER_SNAPSHOT_REQUIRED','QR2_BOUNDARY_RECORD_INVALID']){
     const error=Object.assign(new Error('internal '+code),{name:'Qr2Error',code});
-    const answer=await drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{readAccount:async()=>{throw error;}});
+    const answer=await drive(`bot_id=${bot.id}&period=DAY`,bot.owner,{readSnapshot:async()=>{throw error;}});
     assert.equal(answer.result.status,503,code);assert.equal(answer.result.body.code,'QR2_REPORT_FAILED',code);
   }
 });
@@ -502,8 +509,8 @@ test('H3 audit before read: the admin audit row exists when the reader is called
   const count=async()=>Number((await fx.db.query("SELECT count(*) AS n FROM public.audit WHERE user_id=$1 AND event=$2",[admin.id,QR2_ADMIN_READ_EVENT])).rows[0].n);
   const query=`bot_id=${bot.id}&period=DAY`;
   const seenAtRead=[];
-  const spy=async(...args)=>{seenAtRead.push(await count());return (await import('../../src/postgres/qr2-reader.js')).readQr2Account(...args);};
-  const ok=await drive(query,admin,{readAccount:spy});
+  const spy=async(...args)=>{seenAtRead.push(await count());return readQr2Snapshot(...args);};
+  const ok=await drive(query,admin,{readSnapshot:spy});
   assert.equal(ok.result.status,200);
   assert.deepEqual(seenAtRead,[1],'one committed row when the reader is called');
   const row=(await fx.db.query("SELECT details FROM public.audit WHERE user_id=$1 AND event=$2",[admin.id,QR2_ADMIN_READ_EVENT])).rows[0];
@@ -511,11 +518,11 @@ test('H3 audit before read: the admin audit row exists when the reader is called
   // Phase 2 refused because the slot is busy: no read, and the row of this request stays.
   const busySlot=createQr2Slot();busySlot.tryAcquire();
   let reads=0;
-  const busy=await drive(query,admin,{slot:busySlot,readAccount:async()=>{reads++;throw new Error('must not read');}});
+  const busy=await drive(query,admin,{slot:busySlot,readSnapshot:async()=>{reads++;throw new Error('must not read');}});
   assert.equal(busy.result.status,429);assert.equal(reads,0);
   assert.equal(await count(),2,'the row stays when the slot is busy');
   // Phase 2 failed with a throwing reader: the row stays.
-  const thrown=await drive(query,admin,{readAccount:async()=>{throw new Error('reader down');}});
+  const thrown=await drive(query,admin,{readSnapshot:async()=>{throw new Error('reader down');}});
   assert.equal(thrown.result.status,503);
   assert.equal(await count(),3,'exactly one row per request, kept when the reader throws');
 });
@@ -530,7 +537,7 @@ test('H17 phase 2 hardening: a missing slot, a reader input error and the Retry-
   assert.equal(wrongSlot.result.body.code,'QR2_REPORT_FAILED');
   // A reader QR2_INPUT_INVALID in phase 2 is not client input: 503 QR2_REPORT_FAILED. A phase 1 input refusal stays 400.
   const inputError=new Qr2Error('QR2_INPUT_INVALID','reader argument');
-  const reader=await drive(query,bot.owner,{readAccount:async()=>{throw inputError;}});
+  const reader=await drive(query,bot.owner,{readSnapshot:async()=>{throw inputError;}});
   assert.equal(reader.result.status,503);assert.equal(reader.result.body.code,'QR2_REPORT_FAILED');
   assert.equal((await drive('bot_id=all&period=DAY',bot.owner)).result.status,400);
   // 429 carries Retry-After: 2.

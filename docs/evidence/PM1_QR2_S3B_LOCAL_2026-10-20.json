@@ -1,0 +1,39 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "1480385",
+  "scope": "Local implementation of slice S3b of docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md (RC-Q35, RC-Q36): the per-Bot performance route reads its snapshot on the main thread and computes the view in one long-lived worker thread per process (deadline 10000 ms; limits 256 MB old generation, 32 MB young generation, 4 MB stack); a timeout, crash, heap or spawn failure answers 503 QR2_REPORT_FAILED with Retry-After 2 and the next request starts a new worker. The route stays behind QR2_PERFORMANCE_ENABLED, which is off everywhere.",
+  "method": "An architecture auditor (Opus 5.5) wrote the S3b design and root decided RC-Q35. A coder (Sonnet 5.5) wrote S3b; an independent architecture auditor (Opus 5.5) reviewed rounds 1 and 2; an independent tester (Sonnet 5.5) ran single-edit mutations after each of three rounds and the measurement at the read limit. Root ruled on every finding. A sole-runner tester then ran, with nothing else active, every test file that imports a changed module of the three slices of this wave (found with git grep): 54 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (804 tests, 0 fail; 3 skipped by environment gates in files this wave did not change: one non-loopback address check and two TEMP-privilege suites), the full unit suite (2150 tests, 0 fail, 6 skipped by platform gates, 9 todo) and the grant text test. Two later test-only assertions (one QR-3 reader case and one S3b import-scanner case) were checked by an independent tester (Sonnet 5.5) with their target mutations, both killed. Nobody verified their own work.",
+  "files": {
+    "src/postgres/qr2-reader.js": "21c9613b90176370c2a9d66e280d4e7e8bf5dc057c76352faf737e20b99f837c",
+    "src/postgres/qr2-routes.js": "754199b95179bd58758226f59690f9538d659a7f725639d856e01df1178f2307",
+    "src/postgres/server.js": "a8621105cff3a3468552371fce0b46f1bebe50f396d0b5f2a8a430ff61f6480c",
+    "src/postgres/qr2-compute-pool.js": "540777cc143f5f461103b97b68213fa6cf8b6898d5b1d4c774683ef1c7aebb8f",
+    "src/postgres/qr2-compute-worker.js": "65bc686b88f0257eed9c45435264a2e5506af56938f1fd994c806dd747efce9d",
+    "test/qr2-compute-pool.test.js": "27a04d48d33c40c226a11e368548fc82670a8e510ebc48212a2f058c8bdec552",
+    "test/postgres/qr2-compute-http.test.mjs": "2abeecc01a673aaac5106e84d8ee54c25421ffe9cfef4b0b3482c35bdbd57a00",
+    "test/postgres/qr2-route-http.test.mjs": "1c60ff6d1fdc8a2f864dbd058101d5009dbcfc9964bf2e3b00fdfd84aa4a643e"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "qr2-compute-pool 29 of 29, qr2-compute-http 5 of 5 and qr2-route-http 21 of 21 pass with 0 skipped; the S2 reader files pass unchanged. Measurement (RC-Q36): with the worker the longest event-loop delay was 38.5 ms (F1) and 42.6 and 46.2 ms (F2), against inline stalls of about 3.7 s; a parallel cheap request p95 about 1.1 ms; F2 route p95 3859 ms in one run and 4443 ms in the other against the 4237 ms bar, both below 5 s.",
+  "mutations": {
+    "round1": "7 of 8 killed; the survivor zeroes read_ms, a timing field with no deterministic assertion.",
+    "round2": "4 of 4 killed.",
+    "round3": "1 of 2 killed; the import-scanner survivor became a test and was killed in the later check."
+  },
+  "limits": [
+    "The F2 route p95 bar (S3a p95 plus 300 ms) is not reliably met on this machine: one of two runs passed.",
+    "A 512 MB old-generation limit was about 2.3 times slower; the cause was not investigated.",
+    "The route stays off everywhere; before it is turned on, the target server is measured again and its memory headroom is read.",
+    "Measured on Windows with Node 24 only; no staging or VPS measurement."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S3b as local engineering evidence for the QR-2 row. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}

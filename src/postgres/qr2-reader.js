@@ -313,16 +313,38 @@ function computeAccount(snapshot,{botId,broker,from,to,requestTime,boundaries,op
  * or a value read from a row of another Bot or owner (rows is null).
  */
 export async function readQr2Account(store,args){
+  const {snapshot,input}=await readQr2Snapshot(store,args);
+  return computeQr2View(snapshot,input);
+}
+
+/**
+ * The database half of readQr2Account (QR-2 S3b, RC-Q35): validates the arguments, then reads the snapshot inside its own REPEATABLE READ,
+ * READ ONLY transaction, which has closed when this returns; inside a request transaction it joins that parent transaction, which stays
+ * open (its owner closes it). It returns {snapshot,input}: both are plain data (no handle, no function, no
+ * class instance) so a worker thread can compute the view from them with no database access. input holds the validated, frozen boundaries
+ * and limits and the measured read time. No SQL, limit, refusal or field differs from the former readQr2Account.
+ */
+export async function readQr2Snapshot(store,args){
   const {boundaries,limits}=checkArguments(args);
   const {ownerId,botId,broker,from,to,requestTime}=args,option=args.option||'M';
   const started=nowMs();
   const snapshot=await store.db.transaction(()=>readSnapshot(store,{ownerId,botId,broker,from,to,requestTime,limits,option}),{isolation:'REPEATABLE READ'});
-  const readEnded=nowMs();
+  return {snapshot,input:{ownerId,botId,broker,from,to,requestTime,option,boundaries,limits,read_ms:nowMs()-started}};
+}
+
+/**
+ * The pure half (RC-Q35): replays, gates and values one snapshot and assembles the reader view. It reads no database, clock (except the
+ * compute timer), network or module state, so it gives the same view in the main thread and in a worker thread (structured clone of the
+ * snapshot is lossless: see the clone-safety test).
+ */
+export function computeQr2View(snapshot,input){
+  const {ownerId,botId,broker,from,to,requestTime,boundaries,limits,option='M',read_ms}=input;
+  const computeStarted=nowMs();
   const view=computeAccount(snapshot,{botId,broker,from,to,requestTime,boundaries,option});
   const computeEnded=nowMs();
   const {replay,gates}=view;
   const common={
-    reader:{method:QR2_READER_METHOD,isolation:snapshot.isolation,read_only:snapshot.read_only,read_ms:readEnded-started,compute_ms:computeEnded-readEnded,limits,counts:snapshot.counts},
+    reader:{method:QR2_READER_METHOD,isolation:snapshot.isolation,read_only:snapshot.read_only,read_ms,compute_ms:computeEnded-computeStarted,limits,counts:snapshot.counts},
     scope:{owner_id:ownerId,bot_id:botId,broker,account_id:broker+':primary',currency:broker==='binance-global'?'USDT':'THB'},
     boundary_record:{record_id:boundaries.record_id,evidence:boundaries.evidence},
     request:{from,to,request_time:requestTime},
