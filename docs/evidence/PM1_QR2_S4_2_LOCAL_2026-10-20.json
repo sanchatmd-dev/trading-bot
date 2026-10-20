@@ -1,0 +1,32 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "027b320",
+  "scope": "Local implementation of QR-2 sub-slice S4-2 (RC-Q38): the pure owner-total allocation module src/portfolio/qr2-allocation.js and its unit tests. It reads no database and is wired into no route, worker or view.",
+  "method": "The S4 design as in RC-Q37. A coder (Sonnet 5.5) wrote S4-2; an independent architecture auditor (Opus 5.5) reviewed it for double counting and partial totals and found that an account of a Bot created after the range failed the request; root ruled on that and five smaller findings; the coder fixed them; an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, every test file that imports a changed module of this batch (found with git grep): 22 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (392 tests, 0 fail; 2 skipped by the TEMP-privilege environment gate in a file this batch did not change), the full unit suite (2214 tests, 0 fail, 6 skipped by platform gates, 9 todo) and the grant text test; every changed file had the same hash before and after. Nobody verified their own work.",
+  "files": {
+    "src/portfolio/qr2-allocation.js": "c973c043d2d40774755aa378d70d49eb31a6a24fe235c0600b7a6cc20b04c281",
+    "test/qr2-allocation.test.js": "22786212a58656f6685f98d760aed30404e4c9e1f37f297e0ee76279462bd64e"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/qr2-allocation.test.js 34 of 34 pass, with hand-computed fixtures; the QR-2 response and portfolio tests pass unchanged.",
+  "mutations": {
+    "round1": "15 of 15 killed.",
+    "round2": "6 of 6 rule classes killed (8 edits)."
+  },
+  "limits": [
+    "Provisional until the owner decides the S4 items: the strict reading that a range starting before a declaration takes effect has no total.",
+    "Whether the summed fees are cumulative or range fees (8.1) stays open.",
+    "The S4-5 adapter must supply NAV at both ends, price states and the RX keys per account; the composed per-Bot response does not carry all of them today.",
+    "Not wired; no owner total is computed anywhere."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S4-2 as local engineering evidence for the QR-2 row. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}
