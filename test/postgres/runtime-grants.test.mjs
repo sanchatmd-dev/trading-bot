@@ -16,10 +16,17 @@ const PROTECTED=['quant_foundation_jobs','quant_foundation_owners','quant_founda
 // quant-exposure-register.sql (the PROTECTED loop asserts every protected table is installed) and best-inputs-package-schema.sql (F09 builder slice S2).
 const SCHEMAS=['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql',
   'quant-research-foundation-schema.sql','quant-storage-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql',
-  'quant-preflight-schema.sql','quant-profile-enrollment-schema.sql','quant-exposure-register.sql','best-inputs-package-schema.sql'];
+  'quant-preflight-schema.sql','quant-profile-enrollment-schema.sql','quant-exposure-register.sql','best-inputs-package-schema.sql',
+  'quant-comparison.sql','quant-selection.sql','mp-member-set.sql'];
 // The ten insert-only Best Inputs record tables: SELECT and INSERT stay, UPDATE, DELETE, TRUNCATE and TRIGGER never; the marker is read-only.
 const INSERT_ONLY=['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records','bi_evidence_records',
   'bi_clearances','bi_trace_reproductions','ql4c_validation'];
+// The record tables of the QR-3 comparison, QR-4 selection (first four tables in slice S2-1) and F11 member set extensions: the same insert-only rule.
+// The quant-comparison.sql install adds the three QR-3 S2c-1 tables; later QR-3 and QR-4 slices add theirs to this list.
+const EXTENSION_INSERT_ONLY=['quant_comparison_specs','quant_comparison_participants','quant_comparison_status_events',
+  'quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events',
+  'mp_member_sets','mp_member_set_members'];
+const EXTENSION_MARKERS=['quant_comparison_schema','quant_selection_schema','mp_member_set_schema'];
 // What psql -v runtime_role=<role> does for :'runtime_role'.
 const withRole=(sql,role)=>sql.replaceAll(":'runtime_role'","'"+role.replaceAll("'","''")+"'");
 
@@ -90,16 +97,16 @@ test('runtime grants: DELETE is refused on the eleven protected tables while sch
   assert.equal(await privilege(role,'quant_foundation_scheduler','UPDATE'),true);
   await db.transaction(async()=>{await db.query('SET LOCAL ROLE '+role);await db.query('LOCK TABLE quant_foundation_scheduler IN EXCLUSIVE MODE');});
   // Read-only provenance stays read-only; elsewhere the runtime keeps DELETE (sessions).
-  for(const table of ['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars','quant_exposure_register_schema','bi_package_schema'])
+  for(const table of ['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars','quant_exposure_register_schema','bi_package_schema',...EXTENSION_MARKERS])
     for(const kind of ['INSERT','UPDATE','DELETE'])assert.equal(await privilege(role,table,kind),false,table+' '+kind);
   // Insert-only Best Inputs record tables: SELECT and INSERT stay, nothing that edits or removes a row, whatever history left behind.
-  for(const table of INSERT_ONLY){
+  for(const table of [...INSERT_ONLY,...EXTENSION_INSERT_ONLY]){
     assert.ok((await db.query('SELECT to_regclass($1) AS name',['public.'+table])).rows[0].name,table+' is installed');
     for(const kind of ['SELECT','INSERT'])assert.equal(await privilege(role,table,kind),true,table+' '+kind);
     for(const kind of ['UPDATE','DELETE','TRUNCATE','TRIGGER'])assert.equal(await privilege(role,table,kind),false,table+' '+kind);
     await assert.rejects(db.transaction(async()=>{await db.query('SET LOCAL ROLE '+role);await db.query('DELETE FROM '+table);}),{code:'42501'},table);
   }
-  assert.equal(await privilege(role,'bi_package_schema','SELECT'),true,'the package marker stays readable');
+  for(const marker of ['bi_package_schema',...EXTENSION_MARKERS])assert.equal(await privilege(role,marker,'SELECT'),true,marker+' stays readable');
   for(const table of ['sessions','auth_challenges','password_resets','security_mail','mfa_recovery','user_security',
     'worker_heartbeats','security_limits'])assert.equal(await privilege(role,table,'DELETE'),true,table+' keeps the runtime DELETE');
   // A privilege held through a role the runtime role reaches by membership but does not inherit is still refused: SET ROLE reaches it, while
