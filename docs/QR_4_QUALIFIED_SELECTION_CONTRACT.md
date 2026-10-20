@@ -1,6 +1,6 @@
 # QR-4 qualified best-performance selection contract
 
-Status: owner decisions OD-S1 to OD-S20 recorded 2026-10-19; root decided RO-1 to RO-12 the same day.
+Status: owner decisions OD-S1 to OD-S20 recorded 2026-10-19; root decided RO-1 to RO-12 the same day. Root decided the S2 storage design on 2026-10-20 (RC-S21 to RC-S27).
 Root accepted the other rules after independent review.
 Implementation status: the S1 pure module (`src/selection/`) and its test file are root-accepted as local
 engineering evidence. Nothing is wired to a route, a table or a worker. Root clarifications from the S1 review are in
@@ -1033,6 +1033,13 @@ RC-S16 record the shape that the S1 module expects. Root fixes the final form wh
 | RC-S18 | A development-only participant (label NOT_EVALUATED, NO_SCREENED_CANDIDATE or DEVELOPMENT_ONLY) gets `QR4_DEVELOPMENT_SCORE_NOT_RANKABLE` with the first failing gate or the label as detail; a `QUALIFIED` label with a failing gate, unchecked integrity or a run that did not succeed gets `QR4_PARTICIPANT_NOT_QUALIFIED` (from the independent section 16 test pass) | 4.1, 4.2 | Root | 2026-10-19 |
 | RC-S19 | The development view accepts only the query parameters limit, offset, page_size and include_gates, and an evaluation request accepts only its listed keys; every other key is refused | 3.3, 5.4 | Root | 2026-10-19 |
 | RC-S20 | An imported bundle in the universe gets `QR4_PARTICIPANT_NOT_READY` with detail IMPORTED_BUNDLE; a metric of the wrong type is treated as missing (`QR4_METRIC_MISSING`) | 4.2, 7.1, 10 | Root | 2026-10-19 |
+| RC-S21 | S2 is its own offline extension (`quant-selection` version 1, marker `quant_selection_schema`) in two sub-slices inside the same uninstalled file: S2-1, registration (registrations, universe rows, participants, status events, the register and cancel store functions and the owner read), and S2-2 (the RO-12 rechecks, freeze, evaluation starts, outcome and replay). SQLSTATE plan as PKG RC-25: `QR002` edits, `QR003` writes outside SERIALIZABLE, `QR004` insert guards mapped by guard name. Every write is SERIALIZABLE with at most three retries after a serialization failure; guards take no advisory locks. | 13, 17 | Root | 2026-10-20 |
+| RC-S22 | The registration time is read from the database clock inside the SERIALIZABLE registration transaction and hashed into the body. A trigger stamps `frozen_at_ms` separately, never overwrites the hashed value, requires the two to be at most 60 s apart and requires a PROSPECTIVE window to start after `frozen_at_ms`. | 5.3, 13.1 | Root | 2026-10-20 |
+| RC-S23 | A participant references its export (`export_id`, `package_hash`) in the F09 builder tables, and an insert guard requires a validated one-Pine export of the same owner whose fixture flag equals the selection's; installing QR-4 therefore requires the builder extension. | 4.1, 13.1 | Root | 2026-10-20 |
+| RC-S24 | The universe is stored as rows and as a full copy in the hashed body. Status is an insert-only event log whose pinned SQL transition table must equal `TRANSITIONS` and `INCOMPLETE_CODES` of `src/selection/lifecycle.js` (pin test). `evaluation_run_id` is unique with no foreign key in S2-1; S3 adds the `quant_jobs` link to the same uninstalled file. The evaluation-start guard refuses a start after the admission deadline by the database clock. | 5.4, 8.1, 13.1 | Root | 2026-10-20 |
+| RC-S25 | The later rechecks (each evaluation start and the outcome write) read the register through a new lock-first reader, `readExposuresLocked` (S2-2, its own review), so all three RO-12 transactions take the register lock first. | 13.3 (RO-12) | Root | 2026-10-20 |
+| RC-S26 | Rollback refuses while any QR-4 row or any `QR4_SELECTION` register row exists. A searched train window starts at the dataset start, warm-up included. The prior-selection count covers every earlier selection of the owner, fixtures included. | 5.3, 13.3 | Root | 2026-10-20 |
+| RC-S27 | A window data gap found before the first evaluation start uses the `REGISTERED` to `INCOMPLETE` edge with `WINDOW_DATA_UNAVAILABLE` (RC-S3). | 8.1, 10 | Root | 2026-10-20 |
 
 ### 17.4 Open owner items
 
