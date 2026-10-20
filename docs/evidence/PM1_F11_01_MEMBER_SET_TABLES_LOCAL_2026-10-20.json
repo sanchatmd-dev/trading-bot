@@ -1,0 +1,37 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "d30d4b3",
+  "scope": "Local implementation of the multi-Pine member-set tables of docs/MULTI_PINE_CONTRACT.md (RD-MP-11 to RD-MP-16) for PM-1 row F11-01: an offline PostgreSQL extension with a parent table (UNIQUE(owner_id, bot_id, content_digest)) and a member child table tied to Pine Bridge deployments and revisions, QR002 freeze, QR003 SERIALIZABLE guard, a QR004 member insert guard (mapped to MP_MEMBER_SET_STALE), a deferred completeness check (members equal pine_count and the Bot's connected memberships), exit versions limited to bridge-exit-v1 and bridge-exit-v2, a rollback that refuses while any row exists and an install, inspect and rollback tool. No store function, service, route or product reader exists yet.",
+  "method": "An architecture auditor (Opus 5.5) wrote the F11-01 table design and root decided RD-MP-12 to RD-MP-15 (QR004 instead of a new code, SERIALIZABLE writers). A coder (Sonnet 5.5) wrote the extension. An independent architecture auditor (Opus 5.5) reviewed two rounds (acceptable with minor findings each time). An independent tester (Sonnet 5.5) ran the PostgreSQL suite and single-edit mutations after each of three rounds. A sole-runner tester then ran, with nothing else active, test/postgres/runtime-grants.test.mjs and every new extension file one file per process on a throwaway PostgreSQL 16.15 cluster (fail 0 and skipped 0 in each), the install, inspect and rollback sequence of all three new tools with the repo grant script, test/postgres-runtime-grants.test.js and the full unit suite (2115 tests, 0 fail, 6 skipped, 9 todo). Root ruled on every finding. Nobody verified their own work.",
+  "files": {
+    "src/postgres/mp-member-set.sql": "41c188d48ee766b2063eab774edc972aedc58cc373f520dfa46b0b2261a98437",
+    "src/postgres/mp-member-set-rollback.sql": "423ec31ffd5a82c5ee653727daa1195301a2d511b5d3406e69e3eb79f2b48ee9",
+    "src/postgres/mp-member-set-migration.js": "a7c40ba8dd43e962ab213577fbedfb0ac325e0e370ebe0e38f1f6f1039cf457f",
+    "scripts/migrate-mp-member-set.mjs": "5e132ce83786ed653c41e44d6ee0eaebaac2e3a3ef10c3d20f43f610ddb03422",
+    "test/postgres/mp-member-set.test.mjs": "481a171e1816b1fb57ce819358d52040339c32b8cf3bddd6f57334b47ad94027"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/postgres/mp-member-set.test.mjs 22 of 22 pass with 0 skipped; the tool sequence exits 0 and inspect with the runtime role reports no failures.",
+  "mutations": {
+    "round1": "6 of 6 killed.",
+    "round2": "5 of 5 killed (two only through the pinned definition check).",
+    "round3": "2 of 2 killed (connected-count pair)."
+  },
+  "limits": [
+    "Tables only: the freeze-or-load store function, the internal run store, the combined evaluator and the service do not exist.",
+    "The store slice must take FOR SHARE on the member deployments and the Bot's memberships inside one SERIALIZABLE transaction (RD-MP-15).",
+    "While this extension is installed the Pine Bridge tables cannot be dropped (foreign keys); roll this extension back first.",
+    "created_at may carry a number-valid but non-calendar day; the S1 builder and the server clock check it.",
+    "Not installed on staging; column collation is not classified yet."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the design, the agent reports, the rulings, the sole-runner verification and the final diff and accepted the member-set tables as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself, installs nothing and writes no row."
+  }
+}
