@@ -1,7 +1,7 @@
 import {canonical,hash,executable} from '../pine-bridge/source.js';
 import {assemble} from '../pine-bridge/template.js';
 import {PACKAGE_FILES,MANIFEST_PATH,ENGINEERING_SCOPE,SUPPORTED_EXIT_VERSIONS,CODE_PATTERN,METRIC_KEYS,
-  buildManifest,packageHash,bindingHash,bindingComplete,effectiveInputHash,scanContent} from './package-gates.js';
+  buildManifest,packageHash,bindingHash,bindingComplete,effectiveInputHash,scanContent,explainBoundDefault} from './package-gates.js';
 import {selectedOf} from './derive.js';
 
 /**
@@ -121,47 +121,16 @@ function csvText(spec,name){
 
 /* ---- source edits (4.2 indicator.pine: only selected numeric default literals change) ---- */
 
-/**
- * Finds the numeric default literal of one input statement, the way the Bridge parser reads it: the named defval argument if any,
- * else the first positional argument. span is the stored statement span {start, end} in the original source.
- */
-const INPUT_STATEMENT=/^(?:(?:var|varip|const|simple|series)\s+)?(?:(?:int|float|bool|string|color)\s+)?([A-Za-z_]\w*)\s*=\s*input\.(\w+)\s*\(/;
-function locateLiteral(source,masked,span,binding){
-  const variable=binding.pine_variable,statement=masked.slice(span.start,span.end),open=statement.match(INPUT_STATEMENT);
-  if(!open)throw refuse('RENDER_SOURCE_UNRESOLVED',variable+': no input statement at the start of the stored span');
-  if(open[1]!==variable)throw refuse('RENDER_SOURCE_UNRESOLVED',variable+': the stored span holds another variable');
-  if(open[2]!==binding.type)throw refuse('RENDER_SOURCE_UNRESOLVED',variable+': the input call kind differs from the binding type');
-  const from=span.start+open[0].length,args=[];
-  let depth=1,begin=from,close=-1;
-  for(let i=from;i<span.end&&i<masked.length;i++){
-    if('([{'.includes(masked[i]))depth++;
-    if(')]}'.includes(masked[i]))depth--;
-    if(depth===0){args.push([begin,i]);close=i;break;}
-    if(masked[i]===','&&depth===1){args.push([begin,i]);begin=i+1;}
-  }
-  if(depth!==0)throw refuse('RENDER_SOURCE_UNRESOLVED',variable+': unbalanced input call');
-  if(close+1!==span.end)throw refuse('RENDER_SOURCE_UNRESOLVED',variable+': the stored span does not end at the closing parenthesis');
-  let positional=null,named=null;
-  for(const [a,b] of args){
-    const raw=source.slice(a,b),trimmed=raw.trim(),lead=raw.length-raw.trimStart().length,pair=trimmed.match(/^(\w+)\s*=\s*([\s\S]*)$/);
-    if(pair){if(pair[1]==='defval')named=[a+lead+(trimmed.length-pair[2].length),a+lead+trimmed.length];}
-    else if(positional===null)positional=[a+lead,a+lead+trimmed.length];
-  }
-  const range=named??positional;
-  if(range===null)throw refuse('RENDER_SOURCE_UNRESOLVED',variable+': no default value');
-  return {start:range[0],end:range[1],literal:source.slice(range[0],range[1])};
-}
 function sourceEdits(source,bindings,afterOf){
   const masked=executable(source),edits=[];
   for(const binding of bindings){
-    const span=binding.source_span;
-    if(!isObject(span)||!Number.isSafeInteger(span.start)||!Number.isSafeInteger(span.end)||span.start<0||span.end<span.start||span.end>source.length)
-      throw refuse('RENDER_SOURCE_UNRESOLVED',binding.pine_variable+': source span');
-    const found=locateLiteral(source,masked,span,binding);
-    if(!NUMERIC_LITERAL.test(found.literal)||Number(found.literal)!==binding.effective_value)throw refuse('RENDER_SOURCE_UNRESOLVED',binding.pine_variable+': default literal');
+    // The anchored locator is shared with gate C2, which requires every disclosed edit to sit exactly where it finds the default.
+    const found=explainBoundDefault(source,binding,masked);
+    if(found.reason!==undefined)throw refuse('RENDER_SOURCE_UNRESOLVED',binding.pine_variable+': '+found.reason);
+    if(!NUMERIC_LITERAL.test(found.before)||Number(found.before)!==binding.effective_value)throw refuse('RENDER_SOURCE_UNRESOLVED',binding.pine_variable+': default literal');
     const after=afterOf.get(binding.input_id);
     // An unchanged value keeps its original bytes: no edit.
-    if(Number(after)!==Number(found.literal))edits.push({input_id:binding.input_id,start:found.start,end:found.end,before:found.literal,after});
+    if(Number(after)!==Number(found.before))edits.push({input_id:binding.input_id,start:found.start,end:found.end,before:found.before,after});
   }
   edits.sort(byKey('start'));
   for(let i=1;i<edits.length;i++)if(edits[i].start<edits[i-1].end)throw refuse('RENDER_SOURCE_UNRESOLVED','overlapping edits');

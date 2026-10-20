@@ -1,4 +1,4 @@
-import {canonical,hash} from '../pine-bridge/source.js';
+import {canonical,hash,executable} from '../pine-bridge/source.js';
 import {assemble} from '../pine-bridge/template.js';
 import {RECOMMENDATION_COMPLETION_REASON,OWNER_RECOMMENDATION_CONTRACT_VERSIONS,ownerRecommendationGate} from './owner-recommendation.js';
 import {isObject,isCompleted,selectedOf,selectedReasons,holdoutWindow,windowsOverlap,classify,candidateAggregates,holdoutTooFewTrades,metrics,marketKey,MINUTE} from './derive.js';
@@ -478,6 +478,53 @@ function assembledIndicator(prefix,binding,contract,inputs){
     return typeof out?.integrated_pine==='string'?out.integrated_pine:null;
   }catch{return null;}
 }
+/* ---- anchored default locator (shared by the renderer and C2) ---- */
+
+/**
+ * Finds the numeric default literal of one selected input the way the Bridge parser reads it: the input statement must START at
+ * binding.source_span.start (anchored on the masked source), declare binding.pine_variable with the call kind binding.type, and
+ * its closing parenthesis + 1 must equal binding.source_span.end. The literal is the named defval argument if any, else the first
+ * positional argument. Returns {start, end, before} or {reason}. It throws only if executable(source) does. masked may be passed
+ * when the caller has it already.
+ */
+const INPUT_STATEMENT=/^(?:(?:var|varip|const|simple|series)\s+)?(?:(?:int|float|bool|string|color)\s+)?([A-Za-z_]\w*)\s*=\s*input\.(\w+)\s*\(/;
+export function explainBoundDefault(source,binding,masked=executable(source)){
+  const span=binding?.source_span;
+  if(typeof source!=='string'||!isObject(span)||!Number.isSafeInteger(span.start)||!Number.isSafeInteger(span.end)||span.start<0||span.end<span.start||span.end>source.length)
+    return {reason:'source span'};
+  const statement=masked.slice(span.start,span.end),open=statement.match(INPUT_STATEMENT);
+  if(!open)return {reason:'no input statement at the start of the stored span'};
+  if(open[1]!==binding.pine_variable)return {reason:'the stored span holds another variable'};
+  if(open[2]!==binding.type)return {reason:'the input call kind differs from the binding type'};
+  if(span.start!==0&&masked[span.start-1]!=='\n'&&masked[span.start-1]!=='\r')return {reason:'the stored span does not start at a line start'};
+  const from=span.start+open[0].length,args=[];
+  let depth=1,begin=from,close=-1;
+  for(let i=from;i<span.end&&i<masked.length;i++){
+    if('([{'.includes(masked[i]))depth++;
+    if(')]}'.includes(masked[i]))depth--;
+    if(depth===0){args.push([begin,i]);close=i;break;}
+    if(masked[i]===','&&depth===1){args.push([begin,i]);begin=i+1;}
+  }
+  if(depth!==0)return {reason:'unbalanced input call'};
+  if(close+1!==span.end)return {reason:'the stored span does not end at the closing parenthesis'};
+  let positional=null,named=null;
+  for(const [a,b] of args){
+    const raw=source.slice(a,b),trimmed=raw.trim(),lead=raw.length-raw.trimStart().length,pair=trimmed.match(/^(\w+)\s*=\s*([\s\S]*)$/);
+    if(pair){if(pair[1]==='defval')named=[a+lead+(trimmed.length-pair[2].length),a+lead+trimmed.length];}
+    else if(positional===null)positional=[a+lead,a+lead+trimmed.length];
+  }
+  const range=named??positional;
+  if(range===null)return {reason:'no default value'};
+  return {start:range[0],end:range[1],before:source.slice(range[0],range[1])};
+}
+/** The anchored default literal of a binding as {start, end, before}, or null when the binding does not name an input statement exactly. Never throws. */
+export function locateBoundDefault(source,binding,masked){
+  try{
+    const found=explainBoundDefault(source,binding,masked);
+    return found.reason===undefined?found:null;
+  }catch{return null;}
+}
+
 /** Approved edits are numeric default literals inside the span of a selected input. indicator.pine must equal, byte for byte,
  * the Bridge output for the registered source with only those edits applied and the package Bridge values; any other
  * difference, in the original part or in the appended block, is a logic change. */
@@ -485,12 +532,18 @@ function logicIntact({original,indicator,edits,inputs,bindings,assembleFrom}){
   if(typeof original!=='string'||typeof indicator!=='string'||!Array.isArray(edits)||!Array.isArray(inputs?.source_inputs))return false;
   const byId=new Map(bindings.map(binding=>[binding.input_id,binding])),afterOf=new Map(inputs.source_inputs.filter(isObject).map(item=>[item.input_id,item]));
   const used=new Set();
+  let masked;
+  try{masked=executable(original);}catch{return false;}
   for(const edit of edits){
     const binding=isObject(edit)?byId.get(edit.input_id):undefined,span=binding?.source_span,input=afterOf.get(edit?.input_id);
     if(!binding||!isObject(span)||used.has(edit.input_id)||!isObject(input))return false;
     used.add(edit.input_id);
     const {start,end}=edit;
     if(!Number.isSafeInteger(span.start)||!Number.isSafeInteger(span.end)||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<span.start||end>span.end||start>end||end>original.length)return false;
+    // The edit must sit exactly where the anchored locator finds the default of this binding: a wide or stale stored span proves nothing.
+    const located=locateBoundDefault(original,binding,masked);
+    if(located===null||located.start!==start||located.end!==end||located.before!==edit.before)return false;
+    if(decimalNumber(edit.before)!==decimalNumber(input.before))return false;
     if(original.slice(start,end)!==edit.before||typeof edit.after!=='string'||!DECIMAL.test(edit.after)||decimalNumber(edit.after)!==decimalNumber(input.after))return false;
   }
   for(const input of afterOf.values())if(decimalNumber(input.after)!==decimalNumber(input.before)&&!used.has(input.input_id))return false;
@@ -823,10 +876,11 @@ export function transition(from,event){
   const {pass,codes,mode,attempt_no:attempt}=event;
   if(!Number.isSafeInteger(attempt)||attempt<1||attempt>MAX_VALIDATION_ATTEMPTS||typeof pass!=='boolean'||!MODES.includes(mode)||
     !Array.isArray(codes)||!codes.every(code=>typeof code==='string'&&CODE_PATTERN.test(code)))return refuse();
+  if(codes.includes('BI_ATTEMPTS_EXHAUSTED'))return refuse();
   if(pass)return codes.length===0?move(mode==='ONE_PINE'?STATUS.EXPORT_VALIDATED:STATUS.EXPORT_INTERNAL):refuse();
   if(codes.length===0)return refuse();
   if(!codes.every(isRetryable))return move(STATUS.EXPORT_REFUSED,codes);
-  return attempt>=MAX_VALIDATION_ATTEMPTS?move(STATUS.EXPORT_REFUSED,['BI_ATTEMPTS_EXHAUSTED']):move(STATUS.EXPORT_CANDIDATE,codes);
+  return attempt>=MAX_VALIDATION_ATTEMPTS?move(STATUS.EXPORT_REFUSED,[...new Set([...codes,'BI_ATTEMPTS_EXHAUSTED'])]):move(STATUS.EXPORT_CANDIDATE,codes);
 }
 
 /* ---- derived freshness and READY (sections 6.2, 6.3) ---- */

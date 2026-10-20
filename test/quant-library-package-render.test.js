@@ -373,6 +373,9 @@ test('the stored span must hold the statement of the bound variable, with the bo
   // a span that starts inside the statement is not anchored at an input statement
   failure(bind('fastLen',{start:start+first.indexOf('='),end:start+first.length}),'RENDER_SOURCE_UNRESOLVED',/no input statement/);
   failure(bind('fastLen',{start:start+1,end:start+first.length}),'RENDER_SOURCE_UNRESOLVED',/another variable/);
+  // a span that starts mid-line, after another identifier, is not at a line start
+  const prefixed='x'+first,prefixedSource=sourceOf(prefixed),prefixedStart=prefixedSource.indexOf(prefixed);
+  failure(()=>custom(prefixedSource,[{variable:'fastLen',type:'int',value:10,after:15,statement:first,slot:1,span:{start:prefixedStart+1,end:prefixedStart+prefixed.length}}]),'RENDER_SOURCE_UNRESOLVED',/line start/);
   // the second statement still resolves when the span is exact
   const ok=custom(source,[{variable:'slowLen',type:'int',value:10,after:15,statement:second,slot:1}]);
   assert.ok(ok.rendered.files['indicator.pine'].includes('slowLen = input.int(15, "S")')&&ok.rendered.files['indicator.pine'].includes('fastLen = input.int(10, "F")'));
@@ -382,6 +385,17 @@ test('the stored span must hold the statement of the bound variable, with the bo
   // a typed declaration is accepted
   const typed='var int typedLen = input.int(10, "T")';
   assert.ok(custom(sourceOf(typed),[{variable:'typedLen',type:'int',value:10,after:15,statement:typed,slot:1}]).rendered.files['indicator.pine'].includes('input.int(15, "T")'));
+});
+
+test('a CR-only source renders after a lone carriage return and refuses a span that is not at a line start',()=>{
+  const source=['indicator("Cr fixture", overlay=true)',A,B,...TAIL].join('\r');
+  const run=custom(source,[{variable:'bLen',type:'int',value:20,after:25,statement:B,slot:1}]);
+  const edits=JSON.parse(run.rendered.files['indicator.json']).edits;
+  assert.deepEqual(edits.map(edit=>source.slice(edit.start,edit.end)),['20']);
+  assert.ok(run.rendered.files['indicator.pine'].startsWith(source.replace('input.int(20,','input.int(25,')));
+  assert.equal(evaluateCompile(run.subject).pass,true);
+  const prefixed='x'+A,prefixedSource=['indicator("Cr fixture", overlay=true)',prefixed,...TAIL].join('\r'),prefixedStart=prefixedSource.indexOf(prefixed);
+  failure(()=>custom(prefixedSource,[{variable:'aLen',type:'int',value:10,after:15,statement:A,slot:1,span:{start:prefixedStart+1,end:prefixedStart+prefixed.length}}]),'RENDER_SOURCE_UNRESOLVED',/line start/);
 });
 
 test('exit_version is required and never defaulted',()=>{
@@ -413,6 +427,10 @@ test('the selected parameters must be exactly the bound variables plus the Bridg
   failure(()=>scenario({contract:c=>{c.snapshot.membership[0].pine_import_id='7a6f4e21-5d3c-4b7a-8e19-2c4d6f8a0b1e';}}),'RENDER_INPUT_INVALID',/membership\[0\]/);
   failure(()=>scenario({contract:c=>{c.snapshot.membership[0].source_version=2;}}),'RENDER_INPUT_INVALID',/membership\[0\]/);
   failure(()=>scenario({contract:c=>{c.snapshot.membership[0].source_hash=hex('other-source');}}),'RENDER_INPUT_INVALID',/membership\[0\]/);
+});
+
+test('an extra selected parameter that sorts after every expected key is refused',()=>{
+  failure(()=>scenario({result:r=>{r.selected.parameters={...r.selected.parameters,zzz:3};}}),'RENDER_INPUT_INVALID',/exactly the binding variables/);
 });
 
 test('at most eight selected source inputs are rendered, and nine are refused',()=>{
@@ -470,6 +488,8 @@ test('numbers are written as plain decimals: no exponent in CSV, inputs or risk 
 test('created_at must be a real calendar time',()=>{
   for(const stamp of ['2026-02-30T00:00:00Z','2026-02-29T00:00:00Z','2026-04-31T00:00:00Z','2026-10-19T24:00:00Z','2026-00-10T00:00:00Z','2026-10-00T00:00:00Z','2026-10-19T12:60:00Z'])
     failure(()=>scenario({input:i=>{i.created_at=stamp;}}),'RENDER_INPUT_INVALID');
+  for(const stamp of ['1900-02-29T00:00:00Z','2100-02-29T00:00:00Z'])failure(()=>scenario({input:i=>{i.created_at=stamp;}}),'RENDER_INPUT_INVALID');
+  assert.equal(scenario({input:i=>{i.created_at='2000-02-29T00:00:00Z';}}).rendered.binding.created_at,'2000-02-29T00:00:00Z');
   assert.equal(scenario({input:i=>{i.created_at='2028-02-29T23:59:59Z';}}).rendered.binding.created_at,'2028-02-29T23:59:59Z');
   assert.equal(scenario({input:i=>{i.created_at='2026-12-31T23:59:59.123456789Z';}}).rendered.binding.created_at,'2026-12-31T23:59:59.123456789Z');
 });

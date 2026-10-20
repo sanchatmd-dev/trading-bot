@@ -438,6 +438,61 @@ test('C2 logic diff: one byte changed outside the approved defaults gives BI_SOU
   assert.equal(C2(golden()).pass,true,'the disclosed default edit and the appended block are allowed');
 });
 
+/** A golden package over a custom source. The binding names variable and type, its stored span is span, and the one disclosed edit replaces the two digits at editStart. */
+function anchored({source,variable='emaFastInput',type='int',span,editStart}){
+  return golden({contract:c=>{
+    c.source=source;c.source_hash=hash(source);c.snapshot.membership[0].source_hash=c.source_hash;
+    Object.assign(c.input_lock.selection.bindings[0],{pine_variable:variable,type,source_span:span});
+  },files:files=>{
+    files['indicator.pine']=bridgeIndicator(source.slice(0,editStart)+'30'+source.slice(editStart+2),'1.5','1');
+    editJson(files,'indicator.json',i=>{Object.assign(i.edits[0],{start:editStart,end:editStart+2,before:'50'});});
+  }});
+}
+test('C2 anchor: an edit must sit where the anchored locator finds the default of the bound variable (F09 gate C2)',()=>{
+  const first='fastLen = input.int(50, "F")',second='slowLen = input.int(50, "S")',tail=['emaFast = ta.ema(close, 20)','buySignal = ta.crossover(emaFast, 1)','sellSignal = ta.crossunder(emaFast, 1)','plot(emaFast)',''];
+  const build=eol=>['//@version=6','indicator("Anchor fixture", overlay=true)',first,second,...tail].join(eol);
+  const source=build('\n'),start=source.indexOf(first),secondStart=source.indexOf(second);
+  const literalOf=(text,statement)=>text.indexOf(statement)+statement.indexOf('(')+1;
+  const exact=(text,statement)=>({start:text.indexOf(statement),end:text.indexOf(statement)+statement.length});
+  assert.equal(C2(anchored({source,variable:'fastLen',span:exact(source,first),editStart:literalOf(source,first)})).pass,true,'a correct edit passes');
+  assert.equal(C2(anchored({source,variable:'slowLen',span:exact(source,second),editStart:literalOf(source,second)})).pass,true,'the second input passes with its own exact span');
+  // the auditor probe: a wide span names slowLen but the edit changes fastLen, which has the same default
+  const wide=anchored({source,variable:'slowLen',span:{start,end:secondStart+second.length},editStart:literalOf(source,first)});
+  expectCodes(C2(wide),['BI_SOURCE_LOGIC_CHANGED'],'wide span, edit of another input with the same default');
+  // a wrong call kind
+  expectCodes(C2(anchored({source,variable:'fastLen',type:'float',span:exact(source,first),editStart:literalOf(source,first)})),['BI_SOURCE_LOGIC_CHANGED'],'call kind differs from the binding type');
+  // a span that ends past the statement
+  expectCodes(C2(anchored({source,variable:'fastLen',span:{start,end:start+first.length+1},editStart:literalOf(source,first)})),['BI_SOURCE_LOGIC_CHANGED'],'span ends past the closing parenthesis');
+  expectCodes(C2(anchored({source,variable:'fastLen',span:{start,end:secondStart+second.length},editStart:literalOf(source,first)})),['BI_SOURCE_LOGIC_CHANGED'],'span covers the next statement');
+  // a span that does not start at the statement
+  expectCodes(C2(anchored({source,variable:'fastLen',span:{start:start+1,end:start+first.length},editStart:literalOf(source,first)})),['BI_SOURCE_LOGIC_CHANGED'],'span not anchored at the statement');
+  // a span that starts inside a longer identifier on the same line: the masked character before it is not a line break
+  const prefixed='x'+first,prefixedSource=['//@version=6','indicator("Anchor fixture", overlay=true)',prefixed,...tail].join('\n'),prefixedStart=prefixedSource.indexOf(prefixed)+1;
+  expectCodes(C2(anchored({source:prefixedSource,variable:'fastLen',span:{start:prefixedStart,end:prefixedStart+first.length},editStart:literalOf(prefixedSource,prefixed)})),['BI_SOURCE_LOGIC_CHANGED'],'span starts mid-line after another identifier');
+  // the edit before value must equal the before value of the matching inputs.json entry
+  const beforeDiffers=anchored({source,variable:'fastLen',span:exact(source,first),editStart:literalOf(source,first)});
+  const inputsJson=JSON.parse(beforeDiffers.files['inputs.json']);
+  inputsJson.source_inputs[0].before='51';
+  beforeDiffers.files['inputs.json']=JSON.stringify(inputsJson);
+  expectCodes(C2(beforeDiffers),['BI_SOURCE_LOGIC_CHANGED'],'edit before differs from the inputs.json before');
+  // an edit one digit off the located literal
+  expectCodes(C2(anchored({source,variable:'fastLen',span:exact(source,first),editStart:literalOf(source,first)+1})),['BI_SOURCE_LOGIC_CHANGED'],'edit start differs from the located literal');
+  // CRLF source: spans and edits are character offsets of the stored source
+  const crlf=build('\r\n');
+  assert.equal(C2(anchored({source:crlf,variable:'fastLen',span:exact(crlf,first),editStart:literalOf(crlf,first)})).pass,true,'a CRLF source still passes');
+  expectCodes(C2(anchored({source:crlf,variable:'slowLen',span:{start:crlf.indexOf(first),end:crlf.indexOf(second)+second.length},editStart:literalOf(crlf,first)})),['BI_SOURCE_LOGIC_CHANGED'],'CRLF wide span');
+  // CR-only source: a lone carriage return is a line break for the line-start check
+  // a // comment runs to the next LF, so a CR-only fixture carries no comment line
+  const cr=build('\r').replace('//@version=6\r','');
+  assert.equal(C2(anchored({source:cr,variable:'slowLen',span:exact(cr,second),editStart:literalOf(cr,second)})).pass,true,'a CR-only source: the statement after a lone CR passes');
+  const crPrefixed=['indicator("Anchor fixture", overlay=true)','x'+first,...tail].join('\r'),crPrefixedStart=crPrefixed.indexOf('x'+first)+1;
+  expectCodes(C2(anchored({source:crPrefixed,variable:'fastLen',span:{start:crPrefixedStart,end:crPrefixedStart+first.length},editStart:literalOf(crPrefixed,'x'+first)})),['BI_SOURCE_LOGIC_CHANGED'],'CR-only source, the character before the span is not a line break');
+  // an edit that names the right literal text at another offset inside the span
+  const twice='fastLen = input.int(50, "F", minval=50)',twiceSource=['//@version=6','indicator("Anchor fixture", overlay=true)',twice,...tail].join('\n');
+  assert.equal(C2(anchored({source:twiceSource,variable:'fastLen',span:exact(twiceSource,twice),editStart:literalOf(twiceSource,twice)})).pass,true,'the first literal is the default');
+  expectCodes(C2(anchored({source:twiceSource,variable:'fastLen',span:exact(twiceSource,twice),editStart:twiceSource.indexOf('minval=50')+7})),['BI_SOURCE_LOGIC_CHANGED'],'the same text at another offset inside the span');
+});
+
 test('C3: one negation per check gives exactly the expected code',()=>{
   const cases=[
     ['no run',subject=>{subject.run=null;},['BI_PROVENANCE_UNRESOLVED']],
@@ -1215,7 +1270,15 @@ test('stored transitions: every listed transition and BI_TRANSITION_INVALID for 
   assert.equal(move('EXPORT_CANDIDATE',attempt(false,['BI_COMPILE_EVIDENCE_MISSING','BI_REPAINT_FLAGS_CHANGED'])).to,'EXPORT_REFUSED','one non-retryable code refuses');
   for(const attemptNo of [1,2,3,4])assert.equal(move('EXPORT_CANDIDATE',attempt(false,['BI_REPAINT_EVIDENCE_MISSING'],'ONE_PINE',attemptNo)).to,'EXPORT_CANDIDATE');
   const exhausted=move('EXPORT_CANDIDATE',attempt(false,['BI_REPAINT_EVIDENCE_MISSING'],'ONE_PINE',5));
-  assert.deepEqual({ok:exhausted.ok,to:exhausted.to,codes:[...exhausted.codes]},{ok:true,to:'EXPORT_REFUSED',codes:['BI_ATTEMPTS_EXHAUSTED']});
+  assert.deepEqual({ok:exhausted.ok,to:exhausted.to,codes:[...exhausted.codes]},{ok:true,to:'EXPORT_REFUSED',codes:['BI_REPAINT_EVIDENCE_MISSING','BI_ATTEMPTS_EXHAUSTED']});
+  const exhaustedMany=move('EXPORT_CANDIDATE',attempt(false,['BI_COMPILE_EVIDENCE_MISSING','BI_REPAINT_EVIDENCE_MISSING'],'ONE_PINE',5));
+  assert.deepEqual([...exhaustedMany.codes],['BI_COMPILE_EVIDENCE_MISSING','BI_REPAINT_EVIDENCE_MISSING','BI_ATTEMPTS_EXHAUSTED'],'attempt codes first, then the exhaustion code');
+  const dupCodes=move('EXPORT_CANDIDATE',attempt(false,['BI_REPAINT_EVIDENCE_MISSING','BI_REPAINT_EVIDENCE_MISSING','BI_COMPILE_EVIDENCE_MISSING','BI_REPAINT_EVIDENCE_MISSING'],'ONE_PINE',5));
+  assert.deepEqual([...dupCodes.codes],['BI_REPAINT_EVIDENCE_MISSING','BI_COMPILE_EVIDENCE_MISSING','BI_ATTEMPTS_EXHAUSTED'],'duplicate attempt codes collapse in the refusal codes');
+  for(const attemptNo of [1,5])for(const codes of [['BI_ATTEMPTS_EXHAUSTED'],['BI_REPAINT_EVIDENCE_MISSING','BI_ATTEMPTS_EXHAUSTED']]){
+    const refused=move('EXPORT_CANDIDATE',attempt(false,codes,'ONE_PINE',attemptNo));
+    assert.deepEqual({ok:refused.ok,to:refused.to,codes:[...refused.codes]},{ok:false,to:null,codes:['BI_TRANSITION_INVALID']},'an attempt event cannot carry BI_ATTEMPTS_EXHAUSTED');
+  }
   assert.equal(move('EXPORT_CANDIDATE',attempt(true,[],'ONE_PINE',5)).to,'EXPORT_VALIDATED','a passing fifth attempt still validates');
   assert.equal(MAX_VALIDATION_ATTEMPTS,5);
   const invalid=result=>{assert.deepEqual({ok:result.ok,to:result.to,codes:[...result.codes]},{ok:false,to:null,codes:['BI_TRANSITION_INVALID']});};
@@ -1246,7 +1309,7 @@ test('five failing attempts through the gates end in EXPORT_REFUSED with BI_ATTE
     const subject=golden({subject:s=>{s.compile=null;s.attempt_no=attemptNo;}});
     const result=ALL(subject);
     if(attemptNo<5){assert.equal(result.status,STATUS.EXPORT_CANDIDATE,'attempt '+attemptNo);assert.equal(result.record,null,'a failing attempt has no record');}
-    else{assert.equal(result.status,STATUS.EXPORT_REFUSED);assert.deepEqual([...result.next.codes],['BI_ATTEMPTS_EXHAUSTED']);}
+    else{assert.equal(result.status,STATUS.EXPORT_REFUSED);assert.deepEqual([...result.next.codes],[...result.codes.filter(code=>code!=='BI_ATTEMPTS_EXHAUSTED'),'BI_ATTEMPTS_EXHAUSTED']);}
     status=result.status;
   }
   assert.equal(status,STATUS.EXPORT_REFUSED);

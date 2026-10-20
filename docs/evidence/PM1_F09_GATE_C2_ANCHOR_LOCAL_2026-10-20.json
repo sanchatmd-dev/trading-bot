@@ -1,0 +1,34 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "05001da",
+  "scope": "Local follow-up to the F09 gate module and the S1 renderer for PM-1 row F09-01. Gate C2 now accepts an approved edit only where one shared anchored locator finds the default literal of the bound input: the stored span starts at a line start with the bound variable, uses the bound input call kind and ends at its closing parenthesis, and the edit's literal equals the matching source input's before value. The renderer uses the same locator. transition() now gives the fifth retryable failure the attempt codes followed by BI_ATTEMPTS_EXHAUSTED, and refuses an attempt whose codes include BI_ATTEMPTS_EXHAUSTED, matching the builder tables (PKG RC-27). Both modules stay pure and wired into nothing.",
+  "method": "The S1 renderer review found that C2 checked only that an edit lay inside the stored span. A coder (Sonnet 5.5) moved the anchored locator into the gate module and tightened C2; an independent architecture auditor (Opus 5.5) reviewed it and found the missing line-start anchor; an independent tester (Sonnet 5.5) ran single-edit mutations after each of four narrow rounds. Root ruled on every finding. Nobody verified their own work.",
+  "files": {
+    "src/quant-library/package-gates.js": "f64e857f087f18081f6c2c8870c842bdb2ebe00bcbf0ccab5e5d96dd8c703c9a",
+    "src/quant-library/package-render.js": "6aedc92f1480a0dc90c40c72875d24311b52d36d069f3b5443f72e3630b20ebe",
+    "test/quant-library-package-gates.test.js": "36dab5dbf68832ad987df90e212e757e1138a3611893b91a5aae1a2d764ff139",
+    "test/quant-library-package-render.test.js": "2613b3b58eae0b417af269ba8835896b494edda0f00f67475cf5b669e6f1c7ab"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "Gate, renderer and derive test files: 104 of 104 pass. Root reran them with the exit-version, grant text and register adapter tests: 130 of 130.",
+  "mutations": {
+    "round2": "10 of 13 killed; survivors were the carriage-return arm of the line-start check and the start tie (test gaps) and the end tie (equivalent).",
+    "round3": "The carriage-return arm and the combined start and end ties killed, exhaustion code order and missing attempt codes killed; the start tie alone is equivalent; the duplicate-code case survived.",
+    "round4": "3 of 3 killed (attempt carrying the exhaustion code, duplicate removal, code order)."
+  },
+  "limits": [
+    "A Pine source that uses carriage-return-only line breaks and contains a // comment is masked to its end by the shared executable() helper, so C2 finds no statement and refuses; root accepted this as fail closed.",
+    "No package can be built, stored or shown yet; the builder worker, read routes and attempt service do not exist.",
+    "No staging readback and no PostgreSQL run for these modules."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings and the final diff and accepted the change as local engineering evidence for F09-01. It closes the C2 follow-up recorded in PM1_F09_PACKAGE_RENDER_S1_LOCAL_2026-10-20.json. Acceptance changes no PM-1 credit by itself."
+  }
+}
