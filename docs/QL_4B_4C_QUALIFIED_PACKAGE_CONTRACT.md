@@ -1,7 +1,9 @@
 # QL-4B/QL-4C qualified Best Inputs package contract
 
-Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10); root clarifications RC-1 to RC-11 recorded the same day (section 10.1). Root accepted the other rules on
-2026-10-19 after independent review. Implementation has not started, and nothing in this contract grants a
+Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10); root clarifications RC-1 to RC-11 recorded the same day (section 10.1); root decisions RC-12 to RC-24 for the package builder recorded 2026-10-20 (section 10.2). Root accepted the other rules on
+2026-10-19 after independent review. The pure gate module (`src/quant-library/package-gates.js`) and the slice S1 pure renderer
+(`src/quant-library/package-render.js`) are root-accepted as local engineering evidence and are wired into no route,
+worker, table or view; no package can be built, stored or shown yet. Nothing in this contract grants a
 recommendation, apply, email or Bot action by itself. It does not change the Roadmap. Each implementation step still needs its own gates and approvals.
 
 Feature: F09-01. Target: staging.
@@ -728,6 +730,27 @@ path only and never makes a package qualifiable or READY.
 | RC-9 | The current `RULES` are a required input of the check. The `RULES_VERSION_DIFFERS` rule is unchanged. | 5 intro | Root | 2026-10-19 |
 | RC-10 | The episode-gate test applies to a non-fixture package. | 4.3, 11.1 item 18 | Root | 2026-10-19 |
 | RC-11 | On the `EXPORT_INTERNAL` path only, the multi-Pine research contract freezes the capability blocker `MULTI_PINE_REQUIRES_APP_3B` at admission, and the blocker neither refuses B0 nor fails G6 for export at C4. On the `EXPORT_INTERNAL` path only, G7 may fail only because the run's contract version is the multi-Pine research contract version, which is never listed among the versions whose G7 derives `PASS` (`OWNER_RECOMMENDATION_NOT_READY`). The completion reason must still be the one that derives G7 `PASS` (OD-18). Every other capability blocker still refuses. Source: docs/MULTI_PINE_CONTRACT.md, RD-MP-10. | 4.4, 5.0 items 1 and 2, 5.4, 11.1 item 20 | Root | 2026-10-19 |
+
+### 10.2 Root decisions for the package builder (2026-10-20)
+
+Root accepted the builder design below after an independent architecture review (options D1 to D12) and the review
+rounds of the S1 renderer. The owner decisions OD-1 to OD-20 do not change.
+
+| ID | Decision | Sections | Decided by | Date |
+| --- | --- | --- | --- | --- |
+| RC-12 | Builder slices: S1 pure renderer; S2 insert-only tables, guards and offline migrator; S3 trace reproduction module; S4 build worker; S5 owner read routes; S6 attempt service. Each slice has its own review and none is deployed without its own gate | 11 | Root | 2026-10-20 |
+| RC-13 | One insert-only table per record kind (`bi_exports`, `bi_package_files`, `bi_blobs`, `bi_status_events`, `bi_attempts`, `bi_compile_records`, `bi_evidence_records`, `bi_clearances`, `bi_trace_reproductions`, `ql4c_validation`, marker `bi_package_schema`); `bi_replay_events` comes in a later slice | 3, 8 | Root | 2026-10-20 |
+| RC-14 | Package bytes are stored in PostgreSQL as content-addressed blobs keyed by SHA-256, with the hash and size checked on insert and a 16 MiB cap per package; no filesystem store. A download re-verifies the bytes and re-runs the content scan | 3, 4 | Root | 2026-10-20 |
+| RC-15 | Two enforcement layers: the runtime role has no UPDATE or DELETE on the builder tables (a new insert-only grant list), and ALWAYS triggers refuse every edit with SQLSTATE `QR002`. Insert guards check the parent run (terminal `SUCCEEDED`, same owner and Bot, fixture forced for the engineering scope), the status graph, the attempt cap and the validation record, and refuse with SQLSTATE `QR004`, mapped to `BI_TRANSITION_INVALID` (`QR003` is the exposure register SERIALIZABLE guard) | 6, 8 | Root | 2026-10-20 |
+| RC-16 | A build runs as a worker job, never as a `quant_jobs` row. The order is: render, B0 on the rendered binding, render again if the limitation codes changed, then one SERIALIZABLE transaction that re-reads the lookups and the exposure register, re-runs B0 and inserts everything; a B0 failure writes no export row; a second build of the same run returns the existing export | 3.1, 5.0 | Root | 2026-10-20 |
+| RC-17 | The trace reproduction record (RC-4) is produced at build by a module outside the run engine closure. Its digests come from recomputed results and are never copied from stored ones. If the run engine closure no longer equals the contract engine hash, the build is refused with `BI_ENGINE_HASH_MISMATCH` and no row | 5.3 | Root | 2026-10-20 |
+| RC-18 | Fixture packages use the same tables; `fixture` is fixed at birth and forced true for the engineering scope; the customer read route omits fixture exports | 4.3, 11.3 | Root | 2026-10-20 |
+| RC-19 | The migration is one optional extension with exact classification (ABSENT, INSTALLED, OTHER), an offline maintenance lock and a rollback that refuses while any builder row exists | 8 | Root | 2026-10-20 |
+| RC-20 | Internal multi-Pine packages are not built until the gate module supports the member layout of docs/MULTI_PINE_CONTRACT.md 6.2; until then a build on a multi-Pine run refuses at B0 and writes no row | 5.0 item 3 | Root | 2026-10-20 |
+| RC-21 | Owner reads use their own routes, read only, with a not-found answer for an absent or foreign export; a non-READY export shows only its id, status, UTC times and codes | 6.2, 6.3 | Root | 2026-10-20 |
+| RC-22 | B0 reads the exposure register through one reader port (`src/postgres/exposure-register.js`); while the register is not installed the reader is unavailable and B0 fails closed with `BI_EXPOSURE_REGISTER_UNAVAILABLE` | 5.0 item 5 | Root | 2026-10-20 |
+| RC-23 | `validation.html` is rendered at build from the build-time `validation.json`; live parity is shown at read time from evidence rows, so one run keeps one package and a retry keeps the same bytes | 4.1, 6.2 | Root | 2026-10-20 |
+| RC-24 | One export per run (`UNIQUE(owner_id, run_id)`) with `parent_export_id` null until APP-3B revisits the key. `exit_version` comes from the evaluated deployment and is never defaulted | 3.1, 3.2 | Root | 2026-10-20 |
 
 ## 11. Test and evidence plan
 

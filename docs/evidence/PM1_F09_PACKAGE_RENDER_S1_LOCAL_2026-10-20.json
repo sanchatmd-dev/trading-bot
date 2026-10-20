@@ -1,0 +1,33 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "bf76c0b",
+  "scope": "Local implementation of builder slice S1 of docs/QL_4B_4C_QUALIFIED_PACKAGE_CONTRACT.md (RC-12) for PM-1 row F09-01: a pure deterministic renderer (src/quant-library/package-render.js) that turns a durable one-Pine run view, the binding inputs, trace rows, a caller-given creation time and an export id into the package files, the manifest, the package hash and the binding hash. It reads no database, file, network, clock or random source, judges nothing (B0 and C1 to C4 stay in package-gates.js), refuses multi-Pine membership and is wired into no route, worker, table or view.",
+  "method": "An architecture auditor (Opus 5.5) wrote the builder design and root accepted options D1 to D12 (recorded as RC-12 to RC-24). A coder (Sonnet 5.5) wrote S1. An independent architecture auditor (Opus 5.5) reviewed it, then an independent tester (Sonnet 5.5) ran single-edit mutations; reviews and mutation runs were serialized. Round 2 fixed the findings (the literal is located at the start of the stored span and must name the bound variable, call kind and closing parenthesis; exit_version is required with no default; extra or missing parameter keys, membership identity, escaping, plain decimals and calendar dates) and was checked by the tester with the earlier survivors and new mutations. Root ruled on every finding. Nobody verified their own work.",
+  "files": {
+    "src/quant-library/package-render.js": "3e194f90df9764b5553e514bbcca86140d2a33457d612f6c8084226f26b2c605",
+    "test/quant-library-package-render.test.js": "bbeee1160d2ecaa40b723b58d71d3829a2b74314e4cd3a120b9fd1e032f8559b"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "test/quant-library-package-render.test.js: 27 of 27 pass. With the unchanged gate module tests: 78 of 78. Root reran them with the exposure register adapter and grant text tests: 88 of 88. A labelled one-Pine fixture passes B0 before the render and C1 to C4 and Q after it against the unchanged package-gates.js; the render is byte-stable whatever the input key order, and every file passes the content scan.",
+  "mutations": {
+    "round1": "16 of 22 killed; the survivors became tests in round 2.",
+    "round2": "18 of 20 killed (all 7 earlier survivors and 11 of 13 new). Survivors: dropping the parameter-count comparison (no test uses an extra key that sorts after every expected key) and dropping the 400-year leap rule (no test for 1900, 2000 or 2100 on 29 February)."
+  },
+  "limits": [
+    "Renderer only: the builder tables (S2), the trace reproduction module (S3), the build worker (S4), the read routes (S5) and the attempt service (S6) do not exist, so no package can be built, stored or shown.",
+    "Open follow-up: gate C2 in package-gates.js does not yet anchor the edited literal at the stored span start the way the renderer now does, so a wide or stale span is caught by the renderer but not independently by C2.",
+    "Two test gaps remain from round 2 (see mutations).",
+    "One-Pine only; the multi-Pine member layout is refused (RC-20).",
+    "No staging readback and no PostgreSQL run."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the design, the agent reports, the rulings and the final diff and accepted S1 as local engineering evidence for F09-01. Acceptance changes no PM-1 credit by itself and builds no package."
+  }
+}
