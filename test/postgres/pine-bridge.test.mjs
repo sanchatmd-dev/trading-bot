@@ -210,9 +210,12 @@ test('isolated Bridge HTTP webhook reaches Paper fill without capture writes',as
   const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
   const base='http://127.0.0.1:'+port;
   const child=fork(new URL('../../src/postgres/server.js',import.meta.url),[],{silent:true,env:{...process.env,DATABASE_URL:db.pool.options.connectionString,HOST:'127.0.0.1',PORT:String(port),PUBLIC_ORIGIN:base,SMTP_HOST:'',PINE_BRIDGE_ENABLED:'1'}});
-  const exited=once(child,'exit');let output='';child.stdout.on('data',chunk=>output+=chunk);child.stderr.on('data',chunk=>output+=chunk);
+  const exited=once(child,'exit');let output='',stopped=false;child.stdout.on('data',chunk=>output+=chunk);child.stderr.on('data',chunk=>output+=chunk);child.on('exit',()=>stopped=true);
   t.after(async()=>{child.kill();await exited;});
-  let listening=false;for(let i=0;i<100;i++){try{await fetch(base+'/healthz');listening=true;break;}catch{}await new Promise(r=>setTimeout(r,50));}assert.ok(listening,output);
+  // Bound the wait by wall time, not a poll count: a loaded Windows runner can stall server startup past 100 polls (about 6-8 s).
+  let listening=false;const started=Date.now();
+  while(!stopped&&Date.now()-started<60000){try{await fetch(base+'/healthz');listening=true;break;}catch{}await new Promise(r=>setTimeout(r,50));}
+  assert.ok(listening,`Server not listening after ${Date.now()-started} ms${stopped?' (server exited)':''}\n${output}`);
   const post=async body=>{const response=await fetch(base+'/webhooks/pine-bridge/v1/'+x.secret,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});return {status:response.status,body:await response.json()};};
   const buy=event(x.d,time),accepted=await post(buy);assert.equal(accepted.status,202,JSON.stringify(accepted.body));
   assert.equal((await post(buy)).status,200);
@@ -244,8 +247,10 @@ test('v2 HTTP BUY and NATIVE EXIT close only the referenced long with no duplica
   const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
   const base='http://127.0.0.1:'+port;
   const child=fork(new URL('../../src/postgres/server.js',import.meta.url),[],{silent:true,env:{...process.env,DATABASE_URL:db.pool.options.connectionString,HOST:'127.0.0.1',PORT:String(port),PUBLIC_ORIGIN:base,SMTP_HOST:'',PINE_BRIDGE_ENABLED:'1'}});
-  const exited=once(child,'exit');child.stdout.resume();child.stderr.resume();t.after(async()=>{child.kill();await exited;});
-  let listening=false;for(let i=0;i<100;i++){try{listening=(await fetch(base+'/healthz')).ok;if(listening)break;}catch{}await new Promise(r=>setTimeout(r,50));}assert.ok(listening);
+  const exited=once(child,'exit');let output='',stopped=false;child.stdout.on('data',chunk=>output+=chunk);child.stderr.on('data',chunk=>output+=chunk);child.on('exit',()=>stopped=true);t.after(async()=>{child.kill();await exited;});
+  let listening=false;const started=Date.now();
+  while(!stopped&&Date.now()-started<60000){try{listening=(await fetch(base+'/healthz')).ok;if(listening)break;}catch{}await new Promise(r=>setTimeout(r,50));}
+  assert.ok(listening,`Server not healthy after ${Date.now()-started} ms${stopped?' (server exited)':''}\n${output}`);
   const post=async(body,{version='v2',secret=x.secret}={})=>{const response=await fetch(base+'/webhooks/pine-bridge/'+version+'/'+secret,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});return {status:response.status,body:await response.json()};};
   const buy={...event(x.d,time),schema_version:'bridge-exit-v2'};
   assert.equal((await post(buy,{version:'v1'})).status,400);
@@ -433,8 +438,10 @@ test('Bridge HTTP endpoints enforce auth/CSRF/owner scope and strict early strat
   const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
   const base='http://127.0.0.1:'+port,request=httpClient(base);
   const child=fork(new URL('../../src/postgres/server.js',import.meta.url),[],{silent:true,env:{...process.env,DATABASE_URL:db.pool.options.connectionString,HOST:'127.0.0.1',PORT:String(port),PUBLIC_ORIGIN:base,SMTP_HOST:'',PINE_BRIDGE_ENABLED:'1',PINE_AI_MODEL:'gpt-4.1-mini',PINE_AI_API_KEY:'not-a-real-key',PINE_AI_INPUT_USD_PER_MILLION:'0.4',PINE_AI_OUTPUT_USD_PER_MILLION:'1.6',PINE_AI_RATE_VERSION:'test-only'}});
-  const exited=once(child,'exit');child.stdout.resume();child.stderr.resume();t.after(async()=>{child.kill();await exited;});
-  let ready=false;for(let i=0;i<100;i++){try{await fetch(base+'/healthz');ready=true;break;}catch{await new Promise(r=>setTimeout(r,50));}}assert.ok(ready);
+  const exited=once(child,'exit');let output='',stopped=false;child.stdout.on('data',chunk=>output+=chunk);child.stderr.on('data',chunk=>output+=chunk);child.on('exit',()=>stopped=true);t.after(async()=>{child.kill();await exited;});
+  let ready=false;const started=Date.now();
+  while(!stopped&&Date.now()-started<60000){try{await fetch(base+'/healthz');ready=true;break;}catch{await new Promise(r=>setTimeout(r,50));}}
+  assert.ok(ready,`Server not listening after ${Date.now()-started} ms${stopped?' (server exited)':''}\n${output}`);
   const route='/api/quant/pine-bridge/analyze',body={bot_id:a.id,pine_source:source,source_name:'HTTP fixture'},headers={'Idempotency-Key':randomUUID()};
   assert.equal((await request(route,'POST',body,undefined,headers)).status,401);
   const login=await request('/api/auth/login','POST',{email:a.email,password});assert.equal(login.status,200);const session=login.session;
