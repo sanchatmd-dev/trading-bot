@@ -1,0 +1,44 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "0640dcf",
+  "scope": "Local implementation of slice S3a of docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md (RC-Q28 to RC-Q34) for PM-1 row F10-01: the owner-scoped per-Bot GET /api/paper-performance route (src/postgres/qr2-routes.js), a pure response composer (src/portfolio/qr2-response.js) and an after-commit hook in the request dispatcher. Phase 1 checks the session, own:read, parameters, Bot scope, bounds and an admin step-up inside the request transaction and writes the admin audit row; phase 2 runs the S2 reader after COMMIT in its own REPEATABLE READ, READ ONLY transaction. The route is behind QR2_PERFORMANCE_ENABLED, off by default, and is not enabled anywhere.",
+  "method": "An architecture auditor (Opus 5.5) wrote the S3 design and root accepted it (RC-Q28 to RC-Q33). A coder (Sonnet 5.5) wrote S3a. An independent architecture auditor (Opus 5.5) and a second-opinion reviewer (Fable 5.1) reviewed security, scoping and the hook; both rated it acceptable with minor findings. Two narrow fix rounds followed (history limit from UTC midnight, audit-before-read and end-to-end hook tests, named-key response copies without global serial ids, exact-case periods, error mapping). An independent tester (Sonnet 5.5) ran the suites, single-edit mutations and the M1 and M2 measurements after each round. Root ruled on every finding. Nobody verified their own work.",
+  "files": {
+    "src/postgres/qr2-routes.js": "ac997742094c2d02f88e1667be4c65dea72a7b14aed0f6564ccd9d4410e69fa5",
+    "src/portfolio/qr2-response.js": "f9c1f50369c3fd0c958e7581132917d70115973df4e072fdb1afab3d85abfa86",
+    "src/postgres/request-dispatch.js": "439850330e7be3ed800b2194dc68f95a1641d6043cf6934e0a1c5b5248e454f8",
+    "src/postgres/server.js": "3051743c68ba67f38732b9247acc261201dac52575cf344a345af32ac6dd41bf",
+    "test/qr2-response.test.js": "001ef0e761b11f832004166853526a03321d7805312e6cbbc0bd63ab470db4a1",
+    "test/request-dispatch-after-commit.test.js": "0abb1b45694e1e1450db3c6a405e748cbea0488f40581f7e196062fce565c823",
+    "test/postgres/qr2-route-http.test.mjs": "e1bede166653f82ffbd8f459f4f9d7da1aef405efd4ed6b6f7b9309c6990bc0b",
+    "test/postgres/qr2-ssi.test.mjs": "3e9acb10ae0d1d0a57a3744b5b9564dd16b89d10cbbd30d5adb904d7f72a4726"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "Throwaway PostgreSQL 16.15: test/postgres/qr2-route-http.test.mjs 21 of 21 and test/postgres/qr2-ssi.test.mjs 8 of 8. Without a database: test/qr2-response.test.js and test/request-dispatch-after-commit.test.js pass, and root reran them with test/request-dispatch.test.js (83 of 83). Regression on the files that load the dispatcher or the server passed (request-dispatch 69, request-limits 10, overview 7, news-windows 18, market-chart-states 3, ai-quota 15, pine-bridge-deployments 6, quant-library-derive 23, qr2-portfolio-performance 111 with 2 todo; PostgreSQL overview-http, owner-isolation-http 13, market-chart-states, db-transaction-closed 7, bot-lifecycle-gates 8, journey-http 9, qr2-reader 27, qr2-reader-facts 9, qr2-audit 5). The SSI tests show a SERIALIZABLE reader makes a concurrent funding request fail with 40001 while the REPEATABLE READ product reader does not.",
+  "measurements": {
+    "M1": "Local laptop. 1000 fills (about 3500 to 4000 ledger rows): p95 about 1.5 to 1.6 s, flat or open lots; the highest load reachable under the 5000-row limit (about 1430 flat fills): p95 about 2.4 s. The computation is synchronous, so the event loop is blocked for about the computation time (0.6 to 1.6 s per request at 1000 fills). Above 5000 ledger rows the request is refused in about 30 ms.",
+    "M2": "Audit lookup is a filtered scan: about 25 ms at 100k audit rows and about 200 to 340 ms at 1M rows; it runs after the answer is sent."
+  },
+  "mutations": {
+    "round1": "8 of 8 killed.",
+    "round2": "7 of 9 killed; the two survivors were test gaps, closed in round 3.",
+    "round3": "3 of 3 killed."
+  },
+  "limits": [
+    "Not enabled anywhere. RC-Q34: before QR2_PERFORMANCE_ENABLED is turned on in any environment, slice S3b must move the computation off the event loop or bound repeated requests, and the read budget is re-checked.",
+    "Every account with a fill reads UNAVAILABLE with LEDGER_RULE_UNREPLAYABLE until the per-environment boundary records exist (OD-Q6, slice S9).",
+    "Owner item O-1 (which periods the plan history limit covers) is open; the stricter reading applies.",
+    "The per-fill strategy-tag and slippage lists of 8.1 are not returned yet (counts only); they need a later row-capped slice.",
+    "No staging readback."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the design, the agent reports, the measurements, the rulings and the final diff and accepted S3a as local engineering evidence for F10-01. Acceptance changes no PM-1 credit by itself and enables nothing."
+  }
+}

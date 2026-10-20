@@ -27,6 +27,9 @@ const monotonic=()=>performance.now();
 export const LEGACY_QUANT_PATHS=new Set(['/api/quant/health','/api/quant/backtest','/api/quant/optimize','/api/quant/risk-preview']);
 // Authentication, login, recovery and MFA keep their single attempt: they consume one-time tokens and limiter buckets.
 const retryablePath=pathname=>pathname.startsWith('/api/')&&pathname!=='/api/auth'&&!pathname.startsWith('/api/auth/')&&!LEGACY_QUANT_PATHS.has(pathname);
+// Failures of the after-commit function since process start; for tests and health. No path, user or key is kept.
+let afterCommitFailures=0;
+export const afterCommitFailureCount=()=>afterCommitFailures;
 const disconnected=(req,res)=>res.destroyed===true||req.socket?.destroyed===true;
 
 // Work that must count once per request, not once per attempt: a limiter bucket or a market admission. Later attempts of
@@ -44,11 +47,11 @@ export function oncePerRequest(req,key,run){
 }
 
 const headerSnapshot=res=>Object.entries(res.getHeaders()).map(([name,value])=>[name,Array.isArray(value)?[...value]:value]);
-// Each attempt starts from the state the first one saw: no buffered answer, no deferred market call, no outbound call, the
+// Each attempt starts from the state the first one saw: no buffered answer, no deferred market call, no after-commit function, no outbound call, the
 // response headers the request had before its first attempt, and no cached authentication, so the session, CSRF token and
 // step-up are checked again on the new snapshot.
 function resetAttempt(req,res,headers){
-  res.phase2Buffer=true;res.phase2Result=null;res.phase2Deferred=null;res.phase2External=false;
+  res.phase2Buffer=true;res.phase2Result=null;res.phase2Deferred=null;res.phase2External=false;res.phase2AfterCommit=null;
   const kept=new Set(headers.map(([name])=>name));
   for(const name of res.getHeaderNames())if(!kept.has(name))res.removeHeader(name);
   for(const [name,value] of headers)res.setHeader(name,Array.isArray(value)?[...value]:value);
@@ -94,15 +97,21 @@ export function createDispatcher({newsWindowsPort,requestLimits,auth,database,st
       res.phase2Buffer=false;
       // A market proxy answer runs here, after COMMIT: no database connection or snapshot is held during network I/O.
       const deferred=res.phase2Deferred;res.phase2Deferred=null;
-      const result=deferred?await runMarketDeferred(deferred):res.phase2Result;
+      // A deferred function that throws leaves no after-commit function behind, even when the wrapper turns the throw into an answer.
+      const guarded=typeof deferred==='function'?async()=>{try{return await deferred();}catch(deferredError){res.phase2AfterCommit=null;throw deferredError;}}:deferred;
+      const result=deferred?await runMarketDeferred(guarded):res.phase2Result;
       if(pathname==='/api/quant/optimize'&&req.quantOptimizeAttempt&&quantOptimizeDisconnected(req,res))return;
       if(result)json(res,result.status,result.body);
+      // QR-2 after-commit function (RC-Q33): at most one, run only here, after COMMIT and after the answer is sent, outside any transaction.
+      // A throw or a rejection is counted and never changes the answer, writes no audit row and logs nothing.
+      const afterCommit=res.phase2AfterCommit;res.phase2AfterCommit=null;
+      if(typeof afterCommit==='function'){try{await afterCommit();}catch{afterCommitFailures++;}}
     }catch(error){
       // A handler may throw null or a non-object; the answer must still go out instead of the catch itself throwing.
       if(error===null||typeof error!=='object')error=new Error('Request failed');
       // An error answer never carries a cookie, a validator or deferred work from the rolled-back attempts.
       // Only the final failure reaches here, so one request writes at most one request.error row.
-      res.phase2Buffer=false;res.phase2Deferred=null;
+      res.phase2Buffer=false;res.phase2Deferred=null;res.phase2AfterCommit=null;
       if(!res.headersSent){res.removeHeader('set-cookie');res.removeHeader('etag');}
       // Only our internal pre-attempt cancellation skips the audit and response; the transaction has rolled back.
       if(pathname==='/api/quant/optimize'&&error instanceof QuantOptimizeDisconnected&&!req.quantOptimizeAttempt&&quantOptimizeDisconnected(req,res))return;
