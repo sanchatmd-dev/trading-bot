@@ -1,0 +1,41 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "d30d4b3",
+  "scope": "Local implementation of sub-slice S2-1 of docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md (RC-S21 to RC-S28) for PM-1 row F10-03: the qualified-selection registration tables as an offline PostgreSQL extension (registrations with a database-clock registration time, universe rows, participants tied to the hashed body and to validated F09 exports, an insert-only status log whose pinned transition table equals src/selection/lifecycle.js, a marker), QR002, QR003 and QR004 guards, a deferred commit check, a rollback that refuses while any QR-4 row or QR4_SELECTION register row exists, an install, inspect and rollback tool, and src/postgres/selection-store.js with registerSelection, cancelSelection, an owner-scoped readSelection that compares rows with the body, and readSearchedWindows. src/selection/hash.js now exports registrationBody. Nothing is installed on staging and no route writes these tables.",
+  "method": "An architecture auditor (Opus 5.5) wrote the S2 design and root accepted it (RC-S21 to RC-S27). A coder (Sonnet 5.5) wrote S2-1. An independent architecture auditor (Opus 5.5) and a second-opinion reviewer (Fable 5.1) reviewed rounds 1 and 2; both found in round 1, and Opus confirmed with a probe, that participant rows could be added after registration. An independent tester (Sonnet 5.5) ran the PostgreSQL suites and single-edit mutations after each of three rounds. A sole-runner tester then ran, with nothing else active, test/postgres/runtime-grants.test.mjs and every new extension file one file per process on a throwaway PostgreSQL 16.15 cluster (fail 0 and skipped 0 in each), the install, inspect and rollback sequence of all three new tools with the repo grant script, test/postgres-runtime-grants.test.js and the full unit suite (2115 tests, 0 fail, 6 skipped, 9 todo). Root ruled on every finding. Nobody verified their own work.",
+  "files": {
+    "src/postgres/quant-selection.sql": "8ea2475397477ce025d9cab7b0f9914eb9eff143d820e8a154d8aa6691a938d2",
+    "src/postgres/quant-selection-rollback.sql": "23cb9afb95ea26154916fb9773282f55135beb6b1bfc463b4cf542c1dbe45387",
+    "src/postgres/quant-selection-migration.js": "d0dc5e7b09d14ccfe57653eb07f700a4eade631e2b1bfe5cb3cb6eba98dd74ed",
+    "scripts/migrate-quant-selection.mjs": "f80a82e2499bad1c2bf1693f836764ed8ad169253d33ed1034578098efbf0724",
+    "src/postgres/selection-store.js": "ac55fded748fe5081206a5d3541238744d893286e0f7e04263013450b017b109",
+    "src/selection/hash.js": "32c175f7343b10a0af6f3ca2ce18dc25d99ee72350a9bfb627147e2085f6a9c6",
+    "test/postgres/quant-selection.test.mjs": "7af512d44a35af05072ccb49abd4882b38cd143c76085a45c87f7ac493ef4675",
+    "test/postgres/quant-selection-register.test.mjs": "a72822e27bbfbc0bbc75aa95e569a84f28570c6115a1be4150948ead3c8de760"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/postgres/quant-selection.test.mjs 15 of 15 and test/postgres/quant-selection-register.test.mjs 26 of 26 pass with 0 skipped; the tool sequence exits 0 and inspect with the runtime role reports no failures; the pure selection tests still pass in the full unit suite.",
+  "mutations": {
+    "round1": "4 of 6 killed; the two survivors (a C1 direction and the fixture rule in the prior-selection count) became tests.",
+    "round2": "4 of 5 killed; the run_id compare became a test.",
+    "round3": "2 of 2 killed (run_id compare, guard-name pin derived from the SQL)."
+  },
+  "limits": [
+    "Sub-slice S2-1 only: the RO-12 rechecks, window freeze, evaluation starts, outcome and replay (S2-2), the evaluation job (S3) and the API do not exist.",
+    "S2-2 must add the EVALUATING-origin acceptance oracle and admit a QR4_SELECTION register row only after FIRST_EVALUATION_START.",
+    "The tie tolerances (OD-S3) are still unset by the owner, so no real registration can pass; tests use an injected registry.",
+    "readSearchedWindows has no cap yet (RO-6).",
+    "Not installed on staging; installation needs the F09 builder extension first and a fresh owner GO.",
+    "Column collation is not classified yet (cross-extension hardening slice)."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the design, the agent reports, the rulings, the sole-runner verification and the final diff and accepted S2-1 as local engineering evidence for F10-03. Acceptance changes no PM-1 credit by itself, installs nothing and writes no row."
+  }
+}

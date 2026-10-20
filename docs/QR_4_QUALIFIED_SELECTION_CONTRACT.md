@@ -1,6 +1,6 @@
 # QR-4 qualified best-performance selection contract
 
-Status: owner decisions OD-S1 to OD-S20 recorded 2026-10-19; root decided RO-1 to RO-12 the same day. Root decided the S2 storage design on 2026-10-20 (RC-S21 to RC-S27).
+Status: owner decisions OD-S1 to OD-S20 recorded 2026-10-19; root decided RO-1 to RO-12 the same day. Root decided the S2 storage design on 2026-10-20 (RC-S21 to RC-S28); sub-slice S2-1 (registration) is root-accepted as local engineering evidence and is not installed on staging.
 Root accepted the other rules after independent review.
 Implementation status: the S1 pure module (`src/selection/`) and its test file are root-accepted as local
 engineering evidence. Nothing is wired to a route, a table or a worker. Root clarifications from the S1 review are in
@@ -1040,6 +1040,7 @@ RC-S16 record the shape that the S1 module expects. Root fixes the final form wh
 | RC-S25 | The later rechecks (each evaluation start and the outcome write) read the register through a new lock-first reader, `readExposuresLocked` (S2-2, its own review), so all three RO-12 transactions take the register lock first. | 13.3 (RO-12) | Root | 2026-10-20 |
 | RC-S26 | Rollback refuses while any QR-4 row or any `QR4_SELECTION` register row exists. A searched train window starts at the dataset start, warm-up included. The prior-selection count covers every earlier selection of the owner, fixtures included. | 5.3, 13.3 | Root | 2026-10-20 |
 | RC-S27 | A window data gap found before the first evaluation start uses the `REGISTERED` to `INCOMPLETE` edge with `WINDOW_DATA_UNAVAILABLE` (RC-S3). | 8.1, 10 | Root | 2026-10-20 |
+| RC-S28 | S2-1 result. Each participant row must equal the hashed body participant at its position (export, run and package hash), so no participant can be added after registration; universe rows are tied the same way; `readSelection` refuses rows that differ from the body. A registration slower than 50 s stops with the retryable `REGISTRATION_TOO_SLOW` before the 60 s database guard. A caller-supplied selection id is accepted only from internal callers, and an id collision answers the same refusal for every owner. S2-2 must add the EVALUATING-origin acceptance oracle and let a `QR4_SELECTION` register row in only after `FIRST_EVALUATION_START`. The route slice copies `validated_at_utc` verbatim | 4.3, 13.1, 13.3 | Root | 2026-10-20 |
 
 ### 17.4 Open owner items
 
