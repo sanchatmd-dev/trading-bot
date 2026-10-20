@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import {inspectRuntimeRole} from './runtime-role-inspection.js';
 
 /**
  * QR-1b terminal-result freeze. Offline only: the maintenance lock excludes every participating API and worker.
@@ -11,7 +12,10 @@ import fs from 'node:fs/promises';
  *   FROZEN_LEGACY every legacy object is exact and no FOUNDATION object exists (either the FOUNDATION tables do not exist yet, or
  *                 they exist and the install has not run since). A second install converges it to FROZEN.
  * Anything else (partial, tampered body, extra function setting, SECURITY DEFINER, disabled trigger, changed trigger shape, foreign
- * trigger on a freeze function, overload or orphan with a freeze name) is OTHER and is refused with no write.
+ * trigger on a freeze function, overload or orphan with a freeze name, a guarded table or freeze function owned by a role other than the
+ * owner of the anchor table quant_jobs: OWNER_MISMATCH:<name>) is OTHER and is refused with no write.
+ * Run the install as the owner of quant_jobs: the freeze functions are created by the current user, so any other user (a superuser included)
+ * is refused before any write, and the tables would otherwise be owned by a role other than the one that created the freeze.
  * Install on FROZEN is a no-op. Rollback on ABSENT is a no-op. Rollback only drops the objects the install created.
  */
 export const FREEZE_MARKER='quant-research-freeze-v1';
@@ -30,6 +34,8 @@ const FUNCTIONS=['quant_research_freeze_version','quant_research_status_is_termi
  'quant_research_freeze_step_insert','quant_research_freeze_chunk_change'];
 // The chunk guard function exists only with the FOUNDATION extension; every other function is legacy.
 const CHUNK_FUNCTION='quant_research_freeze_chunk_change';
+// The ownership anchor: every guarded table and every freeze function must have the owner of quant_jobs (the freeze has no table of its own).
+const ANCHOR_TABLE='quant_jobs';
 // pg_trigger.tgtype bits: ROW 1, BEFORE 2, INSERT 4, DELETE 8, UPDATE 16. Every guard is a BEFORE row trigger.
 const GUARD_TGTYPE=Object.freeze({quant_job_terminal_freeze:19,quant_job_terminal_no_delete:11,quant_job_step_terminal_insert:7,
  quant_research_binding_terminal_insert:7,quant_research_chunk_terminal_insert:7,quant_research_chunk_terminal_freeze:27});
@@ -55,7 +61,7 @@ async function expectedFunctions(){
   return out;
 }
 
-const FUNCTION_ROWS=`SELECT p.oid,p.proname,p.prosrc,p.prosecdef,p.provolatile,p.proleakproof,p.proconfig,p.proisstrict,p.proretset,p.prokind,p.proparallel,
+const FUNCTION_ROWS=`SELECT p.oid,p.proowner,p.proname,p.prosrc,p.prosecdef,p.provolatile,p.proleakproof,p.proconfig,p.proisstrict,p.proretset,p.prokind,p.proparallel,
   l.lanname,p.prorettype::regtype::text AS returns,pg_catalog.pg_get_function_identity_arguments(p.oid) AS args
   FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_language l ON l.oid=p.prolang
   WHERE p.pronamespace='public'::regnamespace AND p.proname=ANY($1) ORDER BY p.proname,p.oid`;
@@ -87,6 +93,17 @@ export async function classifyQuantResearchFreeze(db){
   const functions=(await db.query(FUNCTION_ROWS,[FUNCTIONS])).rows;
   const triggers=(await db.query(TRIGGER_ROWS,[FREEZE_GUARDS.map(guard=>guard[1]),FUNCTIONS])).rows;
   const problems=[],missing=[],exact={},legacyMissing=[],foundationMissing=[];
+  // Cross-lane rule: every guarded table that exists and every freeze function is owned by the owner of the anchor table, so a re-owned object
+  // (whose owner could disable its triggers or replace it) is never classified as the release text. Judged only when the anchor table exists.
+  const owners=new Map((await db.query(`SELECT c.relname,c.relowner FROM pg_catalog.pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relkind='r' AND c.relname=ANY($1)`,[TABLES])).rows
+    .map(row=>[row.relname,row.relowner]));
+  const anchorOwner=owners.get(ANCHOR_TABLE)??null;
+  // The anchor must be an ordinary table; when it is not (missing, a view, a partitioned table), the ownership check cannot run and that is a problem, never a silent skip.
+  if(anchorOwner===null)problems.push('OWNER_ANCHOR_UNAVAILABLE:'+ANCHOR_TABLE);
+  else{
+    for(const table of tables)if(owners.get(table)!==anchorOwner)problems.push('OWNER_MISMATCH:'+table);
+    for(const row of functions)if(row.proowner!==anchorOwner)problems.push('OWNER_MISMATCH:'+row.proname);
+  }
   let foundationExpected=0;
   for(const row of functions){
     const expected=bodies[row.proname];
@@ -121,7 +138,7 @@ export async function classifyQuantResearchFreeze(db){
   }
   missing.push(...legacyMissing,...foundationMissing);
   let state;
-  if(!functions.length&&!triggers.length)state='ABSENT';
+  if(!functions.length&&!triggers.length&&!problems.length)state='ABSENT';
   else if(problems.length||legacyMissing.length)state='OTHER';
   else if(foundationMissing.length===0&&foundationExpected>0)state='FROZEN';
   else if(foundationMissing.length===foundationExpected)state='FROZEN_LEGACY';
@@ -132,9 +149,12 @@ export async function classifyQuantResearchFreeze(db){
 }
 
 /**
- * Catalog facts and the failures they imply, read only. With runtimeRole the privilege boundary the freeze relies on is
- * checked too: the role is not a superuser, owns none of the tables, holds no TRIGGER or TRUNCATE privilege on them and
- * (PostgreSQL 15 and later) may not SET session_replication_role. The database TEMP privilege is recorded, not judged,
+ * Catalog facts and the failures they imply, read only. The runtime-role checks are the shared inspection of runtime-role-inspection.js.
+ * With runtimeRole the privilege boundary the freeze relies on is checked too: the role is not a superuser or BYPASSRLS and is a member of no
+ * superuser or BYPASSRLS role (RUNTIME_ROLE_PRIVILEGED_MEMBER), owns none of the tables and no freeze function (ownership includes membership of
+ * the owning role through pg_has_role MEMBER, which SET ROLE reaches even without inheritance), holds no TRIGGER or TRUNCATE privilege on them
+ * (also through any role it can reach by membership, INHERIT FALSE included), does not own schema public (also as database owner) nor hold CREATE
+ * on it and (PostgreSQL 15 and later) may not SET session_replication_role. The database TEMP privilege is recorded, not judged,
  * because every function pins search_path and qualifies each relation.
  * facts.state is the exact classification (ABSENT, FROZEN, FROZEN_LEGACY or OTHER); every inexact object is a failure too.
  */
@@ -174,27 +194,11 @@ export async function inspectQuantResearchFreeze(db,{runtimeRole}={}){
     for(const row of cascades)failures.push('FOREIGN_KEY_CASCADE:'+row.conname);
   }
   if(runtimeRole){
-    const role=(await db.query('SELECT rolsuper,rolbypassrls FROM pg_catalog.pg_roles WHERE rolname=$1',[runtimeRole])).rows[0];
-    if(!role)failures.push('RUNTIME_ROLE_MISSING');
-    else{
-      const runtime=facts.runtime_role={superuser:role.rolsuper,bypass_rls:role.rolbypassrls,tables:[]};
-      if(role.rolsuper)failures.push('RUNTIME_ROLE_SUPERUSER');
-      if(role.rolbypassrls)failures.push('RUNTIME_ROLE_BYPASSRLS');
-      runtime.temp_privilege=(await db.query("SELECT has_database_privilege($1,current_database(),'TEMP') v",[runtimeRole])).rows[0].v;
-      for(const table of present){
-        const row=(await db.query(`SELECT pg_catalog.pg_get_userbyid(c.relowner)=$2 AS owner,has_table_privilege($2,c.oid,'TRIGGER') AS trigger,
-          has_table_privilege($2,c.oid,'TRUNCATE') AS truncate FROM pg_catalog.pg_class c WHERE c.oid=to_regclass($1)`,['public.'+table,runtimeRole])).rows[0];
-        runtime.tables.push({table,...row});
-        if(row.owner)failures.push('RUNTIME_ROLE_OWNS:'+table);
-        if(row.trigger)failures.push('RUNTIME_ROLE_TRIGGER_PRIVILEGE:'+table);
-        if(row.truncate)failures.push('RUNTIME_ROLE_TRUNCATE_PRIVILEGE:'+table);
-      }
-      facts.server_version_num=Number((await db.query("SELECT current_setting('server_version_num') v")).rows[0].v);
-      if(facts.server_version_num>=150000){
-        runtime.session_replication_role_set=(await db.query("SELECT has_parameter_privilege($1,'session_replication_role','SET') v",[runtimeRole])).rows[0].v;
-        if(runtime.session_replication_role_set)failures.push('RUNTIME_ROLE_SESSION_REPLICATION_ROLE');
-      }
-    }
+    // One shared read-only inspection (src/postgres/runtime-role-inspection.js): ownership by membership, TRIGGER and TRUNCATE through any
+    // reachable role (also with INHERIT FALSE), privileged membership, CREATE on schema public and session_replication_role.
+    const inspected=await inspectRuntimeRole(db,{runtimeRole,schema:'public',tables:present.map(name=>({name,forbidden:['TRIGGER','TRUNCATE']})),functions:FUNCTIONS});
+    failures.push(...inspected.failures);
+    if(inspected.found){facts.runtime_role=inspected.facts;facts.server_version_num=inspected.facts.server_version_num;}
   }
   return {ok:failures.length===0,failures,facts};
 }
@@ -215,6 +219,9 @@ export async function migrateQuantResearchFreeze(db,{runtimeRole}={}){
     await db.maintenanceLock();await db.verifySchema();await requireExtension(db);
     const before=await classifyQuantResearchFreeze(db);
     requireKnownState(before,'install');
+    // The functions are created by the current user and must belong to the owner of quant_jobs; refuse before any write otherwise.
+    const owns=(await db.query(`SELECT c.relowner=(SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname=current_user) AS owns FROM pg_catalog.pg_class c WHERE c.oid=to_regclass('public.quant_jobs')`)).rows[0]?.owns;
+    if(owns!==true)throw Error('Research freeze install refused; run as the owner of quant_jobs (no change made)');
     if(!before.converged)await db.query(await sql('quant-research-freeze.sql'));
     const report=await inspectQuantResearchFreeze(db,{runtimeRole});
     if(!report.ok||!['FROZEN','FROZEN_LEGACY'].includes(report.facts.state))throw Error('Research freeze verification failed: '+report.failures.join(', '));

@@ -263,6 +263,8 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
     ['column made optional',T('quant_comparison_specs')+'ALTER COLUMN spec_canonical DROP NOT NULL','TABLE_DEFINITION:quant_comparison_specs:COLUMNS'],
     ['column added',T('quant_comparison_status_events')+'ADD COLUMN extra integer','TABLE_DEFINITION:quant_comparison_status_events:COLUMNS'],
     ['column type changed',T('quant_comparison_participants')+'ALTER COLUMN source_hash TYPE character varying(64)','TABLE_DEFINITION:quant_comparison_participants:'],
+    ['column collation changed',T('quant_comparison_participants')+'ALTER COLUMN origin TYPE text COLLATE "C"','TABLE_DEFINITION:quant_comparison_participants:COLLATION'],
+    ['column collation changed on a second table',T('quant_comparison_status_events')+'ALTER COLUMN status TYPE text COLLATE "POSIX"','TABLE_DEFINITION:quant_comparison_status_events:COLLATION'],
     ['row security enabled',T('quant_comparison_specs')+'ENABLE ROW LEVEL SECURITY','TABLE_DEFINITION:quant_comparison_specs:SHAPE'],
     ['rule added','CREATE RULE s2c_rule AS ON INSERT TO public.quant_comparison_participants DO ALSO NOTHING','TABLE_DEFINITION:quant_comparison_participants:SHAPE'],
     ['marker row removed','DELETE FROM public.quant_comparison_schema','MARKER_ROW'],

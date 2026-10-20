@@ -7,7 +7,7 @@ import {QR2_BOUNDARY_RECORD_UNRECORDED,validateBoundaryRecord} from '../../src/p
 import {rangePerformance} from '../../src/portfolio/qr2-returns.js';
 import {createQr2Database,createOwner,createBot,setCapital,book,insertBars,barOf,ledgerDigest,openSecond,LOCAL_FIXTURE_E2,MINUTE} from '../helpers/qr2-reader-fixture.mjs';
 
-// QR-2 S2 reader (design .qa-local/claude-qr2-s2-design-2026-10-20, tests T1 to T9). Isolated local PostgreSQL only. The ledger is written by the
+// QR-2 S2 reader (docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md 6.1, 6.6, 8.1 to 8.4; tests T1 to T9). Isolated local PostgreSQL only. The ledger is written by the
 // live recordFunding / recordExecution; every direct-SQL write below is a labelled fault or fixture exception made by the test, never by
 // the product. Expected values are literals worked out by hand in the comments or read from the tables by independent SQL.
 let fx,db,store,owner;

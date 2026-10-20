@@ -11,7 +11,9 @@ import {inspectRuntimeRole} from './runtime-role-inspection.js';
  *   ABSENT     no package relation, function, standalone type or trigger exists;
  *   INSTALLED  every object is exactly the package SQL (table shapes, constraints, indexes, function bodies, triggers);
  *   OTHER      anything else (partial, tampered body, SECURITY DEFINER, disabled or reshaped trigger, extra trigger, foreign
- *              constraint or index, overload or orphan with a package name).
+ *              constraint or index, overload or orphan with a package name, a relation or function owned by a role other than the
+ *              owner of the marker table: OWNER_MISMATCH:<name>, a column whose collation is not the database default:
+ *              TABLE_DEFINITION:<table>:COLLATION).
  * Run the tool as the schema owner with the default search_path: the deparsed foreign key text names users and quant_jobs unqualified only
  * when public is on the search_path, otherwise the install classifies OTHER and is refused (loud, no write).
  * OTHER is refused with no write. Install on INSTALLED is a no-op. Rollback on ABSENT is a no-op. Rollback is refused while any package
@@ -248,9 +250,9 @@ async function expectedFunctions(){
   return out;
 }
 
-const RELATION_ROWS=`SELECT c.oid,c.relname,c.relkind,c.relpersistence,c.relrowsecurity,c.relforcerowsecurity,c.relhasrules,c.relispartition,c.relhassubclass,c.reloptions
+const RELATION_ROWS=`SELECT c.oid,c.relowner,c.relname,c.relkind,c.relpersistence,c.relrowsecurity,c.relforcerowsecurity,c.relhasrules,c.relispartition,c.relhassubclass,c.reloptions
   FROM pg_catalog.pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relname=ANY($1) ORDER BY c.relname`;
-const FUNCTION_ROWS=`SELECT p.oid,p.proname,p.prosrc,p.prosecdef,p.provolatile,p.proleakproof,p.proconfig,p.proisstrict,p.proretset,p.prokind,p.proparallel,
+const FUNCTION_ROWS=`SELECT p.oid,p.proowner,p.proname,p.prosrc,p.prosecdef,p.provolatile,p.proleakproof,p.proconfig,p.proisstrict,p.proretset,p.prokind,p.proparallel,
   l.lanname,p.prorettype::regtype::text AS returns,pg_catalog.pg_get_function_identity_arguments(p.oid) AS args
   FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_language l ON l.oid=p.prolang
   WHERE p.pronamespace='public'::regnamespace AND p.proname=ANY($1) ORDER BY p.proname,p.oid`;
@@ -278,12 +280,15 @@ async function tableDifferences(db,relation,table){
   const reasons=[];
   if(relation.relkind!=='r'||relation.relpersistence!=='p'||relation.relrowsecurity||relation.relforcerowsecurity||relation.relhasrules||relation.relispartition||relation.relhassubclass||relation.reloptions!==null)
     reasons.push('SHAPE');
-  const columns=(await db.query(`SELECT a.attname,format_type(a.atttypid,a.atttypmod) AS type,a.attnotnull,pg_catalog.pg_get_expr(d.adbin,d.adrelid) AS def,a.attidentity,a.attgenerated,a.attnum
-    FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+  // Column collation: a text column must carry the database default, which is the collation of the type itself (pg_type.typcollation); any other type has none.
+  const columns=(await db.query(`SELECT a.attname,format_type(a.atttypid,a.atttypmod) AS type,a.attnotnull,pg_catalog.pg_get_expr(d.adbin,d.adrelid) AS def,a.attidentity,a.attgenerated,a.attnum,
+    a.attcollation=ty.typcollation AS default_collation
+    FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_type ty ON ty.oid=a.atttypid LEFT JOIN pg_catalog.pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
     WHERE a.attrelid=$1 AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum`,[relation.oid])).rows;
   const expected=COLUMNS[table];
   if(columns.length!==expected.length||columns.some((row,index)=>row.attname!==expected[index].name||row.type!==expected[index].type||row.attnotnull!==expected[index].notNull
     ||row.def!==expected[index].def||row.attidentity!==''||row.attgenerated!==''||row.attnum!==index+1))reasons.push('COLUMNS');
+  if(columns.some(row=>!row.default_collation))reasons.push('COLLATION');
   // Constraint triggers own a pg_constraint row of type t; the trigger classification judges them.
   const constraints=(await db.query(`SELECT c.conname,c.contype,pg_catalog.pg_get_constraintdef(c.oid) AS def,c.condeferrable,c.condeferred,c.convalidated
     FROM pg_catalog.pg_constraint c WHERE c.conrelid=$1 AND c.contype<>'t' ORDER BY c.conname`,[relation.oid])).rows;
@@ -308,6 +313,12 @@ export async function classifyBestInputsPackage(db){
   const types=(await db.query(`SELECT typname FROM pg_catalog.pg_type WHERE typnamespace='public'::regnamespace AND typrelid=0 AND typname=ANY($1)`,[RELATION_NAMES])).rows;
   const triggers=(await db.query(TRIGGER_ROWS,[PACKAGE_GUARDS.map(guard=>guard[0]),FUNCTIONS,TABLES])).rows;
   const problems=[],missing=[],exact={};
+  // Cross-lane rule: every relation and function is owned by the owner of the marker table. Judged only when the marker table exists.
+  const markerOwner=relations.find(row=>row.relname===MARKER_TABLE)?.relowner??null;
+  if(markerOwner!==null){
+    for(const row of relations)if(row.relowner!==markerOwner)problems.push('OWNER_MISMATCH:'+row.relname);
+    for(const row of functions)if(row.proowner!==markerOwner)problems.push('OWNER_MISMATCH:'+row.proname);
+  }
   for(const row of types)problems.push('TYPE_UNEXPECTED:'+row.typname);
   const tables=relations.filter(row=>TABLES.includes(row.relname));
   for(const row of relations){

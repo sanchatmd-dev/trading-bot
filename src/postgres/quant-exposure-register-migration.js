@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import {inspectRuntimeRole} from './runtime-role-inspection.js';
 
 /**
  * QR-3 S2a exposure register. Offline only: the maintenance lock excludes every participating API and worker.
@@ -10,7 +11,9 @@ import fs from 'node:fs/promises';
  *   ABSENT     no register relation, function, standalone type or trigger exists;
  *   INSTALLED  every object is exactly the register SQL (table shapes, constraints, indexes, function bodies, triggers);
  *   OTHER      anything else (partial, tampered body, SECURITY DEFINER, disabled or reshaped trigger, extra trigger, foreign
- *              constraint or index, overload or orphan with a register name).
+ *              constraint or index, overload or orphan with a register name, a relation or function owned by a role other than the
+ *              owner of the marker table: OWNER_MISMATCH:<name>, a column whose collation is not the database default:
+ *              TABLE_DEFINITION:<table>:COLLATION).
  * Run the tool as the schema owner with the default search_path: the deparsed foreign key text names users unqualified only when public is
  * on the search_path, otherwise the install classifies OTHER and is refused (loud, no write).
  * OTHER is refused with no write. Install on INSTALLED is a no-op. Rollback on ABSENT is a no-op. Rollback is refused while any
@@ -80,9 +83,9 @@ async function expectedFunctions(){
   return out;
 }
 
-const RELATION_ROWS=`SELECT c.oid,c.relname,c.relkind,c.relpersistence,c.relrowsecurity,c.relforcerowsecurity,c.relhasrules,c.relispartition,c.relhassubclass,c.reloptions
+const RELATION_ROWS=`SELECT c.oid,c.relowner,c.relname,c.relkind,c.relpersistence,c.relrowsecurity,c.relforcerowsecurity,c.relhasrules,c.relispartition,c.relhassubclass,c.reloptions
   FROM pg_catalog.pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relname=ANY($1) ORDER BY c.relname`;
-const FUNCTION_ROWS=`SELECT p.oid,p.proname,p.prosrc,p.prosecdef,p.provolatile,p.proleakproof,p.proconfig,p.proisstrict,p.proretset,p.prokind,p.proparallel,
+const FUNCTION_ROWS=`SELECT p.oid,p.proowner,p.proname,p.prosrc,p.prosecdef,p.provolatile,p.proleakproof,p.proconfig,p.proisstrict,p.proretset,p.prokind,p.proparallel,
   l.lanname,p.prorettype::regtype::text AS returns,pg_catalog.pg_get_function_identity_arguments(p.oid) AS args
   FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_language l ON l.oid=p.prolang
   WHERE p.pronamespace='public'::regnamespace AND p.proname=ANY($1) ORDER BY p.proname,p.oid`;
@@ -109,12 +112,15 @@ async function tableDifferences(db,relation,table){
   const reasons=[];
   if(relation.relkind!=='r'||relation.relpersistence!=='p'||relation.relrowsecurity||relation.relforcerowsecurity||relation.relhasrules||relation.relispartition||relation.relhassubclass||relation.reloptions!==null)
     reasons.push('SHAPE');
-  const columns=(await db.query(`SELECT a.attname,format_type(a.atttypid,a.atttypmod) AS type,a.attnotnull,pg_catalog.pg_get_expr(d.adbin,d.adrelid) AS def,a.attidentity,a.attgenerated,a.attnum
-    FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+  // Column collation: a text column must carry the database default, which is the collation of the type itself (pg_type.typcollation); any other type has none.
+  const columns=(await db.query(`SELECT a.attname,format_type(a.atttypid,a.atttypmod) AS type,a.attnotnull,pg_catalog.pg_get_expr(d.adbin,d.adrelid) AS def,a.attidentity,a.attgenerated,a.attnum,
+    a.attcollation=ty.typcollation AS default_collation
+    FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_type ty ON ty.oid=a.atttypid LEFT JOIN pg_catalog.pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
     WHERE a.attrelid=$1 AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum`,[relation.oid])).rows;
   const expected=COLUMNS[table];
   if(columns.length!==expected.length||columns.some((row,index)=>row.attname!==expected[index].name||row.type!==expected[index].type||row.attnotnull!==expected[index].notNull
     ||row.def!==expected[index].def||row.attidentity!==''||row.attgenerated!==''||row.attnum!==index+1))reasons.push('COLUMNS');
+  if(columns.some(row=>!row.default_collation))reasons.push('COLLATION');
   const constraints=(await db.query(`SELECT c.conname,c.contype,pg_catalog.pg_get_constraintdef(c.oid) AS def,c.condeferrable,c.condeferred,c.convalidated
     FROM pg_catalog.pg_constraint c WHERE c.conrelid=$1 ORDER BY c.conname`,[relation.oid])).rows;
   const wanted=CONSTRAINTS[table];
@@ -138,6 +144,12 @@ export async function classifyQuantExposureRegister(db){
   const types=(await db.query(`SELECT typname FROM pg_catalog.pg_type WHERE typnamespace='public'::regnamespace AND typrelid=0 AND typname=ANY($1)`,[RELATION_NAMES])).rows;
   const triggers=(await db.query(TRIGGER_ROWS,[EXPOSURE_GUARDS.map(guard=>guard[0]),FUNCTIONS,TABLES])).rows;
   const problems=[],missing=[],exact={};
+  // Cross-lane rule: every relation and function is owned by the owner of the marker table. Judged only when the marker table exists.
+  const markerOwner=relations.find(row=>row.relname===MARKER_TABLE)?.relowner??null;
+  if(markerOwner!==null){
+    for(const row of relations)if(row.relowner!==markerOwner)problems.push('OWNER_MISMATCH:'+row.relname);
+    for(const row of functions)if(row.proowner!==markerOwner)problems.push('OWNER_MISMATCH:'+row.proname);
+  }
   for(const row of types)problems.push('TYPE_UNEXPECTED:'+row.typname);
   const tables=relations.filter(row=>TABLES.includes(row.relname));
   for(const row of relations){
@@ -183,10 +195,14 @@ export async function classifyQuantExposureRegister(db){
 }
 
 /**
- * Catalog facts and the failures they imply, read only. With runtimeRole the privilege boundary the register relies on is
- * checked too: the role is not a superuser or BYPASSRLS, owns neither table nor any register function (ownership includes membership of the
- * owning role; the QR-1b freeze inspection still compares the owner name only, a known gap), holds no TRIGGER or TRUNCATE privilege, cannot DELETE
- * from the register, cannot write the marker table and (PostgreSQL 15 and later) may not SET session_replication_role. With
+ * Catalog facts and the failures they imply, read only. The runtime-role checks are the shared inspection of runtime-role-inspection.js.
+ * With runtimeRole the privilege boundary the register relies on is
+ * checked too: the role is not a superuser or BYPASSRLS and is a member of no superuser or BYPASSRLS role (RUNTIME_ROLE_PRIVILEGED_MEMBER), owns
+ * neither table nor any register function (ownership includes membership of the owning role through pg_has_role MEMBER, which SET ROLE reaches
+ * even without inheritance), holds no TRIGGER or TRUNCATE privilege, cannot DELETE from the register (RUNTIME_ROLE_DELETE_PRIVILEGE), cannot write
+ * the marker table and (PostgreSQL 15 and later) may not SET session_replication_role. A forbidden privilege counts when any role the runtime
+ * role can reach by membership holds it (INHERIT FALSE and a column-level SELECT, INSERT or UPDATE grant included); the role must not own schema
+ * public (also as database owner) nor hold CREATE on it. With
  * requireGrants the role must also hold SELECT, INSERT and UPDATE on the register (UPDATE only carries the writer's LOCK TABLE: the
  * trigger refuses every row update) and SELECT on the marker table. The database TEMP privilege is recorded, not judged, because
  * every function pins search_path and the reader qualifies each relation.
@@ -214,40 +230,15 @@ export async function inspectQuantExposureRegister(db,{runtimeRole,requireGrants
     facts.functions.push({name,security_definer:fn.prosecdef,search_path:fn.proconfig});
   }
   if(runtimeRole){
-    const role=(await db.query('SELECT rolsuper,rolbypassrls FROM pg_catalog.pg_roles WHERE rolname=$1',[runtimeRole])).rows[0];
-    if(!role)failures.push('RUNTIME_ROLE_MISSING');
-    else{
-      const runtime=facts.runtime_role={superuser:role.rolsuper,bypass_rls:role.rolbypassrls,tables:[]};
-      if(role.rolsuper)failures.push('RUNTIME_ROLE_SUPERUSER');
-      if(role.rolbypassrls)failures.push('RUNTIME_ROLE_BYPASSRLS');
-      runtime.temp_privilege=(await db.query("SELECT has_database_privilege($1,current_database(),'TEMP') v",[runtimeRole])).rows[0].v;
-      for(const table of classification.tables){
-        const row=(await db.query(`SELECT pg_catalog.pg_has_role($2,c.relowner,'MEMBER') AS owner,has_table_privilege($2,c.oid,'TRIGGER') AS trigger,
-          has_table_privilege($2,c.oid,'TRUNCATE') AS truncate,has_table_privilege($2,c.oid,'SELECT') AS "select",has_table_privilege($2,c.oid,'INSERT') AS "insert",
-          has_table_privilege($2,c.oid,'UPDATE') AS "update",has_table_privilege($2,c.oid,'DELETE') AS "delete"
-          FROM pg_catalog.pg_class c WHERE c.oid=to_regclass($1)`,['public.'+table,runtimeRole])).rows[0];
-        runtime.tables.push({table,...row});
-        if(row.owner)failures.push('RUNTIME_ROLE_OWNS:'+table);
-        if(row.trigger)failures.push('RUNTIME_ROLE_TRIGGER_PRIVILEGE:'+table);
-        if(row.truncate)failures.push('RUNTIME_ROLE_TRUNCATE_PRIVILEGE:'+table);
-        if(table===REGISTER_TABLE){
-          if(row.delete)failures.push('RUNTIME_ROLE_DELETE_PRIVILEGE:'+table);
-          if(requireGrants)for(const privilege of ['select','insert','update'])if(!row[privilege])failures.push('RUNTIME_ROLE_PRIVILEGE_MISSING:'+table+':'+privilege.toUpperCase());
-        }else{
-          for(const privilege of ['insert','update','delete'])if(row[privilege])failures.push('RUNTIME_ROLE_WRITE_PRIVILEGE:'+table+':'+privilege.toUpperCase());
-          if(requireGrants&&!row.select)failures.push('RUNTIME_ROLE_PRIVILEGE_MISSING:'+table+':SELECT');
-        }
-      }
-      // Owner or member of the owner (SET ROLE reaches the owner even without inheritance) of a register function can replace its body.
-      for(const fn of (await db.query(`SELECT p.proname,pg_catalog.pg_has_role($2,p.proowner,'MEMBER') AS owner FROM pg_catalog.pg_proc p
-        WHERE p.pronamespace='public'::regnamespace AND p.proname=ANY($1) ORDER BY p.proname,p.oid`,[FUNCTIONS,runtimeRole])).rows)
-        if(fn.owner)failures.push('RUNTIME_ROLE_OWNS_FUNCTION:'+fn.proname);
-      facts.server_version_num=Number((await db.query("SELECT current_setting('server_version_num') v")).rows[0].v);
-      if(facts.server_version_num>=150000){
-        runtime.session_replication_role_set=(await db.query("SELECT has_parameter_privilege($1,'session_replication_role','SET') v",[runtimeRole])).rows[0].v;
-        if(runtime.session_replication_role_set)failures.push('RUNTIME_ROLE_SESSION_REPLICATION_ROLE');
-      }
-    }
+    // One shared read-only inspection (src/postgres/runtime-role-inspection.js): ownership by membership, every forbidden privilege through
+    // any reachable role (also with INHERIT FALSE and on a single column), privileged membership, CREATE on schema public and session_replication_role.
+    const tables=classification.tables.map(name=>name===REGISTER_TABLE
+      ?{name,forbidden:['DELETE','TRUNCATE','TRIGGER'],required:requireGrants?['SELECT','INSERT','UPDATE']:[]}
+      :{name,forbidden:['INSERT','UPDATE','DELETE','TRUNCATE','TRIGGER'],required:requireGrants?['SELECT']:[]});
+    const inspected=await inspectRuntimeRole(db,{runtimeRole,schema:'public',tables,functions:FUNCTIONS});
+    // The register keeps its own failure name for a DELETE privilege.
+    failures.push(...inspected.failures.map(item=>item==='RUNTIME_ROLE_WRITE_PRIVILEGE:'+REGISTER_TABLE+':DELETE'?'RUNTIME_ROLE_DELETE_PRIVILEGE:'+REGISTER_TABLE:item));
+    if(inspected.found){facts.runtime_role=inspected.facts;facts.server_version_num=inspected.facts.server_version_num;}
   }
   return {ok:failures.length===0,failures,facts};
 }

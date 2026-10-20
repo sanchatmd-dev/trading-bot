@@ -1,6 +1,6 @@
 # QL-4B/QL-4C qualified Best Inputs package contract
 
-Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10); root clarifications RC-1 to RC-11 recorded the same day (section 10.1); root decisions RC-12 to RC-31 for the package builder recorded 2026-10-20 (section 10.2). Root accepted the other rules on
+Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10); root clarifications RC-1 to RC-11 recorded the same day (section 10.1); root decisions RC-12 to RC-32 for the package builder recorded 2026-10-20 (section 10.2). Root accepted the other rules on
 2026-10-19 after independent review. The pure gate module (`src/quant-library/package-gates.js`) and the slice S1 pure renderer
 (`src/quant-library/package-render.js`) are root-accepted as local engineering evidence and are wired into no route,
 worker, table or view. Builder slice S2, the insert-only package tables (`src/postgres/best-inputs-package-schema.sql`),
@@ -80,7 +80,7 @@ These facts limit what F09-01 can claim today.
 2. Fixture-based package/report engineering may proceed after its engineering dependencies pass. Real
    recommendations, apply and email need a qualified run and export validation. [SRC: ROADMAP § Current
    status table, row "QL-4B / QL-4C"; § Work packages within the governing phases, paragraph after M7]
-3. CODE: `src/quant-library/derive.js` implements `library-qualification-v1` with eight fixed gates G1
+3. CODE: `src/quant-library/derive.js` implements `library-qualification-v2` (v1 before 2026-10-20; G5 now also reads the exposure register, QR-3 RC-C44) with eight fixed gates G1
    to G8. G8 `QL4C_VALIDATION` always fails with `QL4C_VALIDATION_NOT_AVAILABLE`. `QUALIFIED_TOTAL` is 0
    and `QUALIFIED_WINNER` is null. No run can be qualified today.
 4. CODE: `src/postgres/quant-research-worker.js` always writes `owner_recommendation_ready:false`, so G7
@@ -760,6 +760,7 @@ rounds of the S1 renderer. The owner decisions OD-1 to OD-20 do not change.
 | RC-29 | The install inspection of each new extension uses one shared module that checks ownership by membership (tables, functions and schema `public`), every forbidden privilege held through any role the runtime role can reach, membership in a superuser or bypass-RLS role, and CREATE on schema `public`. The exposure register and research freeze tools adopt it in a later hardening slice | 8 | Root | 2026-10-20 |
 | RC-30 | Gate C2 accepts an approved edit only where one shared anchored locator finds the default literal of the bound input: the stored span starts at a line start with the bound variable, uses the bound input call kind and ends at its closing parenthesis, and the edited literal equals the matching `inputs.json` before value; otherwise `BI_SOURCE_LOGIC_CHANGED`. The renderer uses the same locator. The fifth retryable failure gives `EXPORT_REFUSED` with the attempt codes followed by `BI_ATTEMPTS_EXHAUSTED`, and no attempt carries `BI_ATTEMPTS_EXHAUSTED` | 4.2, 5.2, 6.1 | Root | 2026-10-20 |
 | RC-31 | Every offline extension's classifier also requires each of its relations and functions to be owned by the owner of its own marker table (otherwise `OWNER_MISMATCH` and state OTHER). The QR-3 comparison, QR-4 selection and multi-Pine member-set extensions do this now; the exposure register, research freeze and builder tools, column collation checks and adoption of the shared inspection module come in one later cross-extension hardening slice | 8 | Root | 2026-10-20 |
+| RC-32 | The hardening slice of RC-31 is implemented: every extension classifier compares column collation; the exposure register, research freeze and builder classifiers also require the owner of their marker or anchor table (an anchor that is not an ordinary table is OTHER); the exposure register and research freeze inspections use the shared runtime-role module. The research freeze tool must run as the owner of `quant_jobs`: any other user, a superuser included, is refused before any write | 8 | Root | 2026-10-20 |
 
 ## 11. Test and evidence plan
 

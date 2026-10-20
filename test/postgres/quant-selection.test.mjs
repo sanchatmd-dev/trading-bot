@@ -17,6 +17,7 @@ import {migrateBestInputsPackage} from '../../src/postgres/best-inputs-package-m
 import {SELECTION_GUARDS,SELECTION_MARKER,SELECTION_TABLES,SELECTION_GRANT_TABLES,SELECTION_GUARD_NAMES,INSERT_ONLY_SQLSTATE,INSERT_GUARD_SQLSTATE,SERIALIZABLE_SQLSTATE,
   classifyQuantSelection,inspectQuantSelection,migrateQuantSelection,rollbackQuantSelection} from '../../src/postgres/quant-selection-migration.js';
 import {appendExposures} from '../../src/postgres/exposure-register.js';
+import {QUALIFICATION_VERSION} from '../../src/selection/eligibility.js';
 import {registerSelection,GUARD_REFUSALS} from '../../src/postgres/selection-store.js';
 import {OBJECTIVE_REGISTRY} from '../../src/selection/index.js';
 import {canonical} from '../../src/pine-bridge/source.js';
@@ -119,7 +120,7 @@ const SCOPE={market:structuredClone(MARKET),data_model:{data_profile:'spot-kline
   capital:{equity:'10000',cash:'10000'},policy:{policy_version:'risk-v1',policy_hash:POLICY},valuation:{valuation:'qr3-valuation-std-v1',benchmark:'qr3-bh-close-same-cost-v1'},engine:ENGINE};
 const range=(fromDays,toDays)=>({start_ms:BASE-fromDays*DAY,end_ms:BASE-toDays*DAY});
 const GATES=['G1','G2','G3','G4','G5','G6','G7','G8'];
-const qualification=fixture=>({version:'library-qualification-v1',qualified:!fixture,label:fixture?'DEVELOPMENT_ONLY':'QUALIFIED',
+const qualification=fixture=>({version:QUALIFICATION_VERSION,qualified:!fixture,label:fixture?'DEVELOPMENT_ONLY':'QUALIFIED',
   gates:GATES.map(gate=>({gate,name:'N_'+gate,state:fixture&&gate==='G8'?'FAIL':'PASS',code:fixture&&gate==='G8'?'QL4C_VALIDATION_NOT_AVAILABLE':null}))});
 const EXPORT_SQL=`INSERT INTO public.bi_exports(export_id,owner_id,bot_id,run_id,parent_export_id,mode,internal,fixture,gate_version,library_versions,binding,binding_hash,package_hash,b0,created_at,created_at_utc)
   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`;
@@ -341,6 +342,8 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
     ['column made optional',R+'ALTER COLUMN body_canonical DROP NOT NULL','TABLE_DEFINITION:quant_selection_registrations:COLUMNS'],
     ['column added',R+'ADD COLUMN extra integer','TABLE_DEFINITION:quant_selection_registrations:COLUMNS'],
     ['column type changed','ALTER TABLE public.quant_selection_participants ALTER COLUMN source_hash TYPE character varying(64)','TABLE_DEFINITION:quant_selection_participants:'],
+    ['column collation changed','ALTER TABLE public.quant_selection_universe ALTER COLUMN first_code TYPE text COLLATE "C"','TABLE_DEFINITION:quant_selection_universe:COLLATION'],
+    ['column collation changed on a second table','ALTER TABLE public.quant_selection_status_events ALTER COLUMN detail TYPE text COLLATE "POSIX"','TABLE_DEFINITION:quant_selection_status_events:COLLATION'],
     ['row security enabled',R+'ENABLE ROW LEVEL SECURITY','TABLE_DEFINITION:quant_selection_registrations:SHAPE'],
     ['rule added','CREATE RULE qsm_rule AS ON INSERT TO public.quant_selection_universe DO ALSO NOTHING','TABLE_DEFINITION:quant_selection_universe:SHAPE'],
     ['marker row removed','DELETE FROM public.quant_selection_schema','MARKER_ROW'],

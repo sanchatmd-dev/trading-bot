@@ -7,7 +7,7 @@ import {replayAccount,ledgerRuleEpochsMet,lotMethodsMet,markerCounts,targetOf} f
 import {legacySeeds,runGates,unbackedEquityLine} from '../portfolio/qr2-checks.js';
 import {rangePerformance,accountStatus} from '../portfolio/qr2-returns.js';
 
-// QR-2 S2 reader (docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md 6.1, 6.6, 8.1 to 8.4; design .qa-local/claude-qr2-s2-design-2026-10-20).
+// QR-2 S2 reader (docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md 6.1, 6.6, 8.1 to 8.4).
 // One owner-scoped, read-only account read: every table row of one Bot and broker is read inside ONE REPEATABLE READ, READ ONLY
 // transaction, then the pure S1 library replays, gates and values it. The reader writes nothing: no users lock, no fence bump, no
 // advisory lock, no audit row (the after-commit audit writer is src/postgres/qr2-audit.js), no network and no research module. No

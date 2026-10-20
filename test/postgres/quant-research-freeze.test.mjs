@@ -653,3 +653,122 @@ test('classify: FROZEN_LEGACY converges to FROZEN and rolls back; a partial FOUN
   assert.deepEqual(await rollbackQuantResearchFreeze(local),{rolled_back:true,previous_state:'FROZEN_LEGACY'});
   assert.equal((await classifyQuantResearchFreeze(local)).state,'ABSENT');
 });
+
+test('classify: a guarded table or a freeze function owned by a role other than the owner of quant_jobs is OTHER; install and rollback both refuse and write nothing',async()=>{
+  const local=await fresh('frozen');
+  const original=(await local.query("SELECT quote_ident(pg_get_userbyid(relowner)) AS o FROM pg_class WHERE oid='public.quant_jobs'::regclass")).rows[0].o;
+  await local.query('CREATE ROLE fz_other_owner NOLOGIN');
+  try{
+    const cases=[
+      ['a legacy table re-owned','ALTER TABLE public.quant_job_steps OWNER TO fz_other_owner','ALTER TABLE public.quant_job_steps OWNER TO '+original,'OWNER_MISMATCH:quant_job_steps'],
+      ['a FOUNDATION table re-owned','ALTER TABLE public.quant_research_chunks OWNER TO fz_other_owner','ALTER TABLE public.quant_research_chunks OWNER TO '+original,'OWNER_MISMATCH:quant_research_chunks'],
+      ['the anchor table re-owned (every other table and function now differs from it)','ALTER TABLE public.quant_jobs OWNER TO fz_other_owner','ALTER TABLE public.quant_jobs OWNER TO '+original,'OWNER_MISMATCH:quant_job_steps'],
+      ['a guard function re-owned','ALTER FUNCTION public.quant_research_freeze_job_update() OWNER TO fz_other_owner','ALTER FUNCTION public.quant_research_freeze_job_update() OWNER TO '+original,'OWNER_MISMATCH:quant_research_freeze_job_update'],
+      ['the status helper re-owned','ALTER FUNCTION public.quant_research_status_is_terminal(text) OWNER TO fz_other_owner','ALTER FUNCTION public.quant_research_status_is_terminal(text) OWNER TO '+original,'OWNER_MISMATCH:quant_research_status_is_terminal'],
+      ['the marker function re-owned','ALTER FUNCTION public.quant_research_freeze_version() OWNER TO fz_other_owner','ALTER FUNCTION public.quant_research_freeze_version() OWNER TO '+original,'OWNER_MISMATCH:quant_research_freeze_version']];
+    for(const [note,change,undo,expected] of cases){
+      await local.query(change);
+      try{
+        await refusesUnchanged(local,note);
+        const classification=await classifyQuantResearchFreeze(local);
+        assert.ok(classification.problems.includes(expected),note+': '+classification.problems.join());
+        const report=await inspectQuantResearchFreeze(local);
+        assert.equal(report.ok,false,note);assert.ok(report.failures.includes(expected),note+': '+report.failures.join());
+      }finally{await local.query(undo);}
+      assert.equal((await classifyQuantResearchFreeze(local)).state,'FROZEN',note+': restored');
+    }
+    // Without any freeze object a re-owned table still makes the state OTHER, so the install is refused before it writes.
+    const bare=await fresh('bare');
+    await bare.query('ALTER TABLE public.quant_job_steps OWNER TO fz_other_owner');
+    try{
+      await refusesUnchanged(bare,'re-owned table, no freeze object');
+      assert.ok((await classifyQuantResearchFreeze(bare)).problems.includes('OWNER_MISMATCH:quant_job_steps'));
+    }finally{await bare.query('ALTER TABLE public.quant_job_steps OWNER TO '+original);}
+    assert.equal((await classifyQuantResearchFreeze(bare)).state,'ABSENT','restored');
+  }finally{await local.query('DROP ROLE IF EXISTS fz_other_owner');}
+});
+
+test('classify: an anchor that is not an ordinary table is OWNER_ANCHOR_UNAVAILABLE and OTHER; a view under a guarded table name is never read as a table',async()=>{
+  const original=name=>local=>local.query("SELECT quote_ident(pg_get_userbyid(relowner)) AS o FROM pg_class WHERE oid='public."+name+"'::regclass").then(result=>result.rows[0].o);
+  const bare=await fresh('bare');
+  const owner=await original('quant_jobs')(bare);
+  await bare.query('CREATE ROLE fz_view_owner NOLOGIN');
+  try{
+    // The anchor name is a view: the ownership check cannot run, so the state is OTHER and never a skipped check.
+    await bare.query('ALTER TABLE public.quant_jobs RENAME TO quant_jobs_moved');
+    await bare.query('CREATE VIEW public.quant_jobs AS SELECT * FROM public.quant_jobs_moved');
+    try{
+      await refusesUnchanged(bare,'anchor is a view');
+      const classification=await classifyQuantResearchFreeze(bare);
+      assert.ok(classification.problems.includes('OWNER_ANCHOR_UNAVAILABLE:quant_jobs'),classification.problems.join());
+      const report=await inspectQuantResearchFreeze(bare);
+      assert.equal(report.ok,false);assert.ok(report.failures.includes('OWNER_ANCHOR_UNAVAILABLE:quant_jobs'),report.failures.join());
+    }finally{await bare.query('DROP VIEW public.quant_jobs');await bare.query('ALTER TABLE public.quant_jobs_moved RENAME TO quant_jobs');}
+    assert.equal((await classifyQuantResearchFreeze(bare)).state,'ABSENT','anchor restored');
+    // A view that carries a guarded table name, with the owner of the anchor and then with another owner: only an ordinary table counts.
+    for(const [note,viewOwner] of [['same owner as the anchor',owner],['another owner','fz_view_owner']]){
+      await bare.query('ALTER TABLE public.quant_research_chunks RENAME TO quant_research_chunks_moved');
+      await bare.query('CREATE VIEW public.quant_research_chunks AS SELECT * FROM public.quant_research_chunks_moved');
+      await bare.query('ALTER VIEW public.quant_research_chunks OWNER TO '+viewOwner);
+      try{
+        await refusesUnchanged(bare,'view under a guarded table name, '+note);
+        assert.ok((await classifyQuantResearchFreeze(bare)).problems.includes('OWNER_MISMATCH:quant_research_chunks'),note);
+      }finally{await bare.query('DROP VIEW public.quant_research_chunks');await bare.query('ALTER TABLE public.quant_research_chunks_moved RENAME TO quant_research_chunks');}
+      assert.equal((await classifyQuantResearchFreeze(bare)).state,'ABSENT','restored after '+note);
+    }
+  }finally{await bare.query('DROP ROLE IF EXISTS fz_view_owner');}
+});
+
+test('install: a user that does not own quant_jobs is refused before any write, and nothing changes',async()=>{
+  const local=await fresh('bare');
+  const original=(await local.query("SELECT quote_ident(pg_get_userbyid(relowner)) AS o FROM pg_class WHERE oid='public.quant_jobs'::regclass")).rows[0].o;
+  const tables=['quant_jobs','quant_job_steps','quant_research_foundation','quant_research_chunks'];
+  await local.query('CREATE ROLE fz_table_owner NOLOGIN');
+  try{
+    for(const table of tables)await local.query('ALTER TABLE public.'+table+' OWNER TO fz_table_owner');
+    const before=await catalogDigest(local);
+    assert.equal((await local.query('SELECT rolsuper FROM pg_roles WHERE rolname=current_user')).rows[0].rolsuper,true,'the installing user is a superuser who does not own the tables');
+    assert.equal((await classifyQuantResearchFreeze(local)).state,'ABSENT','every table has one owner, so the state is ABSENT');
+    await assert.rejects(migrateQuantResearchFreeze(local),/Research freeze install refused; run as the owner of quant_jobs \(no change made\)/);
+    assert.deepEqual(await catalogDigest(local),before,'install wrote nothing');
+    assert.equal((await classifyQuantResearchFreeze(local)).state,'ABSENT');
+  }finally{
+    for(const table of tables)await local.query('ALTER TABLE public.'+table+' OWNER TO '+original);
+    await local.query('DROP ROLE IF EXISTS fz_table_owner');
+  }
+  assert.equal((await migrateQuantResearchFreeze(local)).previous_state,'ABSENT','the owner installs');
+});
+
+class Abort extends Error {}
+/** Runs fn in a transaction that is always rolled back, so a role or grant made for one probe never reaches the shared database. */
+async function probeRolledBack(target,fn){
+  let value;
+  try{await target.transaction(async()=>{value=await fn();throw new Abort();});}catch(error){if(!(error instanceof Abort))throw error;}
+  return value;
+}
+test('the runtime-role inspection is the shared one: ownership by membership, privileged membership, a privilege reached without inheriting it and CREATE on public are named',async()=>{
+  const version=Number((await db.query("SELECT current_setting('server_version_num') v")).rows[0].v);
+  const failuresOf=(setup,role)=>probeRolledBack(db,async()=>{await db.query(setup);return (await inspectQuantResearchFreeze(db,{runtimeRole:role})).failures;});
+  assert.deepEqual(await failuresOf('CREATE ROLE fz_plain NOLOGIN','fz_plain'),[],'a clean role reports nothing');
+  assert.deepEqual((await inspectQuantResearchFreeze(db,{runtimeRole:'no_such_role_fz'})).failures,['RUNTIME_ROLE_MISSING']);
+  const owner=(await db.query("SELECT quote_ident(pg_get_userbyid(relowner)) AS o FROM pg_class WHERE oid='public.quant_jobs'::regclass")).rows[0].o;
+  // A member of the owning role owns every table (the old comparison of the owner name alone missed it), also without inheriting it.
+  const member=await failuresOf('CREATE ROLE fz_member NOLOGIN NOINHERIT; GRANT '+owner+' TO fz_member','fz_member');
+  for(const table of ['quant_jobs','quant_job_steps','quant_research_foundation','quant_research_chunks'])assert.ok(member.includes('RUNTIME_ROLE_OWNS:'+table),table+': '+member.join());
+  assert.ok(member.includes('RUNTIME_ROLE_OWNS_FUNCTION:quant_research_freeze_job_update'),member.join());
+  // A member of a BYPASSRLS or superuser role is a privileged member.
+  const privileged=await failuresOf('CREATE ROLE fz_bypass NOLOGIN BYPASSRLS; CREATE ROLE fz_super NOLOGIN SUPERUSER; CREATE ROLE fz_pm NOLOGIN NOINHERIT; GRANT fz_bypass TO fz_pm; GRANT fz_super TO fz_pm','fz_pm');
+  assert.ok(privileged.includes('RUNTIME_ROLE_PRIVILEGED_MEMBER:fz_bypass')&&privileged.includes('RUNTIME_ROLE_PRIVILEGED_MEMBER:fz_super'),privileged.join());
+  // TRIGGER and TRUNCATE held by a role the runtime role reaches without inheriting it.
+  const reached=await failuresOf('CREATE ROLE fz_holder NOLOGIN; GRANT TRIGGER,TRUNCATE ON public.quant_jobs TO fz_holder; CREATE ROLE fz_noinherit NOLOGIN NOINHERIT; GRANT fz_holder TO fz_noinherit','fz_noinherit');
+  for(const failure of ['RUNTIME_ROLE_TRIGGER_PRIVILEGE:quant_jobs','RUNTIME_ROLE_TRUNCATE_PRIVILEGE:quant_jobs'])assert.ok(reached.includes(failure),failure+': '+reached.join());
+  if(version>=160000){
+    const viaGrant=await failuresOf('CREATE ROLE fz_holder2 NOLOGIN; GRANT TRUNCATE ON public.quant_job_steps TO fz_holder2; CREATE ROLE fz_member2 NOLOGIN INHERIT; GRANT fz_holder2 TO fz_member2 WITH INHERIT FALSE','fz_member2');
+    assert.ok(viaGrant.includes('RUNTIME_ROLE_TRUNCATE_PRIVILEGE:quant_job_steps'),viaGrant.join());
+  }
+  // CREATE on schema public, held through a role the runtime role reaches without inheriting it.
+  const create=await failuresOf('CREATE ROLE fz_creator NOLOGIN; GRANT CREATE ON SCHEMA public TO fz_creator; CREATE ROLE fz_via NOLOGIN NOINHERIT; GRANT fz_creator TO fz_via','fz_via');
+  assert.ok(create.includes('RUNTIME_ROLE_SCHEMA_CREATE'),create.join());
+  // The runtime role of the suite and the deleter still pass.
+  for(const role of [roleName,deleterName])assert.deepEqual((await inspectQuantResearchFreeze(db,{runtimeRole:role})).failures,[],role);
+});

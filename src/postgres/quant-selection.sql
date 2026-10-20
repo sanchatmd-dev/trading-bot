@@ -1,5 +1,5 @@
 -- QR-4 S2-1 qualified-selection registration tables (local candidate; applied offline and separately from the version-1 extensions;
--- docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md RC-S21 to RC-S27, root design .qa-local/claude-qr4-s2-design-2026-10-20/DESIGN.md D1 to D12 option A).
+-- docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md RC-S21 to RC-S27).
 -- Slice S2-1 holds the marker, the registration, the universe rows, the participants and the status event log. The window freeze, the evaluation
 -- starts, the outcome and the replay events (S2-2, the RO-12 rechecks) are added to this same uninstalled file by the next slice.
 --

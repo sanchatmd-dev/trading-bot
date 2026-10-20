@@ -317,6 +317,8 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
     ['column made optional','ALTER TABLE public.mp_member_set_members ALTER COLUMN deployment_id DROP NOT NULL','TABLE_DEFINITION:mp_member_set_members:COLUMNS'],
     ['column added',T+'ADD COLUMN extra integer','TABLE_DEFINITION:mp_member_sets:COLUMNS'],
     ['column type changed','ALTER TABLE public.mp_member_set_members ALTER COLUMN evidence_hash TYPE character varying(64)','TABLE_DEFINITION:mp_member_set_members:'],
+    ['column collation changed','ALTER TABLE public.mp_member_set_members ALTER COLUMN exit_version TYPE text COLLATE "C"','TABLE_DEFINITION:mp_member_set_members:COLLATION'],
+    ['column collation changed on the parent table','ALTER TABLE public.mp_member_sets ALTER COLUMN version TYPE text COLLATE "POSIX"','TABLE_DEFINITION:mp_member_sets:COLLATION'],
     ['row security enabled',T+'ENABLE ROW LEVEL SECURITY','TABLE_DEFINITION:mp_member_sets:SHAPE'],
     ['rule added','CREATE RULE mp_rule AS ON INSERT TO public.mp_member_set_members DO ALSO NOTHING','TABLE_DEFINITION:mp_member_set_members:SHAPE'],
     ['marker row removed','DELETE FROM public.mp_member_set_schema','MARKER_ROW'],

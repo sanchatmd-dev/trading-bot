@@ -183,6 +183,7 @@ test('install: ABSENT to INSTALLED in one transaction; the base schema, tables a
 test('installed: every tampered object classifies OTHER and is reported; a replaced marker function is never executed',async()=>{
   const noop="CREATE FUNCTION public.s2a_noop() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$;";
   const T='ALTER TABLE public.quant_exposure_register ';
+  const OTHER_OWNER='CREATE ROLE s2a_other_owner NOLOGIN; ';
   const redo=(name,when,fn)=>`DROP TRIGGER ${name} ON public.quant_exposure_register; CREATE TRIGGER ${name} ${when} ON public.quant_exposure_register FOR EACH ROW EXECUTE FUNCTION public.${fn}();`;
   const cases=[
     ['guard body replaced',"CREATE OR REPLACE FUNCTION public.quant_exposure_register_insert_only() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$ BEGIN RETURN NEW; END $$",'FUNCTION_DEFINITION:quant_exposure_register_insert_only:BODY'],
@@ -212,6 +213,12 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
     ['column made required',T+'ALTER COLUMN comparison_id SET NOT NULL','TABLE_DEFINITION:quant_exposure_register:COLUMNS'],
     ['column added',T+'ADD COLUMN extra integer','TABLE_DEFINITION:quant_exposure_register:COLUMNS'],
     ['column type changed',T+'ALTER COLUMN source_hash TYPE character varying(64)','TABLE_DEFINITION:quant_exposure_register:'],
+    ['column collation changed',T+'ALTER COLUMN source_hash TYPE text COLLATE "C"','TABLE_DEFINITION:quant_exposure_register:COLLATION'],
+    ['column collation changed on a second column',T+'ALTER COLUMN kind TYPE text COLLATE "POSIX"','TABLE_DEFINITION:quant_exposure_register:COLLATION'],
+    ['table re-owned to another role',OTHER_OWNER+T+'OWNER TO s2a_other_owner','OWNER_MISMATCH:quant_exposure_register'],
+    ['marker table re-owned to another role',OTHER_OWNER+'ALTER TABLE public.quant_exposure_register_schema OWNER TO s2a_other_owner','OWNER_MISMATCH:quant_exposure_register'],
+    ['guard function re-owned to another role',OTHER_OWNER+'ALTER FUNCTION public.quant_exposure_register_insert_only() OWNER TO s2a_other_owner','OWNER_MISMATCH:quant_exposure_register_insert_only'],
+    ['marker function re-owned to another role',OTHER_OWNER+'ALTER FUNCTION public.quant_exposure_register_version() OWNER TO s2a_other_owner','OWNER_MISMATCH:quant_exposure_register_version'],
     ['row security enabled',T+'ENABLE ROW LEVEL SECURITY','TABLE_DEFINITION:quant_exposure_register:SHAPE'],
     ['rule added','CREATE RULE s2a_rule AS ON INSERT TO public.quant_exposure_register DO ALSO NOTHING','TABLE_DEFINITION:quant_exposure_register:SHAPE'],
     ['marker row removed','DELETE FROM public.quant_exposure_register_schema','MARKER_ROW'],
@@ -220,7 +227,15 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
   for(const [label,statement,prefix] of cases){
     const found=await probe(db,async()=>{await db.query(statement);return {classification:await classifyQuantExposureRegister(db),report:await inspectQuantExposureRegister(db)};});
     assert.equal(found.classification.state,'OTHER',label+': '+found.classification.problems.join());
-    assert.ok([...found.classification.problems,...found.classification.missing].some(item=>item.startsWith(prefix)),label+': '+[...found.classification.problems,...found.classification.missing].join());
+    const items=[...found.classification.problems,...found.classification.missing];
+    // An owner mismatch is matched by exact name: includes() takes no prefix, so a longer name that starts with it never satisfies it. A re-owned function
+    // leaves the table alone, so the shorter table name must be absent then: the longer function name is not accepted in its place.
+    if(prefix.startsWith('OWNER_MISMATCH:')){
+      const mismatches=items.filter(item=>item.startsWith('OWNER_MISMATCH:'));
+      assert.ok(mismatches.includes(prefix),label+': '+items.join());
+      if(label.includes('function'))assert.ok(!mismatches.includes('OWNER_MISMATCH:quant_exposure_register'),label+': '+items.join());
+    }
+    else assert.ok(items.some(item=>item.startsWith(prefix)),label+': '+items.join());
     assert.equal(found.report.ok,false,label);assert.equal(found.report.facts.state,'OTHER',label);
   }
   // A replaced marker function that raises when called: the inspection reports it and never calls it.
@@ -231,6 +246,41 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
   assert.equal(replaced.ok,false);assert.equal(replaced.facts.marker,null);assert.ok(replaced.failures.includes('MARKER_MISSING'));
   assert.ok(replaced.failures.some(item=>item.startsWith('FUNCTION_DEFINITION:quant_exposure_register_version:BODY')));
   assert.equal((await classifyQuantExposureRegister(db)).state,'INSTALLED','every tamper was rolled back');
+});
+
+test('the runtime-role inspection is the shared one: privileged membership, a privilege reached without inheriting it, a column-level write grant and CREATE on public are named',async()=>{
+  const version=Number((await db.query("SELECT current_setting('server_version_num') v")).rows[0].v);
+  const failuresOf=(setup,role,options={})=>probe(db,async()=>{await db.query(setup);return (await inspectQuantExposureRegister(db,{runtimeRole:role,requireGrants:false,...options})).failures;});
+  // A clean role reports none of the shared failures.
+  assert.deepEqual(await failuresOf('CREATE ROLE s2a_plain NOLOGIN','s2a_plain'),[]);
+  // A member of a BYPASSRLS or superuser role, even without inheriting it, is a privileged member.
+  const privileged=await failuresOf('CREATE ROLE s2a_bypass NOLOGIN BYPASSRLS; CREATE ROLE s2a_super NOLOGIN SUPERUSER; CREATE ROLE s2a_pm NOLOGIN NOINHERIT; GRANT s2a_bypass TO s2a_pm; GRANT s2a_super TO s2a_pm','s2a_pm');
+  assert.ok(privileged.includes('RUNTIME_ROLE_PRIVILEGED_MEMBER:s2a_bypass')&&privileged.includes('RUNTIME_ROLE_PRIVILEGED_MEMBER:s2a_super'),privileged.join());
+  // TRUNCATE, TRIGGER and DELETE held by a role the runtime role reaches without inheriting it (NOINHERIT) still count; DELETE keeps its register name.
+  const reached=await failuresOf(`CREATE ROLE s2a_holder NOLOGIN; GRANT TRUNCATE,TRIGGER,DELETE ON ${REGISTER} TO s2a_holder; CREATE ROLE s2a_noinherit NOLOGIN NOINHERIT; GRANT s2a_holder TO s2a_noinherit`,'s2a_noinherit');
+  for(const failure of ['RUNTIME_ROLE_TRUNCATE_PRIVILEGE:quant_exposure_register','RUNTIME_ROLE_TRIGGER_PRIVILEGE:quant_exposure_register','RUNTIME_ROLE_DELETE_PRIVILEGE:quant_exposure_register'])
+    assert.ok(reached.includes(failure),failure+': '+reached.join());
+  assert.ok(!reached.some(item=>item.startsWith('RUNTIME_ROLE_WRITE_PRIVILEGE:quant_exposure_register:DELETE')),'the register DELETE failure keeps its own name');
+  if(version>=160000){
+    const viaGrant=await failuresOf(`CREATE ROLE s2a_holder2 NOLOGIN; GRANT TRUNCATE ON ${REGISTER} TO s2a_holder2; CREATE ROLE s2a_member2 NOLOGIN INHERIT; GRANT s2a_holder2 TO s2a_member2 WITH INHERIT FALSE`,'s2a_member2');
+    assert.ok(viaGrant.includes('RUNTIME_ROLE_TRUNCATE_PRIVILEGE:quant_exposure_register'),viaGrant.join());
+  }
+  // A column-level INSERT or UPDATE grant on the read-only marker table is a write path that has_table_privilege does not see.
+  const column=await failuresOf(`CREATE ROLE s2a_col NOLOGIN; GRANT UPDATE (version), INSERT (version) ON ${MARKER} TO s2a_col`,'s2a_col');
+  for(const privilege of ['UPDATE','INSERT'])assert.ok(column.includes('RUNTIME_ROLE_WRITE_PRIVILEGE:quant_exposure_register_schema:'+privilege),privilege+': '+column.join());
+  // A column SELECT never satisfies a required table-level privilege.
+  const columnOnly=await failuresOf(`CREATE ROLE s2a_colonly NOLOGIN; GRANT SELECT (exposure_id), INSERT (exposure_id) ON ${REGISTER} TO s2a_colonly`,'s2a_colonly',{requireGrants:true});
+  for(const privilege of ['SELECT','INSERT'])assert.ok(columnOnly.includes('RUNTIME_ROLE_PRIVILEGE_MISSING:quant_exposure_register:'+privilege),privilege+': '+columnOnly.join());
+  // CREATE on schema public, held through a role the runtime role reaches without inheriting it.
+  const create=await failuresOf('CREATE ROLE s2a_creator NOLOGIN; GRANT CREATE ON SCHEMA public TO s2a_creator; CREATE ROLE s2a_via NOLOGIN NOINHERIT; GRANT s2a_creator TO s2a_via','s2a_via');
+  assert.ok(create.includes('RUNTIME_ROLE_SCHEMA_CREATE'),create.join());
+  // Membership of the database owner is ownership of schema public (PostgreSQL 15 and later).
+  if(version>=150000){
+    const owner=(await db.query('SELECT pg_get_userbyid(datdba) AS o FROM pg_database WHERE datname=current_database()')).rows[0].o;
+    const schema=await failuresOf(`CREATE ROLE s2a_dbm NOLOGIN; GRANT ${owner} TO s2a_dbm`,'s2a_dbm');
+    assert.ok(schema.includes('RUNTIME_ROLE_OWNS_SCHEMA:public'),schema.join());
+  }
+  assert.equal((await classifyQuantExposureRegister(db)).state,'INSTALLED','every probe was rolled back');
 });
 
 test('offline only: the install and the rollback need the maintenance lock, their own transaction and the research extension',async()=>{

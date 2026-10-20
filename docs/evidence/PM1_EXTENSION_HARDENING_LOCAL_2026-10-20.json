@@ -1,0 +1,47 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "7b5211c",
+  "scope": "Local cross-extension hardening slice (PKG RC-29, RC-31, RC-32): every offline extension classifier (exposure register, builder, QR-3 comparison, QR-4 selection, multi-Pine member set) compares column collation; the exposure register, research freeze and builder classifiers require the owner of their marker or anchor table (an anchor that is not an ordinary table classifies OTHER); the exposure register and research freeze inspections use the shared runtime-role module; the research freeze tool refuses before any write unless run as the owner of quant_jobs. Tracked comments no longer point at ignored local design files. The QR-4 PostgreSQL fixtures read the qualification version from the pure module. No DDL or function body changed: a fresh install of every extension still classifies INSTALLED.",
+  "method": "A coder (Sonnet 5.5) wrote the slice. An independent architecture auditor (Opus 5.5) and a second-opinion reviewer (Fable 5.1) reviewed round 1 and both found that the freeze tool now had to run as the owner of quant_jobs without saying so; root confirmed it. Two narrow rounds followed (pre-write owner refusal, relkind filter, an anchor that is not a table, exact-name tamper assertions). An independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, fifteen PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (quant-library-http 16, gap-branches 7, compare-context 1, g5-register 11, mp-member-set-store 14, mp-member-set 22, quant-research-freeze 22, quant-exposure-register 18, best-inputs-package 26, quant-comparison 19, quant-comparison-create 12, quant-selection 15, quant-selection-register 26, qr2-reader 27, runtime-grants 1; fail 0 and skipped 0 in each), the grant text test and the full unit suite (2120 tests, 0 fail, 6 skipped), plus five single-edit mutations (all killed). Root ruled on every finding. Nobody verified their own work.",
+  "files": {
+    "src/postgres/quant-exposure-register-migration.js": "ec64ef20b30883458589a734b5a3c6c7afab280a71764f13e56744f883d4d746",
+    "src/postgres/quant-research-freeze-migration.js": "d76d55c205222bd2caa8917ba61810ce3e562f2bacdb65258ad2d7905596a5a4",
+    "scripts/migrate-quant-research-freeze.mjs": "3660c24e61f505db8ec4f47fb7105a357fb5742417f9f0e42c3630f176b67571",
+    "src/postgres/best-inputs-package-migration.js": "230d1c00ada4a751e1510b14ec943753cd081b617c47bbe341f82653effb5ded",
+    "src/postgres/quant-comparison-migration.js": "ae0127473ab1abb9b7b3bf8f2948eb6ad9fd0b94509d0caa5ba49c945aced8bf",
+    "src/postgres/quant-selection-migration.js": "df77c14f89d3266a4b3e119aa3c7b95463b2a3321829e239a2526db20a1cfb4e",
+    "src/postgres/mp-member-set-migration.js": "09a820a1097574ac1ab23d05ce10951fdfc360124d1adcf519c4b297069bf818",
+    "src/postgres/qr2-reader.js": "c03f98202b98d7ecc0e8605662f9885472833d99388e35a8bc963d092fe60147",
+    "src/postgres/quant-selection.sql": "cb8296b2a7550b15d82b1365fbd14e2616e1bd10e7a8ba579737be58712b5041",
+    "test/postgres/quant-exposure-register.test.mjs": "847a6954c9a685ddfb7e497734aebe983e7a05440adae18e1a652f9079e0e2f2",
+    "test/postgres/quant-research-freeze.test.mjs": "6d9f97362cdbcf23ec90d34e8e36d6584752ddc1a9790e540d843d9593c9c038",
+    "test/postgres/best-inputs-package.test.mjs": "56a5dccd8b5cffd10d0c5a4a6c64185696eeaabed2f06833988c41d8b20962c7",
+    "test/postgres/quant-comparison.test.mjs": "0adec092989e02b39589a848cea8a0059099eb7c322aa130b730224dd10edab7",
+    "test/postgres/quant-selection.test.mjs": "ac67fa124056386a1424dd656ecfdf8843a911e49bf5e173f66c074fcee1c671",
+    "test/postgres/quant-selection-register.test.mjs": "55e603446949b4c141881ce4b24eebe28f5ce2981825c9ee7ec7b16b13e56d13",
+    "test/postgres/mp-member-set.test.mjs": "f02452c51e2e4b09ff3250450252f080d647f72671cc73c717f3b8df71c1e8ec",
+    "test/postgres/qr2-reader.test.mjs": "4b70f539b20e1d95b7534974c11b258ca5ee4c8247052edf3b5a780774c1fe3d"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "All affected PostgreSQL files pass with 0 skipped (see method), including the research freeze restart readback.",
+  "mutations": {
+    "round1": "5 of 5 killed.",
+    "round2": "1 of 3 killed; the relkind filter and the prefix assertion became tests.",
+    "round3": "5 of 5 killed in the sole-runner pass (anchor problem, relkind filter, exact-name assertion and two from other lanes)."
+  },
+  "limits": [
+    "Operators must run the research freeze tool as the owner of quant_jobs; any other user, a superuser included, is refused with no change.",
+    "A runtime role with CREATE on schema public, or reaching a superuser or bypass-RLS role, now fails the exposure register and research freeze inspections.",
+    "No install was run on any environment."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted the hardening slice as local engineering evidence for the extension rows (F09-01, F10-02, F10-03, F11-01). Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}

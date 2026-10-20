@@ -11,6 +11,7 @@ import {migrateQuantExposureRegister} from '../../src/postgres/quant-exposure-re
 import {migrateBestInputsPackage} from '../../src/postgres/best-inputs-package-migration.js';
 import {migrateQuantSelection} from '../../src/postgres/quant-selection-migration.js';
 import {appendExposures,readExposures,toComparisonEntries} from '../../src/postgres/exposure-register.js';
+import {QUALIFICATION_VERSION} from '../../src/selection/eligibility.js';
 import {registerSelection,cancelSelection,readSelection,readSearchedWindows,registrationBodyText,GUARD_REFUSALS,REGISTRATION_SLOW_LIMIT_MS} from '../../src/postgres/selection-store.js';
 import {OBJECTIVE_REGISTRY,recheckWindow,transitionSelection,TRANSITIONS,INCOMPLETE_CODES,registrationHashOf} from '../../src/selection/index.js';
 import {canonical} from '../../src/pine-bridge/source.js';
@@ -77,7 +78,7 @@ const SCOPE={market:structuredClone(MARKET),data_model:{data_profile:'spot-kline
   capital:{equity:'10000',cash:'10000'},policy:{policy_version:'risk-v1',policy_hash:POLICY},valuation:{valuation:'qr3-valuation-std-v1',benchmark:'qr3-bh-close-same-cost-v1'},engine:ENGINE};
 const range=(fromDays,toDays)=>({start_ms:BASE-fromDays*DAY,end_ms:BASE-toDays*DAY});
 const GATES=['G1','G2','G3','G4','G5','G6','G7','G8'];
-const qualification=fixture=>({version:'library-qualification-v1',qualified:!fixture,label:fixture?'DEVELOPMENT_ONLY':'QUALIFIED',
+const qualification=fixture=>({version:QUALIFICATION_VERSION,qualified:!fixture,label:fixture?'DEVELOPMENT_ONLY':'QUALIFIED',
   gates:GATES.map(gate=>({gate,name:'N_'+gate,state:fixture&&gate==='G8'?'FAIL':'PASS',code:fixture&&gate==='G8'?'QL4C_VALIDATION_NOT_AVAILABLE':null}))});
 const EXPORT_SQL=`INSERT INTO public.bi_exports(export_id,owner_id,bot_id,run_id,parent_export_id,mode,internal,fixture,gate_version,library_versions,binding,binding_hash,package_hash,b0,created_at,created_at_utc)
   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`;

@@ -2,6 +2,7 @@ import {PostgresDatabase} from '../src/postgres/db.js';
 import {inspectQuantResearchFreeze,migrateQuantResearchFreeze,rollbackQuantResearchFreeze} from '../src/postgres/quant-research-freeze-migration.js';
 
 // Offline only: stop the API, the trading worker and every research worker first. Never run on service start.
+// Run the install as the owner of quant_jobs (the freeze functions take the current user as owner); any other user is refused with no change.
 // --inspect is the exception: one READ ONLY transaction, no maintenance lock and no write, so it is safe beside running services.
 // It may be combined with --runtime-role=NAME to check the runtime role's privilege boundary too.
 const args=process.argv.slice(2);
