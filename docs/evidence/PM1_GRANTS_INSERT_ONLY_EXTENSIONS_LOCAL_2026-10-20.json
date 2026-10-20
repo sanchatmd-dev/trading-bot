@@ -1,0 +1,27 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "d30d4b3",
+  "scope": "Local change to the runtime grant script for the three new offline extensions: the QR-3 comparison tables, the QR-4 selection tables (including the four S2-2 tables, which do not exist yet) and the multi-Pine member-set tables join the insert-only list (SELECT and INSERT only for the runtime role), and their three markers join the read-only list. Both grant tests install every extension and assert the new lists. No grant is applied to any environment.",
+  "method": "One integration coder (Sonnet 5.5) was the only writer of the grant script and its two tests, after the three extension coders returned their exact entries; check logic was not changed. A sole-runner tester then ran, with nothing else active, test/postgres/runtime-grants.test.mjs and every new extension file one file per process on a throwaway PostgreSQL 16.15 cluster (fail 0 and skipped 0 in each), the install, inspect and rollback sequence of all three new tools with the repo grant script, test/postgres-runtime-grants.test.js and the full unit suite (2115 tests, 0 fail, 6 skipped, 9 todo). Root reviewed the diff.",
+  "files": {
+    "scripts/grant-postgres-runtime.sql": "ea131dd1262ed8cf86d8c3e9e76e2db8de2b0faf6fea2642fdeffabd7b679f5c",
+    "test/postgres-runtime-grants.test.js": "cd90ac898ffb6577e1f56430aa662ae37c412f3d48b80ddf114c1dd1def3f6ea",
+    "test/postgres/runtime-grants.test.mjs": "4e71cfffee0833207f238819be26d70f24b4c88fdb2e574fa54841ec2af6c9ef"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/postgres/runtime-grants.test.mjs 1 of 1 and test/postgres-runtime-grants.test.js 1 of 1 pass; every extension inspect with a role granted by this script reports no failures.",
+  "limits": [
+    "The QR-3 S2c-2 tables are not in the lists yet; they are added when they exist.",
+    "The script is applied to no environment; a staging reapply belongs to the data-model window with a fresh owner GO."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the diff and the verification and accepted the grant change as local engineering evidence. It grants nothing in any environment."
+  }
+}

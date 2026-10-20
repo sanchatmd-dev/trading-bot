@@ -9,6 +9,12 @@ const PROTECTED=['quant_foundation_jobs','quant_foundation_owners','quant_founda
 // F09 builder slice S2: the ten insert-only Best Inputs record tables. The runtime keeps SELECT and INSERT and loses UPDATE and DELETE.
 const INSERT_ONLY=['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records','bi_evidence_records',
   'bi_clearances','bi_trace_reproductions','ql4c_validation'];
+// QR-3 comparison, QR-4 selection and F11 member set record tables (optional extensions); the later QR-3 S2c-2 tables join this list when they land.
+const EXTENSION_INSERT_ONLY=['quant_comparison_specs','quant_comparison_participants','quant_comparison_status_events',
+  'quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events',
+  'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events',
+  'mp_member_sets','mp_member_set_members'];
+const EXTENSION_MARKERS=['quant_comparison_schema','quant_selection_schema','mp_member_set_schema'];
 
 test('runtime grants: role from the psql variable, one transaction under the maintenance lock, DELETE never granted to the protected tables',async()=>{
   const raw=await readFile(new URL('../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8');
@@ -32,9 +38,11 @@ test('runtime grants: role from the psql variable, one transaction under the mai
   const readOnly=sql.match(/read_only CONSTANT TEXT\[\] := ARRAY\[([\s\S]*?)\];/);
   assert.ok(readOnly);assert.ok([...readOnly[1].matchAll(/'([^']+)'/g)].map(match=>match[1]).includes('quant_exposure_register_schema'),'the register marker is read-only');
   assert.ok([...readOnly[1].matchAll(/'([^']+)'/g)].map(match=>match[1]).includes('bi_package_schema'),'the Best Inputs package marker is read-only');
-  // The insert-only list: exactly the ten record tables, excluded from the DELETE loop, revoked UPDATE, DELETE, TRUNCATE and TRIGGER, and checked at the end.
+  for(const marker of EXTENSION_MARKERS)assert.ok([...readOnly[1].matchAll(/'([^']+)'/g)].map(match=>match[1]).includes(marker),marker+' is read-only');
+  // The insert-only list: exactly the ten Best Inputs record tables plus the extension record tables, excluded from the DELETE loop, revoked UPDATE, DELETE, TRUNCATE and TRIGGER, and checked at the end.
   const insertOnly=sql.match(/insert_only CONSTANT TEXT\[\] := ARRAY\[([\s\S]*?)\];/);
-  assert.ok(insertOnly);assert.deepEqual([...insertOnly[1].matchAll(/'([^']+)'/g)].map(match=>match[1]).sort(),[...INSERT_ONLY].sort());
+  assert.ok(insertOnly);assert.deepEqual([...insertOnly[1].matchAll(/'([^']+)'/g)].map(match=>match[1]).sort(),[...INSERT_ONLY,...EXTENSION_INSERT_ONLY].sort());
+  for(const marker of EXTENSION_MARKERS)assert.ok(![...insertOnly[1].matchAll(/'([^']+)'/g)].map(match=>match[1]).includes(marker),marker+' is read-only, not insert-only');
   assert.ok(![...insertOnly[1].matchAll(/'([^']+)'/g)].map(match=>match[1]).includes('bi_package_schema'),'the marker is read-only, not insert-only');
   assert.match(sql,/FOREACH item IN ARRAY insert_only LOOP\s+IF to_regclass\(format\('public\.%I',item\)\) IS NOT NULL THEN\s+EXECUTE format\('REVOKE UPDATE,DELETE,TRUNCATE,TRIGGER ON TABLE public\.%I FROM %I',item,runtime_role\);/);
   // The final check also covers every role the runtime role can reach by membership (INHERIT FALSE and NOINHERIT included).

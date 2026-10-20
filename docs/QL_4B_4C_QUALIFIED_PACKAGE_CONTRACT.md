@@ -1,6 +1,6 @@
 # QL-4B/QL-4C qualified Best Inputs package contract
 
-Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10); root clarifications RC-1 to RC-11 recorded the same day (section 10.1); root decisions RC-12 to RC-30 for the package builder recorded 2026-10-20 (section 10.2). Root accepted the other rules on
+Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10); root clarifications RC-1 to RC-11 recorded the same day (section 10.1); root decisions RC-12 to RC-31 for the package builder recorded 2026-10-20 (section 10.2). Root accepted the other rules on
 2026-10-19 after independent review. The pure gate module (`src/quant-library/package-gates.js`) and the slice S1 pure renderer
 (`src/quant-library/package-render.js`) are root-accepted as local engineering evidence and are wired into no route,
 worker, table or view. Builder slice S2, the insert-only package tables (`src/postgres/best-inputs-package-schema.sql`),
@@ -759,6 +759,7 @@ rounds of the S1 renderer. The owner decisions OD-1 to OD-20 do not change.
 | RC-28 | A fixture export may hold a `ql4c_validation` row and reach `EXPORT_VALIDATED` (11.1 item 1); the READY and G8 readers count only non-fixture one-Pine exports (4.3, 6.3) | 4.3, 5.5, 6.3 | Root | 2026-10-20 |
 | RC-29 | The install inspection of each new extension uses one shared module that checks ownership by membership (tables, functions and schema `public`), every forbidden privilege held through any role the runtime role can reach, membership in a superuser or bypass-RLS role, and CREATE on schema `public`. The exposure register and research freeze tools adopt it in a later hardening slice | 8 | Root | 2026-10-20 |
 | RC-30 | Gate C2 accepts an approved edit only where one shared anchored locator finds the default literal of the bound input: the stored span starts at a line start with the bound variable, uses the bound input call kind and ends at its closing parenthesis, and the edited literal equals the matching `inputs.json` before value; otherwise `BI_SOURCE_LOGIC_CHANGED`. The renderer uses the same locator. The fifth retryable failure gives `EXPORT_REFUSED` with the attempt codes followed by `BI_ATTEMPTS_EXHAUSTED`, and no attempt carries `BI_ATTEMPTS_EXHAUSTED` | 4.2, 5.2, 6.1 | Root | 2026-10-20 |
+| RC-31 | Every offline extension's classifier also requires each of its relations and functions to be owned by the owner of its own marker table (otherwise `OWNER_MISMATCH` and state OTHER). The QR-3 comparison, QR-4 selection and multi-Pine member-set extensions do this now; the exposure register, research freeze and builder tools, column collation checks and adoption of the shared inspection module come in one later cross-extension hardening slice | 8 | Root | 2026-10-20 |
 
 ## 11. Test and evidence plan
 
