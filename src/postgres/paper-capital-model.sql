@@ -32,13 +32,15 @@
 -- the same effective_from.
 -- Restore and replication limits: a full pg_restore works (data loads before the post-data triggers, so rows and declared_at come back unchanged).
 -- A data-only restore into an installed table replays the triggers: the stamp overwrites declared_at with the restore time, the version guard
--- refuses rows out of order and QR003 fires (COPY runs at READ COMMITTED). A data-only restore needs a superuser with --disable-triggers, and
--- logical replication of this table is not supported without a design change.
+-- refuses rows out of order and QR003 fires (COPY runs at READ COMMITTED). A data-only restore is unsupported: with --disable-triggers (superuser)
+-- pg_restore re-enables the triggers origin-only, so the classifier reports OTHER (TRIGGER_NOT_ALWAYS); the repair is ALTER TABLE ... ENABLE ALWAYS
+-- TRIGGER for each guard, then --inspect. Logical replication of this table is not supported without a design change.
 -- Every function is SECURITY INVOKER, qualifies each name and pins search_path, so a session TEMP table or function named like a users or
 -- extension object can never be used in its place. All triggers are ENABLE ALWAYS, so session_replication_role=replica skips none.
 -- Dependency: the foreign keys name users, so users cannot be dropped while this extension is installed. Requires the base schema 14 and users only.
 -- This file is not idempotent by itself: src/postgres/paper-capital-model-migration.js classifies the live catalog first and runs it only over ABSENT.
--- Rollback: src/postgres/paper-capital-model-rollback.sql drops exactly the objects created here; the migration tool runs it only at zero rows.
+-- Rollback: src/postgres/paper-capital-model-rollback.sql drops exactly the objects created here; the migration tool runs it at zero rows, or with
+-- rows only after the live row count and the canonical export digest match the owner's confirmation (O12).
 
 CREATE TABLE public.paper_capital_model_schema(
  version INTEGER NOT NULL,

@@ -1,0 +1,36 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "50ffd6a",
+  "scope": "Local implementation of QR-2 sub-slice S4-3 (RC-Q39): the O12 export and the count-and-digest confirmed rollback for the paper-capital-model extension, and a PostgreSQL restore rehearsal test. Nothing is installed on any environment.",
+  "method": "A coder (Sonnet 5.5) wrote S4-3 from the Opus S4 design (sections 4.2 and 4.3) and the root decisions; an independent architecture auditor (Opus 5.5) reviewed it and found that the SQL header described an unsupported restore path, that the confirm setting was not bound to the transaction and that the repository path guard could be bypassed; root ruled; the coder fixed them; an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, every test file that imports a changed module or runs a changed CLI of this batch (found with git grep): 13 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (242 tests, 0 fail, 0 skipped), the full unit suite (2214 tests, 0 fail, 6 skipped by platform gates, 9 todo) and the grant text test; every changed file had the same hash before and after. Nobody verified their own work.",
+  "files": {
+    "src/postgres/paper-capital-model.sql": "3b5069aa98aad44fe695dccd720545388cf2e8d4b47cdae7f993533f632abad9",
+    "src/postgres/paper-capital-model-rollback.sql": "060ce097d6239b353c6709d51114fdb4fa6c5fafe7d20b80b0ad1d9f8a46b7f7",
+    "src/postgres/paper-capital-model-migration.js": "58b6d380cb89c5ff0d77a2cfb9c1d47f3e03fe2403931bd67d594ee97cc07b00",
+    "scripts/migrate-paper-capital-model.mjs": "f7c947d107b925ef18e58e42df465e737d17d644f6136ce9cb18959948576719",
+    "test/postgres/paper-capital-model-migration.test.mjs": "54aad1e308ed080e4e66b26a40e8f25a525ddfc0010e3e9f445624da9fe9829c",
+    "test/postgres/paper-capital-model-rehearsal.test.mjs": "a0270419848869badc9d39d8d4e6f2f10a0177abb9e7810b0255565594926af0"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/postgres/paper-capital-model-migration.test.mjs 30 of 30 and test/postgres/paper-capital-model-rehearsal.test.mjs 10 of 10 pass with 0 skipped.",
+  "mutations": {
+    "round1": "7 of 7 killed.",
+    "round2": "3 of 4 killed; the survivor removes the realpath comparison of the export path, which only matters for a link or a short or extended path spelling; the repository forbids links and no test creates one."
+  },
+  "limits": [
+    "The rehearsal restored into fresh databases of one local cluster, not into a separate cluster or staging.",
+    "A data-only restore and logical replication of the table are not supported.",
+    "The custody and retention of a real export file (it holds owner and Bot ids) stay owner item OW9.",
+    "No install was run on any environment."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S4-3 as local engineering evidence for the QR-2 row. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}

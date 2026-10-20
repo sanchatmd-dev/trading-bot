@@ -1,4 +1,8 @@
 import fs from 'node:fs/promises';
+import {realpathSync} from 'node:fs';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
 import {inspectRuntimeRole} from './runtime-role-inspection.js';
 
 /**
@@ -18,7 +22,8 @@ import {inspectRuntimeRole} from './runtime-role-inspection.js';
  * Run the tool as the schema owner with the default search_path: the deparsed foreign key text names users unqualified only when public is on
  * the search_path, otherwise the install classifies OTHER and is refused (loud, no write).
  * OTHER is refused with no write. Install on INSTALLED is a no-op. Rollback on ABSENT is a no-op. Rollback is refused while any declaration row
- * exists (declarations are never dropped by this tool; the export-and-confirm rollback of O12 is the later slice S4-3). Table, constraint and
+ * exists unless the caller confirms the live rows by count and by the canonical digest of an earlier export (O12, S4-3; see exportPaperCapitalModel
+ * and rollbackPaperCapitalModel). The export file is owner data: keep it outside the repository and outside tracked evidence; evidence records the count and the digest only. Table, constraint and
  * index definitions below are the PostgreSQL 16 deparsed text of a fresh install of paper-capital-model.sql; function bodies are read from that file.
  */
 export const PAPER_CAPITAL_MARKER='paper-capital-model-v1';
@@ -283,23 +288,116 @@ export async function migratePaperCapitalModel(db,{runtimeRole}={}){
 }
 
 /**
- * Drops exactly the objects the install created, after classifying first, and only while the declaration table holds no row. The table is
- * locked ACCESS EXCLUSIVE before the count, so no writer can add a declaration between the count and the drop. The marker row is not a declaration.
+ * The canonical export of the declarations (O12), shared by the export file and the rollback confirmation so both compute one digest.
+ * Recipe: every row of public.paper_capital_models ordered by owner_id, currency (both COLLATE "C", so the order never depends on the cluster
+ * locale) and version; one line per row, a JSON object with exactly these keys in this order: owner_id, currency, version, capital_model, bot_set
+ * (the stored JSONB array, element order kept), effective_from, declared_at, declared_by; version, effective_from and declared_at are JSON numbers
+ * (the table CHECKs keep them below 2^53, a larger value throws); each line ends with LF; the text is UTF-8. sha256 is the SHA-256 of those exact
+ * bytes, so it equals the SHA-256 of an export file. No rows give an empty file and the digest of the empty byte string.
  */
-export async function rollbackPaperCapitalModel(db){
+export const CANONICAL_EXPORT_KEYS=Object.freeze(['owner_id','currency','version','capital_model','bot_set','effective_from','declared_at','declared_by']);
+const exactInteger=(text,name)=>{
+  const value=Number(text);
+  if(!Number.isSafeInteger(value)||String(value)!==text)throw Error('Paper capital model export refused; '+name+' is not an exact integer');
+  return value;
+};
+export function canonicalDeclarationLine(row){
+  return JSON.stringify({owner_id:row.owner_id,currency:row.currency,version:exactInteger(row.version,'version'),capital_model:row.capital_model,bot_set:row.bot_set,
+    effective_from:exactInteger(row.effective_from,'effective_from'),declared_at:exactInteger(row.declared_at,'declared_at'),declared_by:row.declared_by})+'\n';
+}
+/** Reads every declaration through db.query (a READ ONLY snapshot for the export, the ACCESS EXCLUSIVE lock for the rollback) and digests it. */
+export async function readCanonicalDeclarations(db){
+  const result=await db.query(`SELECT owner_id,currency,version::text AS version,capital_model,bot_set,effective_from::text AS effective_from,declared_at::text AS declared_at,declared_by
+    FROM public.${DECLARATION_TABLE} ORDER BY owner_id COLLATE "C",currency COLLATE "C",version`);
+  const bytes=Buffer.from(result.rows.map(canonicalDeclarationLine).join(''),'utf8');
+  return {rows:result.rows.length,sha256:createHash('sha256').update(bytes).digest('hex'),bytes};
+}
+
+const repositoryRoot=path.resolve(fileURLToPath(new URL('../../',import.meta.url)));
+const outsideOf=relative=>relative==='..'||relative.startsWith('..'+path.sep)||path.isAbsolute(relative);
+/**
+ * Where an export path falls: INSIDE (under the repository, refused), QA_LOCAL (under the ignored .qa-local, allowed) or OUTSIDE (allowed).
+ * "Outside" means the relative path is exactly '..', starts with '..' plus a separator, or is absolute, so a repository directory named '..x' is inside.
+ */
+export function exportPathPlacement(output,root=repositoryRoot){
+  const inside=path.relative(root,output);
+  if(outsideOf(inside))return 'OUTSIDE';
+  return inside!==''&&inside.split(path.sep)[0]==='.qa-local'?'QA_LOCAL':'INSIDE';
+}
+/**
+ * O12 step 1: writes the canonical export of every declaration to a NEW file and returns {rows,sha256}. One READ ONLY REPEATABLE READ transaction on
+ * a pool connection (so the classification and the rows come from one snapshot); no maintenance lock and no write, so it is safe beside running
+ * services. The file is created exclusively with mode 0600 BEFORE the database is read, so an existing path is refused untouched; a failure
+ * after that removes only the file this call created. The export holds owner and Bot ids: a path inside the repository is refused unless it is
+ * under .qa-local (ignored), and the custody of a real export stays an owner item (OW9). Needs state INSTALLED.
+ */
+export async function exportPaperCapitalModel(db,target){
+  if(db.isTransaction)throw Error('Paper capital model export requires its own connection');
+  if(typeof target!=='string'||target.trim()==='')throw Error('Paper capital model export needs a new file path');
+  const output=path.resolve(target);
+  const refusal=Error('Paper capital model export refused; the path is inside the repository (use a protected path outside it)');
+  if(exportPathPlacement(output)==='INSIDE')throw refusal;
+  // The same rule on real paths: a link, a short (8.3) name or an extended-length prefix cannot hide a repository path. The directory must exist.
+  const realOutput=path.join(realpathSync.native(path.dirname(output)),path.basename(output));
+  if(exportPathPlacement(realOutput,realpathSync.native(repositoryRoot))==='INSIDE')throw refusal;
+  const handle=await fs.open(output,'wx',0o600);
+  try{
+    const client=await db.pool.connect();
+    let exported;
+    try{
+      await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      const reader={query:(text,params)=>client.query(text,params)};
+      const classification=await classifyPaperCapitalModel(reader);
+      if(classification.state!=='INSTALLED')
+        throw Error('Paper capital model export refused; state '+classification.state+' (nothing exported): '+[...classification.problems,...classification.missing].join(', '));
+      exported=await readCanonicalDeclarations(reader);
+    }finally{await client.query('ROLLBACK').catch(()=>{});client.release();}
+    await handle.writeFile(exported.bytes);await handle.sync();await handle.close();
+    const written=createHash('sha256').update(await fs.readFile(output)).digest('hex');
+    if(written!==exported.sha256)throw Error('Paper capital model export failed; the written file does not match the digest');
+    return {rows:exported.rows,sha256:exported.sha256};
+  }catch(error){
+    await handle.close().catch(()=>{});await fs.unlink(output).catch(()=>{});
+    throw error;
+  }
+}
+
+/**
+ * Drops exactly the objects the install created, after classifying first. The table is locked ACCESS EXCLUSIVE before the count, so no writer can
+ * add a declaration between the count and the drop. The marker row is not a declaration.
+ * Without confirm the rollback works only while the declaration table holds no row. With confirm={rows,sha256} (O12 step 2, from an earlier export)
+ * the live rows are counted and digested under the lock with the same canonical recipe as the export, and the objects are dropped only when both
+ * equal the confirmation; any difference refuses with no change and without printing the live digest. The rollback SQL repeats the count under
+ * the same lock through the transaction-local setting paper_capital_model.rollback_confirm_rows, which only this function sets as '<rows>:<current transaction id>';
+ * the SQL refuses unless both parts match, so a database-level or session setting cannot confirm a drop.
+ */
+export async function rollbackPaperCapitalModel(db,{confirm}={}){
   if(db.isTransaction)throw Error('Paper capital model rollback requires its own transaction');
+  if(confirm!==undefined){
+    if(!confirm||!Number.isSafeInteger(confirm.rows)||confirm.rows<0||!/^[0-9a-f]{64}$/.test(String(confirm.sha256)))
+      throw Error('Paper capital model rollback refused; the confirmation needs a row count and a sha256 (no change made)');
+  }
   return db.transaction(async()=>{
     await db.maintenanceLock();await db.verifySchema();
     const before=await classifyPaperCapitalModel(db);
     requireKnownState(before,'rollback');
+    let confirmedRows=null;
     if(before.state==='INSTALLED'){
       await db.query('LOCK TABLE public.'+DECLARATION_TABLE+' IN ACCESS EXCLUSIVE MODE');
-      const rows=(await db.query('SELECT count(*)::int n FROM public.'+DECLARATION_TABLE)).rows[0].n;
-      if(rows>0)throw Error('Paper capital model rollback refused; '+rows+' declaration row(s) exist (no change made)');
+      if(confirm===undefined){
+        const rows=(await db.query('SELECT count(*)::int n FROM public.'+DECLARATION_TABLE)).rows[0].n;
+        if(rows>0)throw Error('Paper capital model rollback refused; '+rows+' declaration row(s) exist (no change made)');
+      }else{
+        const live=await readCanonicalDeclarations(db);
+        const differs=[live.rows!==confirm.rows?'row count':null,live.sha256!==confirm.sha256?'digest':null].filter(Boolean);
+        if(differs.length)throw Error('Paper capital model rollback refused; the confirmation does not match the live declaration rows: '+differs.join(' and ')+' (no change made)');
+        confirmedRows=live.rows;
+        if(live.rows>0)await db.query("SELECT pg_catalog.set_config('paper_capital_model.rollback_confirm_rows',$1::text||':'||pg_catalog.pg_current_xact_id()::text,true)",[String(live.rows)]);
+      }
       await db.query(await sql('paper-capital-model-rollback.sql'));
     }
     const left=await classifyPaperCapitalModel(db);
     if(left.state!=='ABSENT')throw Error('Paper capital model rollback left objects behind');
-    return {rolled_back:true,previous_state:before.state};
+    return {rolled_back:true,previous_state:before.state,...(confirm!==undefined&&before.state==='INSTALLED'?{confirmed_rows:confirmedRows}:{})};
   });
 }

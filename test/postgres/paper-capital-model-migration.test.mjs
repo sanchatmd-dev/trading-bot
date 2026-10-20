@@ -2,15 +2,17 @@ import test from 'node:test';
 import {before,after} from '../helpers/root-hook-gate.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {PostgresDatabase} from '../../src/postgres/db.js';
 import {Store} from '../../src/postgres/store.js';
 import {rolePasswordClause} from '../helpers/test-role-password.mjs';
-import {PAPER_CAPITAL_GUARDS,QR004_GUARDS,INSERT_ONLY_SQLSTATE,SERIALIZABLE_SQLSTATE,INSERT_GUARD_SQLSTATE,PAPER_CAPITAL_MARKER,classifyPaperCapitalModel,
-  inspectPaperCapitalModel,migratePaperCapitalModel,rollbackPaperCapitalModel} from '../../src/postgres/paper-capital-model-migration.js';
+import {PAPER_CAPITAL_GUARDS,QR004_GUARDS,INSERT_ONLY_SQLSTATE,SERIALIZABLE_SQLSTATE,INSERT_GUARD_SQLSTATE,PAPER_CAPITAL_MARKER,exportPathPlacement,classifyPaperCapitalModel,
+  inspectPaperCapitalModel,migratePaperCapitalModel,rollbackPaperCapitalModel,exportPaperCapitalModel,readCanonicalDeclarations,canonicalDeclarationLine,CANONICAL_EXPORT_KEYS} from '../../src/postgres/paper-capital-model-migration.js';
 
 // QR-2 S4-1 paper capital model declaration extension, proven on a throwaway PostgreSQL cluster as real non-owner LOGIN roles with the repo grants.
 // Every row is a LABELLED FIXTURE (synthetic owners and Bots, never a research or trading result). Rows are insert-only, so each test uses its own owner.
@@ -819,7 +821,7 @@ test('the CLI: install, second install, --inspect exit codes, --runtime-role, us
   // rollback of the empty table, then a second rollback (no-op) and a re-install
   const rolled=await cli(['--rollback'],cliUrl);assert.equal(rolled.code,0,rolled.stderr);assert.match(rolled.stdout,/previous state=INSTALLED/);
   assert.deepEqual(await extensionObjects(cliDb),NONE);
-  const noop=await cli(['--rollback'],cliUrl);assert.equal(noop.code,0,noop.stderr);assert.match(noop.stdout,/previous state=ABSENT/);
+  const noop=await cli(['--rollback'],cliUrl);assert.equal(noop.code,0,noop.stderr);assert.equal(noop.stdout,'Paper capital model not installed; no change\n');
   assert.equal((await cli([],cliUrl)).code,0);
   // with a declaration row the CLI rollback exits nonzero and changes nothing
   const owner=await newOwner('pcm-cli',new Store(cliDb));
@@ -919,5 +921,285 @@ test('rollback SQL file: with zero rows it drops every object in autocommit, and
   assert.ok(!/^\s*(BEGIN|COMMIT)\s*;/im.test(rollbackSql),'no transaction control');
   assert.equal((await rollbackSql.match(/^DO \$\$/gm)).length,1,'one DO block');
   await target.query(rollbackSql);
+  assert.deepEqual(await extensionObjects(target),NONE);
+});
+
+/* ---- 9. O12 export and confirmed rollback (S4-3) ---- */
+
+const EMPTY_SHA='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+const sha256Of=bytes=>createHash('sha256').update(bytes).digest('hex');
+async function tempDir(t){
+  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'robot-pcm-'));
+  t.after(()=>fs.rm(dir,{recursive:true,force:true}));
+  return dir;
+}
+const exists=async file=>fs.stat(file).then(()=>true,()=>false);
+/** Three fixture declarations in target: owner A has USDT v1 and v2, owner B has THB v1 (insert-only, so the rows stay). */
+async function seedDeclarations(target,label){
+  const targetStore=new Store(target),a=await newOwner(label+'-a',targetStore),b=await newOwner(label+'-b',targetStore);
+  const put=value=>target.transaction(()=>target.query(insertSql,valuesOf(value)),serializable);
+  await put(row(a));await put(row(a,{version:2,capital_model:'SHARED_HYPOTHETICAL'}));await put(row(b,{currency:'THB'}));
+  return {a,b};
+}
+/** Independent recomputation of the recipe from plain rows: C-order sort, fixed key order, LF line ends. Shares no code with the module. */
+async function independentDigest(target){
+  const rows=(await target.query(`SELECT owner_id,currency,version::text v,capital_model,bot_set::text bs,effective_from::text ef,declared_at::text da,declared_by FROM ${TABLE}`)).rows;
+  const order=(x,y)=>x<y?-1:x>y?1:0;
+  rows.sort((x,y)=>order(x.owner_id,y.owner_id)||order(x.currency,y.currency)||Number(x.v)-Number(y.v));
+  const text=rows.map(r=>'{"owner_id":'+JSON.stringify(r.owner_id)+',"currency":'+JSON.stringify(r.currency)+',"version":'+r.v+',"capital_model":'+JSON.stringify(r.capital_model)
+    +',"bot_set":'+JSON.stringify(JSON.parse(r.bs))+',"effective_from":'+r.ef+',"declared_at":'+r.da+',"declared_by":'+JSON.stringify(r.declared_by)+'}\n').join('');
+  return {rows:rows.length,sha256:sha256Of(Buffer.from(text,'utf8')),text};
+}
+
+test('O12 digest recipe: the line format, key order and sha256 are pinned by literals; the live read equals an independent recomputation',async()=>{
+  assert.deepEqual([...CANONICAL_EXPORT_KEYS],['owner_id','currency','version','capital_model','bot_set','effective_from','declared_at','declared_by']);
+  const first={owner_id:'o1',currency:'USDT',version:'1',capital_model:'INDEPENDENT_ACCOUNTS',bot_set:['a','b'],effective_from:'86400000',declared_at:'1000',declared_by:'o1'};
+  // the object key order of the input never changes the output order
+  const shuffled={declared_by:'o1',declared_at:'253402300799999',bot_set:['o1'],version:'2',effective_from:'172800000',capital_model:'SHARED_HYPOTHETICAL',currency:'THB',owner_id:'o1'};
+  const text=canonicalDeclarationLine(first)+canonicalDeclarationLine(shuffled);
+  assert.equal(text,'{"owner_id":"o1","currency":"USDT","version":1,"capital_model":"INDEPENDENT_ACCOUNTS","bot_set":["a","b"],"effective_from":86400000,"declared_at":1000,"declared_by":"o1"}\n'
+    +'{"owner_id":"o1","currency":"THB","version":2,"capital_model":"SHARED_HYPOTHETICAL","bot_set":["o1"],"effective_from":172800000,"declared_at":253402300799999,"declared_by":"o1"}\n');
+  assert.equal(sha256Of(Buffer.from(text,'utf8')),'6d89cd235fa0d87a9f00b6e364037a51bbc9aab22e6019587023f11df27d89df','pinned digest of the two sample lines');
+  assert.equal(sha256Of(Buffer.alloc(0)),EMPTY_SHA);
+  // a number outside the safe integer range or a non-integer text is refused, never rounded
+  assert.throws(()=>canonicalDeclarationLine({...first,declared_at:'9007199254740993'}),/declared_at is not an exact integer/);
+  assert.throws(()=>canonicalDeclarationLine({...first,version:'1.0'}),/version is not an exact integer/);
+  // the live read against an independent recomputation, over several owners
+  const name=await clone('digest'),target=track(new PostgresDatabase({connectionString:urlOf(name),max:3}));
+  await migratePaperCapitalModel(target);
+  const empty=await readCanonicalDeclarations(target);
+  assert.deepEqual([empty.rows,empty.sha256,empty.bytes.length],[0,EMPTY_SHA,0]);
+  await seedDeclarations(target,'pcm-digest');await seedDeclarations(target,'pcm-digest2');
+  const live=await readCanonicalDeclarations(target),independent=await independentDigest(target);
+  assert.equal(live.rows,6);
+  assert.equal(live.bytes.toString('utf8'),independent.text);assert.equal(live.sha256,independent.sha256);
+  assert.ok(live.bytes.toString('utf8').endsWith('}\n'));
+  assert.equal((await readCanonicalDeclarations(target)).sha256,live.sha256);
+});
+
+test('O12 export: a new file with mode 0600, only the row count and digest returned, an existing path or a repository path refused, no write and no maintenance lock',async t=>{
+  const dir=await tempDir(t);
+  const name=await clone('export'),target=track(new PostgresDatabase({connectionString:urlOf(name),max:4}));
+  // ABSENT: refused and no file left behind
+  const absentPath=path.join(dir,'absent.jsonl');
+  await assert.rejects(exportPaperCapitalModel(target,absentPath),/export refused; state ABSENT \(nothing exported\)/);
+  assert.equal(await exists(absentPath),false,'the file created for the attempt is removed');
+  await migratePaperCapitalModel(target);
+  // zero rows: an empty file and the digest of the empty byte string
+  const emptyPath=path.join(dir,'empty.jsonl');
+  assert.deepEqual(await exportPaperCapitalModel(target,emptyPath),{rows:0,sha256:EMPTY_SHA});
+  assert.equal((await fs.readFile(emptyPath)).length,0);
+  await seedDeclarations(target,'pcm-export');
+  const before=await catalogDigest(target),held=await rowDigest(target);
+  // the maintenance lock is held by another session: the export still runs (READ ONLY, no lock of its own)
+  const hold=gate(),finish=gate();
+  const locker=target.transaction(async()=>{await target.query("SELECT pg_advisory_xact_lock(hashtextextended('robot:maintenance',0))");hold.open();await finish.promise;});
+  await hold.promise;
+  const file=path.join(dir,'declarations.jsonl');
+  let report;
+  try{report=await exportPaperCapitalModel(target,file);}finally{finish.open();await locker;}
+  assert.deepEqual(Object.keys(report),['rows','sha256']);assert.equal(report.rows,3);
+  const bytes=await fs.readFile(file),independent=await independentDigest(target);
+  assert.equal(sha256Of(bytes),report.sha256,'the file digest is the reported digest');
+  assert.equal(report.sha256,independent.sha256);assert.equal(bytes.toString('utf8'),independent.text);
+  assert.equal(bytes.toString('utf8').split('\n').filter(Boolean).length,3);
+  for(const line of bytes.toString('utf8').split('\n').filter(Boolean))assert.deepEqual(Object.keys(JSON.parse(line)),[...CANONICAL_EXPORT_KEYS]);
+  if(process.platform!=='win32')assert.equal((await fs.stat(file)).mode&0o777,0o600);
+  assert.deepEqual(await rowDigest(target),held);assert.deepEqual(await catalogDigest(target),before,'the export wrote nothing');
+  // an existing path is refused and left untouched
+  await assert.rejects(exportPaperCapitalModel(target,file),{code:'EEXIST'});
+  assert.equal(sha256Of(await fs.readFile(file)),report.sha256);
+  // a path inside the repository is refused (not under .qa-local) and no file appears
+  const inRepo=path.join(repoRoot,'docs','pcm-export-must-not-exist.jsonl');
+  await assert.rejects(exportPaperCapitalModel(target,inRepo),/inside the repository/);
+  assert.equal(await exists(inRepo),false);
+  // a repository directory whose name starts with two dots is inside, not outside (path '<repo>/..x/file')
+  const dotted=path.join(repoRoot,'..x','pcm-export-must-not-exist.jsonl');
+  await assert.rejects(exportPaperCapitalModel(target,dotted),/inside the repository/);
+  assert.equal(await exists(dotted),false);
+  await assert.rejects(exportPaperCapitalModel(target,''),/needs a new file path/);
+  await assert.rejects(target.transaction(()=>exportPaperCapitalModel(target,path.join(dir,'x.jsonl'))),/own connection/);
+  // OTHER: refused with the reasons and no file left
+  const otherPath=path.join(dir,'other.jsonl');
+  await target.query('ALTER TABLE public.paper_capital_models DISABLE TRIGGER paper_capital_models_20_guard');
+  await assert.rejects(exportPaperCapitalModel(target,otherPath),/export refused; state OTHER/);
+  assert.equal(await exists(otherPath),false);
+  await target.query('ALTER TABLE public.paper_capital_models ENABLE ALWAYS TRIGGER paper_capital_models_20_guard');
+  assert.equal((await classifyPaperCapitalModel(target)).state,'INSTALLED');
+});
+
+test('O12 confirmed rollback: refused with a wrong count, a wrong digest or a stale export and changes nothing; accepted only with both; ABSENT stays a no-op',async t=>{
+  const dir=await tempDir(t);
+  const name=await clone('confirm'),target=track(new PostgresDatabase({connectionString:urlOf(name),max:3}));
+  await migratePaperCapitalModel(target);
+  const {a}=await seedDeclarations(target,'pcm-confirm');
+  const exported=await exportPaperCapitalModel(target,path.join(dir,'e1.jsonl'));
+  assert.equal(exported.rows,3);
+  const snapshot=async()=>({rows:await rowDigest(target),catalog:await catalogDigest(target)});
+  const held=await snapshot();
+  const other=exported.sha256.replace(/^./,character=>character==='0'?'1':'0');
+  const attempt=confirm=>rollbackPaperCapitalModel(target,{confirm});
+  const refusedWith=async(confirm,pattern)=>{await assert.rejects(attempt(confirm),pattern);assert.deepEqual(await snapshot(),held,'nothing changed');assert.equal((await classifyPaperCapitalModel(target)).state,'INSTALLED');};
+  await assert.rejects(rollbackPaperCapitalModel(target),/rollback refused; 3 declaration row\(s\) exist \(no change made\)/);
+  await refusedWith({rows:2,sha256:exported.sha256},/does not match the live declaration rows: row count \(no change made\)/);
+  await refusedWith({rows:4,sha256:exported.sha256},/row count \(no change made\)/);
+  await refusedWith({rows:0,sha256:EMPTY_SHA},/row count and digest \(no change made\)/);
+  await refusedWith({rows:3,sha256:other},/live declaration rows: digest \(no change made\)/);
+  await refusedWith({rows:2,sha256:other},/row count and digest \(no change made\)/);
+  await refusedWith({rows:3,sha256:EMPTY_SHA},/digest \(no change made\)/);
+  // the refusal never prints the live digest
+  await assert.rejects(attempt({rows:3,sha256:other}),error=>{assert.ok(!error.message.includes(exported.sha256));return true;});
+  // malformed confirmations are refused before any transaction
+  for(const bad of [null,{},{rows:-1,sha256:exported.sha256},{rows:1.5,sha256:exported.sha256},{rows:3,sha256:'abc'},{rows:3,sha256:exported.sha256.toUpperCase()},{rows:'3',sha256:exported.sha256}])
+    await assert.rejects(attempt(bad),/needs a row count and a sha256 \(no change made\)/);
+  assert.deepEqual(await snapshot(),held);
+  // a stale export: a later declaration changes the live rows, so the earlier count and digest no longer match
+  const put=value=>target.transaction(()=>target.query(insertSql,valuesOf(value)),serializable);
+  await put(row(a,{version:3}));
+  const stale=await snapshot();
+  await assert.rejects(attempt({rows:exported.rows,sha256:exported.sha256}),/row count and digest \(no change made\)/);
+  assert.deepEqual(await snapshot(),stale);
+  const fresh=await exportPaperCapitalModel(target,path.join(dir,'e2.jsonl'));
+  assert.equal(fresh.rows,4);assert.notEqual(fresh.sha256,exported.sha256);
+  // the rollback SQL repeats the count under the lock: the setting must be '<rows>:<current transaction id>'; any other form refuses, the right one drops
+  // (each run is rolled back). The value is built inside the transaction, so the id is the one the DO block sees.
+  const rollbackSql=await sqlText('paper-capital-model-rollback.sql');
+  const withSetting=expression=>probe(target,async()=>{
+    if(expression!==undefined)await target.query("SELECT pg_catalog.set_config('paper_capital_model.rollback_confirm_rows',"+expression+",true)");
+    await target.query(rollbackSql);
+    return (await classifyPaperCapitalModel(target)).state;
+  });
+  const xact="pg_catalog.pg_current_xact_id()::text";
+  await assert.rejects(withSetting(undefined),/declaration rows exist/);
+  await assert.rejects(withSetting("'3:'||"+xact),/declaration rows exist/,'wrong count');
+  await assert.rejects(withSetting("'5:'||"+xact),/declaration rows exist/,'wrong count');
+  await assert.rejects(withSetting("''"),/declaration rows exist/);
+  await assert.rejects(withSetting("'4'"),/declaration rows exist/,'a bare count (the first S4-3 form) no longer confirms');
+  await assert.rejects(withSetting("'4:'||("+xact+"::bigint+1)::text"),/declaration rows exist/,'another transaction id');
+  await assert.rejects(withSetting("'4:1'"),/declaration rows exist/);
+  await assert.rejects(withSetting("'4:'||"+xact+"||'x'"),/declaration rows exist/,'trailing text');
+  await assert.rejects(withSetting("'x4:'||"+xact),/declaration rows exist/,'leading text');
+  assert.equal(await withSetting("'4:'||"+xact),'ABSENT');
+  assert.deepEqual(await snapshot(),stale,'the probes rolled back');
+  // accepted with both: the objects and every declaration go, the base tables stay, and the state is ABSENT
+  const usersBefore=(await target.query('SELECT count(*)::int n FROM users')).rows[0].n;
+  assert.deepEqual(await attempt({rows:fresh.rows,sha256:fresh.sha256}),{rolled_back:true,previous_state:'INSTALLED',confirmed_rows:4});
+  assert.deepEqual(await extensionObjects(target),NONE);assert.equal((await classifyPaperCapitalModel(target)).state,'ABSENT');
+  assert.equal((await target.query('SELECT count(*)::int n FROM users')).rows[0].n,usersBefore);
+  // ABSENT: a confirmed rollback is a no-op, like the plain one
+  assert.deepEqual(await attempt({rows:4,sha256:fresh.sha256}),{rolled_back:true,previous_state:'ABSENT'});
+  const absentCli=await cli(['--rollback','--confirm-rows=4','--confirm-export-sha256='+fresh.sha256],urlOf(name));
+  assert.equal(absentCli.code,0,absentCli.stderr);assert.equal(absentCli.stdout,'Paper capital model not installed; no change\n');
+  // a re-install starts clean: the empty export, and the confirmed form works at zero rows
+  await migratePaperCapitalModel(target);
+  assert.deepEqual(await exportPaperCapitalModel(target,path.join(dir,'e3.jsonl')),{rows:0,sha256:EMPTY_SHA});
+  assert.deepEqual(await attempt({rows:0,sha256:EMPTY_SHA}),{rolled_back:true,previous_state:'INSTALLED',confirmed_rows:0});
+  assert.deepEqual(await extensionObjects(target),NONE);
+});
+
+test('O12 confirmed rollback race: it waits on the ACCESS EXCLUSIVE lock behind an uncommitted version 1 and then refuses because the export no longer matches',async t=>{
+  const dir=await tempDir(t);
+  const {name,target,writer,finish}=await raceSetup('rbconfirmrace');
+  // the export taken while the writer is still uncommitted sees zero rows
+  const exported=await exportPaperCapitalModel(target,path.join(dir,'race.jsonl'));
+  assert.deepEqual(exported,{rows:0,sha256:EMPTY_SHA});
+  const rolling=track(new PostgresDatabase({connectionString:urlOf(name),max:2}));
+  const settled=rollbackPaperCapitalModel(rolling,{confirm:exported}).then(()=>'DROPPED',error=>error.message);
+  try{
+    await until(exclusiveLockWaiting(target),'the confirmed rollback waits for the ACCESS EXCLUSIVE lock');
+  }finally{finish.open();}
+  await writer;
+  assert.match(await settled,/does not match the live declaration rows: row count and digest \(no change made\)/);
+  assert.equal((await rowDigest(target)).n,1,'the declaration survived');
+  assert.equal((await classifyPaperCapitalModel(target)).state,'INSTALLED');
+});
+
+test('O12 CLI: --export prints only the row count and digest; the confirm flags are validated; the confirmed rollback works end to end',async t=>{
+  const dir=await tempDir(t);
+  const name=await clone('cliexp'),url=urlOf(name),target=track(new PostgresDatabase({connectionString:url,max:3}));
+  await migratePaperCapitalModel(target);
+  await seedDeclarations(target,'pcm-cliexp');
+  const file=path.join(dir,'cli-export.jsonl');
+  const exported=await cli(['--export='+file],url);
+  assert.equal(exported.code,0,exported.stderr);
+  const independent=await independentDigest(target);
+  assert.equal(exported.stdout,'rows=3 sha256='+independent.sha256+'\n','only the count and the digest are printed');
+  assert.equal(sha256Of(await fs.readFile(file)),independent.sha256);
+  assert.ok(!exported.stdout.includes(dir)&&!exported.stderr.includes(dir),'the path is not echoed');
+  // an existing path is refused (nonzero), the file is unchanged
+  const again=await cli(['--export='+file],url);assert.notEqual(again.code,0);assert.equal(sha256Of(await fs.readFile(file)),independent.sha256);
+  const sha=independent.sha256;
+  // usage errors: a flag combination, a malformed value, a missing half of the pair, a duplicate
+  const unused=path.join(dir,'u.jsonl');
+  for(const args of [['--export='+unused,'--inspect'],['--export='+unused,'--rollback'],['--export='],
+    ['--confirm-rows=3','--confirm-export-sha256='+sha],['--rollback','--confirm-rows=3'],['--rollback','--confirm-export-sha256='+sha],
+    ['--rollback','--confirm-rows=-1','--confirm-export-sha256='+sha],['--rollback','--confirm-rows=3','--confirm-export-sha256='+sha.toUpperCase()],
+    ['--rollback','--confirm-rows=3','--confirm-export-sha256=abc'],['--rollback','--confirm-rows=03','--confirm-export-sha256='+sha],
+    ['--rollback','--confirm-rows=3','--confirm-rows=3','--confirm-export-sha256='+sha],['--inspect','--confirm-rows=3','--confirm-export-sha256='+sha],
+    ['--rollback','--runtime-role=x','--confirm-rows=3','--confirm-export-sha256='+sha]]){
+    const result=await cli(args,url);assert.notEqual(result.code,0,args.join(' '));assert.match(result.stderr,/Usage: node scripts\/migrate-paper-capital-model\.mjs/,args.join(' '));
+  }
+  assert.equal(await exists(unused),false);
+  assert.equal((await classifyPaperCapitalModel(target)).state,'INSTALLED');assert.equal((await rowDigest(target)).n,3);
+  // wrong count and wrong digest: nonzero exit, nothing dropped; plain rollback also refused
+  const wrongCount=await cli(['--rollback','--confirm-rows=2','--confirm-export-sha256='+sha],url);
+  assert.notEqual(wrongCount.code,0);assert.match(wrongCount.stderr,/confirmation does not match the live declaration rows: row count \(no change made\)/);
+  const wrongDigest=await cli(['--rollback','--confirm-rows=3','--confirm-export-sha256='+EMPTY_SHA],url);
+  assert.notEqual(wrongDigest.code,0);assert.match(wrongDigest.stderr,/live declaration rows: digest \(no change made\)/);
+  const plain=await cli(['--rollback'],url);assert.notEqual(plain.code,0);assert.match(plain.stderr,/rollback refused; 3 declaration row\(s\) exist \(no change made\)/);
+  assert.equal((await rowDigest(target)).n,3);
+  const done=await cli(['--rollback','--confirm-rows=3','--confirm-export-sha256='+sha],url);
+  assert.equal(done.code,0,done.stderr);assert.match(done.stdout,/Paper capital model removed; previous state=INSTALLED; confirmed rows=3/);
+  assert.deepEqual(await extensionObjects(target),NONE);
+  const absent=await cli(['--export='+path.join(dir,'after.jsonl')],url);
+  assert.notEqual(absent.code,0);assert.match(absent.stderr,/export refused; state ABSENT/);assert.equal(await exists(path.join(dir,'after.jsonl')),false);
+});
+
+test('O12 export path placement: only exactly "..", ".." plus a separator or an absolute relative path is outside; a ..x directory is inside; a sibling directory is outside',()=>{
+  const root=repoRoot.replace(/[\\/]+$/,'');
+  const placement=(...parts)=>exportPathPlacement(path.join(root,...parts),root);
+  assert.equal(placement('..x','file'),'INSIDE');
+  assert.equal(placement('docs','f.jsonl'),'INSIDE');
+  assert.equal(placement('.qa-local','f.jsonl'),'QA_LOCAL');
+  assert.equal(placement('.qa-localx','f.jsonl'),'INSIDE');
+  assert.equal(placement('..',path.basename(root)+'-sibling','f.jsonl'),'OUTSIDE','a sibling directory of the repository');
+  assert.equal(placement('..','..x','f.jsonl'),'OUTSIDE');
+  assert.equal(placement('..','f.jsonl'),'OUTSIDE');
+  assert.equal(exportPathPlacement(root,root),'INSIDE','the repository root itself');
+  assert.equal(exportPathPlacement(path.join(os.tmpdir(),'f.jsonl'),root),'OUTSIDE');
+});
+
+test('O12 rollback SQL file: a database-level or session setting of the confirmation never lets the file drop a row; the tool still can',async t=>{
+  const dir=await tempDir(t);
+  const name=await clone('rbsetting'),target=track(new PostgresDatabase({connectionString:urlOf(name),max:3}));
+  await migratePaperCapitalModel(target);
+  await seedDeclarations(target,'pcm-rbsetting');
+  const rollbackSql=await sqlText('paper-capital-model-rollback.sql');
+  const held=await rowDigest(target),heldCatalog=await catalogDigest(target);
+  assert.equal(held.n,3);
+  const setting='paper_capital_model.rollback_confirm_rows';
+  // ALTER DATABASE ... SET reaches every new session. A fresh pool takes it; each value carries the right count and a guessed or no transaction id.
+  for(const value of ['3','3:1','3:'+'9'.repeat(18)]){
+    await admin.query('ALTER DATABASE '+name+" SET "+setting+" = '"+value+"'");
+    const fresh=new PostgresDatabase({connectionString:urlOf(name),max:1});
+    try{
+      assert.equal((await fresh.query("SELECT current_setting('"+setting+"') v")).rows[0].v,value,'the database-level setting is visible');
+      await assert.rejects(fresh.query(rollbackSql),/declaration rows exist/,'database-level '+value);
+    }finally{await fresh.close();}
+  }
+  await admin.query('ALTER DATABASE '+name+' RESET '+setting);
+  // a session SET (autocommit file run on the same connection)
+  const session=new PostgresDatabase({connectionString:urlOf(name),max:1});
+  try{
+    await session.query("SET "+setting+" = '3:1'");
+    await assert.rejects(session.query(rollbackSql),/declaration rows exist/,'session SET');
+    await session.query("SET "+setting+" = '3'");
+    await assert.rejects(session.query(rollbackSql),/declaration rows exist/,'session SET bare count');
+  }finally{await session.close();}
+  assert.deepEqual(await rowDigest(target),held,'no row dropped');assert.deepEqual(await catalogDigest(target),heldCatalog);
+  assert.equal((await classifyPaperCapitalModel(target)).state,'INSTALLED');
+  // the tool path still drops with the matching export
+  const exported=await exportPaperCapitalModel(target,path.join(dir,'rbsetting.jsonl'));
+  assert.deepEqual(await rollbackPaperCapitalModel(target,{confirm:exported}),{rolled_back:true,previous_state:'INSTALLED',confirmed_rows:3});
   assert.deepEqual(await extensionObjects(target),NONE);
 });
