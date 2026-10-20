@@ -1,0 +1,34 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "05001da",
+  "scope": "Local implementation of root decision RD-MP-12 of docs/MULTI_PINE_CONTRACT.md for PM-1 row F11-01: a pure shared function (src/pine-bridge/exit-version.js) that derives a deployment's exit version from its integrated Pine artifact instead of storing it. It checks the artifact hash against the deployment snapshot, finds the Bridge block whose preceding text hashes to the snapshot source hash, and requires exactly one exit header and exactly one alert prefix naming the deployment, with the same version in both, from the versions the template has emitted (bridge-exit-v1 and bridge-exit-v2). Whether a version is supported is a separate admission rule. The function reads no database, file, clock or network, never throws on bad input, and is wired into nothing.",
+  "method": "An architecture auditor (Opus 5.5) wrote the F11-01 table design, and root chose option A for RD-MP-12. A coder (Sonnet 5.5) wrote the function; an independent architecture auditor (Opus 5.5) reviewed rounds 1 and 2 (it found bridge-exit-v1 missing from the known list and proposed bounding the parse to the Bridge block); an independent tester (Sonnet 5.5) ran single-edit mutations after each of three rounds. The bridge-exit-v1 test fixture was produced by a scratch copy of the template at commit c89922b, never by running the historical file in place. Root ruled on every finding. Nobody verified their own work.",
+  "files": {
+    "src/pine-bridge/exit-version.js": "0342bd4455a5b11faa45d8935ac5fcee95d8d9747dc88e1977e0c3c7d877ba4a",
+    "test/pine-bridge-exit-version.test.js": "95d5da60088736dd99d5cd78ac523e6777ff5d32ac77e1e08b4ddee4a35db6e5",
+    "test/fixtures/pine-bridge-exit-v1/artifact.json": "bc866c9c5b78c0358e7a24a26b368abd711e09b61b8594889b15a213aa7fce2d"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "test/pine-bridge-exit-version.test.js: 16 of 16 pass. A real artifact of the current template derives bridge-exit-v2 and the frozen v1 artifact derives bridge-exit-v1; headers and prefixes injected into user source, native trace artifacts, tampered bytes and malformed strings are refused with a reason. A source with 2068 fake block openings is parsed in about 16 ms.",
+  "mutations": {
+    "round1": "8 of 8 killed.",
+    "round2": "13 of 13 killed.",
+    "round3": "15 of 15 killed, including the incremental hash."
+  },
+  "limits": [
+    "Pure function only: the member-set tables, their store function and the package-gate use on the one-Pine path are not wired.",
+    "The caller must fetch the artifact from the succeeded generate job of the same owner, Bot and deployment and refuse a missing or duplicate job.",
+    "The parse depends on the template block layout; a template layout change makes derivation refuse until the function is updated.",
+    "No staging readback and no PostgreSQL run."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the design, the agent reports, the rulings and the final diff and accepted the function as local engineering evidence for F11-01 (RD-MP-12). Acceptance changes no PM-1 credit by itself."
+  }
+}
