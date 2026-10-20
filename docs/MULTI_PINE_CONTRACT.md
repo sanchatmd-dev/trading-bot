@@ -2,7 +2,7 @@
 
 Status: owner decisions OD-MP-1 to OD-MP-11 recorded 2026-10-19. Root decisions RD-MP-4, RD-MP-5,
 RD-MP-7, RD-MP-8, RD-MP-9 and RD-MP-10 recorded the same day; RD-MP-1, RD-MP-2, RD-MP-3 and RD-MP-6
-were decided the same day (RD-MP-1 to RD-MP-11 decided; RD-MP-12 to RD-MP-16 decided 2026-10-20; RC-MP-1 clarifies 3.3; the member-set tables extension is root-accepted as local engineering evidence and not installed on staging). Root accepted the
+were decided the same day (RD-MP-1 to RD-MP-11 decided; RD-MP-12 to RD-MP-17 decided 2026-10-20; RC-MP-1 clarifies 3.3; the member-set tables extension is root-accepted as local engineering evidence and not installed on staging). Root accepted the
 other rules on 2026-10-19 after independent review. The S1 pure member-set builder (src/multi-pine) is root-accepted as local engineering
 evidence and not wired; no other implementation has started; this contract is not a GO, and nothing here
 activates a multi-Pine Bot or exposes multi-Pine results to the owner before APP-3B.
@@ -675,6 +675,7 @@ F11-01 acceptance must not claim it. RC-MP-1 is a root clarification of 3.3 (in-
 | RD-MP-14 | Member-set guards | Edits are refused with `QR002`; member insert guards use the shared guard code `QR004` (PKG RC-25), mapped to `MP_MEMBER_SET_STALE`; a deferred check requires the member count to equal `pine_count` at commit; `exit_version` is limited to the known versions, and admission refuses an unsupported one. Root chose `QR004` over a new code to keep one SQLSTATE plan. | Root | 2026-10-20 |
 | RD-MP-15 | Freeze-or-load transaction | One SERIALIZABLE transaction (`QR003` otherwise): the service takes FOR SHARE locks on the member deployments and on the Bot's memberships, inserts the parent with ON CONFLICT DO NOTHING on the content key, and on a serialization failure retries a bounded number of times and then loads. Root chose SERIALIZABLE over READ COMMITTED after the package builder review showed stale guard reads under mixed isolation. Both tables join the insert-only grant list; the marker is read-only. | Root | 2026-10-20 |
 | RD-MP-16 | Member-set tables result | The deferred completeness check also requires the Bot's connected memberships to equal `pine_count`, so a set covers every connected Pine. A command-line install, inspect and rollback tool is added like the other extensions (accepted deviation from the design). | Root | 2026-10-20 |
+| RD-MP-17 | Member-set store result | `freezeOrLoadMemberSet` runs one SERIALIZABLE transaction: FOR SHARE on the member deployments and the Bot's memberships, each member's artifact from the single succeeded generate job of the same owner, Bot and deployment, its exit version from `deploymentExitVersion`, the record from the S1 builder with its closed-key input check, then load by content digest or insert. A serialization failure or deadlock is retried at most three times; a lost content-key race loads; other unique violations are storage refusals; `QR004` maps to `MP_MEMBER_SET_STALE`. The Bot-state reader must use the same transaction handle; the function is wired into no route, worker or view. | Root | 2026-10-20 |
 
 ## 15. Independent test plan
 

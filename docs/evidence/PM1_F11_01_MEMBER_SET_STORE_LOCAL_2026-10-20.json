@@ -1,0 +1,32 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "7b5211c",
+  "scope": "Local implementation of the multi-Pine member-set store function (RD-MP-15, RD-MP-17) for PM-1 row F11-01: freezeOrLoadMemberSet in src/postgres/mp-member-set-store.js runs one SERIALIZABLE transaction with FOR SHARE on the member deployments and the Bot memberships, takes each artifact from the single succeeded generate job and its exit version from deploymentExitVersion, builds the record with the S1 builder (closed input keys), then loads by content digest or inserts; serialization failures and deadlocks are retried at most three times, a lost content-key race loads, other unique violations are storage refusals and QR004 maps to MP_MEMBER_SET_STALE. It is wired into no route, worker or view.",
+  "method": "A coder (Sonnet 5.5) wrote the function from the F11-01 design. An independent architecture auditor (Opus 5.5) reviewed three rounds (round 1 found that extra input keys were dropped silently); an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, fifteen PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (quant-library-http 16, gap-branches 7, compare-context 1, g5-register 11, mp-member-set-store 14, mp-member-set 22, quant-research-freeze 22, quant-exposure-register 18, best-inputs-package 26, quant-comparison 19, quant-comparison-create 12, quant-selection 15, quant-selection-register 26, qr2-reader 27, runtime-grants 1; fail 0 and skipped 0 in each), the grant text test and the full unit suite (2120 tests, 0 fail, 6 skipped), plus five single-edit mutations (all killed). Root ruled on every finding. Nobody verified their own work.",
+  "files": {
+    "src/postgres/mp-member-set-store.js": "08a88caee75a37187b4a668be7fe38e71af75015fdc885e0879c1b66cc6f6352",
+    "test/postgres/mp-member-set-store.test.mjs": "520eb73005422ac1c84aef1b16dda432b5f167301a51f79c1b0d79a41d3cfa62"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/postgres/mp-member-set-store.test.mjs 14 of 14 and test/postgres/mp-member-set.test.mjs 22 of 22 pass with 0 skipped.",
+  "mutations": {
+    "round1": "11 of 13 killed (one equivalent; the exit-version input survivor became a test).",
+    "round2": "6 of 6 killed.",
+    "round3": "The failed-probe fallback killed in the sole-runner pass."
+  },
+  "limits": [
+    "The Bot-state reader must use the same transaction handle; a reader on another database handle is outside the guarantee and nothing detects it.",
+    "No service, route or internal run store uses the function yet.",
+    "No staging readback."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted the store function as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}
