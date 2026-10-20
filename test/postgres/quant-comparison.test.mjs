@@ -16,12 +16,12 @@ import {backupPostgres,postgresToolEnvironment} from '../../scripts/backup-postg
 import {COMPARISON_GUARDS,COMPARISON_MARKER,COMPARISON_TABLES,INSERT_ONLY_SQLSTATE,INSERT_GUARD_SQLSTATE,SERIALIZABLE_SQLSTATE,classifyQuantComparison,inspectQuantComparison,
   migrateQuantComparison,rollbackQuantComparison} from '../../src/postgres/quant-comparison-migration.js';
 import {migrateQuantExposureRegister} from '../../src/postgres/quant-exposure-register-migration.js';
-import {createComparison,readComparison} from '../../src/postgres/comparison-store.js';
-import {validateSpec} from '../../src/comparison/ranking.js';
+import {createComparison,readComparison,writeEvaluation,writeBenchmark,writeOutcome,writeReplayEvent,readComparisonResults,BENCHMARK_ID} from '../../src/postgres/comparison-store.js';
+import {validateSpec,decideOutcome} from '../../src/comparison/ranking.js';
 import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {hex,MINUTE,T0} from '../helpers/quant-library-fixture.mjs';
 
-// QR-3 S2c-1: the comparison specs, participants and status events, proven on a throwaway PostgreSQL cluster as real non-owner LOGIN roles with the
+// QR-3 S2c: the comparison specs, participants and status events (S2c-1) and the install, guards and grants of the S2c-2 result tables, proven on a throwaway PostgreSQL cluster as real non-owner LOGIN roles with the
 // repo grants. Every row is a LABELLED FIXTURE (synthetic, never a research result). Rows are insert-only, so each test uses its own owner or ids.
 const run=promisify(execFile);
 const repoRoot=fileURLToPath(new URL('../../',import.meta.url));
@@ -29,6 +29,8 @@ const sourceDir=new URL('../../src/postgres/',import.meta.url);
 const QR002=INSERT_ONLY_SQLSTATE,QR003=SERIALIZABLE_SQLSTATE,QR004=INSERT_GUARD_SQLSTATE,DENIED='42501',CHECK_VIOLATION='23514',NOT_NULL='23502',FK_VIOLATION='23503',UNIQUE_VIOLATION='23505',
   SERIALIZATION_FAILURE='40001',INVALID_TEXT='22P02';
 const SPECS='public.quant_comparison_specs',PARTICIPANTS='public.quant_comparison_participants',EVENTS='public.quant_comparison_status_events',MARKER='public.quant_comparison_schema';
+const RESULT_TABLES=['public.quant_comparison_evaluations','public.quant_comparison_benchmarks','public.quant_comparison_outcomes','public.quant_comparison_replay_events'];
+const RECORD_TABLES=[SPECS,PARTICIPANTS,EVENTS,...RESULT_TABLES];
 const CLI='scripts/migrate-quant-comparison.mjs';
 const MARKET={broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'};
 const serializable={isolation:'SERIALIZABLE'};
@@ -72,9 +74,9 @@ const comparisonObjects=async target=>(await target.query(`SELECT
   (SELECT count(*)::int FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname LIKE 'quant\\_comparison%') functions,
   (SELECT count(*)::int FROM pg_trigger WHERE NOT tgisinternal AND tgname LIKE 'quant\\_comparison%') triggers`)).rows[0];
 const rowDigest=async(target,table)=>(await target.query(`SELECT count(*)::int n,encode(sha256(convert_to(COALESCE(string_agg(row_to_json(t)::text,'|' ORDER BY row_to_json(t)::text),''),'UTF8')),'hex') d FROM ${table} t`)).rows[0];
-const allRows=async target=>Promise.all([SPECS,PARTICIPANTS,EVENTS,'public.quant_exposure_register'].map(table=>rowDigest(target,table)));
+const allRows=async target=>Promise.all([...RECORD_TABLES,'public.quant_exposure_register'].map(table=>rowDigest(target,table)));
 const NOT_INSTALLED=/^(MARKER_MISSING|TRIGGER_MISSING:|FUNCTION_MISSING:|TABLE_MISSING:|INDEX_MISSING:)/;
-const OBJECTS={relations:4+7,functions:8,triggers:16};
+const OBJECTS={relations:8+12,functions:13,triggers:33};
 
 /** A STANDARDIZED spec for the given participant ids and window, in the frozen normal form. */
 function specFor(ids,window=WINDOW,patch={}){
@@ -199,12 +201,13 @@ test('install: ABSENT to INSTALLED in one transaction; the base schema, tables a
   const aclBefore=await acl();
   const report=await migrateQuantComparison(db,{runtimeRole:roleName});
   assert.equal(report.ok,true,report.failures.join());assert.equal(report.previous_state,'ABSENT');
-  assert.equal(report.facts.state,'INSTALLED');assert.equal(report.facts.marker,COMPARISON_MARKER);assert.equal(report.facts.guards.length,16);assert.equal(report.facts.register_state,'INSTALLED');
+  assert.equal(report.facts.state,'INSTALLED');assert.equal(report.facts.marker,COMPARISON_MARKER);assert.equal(report.facts.guards.length,33);assert.equal(report.facts.register_state,'INSTALLED');
   assert.ok(report.facts.guards.every(item=>item.enabled==='A'),'every guard is ENABLE ALWAYS');
-  assert.deepEqual((await db.query("SELECT relname FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY 1")).rows.map(row=>row.relname).filter(name=>!baseTables.includes(name)),
-    ['quant_comparison_participants','quant_comparison_schema','quant_comparison_specs','quant_comparison_status_events'],'exactly the four comparison tables were added');
+  assert.deepEqual((await db.query("SELECT relname FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY 1")).rows.map(row=>row.relname).filter(name=>!baseTables.includes(name)).sort(),
+    ['quant_comparison_benchmarks','quant_comparison_evaluations','quant_comparison_outcomes','quant_comparison_participants','quant_comparison_replay_events','quant_comparison_schema','quant_comparison_specs','quant_comparison_status_events'],
+    'exactly the eight comparison tables were added');
   assert.deepEqual(await acl(),aclBefore,'no existing grant changed');
-  assert.deepEqual(await comparisonObjects(db),OBJECTS,'four tables, seven indexes, eight functions and sixteen triggers');
+  assert.deepEqual(await comparisonObjects(db),OBJECTS,'eight tables, twelve indexes, thirteen functions and thirty-three triggers');
   assert.equal((await db.query('SELECT version FROM schema_version')).rows[0].version,14,'the base schema version stays 14');
   assert.deepEqual((await db.query('SELECT version FROM quant_comparison_schema')).rows,[{version:1}]);
   assert.equal((await db.query('SELECT public.quant_comparison_version() v')).rows[0].v,COMPARISON_MARKER);
@@ -225,6 +228,12 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
     ['guard body replaced',"CREATE OR REPLACE FUNCTION public.quant_comparison_insert_only() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$ BEGIN RETURN NEW; END $$",'FUNCTION_DEFINITION:quant_comparison_insert_only:BODY'],
     ['status guard body replaced',"CREATE OR REPLACE FUNCTION public.quant_comparison_guard_status_event() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$ BEGIN RETURN NEW; END $$",'FUNCTION_DEFINITION:quant_comparison_guard_status_event:BODY'],
     ['transaction-membership helper body replaced',"CREATE OR REPLACE FUNCTION public.quant_comparison_in_this_transaction(row_xmin xid) RETURNS boolean LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$ BEGIN RETURN false; END $$",'FUNCTION_DEFINITION:quant_comparison_in_this_transaction:BODY'],
+    ['evaluation guard body replaced',"CREATE OR REPLACE FUNCTION public.quant_comparison_guard_evaluation() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$ BEGIN RETURN NEW; END $$",'FUNCTION_DEFINITION:quant_comparison_guard_evaluation:BODY'],
+    ['outcome commit check body replaced',"CREATE OR REPLACE FUNCTION public.quant_comparison_check_outcome() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$ BEGIN RETURN NULL; END $$",'FUNCTION_DEFINITION:quant_comparison_check_outcome:BODY'],
+    ['replay guard body replaced',"CREATE OR REPLACE FUNCTION public.quant_comparison_guard_replay_event() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$ BEGIN RETURN NEW; END $$",'FUNCTION_DEFINITION:quant_comparison_guard_replay_event:BODY'],
+    ['result guard made SECURITY DEFINER','ALTER FUNCTION public.quant_comparison_guard_outcome() SECURITY DEFINER','FUNCTION_DEFINITION:quant_comparison_guard_outcome:SECURITY_DEFINER'],
+    ['result table re-owned to another role',OTHER_OWNER+'ALTER TABLE public.quant_comparison_outcomes OWNER TO s2c_other_owner','OWNER_MISMATCH:quant_comparison_outcomes'],
+    ['result guard function re-owned to another role',OTHER_OWNER+'ALTER FUNCTION public.quant_comparison_guard_benchmark() OWNER TO s2c_other_owner','OWNER_MISMATCH:quant_comparison_guard_benchmark'],
     ['table re-owned to another role',OTHER_OWNER+'ALTER TABLE public.quant_comparison_participants OWNER TO s2c_other_owner','OWNER_MISMATCH:quant_comparison_participants'],
     ['marker table re-owned to another role',OTHER_OWNER+'ALTER TABLE public.quant_comparison_schema OWNER TO s2c_other_owner','OWNER_MISMATCH:quant_comparison_specs'],
     ['guard function re-owned to another role',OTHER_OWNER+'ALTER FUNCTION public.quant_comparison_guard_spec() OWNER TO s2c_other_owner','OWNER_MISMATCH:quant_comparison_guard_spec'],
@@ -239,6 +248,14 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
     ['trigger replica only',T('quant_comparison_status_events')+'ENABLE REPLICA TRIGGER quant_comparison_status_events_no_truncate','TRIGGER_NOT_ALWAYS:quant_comparison_status_events_no_truncate'],
     ['commit check disabled',T('quant_comparison_specs')+'DISABLE TRIGGER quant_comparison_specs_complete','TRIGGER_NOT_ALWAYS:quant_comparison_specs_complete'],
     ['trigger dropped','DROP TRIGGER quant_comparison_status_events_guard ON public.quant_comparison_status_events','TRIGGER_MISSING:quant_comparison_status_events_guard'],
+    ['evaluation guard dropped','DROP TRIGGER quant_comparison_evaluations_guard ON public.quant_comparison_evaluations','TRIGGER_MISSING:quant_comparison_evaluations_guard'],
+    ['outcome commit check dropped','DROP TRIGGER quant_comparison_outcomes_complete ON public.quant_comparison_outcomes','TRIGGER_MISSING:quant_comparison_outcomes_complete'],
+    ['outcome commit check disabled',T('quant_comparison_outcomes')+'DISABLE TRIGGER quant_comparison_outcomes_complete','TRIGGER_NOT_ALWAYS:quant_comparison_outcomes_complete'],
+    ['outcome commit check made immediate','DROP TRIGGER quant_comparison_outcomes_complete ON public.quant_comparison_outcomes; CREATE CONSTRAINT TRIGGER quant_comparison_outcomes_complete AFTER INSERT ON public.quant_comparison_outcomes FOR EACH ROW EXECUTE FUNCTION public.quant_comparison_check_outcome(); '
+      +T('quant_comparison_outcomes')+'ENABLE ALWAYS TRIGGER quant_comparison_outcomes_complete','TRIGGER_SHAPE:quant_comparison_outcomes_complete'],
+    ['replay guard origin only',T('quant_comparison_replay_events')+'ENABLE TRIGGER quant_comparison_replay_events_guard','TRIGGER_NOT_ALWAYS:quant_comparison_replay_events_guard'],
+    ['benchmark serializable guard replica only',T('quant_comparison_benchmarks')+'ENABLE REPLICA TRIGGER quant_comparison_benchmarks_00_serializable','TRIGGER_NOT_ALWAYS:quant_comparison_benchmarks_00_serializable'],
+    ['extra trigger on a result table',noop+' CREATE TRIGGER s2c_result_extra AFTER INSERT ON public.quant_comparison_evaluations FOR EACH ROW EXECUTE FUNCTION public.s2c_noop()','TRIGGER_UNEXPECTED:s2c_result_extra'],
     ['commit check dropped','DROP TRIGGER quant_comparison_specs_complete ON public.quant_comparison_specs','TRIGGER_MISSING:quant_comparison_specs_complete'],
     ['commit check made immediate','DROP TRIGGER quant_comparison_specs_complete ON public.quant_comparison_specs; CREATE CONSTRAINT TRIGGER quant_comparison_specs_complete AFTER INSERT ON public.quant_comparison_specs FOR EACH ROW EXECUTE FUNCTION public.quant_comparison_check_create(); '
       +T('quant_comparison_specs')+'ENABLE ALWAYS TRIGGER quant_comparison_specs_complete','TRIGGER_SHAPE:quant_comparison_specs_complete'],
@@ -253,6 +270,17 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
     ['freeze body check dropped',T('quant_comparison_participants')+'DROP CONSTRAINT quant_comparison_participants_freeze_body_check','TABLE_DEFINITION:quant_comparison_participants:CONSTRAINTS'],
     ['extra constraint',T('quant_comparison_status_events')+'ADD CONSTRAINT s2c_extra CHECK(at_ms>=0)','TABLE_DEFINITION:quant_comparison_status_events:CONSTRAINTS'],
     ['foreign key dropped',T('quant_comparison_specs')+'DROP CONSTRAINT quant_comparison_specs_owner_id_fkey','TABLE_DEFINITION:quant_comparison_specs:CONSTRAINTS'],
+    ['evaluation participant key dropped',T('quant_comparison_evaluations')+'DROP CONSTRAINT quant_comparison_evaluations_participant_fkey','TABLE_DEFINITION:quant_comparison_evaluations:CONSTRAINTS'],
+    ['outcome only-qualified key dropped',T('quant_comparison_outcomes')+'DROP CONSTRAINT quant_comparison_outcomes_only_qualified_fkey','TABLE_DEFINITION:quant_comparison_outcomes:CONSTRAINTS'],
+    ['outcome body check dropped',T('quant_comparison_outcomes')+'DROP CONSTRAINT quant_comparison_outcomes_body_check','TABLE_DEFINITION:quant_comparison_outcomes:CONSTRAINTS'],
+    ['outcome value check widened',T('quant_comparison_outcomes')+"DROP CONSTRAINT quant_comparison_outcomes_outcome_check, ADD CONSTRAINT quant_comparison_outcomes_outcome_check CHECK(outcome IS NOT NULL)",'TABLE_DEFINITION:quant_comparison_outcomes:CONSTRAINTS'],
+    ['replay shape check dropped',T('quant_comparison_replay_events')+'DROP CONSTRAINT quant_comparison_replay_events_shape_check','TABLE_DEFINITION:quant_comparison_replay_events:CONSTRAINTS'],
+    ['evaluation digest check dropped',T('quant_comparison_evaluations')+'DROP CONSTRAINT quant_comparison_evaluations_body_digest_check','TABLE_DEFINITION:quant_comparison_evaluations:CONSTRAINTS'],
+    ['benchmark id check dropped',T('quant_comparison_benchmarks')+'DROP CONSTRAINT quant_comparison_benchmarks_benchmark_id_check','TABLE_DEFINITION:quant_comparison_benchmarks:CONSTRAINTS'],
+    ['replay index dropped','DROP INDEX public.quant_comparison_replay_events_comparison','INDEX_MISSING:quant_comparison_replay_events_comparison'],
+    ['replay key default dropped',T('quant_comparison_replay_events')+'ALTER COLUMN replay_event_id DROP DEFAULT','TABLE_DEFINITION:quant_comparison_replay_events:COLUMNS'],
+    ['result column collation changed',T('quant_comparison_benchmarks')+'ALTER COLUMN spec_hash TYPE text COLLATE "C"','TABLE_DEFINITION:quant_comparison_benchmarks:COLLATION'],
+    ['result row security enabled',T('quant_comparison_outcomes')+'ENABLE ROW LEVEL SECURITY','TABLE_DEFINITION:quant_comparison_outcomes:SHAPE'],
     ['foreign key made cascading',T('quant_comparison_participants')+'DROP CONSTRAINT quant_comparison_participants_comparison_id_fkey, ADD CONSTRAINT quant_comparison_participants_comparison_id_fkey FOREIGN KEY(comparison_id) REFERENCES public.quant_comparison_specs(comparison_id) ON DELETE CASCADE','TABLE_DEFINITION:quant_comparison_participants:CONSTRAINTS'],
     ['unique constraint dropped',T('quant_comparison_participants')+'DROP CONSTRAINT quant_comparison_participants_position_key','TABLE_DEFINITION:quant_comparison_participants:'],
     ['partial unique index dropped','DROP INDEX public.quant_comparison_specs_request_key','INDEX_MISSING:quant_comparison_specs_request_key'],
@@ -325,7 +353,7 @@ test('a foreign or partial install is refused with no write, in both directions'
 
 /* ---- 2. grants ---- */
 
-test('grants: the repo grant script gives the runtime role SELECT and INSERT on the three record tables and SELECT on the marker, nothing else; reapply is idempotent',async()=>{
+test('grants: the repo grant script gives the runtime role SELECT and INSERT on the seven record tables and SELECT on the marker, nothing else; reapply is idempotent',async()=>{
   for(const role of [roleName,deleterName,truncaterName])await db.query(await grantScript(role));
   for(const table of COMPARISON_TABLES){
     await db.query(`GRANT DELETE ON TABLE public.${table} TO ${deleterName}`);await db.query(`GRANT TRUNCATE ON TABLE public.${table} TO ${truncaterName}`);
@@ -342,10 +370,11 @@ test('grants: the repo grant script gives the runtime role SELECT and INSERT on 
   const facts=async(who,table)=>(await db.query(`SELECT pg_get_userbyid(relowner)=$2 AS owner,has_table_privilege($2,oid,'SELECT') AS "select",has_table_privilege($2,oid,'INSERT') AS "insert",
     has_table_privilege($2,oid,'UPDATE') AS "update",has_table_privilege($2,oid,'DELETE') AS "delete",has_table_privilege($2,oid,'TRUNCATE') AS truncate,has_table_privilege($2,oid,'TRIGGER') AS trigger
     FROM pg_class WHERE oid=$1::regclass`,[table,who])).rows[0];
-  for(const table of [SPECS,PARTICIPANTS,EVENTS])
+  for(const table of RECORD_TABLES)
     assert.deepEqual(await facts(roleName,table),{owner:false,select:true,insert:true,update:false,delete:false,truncate:false,trigger:false},table+': SELECT and INSERT only');
   assert.deepEqual(await facts(roleName,MARKER),{owner:false,select:true,insert:false,update:false,delete:false,truncate:false,trigger:false},'the marker table is read-only');
   assert.equal((await facts(deleterName,SPECS)).delete,true);assert.equal((await facts(truncaterName,EVENTS)).truncate,true);
+  assert.equal((await facts(deleterName,RESULT_TABLES[2])).delete,true);assert.equal((await facts(truncaterName,RESULT_TABLES[3])).truncate,true);
   const role=(await db.query('SELECT rolsuper,rolcreaterole,rolcreatedb,rolbypassrls,rolreplication FROM pg_roles WHERE rolname=$1',[roleName])).rows[0];
   assert.deepEqual(role,{rolsuper:false,rolcreaterole:false,rolcreatedb:false,rolbypassrls:false,rolreplication:false});
   const version=Number((await db.query("SELECT current_setting('server_version_num') v")).rows[0].v);
@@ -372,6 +401,8 @@ test('grants: the repo grant script gives the runtime role SELECT and INSERT on 
   await refused(rt.query(`ALTER TABLE ${SPECS} DISABLE TRIGGER quant_comparison_specs_no_change`),DENIED);
   await refused(rt.query(`ALTER TABLE ${EVENTS} DISABLE TRIGGER ALL`),DENIED);
   await refused(rt.query(`DROP TRIGGER quant_comparison_specs_complete ON ${SPECS}`),DENIED);
+  await refused(rt.query(`DROP TRIGGER quant_comparison_outcomes_complete ON ${RESULT_TABLES[2]}`),DENIED);
+  await refused(rt.query(`ALTER TABLE ${RESULT_TABLES[0]} DISABLE TRIGGER quant_comparison_evaluations_guard`),DENIED);
   await refused(rt.query('CREATE OR REPLACE FUNCTION public.quant_comparison_insert_only() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$'),DENIED);
   await refused(rt.query("SET session_replication_role = 'replica'"),DENIED);
   await refused(rt.query(`DROP TABLE ${SPECS}`),DENIED);
@@ -386,7 +417,7 @@ test('insert-only: UPDATE, DELETE and TRUNCATE are refused at both layers on eve
   const made=await create(rt,OWNER_A,{count:3});
   const before=await allRows(db);
   // layer 1 (privilege): the runtime role holds no UPDATE, DELETE or TRUNCATE on the record tables
-  for(const table of [SPECS,PARTICIPANTS,EVENTS]){
+  for(const table of RECORD_TABLES){
     await refused(rt.query(`DELETE FROM ${table}`),DENIED);await refused(rt.query(`TRUNCATE ${table}`),DENIED);await refused(rt.query(`UPDATE ${table} SET comparison_id=comparison_id`),DENIED);
   }
   await refused(rt.query(`UPDATE ${SPECS} SET frozen_at_ms=frozen_at_ms+1 WHERE comparison_id=$1`,[made.comparison_id]),DENIED);
@@ -402,16 +433,19 @@ test('insert-only: UPDATE, DELETE and TRUNCATE are refused at both layers on eve
     ['marker: update',`UPDATE ${MARKER} SET version=1`,[]]];
   for(const [label,statement,params] of edits)await refused(db.query(statement,params),QR002).catch(error=>{throw Error(label+': '+error.message);});
   for(const table of [SPECS,PARTICIPANTS,EVENTS,MARKER]){
-    await refused(db.query(`DELETE FROM ${table}`),QR002);await refused(db.query(table===SPECS?`TRUNCATE ${table} CASCADE`:`TRUNCATE ${table}`),QR002);
+    await refused(db.query(`DELETE FROM ${table}`),QR002);await refused(db.query([SPECS,PARTICIPANTS].includes(table)?`TRUNCATE ${table} CASCADE`:`TRUNCATE ${table}`),QR002);
     await refused(db.transaction(async()=>{await db.query("SET LOCAL session_replication_role = 'replica'");await db.query(`DELETE FROM ${table}`);}),QR002);
     const touch={[MARKER]:'version=version',[SPECS]:'owner_id=owner_id',[PARTICIPANTS]:'source_hash=source_hash',[EVENTS]:'seq=seq'}[table];
     await refused(db.transaction(async()=>{await db.query("SET LOCAL session_replication_role = 'replica'");await db.query(`UPDATE ${table} SET ${touch}`);}),QR002);
   }
   await refused(dl.query(`DELETE FROM ${SPECS} WHERE comparison_id=$1`,[made.comparison_id]),QR002);await refused(dl.query(`DELETE FROM ${PARTICIPANTS}`),QR002);await refused(dl.query(`DELETE FROM ${EVENTS}`),QR002);
-  await refused(tr.query(`TRUNCATE ${SPECS} CASCADE`),QR002);await refused(tr.query(`TRUNCATE ${PARTICIPANTS}`),QR002);await refused(tr.query(`TRUNCATE ${EVENTS} RESTART IDENTITY`),QR002);
-  await refused(tr.query(`TRUNCATE ${EVENTS}, ${PARTICIPANTS}, ${SPECS}`),QR002);
+  await refused(tr.query(`TRUNCATE ${SPECS} CASCADE`),QR002);await refused(tr.query(`TRUNCATE ${PARTICIPANTS} CASCADE`),QR002);await refused(tr.query(`TRUNCATE ${EVENTS} RESTART IDENTITY`),QR002);
+  await refused(tr.query(`TRUNCATE ${RECORD_TABLES.join(', ')}`),QR002);
+  // the result tables hold no row here (their rows are the results test's), but the statement trigger fires on an empty table too
+  for(const table of RESULT_TABLES){await refused(tr.query(`TRUNCATE ${table}`),QR002);await refused(db.query(`TRUNCATE ${table}`),QR002);}
+  await refused(db.transaction(async()=>{await db.query("SET LOCAL session_replication_role = 'replica'");await db.query(`TRUNCATE ${RESULT_TABLES[2]}`);}),QR002);
   // a plain TRUNCATE of the referenced spec table fails on its foreign keys before any trigger: refused either way
-  await refused(tr.query(`TRUNCATE ${SPECS}`),'0A000');await refused(db.query(`TRUNCATE ${SPECS}`),'0A000');
+  await refused(tr.query(`TRUNCATE ${SPECS}`),'0A000');await refused(tr.query(`TRUNCATE ${PARTICIPANTS}`),'0A000');await refused(db.query(`TRUNCATE ${SPECS}`),'0A000');
   // an upsert that would rewrite a stored row needs UPDATE privilege for the runtime role; a DO NOTHING conflict writes nothing
   assert.equal((await rt.transaction(()=>rt.query(specInsert+' ON CONFLICT (comparison_id) DO NOTHING',values(OWNER_A,{comparison_id:made.comparison_id})),serializable)).rowCount,0);
   await refusedBy(rt.transaction(()=>rt.query(`INSERT INTO ${EVENTS}(comparison_id,seq,status) VALUES($1,1,'SPEC_FROZEN') ON CONFLICT (comparison_id,seq) DO NOTHING`,[made.comparison_id]),serializable),QR004,'quant_comparison_status_transition');
@@ -430,6 +464,16 @@ test('isolation guard: an INSERT below SERIALIZABLE is refused (QR003) on every 
     await refused(rt.transaction(()=>rt.query(specInsert,specValues),{isolation:level}),QR003);
     await refused(rt.transaction(()=>rt.query(participantInsert,participantValues(made.comparison_id,'late-1',1)),{isolation:level}),QR003);
     await refused(rt.transaction(()=>rt.query(`INSERT INTO ${EVENTS}(comparison_id,seq,status) VALUES($1,2,'EVALUATING')`,[made.comparison_id]),{isolation:level}),QR003);
+  }
+  // the result tables meet the same guard first, before any other trigger or constraint (placeholder values: the 00_serializable trigger sorts first)
+  const resultInserts=[`INSERT INTO ${RESULT_TABLES[0]}(comparison_id,participant_id,spec_hash,body_canonical,body_hash,created_at_ms) VALUES('x','y','h','{}','h',0)`,
+    `INSERT INTO ${RESULT_TABLES[1]}(comparison_id,benchmark_id,spec_hash,body_canonical,body_hash,created_at_ms) VALUES('x','y','h','{}','h',0)`,
+    `INSERT INTO ${RESULT_TABLES[2]}(comparison_id,outcome,spec_hash,context_key,body_canonical,outcome_hash,created_at_ms) VALUES('x','y','h','h','{}','h',0)`,
+    `INSERT INTO ${RESULT_TABLES[3]}(comparison_id,kind,prior_outcome_hash,at_ms) VALUES('x','y','h',0)`];
+  for(const statement of resultInserts){
+    for(const level of ['READ COMMITTED','REPEATABLE READ'])await refused(rt.transaction(()=>rt.query(statement),{isolation:level}),QR003);
+    await refused(rt.query(statement),QR003);await refused(db.query(statement),QR003);
+    await refused(db.transaction(async()=>{await db.query("SET LOCAL session_replication_role = 'replica'");await db.query(statement);}),QR003);
   }
   await refused(rt.query(specInsert,specValues),QR003);                                          // autocommit READ COMMITTED
   await refused(rt.query(`INSERT INTO ${EVENTS}(comparison_id,seq,status) VALUES($1,2,'EVALUATING')`,[made.comparison_id]),QR003);
@@ -568,7 +612,7 @@ test('table rules (participants): no row can be added after the create commit; e
 
 /* ---- 5. status graph ---- */
 
-test('status events: seq = last + 1, only the allowed edges, nothing after a terminal status, COMPLETE refused, the database clock stamps strictly increasing times',async()=>{
+test('status events: seq = last + 1, only the allowed edges, nothing after a terminal status, COMPLETE refused without its outcome, the database clock stamps strictly increasing times',async()=>{
   const mk=async()=>create(rt,OWNER_A);
   const transition='quant_comparison_status_transition';
   // the first event is the SPEC_FROZEN written by the create; a second seq 1 or another first status is refused
@@ -585,7 +629,7 @@ test('status events: seq = last + 1, only the allowed edges, nothing after a ter
   await refused(addEvent(rt,a.comparison_id,2,'EVALUATING','SOME_REASON'),CHECK_VIOLATION);              // a reason only on FAILED and CANCELLED
   await refusedBy(rt.transaction(()=>rt.query(`INSERT INTO ${EVENTS}(comparison_id,seq,status) VALUES($1,0,'EVALUATING')`,[a.comparison_id]),serializable),QR004,transition);
   assert.deepEqual(await statusOf(db,a.comparison_id),{seq:1,status:'SPEC_FROZEN'},'no refusal stored an event');
-  // SPEC_FROZEN -> EVALUATING -> COMPLETE is refused until the outcome table exists; -> FAILED with a reason is terminal
+  // SPEC_FROZEN -> EVALUATING -> COMPLETE is refused without an outcome row of the same transaction (the results test writes it); -> FAILED with a reason is terminal
   const evaluating=await addEvent(rt,a.comparison_id,2,'EVALUATING');
   await refusedBy(addEvent(rt,a.comparison_id,3,'COMPLETE'),QR004,transition);
   await refusedBy(addEvent(rt,a.comparison_id,3,'SPEC_FROZEN'),QR004,transition);
@@ -705,7 +749,7 @@ test('the CLI: install, second install, --inspect exit codes, usage errors and r
   // a bad runtime role in the ABSENT state still fails
   const badRole=await inspect(['--runtime-role=no_such_role_s2c']);assert.equal(badRole.code,1);assert.ok(badRole.report.failures.includes('RUNTIME_ROLE_MISSING'));
   // install, then a second install
-  const installed=await cli([],cliUrl);assert.equal(installed.code,0,installed.stderr);assert.match(installed.stdout,/Quant comparison tables ready: quant-comparison-v1; state=INSTALLED; previous state=ABSENT; guards=16/);
+  const installed=await cli([],cliUrl);assert.equal(installed.code,0,installed.stderr);assert.match(installed.stdout,/Quant comparison tables ready: quant-comparison-v1; state=INSTALLED; previous state=ABSENT; guards=33/);
   const second=await cli([],cliUrl);assert.equal(second.code,0,second.stderr);assert.match(second.stdout,/previous state=INSTALLED/);
   // INSTALLED without a runtime role passes; with a role that has no grant yet it fails on the missing privileges; after the grant script it passes
   const settled=await inspect();assert.equal(settled.code,0,settled.stderr);assert.equal(settled.report.facts.state,'INSTALLED');assert.equal(settled.report.ok,true);
@@ -714,7 +758,8 @@ test('the CLI: install, second install, --inspect exit codes, usage errors and r
   await cliDb.query(await grantScript(roleName));
   const granted=await inspect(['--runtime-role='+roleName]);assert.equal(granted.code,0,granted.report.failures.join());assert.equal(granted.report.ok,true);
   assert.deepEqual(granted.report.facts.runtime_role.tables.map(item=>[item.table,item.insert,item.update,item.delete]).sort((a,b)=>a[0]<b[0]?-1:1),
-    [['quant_comparison_participants',true,false,false],['quant_comparison_schema',false,false,false],['quant_comparison_specs',true,false,false],['quant_comparison_status_events',true,false,false]]);
+    [['quant_comparison_benchmarks',true,false,false],['quant_comparison_evaluations',true,false,false],['quant_comparison_outcomes',true,false,false],['quant_comparison_participants',true,false,false],
+      ['quant_comparison_replay_events',true,false,false],['quant_comparison_schema',false,false,false],['quant_comparison_specs',true,false,false],['quant_comparison_status_events',true,false,false]]);
   // a tampered install exits 1
   await cliDb.query('ALTER TABLE public.quant_comparison_specs DISABLE TRIGGER quant_comparison_specs_no_change');
   const other=await inspect();assert.equal(other.code,1);assert.equal(other.report.facts.state,'OTHER');
@@ -777,7 +822,30 @@ test('rollback: empty tables are dropped completely and the register is untouche
   assert.equal(await settled,'DROPPED','the uncommitted spec never became evidence, so the empty tables were dropped');
 });
 
-test('dump and restore: the restored database keeps every guard ENABLE ALWAYS, the deferred commit check, the rows and the grants',async t=>{
+test('dump and restore: the restored database keeps every guard ENABLE ALWAYS, the deferred commit checks, the result rows (outcome, replay event) and the grants',async t=>{
+  // one COMPLETE comparison with an evaluation record per participant, a benchmark, an outcome and a replay event, so the dump carries every result table
+  const pause=()=>new Promise(resolve=>setTimeout(resolve,5));
+  const input=inputFor(OWNER_A,{count:2});
+  const made=await createComparison(rt,input);
+  assert.equal(made.ok,true,JSON.stringify(made));
+  const ids=input.participants.map(item=>item.participant_id);
+  await pause();await addEvent(rt,made.comparison_id,2,'EVALUATING');await pause();
+  const storedTimes={};
+  for(const id of ids){
+    const written=await writeEvaluation(rt,{owner_id:OWNER_A,comparison_id:made.comparison_id,participant_id:id,spec_hash:input.spec_hash,
+      body:{record_comparison_id:made.comparison_id,record_spec_hash:input.spec_hash,window:{...input.spec.period}}});
+    assert.equal(written.ok,true,JSON.stringify(written));
+    storedTimes[id]=written.created_at_ms;
+  }
+  assert.equal((await writeBenchmark(rt,{owner_id:OWNER_A,comparison_id:made.comparison_id,spec_hash:input.spec_hash,body:{benchmark_id:BENCHMARK_ID,line:null}})).ok,true);
+  await pause();
+  const decided=decideOutcome({mode:'STANDARDIZED',spec:input.spec,spec_hash:input.spec_hash,context_key:input.context_key,limitations:[],
+    participants:ids.map(id=>({id,created_at_ms:storedTimes[id],status:'DEVELOPMENT_EVIDENCE',primary_metric:null,reasons:[]}))});
+  const outcome=await writeOutcome(rt,{owner_id:OWNER_A,comparison_id:made.comparison_id,outcome:decided});
+  assert.equal(outcome.ok,true,JSON.stringify(outcome));
+  await pause();
+  assert.equal((await writeReplayEvent(rt,{owner_id:OWNER_A,comparison_id:made.comparison_id,kind:'REPLAY_MATCH',prior_outcome_hash:outcome.outcome_hash,replay_outcome_hash:outcome.outcome_hash})).ok,true);
+  for(const table of RESULT_TABLES)assert.ok((await rowDigest(db,table)).n>=1,table+' holds a row before the dump');
   const restoredName='robot_s2c_restore_'+randomUUID().replaceAll('-','').slice(0,20);databases.push(restoredName);
   const dir=await fs.mkdtemp(path.join(os.tmpdir(),'robot-s2c-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));
   let backup;
@@ -799,4 +867,15 @@ test('dump and restore: the restored database keeps every guard ENABLE ALWAYS, t
   await refused(restoredRuntime.query(`INSERT INTO ${EVENTS}(comparison_id,seq,status) VALUES('x',1,'SPEC_FROZEN')`),QR003);
   const again=await createComparison(restoredRuntime,inputFor(OWNER_A));
   assert.equal(again.ok,true,JSON.stringify(again));
+  // the result rows came back with their stamped times and still read; the guards of the result tables work on the restored database
+  const original=await readComparisonResults(db,{owner_id:OWNER_A,comparison_id:made.comparison_id}),back=await readComparisonResults(restoredRuntime,{owner_id:OWNER_A,comparison_id:made.comparison_id});
+  assert.equal(original.ok,true,JSON.stringify(original));assert.deepEqual(back,original);
+  assert.deepEqual([back.evaluations.length,back.benchmark!==null,back.outcome.outcome_hash,back.replay_events.length],[2,true,outcome.outcome_hash,1]);
+  await pause();
+  const replay=await writeReplayEvent(restoredRuntime,{owner_id:OWNER_A,comparison_id:made.comparison_id,kind:'REPRODUCTION_DISABLED',prior_outcome_hash:outcome.outcome_hash});
+  assert.equal(replay.ok,true,JSON.stringify(replay));
+  const late=await writeEvaluation(restoredRuntime,{owner_id:OWNER_A,comparison_id:made.comparison_id,participant_id:ids[0],spec_hash:input.spec_hash,
+    body:{record_comparison_id:made.comparison_id,record_spec_hash:input.spec_hash,window:{...input.spec.period}}});
+  assert.deepEqual([late.ok,late.detail],[false,'quant_comparison_eval_status'],'a COMPLETE comparison takes no later record on the restored database');
+  await refused(restoredRuntime.query(`DELETE FROM ${RESULT_TABLES[2]}`),DENIED);await refused(db.query(`UPDATE ${RESULT_TABLES[3]} SET at_ms=at_ms`),QR002);
 });

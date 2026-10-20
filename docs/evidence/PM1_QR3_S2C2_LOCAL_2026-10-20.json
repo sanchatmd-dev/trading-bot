@@ -1,0 +1,40 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "1480385",
+  "scope": "Local implementation of sub-slice S2c-2 of docs/QR_3_FAIR_COMPARISON_CONTRACT.md (RC-C37 to RC-C43, RC-C45) for PM-1 row F10-02: four result tables join the uninstalled QR-3 comparison install (evaluations, benchmarks, outcomes, replay events), each insert-only, SERIALIZABLE only and guarded by named checks; the outcome is tied to the stored evaluations and to the COMPLETE status event of the same transaction; the owner reader applies the same checks; the grant script lists the four tables as insert-only. Nothing is installed on staging and no route, worker or view writes the tables.",
+  "method": "An architecture auditor (Opus 5.5) wrote the S2c design and root decided RC-C37 to RC-C43. A coder (Sonnet 5.5) wrote S2c-2; an independent architecture auditor (Opus 5.5) reviewed rounds 1 and 2; an independent tester (Sonnet 5.5) ran single-edit mutations after each of three rounds. Root ruled on every finding, including the UNAVAILABLE rule in round 3. A sole-runner tester then ran, with nothing else active, every test file that imports a changed module of the three slices of this wave (found with git grep): 54 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (804 tests, 0 fail; 3 skipped by environment gates in files this wave did not change: one non-loopback address check and two TEMP-privilege suites), the full unit suite (2150 tests, 0 fail, 6 skipped by platform gates, 9 todo) and the grant text test. Two later test-only assertions (one QR-3 reader case and one S3b import-scanner case) were checked by an independent tester (Sonnet 5.5) with their target mutations, both killed. Nobody verified their own work.",
+  "files": {
+    "src/postgres/quant-comparison.sql": "0d02aae7f04751027c0b45528a4b6770e3f0dfceca4867f67cc5988a2aa26a8b",
+    "src/postgres/quant-comparison-migration.js": "d4b7c7704e0a349ddb4c3be346afdf5aaa28e4f7993d16c0fa50e0377654169b",
+    "src/postgres/quant-comparison-rollback.sql": "87a21774c291e156619370a2cab67aa1da067145348e0b1e112e279cc9b85696",
+    "src/postgres/comparison-store.js": "16d7931dcaeda99d3b38b5f49b6a2b1bee947d12a612db9eafd9928d56c90b27",
+    "scripts/grant-postgres-runtime.sql": "021f092f882425f4d381cee91f63c0ebc0eaee146c3d569456866ef1cecd33f5",
+    "test/postgres-runtime-grants.test.js": "6e7dd2575678ed408bd698b1e967b76942a4a73a69976b0d536672ab71cad8e5",
+    "test/postgres/runtime-grants.test.mjs": "4a9b92255fae99ec787ac16d24b113722b49f23044da0c6866964cd5ab89e956",
+    "test/postgres/quant-comparison.test.mjs": "f50fcf260eb26c5bc369b60b8e894ec8bee6c7b509bbf33225f7498aeda3104c",
+    "test/postgres/quant-comparison-create.test.mjs": "92795efc6be8a74efba94bf89f379ab46b3ba91f22bf1099e6f4a557234bb626",
+    "test/postgres/quant-comparison-results.test.mjs": "adb54404c5d75b4f8eb6b1f97dcdc1338f5a86b6916a808ccb42013bc8f04daa"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "quant-comparison-results 20 of 20, quant-comparison 19 of 19 (dump and restore included) and quant-comparison-create 12 of 12 pass with 0 skipped; the PostgreSQL grant test passes with the four tables.",
+  "mutations": {
+    "round1": "5 killed, 1 equivalent (a create-transaction clause shadowed by the status guard of the same name).",
+    "round2": "8 killed, 1 equivalent; the reader cross-check of the body comparison id and spec hash is not killed by any test (see limits).",
+    "round3": "5 of 6 killed; the survivor (UNAVAILABLE without a stored row) became a test and was killed in the later check."
+  },
+  "limits": [
+    "The reader check that the evaluation body names the same comparison and spec is not proven by a test; a table CHECK already ties those body fields to the columns.",
+    "The outcome value SINGLE_QUALIFIED_RESULT stays absent while owner item OPEN-2 is open.",
+    "A grant reapply is needed after the install; no install was run on any environment."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S2c-2 as local engineering evidence for F10-02. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}

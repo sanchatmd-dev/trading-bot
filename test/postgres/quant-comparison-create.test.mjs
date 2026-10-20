@@ -16,12 +16,13 @@ import {CODES} from '../../src/comparison/common.js';
 import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {hex,MINUTE,T0} from '../helpers/quant-library-fixture.mjs';
 
-// QR-3 S2c-1 create path and owner read (src/postgres/comparison-store.js), proven on a throwaway PostgreSQL cluster as a real non-owner LOGIN role with
+// QR-3 S2c create path (S2c-1) and the S2c-2 zero-row checks of the create commit, and the owner read (src/postgres/comparison-store.js), proven on a throwaway PostgreSQL cluster as a real non-owner LOGIN role with
 // the repo grants. Every row is a LABELLED FIXTURE (synthetic, never a research result). Rows are insert-only, so each test uses its own owner or ids.
 const QR003=SERIALIZABLE_SQLSTATE,QR004=INSERT_GUARD_SQLSTATE,SERIALIZATION_FAILURE='40001';
 const COMPLETE_GUARD='quant_comparison_create_complete',TRANSITION_GUARD='quant_comparison_status_transition';
 const MARKET={broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'};
 const SPECS='public.quant_comparison_specs',PARTICIPANTS='public.quant_comparison_participants',EVENTS='public.quant_comparison_status_events',REGISTER='public.quant_exposure_register';
+const EVALUATIONS='public.quant_comparison_evaluations',BENCHMARKS='public.quant_comparison_benchmarks',OUTCOMES='public.quant_comparison_outcomes',REPLAYS='public.quant_comparison_replay_events';
 const serializable={isolation:'SERIALIZABLE'};
 let admin,db,rt,rt2,connectionString,templateName,databaseName,roleName,store;
 const databases=[],pools=[];
@@ -39,7 +40,7 @@ async function until(check,label,timeout=10000){
   throw Error('timed out waiting for '+label);
 }
 const rowDigest=async(target,table)=>(await target.query(`SELECT count(*)::int n,encode(sha256(convert_to(COALESCE(string_agg(row_to_json(t)::text,'|' ORDER BY row_to_json(t)::text),''),'UTF8')),'hex') d FROM ${table} t`)).rows[0];
-const allRows=async target=>Promise.all([SPECS,PARTICIPANTS,EVENTS,REGISTER].map(table=>rowDigest(target,table)));
+const allRows=async target=>Promise.all([SPECS,PARTICIPANTS,EVENTS,REGISTER,EVALUATIONS,BENCHMARKS,OUTCOMES,REPLAYS].map(table=>rowDigest(target,table)));
 const dbClock=async target=>Number((await target.query("SELECT floor(extract(epoch FROM clock_timestamp())*1000)::bigint AS now")).rows[0].now);
 
 /** A database cloned from the template (base schema 14, Pine and research extensions, register and comparison tables). */
@@ -259,10 +260,11 @@ const participantInsert=`INSERT INTO ${PARTICIPANTS}(comparison_id,participant_i
  * statuses: the event rows after the spec; immediate: SET CONSTRAINTS ALL IMMEDIATE after the spec insert; participantIds: rows stored as participants;
  * earlier: ids whose register events are committed by a transaction of their own BEFORE the create transaction; specPatch: fields replaced in the spec body
  * (the stored text then is not the normal form, which only a raw writer can do); savepoint: the spec row is written inside a released SAVEPOINT;
- * lateImmediate: SET CONSTRAINTS ALL IMMEDIATE after every create row; lateStatuses: status rows after that.
+ * lateImmediate: SET CONSTRAINTS ALL IMMEDIATE after every create row; lateStatuses: status rows after that;
+ * afterCreate: async (target, comparisonId, window) run last in the transaction (result rows, trigger tampering).
  */
 async function rawCreate(target,owner,{ids=['raw-a','raw-b'],participantIds=ids,registerBatches=null,statuses=[[1,'SPEC_FROZEN']],immediate=false,isolation='SERIALIZABLE',window=nextWindow(),specIds=ids,
-  earlier=null,specPatch=null,savepoint=false,lateImmediate=false,lateStatuses=[]}={}){
+  earlier=null,specPatch=null,savepoint=false,lateImmediate=false,lateStatuses=[],afterCreate=null}={}){
   const comparisonId='raw-'+randomUUID().slice(0,12);
   const checked=specFor(specIds,window),text=canonical(specPatch?{...checked.spec,...specPatch}:checked.spec);
   const batches=registerBatches??[{events:ids.map(id=>({id}))}];
@@ -285,6 +287,7 @@ async function rawCreate(target,owner,{ids=['raw-a','raw-b'],participantIds=ids,
     for(const [seq,status] of statuses)await target.query(`INSERT INTO ${EVENTS}(comparison_id,seq,status) VALUES($1,$2,$3)`,[comparisonId,seq,status]);
     if(lateImmediate)await target.query('SET CONSTRAINTS ALL IMMEDIATE');
     for(const [seq,status] of lateStatuses)await target.query(`INSERT INTO ${EVENTS}(comparison_id,seq,status) VALUES($1,$2,$3)`,[comparisonId,seq,status]);
+    if(afterCreate)await afterCreate(target,comparisonId,window);
   },{isolation});
   return comparisonId;
 }
@@ -322,6 +325,42 @@ test('atomicity: the commit check refuses every create that is missing a part or
     await refusedBy(rawCreate(rt,owner,{...options,window:options.window??nextWindow()}),QR004,guard).catch(error=>{throw Error(label+': '+error.message);});
     assert.deepEqual(await allRows(db),before,label+': nothing was stored, the register events were rolled back with the rest');
   }
+  // S2c-2: a result row (evaluation, benchmark, outcome, replay event) cannot join the create transaction. The runtime role meets the guard of each
+  // table (the spec row was written by this very transaction), also after SET CONSTRAINTS ALL IMMEDIATE.
+  const resultRows=(comparisonId,window)=>{
+    const specHash=specFor(['raw-a','raw-b'],window).spec_hash,now=Date.now()+1;
+    const evaluation=canonical({record_comparison_id:comparisonId,record_spec_hash:specHash,window:{start_ms:window.start_ms,end_ms:window.end_ms}});
+    const benchmark=canonical({benchmark_id:'qr3-bh-close-same-cost-v1'});
+    const outcome=canonical({version:'qr3-outcome-v1',mode:'STANDARDIZED',spec_hash:specHash,context_key:hex('context'),outcome:'NO_QUALIFIED_RESULT',participants:[{id:'raw-a'},{id:'raw-b'}],
+      only_qualified_participant_id:null,uncertainty:null,limitations:[]});
+    return {
+      evaluation:[ `INSERT INTO ${EVALUATIONS}(comparison_id,participant_id,spec_hash,body_canonical,body_hash,created_at_ms) VALUES($1,'raw-a',$2,$3,$4,$5)`,[comparisonId,specHash,evaluation,hash(evaluation),now]],
+      benchmark:[`INSERT INTO ${BENCHMARKS}(comparison_id,benchmark_id,spec_hash,body_canonical,body_hash,created_at_ms) VALUES($1,'qr3-bh-close-same-cost-v1',$2,$3,$4,$5)`,[comparisonId,specHash,benchmark,hash(benchmark),now]],
+      outcome:[`INSERT INTO ${OUTCOMES}(comparison_id,outcome,spec_hash,context_key,body_canonical,outcome_hash,created_at_ms) VALUES($1,'NO_QUALIFIED_RESULT',$2,$3,$4,$5,$6)`,[comparisonId,specHash,hex('context'),outcome,hash(outcome),now]],
+      replay:[`INSERT INTO ${REPLAYS}(comparison_id,kind,prior_outcome_hash,at_ms) VALUES($1,'REPRODUCTION_DISABLED',$2,$3)`,[comparisonId,hex('prior'),now]]};
+  };
+  const resultGuards={evaluation:'quant_comparison_eval_status',benchmark:'quant_comparison_benchmark_status',outcome:'quant_comparison_outcome_status',replay:'quant_comparison_replay_order'};
+  for(const kind of Object.keys(resultGuards)){
+    for(const immediate of [false,true]){
+      const before=await allRows(db);
+      await refusedBy(rawCreate(rt,owner,{lateImmediate:immediate,afterCreate:(target,id,window)=>target.query(...resultRows(id,window)[kind])}),QR004,resultGuards[kind])
+        .catch(error=>{throw Error('result row '+kind+' in the create transaction (immediate '+immediate+'): '+error.message);});
+      assert.deepEqual(await allRows(db),before,kind+': nothing was stored');
+    }
+  }
+  // Defense in depth: with the result guard of a table lifted by its owner inside the create transaction, the create commit check itself still sees the
+  // row and refuses the commit (QR004 create_complete). The lift is part of the refused transaction, so the catalog is unchanged afterwards.
+  const guardOf={evaluation:'quant_comparison_evaluations_guard',benchmark:'quant_comparison_benchmarks_guard',outcome:'quant_comparison_outcomes_guard',replay:'quant_comparison_replay_events_guard'};
+  const tableOf={evaluation:'quant_comparison_evaluations',benchmark:'quant_comparison_benchmarks',outcome:'quant_comparison_outcomes',replay:'quant_comparison_replay_events'};
+  for(const kind of Object.keys(guardOf)){
+    const before=await allRows(db);
+    await refusedBy(rawCreate(db,owner,{afterCreate:async(target,id,window)=>{
+      await target.query('ALTER TABLE public.'+tableOf[kind]+' DISABLE TRIGGER '+guardOf[kind]);
+      await target.query(...resultRows(id,window)[kind]);
+    }}),QR004,COMPLETE_GUARD).catch(error=>{throw Error('create commit check, '+kind+' row with its guard lifted: '+error.message);});
+    assert.deepEqual(await allRows(db),before,kind+': nothing was stored');
+  }
+  assert.equal((await classifyQuantComparison(db)).state,'INSTALLED','every lifted guard was rolled back with its transaction');
   // register events committed by an EARLIER transaction never satisfy the commit check of a spec-only create (RC-C32, RC-C40); the earlier register rows
   // are evidence of their own and stay, everything of the refused create is gone
   const earlierBefore=await Promise.all([SPECS,PARTICIPANTS,EVENTS].map(table=>rowDigest(db,table)));

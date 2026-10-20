@@ -32,7 +32,8 @@ DECLARE
     'mp_member_set_schema'];
   insert_only CONSTANT TEXT[] := ARRAY['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records',
     'bi_evidence_records','bi_clearances','bi_trace_reproductions','ql4c_validation',
-    'quant_comparison_specs','quant_comparison_participants','quant_comparison_status_events',
+    'quant_comparison_specs','quant_comparison_participants','quant_comparison_status_events','quant_comparison_evaluations','quant_comparison_benchmarks',
+    'quant_comparison_outcomes','quant_comparison_replay_events',
     'quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events',
     'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events',
     'mp_member_sets','mp_member_set_members'];

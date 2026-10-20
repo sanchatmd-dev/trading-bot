@@ -9,8 +9,9 @@ const PROTECTED=['quant_foundation_jobs','quant_foundation_owners','quant_founda
 // F09 builder slice S2: the ten insert-only Best Inputs record tables. The runtime keeps SELECT and INSERT and loses UPDATE and DELETE.
 const INSERT_ONLY=['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records','bi_evidence_records',
   'bi_clearances','bi_trace_reproductions','ql4c_validation'];
-// QR-3 comparison, QR-4 selection and F11 member set record tables (optional extensions); the later QR-3 S2c-2 tables join this list when they land.
-const EXTENSION_INSERT_ONLY=['quant_comparison_specs','quant_comparison_participants','quant_comparison_status_events',
+// QR-3 comparison (S2c-1 and S2c-2), QR-4 selection and F11 member set record tables (optional extensions).
+const EXTENSION_INSERT_ONLY=['quant_comparison_specs','quant_comparison_participants','quant_comparison_status_events','quant_comparison_evaluations','quant_comparison_benchmarks',
+  'quant_comparison_outcomes','quant_comparison_replay_events',
   'quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events',
   'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events',
   'mp_member_sets','mp_member_set_members'];

@@ -3,11 +3,11 @@ import {inspectRuntimeRole} from './runtime-role-inspection.js';
 import {classifyQuantExposureRegister} from './quant-exposure-register-migration.js';
 
 /**
- * QR-3 S2c-1: comparison specs, participants and status events. Offline only: the maintenance lock excludes every participating API and worker.
+ * QR-3 S2c: comparison specs, participants, status events, evaluation records, benchmarks, outcomes and replay events. Offline only: the maintenance lock excludes every participating API and worker.
  * The comparison tables are their own extension (marker table quant_comparison_schema, version 1); the base schema_version stays 14. The install
  * needs the base users table, the version-1 research extension (quant_job_schema version 1) and the exposure register extension INSTALLED, because
- * the create commit check reads the register. Nothing calls this module from db.migrate. S2c-2 (evaluation records, benchmarks, outcomes, replay
- * events) joins the same version-1 SQL file and extends the lists below before any staging step.
+ * the create commit check reads the register. Nothing calls this module from db.migrate. Both sub-slices (S2c-1: specs, participants,
+ * status events; S2c-2: evaluation records, benchmarks, outcomes, replay events) are in the one version-1 SQL file and in the lists below.
  *
  * Both directions CLASSIFY the live catalog before they write anything, because the SQL is plain CREATE statements and an unclassified
  * install could collide with, or silently accept, a foreign object that carries a comparison name. The states are:
@@ -30,17 +30,36 @@ export const SERIALIZABLE_SQLSTATE='QR003';
 export const PINNED_SEARCH_PATH='search_path=pg_catalog, pg_temp';
 export const MARKER_TABLE='quant_comparison_schema';
 /** The insert-only record tables, in the order the grant script and the inspection use. */
-export const COMPARISON_TABLES=Object.freeze(['quant_comparison_specs','quant_comparison_participants','quant_comparison_status_events']);
+export const COMPARISON_TABLES=Object.freeze(['quant_comparison_specs','quant_comparison_participants','quant_comparison_status_events','quant_comparison_evaluations','quant_comparison_benchmarks',
+  'quant_comparison_outcomes','quant_comparison_replay_events']);
 const TABLES=[MARKER_TABLE,...COMPARISON_TABLES];
 const FUNCTIONS=Object.freeze(['quant_comparison_version','quant_comparison_insert_only','quant_comparison_in_this_transaction','quant_comparison_require_serializable','quant_comparison_guard_spec',
-  'quant_comparison_guard_participant','quant_comparison_guard_status_event','quant_comparison_check_create']);
+  'quant_comparison_guard_participant','quant_comparison_guard_status_event','quant_comparison_check_create','quant_comparison_guard_evaluation','quant_comparison_guard_benchmark',
+  'quant_comparison_guard_outcome','quant_comparison_guard_replay_event','quant_comparison_check_outcome']);
 // pg_trigger.tgtype bits: ROW 1, BEFORE 2, INSERT 4, DELETE 8, UPDATE 16, TRUNCATE 32. A constraint trigger is AFTER ROW INSERT, deferrable and initially deferred.
 const FREEZE_ROW=27,FREEZE_STATEMENT=34,INSERT_GUARD=7,DEFERRED_AFTER_INSERT=5;
 export const COMPARISON_GUARDS=Object.freeze([
+ ['quant_comparison_benchmarks_00_serializable','quant_comparison_benchmarks','quant_comparison_require_serializable',INSERT_GUARD,false],
+ ['quant_comparison_benchmarks_guard','quant_comparison_benchmarks','quant_comparison_guard_benchmark',INSERT_GUARD,false],
+ ['quant_comparison_benchmarks_no_change','quant_comparison_benchmarks','quant_comparison_insert_only',FREEZE_ROW,false],
+ ['quant_comparison_benchmarks_no_truncate','quant_comparison_benchmarks','quant_comparison_insert_only',FREEZE_STATEMENT,false],
+ ['quant_comparison_evaluations_00_serializable','quant_comparison_evaluations','quant_comparison_require_serializable',INSERT_GUARD,false],
+ ['quant_comparison_evaluations_guard','quant_comparison_evaluations','quant_comparison_guard_evaluation',INSERT_GUARD,false],
+ ['quant_comparison_evaluations_no_change','quant_comparison_evaluations','quant_comparison_insert_only',FREEZE_ROW,false],
+ ['quant_comparison_evaluations_no_truncate','quant_comparison_evaluations','quant_comparison_insert_only',FREEZE_STATEMENT,false],
+ ['quant_comparison_outcomes_00_serializable','quant_comparison_outcomes','quant_comparison_require_serializable',INSERT_GUARD,false],
+ ['quant_comparison_outcomes_complete','quant_comparison_outcomes','quant_comparison_check_outcome',DEFERRED_AFTER_INSERT,true],
+ ['quant_comparison_outcomes_guard','quant_comparison_outcomes','quant_comparison_guard_outcome',INSERT_GUARD,false],
+ ['quant_comparison_outcomes_no_change','quant_comparison_outcomes','quant_comparison_insert_only',FREEZE_ROW,false],
+ ['quant_comparison_outcomes_no_truncate','quant_comparison_outcomes','quant_comparison_insert_only',FREEZE_STATEMENT,false],
  ['quant_comparison_participants_00_serializable','quant_comparison_participants','quant_comparison_require_serializable',INSERT_GUARD,false],
  ['quant_comparison_participants_guard','quant_comparison_participants','quant_comparison_guard_participant',INSERT_GUARD,false],
  ['quant_comparison_participants_no_change','quant_comparison_participants','quant_comparison_insert_only',FREEZE_ROW,false],
  ['quant_comparison_participants_no_truncate','quant_comparison_participants','quant_comparison_insert_only',FREEZE_STATEMENT,false],
+ ['quant_comparison_replay_events_00_serializable','quant_comparison_replay_events','quant_comparison_require_serializable',INSERT_GUARD,false],
+ ['quant_comparison_replay_events_guard','quant_comparison_replay_events','quant_comparison_guard_replay_event',INSERT_GUARD,false],
+ ['quant_comparison_replay_events_no_change','quant_comparison_replay_events','quant_comparison_insert_only',FREEZE_ROW,false],
+ ['quant_comparison_replay_events_no_truncate','quant_comparison_replay_events','quant_comparison_insert_only',FREEZE_STATEMENT,false],
  ['quant_comparison_schema_00_serializable','quant_comparison_schema','quant_comparison_require_serializable',INSERT_GUARD,false],
  ['quant_comparison_schema_no_change','quant_comparison_schema','quant_comparison_insert_only',FREEZE_ROW,false],
  ['quant_comparison_schema_no_truncate','quant_comparison_schema','quant_comparison_insert_only',FREEZE_STATEMENT,false],
@@ -56,8 +75,13 @@ export const COMPARISON_GUARDS=Object.freeze([
 export const FREEZE_TRIGGERS=Object.freeze(COMPARISON_GUARDS.filter(item=>item[2]==='quant_comparison_insert_only'));
 const col=(name,type,notNull,def=null)=>({name,type,notNull,def});
 const INDEXES=Object.freeze({
+ quant_comparison_benchmarks_pkey:"CREATE UNIQUE INDEX quant_comparison_benchmarks_pkey ON public.quant_comparison_benchmarks USING btree (comparison_id)",
+ quant_comparison_evaluations_pkey:"CREATE UNIQUE INDEX quant_comparison_evaluations_pkey ON public.quant_comparison_evaluations USING btree (comparison_id, participant_id)",
+ quant_comparison_outcomes_pkey:"CREATE UNIQUE INDEX quant_comparison_outcomes_pkey ON public.quant_comparison_outcomes USING btree (comparison_id)",
  quant_comparison_participants_pkey:"CREATE UNIQUE INDEX quant_comparison_participants_pkey ON public.quant_comparison_participants USING btree (comparison_id, participant_id)",
  quant_comparison_participants_position_key:"CREATE UNIQUE INDEX quant_comparison_participants_position_key ON public.quant_comparison_participants USING btree (comparison_id, \"position\")",
+ quant_comparison_replay_events_comparison:"CREATE INDEX quant_comparison_replay_events_comparison ON public.quant_comparison_replay_events USING btree (comparison_id, at_ms)",
+ quant_comparison_replay_events_pkey:"CREATE UNIQUE INDEX quant_comparison_replay_events_pkey ON public.quant_comparison_replay_events USING btree (replay_event_id)",
  quant_comparison_schema_pkey:"CREATE UNIQUE INDEX quant_comparison_schema_pkey ON public.quant_comparison_schema USING btree (version)",
  quant_comparison_specs_owner:"CREATE INDEX quant_comparison_specs_owner ON public.quant_comparison_specs USING btree (owner_id, frozen_at_ms)",
  quant_comparison_specs_pkey:"CREATE UNIQUE INDEX quant_comparison_specs_pkey ON public.quant_comparison_specs USING btree (comparison_id)",
@@ -67,7 +91,11 @@ const COLUMNS=Object.freeze({
  quant_comparison_schema:[col("version","integer",true)],
  quant_comparison_specs:[col("comparison_id","text",true),col("owner_id","text",true),col("parent_comparison_id","text",false),col("mode","text",true),col("fixture","boolean",true),col("broker","text",true),col("symbol","text",true),col("timeframe","text",true),col("start_ms","bigint",true),col("end_ms","bigint",true),col("participant_count","smallint",true),col("context_key","text",true),col("spec_hash","text",true),col("spec_canonical","text",true),col("spec_body_hash","text",true),col("request_key_hash","text",false),col("frozen_at_ms","bigint",true)],
  quant_comparison_participants:[col("comparison_id","text",true),col("participant_id","text",true),col("position","smallint",true),col("source_hash","text",true),col("origin","text",true),col("fixture","boolean",true),col("context_key","text",true),col("freeze_canonical","text",true),col("freeze_hash","text",true)],
- quant_comparison_status_events:[col("comparison_id","text",true),col("seq","integer",true),col("status","text",true),col("reason_code","text",false),col("at_ms","bigint",true)]});
+ quant_comparison_status_events:[col("comparison_id","text",true),col("seq","integer",true),col("status","text",true),col("reason_code","text",false),col("at_ms","bigint",true)],
+ quant_comparison_evaluations:[col("comparison_id","text",true),col("participant_id","text",true),col("spec_hash","text",true),col("evaluation_run_id","text",false),col("body_canonical","text",true),col("body_hash","text",true),col("created_at_ms","bigint",true)],
+ quant_comparison_benchmarks:[col("comparison_id","text",true),col("benchmark_id","text",true),col("spec_hash","text",true),col("body_canonical","text",true),col("body_hash","text",true),col("created_at_ms","bigint",true)],
+ quant_comparison_outcomes:[col("comparison_id","text",true),col("outcome","text",true),col("spec_hash","text",true),col("context_key","text",true),col("body_canonical","text",true),col("outcome_hash","text",true),col("only_qualified_participant_id","text",false),col("created_at_ms","bigint",true)],
+ quant_comparison_replay_events:[col("replay_event_id","uuid",true,"gen_random_uuid()"),col("comparison_id","text",true),col("kind","text",true),col("replay_run_id","text",false),col("prior_outcome_hash","text",true),col("replay_outcome_hash","text",false),col("first_differing_code","text",false),col("at_ms","bigint",true)]});
 const CONSTRAINTS=Object.freeze({
  quant_comparison_schema:{
   quant_comparison_schema_pkey:["p","PRIMARY KEY (version)"],
@@ -112,7 +140,50 @@ const CONSTRAINTS=Object.freeze({
   quant_comparison_status_events_reason_check:["c","CHECK (((reason_code IS NULL) OR (reason_code ~ '^[A-Z][A-Z0-9_]{1,63}$'::text)))"],
   quant_comparison_status_events_reason_status_check:["c","CHECK ((((status = 'FAILED'::text) AND (reason_code IS NOT NULL)) OR (status = 'CANCELLED'::text) OR ((status <> ALL (ARRAY['FAILED'::text, 'CANCELLED'::text])) AND (reason_code IS NULL))))"],
   quant_comparison_status_events_seq_check:["c","CHECK ((seq >= 1))"],
-  quant_comparison_status_events_status_check:["c","CHECK ((status = ANY (ARRAY['SPEC_FROZEN'::text, 'EVALUATING'::text, 'COMPLETE'::text, 'FAILED'::text, 'CANCELLED'::text])))"]}});
+  quant_comparison_status_events_status_check:["c","CHECK ((status = ANY (ARRAY['SPEC_FROZEN'::text, 'EVALUATING'::text, 'COMPLETE'::text, 'FAILED'::text, 'CANCELLED'::text])))"]},
+ quant_comparison_evaluations:{
+  quant_comparison_evaluations_body_check:["c","CHECK (COALESCE(((jsonb_typeof((body_canonical)::jsonb) = 'object'::text) AND (jsonb_typeof(((body_canonical)::jsonb -> 'record_comparison_id'::text)) = 'string'::text) AND (((body_canonical)::jsonb ->> 'record_comparison_id'::text) = comparison_id) AND (jsonb_typeof(((body_canonical)::jsonb -> 'record_spec_hash'::text)) = 'string'::text) AND (((body_canonical)::jsonb ->> 'record_spec_hash'::text) = spec_hash) AND (jsonb_typeof(((body_canonical)::jsonb #> '{window,start_ms}'::text[])) = 'number'::text) AND (jsonb_typeof(((body_canonical)::jsonb #> '{window,end_ms}'::text[])) = 'number'::text)), false))"],
+  quant_comparison_evaluations_body_digest_check:["c","CHECK ((encode(sha256(convert_to(body_canonical, 'UTF8'::name)), 'hex'::text) = body_hash))"],
+  quant_comparison_evaluations_body_hash_check:["c","CHECK ((body_hash ~ '^[0-9a-f]{64}$'::text))"],
+  quant_comparison_evaluations_body_size_check:["c","CHECK ((octet_length(body_canonical) <= 4194304))"],
+  quant_comparison_evaluations_created_at_check:["c","CHECK (((created_at_ms >= 0) AND (created_at_ms <= '253402300799999'::bigint)))"],
+  quant_comparison_evaluations_participant_fkey:["f","FOREIGN KEY (comparison_id, participant_id) REFERENCES quant_comparison_participants(comparison_id, participant_id)"],
+  quant_comparison_evaluations_pkey:["p","PRIMARY KEY (comparison_id, participant_id)"],
+  quant_comparison_evaluations_run_id_check:["c","CHECK (((evaluation_run_id IS NULL) OR (evaluation_run_id ~ '^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$'::text)))"],
+  quant_comparison_evaluations_spec_hash_check:["c","CHECK ((spec_hash ~ '^[0-9a-f]{64}$'::text))"]},
+ quant_comparison_benchmarks:{
+  quant_comparison_benchmarks_benchmark_id_check:["c","CHECK ((benchmark_id = 'qr3-bh-close-same-cost-v1'::text))"],
+  quant_comparison_benchmarks_body_check:["c","CHECK (COALESCE(((jsonb_typeof((body_canonical)::jsonb) = 'object'::text) AND (((body_canonical)::jsonb ->> 'benchmark_id'::text) = benchmark_id)), false))"],
+  quant_comparison_benchmarks_body_digest_check:["c","CHECK ((encode(sha256(convert_to(body_canonical, 'UTF8'::name)), 'hex'::text) = body_hash))"],
+  quant_comparison_benchmarks_body_hash_check:["c","CHECK ((body_hash ~ '^[0-9a-f]{64}$'::text))"],
+  quant_comparison_benchmarks_body_size_check:["c","CHECK ((octet_length(body_canonical) <= 262144))"],
+  quant_comparison_benchmarks_comparison_id_fkey:["f","FOREIGN KEY (comparison_id) REFERENCES quant_comparison_specs(comparison_id)"],
+  quant_comparison_benchmarks_created_at_check:["c","CHECK (((created_at_ms >= 0) AND (created_at_ms <= '253402300799999'::bigint)))"],
+  quant_comparison_benchmarks_pkey:["p","PRIMARY KEY (comparison_id)"],
+  quant_comparison_benchmarks_spec_hash_check:["c","CHECK ((spec_hash ~ '^[0-9a-f]{64}$'::text))"]},
+ quant_comparison_outcomes:{
+  quant_comparison_outcomes_body_check:["c","CHECK (COALESCE(((jsonb_typeof((body_canonical)::jsonb) = 'object'::text) AND (((body_canonical)::jsonb ->> 'version'::text) = 'qr3-outcome-v1'::text) AND (((body_canonical)::jsonb ->> 'mode'::text) = 'STANDARDIZED'::text) AND (((body_canonical)::jsonb ->> 'outcome'::text) = outcome) AND (((body_canonical)::jsonb ->> 'spec_hash'::text) = spec_hash) AND (((body_canonical)::jsonb ->> 'context_key'::text) = context_key) AND (jsonb_typeof(((body_canonical)::jsonb -> 'participants'::text)) = 'array'::text) AND (NOT (((body_canonical)::jsonb ->> 'only_qualified_participant_id'::text) IS DISTINCT FROM only_qualified_participant_id))), false))"],
+  quant_comparison_outcomes_body_digest_check:["c","CHECK ((encode(sha256(convert_to(body_canonical, 'UTF8'::name)), 'hex'::text) = outcome_hash))"],
+  quant_comparison_outcomes_body_size_check:["c","CHECK ((octet_length(body_canonical) <= 262144))"],
+  quant_comparison_outcomes_comparison_id_fkey:["f","FOREIGN KEY (comparison_id) REFERENCES quant_comparison_specs(comparison_id)"],
+  quant_comparison_outcomes_context_key_check:["c","CHECK ((context_key ~ '^[0-9a-f]{64}$'::text))"],
+  quant_comparison_outcomes_created_at_check:["c","CHECK (((created_at_ms >= 0) AND (created_at_ms <= '253402300799999'::bigint)))"],
+  quant_comparison_outcomes_only_qualified_check:["c","CHECK (((only_qualified_participant_id IS NULL) OR (outcome = 'NO_QUALIFIED_RESULT'::text)))"],
+  quant_comparison_outcomes_only_qualified_fkey:["f","FOREIGN KEY (comparison_id, only_qualified_participant_id) REFERENCES quant_comparison_participants(comparison_id, participant_id)"],
+  quant_comparison_outcomes_outcome_check:["c","CHECK ((outcome = ANY (ARRAY['QUALIFIED_RANKING'::text, 'QUALIFIED_TIE'::text, 'NO_QUALIFIED_RESULT'::text, 'INADEQUATE_EVIDENCE'::text])))"],
+  quant_comparison_outcomes_outcome_hash_check:["c","CHECK ((outcome_hash ~ '^[0-9a-f]{64}$'::text))"],
+  quant_comparison_outcomes_pkey:["p","PRIMARY KEY (comparison_id)"],
+  quant_comparison_outcomes_spec_hash_check:["c","CHECK ((spec_hash ~ '^[0-9a-f]{64}$'::text))"]},
+ quant_comparison_replay_events:{
+  quant_comparison_replay_events_at_ms_check:["c","CHECK (((at_ms >= 0) AND (at_ms <= '253402300799999'::bigint)))"],
+  quant_comparison_replay_events_code_check:["c","CHECK (((first_differing_code IS NULL) OR (first_differing_code ~ '^[A-Z][A-Z0-9_]{1,63}$'::text)))"],
+  quant_comparison_replay_events_comparison_id_fkey:["f","FOREIGN KEY (comparison_id) REFERENCES quant_comparison_specs(comparison_id)"],
+  quant_comparison_replay_events_kind_check:["c","CHECK ((kind = ANY (ARRAY['REPLAY_MATCH'::text, 'REPLAY_MISMATCH'::text, 'REPRODUCTION_DISABLED'::text])))"],
+  quant_comparison_replay_events_pkey:["p","PRIMARY KEY (replay_event_id)"],
+  quant_comparison_replay_events_prior_hash_check:["c","CHECK ((prior_outcome_hash ~ '^[0-9a-f]{64}$'::text))"],
+  quant_comparison_replay_events_replay_hash_check:["c","CHECK (((replay_outcome_hash IS NULL) OR (replay_outcome_hash ~ '^[0-9a-f]{64}$'::text)))"],
+  quant_comparison_replay_events_run_id_check:["c","CHECK (((replay_run_id IS NULL) OR (replay_run_id ~ '^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$'::text)))"],
+  quant_comparison_replay_events_shape_check:["c","CHECK (COALESCE((((kind = 'REPLAY_MATCH'::text) AND (replay_outcome_hash IS NOT NULL) AND (replay_outcome_hash = prior_outcome_hash) AND (first_differing_code IS NULL)) OR ((kind = 'REPLAY_MISMATCH'::text) AND (replay_outcome_hash IS NOT NULL) AND (replay_outcome_hash <> prior_outcome_hash) AND (first_differing_code IS NOT NULL)) OR ((kind = 'REPRODUCTION_DISABLED'::text) AND (replay_outcome_hash IS NULL) AND (first_differing_code IS NULL))), false))"]}});
 const RELATION_NAMES=Object.freeze([...TABLES,...Object.keys(INDEXES)]);
 const sql=name=>fs.readFile(new URL('./'+name,import.meta.url),'utf8');
 // Same normalization as the other guard installers: line endings and surrounding whitespace only.
