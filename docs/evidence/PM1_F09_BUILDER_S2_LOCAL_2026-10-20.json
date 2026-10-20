@@ -1,0 +1,42 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "05001da",
+  "scope": "Local implementation of builder slice S2 of docs/QL_4B_4C_QUALIFIED_PACKAGE_CONTRACT.md (RC-12 to RC-29) for PM-1 row F09-01: the insert-only Best Inputs package tables as an offline PostgreSQL extension (exports, package files, content-addressed blobs, status events, attempts, compile, evidence, clearance and trace reproduction records, validation records and a marker), with freeze triggers (QR002), a SERIALIZABLE-only write guard (QR003), insert guards (QR004) for the parent run, the 6.1 status graph, the attempt cap and retry rules, the twelve-file completeness check and the clearance evidence tie, a rollback that refuses while any row exists and an install, inspect and rollback tool. A new shared module, src/postgres/runtime-role-inspection.js, checks the runtime role by membership, through every reachable role and at column level. The grant script adds an insert-only list and stricter final checks. Nothing is installed on staging, and no route, worker or product path writes these tables.",
+  "method": "An architecture auditor (Opus 5.5) wrote the builder design and root accepted it (RC-12 to RC-24). A coder (Sonnet 5.5) wrote S2. Round 1 was reviewed by an independent architecture auditor (Opus 5.5) and a second-opinion reviewer (Fable 5.1); Fable found two HIGH defects that root confirmed (a failed measurement could still be retried, and guards could read stale state under mixed isolation levels), plus reachable-role and schema-owner gaps in the inspection. Round 2 was rechecked by both reviewers, round 3 by the Opus auditor, round 4 by the tester only. An independent tester (Sonnet 5.5) ran the PostgreSQL suites, the tool and the grant script on a throwaway cluster and single-edit mutations after every round. Reviews and mutations were serialized. Root ruled on every finding and recorded RC-25 to RC-29. Nobody verified their own work.",
+  "files": {
+    "src/postgres/best-inputs-package-schema.sql": "b02d91ced8ee9d1f4d62c099b95dc6c9d974ada6075b4314a745d900035bf62b",
+    "src/postgres/best-inputs-package-rollback.sql": "34ba51b5ba0a2213be9ede0eb0e6f064c6be18f0599c3084099bb8c68b048ff5",
+    "src/postgres/best-inputs-package-migration.js": "7e5df9e617eaf82ffe718bd1034f295dd9e7a959d3c4d4cbb485892876afb359",
+    "src/postgres/runtime-role-inspection.js": "124a5c75cb66f5343cb4b805d93513f8b6225f8a789afd514323b32651b28c9a",
+    "scripts/migrate-best-inputs-package.mjs": "034ea4da8545bcdb41f9b91b5a3634e6329b0d2b16c0492aed9877846abf6cef",
+    "test/postgres/best-inputs-package.test.mjs": "38855395074546ce8d0bbc42222c0adee503b6459775d9e637fc7483d73a2ac2",
+    "scripts/grant-postgres-runtime.sql": "f8714e49057fa3caa1189fe67cc813e66014940ad52049fd65b4d3e740e0d108",
+    "test/postgres-runtime-grants.test.js": "9da2a68416f10a74d7c67e321c19e068031d41bfceae77a962ce279e09bc78aa",
+    "test/postgres/runtime-grants.test.mjs": "55b23facb46f0a3ce1d52a5f74c678e268886bdc18032e0d385dec2d032d416c"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "result": "Throwaway PostgreSQL 16.15 cluster (scram-sha-256, 100 connections, one test file per process, PostgreSQL tools on PATH): test/postgres/best-inputs-package.test.mjs 26 of 26 pass with 0 skipped; test/postgres/runtime-grants.test.mjs 1 of 1; test/postgres/quant-exposure-register.test.mjs 17 of 17 still pass; the grant text test 1 of 1. The tool on a throwaway database: inspect, install, a repeated install, rollback and reinstall all exit 0; after the grant script, inspect with the runtime role reports no failures.",
+  "mutations": {
+    "round1": "8 of 8 killed.",
+    "round2": "8 of 8 killed (retry rules, SERIALIZABLE guard, completeness, scope, clearance tie, reachable-role check).",
+    "round3": "6 of 6 killed (column privileges in the module and the grant script, one event per attempt, terminal race reads, exact refusal codes, scope format).",
+    "round4": "3 of 3 killed (exhaustion code as an attempt code, reachable and column terms of the read-only grant check)."
+  },
+  "limits": [
+    "Tables only: the trace reproduction module (S3), the build worker (S4), the read routes (S5) and the attempt service (S6) do not exist, so no package is built or stored.",
+    "Not installed on staging; installation belongs to a later data-model window with a fresh owner GO.",
+    "The build worker must insert blobs only inside the build transaction, write the status event of each failed attempt before the next attempt, and retry serialization failures from the start of the transaction.",
+    "The exposure register and research freeze tools do not use the shared inspection module yet (hardening backlog).",
+    "Definitions are pinned from PostgreSQL 16; another major version may classify as OTHER and fail closed."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the design, the agent reports, the rulings and the final diff and accepted builder S2 as local engineering evidence for F09-01. Acceptance changes no PM-1 credit by itself, installs nothing and writes no row."
+  }
+}

@@ -19,12 +19,16 @@ DECLARE
   -- a database trigger refuses every row UPDATE (QR002). It is insert-only evidence, so the runtime never gets DELETE.
   -- Accepted residual risk (root ruling 2026-10-20): that UPDATE also allows LOCK TABLE ... ACCESS EXCLUSIVE, bounded by the statement and
   -- idle-in-transaction timeouts, as for the scheduler.
+  -- The Best Inputs package record tables (F09 builder slice S2, optional extension) are insert-only evidence: the runtime keeps SELECT and
+  -- INSERT and loses UPDATE and DELETE (and holds no TRUNCATE or TRIGGER); database triggers refuse an edit by any other role (QR002).
   protected CONSTANT TEXT[] := ARRAY['quant_foundation_jobs','quant_foundation_owners','quant_foundation_scheduler',
     'quant_jobs','quant_research_chunks','quant_io_ledgers','quant_io_launches',
     'quant_profile_enrollment_receipts','quant_storage_namespace','quant_research_executor_mode','quant_exposure_register'];
   -- Versions and provenance the runtime validates but never rewrites (the Pine tables exist only with the extension).
   read_only CONSTANT TEXT[] := ARRAY['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars',
-    'pine_capture_schema','quant_exposure_register_schema'];
+    'pine_capture_schema','quant_exposure_register_schema','bi_package_schema'];
+  insert_only CONSTANT TEXT[] := ARRAY['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records',
+    'bi_evidence_records','bi_clearances','bi_trace_reproductions','ql4c_validation'];
   item TEXT;
 BEGIN
   IF NOT pg_try_advisory_xact_lock(hashtextextended('robot:maintenance',0)) THEN
@@ -40,7 +44,7 @@ BEGIN
   EXECUTE format('GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO %I',runtime_role);
   -- DELETE only where the runtime may delete; this script never grants it on a protected or read-only table.
   FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
-      AND tablename<>ALL(protected) AND tablename<>ALL(read_only) ORDER BY tablename LOOP
+      AND tablename<>ALL(protected) AND tablename<>ALL(read_only) AND tablename<>ALL(insert_only) ORDER BY tablename LOOP
     EXECUTE format('GRANT DELETE ON TABLE public.%I TO %I',item,runtime_role);
   END LOOP;
   -- Remove what an earlier grant left behind, so the result does not depend on the database's history.
@@ -54,8 +58,14 @@ BEGIN
       EXECUTE format('REVOKE INSERT,UPDATE,DELETE ON TABLE public.%I FROM %I',item,runtime_role);
     END IF;
   END LOOP;
+  FOREACH item IN ARRAY insert_only LOOP
+    IF to_regclass(format('public.%I',item)) IS NOT NULL THEN
+      EXECUTE format('REVOKE UPDATE,DELETE,TRUNCATE,TRIGGER ON TABLE public.%I FROM %I',item,runtime_role);
+    END IF;
+  END LOOP;
   -- The final state is checked, not assumed: any remaining DELETE on a protected table, or any write privilege on a
-  -- read-only table (including one held through PUBLIC or an inherited role), rolls everything back.
+  -- read-only table, rolls everything back. For a read-only table the check covers PUBLIC and every role the runtime role can reach by
+  -- membership (SET ROLE; INHERIT FALSE and NOINHERIT included), and INSERT or UPDATE held on a single column counts too.
   FOREACH item IN ARRAY protected LOOP
     IF to_regclass(format('public.%I',item)) IS NOT NULL
         AND has_table_privilege(runtime_role,format('public.%I',item),'DELETE') THEN
@@ -64,10 +74,32 @@ BEGIN
   END LOOP;
   FOREACH item IN ARRAY read_only LOOP
     IF to_regclass(format('public.%I',item)) IS NOT NULL
-        AND (has_table_privilege(runtime_role,format('public.%I',item),'INSERT')
-          OR has_table_privilege(runtime_role,format('public.%I',item),'UPDATE')
-          OR has_table_privilege(runtime_role,format('public.%I',item),'DELETE')) THEN
+        AND EXISTS(SELECT 1 FROM pg_roles r WHERE pg_has_role(runtime_role,r.oid,'MEMBER')
+          AND (has_any_column_privilege(r.oid,format('public.%I',item),'INSERT')
+            OR has_any_column_privilege(r.oid,format('public.%I',item),'UPDATE')
+            OR has_table_privilege(r.oid,format('public.%I',item),'INSERT')
+            OR has_table_privilege(r.oid,format('public.%I',item),'UPDATE')
+            OR has_table_privilege(r.oid,format('public.%I',item),'DELETE'))) THEN
       RAISE EXCEPTION 'Runtime role % can still write to %',runtime_role,item;
+    END IF;
+  END LOOP;
+  -- Insert-only tables: SELECT and INSERT stay, nothing that edits or removes a row. The check covers PUBLIC and every role the runtime role
+  -- can reach by membership (SET ROLE), INHERIT FALSE and NOINHERIT included: has_table_privilege(runtime_role,...) alone ignores those.
+  -- UPDATE also counts on a single column (has_any_column_privilege), which has_table_privilege does not see.
+  FOREACH item IN ARRAY insert_only LOOP
+    IF to_regclass(format('public.%I',item)) IS NOT NULL
+        AND EXISTS(SELECT 1 FROM pg_roles r WHERE pg_has_role(runtime_role,r.oid,'MEMBER')
+          AND (has_any_column_privilege(r.oid,format('public.%I',item),'UPDATE')
+            OR has_table_privilege(r.oid,format('public.%I',item),'UPDATE')
+            OR has_table_privilege(r.oid,format('public.%I',item),'DELETE')
+            OR has_table_privilege(r.oid,format('public.%I',item),'TRUNCATE')
+            OR has_table_privilege(r.oid,format('public.%I',item),'TRIGGER'))) THEN
+      RAISE EXCEPTION 'Runtime role % can still edit or remove rows of %',runtime_role,item;
+    END IF;
+    IF to_regclass(format('public.%I',item)) IS NOT NULL
+        AND NOT (has_table_privilege(runtime_role,format('public.%I',item),'SELECT')
+          AND has_table_privilege(runtime_role,format('public.%I',item),'INSERT')) THEN
+      RAISE EXCEPTION 'Runtime role % lacks SELECT or INSERT on %',runtime_role,item;
     END IF;
   END LOOP;
 END $$;

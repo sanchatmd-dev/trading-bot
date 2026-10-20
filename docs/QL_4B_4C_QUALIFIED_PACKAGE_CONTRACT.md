@@ -3,7 +3,9 @@
 Status: owner decisions OD-1 to OD-19 and root decision OD-20 recorded 2026-10-19 (section 10); root clarifications RC-1 to RC-11 recorded the same day (section 10.1); root decisions RC-12 to RC-30 for the package builder recorded 2026-10-20 (section 10.2). Root accepted the other rules on
 2026-10-19 after independent review. The pure gate module (`src/quant-library/package-gates.js`) and the slice S1 pure renderer
 (`src/quant-library/package-render.js`) are root-accepted as local engineering evidence and are wired into no route,
-worker, table or view; no package can be built, stored or shown yet. Nothing in this contract grants a
+worker, table or view. Builder slice S2, the insert-only package tables (`src/postgres/best-inputs-package-schema.sql`),
+is root-accepted as local engineering evidence and is not installed on staging; no package can be built, stored or
+shown yet. Nothing in this contract grants a
 recommendation, apply, email or Bot action by itself. It does not change the Roadmap. Each implementation step still needs its own gates and approvals.
 
 Feature: F09-01. Target: staging.

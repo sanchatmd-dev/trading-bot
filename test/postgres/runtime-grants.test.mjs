@@ -13,10 +13,13 @@ const PROTECTED=['quant_foundation_jobs','quant_foundation_owners','quant_founda
   'quant_research_chunks','quant_io_ledgers','quant_io_launches','quant_profile_enrollment_receipts',
   'quant_storage_namespace','quant_research_executor_mode','quant_exposure_register'];
 // The same extension schemas, in the same order, as test/helpers/quant-preflight-http-fixture.mjs, plus
-// quant-exposure-register.sql (the PROTECTED loop asserts every protected table is installed).
+// quant-exposure-register.sql (the PROTECTED loop asserts every protected table is installed) and best-inputs-package-schema.sql (F09 builder slice S2).
 const SCHEMAS=['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql',
   'quant-research-foundation-schema.sql','quant-storage-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql',
-  'quant-preflight-schema.sql','quant-profile-enrollment-schema.sql','quant-exposure-register.sql'];
+  'quant-preflight-schema.sql','quant-profile-enrollment-schema.sql','quant-exposure-register.sql','best-inputs-package-schema.sql'];
+// The ten insert-only Best Inputs record tables: SELECT and INSERT stay, UPDATE, DELETE, TRUNCATE and TRIGGER never; the marker is read-only.
+const INSERT_ONLY=['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records','bi_evidence_records',
+  'bi_clearances','bi_trace_reproductions','ql4c_validation'];
 // What psql -v runtime_role=<role> does for :'runtime_role'.
 const withRole=(sql,role)=>sql.replaceAll(":'runtime_role'","'"+role.replaceAll("'","''")+"'");
 
@@ -26,11 +29,17 @@ test('runtime grants: DELETE is refused on the eleven protected tables while sch
   const name='robot_grants_'+suffix,role='robot_grants_role_'+suffix,idle='robot_grants_idle_'+suffix;
   // A mixed-case role must be found by its exact name, never case-folded.
   const mixed='Robot_Grants_Mixed_'+suffix;
+  // Roles for the reachable-privilege proof: a holder of TRIGGER, a NOINHERIT member of it and (PostgreSQL 16 and later) a member WITH INHERIT FALSE.
+  const holder='robot_grants_holder_'+suffix,member='robot_grants_member_'+suffix,memberFalse='robot_grants_memberf_'+suffix;
+  // The same for a column-level UPDATE grant, which has_table_privilege does not see: a NOINHERIT member, a member WITH INHERIT FALSE and a PUBLIC grant.
+  const colHolder='robot_grants_colh_'+suffix,colMember='robot_grants_colm_'+suffix,colMemberFalse='robot_grants_colmf_'+suffix,colPublic='robot_grants_colp_'+suffix;
+  // The same for the read-only marker bi_package_schema: a PUBLIC column INSERT, and a column UPDATE held by a role reached WITH INHERIT FALSE.
+  const roPublic='robot_grants_rop_'+suffix,roHolder='robot_grants_roh_'+suffix,roMemberFalse='robot_grants_romf_'+suffix;
   let db=null;
   t.after(async()=>{
-    for(const owned of [role,idle,'"'+mixed+'"'])await db?.query('DROP OWNED BY '+owned).catch(()=>{});
+    for(const owned of [role,idle,'"'+mixed+'"',holder,member,memberFalse,colHolder,colMember,colMemberFalse,colPublic,roPublic,roHolder,roMemberFalse])await db?.query('DROP OWNED BY '+owned).catch(()=>{});
     await db?.close();await admin.query('DROP DATABASE IF EXISTS '+name);
-    for(const dropped of [role,idle,'"'+mixed+'"'])await admin.query('DROP ROLE IF EXISTS '+dropped);await admin.close();
+    for(const dropped of [role,idle,'"'+mixed+'"',member,memberFalse,holder,colMember,colMemberFalse,colPublic,colHolder,roMemberFalse,roPublic,roHolder])await admin.query('DROP ROLE IF EXISTS '+dropped);await admin.close();
   });
   await admin.query('CREATE DATABASE '+name);
   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+name;
@@ -81,9 +90,71 @@ test('runtime grants: DELETE is refused on the eleven protected tables while sch
   assert.equal(await privilege(role,'quant_foundation_scheduler','UPDATE'),true);
   await db.transaction(async()=>{await db.query('SET LOCAL ROLE '+role);await db.query('LOCK TABLE quant_foundation_scheduler IN EXCLUSIVE MODE');});
   // Read-only provenance stays read-only; elsewhere the runtime keeps DELETE (sessions).
-  for(const table of ['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars','quant_exposure_register_schema'])
+  for(const table of ['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars','quant_exposure_register_schema','bi_package_schema'])
     for(const kind of ['INSERT','UPDATE','DELETE'])assert.equal(await privilege(role,table,kind),false,table+' '+kind);
+  // Insert-only Best Inputs record tables: SELECT and INSERT stay, nothing that edits or removes a row, whatever history left behind.
+  for(const table of INSERT_ONLY){
+    assert.ok((await db.query('SELECT to_regclass($1) AS name',['public.'+table])).rows[0].name,table+' is installed');
+    for(const kind of ['SELECT','INSERT'])assert.equal(await privilege(role,table,kind),true,table+' '+kind);
+    for(const kind of ['UPDATE','DELETE','TRUNCATE','TRIGGER'])assert.equal(await privilege(role,table,kind),false,table+' '+kind);
+    await assert.rejects(db.transaction(async()=>{await db.query('SET LOCAL ROLE '+role);await db.query('DELETE FROM '+table);}),{code:'42501'},table);
+  }
+  assert.equal(await privilege(role,'bi_package_schema','SELECT'),true,'the package marker stays readable');
   for(const table of ['sessions','auth_challenges','password_resets','security_mail','mfa_recovery','user_security',
     'worker_heartbeats','security_limits'])assert.equal(await privilege(role,table,'DELETE'),true,table+' keeps the runtime DELETE');
+  // A privilege held through a role the runtime role reaches by membership but does not inherit is still refused: SET ROLE reaches it, while
+  // has_table_privilege(runtime role, ...) alone says false.
+  await admin.query('CREATE ROLE '+holder+' NOLOGIN');await admin.query('CREATE ROLE '+member+' NOSUPERUSER NOINHERIT');
+  await db.query('GRANT TRIGGER ON TABLE bi_exports TO '+holder);await db.query('GRANT '+holder+' TO '+member);
+  assert.equal(await privilege(member,'bi_exports','TRIGGER'),false,'the NOINHERIT member does not inherit the privilege');
+  await assert.rejects(apply(withRole(script,member)),/can still edit or remove rows of bi_exports/);
+  const version=Number((await db.query("SELECT current_setting('server_version_num') v")).rows[0].v);
+  if(version>=160000){
+    await admin.query('CREATE ROLE '+memberFalse+' NOSUPERUSER INHERIT');await db.query('GRANT '+holder+' TO '+memberFalse+' WITH INHERIT FALSE');
+    await assert.rejects(apply(withRole(script,memberFalse)),/can still edit or remove rows of bi_exports/);
+  }
+  assert.equal(await usage(member),false,'the refused runs changed nothing');
+  await db.query('REVOKE TRIGGER ON TABLE bi_exports FROM '+holder);
+  await apply(withRole(script,member));
+  assert.equal(await usage(member),true,'without the reachable privilege the same role is granted');
   assert.equal(await usage(idle),false,'only the named role was granted');
+  // A column-level UPDATE grant: has_table_privilege is false, has_any_column_privilege is true, and the final check refuses to commit.
+  await admin.query('CREATE ROLE '+colHolder+' NOLOGIN');await admin.query('CREATE ROLE '+colMember+' NOSUPERUSER NOINHERIT');
+  await db.query('GRANT UPDATE (codes) ON TABLE bi_attempts TO '+colHolder);await db.query('GRANT '+colHolder+' TO '+colMember);
+  assert.equal(await privilege(colMember,'bi_attempts','UPDATE'),false,'the table-level check does not see the column grant');
+  assert.equal((await db.query("SELECT has_any_column_privilege($1,'public.bi_attempts','UPDATE') AS ok",[colHolder])).rows[0].ok,true);
+  await assert.rejects(apply(withRole(script,colMember)),/can still edit or remove rows of bi_attempts/);
+  if(version>=160000){
+    await admin.query('CREATE ROLE '+colMemberFalse+' NOSUPERUSER INHERIT');await db.query('GRANT '+colHolder+' TO '+colMemberFalse+' WITH INHERIT FALSE');
+    await assert.rejects(apply(withRole(script,colMemberFalse)),/can still edit or remove rows of bi_attempts/);
+  }
+  await admin.query('CREATE ROLE '+colPublic+' NOSUPERUSER');
+  await db.query('GRANT UPDATE (mode) ON TABLE bi_exports TO PUBLIC');
+  try{await assert.rejects(apply(withRole(script,colPublic)),/can still edit or remove rows of bi_exports/);}
+  finally{await db.query('REVOKE UPDATE (mode) ON TABLE bi_exports FROM PUBLIC');}
+  assert.equal(await usage(colMember),false,'the refused runs changed nothing');
+  await db.query('REVOKE UPDATE (codes) ON TABLE bi_attempts FROM '+colHolder);
+  await apply(withRole(script,colMember));
+  assert.equal(await usage(colMember),true,'without the column grant the same role is granted');
+  // Read-only marker: a column INSERT held through PUBLIC, and a column UPDATE of a role reached WITH INHERIT FALSE, are write paths that
+  // has_table_privilege(runtime role, ...) does not see; the final check refuses to commit.
+  await admin.query('CREATE ROLE '+roPublic+' NOSUPERUSER');
+  await db.query('GRANT INSERT (version) ON TABLE bi_package_schema TO PUBLIC');
+  try{
+    assert.equal(await privilege(roPublic,'bi_package_schema','INSERT'),false,'the table-level check does not see the column grant');
+    await assert.rejects(apply(withRole(script,roPublic)),/can still write to bi_package_schema/);
+  }finally{await db.query('REVOKE INSERT (version) ON TABLE bi_package_schema FROM PUBLIC');}
+  assert.equal(await usage(roPublic),false,'the refused run changed nothing');
+  await apply(withRole(script,roPublic));
+  assert.equal(await usage(roPublic),true,'without the PUBLIC column grant the same role is granted');
+  if(version>=160000){
+    await admin.query('CREATE ROLE '+roHolder+' NOLOGIN');await db.query('GRANT UPDATE (version) ON TABLE bi_package_schema TO '+roHolder);
+    await admin.query('CREATE ROLE '+roMemberFalse+' NOSUPERUSER INHERIT');await db.query('GRANT '+roHolder+' TO '+roMemberFalse+' WITH INHERIT FALSE');
+    assert.equal(await privilege(roMemberFalse,'bi_package_schema','UPDATE'),false,'the WITH INHERIT FALSE member does not inherit the privilege');
+    await assert.rejects(apply(withRole(script,roMemberFalse)),/can still write to bi_package_schema/);
+    assert.equal(await usage(roMemberFalse),false,'the refused run changed nothing');
+    await db.query('REVOKE UPDATE (version) ON TABLE bi_package_schema FROM '+roHolder);
+    await apply(withRole(script,roMemberFalse));
+    assert.equal(await usage(roMemberFalse),true,'without the column grant the same role is granted');
+  }
 });
