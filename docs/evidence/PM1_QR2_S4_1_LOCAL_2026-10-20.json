@@ -1,0 +1,39 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "027b320",
+  "scope": "Local implementation of QR-2 sub-slice S4-1 (RC-Q37): the offline extension paper-capital-model with the insert-only declaration table paper_capital_models, its guards, a rollback that refuses while any declaration exists, the classifier, the CLI with --inspect and the grant entries. No route, store writer or server line uses it; nothing is installed on any environment.",
+  "method": "An architecture auditor (Opus 5.5) wrote the S4 design and a second model (Fable 5.1) wrote an independent alternative; root took the Opus draft as primary and recorded the decisions. A coder (Sonnet 5.5) wrote S4-1; an independent architecture auditor (Opus 5.5) reviewed it and found that the rollback SQL could drop a declaration committed during the drop and that the race test could not catch a missing lock; root ruled; the coder fixed them; an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, every test file that imports a changed module of this batch (found with git grep): 22 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (392 tests, 0 fail; 2 skipped by the TEMP-privilege environment gate in a file this batch did not change), the full unit suite (2214 tests, 0 fail, 6 skipped by platform gates, 9 todo) and the grant text test; every changed file had the same hash before and after. Nobody verified their own work.",
+  "files": {
+    "src/postgres/paper-capital-model.sql": "ce330315db5010179871939751c5d791ec18d2f68d58bb5aa7807b6f08030ce1",
+    "src/postgres/paper-capital-model-rollback.sql": "e34e9c8e3eb0457ba5b2424ca9acab01071b59c39c623e670aa4da9070a0256f",
+    "src/postgres/paper-capital-model-migration.js": "aa01cb8b37222ee8e403805d7d999bdf8118e3b9c042e3bc5691a670e67b63d1",
+    "scripts/migrate-paper-capital-model.mjs": "86e5a0445ba85638efcd85d431f5ff0a3bb4108b3d6e48642a9aa5b686677905",
+    "test/postgres/paper-capital-model-migration.test.mjs": "aca8a10811a91eacbc368ca04eb925707d5561e5c2be6ae04d3b9fe6a6fa4e42",
+    "scripts/grant-postgres-runtime.sql": "0e09af680446a51504cf78e6cf1cc500e878d989a56b0baa080bc5a39d51efec",
+    "test/postgres-runtime-grants.test.js": "0725e9b5b633f00af843194c50249090d75c59cfc4d7368dd02922b4adab899b",
+    "test/postgres/runtime-grants.test.mjs": "0f55263113338d17a0bafc2bdfbcf8b49e6908a4ef0d36d48ec8ab2a607a4617"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/postgres/paper-capital-model-migration.test.mjs 23 of 23 and test/postgres/runtime-grants.test.mjs 1 of 1 pass with 0 skipped; the grant text test passes.",
+  "mutations": {
+    "round1": "11 of 12 killed; the survivor (non-decreasing effective time) is equivalent under the other clock rules.",
+    "round2": "4 of 4 killed (rollback SQL lock and row refusal, tool lock, foreign-key trigger check); the midnight wait in the test helper only guards a timing window and is not killable by design."
+  },
+  "limits": [
+    "Provisional until the owner decides the S4 items: next-midnight effective time, the full owner Bot set, withdrawal as a new SHARED_HYPOTHETICAL version, THB kept, the 1000-version cap.",
+    "The O12 export, the confirmed rollback and the restore rehearsal are S4-3; the plain rollback works only with zero declarations.",
+    "A data-only restore and logical replication of the table are not supported (header).",
+    "The same internal foreign-key trigger gap exists in the other extension classifiers and is a later hardening item.",
+    "No install was run on any environment."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S4-1 as local engineering evidence for the QR-2 row. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}

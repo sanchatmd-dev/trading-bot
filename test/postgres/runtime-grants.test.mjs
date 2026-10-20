@@ -17,7 +17,7 @@ const PROTECTED=['quant_foundation_jobs','quant_foundation_owners','quant_founda
 const SCHEMAS=['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql',
   'quant-research-foundation-schema.sql','quant-storage-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql',
   'quant-preflight-schema.sql','quant-profile-enrollment-schema.sql','quant-exposure-register.sql','best-inputs-package-schema.sql',
-  'quant-comparison.sql','quant-selection.sql','mp-member-set.sql'];
+  'quant-comparison.sql','quant-selection.sql','mp-member-set.sql','paper-capital-model.sql'];
 // The ten insert-only Best Inputs record tables: SELECT and INSERT stay, UPDATE, DELETE, TRUNCATE and TRIGGER never; the marker is read-only.
 const INSERT_ONLY=['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records','bi_evidence_records',
   'bi_clearances','bi_trace_reproductions','ql4c_validation'];
@@ -27,8 +27,8 @@ const EXTENSION_INSERT_ONLY=['quant_comparison_specs','quant_comparison_particip
   'quant_comparison_outcomes','quant_comparison_replay_events',
   'quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events',
   'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events',
-  'mp_member_sets','mp_member_set_members'];
-const EXTENSION_MARKERS=['quant_comparison_schema','quant_selection_schema','mp_member_set_schema'];
+  'mp_member_sets','mp_member_set_members','paper_capital_models'];
+const EXTENSION_MARKERS=['quant_comparison_schema','quant_selection_schema','mp_member_set_schema','paper_capital_model_schema'];
 // What psql -v runtime_role=<role> does for :'runtime_role'.
 const withRole=(sql,role)=>sql.replaceAll(":'runtime_role'","'"+role.replaceAll("'","''")+"'");
 

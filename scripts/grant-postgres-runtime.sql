@@ -21,7 +21,7 @@ DECLARE
   -- idle-in-transaction timeouts, as for the scheduler.
   -- The Best Inputs package record tables (F09 builder slice S2, optional extension) are insert-only evidence: the runtime keeps SELECT and
   -- INSERT and loses UPDATE and DELETE (and holds no TRUNCATE or TRIGGER); database triggers refuse an edit by any other role (QR002).
-  -- The same holds for the quant comparison (QR-3), quant selection (QR-4) and member set (F11) record tables below: optional extensions,
+  -- The same holds for the quant comparison (QR-3), quant selection (QR-4), member set (F11) and paper capital model (QR-2 S4) record tables below: optional extensions,
   -- only installed tables are touched (the selection tables beyond the first four, and the later comparison tables, appear in later slices).
   protected CONSTANT TEXT[] := ARRAY['quant_foundation_jobs','quant_foundation_owners','quant_foundation_scheduler',
     'quant_jobs','quant_research_chunks','quant_io_ledgers','quant_io_launches',
@@ -29,14 +29,14 @@ DECLARE
   -- Versions and provenance the runtime validates but never rewrites (the Pine tables exist only with the extension).
   read_only CONSTANT TEXT[] := ARRAY['schema_version','pine_bridge_schema','pine_bridge_evidence','pine_market_bars',
     'pine_capture_schema','quant_exposure_register_schema','bi_package_schema','quant_comparison_schema','quant_selection_schema',
-    'mp_member_set_schema'];
+    'mp_member_set_schema','paper_capital_model_schema'];
   insert_only CONSTANT TEXT[] := ARRAY['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records',
     'bi_evidence_records','bi_clearances','bi_trace_reproductions','ql4c_validation',
     'quant_comparison_specs','quant_comparison_participants','quant_comparison_status_events','quant_comparison_evaluations','quant_comparison_benchmarks',
     'quant_comparison_outcomes','quant_comparison_replay_events',
     'quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events',
     'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events',
-    'mp_member_sets','mp_member_set_members'];
+    'mp_member_sets','mp_member_set_members','paper_capital_models'];
   item TEXT;
 BEGIN
   IF NOT pg_try_advisory_xact_lock(hashtextextended('robot:maintenance',0)) THEN
