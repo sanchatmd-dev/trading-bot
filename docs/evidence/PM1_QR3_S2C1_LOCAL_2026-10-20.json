@@ -1,0 +1,39 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "d30d4b3",
+  "scope": "Local implementation of sub-slice S2c-1 of docs/QR_3_FAIR_COMPARISON_CONTRACT.md (RC-C37 to RC-C43) for PM-1 row F10-02: the QR-3 comparison tables as an offline PostgreSQL extension (specs, participants with their freeze records and prior exposure, an insert-only status log, a marker), guards for edits (QR002), non-SERIALIZABLE writes (QR003) and insert preconditions (QR004 by guard name), a deferred commit check that makes the create atomic with its exposure register events, a rollback that refuses while any row exists, an install, inspect and rollback tool, and src/postgres/comparison-store.js with createComparison (SERIALIZABLE, register append first, bounded retry, request-key idempotency) and an owner-scoped READ ONLY readComparison. Nothing is installed on staging and no route writes these tables.",
+  "method": "An architecture auditor (Opus 5.5) wrote the S2c design and root accepted it (RC-C37 to RC-C42). A coder (Sonnet 5.5) wrote S2c-1. An independent architecture auditor (Opus 5.5) reviewed three rounds; round 1 found, with probes, that the create transaction could add later rows after an early SET CONSTRAINTS ALL IMMEDIATE and that register rows from an earlier transaction satisfied the commit check, and round 2 found a liveness gap in the same-transaction helper. An independent tester (Sonnet 5.5) ran the PostgreSQL suites and single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, test/postgres/runtime-grants.test.mjs and every new extension file one file per process on a throwaway PostgreSQL 16.15 cluster (fail 0 and skipped 0 in each), the install, inspect and rollback sequence of all three new tools with the repo grant script, test/postgres-runtime-grants.test.js and the full unit suite (2115 tests, 0 fail, 6 skipped, 9 todo). Root ruled on every finding. Nobody verified their own work.",
+  "files": {
+    "src/postgres/quant-comparison.sql": "e6a24c6c3a14c9dcefeb2684e1f4add27d4094ae2b39c630f2f7f0ef91c65322",
+    "src/postgres/quant-comparison-rollback.sql": "c9995a785e2e76341cf5d9e00d7c7741725c82989202edd96a3ef53fcc4b8e3c",
+    "src/postgres/quant-comparison-migration.js": "d0e1216fe8f006280961ad0eeaaa92657e3d88828e23d16438ee669c343f2895",
+    "scripts/migrate-quant-comparison.mjs": "a32930f60cf7677d0a75f568bfaa02447f220e3341033861419c3b13f519e436",
+    "src/postgres/comparison-store.js": "f61dbbf008170fa02dd20be033d3e8a5f018f9519c99a443b569bbe7859fcd4a",
+    "test/postgres/quant-comparison.test.mjs": "8657d2a3963b465a2d8bee5ab354bbf51d97392978c6559c8b636681cc80ed94",
+    "test/postgres/quant-comparison-create.test.mjs": "7e932dfe99e3fe33ebde5dfdee7fdac60bc9bad1da1597af194f8b002c807479"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/postgres/quant-comparison.test.mjs 19 of 19 and test/postgres/quant-comparison-create.test.mjs 12 of 12 pass with 0 skipped; the tool sequence exits 0 and inspect with the runtime role reports no failures.",
+  "mutations": {
+    "round1": "6 of 6 killed.",
+    "round2": "6 of 6 killed (create-transaction rule, register-row rule, owner classification, prior exposure).",
+    "round3": "3 of 4 killed; the earlier-xid branch of the helper is equivalent (an earlier transaction is committed or invisible)."
+  },
+  "limits": [
+    "Sub-slice S2c-1 only: the evaluation records, benchmarks, outcomes and replay events (S2c-2), library G5 v2 (S2b), the evaluation job (S3) and the API (S4) do not exist.",
+    "Not installed on staging; installation belongs to the RC-C36 data-model window with a fresh owner GO.",
+    "Accepted residual: a register row written later for an existing comparison id is not blocked by this extension; it can only add exposure.",
+    "Column collation is not classified yet (cross-extension hardening slice).",
+    "Body size caps (spec 64 KiB, participant freeze record 256 KiB) are provisional."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the design, the agent reports, the rulings, the sole-runner verification and the final diff and accepted S2c-1 as local engineering evidence for F10-02. Acceptance changes no PM-1 credit by itself, installs nothing and writes no row."
+  }
+}
