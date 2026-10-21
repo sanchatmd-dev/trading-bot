@@ -497,8 +497,9 @@ test('retry: an injected 40001 or 40P01 restarts T2 and succeeds; the attempt af
     assert.equal(lookups.length,2,'step 3 and the one retry');
     assert.ok(lookups[0]<serializable[0],'step 3 runs before T1');
     assert.ok(lookups[1]>serializable[1]&&lookups[1]<serializable[2],'the retry looks the key up before the second T2 attempt');
-    const firstQuery=log.slice(serializable[2]+1).find(e=>e.kind==='query');
-    assert.equal(firstQuery.tx,true);assert.match(firstQuery.sql,/FOR SHARE/,'the second attempt starts with the locks');
+    const attempt=log.slice(serializable[2]+1).filter(e=>e.kind==='query');
+    assert.equal(attempt[0].tx,true);assert.match(attempt[0].sql,/idempotency_key=\$3/,'the second attempt starts with the key lookup inside the transaction (RD-MP-35)');
+    assert.equal(attempt[1].tx,true);assert.match(attempt[1].sql,/FOR SHARE/,'then the locks');
   }
 });
 
@@ -548,6 +549,73 @@ test('retry: a lost idempotency-key race loads the competitor run on the next at
   }})).admit(mine);
   refusedAs(conflicted,MP_CODES.INPUT_INVALID,{field:'idempotency_key'});
   assert.equal((await counts(other)).runs,1);
+});
+
+/* ---- 6b. RD-MP-35: T2 re-checks authorization and the idempotency key on every attempt ---- */
+
+/** A service whose handle runs `before` as the T2 attempt `attempt` (1 is the first) starts, after step 3 and T1 and before the T2 snapshot. */
+function beforeT2(attempt,before,failures=[],log=[]) {
+  return serviceOn(tapped(fx,{log,onTransaction:async(options,run,serializable)=>{
+    if(serializable===1+attempt)await before();
+    try{return await run();}catch(error){failures.push(error);throw error;}
+  }}));
+}
+/** The queries of the first T2 attempt that took a lock (T1 takes the same locks, so only what follows its begin counts). */
+const t2Locks=log=>log.slice(log.findLastIndex(e=>e.kind==='begin')).filter(e=>e.kind==='query'&&e.tx&&/FOR SHARE/.test(e.sql));
+const makeStale=world=>db.query('INSERT INTO risk_profiles(user_id,policy,updated_at) VALUES($1,$2,$3)',[world.id,JSON.stringify({maxRiskPercent:3}),T0]);
+
+test('RD-MP-35 (a): an owner or Bot deactivated after step 2 and before the T2 snapshot is NOT_FOUND, thrown out of T2, with no run written',async()=>{
+  for(const [label,disabled] of [['the Bot',world=>world.bot],['the owner',world=>world.id]]) {
+    const world=await newWorld({child:true});
+    const failures=[],log=[];
+    const out=await admit(world,{},beforeT2(1,()=>db.query("UPDATE users SET status='DISABLED' WHERE id=$1",[disabled(world)]),failures,log));
+    refusedAs(out,'NOT_FOUND',{field:'bot_id'});
+    assert.ok(failures.some(error=>error.message==='NOT_FOUND'),label+': thrown out of the transaction callback');
+    assert.equal(begins(log),2,label+': T1 and one T2 attempt, no retry');
+    assert.equal(t2Locks(log).length,0,label+': refused before the first lock and check of T2');
+    assert.equal(log.slice(log.findLastIndex(e=>e.kind==='begin')).some(e=>e.kind==='query'&&/INSERT|UPDATE|DELETE/i.test(e.sql)),false,label+': T2 wrote nothing');
+    const now=await counts(world);
+    assert.equal(now.runs,0,label);assert.equal(now.events,0,label);
+  }
+  // control: nothing deactivated, the same seam admits
+  const control=await newWorld({child:true});
+  assert.equal((await admit(control,{},beforeT2(1,async()=>{}))).action,'ADMIT');
+  // a retry re-checks as well: the Bot is deactivated after the first attempt failed
+  const again=await newWorld({child:true});
+  let left=1;
+  const retried=serviceOn(tapped(fx,{
+    onQuery:(sql,params,run)=>{if(isRunInsert(sql)&&left-->0)throw injected('40001');return run();},
+    onTransaction:async(options,run,serializable)=>{if(serializable===3)await db.query("UPDATE users SET status='DISABLED' WHERE id=$1",[again.bot]);return run();}}));
+  refusedAs(await admit(again,{},retried),'NOT_FOUND',{field:'bot_id'});
+  assert.equal((await counts(again)).runs,0);
+});
+
+test('RD-MP-35 (b): a same-key competitor that commits between step 3 and the T2 snapshot is loaded on the first attempt, even when a check would refuse; another submission is MP_INPUT_INVALID',async()=>{
+  const rival=serviceOn(fx2);
+  // same key, same submission: LOAD, although the set went stale after the competitor committed
+  const world=await newWorld();
+  const input=inputOf(world);
+  const failures=[],log=[];
+  let winner=null;
+  const out=await beforeT2(1,async()=>{winner=await rival.admit(input);assert.equal(winner.ok,true,JSON.stringify(winner));await makeStale(world);},failures,log).admit(input);
+  assert.equal(winner.action,'ADMIT');
+  assert.deepEqual(out,{ok:true,action:'LOAD',run:winner.run},JSON.stringify(out));
+  assert.equal(begins(log),2,'T1 and one T2 attempt: the first attempt loaded, no retry');
+  assert.equal(failures.length,0);
+  assert.equal(t2Locks(log).length,0,'the load came before the locks and the checks');
+  assert.deepEqual(await counts(world),{sets:1,runs:1,events:1},'still one run');
+  // the control: without a competitor the stale set refuses on the first attempt
+  const alone=await newWorld();
+  refusedAs(await beforeT2(1,()=>makeStale(alone)).admit(inputOf(alone)),MP_CODES.MEMBER_SET_STALE,{field:'policy_hash'});
+  // same key, another submission: MP_INPUT_INVALID idempotency_key on the first attempt, although the set went stale
+  const other=await newWorld();
+  const mine=inputOf(other),theirs={...mine,seed:7};
+  const failures2=[],log2=[];
+  const conflicted=await beforeT2(1,async()=>{assert.equal((await rival.admit(theirs)).ok,true);await makeStale(other);},failures2,log2).admit(mine);
+  refusedAs(conflicted,MP_CODES.INPUT_INVALID,{field:'idempotency_key'});
+  assert.equal(begins(log2),2,'T1 and one T2 attempt');
+  assert.ok(failures2.some(error=>error.message===MP_CODES.INPUT_INVALID),'thrown out of the transaction callback');
+  assert.deepEqual(await counts(other),{sets:1,runs:1,events:1},'the competitor run only');
 });
 
 /* ---- 7. concurrency, side effects, boundaries ---- */

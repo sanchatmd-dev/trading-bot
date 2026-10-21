@@ -21,13 +21,14 @@ import {MP_CODES} from './codes.js';
  * admit(input): input is a closed key list, {owner_id, bot_id, fixture, idempotency_key, member_deployments, bridge_domains, dataset, budget, seed} plus the optional
  * parameter_slots (absent or empty) and deadline_seconds (whole seconds 60 to 900, default 900 as in the one-Pine job). Steps, in this order:
  *   1. shape (closed keys), then fixture === true (MP_FIXTURE_ONLY), then non-empty parameter_slots (MP_SOURCE_SLOTS_FORBIDDEN);
- *   2. owner and Bot authorization, as PineBridgeService.authorize (NOT_FOUND);
+ *   2. owner and Bot authorization, as PineBridgeService.authorize (NOT_FOUND); T2 repeats it first on every attempt (RD-MP-35);
  *   3. read-only replay check: the same key with the same submission hash LOADs the stored run; another submission under the key is MP_INPUT_INVALID (idempotency_key);
  *   4. T1: freezeOrLoadMemberSet, outside any transaction (its own SERIALIZABLE transaction);
- *   5. T2, one SERIALIZABLE transaction: FOR SHARE on the Bot's memberships and the member deployments, member-set freshness, the RS-4 checks (checkMemberSetAdmission) with
+ *   5. T2, one SERIALIZABLE transaction: authorization again, then the key lookup again through the transaction (same hash LOADs, another submission is
+ *      MP_INPUT_INVALID idempotency_key; RD-MP-35), then FOR SHARE on the Bot's memberships and the member deployments, member-set freshness, the RS-4 checks (checkMemberSetAdmission) with
  *      the dataset span of CONTENT_DIGEST_SQL and the capital accounts read in the transaction, buildMultiResearchContract, insertMultiRun;
- *   6. T2 restarts on 40001, 40P01 and a lost idempotency-key race, at most RUN_STORE_MAX_RETRIES times; every attempt after the first calls findMultiRunByKey first (X6),
- *      so a run that a competitor committed is loaded and not checked again. After the last retry the last database error is rethrown, as appendRunEvent does;
+ *   6. T2 restarts on 40001, 40P01 and a lost idempotency-key race, at most RUN_STORE_MAX_RETRIES times; every attempt after the first calls findMultiRunByKey first (X6)
+ *      outside the transaction, and every attempt, the first included, looks the key up inside it, so a run that a competitor committed is loaded and not checked again. After the last retry the last database error is rethrown, as appendRunEvent does;
  *   7. every refusal inside T2 is THROWN out of the transaction callback (so ROLLBACK runs) and mapped to a result outside it, never returned from inside.
  * Result: {ok:true, action:'ADMIT'|'LOAD', run:{run_id, contract_hash, status, owner_recommendation_ready:false}} (status ADMITTED on ADMIT, the stored run's current
  * status on LOAD) or {ok:false, code, diagnostic}. Refusal codes are the existing MP_CODES, one-Pine codes (RS-4) and the run-store NOT_FOUND. A diagnostic carries only
@@ -145,8 +146,7 @@ export class MultiPineFixtureService {
     if(this.#db.isTransaction)return invalid('db.transaction');
     const {owner_id,bot_id,idempotency_key}=input;
     // 2. The same checks as PineBridgeService.authorize: the owner owns the Bot, and both users are ACTIVE.
-    if(!await this.#store.ownsBot(owner_id,bot_id)||(await this.#store.userById(bot_id))?.status!=='ACTIVE'||(await this.#store.userById(owner_id))?.status!=='ACTIVE')
-      return refusal(RUN_STORE_CODES.NOT_FOUND,{field:'bot_id'});
+    if(!await this.#authorized(owner_id,bot_id))return refusal(RUN_STORE_CODES.NOT_FOUND,{field:'bot_id'});
     // 3. Read-only replay check.
     const submission_hash=submissionHash(input);
     if(submission_hash===null)return invalid('input');
@@ -182,7 +182,12 @@ export class MultiPineFixtureService {
     return now;
   }
 
-  /** Replay lookup by key, outside any transaction. Null when the key is unused; else the LOAD result or the key conflict. */
+  /** The same checks as PineBridgeService.authorize: the owner owns the Bot, and both users are ACTIVE. Runs on the handle of the caller: inside T2 it reads through the transaction. */
+  async #authorized(owner_id,bot_id) {
+    return await this.#store.ownsBot(owner_id,bot_id)&&(await this.#store.userById(bot_id))?.status==='ACTIVE'&&(await this.#store.userById(owner_id))?.status==='ACTIVE';
+  }
+
+  /** Replay lookup by key. Outside any transaction for step 3 and the retry; inside T2 (RD-MP-35) it reads through the transaction handle. Null when the key is unused; else the LOAD result or the key conflict. */
   async #replay(owner_id,bot_id,idempotency_key,submission_hash) {
     const found=await findMultiRunByKey(this.#db,{owner_id,bot_id,idempotency_key});
     if(!found.ok)return refusal(found.code,found.diagnostic);
@@ -195,6 +200,14 @@ export class MultiPineFixtureService {
   async #admission(set,input,submission_hash) {
     const db=this.#db,{owner_id,bot_id}=set;
     const now=this.#now();
+    // RD-MP-35, on every attempt and before any other check: authorization and the idempotency key are read again through the transaction. A user deactivated after step 2 is NOT_FOUND,
+    // and a same-key run that a competitor committed before this snapshot is loaded (or conflicts), so no later check can refuse it.
+    if(!await this.#authorized(owner_id,bot_id))refuse(refusal(RUN_STORE_CODES.NOT_FOUND,{field:'bot_id'}));
+    const replayed=await this.#replay(owner_id,bot_id,input.idempotency_key,submission_hash);
+    if(replayed!==null) {
+      if(!replayed.ok)refuse(replayed);
+      return replayed;
+    }
     const ids=set.members.map(member=>member.deployment_id),imports=set.members.map(member=>member.pine_import_id);
     // The locks come first (RD-MP-15): a row that changes after the snapshot fails this transaction with 40001.
     const memberships=(await db.query(MEMBERSHIP_ROWS,[owner_id,bot_id])).rows;
