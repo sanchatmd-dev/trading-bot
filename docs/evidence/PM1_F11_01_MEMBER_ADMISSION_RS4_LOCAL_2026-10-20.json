@@ -1,0 +1,31 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "f12d058",
+  "scope": "Local implementation of the F11-01 per-member admission checks, slice RS-4 (RD-MP-20): a pure mirror of the one-Pine admission checks of docs/MULTI_PINE_CONTRACT.md 5.1 steps 3 to 6, with a parity test against the one-Pine path. It is wired into no service, route or worker; the one-Pine path is unchanged.",
+  "method": "A coder (Sonnet 5.5) wrote RS-4 from the design and the contract; an independent architecture auditor (Opus 5.5) reviewed it and showed that ten rules could be deleted without a failing test; root ruled; the coder added parity rows and the other fixes; an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, every test file that imports a changed module or reads the changed grant script (found with git grep): 24 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (441 tests, 0 fail; 2 skipped by platform gates in a file this batch did not change), the full unit suite (2313 tests, 0 fail, 6 skipped by platform gates, 9 todo) and the grant text test; every changed file had the same hash before and after. A first attempt at that pass stopped early and was rerun in full. Nobody verified their own work.",
+  "files": {
+    "src/multi-pine/member-admission.js": "4a7696b451e350e707e4fbd95c6e22dc74147d4eb0b00601345ffeeb4c7b23ca",
+    "test/multi-pine-member-admission.test.js": "fb088a0458939a424ee6baf6458bae64a879e061b893f8d0a4261cc45a87f832"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/multi-pine-member-admission.test.js 98 of 98 pass, including 63 parity cases that run the one-Pine checks and the mirror on the same fixtures; the run-contract and member-set tests pass unchanged.",
+  "mutations": {
+    "round1": "9 of 9 killed.",
+    "round2": "13 of 14 killed; the survivor (the pine_import_id shape check) is redundant because the member, deployment and source ids are compared with each other and the member-set builder already checks the shape."
+  },
+  "limits": [
+    "Which record proves quant capability per member (R17) is decided in RS-5; the module only compares the given capability with the member hashes.",
+    "The caller duties in the module header (exit version derivation, owner and Bot authorization, capital accounts read, configured source hash) are not enforced by the module.",
+    "Not wired; no multi-Pine run is admitted anywhere."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted RS-4 as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}
