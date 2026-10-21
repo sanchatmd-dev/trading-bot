@@ -36,10 +36,13 @@ import {MP_CODES, MP_COMBINED_EVALUATOR, MP_SAME_BAR_ORDER} from './codes.js';
  *      HOLDOUT, which alone gets rows 0..test_end.
  *   6. after the HOLDOUT step, the Node oracle (combined-oracle.js) runs on the HOLDOUT step's bars, member signals, pair, model, policy, capital and ledger
  *      start. Its record `mp-combined-baseline-v1` is stored in the result as combined_baseline, bound to {run_id, contract_hash}; it NEVER changes the status or
- *      the completion reason. An oracle that throws leaves an unmatched record with the error code; the status still follows the search.
+ *      the completion reason. An oracle that throws leaves an unmatched record with the error code; the status still follows the search. The Python side of the
+ *      comparison uses the final state the job sent in the HOLDOUT ledger (final_cash, position_quantity, position_cost, open_allocations; all four are required);
+ *      the executor re-derives them from the FILLED decisions and records a disagreement as the difference job_final_state_vs_trace.
  *   7. the terminal result is validated, then appended: SUCCEEDED or NO_VALID_CANDIDATE with the result (at most 1 MiB, else FAILED EVALUATION_OUTPUT_TOO_LARGE).
- * A job error (any code), a cross_source_target or duplicate_intents counter that is not 0, an inconsistent response: FAILED EVALUATION_FAILED. An abort ends the
- * run CANCELLED RESEARCH_INTERRUPTED. owner_recommendation_ready is always false and MULTI_PINE_REQUIRES_APP_3B stays in acceptance_blockers.
+ * A job error (any code), a cross_source_target or duplicate_intents counter that is not 0, a response with a wrong shape, type or sign: FAILED EVALUATION_FAILED. A
+ * HOLDOUT response whose fill or decision counts disagree with its own ledger is not a run failure: the baseline stores HOLDOUT_LEDGER_INCONSISTENT as its error
+ * (RD-MP-30) and the status follows the search. An abort ends the run CANCELLED RESEARCH_INTERRUPTED. owner_recommendation_ready is always false and MULTI_PINE_REQUIRES_APP_3B stays in acceptance_blockers.
  */
 
 export const EXECUTOR_RESULT_VERSION = 'mp-combined-result-v1';
@@ -79,9 +82,10 @@ const DIAGNOSTIC_KEYS = ['bot', 'cross_source_target', 'duplicate_intents', 'mem
 const FUNNEL_KEYS = ['accepted', 'capped', 'exit_fills', 'intents_buy', 'intents_exit', 'native_buy', 'native_exit', 'pre_start_intents', 'rejected', 'skipped_buys', 'suppressed_buys'];
 const MEMBER_FUNNEL_KEYS = [...FUNNEL_KEYS, 'deployment_id', 'ordinal'];
 const SIGNAL_ROW_KEYS = ['deployment_id', 'native_buy', 'native_exit', 'ordinal', 'segments', 'signals_hash'];
-const LEDGER_KEYS = ['decisions', 'events'];
-/** The final ledger fields the job may add to the HOLDOUT ledger (all four or none; the executor does not use them yet). */
-const LEDGER_FINAL_KEYS = ['final_cash', 'open_allocations', 'position_cost', 'position_quantity'];
+/** The HOLDOUT ledger of a job response has exactly these six keys: the trace plus the four final-state fields copied from the Python replay ledger. */
+const LEDGER_KEYS = ['decisions', 'events', 'final_cash', 'open_allocations', 'position_cost', 'position_quantity'];
+/** The three final-state fields that are decimal strings (open_allocations is a non-negative integer). */
+const LEDGER_DECIMAL_KEYS = ['final_cash', 'position_cost', 'position_quantity'];
 const EVENT_KEYS = ['entry_ref', 'event_type', 'reason', 'sequence', 'sl', 'time', 'tp'];
 const FILLED_KEYS = ['cash', 'cost', 'entry_ref', 'event_type', 'fee', 'notional', 'outcome', 'price', 'quantity', 'realized_r', 'reason', 'sequence', 'sizing_adjustment', 'sizing_outcome', 'sl', 'time', 'tp'];
 const REJECTED_KEYS = ['entry_ref', 'event_type', 'fee', 'outcome', 'quantity', 'reason', 'sequence', 'sl', 'time', 'tp'];
@@ -127,6 +131,11 @@ function metricsOk(metrics) {
   return true;
 }
 const countOk = value => Number.isSafeInteger(value) && value >= 0;
+/** A decimal text the money helper accepts (a string only, never a number): '0E-18' style engine output included. */
+function decimalStringOk(value) {
+  if (typeof value !== 'string') return false;
+  try { return D(value).isFinite(); } catch { return false; }
+}
 
 /** The check of one step response against its request (the worker's INVALID_EVALUATION_RESPONSE checks, plus the multi-only counters). Throws EVALUATION_FAILED. */
 function checkStep(request, response, members, split) {
@@ -141,9 +150,15 @@ function checkStep(request, response, members, split) {
   if (!closed(response, holdout ? [...RESPONSE_KEYS, 'ledger', 'test'] : RESPONSE_KEYS)) bad();
   if (holdout) {
     const {ledger} = response;
-    if (!metricsOk(response.test) || !(closed(ledger, LEDGER_KEYS) || closed(ledger, [...LEDGER_KEYS, ...LEDGER_FINAL_KEYS])) || !Array.isArray(ledger.events) || !Array.isArray(ledger.decisions)) bad();
+    if (!metricsOk(response.test) || !closed(ledger, LEDGER_KEYS) || !Array.isArray(ledger.events) || !Array.isArray(ledger.decisions)) bad();
+    if (!LEDGER_DECIMAL_KEYS.every(key => decimalStringOk(ledger[key])) || !countOk(ledger.open_allocations)) bad();
+    // F4: the final state is never negative. '-0' parses to zero, which is not less than zero, so it is accepted as zero (D('-0').lt(0) is false).
+    if (LEDGER_DECIMAL_KEYS.some(key => D(ledger[key]).lt(0))) bad();
     if (!ledger.events.every(event => closed(event, EVENT_KEYS))) bad();
     if (!ledger.decisions.every(decision => closed(decision, decision?.outcome === 'FILLED' ? FILLED_KEYS : decision?.outcome === 'REJECTED' ? REJECTED_KEYS : []))) bad();
+    // F3: the executor derives the final state from the FILLED decisions, so their typed fields are checked before any arithmetic.
+    if (!ledger.decisions.filter(decision => decision.outcome === 'FILLED').every(fill => ['quantity', 'cash', 'cost'].every(key => decimalStringOk(fill[key]))
+      && typeof fill.entry_ref === 'string' && ['BUY', 'EXIT'].includes(fill.event_type))) bad();
   }
   const diagnostics = response.diagnostics;
   if (!closed(diagnostics, DIAGNOSTIC_KEYS) || diagnostics.same_bar_order !== MP_SAME_BAR_ORDER || !Array.isArray(diagnostics.members) || diagnostics.members.length !== members.length) bad();
@@ -169,9 +184,16 @@ function checkStep(request, response, members, split) {
 const brief = response => ({train: response.train, validation: response.validation, decision_count: response.decision_count, fills: response.fills,
   rejections: response.rejections, exit_fill_reasons: response.exit_fill_reasons, ledger_hash: response.ledger_hash});
 
-/** The Python-side view of a HOLDOUT ledger for compareCombined: fills are the FILLED decisions (the job's fills are the same dicts); the final state is derived from them. */
+/** The names of the final-state fields in which the job values differ from the values derived from the FILLED decisions (decimals compare by value: '0E-18' equals '0'). */
+const FINAL_FIELDS = ['final_cash', 'position_quantity', 'position_cost', 'open_allocations'];
+
+/**
+ * The Python-side view of a HOLDOUT ledger for compareCombined. The trace is the job's own ledger; the final state is the one the JOB supplied (final_cash,
+ * position_quantity, position_cost, open_allocations of the Python replay ledger). The executor still derives the same four values from the FILLED decisions as a
+ * cross-check: `mismatched` names every field in which the derivation differs from the job value (RD-MP-30: that is a baseline difference, never a run status).
+ */
 function pythonLedger(response, startCash) {
-  const {events, decisions} = response.ledger;
+  const {events, decisions, final_cash, position_quantity, position_cost, open_allocations} = response.ledger;
   const fills = decisions.filter(decision => isObject(decision) && decision.outcome === 'FILLED');
   if (fills.length !== response.fills || decisions.length !== response.decision_count) throw fail('HOLDOUT_LEDGER_INCONSISTENT');
   const last = fills.at(-1);
@@ -181,8 +203,13 @@ function pythonLedger(response, startCash) {
     if (fill.event_type === 'BUY') { quantity = quantity.plus(D(fill.quantity)); open.add(fill.entry_ref); }
     else { quantity = quantity.minus(D(fill.quantity)); open.delete(fill.entry_ref); }
   }
-  return {ledger: {events, decisions, fills, final_cash: last ? last.cash : startCash, position_quantity: quantity.toFixed(), position_cost: last ? last.cost : '0', open_allocations: open.size},
-    diagnostics: response.diagnostics};
+  const job = {final_cash, position_quantity, position_cost, open_allocations};
+  const derived = {final_cash: last ? last.cash : startCash, position_quantity: quantity.toFixed(), position_cost: last ? last.cost : '0', open_allocations: open.size};
+  const same = key => {
+    if (key === 'open_allocations') return job[key] === derived[key];
+    try { return D(job[key]).eq(D(derived[key])); } catch { return false; }
+  };
+  return {python: {ledger: {events, decisions, fills, ...job}, diagnostics: response.diagnostics}, mismatched: FINAL_FIELDS.filter(key => !same(key))};
 }
 
 /** Validation of the terminal result before it is written (RD-MP-32). Throws EVALUATION_FAILED. */
@@ -514,18 +541,28 @@ export class MultiPineFixtureExecutor {
   #baseline(view, request, response) {
     const binding = {run_id: view.run.run_id, contract_hash: view.run.contract_hash};
     const pair = {atr_multiplier: request.step.pair.atr_multiplier, rr: request.step.pair.rr};
+    let mismatched = [];
     try {
-      const python = pythonLedger(response, request.capital.cash);
+      const derived = pythonLedger(response, request.capital.cash);
+      const python = derived.python;
+      mismatched = derived.mismatched;
       const oracle = runCombinedOracle({
         members: request.members.map((member, index) => ({ordinal: member.ordinal, deployment_id: member.deployment_id, signals: response.member_signals[index].signals})),
         bars: request.rows.map(row => ({time: row.time, open: row.open, high: row.high, low: row.low, close: row.close, atr14: row.atr14})),
         pair, model: request.model, policy: request.policy, equity: request.capital.equity, cash: request.capital.cash, broker: request.market.broker, symbol: request.market.symbol,
         start_time: request.rows[request.split.warmup].time, same_bar_order: request.same_bar_order, binding
       });
-      return compareCombined(python, oracle);
+      const record = compareCombined(python, oracle);
+      // The job's final state against the state derived from its own FILLED decisions: a disagreement is one named difference (job_final_state_vs_trace, one per field)
+      // and an unmatched record. It adds a difference only; the run status still follows the search alone.
+      if (mismatched.length === 0) return record;
+      return {...record, matched: false, differences: {...record.differences, job_final_state_vs_trace: mismatched.length}, job_final_state_mismatch: mismatched};
     } catch (error) {
       const code = typeof error?.code === 'string' && /^[A-Z][A-Z0-9_]{1,63}$/.test(error.code) ? error.code : 'ORACLE_FAILED';
-      return {version: BASELINE_VERSION, binding, pair, same_bar_order: MP_SAME_BAR_ORDER, matched: false, error: code, differences: {oracle_error: 1}};
+      // F5: a job/derived final-state disagreement found before the failure stays on the error record.
+      const extra = mismatched.length > 0 ? {job_final_state_mismatch: mismatched} : {};
+      return {version: BASELINE_VERSION, binding, pair, same_bar_order: MP_SAME_BAR_ORDER, matched: false, error: code,
+        differences: {oracle_error: 1, ...(mismatched.length > 0 ? {job_final_state_vs_trace: mismatched.length} : {})}, ...extra};
     }
   }
 

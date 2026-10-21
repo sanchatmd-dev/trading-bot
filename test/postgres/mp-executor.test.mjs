@@ -20,6 +20,7 @@ import {createPythonRunner} from '../../src/multi-pine/python-runner.js';
 import {mpCombinedEngineHash,MP_COMBINED_CLOSURE_VERSION} from '../../src/multi-pine/engine-closure.js';
 import {MP_CODES} from '../../src/multi-pine/codes.js';
 import {config} from '../../src/config.js';
+import {D} from '../../src/money.js';
 import {PineBridgeService} from '../../src/postgres/pine-bridge.js';
 import {QuantResearchService} from '../../src/postgres/quant-research.js';
 import {activateDeployment} from '../../src/postgres/pine-bridge-readiness.js';
@@ -67,7 +68,7 @@ const SUPPORTED=hash(SOURCE);
 const START=BARS.first_time,BAR_COUNT=BARS.bar_count,END=START+(BAR_COUNT-1)*60000,NOW=END+3600000;
 const DATASET={start_time:START,end_time:END,warmup_bars:MANIFEST.split.warmup};
 const DOMAINS={atr_multiplier:{min:'1',max:'3',step:'0.5'},rr:{min:'0.5',max:'2.5',step:'0.5'}};
-const barRow=bar=>({time:bar.time,open:bar.open,high:bar.high,low:bar.low,close:bar.close,volume:bar.volume,atr14:bar.atr14,price_tick:BARS.price_tick,quantity_step:BARS.quantity_step});
+const barRow=(bar,source=BARS)=>({time:bar.time,open:bar.open,high:bar.high,low:bar.low,close:bar.close,volume:bar.volume,atr14:bar.atr14,price_tick:source.price_tick,quantity_step:source.quantity_step});
 const PROVENANCE={profile:MODEL.data_profile,source:BARS.provenance.source,fixture:true};
 
 before(async()=>{
@@ -100,7 +101,7 @@ before(async()=>{
   assert.equal(report.ok,true,report.failures?.join());
   service=serviceOn(fx);
   // the verified bars of the dataset, as the market-data writer stores them: bar, provenance and the content hash of the bar
-  const rows=BARS.bars.map(barRow);
+  const rows=BARS.bars.map(bar=>barRow(bar));
   await db.query(`INSERT INTO pine_market_bars SELECT 'binance-global','BTCUSDT','1',t,b::jsonb,$4::jsonb,h FROM unnest($1::bigint[],$2::text[],$3::text[]) AS u(t,b,h)`,
     [rows.map(row=>row.time),rows.map(row=>JSON.stringify(row)),rows.map(row=>hash(canonical(row))),JSON.stringify(PROVENANCE)]);
 });
@@ -133,20 +134,21 @@ function analysisFor(inputs){
 }
 const JOB_SQL=`INSERT INTO pine_bridge_jobs(job_id,owner_id,bot_id,operation,idempotency_key,request_hash,request,pine_import_id,status,created_at,updated_at,deadline,result)
   VALUES($1,$2,$3,'generate',$4,$5,'{}',$6,'SUCCEEDED',$7,$7,$7,$8)`;
-/** names: fixture member names of the manifest in ordinal order. The job gate is replaced by the member's fixture inputs, keyed by pine_import_id (inputsByImport). */
-async function newWorld({names=['M1','M2'],model=MODEL,policy=POLICY}={}){
-  const user=await store.createUser({email:'ex-'+randomUUID()+'@example.test',passwordHash:'unused-fixture-hash'});
+/** `on` (optional {db, store}) is the database the world is written to (default: the main one). names: fixture member names of the manifest in ordinal order. The job gate is replaced by the member's fixture inputs, keyed by pine_import_id (inputsByImport). */
+async function newWorld({names=['M1','M2'],model=MODEL,policy=POLICY,on}={}){
+  const target=on?.db??db,targetStore=on?.store??store;
+  const user=await targetStore.createUser({email:'ex-'+randomUUID()+'@example.test',passwordHash:'unused-fixture-hash'});
   const bot=user.id;
-  await db.query("INSERT INTO paper_funding(user_id,broker,at,equity_delta,cash_delta,kind) VALUES($1,'binance-global',$2,$3,$3,'CONFIGURATION')",[bot,T0,MANIFEST.capital.equity]);
-  const capital=await store.paperAccounts(bot);
-  const funding_cutoff=(await db.query('SELECT COALESCE(max(id),0)::int AS cutoff FROM paper_funding WHERE user_id=$1',[bot])).rows[0].cutoff;
+  await target.query("INSERT INTO paper_funding(user_id,broker,at,equity_delta,cash_delta,kind) VALUES($1,'binance-global',$2,$3,$3,'CONFIGURATION')",[bot,T0,MANIFEST.capital.equity]);
+  const capital=await targetStore.paperAccounts(bot);
+  const funding_cutoff=(await target.query('SELECT COALESCE(max(id),0)::int AS cutoff FROM paper_funding WHERE user_id=$1',[bot])).rows[0].cutoff;
   const ids=Array.from({length:names.length},()=>randomUUID()).sort();
   const deps=Array.from({length:names.length},()=>randomUUID()).sort();
   const specs=ids.map((id,i)=>({n:i+1,name:names[i],pine:id,dep:deps[i],inputs:MANIFEST.members[names[i]].inputs,analysis:analysisFor(MANIFEST.members[names[i]].inputs)}));
   for(const m of specs){
-    await db.query('INSERT INTO pine_sources VALUES($1,$2,$3,1,$4,$5,$6,$7,$8)',[m.pine,user.id,bot,SUPPORTED,'Member fixture',SOURCE,JSON.stringify(m.analysis),T0]);
-    await db.query('INSERT INTO pine_source_revisions VALUES($1,1,$2,$3,$4,$5)',[m.pine,SUPPORTED,SOURCE,JSON.stringify(m.analysis),T0]);
-    await db.query('INSERT INTO pine_memberships(pine_import_id,owner_id,bot_id,source_version,connected) VALUES($1,$2,$3,1,true)',[m.pine,user.id,bot]);
+    await target.query('INSERT INTO pine_sources VALUES($1,$2,$3,1,$4,$5,$6,$7,$8)',[m.pine,user.id,bot,SUPPORTED,'Member fixture',SOURCE,JSON.stringify(m.analysis),T0]);
+    await target.query('INSERT INTO pine_source_revisions VALUES($1,1,$2,$3,$4,$5)',[m.pine,SUPPORTED,SOURCE,JSON.stringify(m.analysis),T0]);
+    await target.query('INSERT INTO pine_memberships(pine_import_id,owner_id,bot_id,source_version,connected) VALUES($1,$2,$3,1,true)',[m.pine,user.id,bot]);
   }
   const projection=specs.map(m=>({pine_import_id:m.pine,source_version:1,source_hash:SUPPORTED,analysis:m.analysis}));
   const selection=validateSelection(inspectSource(SOURCE),{...SPT_SIGNAL_MAPPING,buy:'buySignal',exit:'sellSignal'},[]);
@@ -155,10 +157,10 @@ async function newWorld({names=['M1','M2'],model=MODEL,policy=POLICY}={}){
     const snapshot={policy,policy_hash:hash(canonical(policy)),capital,funding_cutoff,membership:projection,session:{state:'SETUP',run_id:null},captured_at:1,
       selection,market:{deployment_id:m.dep,pine_import_id:m.pine,source_version:1,...MARKET},source_hash:SUPPORTED,instruction_versions:{template:'fixture'},artifact_hash:hash(artifact)};
     const snapshotHash=hash(canonical(snapshot)),body=evidenceFor(snapshot,snapshotHash,'fixture-'+m.n,model);
-    await db.query("INSERT INTO pine_deployments(deployment_id,owner_id,bot_id,pine_import_id,source_version,snapshot,snapshot_hash,state,created_at) VALUES($1,$2,$3,$4,1,$5,$6,'DRAFT',$7)",
+    await target.query("INSERT INTO pine_deployments(deployment_id,owner_id,bot_id,pine_import_id,source_version,snapshot,snapshot_hash,state,created_at) VALUES($1,$2,$3,$4,1,$5,$6,'DRAFT',$7)",
       [m.dep,user.id,bot,m.pine,JSON.stringify(snapshot),snapshotHash,T0]);
-    await db.query('INSERT INTO pine_bridge_evidence(deployment_id,snapshot_hash,evidence,evidence_hash,recorded_at) VALUES($1,$2,$3,$4,$5)',[m.dep,snapshotHash,JSON.stringify(body),hash(canonical(body)),T0]);
-    await db.query(JOB_SQL,[randomUUID(),user.id,bot,randomUUID(),hash('request-'+randomUUID()),m.pine,T0,JSON.stringify({integrated_pine:artifact,deployment_id:m.dep,artifact_status:'DRAFT'})]);
+    await target.query('INSERT INTO pine_bridge_evidence(deployment_id,snapshot_hash,evidence,evidence_hash,recorded_at) VALUES($1,$2,$3,$4,$5)',[m.dep,snapshotHash,JSON.stringify(body),hash(canonical(body)),T0]);
+    await target.query(JOB_SQL,[randomUUID(),user.id,bot,randomUUID(),hash('request-'+randomUUID()),m.pine,T0,JSON.stringify({integrated_pine:artifact,deployment_id:m.dep,artifact_status:'DRAFT'})]);
   }
   return {id:user.id,bot,specs,inputsByImport:Object.fromEntries(specs.map(m=>[m.pine,m.inputs]))};
 }
@@ -170,8 +172,8 @@ function serviceOn(handle,over={},defaultRisk=POLICY){
   const own=new Store(handle);
   return new MultiPineFixtureService({db:handle,store:own,readBotState:storeBotState({store:own,defaultRisk}),clock:()=>NOW,engineHash:ENGINE,supported_source_hash:SUPPORTED,...over});
 }
-async function admitRun(world,over={}){
-  const out=await service.admit(inputOf(world,over));
+async function admitRun(world,over={},svc=service){
+  const out=await svc.admit(inputOf(world,over));
   assert.equal(out.ok,true,JSON.stringify(out));
   return out.run;
 }
@@ -208,7 +210,7 @@ function executorOn(handle,{runEvaluator,clock=()=>NOW+1000,engineHash=()=>ENGIN
   const own=new Store(handle);
   return new MultiPineFixtureExecutor({db:handle,store:own,readBotState:storeBotState({store:own,defaultRisk:POLICY}),clock,runEvaluator,engineHash,...(callTimeoutMs!==undefined?{callTimeoutMs}:{})});
 }
-const eventsOf=async run_id=>(await db.query('SELECT seq,status,reason_code,result FROM mp_research_run_events WHERE run_id=$1 ORDER BY seq',[run_id])).rows;
+const eventsOf=async (run_id,handle=db)=>(await handle.query('SELECT seq,status,reason_code,result FROM mp_research_run_events WHERE run_id=$1 ORDER BY seq',[run_id])).rows;
 const statusOf=async run_id=>(await eventsOf(run_id)).at(-1).status;
 const rowDigest=async(table,where='',params=[])=>(await db.query(`SELECT count(*)::int n,encode(sha256(convert_to(COALESCE(string_agg(row_to_json(t)::text,'|' ORDER BY row_to_json(t)::text),''),'UTF8')),'hex') d FROM public.${table} t ${where}`,params)).rows[0];
 /** A digest of every table of the schema and every sequence: what a side effect would change. */
@@ -267,16 +269,45 @@ const PASSING_TEST=metrics(6,'0.5','0.3');
 const withPassingHoldout=runner=>wrap(runner,(response,payload)=>{if(payload.step.kind==='HOLDOUT')response.test=structuredClone(PASSING_TEST);});
 /** Domains used by the real-job cases: nine grid points (11 to 14 job calls per run, about 0.6 s each). */
 const SMALL={atr_multiplier:{min:'2',max:'3',step:'0.5'},rr:{min:'1',max:'2',step:'0.5'}};
+const V2_DOMAINS=SMALL;
 const STRESS_FAILS={atr_multiplier:{min:'1.5',max:'2.5',step:'0.5'},rr:{min:'1',max:'2.5',step:'0.5'}};
+
+/* ---- the second fixture (bars-v2): its own database, because its rows overlap the v1 times of pine_market_bars (the table keeps one row per bar time) ---- */
+const BARS2=JSON.parse(await fs.readFile(new URL('bars-v2.json',FIXTURES),'utf8'));
+const MANIFEST2=JSON.parse(await fs.readFile(new URL('manifest-v2.json',FIXTURES),'utf8'));
+const START2=BARS2.first_time,END2=START2+(BARS2.bar_count-1)*60000,NOW2=END2+3600000;
+const DATASET2={start_time:START2,end_time:END2,warmup_bars:MANIFEST.split.warmup};
+const PROVENANCE2={profile:MODEL.data_profile,source:BARS2.provenance.source,fixture:true};
+let V2;
+/** A clone of the template with the run store, the grants and the bars-v2 rows (a service and a fixture-role handle on it). Created once, on first use, and dropped with the other extra databases. */
+async function secondDatabase(){
+  if(V2)return V2;
+  const name='robot_ex_v2_'+randomUUID().replaceAll('-','');
+  await admin.query('CREATE DATABASE '+name+' TEMPLATE '+templateName);
+  databases.push(name);
+  const own=ser(track(new PostgresDatabase({connectionString:serialOf(name),max:4})));
+  await migrateMpRunStore(own);
+  await own.query(await roleScript(GRANT_SCRIPT,{runtime_role:runtimeName}));
+  await own.query(await roleScript(FIXTURE_SCRIPT,{runtime_role:runtimeName,fixture_role:fixtureName}));
+  const handle=ser(track(new PostgresDatabase({connectionString:serialOf(name,fixtureName),max:4})));
+  const report=await inspectMpRunStore(own,{runtimeRole:runtimeName,fixtureRole:fixtureName});
+  assert.equal(report.ok,true,report.failures?.join());
+  const rows=BARS2.bars.map(bar=>barRow(bar,BARS2));
+  await own.query(`INSERT INTO pine_market_bars SELECT 'binance-global','BTCUSDT','1',t,b::jsonb,$4::jsonb,h FROM unnest($1::bigint[],$2::text[],$3::text[]) AS u(t,b,h)`,
+    [rows.map(row=>row.time),rows.map(row=>JSON.stringify(row)),rows.map(row=>hash(canonical(row))),JSON.stringify(PROVENANCE2)]);
+  return V2={db:own,fx:handle,store:new Store(own),svc:serviceOn(handle,{clock:()=>NOW2})};
+}
+/** Options that point runWith at the second database (the executor clock is after the last bars-v2 bar). */
+const onSecond=(two,bridge_domains)=>({db:two.fx,svc:two.svc,read:two.db,over:{dataset:{...DATASET2},bridge_domains},executor:{clock:()=>NOW2+1000}});
 
 /* ---- shared world for cases that do not change it ---- */
 let SHARED;
 const shared=async()=>SHARED??=await newWorld();
-async function runWith(world,runner,{over={},executor={},signal,db:handle=fx}={}){
-  const run=await admitRun(world,over);
+async function runWith(world,runner,{over={},executor={},signal,db:handle=fx,svc=service,read=db}={}){
+  const run=await admitRun(world,over,svc);
   const exec=executorOn(handle,{runEvaluator:runner,...executor});
   const out=await exec.execute({owner_id:world.id,run_id:run.run_id,signal});
-  return {run,out,events:await eventsOf(run.run_id),exec};
+  return {run,out,events:await eventsOf(run.run_id,read),exec};
 }
 const statuses=events=>events.map(event=>event.status);
 const DEADLINE=NOW+900_000;
@@ -379,6 +410,54 @@ test('REAL JOB + replaced HOLDOUT test metrics: SUCCEEDED with a matched baselin
   assert.equal(runner.calls.filter(kind=>kind==='HOLDOUT').length,1);
   const read=await getMultiRun(fx,{owner_id:world.id,run_id:run.run_id});
   assert.equal(read.ok,true,JSON.stringify(read));assert.equal(read.status,'SUCCEEDED');assert.equal(read.owner_recommendation_ready,false);
+});
+
+test('REAL JOB on bars-v2: SUCCEEDED with the real HOLDOUT metrics (no replaced metrics) and a matched baseline whose final state is the job\'s own',{timeout:600000},async()=>{
+  // Why V2_DOMAINS: bars-v2 passes the one-Pine HOLDOUT gates (manifest-v2.json: M1+M2 at pair 2/1.5 has 21 closed trades, +0.797 %, drawdown 0.482 % on the HOLDOUT), but a grid that reaches
+  // atr_multiplier 1.5 can fail the sensitivity or the cost stress (handoff). The SMALL grid (atr_multiplier 2 to 3, rr 1 to 2) was run on the real job: the search selects 2/2 (validation +0.824 %),
+  // its two in-grid neighbours hold (2.5/2: -0.213 %, 5 trades, a drop of 1.04 points under the limit of 2 and exactly the 5-trade floor; 2/1.5: +0.656 %, 12 trades), the stress step holds
+  // (+0.612 %, 12 trades) and the HOLDOUT of 2/2 has 20 closed trades, +0.740 %, drawdown 0.457 %. No metric of the run is replaced.
+  const two=await secondDatabase();
+  const world=await newWorld({on:two});
+  const runner=recording(realRunner(world));
+  const {run,out,events}=await runWith(world,runner,onSecond(two,V2_DOMAINS));
+  assert.deepEqual(out,{ok:true,action:'TERMINAL',status:'SUCCEEDED',reason_code:null});
+  assert.deepEqual(statuses(events),['ADMITTED','RUNNING','SUCCEEDED']);
+  const result=events[2].result;
+  assert.equal(result.completion_reason,'RESEARCH_CANDIDATE_PENDING_ACCEPTANCE');
+  assert.deepEqual(result.selected.screen_reasons,[],'sensitivity, cost stress and the HOLDOUT gates all pass on the real job output');
+  assert.equal(result.holdout_evaluated,true);
+  // the HOLDOUT metrics are the job's own (not the replaced PASSING_TEST), and the three gates hold on them
+  const holdout=result.selected.test;
+  assert.notDeepEqual(holdout,PASSING_TEST);
+  assert.ok(holdout.closed_trades>=5&&!D(holdout.net_return_percent).lt(0)&&D(holdout.max_drawdown_percent).lte(20),JSON.stringify(holdout));
+  assert.equal(result.search.dimension_coverage_percent,100);
+  assert.equal(runner.calls.filter(call=>call.kind==='HOLDOUT').length,1);
+  for(const call of runner.calls)assert.ok(call.kind==='HOLDOUT'?call.rows===MANIFEST.split.test_end&&call.last_time===END2:call.rows===MANIFEST.split.validation_end);
+  assert.deepEqual(result.selected.parameters,{rr:'2',atr_multiplier:'2'},'the selected pair of this fixture and domain (deterministic)');
+  assert.equal(holdout.closed_trades,20);
+  // F1 pin: the CANDIDATE result of the manifest pair equals the measured block of manifest-v2.json (the real job and the manifest measurement agree), on the manifest's own first bar time
+  assert.equal(START2,MANIFEST2.bars.first_time);
+  const measured=MANIFEST2.measured;
+  const pinned=result.candidates.filter(row=>D(row.parameters.atr_multiplier).eq(measured.pair.atr_multiplier)&&D(row.parameters.rr).eq(measured.pair.rr));
+  assert.equal(pinned.length,1,'the manifest pair 2/1.5 is one candidate of the SMALL grid');
+  for(const segment of ['train','validation']){
+    assert.equal(pinned[0][segment].closed_trades,measured[segment].closed_trades,segment);
+    assert.ok(D(pinned[0][segment].net_return_percent).eq(measured[segment].net_return_percent),segment+' net return '+pinned[0][segment].net_return_percent);
+    assert.ok(D(pinned[0][segment].max_drawdown_percent).eq(measured[segment].max_drawdown_percent),segment+' drawdown '+pinned[0][segment].max_drawdown_percent);
+  }
+  // the baseline: matched, no difference of any kind (the job-supplied final state agrees with the oracle and with the trace derivation), and the status followed the search
+  const baseline=result.combined_baseline;
+  assert.equal(baseline.version,'mp-combined-baseline-v1');assert.equal(baseline.matched,true,JSON.stringify(baseline.differences));
+  assert.deepEqual(Object.values(baseline.differences).filter(count=>count!==0),[]);
+  assert.equal(Object.hasOwn(baseline.differences,'job_final_state_vs_trace'),false);assert.equal(Object.hasOwn(baseline,'job_final_state_mismatch'),false);
+  assert.deepEqual(baseline.binding,{run_id:run.run_id,contract_hash:run.contract_hash});assert.deepEqual(baseline.pair,result.selected.parameters);
+  assert.ok(baseline.counts.fills>=100,'a long HOLDOUT trace: '+JSON.stringify(baseline.counts));
+  assert.equal(baseline.counts.received_decisions,result.holdout_decisions.length);
+  assert.equal(baseline.final_cash_delta,'0');assert.equal(baseline.final_position_cost_delta,'0');
+  const read=await getMultiRun(two.fx,{owner_id:world.id,run_id:run.run_id});
+  assert.equal(read.ok,true,JSON.stringify(read));assert.equal(read.status,'SUCCEEDED');assert.equal(read.owner_recommendation_ready,false);
+  assert.ok(result.acceptance_blockers.includes('MULTI_PINE_REQUIRES_APP_3B'));assert.equal(result.owner_recommendation_ready,false);
 });
 
 test('REAL JOB: no candidate passes the cost stress (F20): NO_VALID_CANDIDATE, no HOLDOUT, no baseline, no stored trace',{timeout:600000},async()=>{
@@ -981,8 +1060,8 @@ async function recorded(){
   const world=await newWorld();
   const real=realRunner(world),list=[];
   const recording_=async(payload,options)=>{const response=await real(payload,options);list.push({key:canonical([payload.step.kind,payload.step.pair]),response:structuredClone(response)});return response;};
-  const {out}=await runWith(world,withPassingHoldout(recording_),{over:{bridge_domains:SMALL}});
-  assert.equal(out.status,'SUCCEEDED');
+  const {out,events}=await runWith(world,withPassingHoldout(recording_),{over:{bridge_domains:SMALL}});
+  assert.equal(out.status,'SUCCEEDED',JSON.stringify(events.map(event=>[event.status,event.reason_code])));
   for(const item of list)if(item.response.kind==='HOLDOUT')item.response.test=structuredClone(PASSING_TEST);
   return RECORDED={world,list};
 }
@@ -1000,7 +1079,7 @@ const replay=(rec,mutate)=>{
   return run;
 };
 
-test('job responses are closed: an extra or a missing key, a foreign value type or a stray decision field fails the run (REPLAY of one recorded real run)',{timeout:300000},async()=>{
+test('job responses are closed: an extra or a missing key (the four final ledger fields included), a foreign value type or a stray decision field fails the run (REPLAY of one recorded real run)',{timeout:300000},async()=>{
   const rec=await recorded();
   const first=fn=>(response,payload,index)=>{if(index===0)fn(response);};
   const holdout=fn=>response=>{if(response.kind==='HOLDOUT')fn(response);};
@@ -1021,8 +1100,24 @@ test('job responses are closed: an extra or a missing key, a foreign value type 
     ['extra segment key',first(response=>{response.member_signals[0].segments.train.extra=1;})],
     ['segment is missing',first(response=>{delete response.member_signals[0].segments.validation;})],
     ['extra ledger key',holdout(response=>{response.ledger.extra=1;})],
-    ['two of the four final ledger fields',holdout(response=>{response.ledger.final_cash='1';response.ledger.position_cost='0';})],
+    ...['final_cash','position_quantity','position_cost','open_allocations'].map(key=>['a dropped final ledger field: '+key,holdout(response=>{delete response.ledger[key];})]),
+    ['two dropped final ledger fields',holdout(response=>{delete response.ledger.final_cash;delete response.ledger.position_cost;})],
+    ['the old two-key ledger (no final field)',holdout(response=>{for(const key of ['final_cash','position_quantity','position_cost','open_allocations'])delete response.ledger[key];})],
+    ['final_cash is a number',holdout(response=>{response.ledger.final_cash=20000;})],
+    ['final_cash is not a decimal',holdout(response=>{response.ledger.final_cash='abc';})],
+    ['final_cash is NaN text',holdout(response=>{response.ledger.final_cash='NaN';})],
+    ['position_quantity is null',holdout(response=>{response.ledger.position_quantity=null;})],
+    ['position_cost is outside the decimal range',holdout(response=>{response.ledger.position_cost='1e999';})],
+    ['open_allocations is a string',holdout(response=>{response.ledger.open_allocations='0';})],
+    ['open_allocations is negative',holdout(response=>{response.ledger.open_allocations=-1;})],
+    ['open_allocations is not an integer',holdout(response=>{response.ledger.open_allocations=1.5;})],
+    ['open_allocations is a decimal string',holdout(response=>{response.ledger.open_allocations='0.0';})],
     ['extra HOLDOUT metric key',holdout(response=>{response.test.extra=1;})],
+    ...[['quantity',1],['cash',20000],['cost',null],['quantity','abc'],['cash','NaN'],['cost','1e999'],['entry_ref',7],['entry_ref',null],['event_type','SELL'],['event_type','buy']]
+      .map(([key,value])=>['FILLED decision '+key+' is '+JSON.stringify(value),holdout(response=>{response.ledger.decisions.find(decision=>decision.outcome==='FILLED')[key]=value;})]),
+    // F4: a negative final state is refused
+    ...[['final_cash','-1'],['position_quantity','-0.5'],['position_cost','-0.000000000000000001'],['final_cash','-20000.5']]
+      .map(([key,value])=>['negative '+key+' '+value,holdout(response=>{response.ledger[key]=value;})]),
     ['extra event key',holdout(response=>{response.ledger.events[0].extra=1;})],
     ['extra FILLED decision key',holdout(response=>{response.ledger.decisions.find(decision=>decision.outcome==='FILLED').extra=1;})],
     ['missing REJECTED decision key',holdout(response=>{delete response.ledger.decisions.find(decision=>decision.outcome==='REJECTED').reason;})],
@@ -1034,11 +1129,123 @@ test('job responses are closed: an extra or a missing key, a foreign value type 
     assert.deepEqual([out.status,out.reason_code],['FAILED','EVALUATION_FAILED'],label);
     assert.deepEqual(statuses(events),['ADMITTED','RUNNING','FAILED'],label);
   }
-  // the unmodified replay and the four optional final ledger fields are accepted
+  // the unmodified replay (the real job sends all six ledger keys) is accepted
   const plain=await runWith(rec.world,replay(rec),{over:{bridge_domains:SMALL}});
   assert.deepEqual([plain.out.status,plain.out.reason_code],['SUCCEEDED',null]);
-  const withFinal=await runWith(rec.world,replay(rec,holdout(response=>{Object.assign(response.ledger,{final_cash:'1',position_quantity:'0',position_cost:'0',open_allocations:0});})),{over:{bridge_domains:SMALL}});
-  assert.deepEqual([withFinal.out.status,withFinal.out.reason_code],['SUCCEEDED',null]);
+  assert.deepEqual(Object.keys(rec.list.find(item=>item.response.kind==='HOLDOUT').response.ledger).sort(),['decisions','events','final_cash','open_allocations','position_cost','position_quantity']);
+  // decimal text is compared by value: '0E-18', '0' and '0.000' are one number, and so are trailing zeros of the cash
+  const spelled=await runWith(rec.world,replay(rec,holdout(response=>{
+    const wider=value=>D(value).toFixed(D(value).decimalPlaces()+3);
+    for(const key of ['final_cash','position_quantity','position_cost'])response.ledger[key]=wider(response.ledger[key]);
+  })),{over:{bridge_domains:SMALL}});
+  assert.deepEqual([spelled.out.status,spelled.out.reason_code],['SUCCEEDED',null]);
+  const record=spelled.events.at(-1).result.combined_baseline;
+  assert.equal(record.matched,true,JSON.stringify(record.differences));assert.equal(Object.hasOwn(record.differences,'job_final_state_vs_trace'),false);
+  // F4: '-0' is zero (not below zero) and is accepted wherever the recorded value is zero; the recorded run ends flat, so position_quantity and position_cost are zero
+  assert.ok(D(rec.list.find(item=>item.response.kind==='HOLDOUT').response.ledger.position_quantity).eq(0));
+  const negativeZero=await runWith(rec.world,replay(rec,holdout(response=>{response.ledger.position_quantity='-0';response.ledger.position_cost='-0.000';})),{over:{bridge_domains:SMALL}});
+  assert.deepEqual([negativeZero.out.status,negativeZero.out.reason_code],['SUCCEEDED',null]);
+  const zeroRecord=negativeZero.events.at(-1).result.combined_baseline;
+  assert.equal(zeroRecord.matched,true,JSON.stringify(zeroRecord.differences));assert.equal(Object.hasOwn(zeroRecord.differences,'job_final_state_vs_trace'),false);
+});
+
+/** The final state derived from a decision list by the test itself (independent of the executor): fills, open quantity, open allocations, the last cash and cost. */
+function finalStateOf(decisions){
+  const fills=decisions.filter(decision=>decision.outcome==='FILLED');
+  let quantity=D(0);
+  const open=new Set();
+  for(const fill of fills){
+    if(fill.event_type==='BUY'){quantity=quantity.plus(fill.quantity);open.add(fill.entry_ref);}
+    else{quantity=quantity.minus(fill.quantity);open.delete(fill.entry_ref);}
+  }
+  return {fills:fills.length,quantity,open:open.size,cash:fills.at(-1).cash,cost:fills.at(-1).cost};
+}
+
+test('baseline: the Python side uses the final state the job sent; a disagreement with its own FILLED decisions is a named difference and never the run status (REPLAY of one recorded real run)',{timeout:300000},async()=>{
+  const rec=await recorded();
+  const holdout=fn=>response=>{if(response.kind==='HOLDOUT')fn(response);};
+  const ok=async(runner)=>{
+    const {out,events,run}=await runWith(rec.world,runner,{over:{bridge_domains:SMALL}});
+    assert.deepEqual([out.status,out.reason_code],['SUCCEEDED',null],'the baseline never changes the status (RD-MP-30)');
+    const result=events.at(-1).result;
+    assert.equal(result.completion_reason,'RESEARCH_CANDIDATE_PENDING_ACCEPTANCE');
+    assert.deepEqual(result.combined_baseline.binding,{run_id:run.run_id,contract_hash:run.contract_hash});
+    return result;
+  };
+  // the recorded run: the job values equal the derivation, no job difference
+  const clean=await ok(replay(rec));
+  assert.equal(clean.combined_baseline.matched,true);assert.equal(Object.hasOwn(clean.combined_baseline.differences,'job_final_state_vs_trace'),false);
+  assert.equal(Object.hasOwn(clean.combined_baseline,'job_final_state_mismatch'),false);
+  // (a) one job value disagrees with the derivation: that one field is named, the record is unmatched, the oracle still compares the job's value (remaining_quantity)
+  const quantity=await ok(replay(rec,holdout(response=>{response.ledger.position_quantity='0.5';})));
+  assert.equal(quantity.combined_baseline.matched,false);
+  assert.equal(quantity.combined_baseline.differences.job_final_state_vs_trace,1);assert.deepEqual(quantity.combined_baseline.job_final_state_mismatch,['position_quantity']);
+  assert.equal(quantity.combined_baseline.differences.remaining_quantity,1,'the oracle compared the job value 0.5 with its own');
+  // (b) each other field alone, then all four
+  const singles={final_cash:'1',position_cost:'5',open_allocations:2};
+  for(const [key,value] of Object.entries(singles)){
+    const one=await ok(replay(rec,holdout(response=>{response.ledger[key]=value;})));
+    assert.equal(one.combined_baseline.matched,false,key);assert.equal(one.combined_baseline.differences.job_final_state_vs_trace,1,key);assert.deepEqual(one.combined_baseline.job_final_state_mismatch,[key]);
+  }
+  const every=await ok(replay(rec,holdout(response=>{Object.assign(response.ledger,{final_cash:'1',position_quantity:'0.5',position_cost:'5',open_allocations:2});})));
+  assert.equal(every.combined_baseline.differences.job_final_state_vs_trace,4);
+  assert.deepEqual(every.combined_baseline.job_final_state_mismatch,['final_cash','position_quantity','position_cost','open_allocations']);
+  // (c) a HOLDOUT that ends with an OPEN position (REPLAY-perturbed: no fixture pair ends open, so the ledger is cut after its last filled BUY).
+  // The trace ends with a non-zero quantity and cost. The job values below follow the cut trace, so the cross-check finds no job difference there, and the oracle (which ran the full
+  // bars) is the only side that disagrees: unmatched, status unchanged. With the job's original (flat) values the same cut trace is a named job difference.
+  const cut=holdout(response=>{
+    const {decisions}=response.ledger;
+    const last=decisions.findLastIndex(decision=>decision.outcome==='FILLED'&&decision.event_type==='BUY');
+    response.ledger.decisions=decisions.slice(0,last+1);
+    response.decision_count=response.ledger.decisions.length;
+    const state=finalStateOf(response.ledger.decisions);
+    response.fills=state.fills;
+    cut.state=state;
+  });
+  const follow=holdout(response=>{
+    cut(response);
+    const state=cut.state;
+    Object.assign(response.ledger,{final_cash:state.cash,position_quantity:state.quantity.toFixed(),position_cost:state.cost,open_allocations:state.open});
+  });
+  const open=await ok(replay(rec,follow));
+  assert.ok(cut.state.quantity.gt(0)&&D(cut.state.cost).gt(0)&&cut.state.open>=1,'the cut trace ends with an open position: '+JSON.stringify({...cut.state,quantity:cut.state.quantity.toFixed()}));
+  const baseline=open.combined_baseline;
+  assert.equal(baseline.matched,false);
+  assert.equal(Object.hasOwn(baseline.differences,'job_final_state_vs_trace'),false,'the job values follow the cut trace, so the cross-check agrees');
+  assert.equal(baseline.counts.received_decisions,open.holdout_decisions.length);
+  assert.equal(baseline.differences.remaining_quantity,1);assert.ok(baseline.differences.open_allocation_count>=1);
+  assert.equal(open.holdout_decisions.length,baseline.counts.received_decisions);
+  const stale=await ok(replay(rec,holdout(response=>{cut(response);})));
+  assert.equal(stale.combined_baseline.matched,false);
+  assert.ok(stale.combined_baseline.differences.job_final_state_vs_trace>=3,JSON.stringify(stale.combined_baseline.differences));
+  assert.ok(stale.combined_baseline.job_final_state_mismatch.includes('position_quantity')&&stale.combined_baseline.job_final_state_mismatch.includes('position_cost')&&stale.combined_baseline.job_final_state_mismatch.includes('open_allocations'));
+  // (d) auditor item 2: a HOLDOUT response with ZERO fills. Only REJECTED decisions stay, the counts follow, the final state is the start cash with no position. The cross-check
+  // derives the same state (start cash, 0, 0, 0), so no job difference is named; the oracle (which ran the full bars) is the only side that disagrees.
+  const noFill=(response,payload)=>{
+    if(response.kind!=='HOLDOUT')return;
+    response.ledger.decisions=response.ledger.decisions.filter(decision=>decision.outcome==='REJECTED');
+    response.decision_count=response.ledger.decisions.length;response.fills=0;
+    Object.assign(response.ledger,{final_cash:payload.capital.cash,position_quantity:'0',position_cost:'0',open_allocations:0});
+  };
+  const none=await ok(replay(rec,noFill));
+  assert.equal(none.combined_baseline.matched,false);
+  assert.equal(Object.hasOwn(none.combined_baseline,'error'),false,'the response is consistent, so the oracle compared it');
+  assert.equal(Object.hasOwn(none.combined_baseline.differences,'job_final_state_vs_trace'),false,JSON.stringify(none.combined_baseline.differences));
+  assert.equal(Object.hasOwn(none.combined_baseline,'job_final_state_mismatch'),false);
+  assert.equal(none.selected.holdout.fills,0);
+  // (e) F5: the job and the derivation disagree AND the oracle input cannot be built (a policy key dropped from the request after the checks): the error record keeps the named difference.
+  const broken=await ok(replay(rec,(response,payload)=>{
+    if(response.kind!=='HOLDOUT')return;
+    response.ledger.position_quantity='0.5';
+    delete payload.policy.killSwitch;
+  }));
+  const failed=broken.combined_baseline;
+  assert.equal(failed.matched,false);assert.ok(typeof failed.error==='string'&&failed.error.length>0);
+  assert.equal(failed.differences.oracle_error,1);assert.equal(failed.differences.job_final_state_vs_trace,1);
+  assert.deepEqual(failed.job_final_state_mismatch,['position_quantity']);
+  // a failure without a disagreement stays the plain error record
+  const plain=await ok(replay(rec,(response,payload)=>{if(response.kind==='HOLDOUT')delete payload.policy.killSwitch;}));
+  assert.equal(plain.combined_baseline.differences.oracle_error,1);assert.equal(Object.hasOwn(plain.combined_baseline.differences,'job_final_state_vs_trace'),false);assert.equal(Object.hasOwn(plain.combined_baseline,'job_final_state_mismatch'),false);
 });
 
 /* ---- 9c. S3 fix round: the child process (environment, working directory, kill) ---- */

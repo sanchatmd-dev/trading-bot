@@ -328,7 +328,11 @@ def evaluate_request(request: object) -> dict:
     }
     if kind == "HOLDOUT":
         result["test"] = mark_period(marked, ledger["fills"], split["validation_end"], split["test_end"], cash)
-        result["ledger"] = {"events": ledger["events"], "decisions": ledger["decisions"]}
+        result["ledger"] = {
+            "events": ledger["events"], "decisions": ledger["decisions"],
+            "final_cash": ledger["final_cash"], "position_quantity": ledger["position_quantity"],
+            "position_cost": ledger["position_cost"], "open_allocations": ledger["open_allocations"],
+        }
     return result
 
 

@@ -823,6 +823,49 @@ def test_pinned_library_runs_reproduce(manifest, rows, bars, signals):
     assert [p["members"] for p in manifest["library_runs"]][1] == ["M1", "M2", "M1"]  # M3 (F15) equals M1
 
 
+@pytest.fixture(scope="module")
+def manifest_v2():
+    return json.loads((FIXTURES / "manifest-v2.json").read_text())
+
+
+@pytest.fixture(scope="module")
+def rows_v2():
+    return json.loads((FIXTURES / "bars-v2.json").read_text())["bars"]
+
+
+def test_pinned_bars_v2_measured_run_reproduces(manifest, manifest_v2, rows_v2):
+    """F1: M1+M2 at the manifest-v2 pair, replayed over bars-v2 as a HOLDOUT step does, give the measured block of manifest-v2.json."""
+    measured = manifest_v2["measured"]
+    assert hashlib.sha256((FIXTURES / "bars-v2.json").read_bytes()).hexdigest() == manifest_v2["bars"]["sha256"]
+    assert (len(rows_v2), rows_v2[0]["time"], rows_v2[-1]["time"]) == (
+        manifest_v2["bars"]["bar_count"], manifest_v2["bars"]["first_time"], manifest_v2["bars"]["last_time"])
+    split = measured["split"]
+    assert split == manifest["split"]
+    bars = [bar_of(row) for row in rows_v2]
+    vectors = {
+        name: tuple((e.buy, e.native_exit) for e in evaluate_bars(rows_v2, inputs_of(manifest, name)))
+        for name in measured["members"]
+    }
+    members = [(dep, vectors[name]) for dep, name in zip(measured["deployment_ids"], measured["members"], strict=True)]
+    ledger = fixture_run(manifest, bars, rows_v2, members, pair=measured["pair"])["ledger"]
+    assert (len(ledger["fills"]), len(ledger["decisions"]), len(ledger["events"])) == (
+        measured["fills"], measured["decisions"], measured["events"])
+    assert ledger["final_cash"] == measured["final_cash"] and ledger["open_allocations"] == measured["open_allocations"]
+    assert sha(ledger) == measured["ledger_sha256"]
+    cash = Decimal(manifest["capital"]["cash"])
+    marked = [(bar, False, False) for bar in bars]
+    periods = {
+        "train": (split["warmup"], split["train_end"]),
+        "validation": (split["train_end"], split["validation_end"]),
+        "test": (split["validation_end"], split["test_end"]),
+    }
+    for name, (low, high) in periods.items():
+        got = mark_period(marked, ledger["fills"], low, high, cash)
+        assert got["closed_trades"] == measured[name]["closed_trades"], name
+        for key in ("net_return_percent", "max_drawdown_percent"):
+            assert Decimal(str(got[key])) == Decimal(measured[name][key]), (name, key)
+
+
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is not on PATH (generator check not run)")
 def test_generator_rebuilds_the_committed_bars_byte_for_byte():
     done = subprocess.run(

@@ -1,0 +1,121 @@
+{
+ "version": "mp-fixture-manifest-v2",
+ "fixture": true,
+ "label": "BINANCE:BTCUSDT fixture (synthetic, not market data)",
+ "bars": {
+  "path": "bars-v2.json",
+  "sha256": "9e948c1c1325472c3493f07d0380a125939e9e176804d99387e47aab24a58fbc",
+  "bar_count": 6000,
+  "first_time": 1767340800000,
+  "last_time": 1767700740000,
+  "generator": {
+   "script": "scripts/build-mp-fixture-bars.mjs",
+   "version": "mp-fixture-bars-v2",
+   "seed": 20261021,
+   "seed_klines": 500
+  },
+  "atr": "closed-ohlcv-atr14-v1"
+ },
+ "derivation": {
+  "from": "bars-v1.json",
+  "regime_scale": 3,
+  "regime_scale_keys": [
+   "rise",
+   "fall",
+   "noise"
+  ],
+  "first_time_shift_ms": 28800000,
+  "unchanged": [
+   "seed",
+   "bar_count",
+   "seed_klines",
+   "atr"
+  ]
+ },
+ "measured": {
+  "method": "real combined Paper evaluator (robot_quant.mp_combined_paper.combined_paper_replay with the SPT Custom evaluator) over bars-v2.json; periods marked with robot_quant.ql3a.mark_period exactly as robot_quant.mp_combined_job does for a HOLDOUT step; members, inputs, split, model, policy, capital, pair and same-bar order from manifest.json; measured locally 2026-10-21 with a throwaway script, CPython venv of quant_lab",
+  "members": [
+   "M1",
+   "M2"
+  ],
+  "deployment_ids": [
+   "fixture-m1-1",
+   "fixture-m2-2"
+  ],
+  "pair": {
+   "atr_multiplier": "2",
+   "rr": "1.5"
+  },
+  "split": {
+   "warmup": 1250,
+   "train_end": 4100,
+   "validation_end": 5050,
+   "test_end": 6000
+  },
+  "train": {
+   "closed_trades": 49,
+   "net_return_percent": "1.130471910886000000",
+   "max_drawdown_percent": "0.5315962897795891248047290574"
+  },
+  "validation": {
+   "closed_trades": 12,
+   "net_return_percent": "0.655975189604638382844962300",
+   "max_drawdown_percent": "0.1314074878371697253602780578"
+  },
+  "test": {
+   "closed_trades": 21,
+   "net_return_percent": "0.796721362702060459833581800",
+   "max_drawdown_percent": "0.4815932628770921499534439372"
+  },
+  "native_counts": {
+   "M1": {
+    "warmup": {
+     "buy": 24,
+     "exit": 6
+    },
+    "train": {
+     "buy": 61,
+     "exit": 18
+    },
+    "validation": {
+     "buy": 19,
+     "exit": 4
+    },
+    "test": {
+     "buy": 22,
+     "exit": 4
+    }
+   },
+   "M2": {
+    "warmup": {
+     "buy": 22,
+     "exit": 7
+    },
+    "train": {
+     "buy": 67,
+     "exit": 14
+    },
+    "validation": {
+     "buy": 21,
+     "exit": 2
+    },
+    "test": {
+     "buy": 24,
+     "exit": 5
+    }
+   }
+  },
+  "fills": 164,
+  "decisions": 420,
+  "events": 512,
+  "final_cash": "20520.975233185500000000",
+  "open_allocations": 0,
+  "ledger_sha256": "3a2554d1a410b962f52a8aece5d51a322a53fb2f1b44c421217e1550e3fb7941",
+  "holdout_gates": {
+   "rule": "src/multi-pine/executor.js with RULES of src/quant-research/contract.js: test closed trades at least 5, test net return not negative, test max drawdown at most 20 percent",
+   "minimum_closed_trades_test": 5,
+   "maximum_drawdown_percent": 20,
+   "passes": true
+  }
+ }
+}

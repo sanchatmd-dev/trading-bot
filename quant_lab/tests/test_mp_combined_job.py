@@ -455,13 +455,53 @@ def test_holdout_step_carries_test_metrics_trace_and_signal_vectors(manifest, ro
         assert len(vector["buy"]) == len(vector["native_exit"]) == split["test_end"]
         assert all(type(v) is bool for v in vector["buy"] + vector["native_exit"])
         assert "test" in entry["segments"] and entry["segments"]["test"]["buy"] >= 15
-    assert set(holdout["ledger"]) == {"events", "decisions"} and holdout["ledger"]["events"] and holdout["ledger"]["decisions"]
+    assert set(holdout["ledger"]) == {
+        "events", "decisions", "final_cash", "position_quantity", "position_cost", "open_allocations",
+    }
+    assert holdout["ledger"]["events"] and holdout["ledger"]["decisions"]
     # the pinned library run (all 6,000 rows) is the holdout ledger
     pinned = manifest["library_runs"][0]
     assert holdout["ledger_hash"] == pinned["ledger_sha256"]
     assert (len(holdout["ledger"]["events"]), len(holdout["ledger"]["decisions"]), holdout["fills"]) == (
         pinned["events"], pinned["decisions"], pinned["fills"])
     assert len(job._frame(holdout)) < job.RESPONSE_LIMIT
+
+
+def test_holdout_ledger_final_fields_equal_the_replay_ledger_in_type_and_value(manifest, rows, synthetic_gate):
+    members = synthetic_members(manifest)
+    holdout = run_job(manifest, rows, members, kind="HOLDOUT")
+    end = manifest["split"]["test_end"]
+    sigs = [signals_of(manifest, rows, "M1")[:end], signals_of(manifest, rows, "M2")[:end]]
+    library = library_ledger(manifest, rows[:end], sigs, ["fixture-m1-1", "fixture-m2-2"])["ledger"]
+    ledger = holdout["ledger"]
+    assert list(ledger) == ["events", "decisions", "final_cash", "position_quantity", "position_cost", "open_allocations"]
+    assert ledger["events"] == library["events"] and ledger["decisions"] == library["decisions"]
+    for key in ("final_cash", "position_quantity", "position_cost"):
+        assert type(ledger[key]) is str and type(library[key]) is str
+        assert ledger[key] == library[key] and not isinstance(ledger[key], (Decimal, float))
+    assert type(ledger["open_allocations"]) is int and ledger["open_allocations"] == library["open_allocations"]
+    assert ledger["final_cash"] != "" and Decimal(ledger["final_cash"]) > 0
+    # canonical JSON-safe: the response round-trips unchanged and never carries a Decimal or a float
+    assert json.loads(json.dumps(holdout, allow_nan=False)) == holdout
+
+    def no_decimal_or_float(value):
+        assert not isinstance(value, (Decimal, float))
+        if isinstance(value, dict):
+            for item in value.values():
+                no_decimal_or_float(item)
+        elif isinstance(value, list):
+            for item in value:
+                no_decimal_or_float(item)
+
+    no_decimal_or_float(ledger)
+
+
+def test_non_holdout_responses_carry_no_ledger(manifest, rows, synthetic_gate):
+    members = synthetic_members(manifest)
+    for kind in ("CANDIDATE", "SENSITIVITY", "STRESS"):
+        result = run_job(manifest, rows, members, kind=kind)
+        assert result["kind"] == kind and "ledger" not in result and "test" not in result
+        json.dumps(result, allow_nan=False)
 
 
 def test_stress_step_doubles_fee_and_slippage_and_pair_changes_only_the_pair(manifest, rows, synthetic_gate):
