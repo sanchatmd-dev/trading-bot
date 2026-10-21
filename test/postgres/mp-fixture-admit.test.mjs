@@ -178,7 +178,7 @@ const counts=async world=>({
 function tapped(target,{onQuery,onTransaction,log=[]}={}){
   return {log,
     get isTransaction(){return target.isTransaction;},
-    prepare:sql=>target.prepare(sql),
+    prepare:sql=>{log.push({kind:'query',sql:String(sql),tx:target.isTransaction,store:true});return target.prepare(sql);},
     transaction:(fn,options)=>{
       log.push({kind:'begin',isolation:options?.isolation});
       const run=()=>target.transaction(fn,options);
@@ -249,6 +249,22 @@ test('deadline: whole seconds 60 to 900, default 900; anything else is MP_INPUT_
 });
 
 /* ---- 2. step 1: shape, fixture flag, source slots ---- */
+
+test('step 1: a non-finite number anywhere in the input is MP_INPUT_INVALID with the top-level key, before any read, so NaN and Infinity never hash like null',async()=>{
+  const world=await newWorld();
+  const before=await digestAll();
+  const cases=[['seed',{seed:NaN}],['seed',{seed:Infinity}],['seed',{seed:-Infinity}],
+    ['budget',{budget:{candidates:NaN}}],['budget',{budget:{candidates:Infinity}}],
+    ['bridge_domains',{bridge_domains:{...DOMAINS,rr:{min:'0.5',max:Infinity,step:'0.5'}}}],['bridge_domains',{bridge_domains:{...DOMAINS,rr:{min:NaN,max:'2.5',step:'0.5'}}}],
+    ['dataset',{dataset:{...DATASET,warmup_bars:NaN}}],['bridge_domains',{bridge_domains:{...DOMAINS,list:[1,[2,NaN]]}}]];
+  for(const [field,over] of cases) {
+    const log=[];
+    refusedAs(await admit(world,over,serviceOn(tapped(fx,{log}))),MP_CODES.INPUT_INVALID,{field});
+    assert.deepEqual(log,[],field+': refused at step 1, before any read or transaction');
+  }
+  assert.deepEqual(await digestAll(),before);
+});
+
 
 test('step 1: the key list is closed, so no configuration or server-owned value comes from the request (V1)',async()=>{
   const world=await newWorld();
@@ -498,8 +514,7 @@ test('retry: an injected 40001 or 40P01 restarts T2 and succeeds; the attempt af
     assert.ok(lookups[0]<serializable[0],'step 3 runs before T1');
     assert.ok(lookups[1]>serializable[1]&&lookups[1]<serializable[2],'the retry looks the key up before the second T2 attempt');
     const attempt=log.slice(serializable[2]+1).filter(e=>e.kind==='query');
-    assert.equal(attempt[0].tx,true);assert.match(attempt[0].sql,/idempotency_key=\$3/,'the second attempt starts with the key lookup inside the transaction (RD-MP-35)');
-    assert.equal(attempt[1].tx,true);assert.match(attempt[1].sql,/FOR SHARE/,'then the locks');
+    assertT2Start(attempt,'the second attempt');
   }
 });
 
@@ -553,6 +568,12 @@ test('retry: a lost idempotency-key race loads the competitor run on the next at
 
 /* ---- 6b. RD-MP-35: T2 re-checks authorization and the idempotency key on every attempt ---- */
 
+/** RD-MP-35: a T2 attempt opens with the three authorization reads of the Store (users), all in the transaction, then the key lookup, then the first lock. */
+function assertT2Start(queries,label){
+  for(const i of [0,1,2]) {assert.equal(queries[i].tx,true,label+': authorization read '+i+' runs in the transaction');assert.match(queries[i].sql,/FROM users WHERE/,label+': read '+i+' is the users authorization read');}
+  assert.equal(queries[3].tx,true);assert.match(queries[3].sql,/idempotency_key=\$3/,label+': then the key lookup inside the transaction');
+  assert.equal(queries[4].tx,true);assert.match(queries[4].sql,/FOR SHARE/,label+': then the locks');
+}
 /** A service whose handle runs `before` as the T2 attempt `attempt` (1 is the first) starts, after step 3 and T1 and before the T2 snapshot. */
 function beforeT2(attempt,before,failures=[],log=[]) {
   return serviceOn(tapped(fx,{log,onTransaction:async(options,run,serializable)=>{
@@ -579,7 +600,9 @@ test('RD-MP-35 (a): an owner or Bot deactivated after step 2 and before the T2 s
   }
   // control: nothing deactivated, the same seam admits
   const control=await newWorld({child:true});
-  assert.equal((await admit(control,{},beforeT2(1,async()=>{}))).action,'ADMIT');
+  const controlLog=[];
+  assert.equal((await admit(control,{},beforeT2(1,async()=>{},[],controlLog))).action,'ADMIT');
+  assertT2Start(controlLog.slice(controlLog.findLastIndex(e=>e.kind==='begin')+1).filter(e=>e.kind==='query'),'first attempt');
   // a retry re-checks as well: the Bot is deactivated after the first attempt failed
   const again=await newWorld({child:true});
   let left=1;

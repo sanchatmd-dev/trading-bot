@@ -73,11 +73,20 @@ class Refusal extends Error {
 const refuse=outcome=>{throw new Refusal(outcome);};
 const retryable=error=>error?.code===SERIALIZATION_FAILURE||error?.code===DEADLOCK_DETECTED||(error?.code===UNIQUE_VIOLATION&&error.constraint===KEY_CONSTRAINT);
 
+/** True when a number that is not finite sits anywhere in the value: JSON turns NaN and Infinity into null, so they would hash like null. Depth-bounded; a cycle or a deeper value counts as non-finite input. */
+const hasNonFinite=(value,depth=0)=>{
+  if(typeof value==='number')return !Number.isFinite(value);
+  if(value===null||typeof value!=='object')return false;
+  if(depth>32)return true;
+  return Object.values(value).some(item=>hasNonFinite(item,depth+1));
+};
+
 /** Step 1: closed key list, shape, fixture flag, source slots. Returns a refusal or null. */
 function readInput(input) {
   if(!isObject(input))return invalid('input');
   for(const key of Object.keys(input))if(!INPUT_KEYS.includes(key))return invalid('input.'+key);
   for(const key of REQUIRED_KEYS)if(!Object.hasOwn(input,key))return invalid(key);
+  for(const key of Object.keys(input))if(hasNonFinite(input[key]))return invalid(key);
   if(!text(input.owner_id))return invalid('owner_id');
   if(!text(input.bot_id))return invalid('bot_id');
   if(typeof input.idempotency_key!=='string'||!IDEMPOTENCY_KEY.test(input.idempotency_key))return invalid('idempotency_key');
