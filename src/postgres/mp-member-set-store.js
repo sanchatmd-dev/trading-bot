@@ -43,13 +43,13 @@ const invalid=field=>refusal(MP_CODES.INPUT_INVALID,{stage:'store',field});
 /** Internal: the attempt must restart from the beginning (a lost content-key race: the winner is visible only to a new snapshot). */
 class Restart extends Error {}
 
-const BOT_ROWS=`SELECT m.pine_import_id,m.owner_id,m.bot_id,m.source_version,r.source_hash,m.connected,r.analysis
+export const BOT_ROWS=`SELECT m.pine_import_id,m.owner_id,m.bot_id,m.source_version,r.source_hash,m.connected,r.analysis
   FROM pine_memberships m JOIN pine_source_revisions r ON r.pine_import_id=m.pine_import_id AND r.source_version=m.source_version
   WHERE m.owner_id=$1 AND m.bot_id=$2 ORDER BY m.pine_import_id`;
-const DEPLOYMENT_ROWS=`SELECT deployment_id,owner_id,bot_id,pine_import_id,source_version,state,snapshot,snapshot_hash FROM pine_deployments
+export const DEPLOYMENT_ROWS=`SELECT deployment_id,owner_id,bot_id,pine_import_id,source_version,state,snapshot,snapshot_hash FROM pine_deployments
   WHERE owner_id=$1 AND bot_id=$2 AND deployment_id=ANY($3::text[]) ORDER BY deployment_id`;
-const EVIDENCE_ROWS=`SELECT deployment_id,snapshot_hash,evidence,evidence_hash FROM pine_bridge_evidence WHERE deployment_id=ANY($1::text[]) ORDER BY deployment_id`;
-const JOB_ROWS=`SELECT result->>'deployment_id' AS deployment_id,CASE WHEN jsonb_typeof(result->'integrated_pine')='string' THEN result->>'integrated_pine' END AS artifact
+export const EVIDENCE_ROWS=`SELECT deployment_id,snapshot_hash,evidence,evidence_hash FROM pine_bridge_evidence WHERE deployment_id=ANY($1::text[]) ORDER BY deployment_id`;
+export const JOB_ROWS=`SELECT result->>'deployment_id' AS deployment_id,CASE WHEN jsonb_typeof(result->'integrated_pine')='string' THEN result->>'integrated_pine' END AS artifact
   FROM pine_bridge_jobs WHERE owner_id=$1 AND bot_id=$2 AND operation='generate' AND status='SUCCEEDED'
   AND jsonb_typeof(result->'deployment_id')='string' AND result->>'deployment_id'=ANY($3::text[]) ORDER BY job_id`;
 const FIND_SET=`SELECT record FROM mp_member_sets WHERE owner_id=$1 AND bot_id=$2 AND content_digest=$3`;

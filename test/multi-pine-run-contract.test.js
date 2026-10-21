@@ -787,7 +787,7 @@ const root=path.resolve(here,'..');
 const sourcePath=path.join(root,'src','multi-pine','run-contract.js');
 
 // The run-store module re-validates stored contracts (RD-MP-21); test/mp-run-store-static-isolation.test.js proves no runtime root reaches it.
-const ALLOWED_IMPORTERS=['src/postgres/mp-run-store.js'];
+const ALLOWED_IMPORTERS=['src/postgres/mp-run-store.js','src/multi-pine/fixture-service.js'];
 test('import guard: no file under src outside src/multi-pine imports run-contract.js, except the run-store module',()=>{
   const srcDir=path.join(root,'src');
   const files=fs.readdirSync(srcDir,{recursive:true,withFileTypes:true}).filter(e=>e.isFile()&&/\.(?:js|mjs|cjs)$/.test(e.name)).map(e=>path.join(e.parentPath,e.name));
@@ -799,7 +799,7 @@ test('import guard: no file under src outside src/multi-pine imports run-contrac
   // the module itself exists in the allowed folder and no other multi-pine file re-exports it yet
   assert.ok(fs.existsSync(sourcePath));
   const others=files.filter(file=>file.startsWith(inside)&&file!==sourcePath).filter(file=>/run-contract/.test(fs.readFileSync(file,'utf8')));
-  assert.deepEqual(others.map(f=>path.relative(root,f)),[]);
+  assert.deepEqual(others.map(f=>path.relative(root,f).split(path.sep).join('/')).filter(f=>!ALLOWED_IMPORTERS.includes(f)),[]);
 });
 
 const stripComments=text=>text.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');

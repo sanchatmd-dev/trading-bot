@@ -8,7 +8,7 @@
   "files": {
     "src/postgres/mp-run-store.js": "a6ee4c3ccc5554c4f8556b817bb55c8aafe7ab3cfb821536c01d308371aaa514",
     "test/postgres/mp-run-store-writer.test.mjs": "1e3fb4737d7c17c22553471c37682fee621347206f939680aebafef2d2265fd1",
-  "test/multi-pine-run-contract.test.js": "f755bec6a6562de51945d41dff21fafeb94cc23550f0f350e24752a2efd6ef0d"
+    "test/multi-pine-run-contract.test.js": "f755bec6a6562de51945d41dff21fafeb94cc23550f0f350e24752a2efd6ef0d"
   },
   "hashNote": "SHA-256 of the line-feed content as Git stores it.",
   "newHostSteps": 0,

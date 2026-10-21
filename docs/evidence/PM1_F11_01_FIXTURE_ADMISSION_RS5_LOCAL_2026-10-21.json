@@ -1,0 +1,40 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-21",
+  "root": "Claude",
+  "baseRevision": "ae546bf",
+  "scope": "Local implementation of the F11-01 internal fixture admission service, slice RS-5 (RD-MP-23): src/multi-pine/fixture-service.js with its PostgreSQL and unit tests, export-only additions to src/postgres/mp-member-set-store.js and src/postgres/mp-run-store.js, and the run-contract import guard allowlist entry. No route, worker, view or runtime root imports it; nothing is installed on any environment.",
+  "method": "The local work-in-progress for RS-5 was not carried to the cloud root, so the slice was rebuilt from the binding rulings V1 to V7 and X1 to X6 in the 2026-10-21 handoff. A coder (Sonnet 5.5) wrote it; the coder found that the rulings as written left MP_MEMBER_QUANT_UNSUPPORTED unreachable and added a recomputed effective-inputs-hash clause, which root accepted provisionally. An independent architecture auditor (Opus 5.5) reviewed it statically and returned GO with no blocking finding; it verified the recomputed recipe is byte-identical to the reviewedInputs producer (a 5000-case property probe found 0 mismatches) and raised non-blocking findings N1 to N7. An independent tester (Sonnet 5.5) ran the related suites and 38 single-edit mutations: 30 killed, 2 equivalent, 6 survived, all coverage gaps and none a defect. A coder fix round applied N1 to N5 (exported recipe tested against the real producer, shared query and constraint exports instead of copies, a readBotState note, the injected clock for the member-set time, the validated data profile) and closed the six gaps with new tests; each closing test was confirmed by briefly applying its mutant (9 of 9 killed) and restoring the file to its recorded hash. Root then ran the final pass alone in the Claude cloud container (Node 24.22.0, isolated scram PostgreSQL 16.15 cluster, one file per process): every PostgreSQL file that names a changed module and the grant test, and the full unit suite. The round-2 mutation confirmations were run by the fix-round coder on its own tests; no independent tester reran them, and root's final pass is the only independent check of the fix round.",
+  "files": {
+    "src/multi-pine/fixture-service.js": "ae0b7dcc28fbc107c38c29f35d8fb5243972eb52c096f543a4a7d523008a9f57",
+    "test/postgres/mp-fixture-admit.test.mjs": "d5da85a28af189711095f9618913d3cf1e10b1b87c2db08c2d69a26362933ca8",
+    "test/multi-pine-fixture-service.test.js": "d988b0df823e2938ba25ddfa27243435ddf3836ae0b4d5d8bc918d647cdd6e82",
+    "src/postgres/mp-member-set-store.js": "474a6358fe3e0c7ed70c17dd052a0a564a3affdac60e8e0d0b56f68fced1cc10",
+    "src/postgres/mp-run-store.js": "60994fcaa46b1f11ba7d54422c61356fc8381c9a2602536a645fd4142f01b142",
+    "test/multi-pine-run-contract.test.js": "a392703a56688cb45ea7d875a5a418b071a0d6bd18dbf86a33e0f18e6b2b7d48"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "PostgreSQL, one file per process: mp-fixture-admit 24 of 24 (three runs by the coder, one by root), mp-member-set-store 14, mp-member-set 23, mp-run-store-isolation 27, mp-run-store-writer 30, mp-run-store 31 and runtime-grants 1, all with 0 fail. Full unit suite run by root alone: 2323 tests, 2309 pass, 1 skipped, 9 todo, 4 fail; the 4 failures are the real-process PF-2 R4 cases in test/preflight-runtime.test.js (three subtests and their parent), whose import closure contains none of the changed modules and which run in this container only because the quant_lab Python environment is installed there; they are recorded as an open environment item, not as RS-5 evidence. A full PostgreSQL suite on the parent revision in the same container passed 1327 of 1334 with 0 fail and 7 skipped.",
+  "mutations": {
+    "round1": "38 single-edit mutations: 30 killed, 2 equivalent or redundant (engine_hash read from input after the key is already refused; capability clauses already enforced by the per-member checks), 6 survived as coverage gaps (transaction-handle check, Bot and owner ACTIVE checks, FOR SHARE on deployments, retry on any unique violation, retry on any error).",
+    "round2": "9 of 9 killed after the fix round (the six gaps plus never retrying the key race, FOR SHARE on memberships and an extra event written into an allowed table)."
+  },
+  "limits": [
+    "Fixture role on isolated clusters only; nothing is installed on staging or production, and owner item O1 stays open.",
+    "engine_hash is injected; RS-6 decides it (R12).",
+    "Authorization is checked once, outside the admission transaction, and is not re-checked inside it.",
+    "On the first attempt, a same-key competitor that commits between the replay check and the transaction snapshot can turn a LOAD into a check refusal; retries are not affected.",
+    "Retry exhaustion, 42501, QR003 and unmapped database errors are rethrown with database text; any future route must map them.",
+    "The member set frozen in the first transaction stays when the admission transaction refuses, as the step order requires.",
+    "The recomputed effective-inputs-hash clause is a root deviation from the handoff ruling V2.",
+    "The final pass ran in a cloud container, not on CI; CI on the pushed head is the next check."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-21",
+    "statement": "Root reviewed the agent reports, the audit, both mutation rounds, the export-only store diffs and its own final pass, and accepted RS-5 as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}
