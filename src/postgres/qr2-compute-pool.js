@@ -6,9 +6,10 @@ import {Worker} from 'node:worker_threads';
 // run() is refused (the route slot already prevents it, this is the second guard). The returned promise settles only after the worker has
 // answered or has been terminated, so the route never frees its slot while a compute still runs. After a timeout or a crash the worker is
 // dropped and the next run() spawns a new one. The worker holds no state, so termination leaves nothing to repair. Counters are
-// process-local numbers only: no path, user, key or message text. The V8 flag --max-old-space-size (also spelled --max_old_space_size, with or
-// without =value, on the command line or in NODE_OPTIONS) is process-wide and overrides the worker resourceLimits.maxOldGenerationSizeMb, which
-// would silently disable the heap cap. The pool therefore fails closed: with that flag set, start() refuses before it calls spawn, so no worker
+// process-local numbers only: no path, user, key or message text. The V8 flags --max-old-space-size, --max-old-space-size-percentage, --max-heap-size
+// and --max-semi-space-size (each also spelled with underscores, with or without =value, on the command line or in NODE_OPTIONS) are process-wide
+// and override the worker resourceLimits maxOldGenerationSizeMb (first three) or maxYoungGenerationSizeMb (the semi-space flag), which would
+// silently disable the heap cap (Node 24.22 experiment, RC-Q40). The pool therefore fails closed: with that flag set, start() refuses before it calls spawn, so no worker
 // exists and run() rejects with kind spawn (counted as spawn). Only the flag name is tested; its value is never read or reported.
 
 export const QR2_COMPUTE_DEADLINE_MS=10000;
@@ -16,7 +17,7 @@ export const QR2_COMPUTE_RESOURCE_LIMITS=Object.freeze({maxOldGenerationSizeMb:2
 export const QR2_WORKER_ROLE='qr2-compute';
 const DEFAULT_WORKER_URL=new URL('./qr2-compute-worker.js',import.meta.url);
 
-const HEAP_FLAG=/^--?max[-_]old[-_]space[-_]size(?:=|["']*$)/;
+const HEAP_FLAG=/^--?(?:max[-_]old[-_]space[-_]size(?:[-_]percentage)?|max[-_]heap[-_]size|max[-_]semi[-_]space[-_]size)(?:=|["']*$)/;
 // True when the argv list or the NODE_OPTIONS text sets the process-wide old-space limit. Pure: reads only its arguments.
 export function setsProcessHeapLimit(execArgv,nodeOptions){
   if(Array.isArray(execArgv)&&execArgv.some(arg=>typeof arg==='string'&&HEAP_FLAG.test(arg)))return true;

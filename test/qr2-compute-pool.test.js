@@ -614,21 +614,29 @@ test('route with the real pool: a deadline frees the slot, answers 503 with Retr
 // --max-old-space-size is process-wide in V8 and overrides Worker resourceLimits.maxOldGenerationSizeMb, so the heap cap would be silently off.
 // The pool refuses with the existing kind spawn before any worker is created.
 test('heap flag detection: both spellings, with or without a value, in execArgv or NODE_OPTIONS; near misses and clean input pass',()=>{
-  for(const flag of ['--max-old-space-size=512','--max_old_space_size=512','--max-old-space-size','--max_old_space_size','-max-old-space-size=64','--max-old_space-size=1']){
+  // Node 24.22 experiment (worker resourceLimits vs heap_size_limit in the worker): these flags override the worker cap. --max-old-space-size,
+  // --max-old-space-size-percentage and --max-heap-size lift the old-generation cap; --max-semi-space-size lifts the young-generation cap.
+  for(const flag of ['--max-old-space-size=512','--max_old_space_size=512','--max-old-space-size','--max_old_space_size','-max-old-space-size=64','--max-old_space-size=1',
+    '--max-old-space-size-percentage=50','--max_old_space_size_percentage=50','--max-old-space-size-percentage','--max_old_space_size_percentage',
+    '--max-heap-size=2048','--max_heap_size=2048','--max-heap-size','--max_heap_size',
+    '--max-semi-space-size=64','--max_semi_space_size=64','--max-semi-space-size','--max_semi_space_size']){
     assert.equal(setsProcessHeapLimit([flag],undefined),true,'execArgv '+flag);
     assert.equal(setsProcessHeapLimit(['--no-warnings',flag,'7'],''),true,'execArgv among others '+flag);
     assert.equal(setsProcessHeapLimit([],flag),true,'NODE_OPTIONS '+flag);
     assert.equal(setsProcessHeapLimit(undefined,'--no-warnings   '+flag+'  --trace-uncaught'),true,'NODE_OPTIONS among others '+flag);
     assert.equal(setsProcessHeapLimit(undefined,'"'+flag+'"'),true,'NODE_OPTIONS quoted '+flag);
   }
-  for(const clean of [[undefined,undefined],[[],''],[['--no-warnings','--stack-size=512'],'--no-warnings --trace-uncaught'],[['--max-semi-space-size=16'],'--max-http-header-size=16384'],
-    [['--experimental-vm-modules'],'--title=max-old-space-size']]){
+  for(const clean of [[undefined,undefined],[[],''],[['--no-warnings','--stack-size=512'],'--no-warnings --trace-uncaught'],[['--max-http-header-size=16384'],'--max-http-header-size=16384'],
+    [['--experimental-vm-modules'],'--title=max-old-space-size'],[['--min-semi-space-size=16','--semi-space-growth-factor=4','--initial-heap-size=64','--initial-old-space-size=64'],'--stack-trace-limit=50'],
+    [['--max-old-space-sizes=1','--max-heap-sizes=1','--max-heap-size-x=1'],'--title=max-heap-size --title=max-semi-space-size']]){
     assert.equal(setsProcessHeapLimit(...clean),false,JSON.stringify(clean));
   }
 });
 
 test('heap flag refusal: the pool refuses before spawn, creates no worker, counts spawn and recovers when the flag is gone',async()=>{
-  for(const seam of [{execArgv:['--max-old-space-size=4096']},{execArgv:['--max_old_space_size=4096']},{nodeOptions:'--max-old-space-size=4096'},{nodeOptions:'--no-warnings --max_old_space_size'}]){
+  for(const seam of [{execArgv:['--max-old-space-size=4096']},{execArgv:['--max_old_space_size=4096']},{nodeOptions:'--max-old-space-size=4096'},{nodeOptions:'--no-warnings --max_old_space_size'},
+    {execArgv:['--max-old-space-size-percentage=50']},{nodeOptions:'--max_old_space_size_percentage=50'},{execArgv:['--max-heap-size=2048']},{nodeOptions:'--max_heap_size=2048'},
+    {execArgv:['--max-semi-space-size=64']},{nodeOptions:'--no-warnings --max_semi_space_size'}]){
     const {pool,log}=poolWith(['echo'],seam);
     try{
       let thrown=null;
@@ -676,7 +684,10 @@ test('heap flag refusal in a real process: the default pool reads process.execAr
   try{
     const refusedShape='{"kind":"spawn","alive":false,"counters":{"timeout":0,"crash":0,"heap":0,"spawn":1,"completed":0}}';
     for(const [label,args,nodeOptions] of [['execArgv',['--max-old-space-size=512'],undefined],['execArgv underscore',['--max_old_space_size=512'],undefined],
-      ['NODE_OPTIONS',[],'--max-old-space-size=512'],['NODE_OPTIONS underscore',[],'--max_old_space_size=512']]){
+      ['NODE_OPTIONS',[],'--max-old-space-size=512'],['NODE_OPTIONS underscore',[],'--max_old_space_size=512'],
+      ['execArgv percentage',['--max-old-space-size-percentage=50'],undefined],['NODE_OPTIONS percentage underscore',[],'--max_old_space_size_percentage=50'],
+      ['execArgv max-heap-size',['--max-heap-size=2048'],undefined],['NODE_OPTIONS max_heap_size',[],'--max_heap_size=2048'],
+      ['execArgv semi-space',['--max-semi-space-size=64'],undefined],['NODE_OPTIONS semi-space underscore',[],'--max_semi_space_size=64']]){
       const result=await runChild(args,nodeOptions);
       assert.equal(result.code,0,label+': '+result.err);
       assert.equal(result.out,refusedShape,label);
@@ -687,13 +698,13 @@ test('heap flag refusal in a real process: the default pool reads process.execAr
   }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 
-test('static: no tracked deploy file, script, unit, package.json script or Dockerfile sets max-old-space-size',()=>{
+test('static: no tracked deploy file, script, unit, package.json script or Dockerfile sets max-old-space-size, max-heap-size or max-semi-space-size',()=>{
   const root=path.join(here,'..');
   const tracked=execFileSync('git',['ls-files','-z'],{cwd:root,encoding:'utf8',maxBuffer:64*1024*1024}).split('\0').filter(Boolean);
   assert.ok(tracked.length>50,'git ls-files returned the tracked tree: '+tracked.length);
   // Excluded by rule: test files, docs and Markdown. The pool module names the flag only to refuse it.
   const exempt=file=>/^test\//.test(file)||/(^|\/)[^/]*\.test\.[cm]?js$/.test(file)||/^docs\//.test(file)||/\.md$/i.test(file)||file==='src/postgres/qr2-compute-pool.js';
-  const flag=/max[-_]old[-_]space/i;
+  const flag=/max[-_](?:old[-_]space|heap[-_]size|semi[-_]space)/i;
   const hits=[];let scanned=0;
   for(const file of tracked){
     if(exempt(file))continue;
