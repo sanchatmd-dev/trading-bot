@@ -1,0 +1,37 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-21",
+  "root": "Claude",
+  "baseRevision": "8c21fa9",
+  "scope": "Local implementation of the F11 RS-6 S1 follow-up (RD-MP-30, RD-MP-32, RD-MP-45): the job supplies its final ledger state, the executor validates the closed HOLDOUT ledger and re-derives the baseline final state from the FILLED decisions, and a synthetic bars-v2 fixture lets a real job run end SUCCEEDED. Landed at 3576153 (nine paths). No route, worker, view or runtime root uses it; nothing is installed on any environment.",
+  "method": "A coder wrote the follow-up. Round 1: an independent tester (Sonnet 5.5) PASS with 16 of 19 mutants killed (survivors equivalent), an Opus 5.5 auditor GO and a Fable 5.1 second opinion with no high finding. Round 2 fix (measurement pins, fill-field typing, non-negative final values, a no-fill test, mismatch names kept when the oracle throws, a header comment for the count-mismatch rule): tester PASS with 13 of 15 mutants killed (survivors equivalent) and Opus GO. Root accepted the round-2 evidence wording in the auditor report.",
+  "files": {
+    "quant_lab/src/robot_quant/mp_combined_job.py": "f80aa476aea5bed42dbcbdac09eea4f6f852f55b747000e9e7ff57275b50c474",
+    "quant_lab/tests/test_mp_combined_job.py": "f09a8efd3ddacea94065389986ad2eec49478cdc046412d5f63897ac4f4aa00f",
+    "quant_lab/tests/test_mp_combined_paper.py": "22ff415f3124e586b7498df5d17fac8cd99d1229dde2491c4d95b47f125a9a27",
+    "scripts/build-mp-fixture-bars.mjs": "4effb45ca2bdfca9d22132516f402e3cc361d38bbebc552aaa36e713d6e3b926",
+    "src/multi-pine/executor.js": "21db994cc324a9a85921ccd64407f27edeaf0a5729bd7303def1a6f56a1f9bad",
+    "test/postgres/mp-executor.test.mjs": "88eacf843feadee6b0931a9b8ee4d7269bfe497566c83ad0b125b57e22c01ddb",
+    "test/fixtures/mp-combined/bars-v2.json": "9e948c1c1325472c3493f07d0380a125939e9e176804d99387e47aab24a58fbc",
+    "test/fixtures/mp-combined/manifest-v2.json": "f675a83a22696c49b53e6c9f87e30ab278391ecf0c6561aefedb43dedb62ddc1",
+    "test/mp-fixture-bars.test.js": "77500ccf4a88302c247d7ea2581164064ee448f69dedd1d249bb4fa3003e4b4c"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it at 3576153.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "Local Windows run: mp-executor 32 of 36 pass, with 4 known Windows-only python-runner failures; the full local unit suite was not run (low RAM) and CI runs it. The manifest-v2 measured values (pair 2/1.5: 21 HOLDOUT trades, +0.79672 %, drawdown 0.48159 %) are now reproduced by a pytest. The executor real-job run on bars-v2 with domain atr 2-3 and rr 1-2 selects pair 2/2 with 20 HOLDOUT trades and ends SUCCEEDED with unreplaced metrics and a matched baseline. The two measurements are different runs and are not merged.",
+  "limits": [
+    "bars-v2 is synthetic fixture data, not market data and not research evidence; owner_recommendation_ready stays false and MULTI_PINE_REQUIRES_APP_3B stays in the blockers.",
+    "The open-final-position path is covered only by REPLAY perturbation; no real job run ends with an open position.",
+    "The local engine hash is a CRLF working-tree value, not a pin.",
+    "Four python-runner tests of mp-executor fail on Windows only (known); the full local unit suite was not run, CI runs it.",
+    "Executor rules RD-MP-32 and RD-MP-30 are extended by RD-MP-45: a HOLDOUT ledger of any other shape fails the run FAILED EVALUATION_FAILED; a job-versus-trace final-state disagreement is recorded as differences.job_final_state_vs_trace and job_final_state_mismatch (exact, no tolerance, also when the oracle fails) and never changes the run status; a count mismatch HOLDOUT_LEDGER_INCONSISTENT is stored as a baseline error and never changes the status.",
+    "The F1 to F30 acceptance with the private source stays open (RD-MP-34)."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-21",
+    "statement": "Root reviewed the tester and auditor reports of both rounds and accepted the S1 follow-up as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}
