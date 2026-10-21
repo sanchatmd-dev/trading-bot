@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {spawn as spawnProcess} from 'node:child_process';
+import {spawn as spawnProcess,execFileSync} from 'node:child_process';
 import {Worker} from 'node:worker_threads';
 import {EventEmitter} from 'node:events';
 import {createHash} from 'node:crypto';
@@ -15,7 +15,7 @@ import {validateBoundaryRecord} from '../src/portfolio/qr2-boundaries.js';
 import {Qr2Error} from '../src/portfolio/qr2-constants.js';
 import {composePerformanceResponse} from '../src/portfolio/qr2-response.js';
 import {executeQr2Job,QR2_WORKER_ROLE as WORKER_ROLE} from '../src/postgres/qr2-compute-worker.js';
-import {createQr2ComputePool,Qr2ComputeFailure,QR2_COMPUTE_DEADLINE_MS,QR2_COMPUTE_RESOURCE_LIMITS,QR2_WORKER_ROLE as POOL_ROLE} from '../src/postgres/qr2-compute-pool.js';
+import {createQr2ComputePool,Qr2ComputeFailure,QR2_COMPUTE_DEADLINE_MS,QR2_COMPUTE_RESOURCE_LIMITS,QR2_WORKER_ROLE as POOL_ROLE,setsProcessHeapLimit} from '../src/postgres/qr2-compute-pool.js';
 import {qr2PerformanceRoute,createQr2Slot} from '../src/postgres/qr2-routes.js';
 
 // QR-2 S3b (RC-Q35): worker-thread compute pool and route mapping. No database: the snapshot is hand-built in the exact shape readQr2Snapshot
@@ -358,7 +358,10 @@ test('close(): terminates the worker, rejects a running job as closed, refuses l
 test('configuration: the deadline is a pool option with default 10000 ms (no environment override), and a bad option throws',async()=>{
   assert.equal(QR2_COMPUTE_DEADLINE_MS,10000);
   assert.equal(Object.hasOwn(await import('../src/postgres/qr2-compute-pool.js'),'deadlineFromEnv'),false);
-  assert.equal(fs.readFileSync(path.join(SRC,'postgres','qr2-compute-pool.js'),'utf8').includes('process.env'),false,'the pool reads no environment');
+  // The only environment read is NODE_OPTIONS, for the heap-flag refusal; no pool setting comes from the environment.
+  const codeLines=fs.readFileSync(path.join(SRC,'postgres','qr2-compute-pool.js'),'utf8').split('\n').filter(line=>!/^\s*(\/\/|\/?\*)/.test(line)).join('\n');
+  const envReads=codeLines.match(/process\.env\b[.\[]?\w*/g)??[];
+  assert.deepEqual(envReads,['process.env.NODE_OPTIONS'],'the pool reads no environment except NODE_OPTIONS for the heap-flag refusal');
   assert.throws(()=>createQr2ComputePool({deadlineMs:0}),TypeError);
   assert.throws(()=>createQr2ComputePool({deadlineMs:1.5}),TypeError);
   assert.deepEqual({...QR2_COMPUTE_RESOURCE_LIMITS},{maxOldGenerationSizeMb:256,maxYoungGenerationSizeMb:32,stackSizeMb:4});
@@ -604,4 +607,108 @@ test('route with the real pool: a deadline frees the slot, answers 503 with Retr
     assert.equal(next.answer.status,200,'the second worker answered '+JSON.stringify(next.answer)+JSON.stringify(pool.counters));
     assert.deepEqual(next.answer.body,{echo:true});
   }finally{await pool.close();}
+});
+
+/* ------------------------------------------------------------------ process-wide heap flag (fail closed) */
+
+// --max-old-space-size is process-wide in V8 and overrides Worker resourceLimits.maxOldGenerationSizeMb, so the heap cap would be silently off.
+// The pool refuses with the existing kind spawn before any worker is created.
+test('heap flag detection: both spellings, with or without a value, in execArgv or NODE_OPTIONS; near misses and clean input pass',()=>{
+  for(const flag of ['--max-old-space-size=512','--max_old_space_size=512','--max-old-space-size','--max_old_space_size','-max-old-space-size=64','--max-old_space-size=1']){
+    assert.equal(setsProcessHeapLimit([flag],undefined),true,'execArgv '+flag);
+    assert.equal(setsProcessHeapLimit(['--no-warnings',flag,'7'],''),true,'execArgv among others '+flag);
+    assert.equal(setsProcessHeapLimit([],flag),true,'NODE_OPTIONS '+flag);
+    assert.equal(setsProcessHeapLimit(undefined,'--no-warnings   '+flag+'  --trace-uncaught'),true,'NODE_OPTIONS among others '+flag);
+    assert.equal(setsProcessHeapLimit(undefined,'"'+flag+'"'),true,'NODE_OPTIONS quoted '+flag);
+  }
+  for(const clean of [[undefined,undefined],[[],''],[['--no-warnings','--stack-size=512'],'--no-warnings --trace-uncaught'],[['--max-semi-space-size=16'],'--max-http-header-size=16384'],
+    [['--experimental-vm-modules'],'--title=max-old-space-size']]){
+    assert.equal(setsProcessHeapLimit(...clean),false,JSON.stringify(clean));
+  }
+});
+
+test('heap flag refusal: the pool refuses before spawn, creates no worker, counts spawn and recovers when the flag is gone',async()=>{
+  for(const seam of [{execArgv:['--max-old-space-size=4096']},{execArgv:['--max_old_space_size=4096']},{nodeOptions:'--max-old-space-size=4096'},{nodeOptions:'--no-warnings --max_old_space_size'}]){
+    const {pool,log}=poolWith(['echo'],seam);
+    try{
+      let thrown=null;
+      try{await pool.run({},{});}catch(error){thrown=error;}
+      assert.ok(thrown instanceof Qr2ComputeFailure,'a Qr2ComputeFailure');
+      assert.equal(thrown.kind,'spawn');
+      assert.equal(thrown.message,'QR-2 compute spawn','no flag text, value, path or secret in the message');
+      assert.equal(log.length,0,'spawn was never called: no half-started worker');
+      assert.equal(pool.alive,false);assert.equal(pool.busy,false);
+      assert.equal(await failureKind(pool.run({},{})),'spawn','refused again, not cached as success');
+      assert.deepEqual(pool.counters,{timeout:0,crash:0,heap:0,spawn:2,completed:0});
+    }finally{await pool.close();}
+  }
+  // The same pool class with clean seams spawns and answers, and the cap still reaches the worker options.
+  const {pool,log}=poolWith(['echo'],{execArgv:['--no-warnings'],nodeOptions:'--no-warnings'});
+  try{
+    assert.equal((await pool.run({},{})).ok,true);
+    assert.equal(log.length,1);assert.equal(log[0].options.resourceLimits.maxOldGenerationSizeMb,256);
+  }finally{await pool.close();}
+});
+
+test('heap flag refusal: the route answers 503 with Retry-After 2 and the slot is freed',async()=>{
+  const {pool,log}=poolWith(['echo'],{nodeOptions:'--max-old-space-size=4096'});
+  try{
+    const slot=createQr2Slot();
+    const refused=await driveRoute(pool,{slot});
+    assert.equal(refused.answer.status,503);assert.deepEqual(refused.headers,{'Retry-After':'2'});assert.equal(slot.busy,0);
+    assert.equal(log.length,0);
+  }finally{await pool.close();}
+});
+
+test('heap flag refusal in a real process: the default pool reads process.execArgv and NODE_OPTIONS and refuses without creating a worker',async()=>{
+  const poolUrl=new URL('../src/postgres/qr2-compute-pool.js',import.meta.url).href;
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'qr2-pool-'));
+  const script=path.join(dir,'child.mjs');
+  fs.writeFileSync(script,`import {createQr2ComputePool} from ${JSON.stringify(poolUrl)};const pool=createQr2ComputePool();let kind='none';try{await pool.run({},{});}catch(error){kind=error.kind;}console.log(JSON.stringify({kind,alive:pool.alive,counters:pool.counters}));`);
+  const runChild=(args,nodeOptions)=>new Promise(resolve=>{
+    const env={...process.env};
+    if(nodeOptions===undefined)delete env.NODE_OPTIONS;else env.NODE_OPTIONS=nodeOptions;
+    const child=spawnProcess(process.execPath,[...args,script],{stdio:['ignore','pipe','pipe'],env});
+    let out='',err='';child.stdout.on('data',d=>{out+=d;});child.stderr.on('data',d=>{err+=d;});
+    const killer=setTimeout(()=>child.kill(),30000);
+    child.on('exit',(code,signal)=>{clearTimeout(killer);resolve({code,signal,out:out.trim(),err});});
+  });
+  try{
+    const refusedShape='{"kind":"spawn","alive":false,"counters":{"timeout":0,"crash":0,"heap":0,"spawn":1,"completed":0}}';
+    for(const [label,args,nodeOptions] of [['execArgv',['--max-old-space-size=512'],undefined],['execArgv underscore',['--max_old_space_size=512'],undefined],
+      ['NODE_OPTIONS',[],'--max-old-space-size=512'],['NODE_OPTIONS underscore',[],'--max_old_space_size=512']]){
+      const result=await runChild(args,nodeOptions);
+      assert.equal(result.code,0,label+': '+result.err);
+      assert.equal(result.out,refusedShape,label);
+    }
+    const clean=await runChild([],undefined);
+    assert.equal(clean.code,0,clean.err);
+    assert.equal(clean.out,'{"kind":"none","alive":true,"counters":{"timeout":0,"crash":0,"heap":0,"spawn":0,"completed":1}}','without the flag the real worker starts and answers (other)');
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('static: no tracked deploy file, script, unit, package.json script or Dockerfile sets max-old-space-size',()=>{
+  const root=path.join(here,'..');
+  const tracked=execFileSync('git',['ls-files','-z'],{cwd:root,encoding:'utf8',maxBuffer:64*1024*1024}).split('\0').filter(Boolean);
+  assert.ok(tracked.length>50,'git ls-files returned the tracked tree: '+tracked.length);
+  // Excluded by rule: test files, docs and Markdown. The pool module names the flag only to refuse it.
+  const exempt=file=>/^test\//.test(file)||/(^|\/)[^/]*\.test\.[cm]?js$/.test(file)||/^docs\//.test(file)||/\.md$/i.test(file)||file==='src/postgres/qr2-compute-pool.js';
+  const flag=/max[-_]old[-_]space/i;
+  const hits=[];let scanned=0;
+  for(const file of tracked){
+    if(exempt(file))continue;
+    let text;
+    try{
+      const full=path.join(root,file);
+      const stat=fs.statSync(full);
+      if(!stat.isFile()||stat.size>8*1024*1024)continue;
+      const buffer=fs.readFileSync(full);
+      if(buffer.includes(0))continue;
+      text=buffer.toString('utf8');
+    }catch{continue;}
+    scanned++;
+    if(flag.test(text))hits.push(file);
+  }
+  assert.ok(scanned>20,'scanned text files: '+scanned);
+  assert.deepEqual(hits,[],'a tracked file sets the process-wide heap flag, which would disable the QR-2 worker heap cap');
 });

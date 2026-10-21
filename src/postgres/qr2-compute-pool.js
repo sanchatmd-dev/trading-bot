@@ -6,23 +6,35 @@ import {Worker} from 'node:worker_threads';
 // run() is refused (the route slot already prevents it, this is the second guard). The returned promise settles only after the worker has
 // answered or has been terminated, so the route never frees its slot while a compute still runs. After a timeout or a crash the worker is
 // dropped and the next run() spawns a new one. The worker holds no state, so termination leaves nothing to repair. Counters are
-// process-local numbers only: no path, user, key or message text.
+// process-local numbers only: no path, user, key or message text. The V8 flag --max-old-space-size (also spelled --max_old_space_size, with or
+// without =value, on the command line or in NODE_OPTIONS) is process-wide and overrides the worker resourceLimits.maxOldGenerationSizeMb, which
+// would silently disable the heap cap. The pool therefore fails closed: with that flag set, start() refuses before it calls spawn, so no worker
+// exists and run() rejects with kind spawn (counted as spawn). Only the flag name is tested; its value is never read or reported.
 
 export const QR2_COMPUTE_DEADLINE_MS=10000;
 export const QR2_COMPUTE_RESOURCE_LIMITS=Object.freeze({maxOldGenerationSizeMb:256,maxYoungGenerationSizeMb:32,stackSizeMb:4});
 export const QR2_WORKER_ROLE='qr2-compute';
 const DEFAULT_WORKER_URL=new URL('./qr2-compute-worker.js',import.meta.url);
 
+const HEAP_FLAG=/^--?max[-_]old[-_]space[-_]size(?:=|["']*$)/;
+// True when the argv list or the NODE_OPTIONS text sets the process-wide old-space limit. Pure: reads only its arguments.
+export function setsProcessHeapLimit(execArgv,nodeOptions){
+  if(Array.isArray(execArgv)&&execArgv.some(arg=>typeof arg==='string'&&HEAP_FLAG.test(arg)))return true;
+  if(typeof nodeOptions!=='string')return false;
+  return nodeOptions.split(/\s+/).some(token=>HEAP_FLAG.test(token.replace(/^["']+/,'')));
+}
+
 export class Qr2ComputeFailure extends Error{
   constructor(kind){super('QR-2 compute '+kind);this.name='Qr2ComputeFailure';this.kind=kind;}
 }
 
 /**
- * options: {deadlineMs (default 10000; a pool option only, no environment override), resourceLimits, workerUrl, spawn}. spawn(url,options) is a test seam (default new Worker). Returns
+ * options: {deadlineMs (default 10000; a pool option only, no environment override), resourceLimits, workerUrl, spawn, execArgv, nodeOptions}. spawn(url,options) is a test seam (default new Worker).
+ * execArgv and nodeOptions are test seams for the heap-flag refusal; they default to process.execArgv and process.env.NODE_OPTIONS, read at each worker start. Returns
  * {run(snapshot,input), close(), counters, busy, alive}.
  */
 export function createQr2ComputePool({deadlineMs=QR2_COMPUTE_DEADLINE_MS,resourceLimits=QR2_COMPUTE_RESOURCE_LIMITS,workerUrl=DEFAULT_WORKER_URL,
-  spawn=(url,options)=>new Worker(url,options)}={}){
+  spawn=(url,options)=>new Worker(url,options),execArgv,nodeOptions}={}){
   if(!Number.isSafeInteger(deadlineMs)||deadlineMs<1)throw new TypeError('deadlineMs must be a positive integer');
   const counters={timeout:0,crash:0,heap:0,spawn:0,completed:0};
   let current=null;   // {worker,ready}: the live worker, or null
@@ -78,6 +90,8 @@ export function createQr2ComputePool({deadlineMs=QR2_COMPUTE_DEADLINE_MS,resourc
 
   function start(){
     let worker;
+    // Fail closed before any worker exists: a process-wide heap flag would override the worker heap cap.
+    if(setsProcessHeapLimit(execArgv??process.execArgv,nodeOptions??process.env.NODE_OPTIONS)){counters.spawn++;throw new Qr2ComputeFailure('spawn');}
     try{worker=spawn(workerUrl,{resourceLimits:{...resourceLimits},workerData:{role:QR2_WORKER_ROLE},env:{}});}
     catch{counters.spawn++;throw new Qr2ComputeFailure('spawn');}
     const entry={worker,ready:false};
