@@ -58,7 +58,7 @@
     "test/helpers/mp-acceptance-world.mjs": "54ff89a843582a67549732276b5ed3f1d4227da4303578781e353142f09ce6de",
     "test/postgres/mp-private-acceptance.test.mjs": "60051125bc02e0fd7c0245d102cd86cf6d1d88d2bab2c030375fce308c84ce88"
   },
-  "hashNote": "SHA-256 of final worktree bytes verified by root and tester before commit. No private file or source bytes are included.",
+  "hashNote": "SHA-256 of implementation bytes committed at 170c3d394fea060ec8f96383d056958340c87ec7, verified by root and tester before that commit. The later comment-only follow-up is recorded separately below. No private file or source bytes are included.",
   "behavior": [
     "safeError uses an unexported per-process random 32-byte key for HMAC-SHA-256 message tags, truncated to eight hex characters. Its whole body is guarded; throwing getters, proxies or label conversion use the constant fallback.",
     "Repository and fixtures roots are realpathed. Private file names, locations, links, size, raw hashes, analysis shape and effective-input hashes remain checked. The test-only expected source hash has no environment bypass.",
@@ -473,5 +473,12 @@
   "go": null,
   "productionQualified": false,
   "privateAcceptanceRun": false,
-  "safety": "Spot/Paper only. No host/VPS, deploy, production migration, Live, guard reset or Best Inputs apply. Private reviewed source never entered tracked files or this evidence. The held terminal-evidence N1 line is unchanged."
+  "safety": "Spot/Paper only. No host/VPS, deploy, production migration, Live, guard reset or Best Inputs apply. Private reviewed source never entered tracked files or this evidence. The held terminal-evidence N1 line is unchanged.",
+  "commentOnlyFollowup": {
+    "baseRevision": "170c3d394fea060ec8f96383d056958340c87ec7",
+    "file": "test/postgres/mp-private-acceptance.test.mjs",
+    "sha256": "8ee8c8e50db1e49391f2c50e146983acc83c524625e3d56e4828776a99a94062",
+    "change": "Clarify fresh-cluster attestation and disposal, cluster connection before raw-hash validation, and database log controls before private DB writes rather than before filesystem reads.",
+    "verification": "Root compared the before/after file after removing block comments: identical executable text. Final default suite rerun: 21 pass, 0 fail, 11 skip. The synthetic dry run above used the preceding implementation bytes; it was not repeated for comment-only changes."
+  }
 }

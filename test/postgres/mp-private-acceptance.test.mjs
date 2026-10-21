@@ -20,11 +20,12 @@ import {
  * test/helpers/mp-private-inputs.mjs and test/helpers/mp-acceptance-world.mjs. There is no new script and no new runtime path.
  *
  * WHO RUNS WHAT. The owner runs the private cases locally (RD-MP-34): the reviewed SPT source and the two reviewed analyses sit in one git-ignored directory named by MP_PRIVATE_INPUTS_DIR, the
- * pins of the analyses are recorded in test/fixtures/mp-combined/private-inputs.manifest.json, and TEST_DATABASE_URL names a throwaway PostgreSQL cluster. Nothing else runs them.
+ * pins of the analyses are committed in test/fixtures/mp-combined/private-inputs.manifest.json, and TEST_DATABASE_URL names a fresh dedicated PostgreSQL cluster. MP_PRIVATE_FRESH_CLUSTER=1
+ * attests that it was created for this run and its data directory will be deleted afterwards. Nothing else runs the private cases.
  *   - Without MP_PRIVATE_INPUTS_DIR every private case is NOT RUN (skipped, with a reason that names the missing input). The tests that need no private input still run: the static check of the three
  *     harness files, the leak-control wrapper, the input reader (on an in-memory file system), the summary and the MP_REQUIRE_PRIVATE=1 refusal (a child process, with no reachable database).
- *   - With MP_REQUIRE_PRIVATE=1 and missing, unpinned or mismatching inputs the "private inputs" test fails and no database is touched (the private cases are skipped, and the before hook
- *     returns first).
+ *   - Missing, misplaced or unpinned inputs are refused before database contact (missing inputs fail when MP_REQUIRE_PRIVATE=1). After those checks, committed-pin and cluster-freshness
+ *     preflight precede private file reads. A raw-hash mismatch can therefore follow a cluster connection, but no private database write occurs; the private cases remain skipped.
  *   - A skipped run imports no store, executor or Python-runner module (those are imported lazily by mp-acceptance-world.mjs, after the inputs are valid).
  *
  * THE CASES. P1 to P9 and the optional PX follow section 5.2 of the R6 judgement. Each packaged run has its own owner and Bot (judgement J3). The harness NEVER marks a case accepted: it records
@@ -37,7 +38,7 @@ import {
  *   F1 to F9, F12 to F16, F25, F26 do not depend on the source and run in their committed suites; the evidence record labels them SYN (RD-MP-43).
  *
  * LEAK CONTROLS. Assertions compare hashes, codes and counts only (no deep equality anywhere in the harness files). Every call that carries private bytes is wrapped by guard(), which replaces any
- * error with a hash-only error. The cluster gets database-level log controls before the first private byte (mp-acceptance-world.mjs) and the harness refuses to continue if it cannot prove them.
+ * error with a hash-only error. Database-level log controls are proved before private bytes are written to the database (mp-acceptance-world.mjs); they do not precede filesystem reads.
  * The Python runner passes no private variable to the child; the source reaches Python only in the stdin request built from pine_source_revisions.
  *
  * O7 (judgement section 6). MP_ACCEPTANCE_O7=yes lets the harness derive fixture-labelled variants of the private member-2 analysis (P7, P8; hashes recomputed, kept only inside the throwaway
