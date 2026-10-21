@@ -87,6 +87,7 @@ test('One GET /api/overview per cycle lists every Bot with state, new-entry stat
     assert.equal(squash(p.cellOf(second,'New entries')),'Not running');
     assert.equal(squash(p.cellOf(second,'Trades today')),'0 / 6');
     assert.deepEqual(p.kpis(),['1 / 2','15,186.40 USDT','+0.85 R','2']);
+    assert.equal(p.d.querySelectorAll('#ovKpis .ov-kpi')[1].firstElementChild.textContent,'Book equity by currency','tile relabelled (QR-2 O2)');
     assert.equal(p.d.querySelector('#ovConn').textContent,'Connected');
     assert.match(p.d.querySelector('#ovUpdated').textContent,/^Updated \d+ s ago$/);
     assert.equal(p.d.querySelector('.ov-selected-name').textContent,'Momentum BTC');

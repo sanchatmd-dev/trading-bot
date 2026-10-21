@@ -126,7 +126,18 @@ function renderBotCreate() {
 }
 
 function renderAllBotsCard() {
-  const totalEquity = (me?.paperAccounts || []).reduce((sum, a) => sum + parseFloat(a.bookEquity || 0), 0);
+  // Book equity never adds across currencies (QR-2 O2): one total per currency, same rule as the Overview tile.
+  const equityByCurrency = new Map();
+  for (const a of me?.paperAccounts || []) {
+    const equity = Number.parseFloat(a?.bookEquity);
+    const configured = Number.parseFloat(a?.configuredEquity);
+    if (!Number.isFinite(equity) || (equity === 0 && !(configured > 0))) continue;
+    const currency = typeof a.currency === 'string' ? a.currency : '';
+    equityByCurrency.set(currency, (equityByCurrency.get(currency) || 0) + equity);
+  }
+  const equityLines = equityByCurrency.size
+    ? [...equityByCurrency].map(([currency, value]) => `<div class="all-bots-equity">${esc(fmt(value) + (currency ? ' ' + currency : ''))}</div>`).join('')
+    : '<div class="all-bots-equity">\u2014</div>';
   const dailyPnl = (me?.dailyAccounts || []).reduce((sum, a) => sum + (a.realized_r || 0), 0);
   const pnlPos = dailyPnl >= 0;
   $('#botSlots').innerHTML = `<article class="all-bots-card panel">
@@ -134,8 +145,8 @@ function renderAllBotsCard() {
       <span class="all-bots-title">${translate('All Bots')}</span>
       <span class="all-bots-readonly-badge">${translate('Read-Only')}</span>
     </div>
-    <div class="all-bots-stat"><span>${translate('Total portfolio value')}</span>
-      <strong>${fmt(totalEquity)}</strong></div>
+    <div class="all-bots-stat"><span>${translate('Book equity by currency')}</span>
+      <strong>${equityLines}</strong></div>
     <div class="all-bots-pnl ${pnlPos ? 'positive-text' : 'negative-text'}">
       ${translate('Combined daily P/L')}: ${pnlPos ? '+' : ''}${fmt(dailyPnl)} R
     </div>

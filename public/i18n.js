@@ -130,6 +130,7 @@ uiPairs.push(
   // All Bots scope card
   ['All Bots','รวมทุก Bot'],
   ['Total portfolio value','มูลค่าพอร์ตรวม'],
+  ['Book equity by currency','Book equity แยกตามสกุลเงิน'],
   ['Combined daily P/L','กำไรขาดทุนรวมวันนี้'],
   ['Read-Only','อ่านอย่างเดียว'],
   ['All Bots: overview and trade log only. Select a bot to edit settings.','ทุก Bot: ดูภาพรวมและประวัติ เลือก Bot ก่อนแก้การตั้งค่า']

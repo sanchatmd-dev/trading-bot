@@ -134,7 +134,7 @@
     kpis.replaceChildren(
       kpi('Bots running',state.loaded?states.RUNNING+' / '+state.bots.length:'\u2014',
         state.loaded?tpl('Paused {p} \u00b7 Stopped {s} \u00b7 Setup {u}',{p:states.PAUSED,s:states.STOPPED,u:states.SETUP}):'',states.RUNNING?'live':null),
-      kpi('Paper equity',equityValue,T('Book equity at position cost, per currency')),
+      kpi('Book equity by currency',equityValue,T('Book equity at position cost, per currency')),
       kpi('Realized today',state.loaded?signedR(realized):'\u2014',state.loaded?tpl('{n} trades today',{n:trades}):'',realized>0?'gain':realized<0?'loss':null),
       kpi('Open positions',state.loaded?String(open.length):'\u2014',state.loaded?tpl('Held by {n} of {total} bots',{n:new Set(open.map(ownerOf)).size,total:state.bots.length}):''));
   }
