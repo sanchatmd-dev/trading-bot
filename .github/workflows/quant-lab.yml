@@ -48,6 +48,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         env:
           PF2_REQUIRE_PYTHON: '1'
+      - run: node --test test/trace-reproduction-closure.test.js
+        working-directory: ${{ github.workspace }}
+        env:
+          TRACE_REQUIRE_PYTHON: '1'
       - run: uv run --no-sync python -m robot_quant.smoke
       - run: git diff --check
   gate:
