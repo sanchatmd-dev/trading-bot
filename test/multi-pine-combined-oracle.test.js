@@ -774,3 +774,33 @@ test('the module is pure, imports only the production decision functions, and na
     assert.ok(!forbidden.test(body),String(forbidden));
   assert.ok(!/\bnew Date\(\)/.test(body),'no clock');
 });
+const own=(map,key,value)=>{Object.defineProperty(map,key,{value,enumerable:true,configurable:true,writable:true});};
+test('count maps keyed by Python reason strings: __proto__, constructor and toString are plain own keys',()=>{
+  const r=run(RICH()),python=pythonLike(r);
+  // zero entries are the same as absent ones, including through the member -> Bot sum
+  const zeros=edit(python,p=>{
+    for(const row of [...p.diagnostics.members,p.diagnostics.bot])for(const key of ['rejected','exit_fills'])
+      for(const reason of ['__proto__','constructor','toString'])own(row[key],reason,0);
+  });
+  assert.ok(Object.hasOwn(zeros.diagnostics.bot.rejected,'__proto__'),'fixture carries an own __proto__ key');
+  const same=compareCombined(zeros,r);assert.equal(same.matched,true,JSON.stringify(same.differences));
+  // a hostile key with a count is a reason the oracle never produced: member row and Bot row both differ
+  for(const reason of ['__proto__','constructor','toString'])for(const key of ['rejected','exit_fills']){
+    const hostile=edit(python,p=>{for(const row of [p.diagnostics.members[1],p.diagnostics.bot])own(row[key],reason,1);});
+    assert.equal(compareCombined(hostile,r).matched,false,reason+' '+key);
+  }
+  // a count under a hostile key in one member row only
+  const split=edit(python,p=>{own(p.diagnostics.members[0].rejected,'constructor',1);});
+  assert.equal(compareCombined(split,r).matched,false,'constructor count in a member row, not in the Bot row');
+  // the Node side counts the same reasons as own keys
+  const decisions=['__proto__','constructor','toString'].flatMap(reason=>[
+    {event_type:'BUY',outcome:'REJECTED',reason,entry_ref:refOf(1,3)},{event_type:'EXIT',outcome:'REJECTED',reason,entry_ref:refOf(1,3)},
+    {event_type:'EXIT',outcome:'FILLED',reason,entry_ref:refOf(1,3)}]);
+  const funnel=deriveFunnel({events:[],decisions},null).get('dep-1');
+  for(const reason of ['__proto__','constructor','toString'])for(const key of ['rejected_buy','exits_rejected','exits_filled'])
+    assert.equal(Object.getOwnPropertyDescriptor(funnel[key],reason)?.value,1,key+' '+reason);
+  assert.equal(Object.keys(funnel.rejected_buy).join(),'__proto__,constructor,toString');
+  // the Bot-level sum keeps them too
+  const bot=sumFunnels([funnel,funnel]);
+  assert.equal(Object.getOwnPropertyDescriptor(bot.rejected_buy,'__proto__')?.value,2);assert.equal(bot.exits_filled.constructor,2);
+});

@@ -177,10 +177,12 @@ export function orderBarIntents(stepped){
 
 /* ------------------------------------------------------------------ Bot ledger (one account, many members) */
 
-const emptyReasons=()=>Object.fromEntries(EXIT_REASONS.map(reason=>[reason,0]));
+/** Count maps are keyed by reason strings that may come from Python: no prototype, so `__proto__`, `constructor` and `toString` are plain own keys. */
+const countsOf=(entries=[])=>{const out=Object.create(null);for(const [key,value] of entries)out[key]=value;return out;};
+const emptyReasons=()=>countsOf(EXIT_REASONS.map(reason=>[reason,0]));
 const bump=(map,key)=>{map[key]=(map[key]??0)+1;};
 const newFunnel=member=>({ordinal:member.ordinal,deployment_id:member.deployment_id,native_buy:0,native_exit:0,intents_buy:0,intents_exit:emptyReasons(),pre_start_intents:0,
-  suppressed_buy:{exit_bar:0,no_atr:0,invalid_levels:0},accepted_buy:0,capped_buy:0,rejected_buy:{},exits_filled:emptyReasons(),exits_rejected:{},orphan_exits:{warmup_entry:0,refused_entry:0}});
+  suppressed_buy:{exit_bar:0,no_atr:0,invalid_levels:0},accepted_buy:0,capped_buy:0,rejected_buy:countsOf(),exits_filled:emptyReasons(),exits_rejected:countsOf(),orphan_exits:{warmup_entry:0,refused_entry:0}});
 
 /**
  * Bot state by the Node ledger rules (ledger.js: position quantity and cost, initial risk and pnl reset at Bot flat, loss streak moves only
@@ -267,12 +269,12 @@ export function createCombinedLedger({members,model,policy,equity,cash,broker,sy
 /* ------------------------------------------------------------------ oracle run */
 
 const ZERO_FUNNEL_SUM=()=>({native_buy:0,native_exit:0,intents_buy:0,intents_exit:emptyReasons(),pre_start_intents:0,suppressed_buy:{exit_bar:0,no_atr:0,invalid_levels:0},
-  accepted_buy:0,capped_buy:0,rejected_buy:{},exits_filled:emptyReasons(),exits_rejected:{},orphan_exits:{warmup_entry:0,refused_entry:0}});
+  accepted_buy:0,capped_buy:0,rejected_buy:countsOf(),exits_filled:emptyReasons(),exits_rejected:countsOf(),orphan_exits:{warmup_entry:0,refused_entry:0}});
 function addInto(target,source){
   for(const [key,value] of Object.entries(source)){
     if(key==='ordinal'||key==='deployment_id')continue;
     if(typeof value==='number')target[key]=(target[key]??0)+value;
-    else{target[key]??={};addInto(target[key],value);}
+    else{target[key]??=countsOf();addInto(target[key],value);}
   }
 }
 /** Bot-level funnel: the field-wise sum of the member funnels (MPC 5.7 "they sum to the Bot-level counts"). */
@@ -360,7 +362,7 @@ const byOrdinal=(a,b)=>ordinalOf(a)<ordinalOf(b)?-1:ordinalOf(a)>ordinalOf(b)?1:
 
 /* ---- funnel name map: the Python diagnostics keys on one side, the oracle funnel on the other (B2) */
 const sumValues=map=>Object.values(map).reduce((a,b)=>a+b,0);
-const mergeCounts=(...maps)=>{const out={};for(const map of maps)for(const [key,value] of Object.entries(map))out[key]=(out[key]??0)+value;return out;};
+const mergeCounts=(...maps)=>{const out=countsOf();for(const map of maps)for(const [key,value] of Object.entries(map))out[key]=(out[key]??0)+value;return out;};
 /**
  * Python diagnostics key -> value derived from one oracle funnel. Every key is required in every Python member row and in `bot`; a missing key is a difference.
  * Windows: all counts cover ALL rows of the step input, warm-up included; `pre_start_intents` is the part of the intents with time < start_time.
@@ -383,7 +385,7 @@ export const PYTHON_FUNNEL_MAP=Object.freeze({
 const MAP_KEYS=new Set(['rejected','exit_fills']);
 export const pythonFunnelView=funnel=>Object.fromEntries(Object.entries(PYTHON_FUNNEL_MAP).map(([key,from])=>[key,from(funnel)]));
 /** A count map {reason: n} compares without its zero entries; anything but non-negative integers is invalid (null). */
-const countMap=value=>isObject(value)&&Object.values(value).every(n=>Number.isInteger(n)&&n>=0)?canonical(Object.fromEntries(Object.entries(value).filter(([,n])=>n>0))):null;
+const countMap=value=>isObject(value)&&Object.values(value).every(n=>Number.isInteger(n)&&n>=0)?canonical(countsOf(Object.entries(value).filter(([,n])=>n>0))):null;
 const sameCount=(key,left,right)=>{
   if(MAP_KEYS.has(key)){const a=countMap(left),b=countMap(right);return a!==null&&a===b;}
   return Number.isInteger(left)&&left>=0&&left===right;
@@ -410,7 +412,7 @@ function sumPythonRows(rows){
  */
 export function deriveFunnel(ledger,startTime){
   const byMember=new Map();
-  const slot=id=>{if(!byMember.has(id))byMember.set(id,{intents_buy:0,intents_exit:emptyReasons(),pre_start_intents:0,accepted_buy:0,capped_buy:0,rejected_buy:{},exits_filled:emptyReasons(),exits_rejected:{}});return byMember.get(id);};
+  const slot=id=>{if(!byMember.has(id))byMember.set(id,{intents_buy:0,intents_exit:emptyReasons(),pre_start_intents:0,accepted_buy:0,capped_buy:0,rejected_buy:countsOf(),exits_filled:emptyReasons(),exits_rejected:countsOf()});return byMember.get(id);};
   const warm=time=>startTime!==null&&startTime!==undefined&&time<startTime;
   for(const event of ledger.events){
     const funnel=slot(entryOwner(event.entry_ref));
