@@ -1,0 +1,28 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-21",
+  "root": "Claude",
+  "baseRevision": "6f6e081",
+  "scope": "Local implementation of F09 builder packet S3a: the trace reproduction driver (robot_quant.trace_reproduction), which re-runs the selected parameters once through the unchanged research_engine HOLDOUT evaluation and records the trade, decision and per-fill equity rows of that one replay, each labelled with its partition. New files only; no engine-closure list or engine hash changed; the Node module (S3b), the acceptance tests (S3c) and the contract rows (S3e) are not landed.",
+  "method": "Design: an Opus draft and an independent Fable draft judged by an Opus auditor (docs/design/f09-trace-repro, rulings R1 to R11). A coder (Sonnet 5.5) wrote S3a in an isolated worktree. An independent tester (Sonnet 5.5) ran 23 new mutants (17 killed; 4 test gaps, 2 likely equivalent) and an independent Opus 5.5 auditor returned GO with non-blocking items. A fix round closed the four gaps and the auditor's N1 to N3 (capture lock, exit-quantity guard, gross profit and loss, open-entry and final-position cross-checks), each confirmed by its mutant. Root integrated the files after checking their hashes and ran the Python suite.",
+  "files": {
+    "quant_lab/src/robot_quant/trace_reproduction.py": "731147b18b77c6399b217f9b5564cafd876f0d0e055e8e73782d906c6900136d",
+    "quant_lab/tests/test_trace_reproduction.py": "28eb9016c28e459704d523a3de0f6b523864b4756a7e503534d07c8e9b0fcf79"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test_trace_reproduction.py 35 passed (two runs by the fix-round coder); Python suite 698 passed, 3 skipped in the root run; ruff clean.",
+  "limits": [
+    "Owner question OQ-1 (holdout rows in trace files) is open; the driver emits rows for every partition, labelled, so the render step can apply the answer.",
+    "The fixtures replace CustomOptimizationPlan.from_snapshot, so source and snapshot identity are not exercised.",
+    "Container Python 3.12.3 may differ from the staging host; local fixture evidence only.",
+    "The trace-reproduction closure (J7) must be the driver's full import closure; it is defined in S3b, not yet landed."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-21",
+    "statement": "Root accepted F09 builder S3a as local engineering evidence. It changes no PM-1 credit and deploys nothing."
+  }
+}
