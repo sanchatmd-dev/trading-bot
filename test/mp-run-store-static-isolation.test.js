@@ -26,7 +26,12 @@ const ALLOWED_FILES=[
   {file:'src/postgres/mp-run-store.js',required:false},
   {file:'scripts/migrate-mp-run-store.mjs',required:true},
   {file:'scripts/grant-postgres-mp-fixture.sql',required:true},
-  {file:'scripts/grant-postgres-runtime.sql',required:true}];
+  {file:'scripts/grant-postgres-runtime.sql',required:true},
+  // RD-MP-36 (slice R6-3): the multi-Pine package store reads the run store by SELECT in its export guard (no foreign key, judgement J1), so its SQL, its migration
+  // and its fixture grant script name run-store tables. Its rollback SQL and CLI name none and are not listed.
+  {file:'src/postgres/mp-package-store.sql',required:true},
+  {file:'src/postgres/mp-package-store-migration.js',required:true},
+  {file:'scripts/grant-postgres-mp-package-fixture.sql',required:true}];
 const ALLOWED_PREFIX='src/multi-pine/';
 // Code roots outside src and scripts that no run-store name may enter either (the web client, the Python engine, container and service definitions).
 const OTHER_ROOTS=['public','quant_lab','Dockerfile','Caddyfile','compose.yaml','compose.postgres.yaml','.deploy/astra-trade-phase2.service','.deploy/astra-trade-quant.service',

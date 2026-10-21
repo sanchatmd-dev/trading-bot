@@ -40,8 +40,10 @@ DECLARE
     'quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events',
     'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events',
     'mp_member_sets','mp_member_set_members','paper_capital_models'];
-  -- Internal tables: no runtime privilege of any kind (the multi-Pine run store: marker, runs, run events).
-  internal_only CONSTANT TEXT[] := ARRAY['mp_run_store_schema','mp_research_runs','mp_research_run_events'];
+  -- Internal tables: no runtime privilege of any kind (the multi-Pine run store: marker, runs, run events; the multi-Pine package store: marker and ten record tables).
+  internal_only CONSTANT TEXT[] := ARRAY['mp_run_store_schema','mp_research_runs','mp_research_run_events',
+    'mp_package_store_schema','mp_package_blobs','mp_package_exports','mp_package_files','mp_package_status_events','mp_package_attempts','mp_package_validations',
+    'mp_package_compile_records','mp_package_evidence_records','mp_package_clearances','mp_package_trace_records'];
   item TEXT;
 BEGIN
   IF NOT pg_try_advisory_xact_lock(hashtextextended('robot:maintenance',0)) THEN

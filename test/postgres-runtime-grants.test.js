@@ -17,7 +17,9 @@ const EXTENSION_INSERT_ONLY=['quant_comparison_specs','quant_comparison_particip
   'mp_member_sets','mp_member_set_members','paper_capital_models'];
 const EXTENSION_MARKERS=['quant_comparison_schema','quant_selection_schema','mp_member_set_schema','paper_capital_model_schema'];
 // F11-01 RS-1: the internal multi-Pine run store (marker and the two record tables): the runtime role holds no privilege of any kind.
-const INTERNAL_ONLY=['mp_run_store_schema','mp_research_runs','mp_research_run_events'];
+// F11 R6-3 (RD-MP-36): the multi-Pine package store joins the same category.
+const INTERNAL_ONLY=['mp_run_store_schema','mp_research_runs','mp_research_run_events',
+  'mp_package_store_schema','mp_package_blobs','mp_package_exports','mp_package_files','mp_package_status_events','mp_package_attempts','mp_package_validations','mp_package_compile_records','mp_package_evidence_records','mp_package_clearances','mp_package_trace_records'];
 
 test('runtime grants: role from the psql variable, one transaction under the maintenance lock, DELETE never granted to the protected tables',async()=>{
   const raw=await readFile(new URL('../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8');

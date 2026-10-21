@@ -610,7 +610,9 @@ test('grants: the repository grant script lists the run-store tables as internal
   const text=await fs.readFile(GRANT_SCRIPT,'utf8');
   const list=name=>{const match=new RegExp(name+' CONSTANT TEXT\\[\\] := ARRAY\\[([^\\]]*)\\]').exec(text);assert.ok(match,name);return [...match[1].matchAll(/'([^']+)'/g)].map(item=>item[1]);};
   const internal=list('internal_only');
-  assert.deepEqual([...internal].sort(),[...ALL_TABLES].sort());
+  // The F11 R6-3 package store (RD-MP-36) shares the internal_only category; every other entry must be one of its mp_package_ tables.
+  for(const table of ALL_TABLES)assert.ok(internal.includes(table),table+' is internal_only');
+  assert.ok(internal.every(name=>ALL_TABLES.includes(name)||name.startsWith('mp_package_')),'only run-store and package-store tables are internal_only');
   for(const name of ['insert_only','read_only','protected'])for(const table of ALL_TABLES)assert.ok(!list(name).includes(table),table+' is not '+name);
 });
 

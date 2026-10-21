@@ -17,7 +17,7 @@ const PROTECTED=['quant_foundation_jobs','quant_foundation_owners','quant_founda
 const SCHEMAS=['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql',
   'quant-research-foundation-schema.sql','quant-storage-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql',
   'quant-preflight-schema.sql','quant-profile-enrollment-schema.sql','quant-exposure-register.sql','best-inputs-package-schema.sql',
-  'quant-comparison.sql','quant-selection.sql','mp-member-set.sql','mp-run-store.sql','paper-capital-model.sql'];
+  'quant-comparison.sql','quant-selection.sql','mp-member-set.sql','mp-run-store.sql','mp-package-store.sql','paper-capital-model.sql'];
 // The ten insert-only Best Inputs record tables: SELECT and INSERT stay, UPDATE, DELETE, TRUNCATE and TRIGGER never; the marker is read-only.
 const INSERT_ONLY=['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records','bi_evidence_records',
   'bi_clearances','bi_trace_reproductions','ql4c_validation'];
@@ -30,7 +30,9 @@ const EXTENSION_INSERT_ONLY=['quant_comparison_specs','quant_comparison_particip
   'mp_member_sets','mp_member_set_members','paper_capital_models'];
 const EXTENSION_MARKERS=['quant_comparison_schema','quant_selection_schema','mp_member_set_schema','paper_capital_model_schema'];
 // The internal multi-Pine run store (F11-01 RS-1): the runtime role holds no privilege of any kind, whatever history left behind.
-const INTERNAL_ONLY=['mp_run_store_schema','mp_research_runs','mp_research_run_events'];
+// F11 R6-3 (RD-MP-36): the multi-Pine package store joins the same category.
+const INTERNAL_ONLY=['mp_run_store_schema','mp_research_runs','mp_research_run_events',
+  'mp_package_store_schema','mp_package_blobs','mp_package_exports','mp_package_files','mp_package_status_events','mp_package_attempts','mp_package_validations','mp_package_compile_records','mp_package_evidence_records','mp_package_clearances','mp_package_trace_records'];
 // What psql -v runtime_role=<role> does for :'runtime_role'.
 const withRole=(sql,role)=>sql.replaceAll(":'runtime_role'","'"+role.replaceAll("'","''")+"'");
 
