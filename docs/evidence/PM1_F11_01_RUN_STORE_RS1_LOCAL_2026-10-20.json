@@ -1,0 +1,39 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "f12d058",
+  "scope": "Local implementation of the F11-01 internal multi-Pine run store, slice RS-1 (RD-MP-2 option B, RD-MP-19): the offline extension mp-run-store with two insert-only tables, guards, classifier, rollback, CLI, an internal_only grant category and an isolated-cluster fixture grant script. No writer, service, route or worker; nothing is installed on any environment.",
+  "method": "An architecture auditor (Opus 5.5) wrote the run-store design and root decided it. A coder (Sonnet 5.5) wrote RS-1; an independent architecture auditor (Opus 5.5) reviewed it and showed by probes that inheritance or a view could expose runs to the runtime role while the classifier still reported INSTALLED; root ruled; the coder added the checks; an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, every test file that imports a changed module or reads the changed grant script (found with git grep): 24 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (441 tests, 0 fail; 2 skipped by platform gates in a file this batch did not change), the full unit suite (2313 tests, 0 fail, 6 skipped by platform gates, 9 todo) and the grant text test; every changed file had the same hash before and after. A first attempt at that pass stopped early and was rerun in full. Nobody verified their own work.",
+  "files": {
+    "src/postgres/mp-run-store.sql": "26d086cf14ae42a282007c55d057e8c410523d2c34a85938cfa1238087caf277",
+    "src/postgres/mp-run-store-rollback.sql": "14865f881a4e148f9fe133f5c4628506129b78aa5801dfe189eddc61216dbcf1",
+    "src/postgres/mp-run-store-migration.js": "9a7165c5975d0d282d89524f11c3c478694b5bbdd41d1e4743f06576a8b1a0cb",
+    "scripts/migrate-mp-run-store.mjs": "c5ee6b8bb69ebc292a159a4116a3e4e85ff577379cebc3ca4bc406d1e64bcd27",
+    "scripts/grant-postgres-mp-fixture.sql": "e8bcda315af3533f0ad8ad5d2a81cb4e410671290651f8ccebadab4e9647310f",
+    "scripts/grant-postgres-runtime.sql": "781a759a8df0e258e5d819a19249b9e7277b98d006b3af5bffaa66eabac5a4da",
+    "test/postgres/mp-run-store.test.mjs": "880aa3660b56578c1f0d8ae990dc915d2c0868dc6235a03dd5c77dcd38f95c3e",
+    "test/postgres-runtime-grants.test.js": "54ed3b13da92cd9b9fe5a3c2e3f723fb88f0aed8667e63a6df5a458c60d425ed",
+    "test/postgres/runtime-grants.test.mjs": "caf538f272da548c36d3cad341ed2a2b62061353a4ec4e014d8f02b7353530b5"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/postgres/mp-run-store.test.mjs 31 of 31, test/postgres/mp-member-set.test.mjs 23 of 23 and test/postgres/runtime-grants.test.mjs 1 of 1 pass with 0 skipped; the grant text test passes 2 of 2.",
+  "mutations": {
+    "round1": "10 of 10 killed.",
+    "round2": "9 of 9 killed (inheritance, outside foreign key, publication and dependent-view checks, the marker privilege check, and the deadline minimum and maximum)."
+  },
+  "limits": [
+    "Isolated clusters only until the owner decides O1; the run store is never installed on staging or production before APP-3B.",
+    "On an isolated cluster the runtime role still sees table statistics (row counts), and a users delete of a fixture owner fails on the run-store key.",
+    "No writer, service, route or worker uses the tables yet (RS-2 onward).",
+    "No install was run on any environment."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted RS-1 as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}

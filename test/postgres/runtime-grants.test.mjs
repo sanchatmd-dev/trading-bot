@@ -17,7 +17,7 @@ const PROTECTED=['quant_foundation_jobs','quant_foundation_owners','quant_founda
 const SCHEMAS=['pine-bridge-schema.sql','quant-research-schema.sql','quant-foundation-schema.sql',
   'quant-research-foundation-schema.sql','quant-storage-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql',
   'quant-preflight-schema.sql','quant-profile-enrollment-schema.sql','quant-exposure-register.sql','best-inputs-package-schema.sql',
-  'quant-comparison.sql','quant-selection.sql','mp-member-set.sql','paper-capital-model.sql'];
+  'quant-comparison.sql','quant-selection.sql','mp-member-set.sql','mp-run-store.sql','paper-capital-model.sql'];
 // The ten insert-only Best Inputs record tables: SELECT and INSERT stay, UPDATE, DELETE, TRUNCATE and TRIGGER never; the marker is read-only.
 const INSERT_ONLY=['bi_exports','bi_package_files','bi_blobs','bi_status_events','bi_attempts','bi_compile_records','bi_evidence_records',
   'bi_clearances','bi_trace_reproductions','ql4c_validation'];
@@ -29,6 +29,8 @@ const EXTENSION_INSERT_ONLY=['quant_comparison_specs','quant_comparison_particip
   'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events',
   'mp_member_sets','mp_member_set_members','paper_capital_models'];
 const EXTENSION_MARKERS=['quant_comparison_schema','quant_selection_schema','mp_member_set_schema','paper_capital_model_schema'];
+// The internal multi-Pine run store (F11-01 RS-1): the runtime role holds no privilege of any kind, whatever history left behind.
+const INTERNAL_ONLY=['mp_run_store_schema','mp_research_runs','mp_research_run_events'];
 // What psql -v runtime_role=<role> does for :'runtime_role'.
 const withRole=(sql,role)=>sql.replaceAll(":'runtime_role'","'"+role.replaceAll("'","''")+"'");
 
@@ -44,11 +46,13 @@ test('runtime grants: DELETE is refused on the eleven protected tables while sch
   const colHolder='robot_grants_colh_'+suffix,colMember='robot_grants_colm_'+suffix,colMemberFalse='robot_grants_colmf_'+suffix,colPublic='robot_grants_colp_'+suffix;
   // The same for the read-only marker bi_package_schema: a PUBLIC column INSERT, and a column UPDATE held by a role reached WITH INHERIT FALSE.
   const roPublic='robot_grants_rop_'+suffix,roHolder='robot_grants_roh_'+suffix,roMemberFalse='robot_grants_romf_'+suffix;
+  // The same for the internal-only run store tables: a PUBLIC SELECT, and a column SELECT held by a NOINHERIT member's role.
+  const intPublic='robot_grants_intp_'+suffix,intHolder='robot_grants_inth_'+suffix,intMember='robot_grants_intm_'+suffix;
   let db=null;
   t.after(async()=>{
-    for(const owned of [role,idle,'"'+mixed+'"',holder,member,memberFalse,colHolder,colMember,colMemberFalse,colPublic,roPublic,roHolder,roMemberFalse])await db?.query('DROP OWNED BY '+owned).catch(()=>{});
+    for(const owned of [role,idle,'"'+mixed+'"',holder,member,memberFalse,colHolder,colMember,colMemberFalse,colPublic,roPublic,roHolder,roMemberFalse,intPublic,intHolder,intMember])await db?.query('DROP OWNED BY '+owned).catch(()=>{});
     await db?.close();await admin.query('DROP DATABASE IF EXISTS '+name);
-    for(const dropped of [role,idle,'"'+mixed+'"',member,memberFalse,holder,colMember,colMemberFalse,colPublic,colHolder,roMemberFalse,roPublic,roHolder])await admin.query('DROP ROLE IF EXISTS '+dropped);await admin.close();
+    for(const dropped of [role,idle,'"'+mixed+'"',member,memberFalse,holder,colMember,colMemberFalse,colPublic,colHolder,roMemberFalse,roPublic,roHolder,intMember,intPublic,intHolder])await admin.query('DROP ROLE IF EXISTS '+dropped);await admin.close();
   });
   await admin.query('CREATE DATABASE '+name);
   const url=new URL(process.env.TEST_DATABASE_URL);url.pathname='/'+name;
@@ -109,6 +113,12 @@ test('runtime grants: DELETE is refused on the eleven protected tables while sch
     await assert.rejects(db.transaction(async()=>{await db.query('SET LOCAL ROLE '+role);await db.query('DELETE FROM '+table);}),{code:'42501'},table);
   }
   for(const marker of ['bi_package_schema',...EXTENSION_MARKERS])assert.equal(await privilege(role,marker,'SELECT'),true,marker+' stays readable');
+  // Internal-only run store tables: no privilege of any kind (the history above granted SELECT, INSERT, UPDATE and DELETE on every table), and 42501 on access.
+  for(const table of INTERNAL_ONLY){
+    assert.ok((await db.query('SELECT to_regclass($1) AS name',['public.'+table])).rows[0].name,table+' is installed');
+    for(const kind of ['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','TRIGGER','REFERENCES'])assert.equal(await privilege(role,table,kind),false,table+' '+kind);
+    await assert.rejects(db.transaction(async()=>{await db.query('SET LOCAL ROLE '+role);await db.query('SELECT 1 FROM '+table);}),{code:'42501'},table);
+  }
   for(const table of ['sessions','auth_challenges','password_resets','security_mail','mfa_recovery','user_security',
     'worker_heartbeats','security_limits'])assert.equal(await privilege(role,table,'DELETE'),true,table+' keeps the runtime DELETE');
   // A privilege held through a role the runtime role reaches by membership but does not inherit is still refused: SET ROLE reaches it, while
@@ -166,4 +176,20 @@ test('runtime grants: DELETE is refused on the eleven protected tables while sch
     await apply(withRole(script,roMemberFalse));
     assert.equal(await usage(roMemberFalse),true,'without the column grant the same role is granted');
   }
+  // Internal-only run store: a PUBLIC SELECT, and a column SELECT of a role the runtime role reaches by membership without inheriting it, are refused by the final check.
+  await admin.query('CREATE ROLE '+intPublic+' NOSUPERUSER');
+  await db.query('GRANT SELECT ON TABLE mp_research_runs TO PUBLIC');
+  try{await assert.rejects(apply(withRole(script,intPublic)),/can still reach internal table mp_research_runs/);}
+  finally{await db.query('REVOKE SELECT ON TABLE mp_research_runs FROM PUBLIC');}
+  assert.equal(await usage(intPublic),false,'the refused run changed nothing');
+  await apply(withRole(script,intPublic));
+  assert.equal(await usage(intPublic),true,'without the PUBLIC grant the same role is granted');
+  await admin.query('CREATE ROLE '+intHolder+' NOLOGIN');await admin.query('CREATE ROLE '+intMember+' NOSUPERUSER NOINHERIT');
+  await db.query('GRANT SELECT (run_id) ON TABLE mp_research_runs TO '+intHolder);await db.query('GRANT '+intHolder+' TO '+intMember);
+  assert.equal(await privilege(intMember,'mp_research_runs','SELECT'),false,'the NOINHERIT member does not inherit the privilege');
+  await assert.rejects(apply(withRole(script,intMember)),/can still reach internal table mp_research_runs/);
+  assert.equal(await usage(intMember),false,'the refused run changed nothing');
+  await db.query('REVOKE SELECT (run_id) ON TABLE mp_research_runs FROM '+intHolder);
+  await apply(withRole(script,intMember));
+  assert.equal(await usage(intMember),true,'without the reachable privilege the same role is granted');
 });

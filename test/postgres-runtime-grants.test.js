@@ -16,6 +16,8 @@ const EXTENSION_INSERT_ONLY=['quant_comparison_specs','quant_comparison_particip
   'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events',
   'mp_member_sets','mp_member_set_members','paper_capital_models'];
 const EXTENSION_MARKERS=['quant_comparison_schema','quant_selection_schema','mp_member_set_schema','paper_capital_model_schema'];
+// F11-01 RS-1: the internal multi-Pine run store (marker and the two record tables): the runtime role holds no privilege of any kind.
+const INTERNAL_ONLY=['mp_run_store_schema','mp_research_runs','mp_research_run_events'];
 
 test('runtime grants: role from the psql variable, one transaction under the maintenance lock, DELETE never granted to the protected tables',async()=>{
   const raw=await readFile(new URL('../scripts/grant-postgres-runtime.sql',import.meta.url),'utf8');
@@ -72,4 +74,44 @@ test('runtime grants: role from the psql variable, one transaction under the mai
   // The scheduler keeps the table-level UPDATE that LOCK TABLE ... IN EXCLUSIVE MODE needs.
   assert.doesNotMatch(sql,/REVOKE[^;]*(?:UPDATE|ALL)[^;]*quant_foundation_scheduler/i);
   assert.match(sql,/GRANT SELECT,INSERT,UPDATE ON ALL TABLES IN SCHEMA public TO %I/);
+  // The internal_only category (run store): in no other list, no DELETE grant, REVOKE ALL after the blanket grant, and a final check over every reached role.
+  const internalOnly=sql.match(/internal_only CONSTANT TEXT\[\] := ARRAY\[([\s\S]*?)\];/);
+  assert.ok(internalOnly);
+  const namesOf=match=>[...match[1].matchAll(/'([^']+)'/g)].map(item=>item[1]);
+  assert.deepEqual(namesOf(internalOnly).sort(),[...INTERNAL_ONLY].sort());
+  for(const name of INTERNAL_ONLY)for(const other of [list,readOnly,insertOnly])assert.ok(!namesOf(other).includes(name),name+' belongs to the internal_only category alone');
+  assert.match(sql,/AND tablename<>ALL\(insert_only\) AND tablename<>ALL\(internal_only\) ORDER BY tablename LOOP/);
+  assert.match(sql,/FOREACH item IN ARRAY internal_only LOOP\s+IF to_regclass\(format\('public\.%I',item\)\) IS NOT NULL THEN\s+EXECUTE format\('REVOKE ALL ON TABLE public\.%I FROM %I',item,runtime_role\);/);
+  assert.ok(sql.indexOf("REVOKE ALL ON TABLE public.%I FROM %I")>sql.indexOf('GRANT SELECT,INSERT,UPDATE ON ALL TABLES'),'the revoke follows the blanket grant');
+  const internalCheck=sql.slice(sql.lastIndexOf('FOREACH item IN ARRAY internal_only LOOP'),sql.indexOf("RAISE EXCEPTION 'Runtime role % can still reach internal table %'"));
+  assert.ok(internalCheck.includes('internal_only')&&internalCheck.length>200,'the internal-only final check is present');
+  assert.ok(internalCheck.includes("EXISTS(SELECT 1 FROM pg_roles r WHERE pg_has_role(runtime_role,r.oid,'MEMBER')"),'the check reaches every role the runtime role can SET ROLE to');
+  for(const kind of ['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER'])assert.ok(internalCheck.includes("has_table_privilege(r.oid,format('public.%I',item),'"+kind+"')"),'table '+kind);
+  for(const kind of ['SELECT','INSERT','UPDATE','REFERENCES'])assert.ok(internalCheck.includes("has_any_column_privilege(r.oid,format('public.%I',item),'"+kind+"')"),'a column '+kind+' grant of a reached role counts');
+  assert.doesNotMatch(internalCheck,/has_table_privilege\(runtime_role/,'the check does not judge the runtime role alone');
+  assert.match(sql,/Runtime role % can still reach internal table %/);
+  assert.ok(sql.indexOf('FOREACH item IN ARRAY internal_only LOOP')>0&&sql.indexOf("RAISE EXCEPTION 'Runtime role % can still reach internal table %'")<sql.indexOf('COMMIT;'),'the check runs before COMMIT');
+});
+
+test('fixture grants: the isolated-cluster script takes both roles from psql variables, one transaction under the maintenance lock, and creates nothing',async()=>{
+  const raw=await readFile(new URL('../scripts/grant-postgres-mp-fixture.sql',import.meta.url),'utf8');
+  const sql=raw.replace(/--[^\n]*/g,'');
+  assert.equal(sql.split(":'runtime_role'").length-1,1);assert.equal(sql.split(":'fixture_role'").length-1,1);
+  assert.match(sql,/SELECT set_config\('robot\.runtime_role',:'runtime_role',true\)/);assert.match(sql,/SELECT set_config\('robot\.fixture_role',:'fixture_role',true\)/);
+  assert.doesNotMatch(sql,/\\(?:set|if)\b/,'no psql default for a role');
+  const statements=sql.trim();
+  assert.match(statements,/^BEGIN;/);assert.match(statements,/COMMIT;$/);assert.equal(sql.split('COMMIT;').length-1,1);
+  const lock=sql.indexOf("pg_try_advisory_xact_lock(hashtextextended('robot:maintenance',0))");
+  assert.ok(lock>0);assert.doesNotMatch(sql,/pg_advisory_(?:xact_)?lock\(/,'a blocking lock could wait for ever');
+  assert.ok(lock<sql.search(/\bGRANT\b/)&&lock<sql.search(/\bREVOKE\b/),'the lock precedes every grant and revoke');
+  // It creates and alters no role, table or function; it grants only the membership and the table privileges the decision names.
+  assert.doesNotMatch(sql,/\b(?:CREATE|ALTER|DROP)\s+(?:ROLE|USER|TABLE|FUNCTION|TRIGGER|SCHEMA|DATABASE)\b/i);
+  assert.doesNotMatch(sql,/to_regrole/);
+  const grants=[...sql.matchAll(/EXECUTE format\('(GRANT [^']*)'/g)].map(item=>item[1]);
+  assert.deepEqual(grants,['GRANT %I TO %I','GRANT SELECT ON TABLE public.%I TO %I','GRANT SELECT,INSERT ON TABLE public.%I TO %I']);
+  assert.ok(!/GRANT[^;]*(?:UPDATE|DELETE|TRUNCATE|TRIGGER|ALL)/.test(sql.replace(/REVOKE[^;]*;/g,'')),'no grant of UPDATE, DELETE, TRUNCATE, TRIGGER or ALL');
+  assert.match(sql,/The multi-Pine run store is not installed/);
+  assert.match(sql,/IF pg_has_role\(runtime_role,fixture_role,'MEMBER'\) THEN/);
+  assert.match(sql,/Runtime role % can reach fixture role %/);assert.match(sql,/Runtime role % can still reach internal table %/);
+  assert.match(sql,/Fixture role % can still edit or remove rows of %/);assert.match(sql,/IF NOT EXISTS\(SELECT 1 FROM pg_roles WHERE rolname=fixture_role\) THEN/);
 });

@@ -23,6 +23,9 @@ DECLARE
   -- INSERT and loses UPDATE and DELETE (and holds no TRUNCATE or TRIGGER); database triggers refuse an edit by any other role (QR002).
   -- The same holds for the quant comparison (QR-3), quant selection (QR-4), member set (F11) and paper capital model (QR-2 S4) record tables below: optional extensions,
   -- only installed tables are touched (the selection tables beyond the first four, and the later comparison tables, appear in later slices).
+  -- The internal multi-Pine run store (F11-01 RS-1, optional extension) is internal_only: the runtime role holds NO privilege on its tables, neither itself nor
+  -- through any role it can reach by membership. Only a separate fixture role (scripts/grant-postgres-mp-fixture.sql, isolated clusters only) reads and writes them,
+  -- so any runtime code that names a run-store table fails with 42501 instead of silently seeing a run. The final check below proves it and rolls everything back otherwise.
   protected CONSTANT TEXT[] := ARRAY['quant_foundation_jobs','quant_foundation_owners','quant_foundation_scheduler',
     'quant_jobs','quant_research_chunks','quant_io_ledgers','quant_io_launches',
     'quant_profile_enrollment_receipts','quant_storage_namespace','quant_research_executor_mode','quant_exposure_register'];
@@ -37,6 +40,8 @@ DECLARE
     'quant_selection_registrations','quant_selection_universe','quant_selection_participants','quant_selection_status_events',
     'quant_selection_window_freezes','quant_selection_evaluation_starts','quant_selection_outcomes','quant_selection_replay_events',
     'mp_member_sets','mp_member_set_members','paper_capital_models'];
+  -- Internal tables: no runtime privilege of any kind (the multi-Pine run store: marker, runs, run events).
+  internal_only CONSTANT TEXT[] := ARRAY['mp_run_store_schema','mp_research_runs','mp_research_run_events'];
   item TEXT;
 BEGIN
   IF NOT pg_try_advisory_xact_lock(hashtextextended('robot:maintenance',0)) THEN
@@ -52,7 +57,7 @@ BEGIN
   EXECUTE format('GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO %I',runtime_role);
   -- DELETE only where the runtime may delete; this script never grants it on a protected or read-only table.
   FOR item IN SELECT tablename FROM pg_tables WHERE schemaname='public'
-      AND tablename<>ALL(protected) AND tablename<>ALL(read_only) AND tablename<>ALL(insert_only) ORDER BY tablename LOOP
+      AND tablename<>ALL(protected) AND tablename<>ALL(read_only) AND tablename<>ALL(insert_only) AND tablename<>ALL(internal_only) ORDER BY tablename LOOP
     EXECUTE format('GRANT DELETE ON TABLE public.%I TO %I',item,runtime_role);
   END LOOP;
   -- Remove what an earlier grant left behind, so the result does not depend on the database's history.
@@ -69,6 +74,11 @@ BEGIN
   FOREACH item IN ARRAY insert_only LOOP
     IF to_regclass(format('public.%I',item)) IS NOT NULL THEN
       EXECUTE format('REVOKE UPDATE,DELETE,TRUNCATE,TRIGGER ON TABLE public.%I FROM %I',item,runtime_role);
+    END IF;
+  END LOOP;
+  FOREACH item IN ARRAY internal_only LOOP
+    IF to_regclass(format('public.%I',item)) IS NOT NULL THEN
+      EXECUTE format('REVOKE ALL ON TABLE public.%I FROM %I',item,runtime_role);
     END IF;
   END LOOP;
   -- The final state is checked, not assumed: any remaining DELETE on a protected table, or any write privilege on a
@@ -108,6 +118,26 @@ BEGIN
         AND NOT (has_table_privilege(runtime_role,format('public.%I',item),'SELECT')
           AND has_table_privilege(runtime_role,format('public.%I',item),'INSERT')) THEN
       RAISE EXCEPTION 'Runtime role % lacks SELECT or INSERT on %',runtime_role,item;
+    END IF;
+  END LOOP;
+  -- Internal-only tables: no privilege of any kind for the runtime role, PUBLIC included (has_table_privilege of a role sees PUBLIC grants) and every role the
+  -- runtime role can reach by membership (SET ROLE; INHERIT FALSE and NOINHERIT included). A column privilege counts too. A runtime role that is a member of the
+  -- fixture role is refused here for the same reason.
+  FOREACH item IN ARRAY internal_only LOOP
+    IF to_regclass(format('public.%I',item)) IS NOT NULL
+        AND EXISTS(SELECT 1 FROM pg_roles r WHERE pg_has_role(runtime_role,r.oid,'MEMBER')
+          AND (has_any_column_privilege(r.oid,format('public.%I',item),'SELECT')
+            OR has_any_column_privilege(r.oid,format('public.%I',item),'INSERT')
+            OR has_any_column_privilege(r.oid,format('public.%I',item),'UPDATE')
+            OR has_any_column_privilege(r.oid,format('public.%I',item),'REFERENCES')
+            OR has_table_privilege(r.oid,format('public.%I',item),'SELECT')
+            OR has_table_privilege(r.oid,format('public.%I',item),'INSERT')
+            OR has_table_privilege(r.oid,format('public.%I',item),'UPDATE')
+            OR has_table_privilege(r.oid,format('public.%I',item),'DELETE')
+            OR has_table_privilege(r.oid,format('public.%I',item),'TRUNCATE')
+            OR has_table_privilege(r.oid,format('public.%I',item),'REFERENCES')
+            OR has_table_privilege(r.oid,format('public.%I',item),'TRIGGER'))) THEN
+      RAISE EXCEPTION 'Runtime role % can still reach internal table %',runtime_role,item;
     END IF;
   END LOOP;
 END $$;
