@@ -1,0 +1,31 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-20",
+  "root": "Claude",
+  "baseRevision": "601450b",
+  "scope": "Local isolation proof for the F11-01 run store, slice RS-3 (RD-MP-22): a PostgreSQL behaviour matrix and a static scan and import-closure test. Tests only; no product file changed.",
+  "method": "A coder (Sonnet 5.5) wrote RS-3 from the design; an independent architecture auditor (Opus 5.5) reviewed it and found that scripts named by package.json were missing from the import closure, a QR-3 surface that could not fail and other gaps; root ruled; the coder fixed them; an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, every test file that names the run-store modules (found with git grep): 4 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (89 tests, 0 fail, 0 skipped), the static isolation test, the grant text test and the full unit suite. The unit suite showed that the run-contract import guard refused the new run-store module, which imports the contract validator by design; root allowed exactly that module in the guard (the static isolation test proves no runtime root reaches it), confirmed that the guard still fails with an empty allowlist, and reran the full unit suite alone: 2321 tests, 0 fail, 6 skipped by platform gates, 9 todo. Nobody verified their own work.",
+  "files": {
+    "test/postgres/mp-run-store-isolation.test.mjs": "fc448416ab99cc4e425ddd9267cb07c72195ff69c631677bf7787f7e6cabc4fc",
+    "test/mp-run-store-static-isolation.test.js": "e9c8677f93983be55dcf781cf6ce13e1b3cae1f4de12bf6668bc1835d46d6c23"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "test/postgres/mp-run-store-isolation.test.mjs 27 of 27 and test/mp-run-store-static-isolation.test.js 8 of 8 pass with 0 skipped; no isolation defect was found.",
+  "mutations": {
+    "round1": "1 of 4 killed; the full-compare and stale-allowlist survivors got control tests in round 2; dropping server.js from the roots is equivalent because package.json and the compose file name it too.",
+    "round2": "5 of 6 killed; the survivor deletes one self-test assertion line, and breaking the logic that line checks is killed by another test."
+  },
+  "limits": [
+    "On an isolated cluster the runtime role still sees run-store table statistics, and a users delete of a fixture owner fails on the run-store key (accepted residuals, owner item O1).",
+    "A new source file that names a run-store table must be added to the allowlist on purpose.",
+    "No staging or production check; the run store is never installed there before APP-3B."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-20",
+    "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted RS-3 as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}
