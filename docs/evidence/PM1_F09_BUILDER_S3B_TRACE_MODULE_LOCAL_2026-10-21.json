@@ -1,0 +1,30 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-21",
+  "root": "Claude local root",
+  "baseRevision": "4c350eb",
+  "scope": "Local implementation of F09 builder packet S3b: the trace reproduction Node module (src/quant-library/trace-reproduction.js) and its test file. Local engineering evidence only; not wired to any route, worker or build. The acceptance tests (S3c) and the package contract text (S3e) are not landed.",
+  "method": "Three verification rounds. Round 1: tester PASS with gaps; Opus auditor NO-GO (B1 the spawner used bare python, the full process.env and no -P; B2 coded() let any upper-case code through). Round 2 fix under root rulings R-B1, R-B2 and R-f (trace closure adds src/pine-bridge/source.js and src/money.js; package-gates.js stays out as the judge; N2 trace hash before and after; N6 entry_time range): tester PASS, Opus GO. Round 3 R-CV1 amendment (frozen TRACE_EXECUTION_PROFILES and TRACE_PROFILE_DEFERRED; only ql3a-research-job-v1 without execution_backend is ACTIVE; v2 and quant-foundation-v1 deferred to S3d, multi-v1 to the F11 trace producer, v3 placeholder to the slice that defines the next contract; refused as TRACE_REPRODUCTION_UNSUPPORTED before any port call or hash read): tester PASS (22 mutants, survivors equivalent), Opus GO. Root added one test row (a version named like an Object.prototype member) and killed that mutant. Reports are kept locally, not tracked.",
+  "files": {
+    "src/quant-library/trace-reproduction.js": "d9596ea00d78914174517a86b8bd8cf1fd225080162859d2258f95903e46732c",
+    "test/quant-library-trace-reproduction.test.js": "2cad73de8baec23faabdd89c79ff89d26086194c99380207421b2a5d953ecce2"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it, at 730efee.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "Local Windows: 91 tests, 90 pass, 1 skipped (the SIGKILL case skips on Windows). CI on 730efee: 9 of 9 checks green, which ran the full unit suite on ubuntu and windows.",
+  "limits": [
+    "Local engineering evidence only; the module is wired into no route, worker or build.",
+    "S3c (acceptance tests C1 to C5) and S3e (package contract text) are still open.",
+    "The SIGKILL case runs only on Linux CI.",
+    "The full local unit suite was not run because of low RAM; CI ran it.",
+    "Contract versions other than ql3a-research-job-v1 without execution_backend are refused by R-CV1 (deferred, not supported).",
+    "Owner question OQ-1 (holdout rows in trace files) is still open."
+  ],
+  "rootAcceptance": {
+    "by": "Claude local root",
+    "date": "2026-10-21",
+    "statement": "Root accepted F09 builder S3b as local engineering evidence. It changes no PM-1 credit and deploys nothing."
+  }
+}
