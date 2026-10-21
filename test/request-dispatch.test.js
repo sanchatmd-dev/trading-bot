@@ -180,6 +180,18 @@ test('catch mapping: a retryable SQLSTATE that persists becomes one 409 RETRY_TR
   assert.deepEqual(audits,[{message:'Concurrent request rolled back'}]);
 });
 
+test('capital declaration: exhausted serialization/deadlock returns 503 Retry-After 2; other methods, paths and 55P03 keep existing status',async()=>{
+  for(const code of ['40001','40P01']){
+    const {res,pauses}=await bare({handleRequest:async()=>{throw conflict(code);}}).send('/api/paper-capital-model',{method:'PUT'});
+    assert.equal(res.status,503);assert.equal(res.written['retry-after'],'2');
+    assert.equal(JSON.parse(res.body).code,'RETRY_TRANSACTION');assert.equal(pauses.length,RETRY_LIMIT);
+  }
+  for(const [path,method,code] of [['/api/paper-capital-model','GET','40001'],['/api/paper-capital-model-other','PUT','40001'],['/api/paper-capital-model','PUT','55P03']]){
+    const {res}=await bare({handleRequest:async()=>{throw conflict(code);}}).send(path,{method});
+    assert.equal(res.status,409);assert.equal(res.written['retry-after'],undefined);
+  }
+});
+
 test('retry: one serialization failure then success answers 200 with no audit row',async()=>{
   let attempts=0;
   const {res,events,steps,audits,pauses}=await bare({handleRequest:async(req,res)=>{if(++attempts===1)throw conflict('40001');json(res,200,{attempt:attempts});}}).send('/api/quant/data/jobs/x',{method:'POST'});

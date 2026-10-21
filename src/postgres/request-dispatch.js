@@ -120,7 +120,9 @@ export function createDispatcher({newsWindowsPort,requestLimits,auth,database,st
       await store.audit(null,'request.error',null,{message:retry?'Concurrent request rolled back':internal?'Database request failed':'Request validation failed'}).catch(()=>{});
       const outcome=pathname==='/api/quant/optimize'?quantOptimizeOutcome(req.quantOptimizeAttempt):null;
       if(outcome){if(!res.headersSent&&!quantOptimizeDisconnected(req,res))json(res,503,outcome);return;}
-      if(!res.headersSent)json(res,error.status||(retry?409:internal?503:400),{error:retry?'Concurrent update; retry the request':internal?'Request could not be completed':error.message,...(retry?{code:'RETRY_TRANSACTION'}:error.code&&!internal?{code:error.code}:{})});
+      const declarationRetry=pathname==='/api/paper-capital-model'&&req.method==='PUT'&&RETRY_SQLSTATES.includes(error.code);
+      if(declarationRetry&&!res.headersSent)res.setHeader('Retry-After','2');
+      if(!res.headersSent)json(res,declarationRetry?503:error.status||(retry?409:internal?503:400),{error:retry?'Concurrent update; retry the request':internal?'Request could not be completed':error.message,...(retry?{code:'RETRY_TRANSACTION'}:error.code&&!internal?{code:error.code}:{})});
     }
   };
 }

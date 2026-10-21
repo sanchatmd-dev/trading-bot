@@ -88,7 +88,7 @@ export function parseParameters(url,requestTime){
 
 // The reader's refusals become request answers; anything else is a fixed 503 with no internal text. In phase 2 the parameters were already
 // checked, so a reader QR2_INPUT_INVALID is a caller bug or a data case, not client input: it answers 503 QR2_REPORT_FAILED (phase 1 keeps 400).
-function answerOfError(error,phase=1){
+export function answerOfError(error,phase=1){
   if(error instanceof Qr2Error){
     if(phase===2&&error.code==='QR2_INPUT_INVALID')return refusalAnswer('QR2_REPORT_FAILED');
     if(['QR2_NOT_OWNER','QR2_RANGE_INVALID','QR2_INPUT_INVALID','QR2_FEE_OVERLAY_REFUSED','QR2_CURRENCY_MIX'].includes(error.code))return refusalAnswer(error.code);
@@ -129,10 +129,10 @@ export async function qr2PerformanceRoute(req,res,url,actor,deps){
     let {from,to}=parsed;
     if(period==='ALL_TIME'){({from,to}=allTimeWindow({coverageStart,requestTime}));}
     else if(period!=='CUSTOM'){({from,to}=periodWindow(period,requestTime));}
-    // Interim O-1: the plan history limit applies to the start of every period, counted from UTC midnight of the request day, so a
+    // OD-S4-10: the plan history limit applies to every period, counted from UTC midnight of the request day, so a
     // 30-day plan still reads the current month on the 31st.
     const quota=getQuota(await store.activePlan(actor.id));
-    if(quota.historyDays>0&&from<utcMidnight(requestTime)-quota.historyDays*QR2_DAY_MS)refuse('QR2_RANGE_ADMISSION_REFUSED',{limit:'history_days',max:quota.historyDays});
+    assertQr2History(from,requestTime,quota.historyDays);
     // The admin audit row is written in the request transaction, so it is committed before phase 2 reads any ledger data.
     if(adminRead)await store.audit(actor.id,QR2_ADMIN_READ_EVENT,null,{botId,ownerId,broker,period,from,to});
     plan={botId,broker,ownerId,from,to};
@@ -178,4 +178,21 @@ export async function qr2PerformanceRoute(req,res,url,actor,deps){
     finally{if(release)release();}
   };
   return true;
+}
+
+// Reuse the exact calendar validation without accepting account selectors on owner GET.
+export function parseQr2OwnerParameters(url,requestTime){
+  const allowed=new Set(['currency','period','from','to']);
+  for(const key of url.searchParams.keys()){
+    if(['fee_bps','feebps'].includes(key.toLowerCase()))throw new Qr2Error('QR2_FEE_OVERLAY_REFUSED');
+    if(!allowed.has(key)||url.searchParams.getAll(key).length!==1)throw new Qr2Error('QR2_INPUT_INVALID');
+  }
+  const currency=url.searchParams.get('currency');
+  if(!['USDT','THB'].includes(currency))throw new Qr2Error('QR2_INPUT_INVALID');
+  const copy=new URL(url);copy.searchParams.delete('currency');copy.searchParams.set('bot_id','owner');
+  try{const {period,from,to}=parseParameters(copy,requestTime);return {currency,period,from,to};}
+  catch(error){if(error instanceof Refusal)throw Object.assign(new Qr2Error(error.code),{detail:error.detail});throw error;}
+}
+export function assertQr2History(from,requestTime,historyDays){
+  if(historyDays>0&&from<utcMidnight(requestTime)-historyDays*QR2_DAY_MS)throw Object.assign(new Qr2Error('QR2_RANGE_ADMISSION_REFUSED'),{detail:{limit:'history_days',max:historyDays}});
 }

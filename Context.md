@@ -1,5 +1,7 @@
 # Robot trade — Project Context
 
+Codex QR-2 checkpoint, 2026-10-22 (Bangkok): S4-4/S4-5 are accepted as local engineering evidence under RC-Q44/RC-Q45: owner capital declarations and the owner performance API, both behind the existing flag that stays off. Regression passed 271 unit tests with two pre-existing TODOs and 125 PostgreSQL tests; seven serialized mutations were caught and every fixture cluster was removed. [Evidence](docs/evidence/PM1_QR2_S4_4_S4_5_LOCAL_2026-10-22.json) records independent review, actual owner worker computation and limitations. FE-2b lifecycle work continues separately. CI is pending for this checkpoint; no target deployment, migration or activation, private acceptance NOT RUN, READY false and N1 held.
+
 Owner GO, 2026-10-22 (Bangkok): cloud implementation of **FE-2b and QR-2 S4-4/S4-5** is authorized, with independent verification and periodic commit/push. [QR-2 OD-S4-1 to OD-S4-10](docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md#owner-continuation-decisions-2026-10-22-bangkok) record the approved declaration, currency, range-fee and all-period history rules; O-1 is closed. Work is in progress, not accepted or activated. Target deployment/migrations and activation retain their separate gates; no host/VPS work from cloud, private acceptance NOT RUN, READY false and N1 held. Earlier pending-GO notes below are historical.
 
 

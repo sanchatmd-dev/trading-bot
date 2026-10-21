@@ -1,0 +1,135 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-22",
+  "root": "Codex",
+  "baseRevision": "681769ceb69de233d81d8222964c521888d3df90",
+  "scope": "QR-2 S4-4 owner capital declaration and S4-5 owner performance API, local cloud engineering only. Both use the existing disabled-by-default QR2_PERFORMANCE_ENABLED flag.",
+  "authority": "Owner explicitly GO FE-2b and QR-2 S4-4/S4-5; periodic commit/push authorized. OD-S4-1 through OD-S4-10 govern QR-2. No target deployment, installation or activation.",
+  "changes": [
+    "Owner-only PUT uses canonical session, CSRF and sensitive-action checks; full sorted Bot set, 1000 per-currency versions, strictly next UTC midnight and append-only withdrawal. Declaration and createBot share an owner tuple write so stale SERIALIZABLE snapshots retry.",
+    "Owner GET admits the entire selected-currency batch in one RR READ ONLY snapshot before detail reads, then submits one worker job under the shared account/owner slot and deadline. Position-only and foreign-journal discovery cannot hide RP/RX.",
+    "Strict owner summaries use range fees and verified account endpoints; no partial total, cross-currency sum, owner TWR or MWR. Audit follows response/commit with at most 20 distinct incident keys."
+  ],
+  "files": {
+    "src/portfolio/qr2-allocation.js": "132ce2444efc9bff9dfc5e40c45b274e97f719e09ca30a0daa9d1335395a8e90",
+    "src/portfolio/qr2-owner-response.js": "b1f684f26fcd6806009d80905076797c33c7b5e8b11ddeb691a146a5bac70e77",
+    "src/postgres/qr2-capital-model-route.js": "6c8bb41f0364ad242e9c7417e830107afa1ea4548b9dba0906d61dc00e98402d",
+    "src/postgres/qr2-owner-reader.js": "2f4a697e350ec1930755d9323821110a8bdcc880bdd3bfc52aad1d0a970c2809",
+    "src/postgres/qr2-owner-route.js": "ecb47181d335d60e4254a4698b7b916f7fa1c9b3a90107099b2c071bc29a7899",
+    "src/postgres/qr2-compute-worker.js": "5025077a298ba960c93d5f4ec6fcad739f297926cfac424e88f00a6424a10272",
+    "src/postgres/qr2-reader.js": "33131d994df358cbaa7476480fdfb16f4ded5e06578715de53e38248a97d64dc",
+    "src/postgres/qr2-routes.js": "ee9c4168654a13f18a0dacce875c3391c42d75c88a687b98f03531368473da17",
+    "src/postgres/request-dispatch.js": "ddde8eece859d61a7a9c1ac96d16cd92933834a400e8c40c4d320045f8ac66d6",
+    "src/postgres/server.js": "77223de17fca534b7ea9366b95a63afc76bf0b95a513939d3f34de88b4636a87",
+    "src/postgres/store.js": "ad5f8a3f59950520c16accade27b54d0b7eac609b66a2feeffa467c6ca6ba45d",
+    "test/qr2-allocation.test.js": "ee00ce1e2fa7cfa25a21bbf38e4d05631d38eec124740451bde04ff73b58aefd",
+    "test/qr2-owner-independent.test.js": "30ef29bfaecc332b705c2e3600b82984e201c0430dffad4c6a556a9b418b3b65",
+    "test/qr2-owner-response.test.js": "b0813e11d87d62acf4f35dc6ab94955b6d3fe6aeaba9101c29b61577825b44d4",
+    "test/request-dispatch.test.js": "d13928e02718ef8e850697b3b303aa2ad33002f06885899972e001451e01102c",
+    "test/postgres/qr2-capital-model-route.test.mjs": "e95ab29149a84a873209a35a3703e5a7ffd2b21f41df68edee7bc4ff7975ecb3",
+    "test/postgres/qr2-owner-route.test.mjs": "83763915f854fa328ead5e0cca7136489d7dfdac77c242ad69b621ae3740c2db",
+    "test/postgres/qr2-owner-independent.test.mjs": "6478e95ff7c18777bfb1ddba18f549f82efd87e8f6462d5a354b86b0c70f136a",
+    "test/postgres/qr2-owner-compute.test.mjs": "6b9c7bac535b0b88f3586fe0fcdd6040ffeb456a5a954d0c8edb41e3e3b67a4c"
+  },
+  "verification": {
+    "runtime": "Node 24.19.0; PostgreSQL 16.15 in disposable local Docker clusters, SCRAM and wrong-password rejection checked; pg_dump and pg_restore 16.15.",
+    "unit": {
+      "command": "node --test --test-concurrency=1 test/qr2-*.test.js test/request-dispatch.test.js",
+      "pass": 271,
+      "fail": 0,
+      "todo": 2,
+      "note": "Two pre-existing TODOs; includes account real-thread pool regression and independent owner route/pool seam tests.",
+      "log_sha256": "ccc6ca61bd7d26ecb00982560afa96f5ac0255f0bac737d3cfecdf4d847e82d2"
+    },
+    "postgres": {
+      "files": [
+        "test/postgres/qr2-audit.test.mjs",
+        "test/postgres/qr2-capital-model-route.test.mjs",
+        "test/postgres/qr2-compute-http.test.mjs",
+        "test/postgres/qr2-owner-compute.test.mjs",
+        "test/postgres/qr2-owner-independent.test.mjs",
+        "test/postgres/qr2-owner-route.test.mjs",
+        "test/postgres/qr2-reader-facts.test.mjs",
+        "test/postgres/qr2-reader.test.mjs",
+        "test/postgres/qr2-route-http.test.mjs",
+        "test/postgres/qr2-ssi.test.mjs",
+        "test/postgres/bot-parent-hardening.test.mjs",
+        "test/postgres/bot-lifecycle-gates.test.mjs"
+      ],
+      "pass": 125,
+      "fail": 0,
+      "skip": 0,
+      "log_sha256": "05b31b37f963bccd2392489858cee0e1a2ec6ba3d56f3f77a04caf0a42bfd193",
+      "cleanup": {
+        "cluster_stopped": true,
+        "cluster_removed": true
+      }
+    },
+    "real_owner_worker": "Two Bots funded through real Store writers, actual owner reader and worker thread, exact 1000 cash total, zero range fees/flows/PnL, null owner returns, no-account owner row and unchanged ledger digests. Synthetic future reporting clock after a real next-midnight declaration; no database clock or guard changed.",
+    "mutation": {
+      "valid": 7,
+      "assertion_kills": 6,
+      "valid_boundary_refusal_kills": 1,
+      "survivors": 0,
+      "all_source_bytes_restored": true,
+      "tests_unchanged": true,
+      "results_sha256": "afd93f7ee1b2586b9601a86f53a42226f7bdd73b453d5c79e7e419e41c852c60",
+      "cases": [
+        {
+          "id": "M01-owner-slot-acquisition-bypass",
+          "classification": "assertion-kill"
+        },
+        {
+          "id": "M02-owner-schema-bypass",
+          "classification": "assertion-kill"
+        },
+        {
+          "id": "M03-audit-before-response",
+          "classification": "assertion-kill"
+        },
+        {
+          "id": "M04-omit-exposure-row-materialization-count",
+          "classification": "assertion-kill"
+        },
+        {
+          "id": "M05-reject-exact-cap",
+          "classification": "test-body-refusal-kill"
+        },
+        {
+          "id": "M06-audit-dedup-omits-broker",
+          "classification": "assertion-kill"
+        },
+        {
+          "id": "M07-slot-released-before-owner-compute",
+          "classification": "assertion-kill"
+        }
+      ]
+    },
+    "review": "Independent architecture review and independent test authoring; root executed tests and mutations serially and owns acceptance. Findings closed: SUPPORT own:write, first-funding metadata and scalar response bounds.",
+    "initial_failures": [
+      "S44 preloaded null/array body test expected QR2 code instead of canonical JSON-object refusal; test corrected.",
+      "S45 synthetic funding timestamp SQL inferred integer; explicit bigint cast corrected.",
+      "S45 zero-count assertion assumed string but driver returns number; normalized test assertion.",
+      "Independent audit test treated TEXT details as parsed JSON; test corrected with JSON.parse."
+    ],
+    "full_repository_suite": "Not rerun for this isolated QR-2 commit; focused regression above is complete. CI pending on the commit candidate.",
+    "review_sha256": {
+      "s44-review.md": "df2b64f0ac3eaa5167e43481799dd98937e8c35b60a3857dab6ee6d29dc0389c",
+      "s45-review.md": "a91ecf10395433dee33542bee222a341b376ec7fafaf354813c81a6d9cd97679",
+      "independent-test.md": "58e13eba4aa3ced6b58c5c83276b9e4d80603f4a5dec5b02aeb7cd38fa23010e"
+    }
+  },
+  "limits": [
+    "Feature flag remains off; capital-model schema installed only inside disposable fixture databases.",
+    "Row caps do not establish a byte-size or main-process heap bound. Production capacity and boundary provenance remain unmeasured/UNRECORDED.",
+    "Independent contention tests invoke actual routes with one shared slot; server wiring inspected statically, not a concurrent real-HTTP wiring race. Timeout lifetime seam uses a recording worker; existing real-thread account timeout/heap tests and real owner successful compute are separate evidence.",
+    "No UI for these new APIs, target readback, private acceptance, host/VPS action, Live, guard reset or Best Inputs apply. READY false; N1 held.",
+    "FE-2b remains separate work in progress and is excluded from this commit."
+  ],
+  "newHostSteps": 0,
+  "productionQualified": false,
+  "rootAcceptance": {
+    "by": "Codex root",
+    "statement": "Accepted as local engineering evidence for S4-4/S4-5 after focused regression, independent review and serialized mutations; no activation or target eligibility."
+  }
+}

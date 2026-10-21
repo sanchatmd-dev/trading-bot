@@ -19,7 +19,9 @@ import {readJson,preloadJson} from './http.js';
 import {createRequestLimits} from './request-limits.js';
 import {json,createDispatcher,LEGACY_QUANT_PATHS,oncePerRequest} from './request-dispatch.js';
 import {overviewRoute} from './overview.js';
+import {qr2OwnerPerformanceRoute} from './qr2-owner-route.js';
 import {qr2PerformanceRoute,createQr2Slot} from './qr2-routes.js';
+import {qr2CapitalModelRoute} from './qr2-capital-model-route.js';
 import {createQr2ComputePool} from './qr2-compute-pool.js';
 import { PostgresDatabase } from './db.js';
 import {requirePaperLedgerFence} from './paper-ledger-fence.js';
@@ -294,6 +296,8 @@ async function userRoutes(req, res, url) {
   }
   if (req.method !== 'GET' && (url.pathname === '/api/me/webhook-secret' || url.pathname.startsWith('/api/brokers/')) || url.pathname === '/api/me/password') await auth.sensitive(req);
   if (await overviewRoute(req, res, url, actor, {store, json, defaultRisk: config.defaultRisk})) return;
+  if (await qr2CapitalModelRoute(req, res, url, actor, {store, auth, json, enabled: qr2PerformanceEnabled})) return;
+  if (await qr2OwnerPerformanceRoute(req, res, url, actor, {store, auth, json, enabled: qr2PerformanceEnabled, slot: qr2Slot, compute: qr2Compute})) return;
   if (await qr2PerformanceRoute(req, res, url, actor, {store, auth, json, enabled: qr2PerformanceEnabled, slot: qr2Slot, compute: qr2Compute})) return;
   if (req.method === 'GET' && url.pathname === '/api/bots') {
     const plan = await store.activePlan(actor.id);

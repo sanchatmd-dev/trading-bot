@@ -541,3 +541,18 @@ test('the module codes are exported and the two new codes are defined here',()=>
   assert.equal(Object.isFrozen(ALLOCATION_CODES),true);
   for(const [name,value] of Object.entries(ALLOCATION_CODES))assert.equal(name,value);
 });
+
+test('S4-5 scope refusals and duplicate keys dominate every declaration shortcut',()=>{
+  const variants=[[],[decl(1,'SHARED_HYPOTHETICAL',['bot-a','bot-b'],T0-DAY)],
+    [decl(1,'INDEPENDENT_ACCOUNTS',['bot-a'],T0-DAY)],
+    [decl(1,'INDEPENDENT_ACCOUNTS',['bot-a','bot-b'],T0-DAY),decl(2,'SHARED_HYPOTHETICAL',['bot-a','bot-b'],T0+DAY)]];
+  for(const declarations of variants){
+    for(const code of ['QR2_CROSS_BOT_ROW','QR2_NON_PAPER_ROW']){
+      const result=run({declarations,accounts:[accountA(),{bot_id:'bot-b',broker:'binance-global',currency:'USDT',status:{status:REFUSED,overlays:[],reasons:[code]},code}]});
+      assert.equal(result.code,code);assert.equal(result.status.status,REFUSED);
+      for(const key of ['accounts','allocation','total'])assert.equal(result[key],undefined);
+    }
+    const result=run({declarations,accounts:[accountA(),accountB({keys:accountA().keys})]});
+    assert.equal(result.code,'QR2_CROSS_BOT_ROW');assert.equal(result.accounts,undefined);assert.equal(result.total,undefined);
+  }
+});

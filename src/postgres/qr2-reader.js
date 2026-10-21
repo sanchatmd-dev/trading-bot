@@ -28,16 +28,23 @@ export const QR2_READER_METHOD='qr2-reader-v1';
 export const QR2_READ_LIMITS=Object.freeze({ledger_rows:5000,grid_instants:5000,audit_rows:2000,pending_orders:1000});
 export const QR2_AUDIT_EVENTS=Object.freeze(['ledger.cost_clamped','ledger.cost_divergence']);
 const BROKERS=Object.freeze(['binance-global','binance-th','innovestx','settrade']);
-const PENDING_STATUSES=Object.freeze(['PROCESSING','SUBMITTED','PARTIALLY_FILLED','UNKNOWN']);
+export const PENDING_STATUSES=Object.freeze(['PROCESSING','SUBMITTED','PARTIALLY_FILLED','UNKNOWN']);
 const ISOLATIONS=Object.freeze(['repeatable read','serializable']);
 // The own journal rows of the account: rows of the Bot (branch one) and rows on an own signal, whatever their user_id (branch two, so a
 // foreign journal row on an own signal is found and refused). The pre-count and the fetch use the same statement, so the budget counts
 // every row the fetch returns.
-const JOURNAL_SELECT=`SELECT j.signal_id,j.cumulative_quantity,j.user_id,j.broker,j.cash_delta,j.at,s.execution_mode,s.account_id
+export const JOURNAL_SELECT=`SELECT j.signal_id,j.cumulative_quantity,j.user_id,j.broker,j.cash_delta,j.at,s.execution_mode,s.account_id
     FROM public.paper_cash_journal j JOIN public.signals s ON s.id=j.signal_id WHERE j.user_id=$1 AND j.broker=$2
     UNION
     SELECT j.signal_id,j.cumulative_quantity,j.user_id,j.broker,j.cash_delta,j.at,s.execution_mode,s.account_id
     FROM public.paper_cash_journal j JOIN public.signals s ON s.id=j.signal_id WHERE s.user_id=$1 AND s.broker=$2`;
+// Shared exact Q2 predicates; owner admission adds positions without changing account limits.
+export const QR2_LEDGER_COUNT_SQL=`SELECT
+    (SELECT count(*) FROM public.paper_funding WHERE user_id=$1 AND broker=$2) AS fundings,
+    (SELECT count(*) FROM (${JOURNAL_SELECT}) jr) AS journal,
+    (SELECT count(*) FROM public.fills f JOIN public.signals s ON s.id=f.signal_id WHERE s.user_id=$1 AND s.broker=$2) AS fills,
+    (SELECT count(*) FROM public.ledger_position_allocations WHERE user_id=$1 AND broker=$2) AS lots,
+    (SELECT count(*) FROM public.paper_snapshots WHERE user_id=$1 AND broker=$2) AS snapshots`;
 // Option R only (not selected, O15): mirrors retrievedAt() of qr2-price.js exactly. A bar is skipped when provenance.retrieved_at is a JSON
 // number greater than the instant. Root ruling QR-2 S2 round 3 (Z3): before that query runs, RETRIEVED_AT_NOT_SAFE finds any JSON-number
 // retrieved_at that is not a non-negative safe integer (fraction, negative, tiny, above 2^53 - 1) and the read is refused QR2_INPUT_INVALID
@@ -196,12 +203,7 @@ async function readSnapshot(store,{ownerId,botId,broker,from,to,requestTime,limi
   // The grid arithmetic depends only on the resolved range: refuse before Q2 and before any row is fetched.
   if(range.resolved!==null)assertGridMidnights({from:range.resolved.from,to:range.resolved.to,limit:limits.grid_instants});
   // Q2 budget pre-count (OD-Q12), before any row fetch: the whole history counts, not the range length (8.1).
-  const counts=(await q(`SELECT
-    (SELECT count(*) FROM public.paper_funding WHERE user_id=$1 AND broker=$2) AS fundings,
-    (SELECT count(*) FROM (${JOURNAL_SELECT}) jr) AS journal,
-    (SELECT count(*) FROM public.fills f JOIN public.signals s ON s.id=f.signal_id WHERE s.user_id=$1 AND s.broker=$2) AS fills,
-    (SELECT count(*) FROM public.ledger_position_allocations WHERE user_id=$1 AND broker=$2) AS lots,
-    (SELECT count(*) FROM public.paper_snapshots WHERE user_id=$1 AND broker=$2) AS snapshots`,[botId,broker]))[0];
+  const counts=(await q(QR2_LEDGER_COUNT_SQL,[botId,broker]))[0];
   const total=Number(counts.fundings)+Number(counts.journal)+Number(counts.fills)+Number(counts.lots)+Number(counts.snapshots);
   if(total>limits.ledger_rows)throw refusal('QR2_RANGE_ADMISSION_REFUSED','ledger rows over the limit',{limit:'ledger_rows',value:total,max:limits.ledger_rows});
   // Q3 to Q9. Every execution mode is selected (decision D4): paperAccount() sums the journal of every mode, so a PAPER filter would hide the

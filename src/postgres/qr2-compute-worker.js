@@ -1,5 +1,6 @@
 import {isMainThread,parentPort,workerData} from 'node:worker_threads';
 import {computeQr2View} from './qr2-reader.js';
+import {composeOwnerResponse} from '../portfolio/qr2-owner-response.js';
 import {composePerformanceResponse} from '../portfolio/qr2-response.js';
 
 // QR-2 S3b compute worker (RC-Q35, design option A). It computes one reader view from a plain snapshot and builds the response body, off
@@ -18,6 +19,13 @@ const jsonSafe=value=>{try{JSON.stringify(value);return true;}catch{return false
  * ok:false {kind:'qr2',code,detail?} a Qr2Error of the compute; {kind:'response'} a composer failure; {kind:'other'} anything else.
  */
 export function executeQr2Job({snapshot,input},{compute=computeQr2View,compose=composePerformanceResponse}={}){
+  if(input?.kind!==undefined&&input.kind!=='account'&&input.kind!=='owner')return {ok:false,kind:'other'};
+  if(input?.kind==='owner'){
+    if(snapshot?.kind!=='owner')return {ok:false,kind:'other'};
+    try{return {ok:true,...composeOwnerResponse(snapshot,input)};}
+    catch(error){return {ok:false,kind:error?.code==='QR2_RESPONSE_INVALID'?'response':'other'};}
+  }
+  if(snapshot?.kind==='owner')return {ok:false,kind:'other'};
   let view;
   try{view=compute(snapshot,input);}
   catch(error){

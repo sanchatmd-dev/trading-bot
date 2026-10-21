@@ -242,10 +242,27 @@ function refusedView(code,counts){
   return {refused:code,code,status:statusOf(QR2_STATUS.REFUSED,[code],[]),counts};
 }
 
+// Shared owner scope gate also covers an unresolved owner range without inventing an interval.
+export function ownerAccountScopeRefusal(accounts,currency){
+  return accountScopeRefusal(accounts.map((a,i)=>readAccount(a,currency,i)));
+}
+function accountScopeRefusal(accounts){
+  // RX: no signal, journal key, funding id or position key in two member views; a refused member view refuses the whole total.
+  const refusedMembers=accounts.filter(a=>a.refused&&PROPAGATED_REFUSALS.includes(a.code));
+  const overlap=checkCrossViewKeys(accounts.map(a=>({id:a.bot_id+'\u0000'+a.broker,
+    fills:unique([...a.keys.signals,...a.keys.journal.map(j=>j.signal_id)]).map(signal_id=>({signal_id})),journal:a.keys.journal,fundings:a.keys.fundings.map(id=>({id})),lots:a.keys.positions.map(position_id=>({position_id}))})));
+  const keysOf=prefix=>new Set(overlap.findings.filter(f=>f.key.startsWith(prefix)).map(f=>f.key)).size;
+  const counts={accounts:accounts.length,accounts_refused:refusedMembers.length,signals:keysOf('S:'),journal:keysOf('J:'),fundings:keysOf('F:'),positions:keysOf('P:')};
+  if(!overlap.ok||refusedMembers.some(a=>a.code===ALLOCATION_CODES.QR2_CROSS_BOT_ROW))return refusedView(ALLOCATION_CODES.QR2_CROSS_BOT_ROW,counts);
+  if(refusedMembers.length)return refusedView(ALLOCATION_CODES.QR2_NON_PAPER_ROW,counts);
+
+  return null;
+}
+
 /**
  * The owner total over the independent Paper accounts of one currency and range (contract 4.2, design 3.4). Rules, in order:
- * input and currency defence (QR2_CURRENCY_MIX thrown); applicable declaration; declaration change inside the range; SHARED_HYPOTHETICAL;
- * Bot-set check; RX disjointness and member refusals; member condition; range defence; exact sums with the self-check. The first
+ * input and currency defence (QR2_CURRENCY_MIX thrown); RX disjointness and member RP/RX refusals; applicable declaration;
+ * declaration change inside the range; SHARED_HYPOTHETICAL; Bot-set check; member condition; range defence; exact sums with the self-check. The first
  * failing rule decides; a null total has no partial number (contract 4.2). `options.sum` is a test seam for the exact summing.
  */
 export function aggregateOwnerTotal(input,{sum:sumFn=exactSum}={}){
@@ -271,6 +288,9 @@ export function aggregateOwnerTotal(input,{sum:sumFn=exactSum}={}){
     return {allocation:allocationOf(declaration,allocationReason),total,accounts:rowsOf(),status:statusOf(QR2_STATUS.UNAVAILABLE,[reason],overlays)};
   };
 
+  const scopeRefusal=accountScopeRefusal(accounts);
+  if(scopeRefusal)return scopeRefusal;
+
   if(!declaration)return nullView(ALLOCATION_CODES.CAPITAL_MODEL_NOT_DECLARED);
   if(declarations.some(d=>d.version>declaration.version&&d.effective_from<to))return nullView(ALLOCATION_CODES.ALLOCATION_DECLARATION_CHANGED);
   if(declaration.capital_model==='SHARED_HYPOTHETICAL')return nullView(ALLOCATION_CODES.NOT_AGGREGABLE_SHARED_CAPITAL);
@@ -282,15 +302,6 @@ export function aggregateOwnerTotal(input,{sum:sumFn=exactSum}={}){
   if(!sameSet||!declaration.bot_set.every(id=>created.has(id)&&created.get(id)<=from))return nullView(ALLOCATION_CODES.ALLOCATION_SET_CHANGED);
   const declared=new Set(declaration.bot_set);
   if(accounts.some(a=>!declared.has(a.bot_id)))throw bad('an account belongs to a Bot outside the declared set');
-
-  // RX: no signal, journal key, funding id or position key in two member views; a refused member view refuses the whole total.
-  const refusedMembers=accounts.filter(a=>a.refused&&PROPAGATED_REFUSALS.includes(a.code));
-  const overlap=checkCrossViewKeys(accounts.map(a=>({id:a.bot_id+'\u0000'+a.broker,
-    fills:unique([...a.keys.signals,...a.keys.journal.map(j=>j.signal_id)]).map(signal_id=>({signal_id})),journal:a.keys.journal,fundings:a.keys.fundings.map(id=>({id})),lots:a.keys.positions.map(position_id=>({position_id}))})));
-  const keysOf=prefix=>new Set(overlap.findings.filter(f=>f.key.startsWith(prefix)).map(f=>f.key)).size;
-  const counts={accounts:accounts.length,accounts_refused:refusedMembers.length,signals:keysOf('S:'),journal:keysOf('J:'),fundings:keysOf('F:'),positions:keysOf('P:')};
-  if(!overlap.ok||refusedMembers.some(a=>a.code===ALLOCATION_CODES.QR2_CROSS_BOT_ROW))return refusedView(ALLOCATION_CODES.QR2_CROSS_BOT_ROW,counts);
-  if(refusedMembers.length)return refusedView(ALLOCATION_CODES.QR2_NON_PAPER_ROW,counts);
 
   // Member condition (R-5): NAV at both ends, flows, fees and money PnL present, priced, reconciled. A stale price keeps the value.
   const members=accounts;

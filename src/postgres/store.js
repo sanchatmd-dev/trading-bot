@@ -42,7 +42,8 @@ export class Store {
   async createBot(ownerId, label, defaults, initialize = () => {}) {
     if (typeof label !== 'string' || !label.trim() || label.trim().length > 80) throw new Error('Bot label must contain 1–80 characters');
     return await transaction(this, async () => {
-      await this.db.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').get(ownerId);
+      // Capital declarations share this tuple write: a waiting SERIALIZABLE writer must refresh its snapshot through retry.
+      await this.db.prepare('UPDATE public.users SET label=label WHERE id=? RETURNING id').get(ownerId);
       const owner = await this.userById(ownerId);
       if (!owner || owner.parent_user_id) throw new Error('Main account required');
       const bots = await this.listBots(ownerId),
