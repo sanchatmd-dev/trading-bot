@@ -1,0 +1,1870 @@
+{
+  "version": "mp-package-golden-v1",
+  "label": "LABELLED ENGINEERING FIXTURE: synthetic contract, synthetic holdout decisions and synthetic Pine sources. No private content, no real market data.",
+  "render_input": {
+    "export_id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "created_at": "2026-10-21T12:00:00Z",
+    "fixture": true,
+    "run": {
+      "owner_id": "owner-a",
+      "bot_id": "bot-a",
+      "run_id": "9d8c7b6a-1111-4222-8333-444455556666",
+      "contract": {
+        "version": "ql3a-research-job-multi-v1",
+        "mode": "MULTI_PINE",
+        "pine_count": 2,
+        "member_set_id": "5b0c7a52-1d3e-4f60-8a71-2c9d4e6f8a01",
+        "set_hash": "6ee0eb490ff832101cf82a3d387c35f29e4230be786978f7acf9e811febf6723",
+        "membership_hash": "b24090bf3552b985290ad2c1058b4a8fe658943045795b22eb9ebd9169830dd7",
+        "members": [
+          {
+            "ordinal": 1,
+            "pine_import_id": "11111111-bbbb-4bbb-8bbb-111111111111",
+            "source_version": 1,
+            "source_hash": "7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679",
+            "effective_inputs_hash": "7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519",
+            "deployment_id": "00000001-aaaa-4aaa-8aaa-000000000001",
+            "deployment_snapshot_hash": "234b05c495ef7ab6706ac41fb422f56af352ad9351b11a4f8bc0a22f9c497fa1",
+            "exit_version": "bridge-exit-v2",
+            "evidence_hash": "5108deb71ee1d00d8e14ad48f2ddee3dca264528a5ae802ac5a682ee11ecc0d7"
+          },
+          {
+            "ordinal": 2,
+            "pine_import_id": "11111112-bbbb-4bbb-8bbb-111111111112",
+            "source_version": 1,
+            "source_hash": "d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba",
+            "effective_inputs_hash": "95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477",
+            "deployment_id": "00000002-aaaa-4aaa-8aaa-000000000002",
+            "deployment_snapshot_hash": "728039ae08c684991bb27267643aa8465048f711f0943f5813769a551c99c57e",
+            "exit_version": "bridge-exit-v2",
+            "evidence_hash": "fce153950ced26bb8fb13e9b6c8212fc720fedf231615f9a5c3ce2e2cde90451"
+          }
+        ],
+        "owner_id": "owner-a",
+        "bot_id": "bot-a",
+        "policy_hash": "6b4a92f785e9545de8edf663cec18e1f3776c5d87f72a3f71d87bf8601dcae16",
+        "funding_cutoff": 7,
+        "capital": {
+          "equity": "1000",
+          "cash": "1000"
+        },
+        "model": {
+          "version": "paper-close-v1",
+          "price_tick": 0.01,
+          "quantity_step": 0.00001,
+          "fee_bps": 10,
+          "slippage_bps": 0,
+          "risk_percent": 1,
+          "data_profile": "closed-ohlcv-atr14-v1"
+        },
+        "rules": {
+          "minimum_closed_trades_train": 5,
+          "minimum_closed_trades_validation": 5,
+          "minimum_closed_trades_test": 5,
+          "maximum_drawdown_percent": 20,
+          "sensitivity_max_drop_percentage_points": 2
+        },
+        "engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+        "dataset": {
+          "start_time": 1759999980000,
+          "end_time": 1760299920000,
+          "warmup_bars": 500,
+          "bar_count": 5000,
+          "first_time": 1759999980000,
+          "timestamp_semantics": "verified closed-bar timestamps; half-open index end is last timestamp plus one minute",
+          "content_digest": "0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284",
+          "digest_version": "pine-bar-content-digest-v1"
+        },
+        "split": {
+          "warmup": 500,
+          "train_end": 3200,
+          "validation_end": 4100,
+          "test_end": 5000
+        },
+        "budget": {
+          "candidates": 30
+        },
+        "seed": 42,
+        "bridge_domains": {
+          "atr_multiplier": {
+            "min": "1",
+            "max": "3",
+            "step": "0.5"
+          },
+          "rr": {
+            "min": "0.5",
+            "max": "2.5",
+            "step": "0.5"
+          }
+        },
+        "same_bar_order": "exit-first-ordinal-v1",
+        "fixture": true,
+        "acceptance_blockers": [
+          "VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED",
+          "CUSTOM_REPAINT_EVIDENCE_REQUIRED",
+          "MULTI_PINE_REQUIRES_APP_3B"
+        ]
+      },
+      "contract_hash": "1d86ac068bfb37aef49eaaf6ea05d0ed5206c6aedad8bdca97037db75ed4c362",
+      "submission_hash": "293f1d2ee206a7cbebe633764a26ea455bd39f494a774a7289f8663da31916a2",
+      "result": {
+        "version": "mp-combined-result-v1",
+        "run_id": "9d8c7b6a-1111-4222-8333-444455556666",
+        "contract_hash": "1d86ac068bfb37aef49eaaf6ea05d0ed5206c6aedad8bdca97037db75ed4c362",
+        "owner_recommendation_ready": false,
+        "acceptance_blockers": [
+          "VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED",
+          "CUSTOM_REPAINT_EVIDENCE_REQUIRED",
+          "MULTI_PINE_REQUIRES_APP_3B"
+        ],
+        "evaluator": "mp-combined-paper-v1",
+        "engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+        "closure": {
+          "version": "mp-combined-closure-v1",
+          "hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8"
+        },
+        "set_hash": "6ee0eb490ff832101cf82a3d387c35f29e4230be786978f7acf9e811febf6723",
+        "same_bar_order": "exit-first-ordinal-v1",
+        "fixture": true,
+        "search": {
+          "algorithm": "seeded",
+          "seed": 42,
+          "budget": 30,
+          "planned": 3,
+          "grid_combinations": 25,
+          "max_evaluations": 12,
+          "plan_hash": "64879f7d6b960a01909762d911a32d4582c20010c5641ee90278b644a9e3b525",
+          "selected_dimensions": 2,
+          "covered_dimensions": 2,
+          "dimension_coverage_percent": 100
+        },
+        "candidates": [
+          {
+            "index": 0,
+            "parameters": {
+              "atr_multiplier": 2,
+              "rr": 1.5
+            },
+            "train": {
+              "closed_trades": 8,
+              "net_return_percent": "1.5",
+              "max_drawdown_percent": "0.5"
+            },
+            "validation": {
+              "closed_trades": 6,
+              "net_return_percent": "0.9",
+              "max_drawdown_percent": "0.4"
+            },
+            "decision_count": 40,
+            "fills": 30,
+            "rejections": {},
+            "exit_fill_reasons": {
+              "TP": 3
+            },
+            "ledger_hash": "77da8ab6a24992be13dcc3defc6fe4ed1012036cdce49301639a755ef5fdf831",
+            "screen_reasons": []
+          },
+          {
+            "index": 1,
+            "parameters": {
+              "atr_multiplier": 2.5,
+              "rr": 1.5
+            },
+            "train": {
+              "closed_trades": 8,
+              "net_return_percent": "1.5",
+              "max_drawdown_percent": "0.5"
+            },
+            "validation": {
+              "closed_trades": 6,
+              "net_return_percent": "0.9",
+              "max_drawdown_percent": "0.4"
+            },
+            "decision_count": 40,
+            "fills": 30,
+            "rejections": {},
+            "exit_fill_reasons": {
+              "TP": 3
+            },
+            "ledger_hash": "6e86bf06e28b0c69af258e3f6507e4251c12a0ecb67b28f94b2ef1748d880881",
+            "screen_reasons": []
+          },
+          {
+            "index": 2,
+            "parameters": {
+              "atr_multiplier": 2,
+              "rr": 1
+            },
+            "train": {
+              "closed_trades": 8,
+              "net_return_percent": "1.5",
+              "max_drawdown_percent": "0.5"
+            },
+            "validation": {
+              "closed_trades": 6,
+              "net_return_percent": "0.9",
+              "max_drawdown_percent": "0.4"
+            },
+            "decision_count": 40,
+            "fills": 30,
+            "rejections": {},
+            "exit_fill_reasons": {
+              "TP": 3
+            },
+            "ledger_hash": "583c664441d3986f6c632afbfc213e61fceca9d61764e1b05374231f9ccba9a1",
+            "screen_reasons": []
+          }
+        ],
+        "selected": {
+          "index": 0,
+          "parameters": {
+            "atr_multiplier": 2,
+            "rr": 1.5
+          },
+          "train": {
+            "closed_trades": 8,
+            "net_return_percent": "1.5",
+            "max_drawdown_percent": "0.5"
+          },
+          "validation": {
+            "closed_trades": 6,
+            "net_return_percent": "0.9",
+            "max_drawdown_percent": "0.4"
+          },
+          "decision_count": 40,
+          "fills": 30,
+          "rejections": {},
+          "exit_fill_reasons": {
+            "TP": 3
+          },
+          "ledger_hash": "048d778859626b7e8cf2174ce60464f94bf97fd9fc29940594c4594f18327b0a",
+          "sensitivity": [
+            {
+              "dimension": "atr_multiplier",
+              "parameters": {
+                "atr_multiplier": 2.5,
+                "rr": 1.5
+              },
+              "train": {
+                "closed_trades": 8,
+                "net_return_percent": "1.5",
+                "max_drawdown_percent": "0.5"
+              },
+              "validation": {
+                "closed_trades": 6,
+                "net_return_percent": "0.9",
+                "max_drawdown_percent": "0.4"
+              },
+              "decision_count": 40,
+              "fills": 30,
+              "rejections": {},
+              "exit_fill_reasons": {
+                "TP": 3
+              },
+              "ledger_hash": "b2d51ee2ccfb5e36ec9fb69528f9726be359fde00c115c52897835b0ff887e1c"
+            },
+            {
+              "dimension": "rr",
+              "parameters": {
+                "atr_multiplier": 2,
+                "rr": 1
+              },
+              "train": {
+                "closed_trades": 8,
+                "net_return_percent": "1.5",
+                "max_drawdown_percent": "0.5"
+              },
+              "validation": {
+                "closed_trades": 6,
+                "net_return_percent": "0.9",
+                "max_drawdown_percent": "0.4"
+              },
+              "decision_count": 40,
+              "fills": 30,
+              "rejections": {},
+              "exit_fill_reasons": {
+                "TP": 3
+              },
+              "ledger_hash": "6c402f439c589db7fb41053a35a990d657324ef1c8baf8e6fd8646db02038f20"
+            }
+          ],
+          "cost_stress": {
+            "train": {
+              "closed_trades": 8,
+              "net_return_percent": "1.5",
+              "max_drawdown_percent": "0.5"
+            },
+            "validation": {
+              "closed_trades": 6,
+              "net_return_percent": "0.9",
+              "max_drawdown_percent": "0.4"
+            },
+            "decision_count": 40,
+            "fills": 30,
+            "rejections": {},
+            "exit_fill_reasons": {
+              "TP": 3
+            },
+            "ledger_hash": "05a2effbd1d22fdfe50512a48d2c5631da3c5c89014b72d7785c8b9b555277ba"
+          },
+          "screen_reasons": [],
+          "test": {
+            "bars": 900,
+            "closed_trades": 5,
+            "start_equity": "1008.6835",
+            "end_equity": "1016.6075",
+            "net_return_percent": "0.7856",
+            "max_drawdown_percent": "0.2",
+            "profit_factor": "12.5",
+            "gross_profit": "10.8",
+            "gross_loss": "0.8"
+          },
+          "holdout": {
+            "ledger_hash": "94d71bc981c28e493767ef9420b4a761551fb12c215a776348b972fd54acdd39",
+            "decision_count": 17,
+            "fills": 16
+          }
+        },
+        "holdout_evaluated": true,
+        "completion_reason": "RESEARCH_CANDIDATE_PENDING_ACCEPTANCE",
+        "member_signals": [],
+        "funnel": {
+          "step": "HOLDOUT",
+          "rows": 5000,
+          "diagnostics": {
+            "same_bar_order": "exit-first-ordinal-v1",
+            "cross_source_target": 0,
+            "duplicate_intents": 0,
+            "members": [
+              {
+                "ordinal": 1,
+                "deployment_id": "00000001-aaaa-4aaa-8aaa-000000000001",
+                "native_signals": 11,
+                "accepted": 4,
+                "rejected": {
+                  "MAX_OPEN_POSITIONS": 1
+                }
+              },
+              {
+                "ordinal": 2,
+                "deployment_id": "00000002-aaaa-4aaa-8aaa-000000000002",
+                "native_signals": 12,
+                "accepted": 4,
+                "rejected": {
+                  "MAX_OPEN_POSITIONS": 1
+                }
+              }
+            ],
+            "bot": {
+              "native_signals": 23,
+              "accepted": 8,
+              "rejected": {
+                "MAX_OPEN_POSITIONS": 1
+              }
+            }
+          }
+        },
+        "holdout_decisions": [
+          {
+            "event_type": "BUY",
+            "time": 1760035980000,
+            "entry_ref": "00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0",
+            "sequence": 0,
+            "reason": null,
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30000.000000000000000000",
+            "notional": "300.000000000000000000",
+            "fee": "0.300000000000000000",
+            "cash": "699.700000000000000000",
+            "cost": "300.300000000000000000",
+            "realized_r": "0E-18"
+          },
+          {
+            "event_type": "EXIT",
+            "time": 1760053980000,
+            "entry_ref": "00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0",
+            "sequence": 0,
+            "reason": "TP",
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30600.000000000000000000",
+            "notional": "306.000000000000000000",
+            "fee": "0.306000000000000000",
+            "cash": "1005.394000000000000000",
+            "cost": "0E-18",
+            "realized_r": "0.800000000000000000"
+          },
+          {
+            "event_type": "BUY",
+            "time": 1760059980000,
+            "entry_ref": "00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0",
+            "sequence": 0,
+            "reason": null,
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30100.000000000000000000",
+            "notional": "301.000000000000000000",
+            "fee": "0.301000000000000000",
+            "cash": "704.093000000000000000",
+            "cost": "301.301000000000000000",
+            "realized_r": "0E-18"
+          },
+          {
+            "event_type": "EXIT",
+            "time": 1760077980000,
+            "entry_ref": "00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0",
+            "sequence": 0,
+            "reason": "TP",
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30250.000000000000000000",
+            "notional": "302.500000000000000000",
+            "fee": "0.302500000000000000",
+            "cash": "1006.290500000000000000",
+            "cost": "0E-18",
+            "realized_r": "0.200000000000000000"
+          },
+          {
+            "event_type": "BUY",
+            "time": 1760197980000,
+            "entry_ref": "00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0",
+            "sequence": 0,
+            "reason": null,
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30200.000000000000000000",
+            "notional": "302.000000000000000000",
+            "fee": "0.302000000000000000",
+            "cash": "703.988500000000000000",
+            "cost": "302.302000000000000000",
+            "realized_r": "0E-18"
+          },
+          {
+            "event_type": "EXIT",
+            "time": 1760209980000,
+            "entry_ref": "00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0",
+            "sequence": 0,
+            "reason": "TP",
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30500.000000000000000000",
+            "notional": "305.000000000000000000",
+            "fee": "0.305000000000000000",
+            "cash": "1008.683500000000000000",
+            "cost": "0E-18",
+            "realized_r": "0.400000000000000000"
+          },
+          {
+            "event_type": "BUY",
+            "time": 1760251980000,
+            "entry_ref": "00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0",
+            "sequence": 0,
+            "reason": null,
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30000.000000000000000000",
+            "notional": "300.000000000000000000",
+            "fee": "0.300000000000000000",
+            "cash": "708.383500000000000000",
+            "cost": "300.300000000000000000",
+            "realized_r": "0E-18"
+          },
+          {
+            "event_type": "EXIT",
+            "time": 1760257980000,
+            "entry_ref": "00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0",
+            "sequence": 0,
+            "reason": "TP",
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30400.000000000000000000",
+            "notional": "304.000000000000000000",
+            "fee": "0.304000000000000000",
+            "cash": "1012.079500000000000000",
+            "cost": "0E-18",
+            "realized_r": "0.500000000000000000"
+          },
+          {
+            "event_type": "BUY",
+            "time": 1760260980000,
+            "entry_ref": "00000002-aaaa-4aaa-8aaa-000000000002:1760260980000:0",
+            "sequence": 0,
+            "reason": "MAX_OPEN_POSITIONS",
+            "sl": null,
+            "tp": null,
+            "outcome": "REJECTED",
+            "quantity": "0E-18",
+            "fee": "0E-18"
+          },
+          {
+            "event_type": "BUY",
+            "time": 1760263980000,
+            "entry_ref": "00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0",
+            "sequence": 0,
+            "reason": null,
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30400.000000000000000000",
+            "notional": "304.000000000000000000",
+            "fee": "0.304000000000000000",
+            "cash": "707.775500000000000000",
+            "cost": "304.304000000000000000",
+            "realized_r": "0E-18"
+          },
+          {
+            "event_type": "EXIT",
+            "time": 1760275980000,
+            "entry_ref": "00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0",
+            "sequence": 0,
+            "reason": "TP",
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30900.000000000000000000",
+            "notional": "309.000000000000000000",
+            "fee": "0.309000000000000000",
+            "cash": "1016.466500000000000000",
+            "cost": "0E-18",
+            "realized_r": "0.600000000000000000"
+          },
+          {
+            "event_type": "BUY",
+            "time": 1760278980000,
+            "entry_ref": "00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0",
+            "sequence": 0,
+            "reason": null,
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30900.000000000000000000",
+            "notional": "309.000000000000000000",
+            "fee": "0.309000000000000000",
+            "cash": "707.157500000000000000",
+            "cost": "309.309000000000000000",
+            "realized_r": "0E-18"
+          },
+          {
+            "event_type": "EXIT",
+            "time": 1760281980000,
+            "entry_ref": "00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0",
+            "sequence": 0,
+            "reason": "TP",
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "31000.000000000000000000",
+            "notional": "310.000000000000000000",
+            "fee": "0.310000000000000000",
+            "cash": "1016.847500000000000000",
+            "cost": "0E-18",
+            "realized_r": "0.100000000000000000"
+          },
+          {
+            "event_type": "BUY",
+            "time": 1760284980000,
+            "entry_ref": "00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0",
+            "sequence": 0,
+            "reason": null,
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "31000.000000000000000000",
+            "notional": "310.000000000000000000",
+            "fee": "0.310000000000000000",
+            "cash": "706.537500000000000000",
+            "cost": "310.310000000000000000",
+            "realized_r": "0E-18"
+          },
+          {
+            "event_type": "EXIT",
+            "time": 1760287980000,
+            "entry_ref": "00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0",
+            "sequence": 0,
+            "reason": "SL",
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30950.000000000000000000",
+            "notional": "309.500000000000000000",
+            "fee": "0.309500000000000000",
+            "cash": "1015.728000000000000000",
+            "cost": "0E-18",
+            "realized_r": "-0.050000000000000000"
+          },
+          {
+            "event_type": "BUY",
+            "time": 1760290980000,
+            "entry_ref": "00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0",
+            "sequence": 0,
+            "reason": null,
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "30950.000000000000000000",
+            "notional": "309.500000000000000000",
+            "fee": "0.309500000000000000",
+            "cash": "705.918500000000000000",
+            "cost": "309.809500000000000000",
+            "realized_r": "0E-18"
+          },
+          {
+            "event_type": "EXIT",
+            "time": 1760293980000,
+            "entry_ref": "00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0",
+            "sequence": 0,
+            "reason": "TP",
+            "sl": null,
+            "tp": null,
+            "outcome": "FILLED",
+            "sizing_outcome": "ACCEPTED",
+            "sizing_adjustment": null,
+            "quantity": "0.010000000000000000",
+            "price": "31100.000000000000000000",
+            "notional": "311.000000000000000000",
+            "fee": "0.311000000000000000",
+            "cash": "1016.607500000000000000",
+            "cost": "0E-18",
+            "realized_r": "0.300000000000000000"
+          }
+        ],
+        "combined_baseline": {
+          "version": "mp-combined-baseline-v1",
+          "binding": {
+            "run_id": "9d8c7b6a-1111-4222-8333-444455556666",
+            "contract_hash": "1d86ac068bfb37aef49eaaf6ea05d0ed5206c6aedad8bdca97037db75ed4c362"
+          },
+          "pair": {
+            "atr_multiplier": 2,
+            "rr": 1.5
+          },
+          "same_bar_order": "exit-first-ordinal-v1",
+          "matched": true,
+          "differences": {},
+          "received_decisions_hash": "b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4"
+        }
+      }
+    },
+    "policy": {
+      "paperTrading": true,
+      "requireReduceOnlySell": true,
+      "maxRiskPercent": 2
+    },
+    "library_versions": {
+      "gates": "best-inputs-multi-gates-v1",
+      "render": "multi-v1"
+    },
+    "risk_limits": {
+      "maxRiskPercent": "2",
+      "maxOrderNotional": 1000
+    },
+    "producer_closure_hash": "7653338fe83f8783d9969343b9231d6db8c448c1025bae3999ca77b689ac7328",
+    "members": [
+      {
+        "ordinal": 1,
+        "source": "//@version=5\nindicator(\"Fixture member 1\", overlay=true)\nlen = input.int(11, \"Length\")\nbuySignal = ta.crossover(close, ta.sma(close, len))\nsellSignal = ta.crossunder(close, ta.sma(close, len))\n",
+        "signals": {
+          "buy": "buySignal",
+          "exit": "sellSignal"
+        }
+      },
+      {
+        "ordinal": 2,
+        "source": "//@version=5\nindicator(\"Fixture member 2\", overlay=true)\nlen = input.int(12, \"Length\")\nbuySignal = ta.crossover(close, ta.sma(close, len))\nsellSignal = ta.crossunder(close, ta.sma(close, len))\n",
+        "signals": {
+          "buy": "buySignal",
+          "exit": "sellSignal"
+        }
+      }
+    ],
+    "trace": {
+      "tables": {
+        "equity": {
+          "columns": [
+            "time_ms",
+            "time_utc",
+            "partition",
+            "event_type",
+            "cash",
+            "position_quantity",
+            "equity_at_fill",
+            "deployment_id"
+          ],
+          "rows": [
+            [
+              1760035980000,
+              "2025-10-09T18:53:00.000Z",
+              "train",
+              "BUY",
+              "699.700000000000000000",
+              "0.01",
+              "999.7",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              1760053980000,
+              "2025-10-09T23:53:00.000Z",
+              "train",
+              "EXIT",
+              "1005.394000000000000000",
+              "0",
+              "1005.394",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              1760059980000,
+              "2025-10-10T01:33:00.000Z",
+              "train",
+              "BUY",
+              "704.093000000000000000",
+              "0.01",
+              "1005.093",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ],
+            [
+              1760077980000,
+              "2025-10-10T06:33:00.000Z",
+              "train",
+              "EXIT",
+              "1006.290500000000000000",
+              "0",
+              "1006.2905",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ],
+            [
+              1760197980000,
+              "2025-10-11T15:53:00.000Z",
+              "validation",
+              "BUY",
+              "703.988500000000000000",
+              "0.01",
+              "1005.9885",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              1760209980000,
+              "2025-10-11T19:13:00.000Z",
+              "validation",
+              "EXIT",
+              "1008.683500000000000000",
+              "0",
+              "1008.6835",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              1760251980000,
+              "2025-10-12T06:53:00.000Z",
+              "test",
+              "BUY",
+              "708.383500000000000000",
+              "0.01",
+              "1008.3835",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ],
+            [
+              1760257980000,
+              "2025-10-12T08:33:00.000Z",
+              "test",
+              "EXIT",
+              "1012.079500000000000000",
+              "0",
+              "1012.0795",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ],
+            [
+              1760263980000,
+              "2025-10-12T10:13:00.000Z",
+              "test",
+              "BUY",
+              "707.775500000000000000",
+              "0.01",
+              "1011.7755",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              1760275980000,
+              "2025-10-12T13:33:00.000Z",
+              "test",
+              "EXIT",
+              "1016.466500000000000000",
+              "0",
+              "1016.4665",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              1760278980000,
+              "2025-10-12T14:23:00.000Z",
+              "test",
+              "BUY",
+              "707.157500000000000000",
+              "0.01",
+              "1016.1575",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ],
+            [
+              1760281980000,
+              "2025-10-12T15:13:00.000Z",
+              "test",
+              "EXIT",
+              "1016.847500000000000000",
+              "0",
+              "1016.8475",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ],
+            [
+              1760284980000,
+              "2025-10-12T16:03:00.000Z",
+              "test",
+              "BUY",
+              "706.537500000000000000",
+              "0.01",
+              "1016.5375",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              1760287980000,
+              "2025-10-12T16:53:00.000Z",
+              "test",
+              "EXIT",
+              "1015.728000000000000000",
+              "0",
+              "1015.728",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              1760290980000,
+              "2025-10-12T17:43:00.000Z",
+              "test",
+              "BUY",
+              "705.918500000000000000",
+              "0.01",
+              "1015.4185",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ],
+            [
+              1760293980000,
+              "2025-10-12T18:33:00.000Z",
+              "test",
+              "EXIT",
+              "1016.607500000000000000",
+              "0",
+              "1016.6075",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ]
+          ]
+        },
+        "trades": {
+          "columns": [
+            "entry_ref",
+            "partition",
+            "entry_time_ms",
+            "entry_time_utc",
+            "entry_price",
+            "quantity",
+            "entry_fee",
+            "exit_time_ms",
+            "exit_time_utc",
+            "exit_price",
+            "exit_fee",
+            "exit_reason",
+            "net",
+            "realized_r",
+            "deployment_id"
+          ],
+          "rows": [
+            [
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0",
+              "train",
+              1760035980000,
+              "2025-10-09T18:53:00.000Z",
+              "30000.000000000000000000",
+              "0.010000000000000000",
+              "0.300000000000000000",
+              1760053980000,
+              "2025-10-09T23:53:00.000Z",
+              "30600.000000000000000000",
+              "0.306000000000000000",
+              "TP",
+              "5.394",
+              "0.800000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0",
+              "train",
+              1760059980000,
+              "2025-10-10T01:33:00.000Z",
+              "30100.000000000000000000",
+              "0.010000000000000000",
+              "0.301000000000000000",
+              1760077980000,
+              "2025-10-10T06:33:00.000Z",
+              "30250.000000000000000000",
+              "0.302500000000000000",
+              "TP",
+              "0.8965",
+              "0.200000000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ],
+            [
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0",
+              "validation",
+              1760197980000,
+              "2025-10-11T15:53:00.000Z",
+              "30200.000000000000000000",
+              "0.010000000000000000",
+              "0.302000000000000000",
+              1760209980000,
+              "2025-10-11T19:13:00.000Z",
+              "30500.000000000000000000",
+              "0.305000000000000000",
+              "TP",
+              "2.393",
+              "0.400000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0",
+              "test",
+              1760251980000,
+              "2025-10-12T06:53:00.000Z",
+              "30000.000000000000000000",
+              "0.010000000000000000",
+              "0.300000000000000000",
+              1760257980000,
+              "2025-10-12T08:33:00.000Z",
+              "30400.000000000000000000",
+              "0.304000000000000000",
+              "TP",
+              "3.396",
+              "0.500000000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ],
+            [
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0",
+              "test",
+              1760263980000,
+              "2025-10-12T10:13:00.000Z",
+              "30400.000000000000000000",
+              "0.010000000000000000",
+              "0.304000000000000000",
+              1760275980000,
+              "2025-10-12T13:33:00.000Z",
+              "30900.000000000000000000",
+              "0.309000000000000000",
+              "TP",
+              "4.387",
+              "0.600000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0",
+              "test",
+              1760278980000,
+              "2025-10-12T14:23:00.000Z",
+              "30900.000000000000000000",
+              "0.010000000000000000",
+              "0.309000000000000000",
+              1760281980000,
+              "2025-10-12T15:13:00.000Z",
+              "31000.000000000000000000",
+              "0.310000000000000000",
+              "TP",
+              "0.381",
+              "0.100000000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ],
+            [
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0",
+              "test",
+              1760284980000,
+              "2025-10-12T16:03:00.000Z",
+              "31000.000000000000000000",
+              "0.010000000000000000",
+              "0.310000000000000000",
+              1760287980000,
+              "2025-10-12T16:53:00.000Z",
+              "30950.000000000000000000",
+              "0.309500000000000000",
+              "SL",
+              "-1.1195",
+              "-0.050000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001"
+            ],
+            [
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0",
+              "test",
+              1760290980000,
+              "2025-10-12T17:43:00.000Z",
+              "30950.000000000000000000",
+              "0.010000000000000000",
+              "0.309500000000000000",
+              1760293980000,
+              "2025-10-12T18:33:00.000Z",
+              "31100.000000000000000000",
+              "0.311000000000000000",
+              "TP",
+              "0.8795",
+              "0.300000000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002"
+            ]
+          ]
+        },
+        "decisions": {
+          "columns": [
+            "time_ms",
+            "time_utc",
+            "partition",
+            "event_type",
+            "entry_ref",
+            "outcome",
+            "reason",
+            "sizing_outcome",
+            "quantity",
+            "price",
+            "fee",
+            "deployment_id",
+            "ordinal"
+          ],
+          "rows": [
+            [
+              1760035980000,
+              "2025-10-09T18:53:00.000Z",
+              "train",
+              "BUY",
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0",
+              "FILLED",
+              null,
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30000.000000000000000000",
+              "0.300000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001",
+              1
+            ],
+            [
+              1760053980000,
+              "2025-10-09T23:53:00.000Z",
+              "train",
+              "EXIT",
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0",
+              "FILLED",
+              "TP",
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30600.000000000000000000",
+              "0.306000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001",
+              1
+            ],
+            [
+              1760059980000,
+              "2025-10-10T01:33:00.000Z",
+              "train",
+              "BUY",
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0",
+              "FILLED",
+              null,
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30100.000000000000000000",
+              "0.301000000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002",
+              2
+            ],
+            [
+              1760077980000,
+              "2025-10-10T06:33:00.000Z",
+              "train",
+              "EXIT",
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0",
+              "FILLED",
+              "TP",
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30250.000000000000000000",
+              "0.302500000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002",
+              2
+            ],
+            [
+              1760197980000,
+              "2025-10-11T15:53:00.000Z",
+              "validation",
+              "BUY",
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0",
+              "FILLED",
+              null,
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30200.000000000000000000",
+              "0.302000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001",
+              1
+            ],
+            [
+              1760209980000,
+              "2025-10-11T19:13:00.000Z",
+              "validation",
+              "EXIT",
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0",
+              "FILLED",
+              "TP",
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30500.000000000000000000",
+              "0.305000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001",
+              1
+            ],
+            [
+              1760251980000,
+              "2025-10-12T06:53:00.000Z",
+              "test",
+              "BUY",
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0",
+              "FILLED",
+              null,
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30000.000000000000000000",
+              "0.300000000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002",
+              2
+            ],
+            [
+              1760257980000,
+              "2025-10-12T08:33:00.000Z",
+              "test",
+              "EXIT",
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0",
+              "FILLED",
+              "TP",
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30400.000000000000000000",
+              "0.304000000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002",
+              2
+            ],
+            [
+              1760260980000,
+              "2025-10-12T09:23:00.000Z",
+              "test",
+              "BUY",
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760260980000:0",
+              "REJECTED",
+              "MAX_OPEN_POSITIONS",
+              null,
+              "0E-18",
+              null,
+              "0E-18",
+              "00000002-aaaa-4aaa-8aaa-000000000002",
+              2
+            ],
+            [
+              1760263980000,
+              "2025-10-12T10:13:00.000Z",
+              "test",
+              "BUY",
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0",
+              "FILLED",
+              null,
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30400.000000000000000000",
+              "0.304000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001",
+              1
+            ],
+            [
+              1760275980000,
+              "2025-10-12T13:33:00.000Z",
+              "test",
+              "EXIT",
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0",
+              "FILLED",
+              "TP",
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30900.000000000000000000",
+              "0.309000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001",
+              1
+            ],
+            [
+              1760278980000,
+              "2025-10-12T14:23:00.000Z",
+              "test",
+              "BUY",
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0",
+              "FILLED",
+              null,
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30900.000000000000000000",
+              "0.309000000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002",
+              2
+            ],
+            [
+              1760281980000,
+              "2025-10-12T15:13:00.000Z",
+              "test",
+              "EXIT",
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0",
+              "FILLED",
+              "TP",
+              "ACCEPTED",
+              "0.010000000000000000",
+              "31000.000000000000000000",
+              "0.310000000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002",
+              2
+            ],
+            [
+              1760284980000,
+              "2025-10-12T16:03:00.000Z",
+              "test",
+              "BUY",
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0",
+              "FILLED",
+              null,
+              "ACCEPTED",
+              "0.010000000000000000",
+              "31000.000000000000000000",
+              "0.310000000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001",
+              1
+            ],
+            [
+              1760287980000,
+              "2025-10-12T16:53:00.000Z",
+              "test",
+              "EXIT",
+              "00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0",
+              "FILLED",
+              "SL",
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30950.000000000000000000",
+              "0.309500000000000000",
+              "00000001-aaaa-4aaa-8aaa-000000000001",
+              1
+            ],
+            [
+              1760290980000,
+              "2025-10-12T17:43:00.000Z",
+              "test",
+              "BUY",
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0",
+              "FILLED",
+              null,
+              "ACCEPTED",
+              "0.010000000000000000",
+              "30950.000000000000000000",
+              "0.309500000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002",
+              2
+            ],
+            [
+              1760293980000,
+              "2025-10-12T18:33:00.000Z",
+              "test",
+              "EXIT",
+              "00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0",
+              "FILLED",
+              "TP",
+              "ACCEPTED",
+              "0.010000000000000000",
+              "31100.000000000000000000",
+              "0.311000000000000000",
+              "00000002-aaaa-4aaa-8aaa-000000000002",
+              2
+            ]
+          ]
+        }
+      },
+      "files": {
+        "quant-data/equity.csv": "time_ms,time_utc,partition,event_type,cash,position_quantity,equity_at_fill,deployment_id\n1760035980000,2025-10-09T18:53:00.000Z,train,BUY,699.700000000000000000,0.01,999.7,00000001-aaaa-4aaa-8aaa-000000000001\n1760053980000,2025-10-09T23:53:00.000Z,train,EXIT,1005.394000000000000000,0,1005.394,00000001-aaaa-4aaa-8aaa-000000000001\n1760059980000,2025-10-10T01:33:00.000Z,train,BUY,704.093000000000000000,0.01,1005.093,00000002-aaaa-4aaa-8aaa-000000000002\n1760077980000,2025-10-10T06:33:00.000Z,train,EXIT,1006.290500000000000000,0,1006.2905,00000002-aaaa-4aaa-8aaa-000000000002\n1760197980000,2025-10-11T15:53:00.000Z,validation,BUY,703.988500000000000000,0.01,1005.9885,00000001-aaaa-4aaa-8aaa-000000000001\n1760209980000,2025-10-11T19:13:00.000Z,validation,EXIT,1008.683500000000000000,0,1008.6835,00000001-aaaa-4aaa-8aaa-000000000001\n1760251980000,2025-10-12T06:53:00.000Z,test,BUY,708.383500000000000000,0.01,1008.3835,00000002-aaaa-4aaa-8aaa-000000000002\n1760257980000,2025-10-12T08:33:00.000Z,test,EXIT,1012.079500000000000000,0,1012.0795,00000002-aaaa-4aaa-8aaa-000000000002\n1760263980000,2025-10-12T10:13:00.000Z,test,BUY,707.775500000000000000,0.01,1011.7755,00000001-aaaa-4aaa-8aaa-000000000001\n1760275980000,2025-10-12T13:33:00.000Z,test,EXIT,1016.466500000000000000,0,1016.4665,00000001-aaaa-4aaa-8aaa-000000000001\n1760278980000,2025-10-12T14:23:00.000Z,test,BUY,707.157500000000000000,0.01,1016.1575,00000002-aaaa-4aaa-8aaa-000000000002\n1760281980000,2025-10-12T15:13:00.000Z,test,EXIT,1016.847500000000000000,0,1016.8475,00000002-aaaa-4aaa-8aaa-000000000002\n1760284980000,2025-10-12T16:03:00.000Z,test,BUY,706.537500000000000000,0.01,1016.5375,00000001-aaaa-4aaa-8aaa-000000000001\n1760287980000,2025-10-12T16:53:00.000Z,test,EXIT,1015.728000000000000000,0,1015.728,00000001-aaaa-4aaa-8aaa-000000000001\n1760290980000,2025-10-12T17:43:00.000Z,test,BUY,705.918500000000000000,0.01,1015.4185,00000002-aaaa-4aaa-8aaa-000000000002\n1760293980000,2025-10-12T18:33:00.000Z,test,EXIT,1016.607500000000000000,0,1016.6075,00000002-aaaa-4aaa-8aaa-000000000002\n",
+        "quant-data/trades.csv": "entry_ref,partition,entry_time_ms,entry_time_utc,entry_price,quantity,entry_fee,exit_time_ms,exit_time_utc,exit_price,exit_fee,exit_reason,net,realized_r,deployment_id\n00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0,train,1760035980000,2025-10-09T18:53:00.000Z,30000.000000000000000000,0.010000000000000000,0.300000000000000000,1760053980000,2025-10-09T23:53:00.000Z,30600.000000000000000000,0.306000000000000000,TP,5.394,0.800000000000000000,00000001-aaaa-4aaa-8aaa-000000000001\n00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0,train,1760059980000,2025-10-10T01:33:00.000Z,30100.000000000000000000,0.010000000000000000,0.301000000000000000,1760077980000,2025-10-10T06:33:00.000Z,30250.000000000000000000,0.302500000000000000,TP,0.8965,0.200000000000000000,00000002-aaaa-4aaa-8aaa-000000000002\n00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0,validation,1760197980000,2025-10-11T15:53:00.000Z,30200.000000000000000000,0.010000000000000000,0.302000000000000000,1760209980000,2025-10-11T19:13:00.000Z,30500.000000000000000000,0.305000000000000000,TP,2.393,0.400000000000000000,00000001-aaaa-4aaa-8aaa-000000000001\n00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0,test,1760251980000,2025-10-12T06:53:00.000Z,30000.000000000000000000,0.010000000000000000,0.300000000000000000,1760257980000,2025-10-12T08:33:00.000Z,30400.000000000000000000,0.304000000000000000,TP,3.396,0.500000000000000000,00000002-aaaa-4aaa-8aaa-000000000002\n00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0,test,1760263980000,2025-10-12T10:13:00.000Z,30400.000000000000000000,0.010000000000000000,0.304000000000000000,1760275980000,2025-10-12T13:33:00.000Z,30900.000000000000000000,0.309000000000000000,TP,4.387,0.600000000000000000,00000001-aaaa-4aaa-8aaa-000000000001\n00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0,test,1760278980000,2025-10-12T14:23:00.000Z,30900.000000000000000000,0.010000000000000000,0.309000000000000000,1760281980000,2025-10-12T15:13:00.000Z,31000.000000000000000000,0.310000000000000000,TP,0.381,0.100000000000000000,00000002-aaaa-4aaa-8aaa-000000000002\n00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0,test,1760284980000,2025-10-12T16:03:00.000Z,31000.000000000000000000,0.010000000000000000,0.310000000000000000,1760287980000,2025-10-12T16:53:00.000Z,30950.000000000000000000,0.309500000000000000,SL,-1.1195,-0.050000000000000000,00000001-aaaa-4aaa-8aaa-000000000001\n00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0,test,1760290980000,2025-10-12T17:43:00.000Z,30950.000000000000000000,0.010000000000000000,0.309500000000000000,1760293980000,2025-10-12T18:33:00.000Z,31100.000000000000000000,0.311000000000000000,TP,0.8795,0.300000000000000000,00000002-aaaa-4aaa-8aaa-000000000002\n",
+        "quant-data/decisions.csv": "time_ms,time_utc,partition,event_type,entry_ref,outcome,reason,sizing_outcome,quantity,price,fee,deployment_id,ordinal\n1760035980000,2025-10-09T18:53:00.000Z,train,BUY,00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0,FILLED,,ACCEPTED,0.010000000000000000,30000.000000000000000000,0.300000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760053980000,2025-10-09T23:53:00.000Z,train,EXIT,00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,30600.000000000000000000,0.306000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760059980000,2025-10-10T01:33:00.000Z,train,BUY,00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0,FILLED,,ACCEPTED,0.010000000000000000,30100.000000000000000000,0.301000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760077980000,2025-10-10T06:33:00.000Z,train,EXIT,00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,30250.000000000000000000,0.302500000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760197980000,2025-10-11T15:53:00.000Z,validation,BUY,00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0,FILLED,,ACCEPTED,0.010000000000000000,30200.000000000000000000,0.302000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760209980000,2025-10-11T19:13:00.000Z,validation,EXIT,00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,30500.000000000000000000,0.305000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760251980000,2025-10-12T06:53:00.000Z,test,BUY,00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0,FILLED,,ACCEPTED,0.010000000000000000,30000.000000000000000000,0.300000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760257980000,2025-10-12T08:33:00.000Z,test,EXIT,00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,30400.000000000000000000,0.304000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760260980000,2025-10-12T09:23:00.000Z,test,BUY,00000002-aaaa-4aaa-8aaa-000000000002:1760260980000:0,REJECTED,MAX_OPEN_POSITIONS,,0E-18,,0E-18,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760263980000,2025-10-12T10:13:00.000Z,test,BUY,00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0,FILLED,,ACCEPTED,0.010000000000000000,30400.000000000000000000,0.304000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760275980000,2025-10-12T13:33:00.000Z,test,EXIT,00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,30900.000000000000000000,0.309000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760278980000,2025-10-12T14:23:00.000Z,test,BUY,00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0,FILLED,,ACCEPTED,0.010000000000000000,30900.000000000000000000,0.309000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760281980000,2025-10-12T15:13:00.000Z,test,EXIT,00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,31000.000000000000000000,0.310000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760284980000,2025-10-12T16:03:00.000Z,test,BUY,00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0,FILLED,,ACCEPTED,0.010000000000000000,31000.000000000000000000,0.310000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760287980000,2025-10-12T16:53:00.000Z,test,EXIT,00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0,FILLED,SL,ACCEPTED,0.010000000000000000,30950.000000000000000000,0.309500000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760290980000,2025-10-12T17:43:00.000Z,test,BUY,00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0,FILLED,,ACCEPTED,0.010000000000000000,30950.000000000000000000,0.309500000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760293980000,2025-10-12T18:33:00.000Z,test,EXIT,00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,31100.000000000000000000,0.311000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n"
+      },
+      "records": [
+        {
+          "path": "quant-data/equity.csv",
+          "sha256": "0a2b198621e513ee0a453e9e423db6832d80da0f1b8517c60cb0aafa5d89a758",
+          "decisions_hash": "b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4",
+          "steps_digest": "65df0aa29c7422230fdbc2f7cac1208c20090633775a12d6e49d828803bcf2c0",
+          "holdout_digest": "d54dc6adf2b90e52c25d86c005b945f50946858ca65dc6c1f461db295a69a5f6",
+          "run_engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+          "producer_closure_hash": "7653338fe83f8783d9969343b9231d6db8c448c1025bae3999ca77b689ac7328",
+          "method": "stored-holdout-decisions-v1"
+        },
+        {
+          "path": "quant-data/trades.csv",
+          "sha256": "d9914fb0efa60668ba82e3a1ed37988099e4870e9f1f742b191c2e7a166ffb92",
+          "decisions_hash": "b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4",
+          "steps_digest": "65df0aa29c7422230fdbc2f7cac1208c20090633775a12d6e49d828803bcf2c0",
+          "holdout_digest": "d54dc6adf2b90e52c25d86c005b945f50946858ca65dc6c1f461db295a69a5f6",
+          "run_engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+          "producer_closure_hash": "7653338fe83f8783d9969343b9231d6db8c448c1025bae3999ca77b689ac7328",
+          "method": "stored-holdout-decisions-v1"
+        },
+        {
+          "path": "quant-data/decisions.csv",
+          "sha256": "e2dc86d2ba293ea04ec8cbbd36fbcefb2b077138d6e4e41808864576fc5557d3",
+          "decisions_hash": "b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4",
+          "steps_digest": "65df0aa29c7422230fdbc2f7cac1208c20090633775a12d6e49d828803bcf2c0",
+          "holdout_digest": "d54dc6adf2b90e52c25d86c005b945f50946858ca65dc6c1f461db295a69a5f6",
+          "run_engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+          "producer_closure_hash": "7653338fe83f8783d9969343b9231d6db8c448c1025bae3999ca77b689ac7328",
+          "method": "stored-holdout-decisions-v1"
+        }
+      ],
+      "limitation_codes": [
+        "MP_TRACE_STEPS_NOT_REEVALUATED"
+      ],
+      "counts": {
+        "decisions": 17,
+        "fills": 16,
+        "closed_trades": {
+          "train": 2,
+          "validation": 1,
+          "test": 5
+        },
+        "open_entries": 0,
+        "members": [
+          {
+            "ordinal": 1,
+            "deployment_id": "00000001-aaaa-4aaa-8aaa-000000000001",
+            "decisions": 8,
+            "fills": 8
+          },
+          {
+            "ordinal": 2,
+            "deployment_id": "00000002-aaaa-4aaa-8aaa-000000000002",
+            "decisions": 9,
+            "fills": 8
+          }
+        ]
+      }
+    }
+  },
+  "rendered": {
+    "files": {
+      "inputs.json": "{\n  \"bridge\": {\n    \"atr_multiplier\": {\n      \"after\": \"2\",\n      \"domain\": {\n        \"max\": \"3\",\n        \"min\": \"1\",\n        \"step\": \"0.5\"\n      },\n      \"unit\": \"ATR multiple\"\n    },\n    \"rr\": {\n      \"after\": \"1.5\",\n      \"domain\": {\n        \"max\": \"2.5\",\n        \"min\": \"0.5\",\n        \"step\": \"0.5\"\n      },\n      \"unit\": \"reward to risk ratio\"\n    }\n  },\n  \"member_set_id\": \"5b0c7a52-1d3e-4f60-8a71-2c9d4e6f8a01\",\n  \"members\": [\n    {\n      \"deployment_id\": \"00000001-aaaa-4aaa-8aaa-000000000001\",\n      \"effective_input_hash\": \"7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519\",\n      \"ordinal\": 1,\n      \"pine_import_id\": \"11111111-bbbb-4bbb-8bbb-111111111111\",\n      \"source_hash\": \"7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679\",\n      \"source_version\": 1\n    },\n    {\n      \"deployment_id\": \"00000002-aaaa-4aaa-8aaa-000000000002\",\n      \"effective_input_hash\": \"95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477\",\n      \"ordinal\": 2,\n      \"pine_import_id\": \"11111112-bbbb-4bbb-8bbb-111111111112\",\n      \"source_hash\": \"d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba\",\n      \"source_version\": 1\n    }\n  ],\n  \"mode\": \"MULTI_PINE\",\n  \"pine_count\": 2,\n  \"run_id\": \"9d8c7b6a-1111-4222-8333-444455556666\",\n  \"set_hash\": \"6ee0eb490ff832101cf82a3d387c35f29e4230be786978f7acf9e811febf6723\",\n  \"source_inputs\": []\n}\n",
+      "risk-profile.json": "{\n  \"limits\": {\n    \"maxOrderNotional\": \"1000\",\n    \"maxRiskPercent\": \"2\"\n  },\n  \"policy\": {\n    \"maxRiskPercent\": 2,\n    \"paperTrading\": true,\n    \"requireReduceOnlySell\": true\n  },\n  \"policy_hash\": \"6b4a92f785e9545de8edf663cec18e1f3776c5d87f72a3f71d87bf8601dcae16\"\n}\n",
+      "setup-guide.md": "# Setup guide\n\nLABELLED ENGINEERING FIXTURE: synthetic data, not a research result and not a recommendation.\n\nStatus: DRAFT until a validation attempt passes. Export 0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d, run 9d8c7b6a-1111-4222-8333-444455556666.\n\nMulti-Pine Bot with 2 member indicators. Exit contract: bridge-exit-v2. Same-bar order: exit-first-ordinal-v1.\nMarket: binance-global BINANCE:BTCUSDT Spot, standard candles, chart timeframe 1 (one minute).\n\n## Member scripts\n\n- Member 1: Fixture member 1, file members/1/indicator.pine, deployment 00000001-aaaa-4aaa-8aaa-000000000001, source 7c9315291b2f.\n- Member 2: Fixture member 2, file members/2/indicator.pine, deployment 00000002-aaaa-4aaa-8aaa-000000000002, source d658c8b519fa.\n\n## Shared Bridge pair\n\n- Bridge atr_multiplier: 2 ATR multiple\n- Bridge rr: 1.5 reward to risk ratio\nThe same pair applies to every member. No source input is selected in multi-Pine mode.\n\n## Steps\n\n1. Open a standard BINANCE:BTCUSDT Spot chart at timeframe 1. Each indicator stops with an error on any other chart type, symbol or timeframe.\n2. For each member, create a new Pine indicator in TradingView and paste its indicator.pine completely and unchanged. Compile it and review every warning.\n3. Match the two Bridge inputs of every indicator to the shared pair above and to inputs.json. All other source inputs stay at their stored values.\n4. Disable native alert() calls of the source indicators through their existing inputs. If that is impossible, execution stays blocked.\n5. Create exactly one alert per member deployment, 2 alerts in all, with the condition set to that member indicator and Any alert() function call. Enter the private webhook address shown by the application in TradingView only. Webhook addresses, keys and credentials are never part of this package.\n6. Leave the alert message field as the alert() calls of the indicator set it. Do not edit or replace the message.\n7. Missing verified bars wait up to five seconds without creating a Paper order. A timeout rejects the intent.\n8. Protection is observed at bar close and starts on the next bar. SL wins over TP and over native exits.\n9. Pine intents do not confirm inventory. The Paper worker controls accepted, capped and rejected fills and targeted exits. Cash, reservations and limits are shared by the Bot.\n10. Replacing alerts requires a new deployment and preserved old exits.\n\nNo Quant support is implied by this package.\n",
+      "validation.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Best Inputs validation</title>\n<style>body{font-family:sans-serif;margin:16px;max-width:60rem}table{border-collapse:collapse;margin:8px 0}td,th{border:1px solid #888;padding:4px 8px;text-align:left}.banner{border:2px solid #b00;padding:8px;font-weight:bold}</style>\n</head>\n<body>\n<h1>Best Inputs validation</h1>\n<p class=\"banner\">LABELLED ENGINEERING FIXTURE: synthetic data, not a research result and not a recommendation.</p>\n<p>Export 0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d. Run 9d8c7b6a-1111-4222-8333-444455556666. Created 2026-10-21T12:00:00Z. Engine ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8. Member set 6ee0eb490ff832101cf82a3d387c35f29e4230be786978f7acf9e811febf6723.</p>\n<h2>Members</h2><table><tr><th>Ordinal</th><th>Indicator</th><th>Deployment</th><th>Source</th></tr><tr><td>1</td><td>11111111-bbbb-4bbb-8bbb-111111111111</td><td>00000001-aaaa-4aaa-8aaa-000000000001</td><td>7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679</td></tr><tr><td>2</td><td>11111112-bbbb-4bbb-8bbb-111111111112</td><td>00000002-aaaa-4aaa-8aaa-000000000002</td><td>d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba</td></tr></table>\n<h2>Shared Bridge pair</h2>\n<table><tr><th>Parameter</th><th>Value</th></tr><tr><td>atr_multiplier</td><td>2</td></tr><tr><td>rr</td><td>1.5</td></tr></table>\n<p>Metrics are per Bot. No source input is selected in multi-Pine mode.</p>\n<h2>Metrics of the selected candidate</h2>\n<table><tr><th>Metric</th><th>train</th><th>validation</th><th>test</th></tr><tr><td>bars</td><td></td><td></td><td>900</td></tr><tr><td>closed_trades</td><td>8</td><td>6</td><td>5</td></tr><tr><td>start_equity</td><td></td><td></td><td>1008.6835</td></tr><tr><td>end_equity</td><td></td><td></td><td>1016.6075</td></tr><tr><td>net_return_percent</td><td>1.5</td><td>0.9</td><td>0.7856</td></tr><tr><td>max_drawdown_percent</td><td>0.5</td><td>0.4</td><td>0.2</td></tr><tr><td>profit_factor</td><td></td><td></td><td>12.5</td></tr><tr><td>gross_profit</td><td></td><td></td><td>10.8</td></tr><tr><td>gross_loss</td><td></td><td></td><td>0.8</td></tr></table>\n<h2>Robustness</h2>\n<table><tr><th>Neighbour dimension</th><th>Validation return percent</th></tr><tr><td>atr_multiplier</td><td>0.9</td></tr><tr><td>rr</td><td>0.9</td></tr></table>\n<p>Cost stress validation return percent: 0.9.</p>\n<h2>Trace</h2>\n<p>The trace files are derived from the stored holdout decisions. The earlier search steps are not re-evaluated at build.</p>\n<table><tr><th>Member</th><th>Decisions</th><th>Fills</th></tr><tr><td>1</td><td>8</td><td>8</td></tr><tr><td>2</td><td>9</td><td>8</td></tr></table>\n<h2>Parity</h2>\n<p>Not recorded at build. Parity, repaint and compile evidence is appended after the build and is shown from its records at read time.</p>\n<h2>Execution differences</h2>\n<p>Exit contract bridge-exit-v2. Pine tracks hypothetical entries only. Broker fills, allocation quantities and rejection are server-owned. Protection is observed at bar close and starts on the next bar; SL wins over TP and over native exits. Same-bar order exit-first-ordinal-v1.</p>\n</body>\n</html>\n",
+      "members/1/indicator.pine": "//@version=5\nindicator(\"Fixture member 1\", overlay=true)\nlen = input.int(11, \"Length\")\nbuySignal = ta.crossover(close, ta.sma(close, len))\nsellSignal = ta.crossunder(close, ta.sma(close, len))\n\n\n// Robot Trade bridge-exit-v2. DRAFT: compilation and Paper evidence required.\nrt_93fb7cd44545_atrMult = input.float(2, \"Bridge ATR Multiplier for SL\", minval=0.000001, group=\"Robot Trade Bridge\")\nrt_93fb7cd44545_rr = input.float(1.5, \"Bridge Risk-to-Reward\", minval=0.000001, group=\"Robot Trade Bridge\")\nrt_93fb7cd44545_atr = ta.atr(14)\nif not chart.is_standard or syminfo.tickerid != \"BINANCE:BTCUSDT\" or timeframe.in_seconds() != timeframe.in_seconds(\"1\")\n    runtime.error(\"Bridge requires the registered standard chart, symbol and timeframe\")\nvar rt_93fb7cd44545_refs = array.new_string()\nvar rt_93fb7cd44545_times = array.new_int()\nvar rt_93fb7cd44545_stops = array.new_float()\nvar rt_93fb7cd44545_targets = array.new_float()\nrt_93fb7cd44545_payload(string eventId, string eventType, string entryRef, string facts, int sequence) =>\n    \"{\\\"schema_version\\\":\\\"bridge-exit-v2\\\",\\\"deployment_id\\\":\\\"00000001-aaaa-4aaa-8aaa-000000000001\\\",\\\"pine_import_id\\\":\\\"11111111-bbbb-4bbb-8bbb-111111111111\\\",\\\"source_version\\\":1,\\\"broker\\\":\\\"binance-global\\\",\\\"symbol\\\":\\\"BTCUSDT\\\",\\\"timeframe\\\":\\\"1\\\",\" + '\"event_id\":\"' + eventId + '\",\"event_type\":\"' + eventType + '\",\"entry_ref\":\"' + entryRef + '\",\"bar_time\":' + str.tostring(time_close) + ',\"sequence\":' + str.tostring(sequence) + ',' + facts + '}'\nif barstate.isconfirmed\n    bool rt_93fb7cd44545_exitBar = sellSignal\n    int rt_93fb7cd44545_sequence = 0\n    if array.size(rt_93fb7cd44545_refs) > 0\n        for rt_93fb7cd44545_i = array.size(rt_93fb7cd44545_refs) - 1 to 0\n            if time_close > array.get(rt_93fb7cd44545_times, rt_93fb7cd44545_i)\n                string rt_93fb7cd44545_reason = low <= array.get(rt_93fb7cd44545_stops, rt_93fb7cd44545_i) ? \"SL\" : high >= array.get(rt_93fb7cd44545_targets, rt_93fb7cd44545_i) ? \"TP\" : sellSignal ? \"NATIVE\" : \"\"\n                if rt_93fb7cd44545_reason != \"\"\n                    rt_93fb7cd44545_exitBar := true\n                    string rt_93fb7cd44545_ref = array.get(rt_93fb7cd44545_refs, rt_93fb7cd44545_i)\n                    alert(rt_93fb7cd44545_payload(rt_93fb7cd44545_ref + \":\" + str.tostring(time_close) + \":EXIT\", \"EXIT\", rt_93fb7cd44545_ref, '\"reason\":\"' + rt_93fb7cd44545_reason + '\"', rt_93fb7cd44545_sequence), alert.freq_all)\n                    rt_93fb7cd44545_sequence += 1\n                    array.remove(rt_93fb7cd44545_refs, rt_93fb7cd44545_i)\n                    array.remove(rt_93fb7cd44545_times, rt_93fb7cd44545_i)\n                    array.remove(rt_93fb7cd44545_stops, rt_93fb7cd44545_i)\n                    array.remove(rt_93fb7cd44545_targets, rt_93fb7cd44545_i)\n    if buySignal and not rt_93fb7cd44545_exitBar and not na(rt_93fb7cd44545_atr) and rt_93fb7cd44545_atr > 0\n        float rt_93fb7cd44545_sl = math.floor((close - rt_93fb7cd44545_atr * rt_93fb7cd44545_atrMult) / syminfo.mintick) * syminfo.mintick\n        float rt_93fb7cd44545_tp = math.ceil((close + rt_93fb7cd44545_atr * rt_93fb7cd44545_atrMult * rt_93fb7cd44545_rr) / syminfo.mintick) * syminfo.mintick\n        if rt_93fb7cd44545_sl > 0 and rt_93fb7cd44545_sl < close and rt_93fb7cd44545_tp > close\n            if array.size(rt_93fb7cd44545_refs) >= 1000\n                runtime.error(\"Bridge intent capacity reached; review deployment\")\n            string rt_93fb7cd44545_ref = \"00000001-aaaa-4aaa-8aaa-000000000001:\" + str.tostring(time_close) + \":0\"\n            array.push(rt_93fb7cd44545_refs, rt_93fb7cd44545_ref)\n            array.push(rt_93fb7cd44545_times, time_close)\n            array.push(rt_93fb7cd44545_stops, rt_93fb7cd44545_sl)\n            array.push(rt_93fb7cd44545_targets, rt_93fb7cd44545_tp)\n            alert(rt_93fb7cd44545_payload(rt_93fb7cd44545_ref + \":BUY\", \"BUY\", rt_93fb7cd44545_ref, '\"close\":' + str.tostring(close, \"#.################\") + ',\"atr\":' + str.tostring(rt_93fb7cd44545_atr, \"#.################\"), 0), alert.freq_all)\n",
+      "members/1/indicator.json": "{\n  \"alert_source\": \"alert_calls\",\n  \"bridge_defaults\": {\n    \"atr_multiplier\": 2,\n    \"rr\": 1.5\n  },\n  \"deployment_id\": \"00000001-aaaa-4aaa-8aaa-000000000001\",\n  \"deployment_snapshot_hash\": \"234b05c495ef7ab6706ac41fb422f56af352ad9351b11a4f8bc0a22f9c497fa1\",\n  \"edits\": [],\n  \"effective_input_hash\": \"7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519\",\n  \"exit_version\": \"bridge-exit-v2\",\n  \"indicator\": {\n    \"name\": \"Fixture member 1\",\n    \"version\": 1\n  },\n  \"ordinal\": 1,\n  \"pine_import_id\": \"11111111-bbbb-4bbb-8bbb-111111111111\",\n  \"pine_version\": 5,\n  \"signals\": {\n    \"buy\": \"buySignal\",\n    \"exit\": \"sellSignal\"\n  },\n  \"source_diff\": {\n    \"appended_bytes\": 3859,\n    \"changed_original_bytes\": 0\n  },\n  \"source_hash\": \"7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679\",\n  \"source_version\": 1,\n  \"symbol\": \"BINANCE:BTCUSDT\",\n  \"timeframe\": \"1\"\n}\n",
+      "members/2/indicator.pine": "//@version=5\nindicator(\"Fixture member 2\", overlay=true)\nlen = input.int(12, \"Length\")\nbuySignal = ta.crossover(close, ta.sma(close, len))\nsellSignal = ta.crossunder(close, ta.sma(close, len))\n\n\n// Robot Trade bridge-exit-v2. DRAFT: compilation and Paper evidence required.\nrt_e5cc2cccc6ed_atrMult = input.float(2, \"Bridge ATR Multiplier for SL\", minval=0.000001, group=\"Robot Trade Bridge\")\nrt_e5cc2cccc6ed_rr = input.float(1.5, \"Bridge Risk-to-Reward\", minval=0.000001, group=\"Robot Trade Bridge\")\nrt_e5cc2cccc6ed_atr = ta.atr(14)\nif not chart.is_standard or syminfo.tickerid != \"BINANCE:BTCUSDT\" or timeframe.in_seconds() != timeframe.in_seconds(\"1\")\n    runtime.error(\"Bridge requires the registered standard chart, symbol and timeframe\")\nvar rt_e5cc2cccc6ed_refs = array.new_string()\nvar rt_e5cc2cccc6ed_times = array.new_int()\nvar rt_e5cc2cccc6ed_stops = array.new_float()\nvar rt_e5cc2cccc6ed_targets = array.new_float()\nrt_e5cc2cccc6ed_payload(string eventId, string eventType, string entryRef, string facts, int sequence) =>\n    \"{\\\"schema_version\\\":\\\"bridge-exit-v2\\\",\\\"deployment_id\\\":\\\"00000002-aaaa-4aaa-8aaa-000000000002\\\",\\\"pine_import_id\\\":\\\"11111112-bbbb-4bbb-8bbb-111111111112\\\",\\\"source_version\\\":1,\\\"broker\\\":\\\"binance-global\\\",\\\"symbol\\\":\\\"BTCUSDT\\\",\\\"timeframe\\\":\\\"1\\\",\" + '\"event_id\":\"' + eventId + '\",\"event_type\":\"' + eventType + '\",\"entry_ref\":\"' + entryRef + '\",\"bar_time\":' + str.tostring(time_close) + ',\"sequence\":' + str.tostring(sequence) + ',' + facts + '}'\nif barstate.isconfirmed\n    bool rt_e5cc2cccc6ed_exitBar = sellSignal\n    int rt_e5cc2cccc6ed_sequence = 0\n    if array.size(rt_e5cc2cccc6ed_refs) > 0\n        for rt_e5cc2cccc6ed_i = array.size(rt_e5cc2cccc6ed_refs) - 1 to 0\n            if time_close > array.get(rt_e5cc2cccc6ed_times, rt_e5cc2cccc6ed_i)\n                string rt_e5cc2cccc6ed_reason = low <= array.get(rt_e5cc2cccc6ed_stops, rt_e5cc2cccc6ed_i) ? \"SL\" : high >= array.get(rt_e5cc2cccc6ed_targets, rt_e5cc2cccc6ed_i) ? \"TP\" : sellSignal ? \"NATIVE\" : \"\"\n                if rt_e5cc2cccc6ed_reason != \"\"\n                    rt_e5cc2cccc6ed_exitBar := true\n                    string rt_e5cc2cccc6ed_ref = array.get(rt_e5cc2cccc6ed_refs, rt_e5cc2cccc6ed_i)\n                    alert(rt_e5cc2cccc6ed_payload(rt_e5cc2cccc6ed_ref + \":\" + str.tostring(time_close) + \":EXIT\", \"EXIT\", rt_e5cc2cccc6ed_ref, '\"reason\":\"' + rt_e5cc2cccc6ed_reason + '\"', rt_e5cc2cccc6ed_sequence), alert.freq_all)\n                    rt_e5cc2cccc6ed_sequence += 1\n                    array.remove(rt_e5cc2cccc6ed_refs, rt_e5cc2cccc6ed_i)\n                    array.remove(rt_e5cc2cccc6ed_times, rt_e5cc2cccc6ed_i)\n                    array.remove(rt_e5cc2cccc6ed_stops, rt_e5cc2cccc6ed_i)\n                    array.remove(rt_e5cc2cccc6ed_targets, rt_e5cc2cccc6ed_i)\n    if buySignal and not rt_e5cc2cccc6ed_exitBar and not na(rt_e5cc2cccc6ed_atr) and rt_e5cc2cccc6ed_atr > 0\n        float rt_e5cc2cccc6ed_sl = math.floor((close - rt_e5cc2cccc6ed_atr * rt_e5cc2cccc6ed_atrMult) / syminfo.mintick) * syminfo.mintick\n        float rt_e5cc2cccc6ed_tp = math.ceil((close + rt_e5cc2cccc6ed_atr * rt_e5cc2cccc6ed_atrMult * rt_e5cc2cccc6ed_rr) / syminfo.mintick) * syminfo.mintick\n        if rt_e5cc2cccc6ed_sl > 0 and rt_e5cc2cccc6ed_sl < close and rt_e5cc2cccc6ed_tp > close\n            if array.size(rt_e5cc2cccc6ed_refs) >= 1000\n                runtime.error(\"Bridge intent capacity reached; review deployment\")\n            string rt_e5cc2cccc6ed_ref = \"00000002-aaaa-4aaa-8aaa-000000000002:\" + str.tostring(time_close) + \":0\"\n            array.push(rt_e5cc2cccc6ed_refs, rt_e5cc2cccc6ed_ref)\n            array.push(rt_e5cc2cccc6ed_times, time_close)\n            array.push(rt_e5cc2cccc6ed_stops, rt_e5cc2cccc6ed_sl)\n            array.push(rt_e5cc2cccc6ed_targets, rt_e5cc2cccc6ed_tp)\n            alert(rt_e5cc2cccc6ed_payload(rt_e5cc2cccc6ed_ref + \":BUY\", \"BUY\", rt_e5cc2cccc6ed_ref, '\"close\":' + str.tostring(close, \"#.################\") + ',\"atr\":' + str.tostring(rt_e5cc2cccc6ed_atr, \"#.################\"), 0), alert.freq_all)\n",
+      "members/2/indicator.json": "{\n  \"alert_source\": \"alert_calls\",\n  \"bridge_defaults\": {\n    \"atr_multiplier\": 2,\n    \"rr\": 1.5\n  },\n  \"deployment_id\": \"00000002-aaaa-4aaa-8aaa-000000000002\",\n  \"deployment_snapshot_hash\": \"728039ae08c684991bb27267643aa8465048f711f0943f5813769a551c99c57e\",\n  \"edits\": [],\n  \"effective_input_hash\": \"95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477\",\n  \"exit_version\": \"bridge-exit-v2\",\n  \"indicator\": {\n    \"name\": \"Fixture member 2\",\n    \"version\": 1\n  },\n  \"ordinal\": 2,\n  \"pine_import_id\": \"11111112-bbbb-4bbb-8bbb-111111111112\",\n  \"pine_version\": 5,\n  \"signals\": {\n    \"buy\": \"buySignal\",\n    \"exit\": \"sellSignal\"\n  },\n  \"source_diff\": {\n    \"appended_bytes\": 3859,\n    \"changed_original_bytes\": 0\n  },\n  \"source_hash\": \"d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba\",\n  \"source_version\": 1,\n  \"symbol\": \"BINANCE:BTCUSDT\",\n  \"timeframe\": \"1\"\n}\n",
+      "quant-data/manifest.json": "{\n  \"binding\": {\n    \"acceptance_blockers\": [\n      \"VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED\",\n      \"CUSTOM_REPAINT_EVIDENCE_REQUIRED\",\n      \"MULTI_PINE_REQUIRES_APP_3B\"\n    ],\n    \"alert_source\": \"alert_calls\",\n    \"bot_id\": \"bot-a\",\n    \"bridge_domains\": {\n      \"atr_multiplier\": {\n        \"max\": \"3\",\n        \"min\": \"1\",\n        \"step\": \"0.5\"\n      },\n      \"rr\": {\n        \"max\": \"2.5\",\n        \"min\": \"0.5\",\n        \"step\": \"0.5\"\n      }\n    },\n    \"bridge_pair\": {\n      \"atr_multiplier\": 2,\n      \"rr\": 1.5\n    },\n    \"capital\": {\n      \"cash\": \"1000\",\n      \"equity\": \"1000\"\n    },\n    \"contract_hash\": \"1d86ac068bfb37aef49eaaf6ea05d0ed5206c6aedad8bdca97037db75ed4c362\",\n    \"cost_model_version\": \"paper-close-v1\",\n    \"created_at\": \"2026-10-21T12:00:00Z\",\n    \"dataset_ref\": {\n      \"bar_count\": 5000,\n      \"content_digest\": \"0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284\",\n      \"digest_version\": \"pine-bar-content-digest-v1\",\n      \"end_time\": 1760299920000,\n      \"first_time\": 1759999980000,\n      \"start_time\": 1759999980000,\n      \"timestamp_semantics\": \"verified closed-bar timestamps; half-open index end is last timestamp plus one minute\",\n      \"warmup_bars\": 500\n    },\n    \"engine_hash\": \"ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8\",\n    \"exit_version\": \"bridge-exit-v2\",\n    \"fixture\": true,\n    \"funding_cutoff\": 7,\n    \"input_lock_hash\": \"d2d331687f2346dd61158d5a1a4fc81e74f9db7005100e6ea4136085d374f68d\",\n    \"library_record_ref\": {\n      \"result_sha256\": \"c1639d872fafee32bacf61f81202483dfdf59859974a6970964359a3e9455d0d\",\n      \"run_id\": \"9d8c7b6a-1111-4222-8333-444455556666\"\n    },\n    \"library_versions\": {\n      \"gates\": \"best-inputs-multi-gates-v1\",\n      \"render\": \"multi-v1\"\n    },\n    \"market\": {\n      \"broker\": \"binance-global\",\n      \"symbol\": \"BTCUSDT\",\n      \"timeframe\": \"1\"\n    },\n    \"member_set_id\": \"5b0c7a52-1d3e-4f60-8a71-2c9d4e6f8a01\",\n    \"members\": [\n      {\n        \"baseline_snapshot_hash\": \"234b05c495ef7ab6706ac41fb422f56af352ad9351b11a4f8bc0a22f9c497fa1\",\n        \"deployment_id\": \"00000001-aaaa-4aaa-8aaa-000000000001\",\n        \"effective_input_hash\": \"7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519\",\n        \"evidence_hash\": \"5108deb71ee1d00d8e14ad48f2ddee3dca264528a5ae802ac5a682ee11ecc0d7\",\n        \"exit_version\": \"bridge-exit-v2\",\n        \"ordinal\": 1,\n        \"pine_import_id\": \"11111111-bbbb-4bbb-8bbb-111111111111\",\n        \"source_hash\": \"7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679\",\n        \"source_version\": 1\n      },\n      {\n        \"baseline_snapshot_hash\": \"728039ae08c684991bb27267643aa8465048f711f0943f5813769a551c99c57e\",\n        \"deployment_id\": \"00000002-aaaa-4aaa-8aaa-000000000002\",\n        \"effective_input_hash\": \"95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477\",\n        \"evidence_hash\": \"fce153950ced26bb8fb13e9b6c8212fc720fedf231615f9a5c3ce2e2cde90451\",\n        \"exit_version\": \"bridge-exit-v2\",\n        \"ordinal\": 2,\n        \"pine_import_id\": \"11111112-bbbb-4bbb-8bbb-111111111112\",\n        \"source_hash\": \"d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba\",\n        \"source_version\": 1\n      }\n    ],\n    \"membership_hash\": \"b24090bf3552b985290ad2c1058b4a8fe658943045795b22eb9ebd9169830dd7\",\n    \"mode\": \"MULTI_PINE\",\n    \"model\": {\n      \"data_profile\": \"closed-ohlcv-atr14-v1\",\n      \"fee_bps\": 10,\n      \"price_tick\": 0.01,\n      \"quantity_step\": 0.00001,\n      \"risk_percent\": 1,\n      \"slippage_bps\": 0,\n      \"version\": \"paper-close-v1\"\n    },\n    \"owner_id\": \"owner-a\",\n    \"pine_count\": 2,\n    \"policy_hash\": \"6b4a92f785e9545de8edf663cec18e1f3776c5d87f72a3f71d87bf8601dcae16\",\n    \"rules\": {\n      \"maximum_drawdown_percent\": 20,\n      \"minimum_closed_trades_test\": 5,\n      \"minimum_closed_trades_train\": 5,\n      \"minimum_closed_trades_validation\": 5,\n      \"sensitivity_max_drop_percentage_points\": 2\n    },\n    \"run_id\": \"9d8c7b6a-1111-4222-8333-444455556666\",\n    \"same_bar_order\": \"exit-first-ordinal-v1\",\n    \"set_hash\": \"6ee0eb490ff832101cf82a3d387c35f29e4230be786978f7acf9e811febf6723\",\n    \"slot_bindings\": [],\n    \"split\": {\n      \"test_end\": 5000,\n      \"train_end\": 3200,\n      \"validation_end\": 4100,\n      \"warmup\": 500\n    },\n    \"submission_hash\": \"293f1d2ee206a7cbebe633764a26ea455bd39f494a774a7289f8663da31916a2\"\n  },\n  \"evidence\": {\n    \"artifact_schemas\": {\n      \"inputs.json\": \"best-inputs-multi-inputs-v1\",\n      \"members/*/indicator.json\": \"best-inputs-multi-indicator-v1\",\n      \"quant-data/decisions.csv\": \"csv-rfc4180-lf-v1\",\n      \"quant-data/equity.csv\": \"csv-rfc4180-lf-v1\",\n      \"quant-data/members/*/parity.json\": \"best-inputs-multi-parity-v1\",\n      \"quant-data/metrics.json\": \"best-inputs-multi-metrics-v1\",\n      \"quant-data/trades.csv\": \"csv-rfc4180-lf-v1\",\n      \"quant-data/validation.json\": \"best-inputs-multi-validation-v1\",\n      \"risk-profile.json\": \"best-inputs-risk-profile-v1\"\n    },\n    \"engine_hash\": \"ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8\",\n    \"member_counts\": [\n      {\n        \"decisions\": 8,\n        \"deployment_id\": \"00000001-aaaa-4aaa-8aaa-000000000001\",\n        \"fills\": 8,\n        \"ordinal\": 1\n      },\n      {\n        \"decisions\": 9,\n        \"deployment_id\": \"00000002-aaaa-4aaa-8aaa-000000000002\",\n        \"fills\": 8,\n        \"ordinal\": 2\n      }\n    ],\n    \"member_funnel\": {\n      \"diagnostics\": {\n        \"bot\": {\n          \"accepted\": 8,\n          \"native_signals\": 23,\n          \"rejected\": {\n            \"MAX_OPEN_POSITIONS\": 1\n          }\n        },\n        \"cross_source_target\": 0,\n        \"duplicate_intents\": 0,\n        \"members\": [\n          {\n            \"accepted\": 4,\n            \"deployment_id\": \"00000001-aaaa-4aaa-8aaa-000000000001\",\n            \"native_signals\": 11,\n            \"ordinal\": 1,\n            \"rejected\": {\n              \"MAX_OPEN_POSITIONS\": 1\n            }\n          },\n          {\n            \"accepted\": 4,\n            \"deployment_id\": \"00000002-aaaa-4aaa-8aaa-000000000002\",\n            \"native_signals\": 12,\n            \"ordinal\": 2,\n            \"rejected\": {\n              \"MAX_OPEN_POSITIONS\": 1\n            }\n          }\n        ],\n        \"same_bar_order\": \"exit-first-ordinal-v1\"\n      },\n      \"step\": \"HOLDOUT\"\n    },\n    \"membership_hash\": \"b24090bf3552b985290ad2c1058b4a8fe658943045795b22eb9ebd9169830dd7\",\n    \"mode\": \"MULTI_PINE\",\n    \"pine_count\": 2,\n    \"result_sha256\": \"c1639d872fafee32bacf61f81202483dfdf59859974a6970964359a3e9455d0d\",\n    \"run_id\": \"9d8c7b6a-1111-4222-8333-444455556666\",\n    \"set_hash\": \"6ee0eb490ff832101cf82a3d387c35f29e4230be786978f7acf9e811febf6723\",\n    \"trace_formats\": \"Number formats in quant-data/equity.csv, trades.csv and decisions.csv. Stored Python ledger strings, copied unchanged: cash, quantity, price, fee, entry_price, entry_fee, exit_price, exit_fee and realized_r are 18-decimal strings as the ledger printed them (zero prints as 0E-18, for example realized_r on a BUY). Computed by the producer in money.js minimal decimal form, with no trailing zeros: net, position_quantity and equity_at_fill. Times are integer milliseconds plus ISO-8601 UTC text. Empty cells are null.\",\n    \"trace_records\": [\n      {\n        \"decisions_hash\": \"b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4\",\n        \"holdout_digest\": \"d54dc6adf2b90e52c25d86c005b945f50946858ca65dc6c1f461db295a69a5f6\",\n        \"method\": \"stored-holdout-decisions-v1\",\n        \"path\": \"quant-data/equity.csv\",\n        \"producer_closure_hash\": \"7653338fe83f8783d9969343b9231d6db8c448c1025bae3999ca77b689ac7328\",\n        \"run_engine_hash\": \"ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8\",\n        \"sha256\": \"0a2b198621e513ee0a453e9e423db6832d80da0f1b8517c60cb0aafa5d89a758\",\n        \"steps_digest\": \"65df0aa29c7422230fdbc2f7cac1208c20090633775a12d6e49d828803bcf2c0\"\n      },\n      {\n        \"decisions_hash\": \"b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4\",\n        \"holdout_digest\": \"d54dc6adf2b90e52c25d86c005b945f50946858ca65dc6c1f461db295a69a5f6\",\n        \"method\": \"stored-holdout-decisions-v1\",\n        \"path\": \"quant-data/trades.csv\",\n        \"producer_closure_hash\": \"7653338fe83f8783d9969343b9231d6db8c448c1025bae3999ca77b689ac7328\",\n        \"run_engine_hash\": \"ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8\",\n        \"sha256\": \"d9914fb0efa60668ba82e3a1ed37988099e4870e9f1f742b191c2e7a166ffb92\",\n        \"steps_digest\": \"65df0aa29c7422230fdbc2f7cac1208c20090633775a12d6e49d828803bcf2c0\"\n      },\n      {\n        \"decisions_hash\": \"b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4\",\n        \"holdout_digest\": \"d54dc6adf2b90e52c25d86c005b945f50946858ca65dc6c1f461db295a69a5f6\",\n        \"method\": \"stored-holdout-decisions-v1\",\n        \"path\": \"quant-data/decisions.csv\",\n        \"producer_closure_hash\": \"7653338fe83f8783d9969343b9231d6db8c448c1025bae3999ca77b689ac7328\",\n        \"run_engine_hash\": \"ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8\",\n        \"sha256\": \"e2dc86d2ba293ea04ec8cbbd36fbcefb2b077138d6e4e41808864576fc5557d3\",\n        \"steps_digest\": \"65df0aa29c7422230fdbc2f7cac1208c20090633775a12d6e49d828803bcf2c0\"\n      }\n    ],\n    \"trace_semantics\": \"Native signals are the alert() calls of the member indicator.pine files and are listed in decisions.csv as decisions, each tagged with the member deployment_id and ordinal. Intents are the accepted, capped or rejected outcomes in decisions.csv. Fills are server-owned Paper fills and appear only as closed rows of trades.csv. A position episode is one row of trades.csv, from entry_time to exit_time. equity.csv is the equity curve of the evaluated Bot account. Metrics are per Bot, never per member. Number formats in quant-data/equity.csv, trades.csv and decisions.csv. Stored Python ledger strings, copied unchanged: cash, quantity, price, fee, entry_price, entry_fee, exit_price, exit_fee and realized_r are 18-decimal strings as the ledger printed them (zero prints as 0E-18, for example realized_r on a BUY). Computed by the producer in money.js minimal decimal form, with no trailing zeros: net, position_quantity and equity_at_fill. Times are integer milliseconds plus ISO-8601 UTC text. Empty cells are null.\"\n  },\n  \"files\": [\n    {\n      \"bytes\": 1385,\n      \"path\": \"inputs.json\",\n      \"sha256\": \"36e34594c4d9dda3e4ebc6fc65d9a5494eaf85d3c9b3da8ac43af380ed6f0da6\"\n    },\n    {\n      \"bytes\": 885,\n      \"path\": \"members/1/indicator.json\",\n      \"sha256\": \"f7b14566c48b0edc2fec8a13585d678e0ca6976a793701a658ed50977496b21f\"\n    },\n    {\n      \"bytes\": 4052,\n      \"path\": \"members/1/indicator.pine\",\n      \"sha256\": \"f290440e7b0408745313e5278a38cc4ba750791e93933cabe08c87c9994d36db\"\n    },\n    {\n      \"bytes\": 885,\n      \"path\": \"members/2/indicator.json\",\n      \"sha256\": \"1995ce96e745f176d6c6d48e5fde0a15ee2865a966119f882f0c92c9348b5f1f\"\n    },\n    {\n      \"bytes\": 4052,\n      \"path\": \"members/2/indicator.pine\",\n      \"sha256\": \"0b8e751df16c3b41cce87ec3c8fe661f89d59c64bb5aa47a472aa7a9279a7918\"\n    },\n    {\n      \"bytes\": 3925,\n      \"path\": \"quant-data/decisions.csv\",\n      \"sha256\": \"e2dc86d2ba293ea04ec8cbbd36fbcefb2b077138d6e4e41808864576fc5557d3\"\n    },\n    {\n      \"bytes\": 2059,\n      \"path\": \"quant-data/equity.csv\",\n      \"sha256\": \"0a2b198621e513ee0a453e9e423db6832d80da0f1b8517c60cb0aafa5d89a758\"\n    },\n    {\n      \"bytes\": 447,\n      \"path\": \"quant-data/members/1/parity.json\",\n      \"sha256\": \"44c0e97de8abba7f588a309a498208464ca83a08167dc2d8dc1902ef4bde20a7\"\n    },\n    {\n      \"bytes\": 447,\n      \"path\": \"quant-data/members/2/parity.json\",\n      \"sha256\": \"889651dd4ff1bff63a66af7f990887c333d8df3f82902dbc149e0a6c1210a22e\"\n    },\n    {\n      \"bytes\": 500,\n      \"path\": \"quant-data/metrics.json\",\n      \"sha256\": \"7be6cc12fd9cba7aec01cf00785cf1b744e546401fa3268876b1e71a8b9e413a\"\n    },\n    {\n      \"bytes\": 2709,\n      \"path\": \"quant-data/trades.csv\",\n      \"sha256\": \"d9914fb0efa60668ba82e3a1ed37988099e4870e9f1f742b191c2e7a166ffb92\"\n    },\n    {\n      \"bytes\": 6121,\n      \"path\": \"quant-data/validation.json\",\n      \"sha256\": \"87320074e7d2f282e7b8e3078869c722347dfe80289b37c1e7363756f98db378\"\n    },\n    {\n      \"bytes\": 269,\n      \"path\": \"risk-profile.json\",\n      \"sha256\": \"e5e4e3bf742e3b30e495d692001efe90547cb17e9b8c4badcf43ed60c13b4777\"\n    },\n    {\n      \"bytes\": 2443,\n      \"path\": \"setup-guide.md\",\n      \"sha256\": \"a1882ddef5f494b3e029352c5a5aaf937b01a193db5c8cb0de3ffdc4108b0660\"\n    },\n    {\n      \"bytes\": 3264,\n      \"path\": \"validation.html\",\n      \"sha256\": \"ad073d280d3fb5cf8788a0e6bcb8a1953914aaede2c0e1e67696c0654533dddf\"\n    }\n  ],\n  \"fixture\": true,\n  \"identity\": {\n    \"bot_id\": \"bot-a\",\n    \"created_at\": \"2026-10-21T12:00:00Z\",\n    \"export_id\": \"0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d\",\n    \"run_id\": \"9d8c7b6a-1111-4222-8333-444455556666\"\n  },\n  \"inputs\": {\n    \"inputs_sha256\": \"36e34594c4d9dda3e4ebc6fc65d9a5494eaf85d3c9b3da8ac43af380ed6f0da6\"\n  },\n  \"limitations\": {\n    \"codes\": [\n      \"MP_TRACE_STEPS_NOT_REEVALUATED\"\n    ],\n    \"text\": \"Labelled engineering fixture. Not a research result and not a recommendation. Limitation codes: MP_TRACE_STEPS_NOT_REEVALUATED.\"\n  },\n  \"schema_version\": \"best-inputs-manifest-v1\"\n}\n",
+      "quant-data/metrics.json": "{\n  \"test\": {\n    \"bars\": 900,\n    \"closed_trades\": 5,\n    \"end_equity\": \"1016.6075\",\n    \"gross_loss\": \"0.8\",\n    \"gross_profit\": \"10.8\",\n    \"max_drawdown_percent\": \"0.2\",\n    \"net_return_percent\": \"0.7856\",\n    \"profit_factor\": \"12.5\",\n    \"start_equity\": \"1008.6835\"\n  },\n  \"train\": {\n    \"closed_trades\": 8,\n    \"max_drawdown_percent\": \"0.5\",\n    \"net_return_percent\": \"1.5\"\n  },\n  \"validation\": {\n    \"closed_trades\": 6,\n    \"max_drawdown_percent\": \"0.4\",\n    \"net_return_percent\": \"0.9\"\n  }\n}\n",
+      "quant-data/equity.csv": "time_ms,time_utc,partition,event_type,cash,position_quantity,equity_at_fill,deployment_id\n1760035980000,2025-10-09T18:53:00.000Z,train,BUY,699.700000000000000000,0.01,999.7,00000001-aaaa-4aaa-8aaa-000000000001\n1760053980000,2025-10-09T23:53:00.000Z,train,EXIT,1005.394000000000000000,0,1005.394,00000001-aaaa-4aaa-8aaa-000000000001\n1760059980000,2025-10-10T01:33:00.000Z,train,BUY,704.093000000000000000,0.01,1005.093,00000002-aaaa-4aaa-8aaa-000000000002\n1760077980000,2025-10-10T06:33:00.000Z,train,EXIT,1006.290500000000000000,0,1006.2905,00000002-aaaa-4aaa-8aaa-000000000002\n1760197980000,2025-10-11T15:53:00.000Z,validation,BUY,703.988500000000000000,0.01,1005.9885,00000001-aaaa-4aaa-8aaa-000000000001\n1760209980000,2025-10-11T19:13:00.000Z,validation,EXIT,1008.683500000000000000,0,1008.6835,00000001-aaaa-4aaa-8aaa-000000000001\n1760251980000,2025-10-12T06:53:00.000Z,test,BUY,708.383500000000000000,0.01,1008.3835,00000002-aaaa-4aaa-8aaa-000000000002\n1760257980000,2025-10-12T08:33:00.000Z,test,EXIT,1012.079500000000000000,0,1012.0795,00000002-aaaa-4aaa-8aaa-000000000002\n1760263980000,2025-10-12T10:13:00.000Z,test,BUY,707.775500000000000000,0.01,1011.7755,00000001-aaaa-4aaa-8aaa-000000000001\n1760275980000,2025-10-12T13:33:00.000Z,test,EXIT,1016.466500000000000000,0,1016.4665,00000001-aaaa-4aaa-8aaa-000000000001\n1760278980000,2025-10-12T14:23:00.000Z,test,BUY,707.157500000000000000,0.01,1016.1575,00000002-aaaa-4aaa-8aaa-000000000002\n1760281980000,2025-10-12T15:13:00.000Z,test,EXIT,1016.847500000000000000,0,1016.8475,00000002-aaaa-4aaa-8aaa-000000000002\n1760284980000,2025-10-12T16:03:00.000Z,test,BUY,706.537500000000000000,0.01,1016.5375,00000001-aaaa-4aaa-8aaa-000000000001\n1760287980000,2025-10-12T16:53:00.000Z,test,EXIT,1015.728000000000000000,0,1015.728,00000001-aaaa-4aaa-8aaa-000000000001\n1760290980000,2025-10-12T17:43:00.000Z,test,BUY,705.918500000000000000,0.01,1015.4185,00000002-aaaa-4aaa-8aaa-000000000002\n1760293980000,2025-10-12T18:33:00.000Z,test,EXIT,1016.607500000000000000,0,1016.6075,00000002-aaaa-4aaa-8aaa-000000000002\n",
+      "quant-data/trades.csv": "entry_ref,partition,entry_time_ms,entry_time_utc,entry_price,quantity,entry_fee,exit_time_ms,exit_time_utc,exit_price,exit_fee,exit_reason,net,realized_r,deployment_id\n00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0,train,1760035980000,2025-10-09T18:53:00.000Z,30000.000000000000000000,0.010000000000000000,0.300000000000000000,1760053980000,2025-10-09T23:53:00.000Z,30600.000000000000000000,0.306000000000000000,TP,5.394,0.800000000000000000,00000001-aaaa-4aaa-8aaa-000000000001\n00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0,train,1760059980000,2025-10-10T01:33:00.000Z,30100.000000000000000000,0.010000000000000000,0.301000000000000000,1760077980000,2025-10-10T06:33:00.000Z,30250.000000000000000000,0.302500000000000000,TP,0.8965,0.200000000000000000,00000002-aaaa-4aaa-8aaa-000000000002\n00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0,validation,1760197980000,2025-10-11T15:53:00.000Z,30200.000000000000000000,0.010000000000000000,0.302000000000000000,1760209980000,2025-10-11T19:13:00.000Z,30500.000000000000000000,0.305000000000000000,TP,2.393,0.400000000000000000,00000001-aaaa-4aaa-8aaa-000000000001\n00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0,test,1760251980000,2025-10-12T06:53:00.000Z,30000.000000000000000000,0.010000000000000000,0.300000000000000000,1760257980000,2025-10-12T08:33:00.000Z,30400.000000000000000000,0.304000000000000000,TP,3.396,0.500000000000000000,00000002-aaaa-4aaa-8aaa-000000000002\n00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0,test,1760263980000,2025-10-12T10:13:00.000Z,30400.000000000000000000,0.010000000000000000,0.304000000000000000,1760275980000,2025-10-12T13:33:00.000Z,30900.000000000000000000,0.309000000000000000,TP,4.387,0.600000000000000000,00000001-aaaa-4aaa-8aaa-000000000001\n00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0,test,1760278980000,2025-10-12T14:23:00.000Z,30900.000000000000000000,0.010000000000000000,0.309000000000000000,1760281980000,2025-10-12T15:13:00.000Z,31000.000000000000000000,0.310000000000000000,TP,0.381,0.100000000000000000,00000002-aaaa-4aaa-8aaa-000000000002\n00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0,test,1760284980000,2025-10-12T16:03:00.000Z,31000.000000000000000000,0.010000000000000000,0.310000000000000000,1760287980000,2025-10-12T16:53:00.000Z,30950.000000000000000000,0.309500000000000000,SL,-1.1195,-0.050000000000000000,00000001-aaaa-4aaa-8aaa-000000000001\n00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0,test,1760290980000,2025-10-12T17:43:00.000Z,30950.000000000000000000,0.010000000000000000,0.309500000000000000,1760293980000,2025-10-12T18:33:00.000Z,31100.000000000000000000,0.311000000000000000,TP,0.8795,0.300000000000000000,00000002-aaaa-4aaa-8aaa-000000000002\n",
+      "quant-data/decisions.csv": "time_ms,time_utc,partition,event_type,entry_ref,outcome,reason,sizing_outcome,quantity,price,fee,deployment_id,ordinal\n1760035980000,2025-10-09T18:53:00.000Z,train,BUY,00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0,FILLED,,ACCEPTED,0.010000000000000000,30000.000000000000000000,0.300000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760053980000,2025-10-09T23:53:00.000Z,train,EXIT,00000001-aaaa-4aaa-8aaa-000000000001:1760035980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,30600.000000000000000000,0.306000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760059980000,2025-10-10T01:33:00.000Z,train,BUY,00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0,FILLED,,ACCEPTED,0.010000000000000000,30100.000000000000000000,0.301000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760077980000,2025-10-10T06:33:00.000Z,train,EXIT,00000002-aaaa-4aaa-8aaa-000000000002:1760059980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,30250.000000000000000000,0.302500000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760197980000,2025-10-11T15:53:00.000Z,validation,BUY,00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0,FILLED,,ACCEPTED,0.010000000000000000,30200.000000000000000000,0.302000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760209980000,2025-10-11T19:13:00.000Z,validation,EXIT,00000001-aaaa-4aaa-8aaa-000000000001:1760197980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,30500.000000000000000000,0.305000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760251980000,2025-10-12T06:53:00.000Z,test,BUY,00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0,FILLED,,ACCEPTED,0.010000000000000000,30000.000000000000000000,0.300000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760257980000,2025-10-12T08:33:00.000Z,test,EXIT,00000002-aaaa-4aaa-8aaa-000000000002:1760251980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,30400.000000000000000000,0.304000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760260980000,2025-10-12T09:23:00.000Z,test,BUY,00000002-aaaa-4aaa-8aaa-000000000002:1760260980000:0,REJECTED,MAX_OPEN_POSITIONS,,0E-18,,0E-18,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760263980000,2025-10-12T10:13:00.000Z,test,BUY,00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0,FILLED,,ACCEPTED,0.010000000000000000,30400.000000000000000000,0.304000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760275980000,2025-10-12T13:33:00.000Z,test,EXIT,00000001-aaaa-4aaa-8aaa-000000000001:1760263980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,30900.000000000000000000,0.309000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760278980000,2025-10-12T14:23:00.000Z,test,BUY,00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0,FILLED,,ACCEPTED,0.010000000000000000,30900.000000000000000000,0.309000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760281980000,2025-10-12T15:13:00.000Z,test,EXIT,00000002-aaaa-4aaa-8aaa-000000000002:1760278980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,31000.000000000000000000,0.310000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760284980000,2025-10-12T16:03:00.000Z,test,BUY,00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0,FILLED,,ACCEPTED,0.010000000000000000,31000.000000000000000000,0.310000000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760287980000,2025-10-12T16:53:00.000Z,test,EXIT,00000001-aaaa-4aaa-8aaa-000000000001:1760284980000:0,FILLED,SL,ACCEPTED,0.010000000000000000,30950.000000000000000000,0.309500000000000000,00000001-aaaa-4aaa-8aaa-000000000001,1\n1760290980000,2025-10-12T17:43:00.000Z,test,BUY,00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0,FILLED,,ACCEPTED,0.010000000000000000,30950.000000000000000000,0.309500000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n1760293980000,2025-10-12T18:33:00.000Z,test,EXIT,00000002-aaaa-4aaa-8aaa-000000000002:1760290980000:0,FILLED,TP,ACCEPTED,0.010000000000000000,31100.000000000000000000,0.311000000000000000,00000002-aaaa-4aaa-8aaa-000000000002,2\n",
+      "quant-data/validation.json": "{\n  \"candidate\": {\n    \"decision_count\": 40,\n    \"fills\": 30,\n    \"ledger_hash\": \"048d778859626b7e8cf2174ce60464f94bf97fd9fc29940594c4594f18327b0a\",\n    \"parameters\": {\n      \"atr_multiplier\": 2,\n      \"rr\": 1.5\n    },\n    \"train\": {\n      \"closed_trades\": 8,\n      \"max_drawdown_percent\": \"0.5\",\n      \"net_return_percent\": \"1.5\"\n    },\n    \"validation\": {\n      \"closed_trades\": 6,\n      \"max_drawdown_percent\": \"0.4\",\n      \"net_return_percent\": \"0.9\"\n    }\n  },\n  \"combined_baseline\": {\n    \"binding\": {\n      \"contract_hash\": \"1d86ac068bfb37aef49eaaf6ea05d0ed5206c6aedad8bdca97037db75ed4c362\",\n      \"run_id\": \"9d8c7b6a-1111-4222-8333-444455556666\"\n    },\n    \"differences\": {},\n    \"matched\": true,\n    \"pair\": {\n      \"atr_multiplier\": 2,\n      \"rr\": 1.5\n    },\n    \"received_decisions_hash\": \"b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4\",\n    \"same_bar_order\": \"exit-first-ordinal-v1\",\n    \"version\": \"mp-combined-baseline-v1\"\n  },\n  \"cost_stress\": {\n    \"decision_count\": 40,\n    \"exit_fill_reasons\": {\n      \"TP\": 3\n    },\n    \"fills\": 30,\n    \"ledger_hash\": \"05a2effbd1d22fdfe50512a48d2c5631da3c5c89014b72d7785c8b9b555277ba\",\n    \"rejections\": {},\n    \"train\": {\n      \"closed_trades\": 8,\n      \"max_drawdown_percent\": \"0.5\",\n      \"net_return_percent\": \"1.5\"\n    },\n    \"validation\": {\n      \"closed_trades\": 6,\n      \"max_drawdown_percent\": \"0.4\",\n      \"net_return_percent\": \"0.9\"\n    }\n  },\n  \"funnel\": {\n    \"diagnostics\": {\n      \"bot\": {\n        \"accepted\": 8,\n        \"native_signals\": 23,\n        \"rejected\": {\n          \"MAX_OPEN_POSITIONS\": 1\n        }\n      },\n      \"cross_source_target\": 0,\n      \"duplicate_intents\": 0,\n      \"members\": [\n        {\n          \"accepted\": 4,\n          \"deployment_id\": \"00000001-aaaa-4aaa-8aaa-000000000001\",\n          \"native_signals\": 11,\n          \"ordinal\": 1,\n          \"rejected\": {\n            \"MAX_OPEN_POSITIONS\": 1\n          }\n        },\n        {\n          \"accepted\": 4,\n          \"deployment_id\": \"00000002-aaaa-4aaa-8aaa-000000000002\",\n          \"native_signals\": 12,\n          \"ordinal\": 2,\n          \"rejected\": {\n            \"MAX_OPEN_POSITIONS\": 1\n          }\n        }\n      ],\n      \"same_bar_order\": \"exit-first-ordinal-v1\"\n    },\n    \"step\": \"HOLDOUT\"\n  },\n  \"holdout\": {\n    \"step\": {\n      \"decision_count\": 17,\n      \"fills\": 16,\n      \"ledger_hash\": \"94d71bc981c28e493767ef9420b4a761551fb12c215a776348b972fd54acdd39\"\n    },\n    \"test\": {\n      \"bars\": 900,\n      \"closed_trades\": 5,\n      \"end_equity\": \"1016.6075\",\n      \"gross_loss\": \"0.8\",\n      \"gross_profit\": \"10.8\",\n      \"max_drawdown_percent\": \"0.2\",\n      \"net_return_percent\": \"0.7856\",\n      \"profit_factor\": \"12.5\",\n      \"start_equity\": \"1008.6835\"\n    }\n  },\n  \"mode\": \"MULTI_PINE\",\n  \"parity\": {\n    \"state\": \"NOT_RECORDED_AT_BUILD\"\n  },\n  \"sensitivity\": [\n    {\n      \"decision_count\": 40,\n      \"dimension\": \"atr_multiplier\",\n      \"exit_fill_reasons\": {\n        \"TP\": 3\n      },\n      \"fills\": 30,\n      \"ledger_hash\": \"b2d51ee2ccfb5e36ec9fb69528f9726be359fde00c115c52897835b0ff887e1c\",\n      \"parameters\": {\n        \"atr_multiplier\": 2.5,\n        \"rr\": 1.5\n      },\n      \"rejections\": {},\n      \"train\": {\n        \"closed_trades\": 8,\n        \"max_drawdown_percent\": \"0.5\",\n        \"net_return_percent\": \"1.5\"\n      },\n      \"validation\": {\n        \"closed_trades\": 6,\n        \"max_drawdown_percent\": \"0.4\",\n        \"net_return_percent\": \"0.9\"\n      }\n    },\n    {\n      \"decision_count\": 40,\n      \"dimension\": \"rr\",\n      \"exit_fill_reasons\": {\n        \"TP\": 3\n      },\n      \"fills\": 30,\n      \"ledger_hash\": \"6c402f439c589db7fb41053a35a990d657324ef1c8baf8e6fd8646db02038f20\",\n      \"parameters\": {\n        \"atr_multiplier\": 2,\n        \"rr\": 1\n      },\n      \"rejections\": {},\n      \"train\": {\n        \"closed_trades\": 8,\n        \"max_drawdown_percent\": \"0.5\",\n        \"net_return_percent\": \"1.5\"\n      },\n      \"validation\": {\n        \"closed_trades\": 6,\n        \"max_drawdown_percent\": \"0.4\",\n        \"net_return_percent\": \"0.9\"\n      }\n    }\n  ],\n  \"trace\": {\n    \"method\": \"stored-holdout-decisions-v1\",\n    \"records\": [\n      {\n        \"decisions_hash\": \"b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4\",\n        \"holdout_digest\": \"d54dc6adf2b90e52c25d86c005b945f50946858ca65dc6c1f461db295a69a5f6\",\n        \"method\": \"stored-holdout-decisions-v1\",\n        \"path\": \"quant-data/equity.csv\",\n        \"producer_closure_hash\": \"7653338fe83f8783d9969343b9231d6db8c448c1025bae3999ca77b689ac7328\",\n        \"run_engine_hash\": \"ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8\",\n        \"sha256\": \"0a2b198621e513ee0a453e9e423db6832d80da0f1b8517c60cb0aafa5d89a758\",\n        \"steps_digest\": \"65df0aa29c7422230fdbc2f7cac1208c20090633775a12d6e49d828803bcf2c0\"\n      },\n      {\n        \"decisions_hash\": \"b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4\",\n        \"holdout_digest\": \"d54dc6adf2b90e52c25d86c005b945f50946858ca65dc6c1f461db295a69a5f6\",\n        \"method\": \"stored-holdout-decisions-v1\",\n        \"path\": \"quant-data/trades.csv\",\n        \"producer_closure_hash\": \"7653338fe83f8783d9969343b9231d6db8c448c1025bae3999ca77b689ac7328\",\n        \"run_engine_hash\": \"ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8\",\n        \"sha256\": \"d9914fb0efa60668ba82e3a1ed37988099e4870e9f1f742b191c2e7a166ffb92\",\n        \"steps_digest\": \"65df0aa29c7422230fdbc2f7cac1208c20090633775a12d6e49d828803bcf2c0\"\n      },\n      {\n        \"decisions_hash\": \"b23c25df5e7fb0941c7566af15de7244dc0021565b2302777d2eaa03d37c73d4\",\n        \"holdout_digest\": \"d54dc6adf2b90e52c25d86c005b945f50946858ca65dc6c1f461db295a69a5f6\",\n        \"method\": \"stored-holdout-decisions-v1\",\n        \"path\": \"quant-data/decisions.csv\",\n        \"producer_closure_hash\": \"7653338fe83f8783d9969343b9231d6db8c448c1025bae3999ca77b689ac7328\",\n        \"run_engine_hash\": \"ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8\",\n        \"sha256\": \"e2dc86d2ba293ea04ec8cbbd36fbcefb2b077138d6e4e41808864576fc5557d3\",\n        \"steps_digest\": \"65df0aa29c7422230fdbc2f7cac1208c20090633775a12d6e49d828803bcf2c0\"\n      }\n    ]\n  }\n}\n",
+      "quant-data/members/1/parity.json": "{\n  \"bridge_evidence_hash\": \"5108deb71ee1d00d8e14ad48f2ddee3dca264528a5ae802ac5a682ee11ecc0d7\",\n  \"deployment_id\": \"00000001-aaaa-4aaa-8aaa-000000000001\",\n  \"effective_input_hash\": \"7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519\",\n  \"ordinal\": 1,\n  \"pine_import_id\": \"11111111-bbbb-4bbb-8bbb-111111111111\",\n  \"source_hash\": \"7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679\",\n  \"state\": \"NOT_RECORDED_AT_BUILD\"\n}\n",
+      "quant-data/members/2/parity.json": "{\n  \"bridge_evidence_hash\": \"fce153950ced26bb8fb13e9b6c8212fc720fedf231615f9a5c3ce2e2cde90451\",\n  \"deployment_id\": \"00000002-aaaa-4aaa-8aaa-000000000002\",\n  \"effective_input_hash\": \"95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477\",\n  \"ordinal\": 2,\n  \"pine_import_id\": \"11111112-bbbb-4bbb-8bbb-111111111112\",\n  \"source_hash\": \"d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba\",\n  \"state\": \"NOT_RECORDED_AT_BUILD\"\n}\n"
+    },
+    "package_hash": "768808a032569c037d92e28b9f871c8d84a59e53f51806b3ec7868a677c78aef",
+    "binding_hash": "ad38a5835d92d871b38d8361b7baae523c50f6ecf19c5edd4db3749da88d5273"
+  },
+  "run_view": {
+    "status": "SUCCEEDED",
+    "created_at_ms": 1792580400000
+  },
+  "deployments": [
+    {
+      "deployment_id": "00000001-aaaa-4aaa-8aaa-000000000001",
+      "exit_version": "bridge-exit-v2",
+      "snapshot": {
+        "market": {
+          "broker": "binance-global",
+          "symbol": "BTCUSDT",
+          "timeframe": "1",
+          "deployment_id": "00000001-aaaa-4aaa-8aaa-000000000001",
+          "pine_import_id": "11111111-bbbb-4bbb-8bbb-111111111111",
+          "source_version": 1
+        },
+        "selection": {
+          "bridge": {
+            "atr_multiplier": "1.5",
+            "rr": "1"
+          }
+        },
+        "policy": {
+          "paperTrading": true,
+          "requireReduceOnlySell": true,
+          "maxRiskPercent": 2
+        },
+        "policy_hash": "6b4a92f785e9545de8edf663cec18e1f3776c5d87f72a3f71d87bf8601dcae16",
+        "capital": [
+          {
+            "broker": "binance-global",
+            "configuredEquity": "1000",
+            "configuredBalance": "1000"
+          }
+        ],
+        "funding_cutoff": 7,
+        "membership": [
+          {
+            "pine_import_id": "11111111-bbbb-4bbb-8bbb-111111111111",
+            "source_version": 1,
+            "source_hash": "7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679",
+            "analysis": {
+              "effective_inputs_hash": "7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519"
+            }
+          },
+          {
+            "pine_import_id": "11111112-bbbb-4bbb-8bbb-111111111112",
+            "source_version": 1,
+            "source_hash": "d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba",
+            "analysis": {
+              "effective_inputs_hash": "95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477"
+            }
+          }
+        ],
+        "source_hash": "7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679",
+        "artifact_hash": "96ee4a087c77a8f07f2c69fe573b8df55f09887f20f79bbc079def5f39b6fdfb"
+      }
+    },
+    {
+      "deployment_id": "00000002-aaaa-4aaa-8aaa-000000000002",
+      "exit_version": "bridge-exit-v2",
+      "snapshot": {
+        "market": {
+          "broker": "binance-global",
+          "symbol": "BTCUSDT",
+          "timeframe": "1",
+          "deployment_id": "00000002-aaaa-4aaa-8aaa-000000000002",
+          "pine_import_id": "11111112-bbbb-4bbb-8bbb-111111111112",
+          "source_version": 1
+        },
+        "selection": {
+          "bridge": {
+            "atr_multiplier": "1.5",
+            "rr": "1"
+          }
+        },
+        "policy": {
+          "paperTrading": true,
+          "requireReduceOnlySell": true,
+          "maxRiskPercent": 2
+        },
+        "policy_hash": "6b4a92f785e9545de8edf663cec18e1f3776c5d87f72a3f71d87bf8601dcae16",
+        "capital": [
+          {
+            "broker": "binance-global",
+            "configuredEquity": "1000",
+            "configuredBalance": "1000"
+          }
+        ],
+        "funding_cutoff": 7,
+        "membership": [
+          {
+            "pine_import_id": "11111111-bbbb-4bbb-8bbb-111111111111",
+            "source_version": 1,
+            "source_hash": "7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679",
+            "analysis": {
+              "effective_inputs_hash": "7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519"
+            }
+          },
+          {
+            "pine_import_id": "11111112-bbbb-4bbb-8bbb-111111111112",
+            "source_version": 1,
+            "source_hash": "d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba",
+            "analysis": {
+              "effective_inputs_hash": "95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477"
+            }
+          }
+        ],
+        "source_hash": "d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba",
+        "artifact_hash": "a52388e91207dbddb7a7514d59299ab8e46e03e22f510daaa15c179358289ce1"
+      }
+    }
+  ],
+  "holdout": {
+    "earlier_holdouts": [],
+    "earlier_searched": [],
+    "registered_boundary": {
+      "exists": false
+    },
+    "exposure_register": [
+      {
+        "owner_id": "owner-b",
+        "market": {
+          "broker": "binance-global",
+          "symbol": "BTCUSDT",
+          "timeframe": "1"
+        },
+        "window": {
+          "start_time": 1760245980000,
+          "end_time": 1760299920000
+        },
+        "selection_id": "selection-other-owner",
+        "at_utc": "2026-10-01T00:00:00Z"
+      }
+    ]
+  },
+  "current_rules": {
+    "minimum_closed_trades_train": 5,
+    "minimum_closed_trades_validation": 5,
+    "minimum_closed_trades_test": 5,
+    "maximum_drawdown_percent": 20,
+    "sensitivity_max_drop_percentage_points": 2
+  },
+  "compile_records": [
+    {
+      "ordinal": 1,
+      "export_id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+      "indicator_sha256": "f290440e7b0408745313e5278a38cc4ba750791e93933cabe08c87c9994d36db",
+      "pine_version": 5,
+      "errors": [],
+      "warnings": [],
+      "unresolved_references": 0,
+      "collisions": 0,
+      "duplicate_bindings": 0,
+      "mapping_check": [],
+      "compiled_at_utc": "2026-10-21T11:30:00Z",
+      "operator_role": "fixture",
+      "method": "fixture-record"
+    },
+    {
+      "ordinal": 2,
+      "export_id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+      "indicator_sha256": "0b8e751df16c3b41cce87ec3c8fe661f89d59c64bb5aa47a472aa7a9279a7918",
+      "pine_version": 5,
+      "errors": [],
+      "warnings": [],
+      "unresolved_references": 0,
+      "collisions": 0,
+      "duplicate_bindings": 0,
+      "mapping_check": [],
+      "compiled_at_utc": "2026-10-21T11:30:00Z",
+      "operator_role": "fixture",
+      "method": "fixture-record"
+    }
+  ],
+  "native_alert_isolation": [
+    {
+      "ordinal": 1,
+      "routes_disabled": true,
+      "unrelated_payloads": 0,
+      "native_payloads": 0
+    },
+    {
+      "ordinal": 2,
+      "routes_disabled": true,
+      "unrelated_payloads": 0,
+      "native_payloads": 0
+    }
+  ],
+  "evidence": {
+    "members": [
+      {
+        "ordinal": 1,
+        "pine_import_id": "11111111-bbbb-4bbb-8bbb-111111111111",
+        "dataset_alignment": {
+          "matched_percent": 100,
+          "unmatched_bars": 0,
+          "future_leakage": 0,
+          "method": "fixture-record",
+          "operator_role": "fixture",
+          "scope": {
+            "source_hash": "7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679",
+            "effective_input_hash": "7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519",
+            "dataset_digest": "0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284",
+            "engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+            "deployment_id": "00000001-aaaa-4aaa-8aaa-000000000001",
+            "ordinal": 1
+          }
+        },
+        "native_parity": {
+          "match_percent": 100,
+          "missing_events": 0,
+          "additional_events": 0,
+          "shift_bars": 0,
+          "sample": {
+            "warmup_bars": 1250,
+            "lookback": 200,
+            "closed_bars": 2500,
+            "native_events": 150,
+            "buy_events": 40,
+            "exit_events": 40
+          },
+          "method": "fixture-record",
+          "operator_role": "fixture",
+          "scope": {
+            "source_hash": "7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679",
+            "effective_input_hash": "7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519",
+            "dataset_digest": "0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284",
+            "engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+            "deployment_id": "00000001-aaaa-4aaa-8aaa-000000000001",
+            "ordinal": 1
+          }
+        },
+        "bridge_parity": {
+          "match_percent": 100,
+          "sl_tp_diff_ticks": 0,
+          "exit_version": "bridge-exit-v2",
+          "method": "fixture-record",
+          "operator_role": "fixture",
+          "scope": {
+            "source_hash": "7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679",
+            "effective_input_hash": "7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519",
+            "dataset_digest": "0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284",
+            "engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+            "deployment_id": "00000001-aaaa-4aaa-8aaa-000000000001",
+            "ordinal": 1
+          }
+        },
+        "repaint": {
+          "observations": 120,
+          "changed_flags": 0,
+          "method": "fixture-record",
+          "operator_role": "fixture",
+          "scope": {
+            "source_hash": "7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679",
+            "effective_input_hash": "7a510ace2a1e3140a0292e5f4f95b081a1f3a865b1723c295fbd0b2dabe6c519",
+            "dataset_digest": "0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284",
+            "engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+            "deployment_id": "00000001-aaaa-4aaa-8aaa-000000000001",
+            "ordinal": 1
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "pine_import_id": "11111112-bbbb-4bbb-8bbb-111111111112",
+        "dataset_alignment": {
+          "matched_percent": 100,
+          "unmatched_bars": 0,
+          "future_leakage": 0,
+          "method": "fixture-record",
+          "operator_role": "fixture",
+          "scope": {
+            "source_hash": "d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba",
+            "effective_input_hash": "95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477",
+            "dataset_digest": "0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284",
+            "engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+            "deployment_id": "00000002-aaaa-4aaa-8aaa-000000000002",
+            "ordinal": 2
+          }
+        },
+        "native_parity": {
+          "match_percent": 100,
+          "missing_events": 0,
+          "additional_events": 0,
+          "shift_bars": 0,
+          "sample": {
+            "warmup_bars": 1250,
+            "lookback": 200,
+            "closed_bars": 2500,
+            "native_events": 150,
+            "buy_events": 40,
+            "exit_events": 40
+          },
+          "method": "fixture-record",
+          "operator_role": "fixture",
+          "scope": {
+            "source_hash": "d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba",
+            "effective_input_hash": "95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477",
+            "dataset_digest": "0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284",
+            "engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+            "deployment_id": "00000002-aaaa-4aaa-8aaa-000000000002",
+            "ordinal": 2
+          }
+        },
+        "bridge_parity": {
+          "match_percent": 100,
+          "sl_tp_diff_ticks": 0,
+          "exit_version": "bridge-exit-v2",
+          "method": "fixture-record",
+          "operator_role": "fixture",
+          "scope": {
+            "source_hash": "d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba",
+            "effective_input_hash": "95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477",
+            "dataset_digest": "0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284",
+            "engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+            "deployment_id": "00000002-aaaa-4aaa-8aaa-000000000002",
+            "ordinal": 2
+          }
+        },
+        "repaint": {
+          "observations": 120,
+          "changed_flags": 0,
+          "method": "fixture-record",
+          "operator_role": "fixture",
+          "scope": {
+            "source_hash": "d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba",
+            "effective_input_hash": "95999f13cccadb45f3fa0aaf0ebbcee4c15c3058293612f457b683753545a477",
+            "dataset_digest": "0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284",
+            "engine_hash": "ed9f6f25068608efd412958da4dfc19328ca3511251fa6d5f9c42baf230e32f8",
+            "deployment_id": "00000002-aaaa-4aaa-8aaa-000000000002",
+            "ordinal": 2
+          }
+        }
+      }
+    ]
+  },
+  "clearances": [
+    {
+      "blocker": "VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED",
+      "run_id": "9d8c7b6a-1111-4222-8333-444455556666",
+      "export_id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+      "ordinal": 1,
+      "parameter_hash": "d3c8fc739d722106d474b2a02461e5f64cf49f4bc7e28eee424d933af64fa1ff",
+      "evidence_hash": "68032ba206f00e6e25b6aa76aa4236665ad6c351274be5ccbe3bb541460df9a0"
+    },
+    {
+      "blocker": "VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED",
+      "run_id": "9d8c7b6a-1111-4222-8333-444455556666",
+      "export_id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+      "ordinal": 2,
+      "parameter_hash": "d3c8fc739d722106d474b2a02461e5f64cf49f4bc7e28eee424d933af64fa1ff",
+      "evidence_hash": "5bd3f9db0d1122af8c86e79e252173483d55a7e7e9922814d13be59bf2c4ee88"
+    },
+    {
+      "blocker": "CUSTOM_REPAINT_EVIDENCE_REQUIRED",
+      "run_id": "9d8c7b6a-1111-4222-8333-444455556666",
+      "export_id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+      "ordinal": 1,
+      "parameter_hash": "d3c8fc739d722106d474b2a02461e5f64cf49f4bc7e28eee424d933af64fa1ff",
+      "evidence_hash": "b637083b6dea9ded071113115c82ecff4af6c82bf2688e9d84c804dc31e0d8fe"
+    },
+    {
+      "blocker": "CUSTOM_REPAINT_EVIDENCE_REQUIRED",
+      "run_id": "9d8c7b6a-1111-4222-8333-444455556666",
+      "export_id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+      "ordinal": 2,
+      "parameter_hash": "d3c8fc739d722106d474b2a02461e5f64cf49f4bc7e28eee424d933af64fa1ff",
+      "evidence_hash": "b2789b66ac85b5475b00df55df70cfff9535cdff8845930fd633837105b4c82f"
+    }
+  ],
+  "current": {
+    "membership": [
+      {
+        "pine_import_id": "11111111-bbbb-4bbb-8bbb-111111111111",
+        "source_version": 1,
+        "source_hash": "7c9315291b2fe12c2f82c6576d6d30b55d41921f0948a5347a394c2c49cc3679",
+        "deployment_id": "00000001-aaaa-4aaa-8aaa-000000000001"
+      },
+      {
+        "pine_import_id": "11111112-bbbb-4bbb-8bbb-111111111112",
+        "source_version": 1,
+        "source_hash": "d658c8b519fa826b8ae1c8684fb00d62ab47583331e58f3d395ebb6c3bd33fba",
+        "deployment_id": "00000002-aaaa-4aaa-8aaa-000000000002"
+      }
+    ],
+    "membership_hash": "b24090bf3552b985290ad2c1058b4a8fe658943045795b22eb9ebd9169830dd7",
+    "policy_hash": "6b4a92f785e9545de8edf663cec18e1f3776c5d87f72a3f71d87bf8601dcae16",
+    "capital": {
+      "equity": "1000",
+      "cash": "1000"
+    },
+    "funding_cutoff": 7,
+    "input_lock_hash": "d2d331687f2346dd61158d5a1a4fc81e74f9db7005100e6ea4136085d374f68d",
+    "dataset_available": true,
+    "bot_owner_id": "owner-a"
+  },
+  "hard_limits": {
+    "maxRiskPercent": {
+      "min": "0",
+      "max": "2"
+    },
+    "maxOrderNotional": {
+      "min": "0",
+      "max": "1000"
+    }
+  },
+  "bridge_bounds": {
+    "atr_multiplier": {
+      "min": "1",
+      "max": "3"
+    },
+    "rr": {
+      "min": "0.5",
+      "max": "2.5"
+    }
+  },
+  "dataset": {
+    "readable": true,
+    "digest": "0bf474896363505e5ea5e5d6ace8ebfb13a760a409b1fb467d428fc716f9f284",
+    "metadata": {
+      "version": "spot-dataset-v1",
+      "source": "binance-spot-klines-v1",
+      "venue": "binance-global",
+      "market": "SPOT",
+      "symbol": "BTCUSDT",
+      "timeframe": "1",
+      "start_time": 1759999980000,
+      "end_time": 1760299980000,
+      "total_bars": 5000,
+      "warmup_bars": 500,
+      "cutoff": 1760303580000
+    }
+  },
+  "attempt": {
+    "attempt_id": "attempt-0001",
+    "validator_engine_hash": "d8460a366d4a9ea65ada3720ba1c99fa3f1548f154a472cd77b714631ca19909",
+    "validated_at_utc": "2026-10-21T12:30:00Z"
+  }
+}
