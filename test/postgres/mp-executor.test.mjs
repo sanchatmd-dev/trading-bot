@@ -191,7 +191,9 @@ const GATE_WRAPPER=[
   'job.validate_custom_snapshot=gate',
   'job.main()'
 ].join('\n');
-const realRunner=world=>createPythonRunner({python:process.env.QUANT_RESEARCH_PYTHON??'python',args:['-c',GATE_WRAPPER],env:{MP_TEST_INPUTS:JSON.stringify(world.inputsByImport)}});
+// The interpreter is the runner's own default (QUANT_RESEARCH_PYTHON, else quant_lab/.venv): the job imports pydantic through the engine modules, which a bare
+// `python` from PATH (the CI setup-python interpreter) does not have.
+const realRunner=world=>createPythonRunner({args:['-c',GATE_WRAPPER],env:{MP_TEST_INPUTS:JSON.stringify(world.inputsByImport)}});
 /** Wraps a runner and records every call: kind, pair, row count, the last row time and a digest of the member list. */
 function recording(runner){
   const calls=[];

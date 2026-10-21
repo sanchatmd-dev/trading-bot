@@ -168,10 +168,22 @@ test('every listed file is read: a missing or unreadable file fails closed inste
   await assert.rejects(mpCombinedClosure(() => Promise.reject(new Error('no disk'))), /no disk/);
 });
 
+// The pins are hashes of the Git blobs (LF). A Windows checkout writes CRLF, so the comparison reads every file with CRLF turned back into LF; on an LF
+// checkout this reader returns the bytes unchanged.
+const lfReadFile = async url => {
+  const bytes = await fs.readFile(url);
+  return bytes.includes(0x0d) ? Buffer.from(bytes.toString('latin1').replace(/\r\n/g, '\n'), 'latin1') : bytes;
+};
+// engineHash takes no reader, so the legacy and foundation hashes are recomputed here; the same function over raw bytes must equal engineHash itself.
+const researchHash = async (files, readFile) =>
+  hash(canonical(Object.fromEntries(await Promise.all(files.map(async name => [name, hash(await readFile(new URL('../' + name, import.meta.url)))])))));
+
 test('the six existing closure hashes equal their value at base 05e7a47', async () => {
-  const pf2 = await pf2ExecutableHashes();
+  assert.equal(await researchHash(LEGACY_ENGINE_FILES, fs.readFile), await engineHash(false));
+  assert.equal(await researchHash(FOUNDATION_ENGINE_FILES, fs.readFile), await engineHash(true));
+  const pf2 = await pf2ExecutableHashes({readFile: lfReadFile});
   assert.deepEqual({
-    legacy: await engineHash(false), foundation: await engineHash(true), ingestion: await ingestionEngineHash(),
-    pf2_engine: pf2.engine_hash, pf2_evaluator: pf2.evaluator_hash, fixed_eval: await fixedEvalEngineHash()
+    legacy: await researchHash(LEGACY_ENGINE_FILES, lfReadFile), foundation: await researchHash(FOUNDATION_ENGINE_FILES, lfReadFile),
+    ingestion: await ingestionEngineHash(lfReadFile), pf2_engine: pf2.engine_hash, pf2_evaluator: pf2.evaluator_hash, fixed_eval: await fixedEvalEngineHash(lfReadFile)
   }, BASE_HASHES);
 });
