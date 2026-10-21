@@ -28,10 +28,9 @@ import {RETRYABLE_CODES} from '../../src/quant-library/package-gates.js';
 import {RULES} from '../../src/quant-research/contract.js';
 import {MP_TRACE_PATHS} from '../../src/multi-pine/package-trace.js';
 import {multiPackageFiles} from '../../src/multi-pine/package-render.js';
-import {config} from '../../src/config.js';
 import {
   MultiPineFixturePackageService,PACKAGE_STORE_CODES,PACKAGE_STORE_GUARD_NAMES,BOUNDARY_SCOPE,EARLIER_ONE_PINE_SQL,EFFECTIVE_BOUNDARY_SQL,mapPackageStoreFailure,readMultiHoldoutLookups,
-  fixtureEvidenceRecord,fixtureCompileRecord,riskLimitsOf,serverHardLimits,bridgeBoundsOf,memberIsolation,HOLDOUT_MAX_PAGES
+  fixtureEvidenceRecord,fixtureCompileRecord,riskLimitsOf,serverHardLimits,bridgeBoundsOf,tightenBounds,memberIsolation,HOLDOUT_MAX_PAGES
 } from '../../src/postgres/mp-package-store.js';
 import {HARD_RANGES} from '../../src/postgres/pf4-risk-proposals.js';
 
@@ -156,7 +155,7 @@ function analysisFor(inputs){
 }
 const JOB_SQL=`INSERT INTO pine_bridge_jobs(job_id,owner_id,bot_id,operation,idempotency_key,request_hash,request,pine_import_id,status,created_at,updated_at,deadline,result)
   VALUES($1,$2,$3,'generate',$4,$5,'{}',$6,'SUCCEEDED',$7,$7,$7,$8)`;
-async function newWorld({names=['M1','M2']}={}){
+async function newWorld({names=['M1','M2'],policy=POLICY}={}){
   const user=await store.createUser({email:'pb-'+randomUUID()+'@example.test',passwordHash:'unused-fixture-hash'});
   const bot=user.id;
   await db.query("INSERT INTO paper_funding(user_id,broker,at,equity_delta,cash_delta,kind) VALUES($1,'binance-global',$2,$3,$3,'CONFIGURATION')",[bot,T0,MANIFEST.capital.equity]);
@@ -174,7 +173,7 @@ async function newWorld({names=['M1','M2']}={}){
   const selection=validateSelection(inspectSource(SOURCE),{...SPT_SIGNAL_MAPPING,buy:'buySignal',exit:'sellSignal'},[]);
   for(const m of specs){
     const artifact=assemble(SOURCE,selection,{deployment_id:m.dep,pine_import_id:m.pine,source_version:1,...MARKET}).integrated_pine;
-    const snapshot={policy:POLICY,policy_hash:hash(canonical(POLICY)),capital,funding_cutoff,membership:projection,session:{state:'SETUP',run_id:null},captured_at:1,
+    const snapshot={policy,policy_hash:hash(canonical(policy)),capital,funding_cutoff,membership:projection,session:{state:'SETUP',run_id:null},captured_at:1,
       selection,market:{deployment_id:m.dep,pine_import_id:m.pine,source_version:1,...MARKET},source_hash:SUPPORTED,instruction_versions:{template:'fixture'},artifact_hash:hash(artifact)};
     const snapshotHash=hash(canonical(snapshot)),body=evidenceFor(snapshot,snapshotHash,'fixture-'+m.n);
     await db.query("INSERT INTO pine_deployments(deployment_id,owner_id,bot_id,pine_import_id,source_version,snapshot,snapshot_hash,state,created_at) VALUES($1,$2,$3,$4,1,$5,$6,'DRAFT',$7)",
@@ -309,7 +308,9 @@ const quietWrite=(table,sql,params=[])=>db.transaction(async()=>{
 },{isolation:'SERIALIZABLE'});
 
 test('F17 end to end on a real run: build, attempt 1 fails with retryable codes, fixture records, attempt 2 passes to EXPORT_INTERNAL with READY false (F19 first half)',{timeout:600000},async()=>{
-  const real=await R1(),svc=packages();
+  // RD-MP-49 R4: the evidence the gates read at every attempt (the GATES seam of the service)
+  const gateEvidence=[];
+  const real=await R1(),svc=packages(fx,{hooks:{step:(name,detail)=>{if(name==='GATES')gateEvidence.push(structuredClone(detail.evidence));}}});
   const side=await sideDigest();
   const built=await svc.build({owner_id:real.owner_id,run_id:real.run_id});
   assert.equal(built.ok,true,JSON.stringify(built));assert.equal(built.action,'BUILD');
@@ -332,6 +333,8 @@ test('F17 end to end on a real run: build, attempt 1 fails with retryable codes,
   const a1=await svc.attempt({owner_id:real.owner_id,export_id:id});
   assert.equal(a1.ok,true,JSON.stringify(a1));
   assert.deepEqual([a1.attempt_no,a1.pass,a1.status,a1.ready],[1,false,'EXPORT_CANDIDATE',false]);
+  assert.equal(gateEvidence.length,1);
+  assert.deepEqual(gateEvidence[0].members,[{ordinal:1},{ordinal:2}],'R4: exactly one evidence entry per contract member, in ordinal order, even with no record yet');
   assert.ok(a1.codes.length>0&&a1.codes.every(code=>RETRYABLE_CODES.includes(code)),a1.codes.join());
   for(const code of ['BI_COMPILE_EVIDENCE_MISSING','BI_DATASET_ALIGNMENT_MISSING','BI_PARITY_EVIDENCE_MISSING','BI_REPAINT_EVIDENCE_MISSING','ACCEPTANCE_BLOCKERS_PRESENT'])assert.ok(a1.codes.includes(code),code);
   assert.deepEqual([...new Set(a1.diagnostics.filter(item=>item.code==='BI_COMPILE_EVIDENCE_MISSING').map(item=>item.ordinal))].sort(),[1,2],'every missing member is named');
@@ -349,6 +352,9 @@ test('F17 end to end on a real run: build, attempt 1 fails with retryable codes,
   const a2=await svc.attempt({owner_id:real.owner_id,export_id:id});
   assert.equal(a2.ok,true,JSON.stringify(a2));
   assert.deepEqual([a2.attempt_no,a2.pass,a2.status,a2.codes,a2.ready],[2,true,'EXPORT_INTERNAL',[],false]);
+  assert.equal(gateEvidence.length,2);
+  assert.deepEqual(gateEvidence[1].members.map(item=>item.ordinal),[1,2]);
+  for(const item of gateEvidence[1].members)assert.deepEqual(Object.keys(item).sort(),['bridge_parity','dataset_alignment','native_parity','ordinal','repaint']);
   assert.deepEqual(a2.gates.map(item=>[item.gate,item.state]),[['C1','PASS'],['C2','PASS'],['C3','PASS'],['C4','PASS'],['Q','PASS']]);
   events=await rowsFor('mp_package_status_events',id);
   assert.deepEqual(events.map(row=>[row.seq,row.status,row.codes,row.attempt_no]).slice(2),[[3,'EXPORT_INTERNAL',[],2]]);
@@ -652,7 +658,7 @@ test('attempt on live state (R7): a live engine that is not the run engine write
   assert.equal((await db.query('SELECT count(*)::int n FROM mp_package_attempts WHERE export_id=$1',[id])).rows[0].n,2,'the engine refusal wrote no attempt');
 });
 
-test('attempt on live state (R8): Bridge bounds narrower than the chosen pair end the export with BI_BRIDGE_PAIR_OUT_OF_BOUNDS on readable state (RD-MP-48 F2 limitation: the default bounds are the frozen domains)',{timeout:600000},async()=>{
+test('attempt on live state (R8): the gate fires through a tighter configured Bridge bound: bounds narrower than the chosen pair end the export with BI_BRIDGE_PAIR_OUT_OF_BOUNDS (RD-MP-48 F2 limitation: the default bounds are the frozen domains); it does not fire on readable default state',{timeout:600000},async()=>{
   const real=await R8(),built=await packages().build({owner_id:real.owner_id,run_id:real.run_id}),id=built.export.export_id;
   assert.equal(built.ok,true,JSON.stringify(built));
   assert.deepEqual(await packages().recordFixtureRecords({owner_id:real.owner_id,export_id:id}),{ok:true});
@@ -665,7 +671,7 @@ test('attempt on live state (R8): Bridge bounds narrower than the chosen pair en
   assert.deepEqual(out.gates.map(item=>[item.gate,item.state]),[['C1','PASS'],['C2','PASS'],['C3','PASS'],['C4','FAIL'],['Q','NOT_REACHED']]);
 });
 
-test('attempt on live state (R9): hard limits tighter than the risk profile end the export with BI_RISK_RELAXATION; the newest compile record of a member is the one read (N9)',{timeout:600000},async()=>{
+test('attempt on live state (R9): the gate fires through a tighter configured hard limit: a limit narrower than the risk profile ends the export with BI_RISK_RELAXATION; it does not fire on readable default state; the newest compile record of a member is the one read (N9)',{timeout:600000},async()=>{
   const real=await R9(),svc=packages(),built=await svc.build({owner_id:real.owner_id,run_id:real.run_id}),id=built.export.export_id;
   assert.equal(built.ok,true,JSON.stringify(built));
   // an older compile record of member 1 with an error, then the clean records: the newest per ordinal is read, so no compile error is reported
@@ -679,6 +685,74 @@ test('attempt on live state (R9): hard limits tighter than the risk profile end 
   assert.equal(out.ok,true,JSON.stringify(out));
   assert.deepEqual([out.pass,out.status,out.codes],[false,'EXPORT_REFUSED',['BI_RISK_RELAXATION']],'the policy limit 100 is above 50; the older compile error is not read');
   assert.deepEqual(out.gates.map(item=>[item.gate,item.state]),[['C1','PASS'],['C2','PASS'],['C3','FAIL'],['C4','NOT_REACHED'],['Q','NOT_REACHED']]);
+});
+
+test('RD-MP-49 R2: with no override, a stored policy limit above the server hard range ends the export with BI_RISK_RELAXATION (the default hard limits are the server ranges)',{timeout:600000},async()=>{
+  const HIGH={...POLICY,maxRiskPercent:150};
+  assert.ok(Number(HIGH.maxRiskPercent)>Number(serverHardLimits().maxRiskPercent.max),'the staged limit lies above the server range');
+  const world=await newWorld({policy:HIGH}),hi=handle=>storeBotState({store:new Store(handle),defaultRisk:HIGH});
+  const admitted=await new MultiPineFixtureService({db:fx,store:new Store(fx),readBotState:hi(fx),clock:()=>NOW2,engineHash:ENGINE,supported_source_hash:SUPPORTED}).admit(inputOf(world));
+  assert.equal(admitted.ok,true,JSON.stringify(admitted));
+  const done=await new MultiPineFixtureExecutor({db:fx,store:new Store(fx),readBotState:hi(fx),clock:()=>NOW2+1000,runEvaluator:realRunner(world),engineHash:()=>ENGINE}).execute({owner_id:world.id,run_id:admitted.run.run_id});
+  assert.deepEqual(done,{ok:true,action:'TERMINAL',status:'SUCCEEDED',reason_code:null});
+  const svc=packages(fx,{readBotState:hi(fx)}),built=await svc.build({owner_id:world.id,run_id:admitted.run.run_id});
+  assert.equal(built.ok,true,JSON.stringify(built));
+  const id=built.export.export_id;
+  assert.deepEqual(await svc.recordFixtureRecords({owner_id:world.id,export_id:id}),{ok:true});
+  const out=await svc.attempt({owner_id:world.id,export_id:id});
+  assert.equal(out.ok,true,JSON.stringify(out));
+  assert.deepEqual([out.pass,out.status,out.codes],[false,'EXPORT_REFUSED',['BI_RISK_RELAXATION']]);
+  assert.deepEqual(out.gates.map(item=>[item.gate,item.state]),[['C1','PASS'],['C2','PASS'],['C3','FAIL'],['C4','NOT_REACHED'],['Q','NOT_REACHED']]);
+});
+
+test('RD-MP-49 R5: the newest compile record of a member wins in both directions: a newer failing record after a clean one ends the export refused',{timeout:600000},async()=>{
+  const real=await realRun(),svc=packages(),built=await svc.build({owner_id:real.owner_id,run_id:real.run_id}),id=built.export.export_id;
+  assert.equal(built.ok,true,JSON.stringify(built));
+  assert.deepEqual(await svc.recordFixtureRecords({owner_id:real.owner_id,export_id:id}),{ok:true});
+  const file=(await db.query("SELECT sha256 FROM mp_package_files WHERE export_id=$1 AND path='members/1/indicator.pine'",[id])).rows[0];
+  const newer=await svc.recordCompile({owner_id:real.owner_id,export_id:id,ordinal:1,record:{...fixtureCompileRecord({indicatorSha256:file.sha256}),errors:['SYNTAX_ERROR']}});
+  assert.equal(newer.ok,true,JSON.stringify(newer));
+  assert.equal((await rowsFor('mp_package_compile_records',id)).filter(row=>row.ordinal===1).length,2);
+  const out=await svc.attempt({owner_id:real.owner_id,export_id:id});
+  assert.equal(out.ok,true,JSON.stringify(out));
+  assert.equal(out.pass,false);
+  assert.ok(out.codes.includes('BI_COMPILE_ERRORS'),out.codes.join());
+  assert.deepEqual(out.diagnostics.filter(item=>item.code==='BI_COMPILE_ERRORS').map(item=>item.ordinal),[1],'only member 1, whose newest record fails');
+});
+
+test('RD-MP-49 R1: a hard limit or Bridge bound override may only tighten its default: per key the larger min and the smaller max, as decimals; omitted keys keep the default; unknown keys and unreadable bounds are ignored',()=>{
+  const defaults={a:{min:'0.01',max:'100'},b:{min:'1',max:'2'}};
+  // a wider override leaves the default bounds in force
+  assert.deepEqual(tightenBounds(defaults,{a:{min:'0.001',max:'1000'},b:{min:'0.5',max:'3'}}),defaults);
+  // a narrower override applies, key by key and bound by bound
+  assert.deepEqual(tightenBounds(defaults,{a:{min:'0.5',max:'50'}}),{a:{min:'0.5',max:'50'},b:{min:'1',max:'2'}});
+  assert.deepEqual(tightenBounds(defaults,{b:{max:'1.5'}}),{a:{min:'0.01',max:'100'},b:{min:'1',max:'1.5'}});
+  // decimals, not text or doubles: 9 is below 10 as a number although it sorts above it as text; a difference past double precision still counts
+  assert.deepEqual(tightenBounds({x:{min:'1',max:'10'}},{x:{max:'9'}}),{x:{min:'1',max:'9'}});
+  assert.deepEqual(tightenBounds({x:{min:'1',max:'10'}},{x:{min:'10.000000000000000001'}}),{x:{min:'10.000000000000000001',max:'10'}});
+  assert.deepEqual(tightenBounds({x:{min:'1',max:'10'}},{x:{max:9}}),{x:{min:'1',max:'9'}});
+  // a key the default lacks is ignored, an absent or unreadable override changes nothing, and the default is never mutated
+  assert.deepEqual(tightenBounds(defaults,{c:{min:'5',max:'6'}}),defaults);
+  for(const override of [undefined,null,{},[],'x',{a:null},{a:'x'},{a:{min:'x',max:null}},{a:{min:'',max:{}}}])assert.deepEqual(tightenBounds(defaults,override),defaults,JSON.stringify(override));
+  assert.deepEqual(defaults,{a:{min:'0.01',max:'100'},b:{min:'1',max:'2'}});
+  // the server defaults: a wider hard-limit override cannot loosen them
+  assert.deepEqual(tightenBounds(serverHardLimits(),{maxRiskPercent:{min:'0',max:'1000'}}),serverHardLimits());
+  assert.equal(tightenBounds(serverHardLimits(),{maxRiskPercent:{max:'50'}}).maxRiskPercent.max,'50');
+});
+
+test('RD-MP-49 R7: read refuses inside an outer transaction of the same database with a typed code before any statement, and leaves that transaction untouched',{timeout:120000},async()=>{
+  const svc=packages(),probe={owner_id:'x',export_id:randomUUID()};
+  assert.equal(PACKAGE_STORE_CODES.IN_TRANSACTION,'PACKAGE_STORE_IN_TRANSACTION');
+  const seen=await fx.transaction(async()=>{
+    const out=await svc.read(probe);
+    // nothing ran: the outer transaction is not read only
+    const mode=(await fx.query("SELECT current_setting('transaction_read_only') AS read_only")).rows[0].read_only;
+    return {out,mode};
+  },{isolation:'SERIALIZABLE'});
+  assert.deepEqual(seen.out,{ok:false,code:PACKAGE_STORE_CODES.IN_TRANSACTION});
+  assert.equal(seen.mode,'off');
+  // outside a transaction the same input is an ordinary NOT_FOUND
+  assert.deepEqual(await svc.read(probe),{ok:false,code:'NOT_FOUND'});
 });
 
 test('read: the stored integrity check refuses a changed package hash or binding hash; read runs in one READ ONLY REPEATABLE READ transaction (N7) and writes nothing',{timeout:600000},async()=>{
