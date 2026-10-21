@@ -380,8 +380,8 @@ All writers are new files only. One writer per file. Read-only for every S3 writ
 
 ### 6.3 What this cloud container can accept (checked read-only, 2026-10-21)
 
-- Present: Python 3.13.16 (`/usr/bin/python3`), `uv` (`/root/.local/bin/uv`) and a `quant_lab/.venv`; Node v22.22.0; PostgreSQL 16 binaries
-  (`/usr/lib/postgresql/16/bin`, `psql` on PATH; `initdb` not on PATH). System Python has no `pytest`; CI runs `uv run --no-sync pytest`
+- Present: Python 3.13.16 (system), `uv` and a `quant_lab/.venv`; Node v22.22.0; PostgreSQL 16 binaries
+  (`psql` on PATH; `initdb` not on PATH). System Python has no `pytest`; CI runs `uv run --no-sync pytest`
   (`.github/workflows/quant-lab.yml:44`), so A tests run through `uv` in `quant_lab`. Whether the venv already holds pytest is unknown.
 - PostgreSQL tests need `TEST_DATABASE_URL` (`test/helpers/preflight-pg-fixture.mjs:44`); the tester starts a throwaway cluster in the
   session scratchpad with the PG 16 binaries. Not tried here.
