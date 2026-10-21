@@ -97,6 +97,10 @@ const utc = value => typeof value === 'string' && UTC.test(value) && !Number.isN
 const utcMs = value => utc(value) && !/\.\d{4,}Z$/.test(value);
 const list = value => Array.isArray(value) ? value : [];
 const decimalNumber = value => finite(value) ? value : typeof value === 'string' && DECIMAL.test(value) ? Number(value) : NaN;
+/** RD-MP-48 D1: the selected pair (and the combined baseline pair) of a run are canonical decimal strings, exactly atr_multiplier and rr; read as numbers for a decimal compare, or null when they are not that shape. */
+const pairView = pair => isObject(pair) && Object.keys(pair).length === 2 && ['atr_multiplier', 'rr'].every(name => typeof pair[name] === 'string' && DECIMAL.test(pair[name]) && Number(pair[name]) > 0)
+  ? {atr_multiplier: Number(pair.atr_multiplier), rr: Number(pair.rr)} : null;
+const samePair = (a, b) => { const left = pairView(a), right = pairView(b); return left !== null && right !== null && left.atr_multiplier === right.atr_multiplier && left.rr === right.rr; };
 const canon = value => { try { const out = canonical(value); return typeof out === 'string' ? out : null; } catch { return null; } };
 const same = (a, b) => { const left = canon(a); return left !== null && left === canon(b); };
 const digest = value => { const out = canon(value); return out === null ? null : hash(out); };
@@ -526,9 +530,9 @@ function inputsCodes(pkg, run, selected) {
   for (const name of BRIDGE_NAMES) {
     const entry = inputs.bridge[name], domain = contract.bridge_domains?.[name];
     if (!isObject(entry) || !isObject(domain)) { mismatch = true; continue; }
-    const after = decimalNumber(entry.after);
+    const after = decimalNumber(entry.after), chosen = pairView(selected?.parameters);
     if (!domainContains(domain, after)) outOfDomain = true;
-    if (after !== selected?.parameters?.[name] || !same(entry.domain, {min: domain.min, max: domain.max, step: domain.step})) mismatch = true;
+    if (chosen === null || after !== chosen[name] || !same(entry.domain, {min: domain.min, max: domain.max, step: domain.step})) mismatch = true;
   }
   if (mismatch) codes.push('BI_INPUTS_MISMATCH');
   if (outOfDomain) codes.push('BI_INPUT_OUT_OF_DOMAIN');
@@ -712,7 +716,7 @@ function memberEvidenceCodes(out, member, entry, contract) {
 function baselineOk(run, selected) {
   const baseline = run.result?.combined_baseline;
   return isObject(baseline) && baseline.version === MP_BASELINE_VERSION && isObject(baseline.binding) && same(baseline.binding, {run_id: run.run_id, contract_hash: run.contract_hash})
-    && isObject(baseline.pair) && isObject(selected) && same(baseline.pair, selected.parameters) && baseline.same_bar_order === run.contract.same_bar_order
+    && isObject(baseline.pair) && isObject(selected) && samePair(baseline.pair, selected.parameters) && baseline.same_bar_order === run.contract.same_bar_order
     && sha(baseline.received_decisions_hash) && baseline.received_decisions_hash === digest(run.result.holdout_decisions) && baseline.matched === true;
 }
 function bridgePairOutOfBounds(pkg, contract, bounds) {

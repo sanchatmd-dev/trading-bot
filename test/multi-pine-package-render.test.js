@@ -32,7 +32,8 @@ const POLICY = {paperTrading: true, requireReduceOnlySell: true, maxRiskPercent:
 const CLOSURE = sha('producer closure');
 const EXPORT_ID = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
 const CREATED = '2026-10-21T12:00:00Z';
-const PAIR = {atr_multiplier: 2, rr: 1.5};
+// RD-MP-48 D1: the pair is a pair of canonical decimal strings, as the executor and the candidate plan store it.
+const PAIR = {atr_multiplier: '2', rr: '1.5'};
 const SIGNALS = {buy: 'buySignal', exit: 'sellSignal'};
 const refOf = (n, time) => DEP(n) + ':' + time + ':0';
 
@@ -75,8 +76,8 @@ function build(over = {}) {
   const result = {version: 'mp-combined-result-v1', run_id, contract_hash, owner_recommendation_ready: false, acceptance_blockers: [...contract.acceptance_blockers],
     evaluator: 'mp-combined-paper-v1', engine_hash: contract.engine_hash, closure: {version: 'mp-combined-closure-v1', hash: contract.engine_hash}, set_hash: contract.set_hash,
     same_bar_order: contract.same_bar_order, fixture: true, search: {algorithm: 'seeded', seed: 42, budget: 30, planned: 30}, candidates: [],
-    selected: {index: 0, parameters: clone(PAIR), ...brief('selected'), sensitivity: [{dimension: 'atr_multiplier', parameters: {atr_multiplier: 2.5, rr: 1.5}, ...brief('n1')},
-      {dimension: 'rr', parameters: {atr_multiplier: 2, rr: 1}, ...brief('n2')}], cost_stress: brief('stress'), screen_reasons: [],
+    selected: {index: 0, parameters: clone(PAIR), ...brief('selected'), sensitivity: [{dimension: 'atr_multiplier', parameters: {atr_multiplier: '2.5', rr: '1.5'}, ...brief('n1')},
+      {dimension: 'rr', parameters: {atr_multiplier: '2', rr: '1'}, ...brief('n2')}], cost_stress: brief('stress'), screen_reasons: [],
       test: {bars: 900, closed_trades: 1, start_equity: '1000', end_equity: '1004.395', net_return_percent: '0.4395', max_drawdown_percent: '0.4', profit_factor: null},
       holdout: {ledger_hash: sha('holdout ledger'), decision_count: 3, fills: 2}},
     holdout_evaluated: true, completion_reason: 'RESEARCH_CANDIDATE_PENDING_ACCEPTANCE', member_signals: [], funnel: {step: 'HOLDOUT', rows: BARS, diagnostics: diagnosticsFor(contract)}, holdout_decisions: decisions,
@@ -134,7 +135,7 @@ test('indicator.pine is assemble of the original bytes with the selected pair: t
   const input = build({count: 3}), out = renderMultiPackage(input);
   for (const member of input.members) {
     const n = member.ordinal, c = input.run.contract.members[n - 1];
-    const expected = assemble(member.source, {bridge: {atr_multiplier: 2, rr: 1.5}, signals: {buy: 'buySignal', exit: 'sellSignal'}, bindings: [], fixed_inputs: []},
+    const expected = assemble(member.source, {bridge: {atr_multiplier: '2', rr: '1.5'}, signals: {buy: 'buySignal', exit: 'sellSignal'}, bindings: [], fixed_inputs: []},
       {deployment_id: DEP(n), pine_import_id: PINE(n), source_version: 1, broker: 'binance-global', symbol: 'BTCUSDT', timeframe: '1'}).integrated_pine;
     const actual = out.files['members/' + n + '/indicator.pine'];
     assert.equal(actual, expected);
@@ -148,7 +149,7 @@ test('indicator.pine is assemble of the original bytes with the selected pair: t
     assert.doesNotMatch(actual, /\bstrategy\s*[(.]/);
   }
   // the pair changes only the Bridge defaults
-  const other = render({count: 2}, i => { i.run.result.selected.parameters = {atr_multiplier: 2.5, rr: 1}; i.run.result.combined_baseline.pair = {atr_multiplier: 2.5, rr: 1}; i.trace = deriveMultiTrace({run: i.run, producer_closure_hash: CLOSURE}); });
+  const other = render({count: 2}, i => { i.run.result.selected.parameters = {atr_multiplier: '2.5', rr: '1'}; i.run.result.combined_baseline.pair = {atr_multiplier: '2.5', rr: '1'}; i.trace = deriveMultiTrace({run: i.run, producer_closure_hash: CLOSURE}); });
   const base = out.files['members/1/indicator.pine'];
   assert.equal(other.files['members/1/indicator.pine'].slice(0, sourceOf(1).length), sourceOf(1));
   assert.match(other.files['members/1/indicator.pine'], /atrMult = input\.float\(2\.5,/);
@@ -372,9 +373,15 @@ test('refusals: a package is never created from input the renderer cannot render
   refuses(() => render({}, i => { i.run.result.holdout_evaluated = false; }), 'RENDER_INPUT_INVALID', /finished holdout result/);
   refuses(() => render({}, i => { i.run.result.run_id = 'other'; }), 'RENDER_INPUT_INVALID', /finished holdout result/);
   refuses(() => render({}, i => { delete i.run.result.selected.sensitivity; }), 'RENDER_INPUT_INVALID', /incomplete/);
-  refuses(() => render({}, i => { i.run.result.selected.parameters = {atr_multiplier: 2, rr: 1.5, extra: 1}; }), 'RENDER_INPUT_INVALID', /exactly atr_multiplier and rr/);
-  refuses(() => render({}, i => { i.run.result.selected.parameters = {atr_multiplier: 2, rr: '1.5'}; }), 'RENDER_INPUT_INVALID', /exactly atr_multiplier and rr/);
-  refuses(() => render({}, i => { i.run.result.selected.parameters = {atr_multiplier: 0, rr: 1.5}; }), 'RENDER_INPUT_INVALID', /exactly atr_multiplier and rr/);
+  refuses(() => render({}, i => { i.run.result.selected.parameters = {atr_multiplier: '2', rr: '1.5', extra: '1'}; }), 'RENDER_INPUT_INVALID', /exactly atr_multiplier and rr/);
+  // D1: a number is not the contract shape of the pair, however finite and positive
+  refuses(() => render({}, i => { i.run.result.selected.parameters = {atr_multiplier: 2, rr: 1.5}; }), 'RENDER_INPUT_INVALID', /canonical decimal string/);
+  refuses(() => render({}, i => { i.run.result.selected.parameters = {atr_multiplier: '2', rr: 1.5}; }), 'RENDER_INPUT_INVALID', /canonical decimal string/);
+  // and a string must be a positive canonical decimal: no sign, zero, leading zero, trailing fraction zero, exponent, space, empty or non-numeric text
+  for (const bad of ['0', '0.0', '-1.5', '+1.5', '01.5', '1.50', '1.', '.5', '1e2', ' 1.5', '1.5 ', '', 'one', 'NaN', 'Infinity']) {
+    refuses(() => render({}, i => { i.run.result.selected.parameters = {atr_multiplier: '2', rr: bad}; }), 'RENDER_INPUT_INVALID', /canonical decimal string/);
+    refuses(() => render({}, i => { i.run.result.selected.parameters = {atr_multiplier: bad, rr: '1.5'}; }), 'RENDER_INPUT_INVALID', /canonical decimal string/);
+  }
   refuses(() => render({}, i => { i.run.result.selected.parameters = {atr_multiplier: NaN, rr: 1.5}; }), 'RENDER_INPUT_INVALID', /exactly atr_multiplier and rr/);
   // undefined or functions inside stored data are not plain data
   refuses(() => render({}, i => { i.run.result.selected.cost_stress.extra = undefined; }), 'RENDER_INPUT_INVALID', /not plain data/);

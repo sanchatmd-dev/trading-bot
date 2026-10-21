@@ -109,6 +109,9 @@ function decimalString(value) {
   if (out === '-0') out = '0';
   return DECIMAL.test(out) && Number(out) === value ? out : null;
 }
+/** A positive decimal string in canonical form (no sign, no leading zero, no trailing fraction zero, no exponent) that decimalString keeps unchanged; a number is not one. */
+const CANONICAL_POSITIVE = /^(?:0|[1-9]\d*)(?:\.\d*[1-9])?$/;
+const positiveCanonicalDecimal = value => typeof value === 'string' && CANONICAL_POSITIVE.test(value) && /[1-9]/.test(value) && decimalString(value) === value;
 const decimalOrRefuse = (value, path) => { const out = decimalString(value); if (out === null) throw invalid(path + ' has no exact decimal form'); return out; };
 
 const escapeHtml = value => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -165,7 +168,8 @@ function requireRun(run, policy) {
     || !funnel.diagnostics.members.every(isObject) || !isObject(funnel.diagnostics.bot))
     throw invalid('run.result.funnel must be the HOLDOUT funnel with the member and Bot diagnostics');
   const names = Object.keys(selected.parameters).sort();
-  if (names.length !== 2 || names[0] !== 'atr_multiplier' || names[1] !== 'rr' || !BRIDGE_NAMES.every(name => finite(selected.parameters[name]) && selected.parameters[name] > 0)) throw invalid('selected parameters must be exactly atr_multiplier and rr');
+  // RD-MP-48 D1: the executor stores the pair as canonical decimal strings; that is the only contract shape. A number is refused.
+  if (names.length !== 2 || names[0] !== 'atr_multiplier' || names[1] !== 'rr' || !BRIDGE_NAMES.every(name => positiveCanonicalDecimal(selected.parameters[name]))) throw invalid('selected parameters must be exactly atr_multiplier and rr, each a positive canonical decimal string');
   return selected;
 }
 

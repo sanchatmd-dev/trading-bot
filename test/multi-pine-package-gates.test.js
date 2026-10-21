@@ -115,7 +115,7 @@ test('the golden is a labelled synthetic fixture with LF bytes, and it reproduce
     assert.equal(sha(ref(deployment.snapshot)), RI.run.contract.members[index].deployment_snapshot_hash);
     assert.deepEqual(deployment.snapshot.selection.bridge, {atr_multiplier: '1.5', rr: '1'});
   }
-  assert.deepEqual(RI.run.result.selected.parameters, {atr_multiplier: 2, rr: 1.5});
+  assert.deepEqual(RI.run.result.selected.parameters, {atr_multiplier: '2', rr: '1.5'}, 'D1: the selected pair is a pair of canonical decimal strings');
   assert.equal(golden.current.bridge_pair, undefined, 'the freshness tuple has no selected-pair term');
   assert.equal(golden.current.input_lock_hash, JSON.parse(golden.rendered.files[MANIFEST]).binding.input_lock_hash);
   // the trace the evaluator re-derives is the packaged one
@@ -367,13 +367,48 @@ test('B0 and the attempt carry RULES_VERSION_DIFFERS as information only when th
   assert.equal(result.status, 'EXPORT_INTERNAL');
 });
 
+/* ---- RD-MP-48 D1: the pair of the run is a pair of canonical decimal strings ---- */
+
+test('D1: C3 compares the pair of inputs.json with the selected pair as decimals and refuses a number; C4 compares the baseline pair as decimals and refuses a number', () => {
+  const golden0 = fresh();
+  assert.deepEqual(golden0.run.result.selected.parameters, {atr_multiplier: '2', rr: '1.5'});
+  assert.deepEqual(golden0.run.result.combined_baseline.pair, {atr_multiplier: '2', rr: '1.5'});
+  expectCodes(c3(golden0), []);
+  expectCodes(c4(golden0), []);
+  // a number is not the contract shape: the pair of inputs.json then differs from it (BI_INPUTS_MISMATCH), however equal the value
+  const numeric = fresh();
+  numeric.run.result.selected.parameters = {atr_multiplier: 2, rr: 1.5};
+  withCodes(c3(numeric), 'BI_INPUTS_MISMATCH');
+  // a decimal-equal spelling of the same pair is the same pair for the inputs.json compare (other codes may report the changed bytes of the run, never BI_INPUTS_MISMATCH)
+  const spelled = fresh();
+  spelled.run.result.selected.parameters = {atr_multiplier: '2.0', rr: '1.50'};
+  assert.ok(!codes(c3(spelled)).includes('BI_INPUTS_MISMATCH'), JSON.stringify(c3(spelled).codes));
+  const other = fresh();
+  other.run.result.selected.parameters = {atr_multiplier: '2.5', rr: '1.5'};
+  withCodes(c3(other), 'BI_INPUTS_MISMATCH');
+  // C4: the combined baseline pair (RD-MP-30)
+  const spelledBaseline = fresh();
+  spelledBaseline.run.result.combined_baseline.pair = {atr_multiplier: '2.00', rr: '1.500'};
+  assert.ok(!codes(c4(spelledBaseline)).includes('MP_COMBINED_BASELINE_FAILED'), JSON.stringify(c4(spelledBaseline).codes));
+  for (const pair of [{atr_multiplier: 2, rr: 1.5}, {atr_multiplier: '2', rr: 1.5}, {atr_multiplier: '2', rr: '1.5', extra: '1'}, {atr_multiplier: '2'}, {atr_multiplier: '2', rr: '1.51'}, {atr_multiplier: '0', rr: '0'}]) {
+    const bad = fresh();
+    bad.run.result.combined_baseline.pair = pair;
+    withCodes(c4(bad), 'MP_COMBINED_BASELINE_FAILED');
+  }
+  // a number in the selected pair fails the baseline too, whatever the baseline holds
+  const numericBoth = fresh();
+  numericBoth.run.result.selected.parameters = {atr_multiplier: 2, rr: 1.5};
+  numericBoth.run.result.combined_baseline.pair = {atr_multiplier: 2, rr: 1.5};
+  withCodes(c4(numericBoth), 'MP_COMBINED_BASELINE_FAILED');
+});
+
 /* ---- RD-MP-46 B1: the selected pair is not a freshness term ---- */
 
 test('B1: the selected pair differs from the frozen deployment pair (decimal strings) and the package still passes; a changed frozen pair is caught through the input lock', () => {
   const s = fresh();
   const frozen = s.deployments.map(item => item.snapshot.selection.bridge);
   assert.deepEqual(frozen, [{atr_multiplier: '1.5', rr: '1'}, {atr_multiplier: '1.5', rr: '1'}]);
-  assert.notDeepEqual(s.run.result.selected.parameters, {atr_multiplier: 1.5, rr: 1});
+  assert.notDeepEqual(s.run.result.selected.parameters, {atr_multiplier: '1.5', rr: '1'});
   assert.deepEqual(G.multiFreshnessCodes(s.binding, s.current), []);
   assert.equal(G.multiFreshness({binding: s.binding, current: s.current, replay_mismatch: false}).state, 'FRESH');
   // a current.bridge_pair of any shape is not read
@@ -632,7 +667,7 @@ test('C2: every other edit of a member file is a logic change: the Bridge block,
   }
   // the pair comes from the run, not from the package: a file assembled with another pair is a logic change
   const s = fresh();
-  s.run.result.selected.parameters = {atr_multiplier: 2.5, rr: 1};
+  s.run.result.selected.parameters = {atr_multiplier: '2.5', rr: '1'};
   withCodes(c2(s), 'BI_SOURCE_LOGIC_CHANGED');
 });
 
@@ -787,7 +822,7 @@ const C4_CASES = [
   ['MP_COMBINED_BASELINE_FAILED (untied: other run)', ['MP_COMBINED_BASELINE_FAILED'], s => { s.run.result.combined_baseline.binding.run_id = 'other-run'; }, []],
   ['MP_COMBINED_BASELINE_FAILED (untied: other contract hash)', ['MP_COMBINED_BASELINE_FAILED'], s => { s.run.result.combined_baseline.binding.contract_hash = sha('other'); }, []],
   ['MP_COMBINED_BASELINE_FAILED (untied: no binding)', ['MP_COMBINED_BASELINE_FAILED'], s => { delete s.run.result.combined_baseline.binding; }, []],
-  ['MP_COMBINED_BASELINE_FAILED (wrong pair)', ['MP_COMBINED_BASELINE_FAILED'], s => { s.run.result.combined_baseline.pair = {atr_multiplier: 2, rr: 1}; }, []],
+  ['MP_COMBINED_BASELINE_FAILED (wrong pair)', ['MP_COMBINED_BASELINE_FAILED'], s => { s.run.result.combined_baseline.pair = {atr_multiplier: '2', rr: '1'}; }, []],
   ['MP_COMBINED_BASELINE_FAILED (pair absent)', ['MP_COMBINED_BASELINE_FAILED'], s => { delete s.run.result.combined_baseline.pair; }, []],
   ['MP_COMBINED_BASELINE_FAILED (matched false)', ['MP_COMBINED_BASELINE_FAILED'], s => { s.run.result.combined_baseline.matched = false; }, []],
   ['MP_COMBINED_BASELINE_FAILED (matched not boolean true)', ['MP_COMBINED_BASELINE_FAILED'], s => { s.run.result.combined_baseline.matched = 'true'; }, []],
