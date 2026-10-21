@@ -8,7 +8,7 @@ Branch `codex/app3a-market-wait-checkpoint-gwylmk`. The owner authorized the clo
 
 - `296bd64` docs: the documentation fixes D1 to D7 (Bangkok dates, links, contract row dates, status split, Roadmap and contract wording, mutation and import-guard wording). CI passed.
 - `ae546bf` test: the side session's change that bounds the server readiness waits by wall time (cherry-picked from `claude/readiness-wall-time-deadlines`, commit `71932a9`; its other commit was already on the branch). CI passed.
-- `cf0dc83` feat: F11 RS-5, the internal fixture admission service (RD-MP-23, [evidence](evidence/PM1_F11_01_FIXTURE_ADMISSION_RS5_LOCAL_2026-10-21.json)). CI was running when this checkpoint was written; check it first.
+- `cf0dc83` feat: F11 RS-5, the internal fixture admission service (RD-MP-23, [evidence](evidence/PM1_F11_01_FIXTURE_ADMISSION_RS5_LOCAL_2026-10-21.json)). CI passed on every pushed commit through `6c78131`. Later commits are not yet checked here; check CI first.
 
 The owner chose to redo RS-5 and D1 to D7 in the cloud; the local `stash@{1}` is not used. `stash@{0}` (the owner's protected files) stays untouched.
 
@@ -26,12 +26,29 @@ Baseline on `d9a6dce` in that container: the PostgreSQL suite passed 1327 of 133
 ## Open items found in the cloud
 
 - **PF-2 R4 real-process tests.** With the Python environment installed, three subtests of `test/preflight-runtime.test.js` fail in a container without a systemd user manager: on Linux the supervisor always launches through `systemd-run --user` and correctly refuses to confirm a stop it cannot prove (`QUANT_PROCESS_STOP_UNCONFIRMED`). CI never runs them (the unit job has no venv, and `quant-lab.yml` does not run this file), so the Linux real-process path of R4 has no automated evidence. The owner approved a test-only capability gate, now applied: the three subtests skip with a reason when `systemctl --user` is unavailable and still fail under `PF2_REQUIRE_PYTHON=1`; the supervisor is unchanged. Real evidence needs a host with user systemd and cgroup v2, which is an operations step under a fresh owner GO.
-- **Heap flag in production.** No deploy file in the repository sets `--max-old-space-size`. If the VPS ever starts node with it, the QR2 worker heap cap is silently disabled. Not checked on any host.
-- **RS-5 residuals** are listed in the evidence record and RD-MP-23 (authorization checked once outside the transaction; a first-attempt same-key race can turn a LOAD into a check refusal).
+- **Heap flag in production.** No deploy file in the repository sets `--max-old-space-size`. The QR2 compute pool now fails closed: it refuses to start under such a process-wide flag (RC-Q40, four flags after `9842392`). Local engineering evidence only; not checked on any host.
+- **RS-5 residuals** are listed in the evidence record and RD-MP-23. The authorization and key re-check inside the transaction was added later (RD-MP-35, `2b8d398`).
 
 ## Next work
 
-Unchanged from the handoff: RS-6 needs the combined Python evaluator and root items R5, R7, R11 and R12; the multi-Pine package slice needs R6; QR-3 S3 and QR-4 S3 need FE-2b; QR-2 S4-4 and S4-5 need the owner's OW1 to OW10 decisions. The N1 terminal-evidence line stays held. No host, VPS, browser or TradingView work from the cloud; Spot/Paper only.
+RS-6 S1 and S2 have landed (R5, R11); RS-6 S3 is next (R7, R12). The F1 to F30 acceptance with the private source happens later in the owner's local checkout (RD-MP-34). The multi-Pine package slice needs R6; QR-3 S3 and QR-4 S3 need FE-2b; QR-2 S4-4 and S4-5 need the owner's OW1 to OW10 decisions. The N1 terminal-evidence line stays held. No host, VPS, browser or TradingView work from the cloud; Spot/Paper only.
+
+## After the checkpoint
+
+Local engineering evidence only; nothing installed, no host step, no GO. Check CI first.
+
+- `629bcb4` the QR-2 compute pool refuses to start under a process-wide heap flag (RC-Q40).
+- `be8e02e` the PF-2 R4 real-supervisor tests skip without a systemd user manager.
+- `7847a05` the All Bots card shows book equity per currency (RC-Q41; JSDOM only).
+- `5f1f8aa` the combined evaluator and RS-6 rulings recorded (RD-MP-24 to RD-MP-34).
+- `6c78131` the owner's answers on the acceptance machine and readings (RD-MP-34).
+- `05e7a47` RS-6 S1 and S2, the combined Paper evaluator and its Node oracle.
+- `9842392` the heap guard covers three more flags.
+- `2b8d398` RS-5 residual hardening: authorization and key re-checked inside the transaction (RD-MP-35).
+- `e38db9d` oracle count maps free of prototype keys.
+- `8af42ab` non-finite admission input refused; T2 read order pinned.
+- `8f2b364` the F09 builder S3 trace-reproduction design and root rulings R1 to R11; owner question OQ-1 open.
+- `8b10102` container paths dropped from the F09 design judgement.
 
 ## Usage
 

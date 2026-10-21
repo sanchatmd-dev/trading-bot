@@ -474,7 +474,7 @@ RD-MP-24 to 33, the 5.6 clarification, evidence record, Roadmap and Time Managem
 ### What this cloud container can and cannot accept
 
 Checked here: `python3` and `quant_lab/.venv` with pytest exist; PostgreSQL `initdb`, `pg_ctl` and `postgres` exist under
-`/usr/lib/postgresql/*/bin`; `systemd-run` exists but there is no user bus.
+the PostgreSQL 16 binary directory; `systemd-run` exists but there is no user bus.
 
 | Work | Cloud container | Needs owner private source | Needs a systemd host |
 | --- | --- | --- | --- |

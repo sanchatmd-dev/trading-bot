@@ -4,7 +4,7 @@ Status: owner decisions OD-MP-1 to OD-MP-11 recorded 2026-10-19. Root decisions 
 RD-MP-7, RD-MP-8, RD-MP-9 and RD-MP-10 recorded the same day; RD-MP-1, RD-MP-2, RD-MP-3 and RD-MP-6
 were decided the same day (RD-MP-1 to RD-MP-11 decided; RD-MP-12 to RD-MP-17 decided 2026-10-20 and RD-MP-18 to RD-MP-35 decided 2026-10-21; RC-MP-1 clarifies 3.3; the member-set tables extension is root-accepted as local engineering evidence and not installed on staging). Root accepted the
 other rules on 2026-10-19 after independent review. The S1 pure member-set builder (src/multi-pine) is root-accepted as local engineering
-evidence and not wired; the run contract builder, the run-store slices RS-1 to RS-4 and the fixture admission service RS-5 are local engineering evidence only and are wired into no route, worker or service; this contract is not a GO, and nothing here
+evidence and not wired; the run contract builder, the run-store slices RS-1 to RS-4, the fixture admission service RS-5 and the combined Paper evaluator with its Node oracle (RS-6 S1 and S2) are local engineering evidence only and are wired into no route, worker or service; RS-6 S3 has not landed; this contract is not a GO, and nothing here
 activates a multi-Pine Bot or exposes multi-Pine results to the owner before APP-3B.
 
 Feature: PM-1 F11-01 "Multi-Pine contracts and evaluator/package compatibility". Target: isolated
