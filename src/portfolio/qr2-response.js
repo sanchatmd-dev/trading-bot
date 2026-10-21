@@ -155,7 +155,12 @@ function accountBody(view){
   const stale=(nav?.reasons||[]).filter(r=>r==='PRICE_STALE');
   const flowsTotal=p?.flows?p.flows.reduce((t,f)=>t.plus(f.amount),D(0)).toFixed():null;
   const at=resolvedTo===null?{available:false}:stateAt(view.replay,resolvedTo);
-  const fees=at.available&&at.state&&nav?at.state.fees:null;
+  const from=view.range.resolved?.from;
+  const before=from===undefined?{available:false}:stateAt(view.replay,from);
+  // OD-S4-9: both states exclude events at their instant, so the difference is exactly [from,to).
+  // Replay fees remain cumulative; this presentation must not change cash, NAV or money PnL.
+  const fees=at.available&&at.state&&before.available&&before.state&&nav
+    ?D(at.state.fees).minus(before.state.fees).toFixed():null;
   const exp=nav?exposure(nav):{value:null,basis:null,reason:'NAV_NOT_AVAILABLE'};
   const account={
     cash:field(nav?.cash,navReasons,'CASH_NOT_AVAILABLE'),

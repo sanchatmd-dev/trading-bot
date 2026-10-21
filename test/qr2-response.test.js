@@ -234,3 +234,24 @@ test('R6 composer refuses a body with an unknown top-level key; count blocks cop
   assert.deepEqual(body.attribution_counts,{BRIDGE:0,WEBHOOK:2,ATTRIBUTION_UNKNOWN:0});
   assert.deepEqual(body.slippage_counts,{SLIPPAGE_UNKNOWN:2,MODELED_SLIPPAGE_ALREADY_INCLUDED:0});
 });
+
+test('OD-S4-9 reports fees only in resolved [from,to), without changing NAV or returns',()=>{
+  const from=T0+100,to=T0+200;
+  const events=[
+    {time:from-1,halted:false,state:{fees:'1.25'}},
+    {time:from,halted:false,state:{fees:'1.35'}},
+    {time:from+1,halted:false,state:{fees:'1.850000000000000001'}},
+    {time:to,halted:false,state:{fees:'8.85'}},
+    {time:to+1,halted:false,state:{fees:'9.85'}}
+  ];
+  const sample=view({range:{requested:{from:T0,to},resolved:{from,to},flags:[]},replay:{events,final:{}}});
+  const body=compose(sample),baseline=compose(view());
+  assert.equal(body.account.fees.value,'0.600000000000000001');
+  for(const key of ['cash','nav','realized_pnl','unrealized_pnl','money_pnl','flows_total','twr','mwr'])
+    assert.deepEqual(body.account[key],baseline.account[key],key);
+  assert.equal(compose({...sample,range:{...sample.range,resolved:{from:from+2,to}}}).account.fees.value,'0');
+  const blocked=compose({...sample,replay:{events:[{time:from-1,halted:true,code:'REPLAY_HALTED'}],final:{}}});
+  assert.equal(blocked.account.fees.value,null);
+  assert.ok(blocked.account.fees.reasons.includes('FEES_NOT_AVAILABLE'));
+  assert.equal(compose({...sample,performance:null}).account.fees.value,null);
+});
