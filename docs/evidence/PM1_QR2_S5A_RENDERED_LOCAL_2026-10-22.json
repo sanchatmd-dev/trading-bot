@@ -1,0 +1,410 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-22",
+  "timezone": "Asia/Bangkok",
+  "root": "Codex",
+  "baseRevision": "d8a9c6f137a1505fc8ca50bb39b1c3f31a9c3c8d",
+  "scope": "QR-2 S5a RC-Q41 rendered component verification on a local synthetic stub; no product changes.",
+  "result": "PASS: 24 scenario/surface checks across four browser contexts. Root inspected eight main screenshots.",
+  "browser": {
+    "engine": "Chromium",
+    "version": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+    "driver": "Python Playwright, existing installation",
+    "fallback": "Browser plugin had no callable runtime tool; Ego Browser CLI absent and its installation workflow is macOS-only. Local cloud Chromium was used; no user browser or session accessed."
+  },
+  "files": {
+    "public/index.html": "922c672e8635a25c41e36ea4182989da4cb73f96817d5399aa9dda22ae1190de",
+    "public/styles.css": "501cab31ce9c825975fc2bf9ff616dfe0e356dc73bb3cc37a04133749cc1f899",
+    "public/styles-v2.css": "3c176609e0f7ac709e629d490df4775c40c9d93fe0d99e2b55008f3b96099269",
+    "public/theme-hud.css": "08a46fadfa694f41bc83ad17d98ddb68597b96354013e0543994715320650333",
+    "public/research-job.css": "debdaa1caa20c7e0434c91551bc949d19683f164061f72cfd1ebb8dd0a955ecb",
+    "public/market-chart.css": "40b284a5bccd776f7af18e0e5f480fb7d310e0d47f8f183f07df9e1aba5098af",
+    "public/install-shortcut.css": "2d94092e96e18381eed3990cbb79a2e8bbc2162d8751ebbe164ca7c40b853335",
+    "public/i18n.js": "8266e46fe6e0ec7fac4d586f3697433c4dea52065949bfb61612675c76f707a1",
+    "public/app.js": "e5c805b49a8669beebb30f595fcd0237cb0ad8764141e1f14d5bde4b828bb80b",
+    "public/bots.js": "31127683f617bed36b05681dafe4861b556aa534cb1aaf67efbf13147574b716",
+    "public/login.js": "56cb3e0126f6a12275f6432dd3d6b60b5d2e466c8e96e001bfc1b0a662d7d112",
+    "public/overview.js": "70187f0f9028855fcc6de906ad0297d6fc8dfad39dfb1b77002523d65fe69de2"
+  },
+  "fixture": {
+    "data": "Synthetic USDT 1000.5 + 2000 and THB 35000, zero/unfunded exclusions, single-currency and invalid/empty controls.",
+    "page": "Real index structure/styles and i18n/app/bots/login/overview scripts; unrelated boot/chart/security scripts omitted. Session bootstrap and read-only API responses replaced by fixture functions.",
+    "isAuthenticatedIntegration": false,
+    "servedLoopbackOnly": true,
+    "privateInputs": false,
+    "database": false,
+    "realAPIs": false,
+    "writeRequests": 0,
+    "externalRequests": 0,
+    "productionRequests": 0
+  },
+  "verification": {
+    "contexts": 4,
+    "scenarioSurfaceChecks": 24,
+    "cases": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "language": "en",
+        "status": "PASS",
+        "checks": [
+          {
+            "scenario": "mixed",
+            "surface": "overview",
+            "actual": "3,000.50 USDT · 35,000.00 THB",
+            "label": "Book equity by currency",
+            "targetClientWidth": 287,
+            "targetScrollWidth": 287,
+            "documentWidth": 1440
+          },
+          {
+            "scenario": "mixed",
+            "surface": "bots",
+            "actual": [
+              "3,000.5 USDT",
+              "35,000 THB"
+            ],
+            "label": "Book equity by currency",
+            "targetClientWidth": 1190,
+            "targetScrollWidth": 1190,
+            "documentWidth": 1440
+          },
+          {
+            "scenario": "single",
+            "surface": "overview",
+            "actual": "3,000.50 USDT",
+            "label": "Book equity by currency",
+            "targetClientWidth": 287,
+            "targetScrollWidth": 287,
+            "documentWidth": 1440
+          },
+          {
+            "scenario": "single",
+            "surface": "bots",
+            "actual": [
+              "3,000.5 USDT"
+            ],
+            "label": "Book equity by currency",
+            "targetClientWidth": 1190,
+            "targetScrollWidth": 1190,
+            "documentWidth": 1440
+          },
+          {
+            "scenario": "empty",
+            "surface": "overview",
+            "actual": "—",
+            "label": "Book equity by currency",
+            "targetClientWidth": 287,
+            "targetScrollWidth": 287,
+            "documentWidth": 1440
+          },
+          {
+            "scenario": "empty",
+            "surface": "bots",
+            "actual": [
+              "—"
+            ],
+            "label": "Book equity by currency",
+            "targetClientWidth": 1190,
+            "targetScrollWidth": 1190,
+            "documentWidth": 1440
+          }
+        ],
+        "screenshots": [
+          {
+            "file": "desktop-en-overview.png",
+            "sha256": "7116feda00892e6d1ceb9e2f65c6e1f47c5d1402c431f155a864a3419cb6c4f0"
+          },
+          {
+            "file": "desktop-en-bots.png",
+            "sha256": "a0c1d2ba9f2ae74e0c1b00cdc65ccc319e01a50239cf13e7a1d4c5baa0ce243b"
+          }
+        ],
+        "consoleErrors": 0,
+        "blockedRequests": 0,
+        "mockReadRequests": 36
+      },
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "language": "th",
+        "status": "PASS",
+        "checks": [
+          {
+            "scenario": "mixed",
+            "surface": "overview",
+            "actual": "3,000.50 USDT · 35,000.00 THB",
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 287,
+            "targetScrollWidth": 287,
+            "documentWidth": 1440
+          },
+          {
+            "scenario": "mixed",
+            "surface": "bots",
+            "actual": [
+              "3,000.5 USDT",
+              "35,000 THB"
+            ],
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 1190,
+            "targetScrollWidth": 1190,
+            "documentWidth": 1440
+          },
+          {
+            "scenario": "single",
+            "surface": "overview",
+            "actual": "3,000.50 USDT",
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 287,
+            "targetScrollWidth": 287,
+            "documentWidth": 1440
+          },
+          {
+            "scenario": "single",
+            "surface": "bots",
+            "actual": [
+              "3,000.5 USDT"
+            ],
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 1190,
+            "targetScrollWidth": 1190,
+            "documentWidth": 1440
+          },
+          {
+            "scenario": "empty",
+            "surface": "overview",
+            "actual": "—",
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 287,
+            "targetScrollWidth": 287,
+            "documentWidth": 1440
+          },
+          {
+            "scenario": "empty",
+            "surface": "bots",
+            "actual": [
+              "—"
+            ],
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 1190,
+            "targetScrollWidth": 1190,
+            "documentWidth": 1440
+          }
+        ],
+        "screenshots": [
+          {
+            "file": "desktop-th-overview.png",
+            "sha256": "3c618e26d9fd5abf8f1caa581f43a15bcbf99a60fc986a7062412a31f4edf28c"
+          },
+          {
+            "file": "desktop-th-bots.png",
+            "sha256": "969e380e2d1ae707494570be9f6680e1ab61aa48f9f448d641862c62ffd3627e"
+          }
+        ],
+        "consoleErrors": 0,
+        "blockedRequests": 0,
+        "mockReadRequests": 36
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "language": "en",
+        "status": "PASS",
+        "checks": [
+          {
+            "scenario": "mixed",
+            "surface": "overview",
+            "actual": "3,000.50 USDT · 35,000.00 THB",
+            "label": "Book equity by currency",
+            "targetClientWidth": 171,
+            "targetScrollWidth": 171,
+            "documentWidth": 390
+          },
+          {
+            "scenario": "mixed",
+            "surface": "bots",
+            "actual": [
+              "3,000.5 USDT",
+              "35,000 THB"
+            ],
+            "label": "Book equity by currency",
+            "targetClientWidth": 356,
+            "targetScrollWidth": 356,
+            "documentWidth": 390
+          },
+          {
+            "scenario": "single",
+            "surface": "overview",
+            "actual": "3,000.50 USDT",
+            "label": "Book equity by currency",
+            "targetClientWidth": 171,
+            "targetScrollWidth": 171,
+            "documentWidth": 390
+          },
+          {
+            "scenario": "single",
+            "surface": "bots",
+            "actual": [
+              "3,000.5 USDT"
+            ],
+            "label": "Book equity by currency",
+            "targetClientWidth": 356,
+            "targetScrollWidth": 356,
+            "documentWidth": 390
+          },
+          {
+            "scenario": "empty",
+            "surface": "overview",
+            "actual": "—",
+            "label": "Book equity by currency",
+            "targetClientWidth": 171,
+            "targetScrollWidth": 171,
+            "documentWidth": 390
+          },
+          {
+            "scenario": "empty",
+            "surface": "bots",
+            "actual": [
+              "—"
+            ],
+            "label": "Book equity by currency",
+            "targetClientWidth": 356,
+            "targetScrollWidth": 356,
+            "documentWidth": 390
+          }
+        ],
+        "screenshots": [
+          {
+            "file": "mobile-en-overview.png",
+            "sha256": "40b864194a3f718abf3625ad21566d84abb64d93ab66b90c2a8bd1eb0ea3d3f6"
+          },
+          {
+            "file": "mobile-en-bots.png",
+            "sha256": "def3362dc9a5a9960b7bcf0e3b0a14707334ed1f99ac8b83e85c661fc19557db"
+          }
+        ],
+        "consoleErrors": 0,
+        "blockedRequests": 0,
+        "mockReadRequests": 36
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "language": "th",
+        "status": "PASS",
+        "checks": [
+          {
+            "scenario": "mixed",
+            "surface": "overview",
+            "actual": "3,000.50 USDT · 35,000.00 THB",
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 171,
+            "targetScrollWidth": 171,
+            "documentWidth": 390
+          },
+          {
+            "scenario": "mixed",
+            "surface": "bots",
+            "actual": [
+              "3,000.5 USDT",
+              "35,000 THB"
+            ],
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 356,
+            "targetScrollWidth": 356,
+            "documentWidth": 390
+          },
+          {
+            "scenario": "single",
+            "surface": "overview",
+            "actual": "3,000.50 USDT",
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 171,
+            "targetScrollWidth": 171,
+            "documentWidth": 390
+          },
+          {
+            "scenario": "single",
+            "surface": "bots",
+            "actual": [
+              "3,000.5 USDT"
+            ],
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 356,
+            "targetScrollWidth": 356,
+            "documentWidth": 390
+          },
+          {
+            "scenario": "empty",
+            "surface": "overview",
+            "actual": "—",
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 171,
+            "targetScrollWidth": 171,
+            "documentWidth": 390
+          },
+          {
+            "scenario": "empty",
+            "surface": "bots",
+            "actual": [
+              "—"
+            ],
+            "label": "Book equity แยกตามสกุลเงิน",
+            "targetClientWidth": 356,
+            "targetScrollWidth": 356,
+            "documentWidth": 390
+          }
+        ],
+        "screenshots": [
+          {
+            "file": "mobile-th-overview.png",
+            "sha256": "e04a717d8a17de36c5332a423ad72ad003cae81e888c2a9def559bc1eab994c8"
+          },
+          {
+            "file": "mobile-th-bots.png",
+            "sha256": "ba5c5f5eec1fafe20040df59fdab793a375bd03356479c2d46b324d933d0c4fd"
+          }
+        ],
+        "consoleErrors": 0,
+        "blockedRequests": 0,
+        "mockReadRequests": 36
+      }
+    ],
+    "interactions": "Actual navigation between Overview and Bot Manager; mobile Menu open/select/close; synthetic scenario updates through the fixture hook. Languages initialized through the existing localStorage setting.",
+    "pageIdentity": "Robot trade title and component fixture URL verified.",
+    "layout": "Target bounds within viewport, no target horizontal overflow, no document horizontal overflow for all 24 checks; root visual inspection found no overlap or unreadable target values. Normal vertical scrolling remains.",
+    "rootVisualInspection": "Eight mixed-currency main screenshots reviewed; component crops also retained locally.",
+    "rawResultsSha256": "b15cf4b7043a247d702c67f8a4630b0fab11ad8318950fed3363458a84998beb",
+    "runnerSha256": "b1665379344e5f2e6a270171db637d9bb49c3a7e2a0daaca0a43cfb9ca4111a6",
+    "initialAttempt": "The initial browser runner observed a detached element while native Bot navigation asynchronously refreshed the card. Waiting for the existing refreshBots promise before inspection resolved the harness race. No product change or suppressed app error."
+  },
+  "review": {
+    "runner": "Root executed the browser run; tester prepared fixture bootstrap.",
+    "independentReview": "Tester inspected final results, runner, all eight main screenshot digests and unchanged asset hashes, and visually reviewed two mobile Thai screenshots. No actionable finding. Browser execution was by root and was not independently repeated."
+  },
+  "rootAcceptance": "Root accepts the RC-Q41 rendered desktop/mobile EN/TH component check only after raw-result, image and independent artifact review. No product change or broader QR-2 acceptance.",
+  "limitations": [
+    "Component fixture only, not authenticated application integration or staging validation.",
+    "No physical-device, Safari, real-account, market valuation or performance acceptance.",
+    "Full QR-2 S5, capital epochs, S4 owner decisions, server headroom and route enablement remain open.",
+    "Existing RC-Q41 currency grouping arithmetic was observed, not redesigned.",
+    "Screenshots and raw run files remain local; this record contains synthetic observations and artifact digests."
+  ],
+  "cleanup": {
+    "browserContextsClosed": true,
+    "browserClosed": true,
+    "fixtureServerStopped": true
+  },
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false
+}
