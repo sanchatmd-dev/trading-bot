@@ -1,6 +1,6 @@
 {
   "schema": "PM1_SLICE_EVIDENCE_V1",
-  "date": "2026-10-20",
+  "date": "2026-10-21",
   "root": "Claude",
   "baseRevision": "f12d058",
   "scope": "Local implementation of the F11-01 per-member admission checks, slice RS-4 (RD-MP-20): a pure mirror of the one-Pine admission checks of docs/MULTI_PINE_CONTRACT.md 5.1 steps 3 to 6, with a parity test against the one-Pine path. It is wired into no service, route or worker; the one-Pine path is unchanged.",
@@ -25,7 +25,7 @@
   ],
   "rootAcceptance": {
     "by": "Claude root",
-    "date": "2026-10-20",
+    "date": "2026-10-21",
     "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted RS-4 as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
   }
 }

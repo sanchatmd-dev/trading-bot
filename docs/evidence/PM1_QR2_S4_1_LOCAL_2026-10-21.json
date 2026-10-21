@@ -1,6 +1,6 @@
 {
   "schema": "PM1_SLICE_EVIDENCE_V1",
-  "date": "2026-10-20",
+  "date": "2026-10-21",
   "root": "Claude",
   "baseRevision": "027b320",
   "scope": "Local implementation of QR-2 sub-slice S4-1 (RC-Q37): the offline extension paper-capital-model with the insert-only declaration table paper_capital_models, its guards, a rollback that refuses while any declaration exists, the classifier, the CLI with --inspect and the grant entries. No route, store writer or server line uses it; nothing is installed on any environment.",
@@ -22,18 +22,19 @@
   "result": "test/postgres/paper-capital-model-migration.test.mjs 23 of 23 and test/postgres/runtime-grants.test.mjs 1 of 1 pass with 0 skipped; the grant text test passes.",
   "mutations": {
     "round1": "11 of 12 killed; the survivor (non-decreasing effective time) is equivalent under the other clock rules.",
-    "round2": "4 of 4 killed (rollback SQL lock and row refusal, tool lock, foreign-key trigger check); the midnight wait in the test helper only guards a timing window and is not killable by design."
+    "round2": "4 of 5 killed, one survivor not killable by design (killed: rollback SQL lock and row refusal, tool lock, foreign-key trigger check; the survivor is the midnight wait in the test helper, which only guards a timing window)."
   },
   "limits": [
     "Provisional until the owner decides the S4 items: next-midnight effective time, the full owner Bot set, withdrawal as a new SHARED_HYPOTHETICAL version, THB kept, the 1000-version cap.",
     "The O12 export, the confirmed rollback and the restore rehearsal are S4-3; the plain rollback works only with zero declarations.",
     "A data-only restore and logical replication of the table are not supported (header).",
     "The same internal foreign-key trigger gap exists in the other extension classifiers and is a later hardening item.",
-    "No install was run on any environment."
+    "No install was run on any environment.",
+  "Some mutants were killed only by the classifier definition pin (the test that pins the installed definitions), not by a behaviour test; that is weaker evidence than a behaviour kill."
   ],
   "rootAcceptance": {
     "by": "Claude root",
-    "date": "2026-10-20",
+    "date": "2026-10-21",
     "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S4-1 as local engineering evidence for the QR-2 row. Acceptance changes no PM-1 credit by itself and deploys nothing."
   }
 }

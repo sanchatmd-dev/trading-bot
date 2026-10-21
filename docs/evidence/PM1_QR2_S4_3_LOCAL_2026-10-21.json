@@ -1,6 +1,6 @@
 {
   "schema": "PM1_SLICE_EVIDENCE_V1",
-  "date": "2026-10-20",
+  "date": "2026-10-21",
   "root": "Claude",
   "baseRevision": "50ffd6a",
   "scope": "Local implementation of QR-2 sub-slice S4-3 (RC-Q39): the O12 export and the count-and-digest confirmed rollback for the paper-capital-model extension, and a PostgreSQL restore rehearsal test. Nothing is installed on any environment.",
@@ -30,7 +30,7 @@
   ],
   "rootAcceptance": {
     "by": "Claude root",
-    "date": "2026-10-20",
+    "date": "2026-10-21",
     "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S4-3 as local engineering evidence for the QR-2 row. Acceptance changes no PM-1 credit by itself and deploys nothing."
   }
 }

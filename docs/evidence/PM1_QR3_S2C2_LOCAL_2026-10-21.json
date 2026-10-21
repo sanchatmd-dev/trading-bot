@@ -1,6 +1,6 @@
 {
   "schema": "PM1_SLICE_EVIDENCE_V1",
-  "date": "2026-10-20",
+  "date": "2026-10-21",
   "root": "Claude",
   "baseRevision": "1480385",
   "scope": "Local implementation of sub-slice S2c-2 of docs/QR_3_FAIR_COMPARISON_CONTRACT.md (RC-C37 to RC-C43, RC-C45) for PM-1 row F10-02: four result tables join the uninstalled QR-3 comparison install (evaluations, benchmarks, outcomes, replay events), each insert-only, SERIALIZABLE only and guarded by named checks; the outcome is tied to the stored evaluations and to the COMPLETE status event of the same transaction; the owner reader applies the same checks; the grant script lists the four tables as insert-only. Nothing is installed on staging and no route, worker or view writes the tables.",
@@ -28,13 +28,13 @@
     "round3": "5 of 6 killed; the survivor (UNAVAILABLE without a stored row) became a test and was killed in the later check."
   },
   "limits": [
-    "The reader check that the evaluation body names the same comparison and spec is not proven by a test; a table CHECK already ties those body fields to the columns.",
+    "The reader check that the evaluation body names the same comparison and spec is not proven by a test; a table CHECK already ties those body fields to the columns. That tie therefore rests on the evaluation body CHECK alone, and the reader cross-check beside it is not proven by any test.",
     "The outcome value SINGLE_QUALIFIED_RESULT stays absent while owner item OPEN-2 is open.",
     "A grant reapply is needed after the install; no install was run on any environment."
   ],
   "rootAcceptance": {
     "by": "Claude root",
-    "date": "2026-10-20",
+    "date": "2026-10-21",
     "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S2c-2 as local engineering evidence for F10-02. Acceptance changes no PM-1 credit by itself and deploys nothing."
   }
 }

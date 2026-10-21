@@ -1,6 +1,6 @@
 {
   "schema": "PM1_SLICE_EVIDENCE_V1",
-  "date": "2026-10-20",
+  "date": "2026-10-21",
   "root": "Claude",
   "baseRevision": "1480385",
   "scope": "Local implementation of sub-slice S2-2 of docs/QR_4_QUALIFIED_SELECTION_CONTRACT.md (RC-S21 to RC-S27, RC-S29): window freezes, evaluation starts, outcomes and replay events join the uninstalled QR-4 selection install; the first evaluation start rechecks the window under the exposure register lock (RO-12) and binds exactly one QR4_SELECTION register row in the same transaction; later starts and the outcome write read the register lock-first (readExposuresLocked); nothing after the registration may be written in the registration transaction. Tie tolerances stay unset (OD-S3). Nothing is installed on staging and no route or job calls the writers.",
@@ -35,7 +35,7 @@
   ],
   "rootAcceptance": {
     "by": "Claude root",
-    "date": "2026-10-20",
+    "date": "2026-10-21",
     "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S2-2 as local engineering evidence for the QR-4 row (F10-03). Acceptance changes no PM-1 credit by itself and deploys nothing."
   }
 }

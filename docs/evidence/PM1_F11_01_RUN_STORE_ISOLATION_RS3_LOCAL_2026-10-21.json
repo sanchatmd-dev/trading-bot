@@ -1,10 +1,10 @@
 {
   "schema": "PM1_SLICE_EVIDENCE_V1",
-  "date": "2026-10-20",
+  "date": "2026-10-21",
   "root": "Claude",
   "baseRevision": "601450b",
   "scope": "Local isolation proof for the F11-01 run store, slice RS-3 (RD-MP-22): a PostgreSQL behaviour matrix and a static scan and import-closure test. Tests only; no product file changed.",
-  "method": "A coder (Sonnet 5.5) wrote RS-3 from the design; an independent architecture auditor (Opus 5.5) reviewed it and found that scripts named by package.json were missing from the import closure, a QR-3 surface that could not fail and other gaps; root ruled; the coder fixed them; an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, every test file that names the run-store modules (found with git grep): 4 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (89 tests, 0 fail, 0 skipped), the static isolation test, the grant text test and the full unit suite. The unit suite showed that the run-contract import guard refused the new run-store module, which imports the contract validator by design; root allowed exactly that module in the guard (the static isolation test proves no runtime root reaches it), confirmed that the guard still fails with an empty allowlist, and reran the full unit suite alone: 2321 tests, 0 fail, 6 skipped by platform gates, 9 todo. Nobody verified their own work.",
+  "method": "A coder (Sonnet 5.5) wrote RS-3 from the design; an independent architecture auditor (Opus 5.5) reviewed it and found that scripts named by package.json were missing from the import closure, a QR-3 surface that could not fail and other gaps; root ruled; the coder fixed them; an independent tester (Sonnet 5.5) ran single-edit mutations after each round. A sole-runner tester then ran, with nothing else active, every test file that names the run-store modules (found with git grep): 4 PostgreSQL files one file per process on a throwaway PostgreSQL 16.15 cluster (89 tests, 0 fail, 0 skipped), the static isolation test, the grant text test and the full unit suite. The unit suite showed that the run-contract import guard refused the new run-store module, which imports the contract validator by design; root allowed exactly that module in the guard (the static isolation test proves no runtime root reaches it), confirmed that the guard still fails with an empty allowlist, and reran the full unit suite alone: 2321 tests, 0 fail, 6 skipped by platform gates, 9 todo. Root edited the import guard and verified that edit itself, with no independent check of the guard edit: an empty allowlist fails the guard, and the full unit suite, run by root alone, passed 2321 tests with 0 fail. Apart from that root edit, nobody verified their own work.",
   "files": {
     "test/postgres/mp-run-store-isolation.test.mjs": "fc448416ab99cc4e425ddd9267cb07c72195ff69c631677bf7787f7e6cabc4fc",
     "test/mp-run-store-static-isolation.test.js": "e9c8677f93983be55dcf781cf6ce13e1b3cae1f4de12bf6668bc1835d46d6c23"
@@ -25,7 +25,7 @@
   ],
   "rootAcceptance": {
     "by": "Claude root",
-    "date": "2026-10-20",
+    "date": "2026-10-21",
     "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted RS-3 as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
   }
 }

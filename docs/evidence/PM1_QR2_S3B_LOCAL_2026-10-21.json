@@ -1,6 +1,6 @@
 {
   "schema": "PM1_SLICE_EVIDENCE_V1",
-  "date": "2026-10-20",
+  "date": "2026-10-21",
   "root": "Claude",
   "baseRevision": "1480385",
   "scope": "Local implementation of slice S3b of docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md (RC-Q35, RC-Q36): the per-Bot performance route reads its snapshot on the main thread and computes the view in one long-lived worker thread per process (deadline 10000 ms; limits 256 MB old generation, 32 MB young generation, 4 MB stack); a timeout, crash, heap or spawn failure answers 503 QR2_REPORT_FAILED with Retry-After 2 and the next request starts a new worker. The route stays behind QR2_PERFORMANCE_ENABLED, which is off everywhere.",
@@ -33,7 +33,7 @@
   ],
   "rootAcceptance": {
     "by": "Claude root",
-    "date": "2026-10-20",
+    "date": "2026-10-21",
     "statement": "Root reviewed the agent reports, the rulings, the sole-runner verification and the final diff and accepted S3b as local engineering evidence for the QR-2 row. Acceptance changes no PM-1 credit by itself and deploys nothing."
   }
 }
