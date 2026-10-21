@@ -1,0 +1,31 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-21",
+  "root": "Claude local root",
+  "baseRevision": "f1b7e15",
+  "scope": "Local implementation of F09 builder packet S3c: the acceptance tests for the trace reproduction (test/trace-reproduction-closure.test.js, test/postgres/bi-trace-reproduction.test.mjs) and a Quant Lab workflow step that runs the closure file with TRACE_REQUIRE_PYTHON=1. Local engineering evidence only; nothing is installed, routed or wired. The S3e contract text (RC-34 to RC-39) is recorded in the package contract section 10.2; OD-21 stays pending the owner answer to OQ-1.",
+  "method": "Writer tester, an independent mutation tester (PASS with findings) and an Opus auditor (GO). Root made the interpreter-gated cases enforceable: the PostgreSQL file fails in CI without an interpreter, and the Quant Lab job requires one. Reports are kept locally, not tracked.",
+  "files": {
+    ".github/workflows/quant-lab.yml": "6f593c76f5b69243aa977f3ef9f7ec204f45375b27da511285787bf965e16c48",
+    "test/postgres/bi-trace-reproduction.test.mjs": "4097f3440ad1cc47167e258c8837fcd94d70523064c24cf7bc353398208e54e9",
+    "test/trace-reproduction-closure.test.js": "d46b011015faa1347926d0e7a57d3b94c2779d1d92fb9c960d6f78d387bad069"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it, at 0b405e1.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "Local: closure file 18/18; PostgreSQL file 9/9 with CI=true. CI on 0b405e1 passed all 9 checks (read by root at 14:05Z UTC); the PostgreSQL job asserts an interpreter under CI=true and the Quant Lab job ran the closure file with TRACE_REQUIRE_PYTHON=1, so the interpreter-gated C2 and C3 cases ran in CI.",
+  "limits": [
+    "Local engineering evidence only; nothing here is installed, routed or wired.",
+    "C2 and C3 are C3 evidence on a v1 fixture run, not B0 or build evidence.",
+    "The candidate, sensitivity and stress steps run through the real engine via the test's own spawner; the production entry points (pythonEvaluation, defaultPorts) are not exercised with the real engine because source enrolment is patched.",
+    "C3 subject inputs are built from the contract; they prove trace and result binding, not dataset verification.",
+    "Mutant M12 is killed by S3a A4, not by S3c.",
+    "Owner question OQ-1 (holdout rows in trace files) is still open; OD-21 is not recorded."
+  ],
+  "rootAcceptance": {
+    "by": "Claude local root",
+    "date": "2026-10-21",
+    "statement": "Root accepts F09 builder S3a (d45f5d5), S3b (730efee) and S3c (0b405e1) as local engineering evidence. CI on 0b405e1 passed all 9 checks with the interpreter-gated cases required to run. It changes no PM-1 credit and deploys nothing."
+  }
+}
