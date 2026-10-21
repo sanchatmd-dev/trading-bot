@@ -1,0 +1,32 @@
+{
+ "version": "mp-private-inputs-manifest-v1",
+ "fixture": true,
+ "directory_env": "MP_PRIVATE_INPUTS_DIR",
+ "require_env": "MP_REQUIRE_PRIVATE",
+ "note": "Private reviewed inputs are never committed. Job tests that reach the source gate read them from the ignored directory named by directory_env and are skipped without it, unless require_env is 1 (then the test fails).",
+ "files": [
+  {
+   "role": "spt_source",
+   "file": "spt-spot-v4.pine",
+   "sha256": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+   "hash_name": "SOURCE_HASH in quant_lab/src/robot_quant/spt_evaluator.py"
+  },
+  {
+   "role": "analysis_m1",
+   "file": "analysis-m1.json",
+   "member": "M1",
+   "sha256": null,
+   "effective_inputs_hash": null,
+   "status": "owner records the SHA-256 and effective_inputs_hash when the private analysis is placed"
+  },
+  {
+   "role": "analysis_m2",
+   "file": "analysis-m2.json",
+   "member": "M2",
+   "sha256": null,
+   "effective_inputs_hash": null,
+   "status": "owner records the SHA-256 and effective_inputs_hash when the private analysis is placed"
+  }
+ ],
+ "analysis_file_shape": "the analysis object of a pine_source_revisions row: inputs (58 rows with input_id, pine_variable, effective_value, declared_domain), effective_inputs_hash and effective_input_review"
+}

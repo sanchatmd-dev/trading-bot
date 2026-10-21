@@ -1,0 +1,324 @@
+{
+ "version": "mp-fixture-manifest-v1",
+ "fixture": true,
+ "label": "BINANCE:BTCUSDT fixture (synthetic, not market data)",
+ "bars": {
+  "path": "bars-v1.json",
+  "sha256": "5a333fcb0b716a98448fdfef11328a0f1d973ea76ce89d7e312265f8afbb59c8",
+  "bar_count": 6000,
+  "first_time": 1767312000000,
+  "last_time": 1767671940000,
+  "generator": {
+   "script": "scripts/build-mp-fixture-bars.mjs",
+   "version": "mp-fixture-bars-v1",
+   "seed": 20261021,
+   "seed_klines": 500
+  },
+  "atr": "closed-ohlcv-atr14-v1"
+ },
+ "scripted_cases": {
+  "path": "scripted-cases-v1.json",
+  "sha256": "ada54da92f92531b9875a6f51ca0a92993fc9c8a8dbad07466bd5fd8fbc91b56",
+  "version": "scripted-signals-v1",
+  "ids": [
+   "F3",
+   "F4",
+   "F6",
+   "F7",
+   "F8",
+   "F8-streak",
+   "F13"
+  ]
+ },
+ "market": {
+  "broker": "binance-global",
+  "symbol": "BTCUSDT",
+  "timeframe": "1"
+ },
+ "split": {
+  "warmup": 1250,
+  "train_end": 4100,
+  "validation_end": 5050,
+  "test_end": 6000
+ },
+ "model": {
+  "version": "paper-close-v1",
+  "price_tick": "0.01",
+  "quantity_step": "0.00001",
+  "fee_bps": "10",
+  "slippage_bps": "1",
+  "risk_percent": "0.05"
+ },
+ "policy": {
+  "killSwitch": false,
+  "maxSignalAgeSeconds": 120,
+  "maxTradesPerDay": 40,
+  "maxDailyLossR": 5,
+  "pauseAfterLossStreak": 4,
+  "blockHighVolatility": false,
+  "maxVolatilityPercent": 100,
+  "blockDuringNews": false,
+  "allowedSymbols": [
+   "BTCUSDT"
+  ],
+  "sideMode": "BOTH",
+  "maxOpenPositions": 5,
+  "onePositionPerSymbol": false,
+  "capPercentEquitySize": true,
+  "maxRiskPercent": 100,
+  "maxOrderNotional": 10000,
+  "maxDailyNotional": 100000
+ },
+ "capital": {
+  "equity": "20000",
+  "cash": "20000"
+ },
+ "pair": {
+  "atr_multiplier": "2",
+  "rr": "1.5"
+ },
+ "same_bar_order": "exit-first-ordinal-v1",
+ "members": {
+  "M1": {
+   "role": "Option A member 1: SPT Custom defaults",
+   "inputs": {
+    "emaFastInput": 50,
+    "emaSlowInput": 200,
+    "atrLenInput": 14,
+    "stFactorInput": 3.2,
+    "zoneAtrMultInput": 1.15,
+    "setupExpiryInput": 48,
+    "cooldownInput": 8,
+    "confirmLookback": 5,
+    "slAtrBufferInput": 0.6,
+    "minRiskATRInput": 0.5
+   }
+  },
+  "M2": {
+   "role": "Option A member 2: same source, a different complete reviewed input set",
+   "inputs": {
+    "emaFastInput": 34,
+    "emaSlowInput": 250,
+    "atrLenInput": 14,
+    "stFactorInput": 2.8,
+    "zoneAtrMultInput": 1.0,
+    "setupExpiryInput": 48,
+    "cooldownInput": 5,
+    "confirmLookback": 5,
+    "slAtrBufferInput": 0.6,
+    "minRiskATRInput": 0.5
+   }
+  },
+  "M3": {
+   "role": "F15 duplicate logic: equal to M1 in source hash and effective-input hash, new pine_import_id",
+   "equal_to": "M1"
+  },
+  "M2_ZERO": {
+   "role": "F29 zero-signal variant of M2 (minRiskATRInput at its catalog maximum)",
+   "inputs": {
+    "emaFastInput": 34,
+    "emaSlowInput": 250,
+    "atrLenInput": 14,
+    "stFactorInput": 2.8,
+    "zoneAtrMultInput": 1.0,
+    "setupExpiryInput": 48,
+    "cooldownInput": 5,
+    "confirmLookback": 5,
+    "slAtrBufferInput": 0.6,
+    "minRiskATRInput": 100.0
+   }
+  }
+ },
+ "warmup_floor": {
+  "rule": "max(1006, 5 * emaSlowInput)",
+  "M1": 1006,
+  "M2": 1250,
+  "combined": 1250
+ },
+ "segments": {
+  "warmup": "rows 0..1250",
+  "train": "rows 1250..4100",
+  "validation": "rows 4100..5050",
+  "test": "rows 5050..6000"
+ },
+ "native_counts": {
+  "M1": {
+   "warmup": {
+    "buy": 25,
+    "exit": 6
+   },
+   "train": {
+    "buy": 61,
+    "exit": 17
+   },
+   "validation": {
+    "buy": 20,
+    "exit": 4
+   },
+   "test": {
+    "buy": 22,
+    "exit": 4
+   }
+  },
+  "M2": {
+   "warmup": {
+    "buy": 22,
+    "exit": 7
+   },
+   "train": {
+    "buy": 67,
+    "exit": 14
+   },
+   "validation": {
+    "buy": 21,
+    "exit": 2
+   },
+   "test": {
+    "buy": 24,
+    "exit": 5
+   }
+  },
+  "M2_ZERO": {
+   "warmup": {
+    "buy": 0,
+    "exit": 0
+   },
+   "train": {
+    "buy": 0,
+    "exit": 0
+   },
+   "validation": {
+    "buy": 0,
+    "exit": 0
+   },
+   "test": {
+    "buy": 0,
+    "exit": 0
+   }
+  }
+ },
+ "signal_floor": {
+  "rule": "at least 15 native BUY per member in each of train, validation and test",
+  "minimum": 15
+ },
+ "library_runs": [
+  {
+   "members": [
+    "M1",
+    "M2"
+   ],
+   "pair": {
+    "atr_multiplier": "2",
+    "rr": "1.5"
+   },
+   "deployment_ids": [
+    "fixture-m1-1",
+    "fixture-m2-2"
+   ],
+   "events": 516,
+   "decisions": 422,
+   "fills": 74,
+   "final_cash": "19874.364520854200000000",
+   "open_allocations": 0,
+   "ledger_sha256": "fd9e12fc7ca30e045e63475dd54c4f7a32cb8cce67049aa34b50ff95c5f30c79"
+  },
+  {
+   "members": [
+    "M1",
+    "M2",
+    "M1"
+   ],
+   "pair": {
+    "atr_multiplier": "2",
+    "rr": "1.5"
+   },
+   "deployment_ids": [
+    "fixture-m1-1",
+    "fixture-m2-2",
+    "fixture-m1-3"
+   ],
+   "events": 766,
+   "decisions": 622,
+   "fills": 86,
+   "final_cash": "19825.493814405800000000",
+   "open_allocations": 0,
+   "ledger_sha256": "aa8a458fb2d75ca505682c72c1bb3b8defd25da9a73134e7027b21367d803c53"
+  },
+  {
+   "members": [
+    "M1"
+   ],
+   "pair": {
+    "atr_multiplier": "2",
+    "rr": "1.5"
+   },
+   "deployment_ids": [
+    "fixture-m1-1"
+   ],
+   "events": 250,
+   "decisions": 200,
+   "fills": 58,
+   "final_cash": "19953.110149761300000000",
+   "open_allocations": 0,
+   "ledger_sha256": "1065d10cfc3487d22eef1071a358cb9c6f8355b21f33a06f0dc1da57d0aa6c7c"
+  }
+ ],
+ "timing": {
+  "method": "one real subprocess per run (python -I -c wrapper that sets the synthetic gate hash and calls robot_quant.mp_combined_job.main), request piped on stdin, wall time from process start to exit including interpreter start and imports, 5 runs per row, median kept (min and max recorded), 3 members (M1, M2, M1 with emaFastInput 21 and cooldownInput 6), pair 2 / 1.5; rows is the number of rows in the request (a candidate step carries rows 0..validation_end, a holdout step rows 0..test_end); for 10,000 bars the split is warmup 1250 then 60/20/20 of the rest",
+  "machine_note": "Cloud container, 4 vCPU Intel Xeon 2.8 GHz, 16 GB RAM, Linux, CPython 3.12, no other load, measured 2026-10-21; indicative only, not a figure for the VPS. The 10,000-bar series is the same generator with --stdout --bars 10000 and is not committed.",
+  "runs": [
+   {
+    "bars": 6000,
+    "kind": "CANDIDATE",
+    "rows": 5050,
+    "request_kb": 875,
+    "response_kb": 3,
+    "median_s": 0.55,
+    "min_s": 0.5,
+    "max_s": 0.61,
+    "maxrss_mb": 44,
+    "fills": 62,
+    "repeats": 5
+   },
+   {
+    "bars": 6000,
+    "kind": "HOLDOUT",
+    "rows": 6000,
+    "request_kb": 1022,
+    "response_kb": 447,
+    "median_s": 0.59,
+    "min_s": 0.59,
+    "max_s": 0.65,
+    "maxrss_mb": 47,
+    "fills": 72,
+    "repeats": 5
+   },
+   {
+    "bars": 10000,
+    "kind": "CANDIDATE",
+    "rows": 8250,
+    "request_kb": 1371,
+    "response_kb": 3,
+    "median_s": 0.76,
+    "min_s": 0.74,
+    "max_s": 0.79,
+    "maxrss_mb": 52,
+    "fills": 106,
+    "repeats": 5
+   },
+   {
+    "bars": 10000,
+    "kind": "HOLDOUT",
+    "rows": 10000,
+    "request_kb": 1642,
+    "response_kb": 729,
+    "median_s": 0.85,
+    "min_s": 0.84,
+    "max_s": 1.17,
+    "maxrss_mb": 57,
+    "fills": 132,
+    "repeats": 5
+   }
+  ]
+ }
+}

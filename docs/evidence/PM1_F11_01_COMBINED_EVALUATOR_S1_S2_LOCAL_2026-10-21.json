@@ -1,0 +1,47 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-21",
+  "root": "Claude",
+  "baseRevision": "6c78131",
+  "scope": "Local implementation of the F11 combined Paper evaluator and its Node oracle, slices S1 and S2 of RS-6 (RD-MP-24 to RD-MP-30 and RD-MP-33): a new Python library and stdio job, a deterministic synthetic fixture, a pure Node oracle with the baseline comparison, and tests that run the real Python evaluator against the oracle and the real ledger against the oracle. All files are new; no existing file, engine-closure list or engine hash changed. No executor, route, worker or runtime root uses them; nothing is installed on any environment.",
+  "method": "The design came from an Opus draft and an independent Fable draft judged by an Opus auditor (docs/design/f11-mp-combined). Two different coders (Sonnet 5.5) wrote S1 (Python) and S2 (Node); the S2 coder did not read the S1 sources. Each slice had an independent tester (Sonnet 5.5) and an independent Opus 5.5 auditor: S1 was GO with one fixture blocker (future-dated bars), S2 was NO-GO on two comparison gaps (realized_r not compared, member funnel check vacuous). Fix rounds closed both blockers and the testers' gaps, each closing test confirmed by its mutant. A further test then ran the real Python evaluator (through the test driver) against the oracle on every scripted case and on three fixture library runs, and drove the production Store.recordExecution for interleaved members against the oracle's Bot state. Root ran the final pass alone in the cloud container.",
+  "files": {
+    "quant_lab/src/robot_quant/mp_combined_job.py": "8e6a3a8975f6747ef12a7f3a56a399b58f9843b58f676ff30d7d52b5e95bdb59",
+    "quant_lab/src/robot_quant/mp_combined_paper.py": "b54c5a6658b848a2e0e309bcae0ab93c1e2704aefca97c8cb02499514014760c",
+    "quant_lab/tests/mp_scripted_driver.py": "bf75647a76ce31cc852350954d0de811cd635343177eb8435b1ed666fea6f5e7",
+    "quant_lab/tests/test_mp_combined_job.py": "d7d3b602979915e9a4a68f01e019361d6a2d3ad954f1ca65ea8c65c2f753a104",
+    "quant_lab/tests/test_mp_combined_paper.py": "6bd747b73bdd679dadf79ec8727616ea07d7e837d75b5a272c969a6b2d892dae",
+    "scripts/build-mp-fixture-bars.mjs": "d87b2d44eaba7bb05ac55f06a32ad98ab9099f11f3dd59b9799518bf29b7ce98",
+    "src/multi-pine/combined-oracle.js": "ff6fa3aa128e0da71c3722d9f04de968baf8d2626ddfd13b4b20c13cc484fc14",
+    "test/fixtures/mp-combined/bars-v1.json": "5a333fcb0b716a98448fdfef11328a0f1d973ea76ce89d7e312265f8afbb59c8",
+    "test/fixtures/mp-combined/manifest.json": "cd7f2d0f77ca2b0ac002b8f1d01301d63e4295f4bad15c4a263ea93539153b8a",
+    "test/fixtures/mp-combined/private-inputs.manifest.json": "22b7cbffb68ac7e3cc300e9083b9d5d52498cf38fb5fe7d994a2dfe42860d500",
+    "test/fixtures/mp-combined/scripted-cases-v1.json": "ada54da92f92531b9875a6f51ca0a92993fc9c8a8dbad07466bd5fd8fbc91b56",
+    "test/multi-pine-combined-oracle.test.js": "3e2f0be5c8fc4f0bdb8262c27ee98e187f41d9f88bcbf294a81641fe2540fa50",
+    "test/postgres/mp-combined-baseline.test.mjs": "d62fa52bfb3c3edeab19717bc0a540c63526894183d21d0f3303a28d11151231",
+    "test/postgres/mp-combined-ledger-anchor.test.mjs": "4ea11cd2b88ee1e462b87e47272b63dd368e27984b1c09c9bf71fa97890b6d8c"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "Python against oracle: matched on all 7 scripted cases (F3, F4, F6, F7, F8, F8-streak, F13) and the M1+M2, M1+M2+M1 and M1 library runs, with every difference counter 0 and cash, cost and realized_r deltas 0; one quantity step of drift is detected. Production ledger against oracle: equal after every fill and at the end (cash, cost, quantity, initial_risk, pnl, loss streak, daily row) on the scripted cases and the 74-fill library run. Final pass by root: unit suite 2387 tests, 0 fail, 4 skipped; Python suite 663 passed, 3 skipped; ruff clean; fixture rebuild check ok; PostgreSQL files mp-combined-baseline 15, mp-combined-ledger-anchor 9, mp-run-store-isolation 27, mp-fixture-admit 24, runtime-grants 1, all 0 fail.",
+  "mutations": {
+    "S1": "Tester: 80 in-place plus 27 scratch-copy mutants; gaps closed in the fix round, 22 of 22 closing mutants killed (one equivalent noted).",
+    "S2": "Tester: 70 oracle mutants, 57 killed, 7 equivalent, 6 gaps; fix round 22 of 22 closing mutants killed."
+  },
+  "limits": [
+    "The two job tests that need the owner's private reviewed SPT source and analyses did not run; by owner decision (RD-MP-34) the F1 to F30 acceptance runs later in the owner's local checkout.",
+    "In the fixture library runs every BUY fill is CAPPED (quantity-step rounding counts as capped), so the accepted-BUY path and NATIVE exit fills are covered only by scripted cases.",
+    "The oracle's Bot ledger rules are a port of the reference loop onto Bot-level state, not ledger.js itself; the ledger anchor test closes that gap on the tested sequences only. ledger_daily is keyed by wall-clock day, so the anchor compares one row with the sum of the oracle's bar-day totals.",
+    "A member's losing exit counts toward the loss streak only when the Bot is flat (RD-MP-34), carried to APP-3B.",
+    "The engine-hash closure (RD-MP-31), candidate plan and executor are slice S3 and do not exist yet; the multi-run engine_hash is still injected.",
+    "Timings (0.55 to 0.85 s per 3-member step) were measured in the cloud container, not on the VPS.",
+    "The scripted-case series start in 2027; they never meet a clock, but a real-clock admission would refuse them."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-21",
+    "statement": "Root reviewed the design judgement, both audits and test reports, both fix rounds, the Python-against-oracle and ledger-anchor results and its own final pass, and accepted S1 and S2 as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}
