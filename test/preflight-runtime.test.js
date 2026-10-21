@@ -35,6 +35,19 @@ const needPython=st=>{
   st.skip(NO_PYTHON);
   return true;
 };
+// On Linux runQuantProcess always launches through `systemd-run --user` and proves the stop through
+// `systemctl --user`, so the real-supervisor tests need a systemd user manager. Without one they skip with a
+// reason; PF2_REQUIRE_PYTHON=1 makes that a failure. Other platforms use their own supervisor path.
+const userSystemd=process.platform!=='linux'||
+  spawnSync('systemctl',['--user','show-environment'],{timeout:5000}).status===0;
+const NO_SYSTEMD='no systemd user manager (systemctl --user show-environment failed); on Linux the real-supervisor test launches through systemd-run --user';
+const needRealSupervisor=st=>{
+  if(needPython(st))return true;
+  if(userSystemd)return false;
+  assert.notEqual(process.env.PF2_REQUIRE_PYTHON,'1','PF2_REQUIRE_PYTHON=1: '+NO_SYSTEMD);
+  st.skip(NO_SYSTEMD);
+  return true;
+};
 
 const requestOf=value=>Buffer.from(JSON.stringify(value),'utf8');
 const gate=()=>{
@@ -509,7 +522,8 @@ test('PF-2 R4 module boundaries and engine identity',async t=>{
   });
 });
 
-// Real interpreter and real supervisor (allowUnsupportedPlatformForTests, no ioControls). The Linux
+// Real interpreter and real supervisor (allowUnsupportedPlatformForTests, no ioControls). On Linux this path
+// launches through systemd-run --user, so it needs a systemd user manager (otherwise the subtests skip). The Linux
 // ioControls terminal path for pf2_replay is not exercised here; it is proved in R7.
 test('PF-2 R4 real process through runQuantProcess',async t=>{
   const bookkeeping=()=>{
@@ -521,7 +535,7 @@ test('PF-2 R4 real process through runQuantProcess',async t=>{
   const probeModule=launch=>runQuantProcess({...launch,module:'quant_lab.tests.quant_process_probe'});
 
   await t.test('a real run returns its JSON result as one canonical driver line and leaves no process',async st=>{
-    if(needPython(st))return;
+    if(needRealSupervisor(st))return;
     const book=bookkeeping();
     const runner=realRunner({supervisor:probeModule},book);
     const answer=await runner.runChunk(requestOf({mode:'ok'}));
@@ -540,7 +554,7 @@ test('PF-2 R4 real process through runQuantProcess',async t=>{
   });
 
   await t.test('a real timeout and a real abort end with a verified stop and a cleared unit',async st=>{
-    if(needPython(st))return;
+    if(needRealSupervisor(st))return;
     const book=bookkeeping();
     const slow=realRunner({supervisor:probeModule,deadlineAt:Date.now()+700},book);
     await rejectsRunner(slow.runChunk(requestOf({mode:'sleep'})));
@@ -557,7 +571,7 @@ test('PF-2 R4 real process through runQuantProcess',async t=>{
   });
 
   await t.test('the real pf2_replay module starts under the supervisor and an invalid request fails closed',async st=>{
-    if(needPython(st))return;
+    if(needRealSupervisor(st))return;
     const body={version:'pf2-replay-chunk-v1',contract:{},rows:[],checkpoint:null};
     // Same module, working directory and source path as the supervisor uses; no I/O protocol variable is set.
     const env={...process.env,PYTHONPATH:resolve(root,'quant_lab/src')+path.delimiter+root};
