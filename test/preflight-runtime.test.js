@@ -90,9 +90,9 @@ function rig(config={}){
 }
 
 test('PF-2 R4 supervisor I/O module allowlist',async t=>{
-  await t.test('exactly research_chunk and pf2_replay, read-only',()=>{
-    assert.deepEqual([...QUANT_IO_MODULES].sort(),['robot_quant.pf2_replay','robot_quant.research_chunk']);
-    assert.equal(QUANT_IO_MODULES.size,2);
+  await t.test('exactly research_chunk, pf2_replay and fixed_eval_job, read-only',()=>{
+    assert.deepEqual([...QUANT_IO_MODULES].sort(),['robot_quant.fixed_eval_job','robot_quant.pf2_replay','robot_quant.research_chunk']);
+    assert.equal(QUANT_IO_MODULES.size,3);
     assert.ok(QUANT_IO_MODULES instanceof Set);
     assert.ok(Object.isFrozen(QUANT_IO_MODULES));
     for(const name of ['robot_quant.research_engine','robot_quant.pf2_replay_x','robot_quant.','robot_quant','',
@@ -102,7 +102,7 @@ test('PF-2 R4 supervisor I/O module allowlist',async t=>{
     assert.throws(()=>QUANT_IO_MODULES.delete('robot_quant.pf2_replay'),TypeError);
     assert.throws(()=>QUANT_IO_MODULES.clear(),TypeError);
     assert.throws(()=>{QUANT_IO_MODULES.add=()=>{};},TypeError);
-    assert.equal(QUANT_IO_MODULES.size,2);
+    assert.equal(QUANT_IO_MODULES.size,3);
   });
 
   await t.test('the gate reads the set; no other module name appears in the supervisor source',async()=>{
@@ -110,7 +110,7 @@ test('PF-2 R4 supervisor I/O module allowlist',async t=>{
     assert.ok(source.includes('!QUANT_IO_MODULES.has(module)||!storageBudget'));
     assert.equal(source.includes("module!=='robot_quant.research_chunk'"),false);
     assert.deepEqual([...new Set([...source.matchAll(/robot_quant\.[a-z0-9_]+/g)].map(match=>match[0]))].sort(),
-      ['robot_quant.pf2_replay','robot_quant.research_chunk','robot_quant.research_engine']);
+      ['robot_quant.fixed_eval_job','robot_quant.pf2_replay','robot_quant.research_chunk','robot_quant.research_engine']);
   });
 
   const controls={version:'quant-io-v1',device:'8:0',devicePath:'/dev/test-block',

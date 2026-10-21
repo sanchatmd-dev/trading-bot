@@ -148,6 +148,7 @@ export class QuantResearchService{
   return this.get(owner,id);
  }
  async summary(row){
+  if(row?.contract?.mode==='FIXED_INPUT_EVAL')throw fail('NOT_FOUND',404);
   const steps=await this.db.prepare('SELECT step_id,kind,parameters,result,completed_at FROM quant_job_steps WHERE run_id=? ORDER BY completed_at,step_id').all(row.run_id);
   const candidates=steps.filter(s=>s.kind==='CANDIDATE');
   let datasetStatus={dataset_hash:row.contract.dataset.sha256};
@@ -168,12 +169,12 @@ export class QuantResearchService{
  async get(owner,id,cancel=false){
   await this.executorMode();
   if(this.foundation)await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
-  const scope=await this.db.prepare('SELECT bot_id FROM quant_jobs WHERE run_id=? AND owner_id=?').get(id,owner);
+  const scope=await this.db.prepare("SELECT bot_id FROM quant_jobs WHERE run_id=? AND owner_id=? AND (contract->>'mode') IS DISTINCT FROM 'FIXED_INPUT_EVAL'").get(id,owner);
   if(!scope)throw fail('NOT_FOUND',404);
   await this.db.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').get(owner);
   if(scope.bot_id!==owner)await this.db.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').get(scope.bot_id);
   const row=await this.db.prepare('SELECT * FROM quant_jobs WHERE run_id=? AND owner_id=? FOR UPDATE').get(id,owner);
-  if(!row)throw fail('NOT_FOUND',404);await this.pine.authorize(owner,row.bot_id);
+  if(!row||row.contract?.mode==='FIXED_INPUT_EVAL')throw fail('NOT_FOUND',404);await this.pine.authorize(owner,row.bot_id);
   if(cancel&&!TERMINAL.has(row.status)){
    if(row.contract.execution_backend==='quant-foundation-v1'){
     const binding=(await this.db.query('SELECT job_id FROM quant_research_foundation WHERE run_id=$1',[id])).rows[0];

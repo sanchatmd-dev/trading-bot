@@ -131,5 +131,21 @@
   "rootAcceptance": {
     "by": "Codex root",
     "statement": "Accepted as local engineering evidence for S4-4/S4-5 after focused regression, independent review and serialized mutations; no activation or target eligibility."
+  },
+  "ciReadback": {
+    "revision": "cfe0bc938eed06cc840e1119a1bdc17206fca96c",
+    "workflows": [
+      {
+        "name": "Safety checks",
+        "conclusion": "success",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39668374925"
+      },
+      {
+        "name": "Quant Lab",
+        "conclusion": "success",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39668374944"
+      }
+    ],
+    "scope": "Exact committed QR-2 checkpoint; does not cover later uncommitted FE-2b work."
   }
 }

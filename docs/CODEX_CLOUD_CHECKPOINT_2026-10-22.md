@@ -1,5 +1,11 @@
 # Codex cloud checkpoint — 2026-10-22 Bangkok
 
+## Owner-GO continuation checkpoint
+
+The owner subsequently approved FE-2b and QR-2 S4-4/S4-5, including periodic commit/push. QR-2 landed at `cfe0bc9` and both CI workflows passed. Its [evidence](evidence/PM1_QR2_S4_4_S4_5_LOCAL_2026-10-22.json) records the disabled-by-default owner declaration/performance APIs.
+
+FE-2b is now accepted as local engineering only: [evidence](evidence/PM1_FE2B_LOCAL_2026-10-22.json), [closure inventory](evidence/PM1_FE2B_CLOSURES_LOCAL_2026-10-22.json), and [release plan](FE2B_RELEASE_PLAN_DRAFT.md). It has no customer route and the runtime opt-in stays off. Native QS/systemd/cgroup proof remains NOT RUN. Target deployment, shared migration/activation, QR3 ranking/benchmark and QR4 owner tolerances remain their existing separate gates. Earlier pending-GO preparation notes below are historical. FE-2b CI is pending at commit preparation.
+
 The owner authorized continued cloud work and periodic commit/push while away. This is a checkpoint, not a transfer of root authority. The work branch remains `codex/app3a-market-wait-checkpoint-gwylmk`; `main` was not used. WIP `a877733` was not merged or changed.
 
 ## Completed cloud work

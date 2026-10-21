@@ -22,6 +22,7 @@ import {readExposures,toComparisonEntries} from './exposure-register.js';
  * projection once per row, and every response is built from whitelisted fields (never source, bars, idempotency keys,
  * lease or worker fields, dataset references or policy balances).
  */
+// Fixed-input evaluations share quant_jobs storage, but are never research/library records or G5/G8 qualification inputs.
 const PATH='/api/quant/library';
 const DEFAULT_LIMIT=20,MAX_LIMIT=50,MAX_CANDIDATES=100,MAX_TEXT=300;
 const UUID='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
@@ -60,7 +61,7 @@ const LIST=`WITH page AS MATERIALIZED (
   (SELECT count(*)::int FROM quant_job_steps s WHERE s.run_id=j.run_id AND s.kind='CANDIDATE') AS evaluated,
   (SELECT count(*)::int FROM jsonb_array_elements(CASE WHEN jsonb_typeof(j.result->'candidates')='array' THEN j.result->'candidates' ELSE '[]'::jsonb END) c
     WHERE jsonb_typeof(c->'screen_reasons')='array' AND jsonb_array_length(c->'screen_reasons')=0) AS passed
- FROM quant_jobs j WHERE j.owner_id=$1 AND ($2::bigint IS NULL OR (j.created_at,j.run_id)<($2::bigint,$3::text))
+ FROM quant_jobs j WHERE j.owner_id=$1 AND (j.contract->>'mode') IS DISTINCT FROM 'FIXED_INPUT_EVAL' AND ($2::bigint IS NULL OR (j.created_at,j.run_id)<($2::bigint,$3::text))
  ORDER BY j.created_at DESC,j.run_id DESC LIMIT $4)
 SELECT p.run_id,p.created_at,p.updated_at,p.status,p.phase,p.attempt,p.evaluations_started,p.contract_hash,p.diagnostic,p.r,p.evaluated,p.passed,
  jsonb_build_object('version',p.k->'version','execution_backend',p.k->'execution_backend','scope',p.k->'scope','source_hash',p.k->'source_hash',
@@ -73,10 +74,10 @@ SELECT p.run_id,p.created_at,p.updated_at,p.status,p.phase,p.attempt,p.evaluatio
 FROM page p ORDER BY p.created_at DESC,p.run_id DESC`;
 const TOTALS=`SELECT status,diagnostic,
  COALESCE(CASE WHEN jsonb_typeof(result#>'{selected,screen_reasons}')='array' THEN (result#>'{selected,screen_reasons}') ? 'INSUFFICIENT_TEST_TRADES' END,false) AS few,
- count(*)::int AS n FROM quant_jobs WHERE owner_id=$1 GROUP BY 1,2,3`;
+ count(*)::int AS n FROM quant_jobs WHERE owner_id=$1 AND (contract->>'mode') IS DISTINCT FROM 'FIXED_INPUT_EVAL' GROUP BY 1,2,3`;
 
 const RUN=`SELECT run_id,bot_id,deployment_id,status,phase,created_at,updated_at,deadline,attempt,evaluations_started,contract_hash,contract,result,diagnostic
- FROM quant_jobs WHERE run_id=$1 AND owner_id=$2`;
+ FROM quant_jobs WHERE run_id=$1 AND owner_id=$2 AND (contract->>'mode') IS DISTINCT FROM 'FIXED_INPUT_EVAL'`;
 const STEPS=`SELECT step_id,kind,parameters,result,completed_at FROM quant_job_steps WHERE run_id=$1 ORDER BY step_id COLLATE "C"`;
 // The foundation row must belong to the same owner. Never the lease, the worker, the checkpoint, the contract or its dataset references.
 const FOUNDATION=`SELECT f.job_id,f.status,f.attempts,f.runtime_used_ms,f.stop_reason,f.diagnostic,f.created_at,f.deadline_at,
@@ -88,7 +89,7 @@ const CHUNKS=`SELECT step_id,kind,next_bar,CASE WHEN step_id='prepare:dataset' T
 // Earlier runs of the same owner that evaluated a holdout. The slim contract is read once per matching row.
 const EARLIER=`WITH earlier AS MATERIALIZED (SELECT j.run_id,j.created_at,
  CASE WHEN jsonb_typeof(j.contract)='object' THEN j.contract - 'source' #- '{dataset,bars}' #- '{plan,candidates}' END AS k
- FROM quant_jobs j WHERE j.owner_id=$1 AND j.run_id<>$2 AND (j.created_at,j.run_id)<($3::bigint,$2::text) AND j.result->'holdout_evaluated'='true'::jsonb)
+ FROM quant_jobs j WHERE j.owner_id=$1 AND (j.contract->>'mode') IS DISTINCT FROM 'FIXED_INPUT_EVAL' AND j.run_id<>$2 AND (j.created_at,j.run_id)<($3::bigint,$2::text) AND j.result->'holdout_evaluated'='true'::jsonb)
  SELECT run_id,k#>'{snapshot,market}' AS market,k->'split' AS split,k#>'{dataset,start_time}' AS start_time FROM earlier ORDER BY created_at,run_id`;
 
 const emptyExposureGroup=()=>({overlaps:null,comparison_ids:[],selection_ids:[]});
@@ -294,7 +295,7 @@ export class QuantLibraryService{
   /** One run with its steps, foundation facts and the holdout independence lookup, or NOT_FOUND (absent and foreign alike). */
   async load(owner,runId,flags){
     const row=(await this.db.query(RUN,[runId,owner])).rows[0];
-    if(!row)throw fail('NOT_FOUND',404);
+    if(!row||row.contract?.mode==='FIXED_INPUT_EVAL')throw fail('NOT_FOUND',404);
     const steps=(await this.db.query(STEPS,[runId])).rows;
     const found=flags.foundation?(await this.db.query(FOUNDATION,[runId,owner])).rows[0]??null:null;
     // The chunk rows belong to the run, which is already owner-scoped; only the foundation job row needs the owner join.

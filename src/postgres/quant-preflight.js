@@ -143,8 +143,10 @@ const usableStores=stores=>isObject(stores)&&isObject(stores.raw)&&typeof stores
  * Job scoped, read only trusted sources for one resolveHistoricalPreflight call. The scope (job, owner, bot) is fixed
  * at construction; a request for any other owner or bot is refused. Adapters are untrusted data sources: the resolver
  * detaches, re-hashes and re-validates everything they return. Each adapter checks the received signal before every
- * query, only ever runs SELECT, returns null for a missing, foreign or mismatching row and throws one fixed error
- * for any failure (no database text leaves an adapter). Nothing here writes, locks, freezes or replaces the signal.
+ * query, only ever runs SELECT and returns null for a missing, foreign or mismatching row. Internal database
+ * failures retain SQLSTATE until the transaction boundary so complete retries remain possible; other failures
+ * use one fixed adapter error. The outward resolver/API must sanitize database text. Nothing here writes,
+ * locks, freezes or replaces the signal.
  */
 export function trustedSources({db,pine,job_id,owner_id,bot_id,stores,capacityPolicy}={}){
   if(!db||typeof db.query!=='function'||!pine||typeof pine.authorize!=='function'||
@@ -161,7 +163,7 @@ export function trustedSources({db,pine,job_id,owner_id,bot_id,stores,capacityPo
   };
   const adapter=operation=>async(...args)=>{
     try{return await operation(...args);}
-    catch{throw unavailable();}
+    catch(error){if(/^[0-9A-Z]{5}$/.test(error?.code??''))throw error;throw unavailable();}
   };
 
   // One context per resolve: the rows this job names, read once, all scoped to this owner and bot.
@@ -205,7 +207,7 @@ export function trustedSources({db,pine,job_id,owner_id,bot_id,stores,capacityPo
     const ctx=await context(options?.signal);
     if(!ctx)return false;
     alive(options?.signal);
-    try{await pine.authorize(owner_id,bot_id);}catch{return false;}
+    try{await pine.authorize(owner_id,bot_id);}catch(error){if(/^[0-9A-Z]{5}$/.test(error?.code??''))throw error;return false;}
     return true;
   });
 
@@ -568,7 +570,8 @@ export class QuantPreflightService{
    * ACKNOWLEDGE_STOPPED needs supervisor proof. Every fenced action (CLAIM, HEARTBEAT, CHECKPOINT, FINISH) rebuilds
    * the plan from the current authoritative rows, engine hashes, registered boundary and freshness (OD-3) and
    * requires the stored plan bytes to be identical, so any change of enrollment, capacity policy, deployment, source,
-   * boundary, engine or evaluator revokes the job. Any failure or throw is {ok:false}; no code leaves this method.
+   * boundary, engine or evaluator revokes the job. Application refusals return {ok:false}; database errors retain
+   * their SQLSTATE so the caller can roll back and retry the complete transaction.
    */
   async authorize(owner,contract,action,context={}){
     try{
@@ -586,7 +589,7 @@ export class QuantPreflightService{
       const built=await this.assemble(owner,{bot_id:bound.bot_id,deployment_id:bound.deployment_id,
         profile_job_id:bound.profile_job_id},{share:true});
       return {ok:built.plan_json===bound.plan_json};
-    }catch{return {ok:false};}
+    }catch(error){if(/^[0-9A-Z]{5}$/.test(error?.code??''))throw error;return {ok:false};}
   }
 
   /** Job scoped trusted sources for one resolve of one PREFLIGHT job of this service. */

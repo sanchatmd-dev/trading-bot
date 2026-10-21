@@ -247,7 +247,7 @@ export class QuantProfileService{
         return {ok:false};
       const approved=validateFoundationRequestV2(contract,{policy:this.capacityPolicy});
       return await this.authorizeBindings(owner,approved);
-    }catch{return {ok:false};}
+    }catch(error){if(/^[0-9A-Z]{5}$/.test(error?.code??''))throw error;return {ok:false};}
   }
   async authorizeBindings(owner,contract){
     try{
@@ -267,7 +267,7 @@ export class QuantProfileService{
          metadataHash!==contract.profile.metadata_hash||deployment.snapshot_hash!==contract.snapshot_hash)
         return {ok:false};
       return {ok:true};
-    }catch{return {ok:false};}
+    }catch(error){if(/^[0-9A-Z]{5}$/.test(error?.code??''))throw error;return {ok:false};}
   }
   /** Completion authority uses persisted evidence only. The caller owns schema and runtime locks.
    * Ordinary execution authority above still inspects artifacts and hashes the executable closure.

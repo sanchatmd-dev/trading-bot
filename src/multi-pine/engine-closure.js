@@ -39,10 +39,7 @@ export const MP_COMBINED_ONLY_FILES = Object.freeze([
   'src/postgres/pine-bridge-market.js',
   'src/postgres/pine-bridge-readiness.js',
   'src/postgres/pine-bridge-registry.js',
-  'src/postgres/risk.js',
-  'src/quant-library/derive.js',
-  'src/quant-library/owner-recommendation.js',
-  'src/quant-library/package-gates.js'
+  'src/postgres/risk.js'
 ]);
 export const MP_COMBINED_ENGINE_FILES = Object.freeze([...new Set([...QUANT_RUNTIME_ENGINE_FILES, ...MP_COMBINED_ONLY_FILES])].sort());
 

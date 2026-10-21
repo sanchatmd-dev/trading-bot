@@ -22,7 +22,7 @@ const readOnlyModules=()=>{throw new TypeError('QUANT_IO_MODULES is read-only');
 /** Python modules that implement the readiness plus terminal I/O protocol. Object.freeze alone does
  * not stop Set mutation, so the mutators are replaced with throwing ones before the freeze.
  */
-export const QUANT_IO_MODULES=Object.freeze(Object.assign(new Set(['robot_quant.research_chunk','robot_quant.pf2_replay']),
+export const QUANT_IO_MODULES=Object.freeze(Object.assign(new Set(['robot_quant.research_chunk','robot_quant.pf2_replay','robot_quant.fixed_eval_job']),
   {add:readOnlyModules,delete:readOnlyModules,clear:readOnlyModules}));
 
 function command(file,args,timeoutMs=10000) {

@@ -12,8 +12,8 @@ import {FIXED_EVAL_ENGINE_FILES, fixedEvalEngineHash} from '../src/postgres/quan
 import {QUANT_IO_MODULES} from '../src/quant-research/process-supervisor.js';
 
 /*
- * F11 S3: the multi-Pine engine closure mp-combined-closure-v1 (RD-MP-31). Nothing here edits a research closure: the new files stay out of every existing list, the
- * six existing closure hashes equal their value at the base revision 05e7a47, and the new closure holds every file the combined run executes.
+ * F11 S3: the multi-Pine engine closure mp-combined-closure-v1 (RD-MP-31). Its dedicated files stay outside the research closures.
+ * FE-2b updates the shared runtime under the owner's 2026-10-22 implementation GO; the release evidence records the old and new hashes.
  */
 
 /** The new Node modules: roots of the Node traversal (executor, oracle, plan and runner as RD-MP-31 names them, plus the closure module itself). */
@@ -21,14 +21,14 @@ const NEW_NODE_FILES = ['src/multi-pine/candidate-plan.js', 'src/multi-pine/comb
 const NEW_PYTHON_FILES = ['quant_lab/src/robot_quant/mp_combined_job.py', 'quant_lab/src/robot_quant/mp_combined_paper.py'];
 const NEW_FILES = [...NEW_NODE_FILES, ...NEW_PYTHON_FILES];
 const RUNTIME_ROOTS = ['src/postgres/quant-research-main.js', 'src/quant-research/io-profile-worker.js', 'src/postgres/quant-preflight-wiring.js', 'src/postgres/quant-preflight-routes.js'];
-/** The six existing closure hashes at base revision 05e7a47 (the revision before F11 S3), computed from that commit's files. They must not move. */
+/** Candidate closure pins. Update only with an authorized engine change and an old/new closure inventory. */
 const BASE_HASHES = Object.freeze({
   legacy: '988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a',
-  foundation: '7c10135451d8deae067d7a8fc8ee7f0eb0508d6c10c5b607df81d9f273b6e759',
-  ingestion: 'd5364563dfcbd064560c1ba91a499008f1f71ed230807b9aee7cdbe9b01561f1',
-  pf2_engine: '5bfd1bfac70066238c17e3beb3e1bcd68c84e1b8fea8ad808c31fc2d4babbd87',
+  foundation: '3b29eb619f2b4eda1e8abb924e965965c221282462daf238d2cfdd0707386c22',
+  ingestion: 'e10687a3f45eba8cc285c4612ae580db14d94367af3e1fc0b5005346dffa65ce',
+  pf2_engine: '046422ce7627f136983f8e0ee2d382141d1d915f5858e03b48815ee661ea42b7',
   pf2_evaluator: '3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada',
-  fixed_eval: 'f27e1a810356b19b8dfd1e9622f5cda8e3b478a47306aac9af84aa048ecfe86e'
+  fixed_eval: 'b3acd0c8af04a06f17ad5d54946c55e892869f12f64200271f84c200df39bf88'
 });
 
 const listed = new Set(MP_COMBINED_ENGINE_FILES);
@@ -108,12 +108,12 @@ test('Node import closure of the new modules sits inside the closure: shared app
   for (const file of MP_COMBINED_ONLY_FILES.filter(item => item.endsWith('.js'))) assert.ok(imports.has(file), 'unreached entry ' + file);
 });
 
-test('no new file is in an existing closure list, and no existing list changed shape', () => {
+test('multi-Pine files remain outside the research closures and its job stays outside the I/O allowlist', () => {
   const lists = {LEGACY: LEGACY_ENGINE_FILES, FOUNDATION: FOUNDATION_ENGINE_FILES, INGESTION: INGESTION_ENGINE_FILES, PF2_engine: PF2_ENGINE_FILES, PF2_evaluator: PF2_EVALUATOR_FILES,
     runtime_manifest: QUANT_RUNTIME_ENGINE_FILES, FE2a: FIXED_EVAL_ENGINE_FILES};
   // the NEW files (the diff of F11 S3) are in none; shared files such as src/money.js may sit in an existing list and are not edited
   for (const [name, files] of Object.entries(lists)) for (const file of NEW_FILES) assert.ok(!files.includes(file), file + ' is in ' + name);
-  assert.deepEqual([...QUANT_IO_MODULES].sort(), ['robot_quant.pf2_replay', 'robot_quant.research_chunk']);
+  assert.deepEqual([...QUANT_IO_MODULES].sort(), ['robot_quant.fixed_eval_job', 'robot_quant.pf2_replay', 'robot_quant.research_chunk']);
   assert.ok(!QUANT_IO_MODULES.has('robot_quant.mp_combined_job'), 'the I/O module allowlist must not list the job');
 });
 
@@ -178,7 +178,7 @@ const lfReadFile = async url => {
 const researchHash = async (files, readFile) =>
   hash(canonical(Object.fromEntries(await Promise.all(files.map(async name => [name, hash(await readFile(new URL('../' + name, import.meta.url)))])))));
 
-test('the six existing closure hashes equal their value at base 05e7a47', async () => {
+test('the six engine closure hashes equal the authorized candidate pins', async () => {
   assert.equal(await researchHash(LEGACY_ENGINE_FILES, fs.readFile), await engineHash(false));
   assert.equal(await researchHash(FOUNDATION_ENGINE_FILES, fs.readFile), await engineHash(true));
   const pf2 = await pf2ExecutableHashes({readFile: lfReadFile});

@@ -2,6 +2,7 @@ import {canonical,hash,fail} from '../pine-bridge/source.js';
 import {D} from '../money.js';
 import {QuantFoundationScheduler} from './quant-foundation-scheduler.js';
 import {QuantResearchWorker} from './quant-research-worker.js';
+import {QuantFixedEvalRunner,isFixedEvalRequest} from './quant-fixed-eval-worker.js';
 import {runQuantProcess,stopQuantUnit} from '../quant-research/process-supervisor.js';
 import {readSpotHistory} from '../quant-research/spot-ingestion.js';
 import {planIngestionRange} from '../quant-research/ingestion-range.js';
@@ -56,20 +57,22 @@ export function assertQuantHealthRecoveryPool({recoveryEnabled,poolMax}={}){
  * slot; completed research steps retain their original immutable result schema.
  */
 export class QuantResearchFoundationWorker extends QuantResearchWorker {
- constructor({service,dataService,profileService,preflightService,health,evaluateChunk,fetchHistory=readSpotHistory,supervisor=runQuantProcess,stopUnit=stopQuantUnit,clock=Date.now,leaseMs=30000,python,limits,ioControls,allowUnsupportedPlatformForTests=false,profileV2Enabled=false,capacityPolicy,profileRuntimeV2,terminalLog=line=>console.info(line)}){
+ constructor({service,dataService,profileService,preflightService,fixedEvalService,health,evaluateChunk,fetchHistory=readSpotHistory,supervisor=runQuantProcess,stopUnit=stopQuantUnit,clock=Date.now,leaseMs=30000,python,limits,ioControls,allowUnsupportedPlatformForTests=false,profileV2Enabled=false,capacityPolicy,profileRuntimeV2,terminalLog=line=>console.info(line)}){
   super({service,clock,leaseMs});
   if(!service.foundation||typeof health!=='function')throw fail('RESEARCH_FOUNDATION_CALLBACKS_REQUIRED');
   this.dataService=dataService;this.fetchHistory=fetchHistory;this.supervisor=supervisor;this.stopUnit=stopUnit;this.evaluateChunk=evaluateChunk;this.python=python;this.limits=limits;this.ioControls=ioControls;this.allowUnsupportedPlatformForTests=allowUnsupportedPlatformForTests;this.stopped=new Set();this.activeLaunches=new Set();
   this.profileV2Enabled=profileV2Enabled===true;this.capacityPolicy=capacityPolicy;this.profileRuntimeV2=profileRuntimeV2;
   this.profileOperations=new Map();
   this.terminalLog=terminalLog;
-  this.scheduler=new QuantFoundationScheduler({db:this.db,clock,leaseMs,health,capacityPolicy,profileV2Enabled:this.profileV2Enabled,
+  this.scheduler=new QuantFoundationScheduler({db:this.db,clock,leaseMs,health,capacityPolicy,profileV2Enabled:this.profileV2Enabled,serializable:!!fixedEvalService,
    canRelease:this.profileV2Enabled?row=>canReleaseQuantIo(this.db,row):undefined,
    authorize:(owner,request,action,context)=>this.authorize(owner,request,action,context)});
   this.profileService=profileService;
   this.preflightService=preflightService;
+  this.fixedEval=fixedEvalService?new QuantFixedEvalRunner({worker:this,service:fixedEvalService}):null;
  }
  async authorize(owner,request,action,context){
+  if(isFixedEvalRequest(request))return this.fixedEval?this.fixedEval.authorize(owner,request,action,context):{ok:false};
   if(request.kind==='PREFLIGHT')return this.preflightService?.authorize(owner,request,action,
    {...context,stopped:this.stopped.has(context.job_id+':'+context.lease_token)&&!this.activeLaunches.has(context.job_id+':'+context.lease_token)})??{ok:false};
   // The stop acknowledgement needs durable proof only, so it never depends on the profile service being wired.
@@ -94,7 +97,7 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
   // scheduler mutation, so freshness cannot change between check and commit.
   await this.db.query('SELECT id FROM users WHERE id=$1 FOR UPDATE',[row.owner_id]);
   if(row.bot_id!==row.owner_id)await this.db.query('SELECT id FROM users WHERE id=$1 FOR UPDATE',[row.bot_id]);
-  try{await this.current(row);if(await this.engineHash()!==request.engine_hash)return {ok:false};return {ok:true};}catch{return {ok:false};}
+  try{await this.current(row);if(await this.engineHash()!==request.engine_hash)return {ok:false};return {ok:true};}catch(error){if(/^[0-9A-Z]{5}$/.test(error?.code??''))throw error;return {ok:false};}
  }
  async reconcile(){
   const preflights=(await this.db.query("SELECT * FROM quant_foundation_jobs WHERE contract->>'kind'='PREFLIGHT' AND status='STOPPING'")).rows;
@@ -134,6 +137,9 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
   }
   const rows=(await this.db.query("SELECT f.* FROM quant_foundation_jobs f JOIN quant_research_foundation r ON r.job_id=f.job_id WHERE f.status='STOPPING'")).rows;
   for(const row of rows){
+   if(isFixedEvalRequest(row.contract)){
+    if(this.fixedEval)await this.fixedEval.reconcile(row);continue;
+   }
    const units=(await this.db.query('SELECT unit_name FROM quant_research_chunks WHERE run_id=$1 AND unit_token=$2 AND unit_name IS NOT NULL',[String(row.job_id),row.lease_token])).rows;
    // Stopping a persisted unit cannot prove an old launcher will never register
    // it later. Cold recovery therefore stays quarantined until offline recovery.
@@ -149,7 +155,7 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
  async syncTerminal(){
   await this.db.transaction(async()=>{
    await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
-   await this.db.query("UPDATE quant_jobs q SET status=CASE WHEN f.deadline_at<=$1 THEN 'TIMED_OUT' ELSE 'FAILED' END,diagnostic=COALESCE(f.diagnostic,CASE WHEN f.deadline_at<=$1 THEN 'JOB_DEADLINE_EXCEEDED' ELSE 'FOUNDATION_CANCELLED' END),lease_token=NULL,lease_until=0,updated_at=$1 FROM quant_research_foundation r JOIN quant_foundation_jobs f ON f.job_id=r.job_id WHERE q.run_id=r.run_id AND q.status IN ('QUEUED','RUNNING') AND f.status='CANCELLED'",[this.clock()]);
+   await this.db.query("UPDATE quant_jobs q SET status=CASE WHEN f.deadline_at<=$1 THEN 'TIMED_OUT' WHEN q.contract->>'mode'='FIXED_INPUT_EVAL' AND f.diagnostic='FIXED_EVAL_OWNER_CANCELLED' THEN 'CANCELLED' ELSE 'FAILED' END,diagnostic=COALESCE(f.diagnostic,CASE WHEN f.deadline_at<=$1 THEN 'JOB_DEADLINE_EXCEEDED' ELSE 'FOUNDATION_CANCELLED' END),lease_token=NULL,lease_until=0,updated_at=$1 FROM quant_research_foundation r JOIN quant_foundation_jobs f ON f.job_id=r.job_id WHERE q.run_id=r.run_id AND q.status IN ('QUEUED','RUNNING') AND f.status='CANCELLED' AND (q.contract->>'mode' IS DISTINCT FROM 'FIXED_INPUT_EVAL' OR NOT EXISTS(SELECT 1 FROM quant_research_chunks c WHERE c.run_id=q.run_id AND (c.unit_name IS NOT NULL OR c.unit_token IS NOT NULL)))",[this.clock()]);
   });
  }
  async claim(){
@@ -164,8 +170,10 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
   if(foundation.contract.kind==='PREFLIGHT')return {kind:'PREFLIGHT',foundation};
   const row=(await this.db.query('SELECT * FROM quant_jobs WHERE run_id=$1',[String(foundation.job_id)])).rows[0];
   if(!row)throw fail('RESEARCH_FOUNDATION_BINDING_MISSING');
+  const fixed=isFixedEvalRequest(foundation.contract);
+  if(fixed&&(!this.fixedEval||row.contract.mode!=='FIXED_INPUT_EVAL'))throw fail('FIXED_EVAL_BINDING_INVALID');
   let phase=row.phase;
-  await this.scheduler.fenced(foundation,'CHECKPOINT',async()=>{
+  await this.scheduler.fenced(foundation,fixed?'BIND_FIXED_CLAIM':'CHECKPOINT',async()=>{
    if(row.contract.version===RESEARCH_V2_VERSIONS.contract){
     const binding=(await this.db.query('SELECT step_id FROM quant_research_chunks WHERE run_id=$1 AND step_id=$2',
      [row.run_id,DATASET_BINDING_STEP_ID])).rows[0];
@@ -175,14 +183,19 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
     [row.run_id,foundation.attempts,foundation.lease_token,foundation.lease_until,this.clock(),phase]);
    return foundation;
   });
-  return {...row,status:'RUNNING',phase,lease_token:foundation.lease_token,attempt:foundation.attempts,foundation};
+  return {...row,...(fixed?{kind:'FIXED_EVAL'}:{}),status:'RUNNING',phase,lease_token:foundation.lease_token,attempt:foundation.attempts,foundation};
  }
  async fenced(job,callback){return this.scheduler.fenced(job.foundation,'CHECKPOINT',async()=>{
   const row=(await this.db.query('SELECT * FROM quant_jobs WHERE run_id=$1 FOR UPDATE',[job.run_id])).rows[0];
   if(!row||row.status!=='RUNNING'||row.lease_token!==job.lease_token)throw fail('RESEARCH_LEASE_LOST');
   return callback(row);
  });}
- async run(job){return super.run(await this.prepareResearch(job));}
+ async run(job){
+  if(isFixedEvalRequest(job.foundation?.contract)){
+   if(!this.fixedEval)throw fail('FIXED_EVAL_DISABLED');return this.fixedEval.run(job);
+  }
+  return super.run(await this.prepareResearch(job));
+ }
  datasetBinding(contract,row){
   try{
    const parameters=validateDatasetBindingV1(contract,row.parameters);
@@ -493,6 +506,9 @@ export class QuantResearchFoundationWorker extends QuantResearchWorker {
   },Math.max(10,Math.min(5000,Math.floor(this.leaseMs/3))));
   const beforeTerminal=async()=>{clearInterval(heartbeat);await heartbeatTask;terminalStarted=true;};
   try{if(controller.signal.aborted)throw fail('RESEARCH_INTERRUPTED');if(job.kind==='PREFLIGHT')await this.runPreflight(job,controller.signal);else if(job.kind==='BACKFILL')await this.runBackfill(job,controller.signal);else if(profileV2)await this.runProfileV2(job,{signal:controller.signal,emergency:emergencyController.signal,beforeTerminal});else if(job.kind==='PROFILE')await this.runProfile(job,controller.signal);else await this.run(job);}catch(error){
+   if(job.kind==='FIXED_EVAL'){
+    await beforeTerminal();await this.fixedEval.failed(job,error);return true;
+   }
    // A pre-reserve refusal has no runtime terminal hook, but still must quiet this heartbeat.
    if(profileV2)await beforeTerminal();
    // The supervisor settles only after physical exit. An unconfirmed stop keeps

@@ -11,7 +11,7 @@ export {DATASET_BINDING_KIND,DATASET_BINDING_STEP_ID};
  * It closes RO-7 ("Backtest another period" with no search) for two purposes, QR4_SELECTION and QR3_COMPARISON.
  * The stored contract lives in the immutable quant_jobs contract JSONB: lineage is inside it, so no column or trigger
  * changes. It holds no bars and no file reference; the dataset binding, written once by the worker, supplies those.
- * The module reads no database, file, clock or random source. Nothing in a runtime root imports it yet (FE-2b wires it).
+ * The module reads no database, file, clock or random source. FE-2b uses it through the opt-in foundation worker.
  *
  * Time: dataset times are verified closed-bar timestamps, as in research v2 (end_time is the last timestamp; the
  * published metadata end is one minute later). fixed_eval takes these times unchanged as engine time.

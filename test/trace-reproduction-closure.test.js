@@ -27,7 +27,7 @@ import {contractOf, hex, MINUTE, T0} from './helpers/quant-library-fixture.mjs';
  * The PostgreSQL side (C3, C4) is test/postgres/bi-trace-reproduction.test.mjs.
  *
  *   C1  the trace closure: the S3-owned files sit in no other closure list, the list equals the driver import closure plus the named Node files,
- *       one changed byte or one dropped file rotates the hash, the existing LEGACY / FOUNDATION / fixed-evaluation hashes did not move.
+ *       one changed byte or one dropped file rotates the hash, and engine hashes match the authorized candidate pins.
  *       Node only, so it runs in the CI unit jobs. The hash is computed at test time from the checked-out bytes (CRLF or LF alike); only the
  *       pinned engine hashes of C1 normalise line ends, because those literals must hold on a CRLF Windows tree and on the LF CI tree.
  *   C2  a real driver and real engine end to end on a worker-produced v1 fixture run. LABEL: C3 evidence on a v1 fixture run, not B0 or build evidence.
@@ -162,15 +162,15 @@ test('C1 one changed byte in any listed file rotates the hash; one dropped file 
   }
 });
 
-/** The run and evaluation hashes that existed before S3 (S3 base revision f1b7e15), over LF-normalised bytes. A change here is an engine change: it rotates the
- * engine_hash of every stored contract and needs the FE-2b release plan and an owner GO. Update the literals only with that approval. */
+/** Candidate engine hashes over LF-normalised bytes. FE-2b has the owner's 2026-10-22 implementation GO.
+ * Its release evidence records old/new hashes. Stored historical contracts remain unchanged. Update only with an authorized engine change. */
 const BASE_HASHES = Object.freeze({
   LEGACY: '988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a',
-  FOUNDATION: '7c10135451d8deae067d7a8fc8ee7f0eb0508d6c10c5b607df81d9f273b6e759',
-  FIXED_EVAL: 'f27e1a810356b19b8dfd1e9622f5cda8e3b478a47306aac9af84aa048ecfe86e'});
+  FOUNDATION: '3b29eb619f2b4eda1e8abb924e965965c221282462daf238d2cfdd0707386c22',
+  FIXED_EVAL: 'b3acd0c8af04a06f17ad5d54946c55e892869f12f64200271f84c200df39bf88'});
 const fixedEvalFormula = async () => hash(canonical({version: 'fixed-eval-closure-v1', files: Object.fromEntries(await Promise.all(FIXED_EVAL_ENGINE_FILES.map(async name => [name, hash(Buffer.from((await read(name)).toString('latin1').replaceAll('\r\n', '\n'), 'latin1'))])))}));
 
-test('C1 the existing engine hashes of the checkout equal their values at the S3 base revision (S3 edited no closure file)', async () => {
+test('C1 the engine hashes of the checkout equal the authorized candidate pins', async () => {
   assert.equal(await lfHash(LEGACY_ENGINE_FILES), BASE_HASHES.LEGACY, 'LEGACY engineHash(false)');
   assert.equal(await lfHash(FOUNDATION_ENGINE_FILES), BASE_HASHES.FOUNDATION, 'FOUNDATION engineHash(true)');
   assert.equal(await fixedEvalFormula(), BASE_HASHES.FIXED_EVAL, 'fixed-eval-closure-v1');

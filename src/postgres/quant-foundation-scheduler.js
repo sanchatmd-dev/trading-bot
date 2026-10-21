@@ -7,9 +7,11 @@ import {validateProfileResultV2} from '../quant-research/profile-contract-v2.js'
 import {validateCapacityPolicy} from '../quant-research/capacity-contract.js';
 import {validatePreflightEnvelope} from '../quant-research/preflight-plan.js';
 import {beginProfileCompletionLocked} from './quant-profile-enrollment.js';
+import {FIXED_EVAL_VERSIONS,validateFixedEvalRequest} from '../quant-research/fixed-eval-contract.js';
 
 const fail = code => Object.assign(new Error(code), {code});
 const activeStatuses = ['QUEUED','PAUSED','RUNNING','STOPPING'];
+const fixed=request=>request?.version===FIXED_EVAL_VERSIONS.request;
 const freeze = value => {
   if (value && typeof value === 'object') {
     for (const child of Object.values(value)) freeze(child);
@@ -51,7 +53,7 @@ function text(value,code,max=128) {
  * This module supplies no process supervision or OS resource isolation.
  */
 export class QuantFoundationScheduler {
-  constructor({db,authorize,health,clock=Date.now,leaseMs=30000,capacityPolicy,canRelease,profileV2Enabled=false}={}) {
+  constructor({db,authorize,health,clock=Date.now,leaseMs=30000,capacityPolicy,canRelease,profileV2Enabled=false,serializable=false}={}) {
     if (!db?.query || !db?.transaction || typeof authorize!=='function' || typeof health!=='function')
       throw fail('FOUNDATION_TRUSTED_CALLBACKS_REQUIRED');
     if (!Number.isSafeInteger(leaseMs) || leaseMs<1 || leaseMs>900000) throw fail('FOUNDATION_INVALID_LEASE');
@@ -64,6 +66,8 @@ export class QuantFoundationScheduler {
     // Fail closed: a PROFILE V2 claim needs an explicit true (the worker passes its own flag); otherwise the row is
     // cancelled at claim with PROFILE_V2_DISABLED.
     this.profileV2Enabled=profileV2Enabled===true;
+    if(typeof serializable!=='boolean')throw fail('FOUNDATION_TRUSTED_CALLBACKS_REQUIRED');
+    this.serializable=serializable;
   }
   now() {
     const now=this.clock();
@@ -78,15 +82,18 @@ export class QuantFoundationScheduler {
       throw fail('FOUNDATION_FORBIDDEN');
   }
   async lock() { await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE'); }
-  transaction(fn) {
+  async transaction(fn) {
     // Quarantine must commit before a lease-lost error escapes this service.
     if (this.db.isTransaction) throw fail('FOUNDATION_EXTERNAL_TRANSACTION_FORBIDDEN');
-    return this.db.transaction(fn);
+    if(!this.serializable)return this.db.transaction(fn);
+    for(let attempt=0;;attempt++)try{return await this.db.transaction(fn,{isolation:'SERIALIZABLE'});}
+    catch(error){if(!['40001','40P01'].includes(error?.code)||attempt>=3)throw error;}
   }
   expose(row) { return row ? freeze(structuredClone(row)) : null; }
   integrity(row) {
     try {
     if (hash(canonical(row.contract))!==row.contract_hash) return false;
+    if(fixed(row.contract)){validateFixedEvalRequest(row.contract);return row.next_bar===0&&row.checkpoint===null;}
     if (!row.checkpoint) return row.next_bar===0;
     const {sha256,...payload}=row.checkpoint;
     if(row.contract.kind==='BACKFILL')return hash(canonical(payload))===sha256 &&
@@ -105,6 +112,7 @@ export class QuantFoundationScheduler {
   }
   async enqueue(owner,request,idempotencyKey) {
     strictJsonV2(request);
+    if(fixed(request))throw fail('FIXED_EVAL_OBJECT_ADMISSION_REQUIRED');
     const contract=request?.version==='quant-foundation-v2'?
       validateFoundationRequestV2(request,{policy:this.capacityPolicy}):validateFoundationRequest(request);
     if (owner!==contract.owner_id) throw fail('FOUNDATION_FORBIDDEN');
@@ -163,6 +171,7 @@ export class QuantFoundationScheduler {
         ORDER BY o.last_served,j.created_at,j.job_id LIMIT 1 FOR UPDATE OF j`)).rows[0];
       if (!row) return null;
       let diagnostic=this.integrity(row)?null:'INTEGRITY_FAILED';
+      if(fixed(row.contract)&&(row.attempts!==0||row.status!=='QUEUED'))diagnostic='FIXED_EVAL_ATTEMPT_EXHAUSTED';
       const profileV2=row.contract.version==='quant-foundation-v2'&&row.contract.kind==='PROFILE';
       if(!diagnostic&&row.contract.version==='quant-foundation-v2'){
         if(profileV2&&!this.profileV2Enabled)diagnostic='PROFILE_V2_DISABLED';
@@ -222,6 +231,7 @@ export class QuantFoundationScheduler {
   }
   async checkpoint(job,{next_bar,state}) {
     return this.fenced(job,'CHECKPOINT',async row=>{
+      if(fixed(row.contract))throw fail('FIXED_EVAL_CHECKPOINT_REFUSED');
       // PROFILE publishes one atomic result and must restart from its raw input.
       if(row.contract.kind==='PROFILE')throw fail('PROFILE_CHECKPOINT_INVALID');
       if (!Number.isSafeInteger(next_bar) || next_bar<=row.next_bar || next_bar>foundationTotalBars(row.contract))
@@ -238,6 +248,7 @@ export class QuantFoundationScheduler {
   }
   async release(job,status,result) {
     return this.fenced(job,status==='PAUSED'?'PAUSE':'FINISH',async(row,now)=>{
+      if(fixed(row.contract))throw fail('FIXED_EVAL_TERMINAL_LIFECYCLE_REQUIRED');
       if(row.contract.version==='quant-foundation-v2'&&row.contract.kind==='PROFILE')
         throw fail('PROFILE_V2_TERMINAL_REQUIRED');
       if(this.canRelease&&(await this.canRelease(row,status==='PAUSED'?'PAUSE':'FINISH'))?.ok!==true)
@@ -297,7 +308,15 @@ export class QuantFoundationScheduler {
       if(this.canRelease&&(await this.canRelease(row,'ACKNOWLEDGE_STOPPED'))?.ok!==true)
         throw fail('FOUNDATION_IO_UNRESOLVED');
       const profileV2=row.contract.version==='quant-foundation-v2'&&row.contract.kind==='PROFILE';
-      const status=!profileV2&&['LEASE_EXPIRED','HEALTH_UNAVAILABLE'].includes(row.stop_reason) && row.attempts<3 && row.deadline_at>this.now()?'PAUSED':'CANCELLED';
+      const status=!profileV2&&!fixed(row.contract)&&['LEASE_EXPIRED','HEALTH_UNAVAILABLE'].includes(row.stop_reason) && row.attempts<3 && row.deadline_at>this.now()?'PAUSED':'CANCELLED';
+      if(fixed(row.contract)){
+        const units=(await this.db.query('SELECT step_id FROM public.quant_research_chunks WHERE run_id=$1 AND (unit_name IS NOT NULL OR unit_token IS NOT NULL)',[String(jobId)])).rows;
+        if(units.length)throw fail('FIXED_EVAL_STOP_UNCONFIRMED');
+        const terminal=await this.db.query(`UPDATE public.quant_jobs SET status=CASE WHEN $2::bigint>=deadline THEN 'TIMED_OUT' WHEN $3='FIXED_EVAL_OWNER_CANCELLED' THEN 'CANCELLED' ELSE 'FAILED' END,
+          diagnostic=COALESCE($3,'FIXED_EVAL_INTERRUPTED'),lease_token=NULL,lease_until=0,updated_at=$2
+          WHERE run_id=$1 AND status IN ('QUEUED','RUNNING')`,[String(jobId),this.now(),row.diagnostic]);
+        if(terminal.rowCount!==1)throw fail('FIXED_EVAL_RECORDS_INVALID');
+      }
       return this.expose((await this.db.query(`UPDATE quant_foundation_jobs SET status=$2,stop_reason=NULL,
         worker_id=NULL,lease_token=NULL,lease_until=NULL WHERE job_id=$1 RETURNING *`,[jobId,status])).rows[0]);
     });

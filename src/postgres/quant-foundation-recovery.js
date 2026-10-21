@@ -6,6 +6,8 @@ import {validateBackfillState} from '../quant-research/foundation-contract.js';
 import {crashIoOperation,acknowledgeIoCrashStop} from '../quant-research/io-budget-ledger.js';
 import {QuantIoLedger} from './quant-io-ledger.js';
 import {quantIoUnitName} from './quant-io-runtime.js';
+import {validateFixedEvalRecords,fixedEvalArtifactSha} from './quant-fixed-eval.js';
+import {validateFixedEvalContract,validateFixedEvalRequest} from '../quant-research/fixed-eval-contract.js';
 
 const error=code=>Object.assign(new Error(code),{code});
 const unitPattern=/^[a-zA-Z0-9][a-zA-Z0-9_.@-]{0,127}\.service$/;
@@ -225,6 +227,19 @@ function verifyProfile(row){
 function verifyRows(rows,chunksByRun){
  const units=[];
  for(const row of rows){
+  if(row.contract?.version==='quant-foundation-fixed-eval-v1'){
+   try{
+    validateFixedEvalContract(row.research_contract);validateFixedEvalRequest(row.contract,row.research_contract);
+    const claimGap=row.research_status==='QUEUED'&&row.research_attempt===0&&row.research_token===null&&row.research_evaluations===0&&(chunksByRun.get(row.run_id)??[]).length===0&&row.fixed_steps.length===0;
+    if(row.run_id!==String(row.job_id)||!row.lease_token||row.attempts!==1||(!claimGap&&(row.research_attempt!==1||row.research_token!==row.lease_token||row.research_status!=='RUNNING'))||
+       row.owner_id!==row.research_contract.owner_id||hash(canonical(row.contract))!==row.contract_hash||hash(canonical(row.research_contract))!==row.research_job_hash||row.research_contract_hash!==row.research_job_hash||row.next_bar!==0||row.checkpoint!==null)
+     throw error('RECOVERY_FIXED_RECORDS_INVALID');
+    const records=validateFixedEvalRecords(row.research_contract,{chunks:chunksByRun.get(row.run_id)??[],steps:row.fixed_steps,evaluations_started:row.research_evaluations,token:row.lease_token,run_id:row.run_id});
+    if(!/^[a-f0-9]{64}$/.test(row.fixed_expected_sha??'')||records.binding&&records.binding.dataset_sha256!==row.fixed_expected_sha)throw error('RECOVERY_FIXED_RECORDS_INVALID');
+    units.push(...records.units);
+   }catch(failure){if(/^[0-9A-Z]{5}$/.test(failure?.code??''))throw failure;throw error('RECOVERY_FIXED_RECORDS_INVALID');}
+   continue;
+  }
   if(row.contract?.kind==='PREFLIGHT'){
    const bound=row.preflight_binding;
    if(!row.lease_token||hash(canonical(row.contract))!==row.contract_hash||row.run_id||row.research_contract||
@@ -302,7 +317,7 @@ function verifyRows(rows,chunksByRun){
 
 async function snapshot(query){
  const rows=(await query(`SELECT f.*,r.run_id,r.contract_hash AS research_contract_hash,
-    q.contract AS research_contract,q.contract_hash AS research_job_hash
+    q.contract AS research_contract,q.contract_hash AS research_job_hash,q.status AS research_status,q.attempt AS research_attempt,q.lease_token AS research_token,q.evaluations_started AS research_evaluations
     FROM quant_foundation_jobs f LEFT JOIN quant_research_foundation r ON r.job_id=f.job_id
     LEFT JOIN quant_jobs q ON q.run_id=r.run_id WHERE f.status IN ('RUNNING','STOPPING') ORDER BY f.job_id`)).rows;
  // Rows holding I/O state recover per row; every other row keeps the single-transaction path.
@@ -317,6 +332,12 @@ async function snapshot(query){
  }
  const chunksByRun=new Map();
  for(const row of plain){
+  if(row.contract?.version==='quant-foundation-fixed-eval-v1'){
+   row.fixed_steps=(await query('SELECT * FROM quant_job_steps WHERE run_id=$1',[row.run_id])).rows;
+   const c=row.research_contract;
+   try{row.fixed_expected_sha=await fixedEvalArtifactSha({query},row.owner_id,c,row.run_id);}
+   catch(failure){if(/^[0-9A-Z]{5}$/.test(failure?.code??''))throw failure;throw error('RECOVERY_FIXED_RECORDS_INVALID');}
+  }
   if(row.contract?.kind==='PREFLIGHT')row.preflight_binding=(await query('SELECT * FROM quant_preflight_jobs WHERE job_id=$1',[row.job_id])).rows[0];
   else if(!['BACKFILL','PROFILE'].includes(row.contract?.kind))chunksByRun.set(row.run_id,(await query(
    'SELECT * FROM quant_research_chunks WHERE run_id=$1',[row.run_id])).rows);
@@ -466,7 +487,8 @@ export async function recoverQuantFoundation({db,policy,manager=systemd,inventor
        [row.job_id,now,row.lease_token]);
     }
     const reason=row.status==='RUNNING'?'LEASE_EXPIRED':row.stop_reason;
-    const status=['LEASE_EXPIRED','HEALTH_UNAVAILABLE'].includes(reason)&&row.attempts<3&&
+    const fixed=row.contract?.version==='quant-foundation-fixed-eval-v1';
+    const status=!fixed&&['LEASE_EXPIRED','HEALTH_UNAVAILABLE'].includes(reason)&&row.attempts<3&&
       row.deadline_at>now&&row.runtime_used_ms+(row.run_started_at?Math.max(0,now-row.run_started_at):0)<row.contract.budget.max_runtime_ms?
       'PAUSED':'CANCELLED';
     const updated=await query(`UPDATE quant_foundation_jobs SET status=$2,stop_reason=NULL,
@@ -486,9 +508,9 @@ export async function recoverQuantFoundation({db,policy,manager=systemd,inventor
       throw error('RECOVERY_UNIT_STATE_CHANGED');
     if(status==='PAUSED')await query(`UPDATE quant_jobs SET status='QUEUED',lease_token=NULL,lease_until=0,updated_at=$2
       WHERE run_id=$1 AND status='RUNNING' AND lease_token=$3`,[row.run_id,now,row.lease_token]);
-    else await query(`UPDATE quant_jobs SET status=CASE WHEN $2::bigint>=deadline THEN 'TIMED_OUT' ELSE 'FAILED' END,
+    else await query(`UPDATE quant_jobs SET status=CASE WHEN $2::bigint>=deadline THEN 'TIMED_OUT' WHEN $3='FIXED_EVAL_OWNER_CANCELLED' THEN 'CANCELLED' ELSE 'FAILED' END,
       diagnostic=COALESCE(diagnostic,CASE WHEN $2::bigint>=deadline THEN 'JOB_DEADLINE_EXCEEDED' ELSE 'FOUNDATION_CANCELLED' END),
-      lease_token=NULL,lease_until=0,updated_at=$2 WHERE run_id=$1 AND status IN ('QUEUED','RUNNING')`,[row.run_id,now]);
+      lease_token=NULL,lease_until=0,updated_at=$2 WHERE run_id=$1 AND status IN ('QUEUED','RUNNING')`,[row.run_id,now,fixed?row.diagnostic:null]);
     done.push({job_id:row.job_id,status});
    }
    await query('SELECT 1');

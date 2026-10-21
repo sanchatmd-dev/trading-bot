@@ -4,19 +4,17 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {canonical,hash} from '../src/pine-bridge/source.js';
 import {QUANT_RUNTIME_ENGINE_FILES} from '../src/quant-research/runtime-engine-files.js';
-import {FIXED_EVAL_CLOSURE_VERSION,FIXED_EVAL_ENGINE_FILES,FIXED_EVAL_ONLY_FILES,fixedEvalClosure,fixedEvalEngineHash} from '../src/postgres/quant-fixed-eval-engine.js';
+import {FIXED_EVAL_CLOSURE_VERSION,FIXED_EVAL_ENGINE_FILES,FIXED_EVAL_FILES,fixedEvalClosure,fixedEvalEngineHash} from '../src/postgres/quant-fixed-eval-engine.js';
 import {FIXED_EVAL_VERSIONS} from '../src/quant-research/fixed-eval-contract.js';
 import {INGESTION_ENGINE_FILES} from '../src/postgres/quant-data.js';
 import {FOUNDATION_ENGINE_FILES,LEGACY_ENGINE_FILES} from '../src/postgres/quant-research.js';
 import {PF2_ENGINE_FILES,PF2_EVALUATOR_FILES} from '../src/quant-research/preflight-resolver.js';
 import {SHARED_APPLICATION_FILES} from './helpers/runtime-shared-boundary.js';
 
-/** FE-2a: the evaluation closure fixed-eval-closure-v1. Nothing here touches a research closure; the research
- * hashes stay what they are until FE-2b wires the evaluation into the shared worker.
- */
+/** FE-2b: the fixed-evaluation roots and every transitive execution dependency are hashed. */
 const shared=new Set(SHARED_APPLICATION_FILES);
 const listed=new Set(FIXED_EVAL_ENGINE_FILES);
-const NEW_NODE_FILES=FIXED_EVAL_ONLY_FILES.filter(file=>file.endsWith('.js'));
+const NEW_NODE_FILES=FIXED_EVAL_FILES.filter(file=>file.endsWith('.js'));
 const nodeImports=/(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)['"](\.[^'"]+)['"]/g;
 
 async function nodeClosure(roots){
@@ -56,24 +54,24 @@ async function walk(directory){
  return found;
 }
 
-test('the closure is the runtime manifest plus four named files, sorted and present',async()=>{
+test('the closure includes the shared runtime manifest and all six fixed-evaluation roots',async()=>{
  assert.equal(FIXED_EVAL_CLOSURE_VERSION,'fixed-eval-closure-v1');
  assert.equal(FIXED_EVAL_VERSIONS.closure,FIXED_EVAL_CLOSURE_VERSION);
- assert.deepEqual(FIXED_EVAL_ONLY_FILES,['quant_lab/src/robot_quant/fixed_eval.py','quant_lab/src/robot_quant/fixed_eval_job.py',
-  'src/postgres/quant-fixed-eval-engine.js','src/quant-research/fixed-eval-contract.js']);
+ assert.deepEqual(FIXED_EVAL_FILES,['quant_lab/src/robot_quant/fixed_eval.py','quant_lab/src/robot_quant/fixed_eval_job.py',
+  'src/postgres/quant-fixed-eval-engine.js','src/postgres/quant-fixed-eval-worker.js','src/postgres/quant-fixed-eval.js','src/quant-research/fixed-eval-contract.js']);
  assert.equal(FIXED_EVAL_ENGINE_FILES.length,new Set(FIXED_EVAL_ENGINE_FILES).size);
  assert.deepEqual([...FIXED_EVAL_ENGINE_FILES],[...FIXED_EVAL_ENGINE_FILES].sort());
- assert.equal(FIXED_EVAL_ENGINE_FILES.length,QUANT_RUNTIME_ENGINE_FILES.length+FIXED_EVAL_ONLY_FILES.length);
+ assert.equal(FIXED_EVAL_ENGINE_FILES.length,new Set([...QUANT_RUNTIME_ENGINE_FILES,...FIXED_EVAL_FILES]).size);
  for(const file of QUANT_RUNTIME_ENGINE_FILES)assert.ok(listed.has(file),'missing runtime entry '+file);
- for(const file of FIXED_EVAL_ONLY_FILES)assert.ok(listed.has(file),'missing eval file '+file);
+ for(const file of FIXED_EVAL_FILES)assert.ok(listed.has(file),'missing eval file '+file);
  for(const file of FIXED_EVAL_ENGINE_FILES)await fs.access(file);
- assert.ok(Object.isFrozen(FIXED_EVAL_ENGINE_FILES)&&Object.isFrozen(FIXED_EVAL_ONLY_FILES));
+ assert.ok(Object.isFrozen(FIXED_EVAL_ENGINE_FILES)&&Object.isFrozen(FIXED_EVAL_FILES));
 });
 
-test('the evaluation files stay outside every research closure and the runtime manifest until FE-2b',()=>{
- const research={LEGACY:LEGACY_ENGINE_FILES,FOUNDATION:FOUNDATION_ENGINE_FILES,INGESTION:INGESTION_ENGINE_FILES,PF2_engine:PF2_ENGINE_FILES,
-  PF2_evaluator:PF2_EVALUATOR_FILES,runtime_manifest:QUANT_RUNTIME_ENGINE_FILES};
- for(const [name,files] of Object.entries(research))for(const file of FIXED_EVAL_ONLY_FILES)assert.ok(!files.includes(file),file+' is in '+name);
+test('fixed evaluation is hashed by every shared runtime family but not the legacy or PF2 evaluator closure',()=>{
+ const runtime={FOUNDATION:FOUNDATION_ENGINE_FILES,INGESTION:INGESTION_ENGINE_FILES,PF2_engine:PF2_ENGINE_FILES,runtime_manifest:QUANT_RUNTIME_ENGINE_FILES};
+ for(const [name,files] of Object.entries(runtime))for(const file of FIXED_EVAL_FILES)assert.ok(files.includes(file),file+' missing from '+name);
+ for(const files of [LEGACY_ENGINE_FILES,PF2_EVALUATOR_FILES])for(const file of FIXED_EVAL_FILES)assert.ok(!files.includes(file));
 });
 
 test('Python import closure of the job wrapper and the evaluator sits inside the evaluation closure',async()=>{
@@ -90,19 +88,13 @@ test('Node import closure of the new modules sits inside the evaluation closure 
  for(const file of imports)assert.ok(listed.has(file)||shared.has(file),'unhashed dependency '+file);
 });
 
-test('nothing in a runtime root, and no other source file, imports the new Node modules yet',async()=>{
- const roots=['src/postgres/quant-research-main.js','src/quant-research/io-profile-worker.js','src/postgres/quant-preflight-wiring.js','src/postgres/quant-preflight-routes.js'];
- const reached=await nodeClosure(roots);
- for(const file of NEW_NODE_FILES)assert.ok(!reached.has(file),file+' is reachable from a runtime root');
- const importers=[];
+test('runtime importers of fixed evaluation remain inside the reviewed manifest',async()=>{
+ const reached=await nodeClosure(['src/postgres/quant-research-main.js']);
+ for(const file of NEW_NODE_FILES)assert.ok(reached.has(file),file+' must be reachable through the opt-in worker wiring');
  for(const file of (await walk('src')).filter(item=>item.endsWith('.js')||item.endsWith('.mjs'))){
-  if(NEW_NODE_FILES.includes(file))continue;
   const source=await fs.readFile(file,'utf8');
-  if(/fixed-eval-contract|quant-fixed-eval-engine/.test(source))importers.push(file);
+  if(/fixed-eval-contract|quant-fixed-eval-engine|quant-fixed-eval-worker|quant-fixed-eval\.js/.test(source))assert.ok(listed.has(file),'unhashed importer '+file);
  }
- assert.deepEqual(importers,[]);
- const supervisor=await fs.readFile('src/quant-research/process-supervisor.js','utf8');
- assert.ok(!/fixed_eval/.test(supervisor),'the I/O module allowlist must not list the job before FE-2b');
 });
 
 test('the hash is the version plus the sha256 of every listed file as checked out',async()=>{
@@ -119,7 +111,7 @@ test('the hash is the version plus the sha256 of every listed file as checked ou
 
 test('a changed byte in the evaluator, the wrapper, a Node module or a shared engine file rotates the hash',async()=>{
  const baseline=await fixedEvalEngineHash();
- for(const file of [...FIXED_EVAL_ONLY_FILES,'quant_lab/src/robot_quant/analytics.py','quant_lab/src/robot_quant/research_chunk.py',
+ for(const file of [...FIXED_EVAL_FILES,'quant_lab/src/robot_quant/analytics.py','quant_lab/src/robot_quant/research_chunk.py',
   'src/quant-research/foundation-contract.js','quant_lab/src/robot_quant/ql3a.py']){
   const target=new URL('../'+file,import.meta.url).href;
   const changed=await fixedEvalEngineHash(async url=>{

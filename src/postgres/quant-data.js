@@ -114,7 +114,7 @@ export class QuantDataService{
         }
       }
       return {ok:true};
-    }catch{return {ok:false};}
+    }catch(error){if(/^[0-9A-Z]{5}$/.test(error?.code??''))throw error;return {ok:false};}
   }
   expose(row){
     if(hash(canonical(row.contract))!==row.contract_hash)throw fail('FOUNDATION_INTEGRITY_FAILED');

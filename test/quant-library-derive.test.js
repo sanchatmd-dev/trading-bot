@@ -410,13 +410,17 @@ test('derive.js is a pure module: it imports only the hash helpers and the pure 
 // The pattern is written with ~ for the backslash and ~x27 for the apostrophe.
 const IMPORTS=new RegExp('(?:~bfrom~s*|~bimport~s*~(~s*|~bimport~s*)["~x27](~.[^"~x27]+)["~x27]'.split('~').join(String.fromCharCode(92)),'g');
 
-test('the library modules are outside every engine hash and outside the reviewed import closure, so the engine hashes cannot change with them',async()=>{
+test('FE-2b hashes its pure library dependencies while the library API and server stay outside engine closures',async()=>{
   const {FOUNDATION_ENGINE_FILES,LEGACY_ENGINE_FILES}=await import('../src/postgres/quant-research.js');
   const {INGESTION_ENGINE_FILES}=await import('../src/postgres/quant-data.js');
-  const {PF2_ENGINE_FILES}=await import('../src/quant-research/preflight-resolver.js');
+  const {PF2_ENGINE_FILES,PF2_EVALUATOR_FILES}=await import('../src/quant-research/preflight-resolver.js');
+  const {FIXED_EVAL_ENGINE_FILES}=await import('../src/postgres/quant-fixed-eval-engine.js');
   const {QUANT_RUNTIME_ENGINE_FILES}=await import('../src/quant-research/runtime-engine-files.js');
-  const mine=['src/quant-library/derive.js','src/postgres/quant-library.js','src/postgres/server.js'];
-  for(const files of [LEGACY_ENGINE_FILES,FOUNDATION_ENGINE_FILES,INGESTION_ENGINE_FILES,PF2_ENGINE_FILES,QUANT_RUNTIME_ENGINE_FILES])for(const file of mine)assert.ok(!files.includes(file),file+' is in an engine file list');
+  const api=['src/postgres/quant-library.js','src/postgres/server.js'];
+  const execution=['src/quant-library/derive.js','src/quant-library/owner-recommendation.js','src/quant-library/package-gates.js'];
+  for(const files of [LEGACY_ENGINE_FILES,FOUNDATION_ENGINE_FILES,INGESTION_ENGINE_FILES,PF2_ENGINE_FILES,PF2_EVALUATOR_FILES,FIXED_EVAL_ENGINE_FILES,QUANT_RUNTIME_ENGINE_FILES])for(const file of api)assert.ok(!files.includes(file),file+' is in an engine file list');
+  for(const files of [FOUNDATION_ENGINE_FILES,INGESTION_ENGINE_FILES,PF2_ENGINE_FILES,FIXED_EVAL_ENGINE_FILES,QUANT_RUNTIME_ENGINE_FILES])for(const file of execution)assert.ok(files.includes(file),file+' must be hashed for fixed evaluation');
+  for(const files of [LEGACY_ENGINE_FILES,PF2_EVALUATOR_FILES])for(const file of execution)assert.ok(!files.includes(file),file+' changes a separate evaluator boundary');
   // The same closure the engine-files test walks from the worker and API roots.
   const roots=['src/postgres/quant-research-main.js','src/quant-research/io-profile-worker.js','src/postgres/quant-preflight-wiring.js','src/postgres/quant-preflight-routes.js'];
   const visited=new Set();
@@ -427,5 +431,6 @@ test('the library modules are outside every engine hash and outside the reviewed
   };
   for(const root of roots)visit(root);
   assert.ok(visited.size>30,'the closure was walked: '+visited.size);
-  for(const file of mine)assert.ok(!visited.has(file),file+' is reachable from an engine root');
+  for(const file of api)assert.ok(!visited.has(file),file+' is reachable from an engine root');
+  for(const file of execution)assert.ok(visited.has(file),file+' is required by fixed evaluation');
 });

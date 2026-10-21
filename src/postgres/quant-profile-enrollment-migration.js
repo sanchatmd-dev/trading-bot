@@ -84,7 +84,7 @@ async function assertSchema(db,body){
       !row.plain_expressions||!row.constrained))throw refused();
   }
   return true;
- }catch{throw refused();}
+ }catch(error){if(/^[0-9A-Z]{5}$/.test(error?.code??''))throw error;throw refused();}
 }
 
 async function loadBody(){
@@ -96,7 +96,7 @@ async function loadBody(){
 
 /** Read-only readiness checks retain exact schema semantics without requiring an idle database. */
 export async function assertQuantProfileEnrollmentSchema(db){
- try{return await assertSchema(db,await loadBody());}catch{throw refused();}
+ try{return await assertSchema(db,await loadBody());}catch(error){if(/^[0-9A-Z]{5}$/.test(error?.code??''))throw error;throw refused();}
 }
 
 /** Load trusted expectations before runtime locks. The returned assertion performs SQL only. */

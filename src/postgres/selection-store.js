@@ -474,8 +474,11 @@ export async function markWindowDataUnavailable(db,{owner_id:owner,selection_id:
  * stored row that disagrees blocks the step: nothing is written, the selection stays open, the answer has blocked:true.
  * Returns {ok:true, first, evaluation_run_id, ...}, {ok:false, ended:true, ...} or a refusal.
  */
-export async function startEvaluation(db,{owner_id:owner,selection_id:selectionId,export_id:exportId,evaluation_run_id:runId,participantCheck=null,now=undefined,internal=false,retries=SERIALIZATION_RETRIES}={}){
+export async function startEvaluation(db,{owner_id:owner,selection_id:selectionId,export_id:exportId,evaluation_run_id:runId,participantCheck=null,admitEvaluation=null,now=undefined,internal=false,retries=SERIALIZATION_RETRIES}={}){
   if(!validIds(owner,selectionId))return refuse(CODES.NOT_FOUND);
+  // This callback is an internal composition seam, never a customer request field. A thrown admission refusal
+  // rolls back the entire transaction, including the first exposure. It must not open a nested transaction.
+  if(admitEvaluation!==null&&(internal!==true||typeof admitEvaluation!=='function'))return refuse(CODES.INVALID_FIELDS,'ADMISSION');
   // A caller-supplied application clock is accepted only with the internal option (tests and tools); the register at_ms is otherwise always Date.now.
   if(now!==undefined&&(internal!==true||typeof now!=='function'))return refuse(CODES.INVALID_FIELDS,'NOW');
   const clockNow=now===undefined?Date.now:now;
@@ -489,6 +492,10 @@ export async function startEvaluation(db,{owner_id:owner,selection_id:selectionI
       const appended=await appendExposures(db,{...marketOf(owner),now:clockNow,events:[{kind:'QR4_SELECTION',window:{start_ms:window.start_ms,end_ms:window.end_ms},selection_id:selectionId}],
         check:async read=>{
           const judged=await judgeStep(db,{owner,selectionId,registration,read,stage:'EVALUATION_START',exportId,participantCheck});
+          if(admitEvaluation&&judged.action==='BLOCK'&&judged.refusal.detail==='ALREADY_STARTED'){
+            const replay=await admitEvaluation(db,{registration,replayOnly:true});
+            if(replay){carried.replay=replay;return {action:'REPLAY'};}
+          }
           // The first start proceeds to the append (null); every other result is carried out as the check refusal.
           if(judged.action==='OK'&&judged.first){carried.judged=judged;return null;}
           return judged;
@@ -497,8 +504,11 @@ export async function startEvaluation(db,{owner_id:owner,selection_id:selectionI
       if(appended.ok)judged=carried.judged;
       else if(appended.code===EXPOSURE_CODES.CHECK_REFUSED)judged=appended.refusal;
       else return refuse(CODES.INTEGRITY_CHECK_FAILED,'EXPOSURE_EVENT');
+      if(judged.action==='REPLAY')return carried.replay;
       if(judged.action==='BLOCK')return judged.refusal;
       if(judged.action==='END')return endWith(db,selectionId,judged.last,judged);
+      const admitted=admitEvaluation?await admitEvaluation(db,{registration,participant:judged.participant,frozen:judged.frozen,replayOnly:false}):null;
+      if(admitEvaluation&&(!admitted||admitted.evaluation_run_id!==runId))throw Error('Evaluation admission did not bind the requested run');
       let seq=Number(judged.last.seq);
       if(judged.first)await insertEvent(db,selectionId,++seq,{event:'FIRST_EVALUATION_START',status:'SELECTION_EVALUATING'});
       await db.query(`INSERT INTO public.quant_selection_evaluation_starts(selection_id,export_id,evaluation_run_id,parent_run_id,dataset_hash,engine_hash) VALUES($1,$2,$3,$4,$5,$6)`,

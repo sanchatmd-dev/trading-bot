@@ -1,0 +1,452 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-22",
+  "root": "Codex",
+  "baseRevision": "cfe0bc938eed06cc840e1119a1bdc17206fca96c",
+  "scope": "FE-2b internal fixed-input evaluation lifecycle, local cloud engineering only; QUANT_FIXED_EVAL_ENABLED stays off by default and no customer route is added.",
+  "authority": "Owner explicit GO FE-2b and QR-2 S4-4/S4-5; periodic commit/push authorized. No target deployment, migration, activation, host/VPS work, private acceptance, Live, guard reset or Best Inputs apply.",
+  "changes": [
+    "IDs-only QR3/QR4 admission resolves immutable parent inputs, policies, cost models and complete comparison context. QR4 exposure/start/job composition is atomic; refused starts leave no orphan job or exposure.",
+    "One QS scheduler claim and exactly eval:base plus eval:stress whole terminal evaluations. Verified dataset SHA is distinct from the bar-content digest. Live fences recheck authority and closure. No search, intermediate checkpoint resume or second attempt.",
+    "Durable deterministic run/step/token units, active-launch exclusion and confirmed physical stop precede matching-unit cleanup and terminal parent writes. Cancellation remains available after owner/object revocation; unconfirmed stops retain STOPPING and the global slot.",
+    "Cold recovery uses the existing exclusive offline guard, validates exact durable records and terminalizes fixed jobs. Pristine claim/mirror gaps, preparation, base intent/completion and pending stress are covered; committed base evidence is retained without retry.",
+    "Closed read-only RR reader verifies immutable frozen object SHA, both exact steps and terminal envelope against stored closure identity. Historical reads do not require the current live engine; research/library APIs refuse fixed evaluations.",
+    "Mixed-worker SERIALIZABLE transactions retry original SQLSTATE serialization/deadlock failures. Nested schema assertions preserve SQLSTATE while application schema refusals remain sanitized.",
+    "Runtime dependency inventory includes all fixed-evaluation imports. The three pure library dependencies now shared by the runtime are removed from the multi-only list without removing them from its combined closure."
+  ],
+  "files": {
+    "src/multi-pine/engine-closure.js": "e9541719b6b6af86bc20633c6b9f2fc1f6613351bf7be3327eef5161ba8fc622",
+    "src/postgres/quant-data.js": "468a493a710d56b935fa9f18aace48986115a13c1396df669139cea5f68f7af7",
+    "src/postgres/quant-fixed-eval-engine.js": "9ead56bbaea0d0e510342601cc0c6cf45f1ff74472d1896b8f0fd54926cb4672",
+    "src/postgres/quant-fixed-eval-worker.js": "5c6360482e8368b2198e15fb8bab795f9fc0b6b591bae9ec4c39a29c7554518f",
+    "src/postgres/quant-fixed-eval.js": "ff479352f609aff4618a041016d9943eb3c5448250c742bf29a5e933f66842c4",
+    "src/postgres/quant-foundation-recovery.js": "651bd465c992b8ecafa715355bec0d230a5c1c1c559bbe869c94b38f78673ce1",
+    "src/postgres/quant-foundation-scheduler.js": "4ac90992599a0e5f8002c1746f40655d5f213626a7f9cca9d33d0b11fd283111",
+    "src/postgres/quant-library.js": "0256f0acae6ff93db7f3796b6dba80416e082350903f0549f9638c3cb4a5bfd7",
+    "src/postgres/quant-preflight.js": "5f313889eeef21ab23e6369dca4ce5da7d9dd957b06b55f18a018a051599f42f",
+    "src/postgres/quant-profile-enrollment-migration.js": "61bdaa0ae113c30ca7acb0189663b49ce6fc005d9d46dd165f24c5db19fb1440",
+    "src/postgres/quant-profile.js": "7fd7bb5fdaeb39f5415e2e1e7de1ed63eed1b847b99c495cd681e8f08543c5b6",
+    "src/postgres/quant-research-foundation.js": "4b904690731b929b06aac386fdd6cfd6c026cf72a77c0da6500f5c79c361edcb",
+    "src/postgres/quant-research-main.js": "ac24c51572edeb7fe704597b9520c5d8a516fe7ddd39f7d48e4e0c01ff5d3e34",
+    "src/postgres/quant-research.js": "c3e223eedfa2a812c27df646b77a72806287fddb819bc39a3f6a942cbb34c076",
+    "src/postgres/selection-store.js": "b2e96dfa828f4a448aa2e5deaa0f5e1f9b46d843fc5224714d6d06120655a9ba",
+    "src/quant-research/fixed-eval-contract.js": "5cb0978f0555e0f8cad824a162b87905d140ad4ed95e585d4b3b6f385487ac76",
+    "src/quant-research/process-supervisor.js": "4681c46753e52bc9d0dc5c66f6663d9a8e7f42c6dd033e6cf502c7b4439d1ca0",
+    "src/quant-research/runtime-engine-files.js": "64aa2894a890f7c616c2dc964e6983b5ac19a8336ea4b1c21c0b920f8b98a1a1",
+    "test/fixed-eval-admission.test.js": "2f645033a6f21ca5ecb5c9477a5daad23a64063f831f38d777874bf3acdd2373",
+    "test/fixed-eval-engine.test.js": "0648876b46bac719af215d4950201b1035fc6760554608d4778039a3299ae535",
+    "test/helpers/quant-fixed-eval-fixture.mjs": "2073871d1b49c042b101d3ca36e054936ab6b135f2f3b28fee02071cc4d35ed2",
+    "test/mp-engine-closure.test.js": "9eab3432288a92ef2dec92d3dce5b4e53886112c71fe70515331ea091e4ad67d",
+    "test/postgres/quant-fixed-eval-admission.test.mjs": "61d19a9666cad98c6341d5382fee86146d8f461fc5746d3980530237dcf2599d",
+    "test/postgres/quant-fixed-eval-comparison.test.mjs": "8bdbed7a366011bb45c0aa94ee38ef6ff22eb44bd138c91a71e9ac779a219cfa",
+    "test/postgres/quant-fixed-eval-lifecycle-independent.test.mjs": "48f4fbd078a79a068affc44704ea92c61d3c6911d5546a5b68e9c71945c02822",
+    "test/postgres/quant-fixed-eval-mixed-scheduler.test.mjs": "a1aa98716413107d8a9f846c1df83d80194c9a46445e2151a5fe1e8dc73241e8",
+    "test/postgres/quant-fixed-eval-recovery.test.mjs": "c564919fb1a30d90f56d88425ae57b039ddbc213c0d11f6e9d596f5d59b41921",
+    "test/postgres/quant-fixed-eval-runtime-grants.test.mjs": "91ad30dd77f54682bfb72effdbbe6aa3cdb2af7abfebb902e0f4a75d69e04ca3",
+    "test/postgres/quant-fixed-eval-separation.test.mjs": "326519a710af71195c2bea0fbaa43094a1332597cd86b4d52289d05975cec12d",
+    "test/postgres/quant-fixed-eval-worker.test.mjs": "c68fc2d8471fd2d896db1d15e4323f77b1a63c0997c6c7e74a719bb08bacec48",
+    "test/preflight-runtime.test.js": "1ecbaf396829a57de46418f00251653b5be942676f571a961896f2ef871786f0",
+    "test/quant-library-derive.test.js": "f1c289f80a43a10082d0ff83c2ef05b1ac33d474b9d2808ea27fb0d0dce43779",
+    "test/trace-reproduction-closure.test.js": "e94b84b3c9fae668ca423d9e0206e3380330b1564d77a44c45c5890443525a65"
+  },
+  "closureInventory": "PM1_FE2B_CLOSURES_LOCAL_2026-10-22.json",
+  "closureImpact": {
+    "legacy": {
+      "before": "988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a",
+      "after": "988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a",
+      "changed": false,
+      "added_files": [],
+      "removed_files": []
+    },
+    "foundation": {
+      "before": "7c10135451d8deae067d7a8fc8ee7f0eb0508d6c10c5b607df81d9f273b6e759",
+      "after": "3b29eb619f2b4eda1e8abb924e965965c221282462daf238d2cfdd0707386c22",
+      "changed": true,
+      "added_files": [
+        "quant_lab/src/robot_quant/fixed_eval.py",
+        "quant_lab/src/robot_quant/fixed_eval_job.py",
+        "src/comparison/common.js",
+        "src/comparison/context.js",
+        "src/comparison/evidence.js",
+        "src/comparison/labels.js",
+        "src/comparison/ranking.js",
+        "src/postgres/exposure-register.js",
+        "src/postgres/quant-fixed-eval-engine.js",
+        "src/postgres/quant-fixed-eval-worker.js",
+        "src/postgres/quant-fixed-eval.js",
+        "src/postgres/selection-store.js",
+        "src/quant-library/derive.js",
+        "src/quant-library/owner-recommendation.js",
+        "src/quant-library/package-gates.js",
+        "src/quant-research/fixed-eval-contract.js",
+        "src/selection/codes.js",
+        "src/selection/eligibility.js",
+        "src/selection/hash.js",
+        "src/selection/labels.js",
+        "src/selection/lifecycle.js",
+        "src/selection/objective.js",
+        "src/selection/ranking.js",
+        "src/selection/registration.js",
+        "src/selection/window.js"
+      ],
+      "removed_files": []
+    },
+    "ingestion": {
+      "before": "d5364563dfcbd064560c1ba91a499008f1f71ed230807b9aee7cdbe9b01561f1",
+      "after": "e10687a3f45eba8cc285c4612ae580db14d94367af3e1fc0b5005346dffa65ce",
+      "changed": true,
+      "added_files": [
+        "quant_lab/src/robot_quant/fixed_eval.py",
+        "quant_lab/src/robot_quant/fixed_eval_job.py",
+        "src/comparison/common.js",
+        "src/comparison/context.js",
+        "src/comparison/evidence.js",
+        "src/comparison/labels.js",
+        "src/comparison/ranking.js",
+        "src/postgres/exposure-register.js",
+        "src/postgres/quant-fixed-eval-engine.js",
+        "src/postgres/quant-fixed-eval-worker.js",
+        "src/postgres/quant-fixed-eval.js",
+        "src/postgres/selection-store.js",
+        "src/quant-library/derive.js",
+        "src/quant-library/owner-recommendation.js",
+        "src/quant-library/package-gates.js",
+        "src/quant-research/fixed-eval-contract.js",
+        "src/selection/codes.js",
+        "src/selection/eligibility.js",
+        "src/selection/hash.js",
+        "src/selection/labels.js",
+        "src/selection/lifecycle.js",
+        "src/selection/objective.js",
+        "src/selection/ranking.js",
+        "src/selection/registration.js",
+        "src/selection/window.js"
+      ],
+      "removed_files": []
+    },
+    "pf2_engine": {
+      "before": "5bfd1bfac70066238c17e3beb3e1bcd68c84e1b8fea8ad808c31fc2d4babbd87",
+      "after": "046422ce7627f136983f8e0ee2d382141d1d915f5858e03b48815ee661ea42b7",
+      "changed": true,
+      "added_files": [
+        "quant_lab/src/robot_quant/fixed_eval.py",
+        "quant_lab/src/robot_quant/fixed_eval_job.py",
+        "src/comparison/common.js",
+        "src/comparison/context.js",
+        "src/comparison/evidence.js",
+        "src/comparison/labels.js",
+        "src/comparison/ranking.js",
+        "src/postgres/exposure-register.js",
+        "src/postgres/quant-fixed-eval-engine.js",
+        "src/postgres/quant-fixed-eval-worker.js",
+        "src/postgres/quant-fixed-eval.js",
+        "src/postgres/selection-store.js",
+        "src/quant-library/derive.js",
+        "src/quant-library/owner-recommendation.js",
+        "src/quant-library/package-gates.js",
+        "src/quant-research/fixed-eval-contract.js",
+        "src/selection/codes.js",
+        "src/selection/eligibility.js",
+        "src/selection/hash.js",
+        "src/selection/labels.js",
+        "src/selection/lifecycle.js",
+        "src/selection/objective.js",
+        "src/selection/ranking.js",
+        "src/selection/registration.js",
+        "src/selection/window.js"
+      ],
+      "removed_files": []
+    },
+    "pf2_evaluator": {
+      "before": "3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada",
+      "after": "3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada",
+      "changed": false,
+      "added_files": [],
+      "removed_files": []
+    },
+    "fixed_eval": {
+      "before": "f27e1a810356b19b8dfd1e9622f5cda8e3b478a47306aac9af84aa048ecfe86e",
+      "after": "b3acd0c8af04a06f17ad5d54946c55e892869f12f64200271f84c200df39bf88",
+      "changed": true,
+      "added_files": [
+        "src/comparison/common.js",
+        "src/comparison/context.js",
+        "src/comparison/evidence.js",
+        "src/comparison/labels.js",
+        "src/comparison/ranking.js",
+        "src/postgres/exposure-register.js",
+        "src/postgres/quant-fixed-eval-worker.js",
+        "src/postgres/quant-fixed-eval.js",
+        "src/postgres/selection-store.js",
+        "src/quant-library/derive.js",
+        "src/quant-library/owner-recommendation.js",
+        "src/quant-library/package-gates.js",
+        "src/selection/codes.js",
+        "src/selection/eligibility.js",
+        "src/selection/hash.js",
+        "src/selection/labels.js",
+        "src/selection/lifecycle.js",
+        "src/selection/objective.js",
+        "src/selection/ranking.js",
+        "src/selection/registration.js",
+        "src/selection/window.js"
+      ],
+      "removed_files": []
+    },
+    "multi": {
+      "before": "8ec02fb28d7e85e05477c394e7b49aba2cdb023740032e167d00fa40d8bef3f3",
+      "after": "746e4b6e17bdac9d4caa86f292901f43d1e6f6c7cf2ea76ccc4f2d25c5fb1457",
+      "changed": true,
+      "added_files": [
+        "quant_lab/src/robot_quant/fixed_eval.py",
+        "quant_lab/src/robot_quant/fixed_eval_job.py",
+        "src/comparison/common.js",
+        "src/comparison/context.js",
+        "src/comparison/evidence.js",
+        "src/comparison/labels.js",
+        "src/comparison/ranking.js",
+        "src/postgres/exposure-register.js",
+        "src/postgres/quant-fixed-eval-engine.js",
+        "src/postgres/quant-fixed-eval-worker.js",
+        "src/postgres/quant-fixed-eval.js",
+        "src/postgres/selection-store.js",
+        "src/quant-research/fixed-eval-contract.js",
+        "src/selection/codes.js",
+        "src/selection/eligibility.js",
+        "src/selection/hash.js",
+        "src/selection/labels.js",
+        "src/selection/lifecycle.js",
+        "src/selection/objective.js",
+        "src/selection/ranking.js",
+        "src/selection/registration.js",
+        "src/selection/window.js"
+      ],
+      "removed_files": []
+    },
+    "trace": {
+      "before": "d6131e75df9741d4446c960f45c78b7923f5d978e36bfe04a9e6acc04fd4d87c",
+      "after": "d6131e75df9741d4446c960f45c78b7923f5d978e36bfe04a9e6acc04fd4d87c",
+      "changed": false,
+      "added_files": [],
+      "removed_files": []
+    }
+  },
+  "verification": {
+    "runtime": "Node 24.19.0; Python 3.12.14 with locked quant_lab environment; PostgreSQL 16.15 disposable loopback Docker fixtures, SCRAM and wrong-password rejection verified; pg_dump/pg_restore 16.15.",
+    "unit": {
+      "command": "QUANT_RESEARCH_PYTHON=<absolute repository venv interpreter> TRACE_REQUIRE_PYTHON=1 npm test",
+      "pass": 2902,
+      "fail": 0,
+      "skipped": 4,
+      "todo": 9,
+      "seconds": 271.886,
+      "log_sha256": "aa87f2ebd08b9cd3b711ae1d3c52b875e4edabcc0f8a736c93532a0d9bcae86e",
+      "skipReasons": [
+        "One non-Linux-only I/O check on Linux.",
+        "Three existing native PF2 supervisor tests require an unavailable systemd user manager."
+      ],
+      "todoNote": "Nine pre-existing TODOs; no new TODO or waived failure."
+    },
+    "postgres": {
+      "pass": 391,
+      "fail": 0,
+      "skipped": 1,
+      "stages": [
+        {
+          "command": [
+            "node",
+            "--test",
+            "--test-isolation=process",
+            "--test-concurrency=1",
+            "test/postgres/quant-fixed-eval-admission.test.mjs",
+            "test/postgres/quant-fixed-eval-worker.test.mjs",
+            "test/postgres/quant-fixed-eval-runtime-grants.test.mjs",
+            "test/postgres/quant-fixed-eval-separation.test.mjs",
+            "test/postgres/quant-fixed-eval-comparison.test.mjs",
+            "test/postgres/quant-fixed-eval-mixed-scheduler.test.mjs",
+            "test/postgres/quant-fixed-eval-lifecycle-independent.test.mjs"
+          ],
+          "pass": 36,
+          "fail": 0,
+          "skipped": 0,
+          "exit": 0,
+          "seconds": 13.228
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "--test-concurrency=1",
+            "test/postgres/quant-fixed-eval-recovery.test.mjs"
+          ],
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "exit": 0,
+          "seconds": 3.125
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "--test-isolation=process",
+            "--test-concurrency=1",
+            "test/postgres/quant-foundation.test.mjs",
+            "test/postgres/quant-foundation-recovery.test.mjs",
+            "test/postgres/quant-research-foundation.test.mjs",
+            "test/postgres/quant-research-prepare.test.mjs",
+            "test/postgres/quant-research-graceful-stop.test.mjs",
+            "test/postgres/quant-research-contract-guards.test.mjs",
+            "test/postgres/quant-foundation-storage.test.mjs",
+            "test/postgres/quant-storage-retention.test.mjs"
+          ],
+          "pass": 138,
+          "fail": 0,
+          "skipped": 1,
+          "exit": 0,
+          "seconds": 76.831
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "--test-isolation=process",
+            "--test-concurrency=1",
+            "test/postgres/quant-data-foundation.test.mjs",
+            "test/postgres/quant-profile.test.mjs",
+            "test/postgres/quant-profile-enrollment.test.mjs",
+            "test/postgres/quant-profile-enrollment-authority.test.mjs",
+            "test/postgres/quant-profile-enrollment-consumers.test.mjs",
+            "test/postgres/quant-preflight.test.mjs",
+            "test/postgres/quant-preflight-worker.test.mjs"
+          ],
+          "pass": 75,
+          "fail": 0,
+          "skipped": 0,
+          "exit": 0,
+          "seconds": 45.642
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "--test-isolation=process",
+            "--test-concurrency=1",
+            "test/postgres/quant-comparison.test.mjs",
+            "test/postgres/quant-comparison-create.test.mjs",
+            "test/postgres/quant-comparison-results.test.mjs",
+            "test/postgres/quant-selection.test.mjs",
+            "test/postgres/quant-selection-register.test.mjs",
+            "test/postgres/quant-selection-recheck.test.mjs",
+            "test/postgres/quant-exposure-register.test.mjs"
+          ],
+          "pass": 137,
+          "fail": 0,
+          "skipped": 0,
+          "exit": 0,
+          "seconds": 33.069
+        }
+      ],
+      "skipReason": "Existing private baseline Python parity case; private acceptance NOT RUN.",
+      "clustersStoppedAndRemoved": true,
+      "additionalInterpreterFallback": {
+        "command": [
+          "env",
+          "-u",
+          "QUANT_RESEARCH_PYTHON",
+          "-u",
+          "QUANT_TEST_PYTHON",
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-name-pattern=real PG plus actual Python",
+          "test/postgres/quant-fixed-eval-worker.test.mjs"
+        ],
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0,
+        "exit": 0,
+        "seconds": 1.374
+      }
+    },
+    "python": {
+      "files": [
+        "quant_lab/tests/test_fixed_eval.py",
+        "quant_lab/tests/test_fixed_eval_job.py"
+      ],
+      "pass": 233,
+      "fail": 0,
+      "log_sha256": "a1d6e289d034ccc83bfb2fc9e8eec4decb1b11c9c3112081ddc1017ece73bbaf",
+      "note": "Python evaluator/wrapper sources are unchanged. Includes terminal-frame/ACK cases; does not establish native systemd supervision."
+    },
+    "actualProcess": "Real PostgreSQL admission, prepared files, real fixed_eval_job Python base/stress, two charged evaluations, actual closure hash, atomic completion and closed readback passed. A bounded injected supervisor waits for child close; this is not native QS/I/O proof. The no-environment interpreter fallback passed separately using the repository venv.",
+    "independent": "Two genuine PostgreSQL LOGIN NOSUPERUSER cases exercise pending launcher/quarantine and revoked-authority/token cleanup, with canonical runtime grants and enabled immutable guards. Earlier independent admission/separation/QR3 cases remain in the 36-case stage.",
+    "mutations": {
+      "baselineCasesPassed": 3,
+      "assertionKills": 4,
+      "survivors": 0,
+      "sourceBytesRestored": true,
+      "testInputsUnchanged": true,
+      "cases": [
+        {
+          "id": "F01-omit-active-launch-registration",
+          "classification": "assertion-kill"
+        },
+        {
+          "id": "F02-stopped-false-counts-as-proof",
+          "classification": "assertion-kill"
+        },
+        {
+          "id": "F03-ignore-negative-stop-confirmation",
+          "classification": "assertion-kill"
+        },
+        {
+          "id": "F04-fixed-stop-can-pause",
+          "classification": "assertion-kill"
+        }
+      ],
+      "report_sha256": "9ccc0bceb7873da7e7bb5c1ce881e927e3d712f52da0bc60f35668538f7581cc",
+      "limits": "Four launch/stop/PAUSED discriminators only. Frozen SHA and exact unit identity have direct negative regression tests, not mutation evidence."
+    },
+    "review": {
+      "findingsClosed": [
+        "QR4 cost model risk binding",
+        "Nested mixed-worker SQLSTATE propagation",
+        "Closed reader frozen SHA authority",
+        "Exact unit identity and validation before stop, unchanged evidence before cleanup"
+      ],
+      "report_sha256": {
+        "fe2b-a-review.md": "0f788f551a2294f7c25dfd91be73b74e4a1561e4e608f89ea17499c0f89a7300",
+        "fe2b-b-review.md": "0c79cf9b58f6f2ef9d554af62723da453de7aed788e92036e843e5582c95d130",
+        "fe2b-lifecycle-review.md": "33483ff4f21c19f52dc9a4cd85dcb136fd6122c60a8c7740e788fc51c7e1fc8c",
+        "fe2b-lifecycle-independent.md": "e372fca01fba5e37d71badaa949160ec7bb52f5679fbc1de07f0cb7218a6828b",
+        "fe2b-runtime-grants.md": "c76878ebb6feb3f607e3958cb70f0fc7a10828fa4b4510ca477ab58a3e8a45f9",
+        "fe2b-qr3.md": "0944aac1f43f76cf5062eb11ededeab46ef7b09d774f50a3abf2949827121d5a",
+        "fe2b-final-review.md": "9cb99866a1fcee7edec31676b8184d053cbdc6689e6d35cccbd0c09d99beebb6"
+      }
+    },
+    "closureRestoration": "All eight final closure hashes and every listed source-file SHA equal the pre-mutation candidate after exact restoration. The 111 before-inventory files were verified byte-for-byte against the base revision."
+  },
+  "unsuccessfulAttempts": [
+    "Early root manifest-generation regex produced invalid JavaScript; corrected before the accepted 46-case preparation unit/closure run.",
+    "Mixed-worker PG first run passed 23/24; the failing original-SQLSTATE assertion exposed two nested schema catches. Both were corrected and fresh PG 25/25 passed.",
+    "One Cloud restart interrupted runner accounting after its 25-pass log. Root explicitly removed that fixture container and repeated the whole stage with exit 0 and verified cleanup.",
+    "Early preparation logs contained one idle-connection warning. Its cause was not established; fixture cleanup now uses strict DROP after pool closure. Accepted later runs and cleanup passed without that warning.",
+    "First full Node run passed 2900 with two outdated closure-boundary assertions. Explicit shared dependencies and multi-only membership were corrected; final full run passed 2902 with no failures."
+  ],
+  "limits": [
+    "Default-off internal engineering only. No customer route, deployed runtime or target capability/health/readback evidence.",
+    "Native QS/systemd/cgroup I/O enforcement and target physical stop/recovery remain NOT RUN in this environment. Injected manager and supervisor evidence does not replace those release gates.",
+    "Dataset profile remains bounded at 10K bars and each supervised evaluation remains capped at 30 seconds; no production capacity expansion is established.",
+    "Cancellation uses SERIALIZABLE logical order. A fence refuses work when cancellation committed before that fence began. Overlapping transactions may serialize the fence first. No stronger physical after-response commit guarantee is claimed.",
+    "Foundation, ingestion, PF2 engine, fixed evaluation and multi closures rotate. Legacy, PF2 evaluator and trace closures remain unchanged. Old stored hashes are never rewritten; target release needs the separately reviewed drain/cancel and compatibility plan.",
+    "QR3 ranking/benchmark orchestration, QR4 owner tolerances, package qualification, G8 and owner recommendations remain separate gated slices. READY false; N1 held."
+  ],
+  "newHostSteps": 0,
+  "productionQualified": false,
+  "ci": "Pending for the FE-2b commit. QR-2 base cfe0bc9 passed both Safety checks and Quant Lab.",
+  "rootAcceptance": {
+    "by": "Codex root",
+    "statement": "Accepted as local FE-2b engineering evidence after focused/full regression, independent review and serialized mutation checks; no deployment, activation or target eligibility."
+  }
+}
