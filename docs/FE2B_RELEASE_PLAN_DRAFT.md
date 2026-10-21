@@ -1,5 +1,8 @@
 # FE-2b release-plan proposal
 
+**Owner GO update, 2026-10-22 (Bangkok):** the owner explicitly authorized FE-2b cloud implementation in the active Codex conversation. Root is preparing the bounded lifecycle/storage implementation design and independent verification. This supersedes the draft's pending implementation-GO statements below. Target execution, deployment, shared migrations and activation still require their separately scoped authorization; no target facts or release eligibility are established. The original draft remains a proposal until root records its design decisions.
+
+
 **DRAFT — prepared for later root/owner decisions, 2026-10-22 (Bangkok). No owner GO, engine change, deployment authority or release eligibility is established.** Source baseline: d8a9c6f and current committed contracts. Preparation is source review only; no tests, engine-hash execution, host/network access or private-input work supports this proposal. Target revision, installed schemas, active jobs, health, capacity and rollback readiness are UNKNOWN. N1 is entirely outside this proposal.
 
 ## Purpose and boundary

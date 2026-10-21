@@ -1,12 +1,33 @@
 # QR-2 actual Paper portfolio performance contract
 
-Status: owner decisions O1-O16, D4 and OD-Q1, OD-Q8, OD-Q9, OD-Q10, OD-Q13, OD-Q14, OD-Q15, OD-Q18 recorded 2026-10-19; root decided R-A to R-F, OD-Q6, OD-Q12 and OD-Q17 the same day. Root accepted the other rules after independent review. Root clarifications RC-Q1 to RC-Q27 from the QR-2 S0/S1 and S2 reviews are recorded in section 15 (2026-10-19); they change no owner decision. The S1 pure library (src/portfolio) and the S2 read-only reader (src/postgres/qr2-reader.js) are root-accepted as local engineering evidence; neither is wired into any route, worker or view. Root decided the S3 route design on 2026-10-20 (RC-Q28 to RC-Q34), and slice S3a (the per-Bot route, off by default) is root-accepted as local engineering evidence and enabled nowhere; slice S3b (the computation in a worker thread, RC-Q35 and RC-Q36) is root-accepted as local engineering evidence on 2026-10-21, and the route stays off everywhere; sub-slices S4-1 (the capital-model declaration extension, RC-Q37), S4-2 (the pure owner-total allocation module, RC-Q38) and S4-3 (the O12 export, confirmed rollback and local restore rehearsal, RC-Q39) are root-accepted as local engineering evidence on 2026-10-21, are provisional until the owner decides the S4 items, and nothing is installed or routed; owner item O-1 (which periods the plan history limit applies to) is open, and the stricter reading applies meanwhile. Root clarifications RC-Q40 (`629bcb4`, extended by `9842392`: the compute pool refuses to start under process-wide heap flags) and RC-Q41 (`7847a05`: the All Bots card shows book equity per currency) are local engineering evidence only, not installed; the RC-Q41 rendered component check is closed by RC-Q42 on 2026-10-22 (local synthetic stub only). Nothing here changes the ledger or any Bot.
+Status: owner decisions O1-O16, D4 and OD-Q1, OD-Q8, OD-Q9, OD-Q10, OD-Q13, OD-Q14, OD-Q15, OD-Q18 recorded 2026-10-19; root decided R-A to R-F, OD-Q6, OD-Q12 and OD-Q17 the same day. Root accepted the other rules after independent review. Root clarifications RC-Q1 to RC-Q27 from the QR-2 S0/S1 and S2 reviews are recorded in section 15 (2026-10-19); they change no owner decision. The S1 pure library (src/portfolio) and the S2 read-only reader (src/postgres/qr2-reader.js) are root-accepted as local engineering evidence; neither is wired into any route, worker or view. Root decided the S3 route design on 2026-10-20 (RC-Q28 to RC-Q34), and slice S3a (the per-Bot route, off by default) is root-accepted as local engineering evidence and enabled nowhere; slice S3b (the computation in a worker thread, RC-Q35 and RC-Q36) is root-accepted as local engineering evidence on 2026-10-21, and the route stays off everywhere; sub-slices S4-1 (the capital-model declaration extension, RC-Q37), S4-2 (the pure owner-total allocation module, RC-Q38) and S4-3 (the O12 export, confirmed rollback and local restore rehearsal, RC-Q39) are root-accepted as local engineering evidence on 2026-10-21, have their provisional owner rules confirmed by OD-S4-1 to OD-S4-10 below on 2026-10-22, and nothing is installed or routed; owner item O-1 is closed: the plan history limit applies to every period. The owner explicitly authorized cloud implementation of S4-4/S4-5; implementation acceptance and target activation remain separate. Root clarifications RC-Q40 (`629bcb4`, extended by `9842392`: the compute pool refuses to start under process-wide heap flags) and RC-Q41 (`7847a05`: the All Bots card shows book equity per currency) are local engineering evidence only, not installed; the RC-Q41 rendered component check is closed by RC-Q42 on 2026-10-22 (local synthetic stub only). Nothing here changes the ledger or any Bot.
 
 This contract grants no capability, is not a GO and earns no PM-1 credit by itself. Commit, CI, deployment and acceptance are separate facts. The decisions are listed in the "Decisions" table in section 15.
 
 Code base for the facts below: branch `codex/app3a-market-wait-checkpoint`, working tree as found on 2026-10-19. Line numbers are current and are given for learning interfaces only.
 
 ---
+
+
+## Owner continuation decisions, 2026-10-22 (Bangkok)
+
+The owner approved all ten recommendations in the active Codex conversation and then explicitly stated “GO FE-2b และ GO QR-2 S4-4/S4-5”. These decisions authorize cloud engineering, independent verification and the already authorized periodic commit/push. They do not authorize deployment, shared/target migrations, route activation, Live, guard reset or Best Inputs apply. N1 stays held. The IDs below are new records of this conversation; they do not reconstruct the unavailable original OW1–OW10 numbering.
+
+| ID | Owner decision |
+| --- | --- |
+| OD-S4-1 | A declaration takes effect strictly at the next UTC midnight (07:00 Bangkok) after its database-stamped declaration time, including when declared exactly at midnight. No retroactive effect. |
+| OD-S4-2 | A declaration names the owner's full Bot set, not a selected subset. |
+| OD-S4-3 | Withdrawal appends a new SHARED_HYPOTHETICAL version and retains all history. |
+| OD-S4-4 | Keep THB and USDT totals separate. No FX conversion or cross-currency sum. |
+| OD-S4-5 | At most 1000 versions per owner and currency; refuse further declarations, never delete history to create room. |
+| OD-S4-6 | Strict range applicability: no aggregate over a range crossing a declaration change; select a range covered by one declaration. |
+| OD-S4-7 | Only the owner declares; an admin cannot declare for another owner. An authenticated primary ADMIN may declare for their own account under the same step-up rules. |
+| OD-S4-8 | The owner retains custody and retention responsibility for declaration exports; no automatic transfer to cloud. Existing O12 export and count/digest-confirmed rollback requirements remain. |
+| OD-S4-9 | Report fees for the resolved half-open reporting interval [from,to), not cumulative lifetime fees. Replay, ledger, NAV and return accounting remain unchanged. |
+| OD-S4-10 | The plan history limit applies to every period, including ALL_TIME and CUSTOM. This closes O-1 and retains the existing stricter behavior. |
+
+These decisions supersede the provisional/open qualifications in historical RC-Q31, RC-Q37, RC-Q38 and RC-Q39 without rewriting their original evidence. The first eight rows resolve the S4 owner groups summarized in the handoff; the final two resolve the related fees and history-limit questions.
+
 
 ## 0. Reading key
 
