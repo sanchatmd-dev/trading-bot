@@ -1,0 +1,38 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-21",
+  "root": "Claude",
+  "baseRevision": "6f6e081",
+  "scope": "Local implementation of F11 RS-6 slice S3 (RD-MP-29 to RD-MP-32): the multi-Pine candidate plan, the mp-combined-closure-v1 engine-hash closure, the fixture executor with its direct-spawn Python runner and the operator script. All files are new; no existing engine-closure list or engine hash changed. No route, worker, view or runtime root uses them; nothing is installed on any environment.",
+  "method": "A coder (Sonnet 5.5) wrote S3 from RD-MP-29 to RD-MP-34. An independent Opus 5.5 auditor returned NO-GO on two blockers (a losing executor could append a terminal event to another executor's run before the claim; a ?host= query parameter bypassed the operator script's loopback check) with non-blocking items; an independent security review (Opus 5.5) added runner and script items. A fix round in an isolated worktree closed both blockers and those items, each confirmed by its mutant (16 of 16 killed). An independent tester (Sonnet 5.5) ran 27 mutants on the pre-fix executor before it was stopped when the fix round landed; its findings did not block. Root integrated the worktree diffs (verifying file hashes), made the one guard allowlist edit itself (engine-closure.js names run-contract.js as a hashed file), and ran the final pass alone.",
+  "files": {
+    "src/multi-pine/candidate-plan.js": "fed878db7ffbb0ca7388c91807232598202ca812abb30e9964a5f2d01a7aef19",
+    "src/multi-pine/engine-closure.js": "35f1b8e6245ee8f756200abd5665b14f1ae8e9103a3ee48bd8e5dc1cc3bed498",
+    "src/multi-pine/executor.js": "8d266ca9cb661d80759f812288a8a25e19476aa5b8faacdf172e496fcf232f71",
+    "src/multi-pine/python-runner.js": "78b86f5108acb3ca1e42247bc62447d2fdf06e5b5c9749c30661e683808a7ef3",
+    "scripts/mp-fixture-run.mjs": "8ba83ca2913d4d7b528ace90213f43f671f1d15a91683fac827a0711412a2da5",
+    "test/multi-pine-candidate-plan.test.js": "b3624bc131907ac17de03269cd9d15e62b7b54fd612efd4403bc61025135d770",
+    "test/mp-engine-closure.test.js": "0c238ba9ddceb26964025d1feaf39d721f4ed651f3624a01852e0b3e98b04d7a",
+    "test/postgres/mp-executor.test.mjs": "5b59adccd5a82231eff707f9428e1ab4cadcd6ca0e2b2121a0d6d9dbcfadf9b3",
+    "test/multi-pine-run-contract.test.js": "922c39b13a343c3a8a442cb54f51871cf0f590d000e6523138552376e0f472cc"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "Root final pass in the cloud container: unit suite 2408 tests, 0 fail, 4 skipped; mp-executor 34 of 34; mp-combined-baseline, mp-fixture-admit, runtime-grants, engine-closure, candidate-plan, run-contract guard and run-store static isolation all 0 fail; Python suite 698 passed, 3 skipped. The six existing engine-closure hashes are unchanged against base 05e7a47 (pinned in the closure test).",
+  "limits": [
+    "Executor tests run the real Python job with only validate_custom_snapshot replaced by fixture inputs, because the owner's reviewed SPT source is not in the repository; the F1 to F30 acceptance with the private source runs later in the owner's local checkout (RD-MP-34).",
+    "The executor derives final cash and position from the HOLDOUT trace. A prepared S1 follow-up (job-supplied final ledger fields and a bars-v2 fixture on which a real run passes the holdout gates: 21 closed trades, +0.797% at pair 2/1.5) is not committed: with it, one executor closed-key test (two of the four final ledger fields) no longer fails as it expects, so the two must be reconciled in the next round.",
+    "The SUCCEEDED path is tested by replacing HOLDOUT metrics on bars-v1, because bars-v1 has only 4 closed holdout trades.",
+    "A small window remains between a losing executor's re-read and its append; closing it needs a store-side expected-sequence guard in mp-run-store (separate slice). A pre-claim abort of a still-ADMITTED run still ends CANCELLED.",
+    "The runner needs QUANT_RESEARCH_PYTHON or the quant_lab venv (no bare python fallback) and runs the child with -P, cwd quant_lab/src and a minimal environment.",
+    "The database caps a stored result below the executor's 1 MiB check; a result between the two fails FAILED.",
+    "runQuantProcess is not used (R-10); real-process supervision for multi runs is not exercised."
+  ],
+  "rootAcceptance": {
+    "by": "Claude root",
+    "date": "2026-10-21",
+    "statement": "Root reviewed the audit, the security review, the fix round, the tester's partial run, the integrated diffs and its own final pass, and accepted S3 as local engineering evidence for F11-01. Acceptance changes no PM-1 credit by itself and deploys nothing."
+  }
+}
