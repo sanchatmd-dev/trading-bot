@@ -17,7 +17,7 @@ Read first: `AGENTS.md`, `.agents/skills/caveman/SKILL.md`, this file, then [the
 | Safety checks | test (windows-latest) | `d45f5d5` | `test/mp-engine-closure.test.js:171` pins the six existing closure hashes as literals; on a Windows (CRLF) checkout every existing closure hashes differently. Fix the test, not the closures: compare against hashes computed from the base revision's Git blobs (line-feed content), or normalise line endings in the injected reader. |
 | Safety checks | postgres (ubuntu) | `d45f5d5` | `test/postgres/mp-executor.test.mjs`: every REAL JOB run ends `FAILED EVALUATION_FAILED` in CI (9 failing tests, including the 1 MiB and `validateTerminalResult` tests, which may depend on a recorded real run). The same file passed 34 of 34 twice in the cloud container. Not yet diagnosed. Suspects: the hardened runner (`src/multi-pine/python-runner.js`: `-P`, cwd `quant_lab/src`, minimal environment, no bare `python`) against the CI interpreter from `uv sync`, or the test's synthetic-source wrapper. Reproduce with the CI job's commands, read the job's code (the runner drops stderr), and fix in S3's files. |
 
-Everything else was green: both workflows passed on every pushed commit from `296bd64` to `6c78131` and on the docs-only commits after them.
+Everything else was green: both workflows passed on every pushed commit from `296bd64` to `6c78131` and on the docs-only commits after them, which ran only the checks their paths trigger.
 
 ## What landed in the cloud (all local engineering evidence; nothing installed, no host step, no GO)
 
@@ -57,4 +57,4 @@ QR-3 S3 and QR-4 S3 need FE-2b; QR-2 S4-4 and S4-5 need OW1-OW10; F11 acceptance
 
 ## Usage
 
-The cloud root could not read usage. At about 09:00Z the weekly window showed a warning near its reset; the owner had set the floor at 2%. Read usage before the first wave.
+The cloud root could not read usage. At about 09:00Z (16:00 Bangkok) the weekly window showed a warning near its reset. AGENTS.md sets the usage floor at 3%; the owner set a 2% floor for named continuations on 2026-10-19 and restated it on 2026-10-21. Read usage before the first wave.

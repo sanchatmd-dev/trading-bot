@@ -142,4 +142,4 @@ The owner started the side task "Bound the other test readiness waits by wall ti
 
 ## Usage at handoff
 
-At 02:50Z on 2026-10-21 the 5-hour window was 11% used and the weekly all-models window 74% used (Fable bucket 17%). The weekly reset is 09:00Z the same day. The owner's floor is 2%: at the floor, stop admitting work, checkpoint and tell the owner, who may apply a Full Reset.
+At 02:50Z (09:50 Bangkok) on 2026-10-21 the 5-hour window was 11% used and the weekly all-models window 74% used (Fable bucket 17%). The weekly reset is 09:00Z (16:00 Bangkok) the same day. AGENTS.md sets the usage floor at 3%; the owner set a 2% floor for named continuations on 2026-10-19 and restated it on 2026-10-21. At the floor in force, stop admitting work, checkpoint and tell the owner, who may apply a Full Reset.

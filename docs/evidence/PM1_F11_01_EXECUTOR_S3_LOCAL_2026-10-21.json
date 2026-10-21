@@ -28,7 +28,8 @@
     "A small window remains between a losing executor's re-read and its append; closing it needs a store-side expected-sequence guard in mp-run-store (separate slice). A pre-claim abort of a still-ADMITTED run still ends CANCELLED.",
     "The runner needs QUANT_RESEARCH_PYTHON or the quant_lab venv (no bare python fallback) and runs the child with -P, cwd quant_lab/src and a minimal environment.",
     "The database caps a stored result below the executor's 1 MiB check; a result between the two fails FAILED.",
-    "runQuantProcess is not used (R-10); real-process supervision for multi runs is not exercised."
+    "runQuantProcess is not used (R-10); real-process supervision for multi runs is not exercised.",
+    "The root final pass ran in a cloud container, not on CI. CI at d45f5d5 failed the Windows closure test (CRLF closure-hash pins) and the PostgreSQL mp-executor real-job tests (a bare python without the project packages); commit 6fabc04 fixed both in tests and .gitattributes only, with no product file changed."
   ],
   "rootAcceptance": {
     "by": "Claude root",

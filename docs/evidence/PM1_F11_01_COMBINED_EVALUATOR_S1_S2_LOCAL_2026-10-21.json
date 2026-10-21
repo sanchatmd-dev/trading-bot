@@ -37,7 +37,8 @@
     "A member's losing exit counts toward the loss streak only when the Bot is flat (RD-MP-34), carried to APP-3B.",
     "The engine-hash closure (RD-MP-31), candidate plan and executor are slice S3 and do not exist yet; the multi-run engine_hash is still injected.",
     "Timings (0.55 to 0.85 s per 3-member step) were measured in the cloud container, not on the VPS.",
-    "The scripted-case series start in 2027; they never meet a clock, but a real-clock admission would refuse them."
+    "The scripted-case series start in 2027; they never meet a clock, but a real-clock admission would refuse them.",
+    "The fixture pins and the fixture rebuild check passed in the cloud container only. On the Windows CI checkout they failed from 05e7a47 (CRLF fixture checkout) until .gitattributes -text at 6fabc04."
   ],
   "rootAcceptance": {
     "by": "Claude root",

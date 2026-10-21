@@ -27,11 +27,11 @@ Baseline on `d9a6dce` in that container: the PostgreSQL suite passed 1327 of 133
 
 - **PF-2 R4 real-process tests.** With the Python environment installed, three subtests of `test/preflight-runtime.test.js` fail in a container without a systemd user manager: on Linux the supervisor always launches through `systemd-run --user` and correctly refuses to confirm a stop it cannot prove (`QUANT_PROCESS_STOP_UNCONFIRMED`). CI never runs them (the unit job has no venv, and `quant-lab.yml` does not run this file), so the Linux real-process path of R4 has no automated evidence. The owner approved a test-only capability gate, now applied: the three subtests skip with a reason when `systemctl --user` is unavailable and still fail under `PF2_REQUIRE_PYTHON=1`; the supervisor is unchanged. Real evidence needs a host with user systemd and cgroup v2, which is an operations step under a fresh owner GO.
 - **Heap flag in production.** No deploy file in the repository sets `--max-old-space-size`. The QR2 compute pool now fails closed: it refuses to start under such a process-wide flag (RC-Q40, four flags after `9842392`). Local engineering evidence only; not checked on any host.
-- **RS-5 residuals** are listed in the evidence record and RD-MP-23. The authorization and key re-check inside the transaction was added later (RD-MP-35, `2b8d398`).
+- **RS-5 residuals** are listed in the evidence record and RD-MP-23. RD-MP-35 (`2b8d398`) later closed those two residuals by re-checking authorization and the key inside the transaction, and records one new fixture-only residual.
 
 ## Next work
 
-RS-6 S1 and S2 have landed (R5, R11); RS-6 S3 is next (R7, R12). The F1 to F30 acceptance with the private source happens later in the owner's local checkout (RD-MP-34). The multi-Pine package slice needs R6; QR-3 S3 and QR-4 S3 need FE-2b; QR-2 S4-4 and S4-5 need the owner's OW1 to OW10 decisions. The N1 terminal-evidence line stays held. No host, VPS, browser or TradingView work from the cloud; Spot/Paper only.
+RS-6 S1 and S2 have landed (R5, R11); RS-6 S3 is next (R7, R12). The F1 to F30 acceptance with the private source happens later in the owner's local checkout (RD-MP-34). The multi-Pine package slice needs R6; QR-3 S3 and QR-4 S3 need FE-2b; QR-2 S4-4 and S4-5 need the owner's OW1 to OW10 decisions. The N1 terminal-evidence line stays held. No host, VPS, browser or TradingView work from the cloud; Spot/Paper only. The other open owner items are unchanged from the local-to-cloud handoff, and F09 OQ-1 was added.
 
 ## After the checkpoint
 
@@ -52,4 +52,4 @@ Local engineering evidence only; nothing installed, no host step, no GO. Check C
 
 ## Usage
 
-The cloud root could not read account usage itself. At the handoff the owner reported 5h 11%, weekly 74% and Fable 17%; the owner allowed work down to 2% remaining. Read usage before the next wave.
+The cloud root could not read account usage itself. At the handoff the owner reported 5h 11%, weekly 74% and Fable 17%; the owner allowed work down to 2% remaining (AGENTS.md sets the floor at 3%; the owner set 2% for named continuations on 2026-10-19 and restated it on 2026-10-21). Read usage before the next wave.
