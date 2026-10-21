@@ -1,0 +1,477 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-22",
+  "timezone": "Asia/Bangkok",
+  "root": "Codex",
+  "baseRevision": "072461fa39d43646cfbeb6865dcffbe7ea1f6aa9",
+  "workBranch": "codex/app3a-market-wait-checkpoint-gwylmk",
+  "wipRevision": "a877733d5a2cf6d336b331333e6e0bf5615425bd",
+  "scope": "R6-1 through R6-6 local engineering checkpoint. Historical stages retain their committed contract limits; R6-6 is newly verified here. This is not F1-F30 owner-private or production acceptance.",
+  "status": "Root accepted R6-6 as local fixture mechanics after independent testing, architecture audit, separate leak review and a full synthetic dry run. Owner authorizes periodic commit/push. CI is pending for the containing commit.",
+  "stages": [
+    {
+      "stage": "R6-1",
+      "revision": "8c21fa9e7fd2a0db9703f85d4f4a25f26c963156",
+      "contractDecision": "RD-MP-44",
+      "scope": "Package renderer, trace producer and producer closure",
+      "authority": "Committed contract and handoff; historical stages are not newly re-accepted as owner-private acceptance."
+    },
+    {
+      "stage": "R6-2",
+      "revision": "19de3a5e78605320bf3a4588656ea6a8dbe2aebf",
+      "contractDecision": "RD-MP-46",
+      "scope": "Pure package gates and synthetic golden",
+      "authority": "Committed contract and handoff; historical stages are not newly re-accepted as owner-private acceptance."
+    },
+    {
+      "stage": "R6-3",
+      "revision": "f1b7e1533289311e8ce9bc3d0e83414db24e6845",
+      "contractDecision": "RD-MP-47",
+      "scope": "Fixture package store extension, inspection and grants",
+      "authority": "Committed contract and handoff; historical stages are not newly re-accepted as owner-private acceptance."
+    },
+    {
+      "stage": "R6-4",
+      "revision": "c5be80ab003638eae678609a39a987c5cbc8c4ee",
+      "contractDecision": "RD-MP-48",
+      "scope": "Package service and canonical string pairs",
+      "authority": "Committed contract and handoff; historical stages are not newly re-accepted as owner-private acceptance."
+    },
+    {
+      "stage": "R6-4 follow-up/R6-5",
+      "revision": "072461fa39d43646cfbeb6865dcffbe7ea1f6aa9",
+      "contractDecision": "RD-MP-49",
+      "scope": "Bounds, transaction guards and runtime isolation",
+      "authority": "Committed contract and handoff; historical stages are not newly re-accepted as owner-private acceptance."
+    },
+    {
+      "stage": "R6-6",
+      "revision": null,
+      "contractDecision": "RD-MP-50",
+      "scope": "Owner-local private acceptance harness and opt-in synthetic dry run",
+      "authority": "Final local hashes and reviewed evidence in this record; containing commit provides revision. Private execution remains NOT RUN."
+    }
+  ],
+  "previousEvidence": "docs/evidence/PM1_F11_01_R6_4_FOLLOWUP_R6_5_LOCAL_2026-10-22.json",
+  "files": {
+    "test/helpers/mp-private-inputs.mjs": "ccef04321274fca874ed69bbda24e564a6d17f1bcc307d9d752282ea54d1b4f9",
+    "test/helpers/mp-acceptance-world.mjs": "54ff89a843582a67549732276b5ed3f1d4227da4303578781e353142f09ce6de",
+    "test/postgres/mp-private-acceptance.test.mjs": "60051125bc02e0fd7c0245d102cd86cf6d1d88d2bab2c030375fce308c84ce88"
+  },
+  "hashNote": "SHA-256 of final worktree bytes verified by root and tester before commit. No private file or source bytes are included.",
+  "behavior": [
+    "safeError uses an unexported per-process random 32-byte key for HMAC-SHA-256 message tags, truncated to eight hex characters. Its whole body is guarded; throwing getters, proxies or label conversion use the constant fallback.",
+    "Repository and fixtures roots are realpathed. Private file names, locations, links, size, raw hashes, analysis shape and effective-input hashes remain checked. The test-only expected source hash has no environment bypass.",
+    "After missing/location/unpinned checks and before private file reads, the harness checks committed manifest/source-definition pins and cluster freshness. Private mode requires MP_PRIVATE_FRESH_CLUSTER=1, only standard/admin databases and no robot_pa_ roles. Freshness is checked again before context creation; database log controls are installed and verified before private DB writes.",
+    "Provenance records SHA-256 and HEAD equality for manifest, source-hash definition and all three harness files. Missing Git fails closed. Private manifest/source pins must match HEAD. End cleanliness is recorded; end provenance failure still flushes cleanup evidence and fails the run.",
+    "Cleanup records every tracked database and role drop, numeric remaining counts and verification status. Failed drops, leftover objects or cleanup errors fail the run. The owner must dispose of the private cluster data directory; dropping a database alone does not erase private WAL.",
+    "Owner and Bot reuse is refused before another holdout admission/execution; intentional reads and refused freshness probes do not consume another holdout.",
+    "Summary writing enforces decision NONE and exact NOT_RUN/CHECKS_HELD/CHECKS_FAILED statuses. Static checks also reject test diagnostics, warnings, debug logging and assert calls in private case bodies. Summary output stays ignored.",
+    "Each deployment selection comes from its own analysis. Derived member variants replace the ten catalog rows by pine_variable and recompute analysis/review/request hashes, use a fixed fixture-derived review label, and record derived_variant rather than variant input-hash facts. P7 uses catalog defaults with EMA20/100; P8 uses M2_ZERO. Warmup respects max(1006,5*emaSlowInput) across members while retaining the fixture/request floor.",
+    "MP_ACCEPTANCE_DRY_RUN=1 runs committed synthetic source and fixture analyses through the fixture runner. Either private environment variable being set refuses the dry run before loading the world. Every dry-run case is SYN and its summary is separate. PX remains explicitly skipped because its operator path requires the unreplaced source gate."
+  ],
+  "verification": {
+    "defaultNoPrivate": {
+      "command": [
+        "node",
+        "--test",
+        "--test-reporter=tap",
+        "test/postgres/mp-private-acceptance.test.mjs"
+      ],
+      "tests": 32,
+      "pass": 21,
+      "fail": 0,
+      "skipped": 11,
+      "note": "Independent tester ran the final default file. Private input and case skips are NOT RUN, not passes."
+    },
+    "independentProbes": {
+      "initial": {
+        "pass": 16,
+        "fail": 0
+      },
+      "round2CorrectionProbes": {
+        "pass": 2,
+        "fail": 0
+      },
+      "note": "Independent probes ran on their pinned round1/round2 snapshots. Unchanged pure probes were not repeated after the final P3/P4 fixture-only correction."
+    },
+    "syntheticDryRun": {
+      "command": [
+        "env",
+        "MP_ACCEPTANCE_DRY_RUN=1",
+        "node",
+        "--test",
+        "--test-reporter=tap",
+        "--test-isolation=process",
+        "--test-concurrency=1",
+        "test/postgres/mp-private-acceptance.test.mjs"
+      ],
+      "tests": 32,
+      "pass": 31,
+      "fail": 0,
+      "skipped": 1,
+      "caseChecksHeld": 192,
+      "seconds": 18.735,
+      "source": "Committed synthetic fixture behind the fixture source-gate wrapper; no private inputs.",
+      "summarySha256": "55f7344cdffaea509d44422b40871a6ce2dc8b1c257ec6e6ef5a88d1a2cc6ed7",
+      "decision": "NONE",
+      "cases": [
+        {
+          "id": "P1",
+          "label": "SYN",
+          "status": "CHECKS_HELD",
+          "checksHeld": 55,
+          "fItems": [
+            "F17",
+            "F27",
+            "F28",
+            "F23",
+            "F22"
+          ],
+          "reason": null
+        },
+        {
+          "id": "P2",
+          "label": "SYN",
+          "status": "CHECKS_HELD",
+          "checksHeld": 22,
+          "fItems": [
+            "F19"
+          ],
+          "reason": null
+        },
+        {
+          "id": "P3",
+          "label": "SYN",
+          "status": "CHECKS_HELD",
+          "checksHeld": 23,
+          "fItems": [
+            "F18"
+          ],
+          "reason": null
+        },
+        {
+          "id": "P4",
+          "label": "SYN",
+          "status": "CHECKS_HELD",
+          "checksHeld": 12,
+          "fItems": [
+            "F20"
+          ],
+          "reason": null
+        },
+        {
+          "id": "P5",
+          "label": "SYN",
+          "status": "CHECKS_HELD",
+          "checksHeld": 36,
+          "fItems": [
+            "F21"
+          ],
+          "reason": null
+        },
+        {
+          "id": "P6",
+          "label": "SYN",
+          "status": "CHECKS_HELD",
+          "checksHeld": 23,
+          "fItems": [
+            "F10",
+            "F11"
+          ],
+          "reason": null
+        },
+        {
+          "id": "P7",
+          "label": "SYN",
+          "status": "CHECKS_HELD",
+          "checksHeld": 8,
+          "fItems": [
+            "F24"
+          ],
+          "reason": null
+        },
+        {
+          "id": "P8",
+          "label": "SYN",
+          "status": "CHECKS_HELD",
+          "checksHeld": 5,
+          "fItems": [
+            "F29"
+          ],
+          "reason": null
+        },
+        {
+          "id": "P9",
+          "label": "SYN",
+          "status": "CHECKS_HELD",
+          "checksHeld": 8,
+          "fItems": [
+            "F30"
+          ],
+          "reason": null
+        },
+        {
+          "id": "PX",
+          "label": "SYN",
+          "status": "NOT_RUN",
+          "checksHeld": 0,
+          "fItems": [
+            "OPERATOR_PATH"
+          ],
+          "reason": null
+        }
+      ],
+      "cleanup": {
+        "cleanup_database_drops": [
+          true,
+          true
+        ],
+        "cleanup_role_drops": [
+          true,
+          true
+        ],
+        "cleanup_end_database_count": 0,
+        "cleanup_end_role_count": 0,
+        "cleanup_end_counts_verified": true,
+        "cleanup_failed": false
+      },
+      "clusterStopped": true,
+      "clusterRemoved": true,
+      "preflight": {
+        "version": "16.15",
+        "max_connections": 100,
+        "password_encryption": "scram-sha-256",
+        "admin_scram": true,
+        "host_scram": true,
+        "wrong_password_rejected": true
+      },
+      "p4ActualScreenReasons": [
+        "SENSITIVITY_FAILED"
+      ],
+      "provenanceAtExecution": {
+        "baseCommit": "072461fa39d43646cfbeb6865dcffbe7ea1f6aa9",
+        "treeClean": false,
+        "treeCleanEnd": false,
+        "manifestMatchesHead": true,
+        "sourceDefinitionMatchesHead": true,
+        "harnessMatchesHead": false,
+        "note": "Harness files were uncommitted at dry-run time; their SHA-256 matches the final files above. The dry run deliberately does not require committed private pins or fresh-cluster attestation."
+      }
+    },
+    "priorRegression": {
+      "revision": "072461fa39d43646cfbeb6865dcffbe7ea1f6aa9",
+      "focusedPass": 136,
+      "correctedIsolationReplayPass": 20,
+      "reference": "docs/evidence/PM1_F11_01_R6_4_FOLLOWUP_R6_5_LOCAL_2026-10-22.json",
+      "note": "Historical R6-4/R6-5 validation, not newly rerun here."
+    },
+    "importInventory": "The only executable test importing the new helpers is test/postgres/mp-private-acceptance.test.mjs. Both final default and dry-run paths ran; no product module changed.",
+    "notRun": [
+      "Private P0 Python tests and private P1-P9/PX owner-local execution.",
+      "TradingView compile or actual per-member parity acceptance.",
+      "Staging or production installation, migration or deployment.",
+      "CI for this containing commit at record preparation."
+    ]
+  },
+  "mutations": {
+    "valid": 20,
+    "assertionKills": 18,
+    "behavioralExceptionKills": 2,
+    "trueSurvivors": 0,
+    "setupOrSyntaxFailures": 0,
+    "experiments": [
+      {
+        "id": "01-unkeyed-tag",
+        "target": "test/helpers/mp-private-inputs.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "02-getter-outside-try",
+        "target": "test/helpers/mp-private-inputs.mjs",
+        "classification": "behavioral-exception-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "03-root-not-realpath",
+        "target": "test/helpers/mp-private-inputs.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "04-analysis-raw-bypass",
+        "target": "test/helpers/mp-private-inputs.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "05-preflight-bypass",
+        "target": "test/helpers/mp-private-inputs.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "06-fresh-database-bypass",
+        "target": "test/helpers/mp-acceptance-world.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "07-fresh-role-bypass",
+        "target": "test/helpers/mp-acceptance-world.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "08-cleanup-role-swallow",
+        "target": "test/helpers/mp-acceptance-world.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "09-git-missing-bypass",
+        "target": "test/helpers/mp-private-inputs.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "10-pin-bypass",
+        "target": "test/helpers/mp-private-inputs.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "11-write-status-bypass",
+        "target": "test/helpers/mp-private-inputs.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "12-owner-reuse-bypass",
+        "target": "test/helpers/mp-acceptance-world.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "13-bot-reuse-bypass",
+        "target": "test/helpers/mp-acceptance-world.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "14-before-admission-bypass",
+        "target": "test/helpers/mp-acceptance-world.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "15-dryrun-empty-flag-bypass",
+        "target": "test/postgres/mp-private-acceptance.test.mjs",
+        "classification": "behavioral-exception-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "16-warmup-first-member",
+        "target": "test/helpers/mp-acceptance-world.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "17-static-warning",
+        "target": "test/helpers/mp-acceptance-world.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "18-static-diagnostic",
+        "target": "test/helpers/mp-acceptance-world.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 1,
+        "exit": 1
+      },
+      {
+        "id": "P1-runner-bypass",
+        "target": "test/postgres/mp-private-acceptance.test.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 2,
+        "exit": 1
+      },
+      {
+        "id": "P2-flush-skip-on-git-failure",
+        "target": "test/postgres/mp-private-acceptance.test.mjs",
+        "classification": "assertion-kill",
+        "snapshotRound": 2,
+        "exit": 1
+      }
+    ],
+    "restoration": "All three files were restored to their pinned snapshot after each mutation and at handback. Later intentional corrections have new hashes above.",
+    "chronology": "Eighteen initial mutations checked round1. Two extra assertion kills checked round2 P1 runner selection and cleanup flush. These are snapshot-specific experiments, not a claim that all twenty were rerun on round3. The final P3/P4 changes were reviewed and exercised by the full dry run."
+  },
+  "review": {
+    "roles": [
+      "Coder",
+      "Independent tester",
+      "Independent architecture auditor",
+      "Separate independent leak-path reviewer"
+    ],
+    "openActionableFindings": 0,
+    "resolved": [
+      {
+        "finding": "P1 dry run selected the unreplaced private source runner.",
+        "resolution": "P1 and other evaluations share the per-world runner selector; the exact call-site mutant is caught and actual P1 package flow passes."
+      },
+      {
+        "finding": "End provenance failure skipped cleanup summary flush.",
+        "resolution": "Cleanup facts, unknown cleanliness and finished timestamp are flushed before rethrow; a separate mutation catches regression."
+      },
+      {
+        "finding": "The first actual dry run stopped P3 at checksum verification.",
+        "resolution": "F18 setup reseals only the disposable unattempted fixture envelope and appends the changed-member compile record. The final attempt proves C1 PASS, C2 only BI_SOURCE_LOGIC_CHANGED at ordinal2 and no member1 diagnostic."
+      },
+      {
+        "finding": "P4 unnecessarily required COST_STRESS_FAILED despite a valid NO_VALID_CANDIDATE result.",
+        "resolution": "Root retained the F20 no-candidate/no-holdout/no-package contract and records actual nonempty refusal codes; final SYN reason is SENSITIVITY_FAILED. No search or calibration loop ran."
+      }
+    ],
+    "leakReviewLimit": "Static reviewers found no confirmed private-byte leak in the current call graph. The sanitizer is a trusted-caller boundary: identifier-shaped codes/constraints/facts and existing PrivateSafeError objects are not arbitrary secret redaction. No private run or live logging audit was performed."
+  },
+  "limitations": [
+    "Every package compile/evidence record is fixture evidence under RD-MP-41; dry-run success does not establish real TradingView compile/parity.",
+    "Private acceptance F1-F30 remains open; F30 QR-4 is the existing explicit carry-over. R6 completion is engineering preparation only.",
+    "Private analyses may differ from fixture inputs; P4 calibration and candidate outcomes may differ. No automatic optimizer or data-range loop is authorized.",
+    "Raw-byte committed-pin checks may refuse a checkout with different line endings; no normalization or pin weakening is introduced.",
+    "The fixture runner replaces the source gate only on synthetic paths; default private execution keeps the real gate.",
+    "READY remains false. No route or worker wiring and no staging installation.",
+    "The source-independent F suites are inherited from their committed stages and require the same-revision owner acceptance record; they are not newly declared privately accepted here."
+  ],
+  "ownerLocalNext": [
+    "O1: place reviewed source and two analyses in an ignored owner-local directory. Cloud must never receive or run them.",
+    "O2: record and commit analysis SHA-256/effective-input pins in the existing manifest.",
+    "O3: establish whether private analyses match fixture M1/M2 values.",
+    "O7: explicitly decide permission for fixture-labelled member2 derived variants.",
+    "Create a dedicated PostgreSQL16 cluster, use MP_PRIVATE_FRESH_CLUSTER=1, run required P0 and F1-F30 suites locally and dispose of the cluster data directory. Harness CHECKS_HELD is not root/owner acceptance."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "privateAcceptanceRun": false,
+  "safety": "Spot/Paper only. No host/VPS, deploy, production migration, Live, guard reset or Best Inputs apply. Private reviewed source never entered tracked files or this evidence. The held terminal-evidence N1 line is unchanged."
+}
