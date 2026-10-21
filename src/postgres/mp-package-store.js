@@ -48,13 +48,14 @@ import {validateBar} from './pine-bridge-market.js';
  * them and the C3 and C4 gates compare them as decimals. The run view of this module is the stored run as it is: no mapping exists, so the manifest result_sha256 is the stored result_hash.
  * Hard limits (RD-MP-48 F2, N2): C3 BI_RISK_RELAXATION compares the risk-profile limits with the CURRENT SERVER hard limits, the ranges of the risk policy validator (validateRisk, the
  * same constant HARD_RANGES the PF-4 proposals use), not with the frozen policy itself. Bridge bounds: no current server source of "the Bot's permitted Bridge bounds" exists yet (the
- * apply flow, F09-03, is not built), so C4 BI_BRIDGE_PAIR_OUT_OF_BOUNDS uses the frozen contract domains; that is a recorded limitation (RD-MP-48), and a caller may pass narrower bounds.
- * Test seams: hooks.step(name) is called at LOOKUPS, RENDER, B0, TX_BEGIN and INSERT (the RC-16 order); hooks.beforeTransaction() and hooks.beforeInsert() let a test hold a build open.
+ * apply flow, F09-03, is not built), so C4 BI_BRIDGE_PAIR_OUT_OF_BOUNDS uses the frozen contract domains; that is a recorded limitation (RD-MP-48), and a caller may pass narrower bounds (an override only tightens, RD-MP-49 R1).
+ * Test seams: hooks.step(name, detail) is called at LOOKUPS, RENDER, B0, TX_BEGIN and INSERT (the RC-16 order) and, in an attempt, at GATES with the evidence the gates read (detail.evidence); hooks.beforeTransaction() and hooks.beforeInsert() let a test hold a build open.
  */
 
 export const PACKAGE_STORE_CODES = Object.freeze({
   NOT_FOUND: 'NOT_FOUND', BUILD_B0_FAILED: 'BUILD_B0_FAILED', BUILD_INPUT_INVALID: 'BUILD_INPUT_INVALID', EXPORT_NOT_OPEN: 'EXPORT_NOT_OPEN', STORED_INTEGRITY: 'PACKAGE_STORED_INTEGRITY',
-  STORE_GUARD: 'PACKAGE_STORE_GUARD', ENGINE_MISMATCH: 'BI_ENGINE_HASH_MISMATCH', HOLDOUT_UNREADABLE: 'HOLDOUT_INDEPENDENCE_NOT_CHECKED', EXPOSURE_UNREADABLE: 'BI_EXPOSURE_REGISTER_UNAVAILABLE'
+  STORE_GUARD: 'PACKAGE_STORE_GUARD', ENGINE_MISMATCH: 'BI_ENGINE_HASH_MISMATCH', HOLDOUT_UNREADABLE: 'HOLDOUT_INDEPENDENCE_NOT_CHECKED', EXPOSURE_UNREADABLE: 'BI_EXPOSURE_REGISTER_UNAVAILABLE',
+  IN_TRANSACTION: 'PACKAGE_STORE_IN_TRANSACTION'
 });
 /** Names of the guard triggers of mp-package-store.sql (the CONSTRAINT of each QR004). */
 export const PACKAGE_STORE_GUARD_NAMES = Object.freeze({
@@ -149,6 +150,19 @@ export function riskLimitsOf(policy) {
 }
 /** RD-MP-48 F2, N2: the current server hard limits, {name: {min, max}} as decimal strings, from the ranges of the risk policy validator (HARD_RANGES, the one constant of those ranges). */
 export const serverHardLimits = () => Object.fromEntries(Object.entries(HARD_RANGES).map(([name, [min, max]]) => [name, {min, max}]));
+/**
+ * RD-MP-49 R1: an override of the hard limits or the Bridge bounds may only TIGHTEN its default. Per key present in the default, the result takes the larger min and the smaller max of the
+ * default and the override, compared as decimals (D, never Number). A key the override omits keeps its default; a key the default lacks is ignored; a bound that is not a readable decimal,
+ * or an entry that is not an object, is ignored, so the default bound stays in force.
+ */
+export function tightenBounds(defaults, override) {
+  const readable = value => { try { return D(value); } catch { return null; } };
+  return Object.fromEntries(Object.entries(defaults).map(([name, bound]) => {
+    const given = isObject(override) && isObject(override[name]) ? override[name] : {};
+    const min = readable(given.min), max = readable(given.max);
+    return [name, {min: min !== null && min.gt(bound.min) ? min.toFixed() : bound.min, max: max !== null && max.lt(bound.max) ? max.toFixed() : bound.max}];
+  }));
+}
 /** RD-MP-48 limitation: the Bridge bounds are the frozen contract domains (no current server source of the Bot's permitted Bridge bounds exists before the F09-03 apply flow). */
 export const bridgeBoundsOf = contract => Object.fromEntries(['atr_multiplier', 'rr'].map(name => [name, {min: contract.bridge_domains[name].min, max: contract.bridge_domains[name].max}]));
 /**
@@ -311,7 +325,7 @@ export class MultiPineFixturePackageService {
   /** db: a FIXTURE-role PostgresDatabase (not in a transaction); store: a Store on THE SAME db; readBotState: storeBotState over that store; clock: epoch ms; engineHash: the live mp-combined
    * closure hash (a function or a 64-hex string, required: the caller computes it, as the executor's caller does, so this module imports no engine module); producerClosureHash: the live producer closure hash (default mpPackageTraceClosureHash); currentRules: the
    * rules B0 compares the run rules with (default RULES); hooks: {step(name), beforeInsert()} test seams (RC-16 order, a forced build race); hardLimits and bridgeBounds: overrides of the hard
-   * limits and Bridge bounds the C3 and C4 gates take (default: the current server hard limits and the frozen contract domains, see the module comment). */
+   * limits and Bridge bounds the C3 and C4 gates take; each is intersected with its default per key, so it can only tighten (default: the current server hard limits and the frozen contract domains, see the module comment). */
   constructor({db, store, readBotState, clock, engineHash, producerClosureHash = mpPackageTraceClosureHash, currentRules = RULES, hooks = {}, hardLimits, bridgeBounds} = {}) {
     if (!db || typeof db.query !== 'function' || typeof db.transaction !== 'function' || db.isTransaction === true) throw new Error('db must be a PostgresDatabase outside a transaction');
     if (!store || store.db !== db) throw new Error('store must be a Store on the same db');
@@ -328,6 +342,8 @@ export class MultiPineFixturePackageService {
 
   /** One SERIALIZABLE transaction, restarted from its first statement after a lost race (at most PACKAGE_STORE_MAX_RETRIES times). */
   async #transact(body) {
+    // RD-MP-49 R8: nested db.transaction calls reuse the caller's transaction and bypass SERIALIZABLE restart semantics.
+    if (this.#db.isTransaction) return refusal(PACKAGE_STORE_CODES.IN_TRANSACTION);
     let last;
     for (let tries = 0; tries <= PACKAGE_STORE_MAX_RETRIES; tries++) {
       try { return await this.#db.transaction(body, {isolation: 'SERIALIZABLE'}); }
@@ -508,6 +524,7 @@ export class MultiPineFixturePackageService {
   /* ---------- build ---------- */
 
   async build(input) {
+    if (this.#db.isTransaction) return refusal(PACKAGE_STORE_CODES.IN_TRANSACTION);
     if (!isObject(input) || Object.keys(input).some(key => !['owner_id', 'run_id'].includes(key)) || !text(input.owner_id) || typeof input.run_id !== 'string' || !UUID.test(input.run_id)) return refusal(PACKAGE_STORE_CODES.NOT_FOUND);
     const {owner_id, run_id} = input;
     const loaded = await getMultiRun(this.#db, {owner_id, run_id});
@@ -569,6 +586,9 @@ export class MultiPineFixturePackageService {
     if (!isObject(input) || !text(input.owner_id) || (input.export_id === undefined) === (input.run_id === undefined)) return refusal(PACKAGE_STORE_CODES.NOT_FOUND);
     const key = input.export_id ?? input.run_id;
     if (typeof key !== 'string' || !UUID.test(key)) return refusal(PACKAGE_STORE_CODES.NOT_FOUND);
+    // RD-MP-49 R7: db.transaction inside an outer transaction of the same database runs its body in that outer transaction (src/postgres/db.js line 91), so SET TRANSACTION READ ONLY would
+    // change or fail the caller's transaction. A read from inside a transaction is refused before any statement.
+    if (this.#db.isTransaction) return refusal(PACKAGE_STORE_CODES.IN_TRANSACTION);
     // RD-MP-48 N7: one READ ONLY REPEATABLE READ transaction, so the stored export and the live state it is compared with come from one snapshot. It writes nothing.
     return this.#db.transaction(async () => {
       const db = this.#db;
@@ -647,6 +667,7 @@ export class MultiPineFixturePackageService {
   /** All fixture records of the export: a compile record and the four evidence kinds per member, and a clearance per candidate blocker and member. skip: ["<ordinal>:<kind>"] leaves records out
    * ("<ordinal>:compile" for the compile record, "<ordinal>:clearance" for that member's clearances) so a test can model missing evidence. */
   async recordFixtureRecords({owner_id, export_id, skip = []}) {
+    if (this.#db.isTransaction) return refusal(PACKAGE_STORE_CODES.IN_TRANSACTION);
     const opened = await this.#openExport(owner_id, export_id);
     if (opened.ok !== true) return opened;
     const cut = new Set(skip);
@@ -697,8 +718,9 @@ export class MultiPineFixturePackageService {
       const subject = {owner_id, run, internal: true, deployments: prepared.deployments, current_rules: this.#currentRules, files, package_hash: row.package_hash, binding_hash: row.binding_hash,
         binding: row.binding, export_id, export: {library_versions: row.library_versions}, member_sources: prepared.members, compile_records: records.compile_records,
         native_alert_isolation: prepared.isolation, evidence: records.evidence, clearances: records.clearances, current: prepared.current,
-        hard_limits: this.#limits ?? serverHardLimits(), bridge_bounds: this.#bounds ?? bridgeBoundsOf(contract), dataset: prepared.dataset, trace_reproduction: trace,
+        hard_limits: tightenBounds(serverHardLimits(), this.#limits), bridge_bounds: tightenBounds(bridgeBoundsOf(contract), this.#bounds), dataset: prepared.dataset, trace_reproduction: trace,
         attempt: {attempt_id: attemptId, validator_engine_hash: validator, validated_at_utc: isoOf(now)}, attempt_no: attemptNo, replay_mismatch: false};
+      await this.#step('GATES', {evidence: records.evidence, bridge_bounds: subject.bridge_bounds, hard_limits: subject.hard_limits});
       const result = evaluateMultiPackage(subject);
       if (isRefused(result)) return refusal(String(result.refused), {fields: [...result.fields], ready: false});
       if (result.status === null || (result.pass && !isObject(result.record))) return refusal('BI_TRANSITION_INVALID', {codes: [...result.next.codes]});

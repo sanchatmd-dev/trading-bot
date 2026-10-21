@@ -1,0 +1,341 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-22",
+  "timezone": "Asia/Bangkok",
+  "root": "Codex",
+  "baseRevision": "85f53319690a668959327a265d636c9384e5cc58",
+  "workBranch": "codex/app3a-market-wait-checkpoint-gwylmk",
+  "wipRevision": "a877733d5a2cf6d336b331333e6e0bf5615425bd",
+  "scope": "R6-4 follow-up and R6-5 isolation only, RD-MP-49. Four WIP paths were selectively restored, corrected and independently verified. R6-6 was not imported or accepted.",
+  "status": "Root accepted as local isolated fixture engineering evidence. Owner authorized commit/push of this reviewed set; CI pending at commit preparation.",
+  "method": "A coder completed R8, M03 and M11. An independent tester ran serialized mutations with exact restoration. An independent architecture auditor reviewed stable snapshots, found a QR-4 probe gap and a participant-mutation evidence gap, and confirmed both closed after root correction and tester follow-up. Root reviewed the final evidence and accepted this bounded local slice.",
+  "files": {
+    "src/postgres/mp-package-store.js": "997e1c66de7506dcf1a7188c4dabd2f1db4505bad3046bc669260a27b8e774ec",
+    "test/postgres/mp-package-build.test.mjs": "99d915511a2974b7c878e3ae909212560e88e96a0f9e62c848989bc4c7757142",
+    "test/mp-package-store-static-isolation.test.js": "267c644bd0d924530e1e7123fb0b13d8540d83b936e0fc3bbe3b54a886f59d79",
+    "test/postgres/mp-package-isolation.test.mjs": "4d25aa33f610c141d6c5ff6874d3315edce25568762d3ca0409267930cc89b3d"
+  },
+  "hashNote": "SHA-256 of the final worktree bytes, not a claim that these bytes are committed.",
+  "behavior": [
+    "Each attempt intersects hardLimits and bridgeBounds with the server ranges and frozen contract domains per key using Decimal comparisons. Omitted keys retain defaults; unknown keys and unreadable bounds do not replace defaults.",
+    "A stored policy above the server range is refused with BI_RISK_RELAXATION even with a wider override. Attempt-level tests observe exact hard_limits and bridge_bounds passed to the gates.",
+    "read, build, attempt, recordCompile, recordEvidence, recordClearance and recordFixtureRecords refuse valid-key calls inside an outer transaction with PACKAGE_STORE_IN_TRANSACTION before any query or nested transaction. Tests preserve caller transaction identity, isolation, read-only state and usability.",
+    "M03 distinguishes max 10 from 9.9999999999999999999. F17 checks one evidence member per ordinal; a newer failing compile record supersedes an older clean record.",
+    "R6-5 uses a real stored fixture export, exact eleven-table allowlist, static runtime import closure, denied table/service access, paired databases and positive controls for owner readers, QR-3, QR-4 and G8. The corrected QR-4 probe uses source hashes read from the stored multi contract."
+  ],
+  "environment": {
+    "node": "24.19.0",
+    "npm": "11.9.0",
+    "python": "3.12.14",
+    "pythonPackages": "167 packages match quant_lab uv.lock; 12-module smoke check passed before the slice.",
+    "postgres": {
+      "version": "16.15",
+      "max_connections": 100,
+      "password_encryption": "scram-sha-256",
+      "admin_scram": true,
+      "host_scram": true,
+      "wrong_password_rejected": true
+    },
+    "clients": "PostgreSQL 16 Docker-backed pg_dump and pg_restore; dump/restore tests passed. Native server/client binaries and systemd user service are unavailable.",
+    "clusterPolicy": "Disposable loopback fixture clusters; all owned test clusters stopped and removed. No host or VPS access."
+  },
+  "verification": {
+    "focusedRegression": {
+      "pass": 136,
+      "fail": 0,
+      "skipped": 0,
+      "todo": 0,
+      "checks": [
+        {
+          "command": [
+            "node",
+            "--test",
+            "test/mp-package-store-static-isolation.test.js",
+            "test/mp-run-store-static-isolation.test.js",
+            "test/multi-pine-package-closure.test.js"
+          ],
+          "pass": 27,
+          "fail": 0,
+          "skipped": 0,
+          "todo": 0,
+          "seconds": 0.251
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "--test-isolation=process",
+            "--test-concurrency=1",
+            "test/postgres/mp-package-build.test.mjs"
+          ],
+          "pass": 35,
+          "fail": 0,
+          "skipped": 0,
+          "todo": 0,
+          "seconds": 50.984
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "--test-isolation=process",
+            "--test-concurrency=1",
+            "test/postgres/mp-package-isolation.test.mjs"
+          ],
+          "pass": 20,
+          "fail": 0,
+          "skipped": 0,
+          "todo": 0,
+          "seconds": 5.813
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "--test-isolation=process",
+            "--test-concurrency=1",
+            "test/postgres/mp-run-store.test.mjs"
+          ],
+          "pass": 31,
+          "fail": 0,
+          "skipped": 0,
+          "todo": 0,
+          "seconds": 10.466
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "--test-isolation=process",
+            "--test-concurrency=1",
+            "test/postgres/mp-package-store.test.mjs"
+          ],
+          "pass": 22,
+          "fail": 0,
+          "skipped": 0,
+          "todo": 0,
+          "seconds": 20.527
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "--test-isolation=process",
+            "--test-concurrency=1",
+            "test/postgres/runtime-grants.test.mjs"
+          ],
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "todo": 0,
+          "seconds": 0.747
+        }
+      ],
+      "timingNote": "The six command durations total 88.788 seconds, excluding setup and cleanup.",
+      "revisionNote": "This pass preceded the QR-4 test-only correction. Source and other tests stayed unchanged; the corrected isolation file was rerun below."
+    },
+    "correctedIsolation": {
+      "command": [
+        "node",
+        "--test",
+        "--test-reporter=tap",
+        "test/postgres/mp-package-isolation.test.mjs"
+      ],
+      "baselinePass": 20,
+      "restoredFinalPass": 20,
+      "fail": 0,
+      "skipped": 0,
+      "sha256": "4d25aa33f610c141d6c5ff6874d3315edce25568762d3ca0409267930cc89b3d",
+      "clusterRemoved": true
+    },
+    "notRun": [
+      "Full npm test on the final modified tree (the environment baseline was tested separately).",
+      "CI pending at commit preparation; check the resulting commit runs separately.",
+      "Private-source acceptance, TradingView compile or parity acceptance, staging and production checks."
+    ]
+  },
+  "mutations": {
+    "valid": 16,
+    "assertionKills": 14,
+    "databaseConstraintKills": 1,
+    "equivalent": 1,
+    "trueSurvivors": 0,
+    "experiments": [
+      {
+        "id": "I01-runtime-select",
+        "target": "scripts/grant-postgres-mp-package-fixture.sql",
+        "change": "Runtime SELECT on exports after fixture grant checks",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "I02-runtime-execute",
+        "target": "scripts/grant-postgres-mp-package-fixture.sql",
+        "change": "Explicit EXECUTE on existing invoker latest-status function; expected equivalent because PUBLIC already has EXECUTE",
+        "classification": "equivalent",
+        "exit": 0
+      },
+      {
+        "id": "I03-extra-package-table",
+        "target": "src/postgres/mp-package-store.sql",
+        "change": "Unexpected package-prefix table",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "I04-extra-bi-table",
+        "target": "src/postgres/mp-package-store.sql",
+        "change": "Unexpected one-Pine prefix table",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "I05-runtime-gates-import",
+        "target": "src/server.js",
+        "change": "One static runtime-root import of gates",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "I06-runtime-store-import",
+        "target": "src/server.js",
+        "change": "One static runtime-root import of store",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "I07-export-without-fixture",
+        "target": "src/postgres/mp-package-store.js",
+        "change": "Stored participant source row loses fixture flag; may fail DB constraint before QR3 validateRequest",
+        "classification": "database-constraint-kill-before-request",
+        "exit": 1
+      },
+      {
+        "id": "I08-reader-leaks-package-row",
+        "target": "src/postgres/mp-package-store.js",
+        "change": "Cache built export identity then return its row from read to runtime role without privilege failure",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "I09-runtime-update",
+        "target": "scripts/grant-postgres-mp-package-fixture.sql",
+        "change": "Additional actual privilege mutation to compensate equivalent EXECUTE",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "B01-M03-Number-compare",
+        "target": "src/postgres/mp-package-store.js",
+        "change": "Use Number for max comparison, retain decimal output",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "B02-M11-bridge-bypass",
+        "target": "src/postgres/mp-package-store.js",
+        "change": "Allow wider bridge bounds at attempt",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "B03-M11-hard-bypass",
+        "target": "src/postgres/mp-package-store.js",
+        "change": "Allow wider hard limits at attempt",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "B04-R8-build-guard",
+        "target": "src/postgres/mp-package-store.js",
+        "change": "Remove build outer-transaction guard",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "B05-R8-shared-guard",
+        "target": "src/postgres/mp-package-store.js",
+        "change": "Remove transaction guard shared by attempt and record writers",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "B06-R8-fixture-records-guard",
+        "target": "src/postgres/mp-package-store.js",
+        "change": "Remove fixture-records outer-transaction guard",
+        "classification": "assertion-kill",
+        "exit": 1
+      },
+      {
+        "id": "I10-QR3-participant-without-fixture",
+        "target": "test/postgres/mp-package-isolation.test.mjs",
+        "change": "Remove fixture:row.fixture only from the request participant after reading a valid stored export.",
+        "classification": "assertion-kill",
+        "exit": 1,
+        "pass": 19,
+        "fail": 1,
+        "assertion": {
+          "code": "ERR_ASSERTION",
+          "actual": [
+            true,
+            null
+          ],
+          "expected": [
+            false,
+            "QR3_FIXTURE_PARTICIPANT"
+          ]
+        }
+      }
+    ],
+    "excludedInvalidAttempts": [
+      {
+        "id": "I01-runtime-select",
+        "reason": "Grant setup used an expired transaction-local role setting; syntax error before meaningful assertions. Corrected rerun is counted instead."
+      },
+      {
+        "id": "I02-runtime-execute",
+        "reason": "Grant setup used an expired transaction-local role setting; syntax error before meaningful assertions. Corrected rerun is counted instead."
+      },
+      {
+        "id": "I09-runtime-update",
+        "reason": "Grant setup used an expired transaction-local role setting; syntax error before meaningful assertions. Corrected rerun is counted instead."
+      }
+    ],
+    "rootScopeAmendment": "For I10 only, root extended the handoff mutation allowlist to the participant construction in the isolation test after a valid stored export read. This test-only amendment closed the literal participant-without-fixture requirement; no comparison product code changed.",
+    "restoration": "All original five mutation paths match initial SHA-256; the supplemental test mutation was restored exactly.",
+    "interpretation": [
+      "I07 reaches the stored-row constraint before request validation; it is not a QR-3 request assertion kill. I10 supplies that distinct evidence.",
+      "I02 explicit EXECUTE is equivalent because PUBLIC already grants EXECUTE. SECURITY INVOKER confers no table access; the tested read fails with 42501.",
+      "B05 first fails at attempt; the passing baseline covers all record writers, but no separate mutant kill is claimed for each shared-guard call site."
+    ]
+  },
+  "review": {
+    "openFindings": 0,
+    "closedFindings": [
+      {
+        "finding": "P2: QR-4 probe requested a nonmatching source hash.",
+        "resolution": "Root derives and asserts stored contract sources, queries them in both databases and requires an empty result; the existing one-Pine control remains."
+      },
+      {
+        "finding": "I07 did not test a participant without its fixture flag.",
+        "resolution": "Root authorized the narrow test-only mutation. The request assertion failed as expected, exact restoration passed, and the final full isolation file passed 20/20."
+      }
+    ],
+    "auditorExecutedTests": false,
+    "rootAcceptance": "Local fixture engineering only; no owner-private, research or production acceptance."
+  },
+  "limitations": [
+    "Private source gate is stubbed; compile, parity and other fixture records demonstrate mechanics only.",
+    "READY remains false. No runtime route or worker wiring; no staging installation.",
+    "Bridge bounds still use frozen domains until F09-03 defines the live source.",
+    "Table names/statistics remain visible to the runtime role; PUBLIC EXECUTE on invoker functions is not a package-row grant.",
+    "Stored-step trace derivation is not step re-evaluation. Timestamp ties remain deterministic rather than chronological.",
+    "F1 to F30 owner-local acceptance remains open; F30 QR-4 carry-over remains unchanged.",
+    "R6-6 privacy fixes, independent review and no-private dry run remain pending. The complete R6 evidence record is not yet claimed."
+  ],
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "commitPushAuthorized": true,
+  "safety": "Spot/Paper only. No deploy, production migration, Live, guard reset or Best Inputs apply. No private reviewed source entered tracked files. The held terminal-evidence N1 line is unchanged."
+}
