@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-23",
-  "scope": "QR-2 S5-4 Stage 2C reviewed local implementation checkpoint; PostgreSQL functional acceptance pending",
+  "scope": "Reviewed Stage2C implementation and 21 selected CI PostgreSQL functional tests; local Windows runtime and remaining differential/performance unqualified",
   "aggregationPolicy": "Do not sum overlapping author suites, fix reruns or grouped independent cases. Syntax/source review is not test or PG acceptance.",
   "executedAuthorRuns": [
     {
@@ -187,26 +187,27 @@
     "note": "Syntax checks are not added to test totals; no dedicated syntax raw log supplied"
   },
   "notRun": {
-    "postgres": true,
-    "newIntegrationTests": {
+    "localWindowsPostgres": true,
+    "newIntegrationTestsLocalWindows": {
       "path": "test/postgres/qr2-coverage-integration.test.mjs",
       "authoredScenarios": 3,
       "expectedSharedDatabases": 1,
-      "status": "NOT_RUN"
+      "status": "NOT_RUN_LOCALLY; all three passed separately in exact d0acf93 CI"
     },
-    "proposedRuntime": {
+    "localFunctionalPacket": {
       "selectedTests": 21,
       "files": 6,
       "expectedDatabases": 8,
-      "status": "PROPOSAL ONLY; awaiting headroom and final runtime audit/admission"
+      "status": "SOURCE_REVIEWED_NOT_RUN; awaiting sufficient headroom and explicit runtime admission"
     },
+    "financialDifferential": "NOT_RUN; new file not in d0acf93",
+    "followupRevisionCI": "NOT_YET_COMMITTED",
     "combinedPerformance": "OPEN",
     "fullStage2AndS5": "OPEN",
-    "stage3PublicationAndUi": "NOT_RUN",
-    "currentChangeCI": "NOT_VERIFIED_BY_THIS_PACKET"
+    "stage3PublicationAndUi": "NOT_RUN"
   },
   "limits": [
-    "C1 checks use query fakes; no SQL or isolation proof.",
+    "The focused C1 author/query-fake checks alone do not establish SQL or isolation; the separate d0acf93 CI scope records the selected actual PostgreSQL evidence.",
     "Author C2 selected ten tests include actual default-worker account parity/recovery, not PostgreSQL owner reader integration.",
     "Independent C2 old-pin scope and metadata-fix scope are separate; no full suite rerun at final pin.",
     "Worker cannot authenticate jointly forged trusted financial/context inputs.",
@@ -238,7 +239,8 @@
     "test/postgres/qr2-owner-independent.test.mjs": "8a9629ff41ad04f3648ddab3b74332612af70e66afd60e28aac9d9c02985dc0f",
     "test/postgres/qr2-compute-http.test.mjs": "e4f6cb03b65364e0a0e57e77b16bffd5323774068ce9d0203a774a5f75a1f910",
     "test/postgres/qr2-coverage-integration.test.mjs": "b499c58c763585015ec2b893681cb87f01bd2750d961ae50b5dd936b766b6f2a",
-    "test/helpers/qr2-reader-fixture.mjs": "022091da731ae37e6af87e7cce9bd73d5fba045469cc5e1390c57db9ee0b392e"
+    "test/helpers/qr2-reader-fixture.mjs": "022091da731ae37e6af87e7cce9bd73d5fba045469cc5e1390c57db9ee0b392e",
+    "test/postgres/qr2-coverage-financial.test.mjs": "7042792ac097ce06cd77f8f7a1cd428fa800d63e8e38285f25d36eea19229508"
   },
   "artifactPins": {
     ".qa-local/qr2-s5-4-stage2c/c1-audit.md": "9558b3c38e7a39e796d44fef5801838953b9dadb20cf9e9eb05ada1ede71d4ed",
@@ -281,19 +283,36 @@
     ".qa-local/qr2-s5-4-stage2c-runtime/root-headroom-observation.json": "a6ac1455c3d01c61079a5b6d9786a8faacb3f911580c1812e4c213c11b5f56b2",
     ".qa-local/qr2-s5-4-stage2c-runtime/root-selected-names.json": "512c282fc5e8b4d13a0855250c0694b677c6304c149ea8cd2e095282611705a1",
     ".qa-local/qr2-s5-4-stage2c/evidence-inputs.json": "992423f5b44abda77f5e67004b54f06f8d008dfa2fe65d9bd33532699ebf64b4",
-    ".qa-local/qr2-s5-4-stage2c/checkpoint-review.md": "6746808df3e772d3920f04fba1fb46ab2fa5b87e1cb9699e4cda8e186136ce27"
+    ".qa-local/qr2-s5-4-stage2c/checkpoint-review.md": "6746808df3e772d3920f04fba1fb46ab2fa5b87e1cb9699e4cda8e186136ce27",
+    ".qa-local/qr2-s5-4-stage2c/ci/postgres-39859557820.log": "26316ae2a59017b167b0470c4493523edbd061c48551972babbbba999b8b0a63",
+    ".qa-local/qr2-s5-4-stage2c/ci/postgres-39859557820-job.json": "4423bb007d155dcd955b4779dc647e624f9ae0fcb1bdaf0c0510d32669c74231",
+    ".qa-local/qr2-s5-4-stage2c/ci/verified-d0acf93.json": "822c5f81918b3e1eb5fab6cb627d816aed9618e3470238d471482b01ab2cc844",
+    ".qa-local/qr2-s5-4-stage2c/ci-functional-scope.md": "98feaee8e8eb5c74468de4dce9d61cb214b80c90918cc4d831111e4ecedc0c1a",
+    ".qa-local/qr2-s5-4-stage2c/financial-differential-author.md": "10d3b285f614296e30781a20a5aaf6325459cb3eac886d40b4b04b37f18c0cce",
+    ".qa-local/qr2-s5-4-stage2c/financial-differential-review.md": "31880a4484866fd23577868b9aba4402ad753f4fa9daf4b4d7c8ee79b2f5c385",
+    ".qa-local/qr2-s5-4-stage2c/financial-differential-fix-review.md": "46fc9c183f4c7d4d29db4c8b277ba74452238b902395f2785ae212e3b5532021",
+    ".qa-local/qr2-s5-4-stage2c/c3-proposal.md": "3ddb45e0c364f2a46b86edf16256beff48406dfadf821832ac205c1400074160",
+    ".qa-local/qr2-s5-4-stage2c/c3-method-recovery.md": "8e73a9af621363fe70df251ae5ddc4e1960bbf9445c44b389a91d29d3df9d567",
+    ".qa-local/qr2-s5-4-stage2c/c3-packet-review.md": "bc1a97e37dd3389793162c7efddb236088e888bd17c7e11421b6fc001dccf085",
+    ".qa-local/qr2-s5-3/ci-observed-d0acf931c2cf14cf330e69350d759599c2b503fe.json": "f94f495d9cb90f27012c143e1528c504c5af2a5f075e8449c30790613cb97e51",
+    ".qa-local/qr2-s5-4-stage2c/ci/independent-d0acf93.md": "0da330046738a363966927fab094b32c582d3593da501bd4add6c6abf3ea60ee",
+    ".qa-local/qr2-s5-4-stage2c/followup-checkpoint-review.md": "a4d4ed23c7026f113e3c2304440446239e549eff4b5a8bcfa5baaaa385a582f8",
+    ".qa-local/qr2-s5-4-stage2c/followup-checkpoint-fix-review.md": "1e248158595b404a12d9716d8581950125ac464907cd3109af881c88a87a31f3"
   },
-  "status": "IMPLEMENTED_REVIEWED_FUNCTIONAL_PENDING",
+  "status": "BOUNDED_CI_FUNCTIONAL_PASS_FOLLOWUP_AND_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-22T21:41:20.975Z",
+  "recordedAt": "2026-10-22T22:02:48.240Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
-    "functionalPostgres": false,
+    "functionalPostgres": true,
     "combinedPerformance": false,
     "productionLimits": false,
     "publicIntervals": false,
     "fullStage2": false,
-    "fullS5": false
+    "fullS5": false,
+    "functionalScope": "Only the 21 named assertions verified in exact-revision Ubuntu CI; broader functional acceptance remains incomplete.",
+    "localFunctionalPacket": false,
+    "functionalComplete": false
   },
   "provisionalLocalLimits": {
     "union_minutes": 43200,
@@ -337,10 +356,37 @@
     ]
   },
   "ci": {
-    "status": "PENDING",
-    "revision": null,
-    "runs": [],
-    "note": "The earlier M2 documentation scope CI does not qualify this changed product source."
+    "status": "PASS",
+    "revision": "d0acf931c2cf14cf330e69350d759599c2b503fe",
+    "runs": [
+      {
+        "id": 39859557826,
+        "name": "Quant Lab",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39859557826",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 39859557820,
+        "name": "Safety checks",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39859557820",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "jobCount": 9,
+    "actualSubstantiveStepCount": 16,
+    "selectedFunctionalPassCount": 21,
+    "fullSuiteTestCount": null,
+    "checkoutHashObserved": true,
+    "verificationArtifact": ".qa-local/qr2-s5-4-stage2c/ci/verified-d0acf93.json",
+    "sourceProvenance": "The verification artifact links the 12 source/test/helper pins at d0acf93. The new financial differential below is not part of that revision.",
+    "localWindowsRuntime": "NOT_RUN",
+    "limits": "Service-container teardown succeeded; this does not prove per-helper dispose or local pg_ctl/PID/port cleanup.",
+    "independentVerification": {
+      "status": "PASS_WITH_LIMITS",
+      "artifact": ".qa-local/qr2-s5-4-stage2c/ci/independent-d0acf93.md"
+    }
   },
   "checkpointReview": {
     "status": "PASS_WITH_LIMITS",
@@ -352,5 +398,31 @@
     "previousSourceSha256": "f112dc681009ca519285316ec0dd70ceed8a916a9fc2e8f576204e65866e4692",
     "change": "Removed one final blank line after staged diff whitespace check failed; no code or assertion changed.",
     "verification": "node --check and staged git diff --check passed; no tests rerun."
+  },
+  "financialDifferential": {
+    "status": "IMPLEMENTED_NOT_RUN",
+    "path": "test/postgres/qr2-coverage-financial.test.mjs",
+    "tests": 1,
+    "codeRevision": "PENDING_NEXT_COMMIT",
+    "sourceReview": "PASS_WITH_LIMITS_AFTER_ONE_LINE_IMPORT_FIX",
+    "syntax": "PASS",
+    "pureNamedExportSmoke": "PASS",
+    "databaseOrWorkerExecution": "NOT_RUN",
+    "finding": "Initial validateResponse import named a module that does not export it; corrected to qr2-labels.js before execution.",
+    "acceptanceRequired": "Exact-revision raw test PASS, literal financial oracle, whole-body comparison except established timers, identical valuation predecessors and changed one-minute coverage gap."
+  },
+  "combinedMeasurement": {
+    "status": "PREPARATION_ONLY_NOT_RUN",
+    "packet": "docs/QR2_S5_4_STAGE2C_COMBINED_MEASUREMENT_PACKET_2026-10-23.md",
+    "runtimeAdmitted": false,
+    "requirements": "All RC-Q35/36 bars retained; current matched baseline, independent HTTP client/probe, exact financial seed counts, byte accounting and lifecycle source qualification remain required."
+  },
+  "followupCheckpointReview": {
+    "status": "PASS_AFTER_SCOPING_STALE_STATUS_FIELDS",
+    "reports": [
+      ".qa-local/qr2-s5-4-stage2c/followup-checkpoint-review.md",
+      ".qa-local/qr2-s5-4-stage2c/followup-checkpoint-fix-review.md"
+    ],
+    "originalFindingPreserved": true
   }
 }

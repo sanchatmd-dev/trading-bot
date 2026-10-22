@@ -1,6 +1,6 @@
 # QR-2 S5-4 Stage 2C: internal reader and worker integration
 
-Status: **C1/C2 IMPLEMENTED AND REVIEWED; FUNCTIONAL DATABASE ACCEPTANCE PENDING**. The admission history below remains authoritative for each bounded slice.
+Status: **BOUNDED CI FUNCTIONAL PASS; FINANCIAL DIFFERENTIAL AND PERFORMANCE PENDING**. The admission history below remains authoritative for each bounded slice.
 
 ## Objective and qualification envelope
 
@@ -112,3 +112,13 @@ Allow syntax and narrowly named unit/actual-worker tests for parity, clone safet
 ## Reviewed implementation checkpoint
 
 C1 and C2 are implemented with provisional local/off limits. Independent review closed non-enumerable lowering-value loss, preserved original refusal details and bounded metadata before identity allocation. Original failures remain in the evidence. This checkpoint does not accept real PostgreSQL behavior: the separately reviewed functional packet is held below its 1 GiB headroom gate, so its 21 selected tests remain NOT RUN. Combined performance and Stage 3 remain open. No public field, route, production setting or security guard changed.
+
+## Root functional differential admission
+
+The independent CI scope review identified one unexecuted assertion in the broader functional bar: a price-bearing account must retain its complete financial response when an interior coverage bar unused by valuation is removed. Root admits exactly one new regression file, `test/postgres/qr2-coverage-financial.test.mjs`, plus its ignored author/review reports. Use existing isolated fixture producers and the default worker pool; retain literal financial values and compare the whole response with only the two existing reader timing fields normalized. Prove the deleted timestamp is internal to the full-candle range and absent from every selected valuation predecessor; require changed coverage with identical valuation rows and unchanged ledger digests. Keep synthetic reporting clocks explicit and funding/fill chronology coherent. No product source, shared fixture, pool, route or guard change is admitted.
+
+Preparation permits syntax and source review only. The local six-file/21-test packet and its 1 GiB headroom gate remain unchanged and NOT RUN; this added regression is a separate functional follow-up, not an undisclosed extension of that runtime packet. Root will follow its committed exact revision through existing authorized CI and inspect actual raw test output before acceptance. CI evidence is separate from local Windows lifecycle/resource evidence. Full Stage2C/C3 and Stage3 remain open.
+
+## Current CI qualification scope
+
+Exact revision d0acf931c2cf14cf330e69350d759599c2b503fe passed both workflows. Root verified nine successful jobs, sixteen actual substantive steps and all twenty-one selected functional PASS records in the raw PostgreSQL log. The checkout hash ties those observations to the reviewed source. This accepts only that bounded Ubuntu CI semantic scope; the earlier local Windows packet remains NOT RUN, with no headroom or lifecycle claim. The separate priced-account interior-gap differential is implemented and source-reviewed after one import repair, but has not executed. Its exact-revision result and the separate combined measurement are still required; full Stage 2C and Stage 3 remain open.
