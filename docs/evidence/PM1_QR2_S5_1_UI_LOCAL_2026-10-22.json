@@ -8,7 +8,7 @@
     "packet": "docs/QR2_S5_1_LOCAL_UI_GO_PACKET_2026-10-22.md",
     "decision": "Explicit owner GO on 2026-10-22, including focused tests, evidence updates and periodic commit/push; no deployment or target route activation."
   },
-  "status": "IMPLEMENTED_TESTED_RENDER_PENDING",
+  "status": "IMPLEMENTED_TESTED_CI_GREEN_RENDER_PENDING",
   "accepted": false,
   "behavior": [
     "Overview component reads existing per-Bot or owner endpoints with explicit GET submission; it adds no backend route or flag.",
@@ -107,29 +107,288 @@
     }
   },
   "ci": {
-    "status": "REPAIR_PENDING_EXACT_REVISION_CI",
-    "previousRevision": "6f7fcff603d0cdd0c29990c431ae1fdd1ca291c5",
+    "status": "SUCCESS",
+    "revision": "581f6e37ed25010aa4dc9dd5d095886b6886ac05",
+    "runs": [
+      {
+        "id": 39763265408,
+        "name": "Safety checks",
+        "revision": "581f6e37ed25010aa4dc9dd5d095886b6886ac05",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39763265408",
+        "status": "completed",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "name": "scope",
+            "conclusion": "success",
+            "executedChecks": []
+          },
+          {
+            "name": "postgres",
+            "conclusion": "success",
+            "executedChecks": [
+              {
+                "name": "Run npm run test:postgres 2>&1 | tee postgres-test.log",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "container",
+            "conclusion": "success",
+            "executedChecks": [
+              {
+                "name": "Run docker build -t astra-paper-staging .",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "test (windows-latest)",
+            "conclusion": "success",
+            "executedChecks": [
+              {
+                "name": "Run npm test 2>&1 | tee unit-test.log",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "test (ubuntu-latest)",
+            "conclusion": "success",
+            "executedChecks": [
+              {
+                "name": "Run npm test 2>&1 | tee unit-test.log",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 39763265564,
+        "name": "Quant Lab",
+        "revision": "581f6e37ed25010aa4dc9dd5d095886b6886ac05",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39763265564",
+        "status": "completed",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "name": "scope",
+            "conclusion": "success",
+            "executedChecks": []
+          },
+          {
+            "name": "quant (windows-latest)",
+            "conclusion": "success",
+            "executedChecks": [
+              {
+                "name": "Run uv run --no-sync ruff check .",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run uv run --no-sync pytest",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/trace-reproduction-closure.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run uv run --no-sync python -m robot_quant.smoke",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "quant (ubuntu-latest)",
+            "conclusion": "success",
+            "executedChecks": [
+              {
+                "name": "Run uv run --no-sync ruff check .",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run uv run --no-sync pytest",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/trace-reproduction-closure.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run uv run --no-sync python -m robot_quant.smoke",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "gate",
+            "conclusion": "success",
+            "executedChecks": []
+          }
+        ]
+      }
+    ],
     "previousRuns": [
       {
         "id": 39760612800,
         "name": "Safety checks",
+        "revision": "6f7fcff603d0cdd0c29990c431ae1fdd1ca291c5",
         "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39760612800",
-        "status": "in_progress",
-        "nodeUbuntu": "failure",
-        "nodeWindows": "cancelled",
-        "postgres": "in_progress",
-        "container": "success"
+        "status": "completed",
+        "conclusion": "failure",
+        "jobs": [
+          {
+            "name": "scope",
+            "conclusion": "success",
+            "executedChecks": []
+          },
+          {
+            "name": "test (windows-latest)",
+            "conclusion": "cancelled",
+            "executedChecks": [
+              {
+                "name": "Run npm test 2>&1 | tee unit-test.log",
+                "conclusion": "cancelled"
+              }
+            ]
+          },
+          {
+            "name": "postgres",
+            "conclusion": "success",
+            "executedChecks": [
+              {
+                "name": "Run npm run test:postgres 2>&1 | tee postgres-test.log",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "container",
+            "conclusion": "success",
+            "executedChecks": [
+              {
+                "name": "Run docker build -t astra-paper-staging .",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "test (ubuntu-latest)",
+            "conclusion": "failure",
+            "executedChecks": [
+              {
+                "name": "Run npm test 2>&1 | tee unit-test.log",
+                "conclusion": "failure"
+              }
+            ]
+          }
+        ]
       },
       {
         "id": 39760612786,
         "name": "Quant Lab",
+        "revision": "6f7fcff603d0cdd0c29990c431ae1fdd1ca291c5",
         "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39760612786",
         "status": "completed",
         "conclusion": "success",
-        "verification": "Both OS jobs ran their lint, pytest, parity, trace closure and smoke steps successfully; scope and gate also passed."
+        "jobs": [
+          {
+            "name": "scope",
+            "conclusion": "success",
+            "executedChecks": []
+          },
+          {
+            "name": "quant (ubuntu-latest)",
+            "conclusion": "success",
+            "executedChecks": [
+              {
+                "name": "Run uv run --no-sync ruff check .",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run uv run --no-sync pytest",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/trace-reproduction-closure.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run uv run --no-sync python -m robot_quant.smoke",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "quant (windows-latest)",
+            "conclusion": "success",
+            "executedChecks": [
+              {
+                "name": "Run uv run --no-sync ruff check .",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run uv run --no-sync pytest",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node --test test/trace-reproduction-closure.test.js",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run uv run --no-sync python -m robot_quant.smoke",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "gate",
+            "conclusion": "success",
+            "executedChecks": []
+          }
+        ]
       }
     ],
-    "note": "These are exact-revision observations before the repair commit. No test count is inferred from job success."
+    "stepVerification": "All nine jobs passed. Node tests on both operating systems, PostgreSQL tests, container build, and both Quant Lab lint/test/parity/trace/smoke sequences executed successfully. Only the three failure-only annotation steps were skipped.",
+    "testCounts": "Not inferred from job success; measured local counts remain in validation and ciRepair.",
+    "rawReadback": {
+      "path": ".qa-local/qr2-s5-1/ci-final-readback.json",
+      "sha256": "00485da31c7dd37ab3e419e2b32dca0fa4175a4b621c3e04490dd02816eff539"
+    }
   },
   "gates": {
     "spotPaperOnly": true,
@@ -145,7 +404,7 @@
     "guardReset": "NOT AUTHORIZED",
     "bestInputsApply": "NOT AUTHORIZED"
   },
-  "nextAction": "Read back exact-revision CI. Complete rendered synthetic acceptance after local browser capability is enabled; S5-1 and full S5 remain unaccepted.",
+  "nextAction": "Check scope-only CI for this documentation checkpoint, then stop the CI heartbeat. Complete synthetic desktop/mobile English/Thai rendering after local browser capability is enabled; S5-1 and full S5 remain unaccepted.",
   "ciRepair": {
     "date": "2026-10-22",
     "failedRevision": "6f7fcff603d0cdd0c29990c431ae1fdd1ca291c5",
