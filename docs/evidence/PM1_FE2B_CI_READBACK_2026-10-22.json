@@ -1,0 +1,108 @@
+{
+  "schema": "PM1_CI_READBACK_V1",
+  "date": "2026-10-22",
+  "timezone": "Asia/Bangkok",
+  "observedAt": "2026-10-22T09:47:43+07:00",
+  "revision": "15e7bbf39031305e1dd71736e74e0161f4bfd5a3",
+  "scope": "Read-only exact-revision CI inspection for owner-local root transfer; no remediation or rerun.",
+  "runs": [
+    {
+      "id": 39674818373,
+      "name": "Safety checks",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39674818373",
+      "head_sha": "15e7bbf39031305e1dd71736e74e0161f4bfd5a3"
+    },
+    {
+      "id": 39674818360,
+      "name": "Quant Lab",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39674818360",
+      "head_sha": "15e7bbf39031305e1dd71736e74e0161f4bfd5a3"
+    }
+  ],
+  "safetyJobs": [
+    {
+      "id": 119481782727,
+      "name": "scope",
+      "conclusion": "success",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39674818373/job/119481782727"
+    },
+    {
+      "id": 119481868050,
+      "name": "container",
+      "conclusion": "success",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39674818373/job/119481868050"
+    },
+    {
+      "id": 119481868058,
+      "name": "postgres",
+      "conclusion": "failure",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39674818373/job/119481868058"
+    },
+    {
+      "id": 119481868064,
+      "name": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39674818373/job/119481868064"
+    },
+    {
+      "id": 119481868152,
+      "name": "test (windows-latest)",
+      "conclusion": "success",
+      "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39674818373/job/119481868152"
+    }
+  ],
+  "postgres": {
+    "jobId": 119481868058,
+    "tests": 1608,
+    "pass": 1584,
+    "fail": 7,
+    "skipped": 17,
+    "cancelled": 0,
+    "todo": 0,
+    "seconds": 1376.727455741,
+    "failureGroups": [
+      {
+        "file": "test/postgres/mp-package-build.test.mjs",
+        "line": 983,
+        "topLevelFailures": 1,
+        "observed": "SQL parity assertion: mp-package-store EARLIER_ONE_PINE_SQL lacks the FIXED_INPUT_EVAL exclusion now present in quant-library EARLIER.",
+        "next": "Review holdout/search semantics and mirror parity; preserve fixed-evaluation separation. No fix validated."
+      },
+      {
+        "file": "test/postgres/quant-profile-runtime-v2.test.mjs",
+        "lines": [
+          755,
+          764,
+          795,
+          805,
+          812
+        ],
+        "topLevelFailures": 5,
+        "observed": "SQLSTATE 42703: column q.contract does not exist.",
+        "sourceInspection": "Minimal quant_jobs fixture at line 55 lacks contract; quant-research-foundation.js reconciliation at line 158 now reads it.",
+        "next": "Reproduce and review fixture/schema correction; preserve stop/release guarantees."
+      },
+      {
+        "file": "test/postgres/quant-io-release-guard-hardening.test.mjs",
+        "line": 432,
+        "topLevelFailures": 1,
+        "observed": "Nested quant-profile-runtime-v2 suite fails with the same q.contract error.",
+        "next": "Rerun hardened suite after reviewed correction; do not weaken guard."
+      }
+    ]
+  },
+  "decision": "INTEGRATION_BLOCKED_PENDING_REMEDIATION",
+  "localEvidence": "PM1_FE2B_LOCAL_2026-10-22.json",
+  "limits": [
+    "Earlier 391 focused PG passes do not cover this complete CI run.",
+    "Local engineering evidence remains historical; complete integration acceptance is not established.",
+    "Quant Lab success does not override Safety failure.",
+    "No native QS/systemd/cgroup proof, private acceptance, deployment or activation.",
+    "This handoff performs no product edits or new test execution."
+  ],
+  "nextOwner": "Incoming owner-local root"
+}

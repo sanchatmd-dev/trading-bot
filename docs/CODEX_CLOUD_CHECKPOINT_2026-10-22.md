@@ -1,5 +1,7 @@
 # Codex cloud checkpoint — 2026-10-22 Bangkok
 
+Current transfer: the owner requests return to the local root. The [complete handoff](CODEX_CLOUD_TO_LOCAL_ROOT_HANDOFF_2026-10-22.md) supersedes this checkpoint's earlier non-transfer statement. FE-2b `15e7bbf` integration CI is now known to fail seven PostgreSQL cases; see [readback](evidence/PM1_FE2B_CI_READBACK_2026-10-22.json). Cloud implementation stops; remediation belongs to the incoming root. No product changes are made by this handoff.
+
 ## Owner-GO continuation checkpoint
 
 The owner subsequently approved FE-2b and QR-2 S4-4/S4-5, including periodic commit/push. QR-2 landed at `cfe0bc9` and both CI workflows passed. Its [evidence](evidence/PM1_QR2_S4_4_S4_5_LOCAL_2026-10-22.json) records the disabled-by-default owner declaration/performance APIs.

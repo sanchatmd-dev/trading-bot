@@ -448,5 +448,13 @@
   "rootAcceptance": {
     "by": "Codex root",
     "statement": "Accepted as local FE-2b engineering evidence after focused/full regression, independent review and serialized mutation checks; no deployment, activation or target eligibility."
+  },
+  "ciReadback": {
+    "revision": "15e7bbf39031305e1dd71736e74e0161f4bfd5a3",
+    "record": "PM1_FE2B_CI_READBACK_2026-10-22.json",
+    "safety": "failure",
+    "quantLab": "success",
+    "integrationStatus": "BLOCKED_PENDING_REMEDIATION",
+    "note": "Supersedes the historical ci pending string. Local recorded results are unchanged; full PostgreSQL CI reports seven additional failures. No fix or rerun during handoff."
   }
 }
