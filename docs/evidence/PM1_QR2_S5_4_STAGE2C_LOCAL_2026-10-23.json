@@ -350,11 +350,22 @@
     ".qa-local/qr2-s5-4-stage2c/c3-bars-verify-test.json": "51129fa31bae87d9d0ed03c488d4f6b046b89c44548c736a6fd0dd9c2fbb618a",
     ".qa-local/qr2-s5-4-stage2c/c3-bars-verify-test.md": "074f727ecbced23ee413844ce7ec6bba0484eff502f4138dbcf996e2f8cf3f86",
     ".qa-local/qr2-s5-4-stage2c/p5-p6-documentation-ci-verified.json": "80d37e497e05ecbc39e3deee71b8c29464c4d922c9e1005723cb157f0fc57925",
-    ".qa-local/qr2-s5-3/ci-observed-f112d7df9f16eb77b9d47153bca4ecd0d0fc10fe.json": "60cd4ca55a917721f49bb18e4a3178d198b87c8197b07b34115db37ca2747445"
+    ".qa-local/qr2-s5-3/ci-observed-f112d7df9f16eb77b9d47153bca4ecd0d0fc10fe.json": "60cd4ca55a917721f49bb18e4a3178d198b87c8197b07b34115db37ca2747445",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic.mjs": "bdffb6023bbe77425bcd3c18ff570526115faabea3663757af05808fff60eff8",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-author.md": "0ce14cbb267751b60256d9797737e5426c1e8efcbacb7d9ac84959f907411732",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-test.mjs": "9fa9010659571d7e92d1cafa92a7b2a2980ffa3e46c5dc2434eca75fc0f3826a",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-test.json": "6e40b97dc804cb5af45ac275974123b0a296574d7f113cf4d79e91f9edf5f8f5",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-test.md": "63b02ec55a7c4980e5138618bac5a6e6589069c5952f7caf9838b381e83cf08a",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-test-fixed.mjs": "f195cd0c9c0666f51f5d59934d914a257c1d08b9816e88e2e3eba7cdc73bf3c5",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-test-fixed.json": "50b9dde119e0991c4bdc70b580eda81ef67f348b210b5f702ec52fa236e29c35",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-fix-review.md": "656b6aad8f0b7c3765522a1dde9dc2f23b2eb9a1bb59536584cd392cbb4cc8b6",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-source-review.md": "ad667d8e53258cfc65d767a8824e348f44eac446e87b0ac49c396bdea1b0aee2",
+    ".qa-local/qr2-s5-4-stage2c/p7-p8-documentation-ci-verified.json": "5d78638fe03a307a3e0427f8c39065cb6f0431561e1f04b2faacd93585a1aa5f",
+    ".qa-local/qr2-s5-3/ci-observed-ac1f5407a98dddcbb7bce3a51900acfdd7f3bc8c.json": "f3d679336d81a9613f8dbea7b91d84b02d5d0d37d97b063aadc461ccc690dc0e"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-22T23:08:28.632Z",
+  "recordedAt": "2026-10-22T23:24:30.339Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -558,11 +569,42 @@
         "histogramUpdateOrdering": "UNPROVED",
         "report": ".qa-local/qr2-s5-4-stage2c/c3-monitoring-contract.md"
       },
-      "diagnostic": "NOT_RUN",
+      "diagnostic": {
+        "status": "INJECTED_QUERY_POOL_FAKE_CHECKS_PASS_RUNTIME_NOT_RUN",
+        "module": ".qa-local/qr2-s5-4-stage2c/c3-diagnostic.mjs",
+        "sourceSha256": "bdffb6023bbe77425bcd3c18ff570526115faabea3663757af05808fff60eff8",
+        "initialGroups": 18,
+        "initialPassed": 16,
+        "initialFailed": 2,
+        "finalGroups": 22,
+        "finalPassed": 22,
+        "finalFailed": 0,
+        "initialArtifact": ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-test.json",
+        "finalArtifact": ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-test-fixed.json",
+        "review": ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-fix-review.md",
+        "sourceReview": ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-source-review.md",
+        "corrections": "Bind response scope, currency, requested/resolved range and clock to the fixed plan; require exactly five owner rows and expected owner counts.",
+        "suiteDelta": "Not an unchanged-suite rerun: the happy fake now uses actual public metadata fields, the identity mutation targets scope.bot_id, and four binding groups were added. Both original failures remain preserved.",
+        "completeFake": {
+          "sourceQueries": 23,
+          "barQueries": 101,
+          "poolFactoryArguments": 0,
+          "serialJobs": 2,
+          "ledgerDigests": 10,
+          "poolCloses": 1
+        },
+        "limits": [
+          "Injected validators are permissive and minimal response bodies are not production-schema certification.",
+          "No actual PostgreSQL, worker, pool, product validators or HTTP ran.",
+          "R3c RUN/allMATCH and owner member detailed gates remain pending; empty findings do not prove either.",
+          "JSON UTF-8 serialization bytes are not structured-clone heap or the complete wire envelope.",
+          "Snapshot coherence, chronology, external cancellation, lifecycle and performance remain open."
+        ]
+      },
       "runtimeAdmitted": false,
       "remaining": [
-        "Actual producer/storage chronology re-verification and read-only snapshot ownership",
-        "Two-job diagnostic reader/default-pool wiring and response/gate/digest assertions",
+        "Source-qualified R3c and owner member gate verification on the same frozen materialized snapshot",
+        "Actual producer/storage chronology and coherent read-only snapshot ownership",
         "Independent client/HTTP implementation and executed monitoring-boundary tests",
         "Finite setup/SQL/helper/process/sample/whole-run budgets and monotonic supervisor",
         "Complete runtime source manifest and lifecycle review",
@@ -731,24 +773,24 @@
     "originalFindingPreserved": true
   },
   "preparationCheckpointCI": {
-    "revision": "f112d7df9f16eb77b9d47153bca4ecd0d0fc10fe",
+    "revision": "ac1f5407a98dddcbb7bce3a51900acfdd7f3bc8c",
     "status": "SCOPE_ONLY_PASS",
     "runs": [
       {
-        "id": 39868593177,
+        "id": 39869901861,
         "name": "Safety checks",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39868593177"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39869901861"
       },
       {
-        "id": 39868593231,
+        "id": 39869901809,
         "name": "Quant Lab",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39868593231"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39869901809"
       }
     ],
     "actualScopeSteps": 2,
     "actualGateSteps": 1,
     "skippedRuntimeJobs": 4,
     "newRuntimeTests": 0,
-    "artifact": ".qa-local/qr2-s5-4-stage2c/p5-p6-documentation-ci-verified.json"
+    "artifact": ".qa-local/qr2-s5-4-stage2c/p7-p8-documentation-ci-verified.json"
   }
 }
