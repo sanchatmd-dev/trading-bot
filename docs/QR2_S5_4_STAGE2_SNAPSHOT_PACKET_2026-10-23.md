@@ -1,6 +1,6 @@
 # QR-2 S5-4 Stage 2: qualified coverage snapshots
 
-Status: **STAGE 2A ACCEPTED WITH CODE CI PASS; SEPARATE SMALL M1 QUALIFICATION ACCEPTED; INTEGRATION NOT YET ADMITTED**. This continues the owner's local Roadmap GO. The [S5-4 contract](QR2_S5_4_GAP_INTERVAL_PACKET_2026-10-23.md) remains authoritative. Root accepts the bounded design below after source investigation and independent measurement planning. Existing Stage 1 CI is a separate item.
+Status: **STAGE 2A ACCEPTED WITH CODE CI PASS; SEPARATE M1 AND M2 QUALIFICATIONS ACCEPTED; INTEGRATION NOT YET ADMITTED**. This continues the owner's local Roadmap GO. The [S5-4 contract](QR2_S5_4_GAP_INTERVAL_PACKET_2026-10-23.md) remains authoritative. Root accepts the bounded design below after source investigation and independent measurement planning. Existing Stage 1 CI is a separate item.
 
 ## Outcome and limits
 
@@ -65,3 +65,7 @@ Root accepts only the unwired seams. Final focused Node tests passed 29/29. Inde
 ## Exact CI and M1 follow-up
 
 Exact Stage 2A revision `a5d4db611b07062e0a302a05f5027e842c42a11b` passed [Safety checks](https://github.com/sanchatmd-dev/trading-bot/actions/runs/39849193764) and [Quant Lab](https://github.com/sanchatmd-dev/trading-bot/actions/runs/39849193796): all nine jobs and 16 actual substantive test/build/lint/parity/trace/smoke steps succeeded. No CI test counts are inferred. The [separate M1 packet](QR2_S5_4_STAGE2B_M1_PACKET_2026-10-23.md) records twelve accepted small synthetic PostgreSQL cases and verified fixture cleanup. Those observations do not select production budgets or admit account/owner integration. The historical Stage 2A local-only checks above retain their original scope; M1 evidence is separate. Next is a bounded M2 measurement packet for shared windows, public-envelope allocation and worker transport.
+
+## M2 local measurement checkpoint
+
+The [M2 packet](QR2_S5_4_STAGE2B_M2_PACKET_2026-10-23.md) is accepted for its bounded synthetic measurements: 14 verified owner-envelope replies and two expected refusals, with unchanged product source. This is not actual owner integration or production compute-pool qualification. Next is a separately reviewed disabled-gate local integration packet and combined-cost qualification. Numerical defaults remain unselected; Stage 3 publication and rendering remain open.

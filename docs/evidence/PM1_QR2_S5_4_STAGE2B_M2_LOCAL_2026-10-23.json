@@ -1,0 +1,1120 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "scope": "QR-2 S5-4 Stage 2B-M2: synthetic local shared coverage and measurement-worker transport",
+  "status": "BOUNDED_LOCAL_M2_ACCEPTED",
+  "codeRevision": "a5d4db611b07062e0a302a05f5027e842c42a11b",
+  "checkoutRevision": "66ff4abdd26e6a91bda36bd565552d1b0a3ae780",
+  "packet": "docs/QR2_S5_4_STAGE2B_M2_PACKET_2026-10-23.md",
+  "outcome": "Root accepts the bounded local M2 evidence after independent offline verification. Product source is unchanged. Immutable defaults and account/owner integration remain unaccepted.",
+  "checks": {
+    "database": {
+      "version": "PostgreSQL 16.15",
+      "measuredAttempts": 16,
+      "successfulReplies": 14,
+      "expectedRefusals": 2,
+      "unexpectedFailures": 0,
+      "maxResidentRows": 43200,
+      "actualUnionReads": 16,
+      "additionalExplainAnalyzeExecutions": 4,
+      "runnerElapsedMs": 13449,
+      "supervisorElapsedMs": 15727,
+      "note": "Attempt counts include expected fail-closed outcomes. They are not test assertions or CI totals. Import and tiny transport preflights are separate."
+    },
+    "independentVerification": {
+      "status": "PASS WITH LIMITS",
+      "ownerEnvelopes": 14,
+      "primaryAnalyticOracleEnvelopes": 12,
+      "tinyLiteralEnvelopes": 2,
+      "journalStarts": 16,
+      "journalTerminals": 16,
+      "sourceBaselineFiles": 9,
+      "sourceMismatches": 0,
+      "method": "Offline independent recipe oracle and exact literals; verifier imports no product modules. No DB or worker rerun."
+    },
+    "refusals": [
+      {
+        "id": "input-sentinel",
+        "code": "QR2_RANGE_ADMISSION_REFUSED",
+        "workerAllocated": false
+      },
+      {
+        "id": "output-minus-one",
+        "code": "QR2_RANGE_ADMISSION_REFUSED",
+        "workerAllocated": false
+      }
+    ],
+    "fixtureCleanup": {
+      "stopped": true,
+      "pgCtlStatus": 3,
+      "recordedPidAbsent": true,
+      "loopbackPortClosed": true,
+      "stoppedDataRetained": true,
+      "recursiveDeletion": false,
+      "faultInjectedCancellation": false
+    },
+    "review": {
+      "harness": "Initial P2 durable-attempt finding corrected before execution: fsynced START and TERMINAL records preserve attempts across interruption.",
+      "finalHarness": "PASS WITH LIMITS",
+      "lifecycle": "PASS WITH LIMITS",
+      "runtime": "PASS WITH LIMITS"
+    },
+    "checkpointReview": "PASS WITH LIMITS: independent reviewer verified 50 prior source/artifact pins and published measurements. Root synchronized the stale Roadmap row and added this review report pin."
+  },
+  "measurements": {
+    "cases": [
+      {
+        "id": "dense-single",
+        "status": "PASS",
+        "recipe": {
+          "kind": "dense",
+          "minutes": 43200,
+          "starts": [
+            0
+          ],
+          "botIds": [
+            "bot00"
+          ],
+          "extent_minutes": 43200,
+          "starts_minutes": [
+            0
+          ],
+          "seed_count": 43200,
+          "seed_formula": "(i+1)*60000",
+          "tiny_timestamps": null,
+          "batches_max": 10000
+        },
+        "observations": [
+          {
+            "number": 1,
+            "label": "first-touch",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 104.97179999999992,
+            "registryBytes": 457425,
+            "charges": {
+              "union_minutes": 43200,
+              "timestamp_rows": 43200,
+              "unique_windows": 1,
+              "derivation_visits": 43200,
+              "output_intervals": 0,
+              "input_bytes_upper_bound": 737746,
+              "output_bytes_upper_bound": 2755
+            },
+            "ownerBytes": 585,
+            "roundTripReplyMs": 96.014892578125
+          },
+          {
+            "number": 2,
+            "label": "warm",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 71.21069999999997,
+            "registryBytes": 457425,
+            "charges": {
+              "union_minutes": 43200,
+              "timestamp_rows": 43200,
+              "unique_windows": 1,
+              "derivation_visits": 43200,
+              "output_intervals": 0,
+              "input_bytes_upper_bound": 737746,
+              "output_bytes_upper_bound": 2755
+            },
+            "ownerBytes": 585,
+            "roundTripReplyMs": 92.4033203125
+          },
+          {
+            "number": 3,
+            "label": "warm",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 62.25019999999995,
+            "registryBytes": 457425,
+            "charges": {
+              "union_minutes": 43200,
+              "timestamp_rows": 43200,
+              "unique_windows": 1,
+              "derivation_visits": 43200,
+              "output_intervals": 0,
+              "input_bytes_upper_bound": 737746,
+              "output_bytes_upper_bound": 2755
+            },
+            "ownerBytes": 585,
+            "roundTripReplyMs": 77.759765625
+          }
+        ],
+        "plans": {
+          "planningMs": 0.101,
+          "executionMs": 23.775,
+          "tree": {
+            "type": "Limit",
+            "rows": 43200,
+            "loops": 1,
+            "index": null,
+            "condition": null,
+            "removed": 0,
+            "sharedHit": 802,
+            "sharedRead": 0,
+            "children": [
+              {
+                "type": "Index Only Scan",
+                "rows": 43200,
+                "loops": 1,
+                "index": "pine_market_bars_pkey",
+                "condition": "((broker = 'binance-global'::text) AND (symbol = 'BTCUSDT'::text) AND (timeframe = '1'::text) AND (bar_time > '0'::bigint) AND (bar_time <= '2592000000'::bigint))",
+                "removed": 0,
+                "sharedHit": 802,
+                "sharedRead": 0,
+                "children": []
+              }
+            ]
+          }
+        },
+        "actualUnionReads": [
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              2592000000,
+              43201
+            ],
+            "rows": 43200,
+            "ms": 44.20169999999996
+          },
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              2592000000,
+              43201
+            ],
+            "rows": 43200,
+            "ms": 30.40859999999998
+          },
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              2592000000,
+              43201
+            ],
+            "rows": 43200,
+            "ms": 29.253799999999956
+          }
+        ],
+        "additionalExplainAnalyzeExecutions": 1
+      },
+      {
+        "id": "dense-five",
+        "status": "PASS",
+        "recipe": {
+          "kind": "dense",
+          "minutes": 43200,
+          "starts": [
+            0,
+            1080,
+            2160,
+            3240,
+            4320
+          ],
+          "botIds": [
+            "bot00",
+            "bot01",
+            "bot02",
+            "bot03",
+            "bot04"
+          ],
+          "extent_minutes": 43200,
+          "starts_minutes": [
+            0,
+            1080,
+            2160,
+            3240,
+            4320
+          ],
+          "seed_count": 43200,
+          "seed_formula": "(i+1)*60000",
+          "tiny_timestamps": null,
+          "batches_max": 10000
+        },
+        "observations": [
+          {
+            "number": 1,
+            "label": "first-touch",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 104.8877,
+            "registryBytes": 458742,
+            "charges": {
+              "union_minutes": 43200,
+              "timestamp_rows": 43200,
+              "unique_windows": 5,
+              "derivation_visits": 205200,
+              "output_intervals": 0,
+              "input_bytes_upper_bound": 743554,
+              "output_bytes_upper_bound": 12199
+            },
+            "ownerBytes": 2651,
+            "roundTripReplyMs": 141.3291015625
+          },
+          {
+            "number": 2,
+            "label": "warm",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 75.17849999999999,
+            "registryBytes": 458742,
+            "charges": {
+              "union_minutes": 43200,
+              "timestamp_rows": 43200,
+              "unique_windows": 5,
+              "derivation_visits": 205200,
+              "output_intervals": 0,
+              "input_bytes_upper_bound": 743554,
+              "output_bytes_upper_bound": 12199
+            },
+            "ownerBytes": 2651,
+            "roundTripReplyMs": 135.041015625
+          },
+          {
+            "number": 3,
+            "label": "warm",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 78.98130000000015,
+            "registryBytes": 458742,
+            "charges": {
+              "union_minutes": 43200,
+              "timestamp_rows": 43200,
+              "unique_windows": 5,
+              "derivation_visits": 205200,
+              "output_intervals": 0,
+              "input_bytes_upper_bound": 743554,
+              "output_bytes_upper_bound": 12199
+            },
+            "ownerBytes": 2651,
+            "roundTripReplyMs": 125.576416015625
+          }
+        ],
+        "plans": {
+          "planningMs": 0.107,
+          "executionMs": 32.872,
+          "tree": {
+            "type": "Limit",
+            "rows": 43200,
+            "loops": 1,
+            "index": null,
+            "condition": null,
+            "removed": 0,
+            "sharedHit": 802,
+            "sharedRead": 0,
+            "children": [
+              {
+                "type": "Index Only Scan",
+                "rows": 43200,
+                "loops": 1,
+                "index": "pine_market_bars_pkey",
+                "condition": "((broker = 'binance-global'::text) AND (symbol = 'BTCUSDT'::text) AND (timeframe = '1'::text) AND (bar_time > '0'::bigint) AND (bar_time <= '2592000000'::bigint))",
+                "removed": 0,
+                "sharedHit": 802,
+                "sharedRead": 0,
+                "children": []
+              }
+            ]
+          }
+        },
+        "actualUnionReads": [
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              2592000000,
+              43201
+            ],
+            "rows": 43200,
+            "ms": 39.09209999999996
+          },
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              2592000000,
+              43201
+            ],
+            "rows": 43200,
+            "ms": 28.77559999999994
+          },
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              2592000000,
+              43201
+            ],
+            "rows": 43200,
+            "ms": 34.487300000000005
+          }
+        ],
+        "additionalExplainAnalyzeExecutions": 1
+      },
+      {
+        "id": "alternating-five",
+        "status": "PASS",
+        "recipe": {
+          "kind": "alternating",
+          "minutes": 1440,
+          "starts": [
+            0,
+            2,
+            4,
+            6,
+            8
+          ],
+          "botIds": [
+            "bot00",
+            "bot01",
+            "bot02",
+            "bot03",
+            "bot04"
+          ],
+          "extent_minutes": 1440,
+          "starts_minutes": [
+            0,
+            2,
+            4,
+            6,
+            8
+          ],
+          "seed_count": 720,
+          "seed_formula": "(2*i+2)*60000",
+          "tiny_timestamps": null,
+          "batches_max": 10000
+        },
+        "observations": [
+          {
+            "number": 1,
+            "label": "first-touch",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 20.012700000000024,
+            "registryBytes": 8404,
+            "charges": {
+              "union_minutes": 1440,
+              "timestamp_rows": 720,
+              "unique_windows": 5,
+              "derivation_visits": 3590,
+              "output_intervals": 3590,
+              "input_bytes_upper_bound": 21394,
+              "output_bytes_upper_bound": 687119
+            },
+            "ownerBytes": 188403,
+            "roundTripReplyMs": 69.9541015625
+          },
+          {
+            "number": 2,
+            "label": "warm",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 9.6173,
+            "registryBytes": 8404,
+            "charges": {
+              "union_minutes": 1440,
+              "timestamp_rows": 720,
+              "unique_windows": 5,
+              "derivation_visits": 3590,
+              "output_intervals": 3590,
+              "input_bytes_upper_bound": 21394,
+              "output_bytes_upper_bound": 687119
+            },
+            "ownerBytes": 188403,
+            "roundTripReplyMs": 65.467529296875
+          },
+          {
+            "number": 3,
+            "label": "warm",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 8.313600000000008,
+            "registryBytes": 8404,
+            "charges": {
+              "union_minutes": 1440,
+              "timestamp_rows": 720,
+              "unique_windows": 5,
+              "derivation_visits": 3590,
+              "output_intervals": 3590,
+              "input_bytes_upper_bound": 21394,
+              "output_bytes_upper_bound": 687119
+            },
+            "ownerBytes": 188403,
+            "roundTripReplyMs": 59.189697265625
+          }
+        ],
+        "plans": {
+          "planningMs": 0.102,
+          "executionMs": 0.421,
+          "tree": {
+            "type": "Limit",
+            "rows": 720,
+            "loops": 1,
+            "index": null,
+            "condition": null,
+            "removed": 0,
+            "sharedHit": 9,
+            "sharedRead": 0,
+            "children": [
+              {
+                "type": "Sort",
+                "rows": 720,
+                "loops": 1,
+                "index": null,
+                "condition": null,
+                "removed": 0,
+                "sharedHit": 9,
+                "sharedRead": 0,
+                "children": [
+                  {
+                    "type": "Seq Scan",
+                    "rows": 720,
+                    "loops": 1,
+                    "index": null,
+                    "condition": null,
+                    "removed": 0,
+                    "sharedHit": 9,
+                    "sharedRead": 0,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "actualUnionReads": [
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              86400000,
+              43201
+            ],
+            "rows": 720,
+            "ms": 6.551199999999994
+          },
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              86400000,
+              43201
+            ],
+            "rows": 720,
+            "ms": 2.160000000000025
+          },
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              86400000,
+              43201
+            ],
+            "rows": 720,
+            "ms": 1.6601999999999748
+          }
+        ],
+        "additionalExplainAnalyzeExecutions": 1
+      },
+      {
+        "id": "alternating-twenty",
+        "status": "PASS",
+        "recipe": {
+          "kind": "alternating",
+          "minutes": 1440,
+          "starts": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14,
+            16,
+            18,
+            20,
+            22,
+            24,
+            26,
+            28,
+            30,
+            32,
+            34,
+            36,
+            38
+          ],
+          "botIds": [
+            "bot00",
+            "bot01",
+            "bot02",
+            "bot03",
+            "bot04",
+            "bot05",
+            "bot06",
+            "bot07",
+            "bot08",
+            "bot09",
+            "bot10",
+            "bot11",
+            "bot12",
+            "bot13",
+            "bot14",
+            "bot15",
+            "bot16",
+            "bot17",
+            "bot18",
+            "bot19"
+          ],
+          "extent_minutes": 1440,
+          "starts_minutes": [
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14,
+            16,
+            18,
+            20,
+            22,
+            24,
+            26,
+            28,
+            30,
+            32,
+            34,
+            36,
+            38
+          ],
+          "seed_count": 720,
+          "seed_formula": "(2*i+2)*60000",
+          "tiny_timestamps": null,
+          "batches_max": 10000
+        },
+        "observations": [
+          {
+            "number": 1,
+            "label": "first-touch",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 30.017200000000003,
+            "registryBytes": 13249,
+            "charges": {
+              "union_minutes": 1440,
+              "timestamp_rows": 720,
+              "unique_windows": 20,
+              "derivation_visits": 14210,
+              "output_intervals": 14210,
+              "input_bytes_upper_bound": 43174,
+              "output_bytes_upper_bound": 2719214
+            },
+            "ownerBytes": 746129,
+            "roundTripReplyMs": 95.344482421875
+          },
+          {
+            "number": 2,
+            "label": "warm",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 17.13870000000003,
+            "registryBytes": 13249,
+            "charges": {
+              "union_minutes": 1440,
+              "timestamp_rows": 720,
+              "unique_windows": 20,
+              "derivation_visits": 14210,
+              "output_intervals": 14210,
+              "input_bytes_upper_bound": 43174,
+              "output_bytes_upper_bound": 2719214
+            },
+            "ownerBytes": 746129,
+            "roundTripReplyMs": 87.434814453125
+          },
+          {
+            "number": 3,
+            "label": "warm",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 15.840399999999988,
+            "registryBytes": 13249,
+            "charges": {
+              "union_minutes": 1440,
+              "timestamp_rows": 720,
+              "unique_windows": 20,
+              "derivation_visits": 14210,
+              "output_intervals": 14210,
+              "input_bytes_upper_bound": 43174,
+              "output_bytes_upper_bound": 2719214
+            },
+            "ownerBytes": 746129,
+            "roundTripReplyMs": 86.843994140625
+          }
+        ],
+        "plans": {
+          "planningMs": 0.114,
+          "executionMs": 0.434,
+          "tree": {
+            "type": "Limit",
+            "rows": 720,
+            "loops": 1,
+            "index": null,
+            "condition": null,
+            "removed": 0,
+            "sharedHit": 9,
+            "sharedRead": 0,
+            "children": [
+              {
+                "type": "Sort",
+                "rows": 720,
+                "loops": 1,
+                "index": null,
+                "condition": null,
+                "removed": 0,
+                "sharedHit": 9,
+                "sharedRead": 0,
+                "children": [
+                  {
+                    "type": "Seq Scan",
+                    "rows": 720,
+                    "loops": 1,
+                    "index": null,
+                    "condition": null,
+                    "removed": 0,
+                    "sharedHit": 9,
+                    "sharedRead": 0,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "actualUnionReads": [
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              86400000,
+              43201
+            ],
+            "rows": 720,
+            "ms": 6.9084
+          },
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              86400000,
+              43201
+            ],
+            "rows": 720,
+            "ms": 2.2851
+          },
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              86400000,
+              43201
+            ],
+            "rows": 720,
+            "ms": 2.0337000000000103
+          }
+        ],
+        "additionalExplainAnalyzeExecutions": 1
+      },
+      {
+        "id": "input-exact",
+        "status": "PASS",
+        "recipe": {
+          "kind": "tiny-boundary",
+          "minutes": 3,
+          "starts": [
+            0
+          ],
+          "botIds": [
+            "bot00"
+          ],
+          "extent_minutes": 3,
+          "starts_minutes": [
+            0
+          ],
+          "seed_count": 2,
+          "seed_formula": null,
+          "tiny_timestamps": [
+            60000,
+            180000
+          ],
+          "batches_max": 10000
+        },
+        "observations": [
+          {
+            "number": 1,
+            "label": "first-touch",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 9.180199999999985,
+            "registryBytes": 719,
+            "charges": {
+              "union_minutes": 3,
+              "timestamp_rows": 2,
+              "unique_windows": 1,
+              "derivation_visits": 2,
+              "output_intervals": 1,
+              "input_bytes_upper_bound": 3380,
+              "output_bytes_upper_bound": 2943
+            },
+            "ownerBytes": 615,
+            "roundTripReplyMs": 48.59130859375
+          }
+        ],
+        "plans": null,
+        "actualUnionReads": [
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              180000,
+              3
+            ],
+            "rows": 2,
+            "ms": 4.170700000000011
+          }
+        ],
+        "additionalExplainAnalyzeExecutions": 0
+      },
+      {
+        "id": "input-sentinel",
+        "status": "PASS",
+        "recipe": {
+          "kind": "tiny-boundary",
+          "minutes": 3,
+          "starts": [
+            0
+          ],
+          "botIds": [
+            "bot00"
+          ],
+          "extent_minutes": 3,
+          "starts_minutes": [
+            0
+          ],
+          "seed_count": 3,
+          "seed_formula": null,
+          "tiny_timestamps": [
+            60000,
+            120000,
+            180000
+          ],
+          "batches_max": 10000
+        },
+        "observations": [
+          {
+            "number": 1,
+            "label": "first-touch",
+            "status": "EXPECTED_REFUSAL",
+            "errorCode": "QR2_RANGE_ADMISSION_REFUSED"
+          }
+        ],
+        "plans": null,
+        "actualUnionReads": [
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              180000,
+              3
+            ],
+            "rows": 3,
+            "ms": 3.526100000000014
+          }
+        ],
+        "additionalExplainAnalyzeExecutions": 0
+      },
+      {
+        "id": "output-exact",
+        "status": "PASS",
+        "recipe": {
+          "kind": "tiny-boundary",
+          "minutes": 3,
+          "starts": [
+            0
+          ],
+          "botIds": [
+            "bot00"
+          ],
+          "extent_minutes": 3,
+          "starts_minutes": [
+            0
+          ],
+          "seed_count": 2,
+          "seed_formula": null,
+          "tiny_timestamps": [
+            60000,
+            180000
+          ],
+          "batches_max": 10000
+        },
+        "observations": [
+          {
+            "number": 1,
+            "label": "first-touch",
+            "status": "PASS",
+            "combinedReadDecodeBuildMs": 8.364800000000002,
+            "registryBytes": 719,
+            "charges": {
+              "union_minutes": 3,
+              "timestamp_rows": 2,
+              "unique_windows": 1,
+              "derivation_visits": 2,
+              "output_intervals": 1,
+              "input_bytes_upper_bound": 3380,
+              "output_bytes_upper_bound": 2943
+            },
+            "ownerBytes": 615,
+            "roundTripReplyMs": 51.8974609375
+          }
+        ],
+        "plans": null,
+        "actualUnionReads": [
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              180000,
+              43201
+            ],
+            "rows": 2,
+            "ms": 3.644599999999997
+          }
+        ],
+        "additionalExplainAnalyzeExecutions": 0
+      },
+      {
+        "id": "output-minus-one",
+        "status": "PASS",
+        "recipe": {
+          "kind": "tiny-boundary",
+          "minutes": 3,
+          "starts": [
+            0
+          ],
+          "botIds": [
+            "bot00"
+          ],
+          "extent_minutes": 3,
+          "starts_minutes": [
+            0
+          ],
+          "seed_count": 2,
+          "seed_formula": null,
+          "tiny_timestamps": [
+            60000,
+            180000
+          ],
+          "batches_max": 10000
+        },
+        "observations": [
+          {
+            "number": 1,
+            "label": "first-touch",
+            "status": "EXPECTED_REFUSAL",
+            "errorCode": "QR2_RANGE_ADMISSION_REFUSED"
+          }
+        ],
+        "plans": null,
+        "actualUnionReads": [
+          {
+            "params": [
+              "binance-global",
+              "BTCUSDT",
+              "1",
+              0,
+              180000,
+              43201
+            ],
+            "rows": 2,
+            "ms": 3.3740999999999985
+          }
+        ],
+        "additionalExplainAnalyzeExecutions": 0
+      }
+    ],
+    "samples": {
+      "count": 7,
+      "maxRunnerTreeBytes": 131395584,
+      "maxPostgresGlobalRssBytes": 79810560,
+      "minFreeSystemBytes": 674439168,
+      "sampleGapsMs": [
+        1967,
+        1943,
+        1935,
+        2073,
+        2025,
+        1954
+      ]
+    },
+    "sampleLimits": "Sampled process RSS does not prove transient peaks or isolate heap use; PostgreSQL global sum may double count shared pages. Timings include scheduling and do not establish percentiles."
+  },
+  "transport": {
+    "worker": "Measurement-only worker; not the production compute pool",
+    "request": "One shared registry with independently qualified accounts and experiment budgets",
+    "reply": "One bounded owner-envelope JSON string and compact metrics; no timestamp registry returned",
+    "construction": "Serial temporary slice and Stage-1 construction per distinct window, with validation; not zero-copy",
+    "limits": {
+      "oldGenerationMiB": 256,
+      "youngGenerationMiB": 32,
+      "stackMiB": 4,
+      "deadlineMs": 10000
+    },
+    "limitsNote": "Existing configured limits and heap-flag guard retained; not a measured hard RSS ceiling."
+  },
+  "experimentBudgets": {
+    "union_minutes": 43200,
+    "timestamp_rows": 43200,
+    "unique_windows": 20,
+    "derivation_visits": 250000,
+    "output_intervals": 15000,
+    "coverage_input_bytes": 1048576,
+    "coverage_output_bytes": 4194304
+  },
+  "ci": {
+    "code": {
+      "revision": "a5d4db611b07062e0a302a05f5027e842c42a11b",
+      "status": "PASS",
+      "runs": [
+        {
+          "id": 39849193764,
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39849193764"
+        },
+        {
+          "id": 39849193796,
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39849193796"
+        }
+      ],
+      "verifiedJobs": 9,
+      "verifiedSubstantiveSteps": 16,
+      "evidence": "docs/evidence/PM1_QR2_S5_4_STAGE2A_LOCAL_2026-10-23.json"
+    },
+    "priorDocumentation": {
+      "revision": "66ff4abdd26e6a91bda36bd565552d1b0a3ae780",
+      "status": "SCOPE_ONLY_PASS",
+      "runs": [
+        {
+          "id": 39852442640,
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39852442640"
+        },
+        {
+          "id": 39852442722,
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39852442722"
+        }
+      ],
+      "actualScopeAndGateStepsVerified": true,
+      "runtimeJobsSkipped": true
+    },
+    "currentCheckpoint": "Pending commit and separate scope-only CI; no code-test counts inferred."
+  },
+  "next": "Review a bounded disabled-gate local integration packet and qualify combined coverage plus financial snapshot through the actual compute pool. Candidate lower budgets remain provisional until evidence-backed root selection; no further standalone scale matrix is admitted.",
+  "limitations": [
+    "Five-window owner shape is not actual owner discovery/integration; twenty windows are planner stress only.",
+    "Dense unforced fixture plans use Index Only Scan; small alternating plans use Seq Scan plus Sort. Neither guarantees target plans or performance.",
+    "Separate input-heavy and interval-heavy cases do not establish simultaneous maximum allocations.",
+    "Three primary observations do not establish p95/p99, cold-cache performance or target capacity.",
+    "Full financial worker input/output, account/owner integration, public response/UI and full Stage 2/S5 acceptance remain NOT RUN.",
+    "Experiment budgets are not immutable defaults and do not prove their cross-product safe."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "READY": false,
+    "N1": "HELD",
+    "deployment": false,
+    "targetRouteActivation": false,
+    "sharedOrTargetMigration": false,
+    "live": false,
+    "guardReset": false,
+    "bestInputsApply": false
+  },
+  "sourcePins": {
+    "src/postgres/qr2-coverage-reader.js": "233142c751201ee6502fed5e3860df6bafcdb4dc97af1f139749a19efe9e082e",
+    "src/portfolio/qr2-coverage-snapshot.js": "3b6615779b6b16b870c2a6d1a0a87b36bc9ac179d9c3d6231daa16e83f4f674b",
+    "src/portfolio/qr2-coverage.js": "922d776e9c922eba0d4c192a670a48c1023ee335e972a61322fa87f4c9c00387",
+    "src/market-gap-intervals.js": "9ce50b7a64fe33fbdfac40abd52406574b44cc9cce2050185b491668a959d544",
+    "src/postgres/qr2-compute-pool.js": "1437777ba0475bbc11a53c2ed30a7ec4be8b60c529fc7476c0221da4cc3e4eb9",
+    "src/postgres/pine-bridge-schema.sql": "2f54a0cd247e8cf5f2ca384200261ddd2529f4548559c55d7ae25c885e6dcd92",
+    ".qa-local/qr2-s5-4-m2/runner.mjs": "90b5c10252a519b586f3b477c46680d6d7c3d6bed9ee84a6bcf614f73e6d1e93",
+    ".qa-local/qr2-s5-4-m2/cases.mjs": "1fd2ba03f23c514d648421be5a9be5235920fe194f8f752a537d96644f6137e9",
+    ".qa-local/qr2-s5-4-m2/worker.mjs": "3733fcd07357de3b5df9f2348a355c288cc269db81cd9282d88482e35d81e657"
+  },
+  "artifactPins": {
+    ".qa-local/qr2-s5-4-m2/root-results.json": "c34f8ace693b0b06edd0fb8b40d74292b567c70442e8737393a03741d0ef680f",
+    ".qa-local/qr2-s5-4-m2/root-admission.json": "dea78bf5dd92d60f1278ee48672ac90343a200bc94ea2e9d541bdd19d76b6e69",
+    ".qa-local/qr2-s5-4-m2/supervise.mjs": "5011832993cc0da9876c0d840096983bbb82d0c1471d32faa15d747e2a4eae21",
+    ".qa-local/qr2-s5-4-m2/supervisor-1792702942735.jsonl": "95103b8ed258c2e50e251cdafaca7fc7c220c0ae768b92e63d4787405223dea2",
+    ".qa-local/qr2-s5-4-m2/packet-review.md": "e58b536c14676324d8683aa9418737b2dd82c64c3868e2963c37654e4a9cc6ed",
+    ".qa-local/qr2-s5-4-m2/harness-review.md": "acb7bbfefc9ca39f8dfe9862ceb9c8dbb516eb928daf5454bdd8380734c7f1d0",
+    ".qa-local/qr2-s5-4-m2/harness-fix-review.md": "d26fb0b4f3b85b0a687a6ceecb85959aa117ef5d04df968e019faa4320d9eb09",
+    ".qa-local/qr2-s5-4-m2/lifecycle-review.md": "d27a1669699923143926baaa26e562448e234b551745628a8c67fdd882c47737",
+    ".qa-local/qr2-s5-4-m2/limit-proposal.md": "6dfad2f78716d9a5beaa92ddc7c71e022b10b7470c093f7cd9de862fd9fc0705",
+    ".qa-local/qr2-s5-4-m2/tester/oracle.mjs": "b20e5265db0b971c275ed3c9e19cb29708f23f1f9d339b71587446ac169e1ad7",
+    ".qa-local/qr2-s5-4-m2/tester/verify-run.mjs": "a8d4d493d9477e7e823c589904a0f98061ae332123e63a2d50b3686d24839239",
+    ".qa-local/qr2-s5-4-m2/tester/results.json": "df359f2a46e27183f71d427f8031ac77ab1dce89400bd03a740fce04c364463f",
+    ".qa-local/qr2-s5-4-m2/tester/runtime-verification.md": "f00b97cf8a1494ea4649c3caed1f921763066388c002a0ae3474ab0adaedd2e1",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/alternating-five-1-owner.json": "1ca2e70a6b81a12d1ea65e963a97fab55d8e1de04961e961be705978cb9bde0a",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/alternating-five-2-owner.json": "1ca2e70a6b81a12d1ea65e963a97fab55d8e1de04961e961be705978cb9bde0a",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/alternating-five-3-owner.json": "1ca2e70a6b81a12d1ea65e963a97fab55d8e1de04961e961be705978cb9bde0a",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/alternating-five.json": "b4b258a03401ec0c4b391202201392f4822ea8f5ab9d2bc226051e23a8ea61b7",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/alternating-twenty-1-owner.json": "15dd8b9def8b26053512797d4ae62c14af4881536103dba60a2c389d342c0b72",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/alternating-twenty-2-owner.json": "15dd8b9def8b26053512797d4ae62c14af4881536103dba60a2c389d342c0b72",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/alternating-twenty-3-owner.json": "15dd8b9def8b26053512797d4ae62c14af4881536103dba60a2c389d342c0b72",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/alternating-twenty.json": "572bebdff2b384ba489f704e54cc7d03667682dcd62590a18d728c22425e492f",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/attempt-journal.jsonl": "ee486238673075689d426eb768fb1891a09bfc6a3f4d043c72c1faa48a8376c5",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/commands.jsonl": "2e8f6080505b976d4de2cbd47b2f275b6c55f34bfbe9f4f8be90fde9ef9cf4ff",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/dense-five-1-owner.json": "c059b64393002ee7f12568aa70f291a1b2618273efb8681d15502c439a9304a1",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/dense-five-2-owner.json": "c059b64393002ee7f12568aa70f291a1b2618273efb8681d15502c439a9304a1",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/dense-five-3-owner.json": "c059b64393002ee7f12568aa70f291a1b2618273efb8681d15502c439a9304a1",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/dense-five.json": "d72327f03947343d7c2bf7b0a42a6811fd7bc445834e082b3bb1289f1044df40",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/dense-single-1-owner.json": "a16c6323e1f6ce4417bb9c417795d69f917a5af67808de6359a602590a945836",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/dense-single-2-owner.json": "a16c6323e1f6ce4417bb9c417795d69f917a5af67808de6359a602590a945836",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/dense-single-3-owner.json": "a16c6323e1f6ce4417bb9c417795d69f917a5af67808de6359a602590a945836",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/dense-single.json": "412158cdc52b364f4f7bd70db9110ad9fe7f887c49f39a2a085b936686e787a2",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/harness-hashes.json": "63c97377c6b235ac1fb402e08d2f7fcb105bb0e3ed26b6075685a16d7c310315",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/input-exact-1-owner.json": "981daf719e931548d395c3cdf6804a65f5fed04da29757c2b42f735bcf373f58",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/input-exact.json": "820fc0682581078505544557c41f577f289ca43c847b6d92bc16d6a6a86334df",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/input-sentinel.json": "5c0a8e400ea0f9598fee64e5128d2cdd65aaffc6ad933688b4eb0402bf0bdbae",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/output-exact-1-owner.json": "981daf719e931548d395c3cdf6804a65f5fed04da29757c2b42f735bcf373f58",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/output-exact.json": "2387e23bbc0f8b1f2ebf9b40f1b827624634041303ea50d20ab14637fdbc6765",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/output-minus-one.json": "4469da46bf4772034514819d8c3f917ff6e497d51d0155d28e83a1f9c27466d2",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/source-baseline.json": "e4c4f2efca9575ee2e39ca3057e4fa2948827d18ef83d39c91857f6b605c2a09",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/state.json": "8c924d56a5ef3cdc7214e173ae5efcd99d0a77a4217191e53712901431718d5d",
+    ".qa-local/qr2-s5-4-m2/run-1792702943742/summary.json": "8c924d56a5ef3cdc7214e173ae5efcd99d0a77a4217191e53712901431718d5d",
+    ".qa-local/qr2-s5-4-m2/checkpoint-review.md": "d9152318fa66ad19ed69ac8ea7525232759323363c977b3f9d56fae628b90fc7"
+  }
+}
