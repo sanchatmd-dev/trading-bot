@@ -17,8 +17,9 @@ dispatching. Verify runtime state only through authorized access, and report
 anything that remains unknown. Children run on the root's platform.
 Children do not spawn children, dispatch peers, change scope or approve their own
 acceptance. Use bounded independent assignments only; default one or two children,
-maximum three concurrently, within the runtime's available slots. A Codex root
-keeps that three-child maximum. A Claude root in ultracode sizes fan-out under
+maximum three concurrently, within the runtime's available slots. The Codex
+override below replaces the one-or-two default and keeps that three-child maximum.
+A Claude root in ultracode sizes fan-out under
 Models and dispatch instead of the one-or-two default: up to ten concurrent agents,
 counting local and cloud agents together, of which at most six write; one writer
 per file is unchanged (owner rule, 2026-10-19).
@@ -34,6 +35,30 @@ or runtime actions.
 
 ## Models and dispatch
 
+Owner override (2026-10-23): until the owner explicitly restores the previous team,
+use GPT-6 Astra only for every Codex root and child. The three requested levels
+are light (`low` in the supported runtime/configuration), medium and high. Root,
+debugger and operations use high; architecture auditor, coder, tester and routine
+worker use medium; documentation and release clerk use light/low. Do not dispatch
+Sol or a different model while this override is active. If a loaded role selector
+still fixes a role to Sol, use an explicit Astra model/effort dispatch with that
+role's instructions; never assume editing a role file changes a running agent.
+Stop existing Sol agents at a safe checkpoint and preserve their work. The owner
+selects the active root model; report unobservable runtime model/effort as unknown.
+
+For Codex, use the maximum available capacity when useful independent work is
+ready and the aggregate usage reservation fits. The current runtime has four
+slots including root: at most three children, three parallel lanes and three
+writers, with distinct writable files. Use fewer when dependencies, ownership,
+usage bands or serial Git, host and browser steps require it. Do not invent work
+or split dependent work merely to fill capacity. This Codex override replaces
+older one-or-two defaults; it does not change Claude policy or any safety gate.
+
+Previous Codex mapping, retained only for an explicit owner-requested restoration:
+root Astra/high, auditor Astra/medium, other roles GPT-6.1 Sol at the efforts in
+the table. Do not restore it automatically. Role boundaries, one-root authority,
+usage reserve, independent review and every safety gate remain unchanged.
+
 Roles are fixed; each platform maps them to its own models. Use the column for
 the platform running the root. Scout and the Fable 5.1 roles (see Claude-only Fable 5.1 roles) are Claude-only.
 
@@ -41,19 +66,19 @@ the platform running the root. Scout and the Fable 5.1 roles (see Claude-only Fa
 | --- | --- | --- | --- |
 | Root commander | Sole scheduling authority, integration, acceptance | gpt-6-astra / high | Opus 5.5 / xhigh, ultracode |
 | Architecture auditor | Difficult architecture, audit, risk/accounting/parity review, escalated root cause | gpt-6-astra / medium | Opus 5.5 / high |
-| Debugger | Difficult debugging and high-risk code fixes | gpt-6.1-sol / high | Opus 5.5 / medium |
-| Operations | VPS operations, only on an explicit bounded commander dispatch | gpt-6.1-sol / high | Opus 5.5 / medium |
-| Coder | Bounded implementation, including high-risk modules under review | gpt-6.1-sol / medium | Sonnet 5.5 / high |
-| Tester | Independent focused acceptance and regression evidence | gpt-6.1-sol / medium | Sonnet 5.5 / medium |
-| Routine worker | One small local code/UI/fixture slice with an explicit contract and observable acceptance | gpt-6.1-sol / medium | Sonnet 5.5 / medium |
-| Documentation | Documentation and mechanical edits with no behavior change | gpt-6.1-sol / low | Sonnet 5.5 / low; Haiku 5.5 / low for mechanical-only packets |
-| Release clerk | Git/release clerical work | gpt-6.1-sol / low | Haiku 5.5 / low |
+| Debugger | Difficult debugging and high-risk code fixes | gpt-6-astra / high | Opus 5.5 / medium |
+| Operations | VPS operations, only on an explicit bounded commander dispatch | gpt-6-astra / high | Opus 5.5 / medium |
+| Coder | Bounded implementation, including high-risk modules under review | gpt-6-astra / medium | Sonnet 5.5 / high |
+| Tester | Independent focused acceptance and regression evidence | gpt-6-astra / medium | Sonnet 5.5 / medium |
+| Routine worker | One small local code/UI/fixture slice with an explicit contract and observable acceptance | gpt-6-astra / medium | Sonnet 5.5 / medium |
+| Documentation | Documentation and mechanical edits with no behavior change | gpt-6-astra / low | Sonnet 5.5 / low; Haiku 5.5 / low for mechanical-only packets |
+| Release clerk | Git/release clerical work | gpt-6-astra / low | Haiku 5.5 / low |
 | Scout | Read-only local lookup: locate files, symbols and line ranges; grep inventories; Git and CI status reads | Not used; a Codex root reads directly | Haiku 5.5 / medium |
 
-All non-Astra Codex roles use GPT-6.1 Sol. Role boundaries and independent review
-still apply even when implementer and reviewer use the same model. High effort
-is reserved for debugger/operations work; bounded implementation, testing and
-routine work use medium; documentation and release clerical work use low.
+All Codex roles currently use GPT-6 Astra under the owner override above. Role
+boundaries and independent review still apply when implementer and reviewer use
+the same model. High effort is reserved for root, debugger and operations work;
+bounded implementation, testing and routine work use medium; documentation and release clerical work use low.
 
 The effort sentence in the previous paragraph describes the Codex column; Claude
 efforts come only from the Claude column and the Fable table. Claude effort order

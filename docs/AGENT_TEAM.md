@@ -8,17 +8,25 @@ unattended or authorize a new research study merely because workers are availabl
 
 ## One commander, reusable specialist roles
 
+Owner override, 2026-10-23: the Codex team uses GPT-6 Astra only until the owner
+explicitly restores the previous team. Light maps to the supported `low` effort;
+medium and high keep their names. The table below records the active mapping.
+Existing Sol agents are stopped with their work preserved. Configuration changes
+do not prove that an already running root or child changed model. Use explicit
+Astra dispatch when a loaded role selector still fixes a different model.
+The previous mapping is retained in AGENTS.md for an explicit restoration only.
+
 | Role | Model / effort | Responsibility | Boundary |
 | --- | --- | --- | --- |
 | Root commander | gpt-6-astra / high | Task selection, dependency gates, timeline, usage reservations, integration and final acceptance | Exactly one commander; never appoint a competing project manager |
 | Architecture auditor | gpt-6-astra / medium | Independent difficult audit, risk/accounting/parity review, root-cause escalation | Advisory; no peer dispatch, approval of own fixes or independent operations |
-| Routine worker | gpt-6.1-sol / medium | One small local code, UI or fixture slice with a stable contract and observable acceptance | No database migration, scheduler/fencing, accounting, Risk Manager, evaluator/parity, security, production operations or difficult debugging; escalate scope changes |
-| Coder | gpt-6.1-sol / medium | Implement assigned code slice using established semantics | Exact file ownership; escalate complex failures |
-| Debugger | gpt-6.1-sol / high | Reproduce and fix complex bugs/races | Root-defined scope; escalate after two failed approaches |
-| Tester | gpt-6.1-sol / medium | Independent focused acceptance/regression evidence | Own test paths; application changes need reassignment |
-| Documentation | gpt-6.1-sol / low | Synchronize docs, evidence summaries, links, arithmetic and handoffs | No invention of passing gates, time spent or technical decisions |
-| Release clerk | gpt-6.1-sol / low | Execute reviewed Git checkpoint/push serially | Root handoff + actual user authority; no independent merge/deploy |
-| Operations | gpt-6.1-sol / high | Designated executor of scoped local/VPS operational packets | Read-only default; mutations limited to existing user authority and readiness gates |
+| Routine worker | gpt-6-astra / medium | One small local code, UI or fixture slice with a stable contract and observable acceptance | No database migration, scheduler/fencing, accounting, Risk Manager, evaluator/parity, security, production operations or difficult debugging; escalate scope changes |
+| Coder | gpt-6-astra / medium | Implement assigned code slice using established semantics | Exact file ownership; escalate complex failures |
+| Debugger | gpt-6-astra / high | Reproduce and fix complex bugs/races | Root-defined scope; escalate after two failed approaches |
+| Tester | gpt-6-astra / medium | Independent focused acceptance/regression evidence | Own test paths; application changes need reassignment |
+| Documentation | gpt-6-astra / low | Synchronize docs, evidence summaries, links, arithmetic and handoffs | No invention of passing gates, time spent or technical decisions |
+| Release clerk | gpt-6-astra / low | Execute reviewed Git checkpoint/push serially | Root handoff + actual user authority; no independent merge/deploy |
+| Operations | gpt-6-astra / high | Designated executor of scoped local/VPS operational packets | Read-only default; mutations limited to existing user authority and readiness gates |
 
 A Claude root uses the Claude column of [AGENTS.md](../AGENTS.md): Opus 5.5 /
 xhigh root with ultracode (owner, 2026-10-03), graded Opus 5.5, Sonnet 5.5 and
@@ -37,11 +45,14 @@ independent-verification and pilot rules there still apply to every child.
 
 The owner's "light" maps to supported effort `low`. Role profiles are in
 `.codex/agents/`; root/default-child settings are in `.codex/config.toml`.
-At most three children run concurrently with the root in this session. Usually
-one or two are sufficient. Roles are reusable definitions, not permanently
-running agents. Do not spawn a worker without useful independent work for it.
-Start with one routine worker. Add a second child only for independent files
-with enough shared usage and integration margin; a swarm is not the default.
+For Codex, use the maximum available capacity when independent useful work is
+ready and aggregate usage reservations fit. This runtime provides four slots
+including root: at most three children, three parallel lanes and three writers,
+with distinct writable files. Use fewer when dependencies, file ownership, usage
+bands or serial Git, host and browser steps require it. Do not invent work or
+split dependent work to fill capacity. Roles are reusable definitions, not
+permanently running agents. This replaces the Codex one-or-two default and does
+not change the Claude policy in AGENTS.md.
 Root reviews each return. Behavior-changing routine-worker output requires independent,
 focused verification by a coder, tester or debugger before acceptance. Pilot
 three to five comparable small slices, recording observed account usage,
@@ -109,16 +120,16 @@ changes are account-wide observations, not exact per-agent billing.
 
 | Remaining known allowance | Admission behavior |
 | --- | --- |
-| Above 30% | Short checkpointable work; default 1–2 workers. Third worker only for independent useful work within aggregate budget. |
-| Above 15%, at most 30% | One tiny task; preserve integration/handoff margin. |
-| At most 15% | Stop admitting work; no new substantive task; finish the smallest safe checkpoint and yield. |
+| Above 30% | Short checkpointable work; Codex uses up to three available children, lanes and writers when independent useful work fits the aggregate budget. |
+| Above 3%, at most 30% | One tiny task; preserve integration/handoff margin. |
+| At most 3% | Stop admitting work; no new substantive task; finish the smallest safe checkpoint and yield. |
 | Short window unavailable | Mark unknown, permit only provisional small slices; no long unattended model work or promised completion. |
 | All usage unavailable or refresh fails | Save checkpoint / local read-only planning; retry visibility before substantive dispatch. |
 
-Protect a planning reserve of 15 percentage points in each known relevant window.
+Protect a planning reserve of 3 percentage points in each known relevant window.
 The same reserve applies on Codex and Claude; each platform's usage is tracked
 separately against its own account.
-Before launch, check `sum(active reservations) + next reservation < R - 15`.
+Before launch, check `sum(active reservations) + next reservation < R - 3`.
 Provisional reservations: 3 points for a short mapping/docs slice, 5 for a bounded
 implementation/test slice, 10 for a difficult audit/debug slice. These are cautious
 allowances, not measured prices. Split larger tasks; if no safe reservation fits,
@@ -141,7 +152,7 @@ is authoritative. Only an explicit owner chat instruction, each time, triggers i
 root may propose it at a usage-band checkpoint but never starts it. Root stops
 dispatch, confirms no child is active, saves a `.qa-local/` checkpoint and runs
 `node tools/claude-chat/handoff.mjs <checkpoint>` (added by CHAT-2); at or below
-the 15% stop band root may still do this on an explicit owner instruction and
+the 3% stop band root may still do this on an explicit owner instruction and
 starts no other work. Astra is then the only commander and writer (the Claude Code root does not
 write, dispatch or run Git, host or browser steps), works solo with
 no Workflow tool, and every safety, Git, host, browser, GO and one-writer rule
