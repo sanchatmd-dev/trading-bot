@@ -875,7 +875,7 @@ const pfrPairs=[
 // QR-2 fixed interface labels. Raw report data uses .no-i18n.
 uiPairs.push(
   ['Paper account performance','ผลการดำเนินงานบัญชี Paper'],
-  ['Report scope','ขอบเขตรายงาน'],['Bot account','บัญชี Bot'],['Owner accounts · one currency','บัญชีของเจ้าของ · สกุลเงินเดียว'],
+  ['Report Bot','Bot ที่ใช้ในรายงาน'],['Report scope','ขอบเขตรายงาน'],['Bot account','บัญชี Bot'],['Owner accounts · one currency','บัญชีของเจ้าของ · สกุลเงินเดียว'],
   ['Reporting period (UTC)','ช่วงรายงาน (UTC)'],['Day (UTC)','วัน (UTC)'],['Week (Monday–Sunday, UTC)','สัปดาห์ (จันทร์–อาทิตย์ UTC)'],
   ['Month (UTC)','เดือน (UTC)'],['Year (UTC)','ปี (UTC)'],['All Time Registered','ทั้งหมดตั้งแต่ลงทะเบียน'],['Custom (UTC)','กำหนดเอง (UTC)'],
   ['Start date (UTC)','วันเริ่มต้น (UTC)'],['End date (UTC, inclusive)','วันสิ้นสุด (UTC รวมทั้งวัน)'],['Load / Refresh','โหลด / รีเฟรช'],
@@ -892,9 +892,9 @@ uiPairs.push(
   ['Request unavailable. Retry manually later.','ยังใช้คำขอนี้ไม่ได้ กดลองใหม่ภายหลัง'],['Paper performance request refused.','คำขอผลการดำเนินงาน Paper ถูกปฏิเสธ'],
   ['Paper performance response unavailable.','ยังใช้ผลตอบกลับการดำเนินงาน Paper ไม่ได้'],['Paper performance unavailable. Retry manually.','ยังดูผลการดำเนินงาน Paper ไม่ได้ กดลองใหม่'],
   ['Server report received.','ได้รับรายงานจากเซิร์ฟเวอร์แล้ว'],['Server status, methods and range evidence','สถานะ วิธีคำนวณ และหลักฐานช่วงเวลาจากเซิร์ฟเวอร์'],
-  ['Cash','เงินสด'],['Reserved notional','มูลค่าคำสั่งที่กันไว้'],['Reserved fees','ค่าธรรมเนียมที่กันไว้'],['Available cash','เงินสดที่ใช้ได้'],
+  ['Cash','เงินสด'],['Reserved notional','มูลค่าคำสั่งที่กันไว้'],['Available cash','เงินสดพร้อมใช้'],
   ['Marked equity','Equity ตามราคาตลาด'],['Marked equity at start','Equity ตามราคาตลาด ณ ต้นช่วง'],['Marked equity at end','Equity ตามราคาตลาด ณ ปลายช่วง'],
-  ['Market value','มูลค่าตลาด'],['Position cost','ต้นทุน Position'],['Exposure','สัดส่วนการลงทุน'],['Realized PnL','กำไรขาดทุนที่รับรู้'],['Unrealized PnL','กำไรขาดทุนที่ยังไม่รับรู้'],
+  ['Market value','มูลค่าตลาด'],['Exposure','สัดส่วนการลงทุน'],['Realized PnL','กำไรขาดทุนที่รับรู้'],['Unrealized PnL','กำไรขาดทุนที่ยังไม่รับรู้'],
   ['Fees (information only)','ค่าธรรมเนียม (เพื่อข้อมูลเท่านั้น)'],['Unbacked equity','Equity ที่ไม่มีเงินทุนรองรับ'],['Capital flows','เงินทุนเข้าออก'],['Money PnL','กำไรขาดทุนเป็นจำนวนเงิน']
 );
 uiPairs.push(...pfrPairs);for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}

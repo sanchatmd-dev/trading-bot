@@ -29,12 +29,12 @@
       "lfSha256": "ec77e47e83189d2fb8314464bef0efd1d7bb3aac66b11f917ac69633513c4cac"
     },
     "public/index.html": {
-      "rawSha256": "3d7bf50e1e4fb9d083aa53d4be7031b13c592f792529f2ee9f00df323f09d8d6",
-      "lfSha256": "3838f4f05b0b8ff6fac896b968ec78a1ee5fdb9cda2320d785e3bbce97b0f0df"
+      "rawSha256": "327745ef92ee8d7914e148cc3f4474947ef2d6fd1b72a88d5133e47f4fe4c9ac",
+      "lfSha256": "1a1b67ea99575f411c7e978d41d3c12f3029636b4cf550aba648ed4ad89f9fe6"
     },
     "public/i18n.js": {
-      "rawSha256": "d2ad2388af1de0831ead1dce8f0f77706270a8bd49f3feb6558b5f7110e74f08",
-      "lfSha256": "cffee6f16f64274c78dddf82b8930bc23e7f076c40ac9ea010adbf2c4a109902"
+      "rawSha256": "863a571390adafb437f618a4474164d2e2bf4b7aa7f70ac77acb4feb7e7a35e7",
+      "lfSha256": "b36da47cc6cbec35a10891e6c00006093bd5f1f970761e06e1658d6843e4e5e7"
     },
     "test/qr2-performance-ui.test.js": {
       "rawSha256": "65948e30010066f3df09654ce4f0317eb12663c69186c6bef2ddde3c6a06d97d",
@@ -99,12 +99,37 @@
       "shared-ui-tests.log": "43d78f775f9e8e4c193058ca1e1a4c1d1a8015203151d664016bc40077034277",
       "tester.md": "5d98b3a06e2982290e9243379324e1ade7f008f8c8bd6d4e979c2de5f175c493",
       "audit.md": "e120f63f77a8bb3d17bf7f40bfafbf11567b803e6efafe857152283566a18ff7",
-      "render-stub.mjs": "07096756e1029f00adc9b5e44bbfb965478cfaa1bd8c4665e3f5ddbcfde02a2c"
+      "render-stub.mjs": "07096756e1029f00adc9b5e44bbfb965478cfaa1bd8c4665e3f5ddbcfde02a2c",
+      "ci-verify.md": "0a6c1ac485a97070ac9c2c23dbc6de4f1ed0efe5b48784985950b6e27c95760f",
+      "ci-fix.md": "0e5baa903b0dce4969f02dd8a576d4ef156acf7b9d083f845a90c75039c9adcb",
+      "ci-failure-6f7fcff.json": "b4ff9a6f7fb6fbeb025368c66b5a1de49f960adcc7847a45677d5a246c44f4f2",
+      "ci-readback-6f7fcff.json": "84cbc6aac95949345469268b26059bf2930f2f1ae57137389c0df6c13326b895"
     }
   },
   "ci": {
-    "status": "PENDING_EXACT_REVISION_PUSH",
-    "note": "Local focused counts above are measured results. Never infer test counts from job success."
+    "status": "REPAIR_PENDING_EXACT_REVISION_CI",
+    "previousRevision": "6f7fcff603d0cdd0c29990c431ae1fdd1ca291c5",
+    "previousRuns": [
+      {
+        "id": 39760612800,
+        "name": "Safety checks",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39760612800",
+        "status": "in_progress",
+        "nodeUbuntu": "failure",
+        "nodeWindows": "cancelled",
+        "postgres": "in_progress",
+        "container": "success"
+      },
+      {
+        "id": 39760612786,
+        "name": "Quant Lab",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39760612786",
+        "status": "completed",
+        "conclusion": "success",
+        "verification": "Both OS jobs ran their lint, pytest, parity, trace closure and smoke steps successfully; scope and gate also passed."
+      }
+    ],
+    "note": "These are exact-revision observations before the repair commit. No test count is inferred from job success."
   },
   "gates": {
     "spotPaperOnly": true,
@@ -120,5 +145,109 @@
     "guardReset": "NOT AUTHORIZED",
     "bestInputsApply": "NOT AUTHORIZED"
   },
-  "nextAction": "Read back exact-revision CI. Complete rendered synthetic acceptance after local browser capability is enabled; S5-1 and full S5 remain unaccepted."
+  "nextAction": "Read back exact-revision CI. Complete rendered synthetic acceptance after local browser capability is enabled; S5-1 and full S5 remain unaccepted.",
+  "ciRepair": {
+    "date": "2026-10-22",
+    "failedRevision": "6f7fcff603d0cdd0c29990c431ae1fdd1ca291c5",
+    "observedFailure": "Safety checks Ubuntu Node job failed; Windows Node job was cancelled by matrix fail-fast. The annotation is capped and reported at least five failures; it is not a complete failure-count assertion.",
+    "causes": [
+      "New assets and changed i18n bytes were absent from the strict cache pin inventory. Five UI files still asserted the earlier i18n token.",
+      "The new Bot selector requested an identity translation through the shared translator, violating existing Thai completeness assertions.",
+      "The new translation block duplicated two PF-3 pairs and reused an existing Thai value for a different English key. The expanded focused run exposed this additional collision."
+    ],
+    "correction": "Use Report Bot with its Thai translation, reuse the existing Reserved fees and Position cost pairs, give Available cash a distinct Thai translation, bump i18n to qr2s51fix1, register both new assets and update exact token/digest assertions. Strict cache, language and collision guards remain intact. No financial JavaScript, CSS, backend or security guard changed.",
+    "changedSources": {
+      "public/index.html": {
+        "rawSha256": "327745ef92ee8d7914e148cc3f4474947ef2d6fd1b72a88d5133e47f4fe4c9ac",
+        "lfSha256": "1a1b67ea99575f411c7e978d41d3c12f3029636b4cf550aba648ed4ad89f9fe6"
+      },
+      "public/i18n.js": {
+        "rawSha256": "863a571390adafb437f618a4474164d2e2bf4b7aa7f70ac77acb4feb7e7a35e7",
+        "lfSha256": "b36da47cc6cbec35a10891e6c00006093bd5f1f970761e06e1658d6843e4e5e7"
+      },
+      "test/asset-cache-tokens.test.js": {
+        "rawSha256": "4eaf121a93dcbcf16492b5c425e47ba6d51fd21161d9dfabd557e59b18133aef",
+        "lfSha256": "d96915c330f153f281de603d50f797a90a408fe2e93832eb56d6187015d88c58"
+      },
+      "test/bridge-wizard-ui.test.js": {
+        "rawSha256": "94cb3fbac1d082db7d1e5845f408e1644e698f95aa8853d1064b2bde34624de7",
+        "lfSha256": "45f9aa0d52933826e0416f0630627285d047c11061aa6d9d8b6629dc0678d391"
+      },
+      "test/journey-ui.test.js": {
+        "rawSha256": "bbb68f3e6364fde0afc2ca472068b5a2dd27207fe70b503d0535b5500b05e468",
+        "lfSha256": "a02abad9e0d7434e0348185f763dc90ac039fe3016bbbb4f2d37cf8109d8c7dd"
+      },
+      "test/market-chart-ui.test.js": {
+        "rawSha256": "5a4e7b211f29d63aa957fb81142b7b07f78d38ade79d1dc05197335ceea538dc",
+        "lfSha256": "5baabb475c701979659ae248beccbec7442abe15d765ce4ca3728a4bc888b43f"
+      },
+      "test/pf3-readiness-ui.test.js": {
+        "rawSha256": "90a4101a985936b0a295ece0b80ce1760ee574d61d89e30db3570286782ea729",
+        "lfSha256": "c01cffd250a11879a7362dc452f1440cd7023e656c234787b0f1dbfbc7c7aeb9"
+      },
+      "test/quant-library-ui.test.js": {
+        "rawSha256": "25f6dc6d89c9455cdb896e914033e824a03032be611ba2111f927c89beb442aa",
+        "lfSha256": "e68d45c5bd73d00768415eeb443c6498478895ce6747342ddd91cb9376fa4156"
+      }
+    },
+    "runs": [
+      {
+        "file": "ci-fix-tests.log",
+        "command": "node --test --test-isolation=none test/asset-cache-tokens.test.js test/bridge-wizard-ui.test.js test/journey-ui.test.js test/bridge-activate-ui.test.js test/qr2-performance-ui.test.js",
+        "tests": 76,
+        "pass": 76,
+        "fail": 0,
+        "skipped": 0,
+        "durationMs": 135690.1331,
+        "sha256": "a57ff297f3f0c74a519c5791f749ecd4caaf47ad11c93a5043de7d4d42a2d1af",
+        "stage": "before final translation repair"
+      },
+      {
+        "file": "ci-fix-extra-tests.log",
+        "command": "node --test --test-isolation=none test/market-chart-ui.test.js test/pf3-readiness-ui.test.js test/quant-library-ui.test.js",
+        "tests": 108,
+        "pass": 107,
+        "fail": 1,
+        "skipped": 0,
+        "durationMs": 151968.1005,
+        "sha256": "dd9a40b03e6cc1a25e3be5cbab0b1acf5de9ad15009e5adf6cc4273eedc100dc",
+        "stage": "before final translation repair"
+      },
+      {
+        "file": "ci-verify-tests.log",
+        "command": "node --test test/overview-ui.test.js",
+        "tests": 16,
+        "pass": 16,
+        "fail": 0,
+        "skipped": 0,
+        "durationMs": 18166.3468,
+        "sha256": "09080154c6347bf9a9cba1afd17d7bdde7a0d54749cad11c13a711f03a38cd9b",
+        "stage": "before final translation repair"
+      },
+      {
+        "file": "ci-fix-label-tests.log",
+        "command": "node --test --test-isolation=none --test-name-pattern=\"Thai|translation|pairs round-trip\" test/bridge-activate-ui.test.js test/bridge-wizard-ui.test.js test/pf3-readiness-ui.test.js test/quant-library-ui.test.js test/overview-ui.test.js",
+        "tests": 16,
+        "pass": 16,
+        "fail": 0,
+        "skipped": 0,
+        "durationMs": 42253.3607,
+        "sha256": "46077b598df3ddb9d41240f65788c10ea71399a0ce05aac72121c79a5e0b06ad",
+        "stage": "after final translation repair"
+      },
+      {
+        "file": "ci-fix-final-ui-tests.log",
+        "command": "node --test --test-isolation=none test/asset-cache-tokens.test.js test/qr2-performance-ui.test.js",
+        "tests": 12,
+        "pass": 12,
+        "fail": 0,
+        "skipped": 0,
+        "durationMs": 21967.5752,
+        "sha256": "ce8f0a46fb3210185ef3524f1c2d8c3b2d832fb3d70fa471d278b9b285b4a3ee",
+        "stage": "after final translation repair"
+      }
+    ],
+    "independentVerification": "Tester independently reviewed the bounded diff, label and cache pins, ran Overview (16 pass before the final translation-only correction), and rechecked final translation collisions/pins without duplicating the coder reruns.",
+    "limits": "Counts are per run and overlap. The 107/108 intermediate failure is retained; the final affected language checks and asset/QR-2 tests passed. No full local suite or browser rendering is claimed."
+  }
 }

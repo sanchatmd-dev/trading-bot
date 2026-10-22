@@ -14,7 +14,8 @@ const PINNED={
   '/research-job.css':['rj1','debdaa1caa20c7e0'],
   '/market-chart.css':['mc3','40b284a5bccd776f'],
   '/theme-hud.css':['r7ui1','08a46fadfa694f41'],
-  '/i18n.js':['qr2s5a1','8266e46fe6e0ec7f'],
+  '/paper-performance.css':['qr2s51','ec77e47e83189d2f'],
+  '/i18n.js':['qr2s51fix1','b36da47cc6cbec35'],
   '/app.js':['rel20261007','e5c805b49a8669be'],
   '/analytics.js':['rel20261007','6ae87c8d66996569'],
   '/bots.js':['qr2s5a1','31127683f617bed3'],
@@ -33,6 +34,7 @@ const PINNED={
   '/research-job.js':['rj1','ffd1319d6cb583f4'],
   '/journey.js':['jd2','8e975e210d1a8314'],
   '/overview.js':['ov2','70187f0f9028855f'],
+  '/paper-performance.js':['qr2s51','291948b51195839e'],
   '/setup-guide.js':['sg2','2a4297c04f483dc8'],
   '/research-nav.js':['rn1','4de9b9e136d0c461'],
   '/preflight-runner.js':['r7ui6','380a5bf2e40ec318']
