@@ -338,11 +338,23 @@
     ".qa-local/qr2-s5-4-stage2c/c3-seed-verify.md": "34d8f63060c14412da9b7e240726705060a26aed1aae419e9c03e810723dbdaa",
     ".qa-local/qr2-s5-4-stage2c/c3-seed-verify-fixed.mjs": "a1dba3da5b71bc778eca4d7822a411e64d8dfb5b1e98d8a84b483388a9dd1f77",
     ".qa-local/qr2-s5-4-stage2c/c3-seed-verify-fixed.json": "cefce3ad5b4060b4feb21d1e494791e93badc6bd6d228021a309157ae08ee0c2",
-    ".qa-local/qr2-s5-4-stage2c/c3-seed-fix-review.md": "03c471a514e98daa6aca5fee08b1f5efeaefa09ee3932472fb122c730744d843"
+    ".qa-local/qr2-s5-4-stage2c/c3-seed-fix-review.md": "03c471a514e98daa6aca5fee08b1f5efeaefa09ee3932472fb122c730744d843",
+    ".qa-local/qr2-s5-4-stage2c/c3-fixture-verify.mjs": "a036dfa5f652d2bfa1f0391f070620028d7bd2dae702557ad48f212fc784ecc6",
+    ".qa-local/qr2-s5-4-stage2c/c3-fixture-verify-author.md": "7e2d4acb195ae999d56bea56d867f90fd4334d6a0cc5b1ea3a36915eb53a0c70",
+    ".qa-local/qr2-s5-4-stage2c/c3-fixture-verify-test.mjs": "c7797a08a490d94f956fbe24ec4acb9f9fc10ae79e5df0ffb3f614dcb6088105",
+    ".qa-local/qr2-s5-4-stage2c/c3-fixture-verify-test.json": "70ef17f8d85c31cae962d63ed1f96cdbdde4911d032222ad3e0cc72dab4708d7",
+    ".qa-local/qr2-s5-4-stage2c/c3-fixture-verify-test.md": "05388165a6c6268628f48b5ae0210e7888446cf9510bf9a3be7f1c8bda415727",
+    ".qa-local/qr2-s5-4-stage2c/c3-bars-verify.mjs": "83d18761c967711ac43a023eb4b4481093a2857da220c5d1b75b9a7afa9d5415",
+    ".qa-local/qr2-s5-4-stage2c/c3-bars-verify-author.md": "37c5b7a1ead345a83de7ebac7791816f409175e14a913ce0b263bfb3d4a2d95d",
+    ".qa-local/qr2-s5-4-stage2c/c3-bars-verify-test.mjs": "93a940ccc9df41c6d4e669a55cd35b2198f0190ae16d3384e751c923c59e1808",
+    ".qa-local/qr2-s5-4-stage2c/c3-bars-verify-test.json": "51129fa31bae87d9d0ed03c488d4f6b046b89c44548c736a6fd0dd9c2fbb618a",
+    ".qa-local/qr2-s5-4-stage2c/c3-bars-verify-test.md": "074f727ecbced23ee413844ce7ec6bba0484eff502f4138dbcf996e2f8cf3f86",
+    ".qa-local/qr2-s5-4-stage2c/p5-p6-documentation-ci-verified.json": "80d37e497e05ecbc39e3deee71b8c29464c4d922c9e1005723cb157f0fc57925",
+    ".qa-local/qr2-s5-3/ci-observed-f112d7df9f16eb77b9d47153bca4ecd0d0fc10fe.json": "60cd4ca55a917721f49bb18e4a3178d198b87c8197b07b34115db37ca2747445"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-22T22:57:12.828Z",
+  "recordedAt": "2026-10-22T23:08:28.632Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -549,8 +561,8 @@
       "diagnostic": "NOT_RUN",
       "runtimeAdmitted": false,
       "remaining": [
-        "Actual live-producer chronology/counts/gates and independent fixture verifier",
-        "Diagnostic reader/default-pool wiring",
+        "Actual producer/storage chronology re-verification and read-only snapshot ownership",
+        "Two-job diagnostic reader/default-pool wiring and response/gate/digest assertions",
         "Independent client/HTTP implementation and executed monitoring-boundary tests",
         "Finite setup/SQL/helper/process/sample/whole-run budgets and monotonic supervisor",
         "Complete runtime source manifest and lifecycle review",
@@ -640,6 +652,34 @@
           "Clock checks do not replace a monotonic elapsed-time supervisor.",
           "No cluster lifecycle, default-pool diagnostic, HTTP or performance acceptance."
         ]
+      },
+      "fixtureVerifier": {
+        "status": "QUERY_FAKE_CHECKS_PASS_SQL_NOT_RUN",
+        "module": ".qa-local/qr2-s5-4-stage2c/c3-fixture-verify.mjs",
+        "sourceSha256": "a036dfa5f652d2bfa1f0391f070620028d7bd2dae702557ad48f212fc784ecc6",
+        "groups": 29,
+        "passed": 29,
+        "failed": 0,
+        "artifact": ".qa-local/qr2-s5-4-stage2c/c3-fixture-verify-test.json",
+        "review": ".qa-local/qr2-s5-4-stage2c/c3-fixture-verify-test.md",
+        "completeFakeQueryCount": 23,
+        "scope": "Current reader predicates, literal admission counts and exact stored-value/open-lot oracle; SQL text compared with source.",
+        "limits": "Fakes do not execute PostgreSQL or establish actual rows, schema, atomicity, replay gates, chronology or lifecycle. Sequential queries require externally owned quiescence/read-only snapshot."
+      },
+      "barsVerifier": {
+        "status": "STREAMING_QUERY_FAKE_CHECKS_PASS_SQL_NOT_RUN",
+        "module": ".qa-local/qr2-s5-4-stage2c/c3-bars-verify.mjs",
+        "sourceSha256": "83d18761c967711ac43a023eb4b4481093a2857da220c5d1b75b9a7afa9d5415",
+        "groups": 18,
+        "passed": 18,
+        "failed": 0,
+        "artifact": ".qa-local/qr2-s5-4-stage2c/c3-bars-verify-test.json",
+        "review": ".qa-local/qr2-s5-4-stage2c/c3-bars-verify-test.md",
+        "expectedRows": 20000,
+        "maxBatchRows": 200,
+        "maxQueries": 101,
+        "scope": "Exact timestamp recipe, canonical bar/provenance/hash checks and terminal empty page; independent digest in the complete fake.",
+        "limits": "No actual PostgreSQL execution, schema-uniqueness proof, snapshot consistency, hard heap/cancellation bound or financial gate acceptance."
       }
     }
   },
@@ -689,5 +729,26 @@
     "finding": "Changed current low-headroom wording to a historical admission hold after a later above-threshold sample; no runtime GO follows.",
     "fixReview": ".qa-local/qr2-s5-4-stage2c/ci-preparation-checkpoint-fix-review.md",
     "originalFindingPreserved": true
+  },
+  "preparationCheckpointCI": {
+    "revision": "f112d7df9f16eb77b9d47153bca4ecd0d0fc10fe",
+    "status": "SCOPE_ONLY_PASS",
+    "runs": [
+      {
+        "id": 39868593177,
+        "name": "Safety checks",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39868593177"
+      },
+      {
+        "id": 39868593231,
+        "name": "Quant Lab",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39868593231"
+      }
+    ],
+    "actualScopeSteps": 2,
+    "actualGateSteps": 1,
+    "skippedRuntimeJobs": 4,
+    "newRuntimeTests": 0,
+    "artifact": ".qa-local/qr2-s5-4-stage2c/p5-p6-documentation-ci-verified.json"
   }
 }
