@@ -1,6 +1,6 @@
 # QR-2 S5-4 Stage 2C: internal reader and worker integration
 
-Status: **BOUNDED CI FUNCTIONAL PASS; FINANCIAL DIFFERENTIAL AND PERFORMANCE PENDING**. The admission history below remains authoritative for each bounded slice.
+Status: **BOUNDED CI FUNCTIONAL AND FINANCIAL DIFFERENTIAL PASS; PERFORMANCE PENDING**. The admission history below remains authoritative for each bounded slice.
 
 ## Objective and qualification envelope
 
@@ -121,4 +121,4 @@ Preparation permits syntax and source review only. The local six-file/21-test pa
 
 ## Current CI qualification scope
 
-Exact revision d0acf931c2cf14cf330e69350d759599c2b503fe passed both workflows. Root verified nine successful jobs, sixteen actual substantive steps and all twenty-one selected functional PASS records in the raw PostgreSQL log. The checkout hash ties those observations to the reviewed source. This accepts only that bounded Ubuntu CI semantic scope; the earlier local Windows packet remains NOT RUN, with no headroom or lifecycle claim. The separate priced-account interior-gap differential is implemented and source-reviewed after one import repair, but has not executed. Its exact-revision result and the separate combined measurement are still required; full Stage 2C and Stage 3 remain open.
+Exact revision d0acf931c2cf14cf330e69350d759599c2b503fe passed both workflows. Root verified nine successful jobs, sixteen actual substantive steps and all twenty-one selected functional PASS records in the raw PostgreSQL log. The checkout hash ties those observations to the reviewed source. This accepts only that bounded Ubuntu CI semantic scope; the earlier local Windows packet remains NOT RUN, with no headroom or lifecycle claim. The separate priced-account interior-gap differential subsequently passed on exact revision 2a89d1826902290ca54af3c8bf6be84c82267b47. Both workflows succeeded; raw logs verify 22 selected named tests (the earlier 21 plus this one), nine jobs and sixteen substantive steps, with independent verification. This closes the bounded differential only. The combined measurement, broader functional scope and local Windows packet remain incomplete; full Stage 2C and Stage 3 remain open.

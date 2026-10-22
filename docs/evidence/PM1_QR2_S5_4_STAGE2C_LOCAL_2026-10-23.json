@@ -200,8 +200,8 @@
       "expectedDatabases": 8,
       "status": "SOURCE_REVIEWED_NOT_RUN; awaiting sufficient headroom and explicit runtime admission"
     },
-    "financialDifferential": "NOT_RUN; new file not in d0acf93",
-    "followupRevisionCI": "NOT_YET_COMMITTED",
+    "financialDifferential": "Local Windows NOT RUN; the one named regression passed separately in exact 2a89d18 Ubuntu CI",
+    "followupRevisionCI": "Completed: see financialDifferentialCI; no full-suite count inferred",
     "combinedPerformance": "OPEN",
     "fullStage2AndS5": "OPEN",
     "stage3PublicationAndUi": "NOT_RUN"
@@ -297,11 +297,36 @@
     ".qa-local/qr2-s5-3/ci-observed-d0acf931c2cf14cf330e69350d759599c2b503fe.json": "f94f495d9cb90f27012c143e1528c504c5af2a5f075e8449c30790613cb97e51",
     ".qa-local/qr2-s5-4-stage2c/ci/independent-d0acf93.md": "0da330046738a363966927fab094b32c582d3593da501bd4add6c6abf3ea60ee",
     ".qa-local/qr2-s5-4-stage2c/followup-checkpoint-review.md": "a4d4ed23c7026f113e3c2304440446239e549eff4b5a8bcfa5baaaa385a582f8",
-    ".qa-local/qr2-s5-4-stage2c/followup-checkpoint-fix-review.md": "1e248158595b404a12d9716d8581950125ac464907cd3109af881c88a87a31f3"
+    ".qa-local/qr2-s5-4-stage2c/followup-checkpoint-fix-review.md": "1e248158595b404a12d9716d8581950125ac464907cd3109af881c88a87a31f3",
+    ".qa-local/qr2-s5-4-stage2c/c3-coverage-plan.mjs": "4ef1b552b8b18b92a3be0595c0bfd442969d5600523ecd11d5d06ff2693293b0",
+    ".qa-local/qr2-s5-4-stage2c/c3-coverage-plan.json": "0134caa3defb5837757c95b67a479c88a13667bef99191070aee1f1d4e5953c0",
+    ".qa-local/qr2-s5-4-stage2c/c3-coverage-plan-report.md": "7f86f317e15ba24ed86b20b00a6e4f1c3911e5d4c17cdb30435a9f7d1fbc2178",
+    ".qa-local/qr2-s5-4-stage2c/c3-coverage-plan-review.md": "4e22c7b4207215ed393a7ab7d6bcd4edff36e189ab7651d4dcc2f4ddf45ae7d3",
+    ".qa-local/qr2-s5-4-stage2c/c3-coverage-review.mjs": "a58c3a90476bac7db95263530d7304da7aec96084be3a5654360a0e72b710263",
+    ".qa-local/qr2-s5-4-stage2c/c3-financial-recipe.md": "fdf5b8a9cbab4d83eb1da2356979e44e5a678ea6486205da60b93613930caf6b",
+    ".qa-local/qr2-s5-4-stage2c/c3-monitoring-contract.md": "11cfc7319c444beedb3bdd16835d2f018710e40f0664b647343e67eb0f5bc05b",
+    ".qa-local/qr2-s5-4-stage2c/c3-preparation-checkpoint-review.md": "4ade04977c740fed9f31dc3ec515f5f6bae680540ed23a9d504af932a4377688",
+    ".qa-local/qr2-s5-4-stage2c/ci/verified-2a89d18.json": "207dcd0f6fd2c9df0c1a145a0b26b4ed2b27850c0fb7e3f19fee442df6ebe809",
+    ".qa-local/qr2-s5-4-stage2c/ci/independent-2a89d18.md": "a78859b744b8677bd204434a05beb31db44e1e0f6204c22863446e8f09a882eb",
+    ".qa-local/qr2-s5-4-stage2c/ci/postgres-39862387031.log": "38b303d02dc8dcf5ca91f8878bef00c81b9b64f68cc5a3de9b92ed6512380bd2",
+    ".qa-local/qr2-s5-4-stage2c/ci/postgres-39862387031-job.json": "5ed8478333b8725247f025a6d001e62be8ea860bb95335907d28d12da94bb5af",
+    ".qa-local/qr2-s5-3/ci-observed-2a89d1826902290ca54af3c8bf6be84c82267b47.json": "70612de1eef9e824acd710085678511ff383bf8bae5e077ff350ece1e3d08619",
+    ".qa-local/qr2-s5-4-stage2c/ci/verify-2a89d18.mjs": "40dca4d244280a6665b6c588cca44a3949585157b5d2c714f7f02a35d6667953",
+    ".qa-local/qr2-s5-4-stage2c/c3-measurement-math.mjs": "523bf39b30d27c4b2557528ba8079153c4bd2b716fbc91d4d140c0153dccdace",
+    ".qa-local/qr2-s5-4-stage2c/c3-measurement-math-author.md": "8bf3ff4f47400452b26d614ac7436fecf94ec8d11020779ae47c86f5a1820ffb",
+    ".qa-local/qr2-s5-4-stage2c/c3-measurement-math-verify.mjs": "02a1ce2a1f21328250a5f610e19a623cb0b12dd96328ab6b4861e207358ab6d9",
+    ".qa-local/qr2-s5-4-stage2c/c3-measurement-math-verify.json": "f5400d206097866132950b5528b7c2d53d4430f0aaf70dc69ed52410e2ec2f9e",
+    ".qa-local/qr2-s5-4-stage2c/c3-measurement-math-verify.md": "1848face7a21d870d3547fc57c60076759b761859ad70cc2552f5de36ebbdac2",
+    ".qa-local/qr2-s5-4-stage2c/c3-measurement-math-verify-fixed.mjs": "d26af023875c0a39970a8d788ed6511b66e0323efe0ccd9e413b1492a7adfbd2",
+    ".qa-local/qr2-s5-4-stage2c/c3-measurement-math-verify-fixed.json": "df0caef861e6cac713e8ca965ee4c736c6abb9a78a28fca35fb9c705a307c7d3",
+    ".qa-local/qr2-s5-4-stage2c/c3-measurement-math-fix-review.md": "d1d2284774b8b6b91e40f170b85ce02b62c8e6d27e29ddc5216942acb10ccda7",
+    ".qa-local/qr2-s5-4-stage2c/root-headroom-followup.json": "e6b7d18ffee8202e07c6be36049a68f5de59b40554c5df27c7e2928a6c11c630",
+    ".qa-local/qr2-s5-4-stage2c/ci-preparation-checkpoint-review.md": "484d9145b716fb4246a0d1091f00526b83ec59401370018760aace1253c99ebc",
+    ".qa-local/qr2-s5-4-stage2c/ci-preparation-checkpoint-fix-review.md": "ffe54d36522382430d37d8904b215ef76e34324d2fda0ccb34ff910e70be70b5"
   },
-  "status": "BOUNDED_CI_FUNCTIONAL_PASS_FOLLOWUP_AND_PERFORMANCE_PENDING",
+  "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-22T22:02:48.240Z",
+  "recordedAt": "2026-10-22T22:39:30.546Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -310,9 +335,10 @@
     "publicIntervals": false,
     "fullStage2": false,
     "fullS5": false,
-    "functionalScope": "Only the 21 named assertions verified in exact-revision Ubuntu CI; broader functional acceptance remains incomplete.",
+    "functionalScope": "The 22 selected named tests verified in exact 2a89d18 Ubuntu CI: the earlier 21 plus one financial differential. Broader functional and local Windows acceptance remain incomplete.",
     "localFunctionalPacket": false,
-    "functionalComplete": false
+    "functionalComplete": false,
+    "financialDifferential": true
   },
   "provisionalLocalLimits": {
     "union_minutes": 43200,
@@ -325,7 +351,7 @@
   },
   "functionalPreparation": {
     "status": "NOT_RUN",
-    "reason": "Free physical memory below unchanged 1 GiB admission threshold",
+    "reason": "Local Windows packet remains unadmitted and unexecuted. The earlier below-threshold hold is historical; later resource samples do not automatically admit runtime.",
     "selectedTests": 21,
     "fileProcesses": 6,
     "expectedHelperDatabases": 8,
@@ -353,7 +379,27 @@
       "TAP parser requires selected successful names but does not fully cross-check every summary field.",
       "Pre-port failure retains failed state; supervisor does not certify null-port cleanup.",
       "Resource monitoring is sampled and cancellation has not been fault-injected."
-    ]
+    ],
+    "laterHeadroomObservation": {
+      "recordedAt": "2026-10-22T22:37:49.5442294Z",
+      "free_physical_bytes": 1035616256,
+      "required_physical_bytes": 1073741824,
+      "disk_free_bytes": 20591779840,
+      "required_disk_bytes": 2147483648,
+      "postgres_count": 0,
+      "runtime_admitted": false,
+      "runtime_started": false,
+      "scope": "One later resource sample; not a runtime GO or cleanup result",
+      "artifact": ".qa-local/qr2-s5-4-stage2c/root-headroom-followup.json"
+    },
+    "intermediateHeadroomSample": {
+      "free_physical_bytes": 1105436672,
+      "required_physical_bytes": 1073741824,
+      "postgres_count": 0,
+      "source": "Root PowerShell observation during this checkpoint; exact sample timestamp was not recorded",
+      "runtime_admitted": false,
+      "runtime_started": false
+    }
   },
   "ci": {
     "status": "PASS",
@@ -400,22 +446,124 @@
     "verification": "node --check and staged git diff --check passed; no tests rerun."
   },
   "financialDifferential": {
-    "status": "IMPLEMENTED_NOT_RUN",
+    "status": "PASS_EXACT_REVISION_UBUNTU_CI",
     "path": "test/postgres/qr2-coverage-financial.test.mjs",
     "tests": 1,
-    "codeRevision": "PENDING_NEXT_COMMIT",
+    "codeRevision": "2a89d1826902290ca54af3c8bf6be84c82267b47",
     "sourceReview": "PASS_WITH_LIMITS_AFTER_ONE_LINE_IMPORT_FIX",
     "syntax": "PASS",
     "pureNamedExportSmoke": "PASS",
-    "databaseOrWorkerExecution": "NOT_RUN",
+    "databaseOrWorkerExecution": "PASS_UBUNTU_CI; LOCAL_WINDOWS_NOT_RUN",
     "finding": "Initial validateResponse import named a module that does not export it; corrected to qr2-labels.js before execution.",
-    "acceptanceRequired": "Exact-revision raw test PASS, literal financial oracle, whole-body comparison except established timers, identical valuation predecessors and changed one-minute coverage gap."
+    "acceptanceRequired": "Satisfied for this single named CI regression: literal financial oracle, whole-body comparison except established timers, identical valuation predecessors and changed one-minute coverage gap.",
+    "localWindowsExecution": "NOT_RUN"
   },
   "combinedMeasurement": {
     "status": "PREPARATION_ONLY_NOT_RUN",
     "packet": "docs/QR2_S5_4_STAGE2C_COMBINED_MEASUREMENT_PACKET_2026-10-23.md",
     "runtimeAdmitted": false,
-    "requirements": "All RC-Q35/36 bars retained; current matched baseline, independent HTTP client/probe, exact financial seed counts, byte accounting and lifecycle source qualification remain required."
+    "requirements": "All RC-Q35/36 bars retained; current matched baseline, independent HTTP client/probe, exact financial seed counts, byte accounting and lifecycle source qualification remain required.",
+    "preparation": {
+      "coverage": {
+        "status": "PURE_ANALYTICAL_PASS_WITH_LIMITS",
+        "charges": {
+          "union_minutes": 20800,
+          "timestamp_rows": 20000,
+          "unique_windows": 5,
+          "derivation_visits": 99000,
+          "output_intervals": 4000,
+          "input_bytes_upper_bound": 350084,
+          "output_bytes_upper_bound": 765129
+        },
+        "remaining": {
+          "union_minutes": 22400,
+          "timestamp_rows": 1600,
+          "unique_windows": 15,
+          "derivation_visits": 1000,
+          "output_intervals": 96,
+          "coverage_input_bytes": 174204,
+          "coverage_output_bytes": 283447
+        },
+        "identifierWidth": 36,
+        "independentReview": ".qa-local/qr2-s5-4-stage2c/c3-coverage-plan-review.md",
+        "runtimeChronology": "NOT_QUALIFIED: fixed October 1 example must be translated and qualified against actual producer times",
+        "memoryOrPublicOutputClaim": false
+      },
+      "financial": {
+        "status": "SOURCE_AND_ARITHMETIC_PROPOSAL_NOT_RUN",
+        "heavy": {
+          "buys": 1000,
+          "targetedHalfSells": 320,
+          "changedFundingEvents": 15,
+          "openLots": 1000,
+          "predictedStandaloneRows": 4990
+        },
+        "cashMembers": 4,
+        "predictedOwnerRows": 5000,
+        "standaloneAtLimit": false,
+        "oracle": {
+          "cash": "49864.08",
+          "quantity": "0.84",
+          "positionCost": "50450.4",
+          "marketValue": "52080",
+          "realizedPnl": "300.48",
+          "unrealizedPnl": "1629.6",
+          "fees": "69.92",
+          "nav": "101944.08",
+          "moneyPnl": "1930.08"
+        },
+        "capitalModel": "NOT_DECLARED",
+        "ownerAggregate": "UNAVAILABLE",
+        "actualPostgresCounts": null,
+        "report": ".qa-local/qr2-s5-4-stage2c/c3-financial-recipe.md"
+      },
+      "monitoring": {
+        "status": "CONTRACT_ONLY_NOT_IMPLEMENTED",
+        "proposedTimestampCases": 15,
+        "executedTimestampTests": 0,
+        "probeCadenceMs": 50,
+        "maxOutstanding": 1,
+        "measuredReportsPerMode": 20,
+        "warmupsPerMode": 3,
+        "order": "Alternating inline/worker matched blocks after warmups",
+        "clientLagValidityBoundMs": 50,
+        "histogramUpdateOrdering": "UNPROVED",
+        "report": ".qa-local/qr2-s5-4-stage2c/c3-monitoring-contract.md"
+      },
+      "diagnostic": "NOT_RUN",
+      "runtimeAdmitted": false,
+      "remaining": [
+        "Compatible fixed reporting clock and actual producer chronology/counts/gates",
+        "Coupled fixture and diagnostic harness",
+        "Independent client/HTTP implementation and executed boundary tests",
+        "Finite setup/SQL/process/sample/whole-run budgets",
+        "Complete runtime source manifest and lifecycle review",
+        "Refreshed headroom and separate runtime admission"
+      ],
+      "independentCheckpointReview": {
+        "status": "PASS_WITH_LIMITS",
+        "artifact": ".qa-local/qr2-s5-4-stage2c/c3-preparation-checkpoint-review.md"
+      },
+      "measurementMath": {
+        "status": "BOUNDED_PURE_CHECKS_PASS",
+        "module": ".qa-local/qr2-s5-4-stage2c/c3-measurement-math.mjs",
+        "initial": {
+          "total": 24,
+          "passed": 23,
+          "failed": 1,
+          "artifact": ".qa-local/qr2-s5-4-stage2c/c3-measurement-math-verify.json"
+        },
+        "fixed": {
+          "total": 24,
+          "passed": 24,
+          "failed": 0,
+          "artifact": ".qa-local/qr2-s5-4-stage2c/c3-measurement-math-verify-fixed.json"
+        },
+        "fix": "Multiply sample count by percent before division; unchanged independent suite copied only to preserve original failure output.",
+        "scope": "Selected pure percentile/overlap/invalid-input/nonmutation cases only; not the full monitoring contract, histogram/scheduling/clock mapping or runtime performance.",
+        "sourceSha256": "523bf39b30d27c4b2557528ba8079153c4bd2b716fbc91d4d140c0153dccdace"
+      }
+    }
   },
   "followupCheckpointReview": {
     "status": "PASS_AFTER_SCOPING_STALE_STATUS_FIELDS",
@@ -423,6 +571,45 @@
       ".qa-local/qr2-s5-4-stage2c/followup-checkpoint-review.md",
       ".qa-local/qr2-s5-4-stage2c/followup-checkpoint-fix-review.md"
     ],
+    "originalFindingPreserved": true
+  },
+  "financialDifferentialCI": {
+    "status": "PASS",
+    "revision": "2a89d1826902290ca54af3c8bf6be84c82267b47",
+    "runs": [
+      {
+        "id": 39862387010,
+        "name": "Quant Lab",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39862387010",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 39862387031,
+        "name": "Safety checks",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39862387031",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "jobCount": 9,
+    "actualSubstantiveStepCount": 16,
+    "selectedFunctionalPassCount": 22,
+    "newFinancialDifferentialPassCount": 1,
+    "fullSuiteTestCount": null,
+    "verificationArtifact": ".qa-local/qr2-s5-4-stage2c/ci/verified-2a89d18.json",
+    "independentVerification": {
+      "status": "PASS_WITH_LIMITS",
+      "artifact": ".qa-local/qr2-s5-4-stage2c/ci/independent-2a89d18.md"
+    },
+    "localWindowsRuntime": "NOT_RUN",
+    "limits": "Twenty-two selected names include the earlier twenty-one plus the single financial differential; counts are not additive across revisions. CI teardown is not local Windows lifecycle or per-helper cleanup proof."
+  },
+  "latestCheckpointReview": {
+    "status": "PASS_WITH_LIMITS_AFTER_HISTORICAL_HEADROOM_WORDING_FIX",
+    "artifact": ".qa-local/qr2-s5-4-stage2c/ci-preparation-checkpoint-review.md",
+    "finding": "Changed current low-headroom wording to a historical admission hold after a later above-threshold sample; no runtime GO follows.",
+    "fixReview": ".qa-local/qr2-s5-4-stage2c/ci-preparation-checkpoint-fix-review.md",
     "originalFindingPreserved": true
   }
 }
