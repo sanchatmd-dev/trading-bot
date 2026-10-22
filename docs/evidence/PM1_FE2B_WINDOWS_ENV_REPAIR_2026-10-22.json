@@ -37,12 +37,12 @@
   "rejectedApproach": "Blanking all ten defaults prevented parent-value inheritance but failed actual socket creation with Windows error 10106. That approach was not committed. Keeping SYSTEMROOT explicitly passes the compatibility checks.",
   "files": {
     "src/multi-pine/python-runner.js": "4a1c0b79f32980f1c1ea672991d3cf6b78741e25ecc9a8c0f813ea9326e365ce",
-    "test/postgres/mp-executor.test.mjs": "b1cb4ac13fc1f3b45334d6cc163ceea1a89a504e7ba0b907a6098c5518cbc0e8",
+    "test/postgres/mp-executor.test.mjs": "c4a97645f2001dca046003eb208d8dd4ffd7da0703f498ac3f82011b358e4be0",
     "test/mp-python-runner-environment.test.js": "33f3bea00a99d657fd298a985f4cc33bef2ba598534d663b9593469d1588089b"
   },
   "testedWorktreeFiles": {
     "src/multi-pine/python-runner.js": "4a1c0b79f32980f1c1ea672991d3cf6b78741e25ecc9a8c0f813ea9326e365ce",
-    "test/postgres/mp-executor.test.mjs": "7127ba9b10f0a01213b33245fbcfe47eca3eba5617c6313e9a46abeff9032813",
+    "test/postgres/mp-executor.test.mjs": "707ab8e5a8b3d787be825a074f65392f25417c23aa20822e74156d16169d339a",
     "test/mp-python-runner-environment.test.js": "33f3bea00a99d657fd298a985f4cc33bef2ba598534d663b9593469d1588089b"
   },
   "filePinFormat": "files contains canonical LF SHA256 for Git; testedWorktreeFiles contains raw tested bytes. The runtime closure runner file is LF.",
@@ -82,6 +82,11 @@
       "focused-1792650877785/postgres-test.log": "1d9a3a09bda336046d522b9cdfed65e2b565c968085b66529f0a61784d9c0366",
       "focused-1792650877785/commands.jsonl": "cbdc01ab2179b3a9d0d38b3333fb1cda92e8d8cf90e8d47bfda5764facef257a",
       "focused-1792650877785/cleanup.txt": "191c5e6015f02f9b195f33ee36445f9b0b32327030b9732663aeb0564bb1232c"
+    },
+    "testedWorktreeFiles": {
+      "src/multi-pine/python-runner.js": "4a1c0b79f32980f1c1ea672991d3cf6b78741e25ecc9a8c0f813ea9326e365ce",
+      "test/postgres/mp-executor.test.mjs": "7127ba9b10f0a01213b33245fbcfe47eca3eba5617c6313e9a46abeff9032813",
+      "test/mp-python-runner-environment.test.js": "33f3bea00a99d657fd298a985f4cc33bef2ba598534d663b9593469d1588089b"
     }
   },
   "independentVerification": {
@@ -108,11 +113,16 @@
     "logSha256": {
       "standalone": "38d5fa75421a20aeec951d12d61ba0c0232c8fa6ae158559ab175de5df29f61c",
       "probe": "6e04efb0351285ef21570ec96ad28b79aa245d91fc269b53cc2259dd4a1bfe73"
+    },
+    "testedWorktreeFiles": {
+      "src/multi-pine/python-runner.js": "4a1c0b79f32980f1c1ea672991d3cf6b78741e25ecc9a8c0f813ea9326e365ce",
+      "test/postgres/mp-executor.test.mjs": "7127ba9b10f0a01213b33245fbcfe47eca3eba5617c6313e9a46abeff9032813",
+      "test/mp-python-runner-environment.test.js": "33f3bea00a99d657fd298a985f4cc33bef2ba598534d663b9593469d1588089b"
     }
   },
   "review": {
     "architecture": "Final bounded diff and refinements reviewed with no actionable blocker. Root separately verifies execution evidence.",
-    "architectureReportSha256": "6992eb3a19db07b7b0b64e7ed9c4d3d1247c4e2ec3b3637f1bfcb48fa91aa7cb",
+    "architectureReportSha256": "7a52d867ef24e05f83701d9b9dfa803fc5e67eb1ce355cc58d5d96692eefa0b5",
     "testerReportSha256": "1da41380260013b56628a0490328c730143ac4c406800b14db1330857f701506"
   },
   "closure": {
@@ -130,7 +140,7 @@
   "decision": "FOCUSED_WINDOWS_REPAIR_ACCEPTED_LOCALLY",
   "ci": {
     "status": "PENDING_NEW_REVISION",
-    "note": "Prior green CI belongs to 46c7ef3 and does not certify this new runner revision. Standard push workflows are separate from the requested focused local tests."
+    "note": "Prior green CI belongs to 46c7ef3 and does not certify this runner revision. The initial runner commit 2117905 has automatic CI in progress and is superseded by the test harness follow-up. New final-revision CI remains pending; full local suites were not rerun."
   },
   "limits": [
     "No full local Node or PostgreSQL suite rerun, as requested. The previous full-run failure record remains historical evidence.",
@@ -139,5 +149,35 @@
     "Spot/Paper only. No deployment, shared migration, Live, guard reset or Best Inputs apply.",
     "Original dirty checkout and both stashes preserved. The older stopped setup fixture retained after cleanup rejection was not touched.",
     "Ignored local logs and reports are not delivered by Git; portable summaries and digests are recorded here."
-  ]
+  ],
+  "harnessFollowup": {
+    "baseRevision": "21179055b378ff647f58f57fe2110bca72097ab9",
+    "change": "Dependency smoke now uses the configured engine interpreter or project venv instead of bare PATH Python. Its script and security assertions are unchanged.",
+    "reproduction": "With a fresh bare Python environment containing no pydantic, the old explicit-PATH call failed EVALUATION_FAILED; the default engine-interpreter call passed.",
+    "base": "2117905",
+    "file": "test/postgres/mp-executor.test.mjs",
+    "file_sha256": "707ab8e5a8b3d787be825a074f65392f25417c23aa20822e74156d16169d339a",
+    "log_sha256": "cb012fcdf8dd7a02a68687106f0a0a26da8279efdd6b63353e7f8088d9864340",
+    "commands_sha256": "3faf166012ef5caba7e9574ea0ba2325d7be94ea310817e412fd8b8f0fda2419",
+    "reproduction_sha256": "d88d114f02d09e12d9a11132e6d290a10632ea1f13db7594276b9f78f302176f",
+    "checks": {
+      "pass": 1,
+      "fail": 0,
+      "skip": 0
+    },
+    "simulation": {
+      "bare_python_pydantic": false,
+      "project_venv_pydantic": true,
+      "QUANT_RESEARCH_PYTHON": "unset"
+    },
+    "fixture": {
+      "stopped": true,
+      "data_removed": true
+    },
+    "tests": 1,
+    "duration_ms": 4835.5565,
+    "exitCode": 0,
+    "command": "node --test --test-isolation=process --test-concurrency=1 --test-name-pattern=\"^python runner: the child gets a minimal environment\" test/postgres/mp-executor.test.mjs",
+    "review": "Architecture reviewer checked the three-line test-only diff; no blocker or security reduction."
+  }
 }

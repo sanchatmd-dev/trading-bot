@@ -1275,7 +1275,8 @@ test('python runner: the child gets a minimal environment (no DATABASE_URL, no s
       const explicit=createPythonRunner({python:PY,args:['-c','import os,json\nprint(json.dumps({"extra":os.environ.get("MP_TEST_EXTRA"),"username":os.environ.get("USERNAME")}))'],env:{mP_tEsT_eXtRa:'explicit',uSeRnAmE:'explicit-fixture-name'}});
       assert.deepEqual(await explicit({}),{extra:'explicit',username:'explicit-fixture-name'},'explicit extras override empty defaults deterministically');
     }
-    const compatible=createPythonRunner({python:PY,args:['-c','import ssl,socket,tempfile,decimal,pydantic,robot_quant.mp_combined_job,json\ns=socket.socket();s.close()\nwith tempfile.TemporaryFile() as f:\n f.write(b"fixture");f.seek(0);assert f.read()==b"fixture"\nprint(json.dumps({"imports":True,"socket":True,"tempfile":True}))']});
+    // Dependency smoke uses the configured engine interpreter or project venv; CI's bare PATH Python has no project dependencies.
+    const compatible=createPythonRunner({args:['-c','import ssl,socket,tempfile,decimal,pydantic,robot_quant.mp_combined_job,json\ns=socket.socket();s.close()\nwith tempfile.TemporaryFile() as f:\n f.write(b"fixture");f.seek(0);assert f.read()==b"fixture"\nprint(json.dumps({"imports":True,"socket":True,"tempfile":True}))']});
     assert.deepEqual(await compatible({}),{imports:true,socket:true,tempfile:true});
   }finally{for(const [name,value] of Object.entries(saved)){if(value===undefined)delete process.env[name];else process.env[name]=value;}}
   for(const name of ['DATABASE_URL','MP_FIXTURE_DATABASE_URL','MY_SECRET','API_TOKEN','DB_PASSWORD','PGHOST','PYTHONSTARTUP','PYTHONPATH','AWS_ACCESS_KEY','bad name'])
