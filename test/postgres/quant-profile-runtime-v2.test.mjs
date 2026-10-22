@@ -52,7 +52,7 @@ before(async()=>{
     await db.query(await fs.readFile(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
   await installQuantGuards(db);
   // Empty research adapter tables let the actual worker reconcile its other lane without research execution.
-  await db.query(`CREATE TABLE quant_jobs(run_id TEXT PRIMARY KEY,status TEXT,diagnostic TEXT,
+  await db.query(`CREATE TABLE quant_jobs(run_id TEXT PRIMARY KEY,status TEXT,diagnostic TEXT,contract JSONB,
     lease_token UUID,lease_until BIGINT,updated_at BIGINT);
     CREATE TABLE quant_research_foundation(run_id TEXT,job_id UUID);
     CREATE TABLE quant_research_chunks(run_id TEXT,unit_token UUID,unit_name TEXT);`);

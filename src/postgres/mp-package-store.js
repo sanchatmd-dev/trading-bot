@@ -114,7 +114,7 @@ const TRACE_ROWS = `SELECT path,sha256,decisions_hash,steps_digest,holdout_diges
  */
 export const EARLIER_ONE_PINE_SQL = `WITH earlier AS MATERIALIZED (SELECT j.run_id,j.created_at,
  CASE WHEN jsonb_typeof(j.contract)='object' THEN j.contract - 'source' #- '{dataset,bars}' #- '{plan,candidates}' END AS k
- FROM public.quant_jobs j WHERE j.owner_id=$1 AND j.run_id<>$2 AND (j.created_at,j.run_id)<($3::bigint,$2::text) AND j.result->'holdout_evaluated'='true'::jsonb)
+ FROM public.quant_jobs j WHERE j.owner_id=$1 AND (j.contract->>'mode') IS DISTINCT FROM 'FIXED_INPUT_EVAL' AND j.run_id<>$2 AND (j.created_at,j.run_id)<($3::bigint,$2::text) AND j.result->'holdout_evaluated'='true'::jsonb)
  SELECT run_id,k#>'{snapshot,market}' AS market,k->'split' AS split,k#>'{dataset,start_time}' AS start_time FROM earlier ORDER BY created_at,run_id`;
 export const EFFECTIVE_BOUNDARY_SQL = `SELECT (SELECT min(sibling.holdout_start_time)
   FROM public.quant_holdout_boundaries sibling WHERE sibling.owner_id=own.owner_id
@@ -122,9 +122,9 @@ export const EFFECTIVE_BOUNDARY_SQL = `SELECT (SELECT min(sibling.holdout_start_
   AND sibling.symbol=own.symbol AND sibling.timeframe=own.timeframe) holdout_start_time
   FROM public.quant_holdout_boundaries own WHERE own.owner_id=$1 AND own.bot_id=$2
   AND own.venue=$3 AND own.market=$4 AND own.symbol=$5 AND own.timeframe=$6`;
-/** Earlier one-Pine runs of the owner that searched data with one of the given source hashes (OD-10): any status, strictly earlier by (created_at, run_id). */
+/** Earlier one-Pine research runs of the owner that searched data with one of the given source hashes (OD-10): any status, strictly earlier by (created_at, run_id). Fixed evaluations are not searches; their exposure is read from the register. */
 export const EARLIER_SEARCHED_ONE_PINE_SQL = `SELECT j.run_id,j.contract#>'{snapshot,market}' AS market,j.contract->'split' AS split,j.contract#>'{dataset,start_time}' AS start_time
- FROM public.quant_jobs j WHERE j.owner_id=$1 AND j.run_id<>$2 AND (j.created_at,j.run_id)<($3::bigint,$2::text) AND j.contract->>'source_hash'=ANY($4::text[]) ORDER BY j.created_at,j.run_id`;
+ FROM public.quant_jobs j WHERE j.owner_id=$1 AND (j.contract->>'mode') IS DISTINCT FROM 'FIXED_INPUT_EVAL' AND j.run_id<>$2 AND (j.created_at,j.run_id)<($3::bigint,$2::text) AND j.contract->>'source_hash'=ANY($4::text[]) ORDER BY j.created_at,j.run_id`;
 
 /* ---------- small helpers ---------- */
 

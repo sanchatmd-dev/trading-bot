@@ -258,8 +258,8 @@ async function craft(world,{dataset=DATASET2,at=NOW2,terminal=null}={}){
 const ONE_PINE_SQL=`INSERT INTO quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,status,created_at,updated_at,deadline,result)
   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10,$10,$11)`;
 /** An earlier one-Pine quant_jobs row of the world's owner (the read-only EARLIER mirror reads it). holdout: true, false or null (no result). */
-async function onePine(world,{created_at=EARLY,market=MARKET,split,start_time=START2,source_hash=SUPPORTED,status='SUCCEEDED',holdout=true,owner=world.id}={}){
-  const contract={version:'ql3a-research-job-v2',source_hash,...(market===null?{}:{snapshot:{market}}),split,dataset:{start_time}};
+async function onePine(world,{created_at=EARLY,market=MARKET,split,start_time=START2,source_hash=SUPPORTED,status='SUCCEEDED',holdout=true,owner=world.id,mode}={}){
+  const contract={version:'ql3a-research-job-v2',source_hash,...(mode===undefined?{}:{mode}),...(market===null?{}:{snapshot:{market}}),split,dataset:{start_time}};
   const run_id='one-'+randomUUID();
   await db.query(ONE_PINE_SQL,[run_id,owner,world.bot,world.specs[0].dep,'key-'+run_id,hash('s'+run_id),hash('c'+run_id),JSON.stringify(contract),status,created_at,holdout===null?null:JSON.stringify({holdout_evaluated:holdout})]);
   return run_id;
@@ -916,6 +916,41 @@ test('lookups: earlier one-Pine runs (the EARLIER mirror and the searched mirror
   assert.deepEqual([bad.lookups.registered_boundary,bad.lookups.exposure_register],[{exists:false},[]],'the other parts are still read');
 });
 
+test('fixed evaluation rows are neither earlier research holdouts nor searches; legacy missing and null modes still count',{timeout:120000},async()=>{
+  const world=await newWorld(),subject=await craft(world,{at:NOW2}),view=await viewOf(world.id,subject.run_id);
+  const split={warmup:1250,train_end:4100,validation_end:5050,test_end:6000};
+  // Adversarial stored fixtures carry legacy research fields, including holdout_evaluated=true.
+  // Neither those fields nor an unreadable research split may turn a fixed evaluation into research.
+  await onePine(world,{mode:'FIXED_INPUT_EVAL',split});
+  await onePine(world,{mode:'FIXED_INPUT_EVAL',split:null});
+  const fixedOnly=await readMultiHoldoutLookups(fx,view);
+  assert.equal(fixedOnly.ok,true,JSON.stringify(fixedOnly.unavailable));
+  assert.deepEqual([fixedOnly.lookups.earlier_holdouts,fixedOnly.lookups.earlier_searched],[[],[]]);
+  await onePine(world,{split});
+  await onePine(world,{mode:null,split});
+  await onePine(world,{split,status:'QUEUED',holdout:false});
+  const mixed=await readMultiHoldoutLookups(fx,view),shape={dataset:{start_time:START2},split};
+  assert.equal(mixed.ok,true,JSON.stringify(mixed.unavailable));
+  assert.deepEqual(mixed.lookups.earlier_holdouts,[holdoutOf(shape),holdoutOf(shape)]);
+  assert.deepEqual(mixed.lookups.earlier_searched,[searchedOf(shape),searchedOf(shape),searchedOf(shape)]);
+});
+
+test('a QR3 comparison exposure still blocks B0 when fixed evaluations are excluded from research lookups',{timeout:600000},async()=>{
+  const real=await realRun(),view=await viewOf(real.owner_id,real.run_id),contract=view.run.contract,own=holdoutOf(contract);
+  await onePine(real.world,{mode:'FIXED_INPUT_EVAL',split:contract.split,start_time:contract.dataset.start_time});
+  const before=await readMultiHoldoutLookups(fx,view);
+  assert.equal(before.ok,true,JSON.stringify(before.unavailable));
+  assert.deepEqual([before.lookups.earlier_holdouts,before.lookups.earlier_searched],[[],[]]);
+  const registered=await db.transaction(()=>appendExposures(db,{owner_id:real.owner_id,broker:MARKET.broker,symbol:MARKET.symbol,timeframe:MARKET.timeframe,
+    events:[{kind:'QR3_COMPARISON',window:{start_ms:own.start_time,end_ms:own.end_time+MINUTE},comparison_id:'fixed-exposure-fixture',
+      participant_run_id:real.run_id,source_hash:SUPPORTED}],now:()=>EARLY}),{isolation:'SERIALIZABLE'});
+  assert.equal(registered.ok,true,JSON.stringify(registered));
+  const out=await packages().build({owner_id:real.owner_id,run_id:real.run_id});
+  assert.deepEqual([out.ok,out.code,out.stage],[false,PACKAGE_STORE_CODES.BUILD_B0_FAILED,'B0']);
+  assert.ok(out.codes.includes('BI_HOLDOUT_EXPOSED_BY_SELECTION'),out.codes.join());
+  assert.equal((await db.query('SELECT count(*)::int n FROM mp_package_exports WHERE owner_id=$1',[real.owner_id])).rows[0].n,0);
+});
+
 test('lookups: the registered boundary is the strictest boundary of the owner for this Bot; the exposure register gives the owner and market entries in the package shape; an absent table fails closed',{timeout:120000},async()=>{
   const world=await newWorld(),other=await newWorld(),sibling=await newWorld(),subject=await craft(world,{at:NOW2}),view=await viewOf(world.id,subject.run_id);
   assert.deepEqual((await readMultiHoldoutLookups(fx,view)).lookups.registered_boundary,{exists:false});
@@ -986,12 +1021,13 @@ test('parity: the earlier-holdout query is the text of EARLIER of the one-Pine l
   const world=await newWorld(),other=await newWorld();
   const split={warmup:1250,train_end:4100,validation_end:5050,test_end:6000};
   const ids=[await onePine(world,{split,created_at:EARLY}),await onePine(world,{split,created_at:EARLY+5,holdout:false}),await onePine(world,{split,created_at:EARLY+10,market:null}),
-    await onePine(world,{split,created_at:NOW2+1}),await onePine(other,{split,created_at:EARLY}),await onePine(world,{split,created_at:EARLY+20,holdout:null})];
+    await onePine(world,{split,created_at:NOW2+1}),await onePine(other,{split,created_at:EARLY}),await onePine(world,{split,created_at:EARLY+20,holdout:null}),
+    await onePine(world,{split,created_at:EARLY+25,mode:null}),await onePine(world,{split,created_at:EARLY+30,mode:'FIXED_INPUT_EVAL'})];
   for(const [owner,run,created] of [[world.id,'nothing',NOW2],[world.id,ids[2],EARLY+10],[other.id,'nothing',NOW2],[world.id,'nothing',EARLY]]){
     const mine=(await db.query(EARLIER_ONE_PINE_SQL,[owner,run,created])).rows,theirs=(await db.query(original,[owner,run,created])).rows;
     assert.deepEqual(mine,theirs,owner+' '+run);
   }
-  assert.deepEqual((await db.query(EARLIER_ONE_PINE_SQL,[world.id,'nothing',NOW2])).rows.map(row=>row.run_id),[ids[0],ids[2]],'holdout evaluated, created before the subject');
+  assert.deepEqual((await db.query(EARLIER_ONE_PINE_SQL,[world.id,'nothing',NOW2])).rows.map(row=>row.run_id),[ids[0],ids[2],ids[6]],'legacy holdouts with absent or null mode count; fixed evaluations do not');
 });
 
 /* ---- unit-level cases ---- */

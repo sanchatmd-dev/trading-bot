@@ -1,0 +1,170 @@
+{
+  "schema": "PM1_FE2B_CI_REPAIR_V1",
+  "date": "2026-10-22",
+  "timezone": "Asia/Bangkok",
+  "baseRevision": "ca0ebb47b366bb3d3b1cab6dd433286298d6fd5c",
+  "failedImplementation": "15e7bbf39031305e1dd71736e74e0161f4bfd5a3",
+  "scope": "Owner-local engineering repair of the seven PostgreSQL CI failures. No target operations or private acceptance.",
+  "changes": [
+    "Restore EARLIER_ONE_PINE_SQL parity with the library, excluding FIXED_INPUT_EVAL using IS DISTINCT FROM while retaining absent and null legacy modes.",
+    "Explicitly exclude fixed evaluations from the adjacent searched-window query. The independent exposure register remains authoritative and fail closed.",
+    "Add contract JSONB to the minimal PROFILE research-adapter fixture. Production reconciliation and stop/release guards are unchanged.",
+    "Add regressions for legacy/fixed-mode lookup separation and QR3 exposure refusing B0 without creating an export; preserve QR4 and missing-register coverage."
+  ],
+  "files": {
+    "src/postgres/mp-package-store.js": "7ef5f1445ab6de67c61aaf5caa04b649e81be702ec1a64cbd69d486e23c588d8",
+    "test/postgres/mp-package-build.test.mjs": "dedc0bc4691546d9f80c979be49578314c61d884efa8c3c01087a31c51cba3a0",
+    "test/postgres/quant-profile-runtime-v2.test.mjs": "6dd99aead5df63230d63b706d3f885b88db49dada6890e82422a2cd5a8c5825a"
+  },
+  "reproduction": {
+    "tests": 97,
+    "pass": 90,
+    "fail": 7,
+    "skipped": 0,
+    "suites": [
+      {
+        "file": "test/postgres/mp-package-build.test.mjs",
+        "pass": 34,
+        "fail": 1,
+        "duration_ms": 234454.8629
+      },
+      {
+        "file": "test/postgres/quant-profile-runtime-v2.test.mjs",
+        "pass": 38,
+        "fail": 5,
+        "duration_ms": 14326.4448
+      },
+      {
+        "file": "test/postgres/quant-io-release-guard-hardening.test.mjs",
+        "pass": 18,
+        "fail": 1,
+        "duration_ms": 177885.082
+      }
+    ]
+  },
+  "focusedPostgres": {
+    "tests": 99,
+    "pass": 99,
+    "fail": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "file": "test/postgres/mp-package-build.test.mjs",
+        "pass": 37,
+        "fail": 0,
+        "duration_ms": 242346.1433
+      },
+      {
+        "file": "test/postgres/quant-profile-runtime-v2.test.mjs",
+        "pass": 43,
+        "fail": 0,
+        "duration_ms": 13089.6336
+      },
+      {
+        "file": "test/postgres/quant-io-release-guard-hardening.test.mjs",
+        "pass": 19,
+        "fail": 0,
+        "duration_ms": 169573.1802
+      }
+    ],
+    "exitCode": 0,
+    "cleanup": "Both before/after disposable clusters stopped and complete data directories removed."
+  },
+  "focusedNode": {
+    "tests": 82,
+    "pass": 82,
+    "fail": 0,
+    "skipped": 0,
+    "todo": 0,
+    "exitCode": 0,
+    "durationSeconds": 26.6971441,
+    "command": "node --test --test-concurrency=1 test/mp-package-store-static-isolation.test.js test/fixed-eval-contract.test.js test/fixed-eval-admission.test.js test/fixed-eval-engine.test.js test/fixed-eval-qr3-parity.test.js test/mp-engine-closure.test.js test/multi-pine-package-closure.test.js",
+    "logSha256": "359ab9c5cd9ed41fe2a5b130a37caff88b8e67120f308afbb50ba5b66ba49b21"
+  },
+  "independentReview": {
+    "architecture": "Final three-file diff reviewed; no actionable blocker. Legacy null handling, owner/time/source predicates, exposure register, and stop/release assertions preserved.",
+    "tester": "Independent focused Node checks passed on the pinned three-file snapshot. Full PostgreSQL verification is recorded separately.",
+    "architectureReportSha256": "c985ab316ebebf630752a324165cffbb5eb27c40c5ac836613a3b50afeb35203"
+  },
+  "closureVerification": {
+    "hashes": {
+      "legacy": "988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a",
+      "foundation": "3b29eb619f2b4eda1e8abb924e965965c221282462daf238d2cfdd0707386c22",
+      "ingestion": "e10687a3f45eba8cc285c4612ae580db14d94367af3e1fc0b5005346dffa65ce",
+      "pf2_engine": "046422ce7627f136983f8e0ee2d382141d1d915f5858e03b48815ee661ea42b7",
+      "pf2_evaluator": "3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada",
+      "fixed_eval": "b3acd0c8af04a06f17ad5d54946c55e892869f12f64200271f84c200df39bf88",
+      "multi": "746e4b6e17bdac9d4caa86f292901f43d1e6f6c7cf2ea76ccc4f2d25c5fb1457",
+      "trace": "d6131e75df9741d4446c960f45c78b7923f5d978e36bfe04a9e6acc04fd4d87c"
+    },
+    "changedFamilies": [],
+    "fileCount": 129,
+    "fileMismatches": [],
+    "priorInventory": "PM1_FE2B_CLOSURES_LOCAL_2026-10-22.json",
+    "conclusion": "All eight closure hashes and all 129 listed file digests are unchanged. The changed package-store module is outside these eight closures. Historical inventories and stored hashes are not rewritten."
+  },
+  "runtime": {
+    "node": "24.19.0",
+    "npm": "11.17.0",
+    "python": "3.12.14",
+    "postgres": "16.15",
+    "pgDump": "16.15",
+    "pgRestore": "16.15",
+    "pythonDependencies": "Fresh worktree environment: uv sync --locked --all-extras with an explicit verified Python interpreter; 167 packages installed.",
+    "nodeDependencies": "npm ci --ignore-scripts stalled after extraction and was stopped. npm ls --all --offline and imports of all four direct dependencies passed."
+  },
+  "setupLimits": [
+    "Windows checkout CRLF differed from the prior raw-byte closure pins. Only the isolated worktree closure files were normalized to LF; all 129 digests then matched and the Git tree had no content change.",
+    "The first full-suite runner attempt stopped before any npm test began: pg_ctl exited but an inherited Windows pipe delayed the close event. The scratch runner now uses exit for pg_ctl and close for test processes.",
+    "That initial fixture server was stopped. Automatic approval review rejected recursive cleanup with blocked by policy and supplied no further reason; its stopped data directory was retained without a bypass.",
+    "A subsequent full run was interrupted after four Python-runner cases selected the Windows Store python alias. A direct probe failed through that alias and succeeded through the verified locked interpreter. The scratch runner now places the repository venv first in PATH and checks bare-python imports before tests; product and test sources were not changed. The interrupted run is not a complete regression result, and its fixture was stopped and removed."
+  ],
+  "fullPostgres": {
+    "status": "RUNNING",
+    "interimObservation": "The corrected Windows run has one minimal-environment assertion failure in unchanged mp-executor.test.mjs. A direct verified-interpreter probe shows Windows-added environment keys. The other three Python-runner cases now pass. No security assertion was relaxed; complete local results and Linux CI remain pending."
+  },
+  "ci": {
+    "status": "PENDING"
+  },
+  "localLogs": {
+    "availability": "Ignored local evidence; not delivered by Git.",
+    "focused": {
+      "before-1792638394806": {
+        "1-mp-package-build.test.mjs.log": "1293a063624e632d8e913fcf25ead8920e9f8a33e9c54381c5b1564d668d9723",
+        "2-quant-profile-runtime-v2.test.mjs.log": "5430d4f36240e22d5e054d3a13a52cb1032670865a179167747339d8fb218502",
+        "3-quant-io-release-guard-hardening.test.mjs.log": "47812f2f95c1d658e8ac5a0642240bea5522f7f78563a851599a5e6be7a7110f",
+        "cleanup.log": "efd0f07cd9837f7c5c762359b48d3e1bf9320731d7834c999c24c5f28e0d3420",
+        "commands.log": "c14231d3cccf70ce3d617b21f763bb6e4f7fc6adfd62553f7c89b1a4628a9535",
+        "initdb.log": "6dd9598bbd835d8fcd735b8c3b4c140613bb54d57ff22b5f9d72ac655dbb33a6",
+        "postgres.log": "cc95362c78fca4c42c3d3fbffdcdd988cbba1bbb006d24c6df2b69ab31233a29",
+        "start.log": "46038efb813fbca18a92272496901190638dea3f97b51f7af0daa1ca2eb13818",
+        "stop.log": "3589d2bd01f8295cc7c9ec3f5e07625fcd347ccb6f33f2d80edafe5f5217c1fb"
+      },
+      "after-1792638915737": {
+        "1-mp-package-build.test.mjs.log": "c6f7e5718b0c0929d653a943cf7903875416f33b00ccee63d55b07c8d48b1445",
+        "2-quant-profile-runtime-v2.test.mjs.log": "0eb30ec53c0bf976530ca53f746593f223d5e75227a638e680f3aed390acaee7",
+        "3-quant-io-release-guard-hardening.test.mjs.log": "3c849e493675921fe2fa92c32434ebf418a530eaa2f21b218eefca86c31b6022",
+        "cleanup.log": "efd0f07cd9837f7c5c762359b48d3e1bf9320731d7834c999c24c5f28e0d3420",
+        "commands.log": "e80c278f4f3548fd5d82bfe00dbe23075fa47b06ec6f78d62813c4f0eb88bece",
+        "initdb.log": "77f3a59b238aed62f13eee30d4a60cd9570a97e4b2031667470d0ae9163fc83b",
+        "postgres.log": "e4128a0fc40d940c6e74459d156faa370c26c75a457b0a391e6aac5582bba4be",
+        "start.log": "46038efb813fbca18a92272496901190638dea3f97b51f7af0daa1ca2eb13818",
+        "stop.log": "3589d2bd01f8295cc7c9ec3f5e07625fcd347ccb6f33f2d80edafe5f5217c1fb"
+      }
+    }
+  },
+  "limits": [
+    "Spot/Paper only; fixed evaluation remains default off.",
+    "No deployment, shared migration, restart, Live, guard reset or Best Inputs apply.",
+    "Private acceptance and native systemd/cgroup proof remain NOT RUN.",
+    "READY remains false; N1 remains held.",
+    "Original dirty checkout and both stashes preserved; no main switch or wholesale WIP merge."
+  ],
+  "decision": "FULL_REGRESSION_AND_CI_PENDING",
+  "testedWorktreeFiles": {
+    "src/postgres/mp-package-store.js": "aa4092382b561d75e0523071b9dbfbe3a76539b201a4cfd33f539470fa1b9187",
+    "test/postgres/mp-package-build.test.mjs": "47b97ea4212e43fb1f96da12fbffa29c5ac114616e47482f982554a67d3f1a0e",
+    "test/postgres/quant-profile-runtime-v2.test.mjs": "e8bf1f85f7638ef04cf4f21344b27ef164609e5ab9607a3ce990a67efdbc1709"
+  },
+  "filePinFormat": "files pins canonical LF bytes for Git portability; testedWorktreeFiles pins the CRLF working bytes used by the local tests. These three files are outside the eight runtime closures. No source content changed during tests."
+}
