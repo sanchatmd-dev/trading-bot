@@ -8,7 +8,7 @@
     "packet": "docs/QR2_S5_1_LOCAL_UI_GO_PACKET_2026-10-22.md",
     "decision": "Explicit owner GO on 2026-10-22, including focused tests, evidence updates and periodic commit/push; no deployment or target route activation."
   },
-  "status": "LOCAL_ACCEPTED_SHELL_FOLLOWUP_CI_PENDING",
+  "status": "LOCAL_ACCEPTED_SHELL_FOLLOWUP",
   "accepted": true,
   "behavior": [
     "Overview component reads existing per-Bot or owner endpoints with explicit GET submission; it adds no backend route or flag.",
@@ -704,7 +704,7 @@
     "guardReset": "NOT AUTHORIZED",
     "bestInputsApply": "NOT AUTHORIZED"
   },
-  "nextAction": "Commit/push the reviewed bounded correction and evidence, follow its exact revision through CI, record actual job/step outcomes, then close this S5-1 checkpoint. Full S5 and all target effects remain separately gated.",
+  "nextAction": "The bounded S5-1 shell follow-up is complete. Commit/push this CI evidence readback, verify its documentation-scope CI, save the ignored checkpoint and stop. Full S5 and all target effects remain separately gated.",
   "ciRepair": {
     "date": "2026-10-22",
     "failedRevision": "6f7fcff603d0cdd0c29990c431ae1fdd1ca291c5",
@@ -813,7 +813,7 @@
     "scope": "Bounded S5-1 local component plus synthetic session/shell follow-up only; full S5 is not accepted.",
     "decidedBy": "Sole local root after rendered inspection, focused tests and independent code review",
     "candidateBaseRevision": "6b6cf992cf77bfcb88883e8f31a3d03c6e7f6b67",
-    "revision": null,
+    "revision": "735bf9f7c11955396550ec60cbad479f9c050197",
     "verifiedSourceHashes": {
       "public/paper-performance.js": {
         "rawSha256": "a863878e54d3b58be9ec0441904b838e56786e12b7dae90b28726e47113eae35",
@@ -841,9 +841,9 @@
   "shellFollowup": {
     "date": "2026-10-22",
     "baseRevision": "6b6cf992cf77bfcb88883e8f31a3d03c6e7f6b67",
-    "revision": null,
+    "revision": "735bf9f7c11955396550ec60cbad479f9c050197",
     "scope": "Bounded S5-1 synthetic loopback verification in the actual application shell under the existing owner GO; no new phase.",
-    "status": "LOCAL_PASS_CI_PENDING",
+    "status": "LOCAL_PASS_CI_GREEN",
     "sources": {
       "public/paper-performance.js": {
         "rawSha256": "a863878e54d3b58be9ec0441904b838e56786e12b7dae90b28726e47113eae35",
@@ -965,7 +965,8 @@
         "mobile-en.jpg": "1b1d54126551ad569b77cbf17169704110eac476a9e5426a3150fe482bb07d3d",
         "mobile-th-values.jpg": "164ce37f15356147bdb65ffe4951a02c0da7a206f21b0f063a1b7e35f14a66fc",
         "mobile-th.jpg": "34b07bcc6c6429632eb54188e79f418f45afffe051b37fdc2d96e138c2aac543",
-        "evidence-review.md": "a118c2c87d99c8c30cf3c74b5e376d08e650da4bda2d995af7e468739b6a86f0"
+        "evidence-review.md": "a118c2c87d99c8c30cf3c74b5e376d08e650da4bda2d995af7e468739b6a86f0",
+        "ci-735bf9f.json": "80e2922d3856d2512e2222e4c32df34272e42490a2e2b8e4febd38bb14a85677"
       }
     },
     "cleanup": {
@@ -974,8 +975,683 @@
       "viewportReset": true
     },
     "ci": {
-      "status": "PENDING",
-      "revision": null
+      "revision": "735bf9f7c11955396550ec60cbad479f9c050197",
+      "readAt": "2026-10-22T16:11:15.527Z",
+      "runs": [
+        {
+          "id": 39807968713,
+          "name": "Safety checks",
+          "revision": "735bf9f7c11955396550ec60cbad479f9c050197",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39807968713",
+          "status": "completed",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "scope",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run node scripts/ci-scope.mjs",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "name": "container",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run docker build -t astra-paper-staging .",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "name": "test (windows-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run npm ci",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run npm test 2>&1 | tee unit-test.log",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run summary=$(awk '/failing tests:/{found=1} found' unit-test.log | grep -v -E '^[[:space:]]+at |^[[:space:]]*$' | sed -n '1,80p' | cut -c1-200 | sed 's/%/%25/g' | awk 'BEGIN{ORS=\"%0A\"} {print}')",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Run git diff --check",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "name": "test (ubuntu-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run npm ci",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run npm test 2>&1 | tee unit-test.log",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run summary=$(awk '/failing tests:/{found=1} found' unit-test.log | grep -v -E '^[[:space:]]+at |^[[:space:]]*$' | sed -n '1,80p' | cut -c1-200 | sed 's/%/%25/g' | awk 'BEGIN{ORS=\"%0A\"} {print}')",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Run git diff --check",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "name": "postgres",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Initialize containers",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run sudo apt-get update && sudo apt-get install -y postgresql-client-16",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run astral-sh/setup-uv@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run uv sync --locked --all-extras",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run npm ci",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run npm run test:postgres 2>&1 | tee postgres-test.log",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run summary=$(awk '/failing tests:/{found=1} found' postgres-test.log | grep -v -E '^[[:space:]]+at |^[[:space:]]*$' | sed -n '1,80p' | cut -c1-200 | sed 's/%/%25/g' | awk 'BEGIN{ORS=\"%0A\"} {print}')",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Post Run astral-sh/setup-uv@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Stop containers",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 39807968738,
+          "name": "Quant Lab",
+          "revision": "735bf9f7c11955396550ec60cbad479f9c050197",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39807968738",
+          "status": "completed",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "scope",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run node scripts/ci-scope.mjs",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "name": "quant (windows-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run astral-sh/setup-uv@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run npm ci",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run uv sync --locked --all-extras",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run uv run --no-sync ruff check .",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run uv run --no-sync pytest",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run node --test test/trace-reproduction-closure.test.js",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run uv run --no-sync python -m robot_quant.smoke",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run git diff --check",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run astral-sh/setup-uv@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "name": "quant (ubuntu-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run astral-sh/setup-uv@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run npm ci",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run uv sync --locked --all-extras",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run uv run --no-sync ruff check .",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run uv run --no-sync pytest",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run node --test test/trace-reproduction-closure.test.js",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run uv run --no-sync python -m robot_quant.smoke",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run git diff --check",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run astral-sh/setup-uv@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "name": "gate",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run test \"$SCOPE\" = success && { test \"$QUANT\" = success || test \"$QUANT\" = skipped; }",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "status": "SUCCESS",
+      "verifiedJobs": 9,
+      "verifiedTestBuildLintParityTraceSmokeSteps": [
+        {
+          "workflow": "Safety checks",
+          "job": "container",
+          "step": "Run docker build -t astra-paper-staging ."
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "test (windows-latest)",
+          "step": "Run npm test 2>&1 | tee unit-test.log"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "test (ubuntu-latest)",
+          "step": "Run npm test 2>&1 | tee unit-test.log"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "postgres",
+          "step": "Run npm run test:postgres 2>&1 | tee postgres-test.log"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "step": "Run uv run --no-sync ruff check ."
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "step": "Run uv run --no-sync pytest"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "step": "Run node --test test/pf2-cost-v2-parity.test.js"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "step": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "step": "Run node --test test/trace-reproduction-closure.test.js"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "step": "Run uv run --no-sync python -m robot_quant.smoke"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "step": "Run uv run --no-sync ruff check ."
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "step": "Run uv run --no-sync pytest"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "step": "Run node --test test/pf2-cost-v2-parity.test.js"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "step": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "step": "Run node --test test/trace-reproduction-closure.test.js"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "step": "Run uv run --no-sync python -m robot_quant.smoke"
+        }
+      ],
+      "counts": "Job and step outcomes only; no CI test counts are inferred."
     },
     "artifactReview": {
       "status": "PASS",
