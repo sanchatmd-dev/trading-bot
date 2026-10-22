@@ -8,8 +8,9 @@ import {fileURLToPath} from 'node:url';
  * It copies the limits of `pythonEvaluation` (src/postgres/quant-research-worker.js): 8 MiB request, 2 MiB response, a call timeout (at most 30 s and at most the
  * time left to the run deadline), stderr discarded (private source and contract text never leave through a Python error), PYTHONPATH set to quant_lab/src, the
  * child killed on abort, timeout or output overflow (SIGTERM, then SIGKILL after a grace period when the child ignores it).
- * The child gets a MINIMAL environment: PATH, LANG, LC_ALL, PYTHONPATH, PYTHONHASHSEED and the explicit `env` option, never the parent environment (no DATABASE_URL,
- * MP_FIXTURE_DATABASE_URL or secret). It starts with `-P` (no script directory or working directory on sys.path) and with the working directory quant_lab/src, so a
+ * The child gets a MINIMAL environment: PATH, LANG, LC_ALL, PYTHONPATH, PYTHONHASHSEED and the explicit `env` option, never the full parent environment (no DATABASE_URL,
+ * MP_FIXTURE_DATABASE_URL or secret). On Windows, SYSTEMROOT is also inherited for Winsock; the other libuv-required defaults are explicitly empty to prevent implicit parent inheritance.
+ * It starts with `-P` (no script directory or working directory on sys.path) and with the working directory quant_lab/src, so a
  * stray json.py or decimal.py in a directory outside the engine hash cannot shadow the standard library. There is no fallback to a bare `python` from PATH. It does not use `runQuantProcess` (that supervisor needs systemd-run and a user bus, which an isolated
  * local cluster does not have).
  *
@@ -28,7 +29,8 @@ import {fileURLToPath} from 'node:url';
  * Options (all optional): python (default QUANT_RESEARCH_PYTHON, else quant_lab/.venv when present; with neither, every call fails QUANT_PYTHON_UNAVAILABLE), module
  * (default robot_quant.mp_combined_job), args (replaces the "-m module" arguments; a TEST-ONLY seam: the PostgreSQL test runs the real job module through a one-line
  * wrapper that replaces the private source gate), cwd (TEST-ONLY seam, default quant_lab/src), env (extra variables for the child; a name that looks like a secret or a
- * database setting, or starts with PYTHON, throws TypeError), timeoutMs (default 30000, at most 30000), killGraceMs (default 2000: SIGKILL after SIGTERM).
+ * database setting, or starts with PYTHON, throws TypeError; Windows names are canonicalized to uppercase, safe explicit extras override defaults, and case-insensitive duplicate names throw TypeError),
+ * timeoutMs (default 30000, at most 30000), killGraceMs (default 2000: SIGKILL after SIGTERM).
  */
 
 export const RUNNER_REQUEST_LIMIT = 8 * 1024 * 1024;
@@ -42,6 +44,9 @@ const CODE = /^[A-Z][A-Z0-9_]{1,63}$/;
 const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]{0,63}$/;
 const ENV_REFUSED = /(DATABASE|SECRET|TOKEN|PASSW|CREDENTIAL|PRIVATE|API_?KEY|_KEY$|^PG|^PYTHON)/i;
 const ENV_INHERITED = ['PATH', 'LANG', 'LC_ALL'];
+// libuv src/win/process.c required_vars: omission copies the parent's value even with an explicit env block.
+// SYSTEMROOT must remain available for Windows socket initialization; identity and profile defaults must not leak.
+const WINDOWS_EMPTY_DEFAULTS = ['HOMEDRIVE', 'HOMEPATH', 'LOGONSERVER', 'SYSTEMDRIVE', 'TEMP', 'USERDOMAIN', 'USERNAME', 'USERPROFILE', 'WINDIR'];
 const fail = code => Object.assign(new Error(code), {code});
 
 /** The job's own error object: exactly {"error":"CODE"} with a safe code. Anything else is a plain failure. */
@@ -57,9 +62,17 @@ function jobCode(output) {
 function childEnvironment(extra) {
   const out = {};
   for (const name of ENV_INHERITED) if (typeof process.env[name] === 'string') out[name] = process.env[name];
+  const windows = process.platform === 'win32', extraNames = new Set();
+  if (windows) {
+    out.SYSTEMROOT = process.env.SYSTEMROOT ?? '';
+    for (const name of WINDOWS_EMPTY_DEFAULTS) out[name] = '';
+  }
   for (const [name, value] of Object.entries(extra)) {
     if (!ENV_NAME.test(name) || ENV_REFUSED.test(name) || typeof value !== 'string') throw new TypeError('createPythonRunner: env variable refused: ' + name);
-    out[name] = value;
+    const key = windows ? name.toUpperCase() : name;
+    if (extraNames.has(key)) throw new TypeError('createPythonRunner: duplicate env variable: ' + key);
+    extraNames.add(key);
+    out[key] = value;
   }
   return {...out, PYTHONPATH: path.join(root, 'quant_lab/src'), PYTHONHASHSEED: '0'};
 }

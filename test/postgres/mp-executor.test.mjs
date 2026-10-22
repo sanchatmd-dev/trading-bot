@@ -1253,15 +1253,30 @@ test('baseline: the Python side uses the final state the job sent; a disagreemen
 const PY=process.env.QUANT_RESEARCH_PYTHON??'python';
 
 test('python runner: the child gets a minimal environment (no DATABASE_URL, no secret), PYTHONHASHSEED, and refuses secret-looking extras',{timeout:60000},async()=>{
-  const planted={DATABASE_URL:'postgresql://u:p@127.0.0.1/x',MP_FIXTURE_DATABASE_URL:'postgresql://u:p@127.0.0.1/y',MP_SECRET_PROBE:'s3cret',AWS_SECRET_ACCESS_KEY:'k',GITHUB_TOKEN:'t',HOME_PROBE:'h',PGPASSWORD:'pw'};
+  const planted={DATABASE_URL:'postgresql://u:p@127.0.0.1/x',MP_FIXTURE_DATABASE_URL:'postgresql://u:p@127.0.0.1/y',MP_SECRET_PROBE:'s3cret',AWS_SECRET_ACCESS_KEY:'k',GITHUB_TOKEN:'t',HOME_PROBE:'h',PGPASSWORD:'pw',mIxEd_SeCrEt_PrObE:'mixed-case-fixture'};
+  const windowsDefaults=['HOMEDRIVE','HOMEPATH','LOGONSERVER','SYSTEMDRIVE','TEMP','USERDOMAIN','USERNAME','USERPROFILE','WINDIR'];
+  if(process.platform==='win32')for(const name of windowsDefaults)planted[name]='FE2B_WINDOWS_PARENT_SENTINEL_'+name;
   const saved={};
   for(const [name,value] of Object.entries(planted)){saved[name]=process.env[name];process.env[name]=value;}
   try{
-    const runner=createPythonRunner({python:PY,args:['-c','import os,sys,json\njson.load(sys.stdin)\nprint(json.dumps({"keys":sorted(os.environ),"seed":os.environ.get("PYTHONHASHSEED"),"extra":os.environ.get("MP_TEST_EXTRA")}))'],env:{MP_TEST_EXTRA:'x'}});
+    const runner=createPythonRunner({python:PY,args:['-c','import os,sys,json\njson.load(sys.stdin)\nprint(json.dumps({"keys":sorted(os.environ),"seed":os.environ.get("PYTHONHASHSEED"),"extra":os.environ.get("MP_TEST_EXTRA"),"windows_defaults":{k:os.environ.get(k) for k in ["HOMEDRIVE","HOMEPATH","LOGONSERVER","SYSTEMDRIVE","TEMP","USERDOMAIN","USERNAME","USERPROFILE","WINDIR"]},"systemroot":os.environ.get("SYSTEMROOT")}))'],env:{MP_TEST_EXTRA:'x'}});
     const seen=await runner({});
-    for(const name of Object.keys(planted))assert.ok(!seen.keys.includes(name),name+' is not visible to the child');
-    assert.deepEqual(seen.keys.filter(name=>!['PATH','LANG','LC_ALL','LC_CTYPE'].includes(name)).sort(),['MP_TEST_EXTRA','PYTHONHASHSEED','PYTHONPATH'],'only the minimal list and the explicit extra');
+    const childNames=seen.keys.map(name=>name.toUpperCase());
+    for(const name of Object.keys(planted).filter(name=>!windowsDefaults.includes(name)))assert.ok(!childNames.includes(name.toUpperCase()),name+' is not visible to the child');
+    const allowed=['PATH','LANG','LC_ALL','LC_CTYPE'];
+    if(process.platform==='win32'){
+      for(const name of windowsDefaults)assert.equal(seen.windows_defaults[name],'',name+' never inherits a parent value');
+      assert.ok(seen.systemroot===(process.env.SYSTEMROOT??''),'SYSTEMROOT is the explicit Windows socket capability');
+      allowed.push('SYSTEMROOT',...windowsDefaults);
+    }
+    assert.deepEqual(seen.keys.filter(name=>!allowed.includes(name)).sort(),['MP_TEST_EXTRA','PYTHONHASHSEED','PYTHONPATH'],'only the minimal list, explicit Windows defaults and the explicit extra');
     assert.equal(seen.seed,'0');assert.equal(seen.extra,'x');
+    if(process.platform==='win32'){
+      const explicit=createPythonRunner({python:PY,args:['-c','import os,json\nprint(json.dumps({"extra":os.environ.get("MP_TEST_EXTRA"),"username":os.environ.get("USERNAME")}))'],env:{mP_tEsT_eXtRa:'explicit',uSeRnAmE:'explicit-fixture-name'}});
+      assert.deepEqual(await explicit({}),{extra:'explicit',username:'explicit-fixture-name'},'explicit extras override empty defaults deterministically');
+    }
+    const compatible=createPythonRunner({python:PY,args:['-c','import ssl,socket,tempfile,decimal,pydantic,robot_quant.mp_combined_job,json\ns=socket.socket();s.close()\nwith tempfile.TemporaryFile() as f:\n f.write(b"fixture");f.seek(0);assert f.read()==b"fixture"\nprint(json.dumps({"imports":True,"socket":True,"tempfile":True}))']});
+    assert.deepEqual(await compatible({}),{imports:true,socket:true,tempfile:true});
   }finally{for(const [name,value] of Object.entries(saved)){if(value===undefined)delete process.env[name];else process.env[name]=value;}}
   for(const name of ['DATABASE_URL','MP_FIXTURE_DATABASE_URL','MY_SECRET','API_TOKEN','DB_PASSWORD','PGHOST','PYTHONSTARTUP','PYTHONPATH','AWS_ACCESS_KEY','bad name'])
     assert.throws(()=>createPythonRunner({python:PY,env:{[name]:'v'}}),TypeError,name);
