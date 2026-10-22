@@ -3,7 +3,7 @@
   "date": "2026-10-22",
   "scope": "QR-2 S5-2 bounded local book/marked equity view",
   "baseRevision": "b7a5c2fc80c586eb9ecea85491ce7aaf27fae37a",
-  "status": "LOCAL_ACCEPTED_REPAIR_VERIFIED_CI_PENDING",
+  "status": "LOCAL_ACCEPTED_CI_PASS",
   "accepted": true,
   "ownerGo": {
     "received": true,
@@ -217,10 +217,168 @@
       "rootFollowUp": "Root rechecked recorded fixture PID absent after resume; prior root browser record confirms tab closed and viewport reset."
     },
     "ci": {
-      "status": "REPAIR_PENDING_EXACT_REVISION_CI",
-      "revision": null,
-      "repairedFrom": "819adaf8f549ff9eaba152c7d9d7ffa8e18f513e",
-      "note": "Test-only repair verified locally; follow the resulting exact commit through both workflows."
+      "status": "PASS",
+      "revision": "09ecab3020ce6612183951968a5b86dae477cad2",
+      "readAt": "2026-10-22T17:45:54.120Z",
+      "runs": [
+        {
+          "name": "Quant Lab",
+          "id": 39822914467,
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39822914467",
+          "status": "completed",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "scope",
+              "conclusion": "success"
+            },
+            {
+              "name": "quant (ubuntu-latest)",
+              "conclusion": "success"
+            },
+            {
+              "name": "quant (windows-latest)",
+              "conclusion": "success"
+            },
+            {
+              "name": "gate",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "Safety checks",
+          "id": 39822914924,
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39822914924",
+          "status": "completed",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "scope",
+              "conclusion": "success"
+            },
+            {
+              "name": "postgres",
+              "conclusion": "success"
+            },
+            {
+              "name": "test (ubuntu-latest)",
+              "conclusion": "success"
+            },
+            {
+              "name": "test (windows-latest)",
+              "conclusion": "success"
+            },
+            {
+              "name": "container",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ],
+      "actualTestBuildSteps": [
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run uv run --no-sync ruff check .",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run uv run --no-sync pytest",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run node --test test/trace-reproduction-closure.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run uv run --no-sync python -m robot_quant.smoke",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run uv run --no-sync ruff check .",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run uv run --no-sync pytest",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run node --test test/trace-reproduction-closure.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run uv run --no-sync python -m robot_quant.smoke",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "postgres",
+          "name": "Run npm run test:postgres 2>&1 | tee postgres-test.log",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "test (ubuntu-latest)",
+          "name": "Run npm test 2>&1 | tee unit-test.log",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "test (windows-latest)",
+          "name": "Run npm test 2>&1 | tee unit-test.log",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "container",
+          "name": "Run docker build -t astra-paper-staging .",
+          "conclusion": "success"
+        }
+      ],
+      "jobCount": 9,
+      "actualTestBuildStepCount": 16,
+      "testCounts": "Not inferred from job or step success",
+      "artifact": ".qa-local/qr2-s5-2/ci-09ecab3.json",
+      "scope": "Exact implementation revision; full S5 and target acceptance remain open"
     },
     "ciRepair": {
       "status": "PASS_LOCAL",
@@ -252,7 +410,8 @@
       "countsNote": "Five affected static tests plus one asset-cache test; preliminary four-test diagnostic excluded",
       "review": ".qa-local/qr2-s5-2/ci-token-review.md",
       "acceptedBy": "Root after independent review",
-      "productChanged": false
+      "productChanged": false,
+      "revision": "09ecab3020ce6612183951968a5b86dae477cad2"
     }
   },
   "gates": {
@@ -305,7 +464,7 @@
   "acceptance": {
     "status": "BOUNDED_LOCAL_ACCEPTED_BY_ROOT",
     "date": "2026-10-23",
-    "scope": "S5-2 synthetic local presentation only; exact-revision CI has a Windows failure with repair pending",
+    "scope": "S5-2 synthetic local presentation only; exact-revision code CI passed",
     "fullS5": "OPEN",
     "targetIntegration": "NOT RUN"
   },
@@ -487,10 +646,20 @@
       "path": ".qa-local/qr2-s5-2/ci-token-review.md",
       "sha256": "785abdd99d4b8abc609b1fda16975550f47ffde34182594065a091cd294e24f1",
       "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/ci-09ecab3.json",
+      "sha256": "1d2aa63ec3ed62225f983e7f60a28e3363aa913c744163024df24e1729b68934",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/ci-819adaf.json",
+      "sha256": "ff638d4847774eb2c166dbbd25c5832ba1f545b74c301b6f453c62b90f1e202b",
+      "hashConvention": "Raw file bytes"
     }
   ],
   "limitations": [
-    "Bounded local presentation accepted by root; original Windows CI failure repaired in test pins, replacement exact-revision CI pending",
+    "Bounded local presentation accepted by root; exact repaired code revision CI passed. Original failed revision remains separately recorded.",
     "No full S5, target, private acceptance, real authentication, backend/DB or native host proof",
     "No same-snapshot, historical-book, continuously-live, monetary difference/profit or reconciliation claim",
     "No new tests, browser, network, host or Git mutations in evidence-finalization pass"
@@ -498,19 +667,49 @@
   "teamPolicyCommit": "d476b54e0124857938dd7fce247be9f934beb66d",
   "ciHistory": [
     {
-      "status": "WINDOWS_FAILURE_REPAIR_PENDING",
+      "status": "COMPLETED_FAILURE_REPAIRED",
       "revision": "819adaf8f549ff9eaba152c7d9d7ffa8e18f513e",
-      "observedAtUtc": "2026-10-22T17:25:37.134Z",
-      "readback": ".qa-local/qr2-s5-followup/ci-readback.json",
-      "note": "Original exact revision: Windows failed five stale token assertions; Ubuntu was cancelled by the matrix fail-fast behavior. PostgreSQL and the overall Safety run were still in progress at this observation. Quant Lab passed. Later terminal status will be recorded separately.",
+      "observedAtUtc": "2026-10-22T17:44:15.077Z",
+      "readback": ".qa-local/qr2-s5-2/ci-819adaf.json",
+      "note": "Original revision terminal: Windows failed five stale i18n cache-token assertions, Ubuntu was cancelled; PostgreSQL and container passed. Quant Lab passed. Test-only repair and successful replacement revision are recorded separately.",
       "runs": [
         {
-          "id": 39821106332,
+          "name": "Quant Lab",
+          "id": 39821106406,
+          "revision": "819adaf8f549ff9eaba152c7d9d7ffa8e18f513e",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39821106406",
+          "status": "completed",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "scope",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "quant (ubuntu-latest)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "quant (windows-latest)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "gate",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
           "name": "Safety checks",
+          "id": 39821106332,
           "revision": "819adaf8f549ff9eaba152c7d9d7ffa8e18f513e",
           "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39821106332",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "failure",
           "jobs": [
             {
               "name": "scope",
@@ -534,36 +733,6 @@
             },
             {
               "name": "postgres",
-              "status": "in_progress",
-              "conclusion": null
-            }
-          ]
-        },
-        {
-          "id": 39821106406,
-          "name": "Quant Lab",
-          "revision": "819adaf8f549ff9eaba152c7d9d7ffa8e18f513e",
-          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39821106406",
-          "status": "completed",
-          "conclusion": "success",
-          "jobs": [
-            {
-              "name": "scope",
-              "status": "completed",
-              "conclusion": "success"
-            },
-            {
-              "name": "quant (ubuntu-latest)",
-              "status": "completed",
-              "conclusion": "success"
-            },
-            {
-              "name": "quant (windows-latest)",
-              "status": "completed",
-              "conclusion": "success"
-            },
-            {
-              "name": "gate",
               "status": "completed",
               "conclusion": "success"
             }
@@ -591,5 +760,6 @@
         }
       }
     }
-  ]
+  ],
+  "codeRevision": "09ecab3020ce6612183951968a5b86dae477cad2"
 }
