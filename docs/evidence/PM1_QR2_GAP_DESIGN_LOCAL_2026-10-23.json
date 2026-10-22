@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "baseRevision": "0ffc20011bbde1ec397f51bf344fe929557b054a",
+  "scope": "QR-2 gap-interval source qualification and staged design",
+  "status": "DESIGN_QUALIFIED_PURE_STAGE_1_ADMITTED",
+  "implementation": "NOT STARTED",
+  "packet": "docs/QR2_S5_4_GAP_INTERVAL_PACKET_2026-10-23.md",
+  "findings": [
+    "Sparse valuation predecessor rows do not establish complete range coverage. A separate bounded coverage read is required.",
+    "BARS assembleGaps can be reused through a validated adapter; chart history clipping and latest-bar anchoring cannot be reused.",
+    "SQL read time is outside the worker deadline. Account and owner work require aggregate input/output budgets and local cost evidence."
+  ],
+  "rootDecisions": [
+    "Inspect full closed candles only, exposing excluded partial edges. Preserve separate price lookup and option M.",
+    "Closed state/identity/interval schema; unsupported market is null and takes precedence over empty-domain states.",
+    "No silent truncation or range shortening; coverage resource overflow is a whole-request admission refusal.",
+    "Complete feature includes account and owner publication, shared coverage work, both response validators and EN/TH rendering.",
+    "Only the pure adapter, validator and mechanical BARS extraction are admitted now. Numerical budgets, DB integration and target effects are not admitted."
+  ],
+  "checks": {
+    "method": "Independent source review, BARS reuse investigation, coherent design and adversarial review; no tests or runtime executed",
+    "newTestsRun": 0,
+    "dbReads": "NOT RUN",
+    "localBenchmark": "NOT RUN",
+    "browser": "NOT RUN",
+    "stage1Acceptance": "NOT RUN",
+    "fullS5": "OPEN",
+    "finalPacketReview": "PASS: all five design corrections closed; pure Stage 1 implementable; no implementation acceptance"
+  },
+  "ciContext": {
+    "revision": "0ffc20011bbde1ec397f51bf344fe929557b054a",
+    "safetyRun": 39841875708,
+    "quantRun": 39841875739,
+    "note": "Existing S5-3 implementation CI is tracked separately; this source/design record does not claim its completion."
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT RUN",
+    "ready": false,
+    "n1": "HELD",
+    "deployment": "NOT RUN",
+    "targetRouteActivation": "NOT RUN",
+    "migrations": "NOT RUN",
+    "hostVps": "NOT RUN",
+    "live": "HELD",
+    "guardReset": "HELD",
+    "bestInputsApply": "HELD"
+  },
+  "sourcePins": [
+    {
+      "path": "src/postgres/qr2-reader.js",
+      "sha256": "2a7cf21e8cc20e10d308359aa7ec4c8018e312d6ddbef91854fb92d786bf25ec"
+    },
+    {
+      "path": "src/postgres/qr2-owner-reader.js",
+      "sha256": "a91c9457b523f377e938ddb4ba1758b3719107c46b1a4e7bc71d6675b82a59c9"
+    },
+    {
+      "path": "src/postgres/market-ohlcv.js",
+      "sha256": "a27c2ec65dfa030b2ed2fa978397125fc146506a8180b399b1b0aa4f9903a1d7"
+    },
+    {
+      "path": "src/postgres/pine-bridge-schema.sql",
+      "sha256": "2f54a0cd247e8cf5f2ca384200261ddd2529f4548559c55d7ae25c885e6dcd92"
+    },
+    {
+      "path": "src/portfolio/qr2-response.js",
+      "sha256": "3214d21218e2d94152014b8475bd7964c23180397c8ebfb23da80be0de2cfe7c"
+    },
+    {
+      "path": "src/portfolio/qr2-owner-response.js",
+      "sha256": "85ef6764411712db22b02c9f688f11f805206f60e0a9893d9f50ae3a1ec23c4c"
+    },
+    {
+      "path": "src/portfolio/qr2-periods.js",
+      "sha256": "3594914eaa2c8dae2e92fbc1c1a75aeaf1ee8d6c87afcfe5039d76eea020d36e"
+    },
+    {
+      "path": "src/postgres/qr2-compute-pool.js",
+      "sha256": "1437777ba0475bbc11a53c2ed30a7ec4be8b60c529fc7476c0221da4cc3e4eb9"
+    },
+    {
+      "path": "docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md",
+      "sha256": "d05f1f6d89b373d957c691b105f67458a030e2d01ae1d7b77ce26502117a1f21"
+    }
+  ],
+  "artifactPins": [
+    {
+      "path": ".qa-local/qr2-gap-analysis/source-contract-review.md",
+      "sha256": "0b822124e6627293eeeee6520434e0b6ce8e0e204bed4a79a1623f5cf55a28c1"
+    },
+    {
+      "path": ".qa-local/qr2-gap-analysis/bars-reuse-review.md",
+      "sha256": "b84c459e8a1907ea8a6244c57a173f673ca8ee1eb0aa75997706b08379b52186"
+    },
+    {
+      "path": ".qa-local/qr2-gap-analysis/design.md",
+      "sha256": "8f85d3455e8a659685dba703eac71a6c6c21eb5df27d17554aa28a749bb5b82e"
+    },
+    {
+      "path": ".qa-local/qr2-gap-analysis/design-review.md",
+      "sha256": "5a384ba82818660a167d4dab29f0af308cf6ac50f9de8f529ccb5a62e325bf3b"
+    },
+    {
+      "path": ".qa-local/qr2-gap-analysis/packet-review.md",
+      "sha256": "f8e7f7d8af3cd3a7d2c7c1193fafee95e261f1f93e075df62cb246586a3f2489"
+    }
+  ],
+  "hashConvention": "SHA-256 raw local file bytes"
+}

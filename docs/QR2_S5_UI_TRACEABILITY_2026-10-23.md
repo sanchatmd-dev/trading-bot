@@ -37,7 +37,7 @@ Prior evidence covers currency separation, absence of owner returns for undeclar
 
 Targeted independent source review resolves four earlier summary-level inventory limits without counting new test passes:
 
-- Unknown bases: `qr2-returns.js` rejects unavailable or nonpositive bases in `twrChain`/`modifiedDietz`; existing portfolio-performance tests cover unavailable boundaries and nonpositive bases. The composer preserves null wrappers and the UI displays the reason and em dash. The browser does not recalculate the return or prove arbitrary forged server semantics.
+- Unknown bases: `qr2-returns.js` rejects unavailable or nonpositive bases in `chain`, `twr` and `modifiedDietz`; existing portfolio-performance tests cover unavailable boundaries and nonpositive bases. The composer preserves null wrappers and the UI displays the reason and em dash. The browser does not recalculate the return or prove arbitrary forged server semantics.
 - Net liquidation: the composer account field list and the UI metric map contain no hypothetical exit value or future disposal fee calculation. This is bounded source inspection, not a claim about every application page or arbitrary metadata.
 - Ranking: the QR-2 view has no metric sorting, candidate selection or recommendation path. Supplied Bot labels and technical metadata remain literal text; the application does not implement a blanket word filter.
 - PnL and notices: `ppNotice` is outside `ppResult` in the static shell. Invalidation and report rendering replace only result/status content, retaining the fixed Paper-history notice. Previous rendered evidence supports visible EN/TH notices. This source review is not a new browser run.
