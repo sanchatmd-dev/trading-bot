@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-22",
+  "scope": "QR-2 S4-5 local owner-worker numeric verification",
+  "status": "PASSED",
+  "baseRevision": "d93c52a863ab5c46cd0db9760d7ebc6028ba4da9",
+  "authority": "Existing owner GO for S4-4/S4-5 and independent verification.",
+  "changedPaths": [
+    "test/postgres/qr2-owner-compute.test.mjs"
+  ],
+  "productChanges": [],
+  "testSha256": "2b0a2a46bb3be067b4cdc46fcd0f62a03070e69e2ad2e15f2778af074de69fde",
+  "coverage": {
+    "path": "Real PostgreSQL owner reader and real worker pool; synthetic fixture funded through createBot/setRisk and filled through recordExecution.",
+    "accounts": [
+      {
+        "initial": "1000",
+        "buyQuote": "600",
+        "buyFee": "0.6",
+        "sellQuote": "660",
+        "sellFee": "0.66",
+        "navTo": "1058.74",
+        "rangeFees": "1.26",
+        "moneyPnl": "58.74",
+        "flows": "0"
+      },
+      {
+        "initial": "2000",
+        "buyQuote": "600",
+        "buyFee": "0.6",
+        "sellQuote": "570",
+        "sellFee": "0.57",
+        "navTo": "1968.83",
+        "rangeFees": "1.17",
+        "moneyPnl": "-31.17",
+        "flows": "0"
+      }
+    ],
+    "time": "Natural clock only. Start strictly follows both initial funding events; all four fills strictly lie inside the reporting interval.",
+    "gate": "No declaration is manufactured. Owner total fields remain null with CAPITAL_MODEL_NOT_DECLARED; this does not prove an eligible combined owner total.",
+    "immutability": "Owner and both Bot ledger/audit/fence digests remain unchanged by reading and computation."
+  },
+  "validation": {
+    "command": "node --test --test-isolation=process --test-concurrency=1 test/postgres/qr2-owner-compute.test.mjs test/postgres/qr2-owner-independent.test.mjs",
+    "runtime": {
+      "node": "24.19.0",
+      "postgres": "16.15",
+      "platform": "Windows",
+      "fixture": "Fresh loopback SCRAM cluster, max_connections=100"
+    },
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 7099.2258,
+    "logSha256": "79b45bbde47d04ea9eeef771d581d4102e2a56729bcd5e35f6e214b5d4f1ac0f",
+    "review": {
+      "role": "Independent architecture auditor",
+      "blockingFindings": 0,
+      "reportSha256": "bf2d745183c39b357e09fe38bc831bc1f6cf04c88914d6455eaf9279ec7cf9ea"
+    },
+    "cleanup": "Fixture cluster stopped and complete data/WAL directory removed.",
+    "fullLocalSuite": "Not rerun; focused regression only.",
+    "ci": "Pending on the commit containing this test."
+  },
+  "limits": [
+    "The book fixture directly marks a synthetic signal PROCESSING before calling real recordExecution; this is not a complete ExecutionWorker or broker-flow test.",
+    "One synthetic prior closed bar supports intermediate valuation. Per-account numeric values are proved; exhaustive status/metadata labels and exact half-open boundary events are not claimed.",
+    "No declared nonzero owner aggregate, private acceptance, target capacity, deployment or native QS proof.",
+    "No product, clock, declaration, ledger or security guard changed. Spot/Paper only; private source local; READY false; N1 held. Deployment, shared migration, Live, guard reset and Best Inputs apply remain gated."
+  ],
+  "rootAcceptance": "Accepted by the sole local Codex root as focused per-account engineering evidence; no target release eligibility.",
+  "productionQualified": false,
+  "newHostSteps": 0
+}
