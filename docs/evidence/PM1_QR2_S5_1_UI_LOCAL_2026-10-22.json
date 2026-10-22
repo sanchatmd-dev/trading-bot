@@ -8,8 +8,8 @@
     "packet": "docs/QR2_S5_1_LOCAL_UI_GO_PACKET_2026-10-22.md",
     "decision": "Explicit owner GO on 2026-10-22, including focused tests, evidence updates and periodic commit/push; no deployment or target route activation."
   },
-  "status": "IMPLEMENTED_TESTED_CI_GREEN_RENDER_PENDING",
-  "accepted": false,
+  "status": "LOCAL_ACCEPTED_RENDERED",
+  "accepted": true,
   "behavior": [
     "Overview component reads existing per-Bot or owner endpoints with explicit GET submission; it adds no backend route or flag.",
     "Owned Bot and broker, or owner and one currency, with calendar periods and inclusive custom UTC dates.",
@@ -77,20 +77,154 @@
       "remainingActionableFindings": 0,
       "reviewedJsRawSha256": "291948b51195839e8b45ad292f9693b75c5447be96997a6e1548e87ac91f8a7c",
       "scope": "Source mapping, GET-only/auth guards, decimal/null rendering, owner eligibility and stale-response handling; no independent browser execution."
+    },
+    "renderContinuation": {
+      "command": "node --test test/asset-cache-tokens.test.js test/qr2-performance-ui.test.js",
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "todo": 0,
+      "durationMs": 27399.2822,
+      "performedBy": "Independent tester",
+      "independentReview": "No new blocker. Tester checked source/fixture mapping, all 41 observation records, all 44 complete network cases, interactions and three of 45 saved JPGs. Root performed browser interaction and visual inspection. This review does not independently execute the browser.",
+      "reviewedScreenshots": [
+        "mobile-th-unavailable.jpg",
+        "desktop-en-owner-usdt.jpg",
+        "mobile-th-custom.jpg"
+      ],
+      "limits": "Focused counts overlap earlier runs and must not be added. No broad local suite was repeated.",
+      "documentationReview": "Independent final review passed for the five documentation/evidence files; 73 source/artifact hash checks matched, links/counts/gates were consistent. No further tests were run."
     }
   },
   "rendered": {
-    "status": "NOT RUN",
-    "reason": "cua.getState reported: Local browser use is disabled in Work settings.",
-    "required": [
-      "Desktop and mobile English/Thai views",
-      "Visual notices and reasons",
-      "No horizontal overflow",
-      "No unintended external requests"
+    "status": "PASS",
+    "ownerGo": "Owner explicitly resumed local synthetic desktop/mobile EN/TH rendering on 2026-10-22, with evidence and commit/push; no deploy or target routes.",
+    "verifiedRevision": "8c34a38b48bd53e631a352e29c28f75679fbaba0",
+    "browser": "Desktop in-app Chromium browser via the supported Computer Use API; mobile is a viewport test, not a physical device.",
+    "viewports": [
+      {
+        "name": "desktop",
+        "width": 1440,
+        "height": 1000
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      }
     ],
-    "localStub": "Ignored loopback-only harness prepared using actual candidate assets and synthetic fixtures. HTTP smoke returned 200 for the page, Bot list and Bot response. Server stopped after smoke; this is not browser/render evidence.",
-    "screenshots": 0,
-    "authenticatedTargetIntegration": "NOT RUN"
+    "languages": [
+      "en",
+      "th"
+    ],
+    "mainMatrix": {
+      "cases": 36,
+      "states": [
+        "Bot complete",
+        "Owner USDT",
+        "Owner THB",
+        "Bot partial",
+        "Bot unavailable",
+        "Owner undeclared",
+        "HTTP 403 refused",
+        "HTTP 429 retry",
+        "HTTP 404 unavailable"
+      ]
+    },
+    "additionalCases": {
+      "customDates": 4,
+      "pendingSelectionChange": 4,
+      "delayedResponseFinalReadbacks": 2,
+      "delayedResponseReadbackLanguages": [
+        "th"
+      ]
+    },
+    "observations": 41,
+    "screenshots": 45,
+    "screenshotCountExplanation": "36 main states, four custom-date states, four pending states and one extra expanded desktop English Bot view.",
+    "result": "Notices and reasons are readable in EN/TH. Exact decimal strings survive; null is an em dash with its reason. Owner currencies remain separate and owner TWR/MWR metrics are absent. All 41 measured observations have scrollWidth equal to clientWidth and no out-of-viewport component elements, including expanded metadata before collapse. Pending views disable Load, show no financial result, and selection changes clear the request state.",
+    "customDates": "All four surfaces accepted 2026-10-01 through 2026-10-02 and sent CUSTOM/from/to in GET. The fixed synthetic response retains its own requested/resolved range and RANGE_END_AT_REQUEST_TIME; the stub does not compute financial results for arbitrary dates.",
+    "network": {
+      "status": "PASS",
+      "cases": 44,
+      "requestEvents": 528,
+      "methods": [
+        "GET"
+      ],
+      "externalHttpRequests": 0,
+      "embeddedDataImages": 44,
+      "truncated": false,
+      "consoleWarningsOrErrors": 0,
+      "scope": "Only this synthetic component harness. Per-case CDP capture includes navigation, assets, Bot-list and report requests. Embedded data SVG calendar icons are not external traffic."
+    },
+    "collectionCorrections": [
+      "Initial ignored harness CSS named loginPanel instead of the actual login section; corrected to hide the unrelated login panel before counted captures. Product assets were unchanged.",
+      "The initial aggregate CDP buffer was truncated. It is retained as diagnostic network.json only. All 44 cases were repeated for complete per-case network collection; screenshots were not recounted."
+    ],
+    "localStub": "Real index/component/i18n/CSS served by a GET-only loopback stub with synthetic session globals and fixture responses. Unrelated scripts/images/icons and app shell/other Overview panels are removed or hidden. CSP restricts self/data. This verifies component rendering, not the full authenticated application.",
+    "cleanup": "Fixture process stopped, test tab closed and temporary browser viewport reset.",
+    "priorAttempt": {
+      "status": "NOT RUN",
+      "reason": "Local browser use was disabled; owner deferred rendering until the later explicit GO.",
+      "harnessSha256": "07096756e1029f00adc9b5e44bbfb965478cfaa1bd8c4665e3f5ddbcfde02a2c"
+    },
+    "authenticatedTargetIntegration": "NOT RUN",
+    "limitations": [
+      "No real authentication/authorization or backend integration is tested by the stub.",
+      "No full-app layout or full-app network claim.",
+      "No physical mobile-device test.",
+      "No private source, private acceptance, deployment, migration or target route activation."
+    ],
+    "screenshotSha256": {
+      "desktop-en-bot-collapsed.jpg": "54cb7f252548564dda3f86dbde68549de4bf9c2c54718074978d1795e63d7b5e",
+      "desktop-en-bot.jpg": "92fb786c6744b4a76ee2ef46dafd21bfa3b8c9d7df2eef5a003b873e75479737",
+      "desktop-en-custom.jpg": "ef21101248e573452b307a9e846a853c3e02e37c7d253c76c87fca6c90a44eed",
+      "desktop-en-notFound.jpg": "b0195c70ea79a2089109aaa1980cbb083910454ce04feba3d3e53a05940e9883",
+      "desktop-en-owner-thb.jpg": "49b11d1aef8278d37521c2e397ffb0248e7bbd8ede1b0ef4ace1690284594cb0",
+      "desktop-en-owner-usdt.jpg": "508b3eec5cdf790e8d2b06106e8168216989e3d4700e0a57d19d8c164826e851",
+      "desktop-en-partial.jpg": "1262424c71766c2cbd111560d616c7cd393c59ff753e4bb5922600a5f0fde360",
+      "desktop-en-pending.jpg": "fad09636841a6f672e51e50f74b741f56a403c0eff7efe10c944eb4f8add545f",
+      "desktop-en-refused.jpg": "b8d13b62fb8eea91bd959edfad085c306571e918323eba6c277c33e226b5516c",
+      "desktop-en-retry.jpg": "54f645e825af1ad799ea47442540880b5bad29a165ed074ab7275039b814a0b2",
+      "desktop-en-unavailable.jpg": "7c9a1fa736ec6145512fdb90cba24afce00e1d4c3c226e17feddd401bfcff6b7",
+      "desktop-en-undeclared-owner-usdt.jpg": "a5594f3f3dafc646dcc106989d44683505643bea1730b515e0ca3f4fc15fbe53",
+      "desktop-th-bot.jpg": "306033e7a91ce82bfbf73a3d22d5921f535eb144ff9c62faeba6f0c3532039c7",
+      "desktop-th-custom.jpg": "7830fa4f119d1decc71da496fbb1ee3b1b3a9a701b3ca5c7219dfd4f5e77ba8b",
+      "desktop-th-notFound.jpg": "344a37a42382107f74a38a9276253369ae423ceb719607533d5056d1db8e5a2d",
+      "desktop-th-owner-owner-thb.jpg": "91f39dea21c774e95528d2812bde52b8483fad3b6797a32391be86368234fb69",
+      "desktop-th-owner-owner-usdt.jpg": "1fc3cf9088d26cc937b6a70ebb18d7079e18d56307329168ff19f0598115cf55",
+      "desktop-th-partial.jpg": "daae05c6e4b3936e14e5f7eca7b674118b7aafa311950df1410cc65655b6c42f",
+      "desktop-th-pending.jpg": "51607d617e21dba60fca1c6911d12489350551f2e40508facd677b6b82368c52",
+      "desktop-th-refused.jpg": "1a8eba9072ed572c1034c46b5564b774d06b5bb70b006809175668724e530a7a",
+      "desktop-th-retry.jpg": "7c28ca5d836f00947f072c601397d28c7d8cf019b37287f8942d595eb0f874ce",
+      "desktop-th-unavailable.jpg": "d89cb808ca2aaa34f83af4a43bced33bf8fe237ef587574106de5db642960779",
+      "desktop-th-undeclared-owner-usdt.jpg": "fb3b0068d3e52b17e9152dc7d4ca30d59b6eaee18d4deb2729fdbc7c982301ac",
+      "mobile-en-bot.jpg": "2997a652ae2de07ad3f04e5d766660a03db17764b1524f69effcdb4167ea0ded",
+      "mobile-en-custom.jpg": "bead36c93210eeac133b7e1226b85f4c8a75dc880a960ea8ab03c57a621fac9a",
+      "mobile-en-notFound.jpg": "71a6318b383d0a51b9b5a15f19d0f2c09421a107802b248f833a53a10e9c3d13",
+      "mobile-en-owner-owner-thb.jpg": "ead1007bde3b00ac1d94b946daec274417c83c4f26f00acb6497982f5d7ec6c6",
+      "mobile-en-owner-owner-usdt.jpg": "0967f6b9021f57b3adafa9266a1b991ced473c60fd80c750db71d817d8e43252",
+      "mobile-en-partial.jpg": "dc85ff42d8b32384f44681e21890d203034b025f693f6a2d8ebfea2d25c65ab6",
+      "mobile-en-pending.jpg": "c681b32faf123031ab96498504051e022e68079558af8051ef52cf82d9712c5d",
+      "mobile-en-refused.jpg": "126ee026fc8a86d00224b9ab9548299a794c35234fe5f0d5a0521d410cf1249f",
+      "mobile-en-retry.jpg": "1489668f069c89107bff3e80d3466e55545b11f8891681eec792ad60b0f029b2",
+      "mobile-en-unavailable.jpg": "3d7643ab3af6d1b6ac8d8365cd41de0e1ec0b36a210211801d980a108a6ddcf4",
+      "mobile-en-undeclared-owner-usdt.jpg": "099559d7748f9f7018059849855265db33d1b6c46e97b83614d349652d15b379",
+      "mobile-th-bot.jpg": "cce7fd88666fbf146a3cb7507305ef4e05d0441db959293fe6bab85467efb6df",
+      "mobile-th-custom.jpg": "2f7d2a1d8f1cddbd7822505d9d221348fde82061a769d95f61cce587de32934b",
+      "mobile-th-notFound.jpg": "c8c0b106643d07dcccafef16eba301283595808d77ac75e36b2f273449edd93b",
+      "mobile-th-owner-owner-thb.jpg": "c44ff417b4d7c6456c6c26baf182e1fe68a76ded5fd273f477d273578a31cbab",
+      "mobile-th-owner-owner-usdt.jpg": "fddc7d9d0cb5f12d0019bb2fc2ddb225853a31b62d065a59f9868127304d60f0",
+      "mobile-th-partial.jpg": "c244acc136a123b632348150c8e2d8051589fc0e658f328878a57f2bcba77320",
+      "mobile-th-pending.jpg": "e552aa883a67abb94db73e090918da495dd20e35393ec7b13e9ea7726cc5b229",
+      "mobile-th-refused.jpg": "3bd81ea10050b33e832239d608779d46d8ff2f4f4edc277b5bfc7c2d614e0f33",
+      "mobile-th-retry.jpg": "14a15bb8c790e75c2d8abf2aa2fcaf7cf8830b23a30db4828a2f44231f8fb8c5",
+      "mobile-th-unavailable.jpg": "b5ef331748d7f1e91f8d5bf1b1af7c797f73c687f9709058be05415a554f407d",
+      "mobile-th-undeclared-owner-usdt.jpg": "933157f8686a6f162711c91693377e76f08b37f8a9c4617c55e9a95b25cb30b5"
+    },
+    "documentationCi": "Pending at checkpoint preparation; prior actual-code CI remains green on 581f6e3. Record the resulting documentation revision and scope-only jobs in the ignored checkpoint."
   },
   "artifacts": {
     "directory": ".qa-local/qr2-s5-1",
@@ -99,11 +233,19 @@
       "shared-ui-tests.log": "43d78f775f9e8e4c193058ca1e1a4c1d1a8015203151d664016bc40077034277",
       "tester.md": "5d98b3a06e2982290e9243379324e1ade7f008f8c8bd6d4e979c2de5f175c493",
       "audit.md": "e120f63f77a8bb3d17bf7f40bfafbf11567b803e6efafe857152283566a18ff7",
-      "render-stub.mjs": "07096756e1029f00adc9b5e44bbfb965478cfaa1bd8c4665e3f5ddbcfde02a2c",
+      "render-stub.mjs": "803fc48e97c703ff7a369579ed9b8ef1df7a40fab088f9e35924cc5d504c2e5f",
       "ci-verify.md": "0a6c1ac485a97070ac9c2c23dbc6de4f1ed0efe5b48784985950b6e27c95760f",
       "ci-fix.md": "0e5baa903b0dce4969f02dd8a576d4ef156acf7b9d083f845a90c75039c9adcb",
       "ci-failure-6f7fcff.json": "b4ff9a6f7fb6fbeb025368c66b5a1de49f960adcc7847a45677d5a246c44f4f2",
-      "ci-readback-6f7fcff.json": "84cbc6aac95949345469268b26059bf2930f2f1ae57137389c0df6c13326b895"
+      "ci-readback-6f7fcff.json": "84cbc6aac95949345469268b26059bf2930f2f1ae57137389c0df6c13326b895",
+      "render-verify.md": "d0705302316a2cce71cd80e67b3c40e338bd2c846ed911012eb3d9c776bd8bb7",
+      "render-verify-tests.log": "4696b21ab33d586a52cb4fbfff904dd1905bbd0102378b77039d5124b4345720",
+      "render/observations.json": "ebfc379b33efd20fe8f733414867d10a9915f6f750da384eae3020cfbdebdde6",
+      "render/interactions.json": "7d8808a4021769b481bc8e2fb9d4402380cec18e14457ac295653008d74cffb0",
+      "render/network.json": "d21255d0431217a7f02d132fe411c960c740a9481e2c5c13d6e51f32996f204f",
+      "render/network-complete.json": "c209245cc16a264d6f61d331f763869c1e9650b50411ef1005d485ed7423e88e",
+      "stub-requests.json": "3681efe9f7eda56a801c5495934186375ff88c0ace5305888bb997ff8e5f0002",
+      "render-docs-review.md": "7f69499acf7aad8ced7e18eb6ac872b976f0de0d95dae908ec16d76096f49a3a"
     }
   },
   "ci": {
@@ -404,7 +546,7 @@
     "guardReset": "NOT AUTHORIZED",
     "bestInputsApply": "NOT AUTHORIZED"
   },
-  "nextAction": "Check scope-only CI for this documentation checkpoint, then stop the CI heartbeat. Complete synthetic desktop/mobile English/Thai rendering after local browser capability is enabled; S5-1 and full S5 remain unaccepted.",
+  "nextAction": "Follow the documentation-only checkpoint through exact-revision scope CI, save the ignored root checkpoint, then stop. No new phase, target activation or full-S5 acceptance is authorized by this closure.",
   "ciRepair": {
     "date": "2026-10-22",
     "failedRevision": "6f7fcff603d0cdd0c29990c431ae1fdd1ca291c5",
@@ -508,5 +650,13 @@
     ],
     "independentVerification": "Tester independently reviewed the bounded diff, label and cache pins, ran Overview (16 pass before the final translation-only correction), and rechecked final translation collisions/pins without duplicating the coder reruns.",
     "limits": "Counts are per run and overlap. The 107/108 intermediate failure is retained; the final affected language checks and asset/QR-2 tests passed. No full local suite or browser rendering is claimed."
+  },
+  "acceptance": {
+    "scope": "Only the bounded S5-1 read-only local component view in the approved synthetic harness; full S5 is not accepted.",
+    "decidedBy": "Sole local root after rendered inspection, independent artifact review and focused tests",
+    "verifiedRevision": "8c34a38b48bd53e631a352e29c28f75679fbaba0",
+    "productChangesInThisCheckpoint": false,
+    "fullApplicationIntegration": "NOT RUN",
+    "authenticatedTargetIntegration": "NOT RUN"
   }
 }
