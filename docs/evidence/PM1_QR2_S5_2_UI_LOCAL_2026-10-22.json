@@ -1,0 +1,441 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-22",
+  "scope": "QR-2 S5-2 bounded local book/marked equity view",
+  "baseRevision": "b7a5c2fc80c586eb9ecea85491ce7aaf27fae37a",
+  "status": "LOCAL_ACCEPTED_CI_PENDING",
+  "accepted": true,
+  "ownerGo": {
+    "received": true,
+    "packet": "docs/QR2_S5_2_LOCAL_UI_GO_PACKET_2026-10-22.md",
+    "stopOnSourceGap": true
+  },
+  "sourceQualification": {
+    "status": "PASS_STATIC_WITH_CONSTRAINTS",
+    "selectedSource": "GET /api/me?bot_id=<explicit selected Bot>",
+    "authentication": "Existing session and own:read, server ownsBot check; no admin bypass at selected source",
+    "snapshot": "Normal API request runs within SERIALIZABLE and buffers response until commit. Business reads only; existing limiter/session bookkeeping is not claimed write-free.",
+    "decimal": "Existing amount() returns decimal strings after server-side 18-place half-even rounding. UI displays returned bytes; no browser money arithmetic.",
+    "time": "Book is current account snapshot fetched for this Load, valuation time unavailable. QR-2 marked values retain separate requested/resolved range/as_of. No same-snapshot, historical-book, continuously-live or reconciliation claim.",
+    "identity": "Captured and current owner, body.user.id, body.bot.id, unique row bot_id/userId/broker/currency, format and valuation must match; fail closed otherwise",
+    "limitations": [
+      "Static source qualification only, no new real authentication or target proof",
+      "No book valuation timestamp supplied; HTTP receipt/Date, ETag, session timestamps and QR-2 report as_of cannot replace it"
+    ],
+    "review": {
+      "path": ".qa-local/qr2-s5-2/source-review.md",
+      "sha256": "a8b160620e24068a7a977bbfacaf01d0f06376796011bbf8c585924631cdb058"
+    }
+  },
+  "checks": {
+    "focused": {
+      "status": "PASS",
+      "executor": "Implementation/root lane; independently reviewed log, not rerun by evidence reviewer",
+      "command": "node --test test/asset-cache-tokens.test.js test/qr2-performance-ui.test.js",
+      "run": "FINAL FIX ROUND 2",
+      "tests": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "durationMs": 52174.5106,
+      "processExitCode": "Not independently established from retained summary",
+      "log": ".qa-local/qr2-s5-2/implementation-tests.log",
+      "note": "Earlier runs retained in same log; count only final fix2 run."
+    },
+    "language": {
+      "status": "PASS",
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "durationMs": 2131.267,
+      "log": ".qa-local/qr2-s5-2/language-checks.log",
+      "testSources": [
+        "test/overview-ui.test.js",
+        "test/ui.test.js"
+      ],
+      "command": "node --test --test-isolation=none --test-name-pattern='New pairs round-trip|UI defaults to English' test/overview-ui.test.js test/ui.test.js",
+      "executor": "Root lane; independently reviewed log, not rerun by evidence reviewer",
+      "commandProvenance": "Root execution record retained across checkpoint; output log records results only"
+    },
+    "independentReview": {
+      "status": "PASS",
+      "codeReview": ".qa-local/qr2-s5-2/code-review.md",
+      "testReview": ".qa-local/qr2-s5-2/independent-test-review.md",
+      "closedFindings": [
+        "Fixed EN/TH per-Bot sizing notice restored",
+        "Decimal source validation bounds: at most20 integer digits and18 fractional digits"
+      ],
+      "limits": "Advisory evidence; root owns acceptance.",
+      "finalScopeReview": ".qa-local/qr2-s5-2/final-scope-review.md"
+    },
+    "independentVerifier": {
+      "status": "PASS",
+      "checks": 6,
+      "exitCode": 0,
+      "command": "node --input-type=module - (bounded stdin verifier)",
+      "log": ".qa-local/qr2-s5-2/independent-verifier.log",
+      "cases": [
+        "Selected primary Bot differs from shell selectedBot; foreign row ignored",
+        "Positive20-digit plus18-decimal boundary exact",
+        "Negative20-digit plus18-decimal boundary exact",
+        "Zero exact",
+        "Negative smallest18-decimal exact",
+        "Deferred book JSON after broker selection cannot revive prior pair"
+      ],
+      "limits": "Synthetic jsdom; reuses existing setup with independent assertions; no backend, browser or DB execution."
+    },
+    "rendered": {
+      "status": "PASS_LOCAL_SYNTHETIC",
+      "executor": "Root browser lane; evidence reviewer checks retained observations and inventory",
+      "caseCount": 6,
+      "screenshotCount": 8,
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "languages": [
+        "en",
+        "th"
+      ],
+      "cases": [
+        {
+          "name": "desktop-en",
+          "language": "en",
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "horizontalOverflow": false,
+          "bookUnavailable": false
+        },
+        {
+          "name": "desktop-th",
+          "language": "th",
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "horizontalOverflow": false,
+          "bookUnavailable": false
+        },
+        {
+          "name": "mobile-en",
+          "language": "en",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "horizontalOverflow": false,
+          "bookUnavailable": false
+        },
+        {
+          "name": "mobile-th",
+          "language": "th",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "horizontalOverflow": false,
+          "bookUnavailable": false
+        },
+        {
+          "name": "mobile-th-missing",
+          "language": "th",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "horizontalOverflow": false,
+          "bookUnavailable": true
+        },
+        {
+          "name": "desktop-en-wrong-currency",
+          "language": "en",
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "horizontalOverflow": false,
+          "bookUnavailable": true
+        }
+      ],
+      "bookValue": "8007199254740993.123456789",
+      "markedValue": "9007199254740993.123456789",
+      "results": [
+        "Four EN/TH desktop/mobile success cases preserve distinct exact book and marked strings",
+        "Missing book and wrong-currency book show dash and BOOK_ACCOUNT_NOT_UNIQUE while valid marked report remains",
+        "All six retained measurements have scroll width equal to client width",
+        "Desktop side-by-side cards; mobile stacked cards; separate current snapshot and historical range labels"
+      ],
+      "observations": ".qa-local/qr2-s5-2/render-observations.json",
+      "screenshots": [
+        ".qa-local/qr2-s5-2/desktop-en-wrong-currency.jpg",
+        ".qa-local/qr2-s5-2/desktop-en.jpg",
+        ".qa-local/qr2-s5-2/desktop-th.jpg",
+        ".qa-local/qr2-s5-2/mobile-en-book.jpg",
+        ".qa-local/qr2-s5-2/mobile-en-marked.jpg",
+        ".qa-local/qr2-s5-2/mobile-th-book.jpg",
+        ".qa-local/qr2-s5-2/mobile-th-marked.jpg",
+        ".qa-local/qr2-s5-2/mobile-th-missing.jpg"
+      ],
+      "limits": [
+        "Actual shell assets with synthetic local session/GET fixtures; no real authentication or backend accounting proof",
+        "Eight screenshot files inventoried and hashed; this evidence-finalization pass does not independently repeat visual browser review",
+        "Configured harness modes are not additional rendered test cases",
+        "Book fixture amounts are fabricated, not accounting or profitability evidence"
+      ]
+    },
+    "network": {
+      "status": "LOCAL_JOURNAL_REVIEWED",
+      "journal": ".qa-local/qr2-s5-2/request-journal.json",
+      "recordedRequests": 302,
+      "methods": [
+        "GET"
+      ],
+      "reportRequests": 6,
+      "explicitBotBookRequests": 6,
+      "consoleEntries": 0,
+      "consoleArtifact": ".qa-local/qr2-s5-2/browser-console.json",
+      "limits": "Server-side loopback journal only; not full browser/external network capture and does not prove absence of off-origin traffic."
+    },
+    "cleanup": {
+      "status": "STOPPED_RECORDED",
+      "artifact": ".qa-local/qr2-s5-2/runtime.json",
+      "stoppedAtUtc": "2026-10-22T17:07:49.373Z",
+      "tab": "Closed per root stopMethod record",
+      "viewport": "Reset per root stopMethod record",
+      "verification": "Read runtime artifact only; no live process, port, browser or host probe by reviewer.",
+      "rootFollowUp": "Root rechecked recorded fixture PID absent after resume; prior root browser record confirms tab closed and viewport reset."
+    },
+    "ci": {
+      "status": "PENDING",
+      "revision": null,
+      "note": "No prior S5-1 CI attributed to S5-2 candidate; exact committed revision and CI results remain root follow-up."
+    }
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT RUN",
+    "ready": false,
+    "n1": "HELD",
+    "deployment": "NOT RUN",
+    "targetRouteActivation": "NOT RUN",
+    "migrations": "NOT RUN",
+    "hostVps": "NOT RUN",
+    "live": "HELD",
+    "guardReset": "HELD",
+    "bestInputsApply": "HELD"
+  },
+  "sourcePins": [
+    {
+      "path": "src/postgres/request-dispatch.js",
+      "sha256": "e2bac49b395781738d0a18697fccabca6f9eb441b7e190723c473a260c1d256d"
+    },
+    {
+      "path": "src/postgres/auth.js",
+      "sha256": "c0c0d40438ca83cd979842a2c7991ece3671a50839e3a51195ef7d40304abb36"
+    },
+    {
+      "path": "src/postgres/server.js",
+      "sha256": "79bbef073b590082994ba61c4c8186a32d948def74cd808a9c909e942e9728ab"
+    },
+    {
+      "path": "src/postgres/store.js",
+      "sha256": "b371c75db020f579e2dda60704479a38ac0fff94653efc2fc6d28ae96cc3f8e0"
+    },
+    {
+      "path": "src/postgres/db.js",
+      "sha256": "7d74a87eb948b1647c43b48e9c3658827729e1aa6022710ddacc3be0234f7bc6"
+    },
+    {
+      "path": "src/postgres/ledger.js",
+      "sha256": "c79510c207b53021713974a505bd221889cc005566449bf9055bbdee6d30d7f4"
+    },
+    {
+      "path": "src/money.js",
+      "sha256": "3e3b7a80fd25cb5be30fbb262c1466b26b6c6b53ecfaf34a30233f0b2e82bdcf"
+    }
+  ],
+  "preparedDate": "2026-10-22",
+  "verificationCompletedDate": "2026-10-23",
+  "timezone": "Asia/Bangkok",
+  "acceptance": {
+    "status": "BOUNDED_LOCAL_ACCEPTED_BY_ROOT",
+    "date": "2026-10-23",
+    "scope": "S5-2 synthetic local presentation only; exact-revision CI still pending",
+    "fullS5": "OPEN",
+    "targetIntegration": "NOT RUN"
+  },
+  "candidatePins": [
+    {
+      "path": "public/paper-performance.js",
+      "sha256": "167b85e4bbcfc4826ee978e7a53e1a43d25ae13079fc5d17e157343b9822d994",
+      "hashConvention": "UTF-8 text with CRLF normalized to LF"
+    },
+    {
+      "path": "public/paper-performance.css",
+      "sha256": "c68ac529a2511635a1066d1332d9bb8beea3418b3aa2bccc56cb53e395d246b5",
+      "hashConvention": "UTF-8 text with CRLF normalized to LF"
+    },
+    {
+      "path": "public/index.html",
+      "sha256": "e52752ec0f97eb8e2b023d10723df3b14cfc7650e7de8176f58dc37d0d44b953",
+      "hashConvention": "UTF-8 text with CRLF normalized to LF"
+    },
+    {
+      "path": "public/i18n.js",
+      "sha256": "ee56c25b7421cf805b93ffed55c0d269a731fb9fb3dc37107509d49608836ac5",
+      "hashConvention": "UTF-8 text with CRLF normalized to LF"
+    },
+    {
+      "path": "test/qr2-performance-ui.test.js",
+      "sha256": "6486eb1a4b4ba2e7b2cdbdd9d6300c05cec50b6a35e697ce1c2961000cf2f800",
+      "hashConvention": "UTF-8 text with CRLF normalized to LF"
+    },
+    {
+      "path": "test/asset-cache-tokens.test.js",
+      "sha256": "ba7f607bde22c7cdb0006b253fffc2973a2e8ead016fa3763fcbc01bd9823e36",
+      "hashConvention": "UTF-8 text with CRLF normalized to LF"
+    }
+  ],
+  "sourcePinsNote": "Existing source qualification pins preserved unchanged; not replaced by candidate asset or raw artifact hashes.",
+  "artifactPins": [
+    {
+      "path": ".qa-local/qr2-s5-2/source-review.md",
+      "sha256": "a8b160620e24068a7a977bbfacaf01d0f06376796011bbf8c585924631cdb058",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/code-review.md",
+      "sha256": "f4803dc7682daa552655b979ecc880e40529fe9e8083b61db03ac975ee81c8af",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/independent-test-review.md",
+      "sha256": "2c32889a40555b3539ce63dbe64e0981ec40eb4d171c3395f70fdb72576645d6",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/independent-verifier.log",
+      "sha256": "103fb3442482477e639a2567e2f07251d7d3f05c0f78db7eb416090e3bf93813",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/implementation-tests.log",
+      "sha256": "d890e836d32c98f05b17308ffb23acf2b804501e11ece5e6b64ca812b4785452",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/language-checks.log",
+      "sha256": "dd19c7645da36e769988b5e6e81a5edbcdafedee646df5fb5e39c69b4e1307e8",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/harness-review.md",
+      "sha256": "4d2a18d69f329feae364b6b18d4bbb689267c44713a83b4544e4cc0161b92e31",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/evidence-review.md",
+      "sha256": "d22d825725fb99f6beaa467dac46f58cc49b3dda79ec5d301bcd6360474bf715",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/render-observations.json",
+      "sha256": "3f3acf1a1f9fd605fe5a69ce3046df04fc26d1f62a5d6081bd6a7382bd6b4c73",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/request-journal.json",
+      "sha256": "8deb9973ad5dd8099ccaecf6d6b1433637a2c0dddb3d9b0936b135127512ef6f",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/browser-console.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/runtime.json",
+      "sha256": "fadb2b1d808dd1bc8b242d15da0330cc60bf4d8026def6de99db73bf31eceacc",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/shell-stub.mjs",
+      "sha256": "ea12776285be2c25df97650db075feb1b8cf534149154a15e9d11a8dff406bed",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/synthetic-fixtures.json",
+      "sha256": "386314fc11e37ef0fcf822f5cf644158eb0075e6c56253e81484ecab1454fdc0",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/desktop-en-wrong-currency.jpg",
+      "sha256": "2555ad0743d25985b704b78dfcff51de3d6ef52ab7d88632f9cb52a530768acc",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/desktop-en.jpg",
+      "sha256": "18c2e6a664356877225f82edcc8ad54ad42d3470837146c8e2f9d3555283fc4b",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/desktop-th.jpg",
+      "sha256": "4f90c6d835c34b7dcba2ed901e640b5da2567b6b86a65ae851cda5db521c2598",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/mobile-en-book.jpg",
+      "sha256": "b189c94dc5b9bbf51b3e42021ed72982a3095f8bbc72d9440b971a2a3801002b",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/mobile-en-marked.jpg",
+      "sha256": "891c805a6cc56d7376870ec936eb00e2e1e2e6aacdaf04265d7ba2e809223b8d",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/mobile-th-book.jpg",
+      "sha256": "71f496f162d63194e2d70a9bdf20f149649d86fb9b4a06722d6b157548fbd520",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/mobile-th-marked.jpg",
+      "sha256": "e6e5e828eb5fa2a610a60429419936019f3d6789cd27818c4ccdbd33faa46d06",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/mobile-th-missing.jpg",
+      "sha256": "13a363223486d19bd0b6ca91b2ffc0688bab9204c7fb493db926fdd20c38d838",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/final-scope-review.md",
+      "sha256": "cf5849e6de718d0a4916ba18b96209a242236c4073fdbd78ed116126c74c6da1",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/final-evidence-review.md",
+      "sha256": "12775f4a3b5f182f96d769bb39b503431aa6a4d5645127fe7c28febe307f5775",
+      "hashConvention": "Raw file bytes"
+    }
+  ],
+  "limitations": [
+    "Bounded local presentation accepted by root; exact-revision CI pending",
+    "No full S5, target, private acceptance, real authentication, backend/DB or native host proof",
+    "No same-snapshot, historical-book, continuously-live, monetary difference/profit or reconciliation claim",
+    "No new tests, browser, network, host or Git mutations in evidence-finalization pass"
+  ],
+  "teamPolicyCommit": "d476b54e0124857938dd7fce247be9f934beb66d"
+}

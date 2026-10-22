@@ -17,4 +17,9 @@
 #paperPerformance details dl { padding-left: .6rem; border-left: 1px solid #63768c; }
 #paperPerformance ul { padding-left: 1.2rem; }
 #paperPerformance [hidden] { display: none; }
+#paperPerformance .pp-equity-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
+#paperPerformance .pp-equity-card { min-width: 0; padding: 1rem; border: 1px solid #63768c; border-radius: .45rem; }
+#paperPerformance .pp-equity-card h4 { margin-top: 0; }
+#paperPerformance .pp-equity-card strong { display: block; overflow-wrap: anywhere; }
+@media (max-width: 520px) { #paperPerformance .pp-equity-comparison { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { #paperPerformance { padding: .85rem; } #paperPerformance .pp-controls, #paperPerformance .pp-metrics { grid-template-columns: 1fr; } }

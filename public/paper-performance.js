@@ -7,7 +7,8 @@
   const result = get('ppResult'), status = get('ppStatus'), button = get('ppLoad');
   let sequence = 0, sessionSequence = 0, controller, bots = [], botsLoaded = false, botsLoading;
   const signedIn = () => typeof authenticated !== 'undefined' && authenticated === true;
-  let sessionSignedIn = signedIn();
+  const activeOwner = () => typeof me !== 'undefined' && typeof me?.user?.id === 'string' && me.user.id ? me.user.id : null;
+  let sessionSignedIn = signedIn(), sessionOwner = activeOwner();
   const label = (text, tag = 'span') => {
     const node = document.createElement(tag);
     node.dataset.uiLabel = text;
@@ -45,14 +46,15 @@
   async function loadBots() {
     if (!signedIn() || botsLoaded) return;
     if (botsLoading) return botsLoading;
-    const sessionToken = sessionSequence;
+    const sessionToken = sessionSequence, ownerId = activeOwner();
     botsLoading = (async () => {
       try {
         const response = await fetch('/api/bots', {method: 'GET', credentials: 'same-origin'});
-        if (!signedIn() || sessionToken !== sessionSequence) return;
+        if (!signedIn() || sessionToken !== sessionSequence || ownerId !== activeOwner()) return;
+        if (response.status === 401) { authenticationFailed(); return; }
         if (!response.ok) throw new Error(String(response.status));
         const body = await response.json();
-        if (!signedIn() || sessionToken !== sessionSequence) return;
+        if (!signedIn() || sessionToken !== sessionSequence || ownerId !== activeOwner()) return;
         if (!Array.isArray(body.bots)) throw new Error('QR2_BOT_LIST_INVALID');
         bots = body.bots.filter(bot => typeof bot.id === 'string');
         const select = get('ppBot'), previous = select.value;
@@ -102,7 +104,7 @@
     fees: 'Fees (information only)', unbacked_equity: 'Unbacked equity', flows_total: 'Capital flows', money_pnl: 'Money PnL',
     twr: 'TWR', mwr: 'Modified Dietz', max_drawdown: 'Max drawdown'
   };
-  function render(body, owner) {
+  function render(body, owner, book) {
     const fragment = document.createDocumentFragment();
     fragment.append(label(owner ? 'Owner accounts · one currency' : 'Bot account', 'h3'));
     const identity = document.createElement('p');
@@ -113,7 +115,22 @@
       description.append(serverValue(value)); item.append(label(name, 'dt'), description); metrics.append(item);
     };
     fragment.append(label('Book equity used for sizing is a different number.', 'p'));
-    fragment.append(label('Book equity is not supplied by this performance endpoint.', 'p'));
+    if (!owner) {
+      const comparison = document.createElement('div'); comparison.className = 'pp-equity-comparison';
+      const bookCard = document.createElement('section'); bookCard.className = 'pp-equity-card pp-book';
+      bookCard.append(label('Book equity (cost basis)', 'h4'), raw('BOOK_EQUITY_COST_BASIS', 'small'),
+        raw(book?.value ?? '—', 'strong'), raw(body.currency, 'small'),
+        label('Used for sizing; not portfolio value.', 'p'),
+        label('Current account snapshot fetched for this Load / Refresh.', 'p'),
+        label('Book valuation time unavailable.', 'p'));
+      if (book?.reason) bookCard.append(label('Book equity unavailable.', 'p'), raw(book.reason, 'small'));
+      const markedCard = document.createElement('section'); markedCard.className = 'pp-equity-card pp-marked';
+      markedCard.append(label('Marked equity', 'h4'), serverValue(body.account?.nav_to ?? body.account?.nav ?? null),
+        raw(body.currency, 'small'), label('Historical marked report: server range and as_of only.', 'p'),
+        serverValue({requested_range: body.requested_range, resolved_range: body.resolved_range, as_of: body.as_of}));
+      comparison.append(bookCard, markedCard); fragment.append(comparison,
+        label('Separate reads and snapshots; values may reflect different times. Refresh explicitly for a new snapshot.', 'p'));
+    }
     const account = owner ? body.total : body.account;
     if (account) {
       for (const [key, title] of Object.entries(fields)) {
@@ -155,17 +172,39 @@
       body.allocation.version === body.declaration_version &&
       body.total.label === 'SUM_OF_INDEPENDENT_PAPER_ACCOUNTS' && body.total.notice === 'NOT_AN_OWNER_PORTFOLIO';
   }
+  function bookValue(body, botId, broker, currency, ownerId) {
+    if (typeof body?.user?.id === 'string' && body.user.id !== ownerId) return {identityFailure: true};
+    if (body?.user?.id !== ownerId || body.moneyFormat !== 'decimal-string' || body.bot?.id !== botId || body.allBots !== false || !Array.isArray(body.paperAccounts))
+      return {reason: 'BOOK_RESPONSE_INVALID'};
+    const expectedCurrency = {'binance-global': 'USDT', 'binance-th': 'THB', innovestx: 'THB', settrade: 'THB'}[broker];
+    if (!expectedCurrency || currency !== expectedCurrency) return {reason: 'BOOK_CURRENCY_MISMATCH'};
+    const rows = body.paperAccounts.filter(row => row?.bot_id === botId && row.userId === botId && row.broker === broker && row.currency === currency);
+    if (rows.length !== 1) return {reason: 'BOOK_ACCOUNT_NOT_UNIQUE'};
+    const row = rows[0];
+    if (row.valuation !== 'COST_BASIS_NOT_MARK_TO_MARKET' || typeof row.bookEquity !== 'string' ||
+        !/^-?(?:0|[1-9]\d{0,19})(?:\.\d{1,18})?$/.test(row.bookEquity)) return {reason: 'BOOK_VALUE_INVALID'};
+    return {value: row.bookEquity};
+  }
+  function authenticationFailed() {
+    clearSession(); button.disabled = true; message('Sign in to view Paper history.');
+  }
   async function submit(event) {
     event.preventDefault();
     invalidate();
     if (!signedIn()) return;
-    const token = sequence;
+    const token = sequence, ownerId = activeOwner();
+    const current = () => {
+      if (token !== sequence || !signedIn()) return false;
+      if (activeOwner() !== ownerId) { invalidate(); return false; }
+      return true;
+    };
     const owner = get('ppScope').value === 'owner';
+    if (!owner && !ownerId) { message('Paper performance response unavailable.', 'BOOK_OWNER_UNKNOWN'); return; }
     const query = new URLSearchParams({period: get('ppPeriod').value});
     if (owner) query.set('currency', get('ppCurrency').value);
     else {
       if (!botsLoaded) await loadBots();
-      if (token !== sequence || !signedIn()) return;
+      if (!current()) return;
       if (!bots.some(bot => bot.id === get('ppBot').value)) { message('Select an owned Bot.'); return; }
       query.set('bot_id', get('ppBot').value); query.set('broker', get('ppBroker').value);
     }
@@ -182,8 +221,10 @@
       const response = await fetch('/api/paper-performance' + (owner ? '/owner' : '') + '?' + query, {
         method: 'GET', credentials: 'same-origin', signal: controller.signal
       });
+      if (!current()) return;
+      if (response.status === 401) { authenticationFailed(); return; }
       let body; try { body = await response.json(); } catch { body = null; }
-      if (token !== sequence || !signedIn()) return;
+      if (!current()) return;
       if (!response.ok) {
         const retry = response.headers.get('Retry-After');
         message(response.status === 404 ? 'Paper performance endpoint or scope unavailable.' : response.status === 401 ? 'Sign in to view Paper history.' : retry || response.status === 429 ? 'Request unavailable. Retry manually later.' : 'Paper performance request refused.',
@@ -204,10 +245,31 @@
       if (!validNumbers(body) || (owner && !ownerAggregateAllowed(body))) {
         message('Paper performance response unavailable.', 'QR2_RESPONSE_INVALID'); return;
       }
+      let book;
+      if (!owner) {
+        try {
+          const bookResponse = await fetch('/api/me?' + new URLSearchParams({bot_id: query.get('bot_id')}), {
+            method: 'GET', credentials: 'same-origin', cache: 'no-store', signal: controller.signal
+          });
+          if (!current()) return;
+          if (bookResponse.status === 401) { authenticationFailed(); return; }
+          if (!bookResponse.ok) book = {reason: 'BOOK_REQUEST_REFUSED · HTTP ' + bookResponse.status};
+          else {
+            let accountBody; try { accountBody = await bookResponse.json(); } catch { accountBody = null; }
+            if (!current()) return;
+            book = accountBody ? bookValue(accountBody, query.get('bot_id'), query.get('broker'), body.currency, ownerId) : {reason: 'BOOK_RESPONSE_INVALID'};
+            if (book.identityFailure) { authenticationFailed(); return; }
+          }
+        } catch (error) {
+          if (!current() || error.name === 'AbortError') return;
+          book = {reason: 'BOOK_REQUEST_UNAVAILABLE'};
+        }
+      }
+      if (!current()) return;
       message('Server report received.', [body.status.status, ...(body.status.overlays || []), ...(body.status.reasons || []), body.code].filter(Boolean).join(' · '));
-      render(body, owner);
+      render(body, owner, book);
     } catch (error) {
-      if (token === sequence && signedIn() && error.name !== 'AbortError') message('Paper performance unavailable. Retry manually.');
+      if (current() && error.name !== 'AbortError') message('Paper performance unavailable. Retry manually.');
     } finally {
       if (token === sequence) { root.setAttribute('aria-busy', 'false'); button.disabled = !signedIn(); }
     }
@@ -215,7 +277,7 @@
   controls.forEach(control => { control.addEventListener('input', selectionChanged); control.addEventListener('change', selectionChanged); });
   get('ppForm').addEventListener('submit', submit);
   function clearSession() {
-    sessionSignedIn = false;
+    sessionSignedIn = false; sessionOwner = null;
     sessionSequence++;
     invalidate(); bots = []; botsLoaded = false; get('ppBot').replaceChildren();
   }
@@ -226,8 +288,10 @@
     load = async function (...args) {
       const response = await loadSession.apply(this, args);
       if (signedIn()) {
-        if (!sessionSignedIn) invalidate();
-        sessionSignedIn = true;
+        if (!sessionSignedIn || sessionOwner !== activeOwner()) {
+          invalidate(); bots = []; botsLoaded = false; get('ppBot').replaceChildren();
+        }
+        sessionSignedIn = true; sessionOwner = activeOwner();
         button.disabled = root.getAttribute('aria-busy') === 'true';
         await loadBots();
       }

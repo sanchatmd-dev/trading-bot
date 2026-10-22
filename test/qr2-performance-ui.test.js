@@ -11,7 +11,8 @@ const publicFile=name=>fs.readFileSync(new URL('../public/'+name,import.meta.url
 const settle=()=>new Promise(resolve=>setTimeout(resolve,25));
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};
 const ok=body=>({status:200,body});
-function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot),sessionLoad=()=>{}}={}){
+const bookFixture=()=>({user:{id:'owner-1'},bot:{id:'bot-1'},allBots:false,moneyFormat:'decimal-string',paperAccounts:[{bot_id:'bot-1',userId:'bot-1',broker:'binance-global',currency:'USDT',valuation:'COST_BASIS_NOT_MARK_TO_MARKET',bookEquity:'9007199254740994.123456789123456789'}]});
+function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot),bookAnswer=()=>ok(bookFixture()),sessionLoad=()=>{}}={}){
   const dom=new JSDOM(publicFile('index.html'),{url:'https://robot.test',runScripts:'outside-only'}),w=dom.window,d=w.document;
   w.localStorage.setItem('robotLanguage',language);w.eval(publicFile('i18n.js'));
   const requests=[];
@@ -20,6 +21,7 @@ function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot),sess
     const request={path:url.pathname+url.search,method:options.method??'GET',options};requests.push(request);
     assert.equal(request.method,'GET','performance UI never mutates accounts or declarations');
     if(url.pathname==='/api/bots')return ok({bots:fixture.bots,maxBots:5});
+    if(url.pathname==='/api/me')return bookAnswer(request);
     if(['/api/paper-performance','/api/paper-performance/owner'].includes(url.pathname))return answer(request);
     throw Error('Unexpected UI request '+url.pathname);
   }
@@ -242,4 +244,108 @@ test('numeric owner totals require eligible allocation and matching owner curren
       assert.equal(p.text().includes('1058.74'),false,'invalid aggregate and member values never render as a report');
     }finally{p.close();}
   }
+});
+
+test('book snapshot uses exact owned tuple and fresh explicit GET; owner view never requests book',async()=>{
+  const p=setup();
+  try{
+    await p.boot();await p.load();
+    const calls=p.requests.filter(r=>r.path.startsWith('/api/me?'));assert.equal(calls.length,1);
+    assert.equal(calls[0].path,'/api/me?bot_id=bot-1');assert.equal(calls[0].options.cache,'no-store');
+    assert.equal(calls[0].options.credentials,'same-origin');assert.equal(calls[0].options.signal,p.financial()[0].options.signal);
+    assert.equal(p.get('ppResult').querySelector('.pp-book strong').textContent,bookFixture().paperAccounts[0].bookEquity);
+    assert.match(p.text(),/BOOK_EQUITY_COST_BASIS/);
+    const old=p.get('ppResult').innerHTML;await p.w.load();assert.equal(p.get('ppResult').innerHTML,old);
+  }finally{p.close();}
+  const owner=setup({answer:()=>ok(fixture.owner)});
+  try{await owner.boot();owner.change('ppScope','owner');await owner.load();assert.equal(owner.requests.some(r=>r.path.startsWith('/api/me?')),false);assert.equal(owner.get('ppResult').querySelector('.pp-equity-comparison'),null);}
+  finally{owner.close();}
+});
+
+test('missing, malformed, refused or mismatched book stays unavailable beside valid marked report',async()=>{
+  const variants=[null,{},...[
+    b=>b.paperAccounts=[],b=>b.paperAccounts.push({...b.paperAccounts[0]}),b=>b.bot.id='foreign',b=>b.allBots=true,
+    b=>b.moneyFormat='number',b=>b.paperAccounts[0].userId='foreign',b=>b.paperAccounts[0].bot_id='foreign',
+    b=>b.paperAccounts[0].broker='binance-th',b=>b.paperAccounts[0].currency='THB',
+    b=>b.paperAccounts[0].valuation='MARK_TO_MARKET',
+    ...[null,123,'NaN','Infinity','1e9',' 10','01.2','+1','1.','1.1234567890123456789','123456789012345678901'].map(value=>b=>b.paperAccounts[0].bookEquity=value)
+  ].map(edit=>{const b=bookFixture();edit(b);return b;})];
+  for(const body of variants){
+    const p=setup({bookAnswer:()=>ok(body)});
+    try{await p.boot();await p.load();assert.equal(p.get('ppResult').querySelector('.pp-book strong')?.textContent,'—');assert.match(p.text(),/BOOK_/);assert.match(p.text(),/9007199254740993.123456789/);}
+    finally{p.close();}
+  }
+  for(const response of [{status:403,body:{}},{status:500,body:{}}]){
+    const p=setup({bookAnswer:()=>response});
+    try{await p.boot();await p.load();assert.match(p.text(),/BOOK_REQUEST_REFUSED/);assert.match(p.text(),/9007199254740993.123456789/);}
+    finally{p.close();}
+  }
+});
+
+test('book pending pair survives same-session refresh; selection, logout, owner changes suppress late data',async()=>{
+  for(const action of ['refresh','selection','logout','owner']){
+    const pending=deferred(),p=setup({bookAnswer:()=>pending.promise});
+    try{
+      await p.boot();p.get('ppLoad').click();await settle();assert.equal(p.text(),'');assert.equal(p.get('ppLoad').disabled,true);
+      if(action==='refresh'){await p.w.load();assert.equal(p.get('ppLoad').disabled,true);}
+      if(action==='selection')p.change('ppPeriod','YEAR');
+      if(action==='logout')p.get('logout').dispatchEvent(new p.w.Event('click'));
+      if(action==='owner')p.w.eval('me.user.id="another-owner"');
+      pending.resolve(ok(bookFixture()));await settle();
+      if(action==='refresh')assert.match(p.text(),/BOOK_EQUITY_COST_BASIS/);
+      else assert.equal(p.text(),'');
+    }finally{pending.resolve(ok(bookFixture()));p.close();}
+  }
+});
+
+test('401 from either source and wrong owner clear pair; unknown owner makes no report or book request',async()=>{
+  for(const options of [
+    {answer:()=>({status:401,body:{}})},
+    {bookAnswer:()=>({status:401,body:{}})},
+    {bookAnswer:()=>ok({...bookFixture(),user:{id:'foreign'}})}
+  ]){
+    const p=setup(options);
+    try{await p.boot();await p.load();assert.equal(p.text(),'');assert.match(p.get('ppStatus').textContent,/Sign in/);assert.equal(p.get('ppLoad').disabled,true);}
+    finally{p.close();}
+  }
+  const p=setup();
+  try{await p.boot();p.w.eval('me={user:{}}');await p.load();assert.equal(p.financial().length,0);assert.match(p.get('ppStatus').textContent,/BOOK_OWNER_UNKNOWN/);}
+  finally{p.close();}
+});
+
+test('EN/TH comparison labels distinguish current fetched book with no valuation time from historical marked range',async()=>{
+  for(const [language,current,time,history,separate] of [
+    ['en','Current account snapshot fetched','Book valuation time unavailable.','Historical marked report','Separate reads and snapshots'],
+    ['th','ภาพบัญชีปัจจุบันที่ดึง','ไม่มีเวลาประเมินมูลค่า Book equity','รายงานมูลค่าตลาดย้อนหลัง','อ่านข้อมูลและบันทึกภาพแยกกัน']
+  ]){
+    const p=setup({language});
+    try{await p.boot();await p.load();const book=p.get('ppResult').querySelector('.pp-book').textContent,marked=p.get('ppResult').querySelector('.pp-marked').textContent;assert.ok(book.includes(current));assert.ok(book.includes(time));assert.ok(marked.includes(history));assert.ok(p.text().includes(separate));assert.ok(!book.includes(String(fixture.bot.resolved_range.to)));assert.ok(marked.includes(String(fixture.bot.resolved_range.to)));assert.ok(p.text().includes(language==='th'?'Book equity ที่ใช้กำหนดขนาดคำสั่งเป็นคนละตัวเลข':'Book equity used for sizing is a different number.'));}
+    finally{p.close();}
+  }
+});
+
+test('supported ledger broker/currency pairs use matched account only; invalid report never requests book',async()=>{
+  for(const broker of ['binance-th','innovestx','settrade']){
+    const body=structuredClone(fixture.bot);body.scope.broker=broker;body.currency='THB';
+    const book=bookFixture();book.paperAccounts[0].broker=broker;book.paperAccounts[0].currency='THB';
+    const p=setup({answer:()=>ok(body),bookAnswer:()=>ok(book)});
+    try{await p.boot();p.change('ppBroker',broker);await p.load();assert.equal(p.get('ppResult').querySelector('.pp-book strong')?.textContent,book.paperAccounts[0].bookEquity);}
+    finally{p.close();}
+  }
+  const p=setup({answer:()=>ok({...fixture.bot,basis:'HYPOTHETICAL'})});
+  try{await p.boot();await p.load();assert.equal(p.requests.some(r=>r.path.startsWith('/api/me?')),false);}
+  finally{p.close();}
+});
+
+test('deferred book JSON and session expiry cannot revive previous pair',async()=>{
+  const pending=deferred(),p=setup();
+  try{
+    await p.boot();const original=p.w.fetch;p.w.fetch=async(path,options)=>{
+      const response=await original(path,options);
+      if(path.startsWith('/api/me?'))response.json=async()=>{await pending.promise;return bookFixture();};
+      return response;
+    };
+    p.get('ppLoad').click();await settle();p.w.eval('authenticated=false');await p.w.load();
+    pending.resolve();await settle();assert.equal(p.text(),'');assert.equal(p.get('ppLoad').disabled,true);
+  }finally{pending.resolve();p.close();}
 });
