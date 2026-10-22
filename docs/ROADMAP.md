@@ -1,5 +1,7 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+Project status diagrams refreshed, 2026-10-23 (Bangkok): [current project and prototype maps](PROJECT_STATUS_2026-10-23.md) distinguish completed scoped evidence, partial work and unrun acceptance. The latest accepted PM-1 S2 measurement remains project 64–73% and prototype 73–80%, measured on 2026-10-20 Bangkok; later FE-2b, F09/F11 and QR-2 engineering is shown in the diagrams but has not received successor row scoring. These are engineering bounds, not current target readiness or a new numerical assessment. Original S5-2 CI failed five stale test tokens; repair `09ecab3` and documentation checkpoint `4591b1d` passed their respective full and scope-only CI. Spot/Paper, private source local, private acceptance NOT RUN, READY false and N1 held remain unchanged; no deployment or target route activation.
+
 QR-2 S5-2 local checkpoint, 2026-10-23 (Bangkok): the owner approved the bounded packet, and independent source/time qualification passed before UI edits. Root accepts the synthetic local book/marked-equity presentation: a fresh selected-Bot account GET supplies exact book decimal strings, with unavailable valuation time and a separate snapshot warning beside the historical marked report. Ownership, currency, source-shape, expiry and stale-response guards remain enforced. Final focused tests passed 21/21, language checks passed 2/2, and six independent verifier checks passed; these are distinct checks, not repeated-suite totals. Actual-shell rendering passed six bounded cases with eight viewport screenshots: desktop/mobile EN/TH success plus missing/wrong-currency book states. All six width observations show no overflow. The local server journal records 302 GET requests, including six reports and six explicit book reads; captured console entries are zero. This is not a complete external-network capture. The fixture is stopped and browser tab closed. [Evidence](evidence/PM1_QR2_S5_2_UI_LOCAL_2026-10-22.json) pins the sources and local artifacts; Exact repaired revision `09ecab3020ce6612183951968a5b86dae477cad2` passed [Safety checks](https://github.com/sanchatmd-dev/trading-bot/actions/runs/39822914924) and [Quant Lab](https://github.com/sanchatmd-dev/trading-bot/actions/runs/39822914467): all nine jobs and 16 actual test/build/lint/parity/trace/smoke steps succeeded. No CI test counts are inferred. Original revision `819adaf` failed five stale i18n token assertions on Windows; Ubuntu was cancelled, while PostgreSQL, container and Quant Lab passed. The test-only repair preserved all assertions and product guards; five failures reproduced before correction and all five affected tests plus the asset-cache test passed afterward (6/6), with independent review. This closes the code CI item; the documentation checkpoint will receive a separate scope-only CI check. Full S5, real authentication and target integration remain open. Spot/Paper, private source local, private acceptance NOT RUN, READY false and N1 held remain unchanged; no deployment or target route activation. Earlier S8 notes awaiting this GO are historical.
 
 Owner team override, 2026-10-23 (Bangkok): the Codex team now uses Astra only until explicit owner restoration. Light maps to low; medium and high retain their names. Use the runtime's available maximum of three children, three lanes and three writers when useful independent work fits usage and file ownership; root remains sole dispatcher and browser/Git coordinator. [AGENTS.md](../AGENTS.md) and role configuration preserve the 3% reserve and all product gates. Existing Sol work is preserved and its agent is stopped; editing configuration does not establish the active root model. No deployment or target route activation.
@@ -1563,67 +1565,44 @@ or email enqueue from a report view. Owner-started follow-ups are new workflows.
 
 ### Target system diagram
 
-Status as of the 2026-10-13 database guard hardening checkpoint (Claude root, Bangkok). Green means the
-named scope has evidence of completion; yellow means partial implementation or
-an open acceptance gate; grey means planned work. Historical runtime evidence is
-not a fresh health check. Spot/Paper-only remains mandatory, research admission
-is closed, and current supported capacity remains the narrow 10K-bar/1m profile.
+Status refreshed 2026-10-23 (Bangkok), against `4591b1d`. Green means accepted completion for the labelled local or historical target scope; yellow means partial work or an open gate; grey means the named implementation or final acceptance step has not run. UNKNOWN stays explicit. See the [current project and prototype maps](PROJECT_STATUS_2026-10-23.md) for scope, evidence and the separate prototype diagram.
 
-Historical uncalibrated delivery estimate (superseded for future measurement by [PM-1](PROGRESS_MEASUREMENT.md); first scored baseline pending): whole project **60% (55–65%)**; functional staging
-prototype **75% (70–80%)**. These are engineering estimates across the capability
-areas below, not test-pass ratios or formal gate completion. The prototype has a
-visible UI and a proved natural Paper pair; ten-input acceptance, PF-2/R7 and the
-complete research-to-result journey remain open. The full project also includes
-portfolio/reporting, artifact durability, broader strategy support and operating
-capacity. J1 (11 cases), J2 (5), J3 (3) and J4 (1) are individually accepted across their recorded package scopes. Source-based carry is accepted; the wider R7 gate remains open.
+Latest accepted PM-1 S2 engineering bounds remain **project 64–73% / prototype 73–80%**, measured on 2026-10-20 Bangkok. Later local engineering has not received successor row scoring. These are the latest measured bounds, not a new percentage for this source revision, an estimate from box counts or proof of release readiness. Earlier uncalibrated 60%/75% estimates are superseded for measurement. Spot/Paper, the narrow supported 10K-bar/1m profile, private acceptance NOT RUN, READY false and N1 held remain unchanged.
 
 ```mermaid
 flowchart TD
-    UI["Staging Web UI / prototype preview<br/>Deployed scoped baseline"] --> BR["AI Pine Bridge / APP-3A<br/>Staging engineering accepted"]
-    BR --> INPUT["Ten numeric inputs / Create Bot<br/>End-to-end acceptance open"]
-    INPUT --> TV["TradingView signal to Paper<br/>Natural same-entry BUY and EXIT proved"]
-    TV --> CORE["Webhook / Risk Manager / reduce-only EXIT<br/>Paper ledger and audit baseline"]
-    UI --> DATA["Market charts and Spot ingestion<br/>Scoped staging baseline / BACKFILL"]
-    DATA --> SIGNAL["Evaluator / varied-input parity<br/>Profile binding and validation gates"]
-    UI --> RISK["PF-3 readiness / PF-4 Risk proposals<br/>Staging panels deployed"]
-    RISK --> PF["PF-2 historical Preflight<br/>Local wiring; activation gated"]
-    DATA --> PF
-    SIGNAL --> PF
+    UI["Web UI + AI Bridge baseline<br/>Historical staging evidence"] --> INPUT["Ten-input binding + evaluator parity<br/>Target acceptance open"]
+    DATA["Spot data + market charts baseline<br/>Historical narrow-profile evidence"] --> PF["PF-2 historical Preflight<br/>Local work; activation gated"]
+    INPUT --> TV["TradingView BUY + targeted EXIT<br/>Accepted historical Paper pair"]
+    TV --> CORE["Paper Risk + allocations + ledger<br/>Current target reconciliation open"]
+    INPUT --> PF
     PF --> CORE
-
-    CORE --> SNAP["Research snapshot / durable jobs / cancel<br/>Existing scoped implementation"]
-    SNAP --> W7["W7 supervised recovery windows<br/>Accepted measured scope"]
-    W7 --> R7["D6 / R7 enrollment and capacity gates<br/>D6 passed; R7 not complete"]
-    R7 --> J1["R7B J1-R9 on RC11<br/>One VPS run / 11 of 11 PASS"]
-    J1 --> J2["R7B J2-R1 on RC11<br/>One VPS run / 5 of 5 PASS"]
-    J2 --> J3["R7B J3-R4 on RC15<br/>Host accepted / 3 of 3 PASS"]
-    J3 --> J4["J4 H-13 on RC15<br/>Host accepted / three terminal paths PASS"]
-    J4 --> RCLOSE["J1–J4 source reconciliation<br/>20 scoped cases / mixed-package carry accepted"]
-    RCLOSE --> EMPREP["EM2 planning, native chain and recovery<br/>Local synthetic scope accepted"]
-    EMPREP --> ECTRL["STAGE and FULL controller<br/>Local lineage and persistence scope accepted"]
-    ECTRL --> EREPORT["Read-only held-lock report<br/>Local retained-evidence scope accepted"]
-    EREPORT --> ERECOVERY["Controller recovery verification<br/>Matrix, unknown outcome, process kill and report v12 accepted"]
-    ERECOVERY --> EPOCH["Fresh measurement epoch<br/>Owner-present execution and final gates open"]
-    EPOCH --> PF
-    R7 --> OPT["Bounded optimization<br/>Runs completed; no qualified candidate"]
-    OPT --> LIB["QR-1 Research Library<br/>Owner-scoped view and compatible comparison"]
-    LIB --> DUR["QR-1b immutable artifact freeze<br/>Committed, not deployed; owner decisions and staging gates open"]
-    LIB --> COMP["QR-3 full fair comparison<br/>Partial baseline only"]
-    OPT --> EXPORT["QL-4B / QL-4C Best Inputs and reports<br/>Qualified export path and SMTP gates open"]
-    EXPORT --> OWNER["Owner reviews and may start new Bot<br/>No automatic apply or optimize loop"]
-    CORE --> PORT["QR-2 actual Paper portfolio performance"]
-    COMP --> BEST["QR-4 best performance selection"]
-    UI --> MULTI["APP-3B broader multi-Pine support"]
-    DATA --> SCALE["MD-1 production market data<br/>Broader scale and operational qualification"]
+    CORE --> JOB["Research jobs + optimizer + R7 / QS<br/>Local slices; full qualification open"]
+    JOB --> LIB["Library + freeze + compatible comparison<br/>Local fixes; target acceptance open"]
+    LIB --> FE["FE-2b fixed-evaluation lifecycle<br/>Local engineering accepted"]
+    FE --> FAIR["QR-3 comparison + QR-4 selection<br/>Local modules; full flow open"]
+    FAIR --> PACK["Best Inputs + export + email<br/>Builder local; trace / validation / SMTP open"]
+    PACK --> OWNER["Qualified package owner handoff<br/>Final target acceptance NOT RUN"]
+    CORE --> QLOCAL["QR-2 S5-1 / S5-2 presentation<br/>Synthetic local acceptance + CI"]
+    QLOCAL --> QR2["QR-2 full portfolio performance<br/>Full S5 + authenticated target open"]
+    INPUT --> MLOCAL["Multi-Pine R6 fixture engineering<br/>Bounded local acceptance"]
+    MLOCAL --> MULTI["APP-3B multi-Pine release<br/>Private acceptance NOT RUN; READY false"]
+    DATA --> SCALE["MD-1 production-scale market data<br/>Implementation planned"]
+    OWNER --> CUSTOMER["Customer security + entitlement + operations<br/>Readiness work; release gates open"]
+    QR2 --> CUSTOMER
+    MULTI --> CUSTOMER
+    SCALE --> CUSTOMER
+    CUSTOMER --> LAUNCH["Public / paid Paper launch acceptance<br/>NOT RUN"]
+    LAUNCH -. separate scope .-> LIVE["Optional Live<br/>Held; excluded from progress score"]
     classDef done fill:#dcfce7,stroke:#15803d,color:#14532d;
     classDef active fill:#fef3c7,stroke:#ca8a04,color:#713f12;
     classDef planned fill:#e5e7eb,stroke:#6b7280,color:#1f2937;
-    class UI,BR,TV,CORE,DATA,RISK,SNAP,W7,J1,J2,J3,J4,RCLOSE,EMPREP,ECTRL,EREPORT,ERECOVERY,LIB done;
-    class INPUT,SIGNAL,PF,R7,EPOCH,OPT,COMP,EXPORT,DUR active;
-    class OWNER,PORT,BEST,MULTI,SCALE planned;
+    class UI,DATA,TV,FE,QLOCAL,MLOCAL done;
+    class INPUT,PF,CORE,JOB,LIB,FAIR,PACK,QR2,MULTI,CUSTOMER active;
+    class OWNER,SCALE,LAUNCH,LIVE planned;
 ```
 
-Evidence anchors: [EM2 held-lock report v12](evidence/R7B_EM2_HELD_REPORT_V12_LOCAL_2026-10-13.json),
+Historical scoped evidence anchors (not current target-health evidence): [EM2 held-lock report v12](evidence/R7B_EM2_HELD_REPORT_V12_LOCAL_2026-10-13.json),
 [EM2 controller process kill](evidence/R7B_EM2_CONTROLLER_PROCESS_KILL_LOCAL_2026-10-13.json),
 [EM2 controller unknown outcome](evidence/R7B_EM2_CONTROLLER_UNKNOWN_OUTCOME_LOCAL_2026-10-13.json),
 [EM2 controller recovery](evidence/R7B_EM2_CONTROLLER_RECOVERY_LOCAL_2026-10-13.json),
@@ -1643,9 +1622,8 @@ Evidence anchors: [EM2 held-lock report v12](evidence/R7B_EM2_HELD_REPORT_V12_LO
 [W7 window 2](evidence/W7_WINDOW2_2026-10-07.json),
 [Paper and UI checkpoint](STAGING_P2_CHECKPOINT_2026-10-03.md), and
 [prototype acceptance plan](STAGING_PROTOTYPE_PLAN_2026-10-01.md).
-The latest EM2 checkpoint is the amendment-draft paragraph near the top of this Roadmap, below the database guard and QR-1b paragraphs; earlier EM2 acceptances follow as Historical entries. The local controller and report checks are complete. Next is
-owner-gated measurement preparation. Actual measurement retains its
-owner-present and per-effect gates; R7 and Preflight remain open.
+
+R7 retains its wider qualification and current readiness gates; historical J1–J4 and EM2 local acceptances do not establish a fresh measurement epoch or activate Preflight. No deployment or target route activation is granted by this diagram.
 
 ### Owner-requested follow-up diagram
 
