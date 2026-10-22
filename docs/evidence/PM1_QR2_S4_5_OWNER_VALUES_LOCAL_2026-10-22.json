@@ -59,7 +59,7 @@
     },
     "cleanup": "Fixture cluster stopped and complete data/WAL directory removed.",
     "fullLocalSuite": "Not rerun; focused regression only.",
-    "ci": "Pending on the commit containing this test."
+    "ci": "Both workflows passed on exact revision e6db0222806693c8b41a37e531c4ca5da7018134; all nine jobs and required test/build steps ran successfully."
   },
   "limits": [
     "The book fixture directly marks a synthetic signal PROCESSING before calling real recordExecution; this is not a complete ExecutionWorker or broker-flow test.",
@@ -69,5 +69,117 @@
   ],
   "rootAcceptance": "Accepted by the sole local Codex root as focused per-account engineering evidence; no target release eligibility.",
   "productionQualified": false,
-  "newHostSteps": 0
+  "newHostSteps": 0,
+  "ciReadback": {
+    "checkedAt": "2026-10-22T09:28:41.579Z",
+    "revision": "e6db0222806693c8b41a37e531c4ca5da7018134",
+    "source": "GitHub Actions REST workflow runs and jobs/steps",
+    "readbackSha256": "018c677b8302df1018a4ba6b2908a552e0ab32296af4bf48d8bb43347161da29",
+    "workflows": [
+      {
+        "name": "Safety checks",
+        "id": 39751289372,
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39751289372",
+        "attempt": 1,
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 119732216737,
+            "name": "scope",
+            "conclusion": "success",
+            "verifiedTestBuildSteps": [],
+            "skippedFailureAnnotationSteps": 0
+          },
+          {
+            "id": 119732290333,
+            "name": "postgres",
+            "conclusion": "success",
+            "verifiedTestBuildSteps": [
+              "Run npm run test:postgres 2>&1 | tee postgres-test.log"
+            ],
+            "skippedFailureAnnotationSteps": 1
+          },
+          {
+            "id": 119732290376,
+            "name": "test (windows-latest)",
+            "conclusion": "success",
+            "verifiedTestBuildSteps": [
+              "Run npm test 2>&1 | tee unit-test.log"
+            ],
+            "skippedFailureAnnotationSteps": 1
+          },
+          {
+            "id": 119732290393,
+            "name": "test (ubuntu-latest)",
+            "conclusion": "success",
+            "verifiedTestBuildSteps": [
+              "Run npm test 2>&1 | tee unit-test.log"
+            ],
+            "skippedFailureAnnotationSteps": 1
+          },
+          {
+            "id": 119732290747,
+            "name": "container",
+            "conclusion": "success",
+            "verifiedTestBuildSteps": [
+              "Run docker build -t astra-paper-staging ."
+            ],
+            "skippedFailureAnnotationSteps": 0
+          }
+        ]
+      },
+      {
+        "name": "Quant Lab",
+        "id": 39751289295,
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39751289295",
+        "attempt": 1,
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 119732215858,
+            "name": "scope",
+            "conclusion": "success",
+            "verifiedTestBuildSteps": [],
+            "skippedFailureAnnotationSteps": 0
+          },
+          {
+            "id": 119732274488,
+            "name": "quant (ubuntu-latest)",
+            "conclusion": "success",
+            "verifiedTestBuildSteps": [
+              "Run uv run --no-sync ruff check .",
+              "Run uv run --no-sync pytest",
+              "Run node --test test/pf2-cost-v2-parity.test.js",
+              "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+              "Run node --test test/trace-reproduction-closure.test.js",
+              "Run uv run --no-sync python -m robot_quant.smoke"
+            ],
+            "skippedFailureAnnotationSteps": 0
+          },
+          {
+            "id": 119732274530,
+            "name": "quant (windows-latest)",
+            "conclusion": "success",
+            "verifiedTestBuildSteps": [
+              "Run uv run --no-sync ruff check .",
+              "Run uv run --no-sync pytest",
+              "Run node --test test/pf2-cost-v2-parity.test.js",
+              "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+              "Run node --test test/trace-reproduction-closure.test.js",
+              "Run uv run --no-sync python -m robot_quant.smoke"
+            ],
+            "skippedFailureAnnotationSteps": 0
+          },
+          {
+            "id": 119733266047,
+            "name": "gate",
+            "conclusion": "success",
+            "verifiedTestBuildSteps": [],
+            "skippedFailureAnnotationSteps": 0
+          }
+        ]
+      }
+    ],
+    "statement": "All nine jobs and their required test/build steps completed successfully; only three failure-annotation steps were skipped. No new test counts are inferred from job success."
+  }
 }
