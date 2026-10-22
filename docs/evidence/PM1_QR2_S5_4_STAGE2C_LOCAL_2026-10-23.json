@@ -322,11 +322,27 @@
     ".qa-local/qr2-s5-4-stage2c/c3-measurement-math-fix-review.md": "d1d2284774b8b6b91e40f170b85ce02b62c8e6d27e29ddc5216942acb10ccda7",
     ".qa-local/qr2-s5-4-stage2c/root-headroom-followup.json": "e6b7d18ffee8202e07c6be36049a68f5de59b40554c5df27c7e2928a6c11c630",
     ".qa-local/qr2-s5-4-stage2c/ci-preparation-checkpoint-review.md": "484d9145b716fb4246a0d1091f00526b83ec59401370018760aace1253c99ebc",
-    ".qa-local/qr2-s5-4-stage2c/ci-preparation-checkpoint-fix-review.md": "ffe54d36522382430d37d8904b215ef76e34324d2fda0ccb34ff910e70be70b5"
+    ".qa-local/qr2-s5-4-stage2c/ci-preparation-checkpoint-fix-review.md": "ffe54d36522382430d37d8904b215ef76e34324d2fda0ccb34ff910e70be70b5",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan.mjs": "e2cbe5f6a7bea87e1c6a06480df2cc98f4651740c72e517cbf63de3d9fff0482",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan-author.md": "4f4f50ef13d3103eb33bcb4e4c3f75117b307f4a88c812783f003b735371a5ca",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan-verify.mjs": "df9fdbe89719eb09baa06ae164386b64255ead27e6f61453f2e4d1c31117d5ad",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan-verify.json": "0a8b5ac3e55629629d2771b983443549b410e2c0878b5a7dee7a4566559fd970",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan-verify.md": "7e025e8d29495928f8f9d0aa2a46341f2b5da5d3e8f3b935f69c0ca620724f7d",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan-verify-fixed.mjs": "f206b3d3c6f5a8066adf56800d977f1b8939c9fea845bd07a89f7b8cf114e2ba",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan-verify-fixed.json": "f93c4a8ba4cf75d952b9b383a38a1dc948d01f11a6b855adcde5a6ba8d3ee629",
+    ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan-fix-review.md": "5b60ba554b64aa0e8e03c5b169f71c6857f197384ff9e68ea39b790702070955",
+    ".qa-local/qr2-s5-4-stage2c/c3-seed.mjs": "725463d2518b8ea9e4177b9dd9df8b9ce946085c238a0c64e320b0190974fca5",
+    ".qa-local/qr2-s5-4-stage2c/c3-seed-author.md": "ee19d1da924bf554092f488840ca6b173ccdc0b4c0ab84f256b57b152f283c3c",
+    ".qa-local/qr2-s5-4-stage2c/c3-seed-verify.mjs": "dd185c96abb484ed10d0469bd71c39f76bc902e2bd8da61bf738fbcb02cbc6e9",
+    ".qa-local/qr2-s5-4-stage2c/c3-seed-verify.json": "7b1bf0d9c8f54396cfa738c847e9a6d4dc8397b972fef4fc36db62264711d2e1",
+    ".qa-local/qr2-s5-4-stage2c/c3-seed-verify.md": "34d8f63060c14412da9b7e240726705060a26aed1aae419e9c03e810723dbdaa",
+    ".qa-local/qr2-s5-4-stage2c/c3-seed-verify-fixed.mjs": "a1dba3da5b71bc778eca4d7822a411e64d8dfb5b1e98d8a84b483388a9dd1f77",
+    ".qa-local/qr2-s5-4-stage2c/c3-seed-verify-fixed.json": "cefce3ad5b4060b4feb21d1e494791e93badc6bd6d228021a309157ae08ee0c2",
+    ".qa-local/qr2-s5-4-stage2c/c3-seed-fix-review.md": "03c471a514e98daa6aca5fee08b1f5efeaefa09ee3932472fb122c730744d843"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-22T22:39:30.546Z",
+  "recordedAt": "2026-10-22T22:57:12.828Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -533,10 +549,10 @@
       "diagnostic": "NOT_RUN",
       "runtimeAdmitted": false,
       "remaining": [
-        "Compatible fixed reporting clock and actual producer chronology/counts/gates",
-        "Coupled fixture and diagnostic harness",
-        "Independent client/HTTP implementation and executed boundary tests",
-        "Finite setup/SQL/process/sample/whole-run budgets",
+        "Actual live-producer chronology/counts/gates and independent fixture verifier",
+        "Diagnostic reader/default-pool wiring",
+        "Independent client/HTTP implementation and executed monitoring-boundary tests",
+        "Finite setup/SQL/helper/process/sample/whole-run budgets and monotonic supervisor",
         "Complete runtime source manifest and lifecycle review",
         "Refreshed headroom and separate runtime admission"
       ],
@@ -562,6 +578,68 @@
         "fix": "Multiply sample count by percent before division; unchanged independent suite copied only to preserve original failure output.",
         "scope": "Selected pure percentile/overlap/invalid-input/nonmutation cases only; not the full monitoring contract, histogram/scheduling/clock mapping or runtime performance.",
         "sourceSha256": "523bf39b30d27c4b2557528ba8079153c4bd2b716fbc91d4d140c0153dccdace"
+      },
+      "diagnosticPlan": {
+        "status": "BOUNDED_PURE_CHECKS_PASS",
+        "module": ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan.mjs",
+        "sourceSha256": "e2cbe5f6a7bea87e1c6a06480df2cc98f4651740c72e517cbf63de3d9fff0482",
+        "initial": {
+          "groups": 14,
+          "passed": 13,
+          "failed": 1,
+          "artifact": ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan-verify.json"
+        },
+        "fixed": {
+          "groups": 14,
+          "passed": 14,
+          "failed": 0,
+          "artifact": ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan-verify-fixed.json"
+        },
+        "review": ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-plan-fix-review.md",
+        "clock": "Explicit input time; aligned T sixty minutes ahead and B 20800 minutes before T; mandatory setup budget ends strictly before T minus one minute.",
+        "fix": "Restrict exported timestamps to the nonnegative Date domain. utcMidnight and resolveRange use arithmetic; this is not a demonstrated failure of those product functions.",
+        "descriptorCounts": {
+          "heavyFundings": 15,
+          "buys": 1000,
+          "targetedHalfSells": 320,
+          "cashChildren": 4,
+          "barTimestamps": 20000
+        },
+        "financialCounts": "ANALYTICAL ONLY: owner 5000; standalone 4990; gap ten.",
+        "limits": "Pure descriptors and iterator only. No PostgreSQL, actual producer chronology/counts, financial gates, full calendar behavior, lifecycle or performance acceptance."
+      },
+      "seed": {
+        "status": "IN_MEMORY_CONTROL_FLOW_CHECKS_PASS_ACTUAL_PRODUCERS_NOT_RUN",
+        "module": ".qa-local/qr2-s5-4-stage2c/c3-seed.mjs",
+        "sourceSha256": "725463d2518b8ea9e4177b9dd9df8b9ce946085c238a0c64e320b0190974fca5",
+        "initial": {
+          "groups": 16,
+          "passed": 15,
+          "failed": 1,
+          "artifact": ".qa-local/qr2-s5-4-stage2c/c3-seed-verify.json"
+        },
+        "fixed": {
+          "groups": 16,
+          "passed": 16,
+          "failed": 0,
+          "artifact": ".qa-local/qr2-s5-4-stage2c/c3-seed-verify-fixed.json"
+        },
+        "review": ".qa-local/qr2-s5-4-stage2c/c3-seed-fix-review.md",
+        "fix": "Check the finite natural-clock wait deadline after sleep, before admitting another producer. Waking exactly at the deadline is allowed only if the prior event time is exceeded; waking later rejects.",
+        "fakeCompletion": {
+          "fundingOperations": 19,
+          "bookCalls": 1320,
+          "barsSubmitted": 20000,
+          "batchSize": 100,
+          "producerObservations": 1339
+        },
+        "scope": "Injected in-memory helpers, database and clock only; source compatibility inspected. No actual producer, PostgreSQL or process execution.",
+        "limitations": [
+          "Actual admission counts, financial gates/oracle and source completeness remain PENDING.",
+          "Helper-internal awaits are not cancelled by this adapter; finite SQL/helper/supervisor budgets remain external requirements.",
+          "Clock checks do not replace a monotonic elapsed-time supervisor.",
+          "No cluster lifecycle, default-pool diagnostic, HTTP or performance acceptance."
+        ]
       }
     }
   },
