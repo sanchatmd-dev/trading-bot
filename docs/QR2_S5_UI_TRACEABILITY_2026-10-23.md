@@ -7,7 +7,7 @@ Status: **FULL S5 OPEN**. This inventory separates existing local evidence, new 
 - [S5a book-equity evidence](evidence/PM1_QR2_S5A_RENDERED_LOCAL_2026-10-22.json): local currency grouping and book labels.
 - [S5-1 evidence](evidence/PM1_QR2_S5_1_UI_LOCAL_2026-10-22.json): response display, owner eligibility, session guards, notices and synthetic component/application-shell rendering.
 - [S5-2 evidence](evidence/PM1_QR2_S5_2_UI_LOCAL_2026-10-22.json): separately fetched current book equity beside historical marked equity, identity checks and explicit time limitations.
-- [S5-3 packet](QR2_S5_3_LOCAL_VERIFICATION_PACKET_2026-10-23.md): nonempty symbol states and the late-recorded-price notice. [S5-3 evidence](evidence/PM1_QR2_S5_3_UI_LOCAL_2026-10-23.json) records bounded local acceptance and pending exact-revision CI.
+- [S5-3 packet](QR2_S5_3_LOCAL_VERIFICATION_PACKET_2026-10-23.md): nonempty symbol states and the late-recorded-price notice. [S5-3 evidence](evidence/PM1_QR2_S5_3_UI_LOCAL_2026-10-23.json) records bounded local acceptance and successful exact-revision code CI.
 
 The following U1–U9 identifiers index the clauses of [contract section 9](QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md#9-ui-rules-u1-u9) in order. They do not add requirements. Historical test counts overlap and must not be summed.
 

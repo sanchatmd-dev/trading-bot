@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "date": "2026-10-23",
   "scope": "QR-2 S5-3 synthetic local symbol valuation display and late-recorded-price notice",
-  "status": "BOUNDED_LOCAL_ACCEPTED_CI_PENDING",
+  "status": "BOUNDED_LOCAL_ACCEPTED_CODE_CI_PASS",
   "baseRevision": "c159187e7d339bfe7e83007093fbda1f6f3da0ef",
   "packet": "docs/QR2_S5_3_LOCAL_VERIFICATION_PACKET_2026-10-23.md",
   "traceability": "docs/QR2_S5_UI_TRACEABILITY_2026-10-23.md",
@@ -105,7 +105,179 @@
       "recapture": "Raw observation/network files contain three 16-case cohorts. The last cohort is explicitly saved in final-* JSON and paired with viewport-* screenshots. Earlier scaled/clipped screenshot attempts and the pre-R15 exploratory run are not acceptance evidence."
     },
     "ci": {
-      "status": "PENDING_EXACT_REVISION"
+      "status": "PASS",
+      "revision": "0ffc20011bbde1ec397f51bf344fe929557b054a",
+      "observedAt": "2026-10-22T19:59:23.786Z",
+      "runs": [
+        {
+          "name": "Quant Lab",
+          "id": 39841875739,
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39841875739",
+          "revision": "0ffc20011bbde1ec397f51bf344fe929557b054a",
+          "status": "completed",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "scope",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "quant (windows-latest)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "quant (ubuntu-latest)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "gate",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "name": "Safety checks",
+          "id": 39841875708,
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39841875708",
+          "revision": "0ffc20011bbde1ec397f51bf344fe929557b054a",
+          "status": "completed",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "scope",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "container",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "postgres",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "test (ubuntu-latest)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "test (windows-latest)",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ],
+      "actualTestBuildSteps": [
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run uv run --no-sync ruff check .",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run uv run --no-sync pytest",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run node --test test/trace-reproduction-closure.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run uv run --no-sync python -m robot_quant.smoke",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run uv run --no-sync ruff check .",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run uv run --no-sync pytest",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run node --test test/trace-reproduction-closure.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run uv run --no-sync python -m robot_quant.smoke",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "container",
+          "name": "Run docker build -t astra-paper-staging .",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "postgres",
+          "name": "Run npm run test:postgres 2>&1 | tee postgres-test.log",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "test (ubuntu-latest)",
+          "name": "Run npm test 2>&1 | tee unit-test.log",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "test (windows-latest)",
+          "name": "Run npm test 2>&1 | tee unit-test.log",
+          "conclusion": "success"
+        }
+      ],
+      "jobCount": 9,
+      "actualTestBuildStepCount": 16,
+      "testCounts": "Not inferred from job or step success",
+      "artifact": ".qa-local/qr2-s5-3/ci-observed-0ffc20011bbde1ec397f51bf344fe929557b054a.json",
+      "independentReview": "PASS: exact revision, nine jobs and sixteen substantive executed steps verified against saved observation and workflow definitions"
     }
   },
   "acceptance": {
@@ -289,7 +461,16 @@
     {
       "path": ".qa-local/qr2-s5-3/evidence-review.md",
       "sha256": "7e4e9285cdcb89c153c1d74aaadb5e0bb1acaf52482c9511ff1ac92e8b76c8d6"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/ci-observed-0ffc20011bbde1ec397f51bf344fe929557b054a.json",
+      "sha256": "248ece8e071af9f06ae38efef1cd58a55345c2af74e77e7f56b0e96fceae4300"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/ci-closure-review.md",
+      "sha256": "f203977614d731accbae843dbfbf97c6f36117603af3a401ff6aa2548b2b4e19"
     }
   ],
-  "hashConvention": "SHA-256 raw file bytes; Git may normalize line endings. Source pins identify the locally verified working files."
+  "hashConvention": "SHA-256 raw file bytes; Git may normalize line endings. Source pins identify the locally verified working files.",
+  "codeRevision": "0ffc20011bbde1ec397f51bf344fe929557b054a"
 }

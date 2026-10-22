@@ -1,6 +1,6 @@
 # QR-2 S5-3: symbol valuation verification and UI traceability
 
-Status: **BOUNDED LOCAL ACCEPTANCE RECORDED; EXACT-REVISION CI PENDING**. On 2026-10-23 (Bangkok), the owner authorized continuous Roadmap work and bounded local GOs while away. Root admits this slice after the S5 residual audit at `c159187`. The existing target and optional-feature gates remain unchanged.
+Status: **BOUNDED LOCAL ACCEPTANCE RECORDED; EXACT-REVISION CODE CI PASSED**. On 2026-10-23 (Bangkok), the owner authorized continuous Roadmap work and bounded local GOs while away. Root admits this slice after the S5 residual audit at `c159187`. The existing target and optional-feature gates remain unchanged.
 
 ## Purpose and source prerequisite
 
@@ -39,4 +39,4 @@ Spot/Paper only; private source remains local; private acceptance NOT RUN; READY
 
 ## Local verification outcome
 
-Root accepts this bounded slice after the historical-reservation fixture correction, independent review and the final 16-case synthetic rendering cohort. [Evidence](evidence/PM1_QR2_S5_3_UI_LOCAL_2026-10-23.json) records actual checks and capture identities. CI remains pending for the forthcoming implementation revision. Full S5 remains open; no gap-interval or target acceptance is inferred.
+Root accepts this bounded slice after the historical-reservation fixture correction, independent review and the final 16-case synthetic rendering cohort. [Evidence](evidence/PM1_QR2_S5_3_UI_LOCAL_2026-10-23.json) records actual checks and capture identities. Exact implementation revision `0ffc20011bbde1ec397f51bf344fe929557b054a` passed [Safety checks](https://github.com/sanchatmd-dev/trading-bot/actions/runs/39841875708) and [Quant Lab](https://github.com/sanchatmd-dev/trading-bot/actions/runs/39841875739): all nine jobs and 16 actual test/build/lint/parity/trace/smoke steps succeeded. No CI test counts are inferred. The documentation checkpoint has a separate scope-only CI check. Full S5 remains open; no gap-interval or target acceptance is inferred.
