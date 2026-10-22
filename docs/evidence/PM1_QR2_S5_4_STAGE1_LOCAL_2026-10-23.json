@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "date": "2026-10-23",
   "scope": "QR-2 S5-4 pure Stage 1 only",
-  "status": "BOUNDED_PURE_STAGE_1_ACCEPTED_CI_PENDING",
+  "status": "BOUNDED_PURE_STAGE_1_ACCEPTED_CODE_CI_PASS",
   "baseRevision": "9d9e30e45bfdb01c94c52574cfd1bc10a1a4a75e",
   "packet": "docs/QR2_S5_4_GAP_INTERVAL_PACKET_2026-10-23.md",
   "outcome": "Pure complete-candle coverage builder and closed validator, with mechanical extraction and compatibility re-export of BARS assembleGaps. Not wired into readers, responses, routes or UI.",
@@ -61,9 +61,128 @@
     "architectureReview": "PASS WITH LIMITS; no actionable finding; mechanical extraction matches baseline after newline normalization",
     "rootReview": "PASS: source, focused raw log, independent oracle results, audit and scope reviewed; accepts only the pure Stage 1 foundation",
     "ci": {
-      "status": "PENDING",
-      "revision": null,
-      "testCounts": "Not inferred from CI job or step success"
+      "status": "PASS",
+      "revision": "37a010b5897cea95d20d11a1f006dce84b9e6576",
+      "observedAt": "2026-10-22T20:29:00.873Z",
+      "runs": [
+        {
+          "id": 39845736868,
+          "name": "Quant Lab",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39845736868",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 39845736925,
+          "name": "Safety checks",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39845736925",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "jobCount": 9,
+      "actualTestBuildStepCount": 16,
+      "actualTestBuildSteps": [
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run uv run --no-sync ruff check .",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run uv run --no-sync pytest",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run node --test test/trace-reproduction-closure.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (ubuntu-latest)",
+          "name": "Run uv run --no-sync python -m robot_quant.smoke",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run uv run --no-sync ruff check .",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run uv run --no-sync pytest",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run node --test test/trace-reproduction-closure.test.js",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Quant Lab",
+          "job": "quant (windows-latest)",
+          "name": "Run uv run --no-sync python -m robot_quant.smoke",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "postgres",
+          "name": "Run npm run test:postgres 2>&1 | tee postgres-test.log",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "container",
+          "name": "Run docker build -t astra-paper-staging .",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "test (ubuntu-latest)",
+          "name": "Run npm test 2>&1 | tee unit-test.log",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Safety checks",
+          "job": "test (windows-latest)",
+          "name": "Run npm test 2>&1 | tee unit-test.log",
+          "conclusion": "success"
+        }
+      ],
+      "testCounts": "Not inferred from job or step success",
+      "observation": ".qa-local/qr2-s5-3/ci-observed-37a010b5897cea95d20d11a1f006dce84b9e6576.json",
+      "verification": ".qa-local/qr2-s5-4-stage1/ci-verified.json"
     },
     "database": "NOT RUN",
     "sourceCompleteness": "NOT PROVEN",
@@ -172,6 +291,14 @@
     {
       "path": ".qa-local/qr2-s5-4-stage1/root-final-tests.log",
       "sha256": "b57368404036bcf7af1ad4e65716fbef6d9550a10ac2955d32ff92656c71e294"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/ci-observed-37a010b5897cea95d20d11a1f006dce84b9e6576.json",
+      "sha256": "9cf5b2121861b98eb93cb39ad09f5d76f010b3d9c7f2c17e3aa34aadaad97936"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/ci-verified.json",
+      "sha256": "44f2f36d95712427b7b1b4d9245ce69f90334cfa42541f21a2a6c2e3639b021a"
     }
   ],
   "hashConvention": "SHA-256 raw local file bytes before Git line-ending normalization",
@@ -180,5 +307,6 @@
       "path": "src/market-gap-intervals.js",
       "sha256": "6db5aa235646e4363fa5481aead24602523c58c20de0a3b0fa1e095d3e953967"
     }
-  ]
+  ],
+  "codeRevision": "37a010b5897cea95d20d11a1f006dce84b9e6576"
 }
