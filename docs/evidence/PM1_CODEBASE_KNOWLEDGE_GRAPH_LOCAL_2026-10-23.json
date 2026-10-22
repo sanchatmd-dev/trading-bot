@@ -1,0 +1,318 @@
+{
+  "record": "PM1_CODEBASE_KNOWLEDGE_GRAPH_LOCAL_2026-10-23",
+  "recordedAt": "2026-10-22T19:03:10.192Z",
+  "status": "LOCAL_GRAPH_VALIDATED",
+  "scope": "Local repository understanding and navigation only; not product or target acceptance.",
+  "snapshotRevision": "63d465f861ba3689558ce8ae84c44386b08207e3",
+  "language": "en",
+  "tool": {
+    "name": "Understand Anything",
+    "version": "2.9.7"
+  },
+  "artifacts": {
+    "graph": {
+      "path": ".ua/knowledge-graph.json",
+      "storage": "Ignored local file only",
+      "sha256": "2569d37fbecf9e4882e6efee7db658377a4c4e0164af59c301eb44119951e97e"
+    },
+    "fingerprints": {
+      "path": ".ua/fingerprints.json",
+      "files": 1312,
+      "sha256": "6f4d80065fd1dbe7b79bdbe6ffb373412fb6fd29e579727211c612b7971c5f14"
+    },
+    "metadataWrittenAfterFingerprintSuccess": true,
+    "autoUpdateHookInstalled": false,
+    "accessTokenPublishedInRepository": false
+  },
+  "inventory": {
+    "analyzedFiles": 1312,
+    "scannedEligibleFiles": 1312,
+    "categories": {
+      "docs": 147,
+      "config": 368,
+      "infra": 6,
+      "code": 741,
+      "markup": 10,
+      "script": 2,
+      "data": 38
+    },
+    "semanticBatches": 69,
+    "resolvedImportEdges": 2784
+  },
+  "graph": {
+    "totalNodes": 4066,
+    "totalEdges": 7847,
+    "totalLayers": 10,
+    "tourSteps": 11,
+    "nodeTypes": {
+      "file": 764,
+      "function": 2502,
+      "class": 136,
+      "config": 361,
+      "service": 3,
+      "pipeline": 3,
+      "document": 144,
+      "table": 153
+    },
+    "edgeTypes": {
+      "contains": 2754,
+      "exports": 1934,
+      "imports": 2784,
+      "calls": 70,
+      "tested_by": 38,
+      "configures": 9,
+      "deploys": 2,
+      "depends_on": 47,
+      "triggers": 6,
+      "documents": 131,
+      "related": 72
+    },
+    "fileLevelNodes": 1428,
+    "layers": [
+      {
+        "id": "layer:presentation",
+        "name": "Web Interface",
+        "nodes": 31
+      },
+      {
+        "id": "layer:api-security",
+        "name": "API and Security",
+        "nodes": 20
+      },
+      {
+        "id": "layer:domain",
+        "name": "Domain and Signal Contracts",
+        "nodes": 58
+      },
+      {
+        "id": "layer:execution",
+        "name": "Paper Execution and Risk",
+        "nodes": 44
+      },
+      {
+        "id": "layer:research",
+        "name": "Quant Research and Evaluation",
+        "nodes": 103
+      },
+      {
+        "id": "layer:persistence",
+        "name": "Persistence and Schema",
+        "nodes": 188
+      },
+      {
+        "id": "layer:verification",
+        "name": "Tests and Fixtures",
+        "nodes": 386
+      },
+      {
+        "id": "layer:tooling",
+        "name": "Operations and Developer Tools",
+        "nodes": 83
+      },
+      {
+        "id": "layer:infrastructure",
+        "name": "Infrastructure and Configuration",
+        "nodes": 26
+      },
+      {
+        "id": "layer:documentation",
+        "name": "Documentation and Evidence",
+        "nodes": 489
+      }
+    ],
+    "tourTitles": [
+      {
+        "order": 1,
+        "title": "Project Purpose and Boundaries"
+      },
+      {
+        "order": 2,
+        "title": "Runtime Composition and Configuration"
+      },
+      {
+        "order": 3,
+        "title": "Authentication and Request Security"
+      },
+      {
+        "order": 4,
+        "title": "Exact Monetary Domain Values"
+      },
+      {
+        "order": 5,
+        "title": "Persistent State and Transactions"
+      },
+      {
+        "order": 6,
+        "title": "Pine Sources and Webhooks"
+      },
+      {
+        "order": 7,
+        "title": "Paper Risk and Accounting"
+      },
+      {
+        "order": 8,
+        "title": "Workers and Execution Lifecycle"
+      },
+      {
+        "order": 9,
+        "title": "Bounded Research Contracts"
+      },
+      {
+        "order": 10,
+        "title": "Owner Interface and Controls"
+      },
+      {
+        "order": 11,
+        "title": "Packaging and Verification Limits"
+      }
+    ]
+  },
+  "checks": {
+    "batchSchemaOwnershipCoverageAndImports": "PASS for all 69 batches",
+    "independentAssemblyReview": "PASS; four dropped edges restored to existing nodes and all 49 SQL name corrections checked",
+    "architectureScriptAndExactLayerCoverage": "PASS; 1428 file-level nodes across 1312 unique paths, each assigned once",
+    "tourTopologyAndReferences": "PASS; 11 sequential steps, 34 references to 32 unique nodes",
+    "inlineValidation": {
+      "status": "PASS",
+      "issues": 0,
+      "orphanWarnings": 372
+    },
+    "coreAndStrictSchema": "PASS",
+    "fingerprintBaseline": "PASS for all 1312 analyzed files",
+    "dashboard": {
+      "status": "PASS",
+      "observations": {
+        "overviewLayers": 10,
+        "tourListedSteps": 11,
+        "tourStepOneEnglish": true,
+        "projectName": "astra-vps-trade-bot",
+        "gatesVisible": [
+          "private acceptance NOT RUN",
+          "READY false",
+          "N1 held"
+        ]
+      },
+      "http": {
+        "missingTokenStatus": 403,
+        "validTokenStatus": 200,
+        "readbackNodes": 4066,
+        "readbackEdges": 7847
+      },
+      "binding": "127.0.0.1 only",
+      "scope": "Bounded local dashboard check, not a desktop/mobile application acceptance matrix"
+    }
+  },
+  "excluded": [
+    ".qa-local/",
+    ".ua/",
+    ".understand-anything/",
+    ".env",
+    ".env.*",
+    "data/",
+    "backups/",
+    ".deploy/",
+    ".skill-install-*/",
+    ".ql-tools/",
+    ".uv-cache/",
+    "private/",
+    ".private/",
+    ".secrets/",
+    "*.pem",
+    "*.key",
+    "*.log",
+    "*.pyc",
+    "Built-in dependency/build/VCS exclusions"
+  ],
+  "limitations": [
+    "Static repository map at the exact snapshot, not an exhaustive runtime call graph or current target readiness claim.",
+    "372 nodes have no known edges. No relationships were invented to remove these warnings.",
+    "Six large communities were split and six neighbor hints were truncated; all scanned files and all 2784 resolved imports were retained.",
+    "Twenty-five extractor-skipped text files were read directly and represented. Pine and the notebook have file-level coverage; the notebook was not executed.",
+    "Some object methods, generators and nested frontend functions are not enumerated by the extractor. Dynamic and package-level import resolution is not exhaustive.",
+    "SQL extraction truncated 49 schema-qualified names; graph names were corrected from exact declaration lines and independently checked.",
+    "Semantic assembly review sampled the recovered relationships and checked SQL corrections; it did not certify every summary or edge.",
+    "tested_by edges describe relationships and do not prove tests ran.",
+    "Layer card file counts are file-level graph node counts; SQL subnodes and container stages can share a path.",
+    "The prebuilt viewer launch was rejected by automatic approval review with blocked by policy. The already-installed local Vite dashboard fallback was used successfully.",
+    "The graph remains pinned to this snapshot; a later documentation checkpoint is not silently included."
+  ],
+  "notRun": [
+    "Product test suites for this analysis",
+    "Private acceptance",
+    "Target runtime or deployment checks",
+    "Full desktop/mobile application acceptance matrix"
+  ],
+  "gates": {
+    "market": "Spot/Paper only",
+    "privateSource": "Local only",
+    "privateAcceptance": "NOT RUN",
+    "READY": false,
+    "N1": "held",
+    "deployment": "NOT RUN",
+    "targetRouteActivation": "NOT RUN",
+    "migrations": "NOT RUN",
+    "hostVpsWork": "NOT RUN",
+    "Live": "held",
+    "guardReset": "NOT RUN",
+    "bestInputsApply": "NOT RUN"
+  },
+  "progress": {
+    "successorScorecard": "NOT RUN",
+    "latestAcceptedMeasurement": "PM-1 S2, 2026-10-20 Bangkok",
+    "projectDisplayedBounds": "64–73%",
+    "prototypeDisplayedBounds": "73–80%",
+    "interpretation": "Existing measured engineering bounds, not a fresh score or readiness percentage."
+  },
+  "snapshotDocumentationCI": {
+    "revision": "63d465f861ba3689558ce8ae84c44386b08207e3",
+    "readAt": "2026-10-22T19:04:22.342Z",
+    "status": "PASS",
+    "scope": "Documentation scope-only; no new runtime-test evidence or inferred test counts",
+    "runs": [
+      {
+        "id": 39827327751,
+        "name": "Safety checks",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39827327751",
+        "status": "completed",
+        "conclusion": "success",
+        "executedScopeSteps": [
+          {
+            "job": "scope",
+            "name": "Run node scripts/ci-scope.mjs",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ],
+        "skippedJobs": [
+          "test",
+          "postgres",
+          "container"
+        ]
+      },
+      {
+        "id": 39827327809,
+        "name": "Quant Lab",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39827327809",
+        "status": "completed",
+        "conclusion": "success",
+        "executedScopeSteps": [
+          {
+            "job": "scope",
+            "name": "Run node scripts/ci-scope.mjs",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "job": "gate",
+            "name": "Run test \"$SCOPE\" = success && { test \"$QUANT\" = success || test \"$QUANT\" = skipped; }",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ],
+        "skippedJobs": [
+          "quant"
+        ]
+      }
+    ]
+  }
+}
