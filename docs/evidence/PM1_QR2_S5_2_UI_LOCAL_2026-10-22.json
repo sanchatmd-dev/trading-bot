@@ -3,7 +3,7 @@
   "date": "2026-10-22",
   "scope": "QR-2 S5-2 bounded local book/marked equity view",
   "baseRevision": "b7a5c2fc80c586eb9ecea85491ce7aaf27fae37a",
-  "status": "LOCAL_ACCEPTED_CI_PENDING",
+  "status": "LOCAL_ACCEPTED_REPAIR_VERIFIED_CI_PENDING",
   "accepted": true,
   "ownerGo": {
     "received": true,
@@ -217,9 +217,42 @@
       "rootFollowUp": "Root rechecked recorded fixture PID absent after resume; prior root browser record confirms tab closed and viewport reset."
     },
     "ci": {
-      "status": "PENDING",
+      "status": "REPAIR_PENDING_EXACT_REVISION_CI",
       "revision": null,
-      "note": "No prior S5-1 CI attributed to S5-2 candidate; exact committed revision and CI results remain root follow-up."
+      "repairedFrom": "819adaf8f549ff9eaba152c7d9d7ffa8e18f513e",
+      "note": "Test-only repair verified locally; follow the resulting exact commit through both workflows."
+    },
+    "ciRepair": {
+      "status": "PASS_LOCAL",
+      "scope": "Five stale exact i18n cache-token literals updated to qr2s52; assertions and product unchanged",
+      "paths": [
+        "test/bridge-wizard-ui.test.js",
+        "test/journey-ui.test.js",
+        "test/market-chart-ui.test.js",
+        "test/pf3-readiness-ui.test.js",
+        "test/quant-library-ui.test.js"
+      ],
+      "command": "node --test --test-reporter tap --test-name-pattern 'index.html|static: panel on Overview' test/bridge-wizard-ui.test.js test/journey-ui.test.js test/market-chart-ui.test.js test/pf3-readiness-ui.test.js test/quant-library-ui.test.js test/asset-cache-tokens.test.js",
+      "before": {
+        "tests": 5,
+        "passed": 0,
+        "failed": 5,
+        "skipped": 0,
+        "exitCode": 1,
+        "durationMs": 4346.3378
+      },
+      "after": {
+        "tests": 6,
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "exitCode": 0,
+        "durationMs": 5371.0847
+      },
+      "countsNote": "Five affected static tests plus one asset-cache test; preliminary four-test diagnostic excluded",
+      "review": ".qa-local/qr2-s5-2/ci-token-review.md",
+      "acceptedBy": "Root after independent review",
+      "productChanged": false
     }
   },
   "gates": {
@@ -272,7 +305,7 @@
   "acceptance": {
     "status": "BOUNDED_LOCAL_ACCEPTED_BY_ROOT",
     "date": "2026-10-23",
-    "scope": "S5-2 synthetic local presentation only; exact-revision CI still pending",
+    "scope": "S5-2 synthetic local presentation only; exact-revision CI has a Windows failure with repair pending",
     "fullS5": "OPEN",
     "targetIntegration": "NOT RUN"
   },
@@ -429,13 +462,134 @@
       "path": ".qa-local/qr2-s5-2/final-evidence-review.md",
       "sha256": "12775f4a3b5f182f96d769bb39b503431aa6a4d5645127fe7c28febe307f5775",
       "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/ci-failure-39821106332-119972380668.log",
+      "sha256": "de4d7073943f50a8bcf7d4e321195a76e7eacd51e8414310fc9ae16fa233cad1",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/ci-token-before-five.log",
+      "sha256": "2b65c8e5f4d678be49656826d6b94c2777753d7660862ad5d214dd9c95b9cbbb",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/ci-token-after.log",
+      "sha256": "2b4b417f5c868f19a90b955018ee46a3a49299db6c99894c3222edf3e3339d6b",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/ci-token-fix.md",
+      "sha256": "c31753c8365e92580d4a8d31ec712708da15ee979f81e2829a7df47a05b832c4",
+      "hashConvention": "Raw file bytes"
+    },
+    {
+      "path": ".qa-local/qr2-s5-2/ci-token-review.md",
+      "sha256": "785abdd99d4b8abc609b1fda16975550f47ffde34182594065a091cd294e24f1",
+      "hashConvention": "Raw file bytes"
     }
   ],
   "limitations": [
-    "Bounded local presentation accepted by root; exact-revision CI pending",
+    "Bounded local presentation accepted by root; original Windows CI failure repaired in test pins, replacement exact-revision CI pending",
     "No full S5, target, private acceptance, real authentication, backend/DB or native host proof",
     "No same-snapshot, historical-book, continuously-live, monetary difference/profit or reconciliation claim",
     "No new tests, browser, network, host or Git mutations in evidence-finalization pass"
   ],
-  "teamPolicyCommit": "d476b54e0124857938dd7fce247be9f934beb66d"
+  "teamPolicyCommit": "d476b54e0124857938dd7fce247be9f934beb66d",
+  "ciHistory": [
+    {
+      "status": "WINDOWS_FAILURE_REPAIR_PENDING",
+      "revision": "819adaf8f549ff9eaba152c7d9d7ffa8e18f513e",
+      "observedAtUtc": "2026-10-22T17:25:37.134Z",
+      "readback": ".qa-local/qr2-s5-followup/ci-readback.json",
+      "note": "Original exact revision: Windows failed five stale token assertions; Ubuntu was cancelled by the matrix fail-fast behavior. PostgreSQL and the overall Safety run were still in progress at this observation. Quant Lab passed. Later terminal status will be recorded separately.",
+      "runs": [
+        {
+          "id": 39821106332,
+          "name": "Safety checks",
+          "revision": "819adaf8f549ff9eaba152c7d9d7ffa8e18f513e",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39821106332",
+          "status": "in_progress",
+          "conclusion": null,
+          "jobs": [
+            {
+              "name": "scope",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "container",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "test (windows-latest)",
+              "status": "completed",
+              "conclusion": "failure"
+            },
+            {
+              "name": "test (ubuntu-latest)",
+              "status": "completed",
+              "conclusion": "cancelled"
+            },
+            {
+              "name": "postgres",
+              "status": "in_progress",
+              "conclusion": null
+            }
+          ]
+        },
+        {
+          "id": 39821106406,
+          "name": "Quant Lab",
+          "revision": "819adaf8f549ff9eaba152c7d9d7ffa8e18f513e",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39821106406",
+          "status": "completed",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "scope",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "quant (ubuntu-latest)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "quant (windows-latest)",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "gate",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ],
+      "failure": {
+        "runId": 39821106332,
+        "jobId": 119972380668,
+        "jobName": "test (windows-latest)",
+        "status": "completed",
+        "conclusion": "failure",
+        "cause": "Five stale i18n cache-token assertions expect qr2s51fix1; the valid current index token is qr2s52.",
+        "affectedTests": [
+          "test/bridge-wizard-ui.test.js",
+          "test/journey-ui.test.js",
+          "test/market-chart-ui.test.js",
+          "test/pf3-readiness-ui.test.js",
+          "test/quant-library-ui.test.js"
+        ],
+        "rawLog": {
+          "path": ".qa-local/qr2-s5-2/ci-failure-39821106332-119972380668.log",
+          "sha256": "de4d7073943f50a8bcf7d4e321195a76e7eacd51e8414310fc9ae16fa233cad1",
+          "hashConvention": "Raw file bytes"
+        }
+      }
+    }
+  ]
 }
