@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-22",
+  "scope": "QR-2 S8 documentation-only next-scope preparation",
+  "baseRevision": "122b93d0a25796e3bad423f1df74943765473ada",
+  "status": "PROPOSAL_ONLY_AWAITING_OWNER_GO",
+  "implementationChanged": false,
+  "acceptedImplementation": false,
+  "findings": {
+    "existingGo": "No confirmed remaining implementation requirement identified within the completed FE-2b/S4/S5-1 scope by this bounded review; not a proof of absence of defects.",
+    "residual": "Contract section 9 separate book-equity and marked-equity columns are not established by the accepted S5-1 notice and marked metrics.",
+    "candidateSource": "Static PostgreSQL /api/me and /api/overview paperAccounts inspection: per-Bot/broker/currency bookEquity decimal strings. No API call or input data read.",
+    "timeLimitation": "Inspected account shapes do not supply book valuation timestamps. Source identity, authorization and current-versus-historical semantics require independent qualification before any product edit.",
+    "nextPacket": "docs/QR2_S5_2_LOCAL_UI_GO_PACKET_2026-10-22.md",
+    "nextImplementationAuthorized": false
+  },
+  "priorCi": [
+    {
+      "revision": "735bf9f7c11955396550ec60cbad479f9c050197",
+      "safety": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39807968713",
+      "quant": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39807968738",
+      "outcome": "SUCCESS; nine jobs and sixteen actual test/build/lint/parity/trace/smoke steps verified in S5-1 evidence; no CI test counts inferred"
+    },
+    {
+      "revision": "122b93d0a25796e3bad423f1df74943765473ada",
+      "safety": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39811985285",
+      "quant": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39811985309",
+      "outcome": "SUCCESS; scope commands/Quant gate ran; runtime jobs skipped by documentation scope"
+    }
+  ],
+  "validation": {
+    "sourceInspection": "READ_ONLY",
+    "authorityReview": ".qa-local/qr2-next-scope/authority-review.md",
+    "proposalReview": {
+      "status": "PASS",
+      "path": ".qa-local/qr2-next-scope/proposal-review.md",
+      "sha256": "b58a75f28bf1a69be49b3861c81a7de2db4288693224519349dbbade8c50f476",
+      "limit": "Static source/doc consistency only; not authorization or the mandatory implementation source/time qualification"
+    },
+    "documentChecks": {
+      "status": "PASS",
+      "sourcePins": 9,
+      "localLinks": 11,
+      "changedPaths": 6,
+      "ciScope": {
+        "node": false,
+        "quant": false
+      },
+      "diffHygiene": "PASS"
+    },
+    "runtimeTests": "NOT RUN — documentation-only preparation",
+    "browser": "NOT RUN — accepted S5-1 matrix not repeated",
+    "privateAcceptance": "NOT RUN"
+  },
+  "sources": [
+    {
+      "path": "docs/QR2_S5_1_LOCAL_UI_GO_PACKET_2026-10-22.md",
+      "sha256": "eed3b1fa1a15836a36c4d95096977b86961e980937b39c5e76b76a276c14c924"
+    },
+    {
+      "path": "docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md",
+      "sha256": "d05f1f6d89b373d957c691b105f67458a030e2d01ae1d7b77ce26502117a1f21"
+    },
+    {
+      "path": "docs/CODEX_CLOUD_TO_LOCAL_ROOT_HANDOFF_2026-10-22.md",
+      "sha256": "10373941d727af5ce7437e8abb7b6aeb53d118c9d03ccd20d14b4684f92f4dd9"
+    },
+    {
+      "path": "public/paper-performance.js",
+      "sha256": "a863878e54d3b58be9ec0441904b838e56786e12b7dae90b28726e47113eae35"
+    },
+    {
+      "path": "src/postgres/server.js",
+      "sha256": "79bbef073b590082994ba61c4c8186a32d948def74cd808a9c909e942e9728ab"
+    },
+    {
+      "path": "src/postgres/overview.js",
+      "sha256": "7a6f4a8282e148e471d443a01d69c7e0738a4eaa06a7ca1b9076c6b7d73cd4b9"
+    },
+    {
+      "path": "src/postgres/ledger.js",
+      "sha256": "c79510c207b53021713974a505bd221889cc005566449bf9055bbdee6d30d7f4"
+    },
+    {
+      "path": "src/money.js",
+      "sha256": "3e3b7a80fd25cb5be30fbb262c1466b26b6c6b53ecfaf34a30233f0b2e82bdcf"
+    },
+    {
+      "path": "docs/evidence/PM1_QR2_S5_1_UI_LOCAL_2026-10-22.json",
+      "sha256": "1a96a3e095aa25b23f2a119d6b10da2dd9dbbdd582886452c70e7f99fd0ef2ef"
+    }
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT RUN",
+    "ready": false,
+    "n1": "HELD",
+    "deployment": "NOT AUTHORIZED",
+    "targetRouteActivation": "NOT AUTHORIZED",
+    "migrations": "NOT AUTHORIZED",
+    "hostVps": "NOT AUTHORIZED",
+    "live": "NOT AUTHORIZED",
+    "guardReset": "NOT AUTHORIZED",
+    "bestInputsApply": "NOT AUTHORIZED"
+  }
+}
