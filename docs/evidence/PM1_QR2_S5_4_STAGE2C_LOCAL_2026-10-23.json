@@ -379,11 +379,22 @@
     ".qa-local/qr2-s5-4-stage2c/p10-pure-contract-smoke-fixed.json": "63e6e9057611d7e1164faa5f227e00a69d92bd948216e601636dcc4a3eb7fac7",
     ".qa-local/qr2-s5-4-stage2c/p10-pure-contract-review.md": "fa93f8a13f0a081b70b3b978418de5d3512a864e53ea127e5a3ae0571674cde1",
     ".qa-local/qr2-s5-4-stage2c/p9-documentation-ci-verified.json": "04bde75393517564bf49065eee80b693a2fab0fb53eeccad42c65054e95a9e18",
-    ".qa-local/qr2-s5-3/ci-observed-74223e8faa7ea78f48cda0f4f0b7c0cd1da5f93b.json": "484ac814bfdac5ab848b919eaa34755bac96a65cb82b9cd927a6116a5cb916f9"
+    ".qa-local/qr2-s5-3/ci-observed-74223e8faa7ea78f48cda0f4f0b7c0cd1da5f93b.json": "484ac814bfdac5ab848b919eaa34755bac96a65cb82b9cd927a6116a5cb916f9",
+    ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic.mjs": "c6ef8537c24661d8d3c2beaef3e077c12291edc1fbaca7c84e909058a3ab16ff",
+    ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-author.md": "d2419857ad6a50f91ad2f4fe89f397a0025290bfffe57e9cd84e7badf29ad3a7",
+    ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-before-receipt-fix.mjs": "26dfd81ec11e926d376df4cdd33ba8dfe6b0bb84c17849b755f2bb2e963257bf",
+    ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-test.mjs": "35dd3fc7d52924cce2c77b2ef6e5a49401bdfe402d42f7b3063aaa09bdd98f71",
+    ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-test.json": "f0361263a7e69ec97aece5d4361ff26adc11762e28ba2ba7cd79dca21e1fa7fa",
+    ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-test.md": "b74d6558126e894dc3000554b67f602f2acf1f63b0dbf1d7e3b17b5ac5a555b5",
+    ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-test-fixed.mjs": "a9a2268ac6d9a2fd456ef30bf81a7981f96e5563c77be17efafea508425cd8bc",
+    ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-test-fixed.json": "6c0a6e26544cb812055273afd3209baa61fcadba438570bfa4cfb3d79e0425c7",
+    ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-fix-review.md": "0ecf84c018a1c61b7d76b44c0eca04ce24c5647df5f4514af71f4e3ddc6b2219",
+    ".qa-local/qr2-s5-4-stage2c/p10-documentation-ci-verified.json": "f92e9880f4994c6d4f756446b94660470d3364a7e53a73de2f1bc7c77fb55d47",
+    ".qa-local/qr2-s5-3/ci-observed-cf01bf318cd3d05732c8a2829a74e753594ad794.json": "58e787098619affdc92eb1da72af93c6335f541ba653b2ec45bbfd517ca9758d"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-22T23:35:24.250Z",
+  "recordedAt": "2026-10-22T23:42:28.147Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -621,11 +632,11 @@
       },
       "runtimeAdmitted": false,
       "remaining": [
-        "Canonical capture wrapper binding the existing reader results and real pure adapters to retained-input verification",
-        "Actual producer chronology, coherent snapshot ownership and other member gate qualification",
-        "Finite retained-memory/setup/SQL/helper/process/whole-run budgets and monotonic supervisor",
-        "Complete runtime source manifest, independent lifecycle review, refreshed headroom and separate two-job diagnostic admission",
-        "Independent client/HTTP implementation and executed monitoring-boundary tests before the separate performance matrix"
+        "Independent lifecycle/resource/source-closure review for the composed two-job diagnostic",
+        "Finite setup/SQL/helper/retained-memory/replay/process/whole-run budgets and monotonic supervisor",
+        "Actual pinned adapter wiring, coherent snapshot/chronology and other member gate qualification",
+        "Complete runtime manifest, refreshed headroom and separate diagnostic admission",
+        "Independent client/HTTP and monitoring tests before the separately admitted performance matrix"
       ],
       "independentCheckpointReview": {
         "status": "PASS_WITH_LIMITS",
@@ -781,6 +792,29 @@
         "heapSettingMiB": 128,
         "externalTimeoutMs": 10000,
         "limits": "Real replayAccount/legacySeeds/checkCommitOrder executed, but not the retained-input verifier or heavy fixture. No PostgreSQL, worker, HTTP or performance acceptance."
+      },
+      "qualifiedDiagnostic": {
+        "status": "WRAPPER_SEAM_CHECKS_PASS_RUNTIME_NOT_RUN",
+        "module": ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic.mjs",
+        "sourceSha256": "c6ef8537c24661d8d3c2beaef3e077c12291edc1fbaca7c84e909058a3ab16ff",
+        "initialGroups": 18,
+        "initialPassed": 15,
+        "initialFailed": 3,
+        "finalGroups": 20,
+        "finalPassed": 20,
+        "initialArtifact": ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-test.json",
+        "finalArtifact": ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-test-fixed.json",
+        "review": ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-fix-review.md",
+        "correction": "Bind gate receipts to standalone owner and five unique owner members, literal nonzero expected counts, method/status/diagnostics, status totals, input hashes and alignment count/status.",
+        "suiteDelta": "The original eighteen group names remain; the happy fake supplies full alignment counts and two new missing-alignment/duplicate-owner cases were added. This is not an unchanged-suite rerun.",
+        "scope": "Capture exact existing reader objects once each, preserve adapter/default-factory references, bind seed runId and all clock fields, verify retained content before/after gates, and run gates only after diagnostic return.",
+        "failureEvidence": "Original error is preserved as cause; frozen bounded failureFacts contains stage, read counts, attempted-gate flag and successfulReceipt=false. No ledger is copied into failureFacts.",
+        "limits": [
+          "Injected runDiagnostic and gate seams ran; default diagnostic/gate implementations were not invoked in these wrapper tests.",
+          "Retained-reference clearing is not a forced-GC or measured heap guarantee.",
+          "Post-return abort/deadline checks cannot preempt synchronous replay.",
+          "Actual adapter/source pinning, retained-memory/replay-cost budgets, coherent snapshots, other member gates and lifecycle admission remain open."
+        ]
       }
     }
   },
@@ -832,24 +866,24 @@
     "originalFindingPreserved": true
   },
   "preparationCheckpointCI": {
-    "revision": "74223e8faa7ea78f48cda0f4f0b7c0cd1da5f93b",
+    "revision": "cf01bf318cd3d05732c8a2829a74e753594ad794",
     "status": "SCOPE_ONLY_PASS",
     "runs": [
       {
-        "id": 39871616531,
-        "name": "Quant Lab",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39871616531"
+        "id": 39872817377,
+        "name": "Safety checks",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39872817377"
       },
       {
-        "id": 39871616515,
-        "name": "Safety checks",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39871616515"
+        "id": 39872817384,
+        "name": "Quant Lab",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39872817384"
       }
     ],
     "actualScopeSteps": 2,
     "actualGateSteps": 1,
     "skippedRuntimeJobs": 4,
     "newRuntimeTests": 0,
-    "artifact": ".qa-local/qr2-s5-4-stage2c/p9-documentation-ci-verified.json"
+    "artifact": ".qa-local/qr2-s5-4-stage2c/p10-documentation-ci-verified.json"
   }
 }

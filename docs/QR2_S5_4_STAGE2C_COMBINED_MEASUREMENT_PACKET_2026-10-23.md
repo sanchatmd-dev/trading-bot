@@ -64,6 +64,12 @@ The pure adapter verifier passed 19/19 revised fake groups. The initial 17/17 re
 
 A separate real-pure smoke uses only one synthetic funding and passed four scenarios after correcting its mistaken false halt assertion to null. No heavy fixture, retained-input capture, SQL, pool or worker ran. Actual R3c and other member gates remain unqualified until the original materialized inputs are captured, bound to canonical identities and checked with pinned real adapters under reviewed memory/lifecycle bounds. No extra SQL read, third pool job, inline financial report or product API change is admitted.
 
+### P11 retained-read wrapper preparation
+
+The wrapper passed 20/20 revised seam groups after the initial 15/18 result. The original source and all three invalid-receipt failures remain preserved. Root added canonical member/role binding, nonzero expected 1335/1 cardinalities, method/status/diagnostics, status totals, input hashes and alignment count/status checks. The happy fake gained complete alignment counts; missing-alignment and duplicate-owner cases were added. These seam tests do not execute the default P9 diagnostic or P10 gate verifier together.
+
+The wrapper captures each original reader object once, forwards existing adapters and the default pool factory unchanged, and verifies gates after diagnostic return, outside measurement. Seed runId/clock/registration binding and before/after content pins reject tested drift, including undefined-property changes. Failure facts remain bounded; the original cause stays available. Abort/deadline checks bracket synchronous verification but cannot preempt it. Clearing local references is not measured memory release. Independent composed lifecycle/resource/source-closure review and finite supervision precede any runtime admission.
+
 ## Open work
 
 Coverage byte accounting and the financial row/value recipe are analytically qualified within the limits above. Runtime-compatible clock integration, actual producer counts and financial gates, independent client/HTTP implementation, monitoring-boundary tests, finite setup budget and final lifecycle source review remain open. Diagnostic and full measurement are NOT RUN. The separate financial differential CI is accepted only within its named assertion scope. Production cap selection, Stage 3 publication/rendering, full S5 and prototype completion remain OPEN.
