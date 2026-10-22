@@ -224,7 +224,164 @@
       "mobile-th-unavailable.jpg": "b5ef331748d7f1e91f8d5bf1b1af7c797f73c687f9709058be05415a554f407d",
       "mobile-th-undeclared-owner-usdt.jpg": "933157f8686a6f162711c91693377e76f08b37f8a9c4617c55e9a95b25cb30b5"
     },
-    "documentationCi": "Pending at checkpoint preparation; prior actual-code CI remains green on 581f6e3. Record the resulting documentation revision and scope-only jobs in the ignored checkpoint."
+    "documentationCi": {
+      "revision": "22c7f08e1af56f79c2a5ff6eba88659dc89967c3",
+      "readAt": "2026-10-22T15:16:44.252Z",
+      "runs": [
+        {
+          "id": 39802965453,
+          "name": "Quant Lab",
+          "revision": "22c7f08e1af56f79c2a5ff6eba88659dc89967c3",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39802965453",
+          "status": "completed",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "scope",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run node scripts/ci-scope.mjs",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "name": "gate",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run test \"$SCOPE\" = success && { test \"$QUANT\" = success || test \"$QUANT\" = skipped; }",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "name": "quant",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 39802965606,
+          "name": "Safety checks",
+          "revision": "22c7f08e1af56f79c2a5ff6eba88659dc89967c3",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39802965606",
+          "status": "completed",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "scope",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run node scripts/ci-scope.mjs",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-node@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "name": "container",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "name": "test",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "name": "postgres",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        }
+      ],
+      "status": "SUCCESS",
+      "scope": "Documentation-only: scope and gate steps ran successfully. Node, PostgreSQL, container and Quant test jobs were skipped by scope; this adds no runtime test counts."
+    }
   },
   "artifacts": {
     "directory": ".qa-local/qr2-s5-1",
@@ -245,7 +402,8 @@
       "render/network.json": "d21255d0431217a7f02d132fe411c960c740a9481e2c5c13d6e51f32996f204f",
       "render/network-complete.json": "c209245cc16a264d6f61d331f763869c1e9650b50411ef1005d485ed7423e88e",
       "stub-requests.json": "3681efe9f7eda56a801c5495934186375ff88c0ace5305888bb997ff8e5f0002",
-      "render-docs-review.md": "7f69499acf7aad8ced7e18eb6ac872b976f0de0d95dae908ec16d76096f49a3a"
+      "render-docs-review.md": "7f69499acf7aad8ced7e18eb6ac872b976f0de0d95dae908ec16d76096f49a3a",
+      "render-ci-22c7f08.json": "7847e1cbf0b475916b50f845a56339c8b691a57a1c10ba4d1eca85b067aae479"
     }
   },
   "ci": {
@@ -546,7 +704,7 @@
     "guardReset": "NOT AUTHORIZED",
     "bestInputsApply": "NOT AUTHORIZED"
   },
-  "nextAction": "Follow the documentation-only checkpoint through exact-revision scope CI, save the ignored root checkpoint, then stop. No new phase, target activation or full-S5 acceptance is authorized by this closure.",
+  "nextAction": "Bounded S5-1 closure is complete. Verify the final documentation-only readback commit with scope CI and save its exact result in the ignored root checkpoint, then stop. Full S5 and all target effects remain separately gated.",
   "ciRepair": {
     "date": "2026-10-22",
     "failedRevision": "6f7fcff603d0cdd0c29990c431ae1fdd1ca291c5",
