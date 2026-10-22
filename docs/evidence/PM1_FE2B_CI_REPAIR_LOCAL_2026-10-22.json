@@ -84,7 +84,8 @@
   "independentReview": {
     "architecture": "Final three-file diff reviewed; no actionable blocker. Legacy null handling, owner/time/source predicates, exposure register, and stop/release assertions preserved.",
     "tester": "Independent focused Node checks passed on the pinned three-file snapshot. Full PostgreSQL verification is recorded separately.",
-    "architectureReportSha256": "c985ab316ebebf630752a324165cffbb5eb27c40c5ac836613a3b50afeb35203"
+    "architectureReportSha256": "c985ab316ebebf630752a324165cffbb5eb27c40c5ac836613a3b50afeb35203",
+    "testerReportSha256": "52d54d71c1f86e19ff43597b1073ecd064ce1e7a349cb818414f4d5cf1118dc1"
   },
   "closureVerification": {
     "hashes": {
@@ -120,11 +121,193 @@
     "A subsequent full run was interrupted after four Python-runner cases selected the Windows Store python alias. A direct probe failed through that alias and succeeded through the verified locked interpreter. The scratch runner now places the repository venv first in PATH and checks bare-python imports before tests; product and test sources were not changed. The interrupted run is not a complete regression result, and its fixture was stopped and removed."
   ],
   "fullPostgres": {
-    "status": "RUNNING",
-    "interimObservation": "The corrected Windows run has one minimal-environment assertion failure in unchanged mp-executor.test.mjs. A direct verified-interpreter probe shows Windows-added environment keys. The other three Python-runner cases now pass. No security assertion was relaxed; complete local results and Linux CI remain pending."
+    "status": "COMPLETED_WITH_WINDOWS_LIMITATION",
+    "platform": "Windows",
+    "revision": "46c7ef3966c7af35dd0331a0ca7566e22d7430aa",
+    "process": {
+      "command": "npm run test:postgres",
+      "tests": 1610,
+      "suites": 2,
+      "pass": 1591,
+      "fail": 1,
+      "skipped": 18,
+      "cancelled": 0,
+      "todo": 0,
+      "duration_ms": 2644807.3725,
+      "exitCode": 1,
+      "logSha256": "234717b1d92f7e8fe23ec743f4e739dc21a791ee64abb76e53cec58e8b47fac8"
+    },
+    "failure": {
+      "file": "test/postgres/mp-executor.test.mjs",
+      "testLine": 1255,
+      "assertionLine": 1263,
+      "message": "only the minimal list and the explicit extra",
+      "expectedKeys": [
+        "MP_TEST_EXTRA",
+        "PYTHONHASHSEED",
+        "PYTHONPATH"
+      ],
+      "additionalWindowsKeys": [
+        "HOMEDRIVE",
+        "HOMEPATH",
+        "LOGONSERVER",
+        "SYSTEMDRIVE",
+        "SYSTEMROOT",
+        "TEMP",
+        "USERDOMAIN",
+        "USERNAME",
+        "USERPROFILE",
+        "WINDIR"
+      ],
+      "assessment": "The unchanged Python-runner test sees additional Windows environment keys. The runner and security assertion were not edited or relaxed. This local full run is not green; the complete Linux CI command passes on the same repair revision."
+    },
+    "isolationNone": {
+      "command": "node --test --test-isolation=none --test-concurrency=1 test/postgres-isolation-none/*.test.mjs",
+      "reason": "The process phase returned nonzero, so npm && did not execute this phase. It was run separately on a fresh disposable fixture.",
+      "tests": 7,
+      "suites": 3,
+      "pass": 7,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "todo": 0,
+      "duration_ms": 30660.437,
+      "exitCode": 0,
+      "logSha256": "cf9b2fbba123a9d5a7e41406793602b0ad15fbd56a8092a374285a7481d05aed"
+    },
+    "cleanup": "Both completed full-process and separate isolation-none fixture servers stopped successfully; their complete data/WAL directories were removed. The initial setup-attempt directory remains stopped after the separately recorded cleanup rejection.",
+    "testedSourceBytes": "All three raw worktree pins remained unchanged through both local phases."
   },
   "ci": {
-    "status": "PENDING"
+    "status": "PASSED",
+    "sha": "46c7ef3966c7af35dd0331a0ca7566e22d7430aa",
+    "runs": [
+      {
+        "id": 39718982843,
+        "name": "Quant Lab",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "46c7ef3966c7af35dd0331a0ca7566e22d7430aa",
+        "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39718982843",
+        "created_at": "2026-10-22T03:49:46Z",
+        "updated_at": "2026-10-22T03:52:50Z"
+      },
+      {
+        "id": 39718982713,
+        "name": "Safety checks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "46c7ef3966c7af35dd0331a0ca7566e22d7430aa",
+        "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39718982713",
+        "created_at": "2026-10-22T03:49:46Z",
+        "updated_at": "2026-10-22T04:11:35Z"
+      }
+    ],
+    "safetyJobs": [
+      {
+        "id": 119627796658,
+        "name": "scope",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119627855346,
+        "name": "postgres",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119627855365,
+        "name": "test (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119627855424,
+        "name": "test (windows-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119627855457,
+        "name": "container",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "quantJobs": [
+      {
+        "id": 119627797154,
+        "name": "scope",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119627837004,
+        "name": "quant (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119627837019,
+        "name": "quant (windows-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 119628653540,
+        "name": "gate",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "postgres": {
+      "process": {
+        "tests": 1610,
+        "pass": 1593,
+        "fail": 0,
+        "skipped": 17,
+        "todo": 0,
+        "duration_ms": 1239750.246633
+      },
+      "isolationNone": {
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 15531.417425
+      }
+    },
+    "node": {
+      "linux": {
+        "tests": 2915,
+        "pass": 2865,
+        "fail": 0,
+        "skipped": 41,
+        "todo": 9,
+        "duration_ms": 259336.644442
+      },
+      "windows": {
+        "tests": 2915,
+        "pass": 2860,
+        "fail": 0,
+        "skipped": 46,
+        "todo": 9,
+        "duration_ms": 361612.0138
+      }
+    },
+    "quantPython": {
+      "linux": {
+        "pass": 701,
+        "skipped": 3
+      },
+      "windows": {
+        "pass": 702,
+        "skipped": 2
+      }
+    },
+    "scope": "All required workflows and jobs executed successfully on the repair revision. Private acceptance and native target proof are not implied."
   },
   "localLogs": {
     "availability": "Ignored local evidence; not delivered by Git.",
@@ -160,11 +343,16 @@
     "READY remains false; N1 remains held.",
     "Original dirty checkout and both stashes preserved; no main switch or wholesale WIP merge."
   ],
-  "decision": "FULL_REGRESSION_AND_CI_PENDING",
+  "decision": "FE2B_SEVEN_CI_FAILURES_REPAIRED_AND_VERIFIED",
   "testedWorktreeFiles": {
     "src/postgres/mp-package-store.js": "aa4092382b561d75e0523071b9dbfbe3a76539b201a4cfd33f539470fa1b9187",
     "test/postgres/mp-package-build.test.mjs": "47b97ea4212e43fb1f96da12fbffa29c5ac114616e47482f982554a67d3f1a0e",
     "test/postgres/quant-profile-runtime-v2.test.mjs": "e8bf1f85f7638ef04cf4f21344b27ef164609e5ab9607a3ce990a67efdbc1709"
   },
-  "filePinFormat": "files pins canonical LF bytes for Git portability; testedWorktreeFiles pins the CRLF working bytes used by the local tests. These three files are outside the eight runtime closures. No source content changed during tests."
+  "filePinFormat": "files pins canonical LF bytes for Git portability; testedWorktreeFiles pins the CRLF working bytes used by the local tests. These three files are outside the eight runtime closures. No source content changed during tests.",
+  "acceptance": {
+    "scope": "Root accepts the bounded seven-failure repair as engineering integration evidence on exact revision 46c7ef3966c7af35dd0331a0ca7566e22d7430aa. This closes the red PostgreSQL CI item in the Cloud-to-local handoff.",
+    "limitations": "The local Windows minimal-environment assertion remains unresolved and is reported above. No assertion was weakened. Private acceptance, native target proof and target release eligibility are not established.",
+    "nextAction": "No further implementation admitted by this repair packet. Resume the current Roadmap gates under their existing owner authority; private source remains local, READY false and N1 held."
+  }
 }
