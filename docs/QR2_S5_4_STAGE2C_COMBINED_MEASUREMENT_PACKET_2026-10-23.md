@@ -58,6 +58,12 @@ The injected diagnostic passed 22/22 revised named groups after the initial 16/1
 
 Detailed R3c RUN/allMATCH and owner member gates remain pending. Empty public findings or reconciliation OK cannot certify these internal gates. The next packet must bind a source-qualified detailed-gate check to the same frozen materialized snapshot without adding an inline report/comparator, a third pool job or a product API change. JSON UTF-8 bytes exclude structured-clone heap and the complete pool wire envelope. Chronology, coherent snapshot ownership, finite external cancellation and lifecycle/source-freeze review remain required before runtime admission. No C3 performance or full S5 acceptance follows.
 
+### P10 retained-input verifier preparation
+
+The pure adapter verifier passed 19/19 revised fake groups. The initial 17/17 result remains preserved alongside a separate source finding: JSON hashing omitted named array properties. A targeted reproduction on the original module and two new fixed-suite groups record the correction. The verifier now rejects non-index array properties before and after callbacks. Hashes certify JSON content within the stated plain-input contract, not universal JavaScript identity; undefined optional values retain JSON omission semantics. Six fake receipts check separate standalone/owner heavy inputs, four cash members, nonvacuous counts, seed/result alignment and exact immutable lot projection.
+
+A separate real-pure smoke uses only one synthetic funding and passed four scenarios after correcting its mistaken false halt assertion to null. No heavy fixture, retained-input capture, SQL, pool or worker ran. Actual R3c and other member gates remain unqualified until the original materialized inputs are captured, bound to canonical identities and checked with pinned real adapters under reviewed memory/lifecycle bounds. No extra SQL read, third pool job, inline financial report or product API change is admitted.
+
 ## Open work
 
 Coverage byte accounting and the financial row/value recipe are analytically qualified within the limits above. Runtime-compatible clock integration, actual producer counts and financial gates, independent client/HTTP implementation, monitoring-boundary tests, finite setup budget and final lifecycle source review remain open. Diagnostic and full measurement are NOT RUN. The separate financial differential CI is accepted only within its named assertion scope. Production cap selection, Stage 3 publication/rendering, full S5 and prototype completion remain OPEN.

@@ -361,11 +361,29 @@
     ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-fix-review.md": "656b6aad8f0b7c3765522a1dde9dc2f23b2eb9a1bb59536584cd392cbb4cc8b6",
     ".qa-local/qr2-s5-4-stage2c/c3-diagnostic-source-review.md": "ad667d8e53258cfc65d767a8824e348f44eac446e87b0ac49c396bdea1b0aee2",
     ".qa-local/qr2-s5-4-stage2c/p7-p8-documentation-ci-verified.json": "5d78638fe03a307a3e0427f8c39065cb6f0431561e1f04b2faacd93585a1aa5f",
-    ".qa-local/qr2-s5-3/ci-observed-ac1f5407a98dddcbb7bce3a51900acfdd7f3bc8c.json": "f3d679336d81a9613f8dbea7b91d84b02d5d0d37d97b063aadc461ccc690dc0e"
+    ".qa-local/qr2-s5-3/ci-observed-ac1f5407a98dddcbb7bce3a51900acfdd7f3bc8c.json": "f3d679336d81a9613f8dbea7b91d84b02d5d0d37d97b063aadc461ccc690dc0e",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-verify.mjs": "25278c65b2d2947ab85417891a046a44040cb38d3ff77fee50aaeffbfb98c05a",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-author.md": "e3c15c4e9bfa6aedd64b4d5786fa299ca40e19d3a54fdeff04cfd0ba99d91581",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-before-array-fix.mjs": "0cb43cf9360afc823ab6a6aeb2e3293227f320e0cce2ce7c777fa374eb7fa568",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-test.mjs": "714241b7105da232dd3f9a4f9a07f7ab03257d4ad8bb4d5cc609f6eb9554ba2b",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-test.json": "f0d77bb94b3924db6d3f5090abc4293f92ecc10ca1710d28e025a2a80ef34d8d",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-test.md": "794f4798fc1607f2d8cb59dbe5f70143994f7cb3177a0f638f6d0b87c4b42089",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-array-repro.mjs": "93d38cd74cf932e52447b68bd92e9d1351d957901d598103da14c3d4638b2bb8",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-array-repro.json": "f4a248f835c1a37d994a49bba4e50119aab0ac433f82c2d4be835fc3ae348518",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-test-fixed.mjs": "1c784eeb1cab4607564d394e47e4020df707cd4ef71d012d3c4a7328d36f47d9",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-test-fixed.json": "ea6bec9d42411bd3b796abd05a7b233e25d8488c982c434f91561b7f59a4e563",
+    ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-fix-review.md": "bc83bab884adac3ad0492aa9edd0852a751f89c8a22009cef635e963b5923e5e",
+    ".qa-local/qr2-s5-4-stage2c/p10-pure-contract-smoke.mjs": "3c89f653ea85ea68506a3542f2e64e9433288be3d5a770d2e0ac3b6b8a37e673",
+    ".qa-local/qr2-s5-4-stage2c/p10-pure-contract-smoke-initial-failure.json": "232e6473ff33985d2d8173e59b49825f09871fa7c20ee6b19570256730b00a54",
+    ".qa-local/qr2-s5-4-stage2c/p10-pure-contract-smoke-fixed.mjs": "c1b31fe3986bf77878882018d1a2bbfeac577909b5bc2a48baa8536da82f2631",
+    ".qa-local/qr2-s5-4-stage2c/p10-pure-contract-smoke-fixed.json": "63e6e9057611d7e1164faa5f227e00a69d92bd948216e601636dcc4a3eb7fac7",
+    ".qa-local/qr2-s5-4-stage2c/p10-pure-contract-review.md": "fa93f8a13f0a081b70b3b978418de5d3512a864e53ea127e5a3ae0571674cde1",
+    ".qa-local/qr2-s5-4-stage2c/p9-documentation-ci-verified.json": "04bde75393517564bf49065eee80b693a2fab0fb53eeccad42c65054e95a9e18",
+    ".qa-local/qr2-s5-3/ci-observed-74223e8faa7ea78f48cda0f4f0b7c0cd1da5f93b.json": "484ac814bfdac5ab848b919eaa34755bac96a65cb82b9cd927a6116a5cb916f9"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-22T23:24:30.339Z",
+  "recordedAt": "2026-10-22T23:35:24.250Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -603,12 +621,11 @@
       },
       "runtimeAdmitted": false,
       "remaining": [
-        "Source-qualified R3c and owner member gate verification on the same frozen materialized snapshot",
-        "Actual producer/storage chronology and coherent read-only snapshot ownership",
-        "Independent client/HTTP implementation and executed monitoring-boundary tests",
-        "Finite setup/SQL/helper/process/sample/whole-run budgets and monotonic supervisor",
-        "Complete runtime source manifest and lifecycle review",
-        "Refreshed headroom and separate runtime admission"
+        "Canonical capture wrapper binding the existing reader results and real pure adapters to retained-input verification",
+        "Actual producer chronology, coherent snapshot ownership and other member gate qualification",
+        "Finite retained-memory/setup/SQL/helper/process/whole-run budgets and monotonic supervisor",
+        "Complete runtime source manifest, independent lifecycle review, refreshed headroom and separate two-job diagnostic admission",
+        "Independent client/HTTP implementation and executed monitoring-boundary tests before the separate performance matrix"
       ],
       "independentCheckpointReview": {
         "status": "PASS_WITH_LIMITS",
@@ -722,6 +739,48 @@
         "maxQueries": 101,
         "scope": "Exact timestamp recipe, canonical bar/provenance/hash checks and terminal empty page; independent digest in the complete fake.",
         "limits": "No actual PostgreSQL execution, schema-uniqueness proof, snapshot consistency, hard heap/cancellation bound or financial gate acceptance."
+      },
+      "retainedGateVerifier": {
+        "status": "PURE_ADAPTER_FAKE_CHECKS_PASS_ACTUAL_RETAINED_INPUTS_NOT_RUN",
+        "module": ".qa-local/qr2-s5-4-stage2c/c3-gates-verify.mjs",
+        "sourceSha256": "25278c65b2d2947ab85417891a046a44040cb38d3ff77fee50aaeffbfb98c05a",
+        "initialGroups": 17,
+        "initialPassed": 17,
+        "finalGroups": 19,
+        "finalPassed": 19,
+        "sourceFinding": "Named enumerable array properties passed structural qualification but were absent from the JSON hash. Root added canonical array-index validation before and after callbacks.",
+        "originalSource": ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-before-array-fix.mjs",
+        "reproduction": ".qa-local/qr2-s5-4-stage2c/c3-gates-array-repro.json",
+        "initialArtifact": ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-test.json",
+        "finalArtifact": ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-test-fixed.json",
+        "review": ".qa-local/qr2-s5-4-stage2c/c3-gates-verify-fix-review.md",
+        "suiteDelta": "Original seventeen group names retained; two named-array-property groups added. No claim of unchanged-suite rerun.",
+        "expectedReceipts": [
+          1335,
+          1335,
+          1,
+          1,
+          1,
+          1
+        ],
+        "scope": "Standalone heavy and owner heavy qualified separately, with financial-array/boundary equivalence; four cash members; exact immutable lot projection, seed and R3c result/identity/count forwarding.",
+        "limits": [
+          "Caller canonical identity binding, adapter pins, retained input capture and coherent snapshot ownership remain open.",
+          "JSON-content hashes are not universal JavaScript object identity; omitted undefined values retain documented JSON semantics.",
+          "No actual large retained fixture, SQL, pool or worker ran.",
+          "R3c alone does not prove other member gates, financial acceptance or performance."
+        ]
+      },
+      "realPureContractSmoke": {
+        "status": "FOUR_TINY_SCENARIOS_PASS",
+        "fixture": "One synthetic CONFIGURATION funding only",
+        "artifact": ".qa-local/qr2-s5-4-stage2c/p10-pure-contract-smoke-fixed.json",
+        "initialFailure": ".qa-local/qr2-s5-4-stage2c/p10-pure-contract-smoke-initial-failure.json",
+        "review": ".qa-local/qr2-s5-4-stage2c/p10-pure-contract-review.md",
+        "correction": "The smoke initially expected replay.halted=false; actual successful source contract is null. Only that assertion and the output filename changed.",
+        "heapSettingMiB": 128,
+        "externalTimeoutMs": 10000,
+        "limits": "Real replayAccount/legacySeeds/checkCommitOrder executed, but not the retained-input verifier or heavy fixture. No PostgreSQL, worker, HTTP or performance acceptance."
       }
     }
   },
@@ -773,24 +832,24 @@
     "originalFindingPreserved": true
   },
   "preparationCheckpointCI": {
-    "revision": "ac1f5407a98dddcbb7bce3a51900acfdd7f3bc8c",
+    "revision": "74223e8faa7ea78f48cda0f4f0b7c0cd1da5f93b",
     "status": "SCOPE_ONLY_PASS",
     "runs": [
       {
-        "id": 39869901861,
-        "name": "Safety checks",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39869901861"
+        "id": 39871616531,
+        "name": "Quant Lab",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39871616531"
       },
       {
-        "id": 39869901809,
-        "name": "Quant Lab",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39869901809"
+        "id": 39871616515,
+        "name": "Safety checks",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39871616515"
       }
     ],
     "actualScopeSteps": 2,
     "actualGateSteps": 1,
     "skippedRuntimeJobs": 4,
     "newRuntimeTests": 0,
-    "artifact": ".qa-local/qr2-s5-4-stage2c/p7-p8-documentation-ci-verified.json"
+    "artifact": ".qa-local/qr2-s5-4-stage2c/p9-documentation-ci-verified.json"
   }
 }
