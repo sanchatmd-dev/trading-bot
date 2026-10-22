@@ -71,7 +71,21 @@
     "ownerIntegration": "NOT RUN",
     "responsePublication": "NOT RUN",
     "browser": "NOT RUN",
-    "fullS5": "OPEN"
+    "fullS5": "OPEN",
+    "finalFormatting": {
+      "reason": "Pre-push cached whitespace check found a new trailing blank line in the extracted helper. Removed only that blank line; root verified equality after newline normalization and trimming final whitespace.",
+      "priorLocalCommit": "5323511",
+      "independentReviewScope": "442 checks and architecture review ran before the whitespace-only cleanup; no semantic code change followed.",
+      "focusedRerun": {
+        "command": "node --test --test-isolation=none test/qr2-coverage.test.js test/market-ohlcv.test.js",
+        "pass": 51,
+        "fail": 0,
+        "skipped": 0,
+        "todo": 0,
+        "durationMs": 126.2135,
+        "log": ".qa-local/qr2-s5-4-stage1/root-final-tests.log"
+      }
+    }
   },
   "limits": [
     "COMPLETE is a reader-certified fact; pure fixtures do not prove a completed database read.",
@@ -95,7 +109,7 @@
   "sourcePins": [
     {
       "path": "src/market-gap-intervals.js",
-      "sha256": "6db5aa235646e4363fa5481aead24602523c58c20de0a3b0fa1e095d3e953967"
+      "sha256": "9ce50b7a64fe33fbdfac40abd52406574b44cc9cce2050185b491668a959d544"
     },
     {
       "path": "src/postgres/market-ohlcv.js",
@@ -154,7 +168,17 @@
     {
       "path": ".qa-local/qr2-s5-4-stage1/tester/source-pins-after.json",
       "sha256": "f0460406ebc137a2f1f12154db1711eebd35de1600e7e2dd12cc41da1aae2d4d"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/root-final-tests.log",
+      "sha256": "b57368404036bcf7af1ad4e65716fbef6d9550a10ac2955d32ff92656c71e294"
     }
   ],
-  "hashConvention": "SHA-256 raw local file bytes before Git line-ending normalization"
+  "hashConvention": "SHA-256 raw local file bytes before Git line-ending normalization",
+  "preFormattingSourcePins": [
+    {
+      "path": "src/market-gap-intervals.js",
+      "sha256": "6db5aa235646e4363fa5481aead24602523c58c20de0a3b0fa1e095d3e953967"
+    }
+  ]
 }

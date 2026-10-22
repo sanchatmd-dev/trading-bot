@@ -24,4 +24,3 @@ export function assembleGaps({lower,end,n,first,last,internal=[],internalTotal=0
   const ranges=all.slice(0,cap);
   return {count,missing_minutes:Math.max(0,expected-n),ranges,truncated:count>ranges.length};
 }
-
