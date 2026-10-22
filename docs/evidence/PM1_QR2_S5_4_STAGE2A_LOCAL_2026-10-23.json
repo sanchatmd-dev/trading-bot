@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "scope": "QR-2 S5-4 Stage 2A unwired snapshot and coverage-reader seams",
+  "status": "BOUNDED_UNWIRED_STAGE_2A_ACCEPTED_CI_PENDING",
+  "baseRevision": "37a010b5897cea95d20d11a1f006dce84b9e6576",
+  "packet": "docs/QR2_S5_4_STAGE2_SNAPSHOT_PACKET_2026-10-23.md",
+  "outcome": "Deterministic shared-union registry with closed validation, explicit mandatory budgets and a transaction-guarded timestamp reader. No existing entrypoint imports these new seams.",
+  "qualification": [
+    "Exact account/owner coverage fragments define the conservative byte envelope; empty envelopes have nonzero overhead.",
+    "Canonical derivation visits are separate from bounded validation passes and are not total CPU work.",
+    "Numeric ORDER BY is qualified against the table column, avoiding the text result alias. Real PostgreSQL verification remains pending.",
+    "Effective SQL allowance is the minimum of remaining row capacity and pre-admitted serialized-input capacity, plus one temporary sentinel.",
+    "A corrupted or oversized registry fails validation with QR2_REPORT_FAILED after independent context qualification. Build/read resource overflow remains QR2_RANGE_ADMISSION_REFUSED."
+  ],
+  "checks": {
+    "focused": {
+      "command": "node --test --test-isolation=none test/qr2-coverage-snapshot.test.js test/qr2-coverage-reader.test.js test/qr2-coverage.test.js",
+      "initialPass": 28,
+      "finalPass": 29,
+      "finalFail": 0,
+      "skipped": 0,
+      "todo": 0,
+      "finalDurationMs": 120.2401,
+      "finalLog": ".qa-local/qr2-s5-4-stage2/p2-validator-fix-tests.log"
+    },
+    "independent": {
+      "mainCommand": "node .qa-local/qr2-s5-4-stage2/tester/run-independent.mjs",
+      "mainPassedBeforeFix": 409,
+      "mainFailed": 0,
+      "counts": {
+        "oracle": {
+          "pass": 268,
+          "fail": 0
+        },
+        "corruption": {
+          "pass": 30,
+          "fail": 0
+        },
+        "missing_keys": {
+          "pass": 31,
+          "fail": 0
+        },
+        "decoder_invalid": {
+          "pass": 16,
+          "fail": 0
+        },
+        "decoder_valid": {
+          "pass": 5,
+          "fail": 0
+        },
+        "query": {
+          "pass": 20,
+          "fail": 0
+        },
+        "byte_preflight": {
+          "pass": 6,
+          "fail": 0
+        },
+        "budget_invalid": {
+          "pass": 21,
+          "fail": 0
+        },
+        "budget_boundary": {
+          "pass": 7,
+          "fail": 0
+        },
+        "identity": {
+          "pass": 3,
+          "fail": 0
+        },
+        "empty": {
+          "pass": 1,
+          "fail": 0
+        },
+        "integrity": {
+          "pass": 1,
+          "fail": 0
+        }
+      },
+      "targetedFinding": "P2: a corrupted over-row-budget registry failed closed but returned admission-refused instead of report-failed.",
+      "fixCommand": "node .qa-local/qr2-s5-4-stage2/tester/fix/run-fix.mjs",
+      "finalFocusedChecksPassed": 28,
+      "finalFocusedChecksFailed": 0,
+      "originalEvidencePreserved": true,
+      "full409SuiteRerunAfterFix": false,
+      "note": "Main checks and narrow fix checks are separate evidence; they are not added to Node test counts."
+    },
+    "architectureReview": "PASS WITH LIMITS before fix, followed by PASS WITH LIMITS for the narrow error-classification correction",
+    "rootReview": "PASS for the unwired local seams only; final source pins match independently verified files",
+    "ci": {
+      "status": "PENDING",
+      "revision": null,
+      "testCounts": "Not inferred from job or step success"
+    },
+    "database": "NOT RUN",
+    "sqlPlanAndNumericOrder": "NOT RUN ON POSTGRESQL",
+    "snapshotConsistency": "NOT PROVEN BY QUERY FAKES",
+    "costAndHeapMeasurement": "NOT RUN",
+    "productionResourceDefaults": "NOT SELECTED",
+    "accountOwnerIntegration": "NOT RUN",
+    "browser": "NOT RUN",
+    "fullStage2": "OPEN",
+    "fullS5": "OPEN"
+  },
+  "limitations": [
+    "Query-recording fakes do not certify PostgreSQL syntax, ordering, isolation, scan cost or snapshot consistency.",
+    "Supplied account metadata must already be authorized by the caller; the registry cannot prove authorization or source completeness.",
+    "Byte bounds concern serialized coverage fragments and registry data, not driver-object memory, heap, or the entire financial response.",
+    "Five supported owner accounts are reachable under current guards; twenty windows are separately labelled planner stress fixtures.",
+    "No account/owner reader, response composer, worker, route, schema or UI was changed. Later integration and rendering remain required."
+  ],
+  "nextAction": "Prepare and independently review an exact isolated synthetic PG16 measurement packet, including lifecycle and resource stops; admit it before execution. Select immutable limits only from evidence, then integrate both account and owner paths.",
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT RUN",
+    "ready": false,
+    "n1": "HELD",
+    "deployment": "NOT RUN",
+    "targetRouteActivation": "NOT RUN",
+    "migrations": "NOT RUN",
+    "hostVps": "NOT RUN",
+    "live": "HELD",
+    "guardReset": "HELD",
+    "bestInputsApply": "HELD"
+  },
+  "sourcePins": [
+    {
+      "path": "src/portfolio/qr2-coverage-snapshot.js",
+      "sha256": "3b6615779b6b16b870c2a6d1a0a87b36bc9ac179d9c3d6231daa16e83f4f674b"
+    },
+    {
+      "path": "src/postgres/qr2-coverage-reader.js",
+      "sha256": "233142c751201ee6502fed5e3860df6bafcdb4dc97af1f139749a19efe9e082e"
+    },
+    {
+      "path": "test/qr2-coverage-snapshot.test.js",
+      "sha256": "c68109b7e07b2d40138759561faebb220d24892e6f3a23547f10141d836334ff"
+    },
+    {
+      "path": "test/qr2-coverage-reader.test.js",
+      "sha256": "99d4da8ddc8021cb0b6138dffe4d3fb1d851f63048e61a6cc990277905d42fff"
+    }
+  ],
+  "artifactPins": [
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/design.md",
+      "sha256": "b12cc9be177a71475947a6e07aefd351ba490c5995ffa434f5ea1b3587165360"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester-plan.md",
+      "sha256": "b057579107a9759630e5c0488271825718969f154598adc33eb2d7da5111e289"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/packet-review.md",
+      "sha256": "55099a6a0c2e953b5c88239ffa5a32513b78cd12cef689cabc7e3b718f3d32ce"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/contract-audit.md",
+      "sha256": "4a4e868699123873730fcdca4a35e743c7e2109d71b1d8f553159077eeead3b1"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/code-audit.md",
+      "sha256": "76ccf25582e2a7f054491d875b6fa961acf0f9a786a39186877dc32616adba99"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/p2-fix-audit.md",
+      "sha256": "cdbd2a5a0dcfdc19af99a651403ed9fd6ed240bf7866ae4c9bf1ce8e4ce2f4c9"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/coder-report.md",
+      "sha256": "b6eae5e9587f6357bf9408103443c76d9d66eb9f831444a195be6a94b0766322"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/focused-tests-final.log",
+      "sha256": "6a9b2a9caeeb72686f5754851315b6a05f8819dbddb0439c1f365df7c9923c3b"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/p2-validator-fix-tests.log",
+      "sha256": "7d9d360c1513ed1c956a6cfd062536449aa4d2cde5a15cdb7dbe78910fea3877"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/oracle-cases.mjs",
+      "sha256": "1c9463d1d0342b9b9f34e78289d0a5b6b12c7f2336a71ec4e140c66bbf230ff9"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/query-fake.mjs",
+      "sha256": "f3e81d18553e258b52e3325ef882d2866b02ca621380a444cfa5c14f43005949"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/run-independent.mjs",
+      "sha256": "4deb3392fd51deaad4badd8831e8193575b0b20453cc22cb5d7a6cfae8df3229"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/results.json",
+      "sha256": "f251ef1aaa6e7f253ee163823af520cfdfe15fcdae0d1165328b8b6914768d5f"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/raw.log",
+      "sha256": "96e2c26a485adc48615889f3b4af0ee5c10ca01a2e3331fc98770a0e503a3cc7"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/targeted-results.json",
+      "sha256": "4450a6fadc10fc3b951fbd5306f1f1581aaad00c8b3a3291a959e77f181524ef"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/targeted.log",
+      "sha256": "e044e0c86241cf7e47520ce2fbe7bc125778499066fe3ab90c1e0e399f306f6c"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/verification.md",
+      "sha256": "157a18f7943d424f84a7efaa83d793e875a81d37e6e2b056c16f476e9932207c"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/fix/run-fix.mjs",
+      "sha256": "9ac6b6314187b0fc93e9b83d30065d6c6adb6992a3a8e13d02ca9dc5f1999a51"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/fix/fix-results.json",
+      "sha256": "5d220a5470bc5221feab300a34d9cd15e45a8b717b489a12aa36677669f14f47"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/fix/raw.log",
+      "sha256": "015a940b1cae9159707640e52648b05ef807eeb44ec8fdea96fa960de72299c8"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/fix/verification.md",
+      "sha256": "42ab81dab3517b65750af0498e60714cb15e218b1628b168e2e5806f49131f36"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/fix/source-pins-before.json",
+      "sha256": "d7294baa88fc049f15b12bbfbfce6c19e3299322a8922dc8424ebdf6b8261ade"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/fix/source-pins-after.json",
+      "sha256": "d7294baa88fc049f15b12bbfbfce6c19e3299322a8922dc8424ebdf6b8261ade"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage2/tester/fix/original-evidence-pins.json",
+      "sha256": "0a33ffc3ffc1cae8ecfeb4c8e2c4564cc8331eecd8c70d6597016623b3c57bd2"
+    }
+  ],
+  "hashConvention": "SHA-256 raw local file bytes before Git line-ending normalization"
+}
