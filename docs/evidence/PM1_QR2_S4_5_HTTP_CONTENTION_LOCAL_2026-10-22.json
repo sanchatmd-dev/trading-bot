@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-22",
+  "scope": "QR-2 S4-5 local engineering verification",
+  "status": "PASSED",
+  "baseRevision": "c0575feb2508f4f46facd54eed89919565baa0bb",
+  "authority": "Existing owner GO for S4-4/S4-5 and independent verification; RC-Q30 and RC-Q45 govern shared admission.",
+  "changedPaths": [
+    "test/postgres/qr2-owner-http-contention.test.mjs"
+  ],
+  "productChanges": [],
+  "testSha256": "dc424f4194e81f848a5aecd4f8af2bfe02fcae6e78875233232cf9f964a990ed",
+  "coverage": [
+    "Actual src/postgres/server.js, authentication, dispatcher and compute pool; fixture-only feature enablement and unchanged UNRECORDED boundaries.",
+    "Owner then account and account then owner: a PostgreSQL table lock and pg_blocking_pids observe the first deferred ledger reader.",
+    "The second request returns HTTP 429, QR2_RANGE_ADMISSION_REFUSED, exact concurrency/max:1 detail and Retry-After:2. It starts no second ledger reader.",
+    "After lock release, the first request completes with HTTP 200 and the other route can reuse the slot with HTTP 200.",
+    "Unauthenticated requests return 401; owner and Bot ledger/audit/fence digests remain unchanged.",
+    "Bounded request draining and guaranteed fixture close also run after assertion or rollback failure."
+  ],
+  "validation": {
+    "command": "node --test --test-isolation=process --test-concurrency=1 test/postgres/qr2-owner-http-contention.test.mjs test/postgres/qr2-owner-independent.test.mjs test/postgres/qr2-owner-route.test.mjs",
+    "runtime": {
+      "node": "24.19.0",
+      "postgres": "16.15",
+      "platform": "Windows",
+      "fixture": "Fresh loopback SCRAM cluster, max_connections=100; synthetic inputs only"
+    },
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 29472.4545,
+    "logSha256": "7557f6c184c00e893736c19b80387849af9fce3df37dd9eca617f8dfb24f5dc9",
+    "initialRun": {
+      "passed": 13,
+      "failed": 2,
+      "reason": "The test packet incorrectly expected HTTP 503. RC-Q30 and statusOfAdmission require 429; only the test expectation changed.",
+      "logSha256": "bbc225440c556a673f7bb1f4d1481c0f11193b5dcefff88de97535137ea3ef18"
+    },
+    "review": {
+      "role": "Independent architecture auditor",
+      "blockingFindings": 0,
+      "closedFinding": "Unbounded pending-request drain could prevent fixture cleanup; final code bounds the drain and guarantees fixture close.",
+      "reportSha256": "c4500ed5830532cb6ad31f815f92213f7ad41cb35054cc8a1936e4f202a30580"
+    },
+    "mutation": {
+      "change": "Temporarily pass a fresh slot to the owner route instead of the shared process slot.",
+      "caught": 1,
+      "failedTests": 2,
+      "reason": "Both request orders fail the bounded refusal assertion.",
+      "logSha256": "ce27b1dc73ca777edb6f4e3bb2de19da7b1993665fb06a1d9803ab8839393b44",
+      "sourceRestoredByteForByte": true,
+      "restoredSourceSha256": "79bbef073b590082994ba61c4c8186a32d948def74cd808a9c909e942e9728ab"
+    },
+    "cleanup": "All three new fixture clusters stopped and their complete data/WAL directories removed. The previously retained, stopped cluster remains untouched.",
+    "fullLocalSuite": "Not rerun; focused regression only",
+    "ci": "Pending on the commit containing this test"
+  },
+  "limits": [
+    "Closes the previously declared real-HTTP server-wiring contention gap for the read phase and successful completion only.",
+    "No new proof of slot retention during active computation, physical worker-stop timing, target capacity or native QS/systemd isolation.",
+    "No target activation, deployment, shared migration, Live, guard reset or Best Inputs apply. Private source stays local; private acceptance NOT RUN; READY false; N1 held.",
+    "Historical evidence remains unchanged. No security guard or product source was changed."
+  ],
+  "rootAcceptance": "Accepted by the sole local Codex root as focused engineering verification, not target release eligibility.",
+  "productionQualified": false,
+  "newHostSteps": 0
+}
