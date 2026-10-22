@@ -137,10 +137,239 @@
     "after": "8c5d847c6562e2e9999bea7bcc83e7417b72eff9ba52e784a248edc5361c71e2",
     "otherFamilies": "All seven other closure hashes and 128 other file pins remain unchanged. Historical inventories and stored job hashes were not rewritten."
   },
-  "decision": "FOCUSED_WINDOWS_REPAIR_ACCEPTED_LOCALLY",
+  "decision": "WINDOWS_ENV_REPAIR_FOCUSED_AND_EXACT_REVISION_CI_ACCEPTED",
   "ci": {
-    "status": "PENDING_NEW_REVISION",
-    "note": "Prior green CI belongs to 46c7ef3 and does not certify this runner revision. The initial runner commit 2117905 has automatic CI in progress and is superseded by the test harness follow-up. New final-revision CI remains pending; full local suites were not rerun."
+    "status": "PASSED",
+    "revision": "a2268bfafbd7ddd2056642477ea43b1428b17608",
+    "checkedAtUtc": "2026-10-22T08:26:42.4023841Z",
+    "readbackSha256": "d5d20d0c7d1ca9004b8b7c2363ddca681a28a619a7f49aa59009f9de65e02a80",
+    "runs": [
+      {
+        "id": 39735524272,
+        "name": "Safety checks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "a2268bfafbd7ddd2056642477ea43b1428b17608",
+        "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524272",
+        "created_at": "2026-10-22T06:41:28Z",
+        "updated_at": "2026-10-22T07:03:28Z",
+        "run_attempt": 1,
+        "jobs": [
+          {
+            "id": 119680180936,
+            "name": "scope",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524272/job/119680180936",
+            "started_at": "2026-10-22T06:41:32Z",
+            "completed_at": "2026-10-22T06:41:40Z",
+            "steps": []
+          },
+          {
+            "id": 119680242324,
+            "name": "postgres",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524272/job/119680242324",
+            "started_at": "2026-10-22T06:41:43Z",
+            "completed_at": "2026-10-22T07:03:27Z",
+            "steps": [
+              {
+                "number": 10,
+                "name": "Run npm run test:postgres 2>&1 | tee postgres-test.log",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "id": 119680242341,
+            "name": "test (windows-latest)",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524272/job/119680242341",
+            "started_at": "2026-10-22T06:41:43Z",
+            "completed_at": "2026-10-22T06:49:41Z",
+            "steps": [
+              {
+                "number": 6,
+                "name": "Run npm test 2>&1 | tee unit-test.log",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "id": 119680242363,
+            "name": "container",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524272/job/119680242363",
+            "started_at": "2026-10-22T06:41:43Z",
+            "completed_at": "2026-10-22T06:41:53Z",
+            "steps": [
+              {
+                "number": 3,
+                "name": "Run docker build -t astra-paper-staging .",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "id": 119680242390,
+            "name": "test (ubuntu-latest)",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524272/job/119680242390",
+            "started_at": "2026-10-22T06:41:43Z",
+            "completed_at": "2026-10-22T06:48:19Z",
+            "steps": [
+              {
+                "number": 6,
+                "name": "Run npm test 2>&1 | tee unit-test.log",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 39735524235,
+        "name": "Quant Lab",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "a2268bfafbd7ddd2056642477ea43b1428b17608",
+        "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524235",
+        "created_at": "2026-10-22T06:41:28Z",
+        "updated_at": "2026-10-22T06:44:56Z",
+        "run_attempt": 1,
+        "jobs": [
+          {
+            "id": 119680181029,
+            "name": "scope",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524235/job/119680181029",
+            "started_at": "2026-10-22T06:41:31Z",
+            "completed_at": "2026-10-22T06:41:38Z",
+            "steps": []
+          },
+          {
+            "id": 119680233769,
+            "name": "quant (ubuntu-latest)",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524235/job/119680233769",
+            "started_at": "2026-10-22T06:41:41Z",
+            "completed_at": "2026-10-22T06:43:51Z",
+            "steps": [
+              {
+                "number": 8,
+                "name": "Run uv run --no-sync ruff check .",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 9,
+                "name": "Run uv run --no-sync pytest",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 10,
+                "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 11,
+                "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 12,
+                "name": "Run node --test test/trace-reproduction-closure.test.js",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 13,
+                "name": "Run uv run --no-sync python -m robot_quant.smoke",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "id": 119680233775,
+            "name": "quant (windows-latest)",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524235/job/119680233775",
+            "started_at": "2026-10-22T06:41:41Z",
+            "completed_at": "2026-10-22T06:44:48Z",
+            "steps": [
+              {
+                "number": 8,
+                "name": "Run uv run --no-sync ruff check .",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 9,
+                "name": "Run uv run --no-sync pytest",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 10,
+                "name": "Run node --test test/pf2-cost-v2-parity.test.js",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 11,
+                "name": "Run node --test test/preflight-resolver.test.js test/preflight-replay.test.js test/fixed-eval-qr3-parity.test.js",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 12,
+                "name": "Run node --test test/trace-reproduction-closure.test.js",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "number": 13,
+                "name": "Run uv run --no-sync python -m robot_quant.smoke",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "id": 119681315785,
+            "name": "gate",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39735524235/job/119681315785",
+            "started_at": "2026-10-22T06:44:52Z",
+            "completed_at": "2026-10-22T06:44:55Z",
+            "steps": []
+          }
+        ]
+      }
+    ],
+    "conclusion": "Both required workflows and all nine jobs completed successfully on the final runner/test revision. PostgreSQL, Linux/Windows Node, container, Linux/Windows Quant and gate executed; this is not a docs-only scope result.",
+    "testCounts": "Not restated: this readback verifies workflow/job/step conclusions from the public Actions API, not raw test totals. Prior-revision counts are not reused.",
+    "limits": "No new local tests or code changes were needed for this readback. Prior private/native/target limitations remain unchanged.",
+    "independentReadbackReview": {
+      "result": "No actionable blocker in exact-revision API evidence or the five-file documentation update.",
+      "reportSha256": "3a54672c8f557ec9985ef278a317705eca53b1c243e15784a937e353e07bb2b9"
+    }
   },
   "limits": [
     "No full local Node or PostgreSQL suite rerun, as requested. The previous full-run failure record remains historical evidence.",
