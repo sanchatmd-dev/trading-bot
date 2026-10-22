@@ -1,0 +1,20 @@
+#paperPerformance { margin-top: 1rem; min-width: 0; }
+#paperPerformance .pp-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .85rem; }
+#paperPerformance label { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+#paperPerformance select, #paperPerformance input { width: 100%; min-width: 0; box-sizing: border-box; }
+#paperPerformance p { line-height: 1.6; }
+#paperPerformance .pp-notice { border-left: 3px solid #65b9d0; padding-left: .8rem; }
+#paperPerformance #ppStatus { min-height: 1.6em; }
+#paperPerformance #ppResult { overflow-wrap: anywhere; }
+#paperPerformance .pp-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: .7rem; }
+#paperPerformance .pp-metrics > div { padding: .8rem; border: 1px solid #63768c; border-radius: .45rem; }
+#paperPerformance dt { opacity: .85; }
+#paperPerformance dd { margin: .25rem 0 .75rem; }
+#paperPerformance strong { font-variant-numeric: tabular-nums; }
+#paperPerformance small { display: block; margin-top: .25rem; }
+#paperPerformance details { margin-top: 1rem; }
+#paperPerformance summary { cursor: pointer; }
+#paperPerformance details dl { padding-left: .6rem; border-left: 1px solid #63768c; }
+#paperPerformance ul { padding-left: 1.2rem; }
+#paperPerformance [hidden] { display: none; }
+@media (max-width: 520px) { #paperPerformance { padding: .85rem; } #paperPerformance .pp-controls, #paperPerformance .pp-metrics { grid-template-columns: 1fr; } }

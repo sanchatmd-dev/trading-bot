@@ -1,6 +1,6 @@
 # QR-2 S5-1 local UI scope decision
 
-Prepared on 2026-10-22 (Bangkok) against `34fabf6c46c23408bec99471b1bbc39a3ddf08c2`. Status: **proposal only; implementation is not authorized by this packet**.
+Prepared on 2026-10-22 (Bangkok) against `34fabf6c46c23408bec99471b1bbc39a3ddf08c2`. Preparation status was proposal only. The owner explicitly approved this bounded S5-1 packet on 2026-10-22; implementation, focused verification, evidence updates and periodic commit/push are now authorized. Deployment and route activation on a target remain excluded.
 
 ## Why another scope decision is needed
 
@@ -37,4 +37,4 @@ No new runtime test was run to prepare this packet. Preparation validation cover
 
 No capital-declaration PUT UI, declaration creation, Bot start/stop/reset or sizing change; no deployment, migration, route activation, target measurement, native host provisioning or VPS work. No private acceptance, source upload, TradingView operation, frozen-report persistence, QR-3 ranking or QR-4 tolerance decision. Spot/Paper only; private source remains local; READY remains false and N1 remains held. Live, guard reset and Best Inputs apply retain their explicit gates.
 
-Suggested owner decision: **GO QR-2 S5-1 local read-only UI as scoped in this packet, with focused tests, rendered synthetic evidence and periodic commit/push; all excluded effects remain held.** Until that decision, no S5-1 implementation is dispatched.
+Suggested owner decision: **GO QR-2 S5-1 local read-only UI as scoped in this packet, with focused tests, rendered synthetic evidence and periodic commit/push; all excluded effects remain held.** The owner has now given this decision. It authorizes only the bounded view and local verification described above; all excluded effects remain held.

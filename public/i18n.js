@@ -872,6 +872,31 @@ const pfrPairs=[
   ['Raw history fetch in progress.','กำลังดึงข้อมูลดิบ'],['Verified research profile ready.','profile งานวิจัยที่ยืนยันแล้วพร้อมใช้'],
   ['Research profile unavailable:','ยังใช้ profile งานวิจัยไม่ได้:'],['Raw history remains separate.','ข้อมูลดิบยังแยกเป็นอีกส่วน']
 ];
+// QR-2 fixed interface labels. Raw report data uses .no-i18n.
+uiPairs.push(
+  ['Paper account performance','ผลการดำเนินงานบัญชี Paper'],
+  ['Report scope','ขอบเขตรายงาน'],['Bot account','บัญชี Bot'],['Owner accounts · one currency','บัญชีของเจ้าของ · สกุลเงินเดียว'],
+  ['Reporting period (UTC)','ช่วงรายงาน (UTC)'],['Day (UTC)','วัน (UTC)'],['Week (Monday–Sunday, UTC)','สัปดาห์ (จันทร์–อาทิตย์ UTC)'],
+  ['Month (UTC)','เดือน (UTC)'],['Year (UTC)','ปี (UTC)'],['All Time Registered','ทั้งหมดตั้งแต่ลงทะเบียน'],['Custom (UTC)','กำหนดเอง (UTC)'],
+  ['Start date (UTC)','วันเริ่มต้น (UTC)'],['End date (UTC, inclusive)','วันสิ้นสุด (UTC รวมทั้งวัน)'],['Load / Refresh','โหลด / รีเฟรช'],
+  ['Custom dates include both calendar days in UTC. Resolved ranges use an exclusive end.','วันที่กำหนดเองรวมวันเริ่มต้นและวันสิ้นสุดตาม UTC ช่วงที่ระบบใช้จริงไม่รวมเวลาปลายช่วง'],
+  ['Actual Paper ledger history of this Bot. Fills are simulated, not exchange executions. These are engineering facts, not a profitability claim, a strategy evaluation or a recommendation.','ประวัติจริงจากบัญชีแยกประเภท Paper ของ Bot นี้ การจับคู่คำสั่งเป็นการจำลอง ไม่ใช่การซื้อขายที่ตลาด ข้อมูลนี้เป็นข้อเท็จจริงทางวิศวกรรม ไม่ใช่คำกล่าวอ้างผลกำไร การประเมินกลยุทธ์ หรือคำแนะนำ'],
+  ['Actual Paper ledger history of the selected owner accounts. Fills are simulated, not exchange executions. These are engineering facts, not a profitability claim, a strategy evaluation or a recommendation.','ประวัติจริงจากบัญชีแยกประเภท Paper ของบัญชีเจ้าของที่เลือก การจับคู่คำสั่งเป็นการจำลอง ไม่ใช่การซื้อขายที่ตลาด ข้อมูลนี้เป็นข้อเท็จจริงทางวิศวกรรม ไม่ใช่คำกล่าวอ้างผลกำไร การประเมินกลยุทธ์ หรือคำแนะนำ'],
+  ['Book equity used for sizing is a different number.','Book equity ที่ใช้กำหนดขนาดคำสั่งเป็นคนละตัวเลข'],
+  ['Book equity is not supplied by this performance endpoint.','API ผลการดำเนินงานนี้ไม่ได้ส่งค่า Book equity'],
+  ['Owner aggregates require an applicable capital-model declaration. Independent Paper accounts are not an owner portfolio. Owner TWR and MWR are unavailable.','ยอดรวมของเจ้าของต้องมีคำประกาศรูปแบบเงินทุนที่ใช้ได้ บัญชี Paper อิสระไม่ใช่พอร์ตของเจ้าของ ไม่มีค่า TWR และ MWR รวมของเจ้าของ'],
+  ['Choose a scope and press Load / Refresh.','เลือกขอบเขตแล้วกด โหลด / รีเฟรช'],['Sign in to view Paper history.','เข้าสู่ระบบเพื่อดูประวัติ Paper'],
+  ['Owned Bot list unavailable. Press Load / Refresh to retry.','ยังดูรายชื่อ Bot ของคุณไม่ได้ กด โหลด / รีเฟรช เพื่อลองใหม่'],
+  ['Select an owned Bot.','เลือก Bot ของคุณ'],['Choose valid UTC dates. End date includes the whole day.','เลือกวันที่ UTC ที่ถูกต้อง วันสิ้นสุดรวมทั้งวัน'],
+  ['Loading Paper history…','กำลังโหลดประวัติ Paper…'],['Paper performance endpoint or scope unavailable.','ยังใช้ API หรือขอบเขตผลการดำเนินงาน Paper นี้ไม่ได้'],
+  ['Request unavailable. Retry manually later.','ยังใช้คำขอนี้ไม่ได้ กดลองใหม่ภายหลัง'],['Paper performance request refused.','คำขอผลการดำเนินงาน Paper ถูกปฏิเสธ'],
+  ['Paper performance response unavailable.','ยังใช้ผลตอบกลับการดำเนินงาน Paper ไม่ได้'],['Paper performance unavailable. Retry manually.','ยังดูผลการดำเนินงาน Paper ไม่ได้ กดลองใหม่'],
+  ['Server report received.','ได้รับรายงานจากเซิร์ฟเวอร์แล้ว'],['Server status, methods and range evidence','สถานะ วิธีคำนวณ และหลักฐานช่วงเวลาจากเซิร์ฟเวอร์'],
+  ['Cash','เงินสด'],['Reserved notional','มูลค่าคำสั่งที่กันไว้'],['Reserved fees','ค่าธรรมเนียมที่กันไว้'],['Available cash','เงินสดที่ใช้ได้'],
+  ['Marked equity','Equity ตามราคาตลาด'],['Marked equity at start','Equity ตามราคาตลาด ณ ต้นช่วง'],['Marked equity at end','Equity ตามราคาตลาด ณ ปลายช่วง'],
+  ['Market value','มูลค่าตลาด'],['Position cost','ต้นทุน Position'],['Exposure','สัดส่วนการลงทุน'],['Realized PnL','กำไรขาดทุนที่รับรู้'],['Unrealized PnL','กำไรขาดทุนที่ยังไม่รับรู้'],
+  ['Fees (information only)','ค่าธรรมเนียม (เพื่อข้อมูลเท่านั้น)'],['Unbacked equity','Equity ที่ไม่มีเงินทุนรองรับ'],['Capital flows','เงินทุนเข้าออก'],['Money PnL','กำไรขาดทุนเป็นจำนวนเงิน']
+);
 uiPairs.push(...pfrPairs);for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}

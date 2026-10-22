@@ -1,0 +1,124 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-10-22",
+  "timezone": "Asia/Bangkok",
+  "baseRevision": "9f8bda07c6538f1b5d8abbe6ea5942e8b004da68",
+  "scope": "QR-2 S5-1 local read-only account performance view",
+  "ownerAuthorization": {
+    "packet": "docs/QR2_S5_1_LOCAL_UI_GO_PACKET_2026-10-22.md",
+    "decision": "Explicit owner GO on 2026-10-22, including focused tests, evidence updates and periodic commit/push; no deployment or target route activation."
+  },
+  "status": "IMPLEMENTED_TESTED_RENDER_PENDING",
+  "accepted": false,
+  "behavior": [
+    "Overview component reads existing per-Bot or owner endpoints with explicit GET submission; it adds no backend route or flag.",
+    "Owned Bot and broker, or owner and one currency, with calendar periods and inclusive custom UTC dates.",
+    "Financial decimal strings remain unrounded strings; null fields retain reasons. No browser financial arithmetic or chart.",
+    "Server status, overlays, methods, requested/resolved ranges and pending metadata remain visible. Book equity is explicitly separate and is not derived.",
+    "Owner totals require an eligible independent-account declaration; owner TWR/MWR are not displayed.",
+    "Selection changes immediately invalidate pending/completed results; HTTP errors, refusal and retry never retain prior financial results.",
+    "English/Thai fixed notices; user/API text is inserted with textContent."
+  ],
+  "sources": {
+    "public/paper-performance.js": {
+      "rawSha256": "291948b51195839e8b45ad292f9693b75c5447be96997a6e1548e87ac91f8a7c",
+      "lfSha256": "291948b51195839e8b45ad292f9693b75c5447be96997a6e1548e87ac91f8a7c"
+    },
+    "public/paper-performance.css": {
+      "rawSha256": "ec77e47e83189d2fb8314464bef0efd1d7bb3aac66b11f917ac69633513c4cac",
+      "lfSha256": "ec77e47e83189d2fb8314464bef0efd1d7bb3aac66b11f917ac69633513c4cac"
+    },
+    "public/index.html": {
+      "rawSha256": "3d7bf50e1e4fb9d083aa53d4be7031b13c592f792529f2ee9f00df323f09d8d6",
+      "lfSha256": "3838f4f05b0b8ff6fac896b968ec78a1ee5fdb9cda2320d785e3bbce97b0f0df"
+    },
+    "public/i18n.js": {
+      "rawSha256": "d2ad2388af1de0831ead1dce8f0f77706270a8bd49f3feb6558b5f7110e74f08",
+      "lfSha256": "cffee6f16f64274c78dddf82b8930bc23e7f076c40ac9ea010adbf2c4a109902"
+    },
+    "test/qr2-performance-ui.test.js": {
+      "rawSha256": "65948e30010066f3df09654ce4f0317eb12663c69186c6bef2ddde3c6a06d97d",
+      "lfSha256": "967edceaae4c655197bf4774813e15da16e978927b334ae70c228c68b473e63c"
+    },
+    "test/fixtures/qr2-performance-ui/responses.json": {
+      "rawSha256": "0bc7136d499e0fb0a3a7c4ea5f42cc54289be96a1e387849945b939ff0bb95b1",
+      "lfSha256": "0bc7136d499e0fb0a3a7c4ea5f42cc54289be96a1e387849945b939ff0bb95b1"
+    }
+  },
+  "validation": {
+    "focused": {
+      "command": "node --test test/qr2-performance-ui.test.js",
+      "tests": 11,
+      "pass": 11,
+      "fail": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "durationMs": 15898.0615
+    },
+    "sharedUi": {
+      "command": "node --test test/overview-ui.test.js test/all-bots-equity-ui.test.js test/bot-create-ui.test.js",
+      "tests": 28,
+      "pass": 28,
+      "fail": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "durationMs": 11600.5867
+    },
+    "syntax": "node --check public/paper-performance.js and public/i18n.js passed.",
+    "fixtureProvenance": "Synthetic Bot and owner bodies built from production composers; focused tests run validateResponse and validateOwnerResponse. No real account or private source.",
+    "rework": [
+      "Initial test asserted a human-readable year despite the contract supplying raw millisecond timestamps; the assertion was corrected to compare exact server ranges.",
+      "Root review removed invented book-equity reasons and required malformed/REFUSED bodies to remain without financial results.",
+      "Independent P2 review found owner numeric aggregates could pass with a non-null version but an ineligible capital model. The bounded guard fix rejects shared/changed declarations and inconsistent currency; three adversarial cases pass."
+    ],
+    "independentReview": {
+      "role": "Architecture auditor",
+      "findingsClosed": 1,
+      "remainingActionableFindings": 0,
+      "reviewedJsRawSha256": "291948b51195839e8b45ad292f9693b75c5447be96997a6e1548e87ac91f8a7c",
+      "scope": "Source mapping, GET-only/auth guards, decimal/null rendering, owner eligibility and stale-response handling; no independent browser execution."
+    }
+  },
+  "rendered": {
+    "status": "NOT RUN",
+    "reason": "cua.getState reported: Local browser use is disabled in Work settings.",
+    "required": [
+      "Desktop and mobile English/Thai views",
+      "Visual notices and reasons",
+      "No horizontal overflow",
+      "No unintended external requests"
+    ],
+    "localStub": "Ignored loopback-only harness prepared using actual candidate assets and synthetic fixtures. HTTP smoke returned 200 for the page, Bot list and Bot response. Server stopped after smoke; this is not browser/render evidence.",
+    "screenshots": 0,
+    "authenticatedTargetIntegration": "NOT RUN"
+  },
+  "artifacts": {
+    "directory": ".qa-local/qr2-s5-1",
+    "sha256": {
+      "ui-tests.log": "ec0f8d018c2a3744c53a8deb55e140496910083c65db9aea862e5f51e6117af2",
+      "shared-ui-tests.log": "43d78f775f9e8e4c193058ca1e1a4c1d1a8015203151d664016bc40077034277",
+      "tester.md": "5d98b3a06e2982290e9243379324e1ade7f008f8c8bd6d4e979c2de5f175c493",
+      "audit.md": "e120f63f77a8bb3d17bf7f40bfafbf11567b803e6efafe857152283566a18ff7",
+      "render-stub.mjs": "07096756e1029f00adc9b5e44bbfb965478cfaa1bd8c4665e3f5ddbcfde02a2c"
+    }
+  },
+  "ci": {
+    "status": "PENDING_EXACT_REVISION_PUSH",
+    "note": "Local focused counts above are measured results. Never infer test counts from job success."
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSourceLocal": true,
+    "privateAcceptance": "NOT RUN",
+    "ready": false,
+    "n1": "HELD",
+    "deployment": "NOT PERFORMED",
+    "targetRouteActivation": "NOT PERFORMED",
+    "sharedMigration": "NOT PERFORMED",
+    "hostVps": "NOT PERFORMED",
+    "live": "NOT AUTHORIZED",
+    "guardReset": "NOT AUTHORIZED",
+    "bestInputsApply": "NOT AUTHORIZED"
+  },
+  "nextAction": "Read back exact-revision CI. Complete rendered synthetic acceptance after local browser capability is enabled; S5-1 and full S5 remain unaccepted."
+}
