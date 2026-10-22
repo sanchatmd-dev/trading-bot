@@ -1,6 +1,6 @@
 # QR-2 S5-4: complete bar-gap interval reporting
 
-Status: **DESIGN QUALIFIED; PURE STAGE 1 ADMITTED; IMPLEMENTATION NOT STARTED**. The owner's continuous local Roadmap GO of 2026-10-23 authorizes this bounded continuation. Root records the decisions below after independent source qualification, BARS reuse investigation and adversarial design review. S5-3 code CI remains a separate exact-revision item. Full S5 is not accepted.
+Status: **PURE STAGE 1 ACCEPTED LOCALLY; EXACT CODE CI PENDING; LATER STAGES NOT ADMITTED**. The owner's continuous local Roadmap GO of 2026-10-23 authorizes this bounded continuation. Root records the decisions below after independent source qualification, BARS reuse investigation and adversarial design review. S5-3 code CI remains a separate exact-revision item. Full S5 is not accepted.
 
 ## Required outcome and source gap
 
@@ -65,3 +65,7 @@ Both response validators and EN/TH UI must distinguish completed inspection with
 ## Unchanged gates
 
 Spot/Paper only; private source local; private acceptance NOT RUN; READY false; N1 held. No deployment, target route activation, shared/target migration, host/VPS work, Live, guard reset, Best Inputs apply or backfill. Real authentication and target integration remain NOT RUN. No prototype completion or new numerical progress claim follows from this design.
+
+## Pure Stage 1 local outcome
+
+Root accepts only the pure foundation after 51/51 focused Node tests, 442/442 independent oracle/schema/compatibility checks and independent architecture review. The separate check counts are not additive. [Evidence](evidence/PM1_QR2_S5_4_STAGE1_LOCAL_2026-10-23.json) records source pins, raw logs and unrun integration work. The original BARS export and cap behavior remain compatible. No reader, route, worker, response or UI is wired to the new module. Exact code CI remains pending. Next is a bounded local measurement/admission packet for Stage 2; numerical budgets and DB execution still require that admission. Full S5 remains open.

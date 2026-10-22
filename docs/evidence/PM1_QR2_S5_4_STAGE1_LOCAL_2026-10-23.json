@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "scope": "QR-2 S5-4 pure Stage 1 only",
+  "status": "BOUNDED_PURE_STAGE_1_ACCEPTED_CI_PENDING",
+  "baseRevision": "9d9e30e45bfdb01c94c52574cfd1bc10a1a4a75e",
+  "packet": "docs/QR2_S5_4_GAP_INTERVAL_PACKET_2026-10-23.md",
+  "outcome": "Pure complete-candle coverage builder and closed validator, with mechanical extraction and compatibility re-export of BARS assembleGaps. Not wired into readers, responses, routes or UI.",
+  "checks": {
+    "focused": {
+      "command": "node --test --test-isolation=none test/qr2-coverage.test.js test/market-ohlcv.test.js",
+      "pass": 51,
+      "fail": 0,
+      "skipped": 0,
+      "todo": 0,
+      "durationMs": 126.7489,
+      "log": ".qa-local/qr2-s5-4-stage1/focused-tests-final.log"
+    },
+    "independent": {
+      "command": "node .qa-local/qr2-s5-4-stage1/tester/run-independent.mjs",
+      "checksPassed": 442,
+      "checksFailed": 0,
+      "counts": {
+        "valid": {
+          "pass": 271,
+          "fail": 0
+        },
+        "malformed": {
+          "pass": 29,
+          "fail": 0
+        },
+        "schema_mutations": {
+          "pass": 107,
+          "fail": 0
+        },
+        "legacy_caps": {
+          "pass": 8,
+          "fail": 0
+        },
+        "exports": {
+          "pass": 1,
+          "fail": 0
+        },
+        "extra_input_shapes": {
+          "pass": 9,
+          "fail": 0
+        },
+        "extra_schema": {
+          "pass": 16,
+          "fail": 0
+        },
+        "source_integrity": {
+          "pass": 1,
+          "fail": 0
+        }
+      },
+      "started": "2026-10-22T20:01:46.073Z",
+      "finished": "2026-10-22T20:01:46.110Z",
+      "method": "Independent BigInt boundary and missing-slot oracle; 256 occupancy patterns plus named cases, malformed/schema probes and frozen legacy cap comparisons. These checks are not added to the Node test count."
+    },
+    "architectureReview": "PASS WITH LIMITS; no actionable finding; mechanical extraction matches baseline after newline normalization",
+    "rootReview": "PASS: source, focused raw log, independent oracle results, audit and scope reviewed; accepts only the pure Stage 1 foundation",
+    "ci": {
+      "status": "PENDING",
+      "revision": null,
+      "testCounts": "Not inferred from CI job or step success"
+    },
+    "database": "NOT RUN",
+    "sourceCompleteness": "NOT PROVEN",
+    "costQualification": "NOT RUN",
+    "ownerIntegration": "NOT RUN",
+    "responsePublication": "NOT RUN",
+    "browser": "NOT RUN",
+    "fullS5": "OPEN"
+  },
+  "limits": [
+    "COMPLETE is a reader-certified fact; pure fixtures do not prove a completed database read.",
+    "No numerical coverage resource budget is admitted or measured. Derived helper capacity prevents legacy truncation only.",
+    "Full feature still requires bounded account and owner reads, measured aggregate costs, response validation and synthetic EN/TH rendering."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT RUN",
+    "ready": false,
+    "n1": "HELD",
+    "deployment": "NOT RUN",
+    "targetRouteActivation": "NOT RUN",
+    "migrations": "NOT RUN",
+    "hostVps": "NOT RUN",
+    "live": "HELD",
+    "guardReset": "HELD",
+    "bestInputsApply": "HELD"
+  },
+  "sourcePins": [
+    {
+      "path": "src/market-gap-intervals.js",
+      "sha256": "6db5aa235646e4363fa5481aead24602523c58c20de0a3b0fa1e095d3e953967"
+    },
+    {
+      "path": "src/postgres/market-ohlcv.js",
+      "sha256": "a8c821b4fe422ac76c140d6fe41caba22cd31a734cdd76997ef5f74b8df24e2d"
+    },
+    {
+      "path": "src/portfolio/qr2-coverage.js",
+      "sha256": "922d776e9c922eba0d4c192a670a48c1023ee335e972a61322fa87f4c9c00387"
+    },
+    {
+      "path": "test/qr2-coverage.test.js",
+      "sha256": "2528bfb67f7f59d7c66084ba0791c9c20767dd5d6d2124f432aaebea715647d2"
+    },
+    {
+      "path": "test/market-ohlcv.test.js",
+      "sha256": "566912e325f839991390c2acb41c908e4d45e3b4af1d2828fda8cb97f284a092"
+    }
+  ],
+  "artifactPins": [
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/coder-report.md",
+      "sha256": "4c302d455d4dc95ded012f3ec9154a5570b4546980dc574d11d6093b038893e7"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/focused-tests-final.log",
+      "sha256": "a13453bc474dfc6150b9cbef5246efd0496d98afd17a5e54ff9879a673d76c38"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/audit.md",
+      "sha256": "04f3ebf6bf6e5ebafbcf7a3b8945393fb82ac79da2e015349960b1274b774863"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/tester/oracle-cases.mjs",
+      "sha256": "0b779ec94c679bfb676e6f9c5ce1e37d1f93b6419f47a82f7279847755125fd9"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/tester/run-independent.mjs",
+      "sha256": "ad1ed22c94ea56fe263eceffaaf1f30e136f6c22db8bed2d521bdee0f74d92a7"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/tester/results.json",
+      "sha256": "76486cd21f0783e59faf387b81961b501b345f7e75664f184209b4bb918c3a54"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/tester/raw.log",
+      "sha256": "c3dab8aa77906bdb0727ea164ad9428e9cb70181f464379df34df354fa381acd"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/tester/verification.md",
+      "sha256": "a90458994f9a7832f0810fb443a7edacd3a330336d080ccbe6aa22146626ba12"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/tester/source-pins-before.json",
+      "sha256": "f0460406ebc137a2f1f12154db1711eebd35de1600e7e2dd12cc41da1aae2d4d"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-stage1/tester/source-pins-after.json",
+      "sha256": "f0460406ebc137a2f1f12154db1711eebd35de1600e7e2dd12cc41da1aae2d4d"
+    }
+  ],
+  "hashConvention": "SHA-256 raw local file bytes before Git line-ending normalization"
+}

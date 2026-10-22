@@ -667,3 +667,18 @@ test('PF-3 service: configuration, application failures and platform errors',asy
   assert.equal(rethrown,sqlstate);
 });
 });
+
+// Mechanical extraction retains the chart-facing export and its inclusive endpoints/caps.
+test('shared assembleGaps extraction preserves legacy default and explicit truncation',async()=>{
+  const {assembleGaps:shared,GAP_RANGE_CAP:sharedCap}=await import('../src/market-gap-intervals.js');
+  assert.equal(shared,assembleGaps);assert.equal(sharedCap,GAP_RANGE_CAP);
+  const minute=60000,internal=Array.from({length:60},(_,i)=>({prev:(2*i+1)*minute,bar_time:(2*i+3)*minute}));
+  const input={lower:0,end:122*minute,n:61,first:minute,last:121*minute,internal,internalTotal:60};
+  const defaultResult=assembleGaps(input);
+  assert.equal(defaultResult.count,61);assert.equal(defaultResult.ranges.length,50);assert.equal(defaultResult.truncated,true);
+  assert.deepEqual(defaultResult.ranges[0],{from_open_time:60000,to_open_time:60000,missing_minutes:1});
+  assert.equal(assembleGaps(input,2).ranges.length,2);assert.equal(assembleGaps(input,2).truncated,true);
+  const all=assembleGaps(input,62);assert.equal(all.ranges.length,61);assert.equal(all.truncated,false);
+  assert.deepEqual(all.ranges[60],{from_open_time:7260000,to_open_time:7260000,missing_minutes:1});
+  assert.deepEqual(assembleGaps({lower:0,end:minute,n:0,first:null,last:null}),{count:1,missing_minutes:1,ranges:[{from_open_time:0,to_open_time:0,missing_minutes:1}],truncated:false});
+});
