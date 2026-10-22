@@ -390,11 +390,19 @@
     ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-test-fixed.json": "6c0a6e26544cb812055273afd3209baa61fcadba438570bfa4cfb3d79e0425c7",
     ".qa-local/qr2-s5-4-stage2c/c3-qualified-diagnostic-fix-review.md": "0ecf84c018a1c61b7d76b44c0eca04ce24c5647df5f4514af71f4e3ddc6b2219",
     ".qa-local/qr2-s5-4-stage2c/p10-documentation-ci-verified.json": "f92e9880f4994c6d4f756446b94660470d3364a7e53a73de2f1bc7c77fb55d47",
-    ".qa-local/qr2-s5-3/ci-observed-cf01bf318cd3d05732c8a2829a74e753594ad794.json": "58e787098619affdc92eb1da72af93c6335f541ba653b2ec45bbfd517ca9758d"
+    ".qa-local/qr2-s5-3/ci-observed-cf01bf318cd3d05732c8a2829a74e753594ad794.json": "58e787098619affdc92eb1da72af93c6335f541ba653b2ec45bbfd517ca9758d",
+    ".qa-local/qr2-s5-4-stage2c/c3-composed-lifecycle-review.md": "cf22b02a8a813c9a5bba2696d8172e3227e80e559d3b318038bc06acbeb068d7",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload.mjs": "244c428c4f2b2dd558daf06783008da936d5e16ac546fbaab2d0fba733a7d871",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload-author.md": "5ec62147d8526f36f43cdbed109bb47307ddfc706179e4c49ec5c30ee71e3fcd",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload-source-review.md": "19800eff03fe7d4d53acd67c3782568bbc6e9bea231c1db9a119bc426939120d",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload-refusal-test.mjs": "3d74a72a4d316289c3b8ee653e820826a866f3831c19b5901d2e2bffa07240ba",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload-refusal-test.json": "1a1b39e1f25b5810083103186c595e1f280a06808518ad8c7101affda0d7f45b",
+    ".qa-local/qr2-s5-4-stage2c/p11-documentation-ci-verified.json": "ceb0614a9ebeac362a7279eac068798eeaca1b447a74d411461548909a70970a",
+    ".qa-local/qr2-s5-3/ci-observed-e3159e60889e7a740610066d84948beea45243bf.json": "1a5f8e4462fefc8ddcf120dda7d88043347c3b5344fd1489f2cb468b63f35182"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-22T23:42:28.147Z",
+  "recordedAt": "2026-10-22T23:52:09.078Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -632,10 +640,10 @@
       },
       "runtimeAdmitted": false,
       "remaining": [
-        "Independent lifecycle/resource/source-closure review for the composed two-job diagnostic",
-        "Finite setup/SQL/helper/retained-memory/replay/process/whole-run budgets and monotonic supervisor",
-        "Actual pinned adapter wiring, coherent snapshot/chronology and other member gate qualification",
-        "Complete runtime manifest, refreshed headroom and separate diagnostic admission",
+        "Fixed diagnostic parent runner/supervisor with terminal cancellation, durable stage evidence and independent cleanup inventory",
+        "Exhaustive source/resource/installed-dependency manifest and independent lifecycle review",
+        "Actual memory/replay-cost evidence, coherent chronology and other member gate qualification",
+        "Fresh resources and separate two-job diagnostic runtime admission",
         "Independent client/HTTP and monitoring tests before the separately admitted performance matrix"
       ],
       "independentCheckpointReview": {
@@ -815,6 +823,46 @@
           "Post-return abort/deadline checks cannot preempt synchronous replay.",
           "Actual adapter/source pinning, retained-memory/replay-cost budgets, coherent snapshots, other member gates and lifecycle admission remain open."
         ]
+      },
+      "composedLifecycleReview": {
+        "status": "SOURCE_REVIEW_ONLY_RUNTIME_NOT_ADMITTED",
+        "report": ".qa-local/qr2-s5-4-stage2c/c3-composed-lifecycle-review.md",
+        "workloadFacts": {
+          "fundingProducerOperations": 19,
+          "bookProducerOperations": 1320,
+          "totalProducerOperations": 1339,
+          "barInsertStatements": 20000,
+          "registrationUpdates": 5
+        },
+        "limits": "Producer operations are not SQL statement counts. Helper-internal SQL, migrations, verification and digests add work. Manifest entrypoints/non-import dependencies are identified but exhaustive closure is not certified.",
+        "next": "Implement a separate fixed parent runner/supervisor, source manifest and independent cleanup inventory; do not repurpose the frozen 21-test harness."
+      },
+      "workloadEntrypoint": {
+        "status": "SOURCE_REVIEW_AND_FOUR_REFUSAL_CHECKS_PASS_HAPPY_PATH_NOT_RUN",
+        "module": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload.mjs",
+        "sourceSha256": "244c428c4f2b2dd558daf06783008da936d5e16ac546fbaab2d0fba733a7d871",
+        "author": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload-author.md",
+        "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload-source-review.md",
+        "refusalArtifact": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload-refusal-test.json",
+        "refusalGroups": 4,
+        "scope": "Fixed one-fixture/one-seed/one-qualified-diagnostic body, deferred real imports after admission and manifest receipt; unchanged default pool, exactly two completed jobs and six R3c receipts required before local persistence.",
+        "provisionalRefusalBudgets": {
+          "sharedWorkMs": 300000,
+          "initializationMs": 30000,
+          "seedMs": 180000,
+          "diagnosticAndGatesAndPersistenceMs": 90000,
+          "helperMs": 10000,
+          "sqlStatementMs": 5000,
+          "naturalWaitMs": 100,
+          "resultBytes": 16777216
+        },
+        "limits": [
+          "Budgets are unmeasured provisional ceilings, not runtime admission or completion estimates.",
+          "Parent callbacks for manifest qualification, terminal cancellation, durable evidence and bounded persistence are not implemented by this body.",
+          "Refusal checks did not import product modules or run an admitted happy path, PostgreSQL, seed, pool or replay.",
+          "Helper dispose suppresses errors, so cleanup remains UNKNOWN until independent parent database/session and cluster verification.",
+          "Other member gates and performance remain PENDING."
+        ]
       }
     }
   },
@@ -866,24 +914,24 @@
     "originalFindingPreserved": true
   },
   "preparationCheckpointCI": {
-    "revision": "cf01bf318cd3d05732c8a2829a74e753594ad794",
+    "revision": "e3159e60889e7a740610066d84948beea45243bf",
     "status": "SCOPE_ONLY_PASS",
     "runs": [
       {
-        "id": 39872817377,
+        "id": 39873572624,
         "name": "Safety checks",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39872817377"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39873572624"
       },
       {
-        "id": 39872817384,
+        "id": 39873572685,
         "name": "Quant Lab",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39872817384"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39873572685"
       }
     ],
     "actualScopeSteps": 2,
     "actualGateSteps": 1,
     "skippedRuntimeJobs": 4,
     "newRuntimeTests": 0,
-    "artifact": ".qa-local/qr2-s5-4-stage2c/p10-documentation-ci-verified.json"
+    "artifact": ".qa-local/qr2-s5-4-stage2c/p11-documentation-ci-verified.json"
   }
 }

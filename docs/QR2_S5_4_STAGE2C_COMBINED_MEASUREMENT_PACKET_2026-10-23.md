@@ -70,6 +70,14 @@ The wrapper passed 20/20 revised seam groups after the initial 15/18 result. The
 
 The wrapper captures each original reader object once, forwards existing adapters and the default pool factory unchanged, and verifies gates after diagnostic return, outside measurement. Seed runId/clock/registration binding and before/after content pins reject tested drift, including undefined-property changes. Failure facts remain bounded; the original cause stays available. Abort/deadline checks bracket synchronous verification but cannot preempt it. Clearing local references is not measured memory release. Independent composed lifecycle/resource/source-closure review and finite supervision precede any runtime admission.
 
+### P12/P13a lifecycle and workload preparation
+
+Independent source review identified 1339 producer operations plus 20000 individual bar INSERT statements; helper-internal queries, migrations, observations and verification add SQL. The seven preparation modules and known runtime/non-import dependencies are identified, but complete source closure remains uncertified. The existing 21-test runner/supervisor supplies reuse patterns only and remains frozen for its original workload.
+
+A separate fixed workload body now binds the actual fixture, readers, production validators, default pool and pure gate exports through deferred imports after explicit parent admission/manifest qualification. Source review passed with limits, and four refusal-only checks passed without product imports. No admitted happy path or real database ran. Provisional ceilings are shared work 300 seconds, initialization 30, seed 180 and diagnostic/gates/persistence 90, with helpers at most 10 seconds and SQL statements 5 seconds. They are unmeasured refusal ceilings; remaining whole-work time is always tighter. No timeout may permit writes to continue into another phase.
+
+The parent runner/supervisor, exhaustive source/dependency manifest, durable persistence, terminal cancellation and independent cleanup inventory remain required. Helper disposal suppresses close/DROP errors, so its return is not cleanup proof. An R3c receipt alone does not close other member financial gates. No runtime admission, performance matrix or fixture acceptance follows from these preparation checks.
+
 ## Open work
 
 Coverage byte accounting and the financial row/value recipe are analytically qualified within the limits above. Runtime-compatible clock integration, actual producer counts and financial gates, independent client/HTTP implementation, monitoring-boundary tests, finite setup budget and final lifecycle source review remain open. Diagnostic and full measurement are NOT RUN. The separate financial differential CI is accepted only within its named assertion scope. Production cap selection, Stage 3 publication/rendering, full S5 and prototype completion remain OPEN.
