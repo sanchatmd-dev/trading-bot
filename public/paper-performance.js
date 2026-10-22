@@ -93,7 +93,11 @@
     const list = document.createElement('dl');
     for (const [key, item] of Object.entries(value)) {
       const row = document.createElement('div'), term = raw(key, 'dt'), description = document.createElement('dd');
-      description.append(serverValue(item)); row.append(term, description); list.append(row);
+      description.append(serverValue(item));
+      if (key === 'price_retrieval' && item === 'RETRIEVED_AFTER_INSTANT') {
+        description.append(document.createTextNode(' · '), label('Price recorded later.'));
+      }
+      row.append(term, description); list.append(row);
     }
     return list;
   }

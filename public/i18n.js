@@ -874,6 +874,7 @@ const pfrPairs=[
 ];
 // QR-2 fixed interface labels. Raw report data uses .no-i18n.
 uiPairs.push(
+  ['Price recorded later.','ราคาถูกบันทึกภายหลัง'],
   ['Paper account performance','ผลการดำเนินงานบัญชี Paper'],
   ['Report Bot','Bot ที่ใช้ในรายงาน'],['Report scope','ขอบเขตรายงาน'],['Bot account','บัญชี Bot'],['Owner accounts · one currency','บัญชีของเจ้าของ · สกุลเงินเดียว'],
   ['Reporting period (UTC)','ช่วงรายงาน (UTC)'],['Day (UTC)','วัน (UTC)'],['Week (Monday–Sunday, UTC)','สัปดาห์ (จันทร์–อาทิตย์ UTC)'],

@@ -1,0 +1,1220 @@
+{
+  "fresh": {
+    "valuation_method": "btcusdt-1m-close-asof-market-v1",
+    "return_method": {
+      "twr": "twr-flow-split-v1",
+      "mwr": "mwr-modified-dietz-v1",
+      "money_pnl": "money-pnl-flow-v1"
+    },
+    "lot_method": {
+      "E0": "ledger-stored-lots-target-fifo-fallback-v1",
+      "E1": "paper-exit-cost-o3-v1",
+      "E2": "paper-exit-cost-v2"
+    },
+    "legacy_method": "legacy-two-seed-v1",
+    "order_method": "commit-order-snapshot-id-v1",
+    "period_method": "utc-exclusive-isoweek-v1",
+    "drawdown_grid": "qr2-grid-daily-events-v1",
+    "rounding": {
+      "market_value": "market-value-18-half-even",
+      "return": "return-12-half-even"
+    },
+    "price_policy": {
+      "fresh_ms": 180000,
+      "carry_ms": 900000
+    },
+    "contract_id": "QR2_PAPER_PERFORMANCE_CONTRACT_V1",
+    "declaration_version": null,
+    "ledger_rule_epochs": [
+      "E2"
+    ],
+    "lot_epochs": [
+      "paper-exit-cost-v2"
+    ],
+    "fee_source": "RECORDED_ONLY",
+    "alloc_method": "qr2-alloc-v1",
+    "range_flags": [],
+    "basis": "ACTUAL_PAPER_LEDGER",
+    "execution": "PAPER_SIMULATED_FILLS",
+    "historical_simulation": false,
+    "qualified_evidence": false,
+    "fx": "NONE",
+    "event_time_basis": "LEDGER_WRITE_TIME",
+    "requested_range": {
+      "from": 1790812860000,
+      "to": 1790813040000
+    },
+    "resolved_range": {
+      "from": 1790812860000,
+      "to": 1790813040000
+    },
+    "as_of": 1790816400000,
+    "first_funding_at": 1790812800000,
+    "currency": "USDT",
+    "status": {
+      "status": "COMPLETE",
+      "overlays": [],
+      "reasons": []
+    },
+    "scope": {
+      "bot_id": "bot-1",
+      "broker": "binance-global",
+      "account_id": "binance-global:primary"
+    },
+    "account": {
+      "cash": {
+        "value": "640",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "reserved_notional": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "reserved_fees": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "available_cash": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "nav": {
+        "value": "1012.000740740734",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "market_value": {
+        "value": "372.000740740734",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "position_cost": {
+        "value": "360",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "exposure": {
+        "value": "0.367589395704",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "realized_pnl": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "unrealized_pnl": {
+        "value": "12.000740740734",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "fees": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "unbacked_equity": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "flows_total": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "money_pnl": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "twr": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "mwr": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "max_drawdown": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      }
+    },
+    "exposure_basis": "MARKET_VALUE_OVER_NAV",
+    "flows_count": 0,
+    "symbols": [
+      {
+        "symbol": "BTCUSDT",
+        "quantity": {
+          "value": "0.006",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "unlotted_quantity": {
+          "value": "0.006",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "cost_basis": {
+          "value": "360",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "price": {
+          "value": "62000.123456789",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "price_state": "FRESH",
+        "price_age_ms": 180000,
+        "price_bar_time": 1790812860000,
+        "price_retrieval": "RETRIEVED_AFTER_INSTANT",
+        "market_value": {
+          "value": "372.000740740734",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "unrealized_pnl": {
+          "value": "12.000740740734",
+          "status": "COMPLETE",
+          "reasons": []
+        }
+      }
+    ],
+    "reconciliation": {
+      "state": "OK",
+      "failed_from": null,
+      "failed_whole_account": false,
+      "ledger_invariant_violated": false,
+      "first_failure": null
+    },
+    "legacy_seeds": {
+      "method": "legacy-two-seed-v1",
+      "s_cash": 1790812800000,
+      "s_cost": 1790812800000,
+      "nav_from": 1790812800000,
+      "has_m1": false,
+      "has_m2": false,
+      "m1_count": 0,
+      "m2_count": 0,
+      "last_m1_time": null
+    },
+    "marker_counts": {
+      "AGREES": 0,
+      "DISAGREES": 0,
+      "ABSENT": 1
+    },
+    "findings": {
+      "total": 0,
+      "capped": false,
+      "items": []
+    },
+    "information_count": 0,
+    "attribution_counts": {
+      "BRIDGE": 0,
+      "WEBHOOK": 0,
+      "ATTRIBUTION_UNKNOWN": 1
+    },
+    "slippage_counts": {
+      "SLIPPAGE_UNKNOWN": 1,
+      "MODELED_SLIPPAGE_ALREADY_INCLUDED": 0
+    },
+    "audit_findings": {
+      "count": 0,
+      "unparseable": 0,
+      "expected_missing": 0
+    },
+    "pending": {
+      "count": 0,
+      "codes": [],
+      "uncertain": false
+    },
+    "analytics_comparison": {
+      "code": null,
+      "targeted_exits": 0
+    },
+    "market_data": {
+      "checked": true,
+      "table_present": true,
+      "instants": 2,
+      "bars": 1,
+      "gap": null
+    },
+    "cutoffs": {
+      "funding_count": 1,
+      "snapshot_count": 0,
+      "fill_count": 1,
+      "lot_count": 0,
+      "last_fill": {
+        "received_at": 1790812800001,
+        "cumulative_quantity": "0.006"
+      },
+      "market_data_cutoff": 1790812860000
+    },
+    "reader": {
+      "method": "qr2-reader-v1",
+      "limits": {
+        "ledger_rows": 5000,
+        "grid_instants": 5000,
+        "audit_rows": 2000,
+        "pending_orders": 1000
+      },
+      "counts": {
+        "fundings": 1,
+        "journal": 1,
+        "fills": 1,
+        "lots": 0,
+        "snapshots": 0,
+        "total": 3
+      },
+      "read_ms": 13,
+      "compute_ms": 3
+    },
+    "notice_ids": [
+      "QR2_NOTICE_ACTUAL_PAPER",
+      "QR2_NOTICE_BOOK_EQUITY"
+    ]
+  },
+  "stale": {
+    "valuation_method": "btcusdt-1m-close-asof-market-v1",
+    "return_method": {
+      "twr": "twr-flow-split-v1",
+      "mwr": "mwr-modified-dietz-v1",
+      "money_pnl": "money-pnl-flow-v1"
+    },
+    "lot_method": {
+      "E0": "ledger-stored-lots-target-fifo-fallback-v1",
+      "E1": "paper-exit-cost-o3-v1",
+      "E2": "paper-exit-cost-v2"
+    },
+    "legacy_method": "legacy-two-seed-v1",
+    "order_method": "commit-order-snapshot-id-v1",
+    "period_method": "utc-exclusive-isoweek-v1",
+    "drawdown_grid": "qr2-grid-daily-events-v1",
+    "rounding": {
+      "market_value": "market-value-18-half-even",
+      "return": "return-12-half-even"
+    },
+    "price_policy": {
+      "fresh_ms": 180000,
+      "carry_ms": 900000
+    },
+    "contract_id": "QR2_PAPER_PERFORMANCE_CONTRACT_V1",
+    "declaration_version": null,
+    "ledger_rule_epochs": [
+      "E2"
+    ],
+    "lot_epochs": [
+      "paper-exit-cost-v2"
+    ],
+    "fee_source": "RECORDED_ONLY",
+    "alloc_method": "qr2-alloc-v1",
+    "range_flags": [],
+    "basis": "ACTUAL_PAPER_LEDGER",
+    "execution": "PAPER_SIMULATED_FILLS",
+    "historical_simulation": false,
+    "qualified_evidence": false,
+    "fx": "NONE",
+    "event_time_basis": "LEDGER_WRITE_TIME",
+    "requested_range": {
+      "from": 1790812860000,
+      "to": 1790813760000
+    },
+    "resolved_range": {
+      "from": 1790812860000,
+      "to": 1790813760000
+    },
+    "as_of": 1790816400000,
+    "first_funding_at": 1790812800000,
+    "currency": "USDT",
+    "status": {
+      "status": "COMPLETE",
+      "overlays": [],
+      "reasons": []
+    },
+    "scope": {
+      "bot_id": "bot-1",
+      "broker": "binance-global",
+      "account_id": "binance-global:primary"
+    },
+    "account": {
+      "cash": {
+        "value": "640",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "reserved_notional": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "reserved_fees": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "available_cash": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "nav": {
+        "value": "1012.000740740734",
+        "status": "COMPLETE",
+        "reasons": [
+          "PRICE_STALE"
+        ]
+      },
+      "market_value": {
+        "value": "372.000740740734",
+        "status": "COMPLETE",
+        "reasons": [
+          "PRICE_STALE"
+        ]
+      },
+      "position_cost": {
+        "value": "360",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "exposure": {
+        "value": "0.367589395704",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "realized_pnl": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "unrealized_pnl": {
+        "value": "12.000740740734",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "fees": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "unbacked_equity": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "flows_total": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "money_pnl": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": [
+          "PRICE_STALE"
+        ]
+      },
+      "twr": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "mwr": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "max_drawdown": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      }
+    },
+    "exposure_basis": "MARKET_VALUE_OVER_NAV",
+    "flows_count": 0,
+    "symbols": [
+      {
+        "symbol": "BTCUSDT",
+        "quantity": {
+          "value": "0.006",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "unlotted_quantity": {
+          "value": "0.006",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "cost_basis": {
+          "value": "360",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "price": {
+          "value": "62000.123456789",
+          "status": "COMPLETE",
+          "reasons": [
+            "PRICE_STALE"
+          ]
+        },
+        "price_state": "STALE",
+        "price_age_ms": 900000,
+        "price_bar_time": 1790812860000,
+        "price_retrieval": "RETRIEVED_AFTER_INSTANT",
+        "market_value": {
+          "value": "372.000740740734",
+          "status": "COMPLETE",
+          "reasons": [
+            "PRICE_STALE"
+          ]
+        },
+        "unrealized_pnl": {
+          "value": "12.000740740734",
+          "status": "COMPLETE",
+          "reasons": []
+        }
+      }
+    ],
+    "reconciliation": {
+      "state": "OK",
+      "failed_from": null,
+      "failed_whole_account": false,
+      "ledger_invariant_violated": false,
+      "first_failure": null
+    },
+    "legacy_seeds": {
+      "method": "legacy-two-seed-v1",
+      "s_cash": 1790812800000,
+      "s_cost": 1790812800000,
+      "nav_from": 1790812800000,
+      "has_m1": false,
+      "has_m2": false,
+      "m1_count": 0,
+      "m2_count": 0,
+      "last_m1_time": null
+    },
+    "marker_counts": {
+      "AGREES": 0,
+      "DISAGREES": 0,
+      "ABSENT": 1
+    },
+    "findings": {
+      "total": 0,
+      "capped": false,
+      "items": []
+    },
+    "information_count": 0,
+    "attribution_counts": {
+      "BRIDGE": 0,
+      "WEBHOOK": 0,
+      "ATTRIBUTION_UNKNOWN": 1
+    },
+    "slippage_counts": {
+      "SLIPPAGE_UNKNOWN": 1,
+      "MODELED_SLIPPAGE_ALREADY_INCLUDED": 0
+    },
+    "audit_findings": {
+      "count": 0,
+      "unparseable": 0,
+      "expected_missing": 0
+    },
+    "pending": {
+      "count": 0,
+      "codes": [],
+      "uncertain": false
+    },
+    "analytics_comparison": {
+      "code": null,
+      "targeted_exits": 0
+    },
+    "market_data": {
+      "checked": true,
+      "table_present": true,
+      "instants": 2,
+      "bars": 1,
+      "gap": null
+    },
+    "cutoffs": {
+      "funding_count": 1,
+      "snapshot_count": 0,
+      "fill_count": 1,
+      "lot_count": 0,
+      "last_fill": {
+        "received_at": 1790812800001,
+        "cumulative_quantity": "0.006"
+      },
+      "market_data_cutoff": 1790812860000
+    },
+    "reader": {
+      "method": "qr2-reader-v1",
+      "limits": {
+        "ledger_rows": 5000,
+        "grid_instants": 5000,
+        "audit_rows": 2000,
+        "pending_orders": 1000
+      },
+      "counts": {
+        "fundings": 1,
+        "journal": 1,
+        "fills": 1,
+        "lots": 0,
+        "snapshots": 0,
+        "total": 3
+      },
+      "read_ms": 13,
+      "compute_ms": 3
+    },
+    "notice_ids": [
+      "QR2_NOTICE_ACTUAL_PAPER",
+      "QR2_NOTICE_BOOK_EQUITY"
+    ]
+  },
+  "unavailableOld": {
+    "valuation_method": "btcusdt-1m-close-asof-market-v1",
+    "return_method": {
+      "twr": "twr-flow-split-v1",
+      "mwr": "mwr-modified-dietz-v1",
+      "money_pnl": "money-pnl-flow-v1"
+    },
+    "lot_method": {
+      "E0": "ledger-stored-lots-target-fifo-fallback-v1",
+      "E1": "paper-exit-cost-o3-v1",
+      "E2": "paper-exit-cost-v2"
+    },
+    "legacy_method": "legacy-two-seed-v1",
+    "order_method": "commit-order-snapshot-id-v1",
+    "period_method": "utc-exclusive-isoweek-v1",
+    "drawdown_grid": "qr2-grid-daily-events-v1",
+    "rounding": {
+      "market_value": "market-value-18-half-even",
+      "return": "return-12-half-even"
+    },
+    "price_policy": {
+      "fresh_ms": 180000,
+      "carry_ms": 900000
+    },
+    "contract_id": "QR2_PAPER_PERFORMANCE_CONTRACT_V1",
+    "declaration_version": null,
+    "ledger_rule_epochs": [
+      "E2"
+    ],
+    "lot_epochs": [
+      "paper-exit-cost-v2"
+    ],
+    "fee_source": "RECORDED_ONLY",
+    "alloc_method": "qr2-alloc-v1",
+    "range_flags": [],
+    "basis": "ACTUAL_PAPER_LEDGER",
+    "execution": "PAPER_SIMULATED_FILLS",
+    "historical_simulation": false,
+    "qualified_evidence": false,
+    "fx": "NONE",
+    "event_time_basis": "LEDGER_WRITE_TIME",
+    "requested_range": {
+      "from": 1790812860000,
+      "to": 1790813760001
+    },
+    "resolved_range": {
+      "from": 1790812860000,
+      "to": 1790813760001
+    },
+    "as_of": 1790816400000,
+    "first_funding_at": 1790812800000,
+    "currency": "USDT",
+    "status": {
+      "status": "PARTIAL",
+      "overlays": [],
+      "reasons": [
+        "UNAVAILABLE",
+        "TWR_BOUNDARY_UNVALUED",
+        "DRAWDOWN_GRID_UNVALUED"
+      ]
+    },
+    "scope": {
+      "bot_id": "bot-1",
+      "broker": "binance-global",
+      "account_id": "binance-global:primary"
+    },
+    "account": {
+      "cash": {
+        "value": "640",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "reserved_notional": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "reserved_fees": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "available_cash": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "nav": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "UNAVAILABLE"
+        ]
+      },
+      "market_value": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "UNAVAILABLE"
+        ]
+      },
+      "position_cost": {
+        "value": "360",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "exposure": {
+        "value": "0.36",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "realized_pnl": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "unrealized_pnl": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "UNAVAILABLE"
+        ]
+      },
+      "fees": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "unbacked_equity": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "flows_total": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "money_pnl": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "UNAVAILABLE"
+        ]
+      },
+      "twr": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "TWR_BOUNDARY_UNVALUED",
+          "UNAVAILABLE"
+        ]
+      },
+      "mwr": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "UNAVAILABLE"
+        ]
+      },
+      "max_drawdown": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "DRAWDOWN_GRID_UNVALUED"
+        ]
+      }
+    },
+    "exposure_basis": "EXPOSURE_AT_COST",
+    "flows_count": 0,
+    "symbols": [
+      {
+        "symbol": "BTCUSDT",
+        "quantity": {
+          "value": "0.006",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "unlotted_quantity": {
+          "value": "0.006",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "cost_basis": {
+          "value": "360",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "price": {
+          "value": null,
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "UNAVAILABLE"
+          ]
+        },
+        "price_state": "UNAVAILABLE",
+        "price_age_ms": 900001,
+        "price_bar_time": 1790812860000,
+        "price_retrieval": null,
+        "market_value": {
+          "value": null,
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "UNAVAILABLE"
+          ]
+        },
+        "unrealized_pnl": {
+          "value": null,
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "UNAVAILABLE"
+          ]
+        }
+      }
+    ],
+    "reconciliation": {
+      "state": "OK",
+      "failed_from": null,
+      "failed_whole_account": false,
+      "ledger_invariant_violated": false,
+      "first_failure": null
+    },
+    "legacy_seeds": {
+      "method": "legacy-two-seed-v1",
+      "s_cash": 1790812800000,
+      "s_cost": 1790812800000,
+      "nav_from": 1790812800000,
+      "has_m1": false,
+      "has_m2": false,
+      "m1_count": 0,
+      "m2_count": 0,
+      "last_m1_time": null
+    },
+    "marker_counts": {
+      "AGREES": 0,
+      "DISAGREES": 0,
+      "ABSENT": 1
+    },
+    "findings": {
+      "total": 0,
+      "capped": false,
+      "items": []
+    },
+    "information_count": 0,
+    "attribution_counts": {
+      "BRIDGE": 0,
+      "WEBHOOK": 0,
+      "ATTRIBUTION_UNKNOWN": 1
+    },
+    "slippage_counts": {
+      "SLIPPAGE_UNKNOWN": 1,
+      "MODELED_SLIPPAGE_ALREADY_INCLUDED": 0
+    },
+    "audit_findings": {
+      "count": 0,
+      "unparseable": 0,
+      "expected_missing": 0
+    },
+    "pending": {
+      "count": 0,
+      "codes": [],
+      "uncertain": false
+    },
+    "analytics_comparison": {
+      "code": null,
+      "targeted_exits": 0
+    },
+    "market_data": {
+      "checked": true,
+      "table_present": true,
+      "instants": 2,
+      "bars": 1,
+      "gap": null
+    },
+    "cutoffs": {
+      "funding_count": 1,
+      "snapshot_count": 0,
+      "fill_count": 1,
+      "lot_count": 0,
+      "last_fill": {
+        "received_at": 1790812800001,
+        "cumulative_quantity": "0.006"
+      },
+      "market_data_cutoff": 1790812860000
+    },
+    "reader": {
+      "method": "qr2-reader-v1",
+      "limits": {
+        "ledger_rows": 5000,
+        "grid_instants": 5000,
+        "audit_rows": 2000,
+        "pending_orders": 1000
+      },
+      "counts": {
+        "fundings": 1,
+        "journal": 1,
+        "fills": 1,
+        "lots": 0,
+        "snapshots": 0,
+        "total": 3
+      },
+      "read_ms": 13,
+      "compute_ms": 3
+    },
+    "notice_ids": [
+      "QR2_NOTICE_ACTUAL_PAPER",
+      "QR2_NOTICE_BOOK_EQUITY"
+    ]
+  },
+  "unavailableGap": {
+    "valuation_method": "btcusdt-1m-close-asof-market-v1",
+    "return_method": {
+      "twr": "twr-flow-split-v1",
+      "mwr": "mwr-modified-dietz-v1",
+      "money_pnl": "money-pnl-flow-v1"
+    },
+    "lot_method": {
+      "E0": "ledger-stored-lots-target-fifo-fallback-v1",
+      "E1": "paper-exit-cost-o3-v1",
+      "E2": "paper-exit-cost-v2"
+    },
+    "legacy_method": "legacy-two-seed-v1",
+    "order_method": "commit-order-snapshot-id-v1",
+    "period_method": "utc-exclusive-isoweek-v1",
+    "drawdown_grid": "qr2-grid-daily-events-v1",
+    "rounding": {
+      "market_value": "market-value-18-half-even",
+      "return": "return-12-half-even"
+    },
+    "price_policy": {
+      "fresh_ms": 180000,
+      "carry_ms": 900000
+    },
+    "contract_id": "QR2_PAPER_PERFORMANCE_CONTRACT_V1",
+    "declaration_version": null,
+    "ledger_rule_epochs": [
+      "E2"
+    ],
+    "lot_epochs": [
+      "paper-exit-cost-v2"
+    ],
+    "fee_source": "RECORDED_ONLY",
+    "alloc_method": "qr2-alloc-v1",
+    "range_flags": [],
+    "basis": "ACTUAL_PAPER_LEDGER",
+    "execution": "PAPER_SIMULATED_FILLS",
+    "historical_simulation": false,
+    "qualified_evidence": false,
+    "fx": "NONE",
+    "event_time_basis": "LEDGER_WRITE_TIME",
+    "requested_range": {
+      "from": 1790812860000,
+      "to": 1790813040000
+    },
+    "resolved_range": {
+      "from": 1790812860000,
+      "to": 1790813040000
+    },
+    "as_of": 1790816400000,
+    "first_funding_at": 1790812800000,
+    "currency": "USDT",
+    "status": {
+      "status": "UNAVAILABLE",
+      "overlays": [],
+      "reasons": [
+        "NO_VALUED_NAV"
+      ]
+    },
+    "scope": {
+      "bot_id": "bot-1",
+      "broker": "binance-global",
+      "account_id": "binance-global:primary"
+    },
+    "account": {
+      "cash": {
+        "value": "640",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "reserved_notional": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "reserved_fees": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "available_cash": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "RESERVATION_HISTORY_NOT_RECORDED"
+        ]
+      },
+      "nav": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "UNAVAILABLE"
+        ]
+      },
+      "market_value": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "UNAVAILABLE"
+        ]
+      },
+      "position_cost": {
+        "value": "360",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "exposure": {
+        "value": "0.36",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "realized_pnl": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "unrealized_pnl": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "UNAVAILABLE"
+        ]
+      },
+      "fees": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "unbacked_equity": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "flows_total": {
+        "value": "0",
+        "status": "COMPLETE",
+        "reasons": []
+      },
+      "money_pnl": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "UNAVAILABLE"
+        ]
+      },
+      "twr": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "TWR_BOUNDARY_UNVALUED",
+          "UNAVAILABLE"
+        ]
+      },
+      "mwr": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "UNAVAILABLE"
+        ]
+      },
+      "max_drawdown": {
+        "value": null,
+        "status": "UNAVAILABLE",
+        "reasons": [
+          "DRAWDOWN_GRID_UNVALUED"
+        ]
+      }
+    },
+    "exposure_basis": "EXPOSURE_AT_COST",
+    "flows_count": 0,
+    "symbols": [
+      {
+        "symbol": "BTCUSDT",
+        "quantity": {
+          "value": "0.006",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "unlotted_quantity": {
+          "value": "0.006",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "cost_basis": {
+          "value": "360",
+          "status": "COMPLETE",
+          "reasons": []
+        },
+        "price": {
+          "value": null,
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "UNAVAILABLE"
+          ]
+        },
+        "price_state": "UNAVAILABLE",
+        "price_age_ms": null,
+        "price_bar_time": null,
+        "price_retrieval": null,
+        "market_value": {
+          "value": null,
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "UNAVAILABLE"
+          ]
+        },
+        "unrealized_pnl": {
+          "value": null,
+          "status": "UNAVAILABLE",
+          "reasons": [
+            "UNAVAILABLE"
+          ]
+        }
+      }
+    ],
+    "reconciliation": {
+      "state": "OK",
+      "failed_from": null,
+      "failed_whole_account": false,
+      "ledger_invariant_violated": false,
+      "first_failure": null
+    },
+    "legacy_seeds": {
+      "method": "legacy-two-seed-v1",
+      "s_cash": 1790812800000,
+      "s_cost": 1790812800000,
+      "nav_from": 1790812800000,
+      "has_m1": false,
+      "has_m2": false,
+      "m1_count": 0,
+      "m2_count": 0,
+      "last_m1_time": null
+    },
+    "marker_counts": {
+      "AGREES": 0,
+      "DISAGREES": 0,
+      "ABSENT": 1
+    },
+    "findings": {
+      "total": 0,
+      "capped": false,
+      "items": []
+    },
+    "information_count": 0,
+    "attribution_counts": {
+      "BRIDGE": 0,
+      "WEBHOOK": 0,
+      "ATTRIBUTION_UNKNOWN": 1
+    },
+    "slippage_counts": {
+      "SLIPPAGE_UNKNOWN": 1,
+      "MODELED_SLIPPAGE_ALREADY_INCLUDED": 0
+    },
+    "audit_findings": {
+      "count": 0,
+      "unparseable": 0,
+      "expected_missing": 0
+    },
+    "pending": {
+      "count": 0,
+      "codes": [],
+      "uncertain": false
+    },
+    "analytics_comparison": {
+      "code": null,
+      "targeted_exits": 0
+    },
+    "market_data": {
+      "checked": true,
+      "table_present": true,
+      "instants": 2,
+      "bars": 0,
+      "gap": null
+    },
+    "cutoffs": {
+      "funding_count": 1,
+      "snapshot_count": 0,
+      "fill_count": 1,
+      "lot_count": 0,
+      "last_fill": {
+        "received_at": 1790812800001,
+        "cumulative_quantity": "0.006"
+      },
+      "market_data_cutoff": null
+    },
+    "reader": {
+      "method": "qr2-reader-v1",
+      "limits": {
+        "ledger_rows": 5000,
+        "grid_instants": 5000,
+        "audit_rows": 2000,
+        "pending_orders": 1000
+      },
+      "counts": {
+        "fundings": 1,
+        "journal": 1,
+        "fills": 1,
+        "lots": 0,
+        "snapshots": 0,
+        "total": 3
+      },
+      "read_ms": 13,
+      "compute_ms": 3
+    },
+    "notice_ids": [
+      "QR2_NOTICE_ACTUAL_PAPER",
+      "QR2_NOTICE_BOOK_EQUITY"
+    ]
+  }
+}

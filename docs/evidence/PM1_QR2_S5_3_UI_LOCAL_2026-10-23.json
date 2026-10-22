@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "scope": "QR-2 S5-3 synthetic local symbol valuation display and late-recorded-price notice",
+  "status": "BOUNDED_LOCAL_ACCEPTED_CI_PENDING",
+  "baseRevision": "c159187e7d339bfe7e83007093fbda1f6f3da0ef",
+  "packet": "docs/QR2_S5_3_LOCAL_VERIFICATION_PACKET_2026-10-23.md",
+  "traceability": "docs/QR2_S5_UI_TRACEABILITY_2026-10-23.md",
+  "sourceQualification": {
+    "status": "PASS_WITH_LIMITS",
+    "chain": "Synthetic replayAccount, legacySeeds, effectsOf, verified canonical bar, rangePerformance, accountStatus, r15Pending and composePerformanceResponse",
+    "reader": "Synthetic metadata scaffold; actual database reader, routes and authentication NOT RUN",
+    "time": "Symbol valuation uses resolved_range.to; as_of is later request time. Ages 180000, 900000, 900001 and null remain literal server fields.",
+    "gap": "No eligible price is unavailable valuation, not a gap-interval report. API interval list remains absent."
+  },
+  "behavior": [
+    "Append EN/TH human-readable notice only for price_retrieval=RETRIEVED_AFTER_INSTANT; retain raw code and numeric values.",
+    "FRESH and usable STALE preserve decimal strings; beyond-carry and missing rows display null, reason and age/bar time where supplied.",
+    "No backend, accounting, authentication, security guard or financial arithmetic changed."
+  ],
+  "checks": {
+    "regressionBeforeFix": {
+      "passed": 1,
+      "failed": 1,
+      "reason": "late retrieval needs human-readable notice"
+    },
+    "uiCacheLanguage": {
+      "passed": 177,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 259777.9175,
+      "note": "Run loaded the fixture before the review correction. Do not count as final corrected-fixture verification."
+    },
+    "producerSuites": {
+      "passed": 121,
+      "failed": 0,
+      "todo": 2,
+      "skipped": 0,
+      "durationMs": 3362.9982,
+      "note": "Two existing todo tests; no new production calculation change."
+    },
+    "finalFocused": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 6981.1444,
+      "command": "node --test --test-isolation=none --test-name-pattern='S5-3' test/qr2-performance-ui.test.js"
+    },
+    "testEvidence": "Coder tool transcripts and pinned coder report; no separate raw test log. Counts overlap and are not additive.",
+    "review": {
+      "code": "PASS_AFTER_P2_CORRECTION",
+      "finding": "Historical reservation scaffold incorrectly exposed current amounts; replaced with actual r15Pending and null/reason assertions for all three wrappers.",
+      "evidence": "PASS"
+    },
+    "rendered": {
+      "status": "PASS",
+      "cases": 16,
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "languages": [
+        "en",
+        "th"
+      ],
+      "states": [
+        "fresh",
+        "stale",
+        "unavailableOld",
+        "unavailableGap"
+      ],
+      "screenshots": 16,
+      "rootVisualSamples": [
+        "viewport-desktop-en-fresh.png",
+        "viewport-desktop-th-stale.png",
+        "viewport-mobile-en-unavailableOld.png",
+        "viewport-mobile-th-fresh.png"
+      ],
+      "overflowCases": 0,
+      "method": "Actual shell, synthetic loopback GETs, explicit session Refresh before report selection. CSS viewport-clipped screenshots; earlier scaled/clipped captures are superseded.",
+      "network": {
+        "capturedRequestEvents": 896,
+        "loopbackHttpRequests": 880,
+        "inlineDataImages": 16,
+        "reportRequests": 16,
+        "methods": [
+          "GET"
+        ],
+        "externalHttpRequests": 0,
+        "truncatedCases": 0,
+        "scope": "Only final 16 capture intervals. Server journal also includes setup and superseded capture attempts; do not equate those totals."
+      },
+      "consoleEntries": 0,
+      "artifacts": {
+        "observations": ".qa-local/qr2-s5-3/final-render-observations.json",
+        "network": ".qa-local/qr2-s5-3/final-browser-network.json",
+        "screenshots": ".qa-local/qr2-s5-3/viewport-*.png"
+      },
+      "recapture": "Raw observation/network files contain three 16-case cohorts. The last cohort is explicitly saved in final-* JSON and paired with viewport-* screenshots. Earlier scaled/clipped screenshot attempts and the pre-R15 exploratory run are not acceptance evidence."
+    },
+    "ci": {
+      "status": "PENDING_EXACT_REVISION"
+    }
+  },
+  "acceptance": {
+    "boundedLocal": "ACCEPTED_BY_ROOT: only S5-3 synthetic local display and notice",
+    "fullS5": "OPEN: gap-interval reporting unresolved",
+    "realAuthentication": "NOT RUN",
+    "targetIntegration": "NOT RUN"
+  },
+  "limitations": [
+    "Synthetic metadata is not actual database-reader or complete accounting acceptance.",
+    "Browser matrix does not re-prove initial session boot; explicit Refresh is used before each report.",
+    "Mobile means viewport testing, not physical device or Safari.",
+    "Ancillary market/chart/position endpoints intentionally return fixture 404; no external service is used.",
+    "S5-3 does not close full S5, real authentication, target capacity or activation."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT RUN",
+    "ready": false,
+    "n1": "HELD",
+    "deployment": "NOT RUN",
+    "targetRouteActivation": "NOT RUN",
+    "migrations": "NOT RUN",
+    "hostVps": "NOT RUN",
+    "live": "HELD",
+    "guardReset": "HELD",
+    "bestInputsApply": "HELD"
+  },
+  "sourcePins": [
+    {
+      "path": "public/paper-performance.js",
+      "sha256": "a3045783dda8a6defff8f7a998da1a63685d046ada8484861aa815defde9f580"
+    },
+    {
+      "path": "public/i18n.js",
+      "sha256": "efd10874b5ada36e4a934c7e87686aeeb5fe4f057bc833d7c7def1704c1422b8"
+    },
+    {
+      "path": "public/index.html",
+      "sha256": "920a1ada66a3dffc9531b44664f21fa92bcd1bafc2b8bccb4c479aa13b61d2ad"
+    },
+    {
+      "path": "test/qr2-performance-ui.test.js",
+      "sha256": "dfa556e48447b69bfa760b5899d643cd619c02dfc156ea339b0986388f0e4a50"
+    },
+    {
+      "path": "test/fixtures/qr2-performance-ui/symbol-responses.json",
+      "sha256": "b6bcedb591ffbd1195988b19e8e5171b0cc0aa7b7835b7898896978db83e08ed"
+    },
+    {
+      "path": "test/asset-cache-tokens.test.js",
+      "sha256": "c0574f715136e13cbf7b3415036baa23ec3d3fccbda3c84670b5d98cc222584a"
+    },
+    {
+      "path": "src/portfolio/qr2-price.js",
+      "sha256": "5f6f8e8d250b1babfaa22f133aa8fa9ab367e554426b026bc150e8d0e7b06d31"
+    },
+    {
+      "path": "src/portfolio/qr2-returns.js",
+      "sha256": "6102b8a684d125021bdf115ef39519d7d459b685a704031b8c538d5c0743281f"
+    },
+    {
+      "path": "src/portfolio/qr2-response.js",
+      "sha256": "3214d21218e2d94152014b8475bd7964c23180397c8ebfb23da80be0de2cfe7c"
+    },
+    {
+      "path": "src/portfolio/qr2-labels.js",
+      "sha256": "51ef0ca11b16cbfc47013253e8ebdaab08ac7b34f104b8fe17554ba7d90ec524"
+    },
+    {
+      "path": "src/portfolio/qr2-checks.js",
+      "sha256": "c2fc9eb65fefbdb6cdc9025de8eaad2a0af8e1522ad3acbdd76d9d926893df68"
+    }
+  ],
+  "artifactPins": [
+    {
+      "path": ".qa-local/qr2-s5-3/generate-symbol-fixtures.mjs",
+      "sha256": "7b1352b006308ff228a73d977390e285c16361e740ac3eb3614e12efb5b9fc13"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/coder-report.md",
+      "sha256": "2b40302bbeda6f8cdc8fee9d9166865fab5cef03b43bb5af3e8985a42c404dba"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/code-review.md",
+      "sha256": "bdc2951d53f7286f55da0021f0e21b773f97bc413825aaf8e683331aa5cf1ba1"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/harness-review.md",
+      "sha256": "57099491f6eb644a051df1ed99a65bb078cd88d715323d7a131d4d4dd77f8071"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/final-render-observations.json",
+      "sha256": "d5ee25472e4d3014677ce970641855bf84d3695a0984d9366315a842cbc1a0d0"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/final-browser-network.json",
+      "sha256": "89d1c91bc5ed921ea24645821d715b713aa1ea095ee2f5c54cf48d13075def10"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/browser-console.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/runtime.json",
+      "sha256": "bbb5e193a9ac52c8191a4fa9285010265cfe1e36de15f64f8fbf08493ddef5ad"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-desktop-en-fresh.png",
+      "sha256": "681512518ea2f8d6e85c17ffd4ae785534d86ca10f58e33323c5b8368428d758"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-desktop-en-stale.png",
+      "sha256": "3df1f98449955199a568d5f5ed22e39bfce67a765e8a50326f892cf71033a709"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-desktop-en-unavailableOld.png",
+      "sha256": "f46957f1b9a3379bb1eaeff0107722c711148c4285894d56658b2cefb91eafb8"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-desktop-en-unavailableGap.png",
+      "sha256": "5ce8974415f66eece08a98bcf75ce2322ed26349d17a2fc72aeee39389860db3"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-desktop-th-fresh.png",
+      "sha256": "2f9f380c068aca3f51b2dfdb4c15b84b719294c6a6781bc58174d5d110788c92"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-desktop-th-stale.png",
+      "sha256": "427c1c56e364ad8c7ba70d03b75ab1c40f3c0f902f2661b1020d34b03e92bdb8"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-desktop-th-unavailableOld.png",
+      "sha256": "e4d50f3c11052f9a582897fd2b6d3ed9d7fda79c9a3201b8b1b6472e24cf4352"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-desktop-th-unavailableGap.png",
+      "sha256": "e32b7f848dd737844fa0a490cb4ed438206a5086747813444067299732465c29"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-mobile-en-fresh.png",
+      "sha256": "9347bc90a26b6e2b1c09a8a82495b0ce3618b5efc8d1f7bb3df801bda9802e0f"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-mobile-en-stale.png",
+      "sha256": "1059bf1a42796e5477b121dc1beac733e85ce4b486f7854cc5920a2ad89ef312"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-mobile-en-unavailableOld.png",
+      "sha256": "7f35cb6185361f9d3b27e63d8f78f26862c07f5bf5d94e7c7744313d7371f159"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-mobile-en-unavailableGap.png",
+      "sha256": "3f52538f206f5d78fe0a40330c4c42d091d0bf19a66f495fafa8468c39ae6202"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-mobile-th-fresh.png",
+      "sha256": "075e2feafba47ab828f271794c4f5f41a8d39648a1e899c48045590952d38479"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-mobile-th-stale.png",
+      "sha256": "61f7d33b7b75a953faa8d47c90987b30831ae278a278cef95ba23d2f054880be"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-mobile-th-unavailableOld.png",
+      "sha256": "a929f570c86ff050f3eaa572054f0233858f4f09e9386ba7c1bce56101a40577"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/viewport-mobile-th-unavailableGap.png",
+      "sha256": "f9bf8ca91cc91bc91242092cb84c2b9325bcb6d79a8a50a7ca84535094fde6bb"
+    },
+    {
+      "path": ".qa-local/overnight-root/s5-3-source-qualification.md",
+      "sha256": "fc53ab23a03b29b95bb19515a702a7e5abf32adc0121fae62cc657962729005c"
+    },
+    {
+      "path": ".qa-local/overnight-root/s5-negative-trace.md",
+      "sha256": "c95559571d588b18e12de215f60df245a295757df637ed3743d075848a28aee6"
+    },
+    {
+      "path": ".qa-local/qr2-s5-3/evidence-review.md",
+      "sha256": "7e4e9285cdcb89c153c1d74aaadb5e0bb1acaf52482c9511ff1ac92e8b76c8d6"
+    }
+  ],
+  "hashConvention": "SHA-256 raw file bytes; Git may normalize line endings. Source pins identify the locally verified working files."
+}
