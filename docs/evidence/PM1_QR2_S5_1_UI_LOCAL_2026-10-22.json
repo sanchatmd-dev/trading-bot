@@ -8,7 +8,7 @@
     "packet": "docs/QR2_S5_1_LOCAL_UI_GO_PACKET_2026-10-22.md",
     "decision": "Explicit owner GO on 2026-10-22, including focused tests, evidence updates and periodic commit/push; no deployment or target route activation."
   },
-  "status": "LOCAL_ACCEPTED_RENDERED",
+  "status": "LOCAL_ACCEPTED_SHELL_FOLLOWUP_CI_PENDING",
   "accepted": true,
   "behavior": [
     "Overview component reads existing per-Bot or owner endpoints with explicit GET submission; it adds no backend route or flag.",
@@ -704,7 +704,7 @@
     "guardReset": "NOT AUTHORIZED",
     "bestInputsApply": "NOT AUTHORIZED"
   },
-  "nextAction": "Bounded S5-1 closure is complete. Verify the final documentation-only readback commit with scope CI and save its exact result in the ignored root checkpoint, then stop. Full S5 and all target effects remain separately gated.",
+  "nextAction": "Commit/push the reviewed bounded correction and evidence, follow its exact revision through CI, record actual job/step outcomes, then close this S5-1 checkpoint. Full S5 and all target effects remain separately gated.",
   "ciRepair": {
     "date": "2026-10-22",
     "failedRevision": "6f7fcff603d0cdd0c29990c431ae1fdd1ca291c5",
@@ -810,6 +810,181 @@
     "limits": "Counts are per run and overlap. The 107/108 intermediate failure is retained; the final affected language checks and asset/QR-2 tests passed. No full local suite or browser rendering is claimed."
   },
   "acceptance": {
+    "scope": "Bounded S5-1 local component plus synthetic session/shell follow-up only; full S5 is not accepted.",
+    "decidedBy": "Sole local root after rendered inspection, focused tests and independent code review",
+    "candidateBaseRevision": "6b6cf992cf77bfcb88883e8f31a3d03c6e7f6b67",
+    "revision": null,
+    "verifiedSourceHashes": {
+      "public/paper-performance.js": {
+        "rawSha256": "a863878e54d3b58be9ec0441904b838e56786e12b7dae90b28726e47113eae35",
+        "lfSha256": "a863878e54d3b58be9ec0441904b838e56786e12b7dae90b28726e47113eae35"
+      },
+      "public/index.html": {
+        "rawSha256": "ea3660cd8114e65b4d6dd1acb46d381b4c7cba439f96efc9ab5ab208054199fb",
+        "lfSha256": "1b604ce774f97950f13bce068f881f17697c961cc442d6905c6102255bcb6f6a"
+      },
+      "test/asset-cache-tokens.test.js": {
+        "rawSha256": "b93fcb44f1c7a24b3d767f8443a010fb39b1a278a0e3fef8a9a514e813c03cbc",
+        "lfSha256": "506fc7b06ce2959390966ab77d441599ced4de4912a5baaebba589fb1cb48e95"
+      },
+      "test/qr2-performance-ui.test.js": {
+        "rawSha256": "e262c5509a38164edb11659564080e33a26204107b39531fcbaef335c327596b",
+        "lfSha256": "38f22cbaf970e416a4df44a422b7e2f7ea10c3df16e52541882f4e637b0795e1"
+      }
+    },
+    "productChangesInThisCheckpoint": true,
+    "fullApplicationAcceptance": "NOT RUN",
+    "realAuthenticationAcceptance": "NOT RUN",
+    "authenticatedTargetIntegration": "NOT RUN"
+  },
+  "sourceSnapshotNote": "Top-level sources and rendered evidence describe the earlier component candidate; shellFollowup.sources pins the later session correction.",
+  "shellFollowup": {
+    "date": "2026-10-22",
+    "baseRevision": "6b6cf992cf77bfcb88883e8f31a3d03c6e7f6b67",
+    "revision": null,
+    "scope": "Bounded S5-1 synthetic loopback verification in the actual application shell under the existing owner GO; no new phase.",
+    "status": "LOCAL_PASS_CI_PENDING",
+    "sources": {
+      "public/paper-performance.js": {
+        "rawSha256": "a863878e54d3b58be9ec0441904b838e56786e12b7dae90b28726e47113eae35",
+        "lfSha256": "a863878e54d3b58be9ec0441904b838e56786e12b7dae90b28726e47113eae35"
+      },
+      "public/index.html": {
+        "rawSha256": "ea3660cd8114e65b4d6dd1acb46d381b4c7cba439f96efc9ab5ab208054199fb",
+        "lfSha256": "1b604ce774f97950f13bce068f881f17697c961cc442d6905c6102255bcb6f6a"
+      },
+      "test/asset-cache-tokens.test.js": {
+        "rawSha256": "b93fcb44f1c7a24b3d767f8443a010fb39b1a278a0e3fef8a9a514e813c03cbc",
+        "lfSha256": "506fc7b06ce2959390966ab77d441599ced4de4912a5baaebba589fb1cb48e95"
+      },
+      "test/qr2-performance-ui.test.js": {
+        "rawSha256": "e262c5509a38164edb11659564080e33a26204107b39531fcbaef335c327596b",
+        "lfSha256": "38f22cbaf970e416a4df44a422b7e2f7ea10c3df16e52541882f4e637b0795e1"
+      }
+    },
+    "defects": [
+      "An initially signed-out component retained its sign-in prompt after the real shell session loaded successfully.",
+      "An ordinary signed-in session refresh re-enabled the Load button while a report remained pending."
+    ],
+    "correction": "Track the component session transition, refresh the prompt only on signed-out to signed-in, and retain the busy Load gate on same-session refresh. No security guard or financial behavior is relaxed.",
+    "tests": {
+      "command": "node --test test/asset-cache-tokens.test.js test/qr2-performance-ui.test.js",
+      "before": {
+        "tests": 14,
+        "passed": 12,
+        "failed": 2
+      },
+      "after": {
+        "tests": 14,
+        "passed": 14,
+        "failed": 0,
+        "skipped": 0,
+        "durationMs": 52143.0864
+      },
+      "log": "boot-fix-tests.log"
+    },
+    "review": {
+      "status": "PASS",
+      "report": "boot-review.md",
+      "reviewedJsSha256": "a863878e54d3b58be9ec0441904b838e56786e12b7dae90b28726e47113eae35"
+    },
+    "rendered": {
+      "viewports": [
+        {
+          "name": "desktop",
+          "width": 1440,
+          "height": 1000,
+          "documentClientWidth": 1425
+        },
+        {
+          "name": "mobile",
+          "width": 390,
+          "height": 844,
+          "documentClientWidth": 375
+        }
+      ],
+      "languages": [
+        "en",
+        "th"
+      ],
+      "surfaces": 4,
+      "observations": 19,
+      "screenshots": 7,
+      "checks": [
+        "Fast/slow synthetic auth boot uses the real load wrapper chain and produces the correct EN/TH ready prompt without a selection change.",
+        "Explicit report submission preserves exact decimal strings on all four surfaces, with no horizontal page overflow.",
+        "Desktop EN navigation to Trade log and back retains the report.",
+        "Same-session refresh preserves completed reports and the pending disabled Load button; the delayed report still resolves.",
+        "Synthetic session 401 clears pending data, disables Load and prevents the late response from restoring it."
+      ],
+      "captures": "Four surface checks, a pending/completed refresh case, one additional pending timing capture and one 401 case. Seven network intervals; repeated pending case is not a new feature acceptance.",
+      "network": {
+        "requestEvents": 372,
+        "reportGetEvents": 7,
+        "methods": [
+          "GET"
+        ],
+        "externalHttpRequests": 0,
+        "truncatedIntervals": 0,
+        "consoleWarningsOrErrors": 0,
+        "unmodeledAncillary404": [
+          "/api/market/ohlcv",
+          "/api/positions/levels",
+          "/api/market/symbols"
+        ]
+      },
+      "limitations": [
+        "Synthetic auth/config/session and ancillary GET fixtures are not real authentication, backend, full-app or target integration acceptance.",
+        "All actual index scripts and styles remain; only initial language is injected. Self-only fixture CSP blocks external connections; no target proxy exists.",
+        "The market chart endpoints and position levels are deliberately unmodeled and return 404. They are outside this S5-1 verification.",
+        "Full-page screenshot capture failed; seven viewport screenshots and DOM observations are retained. Initial default-size capture was excluded; final viewport dimensions were explicitly set and verified.",
+        "The earlier full component state matrix remains historical evidence on its pinned candidate; this correction reruns only relevant session, layout and existing focused tests."
+      ]
+    },
+    "artifacts": {
+      "directory": ".qa-local/qr2-s5-followup/",
+      "sha256": {
+        "scope-audit.md": "066999f720312c96454a280d94c45f525074d161953249a87fe6bf98b907c645",
+        "shell-stub.mjs": "48a708217214abcf03a742542ba0a59df2d9005ddd696d3ce388f3efae188871",
+        "synthetic-fixtures.json": "0dc8d34b082464542f6b7f0c45ca48f24210e35cf0b33acda40f26b4a63390e0",
+        "fixture-review.md": "88668bb0b1a7f2c2663d816c460fa5fe4ba3d91d939dbfb8ba24ead9d1a94bde",
+        "boot-before.json": "2be5aa0b5d61aaf451a0290336af0b45d3e1f97d6e6ca4affe1ff74e61d7181a",
+        "expired-before.json": "4807d0fdd057048256e7aadcde506abb5edd5f68eb68a88da2890cf47b957f81",
+        "boot-fix.md": "c2afa3d6cc4dfc16b3dd1544f7b6f5f0ae6fb8b3a40a6d97406fdd2816070111",
+        "boot-fix-tests.log": "25957b6040cf43f7ae4fa942486e6c72a3ba92be13edd7fc5b61caa2680fe8af",
+        "boot-review.md": "c5c0d118e7a0a6818be7098b10a6069dff5668628b3169793f78ef330dcd50f0",
+        "shell-observations.json": "1fc00a0c9f9d357dc299c88117a8fa8b1a6775bd59a18fc80598e2f704a46589",
+        "shell-network.json": "4c1ea68b205169e9c577677f7d59659964505b6af513275a0dffeb90cf87e057",
+        "request-journal-before.json": "3ce5bf52e3ca0c58f66e6800c8b06056de0d47d5f97ca67909703b765511ea3c",
+        "request-journal.json": "61a1439e5429e5530ae1586462dbf93a58aa1cc3fc38b3151a756e45c398ff9c",
+        "capture-diagnostic.json": "0c22da1d0e70e85018514b634e191789183558767f6c9ed7eb992b543f60f5a2",
+        "desktop-en-values.jpg": "95cb1e386273151657cc925103db72c916fd3424b74372fb193e1287f58f3936",
+        "desktop-en.jpg": "b740707da1a6d89ebf7a76671d746c8c41134a812bf22cdb87050740cc288a9a",
+        "desktop-th-controls.jpg": "383118c9de88825806faf160e71d0edf630b76b8a97a2481e866c2274314b609",
+        "desktop-th.jpg": "733c9916b045f5e23eba7a19ec3f3358ff6bd47431fae7e4922cf2e826942627",
+        "mobile-en.jpg": "1b1d54126551ad569b77cbf17169704110eac476a9e5426a3150fe482bb07d3d",
+        "mobile-th-values.jpg": "164ce37f15356147bdb65ffe4951a02c0da7a206f21b0f063a1b7e35f14a66fc",
+        "mobile-th.jpg": "34b07bcc6c6429632eb54188e79f418f45afffe051b37fdc2d96e138c2aac543",
+        "evidence-review.md": "a118c2c87d99c8c30cf3c74b5e376d08e650da4bda2d995af7e468739b6a86f0"
+      }
+    },
+    "cleanup": {
+      "fixtureStopped": true,
+      "testTabClosed": true,
+      "viewportReset": true
+    },
+    "ci": {
+      "status": "PENDING",
+      "revision": null
+    },
+    "artifactReview": {
+      "status": "PASS",
+      "report": "evidence-review.md",
+      "hashChecks": 29,
+      "testsRerun": false
+    }
+  },
+  "previousComponentAcceptance": {
     "scope": "Only the bounded S5-1 read-only local component view in the approved synthetic harness; full S5 is not accepted.",
     "decidedBy": "Sole local root after rendered inspection, independent artifact review and focused tests",
     "verifiedRevision": "8c34a38b48bd53e631a352e29c28f75679fbaba0",

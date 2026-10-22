@@ -7,6 +7,7 @@
   const result = get('ppResult'), status = get('ppStatus'), button = get('ppLoad');
   let sequence = 0, sessionSequence = 0, controller, bots = [], botsLoaded = false, botsLoading;
   const signedIn = () => typeof authenticated !== 'undefined' && authenticated === true;
+  let sessionSignedIn = signedIn();
   const label = (text, tag = 'span') => {
     const node = document.createElement(tag);
     node.dataset.uiLabel = text;
@@ -214,6 +215,7 @@
   controls.forEach(control => { control.addEventListener('input', selectionChanged); control.addEventListener('change', selectionChanged); });
   get('ppForm').addEventListener('submit', submit);
   function clearSession() {
+    sessionSignedIn = false;
     sessionSequence++;
     invalidate(); bots = []; botsLoaded = false; get('ppBot').replaceChildren();
   }
@@ -223,7 +225,12 @@
     const loadSession = load;
     load = async function (...args) {
       const response = await loadSession.apply(this, args);
-      if (signedIn()) { button.disabled = false; await loadBots(); }
+      if (signedIn()) {
+        if (!sessionSignedIn) invalidate();
+        sessionSignedIn = true;
+        button.disabled = root.getAttribute('aria-busy') === 'true';
+        await loadBots();
+      }
       else clearSession();
       return response;
     };

@@ -11,7 +11,7 @@ const publicFile=name=>fs.readFileSync(new URL('../public/'+name,import.meta.url
 const settle=()=>new Promise(resolve=>setTimeout(resolve,25));
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};
 const ok=body=>({status:200,body});
-function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot)}={}){
+function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot),sessionLoad=()=>{}}={}){
   const dom=new JSDOM(publicFile('index.html'),{url:'https://robot.test',runScripts:'outside-only'}),w=dom.window,d=w.document;
   w.localStorage.setItem('robotLanguage',language);w.eval(publicFile('i18n.js'));
   const requests=[];
@@ -33,6 +33,7 @@ function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot)}={})
     return structuredClone(result.body);
   };
   w.eval('var authenticated='+JSON.stringify(authenticated)+',selectedBot="bot-1",me={user:{id:"owner-1"}},csrfToken="fixture-csrf";var load=async function(){};');
+  w.load=async()=>sessionLoad(w,d);
   d.querySelector('#app').hidden=!authenticated;
   w.eval(publicFile('paper-performance.js'));
   const get=id=>d.getElementById(id);
@@ -66,6 +67,57 @@ test('performance section belongs to Overview; auth and explicit Load gate finan
   const unauth=setup({authenticated:false});
   try{await unauth.boot();await unauth.load();assert.equal(unauth.financial().length,0,'signed-out user cannot load financial data');}
   finally{unauth.close();}
+});
+
+test('initial signed-out to authenticated load refreshes the prompt without a selection change or financial GET',async()=>{
+  for(const [language,signedOut,prompt] of [
+    ['en','Sign in to view Paper history.','Choose a scope and press Load / Refresh.'],
+    ['th','เข้าสู่ระบบเพื่อดูประวัติ Paper','เลือกขอบเขตแล้วกด โหลด / รีเฟรช']
+  ]){
+    const session=deferred();
+    const p=setup({authenticated:false,language,sessionLoad:async(w,d)=>{
+      await session.promise;w.eval('authenticated=true');d.querySelector('#app').hidden=false;
+    }});
+    try{
+      assert.equal(p.get('ppStatus').textContent,signedOut);
+      assert.equal(p.get('ppLoad').disabled,true);
+      const loading=p.w.load();await settle();
+      assert.equal(p.get('ppLoad').disabled,true,'still disabled before the session resolves');
+      assert.equal(p.requests.length,0,'signed-out boot starts no Bot or financial GET');
+      session.resolve();await loading;await settle();
+      assert.equal(p.get('ppStatus').textContent,prompt);
+      assert.equal(p.get('ppLoad').disabled,false);
+      assert.equal(p.get('app').hidden,false);
+      assert.equal(p.get('ppBot').value,'','no synthetic selection change masks the boot transition');
+      assert.match(p.get('ppBot').textContent,/Synthetic BTC/);
+      assert.equal(p.financial().length,0,'authentication loads only the Bot list');
+    }finally{session.resolve();p.close();}
+  }
+});
+
+test('same-session refresh preserves completed and pending reports without financial auto-load',async()=>{
+  const pending=deferred();let next=ok(fixture.bot);
+  const p=setup({answer:()=>next});
+  try{
+    await p.boot();await p.load();
+    const completed=p.get('ppResult').innerHTML,received=p.get('ppStatus').textContent;
+    await p.w.load();await settle();
+    assert.equal(p.get('ppResult').innerHTML,completed);
+    assert.equal(p.get('ppStatus').textContent,received);
+    assert.equal(p.financial().length,1);
+    next=pending.promise;p.get('ppLoad').click();await settle();
+    const loading=p.get('ppStatus').textContent;
+    await p.w.load();await settle();
+    assert.equal(p.get('ppStatus').textContent,loading);
+    assert.equal(p.text(),'');
+    assert.equal(p.get('paperPerformance').getAttribute('aria-busy'),'true');
+    assert.equal(p.get('ppLoad').disabled,true,'session refresh must retain the pending Load gate');
+    assert.equal(p.financial().length,2,'refresh starts no replacement report');
+    pending.resolve(ok(fixture.bot));await settle();
+    assert.equal(p.get('ppResult').innerHTML,completed,'pending report remains valid across refresh');
+    assert.equal(p.get('ppStatus').textContent,received);
+    assert.equal(p.get('ppLoad').disabled,false);
+  }finally{pending.resolve(ok(fixture.bot));p.close();}
 });
 
 test('Bot rendering keeps decimal strings, method/range labels and Paper/book notices without arithmetic',async()=>{
