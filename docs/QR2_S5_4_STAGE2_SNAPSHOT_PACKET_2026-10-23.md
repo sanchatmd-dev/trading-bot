@@ -1,6 +1,6 @@
 # QR-2 S5-4 Stage 2: qualified coverage snapshots
 
-Status: **STAGE 2A ACCEPTED LOCALLY; EXACT CODE CI PENDING; MEASUREMENT AND INTEGRATION NOT YET ADMITTED**. This continues the owner's local Roadmap GO. The [S5-4 contract](QR2_S5_4_GAP_INTERVAL_PACKET_2026-10-23.md) remains authoritative. Root accepts the bounded design below after source investigation and independent measurement planning. Existing Stage 1 CI is a separate item.
+Status: **STAGE 2A ACCEPTED WITH CODE CI PASS; SEPARATE SMALL M1 QUALIFICATION ACCEPTED; INTEGRATION NOT YET ADMITTED**. This continues the owner's local Roadmap GO. The [S5-4 contract](QR2_S5_4_GAP_INTERVAL_PACKET_2026-10-23.md) remains authoritative. Root accepts the bounded design below after source investigation and independent measurement planning. Existing Stage 1 CI is a separate item.
 
 ## Outcome and limits
 
@@ -61,3 +61,7 @@ Full S5 remains open. Spot/Paper only; private source local; private acceptance 
 ## Stage 2A local outcome
 
 Root accepts only the unwired seams. Final focused Node tests passed 29/29. Independent evidence comprises 409 checks before the targeted error-classification finding, followed by 28 narrow checks confirming the fix and preserved admission guards. Independent architecture and fix reviews passed with explicit runtime limits. [Evidence](evidence/PM1_QR2_S5_4_STAGE2A_LOCAL_2026-10-23.json) retains raw logs and the original failure. Existing production readers and public responses do not import the new seams. PostgreSQL execution, measured budgets, account/owner integration and rendering remain required.
+
+## Exact CI and M1 follow-up
+
+Exact Stage 2A revision `a5d4db611b07062e0a302a05f5027e842c42a11b` passed [Safety checks](https://github.com/sanchatmd-dev/trading-bot/actions/runs/39849193764) and [Quant Lab](https://github.com/sanchatmd-dev/trading-bot/actions/runs/39849193796): all nine jobs and 16 actual substantive test/build/lint/parity/trace/smoke steps succeeded. No CI test counts are inferred. The [separate M1 packet](QR2_S5_4_STAGE2B_M1_PACKET_2026-10-23.md) records twelve accepted small synthetic PostgreSQL cases and verified fixture cleanup. Those observations do not select production budgets or admit account/owner integration. The historical Stage 2A local-only checks above retain their original scope; M1 evidence is separate. Next is a bounded M2 measurement packet for shared windows, public-envelope allocation and worker transport.

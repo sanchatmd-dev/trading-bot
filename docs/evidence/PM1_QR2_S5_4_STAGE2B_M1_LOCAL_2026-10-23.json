@@ -1,0 +1,932 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "scope": "QR-2 S5-4 Stage 2B-M1: isolated synthetic PostgreSQL qualification of unwired coverage seams",
+  "status": "BOUNDED_LOCAL_M1_ACCEPTED",
+  "codeRevision": "a5d4db611b07062e0a302a05f5027e842c42a11b",
+  "packet": "docs/QR2_S5_4_STAGE2B_M1_PACKET_2026-10-23.md",
+  "outcome": "Twelve named synthetic PostgreSQL cases passed after an import-only harness correction. Product source remained unchanged. Independent evidence verification passed with explicit limits; root accepts only this small local qualification.",
+  "checks": {
+    "database": {
+      "version": "PostgreSQL 16.15",
+      "casesPassed": 12,
+      "casesFailed": 0,
+      "expectedRefusals": [
+        {
+          "id": "cap-plus-one",
+          "code": "QR2_RANGE_ADMISSION_REFUSED"
+        },
+        {
+          "id": "remaining-zero-row",
+          "code": "QR2_RANGE_ADMISSION_REFUSED"
+        },
+        {
+          "id": "off-grid",
+          "code": "QR2_REPORT_FAILED"
+        }
+      ],
+      "note": "Case counts include three expected fail-closed outcomes. They are not assertion counts or CI test totals.",
+      "runnerElapsedMs": 11342,
+      "supervisorElapsedMs": 13724,
+      "maxResidentRows": 1440,
+      "syntheticOnly": true
+    },
+    "priorAttempt": {
+      "status": "FAIL",
+      "reason": "Harness import path resolved one parent directory above the repository.",
+      "elapsedMs": 9374,
+      "attemptedCases": 1,
+      "caseDatabaseQueries": 0,
+      "cleanup": "Verified stopped PID and closed loopback port; original evidence and data retained.",
+      "repair": "Only ignored harness imports changed. Import-only preflight and independent review passed before root admitted one fresh corrected repeat."
+    },
+    "semanticObservations": [
+      "Mixed decimal-width closes 60000, 120000 and 600000 returned in numeric order.",
+      "Dense 1440-minute fixture has 1440 stored, zero missing; alternating fixture has 720 stored and 720 missing intervals.",
+      "Sparse 5270400-minute fixture stores two endpoints and reports 5270398 missing minutes; empty long range reports the full gap. These do not prove dense long-range performance.",
+      "Absent table has null counts and no timestamp SELECT, distinct from a completed empty SELECT.",
+      "Exact row cap succeeds; cap+1 and remaining-zero with a later row refuse the whole read. Remaining-zero empty union performs LIMIT 1.",
+      "Off-grid source row fails with QR2_REPORT_FAILED.",
+      "Read-only repeatable-read transaction sees one stored/one missing before and after another connection inserts; a new transaction sees two stored/zero missing."
+    ],
+    "sourceBaseline": "Seven-file baseline established before cluster initialization and checked before/after every case and after cleanup; zero mismatches.",
+    "independentReview": "PASS WITH LIMITS: saved raw evidence, recipes, source baseline, transaction facts and cleanup independently verified.",
+    "ci": {
+      "status": "PASS on exact Stage 2A revision; M1 measurements are separate",
+      "revision": "a5d4db611b07062e0a302a05f5027e842c42a11b",
+      "runs": [
+        {
+          "id": 39849193796,
+          "name": "Quant Lab",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39849193796",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 39849193764,
+          "name": "Safety checks",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39849193764",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "evidence": "docs/evidence/PM1_QR2_S5_4_STAGE2A_LOCAL_2026-10-23.json"
+    },
+    "fixtureCleanup": {
+      "stopped": true,
+      "pgCtlStatus": 3,
+      "recordedPidAbsent": true,
+      "loopbackPortClosed": true,
+      "passwordTempRemoved": true,
+      "stoppedDataRetained": true,
+      "recursiveDeletion": false
+    },
+    "checkpointReview": "PASS: independent notes/evidence review; 68 source/artifact pins checked before adding this review report."
+  },
+  "measurements": {
+    "cases": [
+      {
+        "id": "mixed-width",
+        "status": "PASS",
+        "residentRows": 3,
+        "elapsedMs": 144.8622,
+        "coverageReads": 1,
+        "observations": [
+          {
+            "label": "first-observation",
+            "readMs": 9.958799999999997,
+            "validateMs": 0.7558999999999969,
+            "cloneMs": 0.13509999999999422,
+            "jsonBytes": 724,
+            "charges": {
+              "union_minutes": 10,
+              "timestamp_rows": 3,
+              "unique_windows": 1,
+              "derivation_visits": 3,
+              "output_intervals": 1,
+              "input_bytes_upper_bound": 3373,
+              "output_bytes_upper_bound": 2919
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 600000
+                },
+                "union_id": 0,
+                "start_index": 0,
+                "end_index": 3,
+                "expected_minutes": 10,
+                "stored_minutes": 3,
+                "missing_minutes": 7,
+                "interval_count": 1
+              }
+            ]
+          }
+        ],
+        "plan": null
+      },
+      {
+        "id": "dense-1440",
+        "status": "PASS",
+        "residentRows": 1440,
+        "elapsedMs": 141.2482,
+        "coverageReads": 1,
+        "observations": [
+          {
+            "label": "first-observation",
+            "readMs": 16.326699999999988,
+            "validateMs": 1.0892999999999802,
+            "cloneMs": 0.137800000000027,
+            "jsonBytes": 13502,
+            "charges": {
+              "union_minutes": 1440,
+              "timestamp_rows": 1440,
+              "unique_windows": 1,
+              "derivation_visits": 1440,
+              "output_intervals": 0,
+              "input_bytes_upper_bound": 27802,
+              "output_bytes_upper_bound": 2731
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 86400000
+                },
+                "union_id": 0,
+                "start_index": 0,
+                "end_index": 1440,
+                "expected_minutes": 1440,
+                "stored_minutes": 1440,
+                "missing_minutes": 0,
+                "interval_count": 0
+              }
+            ]
+          }
+        ],
+        "plan": {
+          "planningMs": 0.097,
+          "executionMs": 0.833,
+          "tree": {
+            "nodeType": "Limit",
+            "actualRows": 1440,
+            "loops": 1,
+            "index": null,
+            "indexCond": null,
+            "filter": null,
+            "rowsRemoved": 0,
+            "sharedHit": 17,
+            "sharedRead": 0,
+            "children": [
+              {
+                "nodeType": "Sort",
+                "actualRows": 1440,
+                "loops": 1,
+                "index": null,
+                "indexCond": null,
+                "filter": null,
+                "rowsRemoved": 0,
+                "sharedHit": 17,
+                "sharedRead": 0,
+                "children": [
+                  {
+                    "nodeType": "Seq Scan",
+                    "actualRows": 1440,
+                    "loops": 1,
+                    "index": null,
+                    "indexCond": null,
+                    "filter": "((bar_time > '0'::bigint) AND (bar_time <= '86400000'::bigint) AND (broker = 'binance-global'::text) AND (symbol = 'BTCUSDT'::text) AND (timeframe = '1'::text))",
+                    "rowsRemoved": 0,
+                    "sharedHit": 17,
+                    "sharedRead": 0,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "alternating",
+        "status": "PASS",
+        "residentRows": 720,
+        "elapsedMs": 118.03499999999998,
+        "coverageReads": 1,
+        "observations": [
+          {
+            "label": "first-observation",
+            "readMs": 12.244,
+            "validateMs": 0.9522000000000048,
+            "cloneMs": 0.1285000000000025,
+            "jsonBytes": 7118,
+            "charges": {
+              "union_minutes": 1440,
+              "timestamp_rows": 720,
+              "unique_windows": 1,
+              "derivation_visits": 720,
+              "output_intervals": 720,
+              "input_bytes_upper_bound": 15562,
+              "output_bytes_upper_bound": 138091
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 86400000
+                },
+                "union_id": 0,
+                "start_index": 0,
+                "end_index": 720,
+                "expected_minutes": 1440,
+                "stored_minutes": 720,
+                "missing_minutes": 720,
+                "interval_count": 720
+              }
+            ]
+          }
+        ],
+        "plan": null
+      },
+      {
+        "id": "sparse-long",
+        "status": "PASS",
+        "residentRows": 2,
+        "elapsedMs": 111.48449999999998,
+        "coverageReads": 1,
+        "observations": [
+          {
+            "label": "first-observation",
+            "readMs": 8.982399999999984,
+            "validateMs": 0.9350000000000023,
+            "cloneMs": 0.09379999999998745,
+            "jsonBytes": 751,
+            "charges": {
+              "union_minutes": 5270400,
+              "timestamp_rows": 2,
+              "unique_windows": 1,
+              "derivation_visits": 2,
+              "output_intervals": 1,
+              "input_bytes_upper_bound": 3356,
+              "output_bytes_upper_bound": 2919
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 316224000000
+                },
+                "union_id": 0,
+                "start_index": 0,
+                "end_index": 2,
+                "expected_minutes": 5270400,
+                "stored_minutes": 2,
+                "missing_minutes": 5270398,
+                "interval_count": 1
+              }
+            ]
+          }
+        ],
+        "plan": {
+          "planningMs": 0.102,
+          "executionMs": 0.032,
+          "tree": {
+            "nodeType": "Limit",
+            "actualRows": 2,
+            "loops": 1,
+            "index": null,
+            "indexCond": null,
+            "filter": null,
+            "rowsRemoved": 0,
+            "sharedHit": 1,
+            "sharedRead": 0,
+            "children": [
+              {
+                "nodeType": "Sort",
+                "actualRows": 2,
+                "loops": 1,
+                "index": null,
+                "indexCond": null,
+                "filter": null,
+                "rowsRemoved": 0,
+                "sharedHit": 1,
+                "sharedRead": 0,
+                "children": [
+                  {
+                    "nodeType": "Seq Scan",
+                    "actualRows": 2,
+                    "loops": 1,
+                    "index": null,
+                    "indexCond": null,
+                    "filter": "((bar_time > '0'::bigint) AND (bar_time <= '316224000000'::bigint) AND (broker = 'binance-global'::text) AND (symbol = 'BTCUSDT'::text) AND (timeframe = '1'::text))",
+                    "rowsRemoved": 0,
+                    "sharedHit": 1,
+                    "sharedRead": 0,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "empty-long",
+        "status": "PASS",
+        "residentRows": 0,
+        "elapsedMs": 112.86949999999999,
+        "coverageReads": 1,
+        "observations": [
+          {
+            "label": "first-observation",
+            "readMs": 8.826700000000017,
+            "validateMs": 1.2375000000000114,
+            "cloneMs": 0.13360000000000127,
+            "jsonBytes": 733,
+            "charges": {
+              "union_minutes": 5270400,
+              "timestamp_rows": 0,
+              "unique_windows": 1,
+              "derivation_visits": 0,
+              "output_intervals": 1,
+              "input_bytes_upper_bound": 3322,
+              "output_bytes_upper_bound": 2919
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 316224000000
+                },
+                "union_id": 0,
+                "start_index": 0,
+                "end_index": 0,
+                "expected_minutes": 5270400,
+                "stored_minutes": 0,
+                "missing_minutes": 5270400,
+                "interval_count": 1
+              }
+            ]
+          }
+        ],
+        "plan": null
+      },
+      {
+        "id": "table-absent",
+        "status": "PASS",
+        "residentRows": 0,
+        "elapsedMs": 120.0456,
+        "coverageReads": 0,
+        "observations": [
+          {
+            "label": "first-observation",
+            "readMs": 4.753399999999999,
+            "validateMs": 0.8157999999999959,
+            "cloneMs": 0.13530000000000086,
+            "jsonBytes": 709,
+            "charges": {
+              "union_minutes": 3,
+              "timestamp_rows": 0,
+              "unique_windows": 1,
+              "derivation_visits": 0,
+              "output_intervals": 0,
+              "input_bytes_upper_bound": 3322,
+              "output_bytes_upper_bound": 2731
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 180000
+                },
+                "union_id": 0,
+                "start_index": null,
+                "end_index": null,
+                "expected_minutes": null,
+                "stored_minutes": null,
+                "missing_minutes": null,
+                "interval_count": null
+              }
+            ]
+          }
+        ],
+        "plan": null
+      },
+      {
+        "id": "cap",
+        "status": "PASS",
+        "residentRows": 2,
+        "elapsedMs": 114.0562,
+        "coverageReads": 1,
+        "observations": [
+          {
+            "label": "first-observation",
+            "readMs": 8.284500000000008,
+            "validateMs": 0.8817999999999984,
+            "cloneMs": 0.10140000000001237,
+            "jsonBytes": 715,
+            "charges": {
+              "union_minutes": 3,
+              "timestamp_rows": 2,
+              "unique_windows": 1,
+              "derivation_visits": 2,
+              "output_intervals": 1,
+              "input_bytes_upper_bound": 3356,
+              "output_bytes_upper_bound": 2919
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 180000
+                },
+                "union_id": 0,
+                "start_index": 0,
+                "end_index": 2,
+                "expected_minutes": 3,
+                "stored_minutes": 2,
+                "missing_minutes": 1,
+                "interval_count": 1
+              }
+            ]
+          }
+        ],
+        "plan": null
+      },
+      {
+        "id": "cap-plus-one",
+        "status": "PASS",
+        "residentRows": 3,
+        "elapsedMs": 111.70530000000001,
+        "coverageReads": 1,
+        "observations": [
+          {
+            "label": "expected-refusal",
+            "errorCode": "QR2_RANGE_ADMISSION_REFUSED"
+          }
+        ],
+        "plan": null
+      },
+      {
+        "id": "remaining-zero-empty",
+        "status": "PASS",
+        "residentRows": 1,
+        "elapsedMs": 110.718,
+        "coverageReads": 2,
+        "observations": [
+          {
+            "label": "first-observation",
+            "readMs": 11.181700000000006,
+            "validateMs": 1.9250999999999863,
+            "cloneMs": 0.12560000000001992,
+            "jsonBytes": 1171,
+            "charges": {
+              "union_minutes": 2,
+              "timestamp_rows": 1,
+              "unique_windows": 2,
+              "derivation_visits": 1,
+              "output_intervals": 1,
+              "input_bytes_upper_bound": 5414,
+              "output_bytes_upper_bound": 5256
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 60000
+                },
+                "union_id": 0,
+                "start_index": 0,
+                "end_index": 1,
+                "expected_minutes": 1,
+                "stored_minutes": 1,
+                "missing_minutes": 0,
+                "interval_count": 0
+              },
+              {
+                "id": 1,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 180000,
+                  "to": 240000
+                },
+                "union_id": 1,
+                "start_index": 0,
+                "end_index": 0,
+                "expected_minutes": 1,
+                "stored_minutes": 0,
+                "missing_minutes": 1,
+                "interval_count": 1
+              }
+            ]
+          }
+        ],
+        "plan": null
+      },
+      {
+        "id": "remaining-zero-row",
+        "status": "PASS",
+        "residentRows": 2,
+        "elapsedMs": 107.1359,
+        "coverageReads": 2,
+        "observations": [
+          {
+            "label": "expected-refusal",
+            "errorCode": "QR2_RANGE_ADMISSION_REFUSED"
+          }
+        ],
+        "plan": null
+      },
+      {
+        "id": "off-grid",
+        "status": "PASS",
+        "residentRows": 1,
+        "elapsedMs": 101.65400000000001,
+        "coverageReads": 1,
+        "observations": [
+          {
+            "label": "expected-refusal",
+            "errorCode": "QR2_REPORT_FAILED"
+          }
+        ],
+        "plan": null
+      },
+      {
+        "id": "rr-late-insert",
+        "status": "PASS",
+        "residentRows": 1,
+        "elapsedMs": 167.44619999999998,
+        "coverageReads": 3,
+        "observations": [
+          {
+            "label": "first-observation",
+            "readMs": 7.4923,
+            "validateMs": 1.0379999999999825,
+            "cloneMs": 0.1103999999999985,
+            "jsonBytes": 708,
+            "charges": {
+              "union_minutes": 2,
+              "timestamp_rows": 1,
+              "unique_windows": 1,
+              "derivation_visits": 1,
+              "output_intervals": 1,
+              "input_bytes_upper_bound": 3339,
+              "output_bytes_upper_bound": 2919
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 120000
+                },
+                "union_id": 0,
+                "start_index": 0,
+                "end_index": 1,
+                "expected_minutes": 2,
+                "stored_minutes": 1,
+                "missing_minutes": 1,
+                "interval_count": 1
+              }
+            ]
+          },
+          {
+            "label": "same-RR-after-insert",
+            "readMs": 3.8911999999999978,
+            "validateMs": 0.6045999999999765,
+            "cloneMs": 0.06100000000000705,
+            "jsonBytes": 708,
+            "charges": {
+              "union_minutes": 2,
+              "timestamp_rows": 1,
+              "unique_windows": 1,
+              "derivation_visits": 1,
+              "output_intervals": 1,
+              "input_bytes_upper_bound": 3339,
+              "output_bytes_upper_bound": 2919
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 120000
+                },
+                "union_id": 0,
+                "start_index": 0,
+                "end_index": 1,
+                "expected_minutes": 2,
+                "stored_minutes": 1,
+                "missing_minutes": 1,
+                "interval_count": 1
+              }
+            ]
+          },
+          {
+            "label": "new-RR-after-insert",
+            "readMs": 2.8659999999999854,
+            "validateMs": 0.7864999999999895,
+            "cloneMs": 0.05189999999998918,
+            "jsonBytes": 715,
+            "charges": {
+              "union_minutes": 2,
+              "timestamp_rows": 2,
+              "unique_windows": 1,
+              "derivation_visits": 2,
+              "output_intervals": 0,
+              "input_bytes_upper_bound": 3356,
+              "output_bytes_upper_bound": 2731
+            },
+            "windows": [
+              {
+                "id": 0,
+                "market": {
+                  "broker": "binance-global",
+                  "symbol": "BTCUSDT",
+                  "timeframe": "1"
+                },
+                "resolved_range": {
+                  "from": 0,
+                  "to": 120000
+                },
+                "union_id": 0,
+                "start_index": 0,
+                "end_index": 2,
+                "expected_minutes": 2,
+                "stored_minutes": 2,
+                "missing_minutes": 0,
+                "interval_count": 0
+              }
+            ]
+          }
+        ],
+        "plan": null
+      }
+    ],
+    "sampledMemory": {
+      "sampleCount": 6,
+      "maxRunnerTreeBytes": 132845568,
+      "maxGlobalPostgresRssSumBytes": 79806464,
+      "minFreeSystemBytes": 831741952,
+      "sampleGapsMs": [
+        2080,
+        1942,
+        1972,
+        1956,
+        1953
+      ],
+      "limits": "Observed samples only. Shared pages may be counted more than once; transient peaks are unknown. Global PostgreSQL monitoring never authorizes unrelated process termination."
+    },
+    "queryPlan": "Both observed plans use Limit over Sort over Seq Scan. No index setting was forced. These tiny-table plans establish neither index use nor target scan-cost bounds."
+  },
+  "limitations": [
+    "Twelve named local synthetic cases; not CI test counts.",
+    "Small first qualification only; no production cap or target capacity conclusion.",
+    "Existing account/owner integration, monetary differential and public rendering are not run.",
+    "Read timing combines SQL, decode and registry construction; not isolated component costs.",
+    "Clone measured on main thread, not worker postMessage or full financial response.",
+    "Missing-interval coordinates/public envelopes are not materialized by these Stage 2A registry cases; Stage 1 oracle evidence remains separate.",
+    "No real account/owner authorization, pre-admission ordering, financial differential or worker transport is exercised.",
+    "The experiment does not choose production resource limits, certify target capacity or complete Stage 2/S5.",
+    "No timeout or forced-cancellation fault was injected; lifecycle review and normal/error cleanup are observed, not all failure modes.",
+    "Exact timestamp ordering is evidenced by the pinned executed equality assertion and recorded SQL; raw returned timestamp arrays are not separately archived."
+  ],
+  "nextAction": "Prepare a separate bounded measurement packet for larger dense/alternating data, shared windows and actual publication/worker transport costs. Select immutable limits only after review; then integrate account and owner paths.",
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT RUN",
+    "ready": false,
+    "n1": "HELD",
+    "deployment": "NOT RUN",
+    "targetRouteActivation": "NOT RUN",
+    "sharedTargetMigrations": "NOT RUN",
+    "hostVps": "NOT RUN",
+    "live": "HELD",
+    "guardReset": "HELD",
+    "bestInputsApply": "HELD"
+  },
+  "sourcePins": [
+    {
+      "path": "src/postgres/qr2-coverage-reader.js",
+      "sha256": "233142c751201ee6502fed5e3860df6bafcdb4dc97af1f139749a19efe9e082e"
+    },
+    {
+      "path": "src/portfolio/qr2-coverage-snapshot.js",
+      "sha256": "3b6615779b6b16b870c2a6d1a0a87b36bc9ac179d9c3d6231daa16e83f4f674b"
+    },
+    {
+      "path": "src/portfolio/qr2-coverage.js",
+      "sha256": "922d776e9c922eba0d4c192a670a48c1023ee335e972a61322fa87f4c9c00387"
+    },
+    {
+      "path": "src/market-gap-intervals.js",
+      "sha256": "9ce50b7a64fe33fbdfac40abd52406574b44cc9cce2050185b491668a959d544"
+    },
+    {
+      "path": "src/postgres/pine-bridge-schema.sql",
+      "sha256": "2f54a0cd247e8cf5f2ca384200261ddd2529f4548559c55d7ae25c885e6dcd92"
+    }
+  ],
+  "artifactPins": [
+    {
+      "path": ".qa-local/qr2-s5-4-measure/root-results.json",
+      "sha256": "7b54ed39de5ad6c2a9d5cbd4a85e2a3936c9ef8f0e3ed7632e6939e2a36d3b2d"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/root-admission.json",
+      "sha256": "53fa2adce45b6cc807411b4a1d9027ed60d61a506623c0ccdc2b3e024367f2dd"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/root-repeat-admission.json",
+      "sha256": "da4700517350f3528ec63c90a6f93c1d54fe5a583853ab6d4480392770431718"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/runner.mjs",
+      "sha256": "49b89d86edc0e87f36805eb66339a33b882b370076cdce0f0c14afabf7e90ca3"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/cases.mjs",
+      "sha256": "16e5a36593e6dffb544d97166a99d4ca00da3c6dfd72135f4f62d8eaafd316ea"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/supervise.mjs",
+      "sha256": "5c846389c38edb545fce6ca18c18ce63b79a60ea20c38d7150c468bc09873841"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/packet-review.md",
+      "sha256": "bcfd489415b7f7794dd8bde9ffdc277e8e2f644b787d5095a971779b0c192b09"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/harness-review.md",
+      "sha256": "f36f7bf280e20ac7ee1f5a2d0ac935b925d37dc411d3602dd35f882e1dc22ffc"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/harness-fix-review.md",
+      "sha256": "758f3ad0d1a436276db6debedc5a9b13d73c103604c54fe2aad49f3d5fd9ff92"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/supervisor-review.md",
+      "sha256": "3b515e43c52b6d2881803ccd88faf4faaea37fe763e3f3a11a001ab2efd47833"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/supervisor-fix-review.md",
+      "sha256": "0868e1d387861087662f9393bf62c88d543ad6357dcbd0d2dd4a1da171a26de6"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/supervisor-final-review.md",
+      "sha256": "bb87f2f00f97d37d7f5b04131ca6ab571e01cbb4e484ff5f02338dffe79f5a4c"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/import-fix-review.md",
+      "sha256": "5b740b7ce24d5130b336073ef86e4e6f72301d567567490b7ae0586082133597"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/supervisor-1792701842717.jsonl",
+      "sha256": "7a4cc7d405db93b7a825611aa4cdd4b1d92589bf7b792d3fb6194c3cea30bf8b"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/supervisor-1792701991584.jsonl",
+      "sha256": "c650a085c7d4acab48f0471ff87fe3ddede8af9ff3b2c3e0fbf658a00ce0ef04"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701843764/mixed-width.json",
+      "sha256": "bc292e1d1af768a78cf485b4510476e013a7f09693cf27af8d42fb18fdcb8ccf"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701843764/summary.json",
+      "sha256": "270259a198b9596b9f03bb94a0b4f764775efd2da4e3464311ae66d145224956"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/summary.json",
+      "sha256": "e4effa37b17cb45d88ce165a0fcbf0b019a9f755b9e73b57fc90b106fd1aff59"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/source-baseline.json",
+      "sha256": "2944a983327133f12c275039d84d6e01f18c9e9df69856d702f6d6bde3e34cf9"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/mixed-width.json",
+      "sha256": "4a814befdeb9101a77e79c9bb4e4032d341b9fb759623aa388dd76973f3d485b"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/dense-1440.json",
+      "sha256": "ebb6080d9b2464da94387bb3ee439d7999c8dbb61bb7ff6a233ba772e9f1bba3"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/alternating.json",
+      "sha256": "753ba6bb03d6a97b88a7ae0ac0e1cceb7923636094749de25244bace52b0a1bd"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/sparse-long.json",
+      "sha256": "8b0b5f8702a01c728a44df5cd59820972ee9f86f7a0a9db877166a9fb2990ee4"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/empty-long.json",
+      "sha256": "a317500d64c409a57ffc4ce31a59f4f32d8330a7e0ba70c998d553783143850d"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/table-absent.json",
+      "sha256": "5be56a729a770f9cbf0d9b310528b0fd3e3a3bf1f43686ef89b401b1ee606004"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/cap.json",
+      "sha256": "27edeb855fb480524fd177c5a49e55a211b60483345a9be783131d04166c47ce"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/cap-plus-one.json",
+      "sha256": "4fc9a07a60073a0faebd5e86974f36cb8b36769efd080b9f1569c49943065187"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/remaining-zero-empty.json",
+      "sha256": "b008f269a64e8975ff62161be111e4f43b1771611bbc630f1c5908232598dd35"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/remaining-zero-row.json",
+      "sha256": "405c789377f537c0f7b7dc98fba75c35930990e43c17de3588b81c9c6b399496"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/off-grid.json",
+      "sha256": "b5def42b2c6157d520c482d04a36129941920db4a23841149349083afd195564"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/run-1792701992602/rr-late-insert.json",
+      "sha256": "edf43d8b2780b20fd35047baf2e2bc7a7222a9eca08b1018dde8f4d5cb5b1af0"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/runtime-verification.md",
+      "sha256": "238912db4e8673adba30a6ce8362376d4792ae58521bd8260a45e9c62fdfed50"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/next-measurement.md",
+      "sha256": "3bc9fdfbcbf987556e0ff8c0ef6f7a0ed4bcb7a0f2fbe13abbd1de26604fb6be"
+    },
+    {
+      "path": ".qa-local/qr2-s5-4-measure/checkpoint-review.md",
+      "sha256": "8a9485895d694c335e6c882246e24328d27cdf849c95e0351f946bd01f637cb4"
+    }
+  ]
+}
