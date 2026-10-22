@@ -1,0 +1,356 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "scope": "QR-2 S5-4 Stage 2C reviewed local implementation checkpoint; PostgreSQL functional acceptance pending",
+  "aggregationPolicy": "Do not sum overlapping author suites, fix reruns or grouped independent cases. Syntax/source review is not test or PG acceptance.",
+  "executedAuthorRuns": [
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/coder/focused-first.log",
+      "tests": 6,
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "duration_ms": 167.6131,
+      "overlap": "Separate historical/fix run; never sum with other runs"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/coder/focused-final.log",
+      "tests": 36,
+      "pass": 36,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "duration_ms": 189.7084,
+      "overlap": "Separate historical/fix run; never sum with other runs"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/coder/nonenumerable-fix.log",
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "duration_ms": 141.9279,
+      "overlap": "Separate historical/fix run; never sum with other runs"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/coder/refusal-detail-fix.log",
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "duration_ms": 207.5085,
+      "overlap": "Separate historical/fix run; never sum with other runs"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/coder-c2/focused-first.log",
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "duration_ms": 633.5023,
+      "overlap": "Separate historical/fix run; never sum with other runs"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/coder-c2/metadata-bound-fix.log",
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "skipped": 0,
+      "cancelled": 0,
+      "duration_ms": 160.9203,
+      "overlap": "Separate historical/fix run; never sum with other runs"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/coder-c2/metadata-bound-fix-final.log",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "duration_ms": 161.7877,
+      "overlap": "Separate historical/fix run; never sum with other runs"
+    }
+  ],
+  "independentRuns": [
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/tester/results.json",
+      "groupedChecks": 12,
+      "pass": 11,
+      "fail": 1,
+      "meaning": "Initial C1 non-enumerable lowering P2 preserved"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/tester/results-fixed.json",
+      "groupedChecks": 12,
+      "pass": 12,
+      "fail": 0,
+      "meaning": "Same twelve groups rerun once after helper fix; precedes refusal-detail amendment"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/tester/c2-results.json",
+      "selector": "initialRun",
+      "groupedChecks": 31,
+      "pass": 30,
+      "fail": 1,
+      "meaning": "Old worker pin; includes three C1 exact refusal-message/detail checks. Failure is tester empty-owner expectation."
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/tester/c2-results.json",
+      "selector": "top level",
+      "groupedChecks": 1,
+      "pass": 1,
+      "fail": 0,
+      "meaning": "Only corrected empty-owner case rerun; original preserved under initialRun"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/tester/c2-metadata-and-integration-authoring.md",
+      "groupedChecks": 2,
+      "pass": 2,
+      "fail": 0,
+      "rawResultsFile": null,
+      "meaning": "Tiny lowered-96-byte-budget rejection before snapshot getter; report and tool transcript only, not a dedicated raw JSON run"
+    }
+  ],
+  "failureHistory": [
+    {
+      "kind": "product P2",
+      "artifact": ".qa-local/qr2-s5-4-stage2c/tester/c1-verification.md",
+      "finding": "Accepted non-enumerable lowering dropped by spread",
+      "closure": ".qa-local/qr2-s5-4-stage2c/tester/c1-fix-verification.md"
+    },
+    {
+      "kind": "product P2 source finding",
+      "artifact": ".qa-local/qr2-s5-4-stage2c/tester/c1-fixture-review.md",
+      "finding": "New pre-count omitted existing refusal message/detail",
+      "closure": ".qa-local/qr2-s5-4-stage2c/tester/c1-refusal-fix-review.md"
+    },
+    {
+      "kind": "product P2 source finding",
+      "artifact": ".qa-local/qr2-s5-4-stage2c/c2-audit.md",
+      "finding": "Identifier bounds applied after extra identity allocation",
+      "closure": ".qa-local/qr2-s5-4-stage2c/c2-fix-audit.md"
+    },
+    {
+      "kind": "tester expectation",
+      "artifact": ".qa-local/qr2-s5-4-stage2c/tester/c2-results.json",
+      "finding": "Empty undeclared owner wrongly expected NO_ACCOUNT placeholder",
+      "closure": "Corrected targeted top-level result; initialRun retained"
+    },
+    {
+      "kind": "author test fixture",
+      "artifact": ".qa-local/qr2-s5-4-stage2c/coder-c2/metadata-bound-fix.log",
+      "finding": "Tried mutating frozen fixture budgets",
+      "closure": ".qa-local/qr2-s5-4-stage2c/coder-c2/metadata-bound-fix-final.log"
+    },
+    {
+      "kind": "author syntax preparation",
+      "artifact": ".qa-local/qr2-s5-4-stage2c/coder/coder-report.md",
+      "finding": "Initial replacement-induced reader syntax error repaired before tests",
+      "rawLogAvailable": false
+    },
+    {
+      "kind": "tester harness import preparation",
+      "artifact": ".qa-local/qr2-s5-4-stage2c/tester/c1-verification.md",
+      "finding": "Initial checker relative import climbed too far",
+      "rawLogAvailable": false
+    }
+  ],
+  "reviews": [
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/c1-audit.md",
+      "status": "Historical initial-pin source review; later P2 findings supersede broad no-finding wording"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/c2-audit.md",
+      "status": "Initial source finding retained"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/c2-fix-audit.md",
+      "status": "PASS WITH LIMITS narrow metadata fix inspection"
+    },
+    {
+      "artifact": ".qa-local/qr2-s5-4-stage2c/tester/integration-source-audit.md",
+      "status": "PASS WITH LIMITS source only; no execution"
+    }
+  ],
+  "syntaxEvidence": {
+    "status": "Reported PASS",
+    "sources": [
+      ".qa-local/qr2-s5-4-stage2c/coder/coder-report.md",
+      ".qa-local/qr2-s5-4-stage2c/coder-c2/coder-report.md",
+      ".qa-local/qr2-s5-4-stage2c/tester/integration-chronology-review.md"
+    ],
+    "note": "Syntax checks are not added to test totals; no dedicated syntax raw log supplied"
+  },
+  "notRun": {
+    "postgres": true,
+    "newIntegrationTests": {
+      "path": "test/postgres/qr2-coverage-integration.test.mjs",
+      "authoredScenarios": 3,
+      "expectedSharedDatabases": 1,
+      "status": "NOT_RUN"
+    },
+    "proposedRuntime": {
+      "selectedTests": 21,
+      "files": 6,
+      "expectedDatabases": 8,
+      "status": "PROPOSAL ONLY; awaiting headroom and final runtime audit/admission"
+    },
+    "combinedPerformance": "OPEN",
+    "fullStage2AndS5": "OPEN",
+    "stage3PublicationAndUi": "NOT_RUN",
+    "currentChangeCI": "NOT_VERIFIED_BY_THIS_PACKET"
+  },
+  "limits": [
+    "C1 checks use query fakes; no SQL or isolation proof.",
+    "Author C2 selected ten tests include actual default-worker account parity/recovery, not PostgreSQL owner reader integration.",
+    "Independent C2 old-pin scope and metadata-fix scope are separate; no full suite rerun at final pin.",
+    "Worker cannot authenticate jointly forged trusted financial/context inputs.",
+    "Configured budgets remain provisional local/off maxima; no cross-product heap or production-cap claim.",
+    "Integration chronology is explicitly synthetic; amounts originate from live fixture funding writer.",
+    "Fixture dispose swallows errors; future supervisor cleanup verification remains mandatory.",
+    "Direct readQr2Account and computeQr2View are outside the new worker association guard.",
+    "A 31-day inspected union or aggregate limit overflow refuses the whole request; no silent truncation.",
+    "No public fields, route activation, pool heap/deadline changes or financial composer edits are included."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "READY": false,
+    "N1": "HELD",
+    "deployment": false,
+    "targetRouteActivation": false
+  },
+  "sourcePins": {
+    "src/portfolio/qr2-coverage-limits.js": "139f49c80339495aff77943f27a3f8fe0b31b6b962933caf043c903e5007db11",
+    "src/postgres/qr2-reader.js": "84eef53a28ff322630827b84cecfcd67375404df1c3d17f298f56ca9fbaf62af",
+    "src/postgres/qr2-owner-reader.js": "cd4b1b1e474ea36757b661129b6799dda28fda81585f614b29643f36acda794e",
+    "src/postgres/qr2-compute-worker.js": "8907622bf808743096e6e59656e82f2b4fc7fcd8e8a38682a0f92a61e7eec6ad",
+    "test/qr2-coverage-limits.test.js": "5b6b1b4ffb1b488cdd2ac539539c4cac66765f45c444bcaa0afdd8389ce85801",
+    "test/qr2-compute-pool.test.js": "88c5166db4f7ed63d2eda219e8741528578e028c5bd1813a4370c2bb747a9aac",
+    "test/postgres/qr2-reader.test.mjs": "5905dc2363f2cf4b84179a371aa8a1bf45d4265bb17762f88321a4fe8ba7b515",
+    "test/postgres/qr2-reader-facts.test.mjs": "a54f0002cb14f832b310c77ff58a26cf23e9e2869ed0e6145ec0bb0687cbc1ad",
+    "test/postgres/qr2-owner-independent.test.mjs": "8a9629ff41ad04f3648ddab3b74332612af70e66afd60e28aac9d9c02985dc0f",
+    "test/postgres/qr2-compute-http.test.mjs": "e4f6cb03b65364e0a0e57e77b16bffd5323774068ce9d0203a774a5f75a1f910",
+    "test/postgres/qr2-coverage-integration.test.mjs": "b499c58c763585015ec2b893681cb87f01bd2750d961ae50b5dd936b766b6f2a",
+    "test/helpers/qr2-reader-fixture.mjs": "022091da731ae37e6af87e7cce9bd73d5fba045469cc5e1390c57db9ee0b392e"
+  },
+  "artifactPins": {
+    ".qa-local/qr2-s5-4-stage2c/c1-audit.md": "9558b3c38e7a39e796d44fef5801838953b9dadb20cf9e9eb05ada1ede71d4ed",
+    ".qa-local/qr2-s5-4-stage2c/c1-fixtures.diff": "d4808e0e0cbdb99aa5491afc92b20b18367974dad74c2bc3ff41dfa17f2d922a",
+    ".qa-local/qr2-s5-4-stage2c/c2-audit.md": "acf11f4c8edda49f2fe2839ef437c34d7e52dba96a2a5ee254b91e98348bf131",
+    ".qa-local/qr2-s5-4-stage2c/c2-fix-audit.md": "c8a8ab57409569aa449245107aa4fb6007a9a043d0a4345642050489a266dbe6",
+    ".qa-local/qr2-s5-4-stage2c/coder-c2/coder-report.md": "c4eddd8caa1deb1c2b483b9111a26fffd0ef44560a4ba64308b7b76bf11028f7",
+    ".qa-local/qr2-s5-4-stage2c/coder-c2/focused-first.log": "610fc077d2814179827bde2a5fbbabbadc2784f92685af847cefb5f8d9bf3fff",
+    ".qa-local/qr2-s5-4-stage2c/coder-c2/metadata-bound-fix-final.log": "b3afc3ad5db366c58bcc236e995191b8b0f0e5bc80f4bfb9c98a50e5c7a9a1e4",
+    ".qa-local/qr2-s5-4-stage2c/coder-c2/metadata-bound-fix.log": "e5dc6feab20e6cfcfe901d89ada191faaa9c7b9dec8a5b5904ea28d5dd5c85f0",
+    ".qa-local/qr2-s5-4-stage2c/coder/coder-report.md": "d62babd2205244a79c308726d060473940e69e779ed3f300fe0d3904a2040c15",
+    ".qa-local/qr2-s5-4-stage2c/coder/focused-final.log": "d8cfeacf1d24f7c9ff87a63bd02cd98e282226b186dcfd489ddb422f7f41e721",
+    ".qa-local/qr2-s5-4-stage2c/coder/focused-first.log": "87141cbe97d03847a9cd575862fb3ae873de879a1a575efd9a4e05ac30eb16b0",
+    ".qa-local/qr2-s5-4-stage2c/coder/nonenumerable-fix.log": "bed1a3f5c6996b13d96fe78fcd26b429580a4b7e9f9a667d4ec4957fc7638642",
+    ".qa-local/qr2-s5-4-stage2c/coder/refusal-detail-fix.log": "a08b55af1f7347bc44e95ba3d8896c574f6bb5c63ae48d83e8d001632f15f628",
+    ".qa-local/qr2-s5-4-stage2c/functional-runtime-proposal.md": "a46d16202076f86c4de12d40785086a1a88338b1d864559feae595b6fe450350",
+    ".qa-local/qr2-s5-4-stage2c/tester/c1-fix-verification.md": "0a858e13bce649e9d3b3a8b320df6e8aa928d44d00ddf030301d60315e6aaa99",
+    ".qa-local/qr2-s5-4-stage2c/tester/c1-fixture-review.md": "f73364867e5b55766baf8535078de820d7ae8914275fb8d381ed2c60f96408b5",
+    ".qa-local/qr2-s5-4-stage2c/tester/c1-refusal-fix-review.md": "09b90b424ea9d31ee817379f77a5e546c312748f408cc2ca66d47bd26de6e580",
+    ".qa-local/qr2-s5-4-stage2c/tester/c1-verification.md": "865d15ceb64bf6a72473a8155bbbffe41e8d1955c76456dba77fd3ab81887753",
+    ".qa-local/qr2-s5-4-stage2c/tester/c2-metadata-and-integration-authoring.md": "1c63f3304f48c49fe89ea9b226d8d007ab88817cfb0dae198979f7689c9979fb",
+    ".qa-local/qr2-s5-4-stage2c/tester/c2-results.json": "c1f48b657b76a9ea3c663451d168a9892ec5820bf25d27d627a1ba389f9adee8",
+    ".qa-local/qr2-s5-4-stage2c/tester/c2-verification.md": "fda53cc0256f8f7199287350640ae572f70fbbe6769c8fc675f4c9b8ab9a67b1",
+    ".qa-local/qr2-s5-4-stage2c/tester/c2-verify.mjs": "28d86b742391d5b7ad8b4014156df81d8b0adceabb0a638136f2a6c518576ac3",
+    ".qa-local/qr2-s5-4-stage2c/tester/integration-chronology-review.md": "0e9332bf2196eb23346e692aad6190f85efc3c1d6f57006aa67dac9b667e0b71",
+    ".qa-local/qr2-s5-4-stage2c/tester/integration-source-audit.md": "fcdb31ab15433e317689f8ac5a147996abb57247fef08b58f107d44c421b26a5",
+    ".qa-local/qr2-s5-4-stage2c/tester/plan.md": "0edb0c01f37208a5e5f50d0e9a9176cc80e32fbf387d1a8367a1a0885e2bbb64",
+    ".qa-local/qr2-s5-4-stage2c/tester/results-fixed.json": "b90811d1aa6916b2493e43e80185477e885ca9a876cd566354b6375e3b4e9781",
+    ".qa-local/qr2-s5-4-stage2c/tester/results.json": "71c4015a7a0eb4f720beac2d2e932da9cc4b9cb91a36f89d00d6cb99f397d293",
+    ".qa-local/qr2-s5-4-stage2c/tester/verify-c1-fixed.mjs": "f3b80476baeb8436a674f38bbea5c2565a8508442b019f43813ed64f4d80f94e",
+    ".qa-local/qr2-s5-4-stage2c/tester/verify-c1.mjs": "fa590f2e7e2802d7a3ca4f2385344e242b6052281e9dca4e1aeac61158dcdc26",
+    ".qa-local/qr2-s5-4-stage2c/worker-design.md": "9e925f860e6bfae8ae009f0367f0e33233a0b9c3b1d9337ea967b679cad84cbb",
+    ".qa-local/qr2-s5-4-stage2c-runtime/runner.mjs": "c0bf9fd26d70760e75d7feea9949e116b3fe56a9dc2e5617980d2ae11e7c8341",
+    ".qa-local/qr2-s5-4-stage2c-runtime/supervise.mjs": "b9299498f95bb8b93c6fb362eebd1d0520959feb00d2734c2b597c441e56be57",
+    ".qa-local/qr2-s5-4-stage2c-runtime/source-manifest.json": "f65b4ea6870e53e49e34cd039a440df458fb8887ff60d906dc486ae1d3781bdd",
+    ".qa-local/qr2-s5-4-stage2c-runtime/report.md": "61adbbaf194a15f88e08c3aadb401ff3a02916fae758dc0b48157befc3d2eb2c",
+    ".qa-local/qr2-s5-4-stage2c-runtime/runner-review.md": "aa9196d60e5bb4d8347208743aa30d5336511c4efcb86f583661a7c6644074b1",
+    ".qa-local/qr2-s5-4-stage2c-runtime/runner-fix-review.md": "60036fcb0c685fd17f680b94355fb104e59cb86f3c66fc4e1650a4d1dad71f3d",
+    ".qa-local/qr2-s5-4-stage2c-runtime/supervisor-review.md": "cc0b4845ddec78d3d1ff13a11a5e52e16dc254736bf679fa439081eceee9a951",
+    ".qa-local/qr2-s5-4-stage2c-runtime/root-headroom-observation.json": "a6ac1455c3d01c61079a5b6d9786a8faacb3f911580c1812e4c213c11b5f56b2",
+    ".qa-local/qr2-s5-4-stage2c-runtime/root-selected-names.json": "512c282fc5e8b4d13a0855250c0694b677c6304c149ea8cd2e095282611705a1",
+    ".qa-local/qr2-s5-4-stage2c/evidence-inputs.json": "992423f5b44abda77f5e67004b54f06f8d008dfa2fe65d9bd33532699ebf64b4",
+    ".qa-local/qr2-s5-4-stage2c/checkpoint-review.md": "6746808df3e772d3920f04fba1fb46ab2fa5b87e1cb9699e4cda8e186136ce27"
+  },
+  "status": "IMPLEMENTED_REVIEWED_FUNCTIONAL_PENDING",
+  "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
+  "recordedAt": "2026-10-22T21:41:20.975Z",
+  "rootAcceptance": {
+    "implementationCheckpoint": true,
+    "functionalPostgres": false,
+    "combinedPerformance": false,
+    "productionLimits": false,
+    "publicIntervals": false,
+    "fullStage2": false,
+    "fullS5": false
+  },
+  "provisionalLocalLimits": {
+    "union_minutes": 43200,
+    "timestamp_rows": 21600,
+    "unique_windows": 20,
+    "derivation_visits": 100000,
+    "output_intervals": 4096,
+    "coverage_input_bytes": 524288,
+    "coverage_output_bytes": 1048576
+  },
+  "functionalPreparation": {
+    "status": "NOT_RUN",
+    "reason": "Free physical memory below unchanged 1 GiB admission threshold",
+    "selectedTests": 21,
+    "fileProcesses": 6,
+    "expectedHelperDatabases": 8,
+    "observedHelperDatabases": null,
+    "manifestEntries": 681,
+    "executionAdmitted": false,
+    "headroomObservation": {
+      "at": "2026-10-22T21:39:21.1877965Z",
+      "free_bytes": 1027645440,
+      "required_free_bytes": 1073741824,
+      "disk_free_bytes": 20610568192,
+      "postgres_count": 0,
+      "node_test_processes": [],
+      "runtime_started": false
+    },
+    "independentSourceReview": "PASS_WITH_LIMITS",
+    "lifecycleFindingsClosed": [
+      "PGHOSTADDR loopback enforcement",
+      "Require exact 21-test runtime packet",
+      "Include supervisor in runtime source pins"
+    ],
+    "lifecycleExecution": "NOT_RUN",
+    "limits": [
+      "Eight databases is expected from helper source, not observed creation.",
+      "TAP parser requires selected successful names but does not fully cross-check every summary field.",
+      "Pre-port failure retains failed state; supervisor does not certify null-port cleanup.",
+      "Resource monitoring is sampled and cancellation has not been fault-injected."
+    ]
+  },
+  "ci": {
+    "status": "PENDING",
+    "revision": null,
+    "runs": [],
+    "note": "The earlier M2 documentation scope CI does not qualify this changed product source."
+  },
+  "checkpointReview": {
+    "status": "PASS_WITH_LIMITS",
+    "artifact": ".qa-local/qr2-s5-4-stage2c/checkpoint-review.md",
+    "verifiedPinsBeforeReviewAdded": 52,
+    "testsRun": false
+  },
+  "integrationWhitespaceCorrection": {
+    "previousSourceSha256": "f112dc681009ca519285316ec0dd70ceed8a916a9fc2e8f576204e65866e4692",
+    "change": "Removed one final blank line after staged diff whitespace check failed; no code or assertion changed.",
+    "verification": "node --check and staged git diff --check passed; no tests rerun."
+  }
+}

@@ -1,7 +1,9 @@
+import {coverageReadBudgets} from '../portfolio/qr2-coverage-limits.js';
+import {readCoverageSnapshot} from './qr2-coverage-reader.js';
 import {Qr2Error,QR2_DAY_MS} from '../portfolio/qr2-constants.js';
 import {validateBoundaryRecord} from '../portfolio/qr2-boundaries.js';
 import {resolveRange,utcMidnight} from '../portfolio/qr2-periods.js';
-import {readQr2Snapshot,QR2_READ_LIMITS,QR2_AUDIT_EVENTS,PENDING_STATUSES,QR2_LEDGER_COUNT_SQL,assertGridMidnights} from './qr2-reader.js';
+import {readQr2SnapshotForOwner,coverageAccount,QR2_READ_LIMITS,QR2_AUDIT_EVENTS,PENDING_STATUSES,QR2_LEDGER_COUNT_SQL,assertGridMidnights} from './qr2-reader.js';
 
 export const QR2_OWNER_LIMITS=Object.freeze({...QR2_READ_LIMITS,accounts:20,bots:5,declarations:1000});
 export const QR2_OWNER_BROKERS=Object.freeze({USDT:['binance-global'],THB:['binance-th','innovestx','settrade']});
@@ -19,6 +21,7 @@ const number=value=>{const n=Number(value);if(!Number.isSafeInteger(n)||n<0)fail
 export async function readQr2OwnerSnapshot(store,args){
   const {ownerId,currency,from,to,requestTime,boundaries}=args;
   const limits=ownerReadLimits(args.limits);
+  const budgets=coverageReadBudgets(args.coverageBudgets);
   const checkedBoundaries=validateBoundaryRecord(boundaries);
   if(typeof ownerId!=='string'||!ownerId||!Object.hasOwn(QR2_OWNER_BROKERS,currency))fail('QR2_INPUT_INVALID');
   if(store.db.isTransaction)fail('QR2_READER_SNAPSHOT_REQUIRED');
@@ -66,19 +69,25 @@ export async function readQr2OwnerSnapshot(store,args){
           ) grid`,[bot.id,broker,start,end,utcMidnight(start)+QR2_DAY_MS,QR2_DAY_MS]))[0].n);
         }
         counts.grid_instants+=grid;check(counts,limits);
-        admitted.push({botId:bot.id,broker,total,positions,audit,pending,grid});
+        admitted.push({botId:bot.id,broker,total,positions,audit,pending,grid,range:memberRange});
       }
     }
     // No history, audit details, pending details, exposure or price probe occurs before ALL members pass admission.
+    const coverage_context={accounts:admitted.map(m=>coverageAccount(m.botId,m.broker,m.range)),budgets};
+    const coverage=await readCoverageSnapshot({transaction:store.db,...coverage_context});
     const accounts=[];
     const accountLimits=Object.fromEntries(Object.keys(QR2_READ_LIMITS).map(k=>[k,limits[k]]));
     for(const member of admitted){
-      const read=await readQr2Snapshot(store,{ownerId,botId:member.botId,broker:member.broker,from,to,requestTime,boundaries:checkedBoundaries,limits:accountLimits});
+      const read=await readQr2SnapshotForOwner(store,{ownerId,botId:member.botId,broker:member.broker,from,to,requestTime,boundaries:checkedBoundaries,limits:accountLimits});
       const s=read.snapshot;
       if(s.counts.total!==member.total||s.positions.length!==member.positions||s.auditRows.length!==member.audit||s.pending.length!==member.pending||s.market.instants!==member.grid)fail('QR2_REPORT_FAILED');
+      if(JSON.stringify(s.range)!==JSON.stringify(member.range))fail('QR2_REPORT_FAILED');
+      const binding=coverage.bindings.find(b=>b.bot_id===member.botId&&b.broker===member.broker);
+      if(!binding)fail('QR2_REPORT_FAILED');
+      s.coverage_window_id=binding.window_id;
       accounts.push(read);
     }
-    return {snapshot:{kind:'owner',currency,ownerBots:ownerBots.map(b=>({bot_id:b.id,created_at:Number(b.created_at)})),declarations,accounts,counts,range},
-      input:{kind:'owner',ownerId,currency,from,to,requestTime,limits}};
+    return {snapshot:{kind:'owner',coverage,currency,ownerBots:ownerBots.map(b=>({bot_id:b.id,created_at:Number(b.created_at)})),declarations,accounts,counts,range},
+      input:{kind:'owner',ownerId,currency,from,to,requestTime,limits,coverage_context}};
   },{isolation:'REPEATABLE READ'});
 }

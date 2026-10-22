@@ -1,3 +1,5 @@
+import {buildCoverageSnapshot} from '../src/portfolio/qr2-coverage-snapshot.js';
+import {coverageReadBudgets} from '../src/portfolio/qr2-coverage-limits.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -69,6 +71,18 @@ const FIXTURES={
   unavailable:{snapshot:snapshotOf({unresolved:true}),input:inputOf({from:NOW,to:NOW+DAY})},
   halted:{snapshot:snapshotOf({oversell:true}),input:inputOf()}
 };
+function attachCoverage(job){
+  const {snapshot,input}=job;
+  const resolved_range=resolveRange({from:input.from,to:input.to,requestTime:input.requestTime,coverageStart:snapshot.coverageStart}).resolved;
+  const accounts=[{bot_id:input.botId,broker:input.broker,market:{broker:BROKER,symbol:'BTCUSDT',timeframe:'1'},resolved_range}];
+  input.coverage_context={accounts,budgets:coverageReadBudgets()};
+  // Independent synthetic recipe: every closed minute in the two-hour range is present.
+  const timestamps=resolved_range?Array.from({length:120},(_,i)=>B+(i+1)*MIN):[];
+  snapshot.coverage=buildCoverageSnapshot({...input.coverage_context,facts:resolved_range?[{state:'COMPLETE',timestamps}]:[]});
+  snapshot.coverage_window_id=0;
+  return job;
+}
+for(const job of Object.values(FIXTURES))attachCoverage(job);
 // compute_ms and read_ms are timers; everything else must be identical, byte for byte as JSON. The copy is a JSON round trip, never a
 // structured clone, so a non-plain value cannot be hidden by the copy (callers assert nonPlain() on the raw value first).
 const zeroTimers=body=>{const copy=JSON.parse(JSON.stringify(body));if(copy.reader){copy.reader.compute_ms=0;copy.reader.read_ms=0;}return copy;};
@@ -181,7 +195,7 @@ test('a snapshot with a function cannot be posted: clone failure is its own kind
 
 test('executeQr2Job maps a Qr2Error, a composer failure and any other throw to plain results with no message, stack or row value',()=>{
   const secret='FOREIGN-ROW-VALUE-9917';
-  const job={snapshot:{},input:{requestTime:NOW}};
+  const job=structuredClone(FIXTURES.complete);
   const qr2=executeQr2Job(job,{compute:()=>{throw Object.assign(new Qr2Error('QR2_INPUT_INVALID',secret),{detail:{limit:'ledger_rows',value:5001,max:5000}});}});
   assert.deepEqual(qr2,{ok:false,kind:'qr2',code:'QR2_INPUT_INVALID',detail:{limit:'ledger_rows',value:5001,max:5000}});
   const cyclic={};cyclic.self=cyclic;
@@ -722,4 +736,86 @@ test('static: no tracked deploy file, script, unit, package.json script or Docke
   }
   assert.ok(scanned>20,'scanned text files: '+scanned);
   assert.deepEqual(hits,[],'a tracked file sets the process-wide heap flag, which would disable the QR-2 worker heap cap');
+});
+
+/* Coverage qualification is independent of financial replay. */
+function ownerCoverageJob(empty=false){
+  const member=structuredClone(FIXTURES.complete);
+  const context=member.input.coverage_context;
+  delete member.input.coverage_context;delete member.snapshot.coverage;
+  const accounts=empty?[]:[member];
+  const input={kind:'owner',ownerId:OWNER,currency:'USDT',from:B,to:NOW+DAY,requestTime:NOW,limits:LIMITS,
+    coverage_context:{accounts:empty?[]:context.accounts,budgets:coverageReadBudgets()}};
+  const snapshot={kind:'owner',currency:'USDT',ownerBots:[{bot_id:OWNER,created_at:B},{bot_id:BOT,created_at:B}],declarations:[],accounts,
+    range:resolveRange({from:B,to:NOW+DAY,requestTime:NOW,coverageStart:B}),
+    counts:{ledger_rows:empty?0:6,grid_instants:empty?0:121,audit_rows:0,pending_orders:0,accounts:accounts.length,bots:2,declarations:0}};
+  snapshot.coverage=buildCoverageSnapshot({...input.coverage_context,facts:empty?[]:[{state:'COMPLETE',timestamps:Array.from({length:120},(_,i)=>B+(i+1)*MIN)}]});
+  return {snapshot,input};
+}
+test('coverage: invalid standalone associations fail before compute with fixed redaction',()=>{
+  const changes=[
+    j=>delete j.input.coverage_context,j=>delete j.snapshot.coverage,
+    j=>delete j.input.coverage_context.budgets.timestamp_rows,j=>j.input.coverage_context.budgets.timestamp_rows=0,
+    j=>j.input.coverage_context.budgets.timestamp_rows=21601,j=>j.input.coverage_context.budgets.extra=1,
+    j=>j.input.ownerId='foreign',j=>j.input.botId='foreign',j=>j.input.broker='settrade',
+    j=>j.snapshot.owner.parent_user_id='foreign',j=>j.snapshot.owner.created_at=String(B)+'0',
+    j=>j.snapshot.range.resolved.from++,j=>j.input.requestTime--,
+    j=>j.input.coverage_context.accounts[0].bot_id='foreign',j=>j.input.coverage_context.accounts.push(structuredClone(j.input.coverage_context.accounts[0])),
+    j=>delete j.snapshot.coverage_window_id,j=>j.snapshot.coverage_window_id=1,j=>j.snapshot.coverage_window_id=null,
+    j=>j.snapshot.coverage.windows[0].union_id=99
+  ];
+  for(const change of changes){
+    const job=structuredClone(FIXTURES.complete);change(job);let computed=false;
+    assert.deepEqual(executeQr2Job(job,{compute(){computed=true;throw Error('secret');}}),{ok:false,kind:'other'});
+    assert.equal(computed,false);
+  }
+  const valid=structuredClone(FIXTURES.complete);valid.snapshot.owner.created_at=String(B);
+  assert.equal(valid.snapshot.coverage_window_id,0);assert.equal(executeQr2Job(valid).ok,true);
+});
+test('coverage: owner association, empty owner and one registry validation per job',()=>{
+  for(const empty of [false,true]){
+    const job=ownerCoverageJob(empty),before=JSON.stringify(job),result=executeQr2Job(job);
+    assert.equal(result.ok,true,JSON.stringify(result));assert.equal(JSON.stringify(job),before);
+    for(const key of ['coverage','coverage_context','coverage_window_id','budgets'])assert.equal(JSON.stringify(result).includes('"'+key+'"'),false);
+  }
+  const changes=[
+    j=>j.input.currency='THB',j=>j.snapshot.currency='THB',j=>j.snapshot.ownerBots.shift(),
+    j=>j.snapshot.ownerBots.push(j.snapshot.ownerBots[0]),j=>j.snapshot.accounts.push(j.snapshot.accounts[0]),
+    j=>j.snapshot.accounts=[],j=>j.input.coverage_context.accounts=[],
+    j=>j.snapshot.accounts[0].input.ownerId='foreign',j=>j.snapshot.accounts[0].input.from++,
+    j=>j.snapshot.accounts[0].snapshot.coverageStart++,j=>j.snapshot.accounts[0].snapshot.coverage_window_id=1,
+    j=>j.snapshot.accounts[0].snapshot.coverage={},j=>j.snapshot.accounts[0].input.coverage_context={}
+  ];
+  for(const change of changes){
+    const job=ownerCoverageJob();let financialRead=false;
+    Object.defineProperty(job.snapshot.accounts[0].snapshot,'fundings',{get(){financialRead=true;throw Error('financial path reached');}});
+    change(job);assert.deepEqual(executeQr2Job(job),{ok:false,kind:'other'});assert.equal(financialRead,false);
+  }
+  const source=fs.readFileSync(path.join(SRC,'postgres','qr2-compute-worker.js'),'utf8');
+  assert.equal((source.match(/validateCoverageSnapshot\(/g)||[]).length,1,'one full validation call site outside member computation');
+});
+
+test('coverage metadata bounds reject before serialization, map lookup and long timestamp regex',()=>{
+  const job=structuredClone(FIXTURES.complete);
+  job.input.coverage_context.budgets.coverage_input_bytes=60;
+  job.input.ownerId='x'.repeat(11);
+  let touched=false;
+  Object.defineProperty(job.snapshot,'owner',{get(){touched=true;throw Error('must not inspect financial metadata');}});
+  assert.deepEqual(executeQr2Job(job),{ok:false,kind:'other'});assert.equal(touched,false);
+  for(const change of [
+    j=>j.input.coverage_context.accounts[0].bot_id='x'.repeat(11),
+    j=>j.snapshot.ownerBots[0].bot_id='x'.repeat(11),
+    j=>j.snapshot.accounts[0].input.botId='x'.repeat(11)
+  ]){
+    const owner=structuredClone(ownerCoverageJob());owner.input.coverage_context.budgets.coverage_input_bytes=60;change(owner);
+    let serialized=false;const stringify=JSON.stringify;
+    JSON.stringify=(...args)=>{serialized=true;return stringify(...args);};
+    let answer;try{answer=executeQr2Job(owner);}finally{JSON.stringify=stringify;}
+    assert.deepEqual(answer,{ok:false,kind:'other'});assert.equal(serialized,false);
+  }
+  const timestamp=structuredClone(FIXTURES.complete);timestamp.snapshot.owner.created_at='1'.repeat(17);
+  const test=RegExp.prototype.test;let decimalRegex=false;
+  RegExp.prototype.test=function(value){if(value===timestamp.snapshot.owner.created_at)decimalRegex=true;return test.call(this,value);};
+  let answer;try{answer=executeQr2Job(timestamp);}finally{RegExp.prototype.test=test;}
+  assert.deepEqual(answer,{ok:false,kind:'other'});assert.equal(decimalRegex,false);
 });

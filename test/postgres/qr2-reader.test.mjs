@@ -26,7 +26,7 @@ async function priceTable(bars){await db.query('DELETE FROM public.pine_market_b
 // 360, cash 10000 - 600 + 244 = 9644, market value 372, NAV 10016, realized 4, unrealized 12.
 async function simple(){
   const now=Date.now();
-  await priceTable([barOf(now-1000,'62000')]);
+  await priceTable([barOf(Math.floor((now-1000)/60000)*60000,'62000')]);
   const bot=await newBot(10000);
   const buy=await book(store,bot,'buy-'+bot.id.slice(0,6),{side:'BUY',steps:[{qty:'0.01',quote:'600'}]});
   const sell=await book(store,bot,'sell-'+bot.id.slice(0,6),{side:'SELL',steps:[{qty:'0.004',quote:'244'}]});
@@ -86,7 +86,7 @@ test('arguments: boundaries is required, the option, limits and range are checke
 
 test('T1 golden E2 through the live ledger: deposit, partial BUY fills with fees, targeted EXIT, FIFO exits to flat, withdrawal, deposit',async()=>{
   const now=Date.now();
-  await priceTable([barOf(now-1000,'62000')]);
+  await priceTable([barOf(Math.floor((now-1000)/60000)*60000,'62000')]);
   const bot=await newBot(10000);                                                   // deposit +10000
   // BUY A 0.02 in two fills: 0.01 for 600 (fee 0.6) and 0.01 for 610 (fee 0.61); lots cost (600+0.6)/0.01 = 60060 and (610+0.61)/0.01 = 61061.
   await book(store,bot,'gA',{side:'BUY',steps:[{qty:'0.01',quote:'600',fee:'0.6'},{qty:'0.02',quote:'1210',fee:'0.61'}]});
@@ -330,7 +330,7 @@ test('T5 the marker is corroboration: a boundary record that says E1 for E2-book
 });
 
 test('T5 lot-fee boundary: a lot priced without the fee is LOT_EPOCH_UNKNOWN when no boundary is recorded and matches when the lot predates the recorded boundary',async()=>{
-  await priceTable([barOf(Date.now()-1000,'62000')]);
+  await priceTable([barOf(Math.floor((Date.now()-1000)/60000)*60000,'62000')]);
   const bot=await newBot(10000);
   await book(store,bot,'fee-buy',{side:'BUY',steps:[{qty:'0.01',quote:'600',fee:'0.6'}]});
   // Labelled old-lot fault: entry_price as before b74ba50 (quote / quantity = 60000, fee excluded).
@@ -362,19 +362,19 @@ test('T6 prefetch differential: the reader result equals the library run on ever
     cases.push([label,result]);
     return result;
   };
-  const fresh=await open('fresh',now=>[barOf(now-1000-60000,'62000'),barOf(now-1000-120000,'50000')]);
+  const fresh=await open('fresh',now=>[barOf(Math.floor((now-1000-60000)/60000)*60000,'62000'),barOf(Math.floor((now-1000-120000)/60000)*60000,'50000')]);
   assert.equal(fresh.performance.nav_to.positions[0].state,'FRESH');assert.equal(fresh.performance.nav_to.nav,'10020');            // 10000 - 600 + 0.01 x 62000
-  const stale=await open('stale',now=>[barOf(now-300000,'61000')]);
+  const stale=await open('stale',now=>[barOf(Math.floor((now-300000)/60000)*60000,'61000')]);
   assert.equal(stale.performance.nav_to.positions[0].state,'STALE');assert.equal(stale.performance.money_pnl.status,'COMPLETE');
-  const older=await open('older',now=>[barOf(now-1200000,'61000')]);
+  const older=await open('older',now=>[barOf(Math.floor((now-1200000)/60000)*60000,'61000')]);
   assert.equal(older.performance.nav_to.nav,null);assert.equal(older.performance.nav_to.positions[0].state,'UNAVAILABLE');
   assert.ok(older.performance.money_pnl.reasons.includes('UNAVAILABLE'));
   const none=await open('none',()=>[]);
   assert.equal(none.performance.nav_to.nav,null);assert.equal(none.facts.market_data.bars,0);
-  const tampered=await open('tampered',now=>[barOf(now-1000-60000,'62000')],()=>db.query("UPDATE public.pine_market_bars SET content_hash=repeat('0',64)"));
+  const tampered=await open('tampered',now=>[barOf(Math.floor((now-1000-60000)/60000)*60000,'62000')],()=>db.query("UPDATE public.pine_market_bars SET content_hash=repeat('0',64)"));
   assert.equal(tampered.performance.nav_to.positions[0].state,'PRICE_INTEGRITY_FAILED');assert.equal(tampered.performance.nav_to.nav,null);
   assert.equal(cases.length,5);
-  // Flat account without any fill: no price query at all.
+  // Flat account without any fill: no valuation price query; independent coverage is still read.
   const flat=await newBot(1000);
   const flatResult=await read(flat);
   assert.equal(flatResult.facts.market_data.checked,false);assert.equal(flatResult.performance.nav_to.nav,'1000');
@@ -385,8 +385,8 @@ test('T6 option R: the prefetch skips a bar retrieved after the instant like the
   const bot=await newBot(10000);
   await book(store,bot,'r-buy',{side:'BUY',steps:[{qty:'0.01',quote:'600'}]});
   const requestTime=Date.now();
-  // b1: a bar 120 s old, retrieved in time (price 50000). b2: a bar 60 s old (price 62000) whose retrieved_at is changed per case below.
-  const b1=requestTime-120000,b2=requestTime-60000;
+  // Minute-aligned b1 is 120 to <180 s old and retrieved in time (50000); b2 is 60 to <120 s old (62000).
+  const b1=Math.floor(requestTime/60000)*60000-120000,b2=Math.floor(requestTime/60000)*60000-60000;
   await insertBars(db,[barOf(b1,'50000')],{retrievedAt:requestTime-100000});
   await insertBars(db,[barOf(b2,'62000')],{retrievedAt:requestTime+5000});
   const allBars=async()=>(await db.query('SELECT broker,symbol,timeframe,bar_time,bar,provenance,content_hash FROM public.pine_market_bars ORDER BY bar_time')).rows;
@@ -515,7 +515,7 @@ test('the reader runs as the runtime role of scripts/grant-postgres-runtime.sql 
   for(const file of ['quant-research-schema.sql','quant-foundation-schema.sql','quant-research-foundation-schema.sql','quant-storage-schema.sql','quant-io-ledger-schema.sql','quant-io-runtime-schema.sql','quant-preflight-schema.sql','quant-profile-enrollment-schema.sql'])
     await rt.db.query(fs.readFileSync(new URL('../../src/postgres/'+file,import.meta.url),'utf8'));
   const o=await createOwner(rt.store),bot=await createBot(rt.store,o,10000);
-  await insertBars(rt.db,[barOf(Date.now()-1000,'62000')]);
+  await insertBars(rt.db,[barOf(Math.floor((Date.now()-1000)/60000)*60000,'62000')]);
   await book(rt.store,bot,'rt-buy',{side:'BUY',steps:[{qty:'0.01',quote:'600'}]});
   await book(rt.store,bot,'rt-sell',{side:'SELL',steps:[{qty:'0.004',quote:'244'}]});
   await admin.query('CREATE ROLE '+role+' LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE'+rolePasswordClause());

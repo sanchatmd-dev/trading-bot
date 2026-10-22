@@ -1,3 +1,5 @@
+import {coverageReadBudgets} from '../portfolio/qr2-coverage-limits.js';
+import {readCoverageSnapshot} from './qr2-coverage-reader.js';
 import {createHash} from 'node:crypto';
 import {D} from '../money.js';
 import {QR2_DAY_MS,QR2_MARKET,QR2_STATUS,Qr2Error} from '../portfolio/qr2-constants.js';
@@ -185,7 +187,31 @@ export function priceInstants({from,to,fills,fundings,limit}){
   return [...set].sort((a,b)=>a-b);
 }
 
-async function readSnapshot(store,{ownerId,botId,broker,from,to,requestTime,limits,option}){
+// Metadata comes from the authorized user row and resolved range, never registry bindings.
+export function coverageAccount(botId,broker,range){
+  return {bot_id:botId,broker,market:broker===QR2_MARKET.broker?{broker:QR2_MARKET.broker,symbol:QR2_MARKET.symbol,timeframe:QR2_MARKET.timeframe}:null,resolved_range:range.resolved===null?null:{...range.resolved}};
+}
+const countNumber=value=>{const n=Number(value);if(!Number.isSafeInteger(n)||n<0)throw refusal('QR2_REPORT_FAILED');return n;};
+export const QR2_GRID_COUNT_SQL=`SELECT count(*) AS n FROM (
+  SELECT $3::bigint AS instant UNION SELECT $4::bigint
+  UNION SELECT generate_series($5::bigint,$4::bigint-1,$6::bigint)
+  UNION SELECT f.received_at FROM public.fills f JOIN public.signals s ON s.id=f.signal_id WHERE s.user_id=$1 AND s.broker=$2 AND f.received_at >= $3 AND f.received_at < $4
+  UNION SELECT at FROM public.paper_funding WHERE user_id=$1 AND broker=$2 AND kind='CONFIGURATION' AND at >= $3 AND at < $4
+) grid`;
+async function detailAdmission(q,{botId,broker,range,limits}){
+  const audit=countNumber((await q('SELECT count(*) AS n FROM public.audit WHERE user_id=$1 AND event IN ($2,$3)',[botId,...QR2_AUDIT_EVENTS]))[0].n);
+  const pending=countNumber((await q(`SELECT count(*) AS n FROM public.signals WHERE user_id=$1 AND account_id=$2 AND execution_mode='PAPER' AND status IN (${PENDING_STATUSES.map((_,i)=>'$'+(i+3)).join(',')})`,[botId,broker+':primary',...PENDING_STATUSES]))[0].n);
+  let grid=0;
+  if(range.resolved){const {from,to}=range.resolved;grid=countNumber((await q(QR2_GRID_COUNT_SQL,[botId,broker,from,to,utcMidnight(from)+QR2_DAY_MS,QR2_DAY_MS]))[0].n);}
+  for(const [key,value] of Object.entries({audit_rows:audit,pending_orders:pending,grid_instants:grid}))if(value>limits[key]){
+    const message={audit_rows:'audit rows over the limit',pending_orders:'pending orders over the limit',grid_instants:'grid instants over the limit'}[key];
+    // Audit/pending detail fetches previously observed only their LIMIT + 1 sentinel.
+    throw refusal('QR2_RANGE_ADMISSION_REFUSED',message,{limit:key,value:key==='grid_instants'?value:limits[key]+1,max:limits[key]});
+  }
+  return {audit,pending,grid};
+}
+
+async function readSnapshot(store,{ownerId,botId,broker,from,to,requestTime,limits,option},coverageBudgets){
   const db=store.db,q=(sql,params=[])=>db.query(sql,params).then(r=>r.rows);
   // Q0: the isolation is checked first, so a refused parent is left unchanged (still read-write). A joined parent that is READ COMMITTED would
   // give per-statement snapshots silently (db.transaction ignores the isolation option when it joins), so it is refused before anything is
@@ -206,6 +232,10 @@ async function readSnapshot(store,{ownerId,botId,broker,from,to,requestTime,limi
   const counts=(await q(QR2_LEDGER_COUNT_SQL,[botId,broker]))[0];
   const total=Number(counts.fundings)+Number(counts.journal)+Number(counts.fills)+Number(counts.lots)+Number(counts.snapshots);
   if(total>limits.ledger_rows)throw refusal('QR2_RANGE_ADMISSION_REFUSED','ledger rows over the limit',{limit:'ledger_rows',value:total,max:limits.ledger_rows});
+  for(const value of Object.values(counts))countNumber(value);
+  const admission=await detailAdmission(q,{botId,broker,range,limits});
+  const coverage_context=coverageBudgets?{accounts:[coverageAccount(botId,broker,range)],budgets:coverageBudgets}:null;
+  const coverage=coverage_context?await readCoverageSnapshot({transaction:db,...coverage_context}):null;
   // Q3 to Q9. Every execution mode is selected (decision D4): paperAccount() sums the journal of every mode, so a PAPER filter would hide the
   // cause of an R4 mismatch; the library refuses a non-Paper row (RP) and a row of another Bot (RX).
   const fundings=await q('SELECT id,user_id,broker,at,equity_delta,cash_delta,kind FROM public.paper_funding WHERE user_id=$1 AND broker=$2 ORDER BY at,id',[botId,broker]);
@@ -261,9 +291,10 @@ async function readSnapshot(store,{ownerId,botId,broker,from,to,requestTime,limi
   }
   const last=fills.length?fills[fills.length-1]:null;
   // Q13 cutoffs from the fetched rows (one snapshot, so they describe exactly the rows used).
+  if(fundings.length!==Number(counts.fundings)||fills.length!==Number(counts.fills)||journal.length!==Number(counts.journal)||lots.length!==Number(counts.lots)||snapshots.length!==Number(counts.snapshots)||auditRows.length!==admission.audit||pending.length!==admission.pending||market.instants!==admission.grid)throw refusal('QR2_REPORT_FAILED');
   const cutoffs={max_funding_id:fundings.reduce((m,r)=>Math.max(m,Number(r.id)),0),max_snapshot_id:snapshots.reduce((m,r)=>Math.max(m,Number(r.id)),0),fill_count:fills.length,
     last_fill:last?{received_at:Number(last.received_at),signal_id:last.signal_id,cumulative_quantity:last.cumulative_quantity}:null,lot_count:lots.length,market_data_cutoff:market.cutoff_bar_time};
-  return {isolation,read_only:readOnly==='on',owner,coverageStart,range,counts:{...counts,total},fundings,fills,journal,lots,positions,cash,snapshots,auditRows,pending,exposure,exposureError,market,cutoffs};
+  return {...(coverage?{coverage,coverage_window_id:coverage.bindings[0].window_id}:{}),isolation,read_only:readOnly==='on',owner,coverageStart,range,counts:{...counts,total},fundings,fills,journal,lots,positions,cash,snapshots,auditRows,pending,exposure,exposureError,market,cutoffs};
 }
 
 /* ------------------------------------------------------------------ compute (pure) */
@@ -324,14 +355,16 @@ export async function readQr2Account(store,args){
  * READ ONLY transaction, which has closed when this returns; inside a request transaction it joins that parent transaction, which stays
  * open (its owner closes it). It returns {snapshot,input}: both are plain data (no handle, no function, no
  * class instance) so a worker thread can compute the view from them with no database access. input holds the validated, frozen boundaries
- * and limits and the measured read time. No SQL, limit, refusal or field differs from the former readQr2Account.
+ * and limits and the measured read time. Coverage adds internal admission, registry and authorized context;
+ * existing public financial bodies and financial limit definitions remain unchanged.
  */
 export async function readQr2Snapshot(store,args){
   const {boundaries,limits}=checkArguments(args);
   const {ownerId,botId,broker,from,to,requestTime}=args,option=args.option||'M';
+  const budgets=coverageReadBudgets(args.coverageBudgets);
   const started=nowMs();
-  const snapshot=await store.db.transaction(()=>readSnapshot(store,{ownerId,botId,broker,from,to,requestTime,limits,option}),{isolation:'REPEATABLE READ'});
-  return {snapshot,input:{ownerId,botId,broker,from,to,requestTime,option,boundaries,limits,read_ms:nowMs()-started}};
+  const snapshot=await store.db.transaction(()=>readSnapshot(store,{ownerId,botId,broker,from,to,requestTime,limits,option},budgets),{isolation:'REPEATABLE READ'});
+  return {snapshot,input:{ownerId,botId,broker,from,to,requestTime,option,boundaries,limits,coverage_context:{accounts:[coverageAccount(botId,broker,snapshot.range)],budgets},read_ms:nowMs()-started}};
 }
 
 /**
@@ -420,4 +453,14 @@ export function auditFindingsOf(gates){
   const r3c=gates.gates.R3c;
   if(r3c?.status==='RUN')for(const r of r3c.results)if(r.status!=='MATCH')findings.push({check:'R3c',code:r.status,event_key:r.event_key});
   return findings.filter(f=>f.check);
+}
+// Internal owner seam: the enclosing owner reader owns shared coverage admission/read.
+// This is not an option on readQr2Snapshot and is never exposed by routes.
+export async function readQr2SnapshotForOwner(store,args){
+  if(store.db.isTransaction!==true)throw refusal('QR2_READER_SNAPSHOT_REQUIRED');
+  const {boundaries,limits}=checkArguments(args),option=args.option||'M';
+  const started=nowMs();
+  const snapshot=await readSnapshot(store,{...args,limits,option});
+  const {ownerId,botId,broker,from,to,requestTime}=args;
+  return {snapshot,input:{ownerId,botId,broker,from,to,requestTime,option,boundaries,limits,read_ms:nowMs()-started}};
 }

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {createQr2Database,createOwner,openSecond,LOCAL_FIXTURE_E2} from '../helpers/qr2-reader-fixture.mjs';
+import {validateCoverageSnapshot} from '../../src/portfolio/qr2-coverage-snapshot.js';
 import {readQr2OwnerSnapshot} from '../../src/postgres/qr2-owner-reader.js';
 import {writeQr2Audit,QR2_AUDIT_EVENT} from '../../src/postgres/qr2-audit.js';
 const DAY=86400000;
@@ -16,6 +17,10 @@ test('independent PostgreSQL position and exposure rows count twice at exact who
     for(const symbol of ['BTCUSDT','ETHUSDT','SOLUSDT'])await position(f.db,owner.id,symbol,from);
     const args={ownerId:owner.id,currency:'USDT',from,to,requestTime:to,boundaries:LOCAL_FIXTURE_E2};
     const exact=await readQr2OwnerSnapshot(f.store,{...args,limits:{ledger_rows:6}});
+    assert.deepEqual(validateCoverageSnapshot(exact.snapshot.coverage,exact.input.coverage_context),{ok:true});
+    assert.equal(exact.snapshot.accounts[0].snapshot.coverage_window_id,exact.snapshot.coverage.bindings[0].window_id);
+    assert.equal(Object.hasOwn(exact.snapshot.accounts[0].snapshot,'coverage'),false);
+    assert.equal(Object.hasOwn(exact.snapshot.accounts[0].input,'coverage_context'),false);
     assert.equal(exact.snapshot.counts.ledger_rows,6);assert.equal(exact.snapshot.accounts.length,1);assert.equal(exact.snapshot.accounts[0].snapshot.positions.length,3);
     const query=f.db.query.bind(f.db);let details=0;
     f.db.query=async(sql,...rest)=>{if(sql.startsWith('SELECT user_id,account_id,execution_mode,broker,symbol,quantity'))details++;return query(sql,...rest);};

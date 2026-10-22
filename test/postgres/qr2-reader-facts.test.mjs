@@ -16,7 +16,7 @@ const read=(bot,extra={},broker='binance-global')=>{
   const now=extra.requestTime??Date.now();
   return readQr2Account(store,{ownerId:bot.owner.id,botId:bot.id,broker,from:bot.created_at,to:now,requestTime:now,boundaries:LOCAL_FIXTURE_E2,...extra});
 };
-async function bars(price='62000'){await db.query('DELETE FROM public.pine_market_bars');await insertBars(db,[barOf(Date.now()-1000,price)]);}
+async function bars(price='62000'){await db.query('DELETE FROM public.pine_market_bars');await insertBars(db,[barOf(Math.floor((Date.now()-1000)/60000)*60000,price)]);}
 const uid=bot=>bot.id.slice(0,6);
 
 test('T10 unbacked configured equity stays outside NAV on its own line',async()=>{

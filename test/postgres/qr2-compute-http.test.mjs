@@ -45,7 +45,7 @@ function nonPlain(value,pathOf='$'){
 const stable=body=>{const copy=JSON.parse(JSON.stringify(body));if(copy.reader){copy.reader.compute_ms=0;copy.reader.read_ms=0;}return JSON.stringify(copy);};
 
 let fx,store;
-async function priceNow(price='62000'){await fx.db.query('DELETE FROM public.pine_market_bars');await insertBars(fx.db,[barOf(Date.now()-1000,price)]);}
+async function priceNow(price='62000'){await fx.db.query('DELETE FROM public.pine_market_bars');await insertBars(fx.db,[barOf(Math.floor((Date.now()-1000)/60000)*60000,price)]);}
 async function tradedBot({targeted=false}={}){
   const o=await createOwner(store),bot=await createBot(store,o,10000);bot.owner=o;
   await priceNow();

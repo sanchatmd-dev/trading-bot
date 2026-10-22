@@ -1038,7 +1038,31 @@
       "actualScopeAndGateStepsVerified": true,
       "runtimeJobsSkipped": true
     },
-    "currentCheckpoint": "Pending commit and separate scope-only CI; no code-test counts inferred."
+    "currentCheckpoint": {
+      "revision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
+      "verifiedAt": "2026-10-22T21:11:32.733Z",
+      "scopeOnly": true,
+      "runtimeJobsSkipped": true,
+      "runs": [
+        {
+          "id": 39855134093,
+          "name": "Quant Lab",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39855134093",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 39855134051,
+          "name": "Safety checks",
+          "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39855134051",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "status": "SCOPE_ONLY_PASS",
+      "actualScopeAndGateStepsVerified": true,
+      "note": "Runtime jobs skipped; no additional code tests or counts."
+    }
   },
   "next": "Review a bounded disabled-gate local integration packet and qualify combined coverage plus financial snapshot through the actual compute pool. Candidate lower budgets remain provisional until evidence-backed root selection; no further standalone scale matrix is admitted.",
   "limitations": [
@@ -1115,6 +1139,8 @@
     ".qa-local/qr2-s5-4-m2/run-1792702943742/source-baseline.json": "e4c4f2efca9575ee2e39ca3057e4fa2948827d18ef83d39c91857f6b605c2a09",
     ".qa-local/qr2-s5-4-m2/run-1792702943742/state.json": "8c924d56a5ef3cdc7214e173ae5efcd99d0a77a4217191e53712901431718d5d",
     ".qa-local/qr2-s5-4-m2/run-1792702943742/summary.json": "8c924d56a5ef3cdc7214e173ae5efcd99d0a77a4217191e53712901431718d5d",
-    ".qa-local/qr2-s5-4-m2/checkpoint-review.md": "d9152318fa66ad19ed69ac8ea7525232759323363c977b3f9d56fae628b90fc7"
+    ".qa-local/qr2-s5-4-m2/checkpoint-review.md": "d9152318fa66ad19ed69ac8ea7525232759323363c977b3f9d56fae628b90fc7",
+    ".qa-local/qr2-s5-4-m2/ci-verified.json": "bb33629d690d852b8d9bba2a6cbffcc851b93f2accf3a3f3de889accb5534ee0",
+    ".qa-local/qr2-s5-3/ci-observed-1d7523b8ce5e82b7310e33742abcc0a9b1bf931f.json": "45755f785d9ca8830a03aa06f4de9fe15f454c7ca48f3f8870c55cb861b99413"
   }
 }
