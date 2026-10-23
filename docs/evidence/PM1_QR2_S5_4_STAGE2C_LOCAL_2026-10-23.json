@@ -446,10 +446,6 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-errata-check.md": "4e4c33f18c341107637c11053c2d60b48ac2ebf9e04aa7b6e7da0b16cd155cc4",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g.md": "c8b31b7d105a75c610767957a4c220be86d0c491b6a2a846d3883c713b1bd52f",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-errata-recheck.md": "cff659087dd0c3b2d6fb32e366bb3457d31dfa03bd986bc0bb385b4963ca32c3",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state.mjs": "2b05bb62d62c558719f5346bd12e7e1f4800afc337cbaab48c8f169afee87dc7",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-test.mjs": "f5007591005335953f33cf82db266f73283617130b7486e3a745ba0a308741e6",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-test.json": "466da3789157c4138bac26d38c2ea014e18dd53eaf1d061dbe8e80adca5344c7",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-author.md": "b055c9b17ea308f455eb7e474bfd3133fb10f26c8dc2630eea02540714e7af5c",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation.md": "839abf6d6681d7c0945bb241af5a98b0aa26d8937bf248a2b8d071338206b7d8",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation.json": "4aa434429005038c6b0067bab36a1744eda6563f980ce20ed116233dec04c955",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r2.md": "e7e1221d543f9c28634bf2c8925d36b188fa5bb88e0f49351df13e8dfb7af48a",
@@ -460,9 +456,6 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r2/SHA256SUMS": "2fba1479766ef6587c0db267074bd5f9ab00bbbbab4d89eb588ee1e36372ce3b",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h.md": "90844d63382e91e055e91c4334002291f9be1ad1d4ef3fd1049209da736804e3",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter.mjs": "7181a54e1a2a75bad319fe01c52e74e83969cf5fdcacefa4dd94892652b4c874",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-test.mjs": "10ba0b1d14ca5f6eb6396028536233af1c57f461f9d0a5e33ed8cad604f1b295",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-test.json": "853331ba3535a9eebba12b6ed2a02d137082a7b3a6d800bd9c45531530ad1ecb",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-author.md": "0a3111091858c5cd7601dc9259b0f1d969d7c7513923cc3daaa9382bbaeb0174",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-mutation.md": "53dc3020f388c9e7b212ea251d91174f887a3125f3d835eff58bd0e3088cca13",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-mutation.json": "855acfb4dabc3a92f93fe0af84e45c55438944cede19771140c953708d004ee7",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-mutation-r2.md": "16d4b72be2ec477c04788e778a14333bfed2e95a347db93a00807d13b6338499",
@@ -471,7 +464,69 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-review-r2.md": "c808570d7de3c7822b8cbcd294c3543c51b9fd0c26f4b82fab94e00d5f201de9",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13i-snapshot/SHA256SUMS": "da7daa240d265e107fb85392c52efbe575148180a79d69e2ff1922b8db7205ad",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13i-snapshot-r2/SHA256SUMS": "9d72b5108b1fe54cf151f4585deadd7ef450dd8ec8da0e6405eeec29b30e7a24",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-acceptance-p13i.md": "ec0f51455a1d4e31263fe430b7d92553fb3cf13c6e1df7a3e090d44e137b1021"
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-acceptance-p13i.md": "ec0f51455a1d4e31263fe430b7d92553fb3cf13c6e1df7a3e090d44e137b1021",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h-r4b.md": "43eb88c6791e5a73ce4210fd5de4f2456efe786174804940945ea6bb1ff9b051",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r4b-accepted/SHA256SUMS": "bfc4aaa0348dfba1a7f18a29a52b42970db96f90183195a22ca40fa474d43a9b",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r4b-accepted/guardian-state.mjs": "9f5ef30b5d67db469a6e3320a61cdb2a6c73e63516bd52fd0a19fa87b81fe2c3",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r4b-accepted/guardian-state-test.mjs": "fb460ea04db29d0b0306059888a969a9ad5122082516f040151242f574a85988",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r4b-accepted/guardian-state-test.json": "5f6cd7a762aff0d2bb4100ea18cbdb7875e0fc4407010031ae798099be5ab877",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r4b-accepted/guardian-state-author.md": "63372fc0b952cf7f7d2caf7318386629bd20cbd126bd482e995bd80903af4f0f",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r4b-accepted/supervisor-adapter-test.mjs": "91c547ee29858bfa659e9d7f3eb81361206f741905e0d5fa89e03a1687bba13c",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r4b-accepted/supervisor-adapter-test.json": "01e9ab970b1ceeb22f686600f86b856a0ac6a9b32641fea438ec89d2601850ed",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r4b-accepted/supervisor-adapter-author.md": "843fb625b7a3b3e40885494ab082919844ac987283c8208e3eb89b3e8221c4f0",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-review-r3.md": "8c1c31d043da347ecdfa41f86bd549b912fa872030d5844acde47d1a666f86fe",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-review-r3b.md": "c5760a9bfbc291b481648c4b4f51fa71b265ecdac1db09cc2c4da7f1897d1aec",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-review-r4.md": "1af06acab4ee880dc3504b6a419c6fda95734be7386d5fe3759c1026bb31a920",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-review-r4b.md": "27f6b66107c05f0f1890432ac5a2b0a3bb8e229f9005746963b176e384180adf",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r3.md": "7ce8cf7b4c5ec6a62c21d0c1f246f657ddbf0083d0c1079a2e1ac39f1f617bc3",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r3.json": "a222b60a3b4d59702483c8cf646c47dbe1bdc99aa260b8e45221eaf52ba7ff2d",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r3b.md": "2cdd5a11b27e24a25238a0fe26bebdb4142267c7f0560a6e902960f616be2a61",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r3b.json": "5992692d0940f43bc39d6268a80a0d169ed2b229bb6d995c69a25c65f8145ce5",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r4.md": "4edc554b0e568e4763e8557b47efa43c6b7fc1b92bbc32779ac66c972548d541",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r4.json": "49592b635de01e2a4a9a5b8ca2a7d4720e496013b90728172132231b0fbd31e5",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r4b.md": "0778c2bd8294b73157e08f572d7a711fdee9513f3989a1c181593c6498069202",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r4b.json": "0bcdef30b1aab43210ab5640aeab8c35b300e39a6e4de2c7f7c95cc2f9c13f5f",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r3/SHA256SUMS": "585d717c78164615fa86185b831cb2dba7d8e85670e31cca8f8fad7fb2890022",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r3b/SHA256SUMS": "0f6383c4b05a0fd52369f3b0735cf14b7820fc9d0115bf5073a018b50208332c",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r4/SHA256SUMS": "2799c35bf4a2221a11a23f613cfa523377e4f58f818c452d9a96374ffb344e43",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r4b/SHA256SUMS": "b1bed1e928df6caa9f7b25917f245d2ca1635d915d82aa1e32f4cc8d07867240"
+  },
+  "supersededWorkingCopyPins": {
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state.mjs": {
+      "pinnedSha256": "2b05bb62d62c558719f5346bd12e7e1f4800afc337cbaab48c8f169afee87dc7",
+      "status": "WORKING_COPY_EDITED_BY_P13H_REVISION_R3_TO_R4B",
+      "acceptedBytes": "preserved in .qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r2/guardian-state.mjs (pinned through that folder's SHA256SUMS)"
+    },
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-test.mjs": {
+      "pinnedSha256": "f5007591005335953f33cf82db266f73283617130b7486e3a745ba0a308741e6",
+      "status": "WORKING_COPY_EDITED_BY_P13H_REVISION_R3_TO_R4B",
+      "acceptedBytes": "preserved in .qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r2/guardian-state-test.mjs (pinned through that folder's SHA256SUMS)"
+    },
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-test.json": {
+      "pinnedSha256": "466da3789157c4138bac26d38c2ea014e18dd53eaf1d061dbe8e80adca5344c7",
+      "status": "WORKING_COPY_EDITED_BY_P13H_REVISION_R3_TO_R4B",
+      "acceptedBytes": "not preserved separately; the unchanged root acceptance record states the accepted result"
+    },
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-author.md": {
+      "pinnedSha256": "b055c9b17ea308f455eb7e474bfd3133fb10f26c8dc2630eea02540714e7af5c",
+      "status": "WORKING_COPY_EDITED_BY_P13H_REVISION_R3_TO_R4B",
+      "acceptedBytes": "not preserved separately; the unchanged root acceptance record states the accepted result"
+    },
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-test.mjs": {
+      "pinnedSha256": "10ba0b1d14ca5f6eb6396028536233af1c57f461f9d0a5e33ed8cad604f1b295",
+      "status": "WORKING_COPY_EDITED_BY_P13H_REVISION_R3_TO_R4B",
+      "acceptedBytes": "preserved in .qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13i-snapshot-r2/supervisor-adapter-test.mjs (pinned through that folder's SHA256SUMS)"
+    },
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-test.json": {
+      "pinnedSha256": "853331ba3535a9eebba12b6ed2a02d137082a7b3a6d800bd9c45531530ad1ecb",
+      "status": "WORKING_COPY_EDITED_BY_P13H_REVISION_R3_TO_R4B",
+      "acceptedBytes": "not preserved separately; the unchanged root acceptance record states the accepted result"
+    },
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-author.md": {
+      "pinnedSha256": "0a3111091858c5cd7601dc9259b0f1d969d7c7513923cc3daaa9382bbaeb0174",
+      "status": "WORKING_COPY_EDITED_BY_P13H_REVISION_R3_TO_R4B",
+      "acceptedBytes": "not preserved separately; the unchanged root acceptance record states the accepted result"
+    }
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
@@ -1234,6 +1289,92 @@
         "checks": "Pure model tests, mutation and independent review only; no native compilation, process fixture, PostgreSQL, runtime, network or host action.",
         "notRunOrAuthorized": "Not runtime, native, process or PostgreSQL evidence; no new authority. Gates unchanged: Spot/Paper only; BINANCE:BTCUSDT Spot 1m; reduce-only EXIT; private source local only; private acceptance NOT RUN; READY false; N1 held.",
         "nextGate": "Source-packet selection. Native compilation, process fixtures, PostgreSQL and the C3 runtime stay closed until their own packet and admission pass."
+      },
+      "guardianModelRevision": {
+        "status": "ACCEPTED_AS_PURE_MODEL_NO_RUNTIME_NATIVE_PROCESS_OR_POSTGRESQL_EVIDENCE",
+        "scope": "PURE_GUARDIAN_MODEL_REVISION_R3_TO_R4B_AND_ADAPTER_SUITE_REVERIFICATION",
+        "supersedes": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h.md (round 2, guardian-state.mjs 2b05bb62...)",
+        "rootAcceptanceRecord": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h-r4b.md",
+        "acceptedCopies": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r4b-accepted/SHA256SUMS",
+        "model": "guardian-state.mjs 9f5ef30b5d67db469a6e3320a61cdb2a6c73e63516bd52fd0a19fa87b81fe2c3",
+        "unchangedModels": [
+          "supervisor-adapter.mjs (7181a54e...)",
+          "supervisor-state.mjs (799e4d3e...)"
+        ],
+        "rootRuns": {
+          "node": "v24.19.0",
+          "reporter": "tap",
+          "guardian": {
+            "test": "guardian-state-test.mjs fb460ea0...",
+            "total": 234,
+            "passed": 234,
+            "failed": 0,
+            "cancelled": 0,
+            "skipped": 0
+          },
+          "adapter": {
+            "test": "supervisor-adapter-test.mjs 91c547ee...",
+            "total": 127,
+            "passed": 127,
+            "failed": 0,
+            "cancelled": 0,
+            "skipped": 0
+          },
+          "resultFilesByteIdenticalAfterRun": true
+        },
+        "changes": [
+          "F1 (r3): validateParams refuses a tick interval above 1000 ms (PARAM_TICK_RANGE)",
+          "F3 (r3): an INITDB, PROVISION or STOP exit observed before its resume record is AND-merged on the role record and settled when the record opens the wait; fail-closed",
+          "M16 (r4, safety, A1.5.2): any postmaster exit observed after START_POSTGRES begins and before POSTGRES_READY fails START_POSTGRES as POSTMASTER_EXITED; no path reaches VERIFIER, PROVISION launch or resume, a password handed to the server, or POSTGRES_READY",
+          "M17b (r4): after EXIT no workload-start or workload-failure frame; step.op never returns to RUN; a workload start failure after cleanup started prevents VERIFIED",
+          "B1 (r4b, A2.2): a postmaster exit during a PROVISION wait abandons the wait and terminates the PROVISION job; VERIFIER wait abandoned only; readiness wait unchanged under E2 and R4-3; PG job never terminated on this path"
+        ],
+        "reviewRounds": [
+          {
+            "round": "r3",
+            "writerTests": "guardian 202/202; adapter 111/126",
+            "mutationResult": "FAIL: 31 mutants, 26 killed",
+            "reviewVerdict": "NO-GO on the package (adapter test blockers 1 to 3); model no blocker",
+            "snapshot": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r3/SHA256SUMS"
+          },
+          {
+            "round": "r3b",
+            "writerTests": "guardian 206/206; adapter 127/127",
+            "mutationResult": "FAIL: 16 mutants, 12 killed (M12 equivalent; M16, M17, M17b open)",
+            "reviewVerdict": "NO-GO on model defect M16; test changes no blocker",
+            "snapshot": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r3b/SHA256SUMS"
+          },
+          {
+            "round": "r4",
+            "writerTests": "guardian 234/234; adapter 127/127",
+            "mutationResult": "PASS: 24 mutants, 22 killed, 2 equivalent",
+            "reviewVerdict": "NO-GO on B1 only",
+            "snapshot": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r4/SHA256SUMS"
+          },
+          {
+            "round": "r4b",
+            "writerTests": "guardian 234/234; adapter 127/127",
+            "mutationResult": "PASS: 18 mutants, 17 killed, R7 equivalent",
+            "reviewVerdict": "GO, no blockers",
+            "snapshot": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r4b/SHA256SUMS"
+          }
+        ],
+        "equivalentMutantRulings": [
+          "M12",
+          "M27",
+          "M17bb",
+          "M17bc",
+          "R7"
+        ],
+        "processDeviations": "Every writer packet r3 to r4b disclosed read-only or no-effect commands outside its brief's list; none changed audited content; each packet's output was treated as input and independently re-verified; effect-based command rule from r4b.",
+        "carried": [
+          "Source-packet obligations: maxInbound >= 8200; delivery frame buffered before the workload exists; CLOCK at min(R_s, next reducer deadline); connection-slot ruling (E9); job-list attribute qualification; E8; A5.2; reference-age contributions beyond the tick interval",
+          "r4 audit notes: PG job left to A1.2 at the postmaster resume record; VERIFIED possible without a workload resume record when the run ends before the wait expires (r3 behaviour); no adapter test of WORKLOAD_STARTED never sent; POSTMASTER_RESUME_FAILED detail after an exit",
+          "Thin deterministic margins: adapter supervisor kills 1/1, SELF_LIMIT ends 3/1, garbage frames 3/1; M16 checks (b) and (d) rest on one crafted-state test each"
+        ],
+        "checks": "Pure model tests, mutation and independent review only; no native compilation, process fixture, PostgreSQL, runtime, network or host action.",
+        "notRunOrAuthorized": "Not runtime, native, process or PostgreSQL evidence; no new authority. Gates unchanged: Spot/Paper only; BINANCE:BTCUSDT Spot 1m; reduce-only EXIT; private source local only; private acceptance NOT RUN; READY false; N1 held.",
+        "nextGate": "Source-packet selection. P13j (native-slice proposal) is held by owner decision after a safety classifier stop. Native compilation, process fixtures, PostgreSQL and the C3 runtime stay closed until their own packet and admission pass."
       }
     }
   },
@@ -1304,5 +1445,12 @@
     "skippedRuntimeJobs": 4,
     "newRuntimeTests": 0,
     "artifact": ".qa-local/qr2-s5-4-stage2c/p13e-documentation-ci-verified.json"
+  },
+  "handoff": {
+    "status": "CLAUDE_ROOT_STOPPED_HANDOFF_TO_CODEX_SAVED",
+    "document": "docs/CLAUDE_TO_CODEX_HANDOFF_2026-10-23.md",
+    "localEntryPoint": ".qa-local/codex-handoff-2026-10-23/checkpoint.md",
+    "deliveryClaimed": false,
+    "newRuntimeEvidence": false
   }
 }
