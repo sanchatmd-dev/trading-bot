@@ -408,11 +408,23 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-protocol-review.md": "f91989fd21055496189fbbf33d7f92b4edc558e4c466f8950234d3046792443e",
     ".qa-local/qr2-s5-4-stage2c/p13d-next-packet.md": "7ca1cb4a7740354ccfa6ff6056fa9b1db71df1232953b3e9c8b8d701e697cc8d",
     ".qa-local/qr2-s5-4-stage2c/p12-p13a-documentation-ci-verified.json": "46f016fe8501ae213f97445accf56e6c16d4521f8ce2ea1bf02b9a20056e6b52",
-    ".qa-local/qr2-s5-3/ci-observed-014907ab872a63f1c2f6d5c7cd85afa8823eac6d.json": "721670ad2f4e8089d7abfc40f47df353fc1ac28d7adb0fa889e3775d14ffc78e"
+    ".qa-local/qr2-s5-3/ci-observed-014907ab872a63f1c2f6d5c7cd85afa8823eac6d.json": "721670ad2f4e8089d7abfc40f47df353fc1ac28d7adb0fa889e3775d14ffc78e",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state.mjs": "799e4d3e49abc0a8e6526306cd4bf1fe9db19c9d98fc9d35ee4fb2febcb23f5f",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-author.md": "86a94684393bb041edbb703cb846968d826051ed53786175d5212652b45cad54",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-before-counter-fix.mjs": "156f3c4f150fb5d8e4f3f93912e2b1c00f6c9908f4161ce3e6e9a73fa74986d8",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-test.mjs": "fd4907e887d6c2e4f49301a966b58e62dbc271a609a89d49f804bc602e0d9d97",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-test.json": "2fa87ccb3a8841a5324101a92b3be923a47aca6b6c2e48ea94baabdc6a68adba",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-review.md": "d76c66a42c2c4c915f2cc9b5d97af138dfbfc80d27802e410c3642611e579c21",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-counter-fix.md": "3cbc3675aa1f6bafd4c3c595cbbd04c7d6e9aa9412456923a91f5ce2a81ca96c",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-test-fixed.mjs": "b7135ab922f9ed3fed35e36e38dab2f0071e024b0a52a7ce5be8d969b882a51b",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-test-fixed.json": "2649625951503387830cb6fba7533ee35231040b87ce5ea2e0e782dc2c79550a",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-fix-review.md": "c40894ef4bb42cefff229f86bb6fa605dc647b06af78825257bae8f3440a67b0",
+    ".qa-local/qr2-s5-4-stage2c/p13bc-documentation-ci-verified.json": "e606d03f52c3f3e1e25284942568343c6a5a13152b6d2e6ed53b7f6acd86177b",
+    ".qa-local/qr2-s5-3/ci-observed-73196cb0084a7dc04c5f10cecb9cfe923f8cffa8.json": "e53c60808fd90a09a157184136f10655cafaa4834490e01493e6f3e27bfd951b"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-23T00:04:03.667Z",
+  "recordedAt": "2026-10-23T00:12:02.724Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -650,7 +662,6 @@
       },
       "runtimeAdmitted": false,
       "remaining": [
-        "Pure bounded supervisor state machine and independent checks",
         "Qualified Windows termination/ownership primitive and finite effect execution before live supervisor integration",
         "Fixed parent runner callbacks, exhaustive source/resource/installed-runtime manifest and independent lifecycle review",
         "Actual memory/replay-cost evidence, coherent chronology and other member gate qualification",
@@ -910,6 +921,39 @@
           "Windows identity-safe termination, actual durability, bounded effect execution and lifecycle remain unresolved.",
           "Finite pure-state refusal bounds in the next packet are provisional, not measured workload sufficiency or runtime admission."
         ]
+      },
+      "pureSupervisorState": {
+        "status": "BOUNDED_PURE_MODEL_PASS_NO_RUNTIME_ACCEPTANCE",
+        "module": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state.mjs",
+        "sourceSha256": "799e4d3e49abc0a8e6526306cd4bf1fe9db19c9d98fc9d35ee4fb2febcb23f5f",
+        "author": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-author.md",
+        "initial": {
+          "artifact": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-test.json",
+          "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-review.md",
+          "namedGroups": 12,
+          "passed": 11,
+          "failed": 1,
+          "finding": "Trusted observations did not charge the advertised aggregate message counter.",
+          "preservedSource": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-before-counter-fix.mjs",
+          "sourceSha256": "156f3c4f150fb5d8e4f3f93912e2b1c00f6c9908f4161ce3e6e9a73fa74986d8"
+        },
+        "correction": {
+          "report": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-counter-fix.md",
+          "artifact": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-test-fixed.json",
+          "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-fix-review.md",
+          "originalNamedGroupsRetained": 12,
+          "addedNamedGroups": 2,
+          "passed": 14,
+          "failed": 0,
+          "scope": "Both parsed channels charge the same 32768-message admission budget; the final two slots are reserved for trusted EXIT/CLEANUP observations. Ordinary overflow cannot consume those slots; invalid terminal observations never grant success."
+        },
+        "limits": [
+          "Pure injected-clock and observation transitions only; all effect outputs are descriptions.",
+          "No IPC, physical journaling, process exit, database inventory, cluster cleanup or runtime admission was established.",
+          "Full valid workload progression and every action/journal ceiling were not exhaustively tested.",
+          "The future adapter must close failed traffic admission and perform independent physical cleanup even if protocol evidence is exhausted.",
+          "Windows identity-safe termination and complete runtime lifecycle remain unresolved."
+        ]
       }
     }
   },
@@ -961,24 +1005,24 @@
     "originalFindingPreserved": true
   },
   "preparationCheckpointCI": {
-    "revision": "014907ab872a63f1c2f6d5c7cd85afa8823eac6d",
+    "revision": "73196cb0084a7dc04c5f10cecb9cfe923f8cffa8",
     "status": "SCOPE_ONLY_PASS",
     "runs": [
       {
-        "id": 39874619852,
+        "id": 39875840860,
         "name": "Safety checks",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39874619852"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39875840860"
       },
       {
-        "id": 39874619909,
+        "id": 39875840770,
         "name": "Quant Lab",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39874619909"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39875840770"
       }
     ],
     "actualScopeSteps": 2,
     "actualGateSteps": 1,
     "skippedRuntimeJobs": 4,
     "newRuntimeTests": 0,
-    "artifact": ".qa-local/qr2-s5-4-stage2c/p12-p13a-documentation-ci-verified.json"
+    "artifact": ".qa-local/qr2-s5-4-stage2c/p13bc-documentation-ci-verified.json"
   }
 }

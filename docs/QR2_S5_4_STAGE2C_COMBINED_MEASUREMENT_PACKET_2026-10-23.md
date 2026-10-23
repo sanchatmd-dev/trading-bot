@@ -86,6 +86,14 @@ Source review accepted a supervisor protocol only as input to a bounded pure red
 
 The next pure slice has explicit finite provisional message, journal, stack and action ceilings. It will perform no I/O or process effects and cannot establish Windows termination, actual durability or lifecycle behavior. Identity-safe Windows termination, complete manifest qualification, real parent callbacks, independent inventory and fresh resource admission remain prerequisites for any runtime. No performance or fixture acceptance follows.
 
+### P13d pure supervisor state model
+
+The pure reducer describes effects without executing them. Initial independent verification passed 11 of 12 groups and confirmed that trusted observations bypassed the aggregate message counter. The original source and failed artifacts are preserved. A bounded correction charges both parsed channels to the same 32768-message budget, reserving the final two slots for trusted exit/cleanup observations. Rejected ordinary overflow cannot consume those slots; invalid terminal observations cannot authorize success.
+
+The revised suite passed all fourteen named groups: the original twelve plus two exhaustion/reservation groups. Tests use only returned states and injected clocks/observations. They cover nested deadlines, late durable acknowledgements, terminal refusal, cancellation distinct from verified exit and cleanup retaining prior failure. They do not prove physical exit, fsync, IPC, database inventory, full valid workload progression or every numerical ceiling. The future adapter must independently perform cleanup even when protocol evidence is exhausted.
+
+Root accepts only this bounded pure-model evidence. Windows identity-safe termination, finite effect execution, full source/installed-runtime manifests, runner callbacks and fresh lifecycle/resource admission remain open. No live supervisor or PostgreSQL fixture was started.
+
 ## Open work
 
 Coverage byte accounting and the financial row/value recipe are analytically qualified within the limits above. Runtime-compatible clock integration, actual producer counts and financial gates, independent client/HTTP implementation, monitoring-boundary tests, finite setup budget and final lifecycle source review remain open. Diagnostic and full measurement are NOT RUN. The separate financial differential CI is accepted only within its named assertion scope. Production cap selection, Stage 3 publication/rendering, full S5 and prototype completion remain OPEN.
