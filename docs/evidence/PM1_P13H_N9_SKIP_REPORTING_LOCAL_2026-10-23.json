@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "scope": "P13h N9 missing-supervisor pure-model reporting verification only",
+  "date": "2026-10-23",
+  "sourceRevision": "5cec625bbed81dcb2137b22cff4c5f7d32188f6a",
+  "startedAt": "2026-10-23T16:04:14.736Z",
+  "completedAt": "2026-10-23T16:04:23.377Z",
+  "status": "PASS_REPORTING_ONLY",
+  "execution": {
+    "node": "v24.19.0",
+    "arguments": [
+      "--max-old-space-size=64",
+      "--test",
+      "--test-isolation=none",
+      "--test-concurrency=1",
+      "--test-reporter=tap",
+      "guardian-state-test.mjs"
+    ],
+    "timeoutMs": 30000,
+    "freeMiBAtAdmission": 1292.1015625,
+    "requiredFreeMiB": 1024,
+    "peakMemory": "UNKNOWN",
+    "attemptsExecuted": 1
+  },
+  "observedCounts": {
+    "total": 234,
+    "passed": 233,
+    "failed": 0,
+    "skipped": 1
+  },
+  "skippedTest": "G18 static source check | LABELS match the pinned supervisor-state.mjs table",
+  "labelsCrossCheck": {
+    "ran": false,
+    "skipReason": "supervisor-state.mjs is not next to this test (ENOENT): the LABELS cross-check did not run"
+  },
+  "exitCode": 0,
+  "acceptedSourcesUnchanged": true,
+  "acceptedSourceHashes": {
+    "guardian-state.mjs": "9f5ef30b5d67db469a6e3320a61cdb2a6c73e63516bd52fd0a19fa87b81fe2c3",
+    "guardian-state-test.mjs": "fb460ea04db29d0b0306059888a969a9ad5122082516f040151242f574a85988"
+  },
+  "artifacts": [
+    {
+      "path": ".qa-local/p13h-n9-missing-supervisor-2026-10-23/invocation.json",
+      "sha256": "e983d7c215c3fdc4ae4a8b900ea4cd58f8f1209e66cd80e0d23a34b012b44540"
+    },
+    {
+      "path": ".qa-local/p13h-n9-missing-supervisor-2026-10-23/outcome.json",
+      "sha256": "92ff9f107930be85c1a5247f51bdb71772910935e2fdf387c62f5114df6c8763"
+    },
+    {
+      "path": ".qa-local/p13h-n9-missing-supervisor-2026-10-23/run.tap",
+      "sha256": "74e5d3e36ad7e71c87396eb7c2e2b5b2f4aaba14a565d25d746a18b0a012fc4b"
+    },
+    {
+      "path": ".qa-local/p13h-n9-missing-supervisor-2026-10-23/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".qa-local/p13h-n9-missing-supervisor-2026-10-23/guardian-state-test.json",
+      "sha256": "d682790bd48a5ea412b0a9c1b85b6342a2f01eb27d0c8b576e8679c45e80512d"
+    },
+    {
+      "path": ".qa-local/p13h-n9-missing-supervisor-2026-10-23/guardian-state.mjs",
+      "sha256": "9f5ef30b5d67db469a6e3320a61cdb2a6c73e63516bd52fd0a19fa87b81fe2c3"
+    },
+    {
+      "path": ".qa-local/p13h-n9-missing-supervisor-2026-10-23/guardian-state-test.mjs",
+      "sha256": "fb460ea04db29d0b0306059888a969a9ad5122082516f040151242f574a85988"
+    }
+  ],
+  "independentReview": {
+    "status": "PASS",
+    "scope": "Read-only artifact verification; no duplicate suite run",
+    "path": ".qa-local/s6-metadata-2026-10-23/n9-result-review.md",
+    "sha256": "a76bd42f5e0da2ef9430d56dc6cc115af03d86cba1b502391e85b91efc52c57a"
+  },
+  "admissionReview": {
+    "path": ".qa-local/s6-metadata-2026-10-23/n9-admission-review.md",
+    "sha256": "716dcec799df84badd5cbc2de073a7039fa37265a92938e92d65e5f40b32d5a3"
+  },
+  "priorCoverageDisposition": {
+    "permutedClean": "Already covered by accepted r4b: 50 of 130 main seeds (38.5%); no new run or coverage credit",
+    "historicalPositiveSuite": "234 passed with supervisor source present; distinct from this deliberately missing-source run; counts are not additive"
+  },
+  "limitations": [
+    "The missing-source LABELS cross-check did not execute and is not a pass.",
+    "Only the N9 reporting gap closes. No new native, process-fixture, PostgreSQL, C3 runtime, performance or prototype acceptance.",
+    "The heap limit is not an RSS bound; peak memory was not measured."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "inputLock": "UNCHANGED_NOT_FROZEN",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "nativeCompilation": "NOT_RUN",
+    "processFixture": "NOT_RUN",
+    "postgres": "NOT_RUN",
+    "c3Runtime": "NOT_RUN"
+  }
+}
