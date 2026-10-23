@@ -1,0 +1,385 @@
+{
+  "schemaVersion": 1,
+  "id": "PM1_PROTOTYPE_SHARED_UI_RENDER_LOCAL_2026-10-23",
+  "date": "2026-10-23",
+  "status": "ACCEPTED_SYNTHETIC_LOCAL_RENDER_ONLY",
+  "revision": "fed76e0bfc006a5aec0c52554068d75d66ec7711",
+  "scope": "P0-C/P1-F shared journey and setup-guide component rendering; closes the inspected local desktop/mobile rendering gap only.",
+  "matrix": {
+    "viewports": [
+      "1440x1000",
+      "390x844"
+    ],
+    "languages": [
+      "en",
+      "th"
+    ],
+    "modes": [
+      "journey",
+      "bridge-disabled",
+      "bridge-flag-missing"
+    ],
+    "pageChecks": 12,
+    "journeyCases": 4,
+    "setupGuideCases": 8
+  },
+  "results": [
+    {
+      "name": "desktop-en-journey",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "visibleSurface": "journey",
+      "visibleItems": 6,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 17,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 4,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-en-journey.json",
+        "sha256": "3f7b40ac98fa8804a01c412a285b12df4324a70f1404804da3e2828e5f13c3e3"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-en-journey.png",
+        "sha256": "b6e6c1f65d63ef4906d17c4fe19ad5e1f4c8e6c4b22d4e40e0a9f7669e0b0ad7"
+      }
+    },
+    {
+      "name": "desktop-en-disabled",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "visibleSurface": "setup-guide",
+      "visibleItems": 7,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 3,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-en-disabled.json",
+        "sha256": "c73f89ca3d696a6ef3f6a82326a6790200f9d47a7edb6a67ba4697dc952ec67d"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-en-disabled.png",
+        "sha256": "35532d1c03b7f6ae923350f917b3815934a211924d5fdc070e1a6c651dc15f91"
+      }
+    },
+    {
+      "name": "desktop-en-missing",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "visibleSurface": "setup-guide",
+      "visibleItems": 7,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 3,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-en-missing.json",
+        "sha256": "4db1580daaffd1db57e95b8ab9e52a4ad801de3c3ac62a0b8cf7889e81a73814"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-en-missing.png",
+        "sha256": "35532d1c03b7f6ae923350f917b3815934a211924d5fdc070e1a6c651dc15f91"
+      }
+    },
+    {
+      "name": "desktop-th-journey",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "visibleSurface": "journey",
+      "visibleItems": 6,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 4,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-th-journey.json",
+        "sha256": "416478a0a3a0c57b82a150d80cbf90b785ca15723bbbe231f97bf931005c7eff"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-th-journey.png",
+        "sha256": "80fa180cc039abd81e21880b8263ff7d86893b7194b0a6aaf27edc5b7372dda3"
+      }
+    },
+    {
+      "name": "desktop-th-disabled",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "visibleSurface": "setup-guide",
+      "visibleItems": 7,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 3,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-th-disabled.json",
+        "sha256": "9c3a261e97e01e5a432392a637f6204dcec109bf7b7f0fc0fa4b5c33c2cf9abe"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-th-disabled.png",
+        "sha256": "88dcf9d4d92d98e8a0ef07b95d39bc71058765d10683f93e5fa42c7f335d4359"
+      }
+    },
+    {
+      "name": "desktop-th-missing",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "visibleSurface": "setup-guide",
+      "visibleItems": 7,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 3,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-th-missing.json",
+        "sha256": "f921480f8f5325d8bf231b932433202512ddf63957efed732a648c4092bb73be"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/desktop-th-missing.png",
+        "sha256": "edbc9b72171047f84604b9275806fb924aa2beab6eaf95d5c16e39a585b1f043"
+      }
+    },
+    {
+      "name": "mobile-en-journey",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "visibleSurface": "journey",
+      "visibleItems": 6,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 4,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-en-journey.json",
+        "sha256": "f5babfb24155f64bd6b225939afef54b685210227a45e63bb2eca2ef4aa8876f"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-en-journey.png",
+        "sha256": "f7de2b4e60272f84ec81e27663a9de45fdd6bc82a9d580aa79d04c99f53e5c55"
+      }
+    },
+    {
+      "name": "mobile-en-disabled",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "visibleSurface": "setup-guide",
+      "visibleItems": 7,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 3,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-en-disabled.json",
+        "sha256": "6ecf454a7dd2ec6798c33dd58dddea1b8c276c2f23b6884f44962cc95eaa0ff1"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-en-disabled.png",
+        "sha256": "733b7a05fde9b33b4aaabb9a674201450a4b59451073dede9d8e38a1a98a11e3"
+      }
+    },
+    {
+      "name": "mobile-en-missing",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "visibleSurface": "setup-guide",
+      "visibleItems": 7,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 3,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-en-missing.json",
+        "sha256": "7a7f41c77b72381ebfba6fefc0d57807118c1331d8645c74144a008b6b093d4b"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-en-missing.png",
+        "sha256": "733b7a05fde9b33b4aaabb9a674201450a4b59451073dede9d8e38a1a98a11e3"
+      }
+    },
+    {
+      "name": "mobile-th-journey",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "visibleSurface": "journey",
+      "visibleItems": 6,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 4,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-th-journey.json",
+        "sha256": "bec379f6d7cf064baf938dc92e6d06fc954ca209ee786dbbb8a2f98036930b30"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-th-journey.png",
+        "sha256": "da86ea7f905166c39f02be272bdbccb0f368d3720a5e8a082a67955be692eeb9"
+      }
+    },
+    {
+      "name": "mobile-th-disabled",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "visibleSurface": "setup-guide",
+      "visibleItems": 7,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 3,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-th-disabled.json",
+        "sha256": "41cf0f5b03069d51a3d1ee365f104c7a16ae3933a287dba9a8516ff8386ace03"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-th-disabled.png",
+        "sha256": "b871d74a9254e6e90210577cbacc502ee455e1cc63263d6baba0c9e4f704371b"
+      }
+    },
+    {
+      "name": "mobile-th-missing",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "visibleSurface": "setup-guide",
+      "visibleItems": 7,
+      "overflowFindings": 0,
+      "consoleWarningsOrErrors": 0,
+      "networkRequestCount": 16,
+      "externalHttpRequests": 0,
+      "inMemoryApiCalls": 3,
+      "raw": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-th-missing.json",
+        "sha256": "967f614b6187a48570b635c8030258699d02d4fdb1b64f8a38bfe072c6f9854a"
+      },
+      "screenshot": {
+        "path": ".qa-local/prototype-journey-render-2026-10-23/mobile-th-missing.png",
+        "sha256": "b871d74a9254e6e90210577cbacc502ee455e1cc63263d6baba0c9e4f704371b"
+      }
+    }
+  ],
+  "sourceHashes": {
+    "/index.html": "920a1ada66a3dffc9531b44664f21fa92bcd1bafc2b8bccb4c479aa13b61d2ad",
+    "/styles.css": "7ead696fd140f0f3be8b7c817e7774749506e8fd1b70b415a05b18d45882c317",
+    "/styles-v2.css": "61bfd24be7f36f8217ba79e426883651f2f401fcfcfd87d0be351e90a514b2b8",
+    "/research-job.css": "8e66174929d162d0a4bbf5cc4d73891e4e6b1d906416adb6b34d4435a6503a2c",
+    "/market-chart.css": "4e657ae73b4513410684965e8c290317bc0d9e158dfa672099f9aea90b6a13e9",
+    "/theme-hud.css": "7194298be25c5f26aa6f59921b4d86314e6e46e242024013e81b6c167b9a65f8",
+    "/paper-performance.css": "c68ac529a2511635a1066d1332d9bb8beea3418b3aa2bccc56cb53e395d246b5",
+    "/install-shortcut.css": "3e25d72e24a76e1259314d9ee5123348754d34581b4b7ba7d6b854f49a8eae1c",
+    "/i18n.js": "efd10874b5ada36e4a934c7e87686aeeb5fe4f057bc833d7c7def1704c1422b8",
+    "/journey.js": "ee7f58a4d1e0ad6052a0d6d953812c7b5ca15af33baaee3c10fced5cda8355b1",
+    "/setup-guide.js": "ea3d927df300b3803fd12cc896dd306de02af872f89afc17b087947460f947e4",
+    "/manifest.webmanifest": "1624e3443f276e4e6d8df1da78056014c1ec5dd230ea335bd924cb3ab4fb4f6d",
+    "/assets/icon-180.png": "de48581af6945429e879e16b3da02ec000e4d68e7e78000798768e46d9bc6894",
+    "/assets/icon-192.png": "bc0141d087df810ddffd0b2924ec662d37809a142f47c9f4eb345e664cfed5a1",
+    "/assets/icon-512.png": "21fa116becb3ff7b512486e8a44777fc51c80630ab9b33fd5e0a5bfaeeb73cab",
+    "/assets/robot-trade-original.png": "d3006fd83aac88b078013dbaeeb3a7b2612cb98f3901356b570c9cc17e398858"
+  },
+  "transport": {
+    "staticRequests": 197,
+    "externalHttpRequests": 0,
+    "backendOrProviderRequests": 0,
+    "syntheticApi": "In-memory GET replies only; no fetch or proxy.",
+    "inlineResource": "Browser calendar data:image/svg+xml appeared in network observations; it makes no external HTTP request."
+  },
+  "cleanup": {
+    "serverStopped": true,
+    "reason": "SIGINT",
+    "startedAt": "2026-10-23T10:00:44.187Z",
+    "stoppedAt": "2026-10-23T10:02:43.246Z",
+    "rootReadback": "Owned process and listening socket absent after SIGINT; browser tab closed and viewport reset."
+  },
+  "independentReview": {
+    "status": "PASS_WITH_LIMITS",
+    "report": ".qa-local/prototype-journey-render-2026-10-23/rendered-review.md"
+  },
+  "limits": [
+    "Static component/shared-style rendering only; app.js and authentication integration are not exercised.",
+    "Synthetic responses are not target evidence, real provider results or private acceptance.",
+    "Visible Open Pine Bridge remains navigation; no claim of disabled navigation controls.",
+    "No PM1 rescore, complete end-to-end journey or prototype acceptance."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "N1": "HELD",
+    "P13j": "HELD",
+    "nativeCompilation": "CLOSED",
+    "C3ProcessFixtures": "CLOSED",
+    "localPostgresqlC3Runtime": "CLOSED",
+    "deployment": "NOT_AUTHORIZED",
+    "targetRouteActivation": "NOT_AUTHORIZED"
+  },
+  "artifactPins": [
+    {
+      "path": ".qa-local/prototype-journey-render-2026-10-23/server.mjs",
+      "sha256": "306dd591ef4326f93680bad5995e4a8c2c187affb43ee3eeec3a1f3ec730dff8"
+    },
+    {
+      "path": ".qa-local/prototype-journey-render-2026-10-23/author.md",
+      "sha256": "cee43ff98aaf1e774c5aaeee0b24b1bbd0a769141722aedf4c27c9dd3cdd4578"
+    },
+    {
+      "path": ".qa-local/prototype-journey-render-2026-10-23/review.md",
+      "sha256": "6ff340381c7462194f42ae1eeb836f9f4e9d46b391a9f72499cf00057f5b0b9d"
+    },
+    {
+      "path": ".qa-local/prototype-journey-render-2026-10-23/rendered-review.md",
+      "sha256": "e6270a8b3f178dc596c23205a57ef72b1f55395453e630ceb75e78d1328b4de3"
+    },
+    {
+      "path": ".qa-local/prototype-journey-render-2026-10-23/runtime.json",
+      "sha256": "de3de00a933f1098fb79a7e8362ab23c286ba6c1c677240984702ba57fcedda8"
+    },
+    {
+      "path": ".qa-local/prototype-journey-render-2026-10-23/request-journal.json",
+      "sha256": "ca01e5386c847461d041239b94fd76e9e6e762885c1dd58eca5d93fe0b114e33"
+    },
+    {
+      "path": ".qa-local/prototype-journey-render-2026-10-23/receipt-summary.json",
+      "sha256": "58b24e06d0072da394ccc4b16ad6e9c5e81590c5dea3ceadb9537a96119bfbef"
+    },
+    {
+      "path": ".qa-local/prototype-journey-render-2026-10-23/summarize.mjs",
+      "sha256": "38151478ef4d5e7a3ccd41499397a0c3127491eb1fc849aaa2ec57fdb79f6a81"
+    },
+    {
+      "path": ".qa-local/prototype-journey-render-2026-10-23/cleanup-readback.json",
+      "sha256": "fa8149cc1800d740593029de002d0d1dcdffc1267c4fb31c8eb3073a15faf3e1"
+    }
+  ]
+}

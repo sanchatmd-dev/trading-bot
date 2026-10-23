@@ -303,6 +303,10 @@
     {
       "path": ".qa-local/codex-return-2026-10-23/missing-start-independent.txt",
       "sha256": "41ae84070c215c6d30f758668c92845ae2a7bf09fbbd3fcc4a0a3a5fbaff1e95"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/ci-fed76e0bfc006a5aec0c52554068d75d66ec7711-1792749602757.json",
+      "sha256": "3edc32fb838a709f793d4bf0c58966d5d6330793a9d03260d2bc0fdd7a6e315c"
     }
   ],
   "pureModelFollowup": {
@@ -335,5 +339,432 @@
       ".qa-local/codex-return-2026-10-23/missing-start-review.md",
       ".qa-local/codex-return-2026-10-23/missing-start-independent.txt"
     ]
+  },
+  "policyCheckpointCi": {
+    "revision": "fed76e0bfc006a5aec0c52554068d75d66ec7711",
+    "observedAt": "2026-10-23T10:00:02.755Z",
+    "runs": [
+      {
+        "id": 39933814519,
+        "name": "Quant Lab",
+        "revision": "fed76e0bfc006a5aec0c52554068d75d66ec7711",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39933814519",
+        "status": "completed",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "name": "scope",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node scripts/ci-scope.mjs",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "gate",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run test \"$SCOPE\" = success && { test \"$QUANT\" = success || test \"$QUANT\" = skipped; }",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "quant",
+            "status": "completed",
+            "conclusion": "skipped",
+            "steps": []
+          }
+        ]
+      },
+      {
+        "id": 39933814540,
+        "name": "Safety checks",
+        "revision": "fed76e0bfc006a5aec0c52554068d75d66ec7711",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39933814540",
+        "status": "completed",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "name": "scope",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node scripts/ci-scope.mjs",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "container",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run docker build -t astra-paper-staging .",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "test (ubuntu-latest)",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm test 2>&1 | tee unit-test.log",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run summary=$(awk '/failing tests:/{found=1} found' unit-test.log | grep -v -E '^[[:space:]]+at |^[[:space:]]*$' | sed -n '1,80p' | cut -c1-200 | sed 's/%/%25/g' | awk 'BEGIN{ORS=\"%0A\"} {print}')",
+                "status": "completed",
+                "conclusion": "skipped"
+              },
+              {
+                "name": "Run git diff --check",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "postgres",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Initialize containers",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run sudo apt-get update && sudo apt-get install -y postgresql-client-16",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run astral-sh/setup-uv@v6",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run uv sync --locked --all-extras",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm run test:postgres 2>&1 | tee postgres-test.log",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run summary=$(awk '/failing tests:/{found=1} found' postgres-test.log | grep -v -E '^[[:space:]]+at |^[[:space:]]*$' | sed -n '1,80p' | cut -c1-200 | sed 's/%/%25/g' | awk 'BEGIN{ORS=\"%0A\"} {print}')",
+                "status": "completed",
+                "conclusion": "skipped"
+              },
+              {
+                "name": "Post Run astral-sh/setup-uv@v6",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Stop containers",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "test (windows-latest)",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run npm test 2>&1 | tee unit-test.log",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run summary=$(awk '/failing tests:/{found=1} found' unit-test.log | grep -v -E '^[[:space:]]+at |^[[:space:]]*$' | sed -n '1,80p' | cut -c1-200 | sed 's/%/%25/g' | awk 'BEGIN{ORS=\"%0A\"} {print}')",
+                "status": "completed",
+                "conclusion": "skipped"
+              },
+              {
+                "name": "Run git diff --check",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "verifiedSteps": [
+      {
+        "workflow": "Safety checks",
+        "job": "scope",
+        "step": "Run node scripts/ci-scope.mjs"
+      },
+      {
+        "workflow": "Safety checks",
+        "job": "test (ubuntu-latest)",
+        "step": "Run npm test 2>&1 | tee unit-test.log"
+      },
+      {
+        "workflow": "Safety checks",
+        "job": "test (windows-latest)",
+        "step": "Run npm test 2>&1 | tee unit-test.log"
+      },
+      {
+        "workflow": "Safety checks",
+        "job": "container",
+        "step": "Run docker build -t astra-paper-staging ."
+      },
+      {
+        "workflow": "Safety checks",
+        "job": "postgres",
+        "step": "Run npm run test:postgres 2>&1 | tee postgres-test.log"
+      }
+    ],
+    "quantScopeGate": "PASS",
+    "quantRuntime": "SKIPPED_BY_SCOPE",
+    "testCounts": "NOT_INFERRED",
+    "acceptanceLimit": "Existing CI tests/build passed; no local C3/native/process/PostgreSQL admission, target acceptance or prototype completion follows."
   }
 }
