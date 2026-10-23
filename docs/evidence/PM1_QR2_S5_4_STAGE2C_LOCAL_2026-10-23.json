@@ -425,11 +425,15 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-ownership-source-pins.json": "4aaee19946f0362a1a49072d289e2b8514280252ea53853102c109fa7602bfb3",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-ownership-source-review.md": "8661b11c0f622c85c8baf7c9108fb57cab2396809b26c092b114b3e99cbfe68f",
     ".qa-local/qr2-s5-4-stage2c/p13d-documentation-ci-verified.json": "9dd7feaab0185615ea0787dba0877aede7e08dde5366913ca8733de34dcf9ca2",
-    ".qa-local/qr2-s5-3/ci-observed-40f8853439de1235e346ecbdd4be13bf6dbfe64d.json": "941c0b203a2acc05fbb88b5822f5016111adedefdedb41c17f5a2e937d8d82ef"
+    ".qa-local/qr2-s5-3/ci-observed-40f8853439de1235e346ecbdd4be13bf6dbfe64d.json": "941c0b203a2acc05fbb88b5822f5016111adedefdedb41c17f5a2e937d8d82ef",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-draft.md": "ed01dc78b0a57513ea1bb32d3c1907274fa4e7fdea1ad53c763eacc06391966d",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-review.md": "35a0ad9fa3ea3d8edcd759ae77917f6133561e267b0325cb4d745c734e044ecc",
+    ".qa-local/qr2-s5-4-stage2c/p13e-documentation-ci-verified.json": "aa4e4d190823197a40581d3e36ff8701df6e627cfa3179cc051a3e0c6ac2a5ee",
+    ".qa-local/qr2-s5-3/ci-observed-5ebbb594c5dc67d4fbc919d5d5357e592fad0972.json": "a2c335645d91ec482be550d5438093bf68e874a9270bce5c6c9fc13fca485565"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-23T00:17:33.866Z",
+  "recordedAt": "2026-10-23T00:23:03.224Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -977,6 +981,20 @@
           "No process fixture, native compilation, termination, PostgreSQL, tests or runtime admission occurred."
         ],
         "next": "Review one fixed launch/ownership/termination contract covering assignment before execution, handle lifetime, child creation/nesting, separate PostgreSQL ownership, verified exit and finite independent cleanup."
+      },
+      "launchContractDraft": {
+        "status": "DESIGN_GAP_NO_EFFECTFUL_IMPLEMENTATION_ADMITTED",
+        "draft": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-draft.md",
+        "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-review.md",
+        "proposal": "A fixed native guardian with separate workload and PostgreSQL containment groups, retained handles and assignment before execution.",
+        "decisiveGap": "The surviving inventory/stop executor after JavaScript-supervisor death and its independent cancellation path are not specified.",
+        "requiredAmendment": [
+          "Name the fixed cleanup executor and bound its operations without blocking guardian deadlines.",
+          "Define guardian bootstrap, watched supervisor identity/connection and one finite lifetime origin.",
+          "Forward bounded relative phase/action requests onto guardian-local monotonic deadlines without renewal."
+        ],
+        "checks": "Source design and independent review only; no tests, compilation, process fixtures, PostgreSQL or runtime.",
+        "admission": "Work checkpointed at the project usage reserve; no new substantive task admitted."
       }
     }
   },
@@ -1028,24 +1046,24 @@
     "originalFindingPreserved": true
   },
   "preparationCheckpointCI": {
-    "revision": "40f8853439de1235e346ecbdd4be13bf6dbfe64d",
+    "revision": "5ebbb594c5dc67d4fbc919d5d5357e592fad0972",
     "status": "SCOPE_ONLY_PASS",
     "runs": [
       {
-        "id": 39876700892,
+        "id": 39877277736,
         "name": "Safety checks",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39876700892"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39877277736"
       },
       {
-        "id": 39876700741,
+        "id": 39877277726,
         "name": "Quant Lab",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39876700741"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39877277726"
       }
     ],
     "actualScopeSteps": 2,
     "actualGateSteps": 1,
     "skippedRuntimeJobs": 4,
     "newRuntimeTests": 0,
-    "artifact": ".qa-local/qr2-s5-4-stage2c/p13d-documentation-ci-verified.json"
+    "artifact": ".qa-local/qr2-s5-4-stage2c/p13e-documentation-ci-verified.json"
   }
 }

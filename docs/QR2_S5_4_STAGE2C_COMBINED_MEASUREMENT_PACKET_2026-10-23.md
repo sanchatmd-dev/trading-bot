@@ -100,6 +100,12 @@ Independent source review confirms the distinction between direct-child handle t
 
 A private no-breakaway job is only a candidate. Next is a fixed contract for assignment before execution, retained handles, permitted child creation/nesting, separate PostgreSQL ownership and finite cleanup after failure. No native helper, process fixture or runtime test was executed. The local assessment and review preserve primary-source links and precise limits in the evidence record.
 
+### P13f launch-contract gap and safe checkpoint
+
+The draft separates workload and PostgreSQL containment and proposes retained guardian handles. Independent review found that surviving cleanup execution after JavaScript-supervisor death remains undefined, along with its nonblocking deadline enforcement and guardian bootstrap. This is an explicit design gap, not an implementation failure or runtime qualification.
+
+At the project usage reserve, work is checkpointed without native code, compilation, process fixtures or tests. When usage permits continuation, the next amendment must name the fixed cleanup executor, bound cancellation independently, establish guardian startup/lifetime and use guardian-local phase/action deadlines. No guard or admission limit is relaxed.
+
 ## Open work
 
 Coverage byte accounting and the financial row/value recipe are analytically qualified within the limits above. Runtime-compatible clock integration, actual producer counts and financial gates, independent client/HTTP implementation, monitoring-boundary tests, finite setup budget and final lifecycle source review remain open. Diagnostic and full measurement are NOT RUN. The separate financial differential CI is accepted only within its named assertion scope. Production cap selection, Stage 3 publication/rendering, full S5 and prototype completion remain OPEN.
