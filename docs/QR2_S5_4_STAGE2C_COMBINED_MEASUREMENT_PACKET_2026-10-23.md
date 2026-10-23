@@ -106,6 +106,16 @@ The draft separates workload and PostgreSQL containment and proposes retained gu
 
 At the project usage reserve, work is checkpointed without native code, compilation, process fixtures or tests. When usage permits continuation, the next amendment must name the fixed cleanup executor, bound cancellation independently, establish guardian startup/lifetime and use guardian-local phase/action deadlines. No guard or admission limit is relaxed.
 
+### P13g launch-contract amendment accepted at design level
+
+The amendment closes the P13f design gap. The accepted design is the fourth revision (r4) plus root errata E1 to E9. The first errata check found three wording defects in E1, E4 and E7; root amended them and a re-check confirmed consistency with r4 without relaxing any ceiling or guard. This is design-level acceptance only, local engineering preparation and not runtime or performance evidence.
+
+Four review rounds by independent Opus auditors (Fable was paused by the owner, so an Opus auditor replaced the Fable second opinion) found and fixed these blockers. Round 1: postmaster identity, launch triggers, the unenforced 360 s runner ceiling, a guardian hang and PID reuse at stop. Round 2: the latch check also killed the cleanup roles. Round 3: dropped flush durability. Round 4 found no blocker, and both reviews reached readiness for source-packet selection.
+
+Key design facts: a guardian starts first, launched by a minimal launch step with a kill-on-close job and a lifetime of L = 420 s. The guardian owns the workload, PostgreSQL, supervisor and cleanup-tool jobs. The postmaster is launched directly and its handle is held. INVENTORY and STOP remain the surviving fixed cleanup path, gated only by their preconditions and T_pg. Deadlines are relative requests on the guardian clock with ceilings from one origin, and the enforcement path never blocks.
+
+Still open: the A5.2 implementation obligations, author-knowledge items that remain unverified, the connection-slot ruling point (a max_connections above 16 needs a tracked packet change and a root ruling), and job-list attribute qualification, which blocks runtime until qualified. No native source, compilation, process fixture, PostgreSQL or runtime was run or authorized. Next is source-packet selection; the runtime gates stay closed. Pins for all amendment, review, acceptance and check artifacts are in the evidence record.
+
 ## Open work
 
 Coverage byte accounting and the financial row/value recipe are analytically qualified within the limits above. Runtime-compatible clock integration, actual producer counts and financial gates, independent client/HTTP implementation, monitoring-boundary tests, finite setup budget and final lifecycle source review remain open. Diagnostic and full measurement are NOT RUN. The separate financial differential CI is accepted only within its named assertion scope. Production cap selection, Stage 3 publication/rendering, full S5 and prototype completion remain OPEN.

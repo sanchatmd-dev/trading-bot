@@ -429,7 +429,23 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-draft.md": "ed01dc78b0a57513ea1bb32d3c1907274fa4e7fdea1ad53c763eacc06391966d",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-review.md": "35a0ad9fa3ea3d8edcd759ae77917f6133561e267b0325cb4d745c734e044ecc",
     ".qa-local/qr2-s5-4-stage2c/p13e-documentation-ci-verified.json": "aa4e4d190823197a40581d3e36ff8701df6e627cfa3179cc051a3e0c6ac2a5ee",
-    ".qa-local/qr2-s5-3/ci-observed-5ebbb594c5dc67d4fbc919d5d5357e592fad0972.json": "a2c335645d91ec482be550d5438093bf68e874a9270bce5c6c9fc13fca485565"
+    ".qa-local/qr2-s5-3/ci-observed-5ebbb594c5dc67d4fbc919d5d5357e592fad0972.json": "a2c335645d91ec482be550d5438093bf68e874a9270bce5c6c9fc13fca485565",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment.md": "9cf1dff38154d55437d03f9aeca50a71939ff543afb9ba3351afe9ca44cc9dbe",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-review-closure.md": "8d125cbe09769d6c41ecd9670f0737dbd2085ab03a695d64373a87e52db7bc91",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-review-adversarial.md": "b3478631636f5140845141fe5da709d733fa4b095c347aff2f84fa6d76e46f07",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r2.md": "9d626fb56f66026c9162ff72be55816cb4c557210e853fdba5daf77abb1f0eb3",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r2-review-closure.md": "334628df38c5672f4ef8e0b48c9e0d6b515de79ee2f7d738671d2dcb0fe652ef",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r2-review-adversarial.md": "c689c95b725671420a07c041cecf22ef73eb9d6de3d9e2b9324e3c38b859a780",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r3.md": "6ee1a928ff588d485c25c7fa1ff531c3ae30967e8c7ae55c1164c0f51ea279e9",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r3-review-closure.md": "cfba14a03615ad79367b410fdc8f16466169feef6e7d5ce7b791dad74234133e",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r3-review-adversarial.md": "186cd7983856ffec4b8c2b32d05961aed8805411a82090422f6a29032ebe2a03",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r4.md": "bc155c527cbd8a26aaf13d8b8fefb0beee64f2431c95149960cce493d98822e9",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r4-review-closure.md": "aa17e0d5b2eb3e737105f7cb0fd49f58ad6c71a1a9195bee0d1edb4e37dacc36",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r4-review-adversarial.md": "11f507d37f4a87867ef4315d09d19f6826982b71df97518df46a6b1ad7a07397",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-v1.md": "c028eea37bac6ea70950ab45bfa5d628711ae37122199f76cdbe9db275a89011",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-errata-check.md": "4e4c33f18c341107637c11053c2d60b48ac2ebf9e04aa7b6e7da0b16cd155cc4",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g.md": "c8b31b7d105a75c610767957a4c220be86d0c491b6a2a846d3883c713b1bd52f",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-errata-recheck.md": "cff659087dd0c3b2d6fb32e366bb3457d31dfa03bd986bc0bb385b4963ca32c3"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
@@ -995,6 +1011,93 @@
         ],
         "checks": "Source design and independent review only; no tests, compilation, process fixtures, PostgreSQL or runtime.",
         "admission": "Work checkpointed at the project usage reserve; no new substantive task admitted."
+      },
+      "launchContractAmendment": {
+        "status": "ACCEPTED_AT_DESIGN_LEVEL_NO_EFFECTFUL_IMPLEMENTATION_ADMITTED",
+        "closes": "launchContractDraft.decisiveGap (P13f DESIGN_GAP)",
+        "acceptedDesign": "windows-launch-contract-amendment-r4.md plus root errata E1 to E9; where an erratum and r4 differ the erratum governs",
+        "rootAcceptanceRecord": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g.md",
+        "rootAcceptanceRecordFirstVersion": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-v1.md",
+        "amendments": {
+          "v1": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment.md",
+          "r2": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r2.md",
+          "r3": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r3.md",
+          "r4": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r4.md"
+        },
+        "reviewers": "Four rounds by independent Opus 5.5 / high architecture auditors. Fable was paused by the owner; an Opus auditor replaced the Fable second opinion in every round.",
+        "reviewRounds": [
+          {
+            "round": 1,
+            "target": "v1",
+            "closure": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-review-closure.md",
+            "adversarial": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-review-adversarial.md",
+            "closureVerdict": "DESIGN_GAP",
+            "adversarialVerdict": "DESIGN_GAP",
+            "blockersFixedInNext": [
+              "postmaster identity",
+              "launch triggers",
+              "unenforced 360 s runner ceiling",
+              "guardian hang",
+              "PID reuse at stop"
+            ]
+          },
+          {
+            "round": 2,
+            "target": "r2",
+            "closure": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r2-review-closure.md",
+            "adversarial": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r2-review-adversarial.md",
+            "closureVerdict": "READY_FOR_SOURCE_PACKET_SELECTION",
+            "adversarialVerdict": "DESIGN_GAP",
+            "blockersFixedInNext": [
+              "latch check also killed the INVENTORY and STOP cleanup roles"
+            ]
+          },
+          {
+            "round": 3,
+            "target": "r3",
+            "closure": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r3-review-closure.md",
+            "adversarial": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r3-review-adversarial.md",
+            "closureVerdict": "READY_FOR_SOURCE_PACKET_SELECTION",
+            "adversarialVerdict": "DESIGN_GAP",
+            "blockersFixedInNext": [
+              "r3 dropped the r2 flush durability guard"
+            ]
+          },
+          {
+            "round": 4,
+            "target": "r4",
+            "closure": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r4-review-closure.md",
+            "adversarial": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-amendment-r4-review-adversarial.md",
+            "closureVerdict": "READY_FOR_SOURCE_PACKET_SELECTION",
+            "adversarialVerdict": "READY_FOR_SOURCE_PACKET_SELECTION",
+            "note": "No blocker; every r3-to-r4 hunk mapped to a ruling; no ceiling or guard relaxed."
+          }
+        ],
+        "erratumCheck": {
+          "first": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-errata-check.md",
+          "firstVerdict": "ISSUES F1 to F3 (wording defects in E1, E4 and E7)",
+          "rootAmendment": "Root applied the checker fixes to E1, E4 and E7; E2, E3, E5, E6, E8 and E9 passed unchanged.",
+          "recheck": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-errata-recheck.md",
+          "recheckVerdict": "CONSISTENT",
+          "recheckNote": "Amended E1, E4 and E7 consistent with r4 and the P13c acknowledgements; no ceiling or guard relaxed."
+        },
+        "designFacts": [
+          "The guardian starts first, launched by a minimal launch step with a kill-on-close job and lifetime L = 420 s.",
+          "The guardian owns the workload, PostgreSQL, supervisor and cleanup-tool jobs.",
+          "The postmaster is launched directly and its handle is held by the guardian.",
+          "INVENTORY and STOP are the surviving fixed cleanup path, gated only by their preconditions and T_pg.",
+          "Deadlines are relative requests on the guardian clock, with ceilings measured from one origin.",
+          "The enforcement path never blocks."
+        ],
+        "stillOpen": [
+          "A5.2 implementation obligations",
+          "Author-knowledge items remain unverified until qualified",
+          "Connection-slot ruling point (E9): max_connections above 16 needs a functional packet change and a root ruling",
+          "Job-list attribute qualification blocks runtime until qualified"
+        ],
+        "checks": "Source design and independent review only; no tests, compilation, process fixtures, PostgreSQL, runtime, network or host action.",
+        "notRunOrAuthorized": "No native source, compilation, process fixture, PostgreSQL or runtime was run or authorized.",
+        "nextGate": "Source-packet selection: Root chooses one bounded source piece with its own packet, the A5.2 obligations and the admission gates. Runtime gates stay closed."
       }
     }
   },
