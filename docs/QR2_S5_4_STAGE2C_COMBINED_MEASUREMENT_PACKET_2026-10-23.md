@@ -94,6 +94,12 @@ The revised suite passed all fourteen named groups: the original twelve plus two
 
 Root accepts only this bounded pure-model evidence. Windows identity-safe termination, finite effect execution, full source/installed-runtime manifests, runner callbacks and fresh lifecycle/resource admission remain open. No live supervisor or PostgreSQL fixture was started.
 
+### P13e Windows ownership source qualification
+
+Independent source review confirms the distinction between direct-child handle termination and whole-tree containment. A successful termination request is not verified exit. The matching upstream libuv job has breakaway flags and an assignment exception, so its existence cannot establish strict containment. Version and embedded JavaScript observations do not prove installed native binary provenance.
+
+A private no-breakaway job is only a candidate. Next is a fixed contract for assignment before execution, retained handles, permitted child creation/nesting, separate PostgreSQL ownership and finite cleanup after failure. No native helper, process fixture or runtime test was executed. The local assessment and review preserve primary-source links and precise limits in the evidence record.
+
 ## Open work
 
 Coverage byte accounting and the financial row/value recipe are analytically qualified within the limits above. Runtime-compatible clock integration, actual producer counts and financial gates, independent client/HTTP implementation, monitoring-boundary tests, finite setup budget and final lifecycle source review remain open. Diagnostic and full measurement are NOT RUN. The separate financial differential CI is accepted only within its named assertion scope. Production cap selection, Stage 3 publication/rendering, full S5 and prototype completion remain OPEN.

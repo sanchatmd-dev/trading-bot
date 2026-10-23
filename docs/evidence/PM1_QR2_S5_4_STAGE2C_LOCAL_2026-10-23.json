@@ -420,11 +420,16 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-test-fixed.json": "2649625951503387830cb6fba7533ee35231040b87ce5ea2e0e782dc2c79550a",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-state-fix-review.md": "c40894ef4bb42cefff229f86bb6fa605dc647b06af78825257bae8f3440a67b0",
     ".qa-local/qr2-s5-4-stage2c/p13bc-documentation-ci-verified.json": "e606d03f52c3f3e1e25284942568343c6a5a13152b6d2e6ed53b7f6acd86177b",
-    ".qa-local/qr2-s5-3/ci-observed-73196cb0084a7dc04c5f10cecb9cfe923f8cffa8.json": "e53c60808fd90a09a157184136f10655cafaa4834490e01493e6f3e27bfd951b"
+    ".qa-local/qr2-s5-3/ci-observed-73196cb0084a7dc04c5f10cecb9cfe923f8cffa8.json": "e53c60808fd90a09a157184136f10655cafaa4834490e01493e6f3e27bfd951b",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-ownership-source-assessment.md": "fd96be2a81905835ce7450e0868fe13624d573857f516234cba061f662ee0c95",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-ownership-source-pins.json": "4aaee19946f0362a1a49072d289e2b8514280252ea53853102c109fa7602bfb3",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-ownership-source-review.md": "8661b11c0f622c85c8baf7c9108fb57cab2396809b26c092b114b3e99cbfe68f",
+    ".qa-local/qr2-s5-4-stage2c/p13d-documentation-ci-verified.json": "9dd7feaab0185615ea0787dba0877aede7e08dde5366913ca8733de34dcf9ca2",
+    ".qa-local/qr2-s5-3/ci-observed-40f8853439de1235e346ecbdd4be13bf6dbfe64d.json": "941c0b203a2acc05fbb88b5822f5016111adedefdedb41c17f5a2e937d8d82ef"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-23T00:12:02.724Z",
+  "recordedAt": "2026-10-23T00:17:33.866Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -954,6 +959,24 @@
           "The future adapter must close failed traffic admission and perform independent physical cleanup even if protocol evidence is exhausted.",
           "Windows identity-safe termination and complete runtime lifecycle remain unresolved."
         ]
+      },
+      "windowsOwnershipSources": {
+        "status": "SOURCE_FACTS_REVIEWED_LAUNCH_CONTRACT_NOT_IMPLEMENTED",
+        "assessment": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-ownership-source-assessment.md",
+        "pins": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-ownership-source-pins.json",
+        "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-ownership-source-review.md",
+        "findings": [
+          "Retained child-handle cancellation and PID-based lookup have different ownership properties.",
+          "Successful termination request is not verified process exit.",
+          "Upstream libuv global-job breakaway flags and tolerated assignment failure do not establish strict descendant containment."
+        ],
+        "limits": [
+          "Matching version and embedded JavaScript hash do not prove native binary correspondence.",
+          "Independent reviewer verified local file pins and primary sources, but did not reproduce the runtime or embedded-JavaScript hash.",
+          "A private no-breakaway job remains a candidate, not an accepted wrapper.",
+          "No process fixture, native compilation, termination, PostgreSQL, tests or runtime admission occurred."
+        ],
+        "next": "Review one fixed launch/ownership/termination contract covering assignment before execution, handle lifetime, child creation/nesting, separate PostgreSQL ownership, verified exit and finite independent cleanup."
       }
     }
   },
@@ -1005,24 +1028,24 @@
     "originalFindingPreserved": true
   },
   "preparationCheckpointCI": {
-    "revision": "73196cb0084a7dc04c5f10cecb9cfe923f8cffa8",
+    "revision": "40f8853439de1235e346ecbdd4be13bf6dbfe64d",
     "status": "SCOPE_ONLY_PASS",
     "runs": [
       {
-        "id": 39875840860,
+        "id": 39876700892,
         "name": "Safety checks",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39875840860"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39876700892"
       },
       {
-        "id": 39875840770,
+        "id": 39876700741,
         "name": "Quant Lab",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39875840770"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39876700741"
       }
     ],
     "actualScopeSteps": 2,
     "actualGateSteps": 1,
     "skippedRuntimeJobs": 4,
     "newRuntimeTests": 0,
-    "artifact": ".qa-local/qr2-s5-4-stage2c/p13bc-documentation-ci-verified.json"
+    "artifact": ".qa-local/qr2-s5-4-stage2c/p13d-documentation-ci-verified.json"
   }
 }
