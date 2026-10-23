@@ -7,5 +7,5 @@ enabled = true
 # Current runtime: four total slots including root, at most three children.
 # Use up to three independent lanes/writers only within ownership and usage gates.
 max_concurrent_threads_per_session = 3
-default_subagent_model = "gpt-6-astra"
+default_subagent_model = "gpt-6.1-sol"
 default_subagent_reasoning_effort = "medium"

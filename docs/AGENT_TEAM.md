@@ -8,25 +8,23 @@ unattended or authorize a new research study merely because workers are availabl
 
 ## One commander, reusable specialist roles
 
-Owner override, 2026-10-23: the Codex team uses GPT-6 Astra only until the owner
-explicitly restores the previous team. Light maps to the supported `low` effort;
-medium and high keep their names. The table below records the active mapping.
-Existing Sol agents are stopped with their work preserved. Configuration changes
-do not prove that an already running root or child changed model. Use explicit
-Astra dispatch when a loaded role selector still fixes a different model.
-The previous mapping is retained in AGENTS.md for an explicit restoration only.
+Owner restoration, 2026-10-23: the owner restored the previous Codex team.
+Root remains GPT-6 Astra/high; architecture auditor remains Astra/medium.
+Other roles return to GPT-6.1 Sol with the efforts below. The Astra-only
+override is ended. New dispatches use this mapping; completed agents and their
+work are preserved. Configuration edits do not change an already running model.
 
 | Role | Model / effort | Responsibility | Boundary |
 | --- | --- | --- | --- |
 | Root commander | gpt-6-astra / high | Task selection, dependency gates, timeline, usage reservations, integration and final acceptance | Exactly one commander; never appoint a competing project manager |
 | Architecture auditor | gpt-6-astra / medium | Independent difficult audit, risk/accounting/parity review, root-cause escalation | Advisory; no peer dispatch, approval of own fixes or independent operations |
-| Routine worker | gpt-6-astra / medium | One small local code, UI or fixture slice with a stable contract and observable acceptance | No database migration, scheduler/fencing, accounting, Risk Manager, evaluator/parity, security, production operations or difficult debugging; escalate scope changes |
-| Coder | gpt-6-astra / medium | Implement assigned code slice using established semantics | Exact file ownership; escalate complex failures |
-| Debugger | gpt-6-astra / high | Reproduce and fix complex bugs/races | Root-defined scope; escalate after two failed approaches |
-| Tester | gpt-6-astra / medium | Independent focused acceptance/regression evidence | Own test paths; application changes need reassignment |
-| Documentation | gpt-6-astra / low | Synchronize docs, evidence summaries, links, arithmetic and handoffs | No invention of passing gates, time spent or technical decisions |
-| Release clerk | gpt-6-astra / low | Execute reviewed Git checkpoint/push serially | Root handoff + actual user authority; no independent merge/deploy |
-| Operations | gpt-6-astra / high | Designated executor of scoped local/VPS operational packets | Read-only default; mutations limited to existing user authority and readiness gates |
+| Routine worker | gpt-6.1-sol / medium | One small local code, UI or fixture slice with a stable contract and observable acceptance | No database migration, scheduler/fencing, accounting, Risk Manager, evaluator/parity, security, production operations or difficult debugging; escalate scope changes |
+| Coder | gpt-6.1-sol / medium | Implement assigned code slice using established semantics | Exact file ownership; escalate complex failures |
+| Debugger | gpt-6.1-sol / high | Reproduce and fix complex bugs/races | Root-defined scope; escalate after two failed approaches |
+| Tester | gpt-6.1-sol / medium | Independent focused acceptance/regression evidence | Own test paths; application changes need reassignment |
+| Documentation | gpt-6.1-sol / low | Synchronize docs, evidence summaries, links, arithmetic and handoffs | No invention of passing gates, time spent or technical decisions |
+| Release clerk | gpt-6.1-sol / low | Execute reviewed Git checkpoint/push serially | Root handoff + actual user authority; no independent merge/deploy |
+| Operations | gpt-6.1-sol / high | Designated executor of scoped local/VPS operational packets | Read-only default; mutations limited to existing user authority and readiness gates |
 
 A Claude root uses the Claude column of [AGENTS.md](../AGENTS.md): Opus 5.5 /
 xhigh root with ultracode (owner, 2026-10-03), graded Opus 5.5, Sonnet 5.5 and
