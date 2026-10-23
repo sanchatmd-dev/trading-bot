@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_API_SERVICE_START_PREPARATION_2026-10-24",
+  "recordedAt": "2026-10-23T19:55:23.629Z",
+  "status": "PREPARED_FOR_OWNER_REVIEW_NOT_RUN_NO_EXECUTION_GO",
+  "packetId": "S6-API-SERVICE-START-1",
+  "kind": "SERVICE_CHANGE_REQUIRES_EXPLICIT_OWNER_GO_NAMING_THE_PACKET",
+  "packet": {
+    "path": "docs/S6_API_SERVICE_START_PACKET_2026-10-24.md",
+    "sha256": "448813d5cd796e78e48ac76aa5b922da432dc8322c2e2a3d75c1528951b55287"
+  },
+  "basis": {
+    "path": "docs/evidence/S6_API_SERVICE_MISMATCH_READONLY_RESULT_2026-10-24.json",
+    "sha256": "a1352faa46289125b5fafd49ce317332e9e102776842c10fdd1326a89490706b"
+  },
+  "reviews": [
+    {
+      "round": "r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/s6-start-packet-review.md",
+      "sha256": "5cacbf4388d0b2cb51eea3c868939c68d869df4303f507602ca2b17b5f1cd46f",
+      "verdict": "FIXES_REQUIRED",
+      "findings": "F1 P1 (hard-gate waiver), F2-F5 P2, F6-F11 P3"
+    },
+    {
+      "round": "r2",
+      "role": "architecture auditor, Opus 5.5 / high, substituting for the paused Fable second opinion",
+      "path": ".qa-local/claude-root-2026-10-24/s6-start-packet-review-r2.md",
+      "sha256": "c6a115c61ec3528bd052c547772a6fd4c2057b6a5b124aad437a40e45ddb41d2",
+      "verdict": "FIXES_REQUIRED",
+      "note": "F1-F11 resolved; N1-N3 wording fixes, which root applied and confirmed by diff as the reviewer allowed"
+    }
+  ],
+  "execution": {
+    "collector": "NOT_BUILT",
+    "targetAccess": "NOT_RUN",
+    "ownerGo": "NOT_RECEIVED"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "serviceChange": "NOT_AUTHORIZED_UNTIL_OWNER_GO"
+  }
+}
