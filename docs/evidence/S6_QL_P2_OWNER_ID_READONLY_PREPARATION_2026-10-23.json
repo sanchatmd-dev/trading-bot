@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_QL_P2_OWNER_ID_READONLY_PREPARATION_2026-10-23",
+  "preparedAt": "2026-10-23T17:01:54.609Z",
+  "sourceRevision": "5e06d16ec6a1379f10f0c6cbd1e87276bbd6a620",
+  "status": "PREPARED_NOT_RUN_AWAITING_OWNER_GO",
+  "scope": "Owner-requested preparation of one bounded Staging QL-P2 owner identity discovery read; no target contact",
+  "ownerSelection": "STAGING_QL_P2_PROTOTYPE",
+  "ownerId": "UNKNOWN",
+  "historicalFieldsSupported": 4,
+  "currentApplicability": "UNKNOWN_NOT_QUERIED",
+  "historicalProvenance": "SUPPORTED_BY_LOCAL_EXECUTION_METADATA_ONLY",
+  "packet": {
+    "path": "docs/S6_QL_P2_OWNER_ID_READONLY_PACKET_2026-10-23.md",
+    "sha256": "59be07539b8c80a8a79fcb4147686806693f4f6d4599e1e6e457df863757a161"
+  },
+  "sourcePins": [
+    {
+      "path": "src/postgres/schema.sql",
+      "sha256": "b0f048f0dbaae4d44145cc2b108650a0d666cf119b666132f41d1ebe35afe869"
+    },
+    {
+      "path": "src/postgres/pine-bridge-schema.sql",
+      "sha256": "2f54a0cd247e8cf5f2ca384200261ddd2529f4548559c55d7ae25c885e6dcd92"
+    },
+    {
+      "path": "src/postgres/pine-bridge.js",
+      "sha256": "7d4e9b455627036d8e261bb0e72144fd9ace218c33522a0d4e7107ca250cb937"
+    },
+    {
+      "path": "src/postgres/store.js",
+      "sha256": "b371c75db020f579e2dda60704479a38ac0fff94653efc2fc6d28ae96cc3f8e0"
+    },
+    {
+      "path": "src/postgres/bot-parent-hardening.sql",
+      "sha256": "e6573f60b5e1fb0416f27a200f294e4b95c5077a72f614710caddb87ccd1dd16"
+    }
+  ],
+  "localEvidencePins": [
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-23/bindings-private.json",
+      "sha256": "81a719e9565ac482717d7bd9f4ffb206427db9f92a52db89ddbeedcebd14b7fe"
+    },
+    {
+      "path": ".qa-local/s6-applicability-2026-10-23/p2-local-search-extension-private.json",
+      "sha256": "3400ec022230c2400a4ff1fc27046bad1ad1757450ff9d768956e4914f1784db"
+    }
+  ],
+  "independentReview": {
+    "path": ".qa-local/s6-owner-id-readonly-2026-10-23/packet-review.md",
+    "sha256": "fe832750a664aa3c4a404c4e457ec9c24bf773c048fe309b838d53828d848c98",
+    "status": "APPROVED_PREPARATION_ONLY"
+  },
+  "preparedLimits": {
+    "attempts": 1,
+    "overallSeconds": 300,
+    "connectSeconds": 5,
+    "statementSeconds": 5,
+    "lockSeconds": 1,
+    "idleTransactionSeconds": 10,
+    "businessSelects": 1,
+    "maxRows": 2,
+    "maxResultBytes": 8192,
+    "maxOutputBytes": 65536
+  },
+  "execution": {
+    "ownerGo": "NOT_RECEIVED",
+    "collectorImplemented": false,
+    "channelCurrentlyVerified": false,
+    "targetSchemaVerified": false,
+    "targetAccess": "NOT_RUN",
+    "sql": "NOT_RUN",
+    "tests": "NOT_RUN_DOCUMENTATION_ONLY",
+    "runtimeTests": 0
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "applicabilityExecution": "NOT_RUN",
+    "inputLock": "UNCHANGED"
+  },
+  "next": "Owner reviews the exact packet before GO. No execution until reviewed collector and current channel/schema checks also satisfy the packet."
+}
