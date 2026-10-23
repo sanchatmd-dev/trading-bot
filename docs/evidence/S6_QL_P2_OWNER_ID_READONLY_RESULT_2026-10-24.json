@@ -1,0 +1,220 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_QL_P2_OWNER_ID_READONLY_RESULT_2026-10-24",
+  "recordedAt": "2026-10-23T17:31:54.706Z",
+  "sourceRevision": "793340f72ac4417df2d4c92e9623e686efacf112",
+  "status": "STOP_UNKNOWN",
+  "code": "API_SERVICE_MISMATCH",
+  "scope": "One owner-authorized Staging QL-P2 identity preflight attempt; stopped before DB construction or SQL",
+  "ownerSelection": "STAGING_QL_P2_PROTOTYPE",
+  "ownerId": "UNKNOWN",
+  "currentTuple": "NOT_OBSERVED",
+  "currentApplicability": "UNKNOWN_NOT_QUERIED",
+  "packet": {
+    "path": "docs/S6_QL_P2_OWNER_ID_READONLY_PACKET_2026-10-23.md",
+    "sha256": "59be07539b8c80a8a79fcb4147686806693f4f6d4599e1e6e457df863757a161"
+  },
+  "execution": {
+    "ownerGo": "EXPLICIT_OWNER_GO_RECEIVED",
+    "attempt": "CONSUMED_NO_RETRY",
+    "designatedRole": "OPERATIONS",
+    "attempts": 1,
+    "sessionEvidence": "One SSH spawn and linked local completion receipt; no independent server session audit",
+    "localStarted": "2026-10-23T17:28:09.149Z",
+    "localEnded": "2026-10-23T17:28:10.377Z",
+    "localElapsedMs": 1228,
+    "remoteStarted": "2026-10-23T17:28:10.310Z",
+    "remoteEnded": "2026-10-23T17:28:10.410Z",
+    "remoteEndBeyondLocalEndMs": 33,
+    "allowedClockSkewMs": 5000,
+    "transportExit": 1,
+    "signal": null,
+    "stderrBytes": 0,
+    "overflow": false,
+    "transportError": false,
+    "retainedOutputBytes": 829,
+    "retainedOutputSha256": "56c38cdb2c84be098b196f3017dafc2fdf4aab2e5d56bfeb6bc03048340284b5",
+    "payloadSha256": "0cba7949fbc10cb01c973a0aaab8de31960f827a17c5ecc9e9ee199050de560f",
+    "databaseConnection": "NOT_STARTED_IN_LINKED_COLLECTOR_PATH",
+    "transaction": "NOT_STARTED",
+    "businessSelect": "NOT_RUN",
+    "sql": "NOT_RUN",
+    "rollback": "NOT_STARTED",
+    "close": "NOT_STARTED",
+    "rowCount": null,
+    "currentEnvironmentAttestation": "NOT_OBTAINED",
+    "currentArtifactRevisionAssociation": "NOT_REACHED",
+    "targetSchema": "NOT_OBSERVED",
+    "exactMismatchingServicePredicate": "UNKNOWN",
+    "noClaim": [
+      "Service is down",
+      "Target is wrong",
+      "Deployment data is corrupt",
+      "Current full loaded revision is verified",
+      "Successful DB cleanup occurred"
+    ]
+  },
+  "localTests": {
+    "finalAuthor": {
+      "checks": 43,
+      "passed": 43,
+      "failed": 0,
+      "kind": "PURE_HELPERS_AND_STATIC_CHECKS"
+    },
+    "firstIndependent": {
+      "checks": 62,
+      "passed": 60,
+      "failed": 2,
+      "status": "PRESERVED_TIMESTAMP_FINDINGS"
+    },
+    "finalIndependent": {
+      "checks": 89,
+      "passed": 89,
+      "failed": 0,
+      "subprocessCalls": 0,
+      "focusedReruns": 1
+    },
+    "countsAdditive": false,
+    "fullCollectorOrRunnerDynamicallyTested": false,
+    "notQualified": [
+      "Dynamic concurrency and deadline enforcement",
+      "Real database rollback or close failure",
+      "Full systemd/process/environment association"
+    ]
+  },
+  "reviews": {
+    "implementation": {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/implementation-review.md",
+      "sha256": "309199b39133cc47b9cef4122572e0304d09b46055f3d3c90427f7d78e6a3976",
+      "status": "FOUR_BLOCKERS_FOUND_AND_PRESERVED"
+    },
+    "delta": {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/delta-review.md",
+      "sha256": "155d9c44d04af2d8926d147e0cab8a73aa52bca46f8f89426b05297f4ae0aa25",
+      "status": "NO_BLOCKING_DELTA_FINDINGS"
+    },
+    "independentTests": {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/independent-test-report.md",
+      "sha256": "22a3b3faada903c0a32edd1190b5cee44c28a40a9fd2614d3ebbd109b1296a15",
+      "status": "89_OF_89_SYNTHETIC_CHECKS_PASS"
+    },
+    "result": {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/result-review.md",
+      "sha256": "8d07d928838ced88e4e75a2b259b0abdaf9bcf7eefe5c0a35cd1b8e722cd06e6",
+      "status": "CONSISTENT_FAILURE_RECEIPT"
+    },
+    "rootDecision": "ACCEPT_LINKED_FAILURE_RECORD_ONLY_NO_OWNER_IDENTITY_OR_S6_ACCEPTANCE"
+  },
+  "localEvidencePins": [
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/collector.mjs",
+      "sha256": "46e89f0d7bcc02516f8e2f7da93e6e111d8cda7cfdacb294614d170e88a0fddc"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/runner.mjs",
+      "sha256": "b94a96eee0c46721895f7857a78d4c63823be96180e3c5bcee8ffe783e35331c"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/bindings-private.json",
+      "sha256": "3d373f7fc47c2e9b6798c91f25aeeac8c86280fc0e8095c4cb3e99638a0dae74"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/bindings-before-root-admission.json",
+      "sha256": "a4b2f023c5918e4d70121359b94c88029d0a7e15215b85dbca41d1ca204b7f3d"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/known-hosts-public.txt",
+      "sha256": "e2e3672279708dff52a2f083bb2407965321aacee694d95cb6ec65a805ba10c5"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/owner-authorization.json",
+      "sha256": "1d6134aa74bad6d4be0891dbca372a2db601da89b9e6c1687d5d94a917141078"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/root-manifest.json",
+      "sha256": "2d4a04a53aa7bca65cad576ee389f19f727bcf688ed3bfc10c2f7825ddd207e7"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/OWNER_GO_CONSUMED.json",
+      "sha256": "c2b03a0426a3f6ce8d036ecdaeaaa733cfafc539bcbeeee20d27e5798c4efd38"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/output.json",
+      "sha256": "56c38cdb2c84be098b196f3017dafc2fdf4aab2e5d56bfeb6bc03048340284b5"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/receipt.json",
+      "sha256": "e978c5a060bc98818c28ca272bf90b108e5684f4f22ee282e0d168190e540b1b"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/author-tests.mjs",
+      "sha256": "5738e3a69147cdc94ed97639d449d422ff7d0a82299c0df620cec61f39680b57"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/author-report.md",
+      "sha256": "e3d4c3b3a5e1cd2c5d2bb2dfc7cbdc343d73521fe2a4ebf76141e94230b39ba8"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/independent-tests.mjs",
+      "sha256": "2615dcbae3c05b0b214154fb3d586a2ddee5a001ce25e9c8c482d2e8e1956037"
+    },
+    {
+      "path": ".qa-local/s6-owner-id-readonly-2026-10-24/execution-report.md",
+      "sha256": "98431e5a7195de23290a125e0b285b027f0058a81c922a1febb580856643890b"
+    }
+  ],
+  "collectorPins": {
+    "packet": "59be07539b8c80a8a79fcb4147686806693f4f6d4599e1e6e457df863757a161",
+    "collector": "46e89f0d7bcc02516f8e2f7da93e6e111d8cda7cfdacb294614d170e88a0fddc",
+    "runner": "b94a96eee0c46721895f7857a78d4c63823be96180e3c5bcee8ffe783e35331c",
+    "bindings": "3d373f7fc47c2e9b6798c91f25aeeac8c86280fc0e8095c4cb3e99638a0dae74",
+    "query": "1f33688e7f2ee8454144502a9b605232ddae829f6c2c6f05c27d508664edba5a",
+    "preflightQueries": "6f889996bf37eaebe3a712efb17a5c7cebc3569354d47d8d9afb9f1254520400",
+    "ownerAuthorization": "1d6134aa74bad6d4be0891dbca372a2db601da89b9e6c1687d5d94a917141078"
+  },
+  "limitations": [
+    "Sanitized STOP does not identify the individual failed service predicate.",
+    "Hash linkage supports the recorded local execution chain, not cryptographic remote attestation.",
+    "Expected artifact pins cover three files only; that observation stage was not reached.",
+    "Preparation-era authorization flags are historical; the consumed marker and receipt record current attempt state.",
+    "This evidence does not run or authorize later applicability checks."
+  ],
+  "priorPreparationCi": {
+    "revision": "793340f72ac4417df2d4c92e9623e686efacf112",
+    "workflows": [
+      {
+        "name": "Safety checks",
+        "id": 39991850634,
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39991850634",
+        "conclusion": "success"
+      },
+      {
+        "name": "Quant Lab",
+        "id": 39991850584,
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39991850584",
+        "conclusion": "success"
+      }
+    ],
+    "actualScopeGateSteps": 3,
+    "runtimeJobsSkipped": 4,
+    "newRuntimeTests": 0,
+    "scope": "DOCUMENTATION_ONLY_NOT_TARGET_ATTEMPT_VALIDATION"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "migrations": "NOT_RUN",
+    "serviceChanges": "NOT_RUN",
+    "applicabilityExecution": "NOT_RUN",
+    "inputLock": "UNCHANGED",
+    "nativeProcessDatabaseC3Start": "NOT_RUN",
+    "liveGuardResetBestInputs": "NOT_RUN"
+  },
+  "next": "Stop. A separately reviewed diagnostic scope and fresh owner GO are required before further target contact. Do not reset or retry this attempt."
+}
