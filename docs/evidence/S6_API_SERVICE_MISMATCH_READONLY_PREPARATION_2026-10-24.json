@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_API_SERVICE_MISMATCH_READONLY_PREPARATION_2026-10-24",
+  "preparedAt": "2026-10-23T18:22:53.516Z",
+  "sourceRevision": "3a46849aa939feb29f2d572663cd2882497f93a3",
+  "status": "PREPARED_OWNER_GO_RECEIVED_EXECUTION_NOT_RUN",
+  "scope": "Preparation of one bounded read-only observation of seven service properties on the exact previously selected Staging QL-P2 API unit; no target contact during preparation",
+  "ownerSelection": "STAGING_QL_P2_PROTOTYPE",
+  "ownerId": "UNKNOWN",
+  "currentApplicability": "UNKNOWN_NOT_QUERIED",
+  "packet": {
+    "path": "docs/S6_API_SERVICE_MISMATCH_READONLY_PACKET_2026-10-24.md",
+    "sha256": "bce1a2a167d7666e0c8a82260b78bdda826b69580b0c2065e538915bced955aa"
+  },
+  "priorAttempt": {
+    "id": "S6-OWNER-ID-RO-1",
+    "verdict": "STOP_UNKNOWN",
+    "code": "API_SERVICE_MISMATCH",
+    "failedPredicate": "UNKNOWN",
+    "evidence": {
+      "path": "docs/evidence/S6_QL_P2_OWNER_ID_READONLY_RESULT_2026-10-24.json",
+      "sha256": "9000a7b6b319cdfd48c0938127ba8c33826c30176a103a5f5fc35c6c66d17f69"
+    },
+    "rerun": "FORBIDDEN"
+  },
+  "localEvidencePins": [
+    {
+      "path": ".qa-local/s6-api-service-diagnostic-2026-10-24/prepare-binding.mjs",
+      "sha256": "f48c4e600a7c1a0ee634c5892e3814af94582397abc8d5919729fffbed7e63d1"
+    },
+    {
+      "path": ".qa-local/claude-root-2026-10-24/s6-packet-snapshots/packet-pre-fix-d0aed724.md",
+      "sha256": "d0aed724be7f3992c474225732e18b9fa9c6a9288b0543467a74c115335dc6c0"
+    },
+    {
+      "path": ".qa-local/claude-root-2026-10-24/s6-owner-go.json",
+      "sha256": "0dd89974dfce7ae442d9a000880522e9e3c55afc271d45149c6893f5529c84c7"
+    }
+  ],
+  "reviews": [
+    {
+      "round": "scope",
+      "role": "independent reviewer (Codex period)",
+      "path": ".qa-local/s6-api-service-diagnostic-2026-10-24/scope-review.md",
+      "sha256": "a0e685b27177b10779b1f184c8e4db01ce6f90db124eef59b4815a26e82b18c1",
+      "verdict": "SOUND_PREPARATION_SCOPE_WITH_CONTRACT_DETAILS"
+    },
+    {
+      "round": "r1",
+      "role": "independent reviewer (Codex period)",
+      "path": ".qa-local/s6-api-service-diagnostic-2026-10-24/packet-review.md",
+      "sha256": "05a314d3a9aced7d43044a93ad1689c2230506fdb9a561c69afaee4fe6de0ce3",
+      "verdict": "FIXES_REQUIRED_PREPARATION_ONLY",
+      "reviewedPacketSha256": "4716cde50d02460ffc81a6f6cd88ac62ccddc4f56ed938756c66775c76d2e521",
+      "note": "Two P2 findings; reviewed bytes predate the pause annotations and were not preserved separately"
+    },
+    {
+      "round": "r2",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/s6-packet-rereview-auditor.md",
+      "sha256": "625a840240a2654fb54803913f288fd80c31df238a206b1712e1aff06a39d152",
+      "verdict": "RESOLVED_PREPARATION_ONLY",
+      "reviewedPacketSha256": "c4927d2f4d97f32cf467f37f5b5e37ea7490e0201452e21b4682ae28a352edfa",
+      "findings": {
+        "P1": 0,
+        "P2": 0,
+        "P3": 2
+      }
+    },
+    {
+      "round": "r2",
+      "role": "second opinion, Opus 5.5 / high, substituting for the paused Fable reviewer",
+      "path": ".qa-local/claude-root-2026-10-24/s6-packet-rereview-second.md",
+      "sha256": "0686f0cbd8fd0026aceb3eeee37e8f982dcd09d871f2cb8a7aef05457c2c8a4b",
+      "verdict": "FINDINGS",
+      "reviewedPacketSha256": "c4927d2f4d97f32cf467f37f5b5e37ea7490e0201452e21b4682ae28a352edfa",
+      "findings": {
+        "P1": 0,
+        "P2": 1,
+        "P3": 3
+      }
+    },
+    {
+      "round": "r2b",
+      "role": "second opinion, Opus 5.5 / high, substituting for the paused Fable reviewer",
+      "path": ".qa-local/claude-root-2026-10-24/s6-packet-rereview-second-r2b.md",
+      "sha256": "9760623080e2d2eab1e6732ef864feda8b36e95284a5f1c1a4479e8393a985c1",
+      "verdict": "NO_BLOCKING_FINDINGS",
+      "reviewedPacketSha256": "bce1a2a167d7666e0c8a82260b78bdda826b69580b0c2065e538915bced955aa"
+    }
+  ],
+  "fixesApplied": [
+    "r1-1: explicit --all --no-pager in the property query so a present empty FragmentPath keeps its key",
+    "r1-2: timeout and termination checks use deterministic in-process simulation with injected transport and timer adapters; no subprocess, native or process-fixture testing; real kill and reaping stays unverified",
+    "r2-F1: tracked evidence never carries a hash of raw output, Id, PID, fragment path, unit name or any selector-bearing command; the fragment digest stays in ignored local evidence",
+    "r2-F2: suggested GO names collector and runner and the unverified termination residual; exclusions name subprocess or process-fixture tests",
+    "r2-F3: synthetic empty-key checks prove parser behaviour only, not target systemd formatting",
+    "r2-F4: remote command shape frozen; the unit is the only interpolated value, single-quoted after a strict character check",
+    "r2-P3b: Root records any real-termination qualification judgement in the admission record"
+  ],
+  "openP3Dispositions": [
+    "r2-auditor P3-a: argv assertion for --all and --no-pager is required in the collector tests, not the packet",
+    "r2b A1: wording only (unit is the only value inserted into the script, single-quoted); accepted as is",
+    "r2b A2: unit check must reject a leading hyphen, backslash, quotes and whitespace, and the two user-bus exports are fixed in the collector; both are to be enforced by the collector and its tests",
+    "r2b A3: to be enforced by the collector and Root admission: a random per-job identifier kept in the local receipt, so a tracked receipt hash is not a guessing oracle for selector digests"
+  ],
+  "preparedLimits": {
+    "attempts": 1,
+    "sshSessions": 1,
+    "propertyQueries": 1,
+    "properties": 7,
+    "overallSeconds": 60,
+    "connectSeconds": 5,
+    "querySeconds": 5,
+    "remoteDeadlineSeconds": 20,
+    "remoteKillAfterSeconds": 1,
+    "localCutoffSeconds": 30,
+    "outputBytes": 8192,
+    "envelopeBytes": 8192,
+    "receiptBytes": 8192,
+    "clockSkewSeconds": 5,
+    "startByMinutes": 10
+  },
+  "execution": {
+    "ownerGo": "RECEIVED_IN_CHAT_NAMING_PACKET",
+    "ownerGoReceived": "2026-10-24 Bangkok (2026-10-23T18:1xZ)",
+    "collector": "BUILD_STARTED_NOT_REVIEWED",
+    "targetAccess": "NOT_RUN",
+    "tests": "NOT_RUN_DOCUMENTATION_ONLY",
+    "runtimeTests": 0
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "serviceChange": "NOT_AUTHORIZED",
+    "applicabilityExecution": "NOT_RUN",
+    "inputLock": "UNCHANGED"
+  },
+  "next": "Build and independently verify the collector and runner, then Root admission and one bounded attempt by the designated operations worker under the owner GO. Any outcome stops for review; no retry, DB/SQL, owner query, repair or service change."
+}
