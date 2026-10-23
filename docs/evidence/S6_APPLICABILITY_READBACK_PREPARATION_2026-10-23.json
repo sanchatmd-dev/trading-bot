@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_APPLICABILITY_READBACK_PREPARATION_2026-10-23",
+  "date": "2026-10-23",
+  "sourceRevision": "9f8a723d6b3da5115392a61afe2f73159337c588",
+  "status": "PREPARED_NOT_RUN",
+  "scope": "Static preparation of a future bounded proposal/deployment applicability readback; no target access or product change",
+  "localLockHash": "8a25b8021c98d24f81913ea6386c6743d7b0f32fcb4df30b5ae95f5aa05604d8",
+  "packet": {
+    "path": "docs/S6_APPLICABILITY_READBACK_PACKET_2026-10-23.md",
+    "sha256": "d3852b47a60759929e0505a6512d283c616e936f314a02a53b41fb763791374e"
+  },
+  "sourcePins": [
+    {
+      "path": "src/postgres/pine-bridge.js",
+      "sha256": "7d4e9b455627036d8e261bb0e72144fd9ace218c33522a0d4e7107ca250cb937"
+    },
+    {
+      "path": "src/postgres/pine-bridge-worker.js",
+      "sha256": "09270ba39452944b528454a473dbcd7db1c2b19a2acc54a1e3018859cc5ddebf"
+    },
+    {
+      "path": "src/quant-research/contract.js",
+      "sha256": "17394a4c523e85a4837386c6d447e24d032c536f94cb6bc32dff40662d8237af"
+    },
+    {
+      "path": "src/pine-bridge/source.js",
+      "sha256": "d8dab38c2ee521a597a216215a08eb0f4ff0e841e770f33ad94850f5a62a3bdc"
+    },
+    {
+      "path": "src/postgres/quant-research.js",
+      "sha256": "c3e223eedfa2a812c27df646b77a72806287fddb819bc39a3f6a942cbb34c076"
+    },
+    {
+      "path": "src/postgres/pine-bridge-deployments.js",
+      "sha256": "8f49db585a15a9d522ca16bf521917d2bd569caf946193ce07c2a65c449db08c"
+    },
+    {
+      "path": "src/postgres/pine-bridge-overview.js",
+      "sha256": "d84e3458141348c1cac2f0836c7ca2bdc8a7b65a18601cf4fed667cf5c261616"
+    },
+    {
+      "path": "test/postgres/pine-bridge-input-proposal-rule.test.mjs",
+      "sha256": "6d3bdcfdc28d27c6aa32d744b1fd08bedbf1fe39f578ad01869cd6592312b132"
+    },
+    {
+      "path": "test/postgres/pine-bridge-selection-gates.test.mjs",
+      "sha256": "71b59b3b2109198b89e533421d5372e17003a567bce6504a3080ab4700b31d16"
+    }
+  ],
+  "independentReview": {
+    "status": "PASS_PREPARATION_ONLY",
+    "path": ".qa-local/s6-local-freeze-2026-10-23/applicability-preparation-review.md",
+    "sha256": "c688aec4601da650818ca8eae3e385d508f035f611e6d478262b398f927bbdb0"
+  },
+  "preparedChecks": [
+    "Exact owner/Bot/import/version/deployment binding before access",
+    "Latest successful analyze by created_at; detect ties, do not treat newer failed/queued rows as revocation",
+    "All eight selected input IDs in proposal allowlist",
+    "Snapshot integrity and unique generate provenance",
+    "Complete selection coherence; Bridge research grids remain separate",
+    "Read-only bounded projections; no full source/job-result publication",
+    "Separate applicability verdicts; no runtime-readiness inference"
+  ],
+  "currentApplicability": {
+    "sourceLinkage": "UNKNOWN_NOT_QUERIED",
+    "proposalMembership": "UNKNOWN_NOT_QUERIED",
+    "deploymentProvenance": "UNKNOWN_NOT_QUERIED",
+    "selectionCompatibility": "UNKNOWN_NOT_QUERIED"
+  },
+  "executionAuthority": "REQUIRES_SEPARATE_BOUNDED_READ_ONLY_GO_AND_EXACT_TARGET_TUPLE",
+  "tests": {
+    "productTests": "NOT_RUN_DOCUMENTATION_ONLY",
+    "testSourcesInspected": true,
+    "newRuntimeTests": 0
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "targetAccess": "NOT_RUN",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "generation": "NOT_RUN",
+    "databaseStart": "NOT_RUN",
+    "sourceOrEngineChange": "NONE"
+  }
+}
