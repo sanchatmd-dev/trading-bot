@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "id": "PM1_QR3_S3A_LOCAL_2026-10-24",
+  "recordedAt": "2026-10-23T19:11:00.665Z",
+  "sourceRevision": "66b4df4b983186f5f08fb8ee5563dc8c432672a7",
+  "status": "ACCEPTED_LOCAL_PURE_UNWIRED",
+  "scope": "Pure QR-3 evaluation, benchmark and outcome record assembler from one validated fixed-evaluation result; not imported by any route, worker, service or runtime root; not exported from src/comparison/index.js",
+  "rulings": {
+    "R1": "RD-5 V8 hold not discharged; basis_confirmed false in every record; evidence class development; outcome NO_QUALIFIED_RESULT only",
+    "R3": "record version qr3-evaluation-record-v1 PROPOSED in the packet, not a contract amendment",
+    "section12": "benchmark stores nav_series_sha256 and nav_points instead of the series; hidden statuses carry no metric; body tie-check; basis limitation on every outcome; exact exposure and evaluator consistency checks"
+  },
+  "packet": {
+    "path": "docs/QR3_S3A_EVALUATION_RECORD_PACKET_2026-10-24.md",
+    "sha256": "5999f04e97f38c30ec53616808f58e0a41fb20b756264f3d7a1867d95005f645"
+  },
+  "sourcePins": [
+    {
+      "path": "src/comparison/evaluation-record.js",
+      "sha256": "926946fd957f277cf3a66d69c74eb7956ceec616ccbdc9d36fda3cd437abe5ff"
+    },
+    {
+      "path": "test/qr3-evaluation-record.test.js",
+      "sha256": "f367299ce438c2920fb6ab8b63a5dff7e5c9154b2b38a29d39b71edf827a4d74"
+    }
+  ],
+  "checks": {
+    "rootRun": {
+      "node": "v24.19.0",
+      "newSuite": {
+        "tests": 41,
+        "pass": 41,
+        "fail": 0
+      },
+      "fairComparison": {
+        "tests": 110,
+        "pass": 105,
+        "fail": 0,
+        "todo": 5,
+        "note": "todo items pre-existing"
+      },
+      "parity": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "skipped": 0,
+        "note": "spawns the existing quant_lab Python environment"
+      },
+      "independentSuiteR2": {
+        "tests": 23,
+        "pass": 23,
+        "fail": 0
+      }
+    },
+    "benchmarkCapacity": {
+      "before": "body exceeded 262144 bytes from 5216 scored bars",
+      "after": "8994-bar benchmark body 1451 bytes"
+    },
+    "countsNotAdditive": true
+  },
+  "reviews": [
+    {
+      "round": "r0",
+      "role": "tester, Sonnet 5.5 / medium",
+      "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/tester/tester-report.md",
+      "sha256": "ecf3163fd6fcc7831ddcdddd5fe9dbe45377d82281fba439a891d265fdaaf143",
+      "verdict": "PASS",
+      "note": "confirmed the benchmark capacity limit"
+    },
+    {
+      "round": "r0",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/audit-report.md",
+      "sha256": "1870d9f18dd5148d6364719978bbe61f13a803a9a7c9c3f887636fdd2849ce65",
+      "verdict": "NO-GO",
+      "findings": {
+        "P1": 1,
+        "P2": 1
+      },
+      "note": "benchmark size and hidden-metric leak"
+    },
+    {
+      "round": "r0",
+      "role": "mutation tester, Sonnet 5.5 / medium",
+      "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/mutation/mutation-report.md",
+      "sha256": "2e917e706fce9975cba2d9c24c92294ff74c8e3c25146a1e77a433be7baa0736",
+      "verdict": "PASS",
+      "mutants": {
+        "total": 41,
+        "killed": 34,
+        "equivalent": 5,
+        "survived": 2
+      }
+    },
+    {
+      "round": "r1",
+      "role": "tester, Sonnet 5.5 / medium",
+      "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/tester-r2/tester-report-r2.md",
+      "sha256": "aa4d0d7099e3434b2e8a85e15c8ac62bc2b9ca669e44b7c9412f9759ae9397e4",
+      "verdict": "PASS"
+    },
+    {
+      "round": "r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/audit-r2.md",
+      "sha256": "e5154833d95249785e0838fd1c9452069ee777f4aa7f80371f520c60ee05cbde",
+      "verdict": "GO"
+    },
+    {
+      "round": "r1",
+      "role": "mutation tester, Sonnet 5.5 / medium",
+      "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/mutation-r2/mutation-report-r2.md",
+      "sha256": "b76efc6be2b88252cc3eb0d4ffd0104e00dbc50e996cdd8e60e63fce2f7e0005",
+      "verdict": "PASS_WITH_NOTES",
+      "mutants": {
+        "total": 31,
+        "killed": 23,
+        "survived": 8,
+        "note": "survivors are equivalent or redundant except two low test gaps: M30 (no test pins non-negative intents_total) and M28 (no multibyte byte-boundary test); M38 null-line normalisation accepted as unreachable"
+      }
+    }
+  ],
+  "authorReport": {
+    "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/author-report.md",
+    "sha256": "99ba9378020cf856711d9d5a5f405c07238361f1bdcd749c6106014d55743cfd"
+  },
+  "processDeviations": [
+    "The packet author fixed citation text once with an in-place shell edit",
+    "The coder wrote the module once with a node one-liner before r0 review; content verified by review",
+    "One tester appended to its own scratch file with a shell heredoc"
+  ],
+  "limitations": [
+    "Not QR-3 S3 acceptance: capacity review and PostgreSQL recovery and cancel evidence remain",
+    "No database call, job, route, worker or feature flag; the orchestrator that reads a terminal fixed-evaluation job and calls the writers is a later slice",
+    "No qualified ranking is possible while RD-5 V8 holds",
+    "Exact-revision CI is the remaining check"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "holdout": "UNTOUCHED",
+    "fixedEvalFlag": "OFF"
+  }
+}
