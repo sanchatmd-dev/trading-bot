@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_QL_P2_OWNER_ID_READONLY_RO2_PREPARATION_2026-10-24",
+  "recordedAt": "2026-10-23T21:51:54.670Z",
+  "status": "PREPARED_FOR_OWNER_REVIEW_NOT_RUN_NO_EXECUTION_GO",
+  "packetId": "S6-OWNER-ID-RO-2",
+  "precondition": "S6-API-SERVICE-START-1 accepted with VERIFIED_RUNNING",
+  "goRequirement": "A fresh owner GO naming S6-OWNER-ID-RO-2 and Staging QL-P2 Prototype; the earlier pre-authorization recorded with the RO-1 GO does not name this packet and does not satisfy it",
+  "packet": {
+    "path": "docs/S6_QL_P2_OWNER_ID_READONLY_RO2_PACKET_2026-10-24.md",
+    "sha256": "db80a917b27ffaf509f6ec180d5ddb016df8e4b0081ef58d0fd9d5304540d26d"
+  },
+  "basis": [
+    {
+      "path": "docs/evidence/S6_QL_P2_OWNER_ID_READONLY_RESULT_2026-10-24.json",
+      "sha256": "9000a7b6b319cdfd48c0938127ba8c33826c30176a103a5f5fc35c6c66d17f69"
+    },
+    {
+      "path": "docs/evidence/S6_API_SERVICE_MISMATCH_READONLY_RESULT_2026-10-24.json",
+      "sha256": "a1352faa46289125b5fafd49ce317332e9e102776842c10fdd1326a89490706b"
+    }
+  ],
+  "reviews": [
+    {
+      "round": "r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/owner-id-ro2-packet-review.md",
+      "sha256": "310374cbedd7c590a2a5f9c7bc8338c389345b170db9156efd23460256896165",
+      "verdict": "FIXES_REQUIRED",
+      "findings": "F1 authorization wording, F2 limits and SSH vector, F3 nonce placement; R1-R9 recommendations"
+    },
+    {
+      "round": "r2",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/owner-id-ro2-packet-review-r2.md",
+      "sha256": "0c9002227ae027caabfac3ff636fe42dd7beceed529495409835ea33ed1239aa",
+      "verdict": "FIXES_REQUIRED",
+      "note": "all r1 items resolved; one new wording item N1 (fix the remote locale and time zone for the strict timestamp rule), which root applied and confirmed by diff"
+    }
+  ],
+  "execution": {
+    "collector": "NOT_BUILT",
+    "targetAccess": "NOT_RUN",
+    "ownerGo": "NOT_RECEIVED"
+  },
+  "ownerId": "UNKNOWN",
+  "currentApplicability": "UNKNOWN_NOT_QUERIED",
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "dbWrites": "NONE"
+  }
+}

@@ -46,5 +46,79 @@
     "deployment": "NOT_RUN",
     "targetRouteActivation": "NOT_RUN",
     "serviceChange": "NOT_AUTHORIZED_UNTIL_OWNER_GO"
+  },
+  "collectorBuild": {
+    "status": "BUILT_AND_INDEPENDENTLY_REVIEWED_NOT_RUN",
+    "note": "Built ahead of any owner GO so that an approved attempt can be admitted promptly; nothing ran against a host. Execution still needs an owner GO naming S6-API-SERVICE-START-1 with the checklist answered, then Root admission with a fresh manifest.",
+    "snapshot": {
+      "path": ".qa-local/s6-api-service-start1-exec-2026-10-24/build-snapshot-final/SHA256SUMS",
+      "sha256": "e94006ef6ceda33699b48d383c7848aab6d0deabd8101cf12221412c9a72989e"
+    },
+    "code": {
+      "core": "e54b34db73ddca8350d082d89da1707c02482f7e6bb9d2f0ad520143654c3f6d",
+      "runner": "78955ccc02f040d0d54ee0514dd3643472f0f4bd12afb330f157fc2d397c7a33",
+      "tests": "7180be12b2bf6ccba44bf17bc2667d4fd561016f3fd8e9890daf658af05d5745"
+    },
+    "rootRun": {
+      "tests": 101,
+      "pass": 101,
+      "fail": 0,
+      "skipped": 0,
+      "note": "synthetic only; injected transport and timers; local bash stubs for the P1 template; real spawn never called"
+    },
+    "reviews": [
+      {
+        "round": "r1",
+        "role": "tester, Sonnet 5.5 / medium",
+        "path": ".qa-local/s6-api-service-start1-exec-2026-10-24/tester-r1/tester-report.md",
+        "sha256": "f76632da338d920b1444694a0942145dc55fcefca6a46600ab37169b8f180e85",
+        "verdict": "PASS",
+        "mutants": {
+          "total": 84,
+          "killed": 83,
+          "equivalent": 1
+        }
+      },
+      {
+        "round": "r1",
+        "role": "architecture auditor, Opus 5.5 / high, also the recorded substitute for the paused Fable second opinion",
+        "path": ".qa-local/s6-api-service-start1-exec-2026-10-24/audit-r1.md",
+        "sha256": "72c1c458dc5ba859807f9c8cbe49d4d6a89b206c9e1a6e4a0f0ce4eca5a1b23d",
+        "verdict": "NO-GO",
+        "note": "F1: empty exec-list properties would cause a false pre-check stop and consume the attempt; F2-F5 advisories"
+      },
+      {
+        "round": "r2",
+        "role": "tester, Sonnet 5.5 / medium",
+        "path": ".qa-local/s6-api-service-start1-exec-2026-10-24/tester-r2/tester-report-r2.md",
+        "sha256": "8eb98e9fd60dbb96490cbeffc4b34c23c2df7f12d14db69c8f06f43a9f170bae",
+        "verdict": "PASS",
+        "mutants": {
+          "total": 104,
+          "killed": 103,
+          "equivalent": 1
+        }
+      },
+      {
+        "round": "r2",
+        "role": "architecture auditor, Opus 5.5 / high",
+        "path": ".qa-local/s6-api-service-start1-exec-2026-10-24/audit-r2.md",
+        "sha256": "a76a898799c36e7bf52685481bd5f678866f91b15f675792b462795494bf30ec",
+        "verdict": "GO"
+      }
+    ],
+    "rootBuildRulings": [
+      "F1: an exec-list property prints nothing when empty and one line per entry; empty or bare name means empty, every line with a value means nonempty, anything else is a gap",
+      "F2: the local P2 wait is the remote bound plus a 2-second transit margin",
+      "F3 (stricter than packet line 131, safe direction): any change of a live main PID across post-start polls withholds VERIFIED_RUNNING and reports NOT_VERIFIED_WITHIN_BOUND with MAIN_PID_CHANGED",
+      "F4: the start is sent only if at least 63 seconds of the 120-second budget remain; otherwise NOT_STARTED_PRECHECK_STOP with OVERALL_LIMIT",
+      "F5: the runner yields once and re-checks the session immediately before writing the start command"
+    ],
+    "residuals": [
+      "On older remote bash versions the P1 here-string creates and removes a transient temporary file; if it cannot be created, P1 stops fail-closed",
+      "A transport loss reported by the operating system after the start write still yields UNKNOWN, as the packet requires",
+      "Real ssh.exe kill and reaping, real systemd output shapes and remote timeout exit codes remain stub-verified only"
+    ],
+    "pinsToRefreshAtAdmission": "core, runner, P1 template and limits come from the final snapshot; the manifest is built only after an owner GO"
   }
 }
