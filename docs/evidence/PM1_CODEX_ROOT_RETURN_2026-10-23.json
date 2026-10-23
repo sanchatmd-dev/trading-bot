@@ -1,0 +1,339 @@
+{
+  "record": "PM1_CODEX_ROOT_RETURN_2026-10-23",
+  "recordedAt": "2026-10-23T09:42:04.193Z",
+  "baseRevision": "006dabc932a04b031eeedda26168775396e19968",
+  "scope": "Sole-root handoff intake, persistent Astra-only policy, and bounded local evidence review. No runtime or target acceptance.",
+  "authority": {
+    "incomingRoot": "Codex",
+    "outgoingClaude": "Stopped per owner and handoff",
+    "team": "All Codex roles use gpt-6-astra until explicit owner revocation",
+    "rootRequested": "gpt-6-astra/high",
+    "rootObserved": "UNKNOWN",
+    "light": "low",
+    "maxChildren": 3,
+    "maxLanes": 3,
+    "maxWriters": 3,
+    "capacityCondition": "Useful independent work only, subject to runtime slots, usage and one writer per file",
+    "claudePolicy": "Unchanged"
+  },
+  "intake": {
+    "evidencePins": {
+      "count": 260,
+      "matched": 260,
+      "mismatches": 0,
+      "errors": 0
+    },
+    "acceptedSnapshot": {
+      "count": 7,
+      "matched": 7,
+      "mismatches": 0,
+      "errors": 0
+    },
+    "handoffManifest": {
+      "count": 20,
+      "matched": 19,
+      "mismatches": 1,
+      "errors": 0
+    },
+    "checkpointAppend": {
+      "originalManifestMismatchPreserved": true,
+      "totalBytes": 7997,
+      "appendHeadingByteOffset": 7411,
+      "expected": "a0076fd514cf2301bce50f81fb44c343fd04be292b8ce517fb62d1d3a60a4a38",
+      "matchedPrefix": {
+        "bytes": 7410,
+        "sha256": "a0076fd514cf2301bce50f81fb44c343fd04be292b8ce517fb62d1d3a60a4a38"
+      },
+      "candidates": [
+        {
+          "bytes": 7411,
+          "sha256": "fd98f0940369d371bc711022fe670b45fdba87eb6d381bd42bd9ff38b2f4102c"
+        },
+        {
+          "bytes": 7410,
+          "sha256": "a0076fd514cf2301bce50f81fb44c343fd04be292b8ce517fb62d1d3a60a4a38"
+        },
+        {
+          "bytes": 7409,
+          "sha256": "92e0a9ba9a472dc74d84e3e1711b6b3e29706711e2a3c24e3dbc7f742db4066d"
+        }
+      ]
+    },
+    "protectedStashesPreserved": true,
+    "originalCheckoutDirtyPathsPreserved": 9
+  },
+  "ci": {
+    "revision": "006dabc932a04b031eeedda26168775396e19968",
+    "runs": [
+      {
+        "id": 39930920219,
+        "name": "Quant Lab",
+        "revision": "006dabc932a04b031eeedda26168775396e19968",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39930920219",
+        "status": "completed",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "name": "scope",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node scripts/ci-scope.mjs",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "gate",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run test \"$SCOPE\" = success && { test \"$QUANT\" = success || test \"$QUANT\" = skipped; }",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "quant",
+            "status": "completed",
+            "conclusion": "skipped",
+            "steps": []
+          }
+        ]
+      },
+      {
+        "id": 39930920575,
+        "name": "Safety checks",
+        "revision": "006dabc932a04b031eeedda26168775396e19968",
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39930920575",
+        "status": "completed",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "name": "scope",
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Run node scripts/ci-scope.mjs",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success"
+              }
+            ]
+          },
+          {
+            "name": "test",
+            "status": "completed",
+            "conclusion": "skipped",
+            "steps": []
+          },
+          {
+            "name": "container",
+            "status": "completed",
+            "conclusion": "skipped",
+            "steps": []
+          },
+          {
+            "name": "postgres",
+            "status": "completed",
+            "conclusion": "skipped",
+            "steps": []
+          }
+        ]
+      }
+    ],
+    "scopeOnly": true,
+    "newRuntimeTests": 0
+  },
+  "policyValidation": {
+    "status": "PASS",
+    "roleProfiles": 8,
+    "modelOnlyChanges": 7,
+    "effortsAndInstructions": "Unchanged",
+    "independentReview": "PASS",
+    "productTests": "NOT_RUN_CONFIGURATION_ONLY"
+  },
+  "runtimeObservation": {
+    "at": "2026-10-23T09:34:38.2797041Z",
+    "freeMemoryKiB": 1319844,
+    "freeDiskGiB": 17.62,
+    "postgresProcesses": 0,
+    "pgCtlProcesses": 0,
+    "resourceFloorPassed": true,
+    "runtimeAuthorized": false,
+    "freshCheckRequired": true
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "n1": "HELD",
+    "p13j": "HELD",
+    "nativeCompilation": "CLOSED",
+    "processFixtures": "CLOSED",
+    "postgresqlRuntime": "CLOSED",
+    "c3Runtime": "CLOSED",
+    "deployment": "NOT_AUTHORIZED",
+    "targetRouteActivation": "NOT_AUTHORIZED"
+  },
+  "artifactPins": [
+    {
+      "path": ".qa-local/codex-return-2026-10-23/pin-check.json",
+      "sha256": "796573dc9ef38e7806dffeb589d2a4adee2f0113a786fe42392aabd4fa4d58df"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/pin-check.mjs",
+      "sha256": "487289955644be44f4cd13763166553270d36489454b43d1e4fd59d8de904660"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/policy-return.md",
+      "sha256": "4a8a6fe79527cf7ff17921375d484200a6583df1677a12f589d34557fc07192d"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/policy-review.md",
+      "sha256": "7d3101044b9cfef1ed9f51229cd0eb16d93b6d9ad061cc77c8127222ab5ef5b9"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/eligible-scope-review.md",
+      "sha256": "c84b7a6c3d45025eda2c49163a1e0c5828f7c1f897d18fba5bf6ef0462cbd034"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/ci-006dabc932a04b031eeedda26168775396e19968-1792748002873.json",
+      "sha256": "07d8ffdcff76d46235b87e2472e12b7a7fff8ffe611d4ea4d32e4c1ec3265006"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/missing-start-test.mjs",
+      "sha256": "a4c9c5b9a3bc98aab75bd1f2a918a7d00d2cb4ac2efa2eb523fdcb9ec5e5b9b4"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/missing-start-author.md",
+      "sha256": "4cb2c12fdaaa3f870e9ca89725c86616f6b7ddb1120a302845e6c54411a3d986"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/missing-start-test-r2.mjs",
+      "sha256": "66f5edea3e2cd8d5331e836a055b92219848c42c6788ebd366d3be48297095e1"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/missing-start-result-r2.txt",
+      "sha256": "c9e6e54bd951f8104578f9ea69c09ee1d1a9861dcd488457c889df23eca717a2"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/missing-start-author-r2.md",
+      "sha256": "f0be88bd7dc8d9eaa4cd449b98475ec5acbfb6cef8cce735910d25ff775caf06"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/missing-start-review.md",
+      "sha256": "0e863d89e4aff935b505aa24580086c8f523c19144a7ad93e0b45e1d93b4a5b8"
+    },
+    {
+      "path": ".qa-local/codex-return-2026-10-23/missing-start-independent.txt",
+      "sha256": "41ae84070c215c6d30f758668c92845ae2a7bf09fbbd3fcc4a0a3a5fbaff1e95"
+    }
+  ],
+  "pureModelFollowup": {
+    "status": "ACCEPTED_PURE_MODEL_ONLY",
+    "summary": "A separate deterministic pure-model follow-up closes the disclosed missing-WORKLOAD_STARTED composition coverage gap with three cases: ordinary order, delayed resume after cleanup, and invalid delivered EXIT proof. Author and independent runs passed the same three cases; counts are not additive. The initial wrong-field test assertion remains preserved. Accepted models and runtime gates are unchanged.",
+    "cases": 3,
+    "author": {
+      "exitCode": 0,
+      "elapsedSeconds": 0.507
+    },
+    "independent": {
+      "exitCode": 0,
+      "elapsedSeconds": 0.404,
+      "findings": "No blocking finding; raw outputs differ by newline encoding, normalized four lines match"
+    },
+    "originalFailure": "Harness expected exit code VERIFIED instead of TERMINAL; ordinary control stopped at assertion, late and negative cases NOT RUN in r1",
+    "limitations": [
+      "Crafted deterministic traces only",
+      "Workload activity is simulated PHASE/ACK traffic, not application computation",
+      "Durable records and role observations are synthetic; no OS durability, native, process, PostgreSQL or runtime proof",
+      "128 MiB old-space cap is not a total RSS cap; no hard watchdog claimed",
+      "P13j and N1 remain HELD"
+    ],
+    "artifacts": [
+      ".qa-local/codex-return-2026-10-23/missing-start-test.mjs",
+      ".qa-local/codex-return-2026-10-23/missing-start-author.md",
+      ".qa-local/codex-return-2026-10-23/missing-start-test-r2.mjs",
+      ".qa-local/codex-return-2026-10-23/missing-start-result-r2.txt",
+      ".qa-local/codex-return-2026-10-23/missing-start-author-r2.md",
+      ".qa-local/codex-return-2026-10-23/missing-start-review.md",
+      ".qa-local/codex-return-2026-10-23/missing-start-independent.txt"
+    ]
+  }
+}

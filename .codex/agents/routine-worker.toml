@@ -1,6 +1,6 @@
 name = "routine-worker"
 description = "Implement one small, low-risk local code, UI or fixture slice with exact file ownership."
-model = "gpt-6.1-sol"
+model = "gpt-6-astra"
 model_reasoning_effort = "medium"
 developer_instructions = """
 Read .agents/skills/caveman/SKILL.md once per context. Use Caveman full for chat,

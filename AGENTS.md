@@ -35,13 +35,14 @@ or runtime actions.
 
 ## Models and dispatch
 
-Owner restoration (2026-10-23): the owner explicitly restored the previous Codex
-team. Root uses GPT-6 Astra/high and architecture auditor uses Astra/medium.
-All other Codex roles use GPT-6.1 Sol with the efforts in the table below.
-The prior Astra-only override is ended. Use the restored mapping for new
-dispatches; preserve completed agents and their work. Configuration edits do not
-change an already running root or child. The owner selects the active root model;
-report unobservable runtime model/effort as unknown.
+Owner override (2026-10-23): all Codex roles use GPT-6 Astra until the owner
+explicitly revokes this override. Only low, medium and high efforts are allowed;
+the owner's "light" means low. Root uses Astra/high; role efforts remain as listed
+below. This supersedes the earlier same-day restoration of the mixed-model team.
+Use this mapping for new dispatches; preserve completed agents and their work.
+Configuration edits do not change an already running root or child, or hot-switch
+loaded role selectors. The owner selects the active root model; report unobservable
+runtime model/effort as unknown.
 
 For Codex, use the maximum available capacity when useful independent work is
 ready and the aggregate usage reservation fits. The current runtime has four
@@ -51,7 +52,7 @@ usage bands or serial Git, host and browser steps require it. Do not invent work
 or split dependent work merely to fill capacity. This Codex override replaces
 older one-or-two defaults; it does not change Claude policy or any safety gate.
 
-Restoring models does not change maximum useful capacity, role boundaries,
+This model override does not change maximum useful capacity, role boundaries,
 one-root authority, usage reserve, independent review or any safety gate.
 
 Roles are fixed; each platform maps them to its own models. Use the column for
@@ -61,16 +62,16 @@ the platform running the root. Scout and the Fable 5.1 roles (see Claude-only Fa
 | --- | --- | --- | --- |
 | Root commander | Sole scheduling authority, integration, acceptance | gpt-6-astra / high | Opus 5.5 / xhigh, ultracode |
 | Architecture auditor | Difficult architecture, audit, risk/accounting/parity review, escalated root cause | gpt-6-astra / medium | Opus 5.5 / high |
-| Debugger | Difficult debugging and high-risk code fixes | gpt-6.1-sol / high | Opus 5.5 / medium |
-| Operations | VPS operations, only on an explicit bounded commander dispatch | gpt-6.1-sol / high | Opus 5.5 / medium |
-| Coder | Bounded implementation, including high-risk modules under review | gpt-6.1-sol / medium | Sonnet 5.5 / high |
-| Tester | Independent focused acceptance and regression evidence | gpt-6.1-sol / medium | Sonnet 5.5 / medium |
-| Routine worker | One small local code/UI/fixture slice with an explicit contract and observable acceptance | gpt-6.1-sol / medium | Sonnet 5.5 / medium |
-| Documentation | Documentation and mechanical edits with no behavior change | gpt-6.1-sol / low | Sonnet 5.5 / low; Haiku 5.5 / low for mechanical-only packets |
-| Release clerk | Git/release clerical work | gpt-6.1-sol / low | Haiku 5.5 / low |
+| Debugger | Difficult debugging and high-risk code fixes | gpt-6-astra / high | Opus 5.5 / medium |
+| Operations | VPS operations, only on an explicit bounded commander dispatch | gpt-6-astra / high | Opus 5.5 / medium |
+| Coder | Bounded implementation, including high-risk modules under review | gpt-6-astra / medium | Sonnet 5.5 / high |
+| Tester | Independent focused acceptance and regression evidence | gpt-6-astra / medium | Sonnet 5.5 / medium |
+| Routine worker | One small local code/UI/fixture slice with an explicit contract and observable acceptance | gpt-6-astra / medium | Sonnet 5.5 / medium |
+| Documentation | Documentation and mechanical edits with no behavior change | gpt-6-astra / low | Sonnet 5.5 / low; Haiku 5.5 / low for mechanical-only packets |
+| Release clerk | Git/release clerical work | gpt-6-astra / low | Haiku 5.5 / low |
 | Scout | Read-only local lookup: locate files, symbols and line ranges; grep inventories; Git and CI status reads | Not used; a Codex root reads directly | Haiku 5.5 / medium |
 
-All non-Astra Codex roles use GPT-6.1 Sol under the owner restoration above. Role
+All Codex roles use GPT-6 Astra under the persistent owner override above. Role
 boundaries and independent review still apply when implementer and reviewer use
 the same model. High effort is reserved for root, debugger and operations work;
 bounded implementation, testing and routine work use medium; documentation and release clerical work use low.
