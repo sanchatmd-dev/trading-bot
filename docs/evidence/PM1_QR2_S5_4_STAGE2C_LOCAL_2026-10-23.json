@@ -398,11 +398,21 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload-refusal-test.mjs": "3d74a72a4d316289c3b8ee653e820826a866f3831c19b5901d2e2bffa07240ba",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/workload-refusal-test.json": "1a1b39e1f25b5810083103186c595e1f280a06808518ad8c7101affda0d7f45b",
     ".qa-local/qr2-s5-4-stage2c/p11-documentation-ci-verified.json": "ceb0614a9ebeac362a7279eac068798eeaca1b447a74d411461548909a70970a",
-    ".qa-local/qr2-s5-3/ci-observed-e3159e60889e7a740610066d84948beea45243bf.json": "1a5f8e4462fefc8ddcf120dda7d88043347c3b5344fd1489f2cb468b63f35182"
+    ".qa-local/qr2-s5-3/ci-observed-e3159e60889e7a740610066d84948beea45243bf.json": "1a5f8e4462fefc8ddcf120dda7d88043347c3b5344fd1489f2cb468b63f35182",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/runner.mjs": "3f280f280fca9e916520b27c6fd11762623d1ffd333b7b60e6a7b2ce66be2377",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/runner-author.md": "91023c67c4b3764fdf6518a1e845fc385c87d9ff22c9d403888960d9bf416810",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/runner-refusal-test.mjs": "3da389199b964bfd82fff36106af85a6fdd13385c2f9e7ca558f6d897d337b74",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/runner-refusal-test.json": "a2b2d17c57b35d6bc2559d4802d6cb0311d4b5a41430a2c710e6c87a085605f9",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/runner-partial-review.md": "c284be6b81ad7cb354615ed59b589a1b5d13167ecd277fb6fb1bce9ef8b9dad2",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-protocol-draft.md": "2c3e71081e3f2c2a3491e3ce82bd2beb10ea53b982bf70864d7e1cb9c81847af",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-protocol-review.md": "f91989fd21055496189fbbf33d7f92b4edc558e4c466f8950234d3046792443e",
+    ".qa-local/qr2-s5-4-stage2c/p13d-next-packet.md": "7ca1cb4a7740354ccfa6ff6056fa9b1db71df1232953b3e9c8b8d701e697cc8d",
+    ".qa-local/qr2-s5-4-stage2c/p12-p13a-documentation-ci-verified.json": "46f016fe8501ae213f97445accf56e6c16d4521f8ce2ea1bf02b9a20056e6b52",
+    ".qa-local/qr2-s5-3/ci-observed-014907ab872a63f1c2f6d5c7cd85afa8823eac6d.json": "721670ad2f4e8089d7abfc40f47df353fc1ac28d7adb0fa889e3775d14ffc78e"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
-  "recordedAt": "2026-10-22T23:52:09.078Z",
+  "recordedAt": "2026-10-23T00:04:03.667Z",
   "rootAcceptance": {
     "implementationCheckpoint": true,
     "functionalPostgres": true,
@@ -640,8 +650,9 @@
       },
       "runtimeAdmitted": false,
       "remaining": [
-        "Fixed diagnostic parent runner/supervisor with terminal cancellation, durable stage evidence and independent cleanup inventory",
-        "Exhaustive source/resource/installed-dependency manifest and independent lifecycle review",
+        "Pure bounded supervisor state machine and independent checks",
+        "Qualified Windows termination/ownership primitive and finite effect execution before live supervisor integration",
+        "Fixed parent runner callbacks, exhaustive source/resource/installed-runtime manifest and independent lifecycle review",
         "Actual memory/replay-cost evidence, coherent chronology and other member gate qualification",
         "Fresh resources and separate two-job diagnostic runtime admission",
         "Independent client/HTTP and monitoring tests before the separately admitted performance matrix"
@@ -863,6 +874,42 @@
           "Helper dispose suppresses errors, so cleanup remains UNKNOWN until independent parent database/session and cluster verification.",
           "Other member gates and performance remain PENDING."
         ]
+      },
+      "parentRunnerPartial": {
+        "status": "INCOMPLETE_NON_EXECUTABLE",
+        "module": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/runner.mjs",
+        "sourceSha256": "3f280f280fca9e916520b27c6fd11762623d1ffd333b7b60e6a7b2ce66be2377",
+        "author": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/runner-author.md",
+        "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/runner-partial-review.md",
+        "refusalArtifact": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/runner-refusal-test.json",
+        "namedGroups": {
+          "total": 19,
+          "passed": 19,
+          "failed": 0
+        },
+        "scope": "Pure JSON contract shape checks and unconditional main/CLI refusal. A plausible shape returns SHAPE_ONLY_NOT_QUALIFIED with runtimeReady false. No admitted execution path exists.",
+        "limits": [
+          "No manifest bytes, actual source hashes, installed/runtime closure, process identity, liveness or authority were qualified.",
+          "Parent callbacks, process launch, PostgreSQL setup, persistence and independent cleanup remain unimplemented.",
+          "No workload/product imports, PostgreSQL, pool or synchronous replay ran in these refusal checks."
+        ]
+      },
+      "supervisorProtocol": {
+        "status": "DESIGN_REVIEW_PASS_WITH_LIMITS_PURE_REDUCER_ONLY",
+        "draft": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-protocol-draft.md",
+        "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-protocol-review.md",
+        "nextPacket": ".qa-local/qr2-s5-4-stage2c/p13d-next-packet.md",
+        "acceptedRequirements": [
+          "Supervisor-local monotonic deadlines; workload epoch timestamps do not extend budgets.",
+          "Serial nested LIFO actions retain all ancestor deadlines; explicit ordered phase transitions.",
+          "Durable journal completion is separate from success ACK; recheck clock and terminal latch before ACK.",
+          "Cancellation requested and verified process exit are distinct; cleanup is independent and retains failures."
+        ],
+        "limits": [
+          "No supervisor or pure reducer was implemented or tested in this design slice.",
+          "Windows identity-safe termination, actual durability, bounded effect execution and lifecycle remain unresolved.",
+          "Finite pure-state refusal bounds in the next packet are provisional, not measured workload sufficiency or runtime admission."
+        ]
       }
     }
   },
@@ -914,24 +961,24 @@
     "originalFindingPreserved": true
   },
   "preparationCheckpointCI": {
-    "revision": "e3159e60889e7a740610066d84948beea45243bf",
+    "revision": "014907ab872a63f1c2f6d5c7cd85afa8823eac6d",
     "status": "SCOPE_ONLY_PASS",
     "runs": [
       {
-        "id": 39873572624,
+        "id": 39874619852,
         "name": "Safety checks",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39873572624"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39874619852"
       },
       {
-        "id": 39873572685,
+        "id": 39874619909,
         "name": "Quant Lab",
-        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39873572685"
+        "url": "https://github.com/sanchatmd-dev/trading-bot/actions/runs/39874619909"
       }
     ],
     "actualScopeSteps": 2,
     "actualGateSteps": 1,
     "skippedRuntimeJobs": 4,
     "newRuntimeTests": 0,
-    "artifact": ".qa-local/qr2-s5-4-stage2c/p11-documentation-ci-verified.json"
+    "artifact": ".qa-local/qr2-s5-4-stage2c/p12-p13a-documentation-ci-verified.json"
   }
 }

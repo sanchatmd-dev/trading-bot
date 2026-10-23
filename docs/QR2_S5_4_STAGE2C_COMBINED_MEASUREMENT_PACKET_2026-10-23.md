@@ -78,6 +78,14 @@ A separate fixed workload body now binds the actual fixture, readers, production
 
 The parent runner/supervisor, exhaustive source/dependency manifest, durable persistence, terminal cancellation and independent cleanup inventory remain required. Helper disposal suppresses close/DROP errors, so its return is not cleanup proof. An R3c receipt alone does not close other member financial gates. No runtime admission, performance matrix or fixture acceptance follows from these preparation checks.
 
+### P13b/P13c non-executable parent and supervisor design
+
+The parent runner is an incomplete preparation partial whose main and CLI paths always refuse. Nineteen named independent shape/refusal groups passed; no actual source, authority, process, PostgreSQL or workload qualification occurred. Shape receipts explicitly remain unqualified. The previous workload entrypoint and all runtime guards remain unchanged.
+
+Source review accepted a supervisor protocol only as input to a bounded pure reducer. Supervisor-local monotonic deadlines avoid assumptions about cross-process clock epochs. Nested actions retain ancestor deadlines; explicit phase transitions cannot renew a budget. Durable journal completion must precede success ACK, with a fresh clock/terminal-latch check; a delayed ACK cannot revive expired work. Cancellation requests are distinct from verified process exit, and cleanup retains earlier failures.
+
+The next pure slice has explicit finite provisional message, journal, stack and action ceilings. It will perform no I/O or process effects and cannot establish Windows termination, actual durability or lifecycle behavior. Identity-safe Windows termination, complete manifest qualification, real parent callbacks, independent inventory and fresh resource admission remain prerequisites for any runtime. No performance or fixture acceptance follows.
+
 ## Open work
 
 Coverage byte accounting and the financial row/value recipe are analytically qualified within the limits above. Runtime-compatible clock integration, actual producer counts and financial gates, independent client/HTTP implementation, monitoring-boundary tests, finite setup budget and final lifecycle source review remain open. Diagnostic and full measurement are NOT RUN. The separate financial differential CI is accepted only within its named assertion scope. Production cap selection, Stage 3 publication/rendering, full S5 and prototype completion remain OPEN.
