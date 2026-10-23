@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "PM1_QR2_S5_4_STAGE3A_LOCAL_2026-10-24",
+  "recordedAt": "2026-10-23T18:34:03.121Z",
+  "sourceRevision": "d626cd33e260ea60db6b864f3190dc37ff68f0f0",
+  "status": "ACCEPTED_LOCAL_PURE_UNWIRED",
+  "scope": "Pure public coverage projection and closed owner-envelope validator; not imported by any worker, composer, route, reader or UI",
+  "packet": {
+    "path": "docs/QR2_S5_4_STAGE3A_PUBLIC_COVERAGE_PACKET_2026-10-24.md",
+    "sha256": "d959395c04cfc7c519f53f5d7c99111a653f79ba404bb830c08e4a66cde94611"
+  },
+  "sourcePins": [
+    {
+      "path": "src/portfolio/qr2-coverage-public.js",
+      "sha256": "6f93bc73d5a09233db4e4204c64a433a2e47cbfef0234c79450125288c5bc21e"
+    },
+    {
+      "path": "test/qr2-coverage-public.test.js",
+      "sha256": "4371b20c2a263ba56d7848aa08705e8553fb127b4aaae63a426904f635caa9c2"
+    }
+  ],
+  "checks": {
+    "rootRun": {
+      "node": "v24.19.0",
+      "newSuite": {
+        "tests": 28,
+        "pass": 28,
+        "fail": 0,
+        "skipped": 0
+      },
+      "a2Regression": {
+        "suites": 4,
+        "tests": 38,
+        "pass": 38,
+        "fail": 0,
+        "skipped": 0,
+        "note": "one combined run of the four existing coverage suites; query fakes only"
+      }
+    },
+    "independentOracle": {
+      "seeds": 600,
+      "validRegistries": 569,
+      "refusedByBudget": 31,
+      "windowsCompared": 1449,
+      "completeWindows": 836,
+      "zeroRowWindows": 58,
+      "multiGapWindows": 484,
+      "accountCounts": "0-6",
+      "negativeChecks": 6228,
+      "mismatches": 0,
+      "rerunByRootAfterFixRound": true
+    },
+    "countsNotAdditive": true
+  },
+  "reviews": [
+    {
+      "role": "tester, Sonnet 5.5 / medium (independent oracle A3)",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-stage3a/tester/tester-report.md",
+      "sha256": "1c2cdbc36a83281bd26632d5868f3bd2845768b429ad293cd22db4d390649368",
+      "verdict": "PASS",
+      "reviewedCodeSha256": "bf163a64799723e0fce4c70c45db1ee901d002bc1001cede4199a20cbc884a0e"
+    },
+    {
+      "role": "architecture auditor, Opus 5.5 / high (A4)",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-stage3a/audit-report.md",
+      "sha256": "591834a65a5efd334c8c54aa491ed10412afaceb5e24db78e5d28b4b6c9952b6",
+      "verdict": "GO",
+      "findings": {
+        "P1": 0,
+        "P2": 1,
+        "P3": 5
+      },
+      "reviewedCodeSha256": "bf163a64799723e0fce4c70c45db1ee901d002bc1001cede4199a20cbc884a0e"
+    }
+  ],
+  "fixRound": {
+    "adopted": [
+      "P2-1 estimate check first: actual above the estimate fails QR2_REPORT_FAILED regardless of limit, then actual above the effective limit refuses QR2_RANGE_ADMISSION_REFUSED",
+      "P3-1 deep-frozen outputs",
+      "P3-2 validator rejects accessors, symbol keys, non-plain prototypes, Array subclasses, sparse arrays and cycles and maps unexpected errors to a fixed code",
+      "P3-4 key-order JSON equality with Stage 1, multibyte byte case and validator hostile-input tests"
+    ],
+    "notedForO6": "P3-3: a bad or over-limit context throws instead of returning {ok:false}",
+    "reverification": "Root reran the new suite, the four regression suites and the independent oracle on the fixed bytes"
+  },
+  "authorReport": {
+    "path": ".qa-local/claude-root-2026-10-24/qr2-stage3a/author-report.md",
+    "sha256": "39c83ed56a07f7f0f0a695676b602775b6d2dabca4de497eb9f47367d034c434"
+  },
+  "limitations": [
+    "No public response, worker, route or UI change; O6 wiring and O7 EN/TH UI need their own packets",
+    "Not performance acceptance; Stage 3 envelope cost on the real compute path is unmeasured",
+    "No PostgreSQL ran locally; exact-revision CI is the remaining check",
+    "No PM-1 credit and full S5 stays open"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "c3Runtime": "CLOSED"
+  }
+}
