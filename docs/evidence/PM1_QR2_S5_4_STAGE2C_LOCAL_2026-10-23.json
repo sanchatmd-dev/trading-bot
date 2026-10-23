@@ -445,7 +445,20 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-v1.md": "c028eea37bac6ea70950ab45bfa5d628711ae37122199f76cdbe9db275a89011",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-errata-check.md": "4e4c33f18c341107637c11053c2d60b48ac2ebf9e04aa7b6e7da0b16cd155cc4",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g.md": "c8b31b7d105a75c610767957a4c220be86d0c491b6a2a846d3883c713b1bd52f",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-errata-recheck.md": "cff659087dd0c3b2d6fb32e366bb3457d31dfa03bd986bc0bb385b4963ca32c3"
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/windows-launch-contract-acceptance-p13g-errata-recheck.md": "cff659087dd0c3b2d6fb32e366bb3457d31dfa03bd986bc0bb385b4963ca32c3",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state.mjs": "2b05bb62d62c558719f5346bd12e7e1f4800afc337cbaab48c8f169afee87dc7",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-test.mjs": "f5007591005335953f33cf82db266f73283617130b7486e3a745ba0a308741e6",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-test.json": "466da3789157c4138bac26d38c2ea014e18dd53eaf1d061dbe8e80adca5344c7",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-author.md": "b055c9b17ea308f455eb7e474bfd3133fb10f26c8dc2630eea02540714e7af5c",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation.md": "839abf6d6681d7c0945bb241af5a98b0aa26d8937bf248a2b8d071338206b7d8",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation.json": "4aa434429005038c6b0067bab36a1744eda6563f980ce20ed116233dec04c955",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r2.md": "e7e1221d543f9c28634bf2c8925d36b188fa5bb88e0f49351df13e8dfb7af48a",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r2.json": "f7a4f54ed6033f8c6edc1a4bd34f8b539f377b84e29b8db497451571e21d1fea",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-review.md": "c18efc4ea8b778625082874018abd1f753570046b760729e0a149ae90bf91068",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-review-r2.md": "37d35e1c2a1ffa4171686266ed1b524fada8cf2db86cb6cbd1cdb945d197e632",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot/SHA256SUMS": "dc7c4eae28966035e4ebe708f786354ca1a30dc7daa784a90828efbb97e661e3",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r2/SHA256SUMS": "2fba1479766ef6587c0db267074bd5f9ab00bbbbab4d89eb588ee1e36372ce3b",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h.md": "90844d63382e91e055e91c4334002291f9be1ad1d4ef3fd1049209da736804e3"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
@@ -1098,6 +1111,54 @@
         "checks": "Source design and independent review only; no tests, compilation, process fixtures, PostgreSQL, runtime, network or host action.",
         "notRunOrAuthorized": "No native source, compilation, process fixture, PostgreSQL or runtime was run or authorized.",
         "nextGate": "Source-packet selection: Root chooses one bounded source piece with its own packet, the A5.2 obligations and the admission gates. Runtime gates stay closed."
+      },
+      "guardianStateModel": {
+        "status": "ACCEPTED_AS_PURE_MODEL_NO_RUNTIME_NATIVE_PROCESS_OR_POSTGRESQL_EVIDENCE",
+        "scope": "PURE_GUARDIAN_MODEL_ONLY",
+        "model": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state.mjs",
+        "tests": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-test.mjs",
+        "testResults": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-test.json",
+        "authorRecord": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-author.md",
+        "rootAcceptanceRecord": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h.md",
+        "contract": "P13g accepted contract: r4 plus root errata E1 to E9",
+        "rootRun": {
+          "node": "v24.19.0",
+          "total": 182,
+          "passed": 182,
+          "failed": 0,
+          "skipped": 0
+        },
+        "reviewRounds": [
+          {
+            "round": 1,
+            "coderTests": "158/158",
+            "mutation": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation.md",
+            "mutationResult": "FAIL on test strength: 74 mutants, 55 killed",
+            "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-review.md",
+            "reviewVerdict": "NO-GO",
+            "finding": "Model hole B1: inventory output was accepted before the INVENTORY role exited and its job was empty, so a failed inventory role could still lead to CLEAN and VERIFIED. Seven test gaps: M17, M36, M38, M50, M53, M24b, M35.",
+            "snapshot": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot/SHA256SUMS"
+          },
+          {
+            "round": 2,
+            "name": "fix round",
+            "mutation": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-mutation-r2.md",
+            "mutationResult": "PASS: 51 runs, 39 killed, 12 survived (equivalent or unreachable with stated arguments, three of them throw probes that no test reached; the tester report text said 38 and 13, the raw result file says 39 and 12)",
+            "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-review-r2.md",
+            "reviewVerdict": "GO",
+            "fix": "CLEAN only with INVENTORY signaled, exit success, job verified empty and postmaster unsignaled; otherwise UNKNOWN. Property world permutes exit, job-empty and output order with faults. Each round-1 gap has a direct test.",
+            "snapshot": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r2/SHA256SUMS"
+          }
+        ],
+        "carriedItems": [
+          "Thin permuted-CLEAN coverage: only 2 permuted runs reach CLEAN",
+          "The property oracle does not itself catch failed-exit output faults; unit tests G20 and G9 cover them",
+          "Interpretation 13: a latch that abandons the supervisor resume wait turns later requests after HELLO into supervisor loss instead of REFUSED; fail-closed, unchanged",
+          "N9 skip path (supervisor-state.mjs absent) was not run; the label cross-check ran"
+        ],
+        "checks": "Pure model tests, mutation and independent review only; no native compilation, process fixture, PostgreSQL, runtime, network or host action.",
+        "notRunOrAuthorized": "Not runtime, native, process or PostgreSQL evidence; no new authority. Gates unchanged: Spot/Paper only; BINANCE:BTCUSDT Spot 1m; reduce-only EXIT; private source local only; private acceptance NOT RUN; READY false; N1 held.",
+        "nextGate": "Source-packet selection: the model is the reference the native guardian and the supervisor adapter must match. Native compilation, process fixtures, PostgreSQL and the C3 runtime stay closed until their own packet and admission pass."
       }
     }
   },
