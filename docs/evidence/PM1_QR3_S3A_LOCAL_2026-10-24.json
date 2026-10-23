@@ -121,8 +121,9 @@
     }
   ],
   "authorReport": {
-    "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/author-report.md",
-    "sha256": "99ba9378020cf856711d9d5a5f405c07238361f1bdcd749c6106014d55743cfd"
+    "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/accepted-snapshot/author-report-final.md",
+    "sha256": "a4c0631e2a29e97030677dbb3c17ed18f57ade1ba042b3501de0344319351e14",
+    "note": "immutable copy of the final author report"
   },
   "processDeviations": [
     "The packet author fixed citation text once with an in-place shell edit",
@@ -132,8 +133,7 @@
   "limitations": [
     "Not QR-3 S3 acceptance: capacity review and PostgreSQL recovery and cancel evidence remain",
     "No database call, job, route, worker or feature flag; the orchestrator that reads a terminal fixed-evaluation job and calls the writers is a later slice",
-    "No qualified ranking is possible while RD-5 V8 holds",
-    "Exact-revision CI is the remaining check"
+    "No qualified ranking is possible while RD-5 V8 holds"
   ],
   "gates": {
     "spotPaperOnly": true,
@@ -227,9 +227,28 @@
       "end-to-end tampered-result test through the wiring",
       "rows only through the verified binding",
       "consider an object guard after each validator call"
-    ]
+    ],
+    "passedRevision": "a3450170e37c2cadbd0db1b2abe94875884d031d",
+    "passedRuns": {
+      "safety": {
+        "id": 40015702809,
+        "jobs": "scope, test ubuntu-latest, test windows-latest, postgres, container: success"
+      },
+      "quantLab": {
+        "id": 40015702885,
+        "jobs": "scope, quant ubuntu-latest, quant windows-latest, gate: success"
+      },
+      "note": "step conclusions read by revision; no test counts inferred from CI"
+    }
   },
   "lessons": [
     "Run the full default Node suite once before pushing a new src module: a source-text guard can fail CI even when no test imports the module"
+  ],
+  "supersededWorkingCopyPins": [
+    {
+      "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/author-report.md",
+      "sha256": "99ba9378020cf856711d9d5a5f405c07238361f1bdcd749c6106014d55743cfd",
+      "note": "working copy edited after this pin by the fix-round r2 section; bytes at pin time not preserved separately"
+    }
   ]
 }
