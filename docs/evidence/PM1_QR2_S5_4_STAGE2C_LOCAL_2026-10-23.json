@@ -458,7 +458,20 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-review-r2.md": "37d35e1c2a1ffa4171686266ed1b524fada8cf2db86cb6cbd1cdb945d197e632",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot/SHA256SUMS": "dc7c4eae28966035e4ebe708f786354ca1a30dc7daa784a90828efbb97e661e3",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r2/SHA256SUMS": "2fba1479766ef6587c0db267074bd5f9ab00bbbbab4d89eb588ee1e36372ce3b",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h.md": "90844d63382e91e055e91c4334002291f9be1ad1d4ef3fd1049209da736804e3"
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h.md": "90844d63382e91e055e91c4334002291f9be1ad1d4ef3fd1049209da736804e3",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter.mjs": "7181a54e1a2a75bad319fe01c52e74e83969cf5fdcacefa4dd94892652b4c874",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-test.mjs": "10ba0b1d14ca5f6eb6396028536233af1c57f461f9d0a5e33ed8cad604f1b295",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-test.json": "853331ba3535a9eebba12b6ed2a02d137082a7b3a6d800bd9c45531530ad1ecb",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-author.md": "0a3111091858c5cd7601dc9259b0f1d969d7c7513923cc3daaa9382bbaeb0174",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-mutation.md": "53dc3020f388c9e7b212ea251d91174f887a3125f3d835eff58bd0e3088cca13",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-mutation.json": "855acfb4dabc3a92f93fe0af84e45c55438944cede19771140c953708d004ee7",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-mutation-r2.md": "16d4b72be2ec477c04788e778a14333bfed2e95a347db93a00807d13b6338499",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-mutation-r2.json": "ff96ae2cfaa63a5d5346818661b9743fa05fd822c905e995e8ad352650798b77",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-review.md": "411a3fdae973a0d77f7f26f62652c1070189cd301f95fe96204dbe5f4454bb17",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-review-r2.md": "c808570d7de3c7822b8cbcd294c3543c51b9fd0c26f4b82fab94e00d5f201de9",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13i-snapshot/SHA256SUMS": "da7daa240d265e107fb85392c52efbe575148180a79d69e2ff1922b8db7205ad",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13i-snapshot-r2/SHA256SUMS": "9d72b5108b1fe54cf151f4585deadd7ef450dd8ec8da0e6405eeec29b30e7a24",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-acceptance-p13i.md": "ec0f51455a1d4e31263fe430b7d92553fb3cf13c6e1df7a3e090d44e137b1021"
   },
   "status": "BOUNDED_CI_FUNCTIONAL_AND_FINANCIAL_PASS_PERFORMANCE_PENDING",
   "baseRevision": "1d7523b8ce5e82b7310e33742abcc0a9b1bf931f",
@@ -1159,6 +1172,68 @@
         "checks": "Pure model tests, mutation and independent review only; no native compilation, process fixture, PostgreSQL, runtime, network or host action.",
         "notRunOrAuthorized": "Not runtime, native, process or PostgreSQL evidence; no new authority. Gates unchanged: Spot/Paper only; BINANCE:BTCUSDT Spot 1m; reduce-only EXIT; private source local only; private acceptance NOT RUN; READY false; N1 held.",
         "nextGate": "Source-packet selection: the model is the reference the native guardian and the supervisor adapter must match. Native compilation, process fixtures, PostgreSQL and the C3 runtime stay closed until their own packet and admission pass."
+      },
+      "supervisorAdapterModel": {
+        "status": "ACCEPTED_AS_PURE_MODEL_NO_RUNTIME_NATIVE_PROCESS_OR_POSTGRESQL_EVIDENCE",
+        "scope": "PURE_SUPERVISOR_ADAPTER_MODEL_ONLY",
+        "model": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter.mjs",
+        "tests": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-test.mjs",
+        "testResults": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-test.json",
+        "authorRecord": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-author.md",
+        "rootAcceptanceRecord": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-acceptance-p13i.md",
+        "contract": "P13g accepted contract: r4 plus root errata E1 to E9; A4.1 to A4.5, A4.9, A1.4 result mapping, A1.5.6 with R4-8 and E1, R3-12 (R_s = S_A + 360), guardian interpretation 13",
+        "acceptedModelsUsedUnmodified": [
+          "supervisor-state.mjs (799e4d3e...)",
+          "guardian-state.mjs (2b05bb62...)"
+        ],
+        "rootRun": {
+          "node": "v24.19.0",
+          "total": 126,
+          "passed": 126,
+          "failed": 0,
+          "skipped": 0
+        },
+        "compositionTest": {
+          "seeds": 300,
+          "cleanWorldsVerifiedBothSides": "100 of 100",
+          "mildFaultWorldsVerifiedBothSides": "35 of 100",
+          "heavyFaultWorldsVerified": "none reached; not excluded by construction, only not reached",
+          "properties": "no guardian deadline later than the reducer's; every ceiling holds from the guardian origin; supervisor never outlives R_s; neither side reaches VERIFIED without the other's durable proof; binding appears only in the single delivery frame"
+        },
+        "reviewRounds": [
+          {
+            "round": 1,
+            "coderTests": "119/119",
+            "mutation": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-mutation.md",
+            "mutationResult": "PASS: 64 mutants, 57 killed (survivors: a boundary gap at exactly R_s, a defensive duration guard, four equivalents)",
+            "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-review.md",
+            "reviewVerdict": "GO with N1 to N10",
+            "snapshot": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13i-snapshot/SHA256SUMS"
+          },
+          {
+            "round": 2,
+            "name": "fix round",
+            "mutation": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-mutation-r2.md",
+            "mutationResult": "PASS: 19 mutants, 19 killed",
+            "review": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/supervisor-adapter-review-r2.md",
+            "reviewVerdict": "GO (R2-1 to R2-5 wording and record corrections)",
+            "fix": "Clock-backwards result follows the header contract so a shell cannot drop INVALID_CLOCK; tests for BOOT at exactly R_s and for the duration guard; one rejection code for any unqualified binding; composition oracle cross-checks the reducer deadlines; pause scenario toward the age cliff; test bookkeeping tightened.",
+            "snapshot": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13i-snapshot-r2/SHA256SUMS"
+          }
+        ],
+        "guardianModelFindings": [
+          "F1: a reference older than about 10 s makes every request EXPIRED; fail-closed liveness; source-packet parameter obligation (tick interval at most about 1000 ms), validateParams should enforce it at the next guardian-model revision",
+          "F2: a correctly pipelined request after a latch becomes supervisor loss; fail-closed, accepted as documented and verdict-neutral; a change needs a contract erratum plus a guardian-model change",
+          "F3: a role exit seen before its resume record is dropped; fail-closed liveness; ordering obligation on the native guardian adapter, optional afterResume fix at the next guardian-model revision"
+        ],
+        "sourcePacketObligations": [
+          "maxInbound at least 8200",
+          "The brokered channel buffers the roughly 2 KB delivery frame before the workload exists without blocking the supervisor",
+          "The runtime shell schedules a CLOCK event at min(R_s, next reducer deadline)"
+        ],
+        "checks": "Pure model tests, mutation and independent review only; no native compilation, process fixture, PostgreSQL, runtime, network or host action.",
+        "notRunOrAuthorized": "Not runtime, native, process or PostgreSQL evidence; no new authority. Gates unchanged: Spot/Paper only; BINANCE:BTCUSDT Spot 1m; reduce-only EXIT; private source local only; private acceptance NOT RUN; READY false; N1 held.",
+        "nextGate": "Source-packet selection. Native compilation, process fixtures, PostgreSQL and the C3 runtime stay closed until their own packet and admission pass."
       }
     }
   },
