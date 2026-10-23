@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_API_SERVICE_MISMATCH_READONLY_RESULT_2026-10-24",
+  "recordedAt": "2026-10-23T19:29:49.152Z",
+  "packetId": "S6-API-SERVICE-RO-1",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "DIAGNOSTIC_OBSERVATION_ACCEPTED_ONLY",
+  "ownerGo": "RECEIVED_IN_CHAT_NAMING_PACKET",
+  "ownerGoReference": "owner chat GO 2026-10-24 Bangkok naming S6-API-SERVICE-RO-1; local record sha256 0dd89974dfce7ae442d9a000880522e9e3c55afc271d45149c6893f5529c84c7",
+  "jobId": "s6-api-ro1-e97c9d9dca9f6a66dcb391cc",
+  "packet": {
+    "path": "docs/S6_API_SERVICE_MISMATCH_READONLY_PACKET_2026-10-24.md",
+    "sha256": "bce1a2a167d7666e0c8a82260b78bdda826b69580b0c2065e538915bced955aa"
+  },
+  "preparationEvidence": {
+    "path": "docs/evidence/S6_API_SERVICE_MISMATCH_READONLY_PREPARATION_2026-10-24.json",
+    "sha256": "d82b8f3b755a7f4acc5e3951f80f43f8f66b2216221863286e2ca2c64a956825"
+  },
+  "reviewedCode": {
+    "core": "92a8287ab450b4b5044d77f9b2c0d58da2b2979b7431f9114ccc2f66216ea89b",
+    "runner": "b70f2e42b9f68a9305507c288bf3455fa1aec7514137643e09a6b1770bcbfaaf"
+  },
+  "attempt": {
+    "startedUtc": "2026-10-23T19:26:15.320Z",
+    "endedUtc": "2026-10-23T19:26:16.242Z",
+    "monoElapsedMs": 921.9193,
+    "runnerElapsedMs": 930.9266,
+    "transportExit": 0,
+    "queryExit": 0,
+    "queryExitNote": "inferred from the status ssh relays",
+    "signal": null,
+    "stdoutBytes": 189,
+    "stderrBytes": 0,
+    "overflow": false,
+    "cutoff": false,
+    "transportError": false,
+    "termination": "NOT_NEEDED",
+    "spawnCalls": 1,
+    "noRetry": true,
+    "realKillReapQualification": "UNVERIFIED"
+  },
+  "observation": {
+    "verdict": "SERVICE_GUARD_MISMATCH_OBSERVED_AT_NEW_SNAPSHOT",
+    "idMatch": true,
+    "labels": {
+      "activeState": "inactive",
+      "loadState": "loaded",
+      "needDaemonReload": "no",
+      "subState": "dead"
+    },
+    "predicates": {
+      "activeState": "FAIL",
+      "fragmentIdentity": "PASS",
+      "mainPidShape": "FAIL",
+      "needDaemonReload": "PASS",
+      "subState": "FAIL"
+    },
+    "failedPredicates": [
+      "activeState",
+      "subState",
+      "mainPidShape"
+    ],
+    "fragmentEmpty": false
+  },
+  "bindings": {
+    "outputSha256": "61180f5fccc05ff599fe207b59e60a91c54c37a60037f75b336a53ec061ed0c6",
+    "outputBytes": 533,
+    "receiptSha256": "e7c0d398729d6c23a8647c39703e040f4473ba9629dd97660ab50317149ce639",
+    "note": "The receipt carries a secret per-job nonce, so its hash is safe to track; the receipt, manifest, marker, binding and selector-bearing pins stay local"
+  },
+  "reviews": {
+    "implementation": [
+      "tester PASS r1 and r2 (independent suites 61 and 73 tests; mutation 62 and 112 mutants on copies)",
+      "Opus auditor GO with conditions r1 and r2",
+      "Opus second opinion (Fable substitute) FINDINGS r1, NO_BLOCKING_FINDINGS r2"
+    ],
+    "result": {
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "RESULT_LINKAGE_VERIFIED",
+      "reportSha256": "c7bb5c47f6af60e122af0d7e0a51dc2a8603efe41f5d2e62a4860e44e1edc652",
+      "deviation": "reviewer read the private binding file to verify pins; printed only true/false and persisted nothing from it"
+    }
+  },
+  "notEstablished": [
+    "the historical cause of the earlier API_SERVICE_MISMATCH",
+    "why the unit is inactive; no logs, status or journal were read",
+    "service health or serving revision",
+    "database identity, owner ID or applicability",
+    "an atomic snapshot; this is one property response",
+    "real kill and reaping behaviour"
+  ],
+  "ownerId": "UNKNOWN",
+  "currentApplicability": "UNKNOWN_NOT_QUERIED",
+  "next": "Any start, restart or repair of the service is a service change that needs its own reviewed packet and an explicit owner GO naming it; a later owner-ID read needs the service guard to pass first",
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "serviceChange": "NONE",
+    "dbAccess": "NONE"
+  }
+}
