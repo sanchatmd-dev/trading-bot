@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_INPUT_LOCAL_FREEZE_2026-10-23",
+  "date": "2026-10-23",
+  "sourceRevision": "5e42636b91639e197d3e127fc62d8984c1fd523e",
+  "scope": "Owner-authorized additive local input lock only; no runtime admission or deployment",
+  "ownerAuthority": "Explicit GO for S6 local freeze after metadata verification in this chat on 2026-10-23",
+  "status": "LOCAL_FREEZE_ONLY_NOT_RUNTIME_ADMITTED",
+  "frozenAt": "2026-10-23T16:16:42.747Z",
+  "oldLockHash": "9db0f7723ecff6d05ce9c618b1a5798039d2081c83c698a8b3c9c51f3a1cb184",
+  "newLockHash": "8a25b8021c98d24f81913ea6386c6743d7b0f32fcb4df30b5ae95f5aa05604d8",
+  "sourceHash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "localLockArtifact": {
+    "path": ".qa-local/s6-local-freeze-2026-10-23/input-lock-private.json",
+    "sha256": "8bfd026ef3e5bc5c355873d8d4a4c8a6fa80cf938464170b5397da0a9b2d42ff"
+  },
+  "metadata": {
+    "parserVersion": "pine-static-v1",
+    "codePins": {
+      "src/pine-bridge/source.js": "d8dab38c2ee521a597a216215a08eb0f4ff0e841e770f33ad94850f5a62a3bdc",
+      "src/quant-research/contract.js": "17394a4c523e85a4837386c6d447e24d032c536f94cb6bc32dff40662d8237af",
+      "src/pine-bridge/input-review.js": "dc0f8222a1fc15facffa05aa54871fd62581c56350c6e8b02c888b9474ac6fc1"
+    },
+    "inputCount": 58,
+    "historicalEffectiveInputsHash": "e571b4d9d1bd10704c2bc0e480221669987ef1c2bfab22ebd3da2189f0071ec2",
+    "historicalSnapshotHash": "1ddf2c2f3ec988a1231785d990e066d7f303ec7403d86c811a2ef4a56620cacc",
+    "historicalReviewHash": "dcdffad916221f45346dd198c9b63517b8abb125f1e0fd4a16572e818cea4a0d",
+    "oldLockReproduced": true,
+    "sourceIdentityAndMetadataMatched": true,
+    "settingsPreserved": {
+      "preset": "Custom",
+      "useMTF": false,
+      "useSlowFilter": true,
+      "useRSIFilter": false,
+      "requireBOS": false,
+      "requireSweep": false,
+      "useSession": false,
+      "notifyEnabled": false,
+      "slAtrBufferInput": 0.6,
+      "confirmLookback": 5,
+      "minRiskATRInput": 0.5
+    }
+  },
+  "selection": {
+    "slot10": {
+      "input_id": "13c15795e77cab5b058a991f",
+      "pine_variable": "minRiskATRInput",
+      "baseline": 0.5,
+      "min": 0.5,
+      "max": 2.5,
+      "step": 0.5,
+      "grid": [
+        0.5,
+        1,
+        1.5,
+        2,
+        2.5
+      ]
+    },
+    "selected": 8,
+    "fixed": 50,
+    "confirmLookbackFixed": 5
+  },
+  "preservation": {
+    "oldLockAndPrivateFilesUnchanged": true,
+    "fullEffectiveMapUnchanged": true,
+    "slots3To9Unchanged": true,
+    "bridgeSignalsAndOtherDomainsUnchanged": true,
+    "noNewReviewAttestation": true,
+    "roundTripVerified": true
+  },
+  "guards": {
+    "oldSelectionComparison": "RESEARCH_SELECTION_MISMATCH",
+    "currentProposalAllowlist": "UNKNOWN_NOT_QUERIED",
+    "currentDeploymentSelection": "UNKNOWN_NOT_QUERIED",
+    "policy": "Existing proposal, reviewed-input and selection-coherence guards are unchanged. The new local lock grants no generation or runtime admission."
+  },
+  "focusedTests": {
+    "status": "PASS",
+    "total": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "startedAt": "2026-10-23T16:17:03.261Z",
+    "completedAt": "2026-10-23T16:17:04.734Z",
+    "node": "v24.19.0",
+    "scope": "Five selected pure unit checks for complete reviewed inputs, lock domains and selection coherence. No database/target/generation or native/process fixture.",
+    "args": [
+      "--max-old-space-size=64",
+      "--test",
+      "--test-isolation=none",
+      "--test-concurrency=1",
+      "--test-reporter=tap",
+      "--test-name-pattern=slot limit, duplicate mapping|selection coherence|valid alternative source selection|complete reviewed map",
+      "test/quant-research.test.js",
+      "test/pine-input-review.test.js"
+    ],
+    "timeoutMs": 30000
+  },
+  "independentReview": {
+    "status": "PASS_LOCAL_LOCK_ONLY",
+    "path": ".qa-local/s6-local-freeze-2026-10-23/result-review.md",
+    "sha256": "7778794bebdd0012f67c215911edfac2d4c8238a4a1993ba9e448bd7512707d7"
+  },
+  "preservedFinding": {
+    "id": "F1",
+    "description": "The initial admission script matched PASS as a substring. It was corrected to require one exact affirmative verdict line before any new lock was derived.",
+    "status": "RESOLVED_BEFORE_FREEZE"
+  },
+  "artifacts": [
+    {
+      "path": ".qa-local/s6-local-freeze-2026-10-23/metadata-recheck.json",
+      "sha256": "276e83cbf062dcd2eaec1df4b55ff7153705233192bf4bd95efadcf1ccecadf1"
+    },
+    {
+      "path": ".qa-local/s6-local-freeze-2026-10-23/admission-review.md",
+      "sha256": "6a87ef62106a5c3598efb5d656f2dc7e873483acbaf75d7a8ff56158d17e03a0"
+    },
+    {
+      "path": ".qa-local/s6-local-freeze-2026-10-23/freeze-result.json",
+      "sha256": "cb453e13d2c0e9cf0d2dc5c097a656f5bb0aa6f9be9b8d4cec26a4a8b7723ca0"
+    },
+    {
+      "path": ".qa-local/s6-local-freeze-2026-10-23/focused-tests.json",
+      "sha256": "ee5f776ac5ed3f53cab90f9504e05b2acb9664c22ce628fb6450ed8d30c31a94"
+    },
+    {
+      "path": ".qa-local/s6-local-freeze-2026-10-23/focused.tap",
+      "sha256": "f3a5112ef153e6172777f4785a1866502a460be3edcd99e73aaa6cb54f680e84"
+    },
+    {
+      "path": ".qa-local/s6-local-freeze-2026-10-23/focused-stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".qa-local/s6-local-freeze-2026-10-23/run-focused.mjs",
+      "sha256": "37bc50cd4ec9e51d231c549cb9442fa2f430054d3a27b1a4a1404495bdb3aee1"
+    },
+    {
+      "path": ".qa-local/s6-metadata-2026-10-23/freeze-local.mjs",
+      "sha256": "a4f2da535d1b5f2f85c2997800ebce3af175c925575c5ac00cd93ab212505f54"
+    }
+  ],
+  "notRun": [
+    "Fresh target/proposal/deployment inspection",
+    "Generation or provider calls",
+    "Source compilation or modification",
+    "Database, native compilation, process fixtures or C3 runtime",
+    "Real-data effects, TradingView parity or private acceptance",
+    "Optimizer, holdout access or research campaign"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "targetAction": "NOT_AUTHORIZED",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "live": "NOT_AUTHORIZED",
+    "guardReset": "NOT_AUTHORIZED",
+    "bestInputsApply": "NOT_AUTHORIZED"
+  }
+}
