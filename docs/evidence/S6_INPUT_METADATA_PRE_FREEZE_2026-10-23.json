@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_INPUT_METADATA_PRE_FREEZE_2026-10-23",
+  "date": "2026-10-23",
+  "baseRevision": "4b2c5392ff757588761c38cd3101c14ef7dd731a",
+  "scope": "Owner-selected replacement dimension, static archived-source metadata inspection and pre-freeze packet only.",
+  "ownerDecision": {
+    "slot": 10,
+    "pine_variable": "minRiskATRInput",
+    "baseline": 0.5,
+    "min": 0.5,
+    "max": 2.5,
+    "step": 0.5,
+    "grid": [
+      0.5,
+      1,
+      1.5,
+      2,
+      2.5
+    ],
+    "confirmLookbackFixed": 5,
+    "freezeAuthorized": false,
+    "targetAuthorized": false
+  },
+  "metadata": [
+    {
+      "pine_variable": "minRiskATRInput",
+      "input_id": "13c15795e77cab5b058a991f",
+      "type": "float",
+      "default": 0.5,
+      "declared_domain": {
+        "min": 0.05,
+        "max": null,
+        "step": 0.05
+      },
+      "eligible": true,
+      "effective_value": 0.5
+    },
+    {
+      "pine_variable": "confirmLookback",
+      "input_id": "be4f29f201a27c098a4a8345",
+      "type": "int",
+      "default": 5,
+      "declared_domain": {
+        "min": 2,
+        "max": 50,
+        "step": null
+      },
+      "eligible": true,
+      "effective_value": 5
+    },
+    {
+      "pine_variable": "slAtrBufferInput",
+      "input_id": "340ef8b8aae570efac162075",
+      "type": "float",
+      "default": 0.5,
+      "declared_domain": {
+        "min": 0,
+        "max": null,
+        "step": 0.05
+      },
+      "eligible": true,
+      "effective_value": 0.6
+    }
+  ],
+  "sourceHash": "0be2c64c85ea2c7ef15b00b3bc1d73df1b9ee140398ef2a23a7858209999f01a",
+  "historicalEffectiveInputsHash": "e571b4d9d1bd10704c2bc0e480221669987ef1c2bfab22ebd3da2189f0071ec2",
+  "historicalSnapshotHash": "1ddf2c2f3ec988a1231785d990e066d7f303ec7403d86c811a2ef4a56620cacc",
+  "existingInputLockHash": "9db0f7723ecff6d05ce9c618b1a5798039d2081c83c698a8b3c9c51f3a1cb184",
+  "checks": {
+    "status": "STATIC_METADATA_VERIFIED_PRE_FREEZE_ONLY",
+    "inputCount": 58,
+    "uniqueInputIds": 58,
+    "sourceBoundsPass": true,
+    "evaluatorBoundsPass": true,
+    "sourceStep": 0.05,
+    "gridIncrementSourceStepRatio": 10,
+    "historicalReview": {
+      "effectiveHashVerified": true,
+      "snapshotHashVerified": true,
+      "identityOnlyNotFreshAttestation": true
+    },
+    "privateFilesUnchanged": true,
+    "existingLockUnchanged": true
+  },
+  "priorProposal": {
+    "domain": {
+      "min": 0.5,
+      "max": 1.5,
+      "step": 0.25
+    },
+    "approval": "HISTORIC_UNAPPROVED_PROPOSAL",
+    "preserved": true,
+    "supersededForPlanningBy": "Owner decision in this chat on 2026-10-23"
+  },
+  "runtimeApplicability": {
+    "currentAnalysisProposalAllowlist": "UNKNOWN_NOT_QUERIED",
+    "currentDeploymentSelection": "UNKNOWN_NOT_QUERIED",
+    "freshRuntimeReview": "NOT_PERFORMED"
+  },
+  "independentReview": {
+    "status": "PASS_PRE_FREEZE_ONLY",
+    "report": ".qa-local/s6-metadata-2026-10-23/review.md"
+  },
+  "notRun": [
+    "Input lock freeze",
+    "New input-lock hash generation",
+    "Source modification or compilation",
+    "Database or target inspection",
+    "Generation/provider call",
+    "Real-data effects or TradingView parity",
+    "Optimizer or holdout access",
+    "Runtime regression tests"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "N1": "HELD",
+    "P13j": "HELD",
+    "targetAction": "NOT_AUTHORIZED",
+    "freeze": "NOT_AUTHORIZED_BY_THIS_PACKET"
+  },
+  "artifactPins": [
+    {
+      "path": ".qa-local/s6-metadata-2026-10-23/check-metadata.mjs",
+      "sha256": "049e868f329b461cf3d963677cc8fd5fa9eff85ad986e072d5454f4f1a0cc7a5"
+    },
+    {
+      "path": ".qa-local/s6-metadata-2026-10-23/metadata-result.json",
+      "sha256": "f63ed5d0810da33f44107e27281b2635e1a88cd4a6f3c7f48d59c715711fa873"
+    },
+    {
+      "path": ".qa-local/s6-metadata-2026-10-23/private-file-pins.json",
+      "sha256": "2efaf635088539fe44945cd6dcbeaf912f261459706ba886ffd543ebe6dcce68"
+    },
+    {
+      "path": ".qa-local/s6-metadata-2026-10-23/review.md",
+      "sha256": "503df9097649dbc5d56ce9d5d3fd024a8ad5e487058ec04827d91e022da577b3"
+    }
+  ]
+}
