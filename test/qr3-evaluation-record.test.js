@@ -9,9 +9,15 @@ import {validateSpec,specHashOf} from '../src/comparison/ranking.js';
 import {buyAndHold} from '../src/comparison/valuation.js';
 import {
   EVALUATION_RECORD_VERSION,EVALUATION_RECORD_MAX_BYTES,BENCHMARK_RECORD_MAX_BYTES,BENCHMARK_ID,
-  evaluationRecordBody,benchmarkRecordBody,outcomeRecord
+  evaluationRecordBody as evaluationRecordBodyWith,benchmarkRecordBody as benchmarkRecordBodyWith,outcomeRecord
 } from '../src/comparison/evaluation-record.js';
-import {buildFixedEvalContract,buildFixedEvalResult,fixedEvalBindingParameters,fixedEvalPendingMetadata} from '../src/quant-research/fixed-eval-contract.js';
+import {FIXED_EVAL_VERSIONS,FIXED_EVAL_PURPOSES,buildFixedEvalContract,buildFixedEvalResult,fixedEvalBindingParameters,fixedEvalPendingMetadata,
+  validateFixedEvalContract,validateFixedEvalResult} from '../src/quant-research/fixed-eval-contract.js';
+
+// The module takes the contract validators as a dependency (root ruling, packet section 13); the tests pass the real ones.
+const DEPS={validateFixedEvalContract,validateFixedEvalResult};
+const evaluationRecordBody=input=>evaluationRecordBodyWith(input,DEPS);
+const benchmarkRecordBody=input=>benchmarkRecordBodyWith(input,DEPS);
 
 // Every participant, run, price and number below is a LABELLED TEST FIXTURE. None is a research result and none is a qualified result.
 // The fixture is a real fixed-eval-result-v1 built through buildFixedEvalResult, so validateFixedEvalResult accepts it. The "evaluator" figures are
@@ -832,11 +838,64 @@ test('A9 inputs are deep-equal before and after each call; outputs are deep froz
   assert.throws(()=>{outcomeResult.participants[0].status='ELIGIBLE_QUALIFIED';},TypeError);
 });
 
+/* ------------------------------------------------------------------ S3a-r2 validators as a dependency */
+test('r2 the contract validators are a required dependency: absent, not an object or not a function refuses VALIDATOR_MISSING',()=>{
+  const missing=result=>refused(result,CODES.QR3_INTEGRITY_FAILED,'VALIDATOR_MISSING');
+  for(const deps of [undefined,null,{},[],'validators',7,{validateFixedEvalContract},{validateFixedEvalResult},{validateFixedEvalContract,validateFixedEvalResult:'x'},
+    {validateFixedEvalContract:null,validateFixedEvalResult},{validateFixedEvalContract:{},validateFixedEvalResult}]){
+    missing(evaluationRecordBodyWith(evaluationInput(),deps));
+  }
+  missing(evaluationRecordBodyWith(evaluationInput()));
+  // The dependency is checked before the input is read.
+  missing(evaluationRecordBodyWith(null,{}));
+  // The benchmark needs only the contract validator.
+  for(const deps of [undefined,null,{},{validateFixedEvalContract:1},{validateFixedEvalResult}])missing(benchmarkRecordBodyWith(benchmarkInput(),deps));
+  missing(benchmarkRecordBodyWith(null));
+  assert.equal(benchmarkRecordBodyWith(benchmarkInput(),{validateFixedEvalContract}).ok,true);
+  // The outcome record needs no contract validator.
+  assert.equal(outcomeRecord(outcomeInput()).ok,true);
+  // The real validators give the same bytes as before the dependency existed.
+  assert.equal(evaluationRecordBodyWith(evaluationInput(),DEPS).body_hash,okBase.body_hash);
+  assert.equal(benchmarkRecordBodyWith(benchmarkInput(),DEPS).body_hash,okBenchmark.body_hash);
+});
+test('r2 the validators are used as given: a refusing validator is FIXED_RESULT_INVALID, a passing stub reaches the 5.2 rows the real validator guards',()=>{
+  const refusing=()=>{throw new Error('refused');};
+  integrity(evaluationRecordBodyWith(evaluationInput(),{validateFixedEvalContract,validateFixedEvalResult:refusing}),'FIXED_RESULT_INVALID');
+  integrity(evaluationRecordBodyWith(evaluationInput(),{validateFixedEvalContract:refusing,validateFixedEvalResult}),'FIXED_RESULT_INVALID');
+  refused(benchmarkRecordBodyWith(benchmarkInput(),{validateFixedEvalContract:refusing}),CODES.QR3_INTEGRITY_FAILED,'FIXED_CONTRACT_INVALID');
+  // Pass-through stubs show the three rows of 5.2 that the real validator makes unreachable still hold behind it (defence in depth).
+  const stubs={validateFixedEvalContract:contract=>structuredClone(contract),validateFixedEvalResult:(contract,binding,result)=>structuredClone(result)};
+  const stubbed=edit=>{const input=evaluationInput();edit(input);return evaluationRecordBodyWith(input,stubs);};
+  assert.equal(stubbed(()=>{}).body_hash,okBase.body_hash);
+  integrity(stubbed(input=>{input.fixed_result.base.selection_id='sel-1';}),'SELECTION_ID');
+  integrity(stubbed(input=>{input.fixed_result.stress.selection_id='sel-1';}),'SELECTION_ID');
+  integrity(stubbed(input=>{input.fixed_result.evaluation_closure.version='fixed-eval-closure-v2';}),'CLOSURE_VERSION');
+  integrity(stubbed(input=>{input.fixed_result.stress.split.end+=1;}),'SPLIT_MISMATCH');
+  integrity(stubbed(input=>{input.fixed_result.stress.parent_run_id=OTHER;}),'LINEAGE_PARENT');
+  integrity(stubbed(input=>{input.fixed_result.base.parent_run_id=OTHER;}),'LINEAGE_PARENT');
+  integrity(stubbed(input=>{input.fixed_result.purpose='QR4_SELECTION';}),'PURPOSE');
+});
+test('r2 constants restated in the module equal the exports of the fixed-evaluation contract',()=>{
+  assert.equal(FIXED_EVAL_VERSIONS.closure,'fixed-eval-closure-v1');
+  assert.equal(FIXED_EVAL_PURPOSES[1],'QR3_COMPARISON');
+  // The module refuses a closure version other than the contract one and accepts the contract one (the real result carries it).
+  assert.equal(BASE.result.evaluation_closure.version,FIXED_EVAL_VERSIONS.closure);
+  assert.equal(BASE.result.purpose,FIXED_EVAL_PURPOSES[1]);
+  const stubs={validateFixedEvalContract:contract=>structuredClone(contract),validateFixedEvalResult:(contract,binding,result)=>structuredClone(result)};
+  const other=evaluationInput();other.fixed_result.evaluation_closure.version=FIXED_EVAL_VERSIONS.closure+'x';
+  integrity(evaluationRecordBodyWith(other,stubs),'CLOSURE_VERSION');
+  const purpose=evaluationInput();purpose.fixed_result.purpose=FIXED_EVAL_PURPOSES[0];
+  integrity(evaluationRecordBodyWith(purpose,stubs),'PURPOSE');
+});
+
 /* ------------------------------------------------------------------ A10 static source */
 test('A10 the module source imports no file, network, process or database module, no postgres store, and reads no clock or random source',()=>{
   const source=fs.readFileSync(fileURLToPath(new URL('../src/comparison/evaluation-record.js',import.meta.url)),'utf8');
   const specifiers=[...source.matchAll(/(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g)].map(match=>match[1]);
-  assert.deepEqual([...specifiers].sort(),['../quant-research/fixed-eval-contract.js','./common.js','./evidence.js','./ranking.js','./valuation.js']);
+  assert.deepEqual([...specifiers].sort(),['./common.js','./evidence.js','./ranking.js','./valuation.js']);
+  // The fixed-evaluation closure guard (test/fixed-eval-engine.test.js) flags any src text, comments included, that names these modules.
+  assert.equal(/fixed-eval-contract|quant-fixed-eval-engine|quant-fixed-eval-worker|quant-fixed-eval\.js/.test(source),false);
+  assert.equal(/quant-research/.test(source),false);
   for(const forbidden of [/node:fs/,/node:net/,/node:child_process/,/node:http/,/node:https/,/node:dns/,/node:tls/,/node:dgram/,/node:worker_threads/,/from\s+['"]fs['"]/,/from\s+['"]net['"]/,
     /from\s+['"]child_process['"]/,/\bpg\b/,/postgres/i,/comparison-store/,/\bDate\.now\b/,/\bnew Date\b/,/\bMath\.random\b/,/\brandomUUID\b/,/\brequire\s*\(/,/\bimport\s*\(/,/\bprocess\./,
     /\bfetch\s*\(/,/\bperformance\./,/\bsetTimeout\b/,/\bsetInterval\b/])assert.equal(forbidden.test(source),false,String(forbidden));

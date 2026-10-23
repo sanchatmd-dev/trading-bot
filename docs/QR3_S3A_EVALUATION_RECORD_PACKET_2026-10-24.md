@@ -396,3 +396,22 @@ needs an SQL, store or S1 change.
   hard-coded false; mutant M38 is accepted as unreachable after contract validation; when R1 is lifted, ranking must use
   the unrounded `net_return_percent_exact` and the record's own drawdown (QR3 V7); the later orchestrator must read rows
   only through the verified binding and pass the stored spec.
+
+---
+
+## 13. Root ruling after exact-revision CI, 2026-10-24
+
+The first push of S3a failed exact-revision CI in `test/fixed-eval-engine.test.js` ("runtime importers of fixed evaluation
+remain inside the reviewed manifest"). That guard requires every `src` module whose text names the fixed-evaluation
+contract or engine modules to be listed in the reviewed fixed-evaluation closure. Listing S3a there would change the FE-2b
+closure hash, which is an engine-closure change that needs the FE-2b release plan and an owner GO. Local verification
+missed it because the guard test was not among the suites run.
+
+Ruling: S3a stays outside the evaluation closure. The module no longer imports the fixed-evaluation contract and its
+source text names none of the guarded modules. `evaluationRecordBody` and `benchmarkRecordBody` take the contract's
+validators as a required dependency argument (for example `{validateFixedEvalResult, validateFixedEvalContract}`) and
+refuse with `QR3_INTEGRITY_FAILED`, detail `VALIDATOR_MISSING`, when a required validator is absent or not a function.
+Constants previously imported from the contract are restated as literals and pinned by a test that compares them with the
+contract's exports. Tests pass the real validators. The later database orchestrator, which will sit inside the reviewed
+closure under its own packet and GO, supplies them. Every other rule in this packet is unchanged. Before any further push,
+the full default Node suite runs locally once, and every test that imports a changed module runs.

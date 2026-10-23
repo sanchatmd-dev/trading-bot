@@ -12,16 +12,16 @@
   },
   "packet": {
     "path": "docs/QR3_S3A_EVALUATION_RECORD_PACKET_2026-10-24.md",
-    "sha256": "5999f04e97f38c30ec53616808f58e0a41fb20b756264f3d7a1867d95005f645"
+    "sha256": "698ed81c0200519d26735b0966ef88cc0705419262be0cbd24535f794c135fd1"
   },
   "sourcePins": [
     {
       "path": "src/comparison/evaluation-record.js",
-      "sha256": "926946fd957f277cf3a66d69c74eb7956ceec616ccbdc9d36fda3cd437abe5ff"
+      "sha256": "60c3b66e90b31000bdb92ad578acf38fa767b42724bc34b4528ea3a59a7ba9b7"
     },
     {
       "path": "test/qr3-evaluation-record.test.js",
-      "sha256": "f367299ce438c2920fb6ab8b63a5dff7e5c9154b2b38a29d39b71edf827a4d74"
+      "sha256": "77f066ea3ef7b6da6f95dc6ed3bbc4c21a81602792b6fd0f6990335b5d3e5a50"
     }
   ],
   "checks": {
@@ -146,5 +146,90 @@
     "targetRouteActivation": "NOT_RUN",
     "holdout": "UNTOUCHED",
     "fixedEvalFlag": "OFF"
-  }
+  },
+  "supersededSourcePins": [
+    {
+      "path": "src/comparison/evaluation-record.js",
+      "sha256": "926946fd957f277cf3a66d69c74eb7956ceec616ccbdc9d36fda3cd437abe5ff",
+      "supersededBy": "ciGuardFix"
+    },
+    {
+      "path": "test/qr3-evaluation-record.test.js",
+      "sha256": "f367299ce438c2920fb6ab8b63a5dff7e5c9154b2b38a29d39b71edf827a4d74",
+      "supersededBy": "ciGuardFix"
+    }
+  ],
+  "ciGuardFix": {
+    "failedRevision": "5b958b6a1a86dfd2eda5cb5a450325d99f5a1b18",
+    "failedRun": {
+      "workflow": "Safety checks",
+      "id": 40009400641,
+      "job": "test (ubuntu-latest)",
+      "step": "npm test",
+      "failingTest": "test/fixed-eval-engine.test.js: runtime importers of fixed evaluation remain inside the reviewed manifest (unhashed importer src/comparison/evaluation-record.js)",
+      "otherJobs": "container and postgres success; windows test cancelled; Quant Lab success"
+    },
+    "cause": "The new module imported the fixed-evaluation contract; the guard requires every src importer to sit in the reviewed fixed-evaluation closure, and listing it there would change the FE-2b closure hash, an engine-closure change outside this slice",
+    "ruling": "Packet section 13: validators become a required dependency argument; no import or textual mention of the guarded modules; constants restated as literals pinned against the contract exports",
+    "rootRun": {
+      "fixedEvalGuard": {
+        "tests": 10,
+        "pass": 10,
+        "fail": 0
+      },
+      "newSuite": {
+        "tests": 44,
+        "pass": 44,
+        "fail": 0
+      },
+      "fairComparison": {
+        "tests": 110,
+        "pass": 105,
+        "fail": 0,
+        "todo": 5
+      },
+      "parity": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0
+      }
+    },
+    "coderFullSuite": {
+      "command": "npm test",
+      "tests": 3053,
+      "pass": 3036,
+      "fail": 0,
+      "skipped": 8,
+      "todo": 9,
+      "note": "reported by the coder, about 12 minutes, exit 0"
+    },
+    "reviews": [
+      {
+        "role": "architecture auditor, Opus 5.5 / high",
+        "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/audit-r3.md",
+        "sha256": "392f3bc1a8d4824f7f1ff7db8d687c0872e80b39b7e34d7b68f813823eb67010",
+        "verdict": "GO",
+        "note": "low F1: a validator that returns a non-object raises a TypeError instead of a refusal (fail closed; unreachable with the real validators); carried to the orchestrator packet"
+      },
+      {
+        "role": "tester, Sonnet 5.5 / medium",
+        "path": ".qa-local/claude-root-2026-10-24/qr3-s3a/tester-r3/tester-report-r3.md",
+        "sha256": "ce1a75036ea296ad45f9c286b43d6b18da22b6779c0053ff33b4c950f8b90ad8",
+        "verdict": "PASS",
+        "mutants": {
+          "total": 12,
+          "killed": 12
+        }
+      }
+    ],
+    "carriedToOrchestrator": [
+      "pass the real validators by direct reference, with no swallowing wrapper",
+      "end-to-end tampered-result test through the wiring",
+      "rows only through the verified binding",
+      "consider an object guard after each validator call"
+    ]
+  },
+  "lessons": [
+    "Run the full default Node suite once before pushing a new src module: a source-text guard can fail CI even when no test imports the module"
+  ]
 }

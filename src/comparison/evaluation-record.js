@@ -2,7 +2,6 @@ import {canonical,hash,Money,MINUTE,QR3_VERSIONS,CODES,isObject,isInt,isNumber,d
 import {valueRun,buyAndHold} from './valuation.js';
 import {participantStatus} from './evidence.js';
 import {decideOutcome,specThresholds,specHashOf} from './ranking.js';
-import {FIXED_EVAL_VERSIONS,validateFixedEvalContract,validateFixedEvalResult} from '../quant-research/fixed-eval-contract.js';
 
 /**
  * QR-3 slice S3a (docs/QR3_S3A_EVALUATION_RECORD_PACKET_2026-10-24.md): the pure half of the evaluation orchestration. Three functions build the
@@ -25,6 +24,8 @@ export const BENCHMARK_ID=QR3_VERSIONS.benchmark;
 const ID=/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
 const HEX64=/^[0-9a-f]{64}$/;
 const COMPARISON_PURPOSE='QR3_COMPARISON';
+/** Restated from the fixed-evaluation contract (this module must not import it; root ruling, packet section 13); a test pins both to the contract exports. */
+const CLOSURE_VERSION='fixed-eval-closure-v1';
 const EVALUATION_KEYS=Object.freeze(['comparison_id','spec_hash','spec','participant_id','evaluation_run_id','fixed_contract','binding','fixed_result','rows']);
 const BENCHMARK_KEYS=Object.freeze(['comparison_id','spec_hash','spec','fixed_contract','rows']);
 const OUTCOME_KEYS=Object.freeze(['spec','spec_hash','context_key','participants']);
@@ -40,6 +41,12 @@ const invalid=detail=>refuse(CODES.INVALID_FIELDS,detail);
 const integrity=detail=>refuse(CODES.QR3_INTEGRITY_FAILED,detail);
 const hasKeys=(value,names)=>isObject(value)&&Object.keys(value).length===names.length&&names.every(name=>Object.hasOwn(value,name));
 const hasBasisKey=value=>isObject(value)&&Object.hasOwn(value,'basis_confirmed');
+
+/**
+ * The validators of the fixed-evaluation contract are a required dependency argument, so this module stays outside the reviewed evaluation closure
+ * (root ruling, packet section 13). A missing or non-function validator refuses QR3_INTEGRITY_FAILED, detail VALIDATOR_MISSING, before anything is read.
+ */
+const hasValidators=(deps,names)=>isObject(deps)&&names.every(name=>typeof deps[name]==='function');
 
 /** Shape shared by the evaluation and benchmark inputs: exact keys, no basis_confirmed, a comparison id, a spec hash and a spec object. */
 function checkInput(input,names){
@@ -108,18 +115,20 @@ function crossCheck(step,valued){
 /**
  * Evaluation record body qr3-evaluation-record-v1 (5.6) for one participant.
  * input: {comparison_id, spec_hash, spec (frozen STANDARDIZED spec), participant_id, evaluation_run_id, fixed_contract, binding, fixed_result, rows}
- * Order: input shape, validateFixedEvalResult (FIXED_RESULT_INVALID), lineage and purpose (5.2), window translation (WINDOW_MISMATCH), numbers,
+ * deps: {validateFixedEvalContract, validateFixedEvalResult}, the validators of the fixed-evaluation contract (required, VALIDATOR_MISSING otherwise).
+ * Order: dependencies, input shape, validateFixedEvalResult (FIXED_RESULT_INVALID), lineage and purpose (5.2), window translation (WINDOW_MISMATCH), numbers,
  * fill times (FILL_TIME_TRANSLATION), cash against equity (CASH_EQUITY), valueRun for base and stress (a refusal is passed through unchanged),
  * the exact-decimal cross-check of base then stress (5.5), then the body. The body stores the valueRun outputs, never an evaluator figure.
  * Returns {ok:true, code:null, detail:null, body, body_hash} or a refusal.
  */
-export function evaluationRecordBody(input){
+export function evaluationRecordBody(input,deps){
+  if(!hasValidators(deps,['validateFixedEvalContract','validateFixedEvalResult']))return integrity('VALIDATOR_MISSING');
   const bad=checkInput(input,EVALUATION_KEYS);
   if(bad)return bad;
   let contract,result;
   try{
-    contract=validateFixedEvalContract(input.fixed_contract);
-    result=validateFixedEvalResult(contract,input.binding,input.fixed_result);
+    contract=deps.validateFixedEvalContract(input.fixed_contract);
+    result=deps.validateFixedEvalResult(contract,input.binding,input.fixed_result);
   }catch{return integrity('FIXED_RESULT_INVALID');}
   const {base,stress}=result,participant=input.participant_id;
   if(result.purpose!==COMPARISON_PURPOSE)return integrity('PURPOSE');
@@ -128,7 +137,7 @@ export function evaluationRecordBody(input){
   if(base.selection_id!==null||stress.selection_id!==null)return integrity('SELECTION_ID');
   if(!Array.isArray(input.spec.participants)||!input.spec.participants.includes(participant))return integrity('PARTICIPANT_NOT_IN_SPEC');
   if(!idOk(input.evaluation_run_id))return integrity('EVALUATION_RUN_ID');
-  if(result.evaluation_closure.version!==FIXED_EVAL_VERSIONS.closure)return integrity('CLOSURE_VERSION');
+  if(result.evaluation_closure.version!==CLOSURE_VERSION)return integrity('CLOSURE_VERSION');
   if(canonical(base.split)!==canonical(stress.split))return integrity('SPLIT_MISMATCH');
   const window=scoredWindow(contract,input.spec,input.rows,base.split.evaluated_bars);
   if(!window.ok)return window;
@@ -167,14 +176,15 @@ export function evaluationRecordBody(input){
  * Benchmark body (5.7): Buy & Hold qr3-bh-close-same-cost-v1 on the same scored grid, with the base step cost model of the frozen contract (Q4),
  * basis_confirmed false and no liquidation line. A refused benchmark is stored as a null line that keeps its own code and detail (B6, RC-C20);
  * it does not refuse the comparison. Only an input fault (shape, contract, window, a number) refuses.
- * input: {comparison_id, spec_hash, spec, fixed_contract, rows}
+ * input: {comparison_id, spec_hash, spec, fixed_contract, rows}; deps: {validateFixedEvalContract} (required, VALIDATOR_MISSING otherwise)
  * Returns {ok:true, code:null, detail:null, body:{benchmark_id, record_comparison_id, record_spec_hash, window, result}, body_hash} or a refusal.
  */
-export function benchmarkRecordBody(input){
+export function benchmarkRecordBody(input,deps){
+  if(!hasValidators(deps,['validateFixedEvalContract']))return integrity('VALIDATOR_MISSING');
   const bad=checkInput(input,BENCHMARK_KEYS);
   if(bad)return bad;
   let contract;
-  try{contract=validateFixedEvalContract(input.fixed_contract);}catch{return integrity('FIXED_CONTRACT_INVALID');}
+  try{contract=deps.validateFixedEvalContract(input.fixed_contract);}catch{return integrity('FIXED_CONTRACT_INVALID');}
   const window=scoredWindow(contract,input.spec,input.rows,contract.dataset.bar_count-contract.dataset.warmup_bars);
   if(!window.ok)return window;
   if(gridHasNumber(window.grid))return numberRefusal();
