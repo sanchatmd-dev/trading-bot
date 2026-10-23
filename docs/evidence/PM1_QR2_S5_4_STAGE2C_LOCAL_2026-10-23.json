@@ -489,7 +489,28 @@
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r3/SHA256SUMS": "585d717c78164615fa86185b831cb2dba7d8e85670e31cca8f8fad7fb2890022",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r3b/SHA256SUMS": "0f6383c4b05a0fd52369f3b0735cf14b7820fc9d0115bf5073a018b50208332c",
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r4/SHA256SUMS": "2799c35bf4a2221a11a23f613cfa523377e4f58f818c452d9a96374ffb344e43",
-    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r4b/SHA256SUMS": "b1bed1e928df6caa9f7b25917f245d2ca1635d915d82aa1e32f4cc8d07867240"
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-snapshot-r4b/SHA256SUMS": "b1bed1e928df6caa9f7b25917f245d2ca1635d915d82aa1e32f4cc8d07867240",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-accepted/SHA256SUMS": "5ac685861389b0053028f14068980ab6c1cfc99762014d42268a4978b941bec4",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-accepted/author-r5.md": "ca36548a8b3a5f9090982a02f05b3871a2172633580f667bae5d4735547d67d9",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-accepted/carried-composition-test.json": "b386a4810fea00ec4d703ed965043f30f80d6fd4523ba2ff1c7837539007887a",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-accepted/carried-composition-test.mjs": "1ecb0b83a4b344431dfe2513f732b787a4a8770e375d1ea9f05563e2a35f4575",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-accepted/guardian-state-test.json": "237e8d312b872e4dbade2d20036d09b7ed31b5291e017bc437412a1b98aae5fb",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-accepted/guardian-state-test.mjs": "1b354560d82275b6cdfdf8889604354233a97c775f02dec07df26d4c73a1b3eb",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-accepted/guardian-state.mjs": "b38d5ab84a9821ff94a6ea127c9acc1cc238f1f4132776ec9e8225133bf8ce9b",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-accepted/supervisor-adapter-test.json": "cd94489f89e818f3c5d8e60806f38dd03b1fb02929589e079f82d5eccb1d6377",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-accepted/supervisor-adapter-test.mjs": "27ef00da52e061832012746dbc9c8b14bb39e8784b4abfe38f58fda6ebbe1de1",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/carried-r1-snapshot/carried-composition-test.mjs": "59ff3a7bba5f8cda92376d19fbf9200a81b39bbb5ddb8a104f32cd7fe5090d3c",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/carried-r1-snapshot/carried-composition-test.json": "248af12de7a6e94e1365c22259e15074c87c9f310c7bd957881b20f4bdca70c0",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/carried-r1-snapshot/carried-composition-author.md": "bd750358d1ff79bc54500e88f1be997d62cd03aa5270740337f23f8042e4afe1",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/carried-r1-snapshot/SHA256SUMS": "30100940dcc09ec13dcf09b4835ac0b3d71c253afb12ff58e65a830dd1a08224",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h-r5.md": "c6540f7885df0768406242e88d19090eeedbb6ecd61077d28ce0b325c314de44",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/s1-root-ruling-e10.md": "5a964fb7c3f543179779dfc165614221feacc241bb631021a557a932c0af3206",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/s1-ruling-adversarial.md": "2b018ec31b2e732a9aa00a8c76da2a8298020eff3220ff8783f20bf2e572c26b",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/s1-ruling-comparison.md": "4f547ef1ed80fc2b1a837edc7709f8b7f23ba2d6e0400beba4afe3c3da29dc4e",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/carried-composition-audit-r1.md": "4bb06dd8becd0d4a4295d857b17c8ffadcbfa5559c3fd2ed5c02fd516fd78a79",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-audit.md": "1e4be6db6758714a0724c582f23721b8e939b9c8d3b7195d1a7f8aeba80f9182",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-mutation/mutation-r5.md": "cdf76e7280da626f14868386ccdb182631e8dbe48f3f786480438fd2ea178b3e",
+    ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-mutation/results.json": "85c350fab5534f94b10f4a408aff703f67415ca09ba3905760e057ae6e1b3dfc"
   },
   "supersededWorkingCopyPins": {
     ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state.mjs": {
@@ -1375,6 +1396,68 @@
         "checks": "Pure model tests, mutation and independent review only; no native compilation, process fixture, PostgreSQL, runtime, network or host action.",
         "notRunOrAuthorized": "Not runtime, native, process or PostgreSQL evidence; no new authority. Gates unchanged: Spot/Paper only; BINANCE:BTCUSDT Spot 1m; reduce-only EXIT; private source local only; private acceptance NOT RUN; READY false; N1 held.",
         "nextGate": "Source-packet selection. P13j (native-slice proposal) is held by owner decision after a safety classifier stop. Native compilation, process fixtures, PostgreSQL and the C3 runtime stay closed until their own packet and admission pass."
+      },
+      "guardianModelRevisionR5": {
+        "status": "ACCEPTED_AS_PURE_MODEL_NO_RUNTIME_NATIVE_PROCESS_OR_POSTGRESQL_EVIDENCE",
+        "scope": "PURE_GUARDIAN_MODEL_REVISION_R5_FOR_ERRATUM_E10_FINDING_S1",
+        "supersedes": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h-r4b.md (guardian-state.mjs 9f5ef30b...)",
+        "rootAcceptanceRecord": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/guardian-state-acceptance-p13h-r5.md",
+        "rootRuling": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/s1-root-ruling-e10.md",
+        "acceptedCopies": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/p13h-r5-accepted/SHA256SUMS",
+        "model": "guardian-state.mjs b38d5ab84a9821ff94a6ea127c9acc1cc238f1f4132776ec9e8225133bf8ce9b",
+        "workingCopyNote": "The folder-root guardian-state.mjs keeps the r4b bytes and is not the accepted model; the accepted r5 bytes live only in p13h-r5-accepted.",
+        "finding": "FINDING S1: after EXIT a workload start failure latched the guardian with cleanup FAILED while the CLEANUP frame reported a clean inventory, so the supervisor reducer reached VERIFIED; classified as a contract gap",
+        "erratum": "E10: START_WORKLOAD settles before the normal-path cleanup starts; a failed start is REFUSED WORKLOAD_FAILED before EXIT; a never-settled start cannot reach VERIFIED on either side",
+        "rootRuns": {
+          "node": "v24.19.0",
+          "freeRamGiB": 1.33,
+          "guardian": {
+            "tests": 244,
+            "pass": 244,
+            "fail": 0
+          },
+          "carriedComposition": {
+            "tests": 26,
+            "pass": 26,
+            "fail": 0
+          },
+          "adapter": {
+            "tests": 127,
+            "pass": 127,
+            "fail": 0
+          },
+          "resultFilesByteIdentical": true
+        },
+        "carriedCompositionR1": {
+          "tests": 24,
+          "pass": 24,
+          "s1Reproduced": true,
+          "snapshot": ".qa-local/qr2-s5-4-stage2c-diagnostic-runtime/carried-r1-snapshot/SHA256SUMS"
+        },
+        "review": {
+          "designPanel": [
+            "adversarial: option B holds only with conditions",
+            "comparison: option D recommended"
+          ],
+          "mutation": {
+            "mutants": 22,
+            "killedBehavioural": 17,
+            "equivalent": 5,
+            "invalid": 0
+          },
+          "audit": "GO, five P3 notes"
+        },
+        "deviations": [
+          "Debugger effort raised to high for this packet",
+          "One author test rerun started below the 1 GiB RAM floor; replaced by a gated rerun"
+        ],
+        "carried": [
+          "RS1 latch-abandoned start may leave guardian VERIFIED without a workload ROLE_STARTED record (reducer already fails)",
+          "RS2 pre-existing mirror-lag disagreement with the guardian conservative",
+          "RS3 same-instant record ordering for recovery",
+          "P13i and r4b source-packet obligations unchanged"
+        ],
+        "nextGate": "Native compilation, process fixtures, PostgreSQL and the C3 runtime remain closed until their own packet and admission; P13j stays held by the owner"
       }
     }
   },
