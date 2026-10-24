@@ -1,0 +1,529 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P0A_A2_RESULT_2026-10-24",
+  "recordedAt": "2026-10-24T16:03:17.080Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P0a",
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-24T16:00:47.962Z",
+      "expiresAt": "2026-10-24T16:02:47.962Z"
+    },
+    "runnerStartedUtc": "2026-10-24T16:00:55.893Z",
+    "runnerEndedUtc": "2026-10-24T16:01:05.516Z",
+    "runnerElapsedMs": 9622,
+    "targetConnections": 1,
+    "transportExit": 0,
+    "stderrBytes": 0,
+    "cutoff": false,
+    "overallBreach": false,
+    "termination": "NOT_NEEDED",
+    "noRetry": true
+  },
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P0A_COLLECTED_STOP_CONDITION_ACCEPTED_AS_OBSERVATION",
+  "ownerGo": "RECEIVED in owner chat for attempt 2 with the packet wording and notAfter 2026-10-25T16:00:00Z; consumed by this attempt (no retry)",
+  "jobId": "s6-p0a-a2-06d7cf907b681f939a44b47a",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P0A_BUILD_D15_2026-10-24.json",
+    "sha256": "ef96a44d06134301e9dff49bddec15c5009585dbc372d986296a27a410c26155"
+  },
+  "attempt1Result": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P0A_RESULT_2026-10-24.json",
+    "sha256": "eb62c63e2511896dc55eb75fd3a685e6e6e407cbb8eede920cc201394499922a"
+  },
+  "verdict": {
+    "verdict": "P0A_STOP_CONDITION",
+    "stageReached": 10,
+    "evaluation": {
+      "blocks": {
+        "P2": [],
+        "P4": [
+          "P4_NODE_UNVERIFIED"
+        ],
+        "P5A": []
+      },
+      "facts": [
+        "FACT_UNIT_STOPPED"
+      ],
+      "stops": [
+        "P0A_DISK_LOW"
+      ]
+    }
+  },
+  "observed": {
+    "host": {
+      "bootLabel": "T1_TO_T2",
+      "cpuCount": 2,
+      "distinctVolumes": 1,
+      "heavy": {
+        "PRODUCTION": 0,
+        "STAGING": 0,
+        "UNCLASSIFIED": 0,
+        "scopes": [
+          "USER"
+        ]
+      },
+      "livePayloadCount": 0,
+      "load1PerCpu": 0.03,
+      "load5PerCpu": 0.01,
+      "managerFailedCount": 0,
+      "memAvailableMiB": 7158,
+      "memTotalMiB": 7940,
+      "pendingJobCount": 0,
+      "volumes": {
+        "BACKUP": {
+          "freeMiB": 89072,
+          "sameDeviceAsDatabase": null,
+          "sameDeviceAsTrees": true,
+          "state": "OK"
+        },
+        "DATABASE": {
+          "freeMiB": null,
+          "sameDeviceAsTrees": null,
+          "state": "NOT_FOUND"
+        },
+        "TREES": {
+          "freeMiB": 89072,
+          "state": "OK"
+        }
+      }
+    },
+    "units": {
+      "PROT_1": {
+        "activeState": "active",
+        "subState": "running",
+        "loadState": "loaded",
+        "unitFileState": "enabled",
+        "transient": false,
+        "mainProcessPresent": true,
+        "needDaemonReload": "no",
+        "execStartPresence": "PRESENT",
+        "envFilesPresence": "PRESENT",
+        "topCodeLayerIsExpected": null,
+        "admissionOffSortsLast": null
+      },
+      "PROT_2": {
+        "activeState": "active",
+        "subState": "running",
+        "loadState": "loaded",
+        "unitFileState": "enabled",
+        "transient": false,
+        "mainProcessPresent": true,
+        "needDaemonReload": "no",
+        "execStartPresence": "PRESENT",
+        "envFilesPresence": "PRESENT",
+        "topCodeLayerIsExpected": null,
+        "admissionOffSortsLast": null
+      },
+      "PROT_3": {
+        "activeState": "active",
+        "subState": "running",
+        "loadState": "loaded",
+        "unitFileState": "enabled",
+        "transient": false,
+        "mainProcessPresent": true,
+        "needDaemonReload": "no",
+        "execStartPresence": "PRESENT",
+        "envFilesPresence": "ABSENT",
+        "topCodeLayerIsExpected": null,
+        "admissionOffSortsLast": null
+      },
+      "PROT_4": {
+        "activeState": "active",
+        "subState": "running",
+        "loadState": "loaded",
+        "unitFileState": "enabled",
+        "transient": false,
+        "mainProcessPresent": true,
+        "needDaemonReload": "no",
+        "execStartPresence": "PRESENT",
+        "envFilesPresence": "ABSENT",
+        "topCodeLayerIsExpected": null,
+        "admissionOffSortsLast": null
+      },
+      "STG_API": {
+        "activeState": "active",
+        "subState": "running",
+        "loadState": "loaded",
+        "unitFileState": "static",
+        "transient": false,
+        "mainProcessPresent": true,
+        "needDaemonReload": "no",
+        "execStartPresence": "PRESENT",
+        "envFilesPresence": "ABSENT",
+        "topCodeLayerIsExpected": true,
+        "admissionOffSortsLast": true
+      },
+      "STG_COLLECTOR_SVC": {
+        "activeState": "inactive",
+        "subState": "dead",
+        "loadState": "loaded",
+        "unitFileState": "static",
+        "transient": false,
+        "mainProcessPresent": false,
+        "needDaemonReload": "no",
+        "execStartPresence": "PRESENT",
+        "envFilesPresence": "ABSENT",
+        "topCodeLayerIsExpected": null,
+        "admissionOffSortsLast": null
+      },
+      "STG_COLLECTOR_TIMER": {
+        "activeState": "inactive",
+        "subState": "dead",
+        "loadState": "loaded",
+        "unitFileState": "static",
+        "transient": false,
+        "mainProcessPresent": null,
+        "needDaemonReload": "no",
+        "execStartPresence": null,
+        "envFilesPresence": null,
+        "topCodeLayerIsExpected": null,
+        "admissionOffSortsLast": null
+      },
+      "STG_RESEARCH": {
+        "activeState": "inactive",
+        "subState": "dead",
+        "loadState": "loaded",
+        "unitFileState": "static",
+        "transient": false,
+        "mainProcessPresent": false,
+        "needDaemonReload": "no",
+        "execStartPresence": "PRESENT",
+        "envFilesPresence": "ABSENT",
+        "topCodeLayerIsExpected": null,
+        "admissionOffSortsLast": null
+      },
+      "STG_STREAM": {
+        "activeState": "inactive",
+        "subState": "dead",
+        "loadState": "loaded",
+        "unitFileState": "static",
+        "transient": false,
+        "mainProcessPresent": false,
+        "needDaemonReload": "no",
+        "execStartPresence": "PRESENT",
+        "envFilesPresence": "ABSENT",
+        "topCodeLayerIsExpected": null,
+        "admissionOffSortsLast": null
+      },
+      "STG_TRADING": {
+        "activeState": "inactive",
+        "subState": "dead",
+        "loadState": "loaded",
+        "unitFileState": "static",
+        "transient": false,
+        "mainProcessPresent": false,
+        "needDaemonReload": "no",
+        "execStartPresence": "PRESENT",
+        "envFilesPresence": "ABSENT",
+        "topCodeLayerIsExpected": true,
+        "admissionOffSortsLast": null
+      }
+    },
+    "api": {
+      "argvHeap": false,
+      "effectiveFlags": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "effectiveKnown": true,
+      "effectiveQr2": "UNSET",
+      "heapAny": false,
+      "heapKnown": true,
+      "memoryCurrentMiB": 103,
+      "memoryHighMiB": "INFINITY",
+      "memoryMaxMiB": "INFINITY",
+      "procArgvHeap": false,
+      "rssMiB": 148,
+      "sources": [
+        {
+          "flags": [
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET"
+          ],
+          "heap": false,
+          "index": 1,
+          "kind": "MANAGER",
+          "nodeOptions": "UNSET",
+          "qr2": "UNSET",
+          "state": "READ"
+        },
+        {
+          "flags": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          "heap": false,
+          "index": 1,
+          "kind": "UNIT_ENVIRONMENT",
+          "nodeOptions": "UNSET",
+          "qr2": "UNSET",
+          "state": "READ"
+        },
+        {
+          "flags": [
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET"
+          ],
+          "heap": false,
+          "index": 1,
+          "kind": "NODE_ENV_FILE",
+          "nodeOptions": "UNSET",
+          "qr2": "UNSET",
+          "state": "READ"
+        },
+        {
+          "flags": [
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET"
+          ],
+          "heap": false,
+          "index": 2,
+          "kind": "NODE_ENV_FILE",
+          "nodeOptions": "UNSET",
+          "qr2": "UNSET",
+          "state": "READ"
+        },
+        {
+          "flags": [
+            "1",
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET"
+          ],
+          "heap": false,
+          "index": 3,
+          "kind": "NODE_ENV_FILE",
+          "nodeOptions": "UNSET",
+          "qr2": "UNSET",
+          "state": "READ"
+        }
+      ],
+      "tasksMax": 9483,
+      "unsetNodeOptions": false,
+      "unsetQr2": false
+    },
+    "writers": {
+      "STG_API": {
+        "envFilePresence": "NONE",
+        "fragmentIsPersistentCopy": true,
+        "persistentCopy": "REGULAR",
+        "persistentEnv": {
+          "flags": [
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET"
+          ],
+          "qr2": "UNSET",
+          "state": "NOT_USED"
+        },
+        "startCommandCount": 1,
+        "startFilesChecked": 6,
+        "startFilesMissing": 0,
+        "startForm": "OK",
+        "startSource": "LOADED",
+        "transient": false
+      },
+      "STG_COLLECTOR_SVC": {
+        "envFilePresence": "UNKNOWN",
+        "fragmentIsPersistentCopy": true,
+        "persistentCopy": "REGULAR",
+        "persistentEnv": {
+          "flags": [
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET"
+          ],
+          "qr2": "UNSET",
+          "state": "NOT_USED"
+        },
+        "startCommandCount": 1,
+        "startFilesChecked": 2,
+        "startFilesMissing": 0,
+        "startForm": "OK",
+        "startSource": "LOADED",
+        "transient": false
+      },
+      "STG_COLLECTOR_TIMER": {
+        "envFilePresence": null,
+        "fragmentIsPersistentCopy": true,
+        "persistentCopy": "REGULAR",
+        "persistentEnv": {
+          "flags": [
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET"
+          ],
+          "qr2": "UNSET",
+          "state": "NOT_USED"
+        },
+        "startCommandCount": 0,
+        "startFilesChecked": 0,
+        "startFilesMissing": 0,
+        "startForm": "OK",
+        "startSource": "LOADED",
+        "transient": false
+      },
+      "STG_STREAM": {
+        "envFilePresence": "UNKNOWN",
+        "fragmentIsPersistentCopy": true,
+        "persistentCopy": "REGULAR",
+        "persistentEnv": {
+          "flags": [
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET"
+          ],
+          "qr2": "UNSET",
+          "state": "NOT_USED"
+        },
+        "startCommandCount": 1,
+        "startFilesChecked": 2,
+        "startFilesMissing": 0,
+        "startForm": "OK",
+        "startSource": "LOADED",
+        "transient": false
+      },
+      "STG_TRADING": {
+        "envFilePresence": "UNKNOWN",
+        "fragmentIsPersistentCopy": true,
+        "persistentCopy": "REGULAR",
+        "persistentEnv": {
+          "flags": [
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET",
+            "UNSET"
+          ],
+          "qr2": "UNSET",
+          "state": "NOT_USED"
+        },
+        "startCommandCount": 1,
+        "startFilesChecked": 4,
+        "startFilesMissing": 0,
+        "startForm": "OK",
+        "startSource": "LOADED",
+        "transient": false
+      }
+    },
+    "codeDirs": {
+      "STG_COLLECTOR_SVC": {
+        "fileCount": 11295,
+        "label": "LIMIT"
+      },
+      "STG_STREAM": {
+        "fileCount": 11295,
+        "label": "LIMIT"
+      }
+    },
+    "node": {
+      "STG_API": {
+        "configuredMajor": 24,
+        "runningExeMatches": true,
+        "startIsNode": true,
+        "versionState": "VERIFIED"
+      },
+      "STG_TRADING": {
+        "configuredMajor": null,
+        "runningExeMatches": null,
+        "startIsNode": null,
+        "versionState": "UNVERIFIED"
+      }
+    },
+    "revisions": {
+      "STG_API": {
+        "argvReleaseDirEqualsWd": null,
+        "argvTree": null,
+        "procArgvEqualsLoaded": true,
+        "procCwdEqualsWd": true,
+        "procReadable": true,
+        "wdTree": {
+          "fileCount": 836,
+          "label": "EXACT_eb532ff"
+        }
+      },
+      "STG_TRADING": {
+        "argvReleaseDirEqualsWd": null,
+        "argvTree": null,
+        "procArgvEqualsLoaded": null,
+        "procCwdEqualsWd": null,
+        "procReadable": null,
+        "wdTree": {
+          "fileCount": 983,
+          "label": "EXACT_4d86822"
+        }
+      }
+    },
+    "postgres": {
+      "binaries": {
+        "INITDB": 16,
+        "PG_CTL": 16,
+        "PG_DUMP": 16,
+        "PG_RESTORE": 16,
+        "POSTGRES": 16
+      },
+      "binariesSameMajor": true,
+      "dataDirMajor": null,
+      "dataDirMajorEqualsBinaries": null
+    },
+    "ports": {
+      "apiPortListeners": 1,
+      "apiPortOwnedByApi": 1,
+      "p2PortListeners": 0
+    }
+  },
+  "linkage": {
+    "verifiedBy": "Root",
+    "checks": [
+      "manifest hash equals the runner argument and the receipt",
+      "receipt hash equals the runner output",
+      "marker job ID and manifest hash",
+      "receipt envelope and retained-output hashes",
+      "nonce equal in manifest, retained output and receipt",
+      "canonical pins equal"
+    ],
+    "receiptSha256": "4e1ccb60ab46ab7d3389138bccf86860b71d7b31111aa71e7a7418f88ffd24ea",
+    "envelopeSha256": "566af6fe51e358a75102d2a459b1870782503ed80d1d6a1eb9ae0105d60250ef",
+    "note": "tree and code-directory digests stay in the local retained output as the P3 baseline; manifest, marker, binding, receipt and retained output stay local"
+  },
+  "rootRuling": "D16 in the packet",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "dbAccess": "NONE"
+  }
+}
