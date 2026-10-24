@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P1_BUILD_2026-10-25",
+  "recordedAt": "2026-10-24T19:55:06.116Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P1",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P1_TOOL_AND_PACKAGE_ACCEPTED_LOCAL_NOT_RUN",
+  "authority": "Rulings D9 and D17; owner chat 2026-10-24 18:31Z allowed GO-P1 and GO-P0b when ready",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "680103e93475228eda3ff5abd66e7e5f2f18025a102d5b46fdd83a897cf186a6"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "pinIncludesQr2O7": true,
+  "pinCi": "exact-revision CI: 9 of 9 jobs success (Quant Lab, Safety checks incl. postgres, container, test ubuntu and windows)",
+  "spec": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/p1-spec.md",
+      "sha256": "f7c4623f8be583c4da511b1c49135e06e69b4e5419ed053636ed04e4b549e07a"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/p1-spec-review.md",
+      "sha256": "b3d624aa61593d0d61d792564ecf019a29b95acc4264fd43c861b176712b6859"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/p1-spec-r2.md",
+      "sha256": "602f4c3cfba738016e64b80ec717ba6c5bef0a030b50a3499ce2cc737228e44b"
+    }
+  ],
+  "rootRulings": {
+    "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/root-rulings-p1p0b.md",
+    "sha256": "38de589d5f692cbb96c82c5dd0585784d0954c9d82043a9a24159cb1f42da2f3"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/build-snapshot-p1-r2/SHA256SUMS",
+    "sha256": "f9a9c390ce51c3a27f94d953cd0e1b9f741d5838fcd0df15d1e27c59c784b434"
+  },
+  "pins": {
+    "core": "e2f9fd84e5ecd591b3d87107f15a8e1cd15f89d7ffeb5404636d34ea6d55a5ff",
+    "runner": "b36b16b28cb0c012c1de1b367362a26a7db60eb03d314c19c7a84b24e10f67f8",
+    "build": "d67322f23fbbc6bf978bd9df3e27ba909eb4e1caf3ccccc72487cd7c52b7246d",
+    "region": "88f6731c7b125eefbc625d8c7e7e0d9adc6a1c48f86e2be687d7bd25e08fcc68",
+    "toolSourceSha": "5c8b629813295571b9036db2c82ce88f2e6432b1cb7a8c4b3a6dffa829e87214"
+  },
+  "package": {
+    "counts": {
+      "source": 1407,
+      "dependencies": 182,
+      "rows": 1589,
+      "treeFiles": 1589,
+      "treeBytes": 53951134,
+      "treeDirs": 94
+    },
+    "uploadBytes": 55362089,
+    "treeDigest": "4ffcb4431e04f4491057b9ec870a8f03e21458922892efd8fdbc292e68770a20",
+    "checkListsSha": "9afbb2903b4b8bd5c830e22f6f18ff46c8570c9e219f6992fda41209c2928963",
+    "outputs": {
+      "source.tar": {
+        "sha256": "65d3b6ecb2831a0bed937c2efc86f01b4c777976ac8e698a3756c9f70980bbbf",
+        "bytes": 31839232
+      },
+      "deps.tar": {
+        "sha256": "c0bd614e9cb3ad1d17e51ac14bab20c0d8b4258f888cc24855684e64566e1214",
+        "bytes": 23338496
+      },
+      "release-manifest.txt": {
+        "sha256": "4ffcb4431e04f4491057b9ec870a8f03e21458922892efd8fdbc292e68770a20",
+        "bytes": 177394
+      },
+      "check-lists.json": {
+        "sha256": "9afbb2903b4b8bd5c830e22f6f18ff46c8570c9e219f6992fda41209c2928963",
+        "bytes": 6967
+      },
+      "served-list.json": {
+        "sha256": "cad45af83ab9151330c2d49a124ca3f56607a417b9ae14434832d712b60657ca",
+        "bytes": 7508
+      }
+    },
+    "secondBuildIdentical": true,
+    "gitStatePreserved": true,
+    "builderSha": "d67322f23fbbc6bf978bd9df3e27ba909eb4e1caf3ccccc72487cd7c52b7246d",
+    "rootVerify": "p1-build.mjs --verify rebuilt in memory and byte-matched every file",
+    "depsArchive": "equal to DEPS_PIN (the archive shipped by S07 and DP1S)"
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 105,
+      "pass": 105,
+      "fail": 0
+    },
+    "rehearsal": "author 6 of 6 after the fix round (full 55 MB stream through local bash, early exit with drain, short stream, stall at the real 90 s deadline, real stand-in child, node --check of both closures under Node 24)"
+  },
+  "payload": {
+    "scriptBytes": 50629,
+    "limit": 65536,
+    "headroom": 14907,
+    "stdinBytes": 55412823,
+    "basis": "real private binding"
+  },
+  "reviews": [
+    {
+      "round": "spec",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/p1-spec-review.md",
+      "sha256": "b3d624aa61593d0d61d792564ecf019a29b95acc4264fd43c861b176712b6859"
+    },
+    {
+      "round": "build",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/tester-p1/tester-report.md",
+      "sha256": "77414a2f59c99d7b309e6e2ed861db2480d4aff1321f078710c9420efd20e245"
+    },
+    {
+      "round": "build",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/audit-p1.md",
+      "sha256": "afbb71a1896587443d2c633d71b63bb34d5561a686af960f08171705cc918bbb",
+      "note": "P2-1 stage deadline window: Root sets stageDeadline = startBy + 360 s"
+    },
+    {
+      "round": "fix r1",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "105 unit, 6 rehearsal, 27 nesting tests, 31 of 31 targeted mutants killed"
+    },
+    {
+      "round": "fix r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/audit-p1-r2.md",
+      "sha256": "c0932d02158c78523d28d116e5551e3d0d0988e57ed285d863b559fbd51ab205",
+      "note": "conditions met: real binding validates with the attempt ID and without; manifest, toolSourceSha and payload size are rebuilt at admission"
+    }
+  ],
+  "residuals": [
+    "Real Linux execution untested locally: bash read-ahead and exec with descriptor 3, ssh.exe stdin throughput for 55 MB (needs about 0.62 MB/s), node --check on the host Node",
+    "Anchors are checked as real directories that stay unchanged, not re-hashed; their exactness rests on the P0a attempt-2 observation",
+    "The earlier 90 author mutants were not rerun after the narrow nesting fix (31 new targeted mutants were)",
+    "Packet section 6 and spec section 6 still say nesting is refused; GO-P1 does not name the host node --check parse runs; section 9 still says about 40 MB",
+    "A renamed tree followed by a stop refuses a later attempt; real kill and reap stay unverified"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE"
+  }
+}
