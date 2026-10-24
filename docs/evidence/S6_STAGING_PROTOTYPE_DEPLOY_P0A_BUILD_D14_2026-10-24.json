@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P0A_BUILD_D14_2026-10-24",
+  "recordedAt": "2026-10-24T15:05:20.281Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P0a",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P0A_COLLECTOR_D14_ACCEPTED_LOCAL_NOT_RUN",
+  "authority": "Root ruling D9 (the P0a read-only collector may be built and independently reviewed ahead of GO-P0a) under the owner continuous local work grant; no target contact, manifest, marker, binding or job ID",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "3a84f69cc96f357db54f8aff1ff9094a23f86fac30b57cc18d7c8f3668bb3be8"
+  },
+  "preparationEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_PREPARATION_2026-10-24.json",
+    "sha256": "bedf26538add813062c6b76f8d18fb63ffc82185a02ff64d8744ab30491ebc79"
+  },
+  "packetChange": "Ruling D14 (P0a binding sources): no record of the market stream or fallback collector code directories exists, so P0a takes each from the loaded working directory and records its file count and digest as the P3 baseline; the binding no longer carries code directories; the staging database unit is left out of the ten roles. D13 and its addenda are unchanged",
+  "supersedes": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P0A_BUILD_2026-10-24.json",
+    "sha256": "edd2726bdcc402af06bf3cf4313f4626af0e139617c4829a8478f9385f6c9d1b"
+  },
+  "specAddendum": {
+    "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/spec-addendum-d14.md",
+    "sha256": "30587685d20906a29277096305b8ad4cd4221cfeeb5c3562a7eddf675359ccd1"
+  },
+  "ownerGo": "RECEIVED in owner chat with the packet wording and notAfter 2026-10-25T14:00:00Z after Root reported the D14 change; not yet admitted when this record was written",
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/build-snapshot-r5-d14/SHA256SUMS",
+    "sha256": "b7e7dee53a3d79c079ce9a852446b42fb03461fd780706dc147fe8e4320d819a"
+  },
+  "pins": {
+    "core": "e710ca5d39f900177eec3a70b6e601fe14195d35ec95e2c159ba5c4d42e1de3d",
+    "runner": "0a529f54b0ea877d13beba4b5a4d6349f1cea41f02024505856550e1bf51a897",
+    "tests": "51bc4930977e85392659045331718efcb6aa262a8fbe39aa66dce110bb867611",
+    "collectorRegion": "393d29c808749129e13ec08cd9653b216280034a76d2fa97693626bbdd4d5f73"
+  },
+  "rootRun": {
+    "command": "node --test p0a-tests.mjs (execution-directory depth, before the suite moved to the snapshot)",
+    "node": "v24.19.0",
+    "tests": 89,
+    "pass": 89,
+    "fail": 0,
+    "cancelled": 0,
+    "realProcessCalls": 0
+  },
+  "payload": {
+    "limitBytes": 65536,
+    "testBindingHeadroomBytes": "3496 at an 80-character job id (author, ten roles, no code directories); the suite asserts at least 3000",
+    "realBindingDraft": "built by Root from ignored local evidence before admission; validates; 62717 bytes, headroom 2819 at an 80-character job id",
+    "realBinding": "Root rebuilds it at admission from the draft and the runner refuses before the marker and before any spawn when the payload exceeds the limit (PAYLOAD_LIMIT)",
+    "limitKept": "65536 is not raised"
+  },
+  "reviews": [
+    {
+      "round": "spec",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/p0a-spec.md",
+      "verdict": "BUILD_SPEC",
+      "sha256": "da947329b48b7d15a47723fc12af8f7afbd7fbab78ccc974d8599ccf93194f66"
+    },
+    {
+      "round": "r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/audit-r1.md",
+      "verdict": "GO_WITH_CONDITIONS",
+      "sha256": "a4a8ed2cbd1453d5e77bbcb699c202dfb8aabdbbeeb112ffa7e72c045f8d6c00"
+    },
+    {
+      "round": "r1",
+      "role": "second-opinion reviewer, Opus 5.5 / high (recorded substitute for paused Fable 5.1)",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/second-opinion-r1.md",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "P1-1 host-change vector, closed by fix round 1",
+      "sha256": "214b378d0a3a534b445192b185df5c7c2b55e36648d52f4d6a497bcdcba3dafe"
+    },
+    {
+      "round": "r1",
+      "role": "tester, Sonnet 5.5 / medium",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/tester-r1/tester-report.md",
+      "verdict": "PASS",
+      "mutants": {
+        "total": 145,
+        "killed": 139,
+        "survivedEquivalentOrUnreachable": 6
+      },
+      "sha256": "24b00c8b28ad361fb83a5ee590e63ff51f5e06790523aa97199bd85e99139121"
+    },
+    {
+      "round": "r2",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/audit-r2.md",
+      "verdict": "GO_WITH_CONDITIONS",
+      "sha256": "5ce063387b201c4debc16fb47b0fc762303bc1132bc221eeba495f587ecd4a01"
+    },
+    {
+      "round": "r2",
+      "role": "second-opinion reviewer, Opus 5.5 / high (recorded substitute for paused Fable 5.1)",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/second-opinion-r2.md",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "P2-A environment-file contents read only for the API, closed by fix round 2",
+      "sha256": "b3d401a7014cb8e5132e4a2767b00677b0e1c54ae3a74814e12771ded0b1ff57"
+    },
+    {
+      "round": "r3",
+      "role": "tester, Sonnet 5.5 / medium",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/tester-r2/tester-report.md",
+      "verdict": "PASS",
+      "tests": {
+        "author": 80,
+        "independent": 137
+      },
+      "mutants": {
+        "total": 42,
+        "killed": 42
+      },
+      "sha256": "9f566a4c98c3e21902c80e292bbf08c5a93b40e94c8f7cb50c1638bb53079133"
+    },
+    {
+      "round": "r3",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/audit-r3.md",
+      "verdict": "GO_WITH_CONDITIONS",
+      "findings": {
+        "P1": 0,
+        "P2": 0,
+        "P3": 6
+      },
+      "sha256": "2e7ef7ab9ac5abdd9af41abd01618265e81a16ed6009340f4289b6b26c7fd939"
+    },
+    {
+      "round": "r4",
+      "role": "tester, Sonnet 5.5 / medium",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/tester-r3/tester-report.md",
+      "verdict": "PASS",
+      "tests": {
+        "author": 83,
+        "independent": 151
+      },
+      "mutants": {
+        "total": 33,
+        "killed": 33
+      },
+      "sha256": "a57b3b64388293dcc49b5f05ec5100f3ace758cab832941c3a091f9612ccc7f9"
+    },
+    {
+      "round": "r4",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/audit-r4.md",
+      "verdict": "NO_GO_AT_THOSE_HASHES",
+      "findings": {
+        "P1": 0,
+        "P2": 1,
+        "P3": 4
+      },
+      "note": "R4-P2-1 bare carriage return, closed by fix round 4",
+      "sha256": "18cde8820502134f7d657572c6b1aac2b9218a239dfef06ca76a1fc7b67328c8"
+    },
+    {
+      "round": "r5",
+      "role": "tester, Sonnet 5.5 / medium",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/tester-r4/tester-report.md",
+      "verdict": "PASS",
+      "tests": {
+        "author": 85,
+        "independent": 165
+      },
+      "mutants": {
+        "total": 28,
+        "killed": 28
+      },
+      "sha256": "74a03a1ac80b597cec1433abbadbd81ce1d1bfd8efbba5eed121d70b7c834c5b"
+    },
+    {
+      "round": "r5",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/audit-r5.md",
+      "verdict": "GO_WITH_CONDITIONS",
+      "findings": {
+        "P1": 0,
+        "P2": 0,
+        "P3": 3
+      },
+      "note": "conditions: tester at these hashes (met by tester r4), real-binding payload check (at admission), record R4-P3-3 and R5-P3-1/2 (recorded below)",
+      "sha256": "4631a0c561df8e5fa4a7c00d096b277da6636e7aed9cb0190e527bb1f486278e"
+    },
+    {
+      "round": "r6",
+      "role": "tester, Sonnet 5.5 / medium",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/tester-r5/tester-report.md",
+      "verdict": "PASS",
+      "tests": {
+        "author": 89,
+        "independent": 179
+      },
+      "mutants": {
+        "total": 29,
+        "killed": 29
+      },
+      "sha256": "084bf2cbaa21d41c1455c1bc284bad748bde705833164f19f1714075b90ab17a"
+    },
+    {
+      "round": "r6",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/audit-r6.md",
+      "verdict": "GO_WITH_CONDITIONS",
+      "findings": {
+        "P1": 0,
+        "P2": 0,
+        "P3": 6
+      },
+      "note": "conditions: real binding without code directories and payload check (met by the local draft), independent tester (met), spec addendum and deviations recorded (spec-addendum-d14.md)",
+      "sha256": "02d9e197a45c593acc2f39b99c38a70ab72f1b2c745380f946f9b8485d2aab7d"
+    }
+  ],
+  "spec": {
+    "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/p0a-spec.md",
+    "sha256": "da947329b48b7d15a47723fc12af8f7afbd7fbab78ccc974d8599ccf93194f66"
+  },
+  "authorReports": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/build-snapshot-r5-d14/author-report.md",
+      "sha256": "e68573652a0b262cea028511a9e652c3e68ee20ce8d0bb813a14a6591ab5f841"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/build-snapshot-r5-d14/author-report-r2.md",
+      "sha256": "3dc720bfb77a254bdaaef9872f674b633fe29eedd8af4c7893cfc2dff2bd75fa"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/build-snapshot-r5-d14/author-report-r3.md",
+      "sha256": "d3f6369561a29ba2f5caae8803242bfc80a0f2a53da107d1173fe66788daf2d0"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/build-snapshot-r5-d14/author-report-r4.md",
+      "sha256": "318b3e1995fc945358c58db982c686b7f74873621245495b71ff2d0899f95866"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/build-snapshot-r5-d14/author-report-r5.md",
+      "sha256": "c7f244d1809d41941d3532ccc9a49f07686509286222acdbbc455be520ebf753"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p0a-review-2026-10-24/build-snapshot-r5-d14/author-report-r6.md",
+      "sha256": "e12818f8a900447f302e58d848bb850fd689113ea5ca799e85bf7856e88cd678"
+    }
+  ],
+  "secondOpinion": "Opus 5.5 / high as the recorded substitute for Fable 5.1, which the owner paused on 2026-10-23",
+  "residuals": [
+    "R4-P3-3: a name or link swapped between the stat check and the open could open a non-regular file; O_NONBLOCK, O_NOCTTY and the fstat check reject it after the open, and the swap needs concurrent write access on the host",
+    "R5-P3-1 and R5-P3-2 (transient API only): in the API persistent-copy unit text, a bare carriage return or a quote or backslash inside an Environment= word can hide a research flag. Root rule: if P0a reports the API unit as transient, Root does not rely on the persistent-copy flag labels and P4 stays blocked until a reviewed recheck covers them",
+    "The odd-character guard is over-inclusive: any non-ASCII character, such as a Thai comment, in an API environment source that names a read key stops P0a, and the stop does not show the cause",
+    "Free space is block size times available blocks because Node statfs gives no fragment size (label only)",
+    "Transient unit copies are checked only through their own drop-in directory, and heavy-job visibility is limited to the bound scopes; the P4 fresh gate covers both",
+    "A running unit with a wrapper start path, or a stopped unit, keeps an UNVERIFIED Node version that only the P4 fresh gate can clear by checking the node binary the P4 layer names",
+    "D14: an absent working directory written with a - or ! prefix is MISSING and stops P0a, although the start-file check treats it as optional (kept by Root ruling)",
+    "D14: a working directory such as /proc, /sys or a large data directory would be walked within the unchanged tree and deadline limits (read-only, bounded); the home check covers spelling and realpath only, not a bind-mount alias",
+    "D14: MALFORMED and a missing or relative HOME give NOT_DERIVABLE without a walk (fail-safe deviations accepted by Root)",
+    "Tree labels ignore the tree kind by spec design; digests are unique per binding"
+  ],
+  "notVerifiedLocally": [
+    "real systemd and Node environment-file parsers (modeled from documentation)",
+    "Linux O_NONBLOCK and O_NOCTTY behaviour (flag text checked statically on Windows)",
+    "bash heredoc spooling and env -i under the target login",
+    "a real pipe or device on the host",
+    "real kill and reaping behaviour"
+  ],
+  "next": "Root admits one P0a attempt under the owner GO, through the single designated operations worker, before notAfter",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "targetAccess": "NOT_RUN",
+    "ownerGoP0a": "RECEIVED_NOT_YET_ADMITTED"
+  }
+}
