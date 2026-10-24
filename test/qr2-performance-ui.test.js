@@ -413,3 +413,33 @@ test('S5-3 EN/TH symbol metadata preserves values, null reasons and a human-read
     }finally{p.close();}
   }
 });
+
+test('O6 the generic metadata view shows no raw coverage between O6 and O7 and never mutates the body',async()=>{
+  const coverage={version:'qr2-bar-coverage-v1',source:'pine_market_bars',market:null,resolved_range:null,state:'COVERAGE_SENTINEL_STATE',intervals:[{from:1,to:2,missing_minutes:1}]};
+  const bot=structuredClone(fixture.bot);bot.market_data={...bot.market_data,coverage:structuredClone(coverage)};
+  const owner=structuredClone(fixture.owner);owner.market_coverage={version:'qr2-owner-bar-coverage-v1',entries:[{id:'coverage:0',coverage:structuredClone(coverage)}],accounts:[{bot_id:'bot-1',broker:'binance-global',coverage_ids:['coverage:0']}]};
+  const botBefore=JSON.stringify(bot),ownerBefore=JSON.stringify(owner);
+  const baseline=setup();let baselineText;
+  try{await baseline.boot();baseline.change('ppBot','bot-1');await baseline.load();baselineText=baseline.text();}finally{baseline.close();}
+  const sentinels=['qr2-owner-bar-coverage-v1','qr2-bar-coverage-v1','coverage:0','COVERAGE_SENTINEL_STATE','market_coverage','pine_market_bars'];
+  const p=setup({answer:()=>ok(bot)});
+  try{
+    await p.boot();p.change('ppBot','bot-1');await p.load();
+    for(const sentinel of sentinels)assert.equal(p.text().includes(sentinel),false,'Bot view: '+sentinel);
+    for(const key of ['checked','table_present','instants','bars','gap'])assert.ok(p.text().includes(key),'the existing market_data scalar still renders: '+key);
+    assert.equal(p.text().includes('market_data'),true);
+    assert.equal(p.text(),baselineText,'the Bot view is the same text with and without coverage');
+    assert.equal(JSON.stringify(bot),botBefore,'the input body is unchanged by rendering');
+  }finally{p.close();}
+  const q=setup({answer:()=>ok(owner)});
+  try{
+    await q.boot();q.change('ppScope','owner');q.change('ppCurrency','USDT');await q.load();
+    assert.ok(q.text().length>0);assert.ok(q.text().includes('SUM_OF_INDEPENDENT_PAPER_ACCOUNTS')||q.text().includes('allocation'));
+    for(const sentinel of sentinels)assert.equal(q.text().includes(sentinel),false,'owner view: '+sentinel);
+    assert.equal(JSON.stringify(owner),ownerBefore,'the owner body is unchanged by rendering');
+  }finally{q.close();}
+  // The exclusion is one line that copies; it never deletes from the response object, and a non-object market_data is left alone.
+  const source=publicFile('paper-performance.js');
+  assert.equal((source.match(/market_coverage/g)||[]).length,1);
+  assert.equal((source.match(/key !== 'coverage'/g)||[]).length,1);
+});

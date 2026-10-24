@@ -1,4 +1,4 @@
-import {validateCoverageSnapshot} from '../portfolio/qr2-coverage-snapshot.js';
+import {projectPublicCoverageOutcome} from '../portfolio/qr2-coverage-public.js';
 import {coverageReadBudgets,QR2_COVERAGE_LIMITS} from '../portfolio/qr2-coverage-limits.js';
 import {resolveRange} from '../portfolio/qr2-periods.js';
 import {isMainThread,parentPort,workerData} from 'node:worker_threads';
@@ -35,7 +35,7 @@ function accountAssociation(snapshot,input,idLimit){
   requireFact(sameRange(range.resolved,snapshot.range?.resolved));
   return {bot_id:input.botId,broker:input.broker,market:input.broker==='binance-global'?{broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'}:null,resolved_range:range.resolved};
 }
-function qualifyCoverage(snapshot,input){
+function qualifyCoverage(snapshot,input,coverageOutputLimit){
   const context=input?.coverage_context;
   requireFact(context&&Reflect.ownKeys(context).length===2&&Object.hasOwn(context,'accounts')&&Object.hasOwn(context,'budgets'));
   requireFact(context.budgets&&Reflect.ownKeys(context.budgets).length===Object.keys(QR2_COVERAGE_LIMITS).length&&Object.keys(QR2_COVERAGE_LIMITS).every(k=>Object.hasOwn(context.budgets,k)));
@@ -70,12 +70,13 @@ function qualifyCoverage(snapshot,input){
     const market=matches[0].market;
     requireFact(account.market===null?market===null:market?.broker==='binance-global'&&market.symbol==='BTCUSDT'&&market.timeframe==='1');
   }
-  // Exactly one full registry validation, before either financial compute branch.
-  validateCoverageSnapshot(snapshot.coverage,context);
+  // Exactly one full registry validation (inside the projection) and one build of each coverage entry, before either financial compute branch.
+  const outcome=projectPublicCoverageOutcome(snapshot.coverage,context,coverageOutputLimit);
   for(let i=0;i<expected.length;i++){
     const account=expected[i],binding=snapshot.coverage.bindings.find(b=>b.bot_id===account.bot_id&&b.broker===account.broker);
     requireFact(safe(refs[i])&&binding&&refs[i]===binding.window_id);
   }
+  return outcome;
 }
 
 /**
@@ -83,15 +84,32 @@ function qualifyCoverage(snapshot,input){
  * ok:true  {id?,ok,body,auditFindings,compute_ms}
  * ok:false {kind:'qr2',code,detail?} a Qr2Error of the compute; {kind:'response'} a composer failure; {kind:'other'} anything else.
  */
-export function executeQr2Job({snapshot,input},{compute=computeQr2View,compose=composePerformanceResponse}={}){
+export function executeQr2Job({snapshot,input},{compute=computeQr2View,compose=composePerformanceResponse,coverageOutputLimit}={}){
   if(input?.kind!==undefined&&input.kind!=='account'&&input.kind!=='owner')return {ok:false,kind:'other'};
-  try{qualifyCoverage(snapshot,input);}catch{return {ok:false,kind:'other'};}
+  let projection;
+  try{
+    const outcome=qualifyCoverage(snapshot,input,coverageOutputLimit);
+    // Only the post-build byte admission refusal is a request-level refusal: code only, no detail.
+    if(outcome.refused)return {ok:false,kind:'qr2',code:'QR2_RANGE_ADMISSION_REFUSED'};
+    projection=outcome.projection;
+  }catch{return {ok:false,kind:'other'};}
   if(input?.kind==='owner'){
     if(snapshot?.kind!=='owner')return {ok:false,kind:'other'};
-    try{return {ok:true,...composeOwnerResponse(snapshot,input)};}
+    const coverage=projection.owner.market_coverage;
+    let result;
+    try{result=composeOwnerResponse(snapshot,input,{coverage});}
     catch(error){return {ok:false,kind:error?.code==='QR2_RESPONSE_INVALID'?'response':'other'};}
+    // The envelope is the same object as the option in a non-REFUSED body with a resolved range, and absent from every other body.
+    try{
+      const body=result.body,carries=body.status.status!=='REFUSED'&&body.resolved_range!==null;
+      if(carries?body.market_coverage!==coverage:Object.hasOwn(body,'market_coverage'))return {ok:false,kind:'response'};
+    }catch{return {ok:false,kind:'response'};}
+    return {ok:true,...result};
   }
   if(snapshot?.kind==='owner')return {ok:false,kind:'other'};
+  const accounts=projection.accounts.filter(a=>a.bot_id===input.botId&&a.broker===input.broker);
+  if(accounts.length!==1||projection.accounts.length!==1)return {ok:false,kind:'other'};
+  const coverage=accounts[0].market_data.coverage;
   let view;
   try{view=compute(snapshot,input);}
   catch(error){
@@ -103,8 +121,12 @@ export function executeQr2Job({snapshot,input},{compute=computeQr2View,compose=c
     return {ok:false,kind:'other'};
   }
   let body;
-  try{body=compose(view,{requestTime:input.requestTime});}
+  try{body=compose(view,{requestTime:input.requestTime,coverage});}
   catch{return {ok:false,kind:'response'};}
+  // A non-REFUSED body carries the projected coverage object itself; a REFUSED body carries no market_data. The compose seam is checked too.
+  try{
+    if(body.status.status!=='REFUSED'?(typeof coverage!=='object'||coverage===null||body.market_data.coverage!==coverage):Object.hasOwn(body,'market_data'))return {ok:false,kind:'response'};
+  }catch{return {ok:false,kind:'response'};}
   const auditFindings=view&&Array.isArray(view.audit_findings)?view.audit_findings:[];
   return {ok:true,body,auditFindings,compute_ms:view&&view.reader?view.reader.compute_ms:null};
 }

@@ -9,6 +9,7 @@ import {executeQr2Job} from '../../src/postgres/qr2-compute-worker.js';
 import {createQr2ComputePool} from '../../src/postgres/qr2-compute-pool.js';
 import {runMarketDeferred} from '../../src/postgres/market-ohlcv.js';
 import {composePerformanceResponse} from '../../src/portfolio/qr2-response.js';
+import {projectPublicCoverage} from '../../src/portfolio/qr2-coverage-public.js';
 import {validateResponse} from '../../src/portfolio/qr2-labels.js';
 
 // QR-2 S3b (RC-Q35) with PostgreSQL: the route computing through the real worker pool, driven like the dispatcher drives it (phase 1, the
@@ -99,8 +100,10 @@ test('a real reader snapshot is plain data, a structured clone computes the same
   assert.equal(nonPlain(snapshot),null,'the snapshot holds no Decimal, Date, function or class instance');
   assert.equal(nonPlain({...input,boundaries:null,limits:null}),null);
   assert.ok(snapshot.market.rows.length>0,'the fixture exercises the price path');
-  const direct=composePerformanceResponse(computeQr2View(snapshot,input),{requestTime});
-  const cloned=composePerformanceResponse(computeQr2View(structuredClone(snapshot),structuredClone(input)),{requestTime});
+  // The coverage the worker publishes: the projected account entry whose (bot_id, broker) equals the request.
+  const coverage=projectPublicCoverage(snapshot.coverage,input.coverage_context).accounts.find(a=>a.bot_id===input.botId&&a.broker===input.broker).market_data.coverage;
+  const direct=composePerformanceResponse(computeQr2View(snapshot,input),{requestTime,coverage});
+  const cloned=composePerformanceResponse(computeQr2View(structuredClone(snapshot),structuredClone(input)),{requestTime,coverage});
   assert.equal(nonPlain(direct),null,'the in-thread body holds plain data only');
   assert.equal(stable(cloned),stable(direct));
   const pool=createQr2ComputePool();
@@ -109,6 +112,7 @@ test('a real reader snapshot is plain data, a structured clone computes the same
     assert.equal(viaWorker.ok,true,JSON.stringify(viaWorker));
     assert.equal(nonPlain(viaWorker.body),null,'the worker body holds plain data only');
     assert.equal(stable(viaWorker.body),stable(direct));
+    assert.deepEqual(viaWorker.body.market_data.coverage,coverage);
     assert.equal(direct.analytics_comparison.targeted_exits,1,'the second (analytics) replay ran');
   }finally{await pool.close();}
 });

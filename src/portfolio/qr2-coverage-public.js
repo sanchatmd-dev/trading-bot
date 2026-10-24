@@ -1,6 +1,7 @@
 import {buildBarCoverage,validateBarCoverage} from './qr2-coverage.js';
 import {coverageError,planCoverage,validateCoverageSnapshot} from './qr2-coverage-snapshot.js';
 import {assembleGaps} from '../market-gap-intervals.js';
+import {QR2_COVERAGE_LIMITS} from './qr2-coverage-limits.js';
 
 export const OWNER_COVERAGE_VERSION='qr2-owner-bar-coverage-v1';
 export const OWNER_COVERAGE_INVALID='QR2_OWNER_COVERAGE_INVALID';
@@ -58,6 +59,21 @@ function windowCoverage(registry,w){
  * Returns {owner:{market_coverage},accounts:[{bot_id,broker,market_data:{coverage}}]}. Any failure throws and returns nothing.
  */
 export function projectPublicCoverage(registry,context,outputByteLimit){
+  const outcome=projectOutcome(registry,context,outputByteLimit);
+  if(outcome.refused)fail('QR2_RANGE_ADMISSION_REFUSED');
+  return outcome.projection;
+}
+
+/**
+ * Same projection as projectPublicCoverage, sharing one implementation. Returns {refused:false,projection} on success and
+ * {refused:true} only for the post-build admitSerializedBytes refusal (the lowered-limit refusal). Every other failure throws
+ * exactly as projectPublicCoverage does, including a QR2_RANGE_ADMISSION_REFUSED raised before the entries are built.
+ */
+export function projectPublicCoverageOutcome(registry,context,outputByteLimit){
+  return projectOutcome(registry,context,outputByteLimit);
+}
+
+function projectOutcome(registry,context,outputByteLimit){
   input(closed(context,['accounts','budgets']));
   input(outputByteLimit===undefined||(Number.isSafeInteger(outputByteLimit)&&outputByteLimit>0));
   validateCoverageSnapshot(registry,context);
@@ -76,9 +92,15 @@ export function projectPublicCoverage(registry,context,outputByteLimit){
   report(intervals===charges.output_intervals);
   const owner={market_coverage:{version:OWNER_COVERAGE_VERSION,entries,accounts:registry.bindings.map(b=>({bot_id:b.bot_id,broker:b.broker,coverage_ids:['coverage:'+b.window_id]}))}};
   report(validateOwnerCoverage(owner,context).ok);
-  admitSerializedBytes(bytes(owner),upper,limit);
-  for(const entry of entries)admitSerializedBytes(bytes({market_data:{coverage:entry.coverage}}),upper,limit);
-  return lock({owner,accounts:registry.bindings.map(b=>({bot_id:b.bot_id,broker:b.broker,market_data:{coverage:entries[b.window_id].coverage}}))});
+  // Only this block can report the lowered-limit refusal: every earlier step has already succeeded or thrown.
+  try{
+    admitSerializedBytes(bytes(owner),upper,limit);
+    for(const entry of entries)admitSerializedBytes(bytes({market_data:{coverage:entry.coverage}}),upper,limit);
+  }catch(error){
+    if(error?.code==='QR2_RANGE_ADMISSION_REFUSED')return {refused:true};
+    throw error;
+  }
+  return {refused:false,projection:lock({owner,accounts:registry.bindings.map(b=>({bot_id:b.bot_id,broker:b.broker,market_data:{coverage:entries[b.window_id].coverage}}))})};
 }
 
 function need(condition,path){
@@ -146,5 +168,60 @@ export function validateOwnerCoverage(value,context){
     // Context errors are thrown above. Anything unexpected about the envelope itself is a fixed-code rejection.
     if(error?.code===OWNER_COVERAGE_INVALID)return {ok:false,errors:[{code:error.code,path:error.path}]};
     return {ok:false,errors:[{code:OWNER_COVERAGE_INVALID,path:'envelope'}]};
+  }
+}
+
+const shapeMarketKey=market=>market===null?'':market.broker+'\u0000'+market.symbol+'\u0000'+market.timeframe;
+const shapeRangeCompare=(a,b)=>a===null?(b===null?0:-1):b===null?1:a.from-b.from||a.to-b.to;
+const shapeCompare=(a,b)=>a<b?-1:a>b?1:0;
+
+/**
+ * Context-free closed validator for the market_coverage envelope object (not the {market_coverage} wrapper). Returns {ok,errors}.
+ * It proves shape, order, mapping and sums only. It cannot prove the entries match the authorized accounts; validateOwnerCoverage does.
+ */
+export function validateOwnerCoverageShape(value){
+  try{
+    data(value,'market_coverage');
+    keys(value,['version','entries','accounts'],'market_coverage');
+    need(value.version===OWNER_COVERAGE_VERSION,'version');
+    const {entries,accounts}=value;
+    dense(entries,'entries');dense(accounts,'accounts');
+    need(entries.length<=QR2_COVERAGE_LIMITS.unique_windows,'entries.length');
+    need(accounts.length<=20,'accounts.length');
+    let intervals=0;
+    for(let i=0;i<entries.length;i++){
+      const entry=entries[i];
+      keys(entry,['id','coverage'],'entries.'+i);
+      need(entry.id==='coverage:'+i,'entries.'+i+'.id');
+      need(validateBarCoverage(entry.coverage).ok,'entries.'+i+'.coverage');
+      if(i>0){
+        const before=entries[i-1].coverage,now=entry.coverage;
+        const order=shapeCompare(shapeMarketKey(before.market),shapeMarketKey(now.market))||shapeRangeCompare(before.resolved_range,now.resolved_range);
+        need(order<0,'entries.'+i+'.order');
+      }
+      intervals+=entry.coverage.interval_count??0;
+    }
+    need(intervals<=QR2_COVERAGE_LIMITS.output_intervals,'entries.intervals');
+    const referenced=entries.map(()=>false);
+    for(let j=0;j<accounts.length;j++){
+      const account=accounts[j];
+      keys(account,['bot_id','broker','coverage_ids'],'accounts.'+j);
+      need(typeof account.bot_id==='string'&&typeof account.broker==='string','accounts.'+j);
+      if(j>0){
+        const before=accounts[j-1];
+        need((shapeCompare(before.bot_id,account.bot_id)||shapeCompare(before.broker,account.broker))<0,'accounts.'+j+'.order');
+      }
+      dense(account.coverage_ids,'accounts.'+j+'.coverage_ids');
+      need(account.coverage_ids.length===1,'accounts.'+j+'.coverage_ids');
+      const id=account.coverage_ids[0],match=typeof id==='string'?/^coverage:(0|[1-9][0-9]*)$/.exec(id):null,index=match?Number(match[1]):-1;
+      need(index>=0&&index<entries.length,'accounts.'+j+'.coverage_ids.unresolved');
+      referenced[index]=true;
+      need((entries[index].coverage.market===null)===(account.broker!=='binance-global'),'accounts.'+j+'.market');
+    }
+    need(referenced.every(Boolean),'entries.orphan');
+    return {ok:true,errors:[]};
+  }catch(error){
+    if(error?.code===OWNER_COVERAGE_INVALID)return {ok:false,errors:[{code:error.code,path:error.path}]};
+    return {ok:false,errors:[{code:OWNER_COVERAGE_INVALID,path:'market_coverage'}]};
   }
 }

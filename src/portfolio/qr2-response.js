@@ -3,6 +3,8 @@ import {QR2_BASIS,QR2_METHODS,QR2_STATUS,Qr2Error} from './qr2-constants.js';
 import {buildHeader,numberField,validateResponse} from './qr2-labels.js';
 import {stateAt} from './qr2-replay.js';
 import {exposure} from './qr2-returns.js';
+import {QR2_COVERAGE_MARKET,validateBarCoverage} from './qr2-coverage.js';
+import {QR2_COVERAGE_LIMITS} from './qr2-coverage-limits.js';
 
 // QR-2 S3a response composer (contract 8.1, RC-Q32). Pure: it reads a reader view and builds the header and the number fields of the
 // response. It never returns a ledger row, a replay event, a price bar or a value read from a row of another Bot. The final object goes
@@ -244,11 +246,42 @@ function viewBody(view,requestTime){
 
 const buildBody=(view,requestTime)=>typeof view.refused==='string'?refusedBody(view,requestTime):viewBody(view,requestTime);
 
+const MARKET_DATA_KEYS=['checked','table_present','instants','bars','gap'];
+const exactKeys=(value,names)=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Reflect.ownKeys(value).length===names.length&&names.every(key=>Object.hasOwn(value,key));
+const sameRange=(a,b)=>a===null?b===null:a!==null&&typeof a==='object'&&b!==null&&typeof b==='object'&&a.from===b.from&&a.to===b.to;
+const sameMarket=(a,b)=>a===null?b===null:b!==null&&a.broker===b.broker&&a.symbol===b.symbol&&a.timeframe===b.timeframe;
+
+/**
+ * Coverage rules for a built body. Non-REFUSED bodies only: market_data must hold exactly the five legacy keys, and with the
+ * option present the coverage object is added to a copy of market_data. Returns {body,codes}; codes are fixed strings, never a value.
+ */
+function applyCoverage(body,coverage){
+  const codes=[];
+  const present=coverage!==undefined;
+  if(body.status?.status==='REFUSED'){
+    if(present&&Object.hasOwn(body,'market_data'))codes.push('COVERAGE_REFUSED_MARKET_DATA');
+    return {body,codes};
+  }
+  const block=body.market_data;
+  if(!exactKeys(block,MARKET_DATA_KEYS)){codes.push('COVERAGE_MARKET_DATA_KEYS');return {body,codes};}
+  if(!present)return {body,codes};
+  let valid=false;
+  try{valid=validateBarCoverage(coverage).ok;}catch{valid=false;}
+  if(!valid){codes.push('COVERAGE_INVALID');return {body,codes};}
+  if(!sameRange(coverage.resolved_range,body.resolved_range))codes.push('COVERAGE_RANGE_MISMATCH');
+  const supported=body.scope?.broker==='binance-global';
+  if(!sameMarket(coverage.market,supported?QR2_COVERAGE_MARKET:null))codes.push('COVERAGE_MARKET_MISMATCH');
+  if(!(coverage.interval_count===null||coverage.interval_count<=QR2_COVERAGE_LIMITS.output_intervals))codes.push('COVERAGE_INTERVALS_OVER');
+  if(codes.length)return {body,codes};
+  return {body:{...body,market_data:{...block,coverage}},codes};
+}
+
 /**
  * Builds the validated response body for one reader view. requestTime is the one clock read of the request. build is a seam for tests only (default buildBody): whatever it returns still goes through validateResponse and the key allowlist. A refused view gives the
- * refusal body. Throws QR2_RESPONSE_INVALID (fixed text, no number) when the object cannot be built or validated.
+ * refusal body. coverage is the optional qr2-bar-coverage-v1 object for market_data.coverage of a non-REFUSED body; it enters after build,
+ * so the seam cannot pre-empt the coverage checks. Throws QR2_RESPONSE_INVALID (fixed text, no number, no coverage value) when the object cannot be built or validated.
  */
-export function composePerformanceResponse(view,{requestTime,build=buildBody}){
+export function composePerformanceResponse(view,{requestTime,coverage,build=buildBody}){
   let body;
   try{
     if(!view||typeof view!=='object'||!Number.isSafeInteger(requestTime))throw new TypeError('view and requestTime are required');
@@ -256,7 +289,13 @@ export function composePerformanceResponse(view,{requestTime,build=buildBody}){
   }catch{
     throw new Qr2Error('QR2_RESPONSE_INVALID',QR2_ERROR_TEXT.QR2_RESPONSE_INVALID);
   }
+  let coverageCodes=[];
+  if(body!==null&&typeof body==='object'&&!Array.isArray(body)){
+    try{({body,codes:coverageCodes}=applyCoverage(body,coverage));}
+    catch{coverageCodes=['COVERAGE_CHECK_FAILED'];}
+  }
   const check=validateResponse(body);
+  if(coverageCodes.length)check.ok=false,check.errors=[...check.errors,...coverageCodes.map(code=>({code,path:'market_data'}))];
   // validateResponse (qr2-labels.js) checks the label fields only; the key allowlist of the response is held here.
   const unknown=unknownTopLevelKeys(body);
   if(unknown.length)check.ok=false,check.errors=[...check.errors,...unknown.map(key=>({code:'UNKNOWN_TOP_LEVEL_KEY',path:key}))];

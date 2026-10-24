@@ -6,12 +6,17 @@ import {qr2OwnerPerformanceRoute} from '../src/postgres/qr2-owner-route.js';
 import {createQr2ComputePool} from '../src/postgres/qr2-compute-pool.js';
 import {createDispatcher,json} from '../src/postgres/request-dispatch.js';
 import {composeOwnerResponse,validateOwnerResponse} from '../src/portfolio/qr2-owner-response.js';
+import {buildCoverageSnapshot} from '../src/portfolio/qr2-coverage-snapshot.js';
+import {QR2_COVERAGE_LIMITS} from '../src/portfolio/qr2-coverage-limits.js';
 const NOW=1790899200000,DAY=86400000;
+// Zero members and an unresolved owner range: the registry is empty and the body omits market_coverage.
+const emptyContext={accounts:[],budgets:{...QR2_COVERAGE_LIMITS}};
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 function ownerResult(){
   return composeOwnerResponse({kind:'owner',currency:'USDT',ownerBots:[{bot_id:'owner',created_at:NOW-DAY-1}],declarations:[],accounts:[],
     range:{requested:{from:NOW-DAY,to:NOW},resolved:null,reasons:['RANGE_EMPTY_AT_REQUEST_TIME'],flags:[]},
-    counts:{accounts:0,bots:1,declarations:0,ledger_rows:0,grid_instants:0,audit_rows:0,pending_orders:0}}, {kind:'owner',currency:'USDT',requestTime:NOW});
+    counts:{accounts:0,bots:1,declarations:0,ledger_rows:0,grid_instants:0,audit_rows:0,pending_orders:0},coverage:buildCoverageSnapshot({...emptyContext,facts:[]})},
+  {kind:'owner',currency:'USDT',requestTime:NOW,coverage_context:emptyContext});
 }
 const store=()=>({userById:async id=>({id,parent_user_id:null,created_at:NOW-DAY-1}),ownsBot:async()=>true,activePlan:async()=> 'ENTERPRISE'});
 const response=()=>{const headers={};return {headers,phase2AfterCommit:null,setHeader:(k,v)=>{headers[k]=v;}};};
@@ -67,6 +72,15 @@ test('independent owner finding audit runs only after dispatcher commit and resp
   await dispatch({method:'GET',url:'/api/paper-performance/owner?currency=USDT&period=DAY',headers:{},socket:{}},res);
   assert.deepEqual(order,['commit','read','send-head','send-body','audit']);assert.equal(res.statusCode,200);assert.equal(validateOwnerResponse(res.body),true);
   assert.equal(JSON.stringify(res.body).includes('PRIVATE_'),false);assert.equal(res.phase2AfterCommit,null);
+});
+
+test('independent owner body with an unresolved range carries no market_coverage and a body carrying one is refused by the route',async()=>{
+  const body=structuredClone(ownerResult().body);
+  assert.equal(body.resolved_range,null);assert.equal(Object.hasOwn(body,'market_coverage'),false);assert.equal(validateOwnerResponse(body),true);
+  body.market_coverage={version:'qr2-owner-bar-coverage-v1',entries:[],accounts:[]};
+  assert.equal(validateOwnerResponse(body),false);
+  const res=await plan('owner',{slot:createQr2Slot(),readSnapshot:async()=>({snapshot:{},input:{}}),compute:{run:async()=>({ok:true,body,auditFindings:[]})}});
+  const result=await res.phase2Deferred();assert.equal(result.status,500);assert.equal(result.body.code,'QR2_RESPONSE_INVALID');
 });
 
 test('independent owner scalar response corruption is refused and never registers audit',async()=>{

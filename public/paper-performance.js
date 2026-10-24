@@ -152,6 +152,7 @@
     details.append(label('Server status, methods and range evidence', 'summary'));
     const metadata = {...body};
     delete metadata.account; delete metadata.total;
+    delete metadata.market_coverage; if (metadata.market_data && typeof metadata.market_data === 'object' && !Array.isArray(metadata.market_data)) metadata.market_data = Object.fromEntries(Object.entries(metadata.market_data).filter(([key]) => key !== 'coverage'));
     details.append(serverValue(metadata)); fragment.append(details);
     result.replaceChildren(fragment);
   }

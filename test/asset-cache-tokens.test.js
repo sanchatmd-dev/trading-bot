@@ -34,7 +34,7 @@ const PINNED={
   '/research-job.js':['rj1','ffd1319d6cb583f4'],
   '/journey.js':['jd2','8e975e210d1a8314'],
   '/overview.js':['ov2','70187f0f9028855f'],
-  '/paper-performance.js':['qr2s53','a3045783dda8a6de'],
+  '/paper-performance.js':['qr2o6','ebf55430541e9b67'],
   '/setup-guide.js':['sg2','2a4297c04f483dc8'],
   '/research-nav.js':['rn1','4de9b9e136d0c461'],
   '/preflight-runner.js':['r7ui6','380a5bf2e40ec318']

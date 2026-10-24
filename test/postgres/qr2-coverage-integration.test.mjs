@@ -8,6 +8,7 @@ import {readQr2OwnerSnapshot} from '../../src/postgres/qr2-owner-reader.js';
 import {createQr2ComputePool} from '../../src/postgres/qr2-compute-pool.js';
 import {composeOwnerResponse,validateOwnerResponse} from '../../src/portfolio/qr2-owner-response.js';
 import {buildBarCoverage} from '../../src/portfolio/qr2-coverage.js';
+import {projectPublicCoverage} from '../../src/portfolio/qr2-coverage-public.js';
 const M=60000;let f;
 before(async()=>{f=await createQr2Database('robot_qr2_coverage_integration');await f.db.query(await fs.readFile(new URL('../../src/postgres/paper-capital-model.sql',import.meta.url),'utf8'));});
 after(async()=>{await f?.dispose();});
@@ -33,7 +34,11 @@ const args=(owner,bot,from,to)=>({ownerId:owner.id,botId:bot.id,broker:'binance-
 const unionReads=qs=>qs.filter(q=>q.sql.startsWith('SELECT bar_time::text AS bar_time'));
 async function observed(fn){const query=f.db.query.bind(f.db),queries=[];f.db.query=async(sql,params)=>{queries.push({sql,params});return query(sql,params);};try{return {value:await fn(),queries};}finally{f.db.query=query;}}
 function publicCoverage(read){const registry=read.snapshot.coverage,w=registry.windows[0],u=registry.unions[w.union_id];return buildBarCoverage({market:w.market,resolved_range:w.resolved_range,fact:u.fact.state==='COMPLETE'?{state:'COMPLETE',timestamps:u.fact.timestamps.slice(w.start_index,w.end_index)}:u.fact});}
-function noInternalKeys(value){if(!value||typeof value!=='object')return;for(const[k,v]of Object.entries(value)){assert.ok(!['coverage','coverage_context','coverage_window_id','coverage_input_bytes','coverage_output_bytes'].includes(k),'no internal public key '+k);noInternalKeys(v);}}
+// Path-aware walk: no internal key at any depth; a key named coverage only where the published contract places it
+// (body.market_coverage.entries[i].coverage in an owner body only; this walk runs on owner bodies, so a stray body.market_data.coverage fails).
+const INTERNAL_KEYS=['coverage_context','coverage_window_id','coverage_input_bytes','coverage_output_bytes','budgets','unions','windows','bindings','charges'];
+const COVERAGE_PATH=/^body\.market_coverage\.entries\[\d+\]\.coverage$/;
+function noInternalKeys(value,at='body'){if(!value||typeof value!=='object')return;if(Array.isArray(value)){value.forEach((v,i)=>noInternalKeys(v,at+'['+i+']'));return;}for(const[k,v]of Object.entries(value)){const here=at+'.'+k;assert.ok(!INTERNAL_KEYS.includes(k),'no internal public key '+here);assert.ok(k!=='coverage'||COVERAGE_PATH.test(here),'coverage only at a published path '+here);noInternalKeys(v,here);}}
 
 test('coverage integration: five funded supported accounts share one nested union and preserve cash-only owner body',{timeout:45000},async()=>{
  await clearBars();const owner=await createOwner(f.store);await setCapital(f.store,owner,100);
@@ -44,7 +49,7 @@ test('coverage integration: five funded supported accounts share one nested unio
  const {value:read,queries}=await observed(()=>readQr2OwnerSnapshot(f.store,{ownerId:owner.id,currency:'USDT',from,to,requestTime:to,boundaries:LOCAL_FIXTURE_E2}));
  assert.equal(read.snapshot.accounts.length,5);assert.equal(read.snapshot.ownerBots.length,5);assert.equal(unionReads(queries).length,1);assert.equal(read.snapshot.coverage.unions.length,1);assert.equal(read.snapshot.coverage.windows.length,5);
  for(let i=0;i<5;i++){const member=read.snapshot.accounts.find(a=>a.input.botId===bots[i].id),meta=read.input.coverage_context.accounts.find(a=>a.bot_id===bots[i].id),binding=read.snapshot.coverage.bindings.find(b=>b.bot_id===bots[i].id);assert.deepEqual(meta.resolved_range,{from:from+i*M,to});assert.equal(member.snapshot.coverage_window_id,binding.window_id);assert.equal(Object.hasOwn(member.snapshot,'coverage'),false);assert.equal(Object.hasOwn(member.input,'coverage_context'),false);assert.equal(member.snapshot.market.checked,false);}
- const baseline=composeOwnerResponse(read.snapshot,read.input),pool=createQr2ComputePool();try{const actual=await pool.run(read.snapshot,read.input);assert.equal(actual.ok,true);assert.deepEqual(actual.body,baseline.body);assert.equal(validateOwnerResponse(actual.body),true);for(let i=0;i<5;i++){const row=actual.body.accounts.find(a=>a.bot_id===bots[i].id);assert.equal(row.nav_from.value,'0');assert.equal(row.nav_to.value,String(100+i));assert.equal(row.flows_total.value,String(100+i));assert.equal(row.money_pnl.value,'0');}noInternalKeys(actual.body);}finally{await pool.close();}
+ const baseline=composeOwnerResponse(read.snapshot,read.input),pool=createQr2ComputePool();try{const actual=await pool.run(read.snapshot,read.input);assert.equal(actual.ok,true);assert.deepEqual(actual.body,baseline.body);assert.deepEqual(actual.body.market_coverage,projectPublicCoverage(read.snapshot.coverage,read.input.coverage_context).owner.market_coverage);assert.equal(validateOwnerResponse(actual.body),true);for(let i=0;i<5;i++){const row=actual.body.accounts.find(a=>a.bot_id===bots[i].id);assert.equal(row.nav_from.value,'0');assert.equal(row.nav_to.value,String(100+i));assert.equal(row.flows_total.value,String(100+i));assert.equal(row.money_pnl.value,'0');}noInternalKeys(actual.body);}finally{await pool.close();}
  assert.deepEqual(await Promise.all(bots.map(b=>ledgerDigest(f.db,b))),before);
  // Aggregate failure on the last independently counted member: no coverage or member detail.
  const query=f.db.query.bind(f.db),seen=[];let auditCalls=0;

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {composePerformanceResponse,unknownTopLevelKeys,refusalAnswer,statusOfRefusal,statusOfAdmission,QR2_CONTRACT_ID,QR2_MAX_FINDINGS,QR2_NOTICE_IDS,QR2_ERROR_TEXT} from '../src/portfolio/qr2-response.js';
 import {validateResponse,numberField} from '../src/portfolio/qr2-labels.js';
 import {QR2_METHODS,QR2_STATUS} from '../src/portfolio/qr2-constants.js';
+import {buildBarCoverage,validateBarCoverage,QR2_COVERAGE_MARKET} from '../src/portfolio/qr2-coverage.js';
+import {QR2_COVERAGE_LIMITS} from '../src/portfolio/qr2-coverage-limits.js';
 
 // QR-2 S3a composer (contract 8.1, RC-Q32; design tests R1 to R4). Pure: no database. The views below are hand-built in the exact shape
 // readQr2Account returns (qr2-reader.js), with literal hand values; the real reader output is composed in test/postgres/qr2-route-http.test.mjs.
@@ -254,4 +256,99 @@ test('OD-S4-9 reports fees only in resolved [from,to), without changing NAV or r
   assert.equal(blocked.account.fees.value,null);
   assert.ok(blocked.account.fees.reasons.includes('FEES_NOT_AVAILABLE'));
   assert.equal(compose({...sample,performance:null}).account.fees.value,null);
+});
+
+// O6: market_data.coverage. The option is projected by the worker; the composer checks it against the header and the scope.
+const MIN=60000;
+const rangeView=(to,over={})=>view({range:{requested:{from:T0,to},resolved:{from:T0,to},flags:[]},...over});
+const coverageFor=(resolved_range,fact,market=QR2_COVERAGE_MARKET)=>buildBarCoverage({resolved_range,market,fact});
+const withCoverage=(v,coverage)=>composePerformanceResponse(v,{requestTime:NOW,coverage});
+const failure=run=>{try{run();}catch(error){return error;}assert.fail('expected QR2_RESPONSE_INVALID');};
+const MARKET_KEYS=['bars','checked','gap','instants','table_present'];
+
+test('O6 coverage present and identical to the option; legacy five keys when absent',()=>{
+  const v=view();
+  const coverage=coverageFor(v.range.resolved,{state:'TABLE_ABSENT'});
+  const body=withCoverage(v,coverage);
+  assert.equal(body.market_data.coverage,coverage,'the option object itself');
+  assert.deepEqual(Object.keys(body.market_data).sort(),[...MARKET_KEYS,'coverage'].sort());
+  assert.deepEqual({...body.market_data,coverage:undefined},{...compose(v).market_data,coverage:undefined},'the five legacy keys keep their values');
+  assert.deepEqual(Object.keys(compose(v).market_data).sort(),MARKET_KEYS,'absent option keeps the legacy five keys');
+  assert.deepEqual(Object.keys(composePerformanceResponse(v,{requestTime:NOW,coverage:undefined}).market_data).sort(),MARKET_KEYS);
+  // Coverage never changes another field.
+  const plain=compose(v),{market_data:_a,...rest}=body,{market_data:_b,...restPlain}=plain;
+  assert.deepEqual(rest,restPlain);
+  const complete=coverageFor({from:T0,to:T0+5*MIN},{state:'COMPLETE',timestamps:[T0+MIN,T0+2*MIN,T0+4*MIN,T0+5*MIN]});
+  assert.equal(complete.interval_count,1);
+  assert.equal(withCoverage(rangeView(T0+5*MIN),complete).market_data.coverage.interval_count,1);
+});
+
+test('O6 coverage rejects invalid coverage, range mismatch, market and broker mismatch, interval overflow and extra market_data keys',()=>{
+  const v=view(),good=coverageFor(v.range.resolved,{state:'TABLE_ABSENT'});
+  const invalid=structuredClone(good);invalid.state='COMPLETE';
+  // A valid coverage whose interval count is one above the public maximum: every second minute is stored.
+  const overflow=coverageFor({from:T0,to:T0+8210*MIN},{state:'COMPLETE',timestamps:Array.from({length:4100},(_,k)=>T0+(2*k+2)*MIN)});
+  assert.ok(overflow.interval_count>QR2_COVERAGE_LIMITS.output_intervals);assert.equal(validateBarCoverage(overflow).ok,true);
+  const cases={
+    invalid_coverage:[v,invalid],
+    null_coverage:[v,null],
+    range_mismatch:[v,coverageFor({from:T0,to:NOW+MIN},{state:'TABLE_ABSENT'})],
+    range_null_vs_header:[v,coverageFor(null,{state:'NOT_NEEDED'})],
+    market_null_for_supported_broker:[v,coverageFor(v.range.resolved,{state:'NOT_NEEDED'},null)],
+    market_supported_for_other_broker:[view({scope:{...view().scope,broker:'binance-th'}}),good],
+    interval_overflow:[rangeView(T0+8210*MIN),overflow]
+  };
+  for(const [name,[sample,coverage]] of Object.entries(cases)){
+    const error=failure(()=>withCoverage(sample,coverage));
+    assert.equal(error.code,'QR2_RESPONSE_INVALID',name);assert.equal(error.message,QR2_ERROR_TEXT.QR2_RESPONSE_INVALID,name);
+    assert.ok(Array.isArray(error.validation)&&error.validation.every(code=>/^[A-Z_]+$/.test(code)),name);
+  }
+  // A null market is the exact shape for a non-binance-global broker.
+  const thb=view({scope:{...view().scope,broker:'binance-th'}});
+  assert.equal(withCoverage(thb,coverageFor(thb.range.resolved,{state:'NOT_NEEDED'},null)).market_data.coverage.market,null);
+  // The same range one interval below the maximum composes.
+  const atMaximum=coverageFor({from:T0,to:T0+8200*MIN},{state:'COMPLETE',timestamps:Array.from({length:4095},(_,k)=>T0+(2*k+2)*MIN)});
+  assert.equal(atMaximum.interval_count,QR2_COVERAGE_LIMITS.output_intervals);
+  assert.equal(withCoverage(rangeView(T0+8200*MIN),atMaximum).market_data.coverage.interval_count,QR2_COVERAGE_LIMITS.output_intervals);
+});
+
+test('O6 coverage rejects an extra market_data key and a build seam that already holds coverage',()=>{
+  const v=view(),good=coverageFor(v.range.resolved,{state:'TABLE_ABSENT'}),other=coverageFor(v.range.resolved,{state:'TABLE_ABSENT'});
+  const extraKey=(sample,requestTime)=>{const body=composePerformanceResponse(sample,{requestTime});return {...body,market_data:{...body.market_data,sneak:1}};};
+  assert.equal(failure(()=>composePerformanceResponse(v,{requestTime:NOW,coverage:good,build:extraKey})).code,'QR2_RESPONSE_INVALID');
+  assert.equal(failure(()=>composePerformanceResponse(v,{requestTime:NOW,build:extraKey})).code,'QR2_RESPONSE_INVALID','no option: still exactly five keys');
+  const holding=(sample,requestTime)=>{const body=composePerformanceResponse(sample,{requestTime});return {...body,market_data:{...body.market_data,coverage:other}};};
+  assert.equal(failure(()=>composePerformanceResponse(v,{requestTime:NOW,coverage:good,build:holding})).code,'QR2_RESPONSE_INVALID');
+  assert.equal(failure(()=>composePerformanceResponse(v,{requestTime:NOW,coverage:other,build:holding})).code,'QR2_RESPONSE_INVALID','even the same object cannot pre-empt the checks');
+  assert.equal(failure(()=>composePerformanceResponse(v,{requestTime:NOW,build:holding})).code,'QR2_RESPONSE_INVALID');
+  const noBlock=(sample,requestTime)=>{const {market_data:_dropped,...body}=composePerformanceResponse(sample,{requestTime});return body;};
+  assert.equal(failure(()=>composePerformanceResponse(v,{requestTime:NOW,coverage:good,build:noBlock})).code,'QR2_RESPONSE_INVALID');
+});
+
+test('O6 a refused view with the option present gives the exact legacy refusal body with no market_data',()=>{
+  const v=refusedView(),legacy=compose(v),coverage=coverageFor(v.range.resolved,{state:'TABLE_ABSENT'});
+  const body=withCoverage(v,coverage);
+  assert.deepEqual(body,legacy);assert.equal(Object.hasOwn(body,'market_data'),false);assert.equal(JSON.stringify(body).includes('qr2-bar-coverage'),false);
+  const forced=(sample,requestTime)=>({...composePerformanceResponse(sample,{requestTime}),market_data:{checked:true,table_present:true,instants:1,bars:1,gap:null}});
+  assert.equal(failure(()=>composePerformanceResponse(v,{requestTime:NOW,coverage,build:forced})).code,'QR2_RESPONSE_INVALID');
+});
+
+test('O6 no coverage value appears in a coverage error',()=>{
+  const v=view(),bad=structuredClone(coverageFor(v.range.resolved,{state:'TABLE_ABSENT'}));
+  bad.source=SECRET;bad.reason=SECRET;
+  const error=failure(()=>withCoverage(v,bad));
+  assert.equal(JSON.stringify([error.message,error.code,error.validation,Object.keys(error)]).includes(SECRET),false);
+  assert.equal(error.detail,undefined);
+});
+
+test('O6 fix-r1 M27: the composer accepts interval_count 4096 and refuses exactly 4097 on a valid, range-matching, market-matching coverage',()=>{
+  const at=(timestamps,end)=>coverageFor({from:T0,to:T0+end*MIN},{state:'COMPLETE',timestamps:Array.from({length:timestamps},(_,k)=>T0+(2*k+2)*MIN)});
+  const accepted=at(4095,8200),refusedOne=at(4096,8194);
+  assert.equal(accepted.interval_count,QR2_COVERAGE_LIMITS.output_intervals);
+  assert.equal(refusedOne.interval_count,QR2_COVERAGE_LIMITS.output_intervals+1);
+  // Nothing else rejects 4097: the coverage is valid, its range equals the header range and its market is the supported one.
+  assert.equal(validateBarCoverage(refusedOne).ok,true);assert.deepEqual(refusedOne.resolved_range,{from:T0,to:T0+8194*MIN});
+  assert.equal(withCoverage(rangeView(T0+8200*MIN),accepted).market_data.coverage.interval_count,4096);
+  const error=failure(()=>withCoverage(rangeView(T0+8194*MIN),refusedOne));
+  assert.equal(error.code,'QR2_RESPONSE_INVALID');assert.deepEqual(error.validation,['COVERAGE_INTERVALS_OVER']);
 });

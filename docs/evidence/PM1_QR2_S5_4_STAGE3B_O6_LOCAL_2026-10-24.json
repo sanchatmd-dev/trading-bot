@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "id": "PM1_QR2_S5_4_STAGE3B_O6_LOCAL_2026-10-24",
+  "recordedAt": "2026-10-24T04:13:50.285Z",
+  "baseRevision": "e47e1f7ea167c9914c8a46ad2961fb8a7a0c8751",
+  "status": "ACCEPTED_LOCAL_RESPONSE_WIRING_NOT_RENDERED_NOT_DEPLOYED",
+  "ownerGo": "RECEIVED_IN_CHAT_NAMING_QR2_O6",
+  "scope": "Per-Bot and owner performance responses carry the public market coverage projection; the generic metadata view excludes the coverage keys. No rendering (O7), no deployment, no target route activation.",
+  "packet": {
+    "path": "docs/QR2_S5_4_STAGE3B_RESPONSE_WIRING_PACKET_2026-10-24.md",
+    "sha256": "e68f6276e7e4f3239f378ca83aebfce5370376b0a12d64039fcd9650f1bf8c04"
+  },
+  "preparationEvidence": {
+    "path": "docs/evidence/PM1_QR2_S5_4_STAGE3B_PREPARATION_2026-10-24.json",
+    "sha256": "f8eb7bc7cfebbe55bdf32f488efbc0a22ed600f889acc2c829f485ccf8539f93"
+  },
+  "pinNote": "sha256 is of the working-tree bytes; gitBlob is the line-ending-normalized Git object id, stable across checkouts",
+  "sourcePins": [
+    {
+      "path": "public/index.html",
+      "sha256": "354c384c8c78d7732217d2564a39fbf03b7ec0e9b4d1d27cd77eae76f48dd987",
+      "gitBlob": "cbab22ce693815cb9bc509155f6b094f2368f8a3"
+    },
+    {
+      "path": "public/paper-performance.js",
+      "sha256": "ebf55430541e9b6745a4127cc951cab3f26468eec7dde5068329b5531c2d39b4",
+      "gitBlob": "0b3d9b8252fb47311431419989afba373344e0ab"
+    },
+    {
+      "path": "src/portfolio/qr2-coverage-public.js",
+      "sha256": "d855dc0c2d81441169ada35230fb35eb96ea24da19d7969420132122d2010e72",
+      "gitBlob": "d1dca95887561077c05454a16e085f1491764ceb"
+    },
+    {
+      "path": "src/portfolio/qr2-owner-response.js",
+      "sha256": "44b8d360473b032e86c00c8d80e48711ca22667cc909dc5a83d8b72beaa936e1",
+      "gitBlob": "1d5385cac5c827f79ab3097c4c8500ed611af060"
+    },
+    {
+      "path": "src/portfolio/qr2-response.js",
+      "sha256": "11fb4739db90be39f48b7832b8e3c7d1eb56c99be7459760ab7fc527f55fb9dc",
+      "gitBlob": "b29ee515a45ffa1725c56ba083dc0015524cdc10"
+    },
+    {
+      "path": "src/postgres/qr2-compute-worker.js",
+      "sha256": "170219c090e4a776189fabeca677a43452737bd45e4144c200624dbe6d4b2692",
+      "gitBlob": "d271d89dd7b429cd1839d8e17f29c031e90765cf"
+    }
+  ],
+  "testPins": [
+    {
+      "path": "test/asset-cache-tokens.test.js",
+      "sha256": "1d51360cb6c25c96a657efb57bd1c58ddb7e767b2af52ce6e51c8f43ab78e644",
+      "gitBlob": "72542917d8c08f582c38e4ea08311d11feb3ae33"
+    },
+    {
+      "path": "test/postgres/qr2-compute-http.test.mjs",
+      "sha256": "785a3e514638544cde5be9f5f67e05f159381df337ca657bf3ab2c5a73f60ee6",
+      "gitBlob": "f97c3b5c7e8c1d8b42603f6ce2037bd7c1596542"
+    },
+    {
+      "path": "test/postgres/qr2-coverage-financial.test.mjs",
+      "sha256": "93dc190c3c802d62b1266499b2f6cc9d4c3cb82aa9a048ebd59fa99f0a4729af",
+      "gitBlob": "ed144b79b560ece7e215d29d2e3161243ff810f5"
+    },
+    {
+      "path": "test/postgres/qr2-coverage-integration.test.mjs",
+      "sha256": "55ac67140ce3e8e4fa2bafea472e7e11eb5a98d65c96db416a4cdf3bc6f68b3a",
+      "gitBlob": "72db208687bde6da54d8a028db09937354ea15c7"
+    },
+    {
+      "path": "test/qr2-compute-pool.test.js",
+      "sha256": "1e4ebd7e927d3e2c822208b639e86d6a0d59af3f1a8851bb5b05d9968915cc8c",
+      "gitBlob": "f48b8a106f76c5b7b566082c2bfc3e4097149b0c"
+    },
+    {
+      "path": "test/qr2-coverage-public.test.js",
+      "sha256": "785baf6d934d89d83059e40c0f44c01321203a64c90b985303fe802e784331a5",
+      "gitBlob": "5bf1d6da35f3f62cf8101a28b5451bb4fb4f454f"
+    },
+    {
+      "path": "test/qr2-owner-independent.test.js",
+      "sha256": "6fead4116e81ecc491ccec4ae0c8f6e38be39ad3ccccb161f885804b06943dcf",
+      "gitBlob": "59210ce18a7adb43e394132fcd6a5d6b30b37daf"
+    },
+    {
+      "path": "test/qr2-owner-response.test.js",
+      "sha256": "9f23de5acaabc2e283e815c77f5294f4795f68071b2846f16ddffa630743e171",
+      "gitBlob": "ddaa9a013f6e200f225939917339bfd927a84748"
+    },
+    {
+      "path": "test/qr2-performance-ui.test.js",
+      "sha256": "61f9ca822da32cb6ffce5af4a7417edffabe12efdde5648cef256cd6f93286c1",
+      "gitBlob": "9b4c8d1866a9aee4c839fa1310e394d7e68007f2"
+    },
+    {
+      "path": "test/qr2-response.test.js",
+      "sha256": "e459d5d38d6348983747fa011ce566da5a1b244ad01a98c6e09fa9828596c115",
+      "gitBlob": "a15f60fc25fbc075ad2629bcffaf1e0986f28b9b"
+    }
+  ],
+  "checks": {
+    "rootRun": {
+      "command": "npm test",
+      "node": "v24.19.0",
+      "tests": 3092,
+      "pass": 3075,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 8,
+      "todo": 9
+    },
+    "postgresSuites": "NOT_RUN_LOCALLY; CI postgres job on the pushed revision",
+    "importersCovered": "full npm test covers every non-PostgreSQL importer of the changed modules (git grep)"
+  },
+  "reviews": [
+    {
+      "role": "coder, Sonnet 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o6/author-report.md",
+      "sha256": "e8e797b03967075e1260e23d1b3544c8c84ba0cfb66369fa9f2e27c26a0ca9f8",
+      "note": "stopped on one unnamed import assertion; root ruling 7 amends the packet"
+    },
+    {
+      "role": "tester, Sonnet 5.5 / medium (independent oracle)",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o6/tester/tester-report.md",
+      "sha256": "0d03908eab11d6ccb3ee24949671416110c25568363dea2124a0265fff9e4a5b",
+      "verdict": "PASS",
+      "oracle": {
+        "tests": 438,
+        "seeds": [
+          20261024,
+          7,
+          99
+        ],
+        "mismatches": 0
+      }
+    },
+    {
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o6/audit-report.md",
+      "sha256": "2f6056e84086eed62bbec49f45669984e592cf268a29957eaa2d42048e629e83",
+      "verdict": "GO_WITH_CONDITIONS",
+      "findings": {
+        "P1": 0,
+        "P2": 1,
+        "P3": 4
+      },
+      "note": "P2-1 import assertion: packet amendment (ruling 7); P3-1, P3-2 fixed in fix round 1; P3-3 deferred to O7 (ruling 9); P3-4 timing recorded in fix round 1"
+    },
+    {
+      "role": "mutation tester, Sonnet 5.5 / medium (r1)",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o6/mutation/mutation-report.md",
+      "sha256": "c57c43c41aac92e0bc79f3f192b0ddd536a9927de166487013de21920d444643",
+      "mutants": {
+        "total": 34,
+        "killed": 30,
+        "survived": 4
+      },
+      "note": "M27 real gap and M03/M13/M15 oracle-only kills closed by fix round 1"
+    },
+    {
+      "role": "coder, Sonnet 5.5 / medium (fix round 1, tests only)",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o6/fix-r1-report.md",
+      "sha256": "48b2ec5add58abbcb38e90fc6016c89a272b9dc3e78a5afb11aceefe9dfeb0fb",
+      "timingObservation": "validateOwnerCoverageShape on a maximum envelope (20 entries, 20 accounts, 4096 intervals, 219216 JSON bytes): median 5.2 ms, max 9.5 ms over 50 runs; the rest of validateOwnerResponse and the event-loop bars were not measured"
+    },
+    {
+      "role": "mutation tester, Sonnet 5.5 / medium (r2 recheck)",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o6/mutation-r2/root-record-of-return.md",
+      "sha256": "8d4fd573591213bc93848cf5358a7adc245b59c1447895abbb07a3eef5ea3908",
+      "verdict": "PASS",
+      "note": "M27, M03, M13, M15 killed by unit tests only; root-authored record of the returned facts"
+    },
+    {
+      "role": "second-opinion architecture auditor, Opus 5.5 / high, recorded substitute for paused Fable 5.1",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o6/second-opinion.md",
+      "sha256": "4615c2a0203d969a67398bf5961387bd61313eb871b606dfeaa0e9b987090d2c",
+      "verdict": "GO_WITH_CONDITIONS",
+      "findings": {
+        "P1": 0,
+        "P2": 0,
+        "P3": 8
+      },
+      "note": "conditions: full npm test green (met), exact-revision CI including raw PostgreSQL logs, P3 items carried to O7 (packet rulings 11-12 and carry list)"
+    }
+  ],
+  "processDeviations": [
+    "coder redirected an empty probe file under /tmp and removed it (outside owned paths, no content)",
+    "tester fixed a constant in its own oracle file with sed -i",
+    "fix-round coder appended new tests with PowerShell AppendAllText to keep CRLF"
+  ],
+  "notEstablished": [
+    "rendered EN/TH coverage (O7)",
+    "PostgreSQL suites locally",
+    "event-loop timing bars RC-Q35/36",
+    "target behaviour"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "fullS5": "OPEN",
+    "prototypeCompletion": "OPEN"
+  }
+}

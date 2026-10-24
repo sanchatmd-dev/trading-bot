@@ -6,7 +6,7 @@ import {createQr2ComputePool} from '../../src/postgres/qr2-compute-pool.js';
 import {validateResponse} from '../../src/portfolio/qr2-labels.js';
 import {buildBarCoverage} from '../../src/portfolio/qr2-coverage.js';
 const MINUTE=60000,DAY=86400000;
-const stableBody=body=>{const copy=structuredClone(body);copy.reader.read_ms=0;copy.reader.compute_ms=0;return copy;};
+const stableBody=body=>{const copy=structuredClone(body);copy.reader.read_ms=0;copy.reader.compute_ms=0;delete copy.market_data.coverage;return copy;};
 const coverageOf=read=>{
   const registry=read.snapshot.coverage,window=registry.windows[read.snapshot.coverage_window_id],union=registry.unions[window.union_id];
   assert.equal(union.fact.state,'COMPLETE');
@@ -65,6 +65,7 @@ test('coverage financial differential: unused interior timestamp changes coverag
     const first=await pool.run(before.snapshot,before.input);
     assert.equal(first.ok,true,JSON.stringify(first));
     assert.equal(validateResponse(first.body).ok,true);
+    assert.deepEqual(first.body.market_data.coverage,coverageOf(before),'COMPLETE coverage with no interval before the deletion');
     const a=first.body.account;
     assert.deepEqual([a.cash.value,a.nav.value,a.market_value.value,a.position_cost.value,a.realized_pnl.value,a.unrealized_pnl.value,a.fees.value,a.money_pnl.value,a.twr.value],
       ['9644','10016','372','360','4','12','0','16','0.0016']);
@@ -82,6 +83,7 @@ test('coverage financial differential: unused interior timestamp changes coverag
     const second=await pool.run(after.snapshot,after.input);
     assert.equal(second.ok,true,JSON.stringify(second));
     assert.equal(validateResponse(second.body).ok,true);
+    assert.deepEqual(second.body.market_data.coverage,coverageOf(after),'exactly one one-minute interval at the removed bar');
     assert.deepEqual(stableBody(second.body),stableBody(first.body),'whole financial response differs only in the two established reader timers');
     assert.deepEqual(second.auditFindings,first.auditFindings);
     assert.deepEqual(await ledgerDigest(db,bot),digestBefore,'all ledger/audit/fence tables unchanged');

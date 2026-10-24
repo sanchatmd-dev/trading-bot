@@ -15,7 +15,9 @@ import {computeQr2View} from '../src/postgres/qr2-reader.js';
 import {resolveRange} from '../src/portfolio/qr2-periods.js';
 import {validateBoundaryRecord} from '../src/portfolio/qr2-boundaries.js';
 import {Qr2Error} from '../src/portfolio/qr2-constants.js';
-import {composePerformanceResponse} from '../src/portfolio/qr2-response.js';
+import {composePerformanceResponse,refusalAnswer} from '../src/portfolio/qr2-response.js';
+import {projectPublicCoverage,projectPublicCoverageOutcome} from '../src/portfolio/qr2-coverage-public.js';
+import {buildBarCoverage} from '../src/portfolio/qr2-coverage.js';
 import {executeQr2Job,QR2_WORKER_ROLE as WORKER_ROLE} from '../src/postgres/qr2-compute-worker.js';
 import {createQr2ComputePool,Qr2ComputeFailure,QR2_COMPUTE_DEADLINE_MS,QR2_COMPUTE_RESOURCE_LIMITS,QR2_WORKER_ROLE as POOL_ROLE,setsProcessHeapLimit} from '../src/postgres/qr2-compute-pool.js';
 import {qr2PerformanceRoute,createQr2Slot} from '../src/postgres/qr2-routes.js';
@@ -83,6 +85,12 @@ function attachCoverage(job){
   return job;
 }
 for(const job of Object.values(FIXTURES))attachCoverage(job);
+// The market_data.coverage the worker publishes for one account job: the projected account entry whose (bot_id, broker) equals the request.
+function projectedCoverage(snapshot,input){
+  const entries=projectPublicCoverage(snapshot.coverage,input.coverage_context).accounts.filter(a=>a.bot_id===input.botId&&a.broker===input.broker);
+  assert.equal(entries.length,1);
+  return entries[0].market_data.coverage;
+}
 // compute_ms and read_ms are timers; everything else must be identical, byte for byte as JSON. The copy is a JSON round trip, never a
 // structured clone, so a non-plain value cannot be hidden by the copy (callers assert nonPlain() on the raw value first).
 const zeroTimers=body=>{const copy=JSON.parse(JSON.stringify(body));if(copy.reader){copy.reader.compute_ms=0;copy.reader.read_ms=0;}return copy;};
@@ -127,7 +135,7 @@ test('parity: the worker body equals the in-thread body for complete, targeted-S
     const kinds={};
     for(const [name,{snapshot,input}] of Object.entries(FIXTURES)){
       const inThread=executeQr2Job({snapshot,input});
-      const direct=composePerformanceResponse(computeQr2View(snapshot,input),{requestTime:input.requestTime});
+      const direct=composePerformanceResponse(computeQr2View(snapshot,input),{requestTime:input.requestTime,coverage:projectedCoverage(snapshot,input)});
       assert.equal(nonPlain(inThread),null,name+': the in-thread result holds plain data only');
       assert.equal(nonPlain(direct),null,name+': the in-thread body holds plain data only');
       const viaWorker=await pool.run(snapshot,input);
@@ -205,10 +213,16 @@ test('executeQr2Job maps a Qr2Error, a composer failure and any other throw to p
   const other=executeQr2Job(job,{compute:()=>{throw Object.assign(new TypeError(secret),{stack:secret});}});
   assert.deepEqual(other,{ok:false,kind:'other'});
   for(const answer of [qr2,response,other])assert.equal(JSON.stringify(answer).includes(secret),false);
-  const ok=executeQr2Job(job,{compute:()=>({audit_findings:[{check:'RX',code:'X',event_key:'k'}],reader:{compute_ms:2.5},rows:[{secret}]}),compose:()=>({status:'COMPLETE'})});
-  assert.deepEqual(ok,{ok:true,body:{status:'COMPLETE'},auditFindings:[{check:'RX',code:'X',event_key:'k'}],compute_ms:2.5});
+  // The seam echoes its coverage option: the worker post-check needs the projected coverage object in a non-REFUSED body.
+  let offered;
+  const echo=(view,{coverage})=>{offered=coverage;return {status:{status:'COMPLETE'},market_data:{coverage}};};
+  const projected=projectedCoverage(job.snapshot,job.input);
+  const ok=executeQr2Job(job,{compute:()=>({audit_findings:[{check:'RX',code:'X',event_key:'k'}],reader:{compute_ms:2.5},rows:[{secret}]}),compose:echo});
+  assert.deepEqual(ok,{ok:true,body:{status:{status:'COMPLETE'},market_data:{coverage:projected}},auditFindings:[{check:'RX',code:'X',event_key:'k'}],compute_ms:2.5});
+  assert.equal(ok.body.market_data.coverage,offered,'the body holds the projected coverage object itself');
   assert.equal(JSON.stringify(ok).includes(secret),false,'view.rows never leave the worker');
-  assert.deepEqual(executeQr2Job(job,{compute:()=>({reader:{}}),compose:()=>({})}).auditFindings,[],'no findings array gives an empty list');
+  assert.deepEqual(executeQr2Job(job,{compute:()=>({reader:{}}),compose:echo}).auditFindings,[],'no findings array gives an empty list');
+  assert.deepEqual(executeQr2Job(job,{compute:()=>({reader:{}}),compose:()=>({status:'COMPLETE'})}),{ok:false,kind:'response'},'the literal old seam without coverage now fails the post-check');
 });
 
 test('a real worker answers a bad snapshot with kind other and no text, then keeps serving',async()=>{
@@ -738,6 +752,21 @@ test('static: no tracked deploy file, script, unit, package.json script or Docke
   assert.deepEqual(hits,[],'a tracked file sets the process-wide heap flag, which would disable the QR-2 worker heap cap');
 });
 
+// Path-aware leak walk. The keys below never appear at any depth; `coverage` appears only where the published contract places it.
+const INTERNAL_COVERAGE_KEYS=['coverage_context','coverage_window_id','coverage_input_bytes','coverage_output_bytes','budgets','unions','windows','bindings','charges'];
+const OWNER_COVERAGE_PATH=/^\$\.body\.market_coverage\.entries\[\d+\]\.coverage$/;
+const ACCOUNT_COVERAGE_PATH=/^\$\.body\.market_data\.coverage$/;
+function leakedCoverageKeys(value,allowedPath,pathOf='$',found=[]){
+  if(value===null||typeof value!=='object')return found;
+  if(Array.isArray(value)){value.forEach((item,i)=>leakedCoverageKeys(item,allowedPath,pathOf+'['+i+']',found));return found;}
+  for(const [key,item] of Object.entries(value)){
+    const here=pathOf+'.'+key;
+    if(INTERNAL_COVERAGE_KEYS.includes(key)||(key==='coverage'&&!allowedPath.test(here)))found.push(here);
+    leakedCoverageKeys(item,allowedPath,here,found);
+  }
+  return found;
+}
+
 /* Coverage qualification is independent of financial replay. */
 function ownerCoverageJob(empty=false){
   const member=structuredClone(FIXTURES.complete);
@@ -776,7 +805,8 @@ test('coverage: owner association, empty owner and one registry validation per j
   for(const empty of [false,true]){
     const job=ownerCoverageJob(empty),before=JSON.stringify(job),result=executeQr2Job(job);
     assert.equal(result.ok,true,JSON.stringify(result));assert.equal(JSON.stringify(job),before);
-    for(const key of ['coverage','coverage_context','coverage_window_id','budgets'])assert.equal(JSON.stringify(result).includes('"'+key+'"'),false);
+    assert.deepEqual(leakedCoverageKeys(result,OWNER_COVERAGE_PATH),[],'no internal coverage key; coverage only at the published entry path');
+    assert.equal(Object.hasOwn(result.body,'market_coverage'),true);
   }
   const changes=[
     j=>j.input.currency='THB',j=>j.snapshot.currency='THB',j=>j.snapshot.ownerBots.shift(),
@@ -792,7 +822,9 @@ test('coverage: owner association, empty owner and one registry validation per j
     change(job);assert.deepEqual(executeQr2Job(job),{ok:false,kind:'other'});assert.equal(financialRead,false);
   }
   const source=fs.readFileSync(path.join(SRC,'postgres','qr2-compute-worker.js'),'utf8');
-  assert.equal((source.match(/validateCoverageSnapshot\(/g)||[]).length,1,'one full validation call site outside member computation');
+  assert.equal((source.match(/validateCoverageSnapshot\(/g)||[]).length,0,'the worker validates the registry only inside the projection');
+  assert.equal((source.match(/projectPublicCoverage\(/g)||[]).length,0,'the worker calls the outcome variant only');
+  assert.equal((source.match(/projectPublicCoverageOutcome\(/g)||[]).length,1,'one projection call site: one validation and one build of each entry');
 });
 
 test('coverage metadata bounds reject before serialization, map lookup and long timestamp regex',()=>{
@@ -818,4 +850,141 @@ test('coverage metadata bounds reject before serialization, map lookup and long 
   RegExp.prototype.test=function(value){if(value===timestamp.snapshot.owner.created_at)decimalRegex=true;return test.call(this,value);};
   let answer;try{answer=executeQr2Job(timestamp);}finally{RegExp.prototype.test=test;}
   assert.deepEqual(answer,{ok:false,kind:'other'});assert.equal(decimalRegex,false);
+});
+
+/* ------------------------------------------------------------------ O6: coverage response wiring in the worker */
+
+const readOnlyBody=job=>executeQr2Job(structuredClone(job));
+const refusedAdmission={ok:false,kind:'qr2',code:'QR2_RANGE_ADMISSION_REFUSED'};
+
+test('O6 coverage: the account job body coverage equals the Stage 1 build over the same stored minutes',()=>{
+  const {snapshot,input}=FIXTURES.complete,result=readOnlyBody(FIXTURES.complete);
+  assert.equal(result.ok,true);
+  const resolved=snapshot.range.resolved;
+  const expected=buildBarCoverage({resolved_range:resolved,market:{broker:BROKER,symbol:'BTCUSDT',timeframe:'1'},fact:{state:'COMPLETE',timestamps:Array.from({length:120},(_,i)=>B+(i+1)*MIN)}});
+  assert.deepEqual(result.body.market_data.coverage,expected);
+  assert.equal(JSON.stringify(result.body.market_data.coverage),JSON.stringify(expected),'key order is part of the public bytes');
+  assert.deepEqual(Object.keys(result.body.market_data),['checked','table_present','instants','bars','gap','coverage']);
+  assert.deepEqual(result.body.market_data.coverage,projectedCoverage(snapshot,input));
+  assert.deepEqual(leakedCoverageKeys(result,ACCOUNT_COVERAGE_PATH),[]);
+  // The unavailable fixture publishes a coverage with the unresolved range and no interval list.
+  const unavailable=readOnlyBody(FIXTURES.unavailable);
+  assert.equal(unavailable.ok,true);assert.equal(unavailable.body.market_data.coverage.state,'EMPTY');assert.equal(unavailable.body.market_data.coverage.resolved_range,null);
+});
+
+test('O6 coverage: the leak walk reports internal keys and a misplaced coverage key',()=>{
+  assert.deepEqual(leakedCoverageKeys({body:{market_data:{coverage:{}}}},ACCOUNT_COVERAGE_PATH),[]);
+  assert.deepEqual(leakedCoverageKeys({body:{coverage:{}}},ACCOUNT_COVERAGE_PATH),['$.body.coverage']);
+  assert.deepEqual(leakedCoverageKeys({body:{market_data:{coverage:{coverage:1}}}},ACCOUNT_COVERAGE_PATH),['$.body.market_data.coverage.coverage']);
+  for(const key of INTERNAL_COVERAGE_KEYS)assert.deepEqual(leakedCoverageKeys({body:{deep:[{[key]:1}]}},OWNER_COVERAGE_PATH),['$.body.deep[0].'+key],key);
+  assert.deepEqual(leakedCoverageKeys({body:{market_coverage:{entries:[{id:'coverage:0',coverage:{}}]}}},OWNER_COVERAGE_PATH),[]);
+  assert.deepEqual(leakedCoverageKeys({body:{market_data:{coverage:{}}}},OWNER_COVERAGE_PATH),['$.body.market_data.coverage']);
+});
+
+test('O6 coverage: the owner job carries market_coverage built once, frozen entries shared before cloning, and a plain clone after',()=>{
+  const result=executeQr2Job(ownerCoverageJob());
+  assert.equal(result.ok,true);
+  const section=result.body.market_coverage;
+  assert.equal(section.version,'qr2-owner-bar-coverage-v1');assert.equal(section.entries.length,1);
+  assert.equal(Object.isFrozen(section),true);assert.equal(Object.isFrozen(section.entries[0].coverage),true,'projection output is shared, never copied or mutated');
+  assert.deepEqual(section.accounts,[{bot_id:BOT,broker:BROKER,coverage_ids:['coverage:0']}]);
+  const clone=structuredClone(result);
+  assert.deepEqual(clone,result);assert.equal(Object.isFrozen(clone.body.market_coverage),false,'the pool message copy is unfrozen');
+  assert.equal(nonPlain(result),null);
+  const empty=executeQr2Job(ownerCoverageJob(true));
+  assert.deepEqual(empty.body.market_coverage,{version:'qr2-owner-bar-coverage-v1',entries:[],accounts:[]});
+});
+
+test('O6 coverage: a lowered limit seam refuses with the code only; the route mapping gives 422 with no detail',()=>{
+  const account=executeQr2Job(structuredClone(FIXTURES.complete),{coverageOutputLimit:1});
+  assert.deepEqual(account,refusedAdmission);
+  assert.equal(Object.hasOwn(account,'detail'),false);
+  let computed=false;
+  assert.deepEqual(executeQr2Job(structuredClone(FIXTURES.complete),{coverageOutputLimit:1,compute(){computed=true;throw Error('must not compute');}}),refusedAdmission);
+  assert.equal(computed,false,'a refusal comes before any financial compute');
+  assert.deepEqual(executeQr2Job(ownerCoverageJob(),{coverageOutputLimit:1}),refusedAdmission);
+  const mapped=refusalAnswer(account.code,account.detail);
+  assert.equal(mapped.status,422);assert.deepEqual(mapped.body,{code:'QR2_RANGE_ADMISSION_REFUSED',error:'The request is over a limit'});
+  // The limit only lowers: a value above the context budget changes nothing.
+  assert.equal(executeQr2Job(structuredClone(FIXTURES.complete),{coverageOutputLimit:2**40}).ok,true);
+  for(const bad of [0,-1,1.5,'1',null,Number.NaN])assert.deepEqual(executeQr2Job(structuredClone(FIXTURES.complete),{coverageOutputLimit:bad}),{ok:false,kind:'other'},String(bad));
+});
+
+test('O6 coverage: a context-level overflow and an estimator defect map to kind other, never kind qr2',()=>{
+  const overflow=structuredClone(FIXTURES.complete);
+  overflow.input.coverage_context.budgets.coverage_output_bytes=100;
+  assert.throws(()=>projectPublicCoverageOutcome(overflow.snapshot.coverage,overflow.input.coverage_context),{code:'QR2_RANGE_ADMISSION_REFUSED'},'planCoverage raises the overflow itself');
+  assert.deepEqual(executeQr2Job(overflow),{ok:false,kind:'other'});
+  // An estimator defect: the measured size is above the registry upper bound. Buffer.byteLength is raised for this one synchronous call.
+  const original=Buffer.byteLength;let answer;
+  try{Buffer.byteLength=()=>2**40;answer=executeQr2Job(structuredClone(FIXTURES.complete));}finally{Buffer.byteLength=original;}
+  assert.deepEqual(answer,{ok:false,kind:'other'});
+  let ownerAnswer;
+  try{Buffer.byteLength=()=>2**40;ownerAnswer=executeQr2Job(ownerCoverageJob());}finally{Buffer.byteLength=original;}
+  assert.deepEqual(ownerAnswer,{ok:false,kind:'other'});
+});
+
+test('O6 coverage: a corrupt registry gives kind other before any compute call',()=>{
+  for(const corrupt of [j=>j.snapshot.coverage.windows[0].stored_minutes++,j=>j.snapshot.coverage.charges.output_intervals++,j=>j.snapshot.coverage.unions[0].fact.timestamps.pop(),j=>{j.snapshot.coverage={};}]){
+    const job=structuredClone(FIXTURES.complete);corrupt(job);let computed=false;
+    assert.deepEqual(executeQr2Job(job,{compute(){computed=true;throw Error('must not compute');}}),{ok:false,kind:'other'});
+    assert.equal(computed,false);
+  }
+});
+
+test('O6 coverage: the post-check fails a composer that drops coverage or returns another coverage object, and passes a refused body without market_data',()=>{
+  const job=()=>structuredClone(FIXTURES.complete),view=()=>({reader:{compute_ms:1}});
+  assert.deepEqual(executeQr2Job(job(),{compute:view,compose:()=>({status:{status:'COMPLETE'},market_data:{}})}),{ok:false,kind:'response'},'dropped');
+  assert.deepEqual(executeQr2Job(job(),{compute:view,compose:(_,{coverage})=>({status:{status:'COMPLETE'},market_data:{coverage:structuredClone(coverage)}})}),{ok:false,kind:'response'},'equal but not the same object');
+  assert.deepEqual(executeQr2Job(job(),{compute:view,compose:()=>({status:{status:'COMPLETE'},market_data:{coverage:null}})}),{ok:false,kind:'response'},'null coverage');
+  assert.deepEqual(executeQr2Job(job(),{compute:view,compose:()=>null}),{ok:false,kind:'response'},'no body');
+  assert.deepEqual(executeQr2Job(job(),{compute:view,compose:()=>({})}),{ok:false,kind:'response'},'no status');
+  assert.deepEqual(executeQr2Job(job(),{compute:view,compose:()=>({status:{status:'REFUSED'},market_data:{}})}),{ok:false,kind:'response'},'a refused body must carry no market_data');
+  const refused=executeQr2Job(job(),{compute:view,compose:()=>({status:{status:'REFUSED'},code:'QR2_NON_PAPER_ROW'})});
+  assert.equal(refused.ok,true);assert.equal(Object.hasOwn(refused.body,'market_data'),false);
+  const real=readOnlyBody(FIXTURES.refusedNonPaper);
+  assert.equal(real.ok,true);assert.equal(real.body.status.status,'REFUSED');assert.equal(Object.hasOwn(real.body,'market_data'),false);
+  assert.equal(JSON.stringify(real).includes('qr2-bar-coverage'),false);
+});
+
+test('O6 coverage: a coverageOutputLimit field in a message, top level or inside input, has no effect in the function or the real pool',async()=>{
+  const base=FIXTURES.complete,baseline=executeQr2Job(structuredClone(base));
+  assert.equal(baseline.ok,true);
+  const topLevel=executeQr2Job({...structuredClone(base),coverageOutputLimit:1});
+  assert.equal(stableResult(topLevel),stableResult(baseline));
+  const inner=structuredClone(base);inner.input.coverageOutputLimit=1;
+  assert.equal(stableResult(executeQr2Job(inner)),stableResult(baseline));
+  const ownerBase=executeQr2Job(ownerCoverageJob()),ownerInner=ownerCoverageJob();ownerInner.input.coverageOutputLimit=1;
+  assert.equal(stableResult(executeQr2Job(ownerInner)),stableResult(ownerBase));
+  const pool=createQr2ComputePool({deadlineMs:20000});
+  try{
+    const viaPool=await pool.run(structuredClone(base.snapshot),{...structuredClone(base.input),coverageOutputLimit:1});
+    assert.equal(viaPool.ok,true);assert.equal(stableResult(viaPool),stableResult(baseline));
+    const owner=ownerCoverageJob(),ownerPool=await pool.run(owner.snapshot,{...owner.input,coverageOutputLimit:1});
+    assert.equal(ownerPool.ok,true);assert.equal(stableResult(ownerPool),stableResult(ownerBase));
+    assert.deepEqual(leakedCoverageKeys(viaPool,ACCOUNT_COVERAGE_PATH),[]);
+    assert.deepEqual(leakedCoverageKeys(ownerPool,OWNER_COVERAGE_PATH),[]);
+  }finally{await pool.close();}
+});
+
+test('O6 coverage: actual serialized body sizes at the 4096-interval synthetic maximum (observation only)',t=>{
+  const {snapshot,input}=FIXTURES.complete,view=computeQr2View(snapshot,input);
+  const to=B+8200*MIN,timestamps=Array.from({length:4095},(_,k)=>B+(2*k+2)*MIN);
+  const coverage=buildBarCoverage({resolved_range:{from:B,to},market:{broker:BROKER,symbol:'BTCUSDT',timeframe:'1'},fact:{state:'COMPLETE',timestamps}});
+  assert.equal(coverage.interval_count,4096);
+  const body=composePerformanceResponse({...view,range:{...view.range,resolved:{from:B,to}}},{requestTime:NOW,coverage});
+  const wrapper=Buffer.byteLength(JSON.stringify({market_data:{coverage}})),whole=Buffer.byteLength(JSON.stringify(body));
+  t.diagnostic('coverage wrapper bytes '+wrapper+'; whole account body bytes '+whole);
+  assert.ok(wrapper>0&&whole>wrapper);
+});
+
+test('O6 fix-r1 M03: an owner job with a null resolved range carries no market_coverage and passes the worker post-check',()=>{
+  const job=ownerCoverageJob(true);
+  job.input.from=NOW;job.input.to=NOW+DAY;
+  job.snapshot.range=resolveRange({from:job.input.from,to:job.input.to,requestTime:NOW,coverageStart:B});
+  assert.equal(job.snapshot.range.resolved,null);
+  const result=executeQr2Job(job);
+  assert.equal(result.ok,true,JSON.stringify(result));
+  assert.equal(result.body.status.status!=='REFUSED',true,'not refused, so only the null range omits the section');
+  assert.equal(result.body.resolved_range,null);assert.equal(Object.hasOwn(result.body,'market_coverage'),false);
 });
