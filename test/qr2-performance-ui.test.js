@@ -1,19 +1,27 @@
-import test from 'node:test';
+import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {JSDOM} from 'jsdom';
 import {validateResponse} from '../src/portfolio/qr2-labels.js';
 import {validateOwnerResponse} from '../src/portfolio/qr2-owner-response.js';
-import {refusalAnswer} from '../src/portfolio/qr2-response.js';
+import {refusalAnswer,composePerformanceResponse} from '../src/portfolio/qr2-response.js';
+import {planCoverage,buildCoverageSnapshot} from '../src/portfolio/qr2-coverage-snapshot.js';
+import {projectPublicCoverage} from '../src/portfolio/qr2-coverage-public.js';
+import {QR2_COVERAGE_LIMITS} from '../src/portfolio/qr2-coverage-limits.js';
 
 const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/qr2-performance-ui/responses.json',import.meta.url),'utf8'));
+const covFx=JSON.parse(fs.readFileSync(new URL('./fixtures/qr2-performance-ui/coverage-responses.json',import.meta.url),'utf8'));
 const publicFile=name=>fs.readFileSync(new URL('../public/'+name,import.meta.url),'utf8');
 const settle=()=>new Promise(resolve=>setTimeout(resolve,25));
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};
 const ok=body=>({status:200,body});
 const bookFixture=()=>({user:{id:'owner-1'},bot:{id:'bot-1'},allBots:false,moneyFormat:'decimal-string',paperAccounts:[{bot_id:'bot-1',userId:'bot-1',broker:'binance-global',currency:'USDT',valuation:'COST_BASIS_NOT_MARK_TO_MARKET',bookEquity:'9007199254740994.123456789123456789'}]});
-function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot),bookAnswer=()=>ok(bookFixture()),sessionLoad=()=>{}}={}){
+function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot),bookAnswer=()=>ok(bookFixture()),sessionLoad=()=>{},observe=true}={}){
+  const {problems}=staticI18n();
+  if(problems.length)throw new Error('i18n pair collision, no page rendered: '+problems[0]);
   const dom=new JSDOM(publicFile('index.html'),{url:'https://robot.test',runScripts:'outside-only'}),w=dom.window,d=w.document;
+  // observe:false drops the translateUI MutationObserver for the long fail-closed table (A7); labels still translate through translate().
+  if(!observe)w.MutationObserver=class{observe(){}disconnect(){}};
   w.localStorage.setItem('robotLanguage',language);w.eval(publicFile('i18n.js'));
   const requests=[];
   async function call(path,options={}){
@@ -45,6 +53,43 @@ function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot),book
   const financial=()=>requests.filter(r=>r.path.startsWith('/api/paper-performance'));
   return {w,d,get,change,boot,load,requests,financial,text:()=>get('ppResult').textContent,close:()=>w.close()};
 }
+// Report text outside the coverage section (O7): coverage blocks add em dashes and metric words of their own.
+const outsideCoverage=p=>{const clone=p.get('ppResult').cloneNode(true);clone.querySelector('.pp-coverage')?.remove();return clone.textContent;};
+
+// Static i18n tables, loaded once with no translateUI observer and no page render. A pair collision is reported here by assertion;
+// setup() refuses to render a page while one exists, so a collision never reaches a translateUI cycle that never ends.
+let i18nStatic;
+function staticI18n(){
+  if(i18nStatic)return i18nStatic;
+  const dom=new JSDOM(publicFile('index.html'),{url:'https://robot.test',runScripts:'outside-only'}),w=dom.window;
+  w.MutationObserver=class{observe(){}disconnect(){}};
+  let pairs;
+  try{
+    w.eval(publicFile('i18n.js')+';window.__pairs=uiPairs;window.__mine=qr2CoveragePairs;');
+    const mine=new Set(w.__mine);
+    pairs=[...w.__pairs].map(pair=>({en:pair[0],th:pair[1],mine:mine.has(pair)}));
+  }finally{w.close();}
+  const mine=pairs.filter(pair=>pair.mine),others=pairs.filter(pair=>!pair.mine),texts=new Set(others.flatMap(pair=>[pair.en,pair.th]));
+  const problems=[];
+  if(new Set(mine.map(pair=>pair.en)).size!==mine.length)problems.push('duplicate EN in qr2CoveragePairs');
+  if(new Set(mine.map(pair=>pair.th)).size!==mine.length)problems.push('duplicate TH in qr2CoveragePairs');
+  const flat=mine.flatMap(pair=>[pair.en,pair.th]);
+  if(new Set(flat).size!==flat.length)problems.push('an EN equals a TH inside qr2CoveragePairs');
+  for(const {en,th} of mine){
+    if(en===th)problems.push('EN equals TH: '+en);
+    if(texts.has(en))problems.push('EN collides with an existing text: '+en);
+    if(texts.has(th))problems.push('TH collides with an existing text: '+th);
+    if(/[—€$฿]|USDT|THB|BTCUSDT/.test(en+th))problems.push('em dash, currency or market token in: '+en);
+  }
+  i18nStatic={pairs,mine,others,problems};
+  return i18nStatic;
+}
+
+test('A13 qr2CoveragePairs is collision-free (static, before any page render)',()=>{
+  const {mine,problems}=staticI18n();
+  assert.equal(mine.length,29);
+  assert.deepEqual(problems,[],'no duplicate, no EN/TH collision with an existing text, no em dash, currency or market token');
+});
 
 test('synthetic QR2 UI bodies retain actual Bot and strict owner response contracts',()=>{
   for(const name of ['bot','botPartial','botUnavailable'])assert.equal(validateResponse(fixture[name]).ok,true,name);
@@ -157,7 +202,7 @@ test('owner currency and CUSTOM dates use owner GET without Bot selectors; null 
 test('missing owner declaration, PARTIAL overlays and UNAVAILABLE numbers remain explicit',async()=>{
   for(const [body,scope,expected] of [[fixture.ownerUndeclared,'owner','CAPITAL_MODEL_NOT_DECLARED'],[fixture.botPartial,'bot','TWR_BOUNDARY_UNVALUED'],[fixture.botUnavailable,'bot','RECONCILIATION_FAILED']]){
     const p=setup({answer:()=>ok(body)});
-    try{await p.boot();p.change('ppScope',scope);await p.load();assert.ok(p.text().includes(expected));assert.ok(p.text().includes('—'));assert.ok((p.text()+p.get('ppStatus').textContent).includes(body.status.status));
+    try{await p.boot();p.change('ppScope',scope);await p.load();assert.ok(p.text().includes(expected));assert.ok(outsideCoverage(p).includes('—'));assert.ok((p.text()+p.get('ppStatus').textContent).includes(body.status.status));
       for(const overlay of body.status.overlays)assert.ok(p.text().includes(overlay));
     }finally{p.close();}
   }
@@ -414,21 +459,30 @@ test('S5-3 EN/TH symbol metadata preserves values, null reasons and a human-read
   }
 });
 
-test('O6 the generic metadata view shows no raw coverage between O6 and O7 and never mutates the body',async()=>{
-  const coverage={version:'qr2-bar-coverage-v1',source:'pine_market_bars',market:null,resolved_range:null,state:'COVERAGE_SENTINEL_STATE',intervals:[{from:1,to:2,missing_minutes:1}]};
-  const bot=structuredClone(fixture.bot);bot.market_data={...bot.market_data,coverage:structuredClone(coverage)};
-  const owner=structuredClone(fixture.owner);owner.market_coverage={version:'qr2-owner-bar-coverage-v1',entries:[{id:'coverage:0',coverage:structuredClone(coverage)}],accounts:[{bot_id:'bot-1',broker:'binance-global',coverage_ids:['coverage:0']}]};
+test('O6 the generic metadata view shows no raw coverage and never mutates the body',async()=>{
+  const bot=structuredClone(fixture.bot),owner=structuredClone(fixture.owner);
   const botBefore=JSON.stringify(bot),ownerBefore=JSON.stringify(owner);
-  const baseline=setup();let baselineText;
-  try{await baseline.boot();baseline.change('ppBot','bot-1');await baseline.load();baselineText=baseline.text();}finally{baseline.close();}
-  const sentinels=['qr2-owner-bar-coverage-v1','qr2-bar-coverage-v1','coverage:0','COVERAGE_SENTINEL_STATE','market_coverage','pine_market_bars'];
+  const notCovered=structuredClone(fixture.bot);delete notCovered.market_data.coverage;
+  const sentinels=['qr2-owner-bar-coverage-v1','qr2-bar-coverage-v1','coverage:0','market_coverage','pine_market_bars'];
+  const metadataKeys=p=>{
+    const details=[...p.get('ppResult').querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='Server status, methods and range evidence');
+    assert.ok(details,'the server metadata details element exists');
+    return [...details.querySelectorAll('dt')].map(node=>node.textContent);
+  };
+  const baseline=setup({answer:()=>ok(notCovered)});let baselineOutside;
+  try{
+    await baseline.boot();baseline.change('ppBot','bot-1');await baseline.load();baselineOutside=outsideCoverage(baseline);
+    assert.ok(baseline.get('ppResult').querySelector('.pp-coverage').textContent.includes('Bar coverage not supplied by this response.'));
+  }finally{baseline.close();}
   const p=setup({answer:()=>ok(bot)});
   try{
     await p.boot();p.change('ppBot','bot-1');await p.load();
     for(const sentinel of sentinels)assert.equal(p.text().includes(sentinel),false,'Bot view: '+sentinel);
-    for(const key of ['checked','table_present','instants','bars','gap'])assert.ok(p.text().includes(key),'the existing market_data scalar still renders: '+key);
-    assert.equal(p.text().includes('market_data'),true);
-    assert.equal(p.text(),baselineText,'the Bot view is the same text with and without coverage');
+    const keys=metadataKeys(p);
+    for(const key of ['checked','table_present','instants','bars','gap','market_data'])assert.ok(keys.includes(key),'the existing market_data scalar still renders: '+key);
+    assert.equal(keys.includes('coverage')||keys.includes('market_coverage'),false,'the details element holds no coverage key');
+    assert.ok(p.get('ppResult').querySelector('.pp-coverage .pp-cov-block'),'the producer-built coverage renders as a coverage block');
+    assert.equal(outsideCoverage(p),baselineOutside,'outside the coverage section the Bot view is the same with and without coverage');
     assert.equal(JSON.stringify(bot),botBefore,'the input body is unchanged by rendering');
   }finally{p.close();}
   const q=setup({answer:()=>ok(owner)});
@@ -436,10 +490,646 @@ test('O6 the generic metadata view shows no raw coverage between O6 and O7 and n
     await q.boot();q.change('ppScope','owner');q.change('ppCurrency','USDT');await q.load();
     assert.ok(q.text().length>0);assert.ok(q.text().includes('SUM_OF_INDEPENDENT_PAPER_ACCOUNTS')||q.text().includes('allocation'));
     for(const sentinel of sentinels)assert.equal(q.text().includes(sentinel),false,'owner view: '+sentinel);
+    const keys=metadataKeys(q);
+    assert.equal(keys.includes('coverage')||keys.includes('market_coverage'),false,'the owner details element holds no coverage key');
+    assert.ok(q.get('ppResult').querySelector('.pp-coverage .pp-cov-block'));
     assert.equal(JSON.stringify(owner),ownerBefore,'the owner body is unchanged by rendering');
   }finally{q.close();}
-  // The exclusion is one line that copies; it never deletes from the response object, and a non-object market_data is left alone.
+});
+
+/* ------------------------------------------------------------------ O7 coverage rendering */
+
+const M=60000;
+// Label table of the O7 packet. EN texts come only from here, never from the implementation.
+const EN={
+  heading:'Market bar coverage',
+  notices:[
+    'Bar gaps are listed as the server reports them. No gap is filled or interpolated. Only a gap at a needed valuation point changes a number.',
+    'The valuation check (market_data.checked and market_data.gap) covers only the bars needed at valuation points. Bar coverage covers every complete 1-minute candle in the range. The two can differ.',
+    'Only complete 1-minute candles are inspected. Partial candles at the range edges are excluded.',
+    'Inspection completed means every 1-minute slot in the inspected window was checked for a stored candle. Partial edge candles are outside this check.',
+    'Each time is shown as UTC epoch milliseconds followed by the same instant in ISO 8601 UTC in parentheses.'
+  ],
+  owner:'Coverage is shown per market and range. Accounts with the same market and range share one coverage entry. Coverage is never summed across accounts.',
+  absent:'Bar coverage not supplied by this response.',
+  unresolved:'No bar coverage: the report range is unresolved.',
+  klass:{
+    C1:'Inspection completed; gaps found.',
+    C2:'Inspection completed; no stored candle is missing from the inspected window.',
+    C3:'No inspection: the range for this coverage is unresolved.',
+    C4:'No inspection: the range holds no complete 1-minute candle.',
+    C5:'Inspection unavailable: bar coverage is reported only for the one supported Binance Global spot 1-minute market.',
+    C6:'Inspection unavailable: the market data table is absent. This is not stored history with no bars.'
+  },
+  rows:{result:'Inspection result',market:'Market',range:'Coverage range',window:'Inspected window',edges:'Excluded partial candles',expected:'Expected minutes',stored:'Stored minutes',missing:'Missing minutes',count:'Gap intervals',accounts:'Accounts using this coverage'},
+  list:'Gap interval list, count:',
+  caption:'Each row: start - end : missing minutes. Start inclusive, end exclusive.'
+};
+const newEnglish=[EN.heading,...EN.notices,EN.owner,EN.absent,EN.unresolved,...Object.values(EN.klass),'Inspection result','State code','Reason code','Timeframe (minutes)','Coverage range','Inspected window','Excluded partial candles','Expected minutes','Stored minutes','Missing minutes','Gap intervals',EN.list,EN.caption,'Accounts using this coverage'];
+const reusedEnglish=['Market','Broker','Symbol','From','To','Reason','None','Bot'];
+const timeForm=value=>String(value)+' ('+new Date(value).toISOString()+')';
+const intervalForm=item=>timeForm(item.from)+' - '+timeForm(item.to)+' : '+String(item.missing_minutes);
+// TH text comes from public/i18n.js by EN text (last pair wins, as in uiTranslations), from the static table loaded once above.
+let thTable;
+function thOf(p,en){
+  if(!thTable)thTable=new Map(staticI18n().pairs.map(pair=>[pair.en,pair.th]));
+  assert.ok(thTable.has(en),'a Thai pair exists for: '+en);
+  return thTable.get(en);
+}
+const shown=(p,language,en)=>language==='th'?thOf(p,en):en;
+const sectionOf=p=>p.get('ppResult').querySelector('.pp-coverage');
+const coveragesOf=body=>body.scope?.kind==='OWNER'?(body.market_coverage?.entries.map(e=>e.coverage)??[]):[body.market_data.coverage];
+// One shared page per language keeps the file inside its time bound. view() loads one body and returns the page with only its own requests.
+// fresh:true gives a private page that the caller closes (the language toggle and timing cases).
+const sharedPages=new Map();
+after(()=>{for(const page of sharedPages.values())page.p.close();});
+async function view(body,{language='en',fresh=false}={}){
+  const owner=body.scope?.kind==='OWNER';
+  let page;
+  if(fresh||!sharedPages.has(language)){
+    page={next:body};
+    // Shared pages run without the translateUI observer (labels still translate); private pages keep it.
+    page.p=setup({language,answer:()=>ok(page.next),observe:fresh});
+    await page.p.boot();
+    if(!fresh)sharedPages.set(language,page);
+  }else page=sharedPages.get(language);
+  const p=page.p;
+  page.next=body;
+  if(owner){p.change('ppScope','owner');p.change('ppCurrency',body.currency);}
+  else{p.change('ppScope','bot');p.change('ppBot','bot-1');p.change('ppBroker',body.scope.broker);}
+  const mark=p.requests.length;
+  await p.load();
+  const lent={...p,close:fresh?()=>p.close():()=>{}};
+  Object.defineProperty(lent,'requests',{get:()=>p.requests.slice(mark)});
+  return lent;
+}
+// Stored candles of a union window from a fixture fact spec. Timestamps are close times; missing ranges are open times.
+function timestampsOf(window,spec){
+  if(spec.state!=='COMPLETE')return null;
+  const gone=new Set();
+  for(const range of spec.missing??[])for(let t=range.from;t<range.to;t+=M)gone.add(t);
+  if(spec.missing_every_other)for(let k=0;k<spec.missing_every_other.count;k++)gone.add(spec.missing_every_other.first+2*k*M);
+  const out=[];
+  for(let t=window.from;t<window.to;t+=M)if(!gone.has(t))out.push(t+M);
+  return out;
+}
+function projectFacts({context,unions}){
+  const plan=planCoverage(context);
+  assert.equal(plan.unions.length,unions.length,'one fact spec per union');
+  const facts=plan.unions.map((union,i)=>unions[i].state==='COMPLETE'?{state:'COMPLETE',timestamps:timestampsOf(union.window,unions[i])}:{state:'TABLE_ABSENT'});
+  return projectPublicCoverage(buildCoverageSnapshot({accounts:context.accounts,budgets:context.budgets,facts}),context);
+}
+// Test-local form of the conditional presence rule (B1 is held): absent for REFUSED or a null range, present otherwise.
+const presenceRule=body=>Object.hasOwn(body,'market_coverage')===(body.status.status!=='REFUSED'&&body.resolved_range!==null);
+const allCases=()=>Object.entries(covFx.cases);
+const botCases=()=>allCases().filter(([,c])=>c.scope==='bot');
+const ownerCases=()=>allCases().filter(([,c])=>c.scope==='owner');
+
+test('A1 coverage fixtures are producer-built from recorded facts and cover every class',()=>{
+  assert.deepEqual(covFx.budgets,{...QR2_COVERAGE_LIMITS});
+  const classes=new Set();
+  const checkBot=(name,facts,body)=>{
+    const coverage=projectFacts(facts).accounts[0].market_data.coverage;
+    assert.deepEqual(body.market_data.coverage,coverage,name);
+    const bare=structuredClone(body);delete bare.market_data.coverage;
+    assert.deepEqual(composePerformanceResponse({},{requestTime:1,coverage,build:()=>structuredClone(bare)}),body,name+': the composer accepts the body with this coverage');
+    assert.equal(validateResponse(body).ok,true,name);
+    assert.deepEqual(coverage.resolved_range,body.resolved_range,name+': coverage range equals the header range');
+    assert.equal(coverage.market===null,body.scope.broker!=='binance-global',name+': market is null exactly when the broker is not binance-global');
+    classes.add(coverage.state+'/'+coverage.reason+'/'+(coverage.interval_count>0));
+  };
+  const checkOwner=(name,facts,body)=>{
+    if(facts!==null)assert.deepEqual(body.market_coverage,projectFacts(facts).owner.market_coverage,name);
+    else assert.equal(Object.hasOwn(body,'market_coverage'),false,name);
+    assert.equal(validateOwnerResponse(body),true,name+': validateOwnerResponse as it stands');
+    assert.equal(presenceRule(body),true,name+': conditional presence rule');
+    for(const c of coveragesOf(body))classes.add(c.state+'/'+c.reason+'/'+(c.interval_count>0));
+  };
+  for(const name of ['bot','botPartial','botUnavailable'])checkBot(name,covFx.responsesFacts[name],fixture[name]);
+  for(const name of ['owner','ownerTHB','ownerUndeclared'])checkOwner(name,covFx.responsesFacts[name],fixture[name]);
+  for(const [name,c] of botCases())checkBot(name,c.facts,c.body);
+  for(const [name,c] of ownerCases())checkOwner(name,c.facts,c.body);
+  assert.deepEqual([...classes].sort(),['COMPLETE/null/false','COMPLETE/null/true','EMPTY/NO_FULL_CANDLES/false','EMPTY/RANGE_UNRESOLVED/false','UNAVAILABLE/MARKET_DATA_TABLE_ABSENT/false','UNAVAILABLE/UNSUPPORTED_MARKET/false'],'C1 to C6 are all present');
+  // C1 with leading, internal and trailing gaps and two excluded edges; the intervals equal the documented missing ranges.
+  const c1=covFx.cases.botC1,cov=c1.body.market_data.coverage;
+  assert.deepEqual(cov.intervals.map(i=>({from:i.from,to:i.to})),c1.facts.unions[0].missing);
+  assert.equal(cov.intervals[0].from,cov.inspected_window.from);assert.equal(cov.intervals.at(-1).to,cov.inspected_window.to);
+  assert.equal(cov.excluded_edges.length,2);assert.ok(cov.intervals.length>=3);
+  // 4096-interval maximum.
+  const max=covFx.cases.ownerMax.body.market_coverage.entries[0].coverage;
+  assert.equal(max.interval_count,QR2_COVERAGE_LIMITS.output_intervals);assert.equal(max.intervals.length,4096);
+  // Shared entry, unsupported entry, null range, differing member ranges, C3 under a resolved range, long markup bot id.
+  const multi=covFx.cases.ownerMulti.body.market_coverage;
+  assert.ok(multi.entries.some(e=>multi.accounts.filter(a=>a.coverage_ids[0]===e.id).length===2));
+  assert.ok(Object.values(covFx.cases.ownerUnsupported.body.market_coverage.entries).every(e=>e.coverage.market===null));
+  assert.equal(Object.hasOwn(covFx.cases.ownerNull.body,'market_coverage'),false);assert.equal(covFx.cases.ownerNull.body.resolved_range,null);
+  const ranges=covFx.cases.ownerRanges;
+  const sameMarket=ranges.body.market_coverage.entries.map(e=>e.coverage).filter(c=>c.market!==null&&c.resolved_range!==null);
+  assert.ok(new Set(sameMarket.map(c=>JSON.stringify(c.resolved_range))).size>=2,'one market with different member ranges');
+  assert.deepEqual(ranges.producer_only,['coverage:0']);assert.equal(ranges.body.market_coverage.entries[0].coverage.reason,'RANGE_UNRESOLVED');assert.notEqual(ranges.body.resolved_range,null);
+  const markup=covFx.cases.ownerMarkup.body.market_coverage.accounts[0].bot_id;
+  assert.ok(markup.length>=4096&&markup.includes('<img'));
+  // Fixture bodies for the six existing responses differ from the earlier values only by the coverage keys.
+  for(const name of ['bot','botPartial','botUnavailable']){const bare=structuredClone(fixture[name]);delete bare.market_data.coverage;assert.deepEqual(bare.market_data,{checked:true,table_present:true,instants:2,bars:1,gap:null});}
+});
+
+// Checks one rendered coverage block against its coverage object, EN or TH.
+function checkBlock(p,language,block,coverage,cls){
+  const L=en=>shown(p,language,en);
+  assert.equal(block.dataset.covClass,cls);
+  assert.equal(block.querySelector('.pp-cov-class').textContent,L(EN.klass[cls]));
+  const row=key=>block.querySelector('[data-cov-row="'+key+'"]');
+  for(const [key,en] of Object.entries(EN.rows)){
+    if(key==='accounts')continue;
+    assert.equal(row(key).querySelector('dt').textContent,L(en),key+' label');
+  }
+  const field=(key,name)=>row(key).querySelector('[data-cov-field="'+name+'"]').textContent;
+  assert.equal(field('result','state'),coverage.state);
+  assert.equal(field('result','reason'),coverage.reason===null?'—':coverage.reason);
+  assert.deepEqual([...row('result').querySelectorAll('.pp-cov-pair > [data-ui-label]')].map(n=>n.textContent),[L('State code'),L('Reason code')]);
+  const dd=key=>row(key).querySelector('dd').textContent;
+  if(coverage.market===null)assert.equal(dd('market'),'—');
+  else{
+    assert.equal(field('market','broker'),coverage.market.broker);assert.equal(field('market','symbol'),coverage.market.symbol);assert.equal(field('market','timeframe'),coverage.market.timeframe);
+    assert.deepEqual([...row('market').querySelectorAll('.pp-cov-pair > [data-ui-label]')].map(n=>n.textContent),[L('Broker'),L('Symbol'),L('Timeframe (minutes)')]);
+  }
+  for(const [key,range] of [['range',coverage.resolved_range],['window',coverage.inspected_window]]){
+    if(range===null)assert.equal(dd(key),'—',key);
+    else{
+      assert.equal(field(key,'from'),timeForm(range.from));assert.equal(field(key,'to'),timeForm(range.to));
+      assert.deepEqual([...row(key).querySelectorAll('.pp-cov-pair > [data-ui-label]')].map(n=>n.textContent),[L('From'),L('To')]);
+    }
+  }
+  const items=[...row('edges').querySelectorAll('li')];
+  if(coverage.excluded_edges.length===0){assert.equal(items.length,0);assert.equal(dd('edges'),L('None'));}
+  else{
+    assert.equal(items.length,coverage.excluded_edges.length);
+    coverage.excluded_edges.forEach((edge,i)=>{
+      const get=name=>items[i].querySelector('[data-cov-field="'+name+'"]').textContent;
+      assert.equal(get('from'),timeForm(edge.from));assert.equal(get('to'),timeForm(edge.to));assert.equal(get('edge-reason'),edge.reason);
+      assert.deepEqual([...items[i].querySelectorAll('.pp-cov-pair > [data-ui-label]')].map(n=>n.textContent),[L('From'),L('To'),L('Reason')]);
+    });
+  }
+  for(const [key,value] of [['expected',coverage.expected_minutes],['stored',coverage.stored_minutes],['missing',coverage.missing_minutes],['count',coverage.interval_count]]){
+    assert.equal(field(key,'value'),value===null?'—':String(value),key);
+    assert.equal(dd(key),value===null?'— · '+coverage.reason:String(value),key+' text');
+  }
+  const details=block.querySelector('details');
+  if(cls!=='C1'){assert.equal(details,null);return;}
+  assert.equal(details.querySelector('summary').textContent,L(EN.list)+' '+String(coverage.interval_count));
+  assert.equal(details.open,coverage.interval_count<=10);
+  assert.equal(details.querySelector('p').textContent,L(EN.caption));
+  const lines=[...details.querySelectorAll('ul > li')];
+  assert.deepEqual(lines.map(li=>li.textContent),coverage.intervals.map(intervalForm));
+  assert.ok(lines.every(li=>li.childNodes.length===1&&li.firstChild.nodeType===3),'one text node per interval');
+}
+const checkNotices=(p,language,section,{owner,extra})=>{
+  const expected=[...EN.notices,...(owner?[EN.owner]:[]),...(extra?[extra]:[])].map(en=>shown(p,language,en));
+  assert.deepEqual([...section.querySelectorAll(':scope > .pp-cov-notice')].map(n=>n.textContent),expected);
+  assert.equal(section.querySelector(':scope > h4').textContent,shown(p,language,EN.heading));
+};
+
+test('A2 per-Bot classes C1 to C6 render labels, raw codes, ranges, counts and intervals in EN and TH',async()=>{
+  const classOf={botC1:'C1',botC2:'C2',botC3:'C3',botC4:'C4',botC5:'C5',botC6:'C6'};
+  for(const language of ['en','th'])for(const [name,cls] of Object.entries(classOf)){
+    const body=covFx.cases[name].body,p=await view(body,{language});
+    try{
+      const section=sectionOf(p);assert.ok(section,name);
+      checkNotices(p,language,section,{owner:false});
+      const blocks=section.querySelectorAll('.pp-cov-block');assert.equal(blocks.length,1);
+      checkBlock(p,language,blocks[0],body.market_data.coverage,cls);
+      assert.equal(section.querySelector('[data-cov-row="accounts"]'),null,'no account row in the per-Bot section');
+      for(const hidden of ['qr2-bar-coverage-v1','pine_market_bars','coverage:0'])assert.equal(p.text().includes(hidden),false,hidden);
+    }finally{p.close();}
+  }
+  const placed=await view(covFx.cases.botC1.body);
+  try{
+    const children=[...placed.get('ppResult').children];
+    const at=children.findIndex(n=>n.classList?.contains('pp-coverage'));
+    assert.ok(at>0&&children[at-1].classList.contains('pp-metrics'),'the section follows the metrics grid');
+    assert.equal(children[at+1].tagName,'DETAILS','the section precedes the server details element');
+  }finally{placed.close();}
+});
+
+test('A3 owner coverage maps entries and accounts in server order with no sums',async()=>{
+  for(const language of ['en','th'])for(const name of ['ownerMulti','ownerUnsupported','ownerRanges']){
+    const body=covFx.cases[name].body,envelope=body.market_coverage,p=await view(body,{language});
+    try{
+      const section=sectionOf(p);
+      checkNotices(p,language,section,{owner:true});
+      const blocks=[...section.querySelectorAll(':scope > .pp-cov-block')];
+      assert.equal(blocks.length,envelope.entries.length);
+      envelope.entries.forEach((entry,i)=>{
+        const cls={'COMPLETE/null':entry.coverage.interval_count>0?'C1':'C2','EMPTY/RANGE_UNRESOLVED':'C3','EMPTY/NO_FULL_CANDLES':'C4','UNAVAILABLE/UNSUPPORTED_MARKET':'C5','UNAVAILABLE/MARKET_DATA_TABLE_ABSENT':'C6'}[entry.coverage.state+'/'+entry.coverage.reason];
+        checkBlock(p,language,blocks[i],entry.coverage,cls);
+        const expectedAccounts=envelope.accounts.filter(a=>a.coverage_ids[0]===entry.id);
+        const rows=[...blocks[i].querySelectorAll('[data-cov-row="accounts"] li')];
+        assert.equal(blocks[i].querySelector('[data-cov-row="accounts"] dt').textContent,shown(p,language,EN.rows.accounts));
+        assert.deepEqual(rows.map(li=>[li.querySelector('[data-cov-field="bot"]').textContent,li.querySelector('[data-cov-field="account-broker"]').textContent]),expectedAccounts.map(a=>[a.bot_id,a.broker]));
+        assert.deepEqual([...rows[0].querySelectorAll('.pp-cov-pair > [data-ui-label]')].map(n=>n.textContent),[shown(p,language,'Bot'),shown(p,language,'Broker')]);
+      });
+      const listed=[...section.querySelectorAll('[data-cov-field="bot"]')].map(n=>n.textContent);
+      assert.deepEqual(listed,envelope.entries.flatMap(entry=>envelope.accounts.filter(a=>a.coverage_ids[0]===entry.id).map(a=>a.bot_id)),'every account listed once, under its own entry');
+      assert.equal(section.textContent.includes('owner-1'),false,'NO_ACCOUNT rows get no coverage row');
+      // No-sum rule: no total or sum label; every count element shows its own entry value.
+      for(const node of section.querySelectorAll('dt,summary,h4'))assert.equal(/total|sum/i.test(node.textContent),false,node.textContent);
+      const values=[...section.querySelectorAll('[data-cov-field="value"]')].map(n=>n.textContent);
+      assert.deepEqual(values,envelope.entries.flatMap(e=>[e.coverage.expected_minutes,e.coverage.stored_minutes,e.coverage.missing_minutes,e.coverage.interval_count].map(v=>v===null?'—':String(v))));
+    }finally{p.close();}
+  }
+  const shared=covFx.cases.ownerMulti.body.market_coverage,sharedId=shared.entries.find(e=>shared.accounts.filter(a=>a.coverage_ids[0]===e.id).length===2).id;
+  const p=await view(covFx.cases.ownerMulti.body);
+  try{
+    const blocks=[...sectionOf(p).querySelectorAll(':scope > .pp-cov-block')];
+    const at=blocks[Number(sharedId.slice(9))];
+    assert.deepEqual([...at.querySelectorAll('[data-cov-field="bot"]')].map(n=>n.textContent),['bot-a','bot-b']);
+    assert.equal(blocks.filter(b=>b.querySelector('[data-cov-field="bot"]').textContent==='bot-a').length,1,'a shared entry renders once');
+  }finally{p.close();}
+  const thb=await view(fixture.ownerTHB);
+  try{
+    assert.equal(sectionOf(thb).querySelector('.pp-cov-block').dataset.covClass,'C5');
+    assert.equal(thb.text().includes('USDT'),false,'the THB view shows no market token');
+  }finally{thb.close();}
+});
+
+test('A4 presence branches: not supplied, null range, refused bodies and symbol fixtures',async()=>{
+  const bareBot=structuredClone(fixture.bot);delete bareBot.market_data.coverage;
+  const bareOwner=structuredClone(fixture.owner);delete bareOwner.market_coverage;
+  for(const language of ['en','th']){
+    for(const [body,owner,extra] of [[bareBot,false,EN.absent],[bareOwner,true,EN.absent],[covFx.cases.ownerNull.body,true,EN.unresolved]]){
+      const p=await view(body,{language});
+      try{
+        const section=sectionOf(p);checkNotices(p,language,section,{owner,extra});
+        assert.equal(section.querySelector('.pp-cov-block'),null);
+        assert.equal(section.children.length,1+EN.notices.length+(owner?1:0)+1,'heading, notices and the branch notice only');
+      }finally{p.close();}
+    }
+  }
+  const junk={version:'junk',state:'X'};
+  const refusedBot=structuredClone(fixture.bot);refusedBot.status={status:'REFUSED',overlays:[],reasons:['QR2_RANGE_ADMISSION_REFUSED']};refusedBot.code='QR2_RANGE_ADMISSION_REFUSED';
+  const refusedBotJunk=structuredClone(refusedBot);refusedBotJunk.market_data.coverage=junk;
+  const refusedOwner=structuredClone(fixture.owner);refusedOwner.status={status:'REFUSED',overlays:[],reasons:['QR2_RANGE_ADMISSION_REFUSED']};refusedOwner.code='QR2_RANGE_ADMISSION_REFUSED';
+  const refusedOwnerJunk=structuredClone(refusedOwner);refusedOwnerJunk.market_coverage=junk;
+  for(const body of [refusedBot,refusedBotJunk,refusedOwner,refusedOwnerJunk]){
+    const p=await view(body);
+    try{
+      assert.equal(sectionOf(p),null,'no coverage section');
+      assert.match(p.get('ppStatus').textContent,/Paper performance request refused\./);
+      assert.equal(p.get('ppStatus').textContent.includes('QR2_RESPONSE_INVALID'),false,'coverage keys on a REFUSED body are ignored');
+    }finally{p.close();}
+  }
+  for(const language of ['en','th'])for(const key of Object.keys(symbolFixtures)){
+    const p=await view(symbolFixtures[key],{language});
+    try{
+      const section=sectionOf(p);checkNotices(p,language,section,{owner:false,extra:EN.absent});
+      assert.equal(section.querySelector('.pp-cov-block'),null);
+      assert.equal(section.textContent.includes('ราคาถูกบันทึกภายหลัง'),false,'no late-price notice text in the coverage section');
+    }finally{p.close();}
+  }
+});
+
+test('A5 the 4096-interval list renders in full, closed, one text node per row; timing observed only',async t=>{
+  const body=covFx.cases.ownerMax.body,coverage=body.market_coverage.entries[0].coverage;
+  const started=performance.now();
+  const p=await view(body,{fresh:true});
+  const renderMs=performance.now()-started;
+  try{
+    const section=sectionOf(p),details=section.querySelector('details');
+    assert.equal(details.open,false);
+    const lines=[...details.querySelectorAll('ul > li')];
+    assert.equal(lines.length,coverage.interval_count);assert.equal(lines.length,4096);
+    assert.ok(lines.every(li=>li.childNodes.length===1&&li.firstChild.nodeType===3));
+    assert.equal(lines[0].textContent,intervalForm(coverage.intervals[0]));assert.equal(lines.at(-1).textContent,intervalForm(coverage.intervals.at(-1)));
+    assert.equal(/\bmore\b|truncat|omitted|sample/i.test(section.textContent),false);
+    assert.equal(details.querySelector('summary').textContent,EN.list+' 4096');
+    const before=performance.now();p.w.eval('translateUI()');const translateMs=performance.now()-before;
+    t.diagnostic('A5 observation JSDOM load plus render of the 4096-interval owner body: '+renderMs.toFixed(1)+' ms; one translateUI call over the rendered page: '+translateMs.toFixed(1)+' ms (observation only, no bar)');
+  }finally{p.close();}
+});
+
+test('A6 server strings in coverage render as text in EN and TH; no unsafe sink in the source',async()=>{
+  const attack='<img src=x onerror="window.qr2Unsafe=true">';
+  for(const language of ['en','th']){
+    const body=structuredClone(covFx.cases.ownerMulti.body);
+    body.market_coverage.accounts[0].bot_id=attack;body.market_coverage.accounts[0].broker=attack;
+    const row=body.accounts.find(a=>a.bot_id==='bot-a');row.bot_id=attack;row.broker=attack;
+    const p=await view(body,{language});
+    try{
+      assert.ok(sectionOf(p).textContent.includes(attack));
+      assert.equal(p.get('ppResult').querySelector('img'),null);assert.equal(p.w.qr2Unsafe,undefined);
+    }finally{p.close();}
+    const long=await view(covFx.cases.ownerMarkup.body,{language});
+    try{
+      const id=covFx.cases.ownerMarkup.body.market_coverage.accounts[0].bot_id;
+      assert.ok(sectionOf(long).textContent.includes(id));
+      assert.equal(long.get('ppResult').querySelector('img'),null);assert.equal(long.w.qr2Unsafe,undefined);
+    }finally{long.close();}
+  }
   const source=publicFile('paper-performance.js');
-  assert.equal((source.match(/market_coverage/g)||[]).length,1);
-  assert.equal((source.match(/key !== 'coverage'/g)||[]).length,1);
+  for(const sink of [/\binnerHTML\b/,/\bouterHTML\b/,/insertAdjacentHTML/,/document\s*\.\s*write/,/\beval\s*\(/,/\bFunction\b/,/setAttribute\s*\(\s*['"]on/,/\.srcdoc\b/])assert.equal(sink.test(source),false,String(sink));
+});
+
+test('A7 malformed coverage fails closed with no earlier report and no book request',async()=>{
+  const bot=()=>structuredClone(covFx.cases.botC1.body),cov=body=>body.market_data.coverage;
+  const botBy=(base,edit)=>()=>{const body=structuredClone(covFx.cases[base].body);edit(cov(body));return body;};
+  const bad=[];
+  const add=(name,make)=>bad.push({name,make,owner:false});
+  const addOwner=(name,edit,base='ownerMulti')=>bad.push({name,owner:true,make:()=>{const body=structuredClone(covFx.cases[base].body);edit(body.market_coverage,body);return body;}});
+  add('version',botBy('botC1',c=>{c.version='qr2-bar-coverage-v2';}));
+  add('market two strings',botBy('botC1',c=>{delete c.market.timeframe;}));
+  add('market string',botBy('botC1',c=>{c.market='binance-global';}));
+  add('market number',botBy('botC1',c=>{c.market.timeframe=1;}));
+  add('market array',botBy('botC1',c=>{c.market=[];}));
+  for(const key of ['from','to']){
+    add('resolved '+key+' fractional',botBy('botC1',c=>{c.resolved_range[key]=1.5;}));
+    add('resolved '+key+' string',botBy('botC1',c=>{c.resolved_range[key]='1';}));
+    add('window '+key+' fractional',botBy('botC1',c=>{c.inspected_window[key]=1.5;}));
+    add('window '+key+' null',botBy('botC1',c=>{c.inspected_window[key]=null;}));
+    add('window '+key+' beyond the date limit',botBy('botC1',c=>{c.inspected_window[key]=8640000000000001;}));
+    add('window '+key+' below the date limit',botBy('botC1',c=>{c.inspected_window[key]=-8640000000000001;}));
+    add('resolved '+key+' beyond the date limit',botBy('botC1',c=>{c.resolved_range[key]=8640000000000001;}));
+    add('edge '+key+' fractional',botBy('botC1',c=>{c.excluded_edges[0][key]=0.5;}));
+    add('edge '+key+' beyond the date limit',botBy('botC1',c=>{c.excluded_edges[0][key]=8640000000000001;}));
+    add('interval '+key+' string',botBy('botC1',c=>{c.intervals[0][key]='1';}));
+    add('interval '+key+' beyond the date limit',botBy('botC1',c=>{c.intervals[0][key]=8640000000000001;}));
+  }
+  add('resolved range not an object',botBy('botC1',c=>{c.resolved_range=5;}));
+  add('excluded_edges not an array',botBy('botC1',c=>{c.excluded_edges={length:0};}));
+  add('excluded_edges null',botBy('botC1',c=>{c.excluded_edges=null;}));
+  add('edge without reason',botBy('botC1',c=>{delete c.excluded_edges[0].reason;}));
+  add('edge reason number',botBy('botC1',c=>{c.excluded_edges[0].reason=1;}));
+  add('edge null',botBy('botC1',c=>{c.excluded_edges[0]=null;}));
+  add('state with a foreign reason',botBy('botC1',c=>{c.reason='X';}));
+  add('COMPLETE with null interval count',botBy('botC1',c=>{c.interval_count=null;}));
+  add('foreign state',botBy('botC1',c=>{c.state='PARTIAL';}));
+  add('EMPTY foreign reason',botBy('botC3',c=>{c.reason='X';}));
+  add('EMPTY null reason',botBy('botC4',c=>{c.reason=null;}));
+  add('UNAVAILABLE foreign reason',botBy('botC5',c=>{c.reason='X';}));
+  add('UNAVAILABLE null reason',botBy('botC6',c=>{c.reason=null;}));
+  add('C1 interval_count mismatch',botBy('botC1',c=>{c.interval_count=c.intervals.length+1;}));
+  add('C1 intervals not an array',botBy('botC1',c=>{c.intervals=null;}));
+  add('C1 interval_count fractional',botBy('botC1',c=>{c.interval_count=1.5;}));
+  add('C1 interval missing_minutes fractional',botBy('botC1',c=>{c.intervals[0].missing_minutes=1.5;}));
+  add('C1 interval not an object',botBy('botC1',c=>{c.intervals[0]=1;}));
+  add('C1 interval null',botBy('botC1',c=>{c.intervals[0]=null;}));
+  add('C1 interval array',botBy('botC1',c=>{c.intervals[0]=[];}));
+  add('C1 interval missing_minutes unsafe integer',botBy('botC1',c=>{c.intervals[0].missing_minutes=9007199254740992;}));
+  add('C1 interval_count unsafe integer',botBy('botC1',c=>{c.interval_count=9007199254740992;}));
+  add('C2 interval_count unsafe integer',botBy('botC2',c=>{c.interval_count=9007199254740992;}));
+  add('market broker number',botBy('botC1',c=>{c.market.broker=1;}));
+  add('market symbol number',botBy('botC1',c=>{c.market.symbol=1;}));
+  add('market symbol missing',botBy('botC1',c=>{delete c.market.symbol;}));
+  add('market broker missing',botBy('botC1',c=>{delete c.market.broker;}));
+  add('resolved from below the date limit',botBy('botC1',c=>{c.resolved_range.from=-8640000000000001;}));
+  add('edge from below the date limit',botBy('botC1',c=>{c.excluded_edges[0].from=-8640000000000001;}));
+  add('interval from below the date limit',botBy('botC1',c=>{c.intervals[0].from=-8640000000000001;}));
+  add('interval to below the date limit',botBy('botC1',c=>{c.intervals[0].to=-8640000000000001;}));
+  for(const key of ['expected_minutes','stored_minutes','missing_minutes']){
+    add('C1 '+key+' negative',botBy('botC1',c=>{c[key]=-1;}));
+    add('C1 '+key+' fractional',botBy('botC1',c=>{c[key]=0.5;}));
+    add('C1 '+key+' null',botBy('botC1',c=>{c[key]=null;}));
+    add('C2 '+key+' string',botBy('botC2',c=>{c[key]='1';}));
+    add('C1 '+key+' unsafe integer',botBy('botC1',c=>{c[key]=9007199254740992;}));
+    add('C2 '+key+' unsafe integer',botBy('botC2',c=>{c[key]=9007199254740992;}));
+    add('C3 '+key+' non-zero',botBy('botC3',c=>{c[key]=1;}));
+    add('C4 '+key+' null',botBy('botC4',c=>{c[key]=null;}));
+    add('C5 '+key+' zero',botBy('botC5',c=>{c[key]=0;}));
+    add('C6 '+key+' zero',botBy('botC6',c=>{c[key]=0;}));
+  }
+  add('C2 non-empty intervals',botBy('botC2',c=>{c.intervals=[{from:0,to:1,missing_minutes:1}];}));
+  add('C2 intervals null',botBy('botC2',c=>{c.intervals=null;}));
+  add('C3 interval_count one',botBy('botC3',c=>{c.interval_count=1;}));
+  add('C3 intervals null',botBy('botC3',c=>{c.intervals=null;}));
+  add('C4 non-empty intervals',botBy('botC4',c=>{c.intervals=[{from:0,to:1,missing_minutes:1}];}));
+  add('C5 interval_count zero',botBy('botC5',c=>{c.interval_count=0;}));
+  add('C5 empty intervals',botBy('botC5',c=>{c.intervals=[];}));
+  add('C6 interval_count zero',botBy('botC6',c=>{c.interval_count=0;}));
+  add('C6 empty intervals',botBy('botC6',c=>{c.intervals=[];}));
+  add('coverage null',botBy('botC1',()=>{}));
+  bad.at(-1).make=()=>{const body=bot();body.market_data.coverage=null;return body;};
+  add('coverage array',botBy('botC1',()=>{}));
+  bad.at(-1).make=()=>{const body=bot();body.market_data.coverage=[];return body;};
+  addOwner('envelope version',e=>{e.version='qr2-owner-bar-coverage-v2';});
+  addOwner('entries not an array',e=>{e.entries={};});
+  addOwner('accounts not an array',e=>{e.accounts={};});
+  addOwner('duplicate entry id',e=>{e.entries[1].id=e.entries[0].id;});
+  addOwner('misnumbered entry id',e=>{e.entries[0].id='coverage:1';e.entries[1].id='coverage:0';});
+  addOwner('entry id number',e=>{e.entries[0].id=0;});
+  addOwner('entry coverage invalid',e=>{e.entries[1].coverage.version='x';});
+  addOwner('entry not an object',e=>{e.entries[2]=null;});
+  addOwner('account two coverage ids',e=>{e.accounts[0].coverage_ids=['coverage:0','coverage:1'];});
+  addOwner('account no coverage ids',e=>{e.accounts[0].coverage_ids=[];});
+  addOwner('account coverage id unknown',e=>{e.accounts[0].coverage_ids=['coverage:9'];});
+  addOwner('account coverage id number',e=>{e.accounts[0].coverage_ids=[0];});
+  addOwner('entry unreferenced',e=>{e.accounts=e.accounts.filter(a=>a.coverage_ids[0]!=='coverage:2');});
+  addOwner('duplicate bot and broker pair',e=>{e.accounts[1].bot_id=e.accounts[0].bot_id;e.accounts[1].broker=e.accounts[0].broker;});
+  addOwner('account bot_id number',e=>{e.accounts[0].bot_id=1;});
+  addOwner('account not an object',e=>{e.accounts[0]=null;});
+  addOwner('entries not an array with no accounts',e=>{e.entries={};e.accounts=[];});
+  addOwner('entries null with no accounts',e=>{e.entries=null;e.accounts=[];});
+  addOwner('account broker number',e=>{e.accounts[0].broker=1;});
+  addOwner('account broker null',e=>{e.accounts[0].broker=null;});
+  addOwner('account broker missing',e=>{delete e.accounts[0].broker;});
+  addOwner('account bot_id null',e=>{e.accounts[0].bot_id=null;});
+  addOwner('same bot_id and broker twice, other accounts unchanged',e=>{e.accounts[3].bot_id=e.accounts[2].bot_id;e.accounts[3].broker=e.accounts[2].broker;});
+  addOwner('key present with a null resolved range',(e,body)=>{body.resolved_range=null;});
+  bad.push({name:'key present with a null resolved range (ownerNull)',owner:true,make:()=>{const body=structuredClone(covFx.cases.ownerNull.body);body.market_coverage=structuredClone(covFx.cases.ownerMulti.body.market_coverage);return body;}});
+  // The page first holds a valid report, then every malformed body replaces it.
+  for(const owner of [false,true]){
+    let next=owner?covFx.cases.ownerMulti.body:covFx.cases.botC1.body;
+    const p=setup({answer:()=>ok(next),observe:false});
+    try{
+      await p.boot();
+      if(owner){p.change('ppScope','owner');p.change('ppCurrency','USDT');}
+      await p.load();
+      assert.ok(sectionOf(p).querySelector('.pp-cov-block'),'valid report first');
+      const books=()=>p.requests.filter(r=>r.path.startsWith('/api/me?')).length;
+      for(const item of bad.filter(entry=>entry.owner===owner)){
+        const booksBefore=books();
+        next=item.make();await p.load();
+        assert.match(p.get('ppStatus').textContent,/Paper performance response unavailable\./,item.name);
+        assert.match(p.get('ppStatus').textContent,/QR2_RESPONSE_INVALID/,item.name);
+        assert.equal(p.text(),'',item.name+': no earlier report value survives');
+        assert.equal(books(),booksBefore,item.name+': no /api/me GET');
+      }
+      // A valid report afterwards renders again.
+      next=owner?covFx.cases.ownerMulti.body:covFx.cases.botC1.body;await p.load();
+      assert.ok(sectionOf(p).querySelector('.pp-cov-block'),'recovery after the malformed bodies');
+    }finally{p.close();}
+  }
+  assert.ok(bad.length>=90,'fail-closed table size '+bad.length);
+});
+
+test('A8 stale responses never render coverage',async()=>{
+  const late=deferred(),p=setup({answer:()=>late.promise});
+  try{
+    await p.boot();p.get('ppLoad').click();await settle();
+    p.change('ppPeriod','YEAR');
+    late.resolve(ok(covFx.cases.botC1.body));await settle();
+    assert.equal(sectionOf(p),null);assert.equal(p.text(),'');
+    assert.equal(p.financial().length,1);
+  }finally{late.resolve(ok(covFx.cases.botC1.body));p.close();}
+  const pending=deferred();let next=ok(covFx.cases.botC1.body);const q=setup({answer:()=>next});
+  try{
+    await q.boot();await q.load();assert.ok(sectionOf(q));
+    next=pending.promise;q.get('ppLoad').click();await settle();
+    assert.equal(sectionOf(q),null,'pending clears the coverage section');
+    q.change('ppCurrency','THB');pending.resolve(ok(covFx.cases.botC2.body));await settle();
+    assert.equal(sectionOf(q),null,'a late coverage response after a change never renders');
+  }finally{pending.resolve(ok(covFx.cases.botC2.body));q.close();}
+});
+
+test('A9 language toggle swaps coverage labels, keeps raw values and starts no request',async()=>{
+  // Private pages keep the translateUI observer: two owner bodies and one per-Bot body (C1 with intervals).
+  for(const name of ['ownerMulti','ownerRanges','botC1']){
+    const p=await view(covFx.cases[name].body,{fresh:true});
+    try{
+      const section=sectionOf(p),rawBefore=[...section.querySelectorAll('.no-i18n')].map(n=>n.textContent);
+      const requests=p.requests.length,labelCount=section.querySelectorAll('[data-ui-label]').length;
+      assert.ok(labelCount>(name.startsWith('owner')?20:10),'labels found: '+labelCount);
+      for(const language of ['th','en','th']){
+        p.get('language').value=language;p.get('language').dispatchEvent(new p.w.Event('change',{bubbles:true}));await settle();
+        for(const node of section.querySelectorAll('[data-ui-label]'))assert.equal(node.textContent,shown(p,language,node.dataset.uiLabel),node.dataset.uiLabel);
+        assert.deepEqual([...section.querySelectorAll('.no-i18n')].map(n=>n.textContent),rawBefore,'raw values are identical');
+        assert.equal(p.requests.length,requests,'no request on a language change');
+      }
+      assert.equal(section.querySelectorAll('[data-ui-label]').length,labelCount);
+    }finally{p.close();}
+  }
+});
+
+test('A10 rendering never mutates the body, sends GET only and adds no request',async()=>{
+  for(const [body,owner] of [[covFx.cases.botC1.body,false],[covFx.cases.ownerMulti.body,true],[fixture.bot,false]]){
+    const before=JSON.stringify(body),bare=structuredClone(body);
+    if(owner)delete bare.market_coverage;else delete bare.market_data.coverage;
+    const withCoverage=await view(body),withList=[...withCoverage.requests];
+    const without=await view(bare),withoutList=[...without.requests];
+    try{
+      assert.equal(JSON.stringify(body),before,'the input body is unchanged');
+      assert.deepEqual(withList.map(r=>r.path),withoutList.map(r=>r.path),'the request list is the same without coverage');
+      assert.ok(withList.every(r=>r.method==='GET'&&(r.options.method===undefined||r.options.method==='GET')));
+    }finally{withCoverage.close();without.close();}
+  }
+  const bad=structuredClone(covFx.cases.botC1.body);bad.market_data.coverage.state='X';
+  const p=await view(bad);
+  try{assert.equal(p.requests.some(r=>r.path.startsWith('/api/me?')),false);assert.match(p.get('ppStatus').textContent,/QR2_RESPONSE_INVALID/);}
+  finally{p.close();}
+});
+
+test('A11 counts and times are shown exactly as String(value) and the UTC time form',async()=>{
+  for(const name of ['botC1','ownerRanges']){
+    const body=covFx.cases[name].body,p=await view(body);
+    try{
+      const section=sectionOf(p);
+      const times=[...section.querySelectorAll('[data-cov-field="from"],[data-cov-field="to"]')];
+      assert.ok(times.length>0);
+      for(const node of times){
+        assert.match(node.textContent,/^-?\d+ \(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\)$/);
+        const epoch=Number(node.textContent.split(' ')[0]);
+        assert.equal(node.textContent,String(epoch)+' ('+new Date(epoch).toISOString()+')');
+      }
+      const rawText=[...section.querySelectorAll('.no-i18n')].map(n=>n.textContent).join('\n');
+      assert.equal(/\d,\d{3}|%|\bago\b|GMT|[AP]M\b|\d{1,2}\/\d{1,2}\/\d{2,4}|\d+ (?:min|hour|day)s?\b/.test(rawText),false,'no thousands separator, locale date, non-UTC time, relative time or percentage');
+      const expected=coveragesOf(body).flatMap(c=>[c.expected_minutes,c.stored_minutes,c.missing_minutes,c.interval_count].map(v=>v===null?'—':String(v)));
+      assert.deepEqual([...section.querySelectorAll('[data-cov-field="value"]')].map(n=>n.textContent),expected);
+      for(const c of coveragesOf(body))for(const item of c.intervals??[])assert.ok(section.textContent.includes(intervalForm(item)));
+    }finally{p.close();}
+  }
+  // The interval list is open for 10 or fewer intervals and closed above; a closed list is complete in the DOM.
+  const few=await view(covFx.cases.botC1.body);
+  try{assert.equal(sectionOf(few).querySelector('details').open,true);}finally{few.close();}
+});
+
+// Producer-built per-Bot body with n gap intervals of one minute each, one stored minute between them (the range spans 2n minutes from start).
+// tail:true makes the last gap two minutes long so that it ends exactly at the window end.
+function gapBody(n,start=1790812800000,{tail=false}={}){
+  const missing=Array.from({length:n},(_,k)=>({from:start+2*k*M,to:start+(2*k+1)*M+(tail&&k===n-1?M:0)}));
+  const context={accounts:[{bot_id:'bot-1',broker:'binance-global',market:{broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'},resolved_range:{from:start,to:start+2*n*M}}],budgets:{...QR2_COVERAGE_LIMITS}};
+  const coverage=structuredClone(projectFacts({context,unions:[{state:'COMPLETE',missing}]}).accounts[0].market_data.coverage);
+  const body=structuredClone(covFx.cases.botC1.body);body.market_data.coverage=coverage;body.resolved_range=structuredClone(coverage.resolved_range);
+  return {body,coverage};
+}
+
+test('A14 boundary values: open threshold at 10 and 11 intervals, exact epoch limits, one bot_id under two brokers, null market_data',async()=>{
+  const LIMIT=8640000000000000;
+  for(const [n,open] of [[10,true],[11,false]]){
+    const {body,coverage}=gapBody(n);
+    assert.equal(coverage.interval_count,n);assert.equal(coverage.intervals.length,n);assert.equal(validateResponse(body).ok,true,'header and body stay valid');
+    const p=await view(body);
+    try{
+      const block=sectionOf(p).querySelector('.pp-cov-block');
+      assert.equal(block.querySelector('details').open,open,n+' intervals');
+      assert.equal(block.querySelectorAll('details li').length,n,'every interval is in the DOM');
+      checkBlock(p,'en',block,coverage,'C1');
+    }finally{p.close();}
+  }
+  // +LIMIT: the producer builds a body whose range, window and last interval end exactly at the largest Date epoch.
+  const top=gapBody(10,LIMIT-20*M,{tail:true});
+  assert.equal(top.coverage.resolved_range.to,LIMIT);assert.equal(top.coverage.inspected_window.to,LIMIT);assert.equal(top.coverage.intervals.at(-1).to,LIMIT);
+  // -LIMIT: the producer refuses negative epochs (QR2_INPUT_INVALID), so one producer-built body is edited at the lower bound only.
+  const low=gapBody(10);
+  for(const object of [low.coverage.resolved_range,low.coverage.inspected_window,low.coverage.intervals[0],low.body.resolved_range])object.from=-LIMIT;
+  low.coverage.excluded_edges=[{from:-LIMIT,to:-LIMIT+M,reason:'PARTIAL_CANDLE'}];
+  for(const [name,{body,coverage}] of [['+limit',top],['-limit',low]]){
+    const p=await view(body);
+    try{
+      assert.doesNotMatch(p.get('ppStatus').textContent,/QR2_RESPONSE_INVALID/,name+' is accepted');
+      const block=sectionOf(p).querySelector('.pp-cov-block');assert.ok(block,name);
+      checkBlock(p,'en',block,coverage,'C1');
+      assert.ok(block.textContent.includes(timeForm(name==='+limit'?LIMIT:-LIMIT)),name+' shows the exact limit instant');
+    }finally{p.close();}
+  }
+  // One bot_id under two brokers is two accounts of the envelope; only the same bot_id and broker twice is a duplicate (A7).
+  const multi=structuredClone(covFx.cases.ownerMulti.body),accounts=multi.market_coverage.accounts;
+  accounts[1].bot_id=accounts[0].bot_id;accounts[1].broker='binance-th';
+  const p=await view(multi);
+  try{
+    assert.doesNotMatch(p.get('ppStatus').textContent,/QR2_RESPONSE_INVALID/);
+    const first=sectionOf(p).querySelector(':scope > .pp-cov-block');
+    assert.deepEqual([...first.querySelectorAll('[data-cov-row="accounts"] li')].map(li=>[li.querySelector('[data-cov-field="bot"]').textContent,li.querySelector('[data-cov-field="account-broker"]').textContent]),[[accounts[0].bot_id,'binance-global'],[accounts[0].bot_id,'binance-th']]);
+  }finally{p.close();}
+  // A per-Bot body without a market_data object is "not supplied", never a script error.
+  for(const value of [null,[]]){
+    const body=structuredClone(covFx.cases.botC1.body);body.market_data=value;
+    const q=await view(body);
+    try{
+      assert.doesNotMatch(q.get('ppStatus').textContent,/unavailable|QR2_RESPONSE_INVALID/);
+      const section=sectionOf(q);assert.ok(section,'the coverage section renders');
+      checkNotices(q,'en',section,{owner:false,extra:EN.absent});assert.equal(section.querySelector('.pp-cov-block'),null);
+    }finally{q.close();}
+  }
+});
+
+test('A13 qr2CoveragePairs equals the label-table new entries, is Thai and matches the quoted literals in paper-performance.js',()=>{
+  const {mine:pairs,others:otherPairs}=staticI18n(),mine=pairs.map(pair=>[pair.en,pair.th]),others=otherPairs.map(pair=>[pair.en,pair.th]);
+  assert.deepEqual(mine.map(p=>p[0]).sort(),[...newEnglish].sort(),'EN texts equal the new entries of the label table');
+  const source=publicFile('paper-performance.js');
+  for(const [en] of mine)assert.ok(source.includes("'"+en+"'"),'quoted literal in paper-performance.js: '+en);
+  for(const en of reusedEnglish){
+    assert.equal(mine.some(p=>p[0]===en),false,'reused label is not in qr2CoveragePairs: '+en);
+    assert.ok(others.some(p=>p[0]===en),'reused label already has an existing pair: '+en);
+    assert.ok(source.includes("'"+en+"'"),'quoted literal: '+en);
+  }
+  for(const [en,th] of mine)assert.ok(/[฀-๿]/.test(th),'TH text is Thai: '+en);
+});
+
+test('T1 observation: whole validateOwnerResponse on a maximum owner body (20 accounts, 20 entries, 4096 intervals)',t=>{
+  const S=1790812800000,context={accounts:[],budgets:{...QR2_COVERAGE_LIMITS}};
+  for(let k=0;k<20;k++){
+    const n=k<16?205:204;
+    context.accounts.push({bot_id:'bot-'+String(k).padStart(2,'0'),broker:'binance-global',market:{broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'},resolved_range:{from:S,to:S+2*n*M+k*1000}});
+  }
+  const projected=projectFacts({context,unions:[{state:'COMPLETE',missing_every_other:{first:S,count:205}}]});
+  const body=structuredClone(fixture.owner);
+  const row=body.accounts[0];
+  body.accounts=context.accounts.map(a=>({...structuredClone(row),bot_id:a.bot_id}));
+  body.counts.accounts=20;body.total.member_count=20;
+  body.market_coverage=projected.owner.market_coverage;
+  assert.equal(body.market_coverage.entries.length,20);
+  assert.equal(body.market_coverage.entries.reduce((n,e)=>n+e.coverage.interval_count,0),4096);
+  assert.equal(validateOwnerResponse(body),true);
+  const runs=[];
+  for(let i=0;i<50;i++){const started=performance.now();assert.equal(validateOwnerResponse(body),true);runs.push(performance.now()-started);}
+  runs.sort((a,b)=>a-b);
+  t.diagnostic('T1 observation, 50 runs of the whole validateOwnerResponse on the maximum owner body: median '+runs[24].toFixed(2)+' ms, maximum '+runs[49].toFixed(2)+' ms (O6 reference: validateOwnerCoverageShape alone median 5.2 ms, maximum 9.5 ms). Observation only, no bar.');
 });

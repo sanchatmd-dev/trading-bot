@@ -208,6 +208,17 @@ test('the composed envelope shares entries by reference with the projection and 
   assert.equal(body.market_coverage.entries[0].coverage,projection.accounts[0].market_data.coverage);
 });
 
+test('B2 a passed-in envelope composes with the snapshot coverage removed and equals the direct call',()=>{
+  const f=fixture(),direct=run(f).body,envelope=projectOf(f).owner.market_coverage;
+  const g=fixture();delete g.snapshot.coverage;
+  // Without the envelope option the composer would project again from the removed registry and throw.
+  assert.throws(()=>composeOwnerResponse(g.snapshot,g.input,{...g.options}),{code:/^QR2_/});
+  const {body}=composeOwnerResponse(g.snapshot,g.input,{...g.options,coverage:envelope});
+  assert.deepEqual(body,direct);
+  assert.equal(body.market_coverage,envelope,'the passed-in envelope is the one in the body, so nothing was projected twice');
+  assert.equal(validateOwnerResponse(body),true);
+});
+
 test('owner header reports earliest known member funding and rejects invalid scalar bounds',()=>{
   const f=fixture({currency:'THB',brokers:['binance-th','innovestx','settrade']});
   f.snapshot.accounts[0].body.first_funding_at=from+10;

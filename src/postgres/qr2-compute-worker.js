@@ -7,9 +7,10 @@ import {composeOwnerResponse} from '../portfolio/qr2-owner-response.js';
 import {composePerformanceResponse} from '../portfolio/qr2-response.js';
 
 // QR-2 S3b compute worker (RC-Q35, design option A). It computes one reader view from a plain snapshot and builds the response body, off
-// the main thread's event loop. This module imports only node:worker_threads, the pure compute half of qr2-reader.js and the pure response
-// composer: it imports no pg, no db.js, no store and no server module (a test walks the import graph), so a worker has no database handle
-// and a message cannot carry one. Nothing is kept between jobs. Every result is JSON-safe plain data; no message text, stack or ledger row
+// the main thread's event loop. This module imports only node:worker_threads, the pure compute half of qr2-reader.js, the pure response
+// composers, the pure range resolver (qr2-periods.js) and the pure coverage modules (the public coverage projection and the coverage
+// limits): it imports no pg, no db.js, no store and no server module (a test walks the import graph), so a worker has no database
+// handle and a message cannot carry one. Nothing is kept between jobs. Every result is JSON-safe plain data; no message text, stack or ledger row
 // crosses back (the composer already drops view.rows).
 
 export const QR2_WORKER_ROLE='qr2-compute';
@@ -83,6 +84,7 @@ function qualifyCoverage(snapshot,input,coverageOutputLimit){
  * One job: {snapshot,input} to a result. Exported for the in-thread tests and for the worker listener below; seams are for tests only.
  * ok:true  {id?,ok,body,auditFindings,compute_ms}
  * ok:false {kind:'qr2',code,detail?} a Qr2Error of the compute; {kind:'response'} a composer failure; {kind:'other'} anything else.
+ * kind:'qr2' also carries the post-build coverage refusal QR2_RANGE_ADMISSION_REFUSED, with code only and no detail.
  */
 export function executeQr2Job({snapshot,input},{compute=computeQr2View,compose=composePerformanceResponse,coverageOutputLimit}={}){
   if(input?.kind!==undefined&&input.kind!=='account'&&input.kind!=='owner')return {ok:false,kind:'other'};

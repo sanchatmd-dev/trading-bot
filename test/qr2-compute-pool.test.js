@@ -978,6 +978,34 @@ test('O6 coverage: actual serialized body sizes at the 4096-interval synthetic m
   assert.ok(wrapper>0&&whole>wrapper);
 });
 
+// A null-range owner job whose one admitted member also has a null resolved range. The member keeps its coverage window binding.
+function nullRangeOwnerJobWithMember(){
+  const job=ownerCoverageJob();
+  job.input.from=NOW;job.input.to=NOW+DAY;
+  job.snapshot.range=resolveRange({from:NOW,to:NOW+DAY,requestTime:NOW,coverageStart:B});
+  const member=job.snapshot.accounts[0];
+  member.input.from=NOW;member.input.to=NOW+DAY;
+  member.snapshot.range=resolveRange({from:NOW,to:NOW+DAY,requestTime:NOW,coverageStart:B});
+  const context=job.input.coverage_context;
+  context.accounts=context.accounts.map(account=>({...account,resolved_range:null}));
+  job.snapshot.coverage=buildCoverageSnapshot({...context,facts:[]});
+  return job;
+}
+
+test('B3 an owner job with a null resolved range and an admitted member returns ok, carries no market_coverage and still projects coverage',()=>{
+  const job=nullRangeOwnerJobWithMember();
+  assert.equal(job.snapshot.range.resolved,null);assert.equal(job.snapshot.accounts.length,1);
+  const result=executeQr2Job(structuredClone(job));
+  assert.equal(result.ok,true,JSON.stringify(result));
+  assert.equal(result.body.resolved_range,null);assert.equal(result.body.status.status!=='REFUSED',true);
+  assert.equal(Object.hasOwn(result.body,'market_coverage'),false,'the null range omits the envelope');
+  // The projection still ran: the same shape with a corrupt registry is rejected by the projection.
+  const corrupt=structuredClone(job);corrupt.snapshot.coverage.charges.output_intervals++;
+  assert.deepEqual(executeQr2Job(corrupt),{ok:false,kind:'other'});
+  const missing=structuredClone(job);delete missing.snapshot.coverage;
+  assert.deepEqual(executeQr2Job(missing),{ok:false,kind:'other'});
+});
+
 test('O6 fix-r1 M03: an owner job with a null resolved range carries no market_coverage and passes the worker post-check',()=>{
   const job=ownerCoverageJob(true);
   job.input.from=NOW;job.input.to=NOW+DAY;

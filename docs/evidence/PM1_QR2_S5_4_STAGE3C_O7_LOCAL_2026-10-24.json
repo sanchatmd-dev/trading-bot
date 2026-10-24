@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "id": "PM1_QR2_S5_4_STAGE3C_O7_LOCAL_2026-10-24",
+  "recordedAt": "2026-10-24T12:14:19.545Z",
+  "baseRevision": "727f6503bb6fef8857b1906270e204da386f38bb",
+  "status": "ACCEPTED_LOCAL_RENDERED_LOCAL_NOT_DEPLOYED_B1_HELD",
+  "authority": "Root ruling R1: Part A and B2-B5 under the owner continuous local work grant (no server response contract change); B1 held for an owner GO naming QR-2 O7 B1",
+  "scope": "EN/TH rendering of the per-Bot and owner market coverage sections in the Paper performance view, client structural check, carry items B2-B5; no fetch, route or response-contract change",
+  "packet": {
+    "path": "docs/QR2_S5_4_STAGE3C_O7_UI_PACKET_2026-10-24.md",
+    "sha256": "6f63adee8db82b84937a6e661f7a57037ac41f36806a2ab343f3694433db6968"
+  },
+  "pinNote": "sha256 is of working-tree bytes; gitBlob is the line-ending-normalized Git object id",
+  "sourcePins": [
+    {
+      "path": "public/i18n.js",
+      "sha256": "077bc3d55c8327c96fc0baffc12e82a45ae1f3278082c184f7bd17f6626e95a1",
+      "gitBlob": "ca070805cf80e48926bbfc5d084cac94658310c5"
+    },
+    {
+      "path": "public/index.html",
+      "sha256": "02d3c585de13b1bf9101957180b89752cb849469b3199e4d40f1b49e704f9afd",
+      "gitBlob": "55a763bb012464a8e5b9542e590808fce5d9fd9d"
+    },
+    {
+      "path": "public/paper-performance.css",
+      "sha256": "a5c500d4983317dd4838e82e655949bbdc35262dd7a1f5eef16c49937d8c22d4",
+      "gitBlob": "8d21542d6edc140b67d5bf38d2caf2c92d1b6578"
+    },
+    {
+      "path": "public/paper-performance.js",
+      "sha256": "fbd575133bad3422d9e9af8662e641d4994dfc92711829e4a7fc9ff71f63cf9b",
+      "gitBlob": "e802dd779c23d20473ff0c2055a09d6b22db8965"
+    },
+    {
+      "path": "src/portfolio/qr2-coverage-public.js",
+      "sha256": "13ca6c83b8b1c74b34f479a8c69921c52c906b843c7385433810c2e37451a743",
+      "gitBlob": "5510891bca25c6c05f98f5ac890bf40aaf3a7514"
+    },
+    {
+      "path": "src/postgres/qr2-compute-worker.js",
+      "sha256": "052120be56425b02922ab86224d68aef8833a273fe3bd2ded989ef457936e9b4",
+      "gitBlob": "89b1b90515d9eadf98672b4e7ebbe4787d9af4b1"
+    }
+  ],
+  "testPins": [
+    {
+      "path": "test/asset-cache-tokens.test.js",
+      "sha256": "1e8b45c1aedb97318519c078bf13c2496b3f565d7a7e9d4afc2494a821accf6c",
+      "gitBlob": "6dd09fdad2428df3940be2eff1f27d5f2ffbdc7e"
+    },
+    {
+      "path": "test/bridge-wizard-ui.test.js",
+      "sha256": "be35acebf102f763f8a01ef87c36be0ba1b709376c0b9ccc26ad58f169900ec7",
+      "gitBlob": "f4aec405830d62f406ea7b2a9a5d58ebb969365c"
+    },
+    {
+      "path": "test/fixtures/qr2-performance-ui/responses.json",
+      "sha256": "44cf92ad8572d9e5f7ce708ca00c39aed734c21b676926d8a0d2c59740d91778",
+      "gitBlob": "d2b39d2ab4ab8312cf5b83572f5db0906fc8cccb"
+    },
+    {
+      "path": "test/fixtures/qr2-performance-ui/coverage-responses.json",
+      "sha256": "0f6c364ba3f87a1cd6bf8e33f2381d95e706e51ec999c5e2fbd06ef1dad4957d",
+      "gitBlob": "739e393c2da9c7bfcdf025b6eec2fe47d7308aab"
+    },
+    {
+      "path": "test/journey-ui.test.js",
+      "sha256": "5c424f2a865a68ccbc3a8d9037eefde87c7b61675abd3436ff1b2866f8219d67",
+      "gitBlob": "dc7190175c4ff6858515dfd86901be4d040cead1"
+    },
+    {
+      "path": "test/market-chart-ui.test.js",
+      "sha256": "f7aa1238428bd313cf4e777c21fb778cdb1548c7a36a04288e5dac322270fc8a",
+      "gitBlob": "398eaebddfc7617c9427463520e153058dd51957"
+    },
+    {
+      "path": "test/pf3-readiness-ui.test.js",
+      "sha256": "32676b70bffe11e09fd51af9d29675f7003d2da5dbd8a0bd934022030af22253",
+      "gitBlob": "0124a768b11ca13653b927393d52be42ea6f04b8"
+    },
+    {
+      "path": "test/qr2-compute-pool.test.js",
+      "sha256": "1067599ea5dc778eea5f5852f6ffd99ffe2018917ad8a6c531a6bae174d3d2c5",
+      "gitBlob": "e7f2a70bd363b8f51825188fb768afc3123e79f0"
+    },
+    {
+      "path": "test/qr2-coverage-public.test.js",
+      "sha256": "ecc0507f2c3eb7772b97a66bb81a1a84a291f84258765d24b16a27b2ae82e6c4",
+      "gitBlob": "8416208e14da22966e8dcec243b4c88d36ff906f"
+    },
+    {
+      "path": "test/qr2-owner-response.test.js",
+      "sha256": "c931b5e905cfaf13767321f7b5b173994436f0f8547d7bc14f658e668f181702",
+      "gitBlob": "34c3235ddc0400626a81bbe0c24b6dcd20c9326b"
+    },
+    {
+      "path": "test/qr2-performance-ui.test.js",
+      "sha256": "c3c0a227e9702dab9a7df14a3aa4be146f9f4650717e3e2c964c3c368bb0a01b",
+      "gitBlob": "9b781dba8dd955ac854e854fb11292d09ad1550a"
+    },
+    {
+      "path": "test/quant-library-ui.test.js",
+      "sha256": "4f1e9849c0df2baa8aa2d383abd05afaf8fb4177cb6ff7ec07cdcb7f61c701f5",
+      "gitBlob": "f4796532fe850ffb964b1f3a061aedf4c967e962"
+    }
+  ],
+  "checks": {
+    "rootRun": {
+      "command": "npm test",
+      "node": "v24.19.0",
+      "tests": 3109,
+      "pass": 3092,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 8,
+      "todo": 9
+    },
+    "renderedCheck": {
+      "by": "root, in-app browser, loopback GET-only stub derived from the reviewed S5-3 stub",
+      "captures": 23,
+      "pass": 23,
+      "viewports": [
+        1440,
+        390
+      ],
+      "languages": [
+        "en",
+        "th"
+      ],
+      "languageToggles": 2,
+      "overflowCases": 0,
+      "pageErrors": 0,
+      "longTasksIdle10sAt4096": 0,
+      "externalRequests": 0,
+      "consoleErrors": "404 only for endpoints the stub does not serve (market chart, position levels, symbols)",
+      "observations": {
+        "path": ".qa-local/claude-root-2026-10-24/qr2-o7/render/render-observations.md",
+        "sha256": "894d6339a9d15a6d4823f4d272fc8c175b15c2524f2e07ac52fa523948190f0f"
+      },
+      "stub": {
+        "path": ".qa-local/claude-root-2026-10-24/qr2-o7/render/shell-stub.mjs",
+        "sha256": "8f7cf4ac752f7a4df546f2a7b30fc52843dc575dce2d37a7fe0f571ca982d998"
+      }
+    },
+    "uiSuiteWallSeconds": 81,
+    "uiSuiteBoundSeconds": 90,
+    "timingObservations": {
+      "T1_validateOwnerResponse_max_body_median_ms": 11,
+      "A5_translateUI_4096_ms": "560-710"
+    }
+  },
+  "reviews": [
+    {
+      "role": "packet reviews r1-r3, Opus 5.5 / high",
+      "paths": [
+        {
+          "path": ".qa-local/claude-root-2026-10-24/qr2-o7/packet-review-r1.md",
+          "sha256": "2c18c0b1bbd5ecfc20b443be742a0fc11a9154b91847871e96aa112eff3d4b05"
+        },
+        {
+          "path": ".qa-local/claude-root-2026-10-24/qr2-o7/packet-review-r2.md",
+          "sha256": "3aa8f908b55c801c8dde2783dc5c5ef5a3dcb03ea001f093529a24fb889ee588"
+        },
+        {
+          "path": ".qa-local/claude-root-2026-10-24/qr2-o7/packet-review-r3.md",
+          "sha256": "f7ed7006ece18e4f332493924253a548adc0ffb423b71e082201f3319b9801be"
+        }
+      ]
+    },
+    {
+      "role": "coder, Sonnet 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o7/author-report.md",
+      "sha256": "83ff95c404af2f459ec7900b3df7496524fb6c79b3a2c9669781d24aa9dddc1b"
+    },
+    {
+      "role": "tester, Sonnet 5.5 / medium (independent render oracle)",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o7/tester/tester-report.md",
+      "sha256": "7d47fe0416004113a5b30bebbbf9ff82268af9b0730dee62d493b24fda0d8991",
+      "verdict": "PASS",
+      "oracleChecks": 681
+    },
+    {
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o7/audit-report.md",
+      "sha256": "c3963b24677eb38ae400cf623aad56f976bafa1dd8a45c921aec312cdbc7211a",
+      "verdict": "GO_WITH_CONDITIONS",
+      "findings": {
+        "P1": 0,
+        "P2": 0,
+        "P3": 6
+      },
+      "note": "conditions met by fix round 1 and the green mutation recheck"
+    },
+    {
+      "role": "mutation tester r1, Sonnet 5.5 / medium",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o7/mutation/mutation-report.md",
+      "sha256": "831874ba317eea8bcefd6a145ce71245d19417b10599b7d0abab571941f60fba",
+      "mutants": {
+        "total": 117,
+        "killed": 102,
+        "survivedNonEquivalent": 12,
+        "equivalent": 3
+      }
+    },
+    {
+      "role": "coder fix round 1 (tests, two Thai strings, comments), Sonnet 5.5 / medium",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o7/fix-r1-report.md",
+      "sha256": "52ea834cb1f0afdc4835c67cad94cbc6fea7f6c077af18c38c3c44bb4725812a"
+    },
+    {
+      "role": "mutation tester r2 recheck, Sonnet 5.5 / medium",
+      "path": ".qa-local/claude-root-2026-10-24/qr2-o7/mutation-r2/report.md",
+      "sha256": "2a22c8379c7d77e921a883c4e6fe52c2e8a7b867b59cca8c94005f58e0b4db01",
+      "verdict": "PASS",
+      "note": "all 12 non-equivalent survivors and I04 killed by assertion; the I04 hang in an unrelated suite is accepted as residual because A13 blocks the collision first"
+    }
+  ],
+  "secondOpinion": "Not required: root ruled O7 not a GO packet (ruling R1); no host or public contract change",
+  "processDeviations": [
+    "fixtures written by one-off node scripts kept outside the repo (330 KB one-line JSON)",
+    "tester and coder used sed -i or node writes on their own oracle or test helper files",
+    "mutation runner scripts lived in the session scratchpad"
+  ],
+  "carried": [
+    "B1 conditional market_coverage presence in validateOwnerResponse (owner GO)",
+    "reader/allocation cutoff pin test (backend carry, root)",
+    "RC-Q35/36 event-loop bars (C3)"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "prototypeCompletion": "OPEN"
+  }
+}

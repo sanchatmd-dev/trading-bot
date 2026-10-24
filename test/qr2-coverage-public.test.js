@@ -417,7 +417,7 @@ test('new module imports only the allowlist and avoids array copies',()=>{
   for(const spec of imports)assert.ok(allowed.has(spec),spec);
   assert.equal(source.match(/\bimport\b/g).length,imports.length+0,'no other import syntax');
   assert.ok(!/\bimport\s*\(|\brequire\s*\(|\bprocess\b|\bfs\b|child_process|worker_threads|\bfetch\b/.test(source));
-  assert.ok(!/postgres|\bpg\b|db\.js|\bstore\b|\bserver\b|\broutes?\b|dispatcher/i.test(source.replace(/^.*Unwired.*$/gm,'')),'no persistence, server or routing reference');
+  assert.ok(!/postgres|\bpg\b|db\.js|\bstore\b|\bserver\b|\broutes?\b|dispatcher/i.test(source),'no persistence, server or routing reference');
   assert.ok(!/\.slice\(|\.sort\(|\.concat\(|\.splice\(|structuredClone|Array\.from|\[\.\.\./.test(source),'no array copy or reorder');
 });
 

@@ -53,7 +53,7 @@ function windowCoverage(registry,w){
 }
 
 /**
- * Pure projection of a Stage 2 registry into the public coverage shapes. Unwired: no worker, route or UI imports it.
+ * Pure projection of a Stage 2 registry into the public coverage shapes. Used by the compute worker and the owner response composer.
  * registry: qr2-coverage-snapshot-v1 object. context: {accounts,budgets}, the independently authorized Stage 2C input.
  * outputByteLimit: optional, lowering only. It never raises coverage_output_bytes.
  * Returns {owner:{market_coverage},accounts:[{bot_id,broker,market_data:{coverage}}]}. Any failure throws and returns nothing.

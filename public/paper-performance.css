@@ -17,6 +17,13 @@
 #paperPerformance details dl { padding-left: .6rem; border-left: 1px solid #63768c; }
 #paperPerformance ul { padding-left: 1.2rem; }
 #paperPerformance [hidden] { display: none; }
+#paperPerformance .pp-coverage { margin-top: 1rem; min-width: 0; }
+#paperPerformance .pp-cov-notice { margin: .35rem 0; }
+#paperPerformance .pp-cov-block { margin-top: .8rem; padding: .8rem; border: 1px solid #63768c; border-radius: .45rem; min-width: 0; }
+#paperPerformance .pp-cov-rows, #paperPerformance .pp-cov-block dl { margin: 0; }
+#paperPerformance .pp-cov-pair { display: inline-block; margin-right: .8rem; }
+#paperPerformance .pp-cov-class { font-weight: 600; }
+#paperPerformance .pp-cov-interval-list { max-height: 20rem; overflow: auto; margin: .4rem 0 0; font-variant-numeric: tabular-nums; }
 #paperPerformance .pp-equity-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
 #paperPerformance .pp-equity-card { min-width: 0; padding: 1rem; border: 1px solid #63768c; border-radius: .45rem; }
 #paperPerformance .pp-equity-card h4 { margin-top: 0; }

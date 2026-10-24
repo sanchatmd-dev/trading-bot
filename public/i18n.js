@@ -904,6 +904,39 @@ uiPairs.push(
   ['Market value','มูลค่าตลาด'],['Exposure','สัดส่วนการลงทุน'],['Realized PnL','กำไรขาดทุนที่รับรู้'],['Unrealized PnL','กำไรขาดทุนที่ยังไม่รับรู้'],
   ['Fees (information only)','ค่าธรรมเนียม (เพื่อข้อมูลเท่านั้น)'],['Unbacked equity','Equity ที่ไม่มีเงินทุนรองรับ'],['Capital flows','เงินทุนเข้าออก'],['Money PnL','กำไรขาดทุนเป็นจำนวนเงิน']
 );
+// QR-2 O7 bar coverage labels. Reused labels (Market, Broker, Symbol, From, To, Reason, None, Bot) keep their existing pairs.
+const qr2CoveragePairs=[
+  ['Market bar coverage','ความครอบคลุมแท่งราคาตลาด'],
+  ['Bar gaps are listed as the server reports them. No gap is filled or interpolated. Only a gap at a needed valuation point changes a number.','ช่องว่างของแท่งราคาแสดงตามที่เซิร์ฟเวอร์รายงาน ไม่มีการเติมหรือแทรกค่าให้ช่องว่างใดเลย มีเพียงช่องว่างที่จุดประเมินมูลค่าที่ต้องใช้เท่านั้นที่ทำให้ตัวเลขเปลี่ยน'],
+  ['The valuation check (market_data.checked and market_data.gap) covers only the bars needed at valuation points. Bar coverage covers every complete 1-minute candle in the range. The two can differ.','การตรวจเพื่อประเมินมูลค่า (market_data.checked และ market_data.gap) ครอบคลุมเฉพาะแท่งราคาที่ต้องใช้ ณ จุดประเมินมูลค่า ส่วนความครอบคลุมแท่งราคาครอบคลุมแท่งเทียน 1 นาทีที่ครบทุกแท่งในช่วง สองอย่างนี้อาจไม่ตรงกัน'],
+  ['Only complete 1-minute candles are inspected. Partial candles at the range edges are excluded.','ตรวจเฉพาะแท่งเทียน 1 นาทีที่ครบเท่านั้น แท่งเทียนที่ไม่ครบตรงขอบช่วงไม่ถูกนำมาตรวจ'],
+  ['Inspection completed means every 1-minute slot in the inspected window was checked for a stored candle. Partial edge candles are outside this check.','ตรวจเสร็จสิ้นหมายถึงทุกช่อง 1 นาทีในช่วงที่ตรวจถูกตรวจว่ามีแท่งเทียนที่เก็บไว้หรือไม่ แท่งเทียนที่ไม่ครบตรงขอบอยู่นอกการตรวจนี้'],
+  ['Each time is shown as UTC epoch milliseconds followed by the same instant in ISO 8601 UTC in parentheses.','แต่ละเวลาแสดงเป็น epoch มิลลิวินาที UTC ตามด้วยเวลาเดียวกันในรูปแบบ ISO 8601 UTC ในวงเล็บ'],
+  ['Coverage is shown per market and range. Accounts with the same market and range share one coverage entry. Coverage is never summed across accounts.','ความครอบคลุมแสดงแยกตามตลาดและช่วง บัญชีที่มีตลาดและช่วงเดียวกันใช้รายการความครอบคลุมเดียวกัน ความครอบคลุมไม่เคยถูกนำมารวมกันข้ามบัญชี'],
+  ['Bar coverage not supplied by this response.','ผลตอบกลับนี้ไม่ได้ส่งความครอบคลุมแท่งราคามา'],
+  ['No bar coverage: the report range is unresolved.','ไม่มีความครอบคลุมแท่งราคา: ช่วงของรายงานยังไม่ได้กำหนด'],
+  ['Inspection completed; gaps found.','ตรวจเสร็จสิ้น พบช่องว่าง'],
+  ['Inspection completed; no stored candle is missing from the inspected window.','ตรวจเสร็จสิ้น ในช่วงที่ตรวจไม่มีแท่งเทียนนาทีใดขาดหายจากข้อมูลที่เก็บไว้'],
+  ['No inspection: the range for this coverage is unresolved.','ไม่ได้ตรวจ: ช่วงของความครอบคลุมนี้ยังไม่ได้กำหนด'],
+  ['No inspection: the range holds no complete 1-minute candle.','ไม่ได้ตรวจ: ช่วงนี้ไม่มีแท่งเทียน 1 นาทีที่ครบเลย'],
+  ['Inspection unavailable: bar coverage is reported only for the one supported Binance Global spot 1-minute market.','ตรวจไม่ได้: รายงานความครอบคลุมแท่งราคาเฉพาะตลาด Spot 1 นาทีของ Binance Global ที่รองรับเพียงแห่งเดียวเท่านั้น'],
+  ['Inspection unavailable: the market data table is absent. This is not stored history with no bars.','ตรวจไม่ได้: ไม่มีตารางข้อมูลตลาด นี่ไม่ใช่ประวัติที่เก็บไว้แล้วไม่มีแท่งราคา'],
+  ['Inspection result','ผลการตรวจ'],
+  ['State code','รหัสสถานะ'],
+  ['Reason code','รหัสเหตุผล'],
+  ['Timeframe (minutes)','กรอบเวลา (นาที)'],
+  ['Coverage range','ช่วงของความครอบคลุม'],
+  ['Inspected window','ช่วงที่ตรวจ'],
+  ['Excluded partial candles','แท่งเทียนที่ไม่ครบและถูกยกเว้น'],
+  ['Expected minutes','จำนวนนาทีที่คาดไว้'],
+  ['Stored minutes','จำนวนนาทีที่เก็บไว้'],
+  ['Missing minutes','จำนวนนาทีที่ขาดหาย'],
+  ['Gap intervals','จำนวนช่วงช่องว่าง'],
+  ['Gap interval list, count:','รายการช่วงช่องว่าง จำนวน:'],
+  ['Each row: start - end : missing minutes. Start inclusive, end exclusive.','แต่ละแถว: เริ่ม - สิ้นสุด : จำนวนนาทีที่ขาดหาย รวมเวลาเริ่มต้น ไม่รวมเวลาปลายช่วง'],
+  ['Accounts using this coverage','บัญชีที่ใช้ความครอบคลุมนี้']
+];
+uiPairs.push(...qr2CoveragePairs);
 uiPairs.push(...pfrPairs);for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}
