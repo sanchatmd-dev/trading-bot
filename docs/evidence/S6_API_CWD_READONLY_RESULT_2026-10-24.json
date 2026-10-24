@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_API_CWD_READONLY_RESULT_2026-10-24",
+  "recordedAt": "2026-10-24T09:24:41.348Z",
+  "packetId": "S6-API-CWD-RO-1",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "CWD_RESULT_ACCEPTED_AS_OBSERVATION_OWNER_ID_PATH_BLOCKED",
+  "ownerGo": "RECEIVED_IN_CHAT_FULL_SUGGESTED_WORDING (first button text was cut at 300 characters; the owner then pasted the full wording before 09:11:53Z)",
+  "jobId": "s6-cwd-67284c647600fa3f399af4ec",
+  "packet": {
+    "path": "docs/S6_API_CWD_READONLY_PACKET_2026-10-24.md",
+    "sha256": "d0ef95acc55fe4a5077b4aaa2d94227819ca89d4a97b140c794deecf2a7f5edd"
+  },
+  "preparationEvidence": {
+    "path": "docs/evidence/S6_API_CWD_READONLY_PREPARATION_2026-10-24.json",
+    "sha256": "c1b10ab3e9bc579ea002c295548b82d8797b381ac9a8174114f51fea4ca74baa"
+  },
+  "reviewedCode": {
+    "core": "903be056c7187a4728f5885fb3fcbb83200f21f688b1d26af679a9d69ae37152",
+    "runner": "ae91bf4500467579b98d4dcc8163b018430d53eb788a7c35345c4f86502207da",
+    "collectorRegion": "1e4380fef8f83d8ab77c7562a31b919f1cbf36147cad54e3f3ad0c0668158706"
+  },
+  "attempt": {
+    "startedUtc": "2026-10-24T09:15:10.067Z",
+    "endedUtc": "2026-10-24T09:15:11.255Z",
+    "runnerElapsedMs": 1291,
+    "targetConnections": 1,
+    "noRetry": true,
+    "transportExit": 0,
+    "stderrBytes": 0,
+    "cutoff": false,
+    "overallBreach": false,
+    "termination": "NOT_NEEDED",
+    "realKillReapQualification": "UNVERIFIED"
+  },
+  "observation": {
+    "verdict": "CWD_CLASSIFIED_AT_NEW_SNAPSHOT",
+    "stageReached": 5,
+    "stages": {
+      "BINDING": "PASS",
+      "PATH_METADATA": "PASS",
+      "PROCESS_READ": "PASS",
+      "SERVICE_PROPERTIES": "PASS",
+      "STABILITY_RECHECK": "PASS"
+    },
+    "guard": {
+      "failed": [],
+      "labels": {
+        "activeState": "active",
+        "loadState": "loaded",
+        "needDaemonReload": "no",
+        "subState": "running"
+      },
+      "predicates": {
+        "activeState": "PASS",
+        "fragmentIdentity": "PASS",
+        "mainPidShape": "PASS",
+        "needDaemonReload": "PASS",
+        "subState": "PASS"
+      }
+    },
+    "cwd": {
+      "argvEqualFrozen": false,
+      "cwdClass": "OTHER",
+      "deletedBaseEqualsExpected": null,
+      "deletedBaseEqualsExpectedResolved": null,
+      "deletedSuffix": false,
+      "eqExact": false,
+      "eqHome": false,
+      "eqResolvedExpected": false,
+      "eqResolvedReleaseDir": false,
+      "eqRoot": false,
+      "expectedIsSymlink": false,
+      "expectedLexicallyCanonical": true,
+      "expectedResolvesToItself": true,
+      "expectedState": "DIRECTORY",
+      "homeState": "RESOLVED",
+      "liveReleaseDir": "EQUAL_KERNEL_CWD",
+      "relationToExpectedResolved": "SIBLING",
+      "releaseDirResolvedEqualsExpectedResolved": true,
+      "releaseDirState": "DIRECTORY",
+      "unitWorkingDirectory": "EQUAL_KERNEL_CWD",
+      "unitWorkingDirectoryMissingOk": false
+    }
+  },
+  "linkage": {
+    "envelopeSha256": "b4f9f18a08c985b6cfc7e79819169634aaacdceb9314b7ea9684e8c6f1631881",
+    "retainedOutputSha256": "5b7ae3f5bc9f98bf8bd855750f6d01f1345dc58808d7f4b76156b9ecb9b77717",
+    "receiptSha256": "b7f9c2dbf0ded5385ed694dadfc14993bb72c65c148c9e8979bd330b0cab0746",
+    "markerLinkage": "job ID and manifest hash (the marker carries no nonce by design)",
+    "note": "manifest, marker, receipt, retained output and binding stay local; the receipt and retained output carry a one-use nonce"
+  },
+  "review": {
+    "role": "architecture auditor, Opus 5.5 / high",
+    "verdict": "RESULT_LINKAGE_VERIFIED",
+    "reportSha256": "711fd282bdc7ba67bdfec439dc40aab511d53faa1fdab5ffe063ac8b53e2e27a"
+  },
+  "interpretation": {
+    "supports": "At this snapshot the process working directory is a sibling of the frozen directory; the unit WorkingDirectory equals it and the live server-script argument resolves to it. The frozen directory still exists as a real directory with no symlink, and the frozen release directory resolves to it. The live argument vector differs from the frozen one.",
+    "notEstablished": [
+      "which revision runs in the sibling directory",
+      "whether the content differs (a bind mount is not excluded)",
+      "when or why the configuration changed",
+      "any path value",
+      "owner ID and applicability"
+    ],
+    "trackedContext": "The combined S07 staging release (docs/evidence/COMBINED_S07_STAGING_RELEASE_2026-10-08.json) switched the staging API to a new release through systemd drop-ins on 2026-10-08. That fits this result if the binding was frozen from the earlier base release; it is a hypothesis, not established by this attempt.",
+    "sourceReviewAtActivatedRevision": {
+      "role": "architecture auditor, Opus 5.5 / high, read-only local source review",
+      "latestActivatedApiRevisionInTrackedEvidence": "eb532ffd7b127140c38c44c90cfed50f0708f81c",
+      "evidenceChain": [
+        "docs/evidence/STEP2_S4_STAGING_RELEASE_2026-10-05.json (5e398e7)",
+        "docs/evidence/UI_API_S06_STAGING_RELEASE_2026-10-07.json (db9fb98)",
+        "docs/evidence/COMBINED_S07_STAGING_RELEASE_2026-10-08.json (325d335)",
+        "docs/evidence/R7B_INACTIVE_RELEASE_2026-10-09.json (eb532ff; research flags 0, API unit switched and restarted)",
+        "docs/evidence/R7B_MEASURE_EM1_2026-10-10.json (API running eb532ff in PAPER_ONLY)"
+      ],
+      "noLaterApiActivationFound": "DP1S_C02_STAGING_SWITCH_2026-10-15 switched the trading worker only; RELEASE_LINEAGE_MERGE_2026-10-19 deployed false",
+      "properties": {
+        "noMigrationAtStart": "PASS at 325d335 and eb532ff (server.js verifies schema 14 read-only; migrate() has no caller in the API import graph)",
+        "liveHardLocked": "PASS at 325d335 and eb532ff (PAPER_TRADING=false refused at start; every broker adapter live:false and assertLiveEnabled always throws; ledger rejects non-PAPER)",
+        "noAutonomousGatedActionInApi": "PASS at 325d335 and eb532ff (no setInterval in the API graph; orders enter only through request handlers as PAPER signal rows for the separate worker)"
+      },
+      "differencesFrom5e398e7": "none weaken the three properties; db.js, config.js, adapter registry, ledger, schema and package.json are byte-identical from 5e398e7 to eb532ff",
+      "residual": "Holds if the unit runs src/postgres/server.js; this attempt's live release-directory label was derived from exactly one such argument. Tracked evidence does not prove which revision the sibling directory holds.",
+      "summaryForDoc": "Because the earlier pre-start source review covered revision 5e398e7, root re-checked the source of the API revisions that tracked evidence records as activated afterwards: 325d335 (S07, 8 October) and eb532ff (R7B, 9 October), the latest API activation recorded. At both revisions the API verifies schema 14 without migrating at start, Live trading is locked in code with no environment switch that enables it, and the API process starts no order or fund action by itself. The safety basis of the owner's start GO therefore holds for any of these revisions. The live process runs the `src/postgres/server.js` entry, since its release-directory label was derived from exactly one such argument."
+    }
+  },
+  "consequence": "Blocking: class OTHER, and argvEqualFrozen false blocks any owner-ID packet on its own. No retry, re-freeze or restart follows from this result. Next: the owner explains the intended layout, or a separately reviewed binding-update packet re-freezes the working directory and argument vector with owner-supplied values, then a new owner-ID read packet.",
+  "ownerId": "UNKNOWN",
+  "currentApplicability": "UNKNOWN_NOT_QUERIED",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "LOCKED (see sourceReviewAtActivatedRevision)",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "dbAccess": "NONE"
+  }
+}
