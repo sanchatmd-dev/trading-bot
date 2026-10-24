@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P0A_RESULT_2026-10-24",
+  "recordedAt": "2026-10-24T15:11:51.021Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P0a",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P0A_STOPPED_AT_UNIT_PROPERTIES_GO_CONSUMED",
+  "ownerGo": "RECEIVED in owner chat with the packet wording and notAfter 2026-10-25T14:00:00Z; consumed by this attempt (no retry)",
+  "jobId": "s6-p0a-2b9445bd17980d0520fcbbd7",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P0A_BUILD_D14_2026-10-24.json",
+    "sha256": "61a6a32631df604f9e5d67cccf080765092c6154f20515e4778266e78cee60db"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-24T15:08:48.431Z",
+      "expiresAt": "2026-10-24T15:10:48.431Z"
+    },
+    "runnerStartedUtc": "2026-10-24T15:08:58.859Z",
+    "runnerEndedUtc": "2026-10-24T15:09:00.072Z",
+    "runnerElapsedMs": 1212,
+    "collectorStarted": "2026-10-24T15:08:59.976Z",
+    "collectorEnded": "2026-10-24T15:09:00.042Z",
+    "targetConnections": 1,
+    "transportExit": 0,
+    "stderrBytes": 0,
+    "cutoff": false,
+    "overallBreach": false,
+    "termination": "NOT_NEEDED",
+    "noRetry": true,
+    "realKillReapQualification": "UNVERIFIED"
+  },
+  "observation": {
+    "verdict": "STOP_UNKNOWN",
+    "stageReached": 3,
+    "stageName": "UNIT_PROPERTIES",
+    "code": "MISSING_KEY",
+    "evaluation": null
+  },
+  "linkage": {
+    "verifiedBy": "Root",
+    "checks": [
+      "manifest hash equals the runner argument and the receipt",
+      "marker job ID and manifest hash",
+      "receipt envelope and retained-output hashes",
+      "nonce equal in manifest, retained output and receipt",
+      "canonical pins equal in manifest and receipt",
+      "code and stage equal in envelope, retained output and receipt"
+    ],
+    "receiptSha256": "c28245746e4b5af1f17dfaa384190cdfafc5615596e9c9d67fd0b9fef6fde370",
+    "envelopeSha256": "1c686aaa9625b13df050150306acb08473495f5f99e6dc3a4753583bfb24cb1f",
+    "note": "manifest, marker, binding, receipt and retained output stay local; receipt and retained output carry a one-use nonce"
+  },
+  "interpretation": {
+    "supports": "The channel, the host-side start and stages 1 (binding) and 2 (host health) completed. At stage 3 one requested systemctl show property was absent from the output, and the parser requires every requested key.",
+    "likelyCause": "docs/evidence/DP1P_PROPERTY_OBSERVATION_2026-10-15.json records that on this host systemctl show --all still left EnvironmentFiles out for units with none; list-of-record properties (ExecStart, EnvironmentFiles) are printed one line per entry, so an empty list prints nothing. Which unit and key stopped this attempt is not established.",
+    "notEstablished": [
+      "which unit and which key",
+      "any host fact beyond stages 1 and 2 (no labels are returned on a stop)"
+    ]
+  },
+  "consequence": "No later stage ran and no evaluation exists, so P1 is not admitted. Root ruling D15 records an absent list property as ABSENT (never as empty) with fail-closed rules for the API; the collector needs a reviewed fix and a new owner GO naming P0a before another attempt.",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "dbAccess": "NONE"
+  }
+}
