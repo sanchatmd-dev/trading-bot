@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P0B_BUILD_2026-10-25",
+  "recordedAt": "2026-10-24T20:20:49.654Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P0b",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P0B_RUNNER_ACCEPTED_LOCAL_NOT_RUN",
+  "authority": "Rulings D9, D16 and D18; owner chat 2026-10-24 18:31Z allowed GO-P1 and GO-P0b when ready",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "680103e93475228eda3ff5abd66e7e5f2f18025a102d5b46fdd83a897cf186a6"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "spec": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/p0b-spec.md",
+      "sha256": "3f521621761a0a5fa56f2a080a4475a296e0bff72600635d71b21922b5676fd6"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/p0b-spec-review.md",
+      "sha256": "c2a3f394657f05989f6c9b5ecc6fff7a67b15e98f2f479c7f5f94df2e201085a"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/p0b-spec-r2.md",
+      "sha256": "82662c48bc36405bec6857f0b52d1d99d3c2c5c693ac800b605988afa1bea8c1"
+    }
+  ],
+  "rootRulings": {
+    "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/root-rulings-p1p0b.md",
+    "sha256": "38de589d5f692cbb96c82c5dd0585784d0954c9d82043a9a24159cb1f42da2f3"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/build-snapshot-p0b-r2/SHA256SUMS.root",
+    "sha256": "e71ddfd6e820e7b68c00f806921d2484922f3d4479848ba740f74c86c592c09f"
+  },
+  "pins": {
+    "core": "4c1352db8ee803c694bc3b91222ae24f65c97eb20e52796ca39ed23706aa5114",
+    "runner": "cd71c52c6268c6c94f40c1f2cef8516a494b367f7da9becc23a70f0241b21667"
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 87,
+      "pass": 87,
+      "fail": 0
+    },
+    "rehearsal": "local throwaway PostgreSQL 16.15, 12 of 12 variants with real driver formats (TCP; Unix-socket form covered by the cross-parse table against the pin pg-connection-string under ruling O3)"
+  },
+  "payload": {
+    "bytes": 98684,
+    "limit": 131072,
+    "headroom": 32388,
+    "basis": "real private binding"
+  },
+  "reviews": [
+    {
+      "round": "spec",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/p0b-spec-review.md",
+      "sha256": "c2a3f394657f05989f6c9b5ecc6fff7a67b15e98f2f479c7f5f94df2e201085a"
+    },
+    {
+      "round": "build",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/tester-p0b/tester-report.md",
+      "sha256": "4a9e40ed135b0f34d0a06a6379b3e316ae1758b4bf0900c716ff4195c0aa620e"
+    },
+    {
+      "round": "build",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/audit-p0b.md",
+      "sha256": "b73c5694295d464706d10eaeb0d42f5320f89fee1193088abc660d022fc7b198",
+      "note": "three P2 host-format items fixed in fix round 1"
+    },
+    {
+      "round": "fix r1",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "path": ".qa-local/s6-staging-deploy-p1p0b-review-2026-10-24/tester-p0b-r2/tester-report.md",
+      "sha256": "ee29bdf62bb308d50756fa21b605b20c78781d39f9f1531e6ee1cb9af57dce5a",
+      "note": "104 tests, rehearsal 12 of 12, 38 of 38 mutants killed"
+    },
+    {
+      "round": "fix r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "P2-1, P2-2 and P2-3 fixed; conditions are admission steps and named residuals"
+    }
+  ],
+  "residuals": [
+    "pg-stack stderr written after the stage restore (deadline unwind or a late password-file callback) still gives STDERR_NONEMPTY; needs a timing coincidence",
+    "an unencoded special or non-ASCII character in the live API database URL is refused (fail closed) although pg accepts it",
+    "the full-frame Unix-socket run is not rehearsed on Windows; the URL parse is cross-checked against the pin library on 29 named and 3240 generated forms",
+    "no Linux filesystem or real kill and reap check",
+    "P0b checks only the API runtime role; the trading worker role stays unverified until P4"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "dbAccess": "NONE"
+  }
+}
