@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_API_SERVICE_START_RESULT_2026-10-24",
+  "recordedAt": "2026-10-24T01:08:52.878Z",
+  "packetId": "S6-API-SERVICE-START-1",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "SERVICE_START_RESULT_ACCEPTED_AS_OBSERVATION",
+  "ownerGo": "RECEIVED_IN_CHAT_WITH_HARD_GATE_CHECKLIST_CONFIRMED",
+  "ownerGoReference": "owner chat GO and checklist answers 2026-10-24 Bangkok for S6-API-SERVICE-START-1; local record sha256 77f12be136622c8b3154be79e15f18f8a31d2c8be415664a106a840eb324335f",
+  "jobId": "s6-start1-0d3f00cf35a5d8499c544233",
+  "packet": {
+    "path": "docs/S6_API_SERVICE_START_PACKET_2026-10-24.md",
+    "sha256": "448813d5cd796e78e48ac76aa5b922da432dc8322c2e2a3d75c1528951b55287"
+  },
+  "preparationEvidence": {
+    "path": "docs/evidence/S6_API_SERVICE_START_PREPARATION_2026-10-24.json",
+    "sha256": "79a14d44ee2636873f849ead6e6ed70bd7fc7a46dfe725ad7188bf94c2fc8aea"
+  },
+  "reviewedCode": {
+    "core": "e54b34db73ddca8350d082d89da1707c02482f7e6bb9d2f0ad520143654c3f6d",
+    "runner": "78955ccc02f040d0d54ee0514dd3643472f0f4bd12afb330f157fc2d397c7a33"
+  },
+  "sourceEvidenceAtDeployedRevision": "Root read-only review of revision 5e398e7 before the GO: no migration at start (schema 14 verified, fail closed), Live hard-locked in code, no autonomous gated actions in the API process",
+  "attempt": {
+    "startedUtc": "2026-10-24T01:04:18.180Z",
+    "endedUtc": "2026-10-24T01:04:26.431Z",
+    "monoElapsedMs": 8249.5422,
+    "transportExit": 0,
+    "signal": null,
+    "startCommandsSent": 1,
+    "p2Sent": true,
+    "termination": "NOT_NEEDED",
+    "cutoff": false,
+    "spawnCalls": 1,
+    "noRetry": true,
+    "realKillReapQualification": "UNVERIFIED",
+    "pollStartOffsetsMs": [
+      2011,
+      7012
+    ],
+    "phases": [
+      {
+        "name": "P1",
+        "ok": true,
+        "elapsedMs": 1013,
+        "rcs": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "P2",
+        "ok": true,
+        "elapsedMs": 75,
+        "rcs": [
+          0
+        ]
+      },
+      {
+        "name": "P3-1",
+        "ok": true,
+        "elapsedMs": 73,
+        "rcs": [
+          0
+        ]
+      },
+      {
+        "name": "P3-2",
+        "ok": true,
+        "elapsedMs": 67,
+        "rcs": [
+          0
+        ]
+      }
+    ]
+  },
+  "observation": {
+    "bytes": {
+      "stderr": 347,
+      "stdout": 2007
+    },
+    "cleanup": "NOT_NEEDED",
+    "jobId": "s6-start1-0d3f00cf35a5d8499c544233",
+    "p1": {
+      "dependencyCounts": {
+        "bindsTo": 0,
+        "conflicts": 1,
+        "onFailure": 0,
+        "onSuccess": 0,
+        "requires": 2,
+        "wants": 0
+      },
+      "execMainCode": 0,
+      "execMainExitUtc": null,
+      "execMainStartUtc": null,
+      "execMainStatus": 0,
+      "fragmentIdentity": "PASS",
+      "gate": "PASS",
+      "inactiveEnterUtc": null,
+      "labels": {
+        "activeState": "inactive",
+        "loadState": "loaded",
+        "needDaemonReload": "no",
+        "result": "success",
+        "subState": "dead",
+        "unitFileState": "static"
+      },
+      "linger": "yes",
+      "mainPidZero": "PASS",
+      "nRestarts": 0,
+      "ownerIdRelation": "UNKNOWN",
+      "startSteps": {
+        "execStartPost": "empty",
+        "execStartPre": "empty"
+      },
+      "systemdVersion": 255
+    },
+    "p2": {
+      "exit": 0,
+      "sent": true,
+      "stderrBytes": 0
+    },
+    "p3": {
+      "patterns": [],
+      "pollCount": 2,
+      "polls": [
+        {
+          "activeState": "active",
+          "nRestarts": 0,
+          "predicates": {
+            "activeState": "PASS",
+            "fragmentIdentity": "PASS",
+            "mainPidShape": "PASS",
+            "needDaemonReload": "PASS",
+            "subState": "PASS"
+          },
+          "subState": "running"
+        },
+        {
+          "activeState": "active",
+          "nRestarts": 0,
+          "predicates": {
+            "activeState": "PASS",
+            "fragmentIdentity": "PASS",
+            "mainPidShape": "PASS",
+            "needDaemonReload": "PASS",
+            "subState": "PASS"
+          },
+          "subState": "running"
+        }
+      ]
+    },
+    "packetId": "S6-API-SERVICE-START-1",
+    "reason": null,
+    "verdict": "VERIFIED_RUNNING"
+  },
+  "bindings": {
+    "outputSha256": "453b409f4da5ffe609d64d3824bcb559d8a3332279906246ef06e9f65921822b",
+    "receiptSha256": "de114d3398520972f28730ad7c9006f0cd5bd9f853ecc7935eeb7cf5e605b62a",
+    "note": "The receipt carries a secret per-job nonce; the receipt, manifest, marker, binding, command hashes and fragment digest stay local"
+  },
+  "review": {
+    "role": "architecture auditor, Opus 5.5 / high",
+    "verdict": "RESULT_LINKAGE_VERIFIED",
+    "reportSha256": "785a8a01efb8d4e55c4b989a136ce1291531fb42c80457aec9bea3519ef68d68"
+  },
+  "notEstablished": [
+    "HTTP readiness or application health beyond systemd state",
+    "database identity, owner ID or applicability",
+    "serving revision attestation",
+    "survival across a host reboot: the unit file state is static, so it is not enabled to start at boot",
+    "why the service had stopped",
+    "real kill and reaping behaviour"
+  ],
+  "ownerId": "UNKNOWN",
+  "currentApplicability": "UNKNOWN_NOT_QUERIED",
+  "next": "S6-OWNER-ID-RO-2 (read-only owner identity read) needs an owner GO naming it; the service is left running as the owner asked",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_DEPLOYED_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "ONE_START_UNDER_OWNER_GO"
+  }
+}
