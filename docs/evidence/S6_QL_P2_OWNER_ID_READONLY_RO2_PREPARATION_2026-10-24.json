@@ -4,7 +4,7 @@
   "recordedAt": "2026-10-23T21:51:54.670Z",
   "status": "PREPARED_FOR_OWNER_REVIEW_NOT_RUN_NO_EXECUTION_GO",
   "packetId": "S6-OWNER-ID-RO-2",
-  "precondition": "S6-API-SERVICE-START-1 accepted with VERIFIED_RUNNING",
+  "precondition": "S6-API-SERVICE-START-1 accepted with VERIFIED_RUNNING (met: docs/evidence/S6_API_SERVICE_START_RESULT_2026-10-24.json)",
   "goRequirement": "A fresh owner GO naming S6-OWNER-ID-RO-2 and Staging QL-P2 Prototype; the earlier pre-authorization recorded with the RO-1 GO does not name this packet and does not satisfy it",
   "packet": {
     "path": "docs/S6_QL_P2_OWNER_ID_READONLY_RO2_PACKET_2026-10-24.md",
@@ -39,7 +39,7 @@
     }
   ],
   "execution": {
-    "collector": "NOT_BUILT",
+    "collector": "BUILT_AND_INDEPENDENTLY_REVIEWED_NOT_RUN",
     "targetAccess": "NOT_RUN",
     "ownerGo": "NOT_RECEIVED"
   },
@@ -55,5 +55,51 @@
     "deployment": "NOT_RUN",
     "targetRouteActivation": "NOT_RUN",
     "dbWrites": "NONE"
+  },
+  "preconditionEvidence": {
+    "path": "docs/evidence/S6_API_SERVICE_START_RESULT_2026-10-24.json",
+    "sha256": "3a34e28a220941d49b5c8acc938f21cbe20ca848a020237389a9877636f85180"
+  },
+  "collectorBuild": {
+    "snapshot": {
+      "path": ".qa-local/s6-owner-id-ro2-exec-2026-10-24/build-snapshot-final/SHA256SUMS",
+      "sha256": "9fdf74fd1fa8e518af553f7353cac410b0c0a86e3bac248b4382463a398473d4"
+    },
+    "rootRun": {
+      "tests": 93,
+      "pass": 93,
+      "fail": 0
+    },
+    "reviews": [
+      {
+        "role": "tester, Sonnet 5.5 / medium",
+        "path": ".qa-local/s6-owner-id-ro2-exec-2026-10-24/tester-r1/tester-report.md",
+        "sha256": "9921e2acc4d2e06998b06786631a8512397d01c4dbf96c2250d853da37eaf01d",
+        "verdict": "PASS",
+        "tests": 130,
+        "mutants": {
+          "total": 85,
+          "killed": 84,
+          "equivalent": 1
+        }
+      },
+      {
+        "role": "architecture auditor, Opus 5.5 / high, also the recorded substitute for the paused Fable second opinion",
+        "path": ".qa-local/s6-owner-id-ro2-exec-2026-10-24/audit-r1.md",
+        "sha256": "3edd3f32cc99353aadc0d14315f46d6d40e262c5e0837d5de5c77bdc13e45b22",
+        "verdict": "GO",
+        "findings": {
+          "P1": 0,
+          "P2": 0,
+          "P3": 8
+        }
+      }
+    ],
+    "processDeviation": "the coder renamed one variable with an in-place shell edit; content reviewed afterwards",
+    "rootAdmissionDuties": [
+      "create the RO-2 private binding and known-hosts copy in the RO-2 directory and verify the four tuple fields equal the RO-1 binding",
+      "run a full .qa-local search for any other RO-2 manifest or marker (admission item 9)",
+      "fresh usage and RAM reading; operations worker alone"
+    ]
   }
 }
