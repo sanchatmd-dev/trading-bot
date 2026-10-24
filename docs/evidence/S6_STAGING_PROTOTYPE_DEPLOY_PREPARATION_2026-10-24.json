@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_PREPARATION_2026-10-24",
+  "recordedAt": "2026-10-24T10:20:27.700Z",
+  "status": "PREPARED_FOR_OWNER_REVIEW_NOT_RUN_NO_EXECUTION_GO",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "environment": "Staging QL-P2 Prototype",
+  "ownerRequest": "Prepare (do not run) a staging deploy packet for the current reviewed revision, with migration check and rollback, so I can try the latest prototype on staging. I will GO it separately.",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "fd4f702012ed9f0dc312f3bfa3090498a5c844ca79ebc871730f4c6f803c075e"
+  },
+  "targetPin": "NOT_SET: Root pins one exact origin commit with exact-revision CI green and root acceptance records at final preparation (ruling D1); candidate base 4328ddc",
+  "keyFindings": [
+    "The pinned API and trading worker refuse to start without the Paper ledger fence, which only the offline core migration creates (migration set A, fence only)",
+    "The API and the trading worker must switch together as a pair; pair rollback to the previous trees",
+    "No existing release tool may write the database; new migration-capable tools are built and reviewed after the P0a and P0b results (ruling D9)",
+    "Set B (paper capital model) and the owner aggregate view are deferred to a follow-up packet (ruling D2); the per-Bot QR-2 performance page can be tried after P5a"
+  ],
+  "maps": [
+    {
+      "path": ".qa-local/claude-root-2026-10-24/staging-deploy/map-release.md",
+      "sha256": "592293267061352e97720dba58eebfb2c04f40146311a7fb148b458555fecd42"
+    },
+    {
+      "path": ".qa-local/claude-root-2026-10-24/staging-deploy/map-migrations.md",
+      "sha256": "4083795f73aaa6eb5de160137b680c5f6a7c73b293807374483718454dd670ea"
+    },
+    {
+      "path": ".qa-local/claude-root-2026-10-24/staging-deploy/map-runtime.md",
+      "sha256": "b67acf88cec89b432b8e495192db6926626fbe87054bf9031890b0c29dde792c"
+    }
+  ],
+  "reviews": [
+    {
+      "round": "r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/staging-deploy/packet-review-r1.md",
+      "sha256": "a2a053ed8b959754f06ce95250f22b4a72bb2b931b296c4dba8f2095ce46ac39",
+      "verdict": "FIXES_REQUIRED",
+      "findings": {
+        "P1": 0,
+        "P2": 7,
+        "P3": 13
+      }
+    },
+    {
+      "round": "r1",
+      "role": "second opinion, Opus 5.5 / high substituting for paused Fable 5.1",
+      "path": ".qa-local/claude-root-2026-10-24/staging-deploy/second-opinion-r1.md",
+      "sha256": "8af6b94b79957daccd893a6a5b1a3de80797826692d0015853ef27f693f0214d",
+      "verdict": "GO_READY_WITH_CONDITIONS",
+      "findings": {
+        "P1": 0,
+        "P2": 6,
+        "P3": 6
+      }
+    },
+    {
+      "round": "r2",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/staging-deploy/packet-review-r2.md",
+      "sha256": "14e8848eea59a128410645100aa11732c44f55d52d6d570151212c5faa2435d4",
+      "verdict": "FIXES_REQUIRED",
+      "findings": {
+        "P1": 0,
+        "P2": 4,
+        "P3": 8
+      }
+    },
+    {
+      "round": "r2",
+      "role": "second opinion, Opus 5.5 / high substituting for paused Fable 5.1",
+      "path": ".qa-local/claude-root-2026-10-24/staging-deploy/second-opinion-r2.md",
+      "sha256": "d56d1acc271d1f07876eb39f30788eba05e8d67113859a676c3d8246b3cd5d49",
+      "verdict": "GO_READY_WITH_CONDITIONS",
+      "findings": {
+        "P1": 0,
+        "P2": 6,
+        "P3": 6
+      }
+    },
+    {
+      "round": "r3",
+      "role": "architecture auditor, Opus 5.5 / high (narrow re-check)",
+      "path": ".qa-local/claude-root-2026-10-24/staging-deploy/packet-review-r3.md",
+      "sha256": "3b26cc177c75c1efb4913084322449b91522de643e69e780f49b5446cb19557c",
+      "verdict": "FIXES_REQUIRED",
+      "findings": {
+        "P1": 0,
+        "P2": 1,
+        "P3": 3
+      },
+      "note": "all four wording items applied by Root and checked by diff"
+    }
+  ],
+  "rootRulings": "D1-D12 recorded in the packet (D9 amended, D4 extended, D11 baseline timing, D12 GO wording)",
+  "execution": {
+    "tools": "NONE_BUILT",
+    "targetAccess": "NOT_RUN",
+    "ownerGo": "NOT_RECEIVED"
+  },
+  "next": "Build and review the read-only P0a collector ahead of GO-P0a (ruling D9); request GO-P0a",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "targetRouteActivation": "NOT_RUN"
+  }
+}
