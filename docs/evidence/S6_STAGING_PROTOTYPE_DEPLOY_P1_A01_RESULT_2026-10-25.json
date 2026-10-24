@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P1_A01_RESULT_2026-10-25",
+  "recordedAt": "2026-10-24T19:59:26.812Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P1",
+  "attemptId": "a01",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P1_STOP_PRE_NO_HOST_WRITE_GO_CONSUMED",
+  "ownerGo": "owner chat 2026-10-24 18:31Z allowed GO-P1 and GO-P0b when ready; this attempt consumed GO-P1 (no retry); a contingency attempt needs a new owner GO",
+  "jobId": "s6-p1-a01-a34f24846c11cacb7e1cc121",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P1_BUILD_2026-10-25.json",
+    "sha256": "ff278b2062d8364769611b8d1e02845c7dc5bf4e12ca0b219b3a526c707b3f4b"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-24T19:57:37.193Z",
+      "expiresAt": "2026-10-24T19:59:37.193Z"
+    },
+    "runnerStartedUtc": "2026-10-24T19:57:45.394Z",
+    "runnerEndedUtc": "2026-10-24T19:57:51.387Z",
+    "runnerElapsedMs": 5992,
+    "targetConnections": 1,
+    "transportExit": 0,
+    "stderrBytes": 0,
+    "stdinBytesWritten": 55412777,
+    "cutoff": false,
+    "noRetry": true
+  },
+  "verdict": {
+    "verdict": "P1_STOP_PRE",
+    "stageReached": "PRE_GATES",
+    "code": "PRE_STAGE_ANCHOR",
+    "effectPhase": "PRE",
+    "hostEffect": "NONE"
+  },
+  "observed": {
+    "stream": {
+      "checkListsOk": true,
+      "drained": "NONE",
+      "drainedBytes": 0,
+      "files": 4,
+      "framingOk": true,
+      "receivedBytes": 55362089,
+      "shaOk": true
+    },
+    "archive": {
+      "depEntries": 182,
+      "matched": 1589,
+      "rows": 1589,
+      "sourceEntries": 1407
+    },
+    "host": {
+      "cpuCount": 2,
+      "load1PerCpu": 0.04,
+      "memAvailableMiB": 7083,
+      "nodeMajor": 24,
+      "livePayloadCount": 0,
+      "stageDirOwnerIsSelf": {
+        "API": true,
+        "TRADING": true
+      }
+    },
+    "stageDirs": {
+      "API": {
+        "anchorOk": false,
+        "ownerIsSelf": true
+      },
+      "TRADING": {
+        "anchorOk": null,
+        "ownerIsSelf": true
+      }
+    },
+    "effects": {
+      "apiPartial": "NOT_ATTEMPTED",
+      "apiRename": "NOT_ATTEMPTED",
+      "apiWrite": "NOT_ATTEMPTED",
+      "incoming": "NOT_ATTEMPTED",
+      "incomingFiles": "NOT_ATTEMPTED",
+      "tradingPartial": "NOT_ATTEMPTED",
+      "tradingRename": "NOT_ATTEMPTED",
+      "tradingWrite": "NOT_ATTEMPTED"
+    }
+  },
+  "linkage": {
+    "verifiedBy": "Root",
+    "checks": [
+      "manifest hash equals the runner argument and the receipt",
+      "receipt hash equals the runner output",
+      "marker job, attempt and manifest hash",
+      "receipt envelope and retained-output hashes",
+      "nonce",
+      "canonical pins"
+    ],
+    "receiptSha256": "5ffea93301f6bdf000ce34758345191bca0515f2882cfbe960f29bd4f79edea0",
+    "envelopeSha256": "d19d6bc793fe2b1899419d41980082ac3ae16e249ce3b36434a0d324a1dab138"
+  },
+  "cause": "Root binding error: the R7B release tool kept its trees in a one-segment releases subdirectory of its stage directory, so the API anchor was looked up one level too high. That releases subdirectory is the DP1S stage directory, so both anchors live in one directory; attempt a02 binds both stage directories to it (equal directories, allowed by the reviewed rule).",
+  "next": "Prepared attempt a02 (new run directory, priorAttempts lists a01) waits for a new owner GO-P1; P0b waits for P1 because it runs from the staged API tree.",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
