@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_API_CWD_READONLY_PREPARATION_2026-10-24",
+  "recordedAt": "2026-10-24T03:26:15.094Z",
+  "status": "PREPARED_FOR_OWNER_REVIEW_NOT_RUN_NO_EXECUTION_GO",
+  "packetId": "S6-API-CWD-RO-1",
+  "environment": "Staging QL-P2 Prototype",
+  "purpose": "Classify, read-only, why the serving process working directory differed from the frozen value at S6-OWNER-ID-RO-2 stage 3 (API_REVISION_MISMATCH)",
+  "goRequirement": "A fresh owner GO naming S6-API-CWD-RO-1 and Staging QL-P2 Prototype; no earlier GO names this packet",
+  "packet": {
+    "path": "docs/S6_API_CWD_READONLY_PACKET_2026-10-24.md",
+    "sha256": "d0ef95acc55fe4a5077b4aaa2d94227819ca89d4a97b140c794deecf2a7f5edd"
+  },
+  "basis": [
+    {
+      "path": "docs/evidence/S6_QL_P2_OWNER_ID_READONLY_RO2_RESULT_2026-10-24.json",
+      "sha256": "82636a19e94ff140a64790a205153d9d5407c1fee4650fbc85b9242c4bfd49c6"
+    },
+    {
+      "path": "docs/evidence/S6_API_SERVICE_START_RESULT_2026-10-24.json",
+      "sha256": "3a34e28a220941d49b5c8acc938f21cbe20ca848a020237389a9877636f85180"
+    }
+  ],
+  "packetReviews": [
+    {
+      "round": "r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/cwd-packet-review.md",
+      "sha256": "e1ea69af4a7bb7bb4e8ce7cce093d07224eee45ff38052005b131f242b24225c",
+      "verdict": "FIXES_REQUIRED",
+      "findings": {
+        "P1": 0,
+        "P2": 3,
+        "P3": 8
+      },
+      "note": "all applied in revision 2"
+    },
+    {
+      "round": "r2",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/cwd-packet-review-r2.md",
+      "sha256": "a96514dadbbfe0052592570aec24d9069543ff12cf336ac9bd545e058137d129",
+      "verdict": "FIXES_REQUIRED",
+      "findings": {
+        "P1": 0,
+        "P2": 0,
+        "P3": 4
+      },
+      "note": "text only; applied in revision 4 with the second-opinion text items"
+    },
+    {
+      "round": "r3",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "path": ".qa-local/claude-root-2026-10-24/cwd-packet-review-r3.md",
+      "sha256": "6d397e501d559f47282e9e016667126dc0fa2897f1e0057476c55212ffeb8539",
+      "verdict": "FIXES_REQUIRED",
+      "findings": {
+        "P1": 0,
+        "P2": 0,
+        "P3": 2
+      },
+      "note": "two wording items applied by Root and checked by diff"
+    }
+  ],
+  "collectorBuild": {
+    "note": "Built and reviewed ahead of any owner GO as local-only work: no target contact, manifest, marker or job ID",
+    "snapshot": {
+      "path": ".qa-local/s6-api-cwd-ro1-review-2026-10-24/build-snapshot-final/SHA256SUMS",
+      "sha256": "40f036bcc20fe41bf5d2d13617f478208503c0e16ade18bdbbf04f255d0fb802"
+    },
+    "pins": {
+      "core": "903be056c7187a4728f5885fb3fcbb83200f21f688b1d26af679a9d69ae37152",
+      "runner": "ae91bf4500467579b98d4dcc8163b018430d53eb788a7c35345c4f86502207da",
+      "tests": "24a61cdbdc48275e5234973c372ec8aa963de019287cf2f616406980815caf12",
+      "collectorRegion": "1e4380fef8f83d8ab77c7562a31b919f1cbf36147cad54e3f3ad0c0668158706"
+    },
+    "rootRun": {
+      "tests": 97,
+      "pass": 97,
+      "fail": 0
+    },
+    "fixRound2": "F1 physical realpath through the native call, F4 canonical frame text, F6 strict UTC timestamps, F7 probe tests moved into the author suite, F8 freshness recheck before the marker",
+    "reviews": [
+      {
+        "round": "r1",
+        "role": "tester, Sonnet 5.5 / medium",
+        "path": ".qa-local/s6-api-cwd-ro1-review-2026-10-24/tester-r1/tester-report.md",
+        "sha256": "3ab9163769099ae446778441faef16c87b11d55c992aeb37ab0497d1b9a8704b",
+        "verdict": "PASS",
+        "mutants": {
+          "total": 83,
+          "killed": 78,
+          "survivedEquivalentOrLayered": 5
+        }
+      },
+      {
+        "round": "r1",
+        "role": "architecture auditor, Opus 5.5 / high",
+        "path": ".qa-local/s6-api-cwd-ro1-exec-2026-10-24/audit-r1.md",
+        "sha256": "a36c9f5ef20134daeff794cc26b8beab0c4b220ff8a53468d3322742e5bb5acb",
+        "verdict": "GO_WITH_CONDITIONS",
+        "findings": {
+          "P1": 0,
+          "P2": 3,
+          "P3": 7
+        },
+        "note": "conditions closed by fix round 2 and packet revisions 3 and 4"
+      },
+      {
+        "round": "r2",
+        "role": "tester, Sonnet 5.5 / medium",
+        "path": ".qa-local/s6-api-cwd-ro1-review-2026-10-24/tester-r2/tester-report.md",
+        "sha256": "9b6e63c15149d38e4e6805d7dc029abb2a79cfdbe42c68fead3129d54d5434fb",
+        "verdict": "PASS",
+        "tests": {
+          "author": 97,
+          "independent": 39
+        },
+        "mutants": {
+          "total": 30,
+          "killed": 21,
+          "survivedEquivalentOrLayered": 9
+        }
+      },
+      {
+        "round": "r2",
+        "role": "architecture auditor, Opus 5.5 / high",
+        "path": ".qa-local/s6-api-cwd-ro1-exec-2026-10-24/audit-r2.md",
+        "sha256": "99edddb20ae3ce655bc3b7605306af89bf12291830dcffcb2e6824e8922b3910",
+        "verdict": "GO_WITH_CONDITIONS",
+        "findings": {
+          "P1": 0,
+          "P2": 0,
+          "P3": 4
+        }
+      },
+      {
+        "round": "r1",
+        "role": "second-opinion reviewer, Opus 5.5 / high, recorded substitute for paused Fable 5.1",
+        "path": ".qa-local/s6-api-cwd-ro1-exec-2026-10-24/second-opinion-r1.md",
+        "sha256": "8e59fe15d0c8ee65979103240153f66894983dca873f1054a5834c8c9bc386c3",
+        "verdict": "GO_WITH_CONDITIONS",
+        "findings": {
+          "P1": 0,
+          "P2": 1,
+          "P3": 10
+        }
+      }
+    ],
+    "rootRulings": [
+      "Second-opinion P2-1 (no continuity link to the RO-2 process): recorded in the packet as a snapshot-only limit instead of a rebuild; EXACT_EQUAL establishes no cause",
+      "Root confirmed from the RO-2 collector source that the diagnostic Step 2 makes the same read as RO-2 stage 3 (readlink of the MainPID cwd link, exact string compare)",
+      "Tester and mutant copies moved out of the execution directory before any manifest"
+    ],
+    "processDeviations": [
+      "r1 coder removed an unused import with an in-place shell edit; content reviewed afterwards",
+      "r1 coder started one test run below the 1 GiB free-RAM floor (0.52 GiB)"
+    ]
+  },
+  "rootAdmissionDuties": [
+    "single-attempt search for any S6-API-CWD-RO-1 manifest or marker across the main checkout and every worktree, including s6-* directories",
+    "manifest pins recomputed from the reviewed files; strict UTC millisecond timestamps; collectorDeadline = startBy + 60 s; 32-hex nonce from Root",
+    "binding built by value from the reviewed RO-2 binding; fresh usage and RAM reading; operations worker alone"
+  ],
+  "execution": {
+    "collector": "BUILT_AND_INDEPENDENTLY_REVIEWED_NOT_RUN",
+    "targetAccess": "NOT_RUN",
+    "ownerGo": "NOT_RECEIVED"
+  },
+  "ownerId": "UNKNOWN",
+  "currentApplicability": "UNKNOWN_NOT_QUERIED",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_DEPLOYED_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "targetRouteActivation": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "dbAccess": "NONE"
+  }
+}
