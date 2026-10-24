@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_QL_P2_OWNER_ID_READONLY_RO2_RESULT_2026-10-24",
+  "recordedAt": "2026-10-24T02:18:31.526Z",
+  "packetId": "S6-OWNER-ID-RO-2",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "STOP_RECORD_ACCEPTED_ONLY",
+  "ownerGo": "RECEIVED_IN_CHAT_NAMING_PACKET",
+  "ownerGoReference": "owner chat GO 2026-10-24 Bangkok naming S6-OWNER-ID-RO-2; local record sha256 840066cd7092dc5178c8e988a53ddd36e9c51441adea30b65224a59371d5d711",
+  "jobId": "s6-ro2-b48dc07a3ba62d8afaf6fe72",
+  "packet": {
+    "path": "docs/S6_QL_P2_OWNER_ID_READONLY_RO2_PACKET_2026-10-24.md",
+    "sha256": "db80a917b27ffaf509f6ec180d5ddb016df8e4b0081ef58d0fd9d5304540d26d"
+  },
+  "precondition": {
+    "recordReference": "S6-API-SERVICE-START-1 result evidence (VERIFIED_RUNNING, linkage verified)",
+    "resultEvidenceSha256": "3a34e28a220941d49b5c8acc938f21cbe20ca848a020237389a9877636f85180"
+  },
+  "attempt": {
+    "startedUtc": "2026-10-24T02:13:00.591Z",
+    "endedUtc": "2026-10-24T02:13:01.769Z",
+    "monoElapsedMs": 1178.1694,
+    "transport": {
+      "exit": 1,
+      "stderrBytes": 0,
+      "cutoff": false,
+      "termination": "NOT_NEEDED"
+    },
+    "spawnCalls": 1,
+    "noRetry": true,
+    "realKillReapQualification": "UNVERIFIED"
+  },
+  "observation": {
+    "verdict": "STOP_UNKNOWN",
+    "code": "API_REVISION_MISMATCH",
+    "codeMeaning": "the serving process working directory, read from the kernel, differs from the frozen expected working directory; this is a string comparison only and does not show that a different revision is deployed",
+    "stages": {
+      "ARTIFACT_ASSOCIATION": "NOT_RUN",
+      "BINDING": "PASS",
+      "DATABASE_CHANNEL": "NOT_RUN",
+      "DATABASE_IDENTITY_SCHEMA": "NOT_RUN",
+      "IDENTITY_READ": "NOT_RUN",
+      "SERVICE_GUARD": "PASS",
+      "SERVING_PROCESS": "STOP",
+      "STABILITY_RECHECK": "NOT_RUN"
+    },
+    "guard": {
+      "failed": [],
+      "labels": {
+        "activeState": "active",
+        "needDaemonReload": "no",
+        "subState": "running"
+      },
+      "predicates": {
+        "activeState": "PASS",
+        "fragmentIdentity": "PASS",
+        "mainPidShape": "PASS",
+        "needDaemonReload": "PASS",
+        "subState": "PASS"
+      }
+    },
+    "rollback": "NOT_STARTED",
+    "close": "NOT_STARTED",
+    "rowCount": null
+  },
+  "bindings": {
+    "envelopeSha256": "5b671e48930a4cf39ddf12b04444f7748f1944aad4db20bea22702405d6ad3d2",
+    "receiptSha256": "0aa215021166284552c1b3e2f00d5e4a770ddf31c7dfc62d7110a5cb855971e9"
+  },
+  "review": {
+    "role": "architecture auditor, Opus 5.5 / high",
+    "verdict": "RESULT_LINKAGE_VERIFIED",
+    "reportSha256": "25a144a5c8ad2a8a87f78cf5339300896d3370ddfcf758a3ee558d8abb2aca56",
+    "findings": [
+      "F1: report the cause as a working-directory mismatch, not a revision mismatch",
+      "F2: a later diagnostic should classify the difference (equal after resolving links, deleted release, other) without exposing the path"
+    ]
+  },
+  "noDatabaseAccess": "No database client was created and no SQL ran; the stop happened at stage 3 before any database step",
+  "ownerId": "UNKNOWN",
+  "currentApplicability": "UNKNOWN_NOT_QUERIED",
+  "next": "A separately reviewed read-only diagnostic that classifies the working-directory difference without exposing paths, under its own owner GO",
+  "gates": {
+    "spotPaperOnly": true,
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "dbWrites": "NONE",
+    "serviceChange": "NONE"
+  }
+}
