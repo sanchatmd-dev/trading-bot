@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P3_BUILD_R2_2026-10-26",
+  "recordedAt": "2026-10-25T18:37:12.037Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phases": [
+    "P3",
+    "R3"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P3_AND_R3_TOOLS_ACCEPTED_ROUND_2_LOCAL_NOT_RUN",
+  "authority": "Ruling D23 after attempt a01 (stopped before any effect); a02 needs a new owner GO-P3 in the D23 wording",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "34d73b7e7dd3debf0271f488b123d37148166555a3bbf3693cf3435f96d33515"
+  },
+  "supersedes": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P3_BUILD_2026-10-26.json",
+    "sha256": "83de383cd611c6a7dc1af1b5e3aaaf8f10506304bc64bcaf9c89804901860298"
+  },
+  "a01Result": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P3_A01_RESULT_2026-10-26.json",
+    "sha256": "302b5e9fda935439ad063f4f4cc3831838055df29e3fd35e1f61f3f0970ee0fd"
+  },
+  "rootRulings": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-p3-r2.md",
+    "sha256": "a72461fb94e0c9dbde107bc49098ede0db2f89fb837def4fe71a901f867d3b1f"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/build-snapshot-p3-r3/SHA256SUMS.root",
+    "sha256": "db07d2482b1fc5cb4e4720359d3425b051fcbc6d8cec33fdc534cb30441227f7"
+  },
+  "pins": {
+    "core": "db1371b65ee90861b68df5ea0d5c83c70d3c565a3294e77cbe3f0d17cc5c9caf",
+    "p3Runner": "3fac37f73c10603b243575b316faedd8a1da5d6c4d2323d9bdff74d1b381b077",
+    "r3Runner": "c09a2ed0757ac8f1e376f4155fa0246c97f6d413ea99f54d4ad97a8325c6f91c",
+    "regionP3": "6d094c6b7e2ea5f1f562227825f27656fadbf0c8bbe2cff51fc7564cc9c41edc",
+    "regionR3": "1f3a688f513fa621beebb66cfce5abfc02eded6407555516312d93a9ed6059b9"
+  },
+  "changes": [
+    "stop budget 190 s in P3 and R3 (unit stop timeout up to 180 s passes; finite value and 10 s margin unchanged)",
+    "code directories: two walks that both stop at the tree limit are a recorded fact with both counts; a missing, unreadable or relabelled directory or a changed complete walk is still drift",
+    "packet hash pin"
+  ],
+  "limits": {
+    "p3": {
+      "remoteTimeoutSec": 2135,
+      "killAfterSec": 745,
+      "effectBudgetMs": 1655000,
+      "overlapWaitSec": 2945
+    },
+    "r3Fence": {
+      "remoteTimeoutSec": 1765,
+      "killAfterSec": 680,
+      "overlapWaitSec": 2510
+    },
+    "r3Logical": {
+      "remoteTimeoutSec": 2230,
+      "killAfterSec": 1145,
+      "overlapWaitSec": 3440
+    }
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 304,
+      "pass": 304,
+      "fail": 0
+    },
+    "dryAdmission": "real bindings and the accepted P0a, P0b and P2 records: binding, cross-check, limits, manifest expected block and payload (225545 bytes) all OK"
+  },
+  "reviews": [
+    {
+      "round": "fix r2 (D23)",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "304 unit tests, 22 targeted mutants killed, rehearsal v01 and two new variants (90-second stop timeout, partial code directories) pass",
+      "path": ".qa-local/s6-staging-deploy-p3-build-2026-10-25/author-report.md",
+      "sha256": "7f4e8acb87fb0a04e7cfdd916fcac19091f5af3193789ac13d90e1939affa18d"
+    },
+    {
+      "round": "fix r2",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "304 of 304, 3 of 3 rehearsal variants, 15 independent tests, 24 of 25 mutants killed (1 equivalent)",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p3-r3/tester-report.md",
+      "sha256": "ab9681776e6cbfc4eeb03930ba04d4dc75d9bbd443d397d57feed8312b3c0fd9"
+    },
+    {
+      "round": "fix r2",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1; conditions: new owner GO-P3 in the D23 wording, a02 lists a01 with its limits and start time, residuals recorded",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/audit-p3-r3.md",
+      "sha256": "dad8b53b2a125c165d6aebaf15566a96e512b6053717d2024d9c03e7051914b6"
+    }
+  ],
+  "residuals": [
+    "The fresh gate steps after the stop-timeout check have not yet met the host: journal readability of the running API (medium), the health answer form (medium-low), the runtime-role probe (supported by the P0b probe), dependency, disk and backup-directory checks (low); each stops before any effect",
+    "A partial code-directory walk proves neither identity nor content past the limit; the stream and collector stay stopped and this is no start evidence for them",
+    "An expected LIMIT entry with a digest would also be read as the fact (records give no digest)"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
