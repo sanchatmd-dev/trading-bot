@@ -1,0 +1,433 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P0B_A1_RESULT_2026-10-25",
+  "recordedAt": "2026-10-25T00:46:05.412Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P0b",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P0B_PASS_ACCEPTED_AS_OBSERVATION",
+  "ownerGo": "owner chat 2026-10-24 18:31Z allowed GO-P0b when ready; consumed by this attempt (no retry)",
+  "jobId": "s6-p0b-a1-697c5e08d68dcb529150e099",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P0B_BUILD_2026-10-25.json",
+    "sha256": "3358bee83acb3f9278940b4996844c363b96d82e94c231b57216af4cdebbe128"
+  },
+  "p1Result": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P1_A02_RESULT_2026-10-25.json",
+    "sha256": "705a09eb90155289e6bed1b77cba523f15d7f00b3480629742d91102d4024c4e"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-25T00:44:39.542Z",
+      "expiresAt": "2026-10-25T00:46:39.542Z"
+    },
+    "runnerStartedUtc": "2026-10-25T00:44:48.843Z",
+    "runnerEndedUtc": "2026-10-25T00:44:51.939Z",
+    "runnerElapsedMs": 3096,
+    "targetConnections": 1,
+    "transportExit": 0,
+    "stderrBytes": 0,
+    "cutoff": false,
+    "noRetry": true
+  },
+  "verdict": {
+    "verdict": "P0B_PASS",
+    "stageReached": 10,
+    "evaluation": {
+      "blocks": {
+        "P2": [],
+        "P3": []
+      },
+      "facts": [
+        "FACT_PUBLIC_GRANTEE",
+        "FACT_TEMP_STATE"
+      ],
+      "stops": []
+    }
+  },
+  "observed": {
+    "tree": {
+      "after": {
+        "fileCount": 1589,
+        "foreignOwner": 0,
+        "groupWritable": 0,
+        "label": "EXACT",
+        "nameBad": false,
+        "nonRegular": 0,
+        "otherWritable": 0
+      },
+      "before": {
+        "fileCount": 1589,
+        "foreignOwner": 0,
+        "groupWritable": 0,
+        "label": "EXACT",
+        "nameBad": false,
+        "nonRegular": 0,
+        "otherWritable": 0
+      },
+      "stable": true
+    },
+    "node": {
+      "major": 24
+    },
+    "apiSources": {
+      "activeState": "active",
+      "configVsP0a": "EQUAL",
+      "effective": "SET",
+      "pgKeysPresent": 0,
+      "pgKeysBlocking": 0
+    },
+    "selector": {
+      "form": "SOCKET",
+      "state": "READ"
+    },
+    "runtime": {
+      "bypassRls": false,
+      "connect": "OK",
+      "funding": {
+        "insert": true,
+        "present": true,
+        "select": true,
+        "update": true
+      },
+      "locksOk": true,
+      "maySetSrr": false,
+      "pgLoad": "OK",
+      "readOnly": true,
+      "recovery": false,
+      "schemaVersion": 14,
+      "srr": "origin",
+      "stderrSuppressed": {
+        "deprecation": 0,
+        "warning": 0,
+        "write": 0
+      },
+      "superuser": false
+    },
+    "migration": {
+      "connect": "OK",
+      "serverMajor": 16,
+      "databaseSizeMiB": 86,
+      "schemaVersion": 14,
+      "executorMode": "FOUNDATION",
+      "quantResearchRuns": true,
+      "fencePresent": false,
+      "actsAsFundingOwner": true,
+      "m1PrerequisitesMet": true,
+      "predictedFenceAclEqual": true,
+      "runtimeGrantsInDefaults": 0,
+      "sameDatabase": true,
+      "readOnly": true,
+      "locksOk": true,
+      "recovery": false,
+      "tablespacesExtra": 0,
+      "connections": {
+        "headroom": 95,
+        "max": 100,
+        "reserved": 3,
+        "used": 2
+      },
+      "foundation": {
+        "byStatus": {
+          "CANCELLED": 4,
+          "OTHER": 0,
+          "PAUSED": 0,
+          "QUEUED": 0,
+          "RUNNING": 0,
+          "STOPPING": 0,
+          "SUCCEEDED": 2
+        },
+        "invalidLedgers": 0,
+        "leased": 0,
+        "legacyQueued": 0,
+        "legacyRunning": 0,
+        "openLaunches": 0,
+        "openOperations": 0,
+        "present": true
+      },
+      "roleSet": {
+        "count": 3,
+        "publicGrantee": true,
+        "runtimeInSet": true,
+        "superusers": 1
+      },
+      "aclCounts": {
+        "relations": 72,
+        "relationsWithAcl": 72,
+        "functions": 15,
+        "columnAclRelations": 0,
+        "settingsRows": 0
+      },
+      "counterTables": {
+        "bot_sessions": {
+          "rows": 2,
+          "ins": 2,
+          "upd": 0,
+          "del": 0
+        },
+        "fills": {
+          "rows": 27,
+          "ins": 27,
+          "upd": 0,
+          "del": 0
+        },
+        "ledger_daily": {
+          "rows": 7,
+          "ins": 7,
+          "upd": 20,
+          "del": 0
+        },
+        "ledger_position_allocations": {
+          "rows": 14,
+          "ins": 14,
+          "upd": 13,
+          "del": 0
+        },
+        "ledger_positions": {
+          "rows": 2,
+          "ins": 2,
+          "upd": 25,
+          "del": 0
+        },
+        "ledger_streak": {
+          "rows": 2,
+          "ins": 2,
+          "upd": 6,
+          "del": 0
+        },
+        "paper_cash_journal": {
+          "rows": 27,
+          "ins": 27,
+          "upd": 0,
+          "del": 0
+        },
+        "paper_funding": {
+          "rows": 6,
+          "ins": 6,
+          "upd": 0,
+          "del": 0
+        },
+        "paper_snapshots": {
+          "rows": 33,
+          "ins": 33,
+          "upd": 0,
+          "del": 0
+        },
+        "signals": {
+          "rows": 213,
+          "ins": 213,
+          "upd": 466,
+          "del": 0
+        }
+      }
+    },
+    "dbVolume": {
+      "floorMiB": 2564,
+      "freeMiB": 88922,
+      "meetsRule": true,
+      "sameDeviceAsBackup": true,
+      "sameDeviceAsTrees": true,
+      "state": "OK"
+    },
+    "volumes": {
+      "BACKUP": {
+        "freeMiB": 88922,
+        "state": "OK"
+      },
+      "TREES": {
+        "freeMiB": 88922,
+        "state": "OK"
+      }
+    },
+    "inspect": {
+      "E1": {
+        "state": "ORIGINAL",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 0,
+        "stderrNonEmpty": false
+      },
+      "E2": {
+        "state": "ORIGINAL",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 0,
+        "stderrNonEmpty": false
+      },
+      "E3": {
+        "state": "ORIGINAL",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 0,
+        "stderrNonEmpty": false
+      },
+      "E4": {
+        "state": "ABSENT",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 13,
+        "stderrNonEmpty": false
+      },
+      "E5": {
+        "state": "PUBLIC_TEMP",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 0,
+        "stderrNonEmpty": false
+      },
+      "M1": {
+        "state": "ABSENT",
+        "outcome": "READ",
+        "exit": 1,
+        "failureCount": 1,
+        "stderrNonEmpty": false
+      },
+      "M10": {
+        "state": "ABSENT",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 92,
+        "stderrNonEmpty": false
+      },
+      "M11": {
+        "state": "ABSENT",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 29,
+        "stderrNonEmpty": false
+      },
+      "M12": {
+        "state": "ABSENT",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 32,
+        "stderrNonEmpty": false
+      },
+      "M13": {
+        "state": "ABSENT",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 91,
+        "stderrNonEmpty": false
+      },
+      "M6": {
+        "state": "ABSENT",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 18,
+        "stderrNonEmpty": false
+      },
+      "M7": {
+        "state": "ABSENT",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 14,
+        "stderrNonEmpty": false
+      },
+      "M8": {
+        "state": "ABSENT",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 89,
+        "stderrNonEmpty": false
+      },
+      "M9": {
+        "state": "ABSENT",
+        "outcome": "READ",
+        "exit": 0,
+        "failureCount": 67,
+        "stderrNonEmpty": false
+      }
+    },
+    "e5Temp": {
+      "allLoginRolesClosed": false,
+      "directGrantees": 0,
+      "liveTempSchemas": 0,
+      "loginRoles": 1,
+      "loginRolesWithTemp": 1,
+      "otherSessions": 1,
+      "sessionsVerifiable": true
+    },
+    "ledger": {
+      "outcome": "READ",
+      "incomplete": false,
+      "summary": {
+        "exposure": 0,
+        "findings": 0,
+        "info": 0,
+        "review_differs": 0
+      },
+      "queries": {
+        "Q1_negative_cash": {
+          "count": 0,
+          "status": "OK"
+        },
+        "Q2_funding_missed_fill": {
+          "count": 0,
+          "status": "OK"
+        },
+        "Q3_run_baselines": {
+          "count": 2,
+          "differsCount": 0,
+          "status": "OK"
+        },
+        "Q4_stuck_queued": {
+          "count": 0,
+          "status": "OK"
+        },
+        "Q5_o3_exposed_lots": {
+          "count": 0,
+          "status": "OK"
+        },
+        "Q6_lots_exceed_position": {
+          "count": 0,
+          "status": "OK"
+        },
+        "Q6b_unlotted_quantity": {
+          "count": 0,
+          "status": "OK"
+        },
+        "Q7_cost_at_flat": {
+          "count": 0,
+          "status": "OK"
+        }
+      }
+    },
+    "privateSnapshot": {
+      "bytes": 11028,
+      "state": "INCLUDED"
+    }
+  },
+  "linkage": {
+    "verifiedBy": "Root",
+    "checks": [
+      "manifestArg",
+      "receiptStdout",
+      "receiptManifest",
+      "receiptEnvelope",
+      "receiptRetained",
+      "marker",
+      "nonce",
+      "pins",
+      "noRetry",
+      "pass"
+    ],
+    "receiptSha256": "d6eeef9f99f9b64e22f379874a6d455bf01c655fa60cd66ef88812a3c3a8d8b8",
+    "envelopeSha256": "9d712e7b61cb30bdd5dd5e7994fca85ceca83776ae5c3d1b07e04627e3efc237",
+    "note": "role names, ACL text and settings stay in the local private snapshot"
+  },
+  "next": "P2 backup and restore verification needs its reviewed tool (ruling D9) and a new owner GO; P3 and P4 the same",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "TREES_STAGED_INERT_NOT_ACTIVATED",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "dbAccess": "READ_ONLY_P0B"
+  }
+}
