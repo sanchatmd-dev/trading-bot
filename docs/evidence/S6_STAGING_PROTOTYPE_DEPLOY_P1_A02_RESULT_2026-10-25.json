@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P1_A02_RESULT_2026-10-25",
+  "recordedAt": "2026-10-25T00:42:03.449Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P1",
+  "attemptId": "a02",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P1_PASS_TREES_STAGED_INERT",
+  "ownerGo": "owner chat GO-P1 for attempt a02 with the packet wording, pin ba1a433 (QR-2 O7 included) and notAfter 2026-10-26T06:00:00Z; consumed by this attempt",
+  "jobId": "s6-p1-a02-b33d6ed457121a74620de4ef",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P1_BUILD_2026-10-25.json",
+    "sha256": "ff278b2062d8364769611b8d1e02845c7dc5bf4e12ca0b219b3a526c707b3f4b"
+  },
+  "attemptA01": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P1_A01_RESULT_2026-10-25.json",
+    "sha256": "929e9f3cd10a49eb9d4c021c78c394affc0f823735dddc69170ec1dc5fc7a0ed"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-25T00:40:39.562Z",
+      "expiresAt": "2026-10-25T00:42:39.562Z"
+    },
+    "runnerStartedUtc": "2026-10-25T00:40:52.263Z",
+    "runnerEndedUtc": "2026-10-25T00:41:06.234Z",
+    "runnerElapsedMs": 13971,
+    "targetConnections": 1,
+    "transportExit": 0,
+    "stderrBytes": 0,
+    "stdinBytesWritten": 55412786,
+    "cutoff": false,
+    "noRetry": true
+  },
+  "verdict": {
+    "verdict": "P1_PASS",
+    "stageReached": "DONE",
+    "code": null,
+    "effectPhase": "DONE",
+    "hostEffect": "DONE"
+  },
+  "observed": {
+    "treeDigest": "4ffcb4431e04f4491057b9ec870a8f03e21458922892efd8fdbc292e68770a20",
+    "treeFiles": 1589,
+    "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+    "stream": {
+      "checkListsOk": true,
+      "drained": "NONE",
+      "drainedBytes": 0,
+      "files": 4,
+      "framingOk": true,
+      "receivedBytes": 55362089,
+      "shaOk": true
+    },
+    "incoming": {
+      "bytes": 55362089,
+      "files": 4,
+      "mode": "0700",
+      "state": "EXACT"
+    },
+    "trees": {
+      "API": {
+        "final": {
+          "bad": 0,
+          "bytes": 53951134,
+          "digestMatches": true,
+          "extra": 0,
+          "extraDirs": 0,
+          "files": 1589,
+          "missing": 0,
+          "modeBad": 0,
+          "nonRegular": 0
+        },
+        "label": "STAGED_EXACT",
+        "nodeCheck": {
+          "failed": 0,
+          "files": 145
+        },
+        "partial": {
+          "bad": 0,
+          "bytes": 53951134,
+          "digestMatches": true,
+          "extra": 0,
+          "extraDirs": 0,
+          "files": 1589,
+          "missing": 0,
+          "modeBad": 0,
+          "nonRegular": 0
+        },
+        "renamed": true
+      },
+      "TRADING": {
+        "final": {
+          "bad": 0,
+          "bytes": 53951134,
+          "digestMatches": true,
+          "extra": 0,
+          "extraDirs": 0,
+          "files": 1589,
+          "missing": 0,
+          "modeBad": 0,
+          "nonRegular": 0
+        },
+        "label": "STAGED_EXACT",
+        "nodeCheck": {
+          "failed": 0,
+          "files": 38
+        },
+        "partial": {
+          "bad": 0,
+          "bytes": 53951134,
+          "digestMatches": true,
+          "extra": 0,
+          "extraDirs": 0,
+          "files": 1589,
+          "missing": 0,
+          "modeBad": 0,
+          "nonRegular": 0
+        },
+        "renamed": true
+      }
+    },
+    "effects": {
+      "apiPartial": "DONE",
+      "apiRename": "DONE",
+      "apiWrite": "DONE",
+      "incoming": "DONE",
+      "incomingFiles": "DONE",
+      "tradingPartial": "DONE",
+      "tradingRename": "DONE",
+      "tradingWrite": "DONE"
+    },
+    "stageDirs": {
+      "API": {
+        "anchorOk": true,
+        "entriesAfter": 23,
+        "entriesBefore": 20,
+        "ownerIsSelf": true,
+        "preserved": true
+      },
+      "TRADING": {
+        "anchorOk": true,
+        "entriesAfter": 23,
+        "entriesBefore": 20,
+        "ownerIsSelf": true,
+        "preserved": true
+      }
+    },
+    "units": {
+      "allLoaded": true,
+      "otherRunChanged": 0,
+      "targetsRunStable": true,
+      "STAGING": {
+        "configStable": true,
+        "count": 6
+      },
+      "PROTECTED": {
+        "configStable": true,
+        "count": 4
+      }
+    },
+    "host": {
+      "nodeMajor": 24,
+      "memAvailableMiB": 7078,
+      "load1PerCpu": 0.01,
+      "devices": 1
+    }
+  },
+  "linkage": {
+    "verifiedBy": "Root",
+    "checks": [
+      "manifestArg",
+      "receiptStdout",
+      "receiptManifest",
+      "receiptEnvelope",
+      "receiptRetained",
+      "marker",
+      "nonce",
+      "pins",
+      "noRetry",
+      "pass"
+    ],
+    "receiptSha256": "1ffb920f0455dd7fa7f9d4a3df39c10b279031a39a340ca6894a4d8040003d68",
+    "envelopeSha256": "01c4b9dcfdda69a6474d0e986125e5bb8d1ed02ee34058a3b07d4e4be4478c98"
+  },
+  "next": "P0b under the owner GO-P0b (notAfter 2026-10-25T18:00:00Z) runs its inspect tools from the staged API tree; P2 to P5a need new owner GOs",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "TREES_STAGED_INERT_NOT_ACTIVATED",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "dbAccess": "NONE"
+  }
+}
