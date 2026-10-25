@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P2_BUILD_2026-10-25",
+  "recordedAt": "2026-10-25T16:11:31.217Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P2",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P2_TOOL_ACCEPTED_LOCAL_NOT_RUN",
+  "authority": "Rulings D9, D19, D20 and D21; each host phase needs its own owner GO (GO-P2 not yet given)",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "4ea6a9e11d174fd0843cbde06bd39c8e67266ce7f179eefadbc0ca2454940688"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "pinIncludesQr2O7": true,
+  "spec": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p2-spec.md",
+      "sha256": "cdb84c59e4b1751a6706f08baa9592e7186e0280ee999e50f118ca1351a75e14"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p2-spec-review.md",
+      "sha256": "babaa35fca2a99684df0b5d459386bc9d92754cd499e870a4a635d7242e7c863"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p2-spec-r2.md",
+      "sha256": "f7bf8fe1da5ad50a51e9a4279d563690ba5607c25fb3bb4986b7e0c517651f36"
+    }
+  ],
+  "rootRulings": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-p2p3-r1.md",
+    "sha256": "302d12a748c9ee12b5aa96a9c2d1c5324b106267de87234d8431f95798783aa9"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/build-snapshot-p2-r1/SHA256SUMS.root",
+    "sha256": "7e707227f6a79120e7980eba7b5a24d48f6f6ad58f9ed525286fb67d5f81d651"
+  },
+  "pins": {
+    "core": "fa23883ac5bbfc04bfe4040ac059283e75abe40d7a1192edf78c221be7a5fbae",
+    "runner": "f8f11b9354458279e0cb669944543ef0b5f44b504ff9ae542575154074e53852",
+    "region": "807bb5e3c03556fa68d199bf17913a4fc89c9cd1d89e46e93225849449b2bbfa",
+    "toolSourceSha": "9c6472c3ba22427c29bf89a9aa3ab013c7c6ad06f8ca8eb48e9cfb1e73976fd7",
+    "sqlSha": "23e6ac3e0a6bfb4e4d0ed40386577f401b4bc36cfc41150524bf1d5501448b3a",
+    "allowlistSha": "d99c5771e82bcf1d1a8bc67e9b76fcd0a74ff106139ced2f096040447be591d3"
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 89,
+      "pass": 89,
+      "fail": 0
+    },
+    "dryAdmission": "real bindings and precondition copies: local binding, cross-field list, the three precondition parsers, the private snapshot shape prediction, bound facts and payload build all OK; no run directory, manifest or marker written"
+  },
+  "rootPreGoChecks": [
+    "accounting tables at the accepted P0b reading hold at most 213 rows each, so the fingerprint statements stay far inside the 512 MiB cap (audit P3-7)",
+    "P0b inspect E5 state is PUBLIC_TEMP, the state a restored database has (spec 7.14)",
+    "the P0a attempt-2 and P0b volume paths for trees and backups are equal; the P1 a02 and P0b API stage directories are equal"
+  ],
+  "payload": {
+    "realBytes": 186234,
+    "realHeadroom": 10374,
+    "syntheticMaximalBytes": 192700,
+    "syntheticHeadroom": 3908,
+    "limit": 196608,
+    "basis": "real private binding"
+  },
+  "rehearsal": "author 27 of 27 variants matched on real PostgreSQL 16.15 with the final bytes (18 earlier variants plus the public-schema grant, backup parent absent and present, volume other-writable and group-writable, three login-manager forms and a source procedure); tester rerun 27 of 27",
+  "reviews": [
+    {
+      "round": "spec",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p2-spec-review.md",
+      "sha256": "babaa35fca2a99684df0b5d459386bc9d92754cd499e870a4a635d7242e7c863"
+    },
+    {
+      "round": "build",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "rehearsal rerun 5 of 18 under the RAM rule",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p2/tester-report.md",
+      "sha256": "64c6ca1f76549772b8c75ee07fd97edb3e2f9525b01ac033261c43431d5bb52d"
+    },
+    {
+      "round": "build",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/audit-p2.md",
+      "sha256": "9d05a9af98d973e9f7b42b02085c499b32f214e9dd0dd68c30f7e7b16daf6153"
+    },
+    {
+      "round": "fix r1 (D20, D21)",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "89 unit tests, 141 mutants with 138 killed and 3 equivalent, 27 rehearsal variants",
+      "path": ".qa-local/s6-staging-deploy-p2-build-2026-10-25/author-report.md",
+      "sha256": "f311cfeba7149da1ed3dc8614e36ef1fc775b578ee5f45a977b1248e037219c2"
+    },
+    {
+      "round": "fix r1",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "89 of 89 author tests, 27 of 27 rehearsal variants, 31 of 31 independent tests, 36 of 37 targeted mutants killed (1 equivalent)",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p2-r2/tester-report.md",
+      "sha256": "3fa3cb4eee79c6126eda52c5cc3f2814905d7dc4c051c742181c40ad81e35c18"
+    },
+    {
+      "round": "fix r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2; five P3; conditions met by the provenance record, the Root pre-GO checks and the independent tester",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/audit-p2-r2.md",
+      "sha256": "c4dc8d4f1adfac0c43855d45b08e76a7751774f961629c298359281dc6e5b85c"
+    }
+  ],
+  "provenance": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p2-fixture-provenance.md",
+    "sha256": "3e01a2a88a94e9261b3129d2317ef69467f2e99e9bf3c9ed77b29c0427202a81",
+    "assumptionsThatStopBeforeAnyEffect": [
+      "login-manager output with empty values shown",
+      "manager control-group line",
+      "owner and mode of the backup volume path"
+    ],
+    "assumptionsThatStopAfterTheFirstEffect": [
+      "initdb on the host",
+      "memory.high read-back",
+      "memory.events lines",
+      "ACL SQL text of the dump list",
+      "not-found transient unit show output",
+      "transient-unit properties not used on this host before",
+      "teardown absence proofs"
+    ],
+    "rule": "every mismatch fails closed; none can produce a false pass; a stop after the first effect consumes GO-P2 and starts the section 10 leftover wait"
+  },
+  "residuals": [
+    "A staging API restart since 24 October, or a staging unit state other than the P1 a02 reading, stops P2 before any effect and consumes GO-P2 (audit P3-8)",
+    "Webhook writes to signals during the dump can stop P2 as P2_ACCOUNTING_DRIFT_UNVERIFIED after the first effect; pausing staging alerts during the run avoids it",
+    "The dedicated backup directory and the volume owner and mode were exercised on Linux-shaped modes over a local directory, not on a Linux volume",
+    "One earlier local rehearsal run under memory pressure stopped one variant at teardown; reruns and the final run matched; on the host the same event fails closed",
+    "Decrypt state FAILED is not tied to its stop in the local evaluator (unreachable with the pinned host region; audit r2 F-1)"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
