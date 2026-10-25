@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P3_BUILD_2026-10-26",
+  "recordedAt": "2026-10-25T17:11:08.077Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phases": [
+    "P3",
+    "R3"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P3_AND_R3_TOOLS_ACCEPTED_LOCAL_NOT_RUN",
+  "authority": "Rulings D9, D19, D20, D21 and D22; GO-P3 needs its own owner GO; R3 runs only under its own owner GO after a P3 stop",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "99513e88d66e7a40ebbd05f9bb87d70056e79e4c914d977b37c1594cc2f59d7e"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "pinIncludesQr2O7": true,
+  "spec": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p3-spec.md",
+      "sha256": "c7fe305b317bce23b8c6efd20067be0fb6aa5d3853873a3a88527d0f2ab51e0c"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p3-spec-review.md",
+      "sha256": "91ca737303e24bffd74fd83bc2c38d981e622f2f1377e91c5ef3a3eb8aea5423"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p3-spec-r2.md",
+      "sha256": "35ed169ffbbfcda20e0d6f09849360cf7e3941114e9da7be3d21a4a76a6dfd25"
+    }
+  ],
+  "rootRulings": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-p2p3-r1.md",
+    "sha256": "302d12a748c9ee12b5aa96a9c2d1c5324b106267de87234d8431f95798783aa9"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/build-snapshot-p3-r2/SHA256SUMS.root",
+    "sha256": "14dfc88670dcdc876bc36585fdfb440fcd03fb0b784f5401c5a0758810c0b3dc"
+  },
+  "pins": {
+    "core": "a1c5d8025fd60c30adb0ce535b4f5fe9d6e4fc5814f26d7b88848b47048b72df",
+    "p3Runner": "3fac37f73c10603b243575b316faedd8a1da5d6c4d2323d9bdff74d1b381b077",
+    "r3Runner": "c09a2ed0757ac8f1e376f4155fa0246c97f6d413ea99f54d4ad97a8325c6f91c",
+    "regionP3": "239b35465bc469c21dc0a4e9a25c0b9416016740ad19b651c79fee4dbeb1a65e",
+    "regionR3": "c1b2b5e0453219881aa6590bc5542e7df5b5463653ea7a10f4c82bc5c2c2134f"
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 302,
+      "pass": 302,
+      "fail": 0
+    },
+    "packetPinUpdate": "after packet D22 Root changed only the packet hash constant in the core and its source part; the generator reproduces the core byte for byte, both host-region hashes are unchanged (the rehearsed regions ran exactly), and the suite passed 302 of 302 again"
+  },
+  "rehearsal": "author 23 of 23 variants on real PostgreSQL 16.15 with the real pin scripts and an eb532ff API stub through local bash and timeout, on the final host regions; tester rerun 23 of 23; local API gap about 7.4 s with a stub that starts at once (not a host measurement)",
+  "payload": {
+    "limit": 327680,
+    "realP3Bytes": "224551 to 224958",
+    "realR3Bytes": "258033 to 258166",
+    "basis": "author measurement on the rehearsal binding; Root re-measures on the real binding before GO-P3"
+  },
+  "reviews": [
+    {
+      "round": "spec",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p3-spec-review.md",
+      "sha256": "91ca737303e24bffd74fd83bc2c38d981e622f2f1377e91c5ef3a3eb8aea5423"
+    },
+    {
+      "round": "build",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "NOT_RUN",
+      "note": "free RAM below the 1 GiB rule for 90 minutes; missing evidence, not a defect",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p3/tester-report.md",
+      "sha256": "0019f2ae9dda7c3f29665f2b001cbbd5e8de915cfb8b7ca2c8c7810505fe9454"
+    },
+    {
+      "round": "build",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "NO_GO_ON_THESE_BYTES",
+      "note": "P2 leftover prefixes, P4 facts shape and in-run restore evaluation",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/audit-p3.md",
+      "sha256": "d6e91173c79eb4be516fad651f118c6fecb46176e915ab7795bbaa8835b3e34e"
+    },
+    {
+      "round": "fix r1 (D20, D21)",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "302 unit tests, 92 of 92 mutants killed, 23 rehearsal variants",
+      "path": ".qa-local/s6-staging-deploy-p3-build-2026-10-25/author-report.md",
+      "sha256": "a4f962b26ce00ed1726d9243fb030316bf3e7fb6813e1f25e113313a66de1239"
+    },
+    {
+      "round": "fix r1",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "302 of 302 author tests, 22 of 22 independent tests, 40 of 40 independent mutants killed, earlier audit mutant kills confirmed with --full, 23 of 23 rehearsal variants",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p3-r2/tester-report.md",
+      "sha256": "2bbec3c385fa5a14f4a35b3c2bdbb677496fcefdd370967c2f6992edda6c4cdf"
+    },
+    {
+      "round": "fix r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2; conditions: tester confirmation (met), the P2 prefixes in the accepted P2 tool (met), D21 in the P4 round (pending), F-4 to F-6 recorded (D22)",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/audit-p3-r2.md",
+      "sha256": "a89e2f146fa8e2723974d2bc13b4610447ce5bd21dd3354cf1b77e821cc35127"
+    }
+  ],
+  "residuals": [
+    "Host output formats that no accepted tool recorded (control group, stop timeout, timer next-elapse, newer dependency properties) stop before any effect and consume GO-P3",
+    "Readiness cannot see an automatic restart between the manual start and its first active reading",
+    "An R3 run whose gate found a writer failed ends as a restore stop after an in-run stop, never as a false pass (audit r2 F-1)",
+    "A race at the quiesce record directory frames as unknown and fails closed (audit r2 F-4)",
+    "The connection-count rule counts the tool session too, so it cannot fail on a live server (audit r2 F-5, by design)",
+    "The old API start on a fenced database is shown by the pin code, local suites and the rehearsal stub, not yet by a staging observation; stage 13 observes it",
+    "No off-host backup copy exists; both P3 dumps and any R3 archive stay on the staging host"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
