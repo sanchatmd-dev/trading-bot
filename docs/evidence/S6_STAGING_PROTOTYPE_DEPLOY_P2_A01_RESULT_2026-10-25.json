@@ -1,0 +1,667 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P2_A01_RESULT_2026-10-25",
+  "recordedAt": "2026-10-25T17:06:55.747Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P2",
+  "attemptId": "a01",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P2_PASS_BACKUP_RESTORE_VERIFIED_GO_CONSUMED",
+  "ownerGo": "owner chat 2026-10-25 full typed GO-P2 (packet 4ea6a9e1 wording, pin ba1a433, QR-2 O7 yes, notAfter 2026-10-26T15:00:00Z); consumed by this attempt (no retry)",
+  "jobId": "s6-p2-a01-9b2125ffdc9fd91be89da72b",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P2_BUILD_2026-10-25.json",
+    "sha256": "ce1bb26d6b0d2ab1f9f381d2c1ad8193c928a83f175779f8dcec9dd3979f98a8"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-25T17:04:52.414Z",
+      "expiresAt": "2026-10-25T17:06:52.414Z"
+    },
+    "runnerStartedUtc": "2026-10-25T17:05:10.794Z",
+    "runnerEndedUtc": "2026-10-25T17:05:23.762Z",
+    "runnerElapsedMs": 12968,
+    "targetConnections": 1,
+    "transport": {
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0,
+      "termination": "NOT_NEEDED"
+    },
+    "noRetry": true,
+    "effectPhase": "EFFECT",
+    "teardown": "PROVEN",
+    "progressRecord": "WRITTEN",
+    "leftoverWait": "not applicable: teardown PROVEN"
+  },
+  "verdict": {
+    "verdict": "P2_PASS",
+    "stageReached": 19,
+    "code": null,
+    "facts": [
+      "FACT_DECRYPT_SKIPPED"
+    ],
+    "stops": []
+  },
+  "measured": {
+    "dumpBytes": 7981962,
+    "dumpMs": 1193,
+    "restoreMs": 2776,
+    "hostTotalMs": 11640,
+    "databaseMiB": 86,
+    "restoredBytes": 192424573,
+    "tocEntries": 417,
+    "derivedBounds": {
+      "p3ApiGapBoundSec": 123,
+      "p4SwitchGapBoundSec": 303,
+      "rule": "GO-P3: 120 s + 2 x P2 dump seconds; GO-P4: 300 s + 2 x P2 dump seconds (D19)"
+    }
+  },
+  "observed": {
+    "aclSql": {
+      "restrictLines": "PRESENT",
+      "rolesNamed": 1,
+      "statements": 73,
+      "unknownRoles": 0
+    },
+    "after": {
+      "hostHealth": {
+        "load1": 0.29,
+        "load5": 0.09,
+        "memAvailableMiB": 7021
+      },
+      "units": {
+        "apiRunVsBefore": "EQUAL",
+        "configVsBefore": "EQUAL",
+        "failed": 0,
+        "productionRunChanged": 0,
+        "stagingRunVsBefore": "EQUAL"
+      }
+    },
+    "backup": {
+      "bytes": 7981962,
+      "mode": "0600",
+      "state": "COMPLETE",
+      "tableStates": {
+        "drift": 0,
+        "driftOther": 0,
+        "stable": 66
+      }
+    },
+    "caps": {
+      "cpu": true,
+      "io": false,
+      "memory": true,
+      "mode": "CPU_CAP",
+      "pids": true,
+      "state": "READ"
+    },
+    "cluster": {
+      "capsApplied": true,
+      "hbaOk": true,
+      "ioPriorityReadBack": "NOT_READ",
+      "listenerOwned": true,
+      "niceApplied": true,
+      "settingsOk": true,
+      "unit": "STARTED"
+    },
+    "deadlineStage": null,
+    "diagnostics": {
+      "bytes": 2,
+      "state": "EMPTY"
+    },
+    "effectPhase": "EFFECT",
+    "effects": {
+      "aclList": "DONE",
+      "backupDir": "DONE",
+      "backupParent": "CREATED",
+      "database": "DONE",
+      "dumpFile": "COMPLETE",
+      "initdb": "DONE",
+      "progressRecord": "DONE",
+      "restore": "DONE",
+      "restoreDir": "DONE",
+      "restoreDirRemoved": "DONE",
+      "roles": "DONE",
+      "socketDir": "DONE",
+      "unit": "DONE",
+      "unitStopped": "DONE"
+    },
+    "gate": {
+      "connect": "OK",
+      "connections": {
+        "headroom": 93
+      },
+      "disk": {
+        "devices": 1,
+        "floorMiB": 2564,
+        "meetsRule": true,
+        "minFreeMiB": 88905,
+        "sameDeviceAll": true
+      },
+      "drift": {
+        "database": true,
+        "default": true,
+        "function": true,
+        "roleset": true,
+        "schema": true,
+        "settings": true,
+        "table": true
+      },
+      "identity": {
+        "dataDirectory": "READ",
+        "databaseEqual": true,
+        "locksOk": true,
+        "portSetting": true,
+        "readOnly": true,
+        "recovery": false,
+        "versionEqual": true
+      },
+      "leftoverRestoreDirs": 0,
+      "locale": {
+        "ok": true,
+        "provider": "libc"
+      },
+      "ownerShapeOk": true,
+      "parents": {
+        "jobNameExists": false,
+        "ok": true,
+        "state": "CREATE",
+        "volumeGroupWrite": false
+      },
+      "ports": {
+        "p2PortListeners": 0
+      },
+      "sameServer": true,
+      "size": {
+        "databaseMiB": 86,
+        "sizeForRule": 86
+      },
+      "socketPathOk": true,
+      "sourceShape": {
+        "aggregates": 0,
+        "extensions": 0,
+        "foreignTables": 0,
+        "largeObjects": 0,
+        "matViews": 0,
+        "partitioned": 0,
+        "policies": 0,
+        "procedures": 0,
+        "rules": 0,
+        "schemas": 0,
+        "tablespaces": 0
+      }
+    },
+    "host": {
+      "cpuCount": 2,
+      "heavy": {
+        "PRODUCTION": 0,
+        "STAGING": 0,
+        "UNCLASSIFIED": 0
+      },
+      "leftoverUnits": 0,
+      "livePayloadCount": 0,
+      "load1PerCpu": 0.08,
+      "load5PerCpu": 0.03,
+      "loginManager": "NO_KILL",
+      "managerFailedCount": 0,
+      "memAvailableMiB": 7133,
+      "memTotalMiB": 7940,
+      "pendingJobCount": 0
+    },
+    "keys": {
+      "activeState": "active",
+      "configVsP0b": "EQUAL",
+      "keyId": "DEFAULTED",
+      "keyring": "BUILT",
+      "loadState": "loaded",
+      "master": "SET",
+      "masterForm": "HEX",
+      "previous": "DEFAULTED"
+    },
+    "node": {
+      "major": 24
+    },
+    "pg": {
+      "major": 16,
+      "minor": {
+        "initdb": 15,
+        "pg_dump": 15,
+        "pg_restore": 15,
+        "postgres": 15
+      }
+    },
+    "progressRecord": {
+      "lines": 29,
+      "state": "WRITTEN"
+    },
+    "restore": {
+      "exit": 0,
+      "label": "OTHER",
+      "oom": 0,
+      "stderrBytes": 55
+    },
+    "roles": {
+      "created": 2,
+      "predefinedPresent": 1,
+      "superusers": 1
+    },
+    "signalsIgnored": {
+      "SIGHUP": 0,
+      "SIGPIPE": 0
+    },
+    "sizes": {
+      "databaseMiB": 86,
+      "dumpBytes": 7981962,
+      "minFreeMiBAfter": 88897,
+      "minFreeMiBAfterDump": 88857,
+      "minFreeMiBGate": 88905,
+      "restoredBytes": 192424573,
+      "restoredBytesState": "READ"
+    },
+    "sourceInspect": {
+      "failed": 0,
+      "inspect": {
+        "E1": {
+          "equal": true,
+          "state": "ORIGINAL"
+        },
+        "E2": {
+          "equal": true,
+          "state": "ORIGINAL"
+        },
+        "E3": {
+          "equal": true,
+          "state": "ORIGINAL"
+        },
+        "E4": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "E5": {
+          "equal": true,
+          "state": "PUBLIC_TEMP"
+        },
+        "M1": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M10": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M11": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M12": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M13": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M6": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M7": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M8": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M9": {
+          "equal": true,
+          "state": "ABSENT"
+        }
+      },
+      "ledgerFindings": 0,
+      "ledgerOutcome": "READ",
+      "ledgerVsP0b": "EQUAL"
+    },
+    "stage": 19,
+    "stderrSuppressed": {
+      "deprecation": 0,
+      "warning": 0,
+      "write": 0
+    },
+    "stops": [],
+    "teardown": "PROVEN",
+    "timing": {
+      "clusterStartMs": 309,
+      "dumpMs": 1193,
+      "gateMs": 136,
+      "hostTotalMs": 11640,
+      "restoreMs": 2776,
+      "teardownMs": 253,
+      "tocMs": 38,
+      "verifyMs": 1493
+    },
+    "toc": {
+      "byDesc": {
+        "ACL": 73,
+        "CONSTRAINT": 79,
+        "FK CONSTRAINT": 68,
+        "FUNCTION": 15,
+        "INDEX": 23,
+        "SEQUENCE": 6,
+        "SEQUENCE SET": 6,
+        "TABLE": 66,
+        "TABLE DATA": 66,
+        "TRIGGER": 15
+      },
+      "entries": 417
+    },
+    "tree": {
+      "after": {
+        "fileCount": 1589,
+        "foreignOwner": 0,
+        "groupWritable": 0,
+        "label": "EXACT",
+        "nameBad": false,
+        "nonRegular": 0,
+        "otherWritable": 0
+      },
+      "before": {
+        "fileCount": 1589,
+        "foreignOwner": 0,
+        "groupWritable": 0,
+        "label": "EXACT",
+        "nameBad": false,
+        "nonRegular": 0,
+        "otherWritable": 0
+      },
+      "stable": true
+    },
+    "units": {
+      "allLoaded": true,
+      "apiRunVsP0a": "EQUAL",
+      "configVsP0a": "EQUAL",
+      "count": 10,
+      "failed": 0,
+      "perRole": {
+        "PROT_1": {
+          "activeState": "active"
+        },
+        "PROT_2": {
+          "activeState": "active"
+        },
+        "PROT_3": {
+          "activeState": "active"
+        },
+        "PROT_4": {
+          "activeState": "active"
+        },
+        "STG_API": {
+          "activeState": "active"
+        },
+        "STG_COLLECTOR_SVC": {
+          "activeState": "inactive"
+        },
+        "STG_COLLECTOR_TIMER": {
+          "activeState": "inactive"
+        },
+        "STG_RESEARCH": {
+          "activeState": "inactive"
+        },
+        "STG_STREAM": {
+          "activeState": "inactive"
+        },
+        "STG_TRADING": {
+          "activeState": "inactive"
+        }
+      },
+      "productionRunChanged": 0,
+      "stagingRunVsP1": "EQUAL"
+    },
+    "verify": {
+      "accounting": {
+        "bot_sessions": {
+          "rows": 2,
+          "state": "MATCH"
+        },
+        "fills": {
+          "rows": 27,
+          "state": "MATCH"
+        },
+        "ledger_daily": {
+          "rows": 7,
+          "state": "MATCH"
+        },
+        "ledger_position_allocations": {
+          "rows": 14,
+          "state": "MATCH"
+        },
+        "ledger_positions": {
+          "rows": 2,
+          "state": "MATCH"
+        },
+        "ledger_streak": {
+          "rows": 2,
+          "state": "MATCH"
+        },
+        "paper_cash_journal": {
+          "rows": 27,
+          "state": "MATCH"
+        },
+        "paper_funding": {
+          "rows": 6,
+          "state": "MATCH"
+        },
+        "paper_snapshots": {
+          "rows": 33,
+          "state": "MATCH"
+        },
+        "signals": {
+          "rows": 213,
+          "state": "MATCH"
+        }
+      },
+      "acl": {
+        "column": "EQUAL",
+        "default": "EQUAL",
+        "function": "EQUAL",
+        "rawOrderFact": false,
+        "schema": "EQUAL",
+        "table": "EQUAL"
+      },
+      "cipher": {
+        "broker": "SAME",
+        "mail": "SAME",
+        "mfa": "SAME",
+        "pending": "SAME",
+        "webhook": "SAME"
+      },
+      "decrypt": {
+        "failedKinds": {
+          "AUTH_OR_FORMAT": 0,
+          "KEY_UNAVAILABLE": 0,
+          "LEGACY_REENTRY": 0
+        },
+        "fields": {
+          "broker": {
+            "failed": 0,
+            "formats": {
+              "other": 0,
+              "v1": 0,
+              "v2": 0,
+              "v3": 0
+            },
+            "ok": 0,
+            "rows": 0,
+            "skipped": 0
+          },
+          "mail": {
+            "failed": 0,
+            "formats": {
+              "other": 0,
+              "v1": 0,
+              "v2": 0,
+              "v3": 0
+            },
+            "ok": 0,
+            "rows": 0,
+            "skipped": 0
+          },
+          "mfa": {
+            "failed": 0,
+            "formats": {
+              "other": 0,
+              "v1": 0,
+              "v2": 0,
+              "v3": 1
+            },
+            "ok": 1,
+            "rows": 1,
+            "skipped": 0
+          },
+          "pending": {
+            "failed": 0,
+            "formats": {
+              "other": 0,
+              "v1": 0,
+              "v2": 0,
+              "v3": 0
+            },
+            "ok": 0,
+            "rows": 1,
+            "skipped": 1
+          },
+          "webhook": {
+            "failed": 0,
+            "formats": {
+              "other": 0,
+              "v1": 0,
+              "v2": 0,
+              "v3": 2
+            },
+            "ok": 2,
+            "rows": 2,
+            "skipped": 0
+          }
+        },
+        "preExisting": false,
+        "skipped": 1,
+        "state": "VERIFIED"
+      },
+      "executorMode": "EQUAL",
+      "inspect": {
+        "E1": {
+          "equal": true,
+          "state": "ORIGINAL"
+        },
+        "E2": {
+          "equal": true,
+          "state": "ORIGINAL"
+        },
+        "E3": {
+          "equal": true,
+          "state": "ORIGINAL"
+        },
+        "E4": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "E5": {
+          "equal": true,
+          "state": "PUBLIC_TEMP"
+        },
+        "M1": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M10": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M11": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M12": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M13": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M6": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M7": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M8": {
+          "equal": true,
+          "state": "ABSENT"
+        },
+        "M9": {
+          "equal": true,
+          "state": "ABSENT"
+        }
+      },
+      "ledger": {
+        "equal": true,
+        "outcome": "READ"
+      },
+      "roleSet": {
+        "count": 3,
+        "equal": true
+      },
+      "rowCounts": {
+        "drift": 0,
+        "driftOutside": 0,
+        "mismatched": 0,
+        "stable": 66,
+        "tables": 66
+      },
+      "schemaVersion": {
+        "rows": 1,
+        "version": 14
+      },
+      "sequences": {
+        "count": 6,
+        "mismatched": 0
+      },
+      "shape": {
+        "equal": true
+      }
+    }
+  },
+  "linkage": {
+    "verifiedBy": "Root",
+    "checks": [
+      "manifest hash equals the runner argument and the receipt",
+      "receipt hash equals the runner output",
+      "marker job, family, attempt and manifest hash",
+      "receipt envelope, retained-output and diagnostics hashes",
+      "nonce in the retained output",
+      "tool source hash"
+    ],
+    "receiptSha256": "c5dd57b1df186751ffc0ba30c4c40139e4695f5b9531c50d3fa9d18c6324d125",
+    "envelopeSha256": "36570a76e0fd97859f833d8c0b7f85a76c42df92d73396161f53642fb3f8cc5a",
+    "manifestSha256": "e6d1a79459046bb338fc3c3f0f8a0cca3bc6686d034aa99662ad23c0b0262e67"
+  },
+  "next": "P3 needs its own owner GO; its binding uses the dedicated backup directory this attempt created, and its admission waits for the accepted P3 tool record and a dry admission. P4 follows the accepted P3 result.",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "stagingDatabaseChange": "NONE",
+    "hostWrite": "one dedicated protected backup directory with one backup directory (dump, progress record, result file); throwaway copy removed"
+  }
+}
