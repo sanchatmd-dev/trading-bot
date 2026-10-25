@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P3_A01_RESULT_2026-10-26",
+  "recordedAt": "2026-10-25T17:34:13.706Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P3",
+  "attemptId": "a01",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P3_STOP_PRE_NO_EFFECT_GO_CONSUMED",
+  "ownerGo": "owner chat 2026-10-26 full typed GO-P3 (packet 99513e88 wording, pin ba1a433, QR-2 O7 yes, checklist 1, 3 and 7 confirmed, 2, 4 and 8 named risks, notAfter 2026-10-26T15:00:00Z); consumed by this attempt (no retry)",
+  "jobId": "s6-p3-a01-12dc0df52d5fa2fdebb59a0b",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P3_BUILD_2026-10-26.json",
+    "sha256": "83de383cd611c6a7dc1af1b5e3aaaf8f10506304bc64bcaf9c89804901860298"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-25T17:30:28.277Z",
+      "expiresAt": "2026-10-25T17:32:28.277Z"
+    },
+    "runnerStartedUtc": "2026-10-25T17:30:44.559Z",
+    "runnerEndedUtc": "2026-10-25T17:30:50.446Z",
+    "runnerElapsedMs": 5886,
+    "targetConnections": 1,
+    "transport": {
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "termination": "NOT_NEEDED",
+    "noRetry": true
+  },
+  "verdict": {
+    "verdict": "P3_STOP_PRE",
+    "code": "FG_STOP_TIMEOUT",
+    "stopStage": "FG_HOST",
+    "stageReached": 2,
+    "migrate": "NOT_RUN",
+    "migrationCommitted": "NOT_RUN"
+  },
+  "freshGateReached": {
+    "runSet": {
+      "equal": true,
+      "running": [
+        "STG_API"
+      ]
+    },
+    "stopProof": {
+      "STG_COLLECTOR_SVC": "STOPPED",
+      "STG_COLLECTOR_TIMER": "STOPPED",
+      "STG_RESEARCH": "STOPPED",
+      "STG_STREAM": "STOPPED",
+      "STG_TRADING": "STOPPED"
+    },
+    "stopTimeout": {
+      "STG_API": {
+        "finite": true,
+        "withinLimit": false
+      }
+    },
+    "protectedEqual": true,
+    "ports": {
+      "apiPortListeners": 1,
+      "apiPortOwnedByApi": 1,
+      "family": "IPV4",
+      "p2PortListeners": 0
+    },
+    "driftRecorded": [
+      "codeDirs.STG_STREAM",
+      "codeDirs.STG_COLLECTOR_SVC"
+    ]
+  },
+  "cause": "Two tool design limits met the real host before any effect. (1) The staging API unit stop timeout is finite but above the 80 seconds that the 90-second stop budget allows with its 10-second margin (the PF2 unit policy and the systemd default are 90 seconds). (2) The stream and fallback-collector code-directory walks both stopped at their tree limit, at different counts than the P0a walk, so a count comparison of two partial walks always differs; D16 had called this baseline partial. Neither is a staging change.",
+  "hostEffect": "NONE: no unit stopped, no backup, no migration; the staging API kept running",
+  "next": "Ruling D23 widens the P3 and R3 stop budget and treats two partial code-directory walks as a recorded fact; after a reviewed fix round, attempt a02 (listing a01, after the 2845-second overlap rule) needs a new owner GO-P3.",
+  "linkage": {
+    "verifiedBy": "Root",
+    "checks": [
+      "manifest hash equals the runner argument and the receipt",
+      "receipt hash equals the runner output",
+      "marker family and manifest hash",
+      "receipt envelope and retained-output hashes"
+    ],
+    "receiptSha256": "68cc81168cc187f462fec65ff6ce3e6a96da96c9fe57abf044f851d60e983af0",
+    "envelopeSha256": "508c65f1fe64363545b9bf8512296dfe209133775a2b5585464b14632ee98ace",
+    "manifestSha256": "8df6d0ba7b4e3aba99430ad33e49a2778ba8affec0275ff70a955fe963779722"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "NOT_RUN",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
