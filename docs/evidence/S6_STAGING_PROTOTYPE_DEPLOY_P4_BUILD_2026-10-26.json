@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_2026-10-26",
+  "recordedAt": "2026-10-25T21:59:05.258Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phases": [
+    "P4",
+    "R4",
+    "R4H",
+    "RX"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4_R4_R4H_RX_TOOLS_ACCEPTED_LOCAL_NOT_RUN",
+  "authority": "Rulings D19 to D24; P4 runs only after P0c passes and under GO-P4; R4, R4H and RX each need their own owner GO",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "pinIncludesQr2O7": true,
+  "spec": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p4-spec.md",
+      "sha256": "6198c200f7497cee410ea15c4e7a388228a7167471821c5fb1f796d608b36192"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p4-spec-review.md",
+      "sha256": "656d0759374fee142fe2f013ae4aab9748944d8c84f2fed68c82fcdde20aaa20"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/p4-spec-r2.md",
+      "sha256": "db317635bc028169a201872dd3f946272731097223817506bd8d2c8de51077fe"
+    }
+  ],
+  "rootRulings": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-p4-r1.md",
+      "sha256": "d7fad736a431ae26ed94d6fc4c5d73e5de3920da0fd5c7c902bef3fd5ce6f52a"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-p4-r2.md",
+      "sha256": "94018b6b6f9bee85ddf6a71da535654796a1187e55150b9eaf9d9118f304263c"
+    }
+  ],
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/build-snapshot-p4-r2/SHA256SUMS.root",
+    "sha256": "5094c8e45c153f7b8d4e9b727b37219f3967507265ac73ccefa7b112825d5afb"
+  },
+  "pins": {
+    "core": "7fdc7fb042dcbd48c9c8e50af51ad713f947c3fe365caa72c2cf98d78ee3dc73",
+    "runner": "d11e61907ddb6de93f083589ce7f7ceda5ba6e9124ae95e90a24265a63bfb3e3",
+    "regions": {
+      "X4": "44a087c0fa229e18db4fa4bf2a6dd5873a46366cdf4f508f075330529e444b9b",
+      "CHECK": "15f69011b8e69b5517394e09847827ff33ef78f08df87e84a87e06ca3c1c37c3",
+      "ROLLBACK": "7417dbb03a0afc62ec3bbcdaf895c73b69b1b3d2e6d18d063536facbdcdc9d06",
+      "RESTORE": "62a21ca7b866ad477a8c7dd5921a7bbf5593afa94c6d3ef63181267c11583187"
+    }
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 699,
+      "pass": 699,
+      "fail": 0,
+      "core": "7fdc7fb0"
+    },
+    "packetPinUpdate": "after packet D24 Root changed only the packet hash constant in the shared source part and regenerated the core with the assembler; only that line of the core changed and all four host-region hashes are unchanged, so the rehearsed regions are the ones that run"
+  },
+  "rehearsal": "author 12 of 12 sections on the final regions, including 7 full-restore variants on real PostgreSQL 16 with pg_restore and the R3 statements; tester rerun 12 of 12",
+  "payload": {
+    "basis": "fixture binding; Root re-measures every mode on the real binding before GO-P4",
+    "headroomBytes": {
+      "X4": 103784,
+      "CHECK": 41394,
+      "ROLLBACK": 3060,
+      "RESTORE": 110540
+    }
+  },
+  "reviews": [
+    {
+      "round": "build r0",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/audit-p4.md",
+      "sha256": "9adc2d0e41557244f7867a55b794def9f45cbc12ce5b6cc167876d702f0c38f3"
+    },
+    {
+      "round": "build r0",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p4/tester-report.md",
+      "sha256": "2f8ebeb2d39cf6d67333b734c4742a7c5dcce3f64ffc6988b93dee4028561e38"
+    },
+    {
+      "round": "fix r1 (D20 to D22)",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "699 unit tests, 80 of 81 mutants killed (one equivalent), rehearsal 12 of 12",
+      "path": ".qa-local/s6-staging-deploy-p4-build-2026-10-25/author-report.md",
+      "sha256": "a9a9eeda4f6d433710fd05aa6fad6f5284eadd81c0a82d2339bea5105460d130"
+    },
+    {
+      "round": "fix r1",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "699 of 699 author tests, 116 of 116 independent tests, 35 of 36 independent mutants killed (one equivalent), rehearsal 12 of 12",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p4-r2/tester-report.md",
+      "sha256": "8781d8098531e8748a47593d7843fc0e82f9ab399d4cc70ce80840e5def04945"
+    },
+    {
+      "round": "fix r1",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1; C-1 packet pin (met by Root); C-2 RX gate facts (settings and tablespaces met from P0b and P2, the collation version and properties read by P0c) and the r3 vector (met: unchanged)",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/audit-p4-r2.md",
+      "sha256": "b68635704a7cf1f529e364b147d92d8cba6eda927788df6fd0141e12871b9eee"
+    }
+  ],
+  "residuals": [
+    "The binding needs the loaded unit settings and drop-in hashes, which P0c reads (D24); GO-P4 waits for a P0c pass",
+    "The rollback payload has about 3 KB of headroom with the fixture binding; Root measures it on the real binding before GO-P4",
+    "A stop of the staging API slower than 30 seconds ends the switch as an unwind failure that leaves the API stopped; the P3 window stopped it well inside that bound",
+    "A host killed between the half-state step and its end line reads as a half state (audit r2 F-3); R4H needs its own owner GO and re-reads the counters",
+    "A production restart after the switch blocks the delayed check and the rollbacks before any effect (drift rule)",
+    "All tests ran on Windows with a simulated host; systemd, cgroup, journal and file-mode behaviour on Linux are shown only by the earlier accepted host phases"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)"
+  }
+}

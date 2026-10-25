@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P0C_BUILD_2026-10-26",
+  "recordedAt": "2026-10-25T21:59:05.274Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phases": [
+    "P0c"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P0C_COLLECTOR_ACCEPTED_LOCAL_NOT_RUN",
+  "authority": "Ruling D24; P0c runs only under its own owner GO-P0c",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "pinIncludesQr2O7": true,
+  "spec": {
+    "path": ".qa-local/s6-staging-deploy-p0c-review-2026-10-26/p0c-spec.md",
+    "sha256": "fb7e580813326b5197a4d4eeb9417a7bf1c8d4ad1d205901ab0cf8db35153c6f"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p0c-review-2026-10-26/build-snapshot-p0c-r1/SHA256SUMS.root",
+    "sha256": "9be75cf1a7d7dd64f1b0cf97fdf62e3b1ce42b97dcf56e14dbe23a02d37f9261"
+  },
+  "pins": {
+    "core": "efd674388a4ec771b39bd2a7e7383afc40d177b40824417469de92fa369f7d0d",
+    "runner": "cc710df841d243342bc1874288173333a73cd567d87383b4abca5a40d750856b",
+    "region": "0be1a11cbcee328b4902e6e171478f91ab75cf3f01f26a7bfa179e7a7e6a4b12"
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 267,
+      "pass": 266,
+      "fail": 1,
+      "failure": "the copy-record pin of the P4 source file src/shared.mjs, expected after Root re-pinned the P4 packet hash (only that constant line changed); the copied-chunk equality test passes, so every copied text is still verbatim P4 code"
+    }
+  },
+  "copiedFrom": "the accepted P4 tool (fix r1): 116 copied chunks, each byte-equal to its P4 source (author static test, auditor and tester independent checks)",
+  "payload": {
+    "basis": "fixture binding",
+    "bytes": 37003,
+    "limit": 196608
+  },
+  "reviews": [
+    {
+      "round": "build r0",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "254 unit tests, 27 of 27 mutants killed",
+      "path": ".qa-local/s6-staging-deploy-p0c-build-2026-10-26/author-report.md",
+      "sha256": "d4cc8b8776ccb46a6c24113d27101884fc879eb74a70c3e1ad9ac064ff9df3e3"
+    },
+    {
+      "round": "build r0",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "254 of 254 author tests, 79 independent tests, 47 of 48 mutants killed",
+      "path": ".qa-local/s6-staging-deploy-p0c-review-2026-10-26/tester-p0c/tester-report.md",
+      "sha256": "68b044a039d8af2933933f89e2315bfd758c6c8b7c64836b9c70061b1d34efe0"
+    },
+    {
+      "round": "build r0",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1; one P2 (an undeclared constant in the host region would have stopped the database read on a driver warning); host region strictly read only",
+      "path": ".qa-local/s6-staging-deploy-p0c-review-2026-10-26/audit-p0c.md",
+      "sha256": "13c3e596a785df3704db0109b93bfefa3f6e0ba124882a495fcb19b6ea8d9f2b"
+    },
+    {
+      "round": "fix r1",
+      "role": "coder, Sonnet 5.5 / medium",
+      "verdict": "DONE",
+      "note": "six ruled changes; 267 unit tests, 44 of 44 mutants killed",
+      "path": ".qa-local/s6-staging-deploy-p0c-build-2026-10-26/author-report.md",
+      "sha256": "d4cc8b8776ccb46a6c24113d27101884fc879eb74a70c3e1ad9ac064ff9df3e3"
+    },
+    {
+      "round": "fix r1",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "267 of 267 author tests, 45 of 45 independent tests, 25 of 25 mutants killed, nothing changed beyond the six rulings",
+      "path": ".qa-local/s6-staging-deploy-p0c-review-2026-10-26/tester-p0c-r2/tester-report.md",
+      "sha256": "5a39bc3672345f0934f85d91461c735b03fe89122cdc6836ae33bacb5dff7571"
+    }
+  ],
+  "noSecondOpinion": "Fable is paused by the owner; usage is near the effect-phase floor; the tool is a read-only copy of reviewed code. One Opus audit and two tester rounds.",
+  "residuals": [
+    "No run on a real host, systemctl, pg driver or SSH; the database statement and its check are byte copies of the P4 full-restore code that ran on a real cluster",
+    "Drop-in checks refuse a symbolic link only at the last path component",
+    "A stop frame reports zero database sessions, which means unknown, not none"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)"
+  }
+}
