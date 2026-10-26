@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_FOLLOWUP_P5A_A01_RESULT_2026-10-27",
+  "recordedAt": "2026-10-26T20:09:35.333Z",
+  "packetId": "S6-STAGING-PROTO-FOLLOWUP-1",
+  "phase": "P5a",
+  "jobKey": "p5a",
+  "attemptId": "a01",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P5A_ACCEPTED_PANEL_ON",
+  "authority": "Owner GO-P5a (pasted, byte-equal to the packet revision 5 line, notAfter 2026-10-27T20:00:00Z); owner waiver of the D8 usage band; ruling D37 tools",
+  "jobId": "s6-p5a-p5a-a01-af87f717eed6aaee1a128f49",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_FOLLOWUP_P5A_BUILD_2026-10-27.json",
+    "sha256": "a3aaf1086acda437d3571ff100e9d8a05928df8a20fa0381d9349a73f8bb1327"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-26T19:51:52.768Z",
+      "expiresAt": "2026-10-26T19:53:52.768Z"
+    },
+    "hostStarted": "2026-10-26T19:52:17.163Z",
+    "hostEnded": "2026-10-26T19:56:51.570Z",
+    "targetConnections": 1,
+    "transport": {
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "noRetry": true
+  },
+  "verdict": {
+    "verdict": "P5A_PASS",
+    "code": null,
+    "stageReached": "CHECKS_D5",
+    "outcome": "API_READY"
+  },
+  "effects": {
+    "recordDir": "DONE",
+    "apiStop": "DONE",
+    "layer": "DONE",
+    "reload": "DONE",
+    "loadedGate": "DONE",
+    "apiStart": "DONE",
+    "unwindArchive": "NOT_ATTEMPTED",
+    "unwindReload": "NOT_ATTEMPTED",
+    "unwindStart": "NOT_ATTEMPTED"
+  },
+  "switch": {
+    "apiGapMs": 4436,
+    "apiGapBoundMs": 280000,
+    "overBound": false
+  },
+  "readiness": {
+    "apiReadyAt": "2026-10-26T19:52:25.434Z",
+    "readyMs": 3855,
+    "health": 200
+  },
+  "checks": {
+    "served": {
+      "count": 34,
+      "ok": 34
+    },
+    "auth": {
+      "count": 6,
+      "ok": 6,
+      "qr2Routes": true
+    },
+    "health": "PASS",
+    "heartbeat": "PASS",
+    "config": "PASS",
+    "flag": "PASS",
+    "heapOption": "PASS",
+    "loadedBytes": "PASS",
+    "journal": {
+      "refusals": 0
+    },
+    "queue": "PASS",
+    "protected": "PASS"
+  },
+  "delayedCheck": {
+    "state": "PASS",
+    "sinceApiReadyMs": 266123,
+    "code": null
+  },
+  "qr2": {
+    "effective": "1",
+    "sources": [
+      {
+        "kind": "MANAGER",
+        "value": "UNSET"
+      },
+      {
+        "kind": "UNIT_ENVIRONMENT",
+        "value": "1"
+      },
+      {
+        "kind": "NODE_ENV_FILE",
+        "value": "UNSET"
+      },
+      {
+        "kind": "NODE_ENV_FILE",
+        "value": "UNSET"
+      },
+      {
+        "kind": "NODE_ENV_FILE",
+        "value": "UNSET"
+      }
+    ],
+    "heapOption": false,
+    "researchEffective": "0"
+  },
+  "units": {
+    "targets": {
+      "API": {
+        "classBefore": "RUNNING",
+        "sameProcess": true,
+        "nRestartsEqual": true,
+        "dropIns": {
+          "count": 17,
+          "equal": true,
+          "orderOk": true
+        },
+        "loadedOk": true
+      },
+      "TRADING": {
+        "classBefore": "RUNNING",
+        "sameProcess": true,
+        "nRestartsEqual": true,
+        "dropIns": {
+          "count": 8,
+          "equal": true,
+          "orderOk": true
+        },
+        "loadedOk": true
+      }
+    },
+    "others": {
+      "STG_RESEARCH": "inactive",
+      "STG_STREAM": "inactive",
+      "STG_COLLECTOR_TIMER": "inactive",
+      "STG_COLLECTOR_SVC": "inactive",
+      "PROT_1": "active",
+      "PROT_2": "active",
+      "PROT_3": "active",
+      "PROT_4": "active"
+    }
+  },
+  "production": {
+    "protectedEqual": true,
+    "protectedDigest": "b578933221da098a974c13ccc342b76c05284f66485eaa2c267221fe3af65ca1",
+    "source": "R6A02",
+    "perUnit": {
+      "PROT_1": {
+        "config": "EQUAL",
+        "run": "EQUAL",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      },
+      "PROT_2": {
+        "config": "EQUAL",
+        "run": "EQUAL",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      },
+      "PROT_3": {
+        "config": "EQUAL",
+        "run": "EQUAL",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      },
+      "PROT_4": {
+        "config": "EQUAL",
+        "run": "EQUAL",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      }
+    }
+  },
+  "endState": {
+    "layerFile": "LAYER",
+    "loaded": "P5A",
+    "apiNeedReload": false,
+    "apiClass": "RUNNING"
+  },
+  "receiptExport": {
+    "apiUnitDigest": "c6bf991cc550812b22e888a8f865c01149a922f87db96aa36eb608eed92706f4",
+    "apiNRestarts": 0,
+    "layerSha": "8e93e53afe7bc33001aaf2a0194592b209a01dfb27a1a94cbc4d26498f7039bf",
+    "protectedAfterDigest": "b578933221da098a974c13ccc342b76c05284f66485eaa2c267221fe3af65ca1"
+  },
+  "ownerPanelCheck": "The owner asked Root to run the browser check of the per-Bot panel (27 October 2026, about 03:00 Bangkok). Root opened the staging web app through the owner's own port forwarding in the owner's signed-in browser, view only, entered no credential and changed no setting. The Overview page shows the \"Paper account performance\" panel with its report scope, Bot, broker, currency and period controls.\n\n- SPT Prototype Paper Bot, period All Time Registered: \"Server report received\". Book equity (cost basis) 997.09 USDT, available cash, reserved notional and fees, unbacked equity and capital flows are COMPLETE. Marked equity, realized and unrealized PnL, fees, money PnL, TWR, Modified Dietz and max drawdown read UNAVAILABLE with RECONCILIATION_FAILED (first failure from 3 October, code LEDGER_RULE_UNREPLAYABLE, not the whole account, no ledger invariant violated); exposure NAV_NOT_AVAILABLE. Bar coverage: inspection completed, one gap from 17 October 12:28Z to now (13,416 missing minutes, the market writers are stopped). Reads: 1 funding, 24 journal rows, 24 fills, 12 lots, 25 snapshots; read 497 ms, compute 15 ms. A second load gave the same answer.\n- Main Bot, period Week: \"Server report received\", COMPLETE, book equity 1000 USDT, reconciliation OK, 1 funding and 1 snapshot, no fill.\n- Main Bot, custom range 4 to 26 October: \"Server report received\", COMPLETE.\n- Main Bot, periods Month and All Time Registered, and custom range 1 to 26 October; QL-3A SPT Custom Paper Bot, All Time Registered: refused, HTTP 503 QR2_REPORT_FAILED.\n\nReading: the panel and the per-Bot route work on staging. A 503 appears only when the report range reaches back before the stored staging market bars begin (about 3 October); in the pinned code the market-bar coverage step maps its range-admission refusal to QR2_REPORT_FAILED. This is a product finding for a later packet; P4M fills only the recent gap and does not change it.",
+  "rootReview": "Root, 27 October 2026 (Bangkok): linkage verified; every immediate check and the delayed check passed; production identity equal to the r6 a02 baseline after the shared reload; the trading worker kept its process; research, stream and collector stayed stopped. The owner delegated the browser check of the per-Bot panel to Root (owner message of 27 October 2026, Bangkok); Root ran it in the owner's signed-in browser session, view only, and accepts P5a on it (ruling RD-18). The 503 answers for ranges that reach back before the stored staging bars begin are a product finding for a later packet, not a deployment fault. This record is the latest accepted pair record for P4M (ruling D33).",
+  "linkage": {
+    "verifiedBy": "Root",
+    "receiptSha256": "4e3457c95f08b02d406f76b8bdc0c25ac6525cfbebc216dc3d97dc146fc5b469",
+    "envelopeSha256": "151afffa8420b08f392afbf803aa1b4ab0516aaabadf98242f35b5afbd07ed95",
+    "manifestSha256": "f50cc34d480156fdd5745b265df2d7218e2d2f555868dc96f06859abc53b1dcb",
+    "retainedSha256": "b2a64f26f79a774603093a817ce34cf9aca2d1966a2e6078ab6d08cdb9961e14"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "STAGING_PAIR_ON_PIN_WITH_QR2_PANEL",
+    "serviceChange": "STAGING API RESTART (one QR-2 flag layer)",
+    "hostWrite": "ONE API DROP-IN LAYER AND ONE RECORD DIRECTORY"
+  }
+}
