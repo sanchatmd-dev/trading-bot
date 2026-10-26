@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P4_R6_A01_RESULT_2026-10-26",
+  "recordedAt": "2026-10-26T06:44:40.141Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P4",
+  "jobKey": "r6",
+  "attemptId": "a01",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4_DELAYED_CHECK_STAGING_PASS_PRODUCTION_DIFFERENCE_EXPLAINED",
+  "authority": "GO-P4 for attempt a02 (delayed checks) and the owner consent of 2026-10-26 to run this read-only check once; ruling D28 tool (build R5)",
+  "jobId": "s6-p4-r6-a01-c8eb24d35605f716448da4fb",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R5_2026-10-26.json",
+    "sha256": "62e55f18e795497f783abfa0e2df6ea595acb92c65d3839bf37425723bd327e2"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-26T06:42:41.689Z",
+      "expiresAt": "2026-10-26T06:44:41.689Z"
+    },
+    "hostStarted": "2026-10-26T06:42:55.431Z",
+    "hostEnded": "2026-10-26T06:42:55.932Z",
+    "targetConnections": 1,
+    "transport": {
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "noRetry": true,
+    "effects": "none (read only)"
+  },
+  "verdict": {
+    "verdict": "P4_CHECK_STOP",
+    "code": "CHK_PROTECTED",
+    "stageReached": "CHECKS"
+  },
+  "window": {
+    "kind": "r6",
+    "label": "OPEN",
+    "sinceWorkerReadyMs": 6783315
+  },
+  "x4Link": {
+    "fromRecord": false,
+    "recordTerminal": true,
+    "outcome": "BOTH_READY",
+    "resultPresent": true,
+    "factsEqual": true
+  },
+  "staging": {
+    "targets": {
+      "API": {
+        "activeState": "active",
+        "sameProcess": true,
+        "nRestartsEqual": true
+      },
+      "TRADING": {
+        "activeState": "active",
+        "sameProcess": true,
+        "nRestartsEqual": true
+      }
+    },
+    "trees": {
+      "apiNew": "EXACT",
+      "tradingNew": "EXACT"
+    },
+    "checks": {
+      "served": null,
+      "auth": null,
+      "health": "PASS",
+      "liveEnabledSource": null,
+      "heartbeat": "PASS",
+      "loadedBytes": "PASS",
+      "journal": {
+        "refusals": 0
+      },
+      "queue": "PASS",
+      "config": "PASS",
+      "protected": "FAIL"
+    },
+    "queue": {
+      "liveMode": 0,
+      "queued": 0,
+      "processing": 0,
+      "heartbeatRows": 1
+    },
+    "counters": "unchanged since the x4 gate (no Paper row moved)"
+  },
+  "production": {
+    "perUnit": {
+      "PROT_1": {
+        "config": "EQUAL",
+        "run": "EQUAL",
+        "activeState": "active",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      },
+      "PROT_2": {
+        "config": "EQUAL",
+        "run": "EQUAL",
+        "activeState": "active",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      },
+      "PROT_3": {
+        "config": "EQUAL",
+        "run": "EQUAL",
+        "activeState": "active",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      },
+      "PROT_4": {
+        "config": "CHANGED",
+        "run": "CHANGED",
+        "activeState": "active",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      }
+    },
+    "protectedEqual": false,
+    "p0aExecStartForm": {
+      "PROT_1": "OK",
+      "PROT_2": "OK",
+      "PROT_3": "OK",
+      "PROT_4": "MALFORMED"
+    }
+  },
+  "rulingD29": "Root, 26 October 2026: the production-identity difference is explained and benign. PROT_1 to PROT_3 are unchanged. PROT_4 keeps the same main process (started before the switch, no restarts, active); only its configuration digest changed. Its start command is in a form the strict parser does not split (P0a labels it MALFORMED), so the digest includes the raw start-command line, whose runtime status fields systemd shows differently after the one in-scope reload of the shared user manager. The owner reported production healthy. Root accepts P4 as switched, with the staging delayed check passed in every staging check. Residual: the rollback tools (R4, R4H) and any later check compare the old production identity and refuse before any effect until a reviewed re-baseline of the production identity; this is a follow-up and needs its own owner GO before any rollback.",
+  "linkage": {
+    "verifiedBy": "Root",
+    "receiptSha256": "5d02f9126e70201322e6104aed6c83e3fb161add78e8ac547ee9ff8206ab7205",
+    "envelopeSha256": "d48f7401ef724b05dcabf1412bd0ab3969f1d86826502d6716e77ecb08fa7da2",
+    "manifestSha256": "192967e40a8b0ecbf32f1d645345dbacdd9de67bfbd02af8f789260a02c7cef8"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "STAGING_PAIR_ON_PIN_CHECKED",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)",
+    "serviceChange": "NONE in this job",
+    "hostWrite": "NONE in this job"
+  }
+}
