@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R5_2026-10-26",
+  "recordedAt": "2026-10-26T06:37:41.083Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phases": [
+    "P4",
+    "R4",
+    "R4H",
+    "RX"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4_TOOLS_ACCEPTED_AFTER_FIX_ROUND_5_LOCAL_NOT_RUN",
+  "authority": "Rulings D25 to D28 (Root rulings files, packet text unchanged); the delayed check after the a02 stop runs under GO-P4 a02 with the owner consent of 2026-10-26; GO-P4 under the owner authority of 25 October 2026; R4, R4H and RX each need their own owner GO",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "previous": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R4_2026-10-26.json",
+    "sha256": "986894e4477a68dafee9b9a5dbcd211ab6044e6f03f263dcf52e63a860b8aab7"
+  },
+  "reason": "P4 attempt a02 switched the pair and stopped after readiness on the production-identity check. The delayed check (CHECK, r6) now admits after a stop at both-ready, reports per production unit whether its settings or running process changed, its restart count and whether its main process started before, during or after the switch, and still runs the other read-only checks; it cannot pass while any production difference remains. Only the CHECK region changed. Accepted with one caveat (audit P3-1): systemd reports whole seconds, so a process that started in the same second as the switch start may read BEFORE_X4.",
+  "rootRulings": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-p4-r6.md",
+    "sha256": "15168e303aabd9cd6e6647a421572068db687b37fe56361de4b2f6e8bb3030c2"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/build-snapshot-p4-r6/SHA256SUMS.root",
+    "sha256": "15e9e0af3e4181e4868c99c4d3b2727ed5e1d407f27c72930a63e5448d170a1f"
+  },
+  "pins": {
+    "core": "061f2ee66f3093971164fe205a58a0b4202b694275c45f683715391f92e89e59",
+    "runner": "2ae2127ee2f72ca259c55f6454ae61a2da6dcf92f1f0d22ddec2208dcf8cf9c4",
+    "regions": {
+      "X4": "4f70517240f4588a96a74ede9ec21078e574a3041a19dd62783cc318b55b2310",
+      "CHECK": "939990c11f243a8119aede8ca71914e4504a24a95951ed7094a9f8211bfbeacd",
+      "ROLLBACK": "64f1d345698e79def89b16118b2f03e6011f891c7d1418495194c95aedeff2ce",
+      "RESTORE": "54810d2ea6347b1d09d4a7ac9c0870a4a18850fc361a5584432ac7c35e129205"
+    },
+    "unchangedRegions": [
+      "X4",
+      "ROLLBACK",
+      "RESTORE"
+    ]
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 828,
+      "pass": 828,
+      "fail": 0
+    }
+  },
+  "rehearsal": "author full rehearsal 14 of 14 sections on the final bytes, including r6 after a pass and r6 after a stop at both-ready with a changed production unit; tester reran the x4, follow-up and new check sections",
+  "reviews": [
+    {
+      "round": "fix r5 (D28)",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "828 unit tests, 35 of 36 new mutants killed (one equivalent), rehearsal 14 of 14",
+      "path": ".qa-local/s6-staging-deploy-p4-build-2026-10-25/author-report.md",
+      "sha256": "b0efc91e57ed38d859f3b3410bf79d55c6e3d7677cac126a16df93eeae1abbe5"
+    },
+    {
+      "round": "fix r5",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "only CHECK changed; fresh assembly equals the core; 828 of 828; 38 independent tests; 30 of 32 mutants killed (2 equivalent)",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p4-r6/tester-report.md",
+      "sha256": "00add4d05c0127380de5e5cd86baf832deb9b0cd3ffa66d9f32e970f2acb4d5c"
+    },
+    {
+      "round": "fix r5",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2; P3-1 same-second label accepted with a caveat; P3-2 to P3-4 defence-in-depth residuals",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/audit-p4-r6.md",
+      "sha256": "d6147ffd78bb671f489d21111a78d6c5e7afdeb8d90befdb8b12a396aed13409"
+    }
+  ],
+  "payload": {
+    "basis": "real-shaped binding, maximal sizing manifest",
+    "CHECKBytes": 101073,
+    "CHECKLimit": 131072
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
