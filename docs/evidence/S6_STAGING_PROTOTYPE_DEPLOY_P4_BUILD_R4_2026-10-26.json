@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R4_2026-10-26",
+  "recordedAt": "2026-10-26T04:47:03.079Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phases": [
+    "P4",
+    "R4",
+    "R4H",
+    "RX"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4_TOOLS_ACCEPTED_AFTER_FIX_ROUND_4_LOCAL_NOT_RUN",
+  "authority": "Rulings D25, D26 and D27 (Root rulings files, packet text unchanged); GO-P4 under the owner authority of 25 October 2026; R4, R4H and RX each need their own owner GO",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "previous": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R3_2026-10-26.json",
+    "sha256": "121b1fa3c04a09cfe3971e5e21c1c428ae61d98edf2e309247dfa935cbae8cb1"
+  },
+  "reason": "P4 attempt a01 refused at its first host stage because one served asset of the pinned package (a 5.07 MB image) exceeded the 4 MiB per-asset bound, and the runner did not run the bound validation before its marker. The per-asset bound and the HTTP read cap are now 8 MiB, and the runner validates the exact bound before the marker (BOUND_INVALID). All regions changed only through the shared limits table.",
+  "rootRulings": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-p4-r5.md",
+    "sha256": "11a3dccbd7f085a2eca5f9f14947142fdcf3941e1d0da40f1543e468c16489c5"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/build-snapshot-p4-r5/SHA256SUMS.root",
+    "sha256": "228dcd4ec89ed95d4550c2863f5ab016549ba4c8bcb333f6f1cc347cc84a86f5"
+  },
+  "pins": {
+    "core": "da219b89270eaabec85da21667899aec10cfb4d0bc316d96a2d231175e6315d8",
+    "runner": "2ae2127ee2f72ca259c55f6454ae61a2da6dcf92f1f0d22ddec2208dcf8cf9c4",
+    "regions": {
+      "X4": "4f70517240f4588a96a74ede9ec21078e574a3041a19dd62783cc318b55b2310",
+      "CHECK": "4c4be6240d9b68f9075396888666198d12bb0afbb92563d278c68ff7806ab026",
+      "ROLLBACK": "64f1d345698e79def89b16118b2f03e6011f891c7d1418495194c95aedeff2ce",
+      "RESTORE": "54810d2ea6347b1d09d4a7ac9c0870a4a18850fc361a5584432ac7c35e129205"
+    },
+    "unchangedRegions": []
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 776,
+      "pass": 776,
+      "fail": 0
+    }
+  },
+  "rehearsal": "author full rehearsal 13 of 13 sections on the final bytes with a 5312887-byte served asset; tester full rehearsal 13 of 13",
+  "reviews": [
+    {
+      "round": "fix r4 (D27)",
+      "role": "coder, Sonnet 5.5 / medium",
+      "verdict": "DONE",
+      "note": "776 unit tests, 9 of 9 new mutants killed (107 of 108 overall, one equivalent), rehearsal 13 of 13",
+      "path": ".qa-local/s6-staging-deploy-p4-build-2026-10-25/author-report.md",
+      "sha256": "858c984c0567076f4662c9504ee7cf2aad5e676d89f7e70c7c1a15456bad3266"
+    },
+    {
+      "round": "fix r4",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "diff equals the two ruled changes; fresh assembly equals the core; 776 of 776, rehearsal 13 of 13, 90 independent tests, 14 of 14 mutants killed",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p4-r5/tester-report.md",
+      "sha256": "a895a22a137a02ff6a1f1ad03e9cf002f34dda838c6ed46fb3e40ce19cbee71e"
+    }
+  ],
+  "payload": {
+    "basis": "real-shaped binding, maximal sizing manifest",
+    "headroomBytes": {
+      "X4": 95698,
+      "CHECK": 33667,
+      "ROLLBACK": 125200,
+      "RESTORE": 102919
+    },
+    "note": "Root measures every mode on the real binding before GO-P4"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
