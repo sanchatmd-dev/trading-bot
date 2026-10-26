@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R6_2026-10-26",
+  "recordedAt": "2026-10-26T08:26:24.922Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phases": [
+    "P4",
+    "R4",
+    "R4H",
+    "RX"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4_TOOLS_ACCEPTED_AFTER_FIX_ROUND_6_LOCAL_NOT_RUN",
+  "authority": "Rulings D25 to D30 (Root rulings files, main packet text unchanged); owner yes to build D30 recorded 2026-10-26; the r6 a02 baseline run needs its own owner GO; GO-P4 under the owner authority of 25 October 2026; R4, R4H and RX each need their own owner GO",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "previous": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R5_2026-10-26.json",
+    "sha256": "62e55f18e795497f783abfa0e2df6ea595acb92c65d3839bf37425723bd327e2"
+  },
+  "reason": "One production unit has a start command the strict parser does not split, so its identity hashed the raw systemd line including runtime status fields that change on every manager reload; the rollbacks (which reload) could never pass. The identity now hashes such a line only up to its runtime status tail (path, argument text and ignore flag still count; main process and invocation stay in the run digest). The delayed check reports per-unit digests and admits a second attempt, and R4, R4H, RX and later checks accept a Root-reviewed baseline from that check. Residual (tester F-1, pre-existing): RX checks production identity at its gate but not again after its own reload; RX needs its own owner GO.",
+  "rootRulings": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-p4-r7.md",
+    "sha256": "0ab09f94c7067ab8f522ada802b793285db15ba596fff824fe271cef300c7ba8"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/build-snapshot-p4-r7/SHA256SUMS.root",
+    "sha256": "6f8cc2dde74514bb5536299a30a4e9a163311b7644395bb0c1e15386d0186622"
+  },
+  "pins": {
+    "core": "18d91e7d358289d68dda66cb08bd90a966bc87590787025a082755ccc49b73b6",
+    "runner": "2ae2127ee2f72ca259c55f6454ae61a2da6dcf92f1f0d22ddec2208dcf8cf9c4",
+    "regions": {
+      "X4": "4637b7c75b807298e379ec07b8220f00209b720df85d1d16974ac0ef997e0d30",
+      "CHECK": "f5af0f0ed2a78e9e0b9d0658998d8c7e750fec8a26a8cbde0f3813de2ad81323",
+      "ROLLBACK": "825c77c3228c3eb73bd335296b0c509ade31e9a6bb5b318543c494c7eab9cee4",
+      "RESTORE": "8400ae4fb610425104c1082b82e5f141cec597829d308e9111889be069d75adb"
+    },
+    "unchangedRegions": []
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 950,
+      "pass": 950,
+      "fail": 0
+    }
+  },
+  "rehearsal": "author full rehearsal 15 of 15 sections on the final bytes, including a unit with an unparsable start command whose status tail changes across the reload (x4, r6 a01 and a02, and R4 with the a02 baseline all pass) and a stale-baseline case; tester full rehearsal 15 of 15",
+  "reviews": [
+    {
+      "round": "fix r6 (D30)",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "950 unit tests, 185 of 187 mutants killed (2 equivalent), rehearsal 15 of 15",
+      "path": ".qa-local/s6-staging-deploy-p4-build-2026-10-25/author-report.md",
+      "sha256": "b2b722159430afb7de0ecfacdb6d9d01770b026fd4a1033b6affee39b35f2e84"
+    },
+    {
+      "round": "fix r6",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "950 of 950, rehearsal 15 of 15, 71 of 72 independent tests (the one failure is F-1, RX post-reload identity, pre-existing, accepted as residual), 24 of 25 mutants killed (1 equivalent)",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p4-r7/tester-report.md",
+      "sha256": "f07bd5227e48fc03d2df10487297bc4c095982279e2c0f7e72aa176c66030846"
+    },
+    {
+      "round": "fix r6",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2; six P3",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/audit-p4-r7.md",
+      "sha256": "5c4298d98327ae5605801df095bb1a2c22be5c887e6cbe08179fb9b778b8a200"
+    }
+  ],
+  "payload": {
+    "basis": "real-shaped binding, maximal sizing manifest",
+    "bytes": {
+      "r6": 103675,
+      "r4": 139341,
+      "r4h": 139344,
+      "rx": 161650,
+      "x4": 166621
+    }
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
