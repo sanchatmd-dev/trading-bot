@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R3_2026-10-26",
+  "recordedAt": "2026-10-26T04:13:33.209Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phases": [
+    "P4",
+    "R4",
+    "R4H",
+    "RX"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4_TOOLS_ACCEPTED_AFTER_FIX_ROUND_3_LOCAL_NOT_RUN",
+  "authority": "Rulings D25 and D26 (Root rulings files, packet text unchanged); GO-P4 under the owner authority of 25 October 2026; R4, R4H and RX each need their own owner GO",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "previous": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R2_2026-10-26.json",
+    "sha256": "2e9748ee6bd4a51700754b3664417f155a257dc0add9af2b8ec5bf64671e7227"
+  },
+  "reason": "With the real binding the pair-rollback payload (R4 and R4H) is about 137 KB, above its 131072-byte cap, so both would have refused before any host contact. The cap is now 262144 bytes, the value the switch (X4) and full restore (RX) already use on the same transport; the accepted P3 sent 225 KB to the staging host. Nothing else changed.",
+  "rootRulings": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-p4-r4.md",
+    "sha256": "f3ecbc058b102b35d8fc685628036ac44aec545b8b84921b245a42a8466ba042"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/build-snapshot-p4-r4/SHA256SUMS.root",
+    "sha256": "61afc233f2b632cf330189ea1f1a9d7d3c59be37d3c86c3317b0a4b2491dc5df"
+  },
+  "pins": {
+    "core": "93f712bf6a764a876eb968b2e77d14af0b3b7f9cb2ed2973a96f4db3de233a0c",
+    "runner": "d11e61907ddb6de93f083589ce7f7ceda5ba6e9124ae95e90a24265a63bfb3e3",
+    "regions": {
+      "X4": "fa494b1611f407ba8a214f97b9847275fb575f98ec3f120944641cb16199ded2",
+      "CHECK": "15f69011b8e69b5517394e09847827ff33ef78f08df87e84a87e06ca3c1c37c3",
+      "ROLLBACK": "9b7e32a1b970421f504a7af528b2fc3d4369d742d6d5d367a7c97b7d253a72c7",
+      "RESTORE": "62a21ca7b866ad477a8c7dd5921a7bbf5593afa94c6d3ef63181267c11583187"
+    },
+    "unchangedRegions": [
+      "X4",
+      "CHECK",
+      "RESTORE"
+    ]
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 757,
+      "pass": 757,
+      "fail": 0
+    }
+  },
+  "rehearsal": "author full rehearsal 13 of 13 sections on the final bytes, including the pair rollback and the delayed check; tester did not rerun the rehearsal (only the payload cap constant changed, which the host does not use)",
+  "reviews": [
+    {
+      "round": "fix r3 (D26)",
+      "role": "coder, Sonnet 5.5 / medium",
+      "verdict": "DONE",
+      "note": "757 unit tests, 5 of 5 new mutants killed (98 of 99 overall, one equivalent), rehearsal 13 of 13",
+      "path": ".qa-local/s6-staging-deploy-p4-build-2026-10-25/author-report.md",
+      "sha256": "851a7193ecc1af0b26cfe93cc40e3a0041d509c30108636b5b686dc3abf157d5"
+    },
+    {
+      "round": "fix r3",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "diff equals the ruled constant; fresh assembly equals the core; 757 of 757, 6 of 6 independent tests, 8 of 8 mutants killed; real-shaped binding fits every mode",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p4-r4/tester-report.md",
+      "sha256": "903effa2ddf6728985ee0a9ac3151d98bd07037b188d2fac23dd7bc6e955a833"
+    }
+  ],
+  "payload": {
+    "basis": "real-shaped binding, maximal sizing manifest",
+    "headroomBytes": {
+      "X4": 95698,
+      "CHECK": 33667,
+      "ROLLBACK": 125200,
+      "RESTORE": 102919
+    },
+    "note": "Root measures every mode on the real binding before GO-P4"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
