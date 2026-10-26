@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_FOLLOWUP_P5A_BUILD_R2_2026-10-27",
+  "recordedAt": "2026-10-26T21:27:39.481Z",
+  "packetId": "S6-STAGING-PROTO-FOLLOWUP-1",
+  "phases": [
+    "P5a",
+    "R5a"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P5A_R5A_TOOLS_ACCEPTED_PIN_UPDATE",
+  "reason": "Follow-up packet revisions 6 and 7 (rulings D38 and D39, both for P4M) changed the packet hash that the P5a tool pins. Two pin updates changed only the packet hash literal; Root checked each diff (one line in each of four files). The P5a run itself is recorded separately and used the previous bytes. R5a uses these bytes.",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_FOLLOWUP_PACKET_2026-10-26.md",
+    "sha256": "477018d7e28282a7329f8aecbb06403134b73b6e07ce19b8b5981788510adf06"
+  },
+  "mainPacket": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "previous": {
+    "path": "docs/evidence/S6_STAGING_FOLLOWUP_P5A_BUILD_2026-10-27.json",
+    "sha256": "a3aaf1086acda437d3571ff100e9d8a05928df8a20fa0381d9349a73f8bb1327"
+  },
+  "rulings": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d38.md",
+      "sha256": "41ad2b4b3c2510a311691100eba9c16894a5c0ef7519a9222194bc9e63277a8f"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d39.md",
+      "sha256": "c3afdf60c06cceaa2c7a00778deaa3172e2e81124c853d1b25b3fd51cc6728be"
+    }
+  ],
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p5a-review-2026-10-26/build-snapshot-p5a-r2/SHA256SUMS.root",
+    "sha256": "bc08895baa23a88f116090509155cfcf619e44b7b2def5d304201f7b95d4d0c0"
+  },
+  "pins": {
+    "core": "89b915e18f10f50aebc7e21d6b7f5b544fb6746bb3466dba1cbce1c5688b8c43",
+    "runner": "79cbff2a59a392d8674399ec3983ae4234b339b0d7fdc6f386999837de1308cd",
+    "regions": {
+      "ON": "b8916c737ef60d79dd8a31f42b5a55568563e783cc6cfed876bb5d8205302257",
+      "OFF": "ce5e3f5c03dc22135f8103eac04fa71e25b955df025b34674b85b58d291535c4"
+    }
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 377,
+      "pass": 377,
+      "fail": 0
+    }
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE",
+    "deployment": "NOT_RUN for these bytes"
+  }
+}

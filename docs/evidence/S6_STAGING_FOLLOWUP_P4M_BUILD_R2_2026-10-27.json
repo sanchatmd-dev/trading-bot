@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_FOLLOWUP_P4M_BUILD_R2_2026-10-27",
+  "recordedAt": "2026-10-26T21:27:39.700Z",
+  "packetId": "S6-STAGING-PROTO-FOLLOWUP-1",
+  "phases": [
+    "P4M",
+    "RM"
+  ],
+  "jobs": [
+    "m1",
+    "m6",
+    "rm"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4M_RM_TOOLS_ACCEPTED_AFTER_CALENDAR_TIMER_FIX_LOCAL_NOT_RUN",
+  "reason": "P4M m1 attempt a01 stopped at the gate before any effect (PRE_MARKET_TIMER): the fallback collector timer on the host has a calendar trigger, which gate item G5 refused. Ruling D38 accepts a calendar trigger, checked for form only, bounds its first scheduled run to 900 seconds after timer readiness and uses that time in the m6 window. Ruling D39 corrected the GO-P4M wording (packet revision 7).",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_FOLLOWUP_PACKET_2026-10-26.md",
+    "sha256": "477018d7e28282a7329f8aecbb06403134b73b6e07ce19b8b5981788510adf06"
+  },
+  "mainPacket": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "previous": {
+    "path": "docs/evidence/S6_STAGING_FOLLOWUP_P4M_BUILD_2026-10-27.json",
+    "sha256": "a99c8a04b85efb6dc98561e86bb3735d8a6c826917725606d4f833d09eb6a9d2"
+  },
+  "rulings": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d38.md",
+      "sha256": "41ad2b4b3c2510a311691100eba9c16894a5c0ef7519a9222194bc9e63277a8f"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d39.md",
+      "sha256": "c3afdf60c06cceaa2c7a00778deaa3172e2e81124c853d1b25b3fd51cc6728be"
+    }
+  ],
+  "snapshot": {
+    "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/build-snapshot-p4m-r2/SHA256SUMS.root",
+    "sha256": "d4ecf9b4d28f84c7ab3eeef5baa0e81bf8478c5c3019bbb4220038fea2f1ac72"
+  },
+  "closureTable": {
+    "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/build-snapshot-p4m-r2/closure-table.json",
+    "sha256": "eb9be9094259a14a07de7939daee837ae618f08c638686812e449cb2a0aef9a3"
+  },
+  "pins": {
+    "core": "745d4651d0ab57aed6bb8dafe569445357ec479aa8db4204df4834f1f4dae390",
+    "runner": "43cb8c31d54e2b229945a7e8cbf2713cf189843677b9d281f5931532e2966f1b",
+    "regions": {
+      "MARKET": "128c606596ffdb7e3e93b097873484aabab7b65918bd10829d8183ad774d48b1",
+      "MARKET_CHECK": "be60b0c76c921379b265d8a20524c56597fc048eb28e124e0b097bc9d8e1dac5",
+      "MARKET_STOP": "b48a80e779e400e851af34dd3e41279d984171fe300a7f577706de94177c199d"
+    }
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 925,
+      "pass": 925,
+      "fail": 0
+    }
+  },
+  "reviews": [
+    {
+      "round": "fix D38",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "925 unit tests; 71 of 71 round mutants killed (174 in total, M09 equivalent); rehearsal passed",
+      "path": ".qa-local/s6-staging-market-build-2026-10-26/author-report.md",
+      "sha256": "dad8e219fc33c6d2d31f98d179b9972fb7ef8f0758d441197df55864f21da7c0"
+    },
+    {
+      "round": "fix D38",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/tester-p4m-r5/tester-report.md",
+      "sha256": "c3728fadde08f7d04319a838dceb6bdbfad9621e0a578500f028810075439626"
+    },
+    {
+      "round": "fix D38",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1; the P2 was GO-P4M wording, closed by packet revision 7 (ruling D39)",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/audit-p4m-r5.md",
+      "sha256": "a45edb227d3ea20916a7efd1edeaf1ce69230d5f2641e4d728a16d2675bd84ab"
+    }
+  ],
+  "residuals": [
+    "The calendar path is tested on the fake host and the unit suite; the host print forms after a start are first seen at m1 a02.",
+    "No tool bounds the period of later calendar runs; a first run more than 900 seconds after readiness rolls m1 back after the catch-up.",
+    "Optional hardening not done: recompute the timer policy on the post-start read (audit r5 P3-4; fail safe).",
+    "103 older mutants keep their earlier result."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE",
+    "deployment": "NOT_RUN"
+  }
+}

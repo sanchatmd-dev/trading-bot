@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_FOLLOWUP_P4M_M1_A01_RESULT_2026-10-27",
+  "recordedAt": "2026-10-26T21:28:18.181Z",
+  "packetId": "S6-STAGING-PROTO-FOLLOWUP-1",
+  "phase": "P4M",
+  "jobKey": "m1",
+  "attemptId": "a01",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4M_STOP_PRE_GATE_NO_EFFECT",
+  "authority": "Owner GO-P4M attempt a01 (pasted, byte-equal to the packet revision 5 line, notAfter 2026-10-27T20:00:00Z); consumed, no retry",
+  "jobId": "s6-p4m-m1-a01-9d2fd2d9ca210fb38396cd70",
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-26T20:16:10.379Z",
+      "expiresAt": "2026-10-26T20:18:10.379Z"
+    },
+    "hostStarted": "2026-10-26T20:16:31.874Z",
+    "hostEnded": "2026-10-26T20:16:32.300Z",
+    "targetConnections": 1,
+    "transport": {
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "noRetry": true
+  },
+  "verdict": {
+    "verdict": "P4M_STOP_PRE",
+    "code": "PRE_MARKET_TIMER",
+    "stage": "GATE_MARKET",
+    "effectPhase": "PRE",
+    "effects": {
+      "recordDir": "NOT_ATTEMPTED",
+      "streamStart": "NOT_ATTEMPTED",
+      "collectorRun": "NOT_ATTEMPTED",
+      "timerStart": "NOT_ATTEMPTED",
+      "rbTimer": "NOT_ATTEMPTED",
+      "rbCollector": "NOT_ATTEMPTED",
+      "rbStream": "NOT_ATTEMPTED"
+    }
+  },
+  "gate": {
+    "host": {
+      "systemdMajor": 255,
+      "clockSync": "yes",
+      "loginManager": "NO_KILL",
+      "jobsPending": 0,
+      "otherNeedReload": 0,
+      "livePayloadCount": 0
+    },
+    "production": {
+      "protectedEqual": true,
+      "protectedDigest": "b578933221da098a974c13ccc342b76c05284f66485eaa2c267221fe3af65ca1"
+    },
+    "pair": {
+      "API": {
+        "activeState": "active",
+        "sameProcess": true,
+        "nRestartsEqual": true,
+        "configEqual": true
+      },
+      "TRADING": {
+        "activeState": "active",
+        "sameProcess": true,
+        "nRestartsEqual": true,
+        "configEqual": true
+      }
+    },
+    "research": "STOPPED",
+    "market": {
+      "stream": {
+        "cls": "INACTIVE",
+        "type": "simple",
+        "restart": "always",
+        "configEqual": true,
+        "stopTimeoutOk": true,
+        "links": {
+          "formOk": true,
+          "hooksEmpty": true,
+          "handlersEmpty": true,
+          "forwardOk": true,
+          "conflictsOk": true,
+          "reverseOk": true,
+          "names": 3,
+          "foreign": 0
+        }
+      },
+      "collector": {
+        "cls": "INACTIVE",
+        "type": "simple",
+        "restart": "no",
+        "configEqual": true,
+        "stopTimeoutOk": true,
+        "links": {
+          "formOk": true,
+          "hooksEmpty": true,
+          "handlersEmpty": true,
+          "forwardOk": true,
+          "conflictsOk": true,
+          "reverseOk": true,
+          "names": 3,
+          "foreign": 0
+        }
+      },
+      "timer": {
+        "cls": "INACTIVE",
+        "configEqual": true,
+        "monotonicTriggers": 0,
+        "accuracyMs": 1000,
+        "delayMs": 0,
+        "persistent": "no"
+      }
+    }
+  },
+  "rootReview": "Root, 27 October 2026 (Bangkok): every gate item before the timer passed. The timer reported no monotonic trigger; systemd loads no timer without a trigger, so its trigger is a calendar trigger, which gate item G5 refused by design. The stop was correct and left staging unchanged. Ruling D38 accepts a calendar trigger (form checked only, first run within 900 seconds of timer readiness); ruling D39 corrected the GO-P4M wording. The retry is attempt a02 under a new owner GO.",
+  "linkage": {
+    "verifiedBy": "Root",
+    "receiptSha256": "da81657e1b172c36d1e959acae13cdf77a3422fa21135a9b947e4cc66526fae5",
+    "envelopeSha256": "6c42182ae0c2dbfbb3a855d336e0e1fbecf26e9b1857a574f28be8f680dc0afd",
+    "manifestSha256": "ede5d18658bff2e73af298e65db2c2f10607673a96840248b4678a648a1ab47a",
+    "retainedSha256": "8f12de470599f00ad9c8fdb9e34437533f69905186dc6830cbf52c6120d971c2"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "NONE in this job",
+    "hostWrite": "NONE in this job"
+  }
+}
