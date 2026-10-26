@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P4_X4_A02_RESULT_2026-10-26",
+  "recordedAt": "2026-10-26T04:52:29.364Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P4",
+  "jobKey": "x4",
+  "attemptId": "a02",
+  "priorAttempts": [
+    "a01"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4_STOP_AFTER_READY_NEW_PAIR_RUNNING_GO_CONSUMED",
+  "ownerGo": "owner chat full GO-P4 for attempt a02 (packet e8a18a90 GO-P4 line, pin ba1a433, bound 303 s, start clause for the trading worker, no 24-hour check, checklist 1, 3, 5, 7 and risks 2, 4, 6, 8, notAfter 2026-10-26T20:00:00Z); consumed (no retry)",
+  "jobId": "s6-p4-x4-a02-365c4af140a9c3f91059034d",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R4_2026-10-26.json",
+    "sha256": "986894e4477a68dafee9b9a5dbcd211ab6044e6f03f263dcf52e63a860b8aab7"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-26T04:49:18.918Z",
+      "expiresAt": "2026-10-26T04:51:18.918Z"
+    },
+    "runnerEndedUtc": "2026-10-26T04:49:52.453Z",
+    "runnerElapsedMs": 21665,
+    "targetConnections": 1,
+    "transport": {
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "noRetry": true
+  },
+  "verdict": {
+    "verdict": "P4_STOP_AFTER_READY",
+    "code": "CHK_PROTECTED",
+    "stageReached": "CHECKS_R4",
+    "outcome": "BOTH_READY",
+    "effectPhase": "DONE"
+  },
+  "effects": {
+    "apiLayer": "DONE",
+    "apiStart": "DONE",
+    "apiStop": "DONE",
+    "backup": "DONE",
+    "baseline": "RECORDED",
+    "loadedGate": "DONE",
+    "recordDir": "DONE",
+    "reload": "DONE",
+    "reread": "RECORDED",
+    "sessionWait": "DONE",
+    "tradingLayer": "DONE",
+    "unwindArchive": "NOT_ATTEMPTED",
+    "unwindReload": "NOT_ATTEMPTED",
+    "unwindStart": "NOT_ATTEMPTED",
+    "workerStart": "DONE",
+    "workerStop": "SKIPPED_STOPPED"
+  },
+  "measured": {
+    "apiGapMs": 6845,
+    "gapBoundMs": 302386,
+    "preSwitchBackup": {
+      "bytes": 7998842,
+      "dumpMs": 2576,
+      "tocEntries": 422,
+      "takenAtUtc": "2026-10-26T04:49:37.825Z"
+    },
+    "apiReadyMs": 3792,
+    "workerReadyMs": 10192,
+    "workerHeartbeatAgeMs": 201
+  },
+  "gate": {
+    "protectedEqualAtGate": true,
+    "otherUnitsNeedingReload": 0,
+    "heavyJobs": 0,
+    "loginManager": "NO_KILL",
+    "probe": [
+      {
+        "key": "API",
+        "outcome": "PASS",
+        "readOnly": true,
+        "sameDatabase": true
+      }
+    ],
+    "database": {
+      "fence": "INSTALLED",
+      "schemaVersion": 14,
+      "queue": {
+        "queued": 0,
+        "processing": 0,
+        "waitingMarket": 0,
+        "liveMode": 0,
+        "heartbeatRows": 0,
+        "heartbeatFresh": 0
+      },
+      "foreignSessions": 0
+    },
+    "trees": {
+      "apiNew": "EXACT",
+      "tradingNew": "EXACT",
+      "apiOld": "EXACT",
+      "tradingOld": "EXACT"
+    }
+  },
+  "immediateChecks": {
+    "served": {
+      "count": 34,
+      "ok": 34
+    },
+    "auth": {
+      "count": 6,
+      "ok": 6
+    },
+    "health": "NOT_RUN",
+    "liveEnabledSource": "PIN_LITERAL",
+    "heartbeat": "NOT_RUN",
+    "loadedBytes": "NOT_RUN",
+    "journal": null,
+    "queue": "NOT_RUN",
+    "config": "PASS",
+    "protected": "NOT_RUN"
+  },
+  "finding": "The immediate checks passed the served assets (34 of 34), the auth routes (6 of 6) and the loaded configuration, then the production-identity check found that the combined identity of the four production units (loaded settings, state, main process and invocation) differed from the value that matched at the gate about 20 seconds earlier. The record keeps only the combined digest, so the unit and the field are unknown. Before its one daemon reload of the shared user manager the tool had confirmed that no other unit needed a reload. Health, heartbeat, journal and queue checks and the r5 check did not run.",
+  "stateAfter": "The staging API and trading worker run on the pinned trees under their new layers (both ready); the market stream, fallback collector and research worker stay stopped; the pre-switch backup is on the host. No automatic rollback runs after readiness. The delayed check r6, R4 and R4H compare the production identity again and refuse before any effect while it differs (audit P3-10).",
+  "next": "Root reports to the owner: check production first; then a decision on the staging pair (keep the new pair, or a separate owner GO for a rollback path).",
+  "linkage": {
+    "verifiedBy": "Root",
+    "receiptSha256": "b25b721e02bc3dee3599d0c432ce29698b92633056975319ee7f5362c0500854",
+    "envelopeSha256": "3ad250a55438d5080d629f83064350d90c53436d33ab94bb2e9c88e92c15cc92",
+    "manifestSha256": "8591abc31f1f9fee8cac999cfd9b9541ec63b8a5cda342b3c894e9acdc375702"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "STAGING_PAIR_ON_PIN_UNVERIFIED",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)",
+    "serviceChange": "STAGING_API_AND_TRADING_WORKER_SWITCHED",
+    "hostWrite": "two drop-in layers, one job directory with the pre-switch backup in the protected backup directory"
+  }
+}

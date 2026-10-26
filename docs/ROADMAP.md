@@ -2,6 +2,8 @@
 
 Claude root intake, 2026-10-24 (Bangkok): Claude verified the [Codex-to-Claude handoff](CODEX_TO_CLAUDE_HANDOFF_2026-10-24.md) and is sole root. HEAD and the permitted remote matched `3a46849`; the four transferred drafts, both protected stashes, the original checkout's nine preserved paths and all 19 handoff pins verified, and Codex dispatch is stopped. The owner then resumed preparation, gave a new GO naming S6-API-SERVICE-RO-1, with the environment taken from the packet binding, and granted continuous local work. No deployment or target route activation.
 
+S6 staging deploy P4 attempt a02 switched the pair, 2026-10-26 (Bangkok): the staging API and trading worker now run the pinned prototype ([result](S6_STAGING_PROTOTYPE_DEPLOY_P4_X4_A02_RESULT_2026-10-26.md)), but the run stopped after readiness (P4_STOP_AFTER_READY, CHK_PROTECTED): the combined identity of the production units changed within about 20 seconds after the switch. Production is checked first; the delayed check and the rollbacks wait for an owner decision.
+
 S6 staging deploy P4 attempt a01 stopped before any effect, 2026-10-26 (Bangkok): the switch job refused at its first host stage because one public asset of the package (a 5.07 MB image) exceeds the tool's 4 MiB per-asset bound ([result](S6_STAGING_PROTOTYPE_DEPLOY_P4_X4_A01_RESULT_2026-10-26.md)); staging unchanged, GO-P4 consumed. Ruling D27 fixes the bound and makes the runner check it before its marker; attempt a02 needs a new owner GO-P4.
 
 S6 staging deploy P0c read, 2026-10-26 (Bangkok): under the owner's GO-P0c, attempt a01 ran once read only ([result](S6_STAGING_PROTOTYPE_DEPLOY_P0C_A01_RESULT_2026-10-26.md)), verdict P0C_PASS. The P4 binding facts match the accepted P0a and P3 digests. Next: P4.
