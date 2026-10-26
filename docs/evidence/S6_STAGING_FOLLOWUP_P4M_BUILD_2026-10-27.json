@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_FOLLOWUP_P4M_BUILD_2026-10-27",
+  "recordedAt": "2026-10-26T19:07:25.969Z",
+  "packetId": "S6-STAGING-PROTO-FOLLOWUP-1",
+  "phases": [
+    "P4M",
+    "RM"
+  ],
+  "jobs": [
+    "m1",
+    "m6",
+    "rm"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4M_RM_TOOLS_ACCEPTED_LOCAL_NOT_RUN",
+  "authority": "Root rulings D31 to D37 (follow-up packet revision 5); owner waiver of the D8 usage band for GO-P4M recorded 2026-10-26; GO-P4M and GO-RM each need their own explicit owner GO; P4M binds after the P5a result is accepted (ruling D33)",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_FOLLOWUP_PACKET_2026-10-26.md",
+    "sha256": "7dd4ce906be9ca3dc55952506c016a9e30d5da94d247dff3337de6bda1e9bbf5"
+  },
+  "mainPacket": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "rulings": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d31.md",
+      "sha256": "6b1a3ae4442f8c7a215974ec99666dc7a29dc4a4aea8b621c18ff5af257de609"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d32.md",
+      "sha256": "32d4c370fd3a02db6bce5049716bb581e4d3840e9135494caad5a0e0a4b7e81b"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d34.md",
+      "sha256": "4e11cf5feae1745c36bcbf530d3caffe3f095890e88651b5d4ace1107f3a7051"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d35.md",
+      "sha256": "a229dc6866089772b511cd1d4258a0738dc4fd9c4b74761cc6548f3fe758e98f"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d36.md",
+      "sha256": "cdf1f8e9495005b88b0aac349cd81fd090fadf64b833be289ea5aac1503b389b"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d37.md",
+      "sha256": "16608add64f021e022b182964786b558f57ccc97bc6b9023bd53fdd9c07efb75"
+    }
+  ],
+  "spec": {
+    "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/market-restart-spec-r2.md",
+    "sha256": "d8e658930b502a2ef6280fdfd42659d907ad493f54f2be2d7df18267624bb65b"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/build-snapshot-p4m-r1/SHA256SUMS.root",
+    "sha256": "24dc2b282249e90917f706df25f43064ff1f895bd76b50a54992c9cc245fca2e"
+  },
+  "closureTable": {
+    "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/build-snapshot-p4m-r1/closure-table.json",
+    "sha256": "eb9be9094259a14a07de7939daee837ae618f08c638686812e449cb2a0aef9a3"
+  },
+  "pins": {
+    "core": "e7a9f9e8abe0277aa77f78cca1a04a7eebfc60202c7f50650fc6dcab5faf9260",
+    "runner": "43cb8c31d54e2b229945a7e8cbf2713cf189843677b9d281f5931532e2966f1b",
+    "regions": {
+      "MARKET": "0f025eed3cdbf98a644d172cb0d3daf12e77b35be490f890bcd1a0c244e190b1",
+      "MARKET_CHECK": "be60b0c76c921379b265d8a20524c56597fc048eb28e124e0b097bc9d8e1dac5",
+      "MARKET_STOP": "92314d41077c8ba05b60ac88a33ce5a28afcaf49b3ec727001001440311e05c5"
+    }
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 868,
+      "pass": 868,
+      "fail": 0
+    },
+    "note": "Root ran the unit suite once on the accepted bytes under the machine lock"
+  },
+  "rehearsal": {
+    "result": "ALL_SECTIONS_PASSED",
+    "elapsedSeconds": 30,
+    "sections": [
+      "fullPass",
+      "sigtermDuringCatchUp",
+      "resumeAfterSigterm",
+      "collectorExitsNonZero",
+      "rmAfterEachOutcome",
+      "realBashPayloads",
+      "payloadSizes"
+    ],
+    "sizes": {
+      "MARKET": {
+        "mode": "MARKET",
+        "bytes": 149111,
+        "limit": 262144,
+        "headroom": 113033,
+        "ok": true,
+        "regionBytes": 126642,
+        "closureRevisions": 15
+      },
+      "MARKET_CHECK": {
+        "mode": "MARKET_CHECK",
+        "bytes": 74812,
+        "limit": 262144,
+        "headroom": 187332,
+        "ok": true,
+        "regionBytes": 69397,
+        "closureRevisions": null
+      },
+      "MARKET_STOP": {
+        "mode": "MARKET_STOP",
+        "bytes": 77460,
+        "limit": 262144,
+        "headroom": 184684,
+        "ok": true,
+        "regionBytes": 72976,
+        "closureRevisions": null
+      }
+    },
+    "note": "local throwaway PostgreSQL 16 with a stub writer and simulated units, journal and proc; not a staging check"
+  },
+  "mutants": {
+    "summary": null,
+    "note": "author mutants: 146 of 147 killed in total (M09 equivalent); the latest round reran its new and affected mutants on the final bytes, older ones keep their earlier result"
+  },
+  "reviews": [
+    {
+      "round": "build",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "path": ".qa-local/s6-staging-market-build-2026-10-26/author-report.md",
+      "sha256": "88be9a304082468846b3c58aa5e6d2e7ce9c6cf61cd0cccbf2d2f39ef6740f3a"
+    },
+    {
+      "round": "build",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/tester-p4m/tester-report.md",
+      "sha256": "553652ae80047e2dedca8f14e7283d5b23a91791d4662247846e4090284bd72f"
+    },
+    {
+      "round": "build",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "real paths of the code closure (ruling D34)",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/audit-p4m-build.md",
+      "sha256": "537c975806ad5ea9c2d84b54f7e7065b1410b4ada91e795edcb898bc70782941"
+    },
+    {
+      "round": "fix D34",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/tester-p4m-r2/tester-report.md",
+      "sha256": "c59b8ca608665c84dbf788a2495f38bab4d92cf0dc8b61c1eba9da3edd2d7039"
+    },
+    {
+      "round": "fix D34",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "RM read the environment property (ruling D35)",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/audit-p4m-r2.md",
+      "sha256": "9f36ea0d64ccc86b8824c1d40af57f6b7c4eada0f665106fb2c0490a03d7cb55"
+    },
+    {
+      "round": "fix D34",
+      "role": "second-opinion substitute, Opus 5.5 / high (Fable paused by the owner)",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "unit hooks and links, RM pending-job gate (ruling D35)",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/second-opinion-p4m.md",
+      "sha256": "7e1052b683b299eae611f5c35171c4f16f25c1711176d0918d42ffdd49663dcc"
+    },
+    {
+      "round": "fix D35",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "FAIL",
+      "note": "timer running during a collector run stopped the m1 immediate check (fail safe; ruling D36)",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/tester-p4m-r3/tester-report.md",
+      "sha256": "8a64145e1509dce95a0ef5c885aa871fbcd01d82ff90893d90c18a2956a0a8bf"
+    },
+    {
+      "round": "fix D35",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/audit-p4m-r3.md",
+      "sha256": "115f54133934bdb299a8a3d788a834383415c5ab047af2b4972dc7a126f121c8"
+    },
+    {
+      "round": "fix D36",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/tester-p4m-r4/tester-report.md",
+      "sha256": "f7d1dccad34479c310bbc5f3b297d0cc098e6a6005f14a115e810f2efe50d099"
+    },
+    {
+      "round": "fix D36",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2; fail-safe wording residuals named in ruling D37",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/audit-p4m-r4.md",
+      "sha256": "79239b0956d1745560e04d6d8432e371d570c39a745ad87898f28810957e029f"
+    }
+  ],
+  "payload": {
+    "limit": 262144,
+    "fixture": {
+      "MARKET": 149111,
+      "MARKET_CHECK": 74812,
+      "MARKET_STOP": 77460
+    }
+  },
+  "dryAdmission": "NOT_RUN: gate G3 binds the latest accepted pair record, so P4M is bound and dry-admitted after the P5a result is accepted (ruling D33)",
+  "residuals": [
+    "Named in ruling D37: a race between the reads of the m1 immediate check (fail safe); any mount unit accepted in the start lists; the step 5 text accepts less than the code.",
+    "Host systemd property forms, real timer behaviour and real realpath semantics are unobserved until the first run; unknown forms stop before an effect.",
+    "The packages pg and decimal.js are checked for presence; the version is recorded, not gated.",
+    "Packet section 9 lists the host, venue and data residuals."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
