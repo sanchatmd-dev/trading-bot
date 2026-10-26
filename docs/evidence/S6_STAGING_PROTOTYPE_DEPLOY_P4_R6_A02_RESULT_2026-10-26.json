@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P4_R6_A02_RESULT_2026-10-26",
+  "recordedAt": "2026-10-26T13:03:31.486Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P4",
+  "jobKey": "r6",
+  "attemptId": "a02",
+  "priorAttempts": [
+    "a01"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4_DELAYED_CHECK_STAGING_PASS_PRODUCTION_BASELINE_ACCEPTED",
+  "authority": "Owner GO for CHECK r6 attempt a02 (typed in chat, 26 October 2026, notAfter 2026-10-26T20:00:00Z); ruling D30 tool (build R6)",
+  "jobId": "s6-p4-r6-a02-bc1f6448621c443e4f0f5438",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R6_2026-10-26.json",
+    "sha256": "4479af2cd6b313839f3462613163555e736ceb0a364f5ab9734b8c6a09a665b8"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-26T09:33:26.312Z",
+      "expiresAt": "2026-10-26T09:35:26.312Z"
+    },
+    "hostStarted": "2026-10-26T09:33:41.879Z",
+    "hostEnded": "2026-10-26T09:33:43.323Z",
+    "targetConnections": 1,
+    "transport": {
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "noRetry": true,
+    "effects": "none (read only)"
+  },
+  "verdict": {
+    "verdict": "P4_CHECK_STOP",
+    "code": "CHK_PROTECTED",
+    "stageReached": "CHECKS"
+  },
+  "window": {
+    "kind": "r6",
+    "label": "OPEN",
+    "sinceWorkerReadyMs": 17029762
+  },
+  "x4Link": {
+    "fromRecord": false,
+    "recordTerminal": true,
+    "outcome": "BOTH_READY",
+    "resultPresent": true,
+    "factsEqual": true
+  },
+  "staging": {
+    "targets": {
+      "API": {
+        "activeState": "active",
+        "sameProcess": true,
+        "nRestartsEqual": true
+      },
+      "TRADING": {
+        "activeState": "active",
+        "sameProcess": true,
+        "nRestartsEqual": true
+      }
+    },
+    "trees": {
+      "apiNew": "EXACT",
+      "tradingNew": "EXACT"
+    },
+    "checks": {
+      "served": null,
+      "auth": null,
+      "health": "PASS",
+      "liveEnabledSource": null,
+      "heartbeat": "PASS",
+      "loadedBytes": "PASS",
+      "journal": {
+        "refusals": 0
+      },
+      "queue": "PASS",
+      "config": "PASS",
+      "protected": "FAIL"
+    },
+    "queue": {
+      "liveMode": 0,
+      "queued": 0,
+      "processing": 0,
+      "heartbeatRows": 1
+    },
+    "counters": "unchanged since the x4 gate (no Paper row moved)"
+  },
+  "production": {
+    "perUnit": {
+      "PROT_1": {
+        "config": "EQUAL",
+        "run": "EQUAL",
+        "activeState": "active",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      },
+      "PROT_2": {
+        "config": "EQUAL",
+        "run": "EQUAL",
+        "activeState": "active",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      },
+      "PROT_3": {
+        "config": "EQUAL",
+        "run": "EQUAL",
+        "activeState": "active",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      },
+      "PROT_4": {
+        "config": "CHANGED",
+        "run": "CHANGED",
+        "activeState": "active",
+        "nRestarts": 0,
+        "mainStart": "BEFORE_X4"
+      }
+    },
+    "protectedEqualToP0a": false,
+    "p0aExecStartForm": {
+      "PROT_1": "OK",
+      "PROT_2": "OK",
+      "PROT_3": "OK",
+      "PROT_4": "MALFORMED"
+    },
+    "formula": "D30: a raw unparsed start-command line is hashed only up to its first runtime status field; parsed entries unchanged"
+  },
+  "acceptedBaseline": {
+    "ruling": "D30",
+    "status": "ACCEPTED_AS_PRODUCTION_BASELINE",
+    "digest": "b578933221da098a974c13ccc342b76c05284f66485eaa2c267221fe3af65ca1",
+    "sourceSha256": "55a70e2210486ca382393e8f82e6669640002ff7904f7d29b414db4b57d80d67",
+    "units": [
+      {
+        "role": "PROT_1",
+        "configDigest": "e1e9e896db6946f3aa8675572ce760da7bb98b039aa83d9e91e2ab77bcfe10c2",
+        "runDigest": "0ced05330ce38f577fb2c5e3eb7bbf776a89c953aea0bd0c25b851fbb19213da"
+      },
+      {
+        "role": "PROT_2",
+        "configDigest": "1220831d18ac243295d00a37166012518ee95c83e6178750a8ee86812b72872d",
+        "runDigest": "f5812a6d3de629c208c8d03f22d8002f6053980a3ce7e30c997aa9452608ed69"
+      },
+      {
+        "role": "PROT_3",
+        "configDigest": "616cffb8c5bbc3275c5181e34a34eff9272b3f6ec3325d42d486841d8a5667fe",
+        "runDigest": "900c785e2875762317c7a9051bf0674ebf048429e0ca0dbb458d2b845ee69890"
+      },
+      {
+        "role": "PROT_4",
+        "configDigest": "5a4e2f9a5f17361b848599b7c89c0305bbd8bae590a3e5ff67d6242bb3bee3c6",
+        "runDigest": "703290c70d32682372cb7684b3cd1501843fd8e7b1468f1e310c8575b0abe53a"
+      }
+    ],
+    "usedBy": "CHECK, R4, R4H and RX (protectedBaseline in their manifests); each rollback still needs its own owner GO"
+  },
+  "rootReview": "Root, 26 October 2026: every staging check passed. PROT_1 to PROT_3 configuration and run digests equal the P0a values under the normalised formula, which shows the formula change does not touch parsed units. PROT_4 keeps the same main process (started before the switch, no restarts, active) and now has stable normalised digests. The stop code CHK_PROTECTED only reflects the comparison with the old P0a combined value, as ruling D30 predicted. Root accepts the four rows of this run as the production baseline.",
+  "residual": "F-1: RX (restore) has no production-identity check after its own reload; R4 and R4H check before and after. Market stream, fallback collector and research worker stay stopped until the follow-up packet phases.",
+  "linkage": {
+    "verifiedBy": "Root",
+    "receiptSha256": "c1e207de88717d805ce509b7bfa823e0e1bb5a6d5ae68cf114103073cbb3cb3b",
+    "envelopeSha256": "06b0ad2256f26b73a542e3e354156dd0fc758c4ff5a069b4d56ad9199682e9e2",
+    "manifestSha256": "48b7fc1d0c83c0ff21b59ab32f6c6585fe2ff60d04f47204e354485c2fb7657a",
+    "retainedSha256": "55a70e2210486ca382393e8f82e6669640002ff7904f7d29b414db4b57d80d67"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "STAGING_PAIR_ON_PIN_CHECKED",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)",
+    "serviceChange": "NONE in this job",
+    "hostWrite": "NONE in this job"
+  }
+}
