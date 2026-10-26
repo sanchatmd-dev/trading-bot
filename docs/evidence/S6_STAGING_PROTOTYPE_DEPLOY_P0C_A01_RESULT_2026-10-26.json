@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P0C_A01_RESULT_2026-10-26",
+  "recordedAt": "2026-10-26T03:09:44.246Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P0c",
+  "attemptId": "a01",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P0C_PASS_GO_CONSUMED",
+  "ownerGo": "owner chat GO-P0c (full typed text equal to the packet e8a18a90 wording with pin ba1a433, QR-2 O7 yes, notAfter 2026-10-26T15:00:00Z); consumed by this attempt (no retry)",
+  "jobId": "s6-p0c-a01-9fab5895e645d9f12cdf63a6",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P0C_BUILD_2026-10-26.json",
+    "sha256": "82720d097cbd87827a222770db77f6659f3ab9408b92865f987461a2b7f8c9b1"
+  },
+  "verdict": {
+    "verdict": "P0C_PASS",
+    "code": null
+  },
+  "observed": {
+    "attemptId": "a01",
+    "code": null,
+    "db": {
+      "checks": {
+        "allowconn": true,
+        "collVersionEqual": true,
+        "icuRulesNull": true,
+        "namesShape": true,
+        "notTemplate": true,
+        "provider": true,
+        "tablespaceDefault": true
+      },
+      "code": null,
+      "dbProps": "REPRODUCIBLE",
+      "roleSettings": 0,
+      "sessionsOpened": 1
+    },
+    "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+    "phase": "P0c",
+    "stage": "DONE",
+    "timing": {
+      "elapsedMs": 351
+    },
+    "units": {
+      "API": {
+        "activeState": "active",
+        "cfgDigest": "95dbe7883170189a812cbc9f07cb1026a812a5f4bfe0aa320577c8160974705f",
+        "dropInCount": 16,
+        "dropInDigest": "729899e047cf2ef6c499090dde8859cad0cf7cc94aa8b5d3fa2e1aa6f293a289",
+        "dropIns": {
+          "CHANGED": 0,
+          "NOT_REGULAR": 0,
+          "OK": 16,
+          "SYMLINK": 0,
+          "TOO_BIG": 0,
+          "UNREADABLE": 0
+        },
+        "envFileArgCount": 3,
+        "envFileCount": 0,
+        "execStartCount": 1,
+        "loadState": "loaded",
+        "loadedForm": "OK",
+        "needDaemonReload": false,
+        "showStderrBytes": 0,
+        "stable": true,
+        "subState": "running"
+      },
+      "TRADING": {
+        "activeState": "inactive",
+        "cfgDigest": "f46496f9231b5f8a7821a709dd3cd7fda70d10545b9a8225088efc100af1cbba",
+        "dropInCount": 7,
+        "dropInDigest": "86d0a907b9692118a5495f60fa652fae4d10da73db45e1a1e18b7e06111af49c",
+        "dropIns": {
+          "CHANGED": 0,
+          "NOT_REGULAR": 0,
+          "OK": 7,
+          "SYMLINK": 0,
+          "TOO_BIG": 0,
+          "UNREADABLE": 0
+        },
+        "envFileArgCount": 2,
+        "envFileCount": 0,
+        "execStartCount": 1,
+        "loadState": "loaded",
+        "loadedForm": "OK",
+        "needDaemonReload": false,
+        "showStderrBytes": 0,
+        "stable": true,
+        "subState": "dead"
+      }
+    },
+    "verdict": "P0C_COLLECTED"
+  },
+  "rootCrossCheck": {
+    "verdict": "P0C_PASS",
+    "API": {
+      "validLoaded": true,
+      "cfgEqualsP0a": true,
+      "cfgEqualsP3": true,
+      "dropInEqualsP0a": true,
+      "dropInEqualsP3": true,
+      "dropIns": 16,
+      "hashes": 16,
+      "hashPathsInOrder": true
+    },
+    "TRADING": {
+      "validLoaded": true,
+      "cfgEqualsP0a": true,
+      "cfgEqualsP3": true,
+      "dropInEqualsP0a": true,
+      "dropInEqualsP3": true,
+      "dropIns": 7,
+      "hashes": 7,
+      "hashPathsInOrder": true
+    }
+  },
+  "linkage": {
+    "verifiedBy": "Root",
+    "checks": [
+      "manifest hash equals the receipt and the marker",
+      "receipt hash equals the runner output",
+      "receipt envelope and retained-output hashes",
+      "Root recomputed the configuration and drop-in digests of the private facts with the accepted P4 functions and compared them with the accepted P0a and P3 values"
+    ],
+    "receiptSha256": "1c9c448ebe719f1f60f7402aa741540daa99e8a018387f0fe53d0debb13ae2ad",
+    "envelopeSha256": "cee51950b5ec031dab62fea6e7448375a31f39f60b6bd46f74ca3bdaa343ce7f",
+    "manifestSha256": "4b40f922a34832dc9e8656544572bda04d125c458f5e9fcf892a0300d94755a7"
+  },
+  "next": "P4: retirement inventory, P4 binding from the private facts, dry admission, then GO-P4 under the owner authority of 2026-10-25 20:21Z when weekly usage is above 30% remaining.",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
