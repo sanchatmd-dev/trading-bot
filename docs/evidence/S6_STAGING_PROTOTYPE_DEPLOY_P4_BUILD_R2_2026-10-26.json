@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R2_2026-10-26",
+  "recordedAt": "2026-10-26T03:52:25.596Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phases": [
+    "P4",
+    "R4",
+    "R4H",
+    "RX"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4_TOOLS_ACCEPTED_AFTER_FIX_ROUND_2_LOCAL_NOT_RUN",
+  "authority": "Ruling D25 (Root rulings file, packet text unchanged); GO-P4 under the owner authority of 25 October 2026; R4, R4H and RX each need their own owner GO",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "previous": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_2026-10-26.json",
+    "sha256": "584d21b4aeaf4ee2cbb4f39dd860ecbeeab347833a8c0d76f0a3e471782b271e"
+  },
+  "reason": "The P0c read showed that the staging trading worker starts its entry script by a path relative to its working directory; the binding check and the host gate accepted only the absolute form, so the real binding refused before any host contact. Both now also accept exactly the relative entry; the new layer still writes the absolute staged entry.",
+  "rootRulings": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-p4-r3.md",
+    "sha256": "b050cf31ef53535b3c82e2a70427130fa2ee48448d3c8df8a3035c77c7f90d25"
+  },
+  "snapshot": {
+    "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/build-snapshot-p4-r3/SHA256SUMS.root",
+    "sha256": "873d0b846fe1160cc8cf305c4c43406b0e5506c81a4f8fe8bb568b16717e38d6"
+  },
+  "pins": {
+    "core": "b5bd27e3c17065d75966b1aa9c8fc8219c98fa8096c663de48d149cbf0bb2026",
+    "runner": "d11e61907ddb6de93f083589ce7f7ceda5ba6e9124ae95e90a24265a63bfb3e3",
+    "regions": {
+      "X4": "fa494b1611f407ba8a214f97b9847275fb575f98ec3f120944641cb16199ded2",
+      "CHECK": "15f69011b8e69b5517394e09847827ff33ef78f08df87e84a87e06ca3c1c37c3",
+      "ROLLBACK": "7417dbb03a0afc62ec3bbcdaf895c73b69b1b3d2e6d18d063536facbdcdc9d06",
+      "RESTORE": "62a21ca7b866ad477a8c7dd5921a7bbf5593afa94c6d3ef63181267c11583187"
+    },
+    "unchangedRegions": [
+      "CHECK",
+      "ROLLBACK",
+      "RESTORE"
+    ]
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 751,
+      "pass": 751,
+      "fail": 0
+    }
+  },
+  "rehearsal": "author 13 of 13 sections on the final regions, including a new section with the trading worker on the relative entry (switch pass, delayed check pass, pair rollback and in-run unwind back to the relative entry); tester rerun 13 of 13",
+  "reviews": [
+    {
+      "round": "fix r2 (D25)",
+      "role": "coder, Sonnet 5.5 / medium",
+      "verdict": "DONE",
+      "note": "751 unit tests, 13 of 13 new mutants killed (93 of 94 overall, one equivalent), rehearsal 13 of 13",
+      "path": ".qa-local/s6-staging-deploy-p4-build-2026-10-25/author-report.md",
+      "sha256": "5803c9ec6f510e2ffdb0371d23d8f79d3591163581b6608713af3e75c00b6e06"
+    },
+    {
+      "round": "fix r2",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "diff equals the two ruled lines; regenerated core equals a fresh assembly; 751 of 751, rehearsal 13 of 13, 70 of 70 independent tests, 15 of 17 mutants killed (2 equivalent)",
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/tester-p4-r3/tester-report.md",
+      "sha256": "0eae81a4da8d04096ec048220c60926b8722d00241299224aeb6790a4b0572bd"
+    }
+  ],
+  "payload": {
+    "basis": "fixture binding",
+    "ROLLBACKHeadroomBytes": 3023,
+    "note": "Root measures every mode on the real binding before GO-P4"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
