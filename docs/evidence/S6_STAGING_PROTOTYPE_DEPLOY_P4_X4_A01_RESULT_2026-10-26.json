@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_PROTOTYPE_DEPLOY_P4_X4_A01_RESULT_2026-10-26",
+  "recordedAt": "2026-10-26T04:18:05.959Z",
+  "packetId": "S6-STAGING-PROTO-DEPLOY-1",
+  "phase": "P4",
+  "jobKey": "x4",
+  "attemptId": "a01",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4_STOP_PRE_NO_EFFECT_GO_CONSUMED",
+  "ownerGo": "GO-P4 issued by Root under the owner authority of 2026-10-25T20:21Z (packet e8a18a90 GO-P4 line, pin ba1a433, bound 303 s, start clause for the trading worker, no 24-hour check, notAfter 2026-10-26T20:00:00Z); consumed by this attempt; a second attempt needs a new owner GO",
+  "jobId": "s6-p4-x4-a01-f1e37122ffd5fcbc89e129ac",
+  "buildEvidence": {
+    "path": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_BUILD_R3_2026-10-26.json",
+    "sha256": "121b1fa3c04a09cfe3971e5e21c1c428ae61d98edf2e309247dfa935cbae8cb1"
+  },
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-26T04:14:48.591Z",
+      "expiresAt": "2026-10-26T04:16:48.591Z"
+    },
+    "runnerEndedUtc": "2026-10-26T04:15:04.211Z",
+    "runnerElapsedMs": 1509,
+    "targetConnections": 1,
+    "transport": {
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "noRetry": true
+  },
+  "verdict": {
+    "verdict": "P4_STOP_PRE",
+    "code": "COLLECTION_UNKNOWN",
+    "stageReached": "BOUND",
+    "effectPhase": "PRE",
+    "outcome": "NONE",
+    "effects": null
+  },
+  "cause": "Root reproduced the host refusal locally on the sent bytes: the bound validation refused one served asset of the pinned P1 package (a 5.07 MB image) above the 4 MiB per-asset bound. The runner did not run that validation before its marker, so the refusal consumed the GO. The host stopped in its first stage, before any read of units or the database and before any record directory; staging is unchanged.",
+  "next": "Ruling D27: per-asset bound 8 MiB and the runner validates the bound before the marker (fix round 4); then a new owner GO-P4 for attempt a02, which lists a01 as its prior attempt.",
+  "linkage": {
+    "verifiedBy": "Root",
+    "receiptSha256": "71e3b9545204082b865090e1722a39783a7436055f031f05a8d404939907d413",
+    "envelopeSha256": "e5604a91390c7dd6166ade4d94b28e4fbd1bbca4312c42684d0a20a713d0bf90",
+    "manifestSha256": "e78c9f9aabd23239e39fa5c554c62f9fc9cb7bb2ef83c9990cd917abe3157fbd"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN",
+    "migration": "SET_A_FENCE_ON_STAGING (P3)",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE"
+  }
+}
