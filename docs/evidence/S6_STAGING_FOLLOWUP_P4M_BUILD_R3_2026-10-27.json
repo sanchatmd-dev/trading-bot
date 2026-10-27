@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_FOLLOWUP_P4M_BUILD_R3_2026-10-27",
+  "recordedAt": "2026-10-27T05:03:47.214Z",
+  "packetId": "S6-STAGING-PROTO-FOLLOWUP-1",
+  "phases": [
+    "P4M",
+    "RM"
+  ],
+  "jobs": [
+    "m1",
+    "m6",
+    "rm"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4M_RM_TOOLS_ACCEPTED_STREAM_ONLY_LOCAL_NOT_RUN",
+  "reason": "P4M m1 attempt a02 proved the market stream but could not prove the one fallback collector run and rolled back. The owner chose stream only. Ruling D40: from attempt a03, m1 starts the stream only, proves the collector service and timer stopped, and the delayed check m6 opens 600 seconds after the live proof. Ruling D41, from the audit of that change: the m1 gate refuses a stream whose start lists name the collector service or timer, and m1 may start only the stream (packet revision 9). Ruling D42 accepts the change with named residuals.",
+  "packet": {
+    "path": "docs/S6_STAGING_PROTOTYPE_FOLLOWUP_PACKET_2026-10-26.md",
+    "sha256": "ebc707c8e7b75602dbac80a325b5cae2bcb1d1b02d157e7d90615c60462d8c50"
+  },
+  "mainPacket": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "previous": {
+    "path": "docs/evidence/S6_STAGING_FOLLOWUP_P4M_BUILD_R2_2026-10-27.json",
+    "sha256": "90bf4a132928e9fd19c3ed9ef1a23901c664f62f2e4d483a653356bbd7097e66"
+  },
+  "rulings": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d40.md",
+      "sha256": "57ad3b31faecdccf305af174503d2ee94b0327b04933dd4153ecdbea3b8a21e4"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d41.md",
+      "sha256": "69e20a1a9bd2c65e82734636056cfb67cf2cdcc773e5e6373c2bfae330abcdc2"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d42.md",
+      "sha256": "01c891ae1304a676d83bc430646b125ee1865256195be400cc66a6191151fc00"
+    }
+  ],
+  "snapshot": {
+    "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/build-snapshot-p4m-r3/SHA256SUMS.root",
+    "sha256": "de3351fc7b375ebf987cdebbccab75d37d38466c67fcbf75233f52aceb74625d"
+  },
+  "closureTable": {
+    "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/build-snapshot-p4m-r3/closure-table.json",
+    "sha256": "eb9be9094259a14a07de7939daee837ae618f08c638686812e449cb2a0aef9a3"
+  },
+  "pins": {
+    "core": "b7633d73e40930d944b6fc20feb3ba1710091c1c9fc9b18f55abf62a996142f3",
+    "runner": "43cb8c31d54e2b229945a7e8cbf2713cf189843677b9d281f5931532e2966f1b",
+    "regions": {
+      "MARKET": "949ce7ddd182696dcf37ec26aaf5c478c65cf499834ed46f1905a0c2dd6de2e6",
+      "MARKET_CHECK": "ea17e310ca2577ae5e1c21bb79019b9733ef6cc653478708c2067fa8428ee701",
+      "MARKET_STOP": "37d0079378c85547ad66212c39eeef5d972045d8120d58bee7fa8b88e6ca92bc"
+    }
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 962,
+      "pass": 962,
+      "fail": 0
+    }
+  },
+  "reviews": [
+    {
+      "round": "fix D40",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "911 unit tests; 193 of 196 mutants killed (M09, M213, M214 equivalent); rehearsal passed"
+    },
+    {
+      "round": "fix D40",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "29 independent tests; 16 of 17 mutants killed (M3 equivalent)",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/tester-p4m-r6/tester-report.md",
+      "sha256": "cde6f7e5e5b72a384c1c9351ca8545fa289763163de5a8b269128ef0d2f6acb2"
+    },
+    {
+      "round": "fix D40",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "P2-1 a stream start could start the collector units (closed by ruling D41); P3 items closed by packet revision 9 or accepted",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/audit-p4m-r6.md",
+      "sha256": "b06b5d05503fc09f81d02e0414d11d12ecf77bc0c0a367b8a14b89228dad4f92"
+    },
+    {
+      "round": "fix D41",
+      "role": "coder, Sonnet 5.5 / medium",
+      "verdict": "DONE",
+      "note": "962 unit tests; 33 of 34 round mutants killed (M236 equivalent); rehearsal passed",
+      "path": ".qa-local/s6-staging-market-build-2026-10-26/author-report.md",
+      "sha256": "a944e0990b8f13503999e94acae01ac59112b5ff2cb75528df3fb66a8f43c5be"
+    },
+    {
+      "round": "fix D41",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "52 independent tests; 19 of 20 mutants killed (B3 equivalent)",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/tester-p4m-r7/tester-report.md",
+      "sha256": "ba3f82396364b8edc600bd61cdf8d82d38e00cfae293dde1d7a6882dd1db845f"
+    },
+    {
+      "round": "fix D41",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2; conditions C1 (m6 admission margin) and C2 (pull through a target) met by ruling D42",
+      "path": ".qa-local/s6-staging-market-restart-review-2026-10-26/audit-p4m-r7.md",
+      "sha256": "0774b211c790f27ed12f6bcfda793f9b16b0c72cc076a3c33047661824cad76d"
+    }
+  ],
+  "residuals": [
+    "The stream-only path is tested on the fake host, the unit suite and the rehearsal; the host print forms of a stream-only m1 are first seen at m1 a03.",
+    "A start of the collector units through a target is caught only by the immediate checks after readiness (ruling D42 C2); the a02 record shows none.",
+    "The worst-case time budgets still count the old collector and timer steps (wider only).",
+    "The GO-P4M wording omits mount units in the start lists and units in automatic restart in the rollback sentence; the packet body states both.",
+    "No fallback collector: a stream outage leaves a gap until the stream restarts and catches up, or a later packet starts the collector.",
+    "Older mutants keep their earlier results."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE",
+    "deployment": "NOT_RUN"
+  }
+}

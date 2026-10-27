@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_FOLLOWUP_P4M_M1_A02_RESULT_2026-10-27",
+  "recordedAt": "2026-10-27T04:30:39.195Z",
+  "packetId": "S6-STAGING-PROTO-FOLLOWUP-1",
+  "phase": "P4M",
+  "jobKey": "m1",
+  "attemptId": "a02",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4M_STOP_ROLLED_BACK_STREAM_PROVED_COLLECTOR_UNPROVED",
+  "authority": "Owner GO-P4M attempt a02 listing a01 as its prior attempt (pasted, byte-equal to the packet revision 7 line, notAfter 2026-10-27T20:00:00Z); consumed, no retry",
+  "jobId": "s6-p4m-m1-a02-d2c637703cac7f90b0b89d34",
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-27T02:03:36.060Z",
+      "expiresAt": "2026-10-27T02:05:36.060Z"
+    },
+    "hostStarted": "2026-10-27T02:03:53.412Z",
+    "hostEnded": "2026-10-27T02:05:34.631Z",
+    "targetConnections": 1,
+    "transport": {
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "noRetry": true
+  },
+  "verdict": {
+    "verdict": "P4M_STOP_ROLLED_BACK",
+    "code": "M_COLLECTOR_NOSTART",
+    "stage": "ROLLBACK",
+    "effectPhase": "DONE",
+    "outcome": "ROLLED_BACK",
+    "effects": {
+      "recordDir": "DONE",
+      "streamStart": "DONE",
+      "collectorRun": "STARTED_UNVERIFIED",
+      "timerStart": "NOT_ATTEMPTED",
+      "rbTimer": "SKIPPED_STOPPED",
+      "rbCollector": "SKIPPED_STOPPED",
+      "rbStream": "DONE"
+    }
+  },
+  "gate": {
+    "host": {
+      "systemdMajor": 255,
+      "clockSync": "yes",
+      "loginManager": "NO_KILL",
+      "jobsPending": 0,
+      "otherNeedReload": 0,
+      "livePayloadCount": 0
+    },
+    "production": {
+      "protectedEqual": true,
+      "protectedDigest": "b578933221da098a974c13ccc342b76c05284f66485eaa2c267221fe3af65ca1"
+    },
+    "database": {
+      "fence": "INSTALLED",
+      "gapPages": 14,
+      "queue": {
+        "queued": 0,
+        "processing": 0,
+        "waitingMarket": 0,
+        "liveMode": 0
+      },
+      "bridgeSwitch": {
+        "API": "1",
+        "TRADING": "1"
+      }
+    }
+  },
+  "market": {
+    "bars": {
+      "contiguous": true,
+      "wssRows": 1,
+      "catchUpMs": 30416,
+      "liveMs": 35288,
+      "gateMaxBar": "2026-10-17T12:28Z",
+      "latestBar": "2026-10-27T02:05Z"
+    },
+    "streamJournal": {
+      "kinds": {
+        "connected": 1,
+        "closed_bar_frozen": 1,
+        "catchup_failed": 0,
+        "stream_failed": 0,
+        "socket_error": 0,
+        "disconnected": 0
+      },
+      "summaryLines": 0
+    }
+  },
+  "rollback": {
+    "point": "COLLECTOR_RUN",
+    "labels": {
+      "timer": "STOPPED",
+      "collector": "STOPPED",
+      "stream": "STOPPED"
+    },
+    "jobs": "NONE"
+  },
+  "rootReview": "Root, 27 October 2026 (Bangkok): the gate passed in full, including the calendar timer accepted under ruling D38. The stream started, caught up the 14-page gap in 30 seconds and stored a live bar in 35 seconds; bars are contiguous from the m1 gate maximum. The one collector run was accepted without blocking, but its invocation did not change within 30 seconds, so the tool rolled back as designed: the stream was stopped and all three market units ended stopped and inactive with no job. Stored bars stay. Likely cause: a very short collector run whose unit systemd unloaded before the next read; a start skipped by a unit condition is not excluded. The owner chose stream only (ruling D40); ruling D41 added a gate rule so the stream start cannot pull in the collector. The retry is attempt a03 under a new owner GO.",
+  "linkage": {
+    "verifiedBy": "Root",
+    "receiptSha256": "7f52617ff10b39a846eddfd7dbed0796ca9a23dfb2a470be8645cf4bcc7b4f13",
+    "envelopeSha256": "942c9624753fb4018844742481bc3bd2bd57aebc0908ce704218e8d01ff3007e",
+    "manifestSha256": "3c68dcb242370e1d714a2ab379e8c55d16f822532fe8172dcbe78c66ef69e3c1",
+    "retainedSha256": "9960102930696c647e877108fedc42ac954ad9d255c9c746a3258e6de7aaf569"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "market stream started then stopped by the in-run rollback; no other unit",
+    "hostWrite": "record directory only; stored market bars appended by the stream"
+  }
+}
