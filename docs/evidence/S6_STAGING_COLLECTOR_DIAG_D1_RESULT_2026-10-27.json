@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_COLLECTOR_DIAG_D1_RESULT_2026-10-27",
+  "recordedAt": "2026-10-27T10:50:00.282Z",
+  "packetId": "S6-STAGING-COLLECTOR-DIAG-1",
+  "phase": "P4D",
+  "jobKey": "d1",
+  "attemptId": "a01",
+  "environment": "Staging QL-P2 Prototype",
+  "status": "DIAG_PASS_READING_KEY_H2",
+  "authority": "Owner GO-P4D attempt a01 (pasted, byte-equal to the packet revision 2 line, notAfter 2026-10-29T20:00:00Z); consumed, no retry",
+  "jobId": "s6-cd-d1-a01-2435008d16eceeca775a5738",
+  "attempt": {
+    "goWindow": {
+      "approvedAt": "2026-10-27T10:48:15.632Z",
+      "expiresAt": "2026-10-27T10:50:15.632Z"
+    },
+    "hostStarted": "2026-10-27T10:48:33.183Z",
+    "hostEnded": "2026-10-27T10:48:33.605Z",
+    "targetConnections": 1,
+    "transport": {
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "noRetry": true
+  },
+  "verdict": {
+    "local": "DIAG_PASS",
+    "host": "DIAG_COLLECTED",
+    "code": null,
+    "reads": {
+      "R1": "DONE",
+      "R2": "DONE",
+      "R3": "DONE",
+      "R6": "DONE",
+      "R7": "DONE",
+      "S": "DONE",
+      "G": "DONE"
+    },
+    "effects": {
+      "recordDir": "DONE"
+    }
+  },
+  "readingKey": {
+    "label": "H2",
+    "strength": null,
+    "rule": "K6a",
+    "flags": {
+      "streamFinding": false,
+      "subPoll": true
+    },
+    "ruleVersion": 2,
+    "readingKeySha256": "3809d85cb19661d9a013ed2b9bb2da143cb46bece21374551deda56fdd1c8818",
+    "window": {
+      "startLoMs": 64704,
+      "startHiMs": 72219,
+      "endOffsetMs": 101219
+    }
+  },
+  "facts": {
+    "loadedNow": {
+      "stream": true,
+      "collector": false,
+      "timer": false
+    },
+    "bootSameAsA02": true,
+    "collectorJournal": {
+      "entries": 2,
+      "truncated": false,
+      "lastOffsetMs": 71092,
+      "groups": [
+        {
+          "g": 1,
+          "firstOffsetMs": 70647,
+          "priorToStart": false,
+          "entries": 2,
+          "managerEntries": 1,
+          "processEntries": 1,
+          "summaryLines": 1
+        }
+      ],
+      "noneGroup": {
+        "entries": 0,
+        "managerEntries": 0,
+        "processEntries": 0
+      },
+      "entriesOfRunGroup": [
+        {
+          "src": "M",
+          "g": 1,
+          "o": 70647,
+          "mid": "39f53479d3a045ac8e11786248231fbf",
+          "jt": "start",
+          "jr": "done",
+          "ur": null,
+          "ec": null,
+          "es": null,
+          "sk": false
+        },
+        {
+          "src": "P",
+          "g": 1,
+          "o": 71092,
+          "mid": "NONE",
+          "jt": null,
+          "jr": null,
+          "ur": null,
+          "ec": null,
+          "es": null,
+          "sk": null
+        }
+      ]
+    },
+    "streamControl": {
+      "sameScope": true,
+      "truncated": false,
+      "a02Period": {
+        "processEntries": 2,
+        "managerEntries": 4
+      }
+    },
+    "collectorNow": {
+      "loadState": "loaded",
+      "cls": "INACTIVE",
+      "job": "NONE",
+      "invocationEmpty": true,
+      "collectMode": "inactive",
+      "type": "simple",
+      "unitFileState": "static",
+      "wantedByCount": 0,
+      "triggeredByCount": 0
+    },
+    "timerNow": {
+      "loadState": "loaded",
+      "cls": "INACTIVE",
+      "job": "NONE",
+      "unitFileState": "static"
+    },
+    "stream": {
+      "cls": "RUNNING",
+      "sameProcessAsA03": true,
+      "nRestartsDelta": 0,
+      "marketKinds": {
+        "connected": 0,
+        "closed_bar_frozen": 320,
+        "catchup_failed": 0,
+        "stream_failed": 0,
+        "socket_error": 0,
+        "disconnected": 0
+      },
+      "processInvocationGroups": 1
+    },
+    "gateUnits": {
+      "classes": {
+        "stream": "RUNNING",
+        "collector": "INACTIVE",
+        "timer": "INACTIVE"
+      },
+      "stopped": {
+        "collector": true,
+        "timer": true
+      },
+      "pairUnchanged": true,
+      "research": "STOPPED",
+      "protectedEqual": true
+    }
+  },
+  "rootReview": "Root, 27 October 2026 (Bangkok): the job ran once, read only, in under a second, and every read finished. The fallback collector did run in P4M attempt a02: about 70.6 seconds after the a02 host start (inside the collector start window of 64.7 to 72.2 seconds), systemd logged the start job as done with a new invocation, and the collector printed its summary line about 0.45 seconds later. No failure, skip or later run follows. Today the collector service and timer are not held loaded, the state read shows a fresh load with no invocation ID, nothing wants or triggers the service, and the boot is the same as at a02. The stream journal control shows that the a02 period is retained and the manager entries are visible. Reading key: H2 (rule K6a, flag subPoll): the run succeeded and systemd then unloaded the unreferenced unit, so the a02 proof rule, which needed a changed invocation ID, could not see it. Decision: before the collector service and timer start again, a later packet replaces the run proof (a journal run proof bounded after the start, or a bounded blocking start that keeps a reference until the run ends) and gives the delayed timer-run check the same change. The stream snapshot shows the market stream running as the same process as at a03, with no restart, 320 closed bars since the a03 live proof and no failure kinds.",
+  "linkage": {
+    "verifiedBy": "Root",
+    "receiptSha256": "5913a4b333dac2c3302a8ecab660de83dd0dafcd1583dd542ffbfccc761b2ec0",
+    "envelopeSha256": "439a0c07c9aacaa4704c35d74045938e48bcd3863902a8e2b03f0b96aeadfcb2",
+    "manifestSha256": "e54d76da158b92ceb5c065d71e07843bc375becb46ded733c33c193c2c434b5b",
+    "retainedSha256": "05ef59a4b88ced2a927e6301f54017de081fd113177cc1ec8122cfac3f08b190"
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "NONE",
+    "hostWrite": "one record directory"
+  }
+}
