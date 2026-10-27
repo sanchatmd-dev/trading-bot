@@ -934,7 +934,10 @@ const qr2CoveragePairs=[
   ['Gap intervals','จำนวนช่วงช่องว่าง'],
   ['Gap interval list, count:','รายการช่วงช่องว่าง จำนวน:'],
   ['Each row: start - end : missing minutes. Start inclusive, end exclusive.','แต่ละแถว: เริ่ม - สิ้นสุด : จำนวนนาทีที่ขาดหาย รวมเวลาเริ่มต้น ไม่รวมเวลาปลายช่วง'],
-  ['Accounts using this coverage','บัญชีที่ใช้ความครอบคลุมนี้']
+  ['Accounts using this coverage','บัญชีที่ใช้ความครอบคลุมนี้'],
+  ['The chosen range is too long for the performance report (the limit is about 15 days of market data). A shorter range, for example Week or a Custom range, should work.','ช่วงที่เลือกยาวเกินไปสำหรับรายงานผลการดำเนินงาน (ขีดจำกัดคือข้อมูลตลาดประมาณ 15 วัน) ลองเลือกช่วงที่สั้นลง เช่น สัปดาห์ หรือช่วงกำหนดเอง ก็น่าจะใช้ได้'],
+  ['The chosen range is too long for the performance report (the limit is 30 days). A shorter range, for example Week or a Custom range, should work.','ช่วงที่เลือกยาวเกินไปสำหรับรายงานผลการดำเนินงาน (ขีดจำกัดคือ 30 วัน) ลองเลือกช่วงที่สั้นลง เช่น สัปดาห์ หรือช่วงกำหนดเอง ก็น่าจะใช้ได้'],
+  ['The chosen range is too long for the performance report (a report size limit was reached). A shorter range, for example Week or a Custom range, should work.','ช่วงที่เลือกยาวเกินไปสำหรับรายงานผลการดำเนินงาน (ถึงขีดจำกัดขนาดรายงานแล้ว) ลองเลือกช่วงที่สั้นลง เช่น สัปดาห์ หรือช่วงกำหนดเอง ก็น่าจะใช้ได้']
 ];
 uiPairs.push(...qr2CoveragePairs);
 uiPairs.push(...pfrPairs);for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}

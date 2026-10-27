@@ -350,6 +350,16 @@
   function authenticationFailed() {
     clearSession(); button.disabled = true; message('Sign in to view Paper history.');
   }
+  // A 422 range refusal tells the person what to change. The limit is named in plain words only when it is known.
+  function rangeHint(limit) {
+    const known = {
+      timestamp_rows: 'The chosen range is too long for the performance report (the limit is about 15 days of market data). A shorter range, for example Week or a Custom range, should work.',
+      union_minutes: 'The chosen range is too long for the performance report (the limit is 30 days). A shorter range, for example Week or a Custom range, should work.'
+    };
+    const hint = document.createElement('p');
+    hint.append(label(Object.hasOwn(known, limit) ? known[limit] : 'The chosen range is too long for the performance report (a report size limit was reached). A shorter range, for example Week or a Custom range, should work.'));
+    return hint;
+  }
   async function submit(event) {
     event.preventDefault();
     invalidate();
@@ -391,6 +401,7 @@
         const retry = response.headers.get('Retry-After');
         message(response.status === 404 ? 'Paper performance endpoint or scope unavailable.' : response.status === 401 ? 'Sign in to view Paper history.' : retry || response.status === 429 ? 'Request unavailable. Retry manually later.' : 'Paper performance request refused.',
           ['HTTP ' + response.status, body?.code, retry ? 'Retry-After: ' + retry : ''].filter(Boolean).join(' · '));
+        if (response.status === 422 && body?.code === 'QR2_RANGE_ADMISSION_REFUSED') result.append(rangeHint(body.detail?.limit));
         if (body?.detail) result.append(serverValue(body.detail));
         return;
       }

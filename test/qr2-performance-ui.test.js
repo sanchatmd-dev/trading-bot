@@ -87,7 +87,7 @@ function staticI18n(){
 
 test('A13 qr2CoveragePairs is collision-free (static, before any page render)',()=>{
   const {mine,problems}=staticI18n();
-  assert.equal(mine.length,29);
+  assert.equal(mine.length,32);
   assert.deepEqual(problems,[],'no duplicate, no EN/TH collision with an existing text, no em dash, currency or market token');
 });
 
@@ -224,6 +224,56 @@ test('pending, endpoint 404, request refusal and Retry-After replace prior finan
     }
     assert.match(p.get('ppStatus').textContent+p.text(),/2/,'retry seconds are visible');
   }finally{pending.resolve(ok(fixture.bot));p.close();}
+});
+
+test('422 range admission refusal adds a plain range hint; other statuses and limits add none',async()=>{
+  const refusal=(status,detail)=>({status,body:{code:'QR2_RANGE_ADMISSION_REFUSED',error:'The request is over a limit',detail}});
+  const cases=[
+    [refusal(422,{limit:'timestamp_rows',value:30000,max:21600}),/too long for the performance report/,/about 15 days of market data/],
+    [refusal(422,{limit:'union_minutes',value:50000,max:43200}),/too long for the performance report/,/the limit is 30 days/],
+    [refusal(422,{limit:'unique_windows',value:9,max:8}),/too long for the performance report/,/a report size limit/],
+    [refusal(422,{limit:'coverage_output_bytes',max:1000}),/too long for the performance report/,/a report size limit/],
+    [refusal(422,undefined),/too long for the performance report/,/a report size limit/]
+  ];
+  let next=ok(fixture.bot);
+  for(const scope of ['bot','owner']){
+    const p=setup({answer:()=>next});
+    try{
+      await p.boot();p.change('ppScope',scope);
+      for(const [response,generic,named] of cases){
+        next=response;await p.load();
+        const status=p.get('ppStatus').textContent;
+        assert.match(status,/Paper performance request refused\./);
+        assert.ok(status.includes('HTTP 422')&&status.includes('QR2_RANGE_ADMISSION_REFUSED'),'status line keeps status and code');
+        assert.match(p.text(),generic);assert.match(p.text(),named);
+        assert.match(p.text(),/shorter range, for example Week or a Custom range/);
+        if(response.body.detail)assert.ok(p.text().includes(response.body.detail.limit),'detail list stays');
+      }
+      for(const response of [fixture.refused,fixture.retry,refusal(500,{limit:'timestamp_rows',max:1}),{status:422,body:{code:'OTHER',detail:{limit:'timestamp_rows'}}}]){
+        next=response;await p.load();
+        assert.doesNotMatch(p.text(),/too long for the performance report/,'no hint for '+response.status+' '+response.body.code);
+        assert.ok(p.get('ppStatus').textContent.includes('HTTP '+response.status));
+      }
+    }finally{p.close();}
+  }
+});
+
+test('422 range admission hint is shown in Thai with the Thai pair for each limit',async()=>{
+  const refusal=detail=>({status:422,body:{code:'QR2_RANGE_ADMISSION_REFUSED',error:'The request is over a limit',detail}});
+  const cases=[[{limit:'timestamp_rows',max:21600},RANGE_HINTS[0],'ข้อมูลตลาดประมาณ 15 วัน'],[{limit:'union_minutes',max:43200},RANGE_HINTS[1],'ขีดจำกัดคือ 30 วัน'],[{limit:'unique_windows',max:8},RANGE_HINTS[2],'ขีดจำกัดขนาดรายงาน'],[undefined,RANGE_HINTS[2],'ขีดจำกัดขนาดรายงาน']];
+  let next=ok(fixture.bot);
+  const p=setup({language:'th',answer:()=>next});
+  try{
+    await p.boot();
+    for(const [detail,english,fragment] of cases){
+      next=refusal(detail);await p.load();
+      const text=p.text();
+      assert.ok(text.includes(thOf(p,english)),'Thai hint shown for '+(detail?.limit??'no detail'));
+      assert.ok(text.includes(fragment));
+      assert.ok(text.includes('15 วัน')||text.includes('30 วัน')||text.includes('ขนาดรายงาน'));
+      assert.ok(!text.includes(english),'English hint is not left untranslated');
+    }
+  }finally{p.close();}
 });
 
 test('selection change immediately invalidates pending and completed responses; late response cannot reappear',async()=>{
@@ -525,7 +575,8 @@ const EN={
   list:'Gap interval list, count:',
   caption:'Each row: start - end : missing minutes. Start inclusive, end exclusive.'
 };
-const newEnglish=[EN.heading,...EN.notices,EN.owner,EN.absent,EN.unresolved,...Object.values(EN.klass),'Inspection result','State code','Reason code','Timeframe (minutes)','Coverage range','Inspected window','Excluded partial candles','Expected minutes','Stored minutes','Missing minutes','Gap intervals',EN.list,EN.caption,'Accounts using this coverage'];
+const RANGE_HINTS=["The chosen range is too long for the performance report (the limit is about 15 days of market data). A shorter range, for example Week or a Custom range, should work.","The chosen range is too long for the performance report (the limit is 30 days). A shorter range, for example Week or a Custom range, should work.","The chosen range is too long for the performance report (a report size limit was reached). A shorter range, for example Week or a Custom range, should work."];
+const newEnglish=[EN.heading,...EN.notices,EN.owner,EN.absent,EN.unresolved,...Object.values(EN.klass),'Inspection result','State code','Reason code','Timeframe (minutes)','Coverage range','Inspected window','Excluded partial candles','Expected minutes','Stored minutes','Missing minutes','Gap intervals',EN.list,EN.caption,'Accounts using this coverage',...RANGE_HINTS];
 const reusedEnglish=['Market','Broker','Symbol','From','To','Reason','None','Bot'];
 const timeForm=value=>String(value)+' ('+new Date(value).toISOString()+')';
 const intervalForm=item=>timeForm(item.from)+' - '+timeForm(item.to)+' : '+String(item.missing_minutes);
