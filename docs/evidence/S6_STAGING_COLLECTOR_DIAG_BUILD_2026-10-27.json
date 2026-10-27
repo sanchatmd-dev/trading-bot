@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_COLLECTOR_DIAG_BUILD_2026-10-27",
+  "recordedAt": "2026-10-27T10:04:44.421Z",
+  "packetId": "S6-STAGING-COLLECTOR-DIAG-1",
+  "phases": [
+    "P4D"
+  ],
+  "jobs": [
+    "d1"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4D_TOOL_ACCEPTED_LOCAL_NOT_RUN",
+  "reason": "P4M m1 attempt a02 could not prove its one fallback collector run (M_COLLECTOR_NOSTART): the tool counted a run only when the unit invocation ID changed, and an unloaded unit reads with an empty ID before and after a short run. This read-only job (ruling D43) returns closed-label facts from systemd and its journal about that start; Root classifies the cause locally with a fixed reading key. The tool is a separate family copied by value from the accepted P4M tool (snapshot r3), which stays unchanged.",
+  "packet": {
+    "path": "docs/S6_STAGING_COLLECTOR_DIAG_PACKET_2026-10-27.md",
+    "sha256": "a4122d1c4d5f71f5260ea814e221de9ca09c613b00debbdb6831bc1b778812cd"
+  },
+  "mainPacket": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "rulings": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d43.md",
+      "sha256": "500db94b4739c4f98734213d715f31b98efc7e17da8dd1c341f9cf8032c212a1"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d44.md",
+      "sha256": "12118d95937c35d1b9a5a6b1ecd81d5b998bd39c513dcb765110c9e92992a024"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d45.md",
+      "sha256": "5b50c58d956d2813455641ec04ae95cdf00c9bf3d85c178b07f54c88b5818760"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d46.md",
+      "sha256": "3245c75d87d5dc3d189bc339d19d9ce86936e4340a76ae01ec80ca6757280ec3"
+    }
+  ],
+  "snapshot": {
+    "path": ".qa-local/s6-staging-collector-diag-review-2026-10-27/build-snapshot-d1-r1/SHA256SUMS.root",
+    "sha256": "620ea8ced1485021ece5efd099721173af367614b0db71464b30c27cc224356f"
+  },
+  "pins": {
+    "core": "5346a2b884a1949455096a86244173f1cee552452d3792166164dea46d548e84",
+    "runner": "109075bbb768106976803d6863ca9f37d5da1d6848116763e4bba37fed26b151",
+    "regions": {
+      "COLLECTOR_DIAG": "0eb28a2fd1f70da7a02d3b6af27b6e8863e4086db8896702ac9bc64cf3126c66"
+    },
+    "readingKey": "3809d85cb19661d9a013ed2b9bb2da143cb46bece21374551deda56fdd1c8818"
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 365,
+      "pass": 365,
+      "fail": 0
+    }
+  },
+  "reviews": [
+    {
+      "round": "design",
+      "role": "designer, Opus 5.5 / high (Fable substitute)",
+      "verdict": "SPEC_R1_AND_R2",
+      "path": ".qa-local/s6-staging-collector-diag-review-2026-10-27/collector-diag-spec-r2.md",
+      "sha256": "9905e4b01033a5074e9fc17a2d83b27913b3f726736a71bb2464305ab465c9db"
+    },
+    {
+      "round": "design",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "spec r2 re-review; conditions set as build conditions by ruling D44",
+      "path": ".qa-local/s6-staging-collector-diag-review-2026-10-27/collector-diag-spec-r2-review.md",
+      "sha256": "8168d08b90c3832b4823422c09fe10ef203f4f6fe0940da089c1a516a447af6c"
+    },
+    {
+      "round": "build",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "348 unit tests; 71 of 71 mutants killed; bash rehearsal passed"
+    },
+    {
+      "round": "build",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "143 independent tests; 33 of 34 mutants killed (M31 equivalent)",
+      "path": ".qa-local/s6-staging-collector-diag-review-2026-10-27/tester-d1/tester-report.md",
+      "sha256": "4c1ebf549bb4b2b4cd86f11da5bd0dcd66fc750219c90335c6c200f531b786fe"
+    },
+    {
+      "round": "build",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "P2: packet named a journal persistence check the tool does not run (closed by packet revision 2, ruling D45)",
+      "path": ".qa-local/s6-staging-collector-diag-review-2026-10-27/audit-d1.md",
+      "sha256": "28b185137a22e8e5b300ec2f9f0b8a6aadac19dd88a920e135458aa5df54f2e5"
+    },
+    {
+      "round": "build",
+      "role": "second-opinion reviewer, Opus 5.5 / high (Fable substitute)",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1; the same P2 and an H2 key hardening (ruling D45)",
+      "path": ".qa-local/s6-staging-collector-diag-review-2026-10-27/second-opinion-d1.md",
+      "sha256": "5abb85616c5070799572a6b9f52d09147fa08f9d01601db1520e45164ee3ee5d"
+    },
+    {
+      "round": "fix D45",
+      "role": "coder, Sonnet 5.5 / medium",
+      "verdict": "DONE",
+      "note": "365 unit tests; 80 of 80 mutants killed; rehearsal passed",
+      "path": ".qa-local/s6-staging-collector-diag-build-2026-10-27/author-report.md",
+      "sha256": "18db52d25820d15ec0a1bdd74b78dce7bf62c2c3d224ee55b0860727281813db"
+    },
+    {
+      "round": "fix D45",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "46 independent tests; 27 of 27 mutants killed",
+      "path": ".qa-local/s6-staging-collector-diag-review-2026-10-27/tester-d1-r2/tester-report.md",
+      "sha256": "6b5491c2b5e0669d8e4ebde268883844fc76d03d6733a6b45aff5590a1168a62"
+    },
+    {
+      "round": "fix D45",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO",
+      "note": "no P1 or P2; packet revision 2 matches the code",
+      "path": ".qa-local/s6-staging-collector-diag-review-2026-10-27/audit-d1-r2.md",
+      "sha256": "2a324cf93f8548d77343a75c4e6e7494ea68065a6d02fd0f8d499163fb096562"
+    }
+  ],
+  "residuals": [
+    "The systemd 255 and Node 24 behaviours the fixtures pin come from knowledge, not host observation; the job returns IDs and words verbatim, so a difference changes only Root's reading key.",
+    "If the journal no longer holds the a02 period, or the reading user cannot see the manager's entries, the result is inconclusive by design.",
+    "The show reads load the collector service, its timer and the stopped research worker for a moment; R1 runs before any show.",
+    "In user scope a same-user process could write an entry that looks like a manager entry; the output stays inside the closed schema.",
+    "The packet's reading-key summary is shorter than the full key; the key file is pinned in this record.",
+    "The admission and host gate refuse a run after 2026-11-10T01:53:52Z."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE",
+    "deployment": "NOT_RUN"
+  }
+}
