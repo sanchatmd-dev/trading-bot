@@ -1,4 +1,5 @@
 import {planCoverage,buildCoverageSnapshot,admitCoverageRows,coverageRowCapacity,coverageError} from '../portfolio/qr2-coverage-snapshot.js';
+import {Qr2Error} from '../portfolio/qr2-constants.js';
 
 export const COVERAGE_SQL=Object.freeze({
   ISOLATION:'SHOW transaction_isolation',
@@ -14,14 +15,24 @@ export function decodeCoverageTimestamp(text){
 }
 function rowsOf(result,limit){
   if(!result||!Array.isArray(result.rows))failed();
-  if(result.rows.length>limit)throw coverageError('QR2_RANGE_ADMISSION_REFUSED');
+  // A driver result over its own LIMIT is a corrupt result, not a request range: 503. Only the timestamp sentinel below is a range refusal.
+  if(result.rows.length>limit)failed();
   return result.rows;
 }
 /** Requires a verified caller-owned transaction; never starts a transaction, retries or publishes partial success.
  * Pass schedule: one strict union decode here; one union validation and per-window derivation in construction.
  * A caller may perform at most one independent final registry validation for this invocation.
  */
-export async function readCoverageSnapshot({transaction,accounts,budgets}){
+export async function readCoverageSnapshot(args){
+  try{return await readCoverageSnapshotUnchecked(args);}
+  catch(error){
+    // Reader path only: a range over a read limit is a request refusal (contract 10, 422 QR2_RANGE_ADMISSION_REFUSED with the limit). Every other
+    // error keeps its plain-Error form and answers 503. The worker path never calls this function and keeps its own mapping (Stage 3B).
+    if(error?.code==='QR2_RANGE_ADMISSION_REFUSED'&&!(error instanceof Qr2Error))throw Object.assign(new Qr2Error('QR2_RANGE_ADMISSION_REFUSED'),error.detail!==undefined?{detail:error.detail}:{});
+    throw error;
+  }
+}
+async function readCoverageSnapshotUnchecked({transaction,accounts,budgets}){
   const plan=planCoverage({accounts,budgets});
   if(transaction?.isTransaction!==true||typeof transaction.query!=='function')failed();
   try{
@@ -38,10 +49,10 @@ export async function readCoverageSnapshot({transaction,accounts,budgets}){
     const facts=[];let total=0;
     for(const union of plan.unions){
       const remaining=retainedCapacity-total;
-      if(remaining===Number.MAX_SAFE_INTEGER)throw coverageError('QR2_RANGE_ADMISSION_REFUSED');
+      if(remaining===Number.MAX_SAFE_INTEGER)failed();
       const limit=remaining+1;
       const rows=rowsOf(await transaction.query(COVERAGE_SQL.ROWS,[union.market.broker,union.market.symbol,union.market.timeframe,union.window.from,union.window.to,limit]),limit);
-      if(rows.length>remaining)throw coverageError('QR2_RANGE_ADMISSION_REFUSED');
+      if(rows.length>remaining)throw coverageError('QR2_RANGE_ADMISSION_REFUSED',{limit:'timestamp_rows',max:retainedCapacity});
       admitCoverageRows({accounts,budgets,rowCount:total+rows.length});
       const timestamps=[];let previous=union.window.from;
       for(let i=0;i<rows.length;i++){

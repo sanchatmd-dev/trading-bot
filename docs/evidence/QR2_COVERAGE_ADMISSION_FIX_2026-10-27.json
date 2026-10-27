@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "id": "QR2_COVERAGE_ADMISSION_FIX_2026-10-27",
+  "recordedAt": "2026-10-27T12:42:29.918Z",
+  "status": "LOCAL_FIX_ACCEPTED_NOT_DEPLOYED",
+  "problem": "On staging the QR-2 per-Bot panel answered 503 QR2_REPORT_FAILED when a report range held more stored bars than the coverage read row cap (timestamp_rows 21600) or spanned more than the union_minutes cap (43200). The coverage modules throw a plain Error, which the routes map to 503; the contract (QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md line 440) refuses a request over a read limit with 422 QR2_RANGE_ADMISSION_REFUSED and the limit in the detail.",
+  "change": "Reader path only: readCoverageSnapshot converts a coverage read-limit refusal into a Qr2Error with detail {limit, value?, max}, which both the per-Bot and owner routes answer 422. The coverage modules still throw plain Error, so the worker path keeps its Stage 3B mapping (503 for a planCoverage overflow on an admitted context). A driver result over its own LIMIT is a corrupt result and answers 503. No limit value, response shape, worker, route or UI file changed.",
+  "files": [
+    {
+      "path": "src/portfolio/qr2-coverage-snapshot.js",
+      "sha256": "caa1068b8238df73f7a7a2ed5969ed3e2a48cb78212f45a51a9d363a5c1af146"
+    },
+    {
+      "path": "src/postgres/qr2-coverage-reader.js",
+      "sha256": "2e79741c22a48967a536fd89c025977b6cad384bec12d99ebb7ef253617b4982"
+    },
+    {
+      "path": "test/qr2-coverage-admission.test.js",
+      "sha256": "6580223799813c85e16545ec03eaaada3ee9885e6750d86df7b64319cf515f38"
+    },
+    {
+      "path": "test/postgres/qr2-coverage-admission.test.mjs",
+      "sha256": "79d72dd43ee9f129287f392674273ba81a6a4fa60e74ff17fb674e831e1e5857"
+    }
+  ],
+  "stage3bAmendment": {
+    "packet": {
+      "path": "docs/QR2_S5_4_STAGE3B_RESPONSE_WIRING_PACKET_2026-10-24.md",
+      "sha256": "e68f6276e7e4f3239f378ca83aebfce5370376b0a12d64039fcd9650f1bf8c04"
+    },
+    "row": 221,
+    "packetUnchanged": true,
+    "note": "The accepted Stage 3B packet stays byte-equal (it is pinned by hash in its evidence). This record amends row 221 by reference: the row now applies only to a planCoverage overflow inside the worker (registry validation or projection of a context the reader already admitted; a corrupt context: kind other, 503 on both routes). A new reader-path row applies to a range over a coverage read limit at the reader (planCoverage span, windows or byte envelope; the timestamp_rows sentinel; derivation, interval or byte caps while building): QR2_RANGE_ADMISSION_REFUSED converted at the reader boundary to a Qr2Error with detail {limit, value?, max}; worker not reached; 422 with detail on both routes (contract section 8.1 read budget, line 440). A driver result over its LIMIT answers 503 QR2_REPORT_FAILED."
+  },
+  "tests": {
+    "rootUnit": {
+      "tests": 372,
+      "pass": 370,
+      "fail": 0,
+      "skipped": 0,
+      "todo": 2,
+      "scope": "test/qr2-*.test.js, node --test --test-isolation=none, under the machine lock"
+    },
+    "coderUnit": "whole non-PostgreSQL suite 3120 tests, 0 fail (round 1); test/qr2-*.test.js 372 tests, 370 pass, 0 fail, 2 skipped (round 2)",
+    "coderPostgres": "14 test/postgres/qr2-*.test.mjs files on a throwaway PostgreSQL 16 cluster, 111 of 111 pass (rounds 1 and 2)",
+    "testerPostgres": "7 qr2 PostgreSQL files, 72 of 72 pass (round 2)",
+    "ci": "checked on the pushed commit (GitHub check runs)"
+  },
+  "reviews": [
+    {
+      "round": 1,
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE"
+    },
+    {
+      "round": 1,
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "6 of 6 mutants killed",
+      "path": ".qa-local/qr2-coverage-fix-2026-10-27/tester/report.md",
+      "sha256": "576830200ce136e40dd58006332a103ff6097f8bb346f7175f90c7b493f1b670"
+    },
+    {
+      "round": 1,
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2; P3-1 and P3-3 fixed in round 2; P3-2 and P3-4 recorded",
+      "path": ".qa-local/qr2-coverage-fix-2026-10-27/audit.md",
+      "sha256": "12920adf7ae7035871c57767144a8afdfb3bfe8df88270a5b1e0de9cabd72daa"
+    },
+    {
+      "round": 2,
+      "role": "coder, Sonnet 5.5 / medium",
+      "verdict": "DONE"
+    },
+    {
+      "round": 2,
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "2 of 2 mutants killed; report returned as text (no report file), run logs kept locally",
+      "path": ".qa-local/qr2-coverage-fix-2026-10-27/tester2/js-run.txt",
+      "sha256": "08fbad99a7ed690403c6b53f66233accd717a726bcda68611dfddf83da1652ca"
+    }
+  ],
+  "residuals": [
+    "The panel still refuses Month and long Custom ranges (now with a clear 422 and the limit) and All Time for Bots older than 30 days; making them succeed needs budget changes with re-measurement under an owner GO, or a coverage design change (budget memo).",
+    "If a later budget change raises timestamp_rows above about 30,600, the byte bound binds first and the sentinel detail would name timestamp_rows with a lower max (audit P3-2).",
+    "The panel shows the 422 code and the raw limit name; a friendlier hint to choose a shorter range is a separate UI task.",
+    "Not deployed: staging still runs the pinned pair ba1a433; deployment needs a new pin and its own packet and owner GO."
+  ],
+  "budgetMemo": {
+    "path": ".qa-local/qr2-coverage-fix-2026-10-27/budget-memo.md",
+    "sha256": "07f87c1361d984fcd51eec33816b8b40aee1c304607f9a82db66970dabba8deb",
+    "summary": "Month and Custom ranges up to 31 days fit with union_minutes 44640, timestamp_rows 44640, coverage_input_bytes 1048576 and (owner route) derivation_visits 250000, after a new measurement cell, the combined C3 measurement and a staging re-measure under an owner GO. All Time needs run-length coverage or degrading coverage to UNAVAILABLE (a contract change for the owner)."
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN"
+  }
+}

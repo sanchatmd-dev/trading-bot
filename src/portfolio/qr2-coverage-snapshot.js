@@ -4,14 +4,16 @@ export const COVERAGE_SNAPSHOT_VERSION='qr2-coverage-snapshot-v1';
 export const COVERAGE_BUDGET_KEYS=Object.freeze(['union_minutes','timestamp_rows','unique_windows','derivation_visits','output_intervals','coverage_input_bytes','coverage_output_bytes']);
 const MAX=Number.MAX_SAFE_INTEGER,M=60000;
 const CHARGES=['union_minutes','timestamp_rows','unique_windows','derivation_visits','output_intervals','input_bytes_upper_bound','output_bytes_upper_bound'];
-export function coverageError(code){const error=new Error(code);error.code=code;return error;}
-const fail=code=>{throw coverageError(code);};
+// The error stays a plain Error: the worker path relies on that (Stage 3B). An optional detail {limit,value,max} names the limit that refused the read;
+// only the reader boundary (qr2-coverage-reader.js) turns a refusal with its detail into a Qr2Error that the routes answer as 422.
+export function coverageError(code,detail){const error=new Error(code);error.code=code;if(detail!==undefined)error.detail=detail;return error;}
+const fail=(code,detail)=>{throw coverageError(code,detail);};
 const input=condition=>{if(!condition)fail('QR2_INPUT_INVALID');};
 const report=condition=>{if(!condition)fail('QR2_REPORT_FAILED');};
 const safe=n=>Number.isSafeInteger(n)&&n>=0;
 function add(a,b){const n=BigInt(a)+BigInt(b);if(n>BigInt(MAX))fail('QR2_RANGE_ADMISSION_REFUSED');return Number(n);}
 function multiply(a,b){const n=BigInt(a)*BigInt(b);if(n>BigInt(MAX))fail('QR2_RANGE_ADMISSION_REFUSED');return Number(n);}
-function cap(n,limit){if(n>limit)fail('QR2_RANGE_ADMISSION_REFUSED');return n;}
+function cap(n,limit,name){if(n>limit)fail('QR2_RANGE_ADMISSION_REFUSED',name===undefined?undefined:{limit:name,value:n,max:limit});return n;}
 function shape(value,names,check=input){
   check(value!==null&&typeof value==='object'&&!Array.isArray(value)&&(Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null));
   check(Reflect.ownKeys(value).length===names.length&&names.every(k=>Object.hasOwn(value,k)));
@@ -69,7 +71,7 @@ function makePlan(accounts,budgets){
   }
   const distinct=[];
   for(const account of normalized)if(!distinct.some(w=>marketKey(w.market)===marketKey(account.market)&&sameRange(w.resolved_range,account.resolved_range)))distinct.push({market:account.market,resolved_range:account.resolved_range});
-  cap(distinct.length,budgets.unique_windows);
+  cap(distinct.length,budgets.unique_windows,'unique_windows');
   distinct.sort((a,b)=>cmp(marketKey(a.market),marketKey(b.market))||rangeCompare(a.resolved_range,b.resolved_range));
   const windows=distinct.map((w,id)=>({id,...w,union_id:null}));
   const candidates=windows.map(w=>({id:w.id,market:w.market,window:domain(w.resolved_range,w.market).inspected_window})).filter(w=>w.market!==null&&w.window!==null);
@@ -82,7 +84,7 @@ function makePlan(accounts,budgets){
     windows[item.id].union_id=union.id;
   }
   const bindings=normalized.map(a=>({bot_id:a.bot_id,broker:a.broker,window_id:windows.find(w=>marketKey(w.market)===marketKey(a.market)&&sameRange(w.resolved_range,a.resolved_range)).id})).sort((a,b)=>cmp(a.bot_id,b.bot_id)||cmp(a.broker,b.broker));
-  let minutes=0;for(const union of unions)minutes=add(minutes,(union.window.to-union.window.from)/M);cap(minutes,budgets.union_minutes);
+  let minutes=0;for(const union of unions)minutes=add(minutes,(union.window.to-union.window.from)/M);cap(minutes,budgets.union_minutes,'union_minutes');
   return {unions,windows,bindings};
 }
 const fields=(w,counts)=>({...w,start_index:null,end_index:null,expected_minutes:null,stored_minutes:null,missing_minutes:null,interval_count:null,...counts});
@@ -103,7 +105,7 @@ function estimates(plan,windows,rows,intervals){
   for(const bytes of coverageBytes)outputBytes=Math.max(outputBytes,add(jsonBound({market_data:{coverage:null}}),bytes-4));
   return {input_bytes_upper_bound:inputBytes,output_bytes_upper_bound:outputBytes};
 }
-function checkBytes(bytes,budgets){cap(bytes.input_bytes_upper_bound,budgets.coverage_input_bytes);cap(bytes.output_bytes_upper_bound,budgets.coverage_output_bytes);}
+function checkBytes(bytes,budgets){cap(bytes.input_bytes_upper_bound,budgets.coverage_input_bytes,'coverage_input_bytes');cap(bytes.output_bytes_upper_bound,budgets.coverage_output_bytes,'coverage_output_bytes');}
 export function planCoverage({accounts,budgets}){
   const plan=makePlan(accounts,budgets);
   // Minimum safe envelope before any source read, including nonzero empty-registry overhead.
@@ -118,7 +120,7 @@ function unionFacts(plan,facts,budgets,check){
     const fact=facts[i];check(fact!==null&&typeof fact==='object');
     check(fact.state==='COMPLETE'||fact.state==='TABLE_ABSENT');shape(fact,fact.state==='COMPLETE'?['state','timestamps']:['state'],check);
     if(fact.state==='TABLE_ABSENT')continue;
-    check(Array.isArray(fact.timestamps));total=add(total,fact.timestamps.length);cap(total,budgets.timestamp_rows);
+    check(Array.isArray(fact.timestamps));total=add(total,fact.timestamps.length);cap(total,budgets.timestamp_rows,'timestamp_rows');
     checkBytes(estimates(plan,plan.windows.map(w=>fields(w,{})),total,plan.windows.map(()=>0)),budgets);
     array(fact.timestamps,fact.timestamps.length,check);
     let previous=plan.unions[i].window.from;
@@ -137,11 +139,11 @@ function derive(plan,facts,budgets,check=report){
     if(fact.state==='TABLE_ABSENT'){windows.push(fields(w,{}));continue;}
     const values=fact.timestamps,{from,to}=d.inspected_window;
     const start=upperBound(values,from),end=upperBound(values,to),n=end-start;
-    visits=add(visits,n);cap(visits,budgets.derivation_visits);
+    visits=add(visits,n);cap(visits,budgets.derivation_visits,'derivation_visits');
     let count=0,previous=from;
     for(let i=start;i<end;i++){if(values[i]-previous>M)count++;previous=values[i];}
     if(previous<to)count++;
-    outputIntervals=add(outputIntervals,count);cap(outputIntervals,budgets.output_intervals);
+    outputIntervals=add(outputIntervals,count);cap(outputIntervals,budgets.output_intervals,'output_intervals');
     const expected=(to-from)/M;
     windows.push(fields(w,{start_index:start,end_index:end,expected_minutes:expected,stored_minutes:n,missing_minutes:expected-n,interval_count:count}));
   }
@@ -182,7 +184,7 @@ export function validateCoverageSnapshot(registry,{accounts,budgets}){
 }
 /** Pre-decode envelope check for bounded driver results; no timestamp traversal or allocation. */
 export function admitCoverageRows({accounts,budgets,rowCount}){
-  const plan=planCoverage({accounts,budgets});input(safe(rowCount));cap(rowCount,budgets.timestamp_rows);
+  const plan=planCoverage({accounts,budgets});input(safe(rowCount));cap(rowCount,budgets.timestamp_rows,'timestamp_rows');
   checkBytes(estimates(plan,plan.windows.map(w=>fields(w,{})),rowCount,plan.windows.map(()=>0)),budgets);
 }
 
