@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_FOLLOWUP_P4M_A03_RESULT_2026-10-27",
+  "recordedAt": "2026-10-27T05:40:40.044Z",
+  "packetId": "S6-STAGING-PROTO-FOLLOWUP-1",
+  "phase": "P4M",
+  "attemptId": "a03",
+  "priorAttempts": [
+    "a01",
+    "a02"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4M_PASS_STREAM_ONLY_M6_PASS",
+  "authority": "Owner GO-P4M attempt a03 listing a01 and a02 as prior attempts (pasted, byte-equal to the packet revision 9 line, notAfter 2026-10-28T20:00:00Z); jobs m1 and m6 consumed, no retry",
+  "m1": {
+    "jobId": "s6-p4m-m1-a03-fb1fc6f8850f73fd7f84bd8c",
+    "recordName": "s6pm-m1-70f28e9b",
+    "goWindow": {
+      "approvedAt": "2026-10-27T05:27:07.360Z",
+      "expiresAt": "2026-10-27T05:29:07.360Z"
+    },
+    "hostStarted": "2026-10-27T05:27:27.717Z",
+    "hostEnded": "2026-10-27T05:28:02.522Z",
+    "transport": {
+      "targetConnections": 1,
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "verdict": {
+      "verdict": "P4M_PASS",
+      "outcome": "READY",
+      "effects": {
+        "recordDir": "DONE",
+        "streamStart": "DONE",
+        "collectorRun": "NOT_ATTEMPTED",
+        "timerStart": "NOT_ATTEMPTED",
+        "rbTimer": "NOT_ATTEMPTED",
+        "rbCollector": "NOT_ATTEMPTED",
+        "rbStream": "NOT_ATTEMPTED"
+      }
+    },
+    "gate": {
+      "host": {
+        "systemdMajor": 255,
+        "clockSync": "yes",
+        "loginManager": "NO_KILL",
+        "jobsPending": 0,
+        "otherNeedReload": 0,
+        "livePayloadCount": 0
+      },
+      "production": {
+        "protectedEqual": true,
+        "protectedDigest": "b578933221da098a974c13ccc342b76c05284f66485eaa2c267221fe3af65ca1"
+      },
+      "research": "STOPPED",
+      "market": {
+        "stream": "INACTIVE",
+        "collector": "INACTIVE",
+        "timer": "INACTIVE",
+        "streamPullsCollector": false
+      },
+      "database": {
+        "fence": "INSTALLED",
+        "gapPages": 1,
+        "queue": {
+          "queued": 0,
+          "processing": 0,
+          "waitingMarket": 0,
+          "liveMode": 0
+        },
+        "bridgeSwitch": {
+          "API": "1",
+          "TRADING": "1"
+        }
+      }
+    },
+    "bars": {
+      "contiguous": true,
+      "wssRows": 1,
+      "catchUpMs": 29,
+      "liveMs": 30170,
+      "gateMaxBar": "2026-10-27T02:05Z",
+      "latestBar": "2026-10-27T05:28Z"
+    },
+    "scope": "STREAM_ONLY",
+    "liveProofAt": "2026-10-27T05:28:02.043Z",
+    "immediateChecks": {
+      "stream": "PASS",
+      "timer": "PASS",
+      "collector": "PASS",
+      "pair": "PASS",
+      "research": "PASS",
+      "jobs": "PASS",
+      "reload": "PASS",
+      "health": "PASS",
+      "bars": "PASS",
+      "protected": "PASS"
+    },
+    "streamJournal": {
+      "kinds": {
+        "connected": 0,
+        "closed_bar_frozen": 1,
+        "catchup_failed": 0,
+        "stream_failed": 0,
+        "socket_error": 0,
+        "disconnected": 0
+      },
+      "summaryLines": 0
+    },
+    "linkage": {
+      "receiptSha256": "a7e93459c8118ff26e453e27712d9933c55999b94fdec907a184eb6cf0a4d415",
+      "envelopeSha256": "e177f8529296da95eab2b94395f3b6297a0a0f87dbbbd49d086fa185b8ed7ea7",
+      "manifestSha256": "0b88a1b0f510f0ea2927c299d0150823c36bcef9b64c7814dbd9db61d6071304",
+      "retainedSha256": "a494b5ac28a6f7c858cca73455a1ddd3b7cbcac5b1347798644d2f857683f771"
+    }
+  },
+  "m6": {
+    "jobId": "s6-p4m-m6-a01-8b2c4f98881ff4a05eab6943",
+    "recordName": "s6pm-m6-01989a78",
+    "goWindow": {
+      "approvedAt": "2026-10-27T05:39:09.720Z",
+      "expiresAt": "2026-10-27T05:41:09.720Z"
+    },
+    "hostStarted": "2026-10-27T05:39:30.132Z",
+    "hostEnded": "2026-10-27T05:39:30.353Z",
+    "transport": {
+      "targetConnections": 1,
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "window": {
+      "label": "OPEN",
+      "sinceLiveProofMs": 688091
+    },
+    "verdict": {
+      "verdict": "P4M_M6_PASS",
+      "effects": {
+        "recordDir": "DONE"
+      }
+    },
+    "m1Record": {
+      "recordTerminal": true,
+      "outcome": "READY",
+      "resultPresent": true,
+      "factsEqual": true
+    },
+    "units": {
+      "stream": {
+        "cls": "RUNNING",
+        "sameProcess": true,
+        "nRestartsEqual": true
+      },
+      "classes": {
+        "stream": "RUNNING",
+        "collector": "INACTIVE",
+        "timer": "INACTIVE"
+      },
+      "stopped": {
+        "collector": true,
+        "timer": true
+      },
+      "research": "STOPPED"
+    },
+    "bars": {
+      "contiguous": true,
+      "wssRecent": 10,
+      "latestBar": "2026-10-27T05:39Z"
+    },
+    "checks": {
+      "stream": "PASS",
+      "units": "PASS",
+      "bars": "PASS",
+      "collector": "PASS",
+      "timer": "PASS",
+      "pair": "PASS",
+      "research": "PASS",
+      "protected": "PASS"
+    },
+    "streamJournal": {
+      "kinds": {
+        "connected": 1,
+        "closed_bar_frozen": 12,
+        "catchup_failed": 0,
+        "stream_failed": 0,
+        "socket_error": 0,
+        "disconnected": 0
+      },
+      "summaryLines": 0
+    },
+    "linkage": {
+      "receiptSha256": "12e6cf06cfa731bb5c254242568d6755e89f6c3c2d267762be10ce44fc8dfd43",
+      "envelopeSha256": "711d2deebd340eeb2dafd42dd43caf138d1fdd1993f6c0598118565a1faaaeb8",
+      "manifestSha256": "ccac7cd0bd968c5af7a253e05b3f4e72b3bb11621417325c5f5fbd54bff1e3a6",
+      "retainedSha256": "718282bde9f117d5666b71d7d7a802e6134cba80e34cc90b836c0345a5618158"
+    }
+  },
+  "rootReview": "Root, 27 October 2026 (Bangkok): m1 ran once at 05:27Z. The gate passed, including the D41 rule (the stream does not pull in the collector units). The stream started, caught up the one-page gap left since attempt a02 and stored a live bar about 30 seconds later; the collector service and timer stayed stopped and were proved stopped; all ten immediate checks passed; the staging API and trading worker and production identity were unchanged. m6 ran once, read only, about 688 seconds after the live proof, inside its window: the stream was the same process with no restart, bars contiguous with recent live rows, the collector and timer still stopped, and every check passed. The staging prototype now reads fresh BTCUSDT 1m bars. After m6 no tool watches the stream; the fallback collector and timer stay stopped until a later packet.",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "staging market stream started (m1); no other unit",
+    "hostWrite": "two record directories; stored market bars appended by the stream"
+  }
+}
