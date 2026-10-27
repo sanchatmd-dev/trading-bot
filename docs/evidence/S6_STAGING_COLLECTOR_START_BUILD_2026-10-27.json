@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_COLLECTOR_START_BUILD_2026-10-27",
+  "recordedAt": "2026-10-27T15:56:44.305Z",
+  "packetId": "S6-STAGING-COLLECTOR-START-1",
+  "phases": [
+    "P4C",
+    "RC"
+  ],
+  "jobs": [
+    "c1",
+    "c6",
+    "rc"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "P4C_RC_TOOLS_ACCEPTED_LOCAL_NOT_RUN",
+  "reason": "The diagnosis d1 proved that the fallback collector run of P4M attempt a02 happened and that systemd then unloaded the unit, so the a02 invocation-ID proof could not see it. At the owner's request this packet restarts the collector with a journal-based run proof: c1 runs the collector once and proves the run from the journal (a completed start job and the collector's summary line of the same run, no failure or skip entry), self-tested on the a02 run before any effect, then starts the timer; c6 proves a timer-started run the same way; rc stops only the collector service and timer. The stream is never touched. The tool is a separate family copied by value from the accepted P4M tool, the a02-era collector and timer code and the diagnosis journal reader.",
+  "packet": {
+    "path": "docs/S6_STAGING_COLLECTOR_START_PACKET_2026-10-27.md",
+    "sha256": "a296989ee0194107498680698194b93fed6f60515d6f7e3121e8d9d8b1b0a741"
+  },
+  "mainPacket": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "rulings": [
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d47.md",
+      "sha256": "3efae90a1f6a8859c0fcb6e0aaa5c4fcdd6327aa4f0c456fe2c8d9813ad6c13e"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d48.md",
+      "sha256": "e0a097acd8bf80c38dc3bd9fb8919b396e646d96c6f6d106ad4f1ab4f0e3a6d8"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d49.md",
+      "sha256": "58d9e2eb19ca041ede0e7664a78ec1ed747b0c3e45d1724b87bd65e2f4287dfa"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d50.md",
+      "sha256": "c2fd5a12c8a4d4beed2632e65bc38d06493a75e8422b43e258b462b3aeab92b2"
+    },
+    {
+      "path": ".qa-local/s6-staging-deploy-p2p4-review-2026-10-25/root-rulings-followup-d51.md",
+      "sha256": "6c5e88722088daace851b62a0284d4db8468e16bf94125cdc526c50035c4b703"
+    }
+  ],
+  "snapshot": {
+    "path": ".qa-local/s6-staging-collector-start-review-2026-10-27/build-snapshot-c1-r1/SHA256SUMS.root",
+    "sha256": "ce953a6c6aa8b8797e6fdaf08e16aa92bd7d71a97fa4f6c9af7fd977e4220646"
+  },
+  "pins": {
+    "core": "0d4b2ebddc107c6fa3dc78d4c0a97b94d1d58c2ad119173236bffae5e226aabe",
+    "runner": "34d996c42de05b9ccd01f23e6a5a03078c4e693ca6b46059923bc322e46cc19c",
+    "regions": {
+      "COLLECTOR_START": "6a4f481ef45fc4637b7d51cf20e93367ae50c9bbd17094a7a45f171bd944cfdb",
+      "COLLECTOR_CHECK": "ea7df556b1227b74131b87c1abc4970372958c2eb031b05dd413bdccf87471a9",
+      "COLLECTOR_STOP": "d444a5aa4cda1831d7835bd67bab1daefddcf139ac1342460f539d06a4bf2b60"
+    }
+  },
+  "rootRun": {
+    "unit": {
+      "tests": 469,
+      "pass": 469,
+      "fail": 0
+    }
+  },
+  "reviews": [
+    {
+      "round": "design",
+      "role": "designer, Opus 5.5 / high (Fable substitute)",
+      "verdict": "SPEC_R1_AND_R2",
+      "path": ".qa-local/s6-staging-collector-start-review-2026-10-27/collector-start-spec-r2.md",
+      "sha256": "3041ef635a28ba0515d096f9caef0afc188ab4f85ae6ff6af4a1db8a878b5984"
+    },
+    {
+      "round": "design",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "spec r2 re-review; one P2 (summary-line witness), ruling D48",
+      "path": ".qa-local/s6-staging-collector-start-review-2026-10-27/collector-start-spec-r2-review.md",
+      "sha256": "28a68e33ff32b8e60904927dd7da44511f93973a025c8416ef61f19cf642e7ed"
+    },
+    {
+      "round": "build",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "path": ".qa-local/s6-staging-collector-start-review-2026-10-27/tester-c1/tester-report.md",
+      "sha256": "28d4dbd468fb749a158e4459850108a16b59423104a5104310fe9318cd124da5"
+    },
+    {
+      "round": "build",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "three P2, closed by ruling D49",
+      "path": ".qa-local/s6-staging-collector-start-review-2026-10-27/audit-c1.md",
+      "sha256": "9ad292fd018ef6e0eb7807568dee9cdb73c228efda3c8cb8d8effab8201e2e23"
+    },
+    {
+      "round": "build",
+      "role": "second-opinion reviewer, Opus 5.5 / high (Fable substitute)",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2",
+      "path": ".qa-local/s6-staging-collector-start-review-2026-10-27/second-opinion-c1.md",
+      "sha256": "fc28e31bb02528a9c3d0da9d72d624ad7d68b16cd7730b8f7decf07644f54fc0"
+    },
+    {
+      "round": "fix D49",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO",
+      "note": "no P1 or P2",
+      "path": ".qa-local/s6-staging-collector-start-review-2026-10-27/audit-c1-r2.md",
+      "sha256": "78fcd3e17580edfd49012021d5fb05ed16447eca4a27ae9f63ff69bde7a8d65a"
+    },
+    {
+      "round": "fix D49",
+      "role": "second-opinion reviewer, Opus 5.5 / high (Fable substitute)",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2; ruling D50",
+      "path": ".qa-local/s6-staging-collector-start-review-2026-10-27/second-opinion-c1-r2.md",
+      "sha256": "87f08c060fc51e11513bab14a64d02f46c5d9bf13363185aed513344451de249"
+    },
+    {
+      "round": "fix D50",
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "469 unit tests; 94 of 97 mutants killed (3 equivalent); rehearsal passed",
+      "path": ".qa-local/s6-staging-collector-start-build-2026-10-27/author-report.md",
+      "sha256": "e02b6f9149a4477cafb32fc674849b33891f97939e1b9041ce0b10056b30f3af"
+    },
+    {
+      "round": "fix D50",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "60 independent tests; 21 of 22 mutants killed (1 equivalent)"
+    },
+    {
+      "round": "fix D50",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2; residuals named in ruling D51",
+      "path": ".qa-local/s6-staging-collector-start-review-2026-10-27/audit-c1-r3.md",
+      "sha256": "6dbdc5772e0da694688f3805c87fa327a1bbaead87c98186aa1dda684873c1f6"
+    },
+    {
+      "round": "fix D50",
+      "role": "second-opinion reviewer, Opus 5.5 / high (Fable substitute)",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1 or P2; residuals named in ruling D51",
+      "path": ".qa-local/s6-staging-collector-start-review-2026-10-27/second-opinion-c1-r3.md",
+      "sha256": "395035de5b24322446a06829de44ec809781bf106d319ad0dc8880c8ce07346f"
+    }
+  ],
+  "residuals": [
+    "The tool also counts the stream's stop-propagation handler naming a collector unit (c1 refuses, rc half state); the packet wording names only start lists and failure or success handlers. The tool is stricter than the text.",
+    "c1 and rc do not gate the stream's own start and stop hooks; a hook that starts a collector unit would need an edited drop-in and a daemon reload. a03 recorded the stream hooks empty.",
+    "Owner summary items 2 and 4 are shorter than GO-C, GO-RC and sections 3.2 and 3.4, which are exact.",
+    "systemd 255 forms not observed by d1 (catalog IDs for success, exit, failure and exec-skip entries) fail closed: a different form stops or rolls back, never passes.",
+    "If the journal no longer holds the a02 period, c1 stops before any effect at the self-test.",
+    "No tool watches the timer or the stream after c6."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE",
+    "deployment": "NOT_RUN"
+  }
+}
