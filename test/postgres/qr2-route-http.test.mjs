@@ -549,3 +549,32 @@ test('H17 phase 2 hardening: a missing slot, a reader input error and the Retry-
   assert.equal((await res.phase2Deferred()).status,429);
   assert.deepEqual(headers,{'Retry-After':'2'});
 });
+
+test('spec D item 10: an ALL_TIME request over a coverage budget answers 200 with bar coverage class C7 (the financial report is unchanged); a short range keeps its normal coverage',async()=>{
+  // ENTERPRISE has unlimited history, so history_days (403) cannot answer first; the range is over the default union_minutes (43200 minutes, 30 days).
+  const owner=await account('USER');await plan(owner,'ENTERPRISE');
+  const session=await loginOf(owner);
+  const bot=await createBot(f.store,owner,10000);
+  const age=45*DAY,registration=Date.now()-age;
+  // Labelled synthetic chronology (as in qr2-coverage-integration): move the registration, the one CONFIGURATION funding and its FUNDING snapshot together.
+  await f.db.transaction(async()=>{
+    await f.db.query('UPDATE users SET created_at=$2 WHERE id=$1',[bot.id,registration]);
+    const funding=(await f.db.query('SELECT kind FROM paper_funding WHERE user_id=$1',[bot.id])).rows;
+    assert.equal(funding.length,1);assert.equal(funding[0].kind,'CONFIGURATION');
+    await f.db.query('UPDATE paper_funding SET at=$2 WHERE user_id=$1',[bot.id,registration+1]);
+    await f.db.query('UPDATE paper_snapshots SET at=$2 WHERE user_id=$1',[bot.id,registration+1]);
+  });
+  const long=await get(session,`bot_id=${bot.id}&period=ALL_TIME`);
+  assert.equal(long.status,200,JSON.stringify(long.body));
+  assert.equal(validateResponse(long.body).ok,true);
+  assert.notEqual(long.body.status.status,'REFUSED');
+  const c=long.body.market_data.coverage;
+  assert.deepEqual([c.state,c.reason,c.complete,c.expected_minutes,c.stored_minutes,c.missing_minutes,c.interval_count,c.intervals],['UNAVAILABLE','COVERAGE_BUDGET_EXCEEDED',false,null,null,null,null,null],'class C7: not inspected, no count, no gap list');
+  assert.ok(c.inspected_window.to-c.inspected_window.from>43200*60000,'the inspected window is over the default span budget');
+  // The financial part is a normal report: the funding-only account keeps its NAV.
+  assert.equal(long.body.account.nav.value,'10000');assert.equal(long.body.account.cash.value,'10000');
+  // A day inside the same Bot's life is far under the budget: its coverage is never C7.
+  const day=await get(session,`bot_id=${bot.id}&period=DAY`);
+  assert.equal(day.status,200,JSON.stringify(day.body));
+  assert.notEqual(day.body.market_data.coverage.reason,'COVERAGE_BUDGET_EXCEEDED');
+});

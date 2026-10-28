@@ -921,6 +921,7 @@ const qr2CoveragePairs=[
   ['No inspection: the range holds no complete 1-minute candle.','ไม่ได้ตรวจ: ช่วงนี้ไม่มีแท่งเทียน 1 นาทีที่ครบเลย'],
   ['Inspection unavailable: bar coverage is reported only for the one supported Binance Global spot 1-minute market.','ตรวจไม่ได้: รายงานความครอบคลุมแท่งราคาเฉพาะตลาด Spot 1 นาทีของ Binance Global ที่รองรับเพียงแห่งเดียวเท่านั้น'],
   ['Inspection unavailable: the market data table is absent. This is not stored history with no bars.','ตรวจไม่ได้: ไม่มีตารางข้อมูลตลาด นี่ไม่ใช่ประวัติที่เก็บไว้แล้วไม่มีแท่งราคา'],
+  ['Inspection unavailable: this range is over the bar coverage check limit, so bar coverage was not checked. The financial figures and their price checks are not affected. Choose a shorter range, for example Week, to see bar coverage.','ตรวจไม่ได้: ช่วงนี้เกินขีดจำกัดของการตรวจความครอบคลุมแท่งราคา จึงไม่ได้ตรวจความครอบคลุมแท่งราคา ตัวเลขทางการเงินและการตรวจราคาของตัวเลขเหล่านั้นไม่ได้รับผลกระทบ เลือกช่วงที่สั้นลง เช่น สัปดาห์ เพื่อดูความครอบคลุมแท่งราคา'],
   ['Inspection result','ผลการตรวจ'],
   ['State code','รหัสสถานะ'],
   ['Reason code','รหัสเหตุผล'],
@@ -935,8 +936,6 @@ const qr2CoveragePairs=[
   ['Gap interval list, count:','รายการช่วงช่องว่าง จำนวน:'],
   ['Each row: start - end : missing minutes. Start inclusive, end exclusive.','แต่ละแถว: เริ่ม - สิ้นสุด : จำนวนนาทีที่ขาดหาย รวมเวลาเริ่มต้น ไม่รวมเวลาปลายช่วง'],
   ['Accounts using this coverage','บัญชีที่ใช้ความครอบคลุมนี้'],
-  ['The chosen range is too long for the performance report (the limit is about 15 days of market data). A shorter range, for example Week or a Custom range, should work.','ช่วงที่เลือกยาวเกินไปสำหรับรายงานผลการดำเนินงาน (ขีดจำกัดคือข้อมูลตลาดประมาณ 15 วัน) ลองเลือกช่วงที่สั้นลง เช่น สัปดาห์ หรือช่วงกำหนดเอง ก็น่าจะใช้ได้'],
-  ['The chosen range is too long for the performance report (the limit is 30 days). A shorter range, for example Week or a Custom range, should work.','ช่วงที่เลือกยาวเกินไปสำหรับรายงานผลการดำเนินงาน (ขีดจำกัดคือ 30 วัน) ลองเลือกช่วงที่สั้นลง เช่น สัปดาห์ หรือช่วงกำหนดเอง ก็น่าจะใช้ได้'],
   ['The chosen range is too long for the performance report (a report size limit was reached). A shorter range, for example Week or a Custom range, should work.','ช่วงที่เลือกยาวเกินไปสำหรับรายงานผลการดำเนินงาน (ถึงขีดจำกัดขนาดรายงานแล้ว) ลองเลือกช่วงที่สั้นลง เช่น สัปดาห์ หรือช่วงกำหนดเอง ก็น่าจะใช้ได้']
 ];
 uiPairs.push(...qr2CoveragePairs);

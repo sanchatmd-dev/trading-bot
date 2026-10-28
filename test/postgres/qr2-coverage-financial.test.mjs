@@ -93,3 +93,64 @@ test('coverage financial differential: unused interior timestamp changes coverag
     try{await pool.close();}finally{await fixture.dispose();}
   }
 });
+
+test('coverage degrade differential (spec D item 9): lowering a degradable coverage budget changes only market_data.coverage, never a financial field',{timeout:45000},async()=>{
+  const fixture=await createQr2Database('robot_qr2_coverage_degrade_fin');
+  const pool=createQr2ComputePool();
+  try{
+    const {db,store}=fixture,owner=await createOwner(store),bot=await createBot(store,owner,10000);
+    await book(store,bot,'coverage-degrade-buy',{side:'BUY',steps:[{qty:'0.01',quote:'600'}]});
+    await book(store,bot,'coverage-degrade-partial-sell',{side:'SELL',steps:[{qty:'0.004',quote:'244'}]});
+    const fills=(await db.query('SELECT f.received_at FROM public.fills f JOIN public.signals s ON s.id=f.signal_id WHERE s.user_id=$1 ORDER BY f.received_at',[bot.id])).rows;
+    assert.equal(fills.length,2);
+    const from=Number(bot.created_at),lastFill=Math.max(...fills.map(f=>Number(f.received_at)));
+    const to=Math.ceil(lastFill/MINUTE)*MINUTE+6*MINUTE,requestTime=to;
+    const firstBar=Math.floor(from/MINUTE)*MINUTE-MINUTE;
+    const barTimes=[];for(let t=firstBar;t<=to;t+=MINUTE)barTimes.push(t);
+    assert.ok(barTimes.length>=8&&barTimes.length<=100,'bounded synthetic source recipe');
+    await insertBars(db,barTimes.map(t=>barOf(t,'62000')));
+    const args={ownerId:owner.id,botId:bot.id,broker:'binance-global',from,to,requestTime,boundaries:LOCAL_FIXTURE_E2};
+    const digestBefore=await ledgerDigest(db,bot);
+
+    // Default budgets: coverage completes. Lowered timestamp_rows (the existing test seam; it can only lower a limit): the read stops and the registry degrades.
+    const normal=await readQr2Snapshot(store,args);
+    const lowered=await readQr2Snapshot(store,{...args,coverageBudgets:{timestamp_rows:2}});
+    assert.equal(normal.snapshot.coverage.unions[0].fact.state,'COMPLETE');
+    assert.deepEqual(lowered.snapshot.coverage.unions.map(u=>u.fact),[{state:'BUDGET_EXCEEDED',limit:'timestamp_rows'}]);
+    // The financial rows read and the valuation inputs do not depend on the coverage outcome.
+    assert.deepEqual(lowered.snapshot.market,normal.snapshot.market);
+    assert.deepEqual(lowered.snapshot.fills,normal.snapshot.fills);
+    assert.deepEqual(lowered.snapshot.fundings,normal.snapshot.fundings);
+    assert.deepEqual(lowered.snapshot.range,normal.snapshot.range);
+
+    const full=await pool.run(normal.snapshot,normal.input);
+    const degraded=await pool.run(lowered.snapshot,lowered.input);
+    assert.equal(full.ok,true,JSON.stringify(full));
+    assert.equal(degraded.ok,true,JSON.stringify(degraded));
+    assert.equal(validateResponse(full.body).ok,true);
+    assert.equal(validateResponse(degraded.body).ok,true);
+    assert.equal(full.body.market_data.coverage.state,'COMPLETE');
+
+    // Financial equality: the whole body is equal once the coverage object is removed (and the two reader timers are zeroed).
+    assert.deepEqual(stableBody(degraded.body),stableBody(full.body),'every financial field and status is equal with and without the degrade');
+    assert.deepEqual(degraded.auditFindings,full.auditFindings);
+    const a=degraded.body.account;
+    assert.deepEqual([a.cash.value,a.nav.value,a.market_value.value,a.position_cost.value,a.realized_pnl.value,a.unrealized_pnl.value,a.fees.value,a.money_pnl.value,a.twr.value],
+      ['9644','10016','372','360','4','12','0','16','0.0016'],'the same absolute values as the complete-coverage run');
+
+    // The degraded coverage is exactly the C7 object: same head as the complete object, every count and the interval list null, one reason.
+    const c=degraded.body.market_data.coverage,k=full.body.market_data.coverage;
+    const window=lowered.snapshot.coverage.windows[lowered.snapshot.coverage_window_id];
+    assert.deepEqual(c,buildBarCoverage({market:window.market,resolved_range:window.resolved_range,fact:{state:'BUDGET_EXCEEDED'}}));
+    assert.deepEqual([c.state,c.reason,c.complete,c.expected_minutes,c.stored_minutes,c.missing_minutes,c.interval_count,c.intervals],['UNAVAILABLE','COVERAGE_BUDGET_EXCEEDED',false,null,null,null,null,null]);
+    assert.deepEqual(c.inspected_window,k.inspected_window);
+    assert.deepEqual(c.resolved_range,k.resolved_range);
+    assert.deepEqual(c.excluded_edges,k.excluded_edges);
+    assert.deepEqual(c.market,k.market);
+    assert.deepEqual(await ledgerDigest(db,bot),digestBefore,'all ledger/audit/fence tables unchanged');
+    assert.equal(pool.counters.completed,2);
+    assert.equal(pool.counters.timeout+pool.counters.crash+pool.counters.spawn,0);
+  }finally{
+    try{await pool.close();}finally{await fixture.dispose();}
+  }
+});

@@ -124,14 +124,15 @@
     C3: 'No inspection: the range for this coverage is unresolved.',
     C4: 'No inspection: the range holds no complete 1-minute candle.',
     C5: 'Inspection unavailable: bar coverage is reported only for the one supported Binance Global spot 1-minute market.',
-    C6: 'Inspection unavailable: the market data table is absent. This is not stored history with no bars.'
+    C6: 'Inspection unavailable: the market data table is absent. This is not stored history with no bars.',
+    C7: 'Inspection unavailable: this range is over the bar coverage check limit, so bar coverage was not checked. The financial figures and their price checks are not affected. Choose a shorter range, for example Week, to see bar coverage.'
   };
   const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   const epochOk = value => Number.isSafeInteger(value) && value >= -EPOCH_LIMIT && value <= EPOCH_LIMIT;
   const countOk = value => Number.isSafeInteger(value) && value >= 0;
   const rangeOk = value => value === null || (isObject(value) && epochOk(value.from) && epochOk(value.to));
   const timeForm = value => String(value) + ' (' + new Date(value).toISOString() + ')';
-  // Returns the class C1 to C6 of one coverage object, or null when the object is not a well-formed coverage.
+  // Returns the class C1 to C7 of one coverage object, or null when the object is not a well-formed coverage.
   function coverageClass(c) {
     if (!isObject(c) || c.version !== COVERAGE_VERSION) return null;
     const m = c.market;
@@ -144,9 +145,10 @@
     else if (c.state === 'EMPTY' && c.reason === 'NO_FULL_CANDLES') cls = 'C4';
     else if (c.state === 'UNAVAILABLE' && c.reason === 'UNSUPPORTED_MARKET') cls = 'C5';
     else if (c.state === 'UNAVAILABLE' && c.reason === 'MARKET_DATA_TABLE_ABSENT') cls = 'C6';
+    else if (c.state === 'UNAVAILABLE' && c.reason === 'COVERAGE_BUDGET_EXCEEDED') cls = 'C7';
     if (!cls) return null;
     const counts = [c.expected_minutes, c.stored_minutes, c.missing_minutes];
-    if (cls === 'C5' || cls === 'C6') return counts.every(value => value === null) && c.interval_count === null && c.intervals === null ? cls : null;
+    if (cls === 'C5' || cls === 'C6' || cls === 'C7') return counts.every(value => value === null) && c.interval_count === null && c.intervals === null ? cls : null;
     if (!Array.isArray(c.intervals)) return null;
     if (cls === 'C3' || cls === 'C4') return counts.every(value => value === 0) && c.interval_count === 0 && c.intervals.length === 0 ? cls : null;
     if (!counts.every(countOk)) return null;
@@ -350,14 +352,11 @@
   function authenticationFailed() {
     clearSession(); button.disabled = true; message('Sign in to view Paper history.');
   }
-  // A 422 range refusal tells the person what to change. The limit is named in plain words only when it is known.
-  function rangeHint(limit) {
-    const known = {
-      timestamp_rows: 'The chosen range is too long for the performance report (the limit is about 15 days of market data). A shorter range, for example Week or a Custom range, should work.',
-      union_minutes: 'The chosen range is too long for the performance report (the limit is 30 days). A shorter range, for example Week or a Custom range, should work.'
-    };
+  // A 422 range refusal tells the person what to change, in generic words that name no limit or day count.
+  function rangeHint() {
+    // timestamp_rows and union_minutes no longer refuse a request (OD-S5-D): they degrade bar coverage to class C7. Only the generic hint remains.
     const hint = document.createElement('p');
-    hint.append(label(Object.hasOwn(known, limit) ? known[limit] : 'The chosen range is too long for the performance report (a report size limit was reached). A shorter range, for example Week or a Custom range, should work.'));
+    hint.append(label('The chosen range is too long for the performance report (a report size limit was reached). A shorter range, for example Week or a Custom range, should work.'));
     return hint;
   }
   async function submit(event) {
@@ -401,7 +400,7 @@
         const retry = response.headers.get('Retry-After');
         message(response.status === 404 ? 'Paper performance endpoint or scope unavailable.' : response.status === 401 ? 'Sign in to view Paper history.' : retry || response.status === 429 ? 'Request unavailable. Retry manually later.' : 'Paper performance request refused.',
           ['HTTP ' + response.status, body?.code, retry ? 'Retry-After: ' + retry : ''].filter(Boolean).join(' · '));
-        if (response.status === 422 && body?.code === 'QR2_RANGE_ADMISSION_REFUSED') result.append(rangeHint(body.detail?.limit));
+        if (response.status === 422 && body?.code === 'QR2_RANGE_ADMISSION_REFUSED') result.append(rangeHint());
         if (body?.detail) result.append(serverValue(body.detail));
         return;
       }

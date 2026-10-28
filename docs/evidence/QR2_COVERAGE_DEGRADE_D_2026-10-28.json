@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "id": "QR2_COVERAGE_DEGRADE_D_2026-10-28",
+  "recordedAt": "2026-10-28T10:12:37.969Z",
+  "status": "LOCAL_ACCEPTED_NOT_DEPLOYED",
+  "ownerDecision": {
+    "id": "OD-S5-D",
+    "decidedBy": "owner",
+    "date": "2026-10-28",
+    "record": {
+      "path": ".qa-local/qr2-longrange-design-2026-10-28/owner-decisions-2026-10-28.json",
+      "sha256": "9e2d1c75a2a409b441254f03ab753057ee7e235c736f8c5ee61c6df4b066d8a2"
+    }
+  },
+  "problem": "Long QR-2 report ranges were refused whole when the bar-coverage check would exceed a coverage budget: Month (the default period) from about day 16, Year and All Time for Bots older than about 15 to 30 days. Staging answers 503; the local fix F answers 422.",
+  "change": "Over a degradable coverage budget the report still returns; bar coverage for the whole request is UNAVAILABLE with reason COVERAGE_BUDGET_EXCEEDED (panel class C7, English and Thai). Degradable: union_minutes (plan time) and the data-time stops of timestamp_rows, derivation_visits, output_intervals and coverage_output_bytes. Not degradable (unchanged 422 or 503): unique_windows, coverage_input_bytes, plan-time byte refusals, unnamed overflow, the post-build lowered-limit refusal and every financial limit. The worker accepts a data-time claim only when the planned windows make it possible (feasibility check). No budget value, financial number or status changes. Cache tokens qr2o8 to qr2o9 for i18n.js and paper-performance.js; the 422 hint keeps only its generic text.",
+  "files": [
+    {
+      "path": "src/portfolio/qr2-coverage.js",
+      "sha256": "2a61ad135f0cc551e913c48da1313148bf393a215b48a2acd24ab429a050ec1c"
+    },
+    {
+      "path": "src/portfolio/qr2-coverage-snapshot.js",
+      "sha256": "693f00f67a14244dbaa8559e760235186c616877b52615779b53644977f9f1fe"
+    },
+    {
+      "path": "src/portfolio/qr2-coverage-public.js",
+      "sha256": "935990973d3421c72a68f7c1949859a881254ea04ca551831d446f4630af3b65"
+    },
+    {
+      "path": "src/postgres/qr2-coverage-reader.js",
+      "sha256": "1144123ec60607efd94a51824934ad72dc6154c2d8663ee63f8e5511ccf6b352"
+    },
+    {
+      "path": "public/paper-performance.js",
+      "sha256": "cca35ea788a6aacfee3db71fd6b2fecc13606abdaf59d6874f594609e62988cf"
+    },
+    {
+      "path": "public/i18n.js",
+      "sha256": "c954edb0a5a899046974417e8ebd1b9fdf450873c77dfaeefa7ea23c7bbf9e40"
+    },
+    {
+      "path": "public/index.html",
+      "sha256": "5d717cb75a10df49be9e2fad6c80d43d1e853c0686ae1c84f62372b3ad2f0557"
+    },
+    {
+      "path": "docs/QR_2_PORTFOLIO_PERFORMANCE_CONTRACT.md",
+      "sha256": "7b387bbe226b33785aab50cd01e438cb8e839e640202f4fe04ff47d600ab9da1"
+    }
+  ],
+  "rulings": [
+    {
+      "path": ".qa-local/qr2-longrange-design-2026-10-28/root-ruling-l1.md",
+      "sha256": "648eb50a9b2c1c011e4e526fc11c1e0948876d3fe28d5b184607acafa1457852"
+    },
+    {
+      "path": ".qa-local/qr2-longrange-design-2026-10-28/root-ruling-l2.md",
+      "sha256": "a0bbdffec44de9513d23856b3de3a3a0cb22440981f017137eb4c2cbe489974e"
+    },
+    {
+      "path": ".qa-local/qr2-longrange-design-2026-10-28/decision-memo.md",
+      "sha256": "84b4052eb7ff668686b5c7be5c822b577bbca6d21de46599c1c13078717d2f3f"
+    },
+    {
+      "path": ".qa-local/qr2-longrange-design-2026-10-28/spec-d-degrade.md",
+      "sha256": "52c2e81ef161b07cd2dc40df4bfef5c1d26b7133546da26ff56711da9e4fd755"
+    }
+  ],
+  "rootRun": {
+    "unit": {
+      "tests": 3163,
+      "pass": 3145,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 8,
+      "todo": 9
+    },
+    "method": "node --test --test-isolation=process --test-concurrency=1 test/*.test.js",
+    "harnessException": {
+      "test": "test/pf2-worker-test-seam.test.js R5-21 capture is scoped to one worker",
+      "reason": "the test requires --test-isolation=none (the repository npm test mode) and fails by design under process isolation",
+      "rerun": "node --test --test-isolation=none test/pf2-worker-test-seam.test.js: 2 pass, 0 fail",
+      "changedByD": false
+    }
+  },
+  "reviews": [
+    {
+      "round": 1,
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "path": ".qa-local/qr2-d-impl-2026-10-28-r2/author-report.md",
+      "sha256": "408aad88a369f947a7f8f9b859f910d795259f7235582a249ba2c7a8ea7f896a"
+    },
+    {
+      "round": 1,
+      "role": "documentation, Sonnet 5.5 / low",
+      "verdict": "DONE",
+      "note": "contract section 11.1, 8.1, 10, OD-S5-D row, amended-by-reference table"
+    },
+    {
+      "round": 1,
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "no P1; P2 contract status wording and CRLF-fragile UI mutant test, fixed in round 2; about 27,000 random contexts with 0 false refusals",
+      "path": ".qa-local/qr2-d-impl-2026-10-28-r2/audit.md",
+      "sha256": "36c9e7bbd589ae17d0c5c930cd2bc533a4628198a34cc83bff1da6931c66dcb7"
+    },
+    {
+      "round": 1,
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "independent tests; 395 QR-2 and importer tests, UI files one per process",
+      "path": ".qa-local/qr2-d-impl-2026-10-28-r2/tester/tester-report.md",
+      "sha256": "e4c33c6cd619b8eec0a5563b7e503aa073f26243f1eabb09eaaefcce70c630a4"
+    },
+    {
+      "round": 1,
+      "role": "tester, Sonnet 5.5 / medium (mutation and PostgreSQL)",
+      "verdict": "FAIL_BY_RULE",
+      "note": "14 of 14 PostgreSQL files pass; 27 mutants, one non-equivalent survivor m13 (test gap), fixed in round 2",
+      "path": ".qa-local/qr2-d-impl-2026-10-28-r2/tester2-report.md",
+      "sha256": "49df731f52d9bc8b9b5fc8b4b6726ef64dae29d58678b7cdf118f820a8cbab51"
+    },
+    {
+      "round": 2,
+      "role": "coder, Sonnet 5.5 / high",
+      "verdict": "DONE",
+      "note": "CRLF-safe UI mutant test, m13 test, spec D PostgreSQL items 9 and 10",
+      "path": ".qa-local/qr2-d-impl-2026-10-28-r2/fix-r1-coder.md",
+      "sha256": "9f4b628ad18def308bfc24c58d1bdd56a439354fd7d0e3cd1c7cbc8f28e51c3c"
+    },
+    {
+      "round": 2,
+      "role": "documentation, Sonnet 5.5 / low",
+      "verdict": "DONE",
+      "path": ".qa-local/qr2-d-impl-2026-10-28-r2/fix-r1-doc.md",
+      "sha256": "2929111e40cd3b02b5992bbfedacb4d417da58872760044c594c1ccfe234e8c0"
+    },
+    {
+      "round": 2,
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "note": "QR-2 group 213/213, UI 43/43, m13 killed, PostgreSQL financial 2/2, route-http 22/22, admission 1/1, integration 3/3; contract sentences checked against code",
+      "path": ".qa-local/qr2-d-impl-2026-10-28-r2/fix-r1-tester.md",
+      "sha256": "a9ef2abeb502c3fbe183688024ef7622c82d273a79f88e13165bad82ce62709c"
+    }
+  ],
+  "residuals": [
+    "A data-time degrade claim cannot be re-derived by the worker (timestamps are dropped); the feasibility check narrows it, and a wrong feasible claim can only hide bar coverage, never publish a false COMPLETE.",
+    "validateOwnerCoverage cannot see the limit name; safety rests on validateCoverageSnapshot running first in projectOutcome, its only production caller.",
+    "Spec D item 10 covers the per-Bot route; the owner-route HTTP case is covered by unit and in-thread worker tests only.",
+    "The estimator reserves the longer reason by a reduce; both reasons have 24 characters, so no test distinguishes it from a constant.",
+    "An old cached panel fails closed on C7; server and UI ship in one pin with new cache tokens.",
+    "docs/evidence/PM1_QR2_S5_4_STAGE3C_O7_LOCAL_2026-10-24.json pins the sha256 of the older coverage-responses.json fixture; no test reads that pin.",
+    "test/qr2-performance-ui.test.js grows to several hundred MB in one process (cumulative jsdom pages); run it alone on this machine."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "deployment": "NOT_RUN"
+  }
+}

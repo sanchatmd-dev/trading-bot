@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readCoverageSnapshot,decodeCoverageTimestamp,COVERAGE_SQL} from '../src/postgres/qr2-coverage-reader.js';
-import {buildCoverageSnapshot} from '../src/portfolio/qr2-coverage-snapshot.js';
+import {buildCoverageSnapshot,planCoverage} from '../src/portfolio/qr2-coverage-snapshot.js';
 import {QR2_COVERAGE_MARKET as market} from '../src/portfolio/qr2-coverage.js';
 const M=60000;
 const budgets={union_minutes:1000,timestamp_rows:10,unique_windows:20,derivation_visits:1000,output_intervals:1000,coverage_input_bytes:1000000,coverage_output_bytes:1000000};
@@ -44,14 +44,16 @@ test('no union avoids probe; absent table differs from completed empty rows',asy
   const empty=await readCoverageSnapshot({transaction:transaction({answers:[[]]}),accounts:[account('a')],budgets});assert.equal(empty.windows[0].missing_minutes,3);assert.equal(empty.windows[0].interval_count,1);
 });
 
-test('exact row cap succeeds; sentinel and exhausted budget with later data refuse entire result',async()=>{
+test('exact row cap succeeds; sentinel and exhausted budget with later data degrade the entire result',async()=>{
   const limited={...budgets,timestamp_rows:1};
   assert.ok(await readCoverageSnapshot({transaction:transaction({answers:[['60000']]}),accounts:[account('a')],budgets:limited}));
-  await assert.rejects(readCoverageSnapshot({transaction:transaction(),accounts:[account('a')],budgets:limited}),{code:'QR2_RANGE_ADMISSION_REFUSED'});
+  const degraded=await readCoverageSnapshot({transaction:transaction(),accounts:[account('a')],budgets:limited});
+  assert.deepEqual(degraded.unions.map(u=>u.fact),[{state:'BUDGET_EXCEEDED',limit:'timestamp_rows'}]);assert.equal(degraded.windows[0].stored_minutes,null);
   const accounts=[account('a',0,M),account('b',3*M,4*M)];
   const tx=transaction({answers:[['60000'],[]]});const result=await readCoverageSnapshot({transaction:tx,accounts,budgets:limited});
   assert.deepEqual(tx.calls.filter(c=>c.sql===COVERAGE_SQL.ROWS).map(c=>c.params[5]),[2,1]);assert.equal(result.unions[1].fact.timestamps.length,0);
-  await assert.rejects(readCoverageSnapshot({transaction:transaction({answers:[['60000'],['240000']]}),accounts,budgets:limited}),{code:'QR2_RANGE_ADMISSION_REFUSED'});
+  const later=await readCoverageSnapshot({transaction:transaction({answers:[['60000'],['240000']]}),accounts,budgets:limited});
+  assert.deepEqual(later.unions.map(u=>u.fact),[{state:'BUDGET_EXCEEDED',limit:'timestamp_rows'},{state:'BUDGET_EXCEEDED',limit:'timestamp_rows'}]);assert.ok(later.unions.every(u=>!Object.hasOwn(u.fact,'timestamps')),'decoded timestamps are dropped');
 });
 
 test('misaligned, duplicate, unsorted, foreign-window rows and late query failures never yield partial registry',async()=>{
@@ -69,6 +71,22 @@ test('read LIMIT obeys pre-admitted input byte capacity, including zero and one-
     await readCoverageSnapshot({transaction:tx,accounts,budgets:limited});
     assert.equal(tx.calls.find(c=>c.sql===COVERAGE_SQL.ROWS).params[5],capacity+1);
     const overflow=transaction({answers:[capacity?['60000','120000']:['60000']]});
-    await assert.rejects(readCoverageSnapshot({transaction:overflow,accounts,budgets:limited}),{code:'QR2_RANGE_ADMISSION_REFUSED'});
+    const over=await readCoverageSnapshot({transaction:overflow,accounts,budgets:limited});
+    assert.deepEqual(over.unions.map(u=>u.fact),[{state:'BUDGET_EXCEEDED',limit:'timestamp_rows'}]);
   }
+});
+
+test('plan-time byte refusal wins over a span stop and a missing transaction: 422 with the byte limit, no query (mutant m13)',async()=>{
+  const accounts=[account('a')],big={...budgets,union_minutes:1000,timestamp_rows:1000,derivation_visits:20000,output_intervals:20000,coverage_output_bytes:10000000};
+  // Smallest output byte budget the zero-row plan accepts; one byte less is a zero-row byte refusal.
+  let lo=1,hi=10000000;while(lo<hi){const mid=(lo+hi)>>1;try{planCoverage({accounts,budgets:{...big,coverage_output_bytes:mid}});hi=mid;}catch{lo=mid+1;}}
+  const refused={...big,union_minutes:2,coverage_output_bytes:lo-1};   // 3 planned minutes exceed union_minutes 2 (span stop) and the zero-row envelope exceeds the byte budget
+  assert.ok(lo>1);
+  const expected=error=>error.code==='QR2_RANGE_ADMISSION_REFUSED'&&error.detail?.limit==='coverage_output_bytes';
+  await assert.rejects(readCoverageSnapshot({transaction:null,accounts,budgets:refused}),expected);
+  const tx=transaction();
+  await assert.rejects(readCoverageSnapshot({transaction:tx,accounts,budgets:refused}),expected);
+  assert.equal(tx.calls.length,0,'a plan-time refusal issues no query');
+  // Control: the same span stop with a sufficient byte budget and a missing transaction is the 503 (the degrade needs a verified transaction).
+  await assert.rejects(readCoverageSnapshot({transaction:null,accounts,budgets:{...big,union_minutes:2}}),{code:'QR2_REPORT_FAILED'});
 });

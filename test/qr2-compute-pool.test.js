@@ -1,4 +1,4 @@
-import {buildCoverageSnapshot} from '../src/portfolio/qr2-coverage-snapshot.js';
+import {buildCoverageSnapshot,buildDegradedCoverageSnapshot} from '../src/portfolio/qr2-coverage-snapshot.js';
 import {coverageReadBudgets} from '../src/portfolio/qr2-coverage-limits.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -1015,4 +1015,125 @@ test('O6 fix-r1 M03: an owner job with a null resolved range carries no market_c
   assert.equal(result.ok,true,JSON.stringify(result));
   assert.equal(result.body.status.status!=='REFUSED',true,'not refused, so only the null range omits the section');
   assert.equal(result.body.resolved_range,null);assert.equal(Object.hasOwn(result.body,'market_coverage'),false);
+});
+/* ------------------------------------------------------------------ OD-S5-D: degraded bar coverage in the worker */
+
+// A job whose coverage context lowers some budgets (lowering is allowed) and whose registry is the degraded one for the named limit.
+const lowerBudgets=(job,over)=>{job.input.coverage_context.budgets={...job.input.coverage_context.budgets,...over};};
+function degradedJob(job,limit,lower={}){
+  const copy=structuredClone(job);
+  Object.assign(copy.input.coverage_context.budgets,lower);
+  copy.snapshot.coverage=buildDegradedCoverageSnapshot({...copy.input.coverage_context,limit});
+  return copy;
+}
+// The body with its bar coverage removed and the timers zeroed: what must not move when only the coverage degrades.
+const financialOnly=body=>{const copy=zeroTimers(body);if(copy.market_data)delete copy.market_data.coverage;delete copy.market_coverage;return copy;};
+const zeroOutputBytes=job=>buildCoverageSnapshot({...job.input.coverage_context,facts:[{state:'TABLE_ABSENT'}]}).charges.output_bytes_upper_bound;
+function degradeCases(job){
+  return [['union_minutes',{union_minutes:60}],['timestamp_rows',{timestamp_rows:50}],['derivation_visits',{derivation_visits:50}],['output_intervals',{output_intervals:10}],
+    ['coverage_output_bytes',{coverage_output_bytes:zeroOutputBytes(job)+50}]];
+}
+
+test('D worker: a per-Bot job with a degraded registry returns ok with UNAVAILABLE / COVERAGE_BUDGET_EXCEEDED coverage and unchanged financial fields',()=>{
+  const baseline=executeQr2Job(structuredClone(FIXTURES.complete));
+  assert.equal(baseline.ok,true);
+  for(const [limit,lower] of degradeCases(FIXTURES.complete)){
+    const job=degradedJob(FIXTURES.complete,limit,lower);
+    let computed=0;
+    const result=executeQr2Job(job,{compute:(...args)=>{computed++;return computeQr2View(...args);}});
+    assert.equal(result.ok,true,limit+': '+JSON.stringify(result));
+    assert.equal(computed,1,limit);
+    const c=result.body.market_data.coverage;
+    assert.deepEqual([c.state,c.reason,c.complete],['UNAVAILABLE','COVERAGE_BUDGET_EXCEEDED',false],limit);
+    assert.deepEqual([c.expected_minutes,c.stored_minutes,c.missing_minutes,c.interval_count,c.intervals],[null,null,null,null,null],limit);
+    assert.equal(Object.keys(c).length,14,limit);
+    assert.equal(JSON.stringify(financialOnly(result.body)),JSON.stringify(financialOnly(baseline.body)),limit+': status and every financial field are identical');
+    assert.equal(result.body.status.status,baseline.body.status.status,limit);
+    assert.deepEqual(leakedCoverageKeys(result,ACCOUNT_COVERAGE_PATH),[],limit);
+    assert.equal(nonPlain(result),null,limit);
+    assert.equal(JSON.stringify(structuredClone(result)),JSON.stringify(result),limit+': plain data crosses the pool message');
+  }
+});
+
+test('D worker: an owner job with a degraded registry returns ok with C7 entries and unchanged financial fields',()=>{
+  const baseline=executeQr2Job(ownerCoverageJob());
+  assert.equal(baseline.ok,true);
+  for(const [limit,lower] of degradeCases(ownerCoverageJob())){
+    const job=ownerCoverageJob();
+    lowerBudgets(job,lower);
+    job.snapshot.coverage=buildDegradedCoverageSnapshot({...job.input.coverage_context,limit});
+    const result=executeQr2Job(job);
+    assert.equal(result.ok,true,limit+': '+JSON.stringify(result));
+    const section=result.body.market_coverage;
+    assert.equal(section.entries.length,1);
+    const c=section.entries[0].coverage;
+    assert.deepEqual([c.state,c.reason,c.complete,c.interval_count,c.intervals],['UNAVAILABLE','COVERAGE_BUDGET_EXCEEDED',false,null,null],limit);
+    assert.deepEqual(section.accounts,[{bot_id:BOT,broker:BROKER,coverage_ids:['coverage:0']}],limit);
+    assert.equal(JSON.stringify(financialOnly(result.body)),JSON.stringify(financialOnly(baseline.body)),limit+': financial fields are identical');
+    assert.deepEqual(leakedCoverageKeys(result,OWNER_COVERAGE_PATH),[],limit);
+    assert.equal(nonPlain(result),null,limit);
+  }
+});
+
+test('D worker: the planner calls run without the span cap only for a degraded union_minutes registry (per-Bot and owner)',()=>{
+  for(const [name,make] of [['account',()=>structuredClone(FIXTURES.complete)],['owner',()=>ownerCoverageJob()]]){
+    // Degraded union_minutes registry in a context over the span budget: accepted.
+    const job=make();lowerBudgets(job,{union_minutes:60});
+    job.snapshot.coverage=buildDegradedCoverageSnapshot({...job.input.coverage_context,limit:'union_minutes'});
+    assert.equal(executeQr2Job(structuredClone(job)).ok,true,name);
+    // COMPLETE and TABLE_ABSENT registries built under the default budgets, then presented to the same over-span context: still kind other, no compute.
+    for(const facts of [[{state:'COMPLETE',timestamps:Array.from({length:120},(_,i)=>B+(i+1)*MIN)}],[{state:'TABLE_ABSENT'}]]){
+      const bad=make();
+      bad.snapshot.coverage=buildCoverageSnapshot({...bad.input.coverage_context,facts});
+      lowerBudgets(bad,{union_minutes:60});
+      let computed=false;
+      assert.deepEqual(executeQr2Job(bad,{compute(){computed=true;throw Error('must not compute');}}),{ok:false,kind:'other'},name+' '+facts[0].state);
+      assert.equal(computed,false,name);
+    }
+    // A degraded non-span registry claimed in an over-span context is not accepted either.
+    const mixed=make();
+    lowerBudgets(mixed,{timestamp_rows:50});
+    mixed.snapshot.coverage=buildDegradedCoverageSnapshot({...mixed.input.coverage_context,limit:'timestamp_rows'});
+    lowerBudgets(mixed,{union_minutes:60});
+    assert.deepEqual(executeQr2Job(mixed),{ok:false,kind:'other'},name);
+  }
+});
+
+test('D worker: an impossible or corrupt degrade claim is a corrupt registry (kind other), with no compute',()=>{
+  for(const [name,make] of [['account',()=>structuredClone(FIXTURES.complete)],['owner',()=>ownerCoverageJob()]]){
+    // The registry is degraded for lowered budgets; the job's own context keeps the default budgets, so the plan alone cannot make the stop happen.
+    const cases=[
+      ['union_minutes claim within the span budget','union_minutes',j=>({union_minutes:60})],
+      ['timestamp_rows claim with capacity above the plan','timestamp_rows',j=>({timestamp_rows:50})],
+      ['derivation_visits claim above the plan','derivation_visits',j=>({derivation_visits:50})],
+      ['output_intervals claim above the plan','output_intervals',j=>({output_intervals:10})],
+      ['coverage_output_bytes claim above the plan','coverage_output_bytes',j=>({coverage_output_bytes:zeroOutputBytes(j)+50})]
+    ];
+    for(const [label,limit,lower] of cases){
+      const job=make(),lowered=structuredClone(job);
+      lowerBudgets(lowered,lower(job));
+      job.snapshot.coverage=buildDegradedCoverageSnapshot({...lowered.input.coverage_context,limit});
+      let computed=false;
+      assert.deepEqual(executeQr2Job(job,{compute(){computed=true;throw Error('must not compute');}}),{ok:false,kind:'other'},name+': '+label);
+      assert.equal(computed,false,name+': '+label);
+    }
+    const edits=[
+      ['coverage_input_bytes claim',j=>{j.snapshot.coverage.unions[0].fact.limit='coverage_input_bytes';}],
+      ['unique_windows claim',j=>{j.snapshot.coverage.unions[0].fact.limit='unique_windows';}],
+      ['timestamps on a degraded fact',j=>{j.snapshot.coverage.unions[0].fact.timestamps=[];}],
+      ['a count on a degraded window',j=>{j.snapshot.coverage.windows[0].stored_minutes=0;}],
+      ['a data charge on a degraded registry',j=>{j.snapshot.coverage.charges.timestamp_rows=1;}]
+    ];
+    for(const [label,edit] of edits){
+      const job=make();lowerBudgets(job,{timestamp_rows:50});
+      job.snapshot.coverage=buildDegradedCoverageSnapshot({...job.input.coverage_context,limit:'timestamp_rows'});
+      edit(job);
+      assert.deepEqual(executeQr2Job(job),{ok:false,kind:'other'},name+': '+label);
+    }
+  }
+});
+
+test('D worker: the post-build lowered-limit refusal is unchanged for a degraded registry (422 code only)',()=>{
+  const job=degradedJob(FIXTURES.complete,'timestamp_rows',{timestamp_rows:50});
+  assert.deepEqual(executeQr2Job(job,{coverageOutputLimit:1}),refusedAdmission);
 });

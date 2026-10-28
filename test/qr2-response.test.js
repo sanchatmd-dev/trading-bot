@@ -352,3 +352,24 @@ test('O6 fix-r1 M27: the composer accepts interval_count 4096 and refuses exactl
   const error=failure(()=>withCoverage(rangeView(T0+8194*MIN),refusedOne));
   assert.equal(error.code,'QR2_RESPONSE_INVALID');assert.deepEqual(error.validation,['COVERAGE_INTERVALS_OVER']);
 });
+// OD-S5-D: UNAVAILABLE / COVERAGE_BUDGET_EXCEEDED is bar coverage only; it never reaches a status, a reason or a financial field.
+test('D coverage COVERAGE_BUDGET_EXCEEDED composes as a coverage object and changes no other field of the body',()=>{
+  const v=view(),c7=coverageFor(v.range.resolved,{state:'BUDGET_EXCEEDED'}),completed=coverageFor(v.range.resolved,{state:'COMPLETE',timestamps:[]});
+  const body=withCoverage(v,c7);
+  assert.equal(body.market_data.coverage,c7,'the option object itself');
+  assert.equal(c7.reason,'COVERAGE_BUDGET_EXCEEDED');
+  const others=[withCoverage(v,completed),withCoverage(v,coverageFor(v.range.resolved,{state:'TABLE_ABSENT'})),compose(v)];
+  const strip=b=>{const {market_data,...rest}=b;return {rest,legacy:{...market_data,coverage:undefined}};};
+  for(const other of others)assert.deepEqual(strip(body),strip(other),'status, reasons, overlays and every financial field are identical');
+  assert.deepEqual(body.status,compose(v).status);
+  assert.equal(JSON.stringify(body).includes('COVERAGE_BUDGET_EXCEEDED'),true);
+  assert.equal(JSON.stringify(body.status).includes('COVERAGE'),false,'the reason is never a status reason');
+  // A budget coverage with a count, or with the wrong shape, is invalid.
+  for(const edit of [c=>{c.stored_minutes=0;},c=>{c.interval_count=0;},c=>{c.intervals=[];},c=>{c.complete=true;},c=>{c.reason='COVERAGE_BUDGET_EXCEEDED_X';}]){
+    const bad=structuredClone(c7);edit(bad);
+    assert.equal(failure(()=>withCoverage(v,bad)).code,'QR2_RESPONSE_INVALID');
+  }
+  // The THB shape is unchanged: a null market stays UNSUPPORTED_MARKET, never the budget reason.
+  const thb=view({scope:{...view().scope,broker:'binance-th'}});
+  assert.equal(withCoverage(thb,coverageFor(thb.range.resolved,{state:'NOT_NEEDED'},null)).market_data.coverage.reason,'UNSUPPORTED_MARKET');
+});

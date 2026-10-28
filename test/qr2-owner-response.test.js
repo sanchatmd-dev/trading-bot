@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {composeOwnerResponse,validateOwnerResponse,ownerAccountInput,endpointPriceState} from '../src/portfolio/qr2-owner-response.js';
 import {numberField} from '../src/portfolio/qr2-labels.js';
-import {buildCoverageSnapshot,planCoverage} from '../src/portfolio/qr2-coverage-snapshot.js';
+import {buildCoverageSnapshot,buildDegradedCoverageSnapshot,planCoverage} from '../src/portfolio/qr2-coverage-snapshot.js';
 import {QR2_COVERAGE_LIMITS} from '../src/portfolio/qr2-coverage-limits.js';
 import {QR2_COVERAGE_MARKET} from '../src/portfolio/qr2-coverage.js';
 import {projectPublicCoverage,validateOwnerCoverageShape} from '../src/portfolio/qr2-coverage-public.js';
@@ -227,5 +227,23 @@ test('owner header reports earliest known member funding and rejects invalid sca
   const {body}=run(f);assert.equal(body.first_funding_at,from+1);
   for(const mutate of [b=>{b.total.member_count=-1;},b=>{b.total.member_count=21;},b=>{b.total.members=Array(21).fill({bot_id:'owner',broker:'binance-th',fields:[],reasons:[]});},b=>{b.first_funding_at=-1;},b=>{b.allocation.effective_from=-86400000;},b=>{b.price_policy.fresh_ms=1;}]){
     const copy=structuredClone(body);mutate(copy);assert.equal(validateOwnerResponse(copy),false);
+  }
+});
+
+// OD-S5-D: a degraded registry gives C7 entries; the owner status roll-up, the member bodies and every other field are the same as with completed coverage.
+test('D owner: degraded coverage gives UNAVAILABLE / COVERAGE_BUDGET_EXCEEDED entries and changes no status or member field',()=>{
+  const baseline=run(fixture());
+  for(const [limit,lowered] of [['union_minutes',{union_minutes:60}],['timestamp_rows',{timestamp_rows:10}],['output_intervals',{output_intervals:2}]]){
+    const f=fixture(),accounts=coverageAccounts(f),degradedBudgets={...budgets,...lowered};
+    f.snapshot.coverage=buildDegradedCoverageSnapshot({accounts,budgets:degradedBudgets,limit});
+    f.input.coverage_context={accounts,budgets:degradedBudgets};
+    const {body}=run(f);
+    assert.equal(validateOwnerResponse(body),true,limit);
+    assert.deepEqual(body.market_coverage,projectOf(f).owner.market_coverage,limit);
+    assert.equal(validateOwnerCoverageShape(body.market_coverage).ok,true,limit);
+    assert.deepEqual(body.market_coverage.entries.map(e=>[e.coverage.state,e.coverage.reason,e.coverage.interval_count,e.coverage.intervals]),[['UNAVAILABLE','COVERAGE_BUDGET_EXCEEDED',null,null]],limit);
+    const {market_coverage:_mine,...mine}=body,{market_coverage:_base,...theirs}=baseline.body;
+    assert.deepEqual(mine,theirs,limit+': status, totals and member rows are identical to the completed-coverage composition');
+    assert.equal(body.status.status,'COMPLETE',limit);
   }
 });

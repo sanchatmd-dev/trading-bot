@@ -74,9 +74,12 @@ test('later owner member refusal prevents every coverage and detail read',async(
   assert.ok(!f.queries.some(q=>q.sql===COVERAGE_SQL.PROBE||q.sql.startsWith('SELECT id,user_id,broker,at,equity_delta')));
 });
 
-test('31-day coverage union refuses whole request before source/detail reads',async()=>{
-  const f=fixture({grid:32});await assert.rejects(readQr2Snapshot(f.store,{...args,to:31*86400000,requestTime:31*86400000}),{code:'QR2_RANGE_ADMISSION_REFUSED'});
-  assert.ok(!f.queries.some(q=>q.sql===COVERAGE_SQL.PROBE||q.sql.startsWith('SELECT id,user_id,broker,at,equity_delta')));
+test('31-day coverage union degrades bar coverage after the SHOW checks and before the market-data probe; the financial read goes on',async()=>{
+  const f=fixture({grid:32}),r=await readQr2Snapshot(f.store,{...args,to:31*86400000,requestTime:31*86400000});
+  assert.deepEqual(r.snapshot.coverage.unions.map(u=>u.fact),[{state:'BUDGET_EXCEEDED',limit:'union_minutes'}]);
+  assert.deepEqual(validateCoverageSnapshot(r.snapshot.coverage,r.input.coverage_context),{ok:true});
+  assert.ok(!f.queries.some(q=>q.sql===COVERAGE_SQL.PROBE||q.sql===COVERAGE_SQL.ROWS),'no market-data query');
+  assert.ok(f.queries.some(q=>q.sql.startsWith('SELECT id,user_id,broker,at,equity_delta')),'the financial detail read still runs');
 });
 
 test('non-enumerable overrides retain validated lowering and reject raised values or accessors',()=>{

@@ -1,5 +1,5 @@
-import {buildBarCoverage,validateBarCoverage} from './qr2-coverage.js';
-import {coverageError,planCoverage,validateCoverageSnapshot} from './qr2-coverage-snapshot.js';
+import {buildBarCoverage,validateBarCoverage,QR2_COVERAGE_BUDGET_REASON} from './qr2-coverage.js';
+import {coverageError,planCoverageUncapped,assertUnionMinutes,assertZeroEnvelope,validateCoverageSnapshot} from './qr2-coverage-snapshot.js';
 import {assembleGaps} from '../market-gap-intervals.js';
 import {QR2_COVERAGE_LIMITS} from './qr2-coverage-limits.js';
 
@@ -35,6 +35,8 @@ function windowCoverage(registry,w){
   const {market,resolved_range}=w;
   if(w.union_id===null)return buildBarCoverage({resolved_range,market,fact:{state:'NOT_NEEDED'}});
   const fact=registry.unions[w.union_id].fact;
+  // Degraded registry (OD-S5-D): the coverage was not inspected. Nothing is read from the registry beyond the state.
+  if(fact.state==='BUDGET_EXCEEDED')return buildBarCoverage({resolved_range,market,fact:{state:'BUDGET_EXCEEDED'}});
   // The absent-table build is the exact Stage 1 head for a window that has an inspected range.
   const coverage=buildBarCoverage({resolved_range,market,fact:{state:'TABLE_ABSENT'}});
   if(fact.state==='TABLE_ABSENT')return coverage;
@@ -126,7 +128,10 @@ function data(value,path,depth=0){
 /** Closed validator for the owner envelope against the independently authorized context. Returns {ok,errors}. */
 export function validateOwnerCoverage(value,context){
   input(closed(context,['accounts','budgets']));
-  const plan=planCoverage({accounts:context.accounts,budgets:context.budgets});
+  // The span cap applies unless every inspected entry says COVERAGE_BUDGET_EXCEEDED (a degraded union_minutes registry). Everything else is refused as before.
+  const plan=planCoverageUncapped({accounts:context.accounts,budgets:context.budgets}),overSpan=plan.minutes>context.budgets.union_minutes;
+  if(!overSpan)assertZeroEnvelope(plan,context.budgets);
+  let degraded=false,result;
   try{
     data(value,'envelope');
     keys(value,['market_coverage'],'envelope');
@@ -136,13 +141,21 @@ export function validateOwnerCoverage(value,context){
     const {entries,accounts}=section;
     dense(entries,'entries');dense(accounts,'accounts');
     need(entries.length===plan.windows.length,'entries.length');
+    let inspected=null;
     for(let i=0;i<entries.length;i++){
       const entry=entries[i],w=plan.windows[i];
       keys(entry,['id','coverage'],'entries.'+i);
       need(entry.id==='coverage:'+i,'entries.'+i+'.id');
       need(validateBarCoverage(entry.coverage).ok,'entries.'+i+'.coverage');
       need(sameMarket(entry.coverage.market,w.market)&&sameRange(entry.coverage.resolved_range,w.resolved_range),'entries.'+i+'.window');
+      // One decision per request: every inspected entry is budget-exceeded or none is.
+      if(w.union_id!==null){
+        const over=entry.coverage.reason===QR2_COVERAGE_BUDGET_REASON;
+        need(inspected===null||inspected===over,'entries.'+i+'.budget');
+        if(inspected===null)inspected=over;
+      }
     }
+    degraded=inspected===true;
     const referenced=entries.map(()=>false),seen=new Set(),targets=[];
     for(let j=0;j<accounts.length;j++){
       const account=accounts[j];
@@ -163,12 +176,18 @@ export function validateOwnerCoverage(value,context){
       need(accounts[j].bot_id===binding.bot_id&&accounts[j].broker===binding.broker,'accounts.'+j+'.set');
       need(targets[j]===binding.window_id,'accounts.'+j+'.mapping');
     }
-    return {ok:true,errors:[]};
+    result={ok:true,errors:[]};
   }catch(error){
     // Context errors are thrown above. Anything unexpected about the envelope itself is a fixed-code rejection.
-    if(error?.code===OWNER_COVERAGE_INVALID)return {ok:false,errors:[{code:error.code,path:error.path}]};
-    return {ok:false,errors:[{code:OWNER_COVERAGE_INVALID,path:'envelope'}]};
+    if(error?.code===OWNER_COVERAGE_INVALID)result={ok:false,errors:[{code:error.code,path:error.path}]};
+    else result={ok:false,errors:[{code:OWNER_COVERAGE_INVALID,path:'envelope'}]};
   }
+  if(overSpan){
+    // Over the span budget only a valid all-degraded envelope passes; anything else keeps today's plain refusal.
+    if(!(result.ok&&degraded))assertUnionMinutes(plan,context.budgets);
+    assertZeroEnvelope(plan,context.budgets);
+  }
+  return result;
 }
 
 const shapeMarketKey=market=>market===null?'':market.broker+'\u0000'+market.symbol+'\u0000'+market.timeframe;
@@ -188,12 +207,18 @@ export function validateOwnerCoverageShape(value){
     dense(entries,'entries');dense(accounts,'accounts');
     need(entries.length<=QR2_COVERAGE_LIMITS.unique_windows,'entries.length');
     need(accounts.length<=20,'accounts.length');
-    let intervals=0;
+    let intervals=0,inspected=null;
     for(let i=0;i<entries.length;i++){
       const entry=entries[i];
       keys(entry,['id','coverage'],'entries.'+i);
       need(entry.id==='coverage:'+i,'entries.'+i+'.id');
       need(validateBarCoverage(entry.coverage).ok,'entries.'+i+'.coverage');
+      // One decision per request: every inspected entry is budget-exceeded or none is.
+      if(entry.coverage.market!==null&&entry.coverage.inspected_window!==null){
+        const over=entry.coverage.reason===QR2_COVERAGE_BUDGET_REASON;
+        need(inspected===null||inspected===over,'entries.'+i+'.budget');
+        inspected=over;
+      }
       if(i>0){
         const before=entries[i-1].coverage,now=entry.coverage;
         const order=shapeCompare(shapeMarketKey(before.market),shapeMarketKey(now.market))||shapeRangeCompare(before.resolved_range,now.resolved_range);

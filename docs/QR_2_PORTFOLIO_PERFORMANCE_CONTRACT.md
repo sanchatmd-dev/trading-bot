@@ -437,7 +437,7 @@ Offline, maintenance lock, classified install (ABSENT, INSTALLED, PARTIAL; refus
 
 `GET /api/paper-performance?bot_id=<id>&broker=<b>&period=<p>[&from&to]`, scoped by `ownsBot`; admin cross-owner reads need `analytics:any`, the sensitive-action check and an audit row; `user_id` is never a selector (`QR2_NOT_OWNER`). Bounds: custom windows at most 3660 days and not older than `quota.historyDays`. The legacy Quant gate is not applied (O8).
 
-Read budget (OD-Q12): root fixes a maximum of ledger rows per account and grid points per view; measure replay cost in S2 and fix the numbers before S3 acceptance. A request over a limit is refused `QR2_RANGE_ADMISSION_REFUSED` and never truncated. Replay needs the full history of the account up to `to`, so the ledger-row limit applies to history, not to the range length. [SRC: ROADMAP § Report range, no silent truncation]
+Read budget (OD-Q12): root fixes a maximum of ledger rows per account and grid points per view; measure replay cost in S2 and fix the numbers before S3 acceptance. A request over a limit is refused `QR2_RANGE_ADMISSION_REFUSED` and never truncated. The bar-coverage budgets are the one exception (11.1): a request over a degradable coverage budget is not refused; its bar coverage is reported as not inspected, and nothing is truncated. Replay needs the full history of the account up to `to`, so the ledger-row limit applies to history, not to the range length. [SRC: ROADMAP § Report range, no silent truncation]
 
 Response fields: per symbol: quantity, unlotted quantity, cost basis, price, price state, age, retrieval flag, market value, unrealized PnL; per account: cash, reserved, available, NAV, unbacked configured equity, realized PnL, fees, flows, money PnL, TWR, Modified Dietz, drawdown, reconciliation state, legacy seeds, findings, method ids, cutoffs, gaps, per-fill strategy tag (O14); exposure, `EXPOSURE_AT_COST`, available cash state, modeled slippage (information), audit findings (R14), ledger rule epochs, and the header below. Every number is serialized as `{value | null, status, reasons[]}`; money and returns are decimal strings; a null never renders as 0.
 
@@ -485,6 +485,8 @@ Root clarification RC-Q3: a range that ends at or before the failing fill gives 
 
 The status rolls up from account to Bot (worst of its accounts) to owner total (worst of its Bots). The owner total is unavailable whenever the declaration is missing or refused. RO1 facts mean many real accounts are expected to be `PARTIAL`; that is the intended outcome, not a QR-2 defect.
 
+In the `COMPLETE` row, "coverage" means the ledger coverage start of 3.5. Bar coverage (section 11, 11.1) is not a status input at any level.
+
 ---
 
 ## 11. Gaps
@@ -492,6 +494,50 @@ The status rolls up from account to Bot (worst of its accounts) to owner total (
 - Missing or stale prices follow 2.1. Missing ledger history (before coverage start, before `S_cash`, or not replayable) is a reason, never zero rows.
 - Bar gaps in range are listed as intervals, reusing the BARS gap logic where possible. Only a gap that hits a needed valuation point changes a number. QR-2 never requests a backfill.
 - Under option M a later catch-up bar restores a price for a past instant; only frozen reports keep what was shown earlier (K7).
+
+### 11.1 Bar coverage over a coverage budget (OD-S5-D)
+
+Bar coverage is the `qr2-bar-coverage-v1` object in `market_data.coverage` of a per-Bot body and in each `market_coverage.entries[i].coverage` of an owner body. The coverage read is bounded by the coverage budgets in `src/portfolio/qr2-coverage-limits.js`. Budget values do not change.
+
+Degradable budgets. When the coverage read of a request would exceed one of the budgets `union_minutes` (decided at plan time), `timestamp_rows`, `derivation_visits`, `output_intervals` or `coverage_output_bytes` (decided during the read), the request is not refused for that reason. The financial report is computed and returned exactly as for any other request. In that response, every coverage object whose market is the supported market and whose resolved range has an inspected window has:
+
+- `state` `UNAVAILABLE`, `reason` `COVERAGE_BUDGET_EXCEEDED`, `complete` false;
+- `expected_minutes`, `stored_minutes`, `missing_minutes`, `interval_count` and `intervals` all null;
+- `version`, `source`, `market`, `resolved_range`, `inspected_window` and `excluded_edges` exactly as for a completed inspection of the same range.
+
+Coverage objects with a fixed disposition keep it: `UNAVAILABLE/UNSUPPORTED_MARKET`, `EMPTY/RANGE_UNRESOLVED` and `EMPTY/NO_FULL_CANDLES` do not change.
+
+The decision is made once per request. Either every inspected window of the response was inspected, or none was. Nothing publishes a partial interval list, a shortened range, a sampled or estimated count, or a completeness claim. `COVERAGE_BUDGET_EXCEEDED` means "not inspected". It never means "no stored bars" and never means "no gaps".
+
+Input bytes are not degradable. `coverage_input_bytes` is kept within budget by the row capacity during the read, so a degraded result never claims it. The worker treats a degrade claim naming `coverage_input_bytes` as impossible and answers 503 `QR2_REPORT_FAILED`. Plan-time byte refusals computed from the zero-row envelope (`coverage_input_bytes` or `coverage_output_bytes`) keep the whole-request 422 `QR2_RANGE_ADMISSION_REFUSED` with the limit in the detail.
+
+Feasibility check. The worker accepts a data-time degrade claim only when the plan alone makes it possible: `timestamp_rows` only if the planned union minutes exceed the row capacity (`coverageRowCapacity`, not the budget value); `derivation_visits` only if the sum over windows of min(expected minutes, capacity) exceeds the visits budget; `output_intervals` only if the sum over windows of min(ceil(expected minutes / 2), capacity + 1) exceeds the interval budget; `coverage_output_bytes` only if the byte estimator at those interval upper bounds exceeds the output byte budget. Any other claim is a corrupt registry and answers 503 `QR2_REPORT_FAILED`. A registry that claims inspection (`COMPLETE` or `TABLE_ABSENT`) while its context is over `union_minutes` is also corrupt and answers 503.
+
+Order. The plan is made first. A non-degradable plan refusal keeps its precedence and issues no query. A degraded registry is returned only after both SHOW transaction checks (isolation level and read-only) pass; a failing check answers as it does today, before any coverage result is returned. `union_minutes` is decided from the resolved ranges before the market-data table probe, so a range over `union_minutes` reports `COVERAGE_BUDGET_EXCEEDED` even when the market-data table is absent.
+
+Unchanged refusals. These limits are not degraded and keep their existing answers, each refusing the whole request with code `QR2_RANGE_ADMISSION_REFUSED`: 422 with the limit in the detail for `unique_windows`, plan-time byte refusals, `ledger_rows`, `grid_instants`, `audit_rows` and `pending_orders`; 403 with the limit in the detail for `history_days`; 429 with the limit in the detail for `concurrency` (statusOfAdmission in `src/portfolio/qr2-response.js`); 422 with no detail for an arithmetic overflow that names no limit and for the post-build lowered-limit refusal (the code only). Source, transaction and decode failures still answer 503 `QR2_REPORT_FAILED`.
+
+Status. Bar coverage never changes a price, a valuation, a financial field or a status. The section 10 statuses roll up from account to Bot to owner exactly as before. A coverage object with `COVERAGE_BUDGET_EXCEEDED` does not make a COMPLETE account PARTIAL. Bar coverage has no roll-up of its own: a per-Bot body carries the one coverage object of its account; an owner body lists one entry per unique market and range and maps each account to exactly one entry; nothing sums, merges or ranks entries. Because the decision is per request, an owner body over a coverage budget shows `COVERAGE_BUDGET_EXCEEDED` on every entry that has an inspected window.
+
+Interface. The panel shows class C7 for this state, in English and Thai through `public/i18n.js`:
+
+- English: "Inspection unavailable: this range is over the bar coverage check limit, so bar coverage was not checked. The financial figures and their price checks are not affected. Choose a shorter range, for example Week, to see bar coverage."
+- Thai: "ตรวจไม่ได้: ช่วงนี้เกินขีดจำกัดของการตรวจความครอบคลุมแท่งราคา จึงไม่ได้ตรวจความครอบคลุมแท่งราคา ตัวเลขทางการเงินและการตรวจราคาของตัวเลขเหล่านั้นไม่ได้รับผลกระทบ เลือกช่วงที่สั้นลง เช่น สัปดาห์ เพื่อดูความครอบคลุมแท่งราคา"
+
+The panel never shows counts, a gap list or a "no gaps" label for C7.
+
+Packet rules amended by reference (OD-S5-D, 2026-10-28). The packets below stay unchanged because their evidence pins their hashes; this table is the amendment.
+
+| Packet and line | Current rule | Amended by OD-S5-D |
+| --- | --- | --- |
+| `docs/QR2_S5_4_GAP_INTERVAL_PACKET_2026-10-23.md:57` | Exceeding a coverage budget takes the whole-request refusal path. | Exceeding a degradable budget (11.1) gives `COVERAGE_BUDGET_EXCEEDED` coverage. The rest of line 57 (never shorten, never truncate, never claim a resource-limited scan complete) stands and is satisfied. |
+| same file `:61` | Coverage budget failures publish no successful owner object. | A degradable budget stop publishes the owner object with every inspected entry `COVERAGE_BUDGET_EXCEEDED`. Source failures still publish nothing. |
+| same file `:63` | UI distinguishes four inspection kinds. | Adds a fifth: not inspected because of a budget (C7). |
+| `docs/QR2_S5_4_STAGE2C_INTEGRATION_PACKET_2026-10-23.md:56`, `:98` (root C1 admission) | Whole-request refusal on any overflow. | Whole-request refusal stays for source failures, `unique_windows`, unnamed overflows, non-degradable plan-time byte refusals and `coverage_input_bytes`. Degradable budget overflows degrade per 11.1. The C1 envelope values are unchanged. |
+| `docs/QR2_S5_4_STAGE3B_RESPONSE_WIRING_PACKET_2026-10-24.md:210` | If valid coverage cannot be obtained, the whole request fails. | Stands for invalid coverage. A budget stop is not invalid coverage: it is a valid `COVERAGE_BUDGET_EXCEEDED` object. |
+| same file `:221` | `planCoverage` overflow on the worker path answers 503. | Stands for a registry that claims inspection (COMPLETE/TABLE_ABSENT) while its context is over budget, and for any degrade claim that fails the feasibility check: that is still a corrupt context. A degraded `union_minutes` registry is not an overflow on the worker path. |
+| `docs/QR2_COVERAGE_ADMISSION_FIX_2026-10-27.md` (F) | Reader-path coverage refusal answers 422 with detail. | Stands for the non-degradable cases (`unique_windows`, unnamed overflow, plan-time byte refusals). For the degradable budgets the reader returns a degraded registry instead. |
+| `docs/QR2_S5_4_STAGE3C_O7_UI_PACKET_2026-10-24.md:137`, `:256`, `:268`, `:297` | Six classes C1 to C6; fixtures cover C1 to C6. | Seven classes; C7 behaves like C5/C6 for counts (all null); fixtures add one C7 per-Bot body and one USDT owner body whose inspected entries are C7. A USDT owner body holds only `binance-global` accounts, so C7 never sits beside a THB entry in one owner body; THB stays C5 in its own owner body. |
 
 ---
 
@@ -578,7 +624,7 @@ Out of scope: Live, non-Paper execution, Futures, margin, shorts, funding paymen
 
 ## 15. Decisions
 
-All dates 2026-10-19. "Owner" means the owner decided it as recommended. "Root" means root decided it. None is a GO.
+Dates are 2026-10-19 unless a row states another date. "Owner" means the owner decided it as recommended. "Root" means root decided it. None is a GO.
 
 | ID | Decision | Outcome | Decided by | Date |
 | --- | --- | --- | --- | --- |
@@ -616,6 +662,7 @@ All dates 2026-10-19. "Owner" means the owner decided it as recommended. "Root" 
 | OD-Q12 | Numeric read budget per view | Measure replay cost in S2, fix maximum ledger rows per account history and grid points per view before S3 acceptance; refuse `QR2_RANGE_ADMISSION_REFUSED`, never truncate. | root | 2026-10-19 |
 | OD-Q17 | Staging deployment of the F4, ledger fix O3, G1 and W1 fixes before QR-2 staging integration | Required, confirmed from deployment evidence. QR-2 logic does not need the fixes (epochs), but the branch already carries 40e3b6b, whose API and worker refuse to start without the fence table. | root | 2026-10-19 |
 | OD-Q18 | Requested `to` later than the request time | Resolved to the request time; flag `RANGE_END_AT_REQUEST_TIME`; the header keeps the requested range next to the resolved range. Supersedes the earlier refusal. | owner | 2026-10-19 |
+| OD-S5-D | Bar coverage over a degradable coverage budget is reported `UNAVAILABLE/COVERAGE_BUDGET_EXCEEDED` per request instead of refusing the request; budgets, financial limits, plan-time byte refusals and statuses unchanged (11.1; sections 8.1, 10, 11). | Applied with root ruling L2 items 1 to 4. | owner | 2026-10-28 |
 
 ### Root clarifications (2026-10-19)
 

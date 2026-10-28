@@ -57,14 +57,14 @@ test('coverage integration: five funded supported accounts share one nested unio
  try{await assert.rejects(readQr2OwnerSnapshot(f.store,{ownerId:owner.id,currency:'USDT',from,to,requestTime:to,boundaries:LOCAL_FIXTURE_E2,limits:{audit_rows:1}}),{code:'QR2_RANGE_ADMISSION_REFUSED'});assert.equal(auditCalls,5);assert.ok(!seen.some(sql=>sql.includes('pine_market_bars')||/^SELECT (id,user_id|f.signal_id|j.signal_id|position_id|user_id,account_id|id,side)/.test(sql)));}finally{f.db.query=query;}
 });
 
-test('coverage integration: no-fill exact gap, absent versus empty, and row sentinel refuse whole read',{timeout:45000},async()=>{
+test('coverage integration: no-fill exact gap, absent versus empty, and row sentinel degrades the whole coverage',{timeout:45000},async()=>{
  await clearBars();const owner=await createOwner(f.store),bot=await createBot(f.store,owner,250),from=future(),to=from+3*M;await registration(bot,from);const input=args(owner,bot,from,to);
  await insertBars(f.db,[barOf(from+M,'62000'),barOf(from+3*M,'62000')]);
  const {value:read,queries}=await observed(()=>readQr2Snapshot(f.store,{...input,coverageBudgets:{timestamp_rows:2}}));
  assert.equal(read.snapshot.market.checked,false);assert.deepEqual(read.snapshot.coverage.unions[0].fact.timestamps,[from+M,from+3*M]);assert.equal(unionReads(queries).length,1);assert.equal(unionReads(queries)[0].params[5],3);
  const c=publicCoverage(read);assert.deepEqual([c.state,c.expected_minutes,c.stored_minutes,c.missing_minutes],['COMPLETE',3,2,1]);assert.deepEqual(c.intervals,[{from:from+M,to:from+2*M,missing_minutes:1}]);
  await insertBars(f.db,[barOf(from+2*M,'62000')]);const original=f.db.query.bind(f.db),seen=[];f.db.query=async(sql,params)=>{seen.push(sql);return original(sql,params);};
- try{await assert.rejects(readQr2Snapshot(f.store,{...input,coverageBudgets:{timestamp_rows:2}}),{code:'QR2_RANGE_ADMISSION_REFUSED'});assert.ok(!seen.some(sql=>sql.startsWith('SELECT id,user_id,broker,at,equity_delta')));}finally{f.db.query=original;}
+ try{const degraded=await readQr2Snapshot(f.store,{...input,coverageBudgets:{timestamp_rows:2}});assert.deepEqual(degraded.snapshot.coverage.unions.map(u=>u.fact),[{state:'BUDGET_EXCEEDED',limit:'timestamp_rows'}]);assert.ok(seen.some(sql=>sql.startsWith('SELECT id,user_id,broker,at,equity_delta')),'the financial detail read still runs after a degrade (OD-S5-D)');}finally{f.db.query=original;}
  await clearBars();const empty=publicCoverage(await readQr2Snapshot(f.store,input));assert.deepEqual([empty.state,empty.expected_minutes,empty.stored_minutes,empty.missing_minutes],['COMPLETE',3,0,3]);assert.deepEqual(empty.intervals,[{from,to,missing_minutes:3}]);
  await f.db.query('ALTER TABLE public.pine_market_bars RENAME TO pine_market_bars_coverage_hidden');try{const {value:absent,queries:absentQueries}=await observed(()=>readQr2Snapshot(f.store,input));assert.equal(absent.snapshot.coverage.unions[0].fact.state,'TABLE_ABSENT');assert.equal(publicCoverage(absent).state,'UNAVAILABLE');assert.equal(unionReads(absentQueries).length,0);}finally{await f.db.query('ALTER TABLE public.pine_market_bars_coverage_hidden RENAME TO pine_market_bars');}
 });

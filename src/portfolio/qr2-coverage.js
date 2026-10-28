@@ -2,6 +2,7 @@ import {assembleGaps} from '../market-gap-intervals.js';
 
 export const QR2_COVERAGE_VERSION='qr2-bar-coverage-v1';
 export const QR2_COVERAGE_MARKET=Object.freeze({broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'});
+export const QR2_COVERAGE_BUDGET_REASON='COVERAGE_BUDGET_EXCEEDED';
 const M=60000, MB=60000n, MAX=BigInt(Number.MAX_SAFE_INTEGER);
 const KEYS=['version','source','market','resolved_range','inspected_window','excluded_edges','state','reason','complete','expected_minutes','stored_minutes','missing_minutes','interval_count','intervals'];
 function invalid(path){const error=new TypeError('Invalid QR-2 coverage: '+path);error.code='QR2_COVERAGE_INVALID';error.path=path;throw error;}
@@ -62,12 +63,14 @@ export function buildBarCoverage(input){
   keys(input,['resolved_range','market','fact'],'input');
   const head=base(input.resolved_range,input.market),fact=input.fact;
   requireValue(fact!==null&&typeof fact==='object'&&!Array.isArray(fact),'fact');
-  requireValue(['NOT_NEEDED','TABLE_ABSENT','COMPLETE'].includes(fact.state),'fact.state');
+  requireValue(['NOT_NEEDED','TABLE_ABSENT','BUDGET_EXCEEDED','COMPLETE'].includes(fact.state),'fact.state');
   keys(fact,fact.state==='COMPLETE'?['state','timestamps']:['state'],'fact');
   const fixed=disposition(head);
   if(fixed){requireValue(fact.state==='NOT_NEEDED','fact.contradiction');return nonComplete(head,...fixed);}
   requireValue(fact.state!=='NOT_NEEDED','fact.contradiction');
   if(fact.state==='TABLE_ABSENT')return nonComplete(head,'UNAVAILABLE','MARKET_DATA_TABLE_ABSENT',false);
+  // Not inspected because a coverage budget stopped the read (OD-S5-D). Never means no stored bars and never means no gaps.
+  if(fact.state==='BUDGET_EXCEEDED')return nonComplete(head,'UNAVAILABLE',QR2_COVERAGE_BUDGET_REASON,false);
   array(fact.timestamps,'fact.timestamps');
   const {from:lower,to:end}=head.inspected_window,internal=[];
   let previous=lower;
@@ -102,7 +105,7 @@ export function validateBarCoverage(value){
     requireValue(equal(value.inspected_window,head.inspected_window)&&equal(value.excluded_edges,head.excluded_edges),'derived_bounds');
     const fixed=disposition(head);
     if(fixed||value.state==='UNAVAILABLE'){
-      const expected=fixed?nonComplete(head,...fixed):nonComplete(head,'UNAVAILABLE','MARKET_DATA_TABLE_ABSENT',false);
+      const expected=fixed?nonComplete(head,...fixed):nonComplete(head,'UNAVAILABLE',value.reason===QR2_COVERAGE_BUDGET_REASON?QR2_COVERAGE_BUDGET_REASON:'MARKET_DATA_TABLE_ABSENT',false);
       requireValue(equal(value,expected),'state_fields');return {ok:true,errors:[]};
     }
     requireValue(value.state==='COMPLETE'&&value.reason===null&&value.complete===true,'state_fields');

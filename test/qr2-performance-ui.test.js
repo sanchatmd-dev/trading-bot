@@ -5,7 +5,7 @@ import {JSDOM} from 'jsdom';
 import {validateResponse} from '../src/portfolio/qr2-labels.js';
 import {validateOwnerResponse} from '../src/portfolio/qr2-owner-response.js';
 import {refusalAnswer,composePerformanceResponse} from '../src/portfolio/qr2-response.js';
-import {planCoverage,buildCoverageSnapshot} from '../src/portfolio/qr2-coverage-snapshot.js';
+import {planCoverageUncapped,buildCoverageSnapshot,buildDegradedCoverageSnapshot} from '../src/portfolio/qr2-coverage-snapshot.js';
 import {projectPublicCoverage} from '../src/portfolio/qr2-coverage-public.js';
 import {QR2_COVERAGE_LIMITS} from '../src/portfolio/qr2-coverage-limits.js';
 
@@ -16,7 +16,7 @@ const settle=()=>new Promise(resolve=>setTimeout(resolve,25));
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};
 const ok=body=>({status:200,body});
 const bookFixture=()=>({user:{id:'owner-1'},bot:{id:'bot-1'},allBots:false,moneyFormat:'decimal-string',paperAccounts:[{bot_id:'bot-1',userId:'bot-1',broker:'binance-global',currency:'USDT',valuation:'COST_BASIS_NOT_MARK_TO_MARKET',bookEquity:'9007199254740994.123456789123456789'}]});
-function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot),bookAnswer=()=>ok(bookFixture()),sessionLoad=()=>{},observe=true}={}){
+function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot),bookAnswer=()=>ok(bookFixture()),sessionLoad=()=>{},observe=true,panelSource=null}={}){
   const {problems}=staticI18n();
   if(problems.length)throw new Error('i18n pair collision, no page rendered: '+problems[0]);
   const dom=new JSDOM(publicFile('index.html'),{url:'https://robot.test',runScripts:'outside-only'}),w=dom.window,d=w.document;
@@ -45,7 +45,7 @@ function setup({authenticated=true,language='en',answer=()=>ok(fixture.bot),book
   w.eval('var authenticated='+JSON.stringify(authenticated)+',selectedBot="bot-1",me={user:{id:"owner-1"}},csrfToken="fixture-csrf";var load=async function(){};');
   w.load=async()=>sessionLoad(w,d);
   d.querySelector('#app').hidden=!authenticated;
-  w.eval(publicFile('paper-performance.js'));
+  w.eval(panelSource??publicFile('paper-performance.js'));
   const get=id=>d.getElementById(id);
   const change=(id,value)=>{const node=get(id);const option=[...node.options??[]].find(o=>o.value.toLowerCase()===String(value).toLowerCase());node.value=option?.value??value;node.dispatchEvent(new w.Event('change',{bubbles:true}));};
   const boot=async()=>{await w.load();await settle();if(get('ppBot')?.options.length>1)change('ppBot','bot-1');};
@@ -87,7 +87,7 @@ function staticI18n(){
 
 test('A13 qr2CoveragePairs is collision-free (static, before any page render)',()=>{
   const {mine,problems}=staticI18n();
-  assert.equal(mine.length,32);
+  assert.equal(mine.length,31,"32 pairs before OD-S5-D: the two named range hints go, the C7 label comes");
   assert.deepEqual(problems,[],'no duplicate, no EN/TH collision with an existing text, no em dash, currency or market token');
 });
 
@@ -229,8 +229,8 @@ test('pending, endpoint 404, request refusal and Retry-After replace prior finan
 test('422 range admission refusal adds a plain range hint; other statuses and limits add none',async()=>{
   const refusal=(status,detail)=>({status,body:{code:'QR2_RANGE_ADMISSION_REFUSED',error:'The request is over a limit',detail}});
   const cases=[
-    [refusal(422,{limit:'timestamp_rows',value:30000,max:21600}),/too long for the performance report/,/about 15 days of market data/],
-    [refusal(422,{limit:'union_minutes',value:50000,max:43200}),/too long for the performance report/,/the limit is 30 days/],
+    [refusal(422,{limit:'timestamp_rows',value:30000,max:21600}),/too long for the performance report/,/a report size limit/],
+    [refusal(422,{limit:'union_minutes',value:50000,max:43200}),/too long for the performance report/,/a report size limit/],
     [refusal(422,{limit:'unique_windows',value:9,max:8}),/too long for the performance report/,/a report size limit/],
     [refusal(422,{limit:'coverage_output_bytes',max:1000}),/too long for the performance report/,/a report size limit/],
     [refusal(422,undefined),/too long for the performance report/,/a report size limit/]
@@ -258,9 +258,9 @@ test('422 range admission refusal adds a plain range hint; other statuses and li
   }
 });
 
-test('422 range admission hint is shown in Thai with the Thai pair for each limit',async()=>{
+test('422 range admission hint is shown in Thai with the Thai pair for each limit and names no day count',async()=>{
   const refusal=detail=>({status:422,body:{code:'QR2_RANGE_ADMISSION_REFUSED',error:'The request is over a limit',detail}});
-  const cases=[[{limit:'timestamp_rows',max:21600},RANGE_HINTS[0],'ข้อมูลตลาดประมาณ 15 วัน'],[{limit:'union_minutes',max:43200},RANGE_HINTS[1],'ขีดจำกัดคือ 30 วัน'],[{limit:'unique_windows',max:8},RANGE_HINTS[2],'ขีดจำกัดขนาดรายงาน'],[undefined,RANGE_HINTS[2],'ขีดจำกัดขนาดรายงาน']];
+  const cases=[[{limit:'timestamp_rows',max:21600},RANGE_HINTS[0],'ขีดจำกัดขนาดรายงาน'],[{limit:'union_minutes',max:43200},RANGE_HINTS[0],'ขีดจำกัดขนาดรายงาน'],[{limit:'unique_windows',max:8},RANGE_HINTS[0],'ขีดจำกัดขนาดรายงาน'],[undefined,RANGE_HINTS[0],'ขีดจำกัดขนาดรายงาน']];
   let next=ok(fixture.bot);
   const p=setup({language:'th',answer:()=>next});
   try{
@@ -270,7 +270,8 @@ test('422 range admission hint is shown in Thai with the Thai pair for each limi
       const text=p.text();
       assert.ok(text.includes(thOf(p,english)),'Thai hint shown for '+(detail?.limit??'no detail'));
       assert.ok(text.includes(fragment));
-      assert.ok(text.includes('15 วัน')||text.includes('30 วัน')||text.includes('ขนาดรายงาน'));
+      assert.ok(text.includes('ขนาดรายงาน'));
+      assert.equal(/15 วัน|30 วัน/.test(text),false,'no day count in the hint');
       assert.ok(!text.includes(english),'English hint is not left untranslated');
     }
   }finally{p.close();}
@@ -569,13 +570,14 @@ const EN={
     C3:'No inspection: the range for this coverage is unresolved.',
     C4:'No inspection: the range holds no complete 1-minute candle.',
     C5:'Inspection unavailable: bar coverage is reported only for the one supported Binance Global spot 1-minute market.',
-    C6:'Inspection unavailable: the market data table is absent. This is not stored history with no bars.'
+    C6:'Inspection unavailable: the market data table is absent. This is not stored history with no bars.',
+    C7:'Inspection unavailable: this range is over the bar coverage check limit, so bar coverage was not checked. The financial figures and their price checks are not affected. Choose a shorter range, for example Week, to see bar coverage.'
   },
   rows:{result:'Inspection result',market:'Market',range:'Coverage range',window:'Inspected window',edges:'Excluded partial candles',expected:'Expected minutes',stored:'Stored minutes',missing:'Missing minutes',count:'Gap intervals',accounts:'Accounts using this coverage'},
   list:'Gap interval list, count:',
   caption:'Each row: start - end : missing minutes. Start inclusive, end exclusive.'
 };
-const RANGE_HINTS=["The chosen range is too long for the performance report (the limit is about 15 days of market data). A shorter range, for example Week or a Custom range, should work.","The chosen range is too long for the performance report (the limit is 30 days). A shorter range, for example Week or a Custom range, should work.","The chosen range is too long for the performance report (a report size limit was reached). A shorter range, for example Week or a Custom range, should work."];
+const RANGE_HINTS=["The chosen range is too long for the performance report (a report size limit was reached). A shorter range, for example Week or a Custom range, should work."];
 const newEnglish=[EN.heading,...EN.notices,EN.owner,EN.absent,EN.unresolved,...Object.values(EN.klass),'Inspection result','State code','Reason code','Timeframe (minutes)','Coverage range','Inspected window','Excluded partial candles','Expected minutes','Stored minutes','Missing minutes','Gap intervals',EN.list,EN.caption,'Accounts using this coverage',...RANGE_HINTS];
 const reusedEnglish=['Market','Broker','Symbol','From','To','Reason','None','Bot'];
 const timeForm=value=>String(value)+' ('+new Date(value).toISOString()+')';
@@ -625,8 +627,12 @@ function timestampsOf(window,spec){
   return out;
 }
 function projectFacts({context,unions}){
-  const plan=planCoverage(context);
+  const plan=planCoverageUncapped(context);
   assert.equal(plan.unions.length,unions.length,'one fact spec per union');
+  if(unions.length&&unions.every(u=>u.state==='BUDGET_EXCEEDED')){
+    const [{limit}]=unions;
+    return projectPublicCoverage(buildDegradedCoverageSnapshot({accounts:context.accounts,budgets:context.budgets,limit}),context);
+  }
   const facts=plan.unions.map((union,i)=>unions[i].state==='COMPLETE'?{state:'COMPLETE',timestamps:timestampsOf(union.window,unions[i])}:{state:'TABLE_ABSENT'});
   return projectPublicCoverage(buildCoverageSnapshot({accounts:context.accounts,budgets:context.budgets,facts}),context);
 }
@@ -660,7 +666,7 @@ test('A1 coverage fixtures are producer-built from recorded facts and cover ever
   for(const name of ['owner','ownerTHB','ownerUndeclared'])checkOwner(name,covFx.responsesFacts[name],fixture[name]);
   for(const [name,c] of botCases())checkBot(name,c.facts,c.body);
   for(const [name,c] of ownerCases())checkOwner(name,c.facts,c.body);
-  assert.deepEqual([...classes].sort(),['COMPLETE/null/false','COMPLETE/null/true','EMPTY/NO_FULL_CANDLES/false','EMPTY/RANGE_UNRESOLVED/false','UNAVAILABLE/MARKET_DATA_TABLE_ABSENT/false','UNAVAILABLE/UNSUPPORTED_MARKET/false'],'C1 to C6 are all present');
+  assert.deepEqual([...classes].sort(),['COMPLETE/null/false','COMPLETE/null/true','EMPTY/NO_FULL_CANDLES/false','EMPTY/RANGE_UNRESOLVED/false','UNAVAILABLE/COVERAGE_BUDGET_EXCEEDED/false','UNAVAILABLE/MARKET_DATA_TABLE_ABSENT/false','UNAVAILABLE/UNSUPPORTED_MARKET/false'],'C1 to C7 are all present');
   // C1 with leading, internal and trailing gaps and two excluded edges; the intervals equal the documented missing ranges.
   const c1=covFx.cases.botC1,cov=c1.body.market_data.coverage;
   assert.deepEqual(cov.intervals.map(i=>({from:i.from,to:i.to})),c1.facts.unions[0].missing);
@@ -740,8 +746,8 @@ const checkNotices=(p,language,section,{owner,extra})=>{
   assert.equal(section.querySelector(':scope > h4').textContent,shown(p,language,EN.heading));
 };
 
-test('A2 per-Bot classes C1 to C6 render labels, raw codes, ranges, counts and intervals in EN and TH',async()=>{
-  const classOf={botC1:'C1',botC2:'C2',botC3:'C3',botC4:'C4',botC5:'C5',botC6:'C6'};
+test('A2 per-Bot classes C1 to C7 render labels, raw codes, ranges, counts and intervals in EN and TH',async()=>{
+  const classOf={botC1:'C1',botC2:'C2',botC3:'C3',botC4:'C4',botC5:'C5',botC6:'C6',botC7:'C7'};
   for(const language of ['en','th'])for(const [name,cls] of Object.entries(classOf)){
     const body=covFx.cases[name].body,p=await view(body,{language});
     try{
@@ -763,7 +769,7 @@ test('A2 per-Bot classes C1 to C6 render labels, raw codes, ranges, counts and i
 });
 
 test('A3 owner coverage maps entries and accounts in server order with no sums',async()=>{
-  for(const language of ['en','th'])for(const name of ['ownerMulti','ownerUnsupported','ownerRanges']){
+  for(const language of ['en','th'])for(const name of ['ownerMulti','ownerUnsupported','ownerRanges','ownerC7']){
     const body=covFx.cases[name].body,envelope=body.market_coverage,p=await view(body,{language});
     try{
       const section=sectionOf(p);
@@ -771,7 +777,7 @@ test('A3 owner coverage maps entries and accounts in server order with no sums',
       const blocks=[...section.querySelectorAll(':scope > .pp-cov-block')];
       assert.equal(blocks.length,envelope.entries.length);
       envelope.entries.forEach((entry,i)=>{
-        const cls={'COMPLETE/null':entry.coverage.interval_count>0?'C1':'C2','EMPTY/RANGE_UNRESOLVED':'C3','EMPTY/NO_FULL_CANDLES':'C4','UNAVAILABLE/UNSUPPORTED_MARKET':'C5','UNAVAILABLE/MARKET_DATA_TABLE_ABSENT':'C6'}[entry.coverage.state+'/'+entry.coverage.reason];
+        const cls={'COMPLETE/null':entry.coverage.interval_count>0?'C1':'C2','EMPTY/RANGE_UNRESOLVED':'C3','EMPTY/NO_FULL_CANDLES':'C4','UNAVAILABLE/UNSUPPORTED_MARKET':'C5','UNAVAILABLE/MARKET_DATA_TABLE_ABSENT':'C6','UNAVAILABLE/COVERAGE_BUDGET_EXCEEDED':'C7'}[entry.coverage.state+'/'+entry.coverage.reason];
         checkBlock(p,language,blocks[i],entry.coverage,cls);
         const expectedAccounts=envelope.accounts.filter(a=>a.coverage_ids[0]===entry.id);
         const rows=[...blocks[i].querySelectorAll('[data-cov-row="accounts"] li')];
@@ -917,6 +923,9 @@ test('A7 malformed coverage fails closed with no earlier report and no book requ
   add('EMPTY null reason',botBy('botC4',c=>{c.reason=null;}));
   add('UNAVAILABLE foreign reason',botBy('botC5',c=>{c.reason='X';}));
   add('UNAVAILABLE null reason',botBy('botC6',c=>{c.reason=null;}));
+  add('C7 null reason',botBy('botC7',c=>{c.reason=null;}));
+  add('C7 foreign reason',botBy('botC7',c=>{c.reason='COVERAGE_BUDGET_EXCEEDED_X';}));
+  add('C7 lower-case reason',botBy('botC7',c=>{c.reason='coverage_budget_exceeded';}));
   add('C1 interval_count mismatch',botBy('botC1',c=>{c.interval_count=c.intervals.length+1;}));
   add('C1 intervals not an array',botBy('botC1',c=>{c.intervals=null;}));
   add('C1 interval_count fractional',botBy('botC1',c=>{c.interval_count=1.5;}));
@@ -946,6 +955,8 @@ test('A7 malformed coverage fails closed with no earlier report and no book requ
     add('C4 '+key+' null',botBy('botC4',c=>{c[key]=null;}));
     add('C5 '+key+' zero',botBy('botC5',c=>{c[key]=0;}));
     add('C6 '+key+' zero',botBy('botC6',c=>{c[key]=0;}));
+    add('C7 '+key+' zero',botBy('botC7',c=>{c[key]=0;}));
+    add('C7 '+key+' number',botBy('botC7',c=>{c[key]=5;}));
   }
   add('C2 non-empty intervals',botBy('botC2',c=>{c.intervals=[{from:0,to:1,missing_minutes:1}];}));
   add('C2 intervals null',botBy('botC2',c=>{c.intervals=null;}));
@@ -956,6 +967,11 @@ test('A7 malformed coverage fails closed with no earlier report and no book requ
   add('C5 empty intervals',botBy('botC5',c=>{c.intervals=[];}));
   add('C6 interval_count zero',botBy('botC6',c=>{c.interval_count=0;}));
   add('C6 empty intervals',botBy('botC6',c=>{c.intervals=[];}));
+  add('C7 interval_count zero',botBy('botC7',c=>{c.interval_count=0;}));
+  add('C7 interval_count number',botBy('botC7',c=>{c.interval_count=3;}));
+  add('C7 empty intervals',botBy('botC7',c=>{c.intervals=[];}));
+  add('C7 intervals with a gap list',botBy('botC7',c=>{c.intervals=[{from:0,to:1,missing_minutes:1}];}));
+  addOwner('C7 entry with a count',e=>{e.entries[0].coverage.stored_minutes=0;},'ownerC7');
   add('coverage null',botBy('botC1',()=>{}));
   bad.at(-1).make=()=>{const body=bot();body.market_data.coverage=null;return body;};
   add('coverage array',botBy('botC1',()=>{}));
@@ -1183,4 +1199,67 @@ test('T1 observation: whole validateOwnerResponse on a maximum owner body (20 ac
   for(let i=0;i<50;i++){const started=performance.now();assert.equal(validateOwnerResponse(body),true);runs.push(performance.now()-started);}
   runs.sort((a,b)=>a-b);
   t.diagnostic('T1 observation, 50 runs of the whole validateOwnerResponse on the maximum owner body: median '+runs[24].toFixed(2)+' ms, maximum '+runs[49].toFixed(2)+' ms (O6 reference: validateOwnerCoverageShape alone median 5.2 ms, maximum 9.5 ms). Observation only, no bar.');
+});
+
+// QR-2 option D (OD-S5-D), D2: class C7 in the panel.
+const C7_EN="Inspection unavailable: this range is over the bar coverage check limit, so bar coverage was not checked. The financial figures and their price checks are not affected. Choose a shorter range, for example Week, to see bar coverage.";
+const C7_TH="ตรวจไม่ได้: ช่วงนี้เกินขีดจำกัดของการตรวจความครอบคลุมแท่งราคา จึงไม่ได้ตรวจความครอบคลุมแท่งราคา ตัวเลขทางการเงินและการตรวจราคาของตัวเลขเหล่านั้นไม่ได้รับผลกระทบ เลือกช่วงที่สั้นลง เช่น สัปดาห์ เพื่อดูความครอบคลุมแท่งราคา";
+
+test('D2 C7 shows the spec English and Thai text with no count, no gap list and no completeness label; the other classes keep their text',async()=>{
+  assert.equal(EN.klass.C7,C7_EN,'the English label is the spec D text');
+  for(const language of ['en','th'])for(const [name,body] of [['botC7',covFx.cases.botC7.body],['ownerC7',covFx.cases.ownerC7.body]]){
+    const p=await view(body,{language});
+    try{
+      const section=sectionOf(p);assert.ok(section,name);
+      const blocks=[...section.querySelectorAll('.pp-cov-block')];
+      assert.equal(blocks.length,name==='botC7'?1:3);
+      for(const [i,block] of blocks.entries()){
+        assert.equal(block.dataset.covClass,'C7');
+        assert.equal(block.querySelector('.pp-cov-class').textContent,language==='th'?C7_TH:C7_EN,name+' '+language);
+        assert.equal(block.querySelector('.pp-cov-intervals'),null,'no gap list for C7');
+        assert.equal(block.querySelector('details'),null);
+        const values=[...block.querySelectorAll('[data-cov-field="value"]')].map(n=>n.textContent);
+        assert.deepEqual(values,['—','—','—','—'],'every count is the em dash: nothing is counted');
+        assert.equal(block.querySelector('[data-cov-field="state"]').textContent,'UNAVAILABLE');
+        assert.equal(block.querySelector('[data-cov-field="reason"]').textContent,'COVERAGE_BUDGET_EXCEEDED');
+        void i;
+      }
+      const text=blocks.map(block=>block.textContent).join(' ');   // the section notices explain the vocabulary for every class; the blocks hold the result
+      assert.equal(/no gaps|ไม่มีช่องว่าง/i.test(text),false,'no "no gaps" label');
+      assert.equal(/Inspection completed|ตรวจเสร็จสิ้น/.test(text),false,'no completion label');
+      // The financial report above the coverage section is rendered as for any other body.
+      assert.ok(p.get('ppResult').querySelector('.pp-metrics'),name+': the metrics grid is shown');
+    }finally{p.close();}
+  }
+  assert.equal(C7_TH,thOf(await view(covFx.cases.botC7.body),C7_EN),'the Thai pair equals the spec D Thai text');
+  // Every other class keeps its own text.
+  for(const cls of ['C1','C2','C3','C4','C5','C6'])assert.notEqual(EN.klass[cls],C7_EN);
+});
+
+test('D2 a panel without the C7 branch fails closed on a C7 body; the real panel does not (mutant)',async()=>{
+  const source=publicFile('paper-performance.js').replace(/\r\n/g,'\n');   // a Windows checkout has CRLF; match the branch line on LF text
+  const branch="    else if (c.state === 'UNAVAILABLE' && c.reason === 'COVERAGE_BUDGET_EXCEEDED') cls = 'C7';\n";
+  assert.ok(source.includes(branch),'the C7 branch exists in the panel');
+  const mutant=source.replace(branch,'');
+  assert.notEqual(mutant,source);
+  for(const [name,body,owner] of [['bot',covFx.cases.botC7.body,false],['owner',covFx.cases.ownerC7.body,true]]){
+    const p=setup({answer:()=>ok(body),observe:false,panelSource:mutant});
+    try{
+      await p.boot();
+      if(owner){p.change('ppScope','owner');p.change('ppCurrency','USDT');}
+      await p.load();
+      assert.match(p.get('ppStatus').textContent,/Paper performance response unavailable\./,name);
+      assert.match(p.get('ppStatus').textContent,/QR2_RESPONSE_INVALID/,name);
+      assert.equal(p.text(),'',name+': no report value is shown');
+    }finally{p.close();}
+    const good=await view(body);
+    try{assert.ok(sectionOf(good).querySelector('.pp-cov-block[data-cov-class="C7"]'),name+': the real panel shows C7');}finally{good.close();}
+  }
+});
+
+test('D2 cache tokens: i18n.js and paper-performance.js load with qr2o9; the stylesheet token is unchanged',()=>{
+  const html=publicFile('index.html');
+  assert.ok(html.includes('/i18n.js?v=qr2o9'));assert.ok(html.includes('/paper-performance.js?v=qr2o9'));
+  assert.ok(html.includes('/paper-performance.css?v=qr2o7'));
+  assert.equal(html.includes('qr2o8'),false,'no asset keeps the previous token');
 });
