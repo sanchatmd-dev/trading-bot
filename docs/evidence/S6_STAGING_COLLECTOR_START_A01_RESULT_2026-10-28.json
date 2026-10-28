@@ -1,0 +1,323 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_COLLECTOR_START_A01_RESULT_2026-10-28",
+  "recordedAt": "2026-10-28T07:42:38.511Z",
+  "packetId": "S6-STAGING-COLLECTOR-START-1",
+  "phase": "P4C",
+  "attemptId": "a01",
+  "priorAttempts": [],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "C1_PASS_C6_PASS",
+  "authority": "Owner GO-C attempt a01 (pasted, byte-equal to the packet revision 3 line, notAfter 2026-10-29T20:00:00Z); jobs c1 and c6 consumed, no retry",
+  "c1": {
+    "jobId": "s6-cs-c1-a01-c4346e68ba0bd0556bb9a809",
+    "recordName": "s6cs-c1-9cfa5e0d",
+    "goWindow": {
+      "approvedAt": "2026-10-28T07:32:46.178Z",
+      "expiresAt": "2026-10-28T07:34:46.178Z"
+    },
+    "hostStarted": "2026-10-28T07:33:04.190Z",
+    "hostEnded": "2026-10-28T07:33:10.367Z",
+    "transport": {
+      "targetConnections": 1,
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "verdict": {
+      "verdict": "C1_PASS",
+      "toolVerdict": "P4_COLLECTED",
+      "outcome": "READY",
+      "effects": {
+        "recordDir": "DONE",
+        "collectorRun": "DONE",
+        "timerStart": "DONE",
+        "rbTimer": "NOT_ATTEMPTED",
+        "rbCollector": "NOT_ATTEMPTED"
+      }
+    },
+    "gate": {
+      "host": {
+        "systemdMajor": 255,
+        "clockSync": "yes",
+        "loginManager": "NO_KILL",
+        "jobsPending": 0,
+        "otherNeedReload": 0,
+        "livePayloadCount": 0,
+        "heavyJobs": 0
+      },
+      "production": {
+        "protectedEqual": true,
+        "protectedDigest": "b5789332"
+      },
+      "health": "PAPER_ONLY",
+      "research": "STOPPED",
+      "pair": {
+        "API": {
+          "activeState": "active",
+          "sameProcess": true,
+          "nRestartsEqual": true,
+          "configEqual": true
+        },
+        "TRADING": {
+          "activeState": "active",
+          "sameProcess": true,
+          "nRestartsEqual": true,
+          "configEqual": true
+        }
+      },
+      "stream": {
+        "cls": "RUNNING",
+        "sameProcessAsA03": true,
+        "nRestartsDelta": 0
+      },
+      "collector": {
+        "cls": "INACTIVE",
+        "type": "simple",
+        "restart": "no",
+        "configEqual": true,
+        "closure": "CLOSURE_EXACT",
+        "packages": {
+          "pg": {
+            "present": true,
+            "version": "8.23.0"
+          },
+          "decimal": {
+            "present": true,
+            "version": "10.6.0"
+          }
+        },
+        "links": {
+          "formOk": true,
+          "hooksEmpty": true,
+          "handlersEmpty": true,
+          "forwardOk": true,
+          "conflictsOk": true,
+          "reverseOk": true,
+          "pullsCollector": false,
+          "names": 3,
+          "foreign": 0
+        },
+        "collectModeOk": true
+      },
+      "timer": {
+        "cls": "INACTIVE",
+        "configEqual": true,
+        "triggers": 0,
+        "calendar": 1,
+        "accuracyMs": 1000,
+        "delayMs": 0,
+        "persistent": "no"
+      },
+      "isolation": {
+        "touchesStream": false,
+        "streamPullsCollector": false,
+        "formOk": true
+      },
+      "database": {
+        "fence": "INSTALLED",
+        "rows": 54643,
+        "gapPages": 1,
+        "queue": {
+          "queued": 0,
+          "processing": 0,
+          "waitingMarket": 0,
+          "liveMode": 0
+        }
+      }
+    },
+    "selftest": {
+      "label": "PROVED",
+      "startOffsetMs": 5943,
+      "proc": 1,
+      "summary": 1
+    },
+    "run": {
+      "label": "PROVED",
+      "startOffsetMs": 30,
+      "endOffsetMs": 624,
+      "groupsNew": 1,
+      "witness": {
+        "proc": 1,
+        "summary": 1,
+        "success": 0,
+        "exit": 0,
+        "resources": 0
+      },
+      "stateAfter": {
+        "cls": "INACTIVE",
+        "result": "success"
+      }
+    },
+    "timer": {
+      "runStartAt": "2026-10-28T07:33:05.853Z",
+      "runEndAt": "2026-10-28T07:33:06.447Z",
+      "timerStartAt": "2026-10-28T07:33:06.903Z",
+      "timerReadyAt": "2026-10-28T07:33:06.933Z",
+      "timerSpanMs": 113067
+    },
+    "bars": {
+      "contiguous": true,
+      "gateMaxBar": "2026-10-28T07:33Z",
+      "latestBar": "2026-10-28T07:33Z"
+    },
+    "paperCountersUnchanged": true,
+    "immediateChecks": {
+      "stream": "PASS",
+      "timer": "PASS",
+      "collector": "PASS",
+      "pair": "PASS",
+      "research": "PASS",
+      "jobs": "PASS",
+      "reload": "PASS",
+      "health": "PASS",
+      "bars": "PASS",
+      "protected": "PASS"
+    },
+    "streamJournal": {
+      "connected": 0,
+      "closed_bar_frozen": 0,
+      "catchup_failed": 0,
+      "stream_failed": 0,
+      "socket_error": 0,
+      "disconnected": 0
+    },
+    "linkage": {
+      "receiptSha256": "b429f232352690cb2587b60292e6f99efda9792909feff918dd6701e92324b84",
+      "envelopeSha256": "41308e760de0f9982e8cc97d0c5b094fd708bfd89203f3d63799595bd68ebf12",
+      "manifestSha256": "6f2927fe9d6ed747b3701dbc1e3c1611444db47793398febc892c4eec1056157",
+      "retainedSha256": "3239fa4469f8b1a5af0fc6c9aabfb990677a081c4668999da91f321dc78f244b"
+    }
+  },
+  "c6": {
+    "jobId": "s6-cs-c6-a01-7bff6cd1620a10ae0b4e9201",
+    "recordName": "s6cs-c6-9ca9cd83",
+    "goWindow": {
+      "approvedAt": "2026-10-28T07:41:18.088Z",
+      "expiresAt": "2026-10-28T07:43:18.088Z"
+    },
+    "hostStarted": "2026-10-28T07:41:36.423Z",
+    "hostEnded": "2026-10-28T07:41:36.708Z",
+    "transport": {
+      "targetConnections": 1,
+      "exit": 0,
+      "cutoff": false,
+      "stderrBytes": 0
+    },
+    "verdict": {
+      "verdict": "C6_PASS",
+      "effects": {
+        "recordDir": "DONE"
+      }
+    },
+    "checks": {
+      "stream": "PASS",
+      "units": "PASS",
+      "bars": "PASS",
+      "runs": "PASS",
+      "timer": "PASS",
+      "pair": "PASS",
+      "research": "PASS",
+      "protected": "PASS"
+    },
+    "window": {
+      "label": "OPEN",
+      "sinceTimerReadyMs": 509492
+    },
+    "c1Record": {
+      "recordTerminal": true,
+      "outcome": "READY",
+      "resultPresent": true,
+      "factsEqual": true
+    },
+    "units": {
+      "stream": {
+        "cls": "RUNNING",
+        "sameProcessAsA03": true,
+        "nRestartsDelta": 0
+      },
+      "classes": {
+        "stream": "RUNNING",
+        "collector": "INACTIVE",
+        "timer": "RUNNING"
+      },
+      "timer": {
+        "activeState": "active",
+        "nextElapseSet": true,
+        "lastTriggerOffsetMs": 413067
+      },
+      "collectModeOk": true,
+      "pair": {
+        "API": {
+          "activeState": "active",
+          "sameProcess": true,
+          "nRestartsEqual": true,
+          "configEqual": true,
+          "running": true,
+          "reloadClear": true
+        },
+        "TRADING": {
+          "activeState": "active",
+          "sameProcess": true,
+          "nRestartsEqual": true,
+          "configEqual": true,
+          "running": true,
+          "reloadClear": true
+        }
+      },
+      "research": "STOPPED",
+      "protectedEqual": true,
+      "protectedDigest": "b5789332"
+    },
+    "bars": {
+      "contiguous": true,
+      "wssRecent": 10,
+      "latestBar": "2026-10-28T07:41Z"
+    },
+    "runs": {
+      "label": "PROVED",
+      "count": 2,
+      "timerLinked": true,
+      "latestStartOffsetMs": 413389,
+      "latestEndOffsetMs": 414674,
+      "form": {
+        "bothFields": 0,
+        "otherFieldValues": 0,
+        "badTimestamp": 0,
+        "nullMessage": 0,
+        "truncated": false,
+        "unmatched": 0,
+        "droppedOutOfWindow": 0
+      },
+      "stateAfter": {
+        "cls": "INACTIVE",
+        "result": "success"
+      }
+    },
+    "streamJournal": {
+      "connected": 0,
+      "closed_bar_frozen": 8,
+      "catchup_failed": 0,
+      "stream_failed": 0,
+      "socket_error": 0,
+      "disconnected": 0
+    },
+    "linkage": {
+      "receiptSha256": "b629a1b7101b01033b4867ba2129f525297ba3ed8ccd30cf68f06aa7d8dee1c5",
+      "envelopeSha256": "6481e2998b36c7b963381e267cffd246ac66b140a95ad30ea3820009833a751e",
+      "manifestSha256": "61fc0945bd308f4c503490e6fc3097f1baf6d0c700c243a63d20260648dd30f3",
+      "retainedSha256": "cf10cdc15ba7743e26bb8288e3fc4da9f1952aab987d9d9984db0c865f820830"
+    }
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "fallback collector run once and its timer started (c1); no other unit",
+    "hostWrite": "two record directories; market bars appended by the collector and the stream"
+  }
+}
