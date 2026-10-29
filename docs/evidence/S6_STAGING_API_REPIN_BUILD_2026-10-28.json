@@ -1,0 +1,348 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_API_REPIN_BUILD_2026-10-28",
+  "recordedAt": "2026-10-29T06:47:04Z",
+  "packetId": "S6-STAGING-API-REPIN-1",
+  "packetRevision": 7,
+  "phases": [
+    "A0",
+    "A1",
+    "A2",
+    "A2M",
+    "RA",
+    "AR"
+  ],
+  "jobs": [
+    "a1",
+    "a2",
+    "a2m",
+    "ra",
+    "ar"
+  ],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "A1_A2_A2M_RA_AR_TOOLS_ACCEPTED_LOCAL_NOT_RUN",
+  "reason": "The packet moves only the staging API to the pin 33e5a8c (the QR-2 fixes F, the L2 hints and the long-range degrade D); the trading worker stays on ba1a433 and the API keeps the P5a flag layer. A1 stages the new API tree inert and reads the layer-name boolean; A2 switches the API with immediate and delayed checks and the RC-Q36 memory numbers; A2M and AR are read-only readings; RA withdraws the re-pin layer. Each effect needs its own owner GO. The tools are accepted locally after review rounds recorded below; Root set the four packet pins after installation, which changed only those four constants (checked by diff against the accepted snapshots).",
+  "pin": "33e5a8c3c31b0fca61fa44792aad7d1cea769c35",
+  "packet": {
+    "path": "docs/S6_STAGING_API_REPIN_PACKET_2026-10-28.md",
+    "sha256": "2fc19d82e638aecf18bb8986a490da6af819762b3870b13d8cca2095d21e10eb"
+  },
+  "mainPacket": {
+    "path": "docs/S6_STAGING_PROTOTYPE_DEPLOY_PACKET_2026-10-24.md",
+    "sha256": "e8a18a90d047a43d46213d00f46a981842da8ef0c58779030c730e8df7cf8dc4"
+  },
+  "followupPacket": {
+    "path": "docs/S6_STAGING_PROTOTYPE_FOLLOWUP_PACKET_2026-10-26.md",
+    "sha256": "ebc707c8e7b75602dbac80a325b5cae2bcb1d1b02d157e7d90615c60462d8c50"
+  },
+  "collectorPacket": {
+    "path": "docs/S6_STAGING_COLLECTOR_START_PACKET_2026-10-27.md",
+    "sha256": "a296989ee0194107498680698194b93fed6f60515d6f7e3121e8d9d8b1b0a741"
+  },
+  "rulings": [
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r1.md",
+      "sha256": "a7373193852ce70b0a7de6e3aca863876e5ab69fed5d76ed4e5b6ea8d547b81c"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r2.md",
+      "sha256": "8c0e5e12f026e97631f08127bce49d458e67a8bc5ad0c8bbacefafdb7274bf6f"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r3.md",
+      "sha256": "3bbcdb1bb9e307b0ba73e2debdb2f5cea39a4bc6a1bc94ad6136871bf91e9743"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r4.md",
+      "sha256": "85bdac0f4ee25aed604669a66bbe234dfe7bcd9d18e74b7533e725e27f6990d4"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r5.md",
+      "sha256": "f984ec338c40a0f0683db61676e8230d9be4377a735e83a30ee9be3177a7ead4"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r6.md",
+      "sha256": "24f89249406208524bb96469aafc333c78a8f4446b5a9353b68f4b8abe349aa1"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r7.md",
+      "sha256": "ec6e4b144e93f0e76a17d7a2db796ab2873658c39bee26a9aac89364bfcc3bfd"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r8.md",
+      "sha256": "f879c77ad39ddec4c8d744eb6bd8b6981d1267dedca11e1476841357054cbef3"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r9.md",
+      "sha256": "08e2990df67b04d0033b2a4478f0f1549e2a0f91c27f1f6df52b25a91cca6313"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r10.md",
+      "sha256": "5fbe50ca0b128b59723278008a32f96f6249f2edd5998912e25693f77f4677fd"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r11.md",
+      "sha256": "f8de8e4afd1fc7f094d701af0fe1d6d5104ba97eb4aaed4e18aaf575c68a736a"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r12.md",
+      "sha256": "d7117199df271202a29ac6ff8d0c568ec7fbbecff397fd9607fcef5da8a817fd"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r13.md",
+      "sha256": "1655a2df911043ab31cdebf8db4994d3f85ddaa9220ca5eb2fef31f6c061121d"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r14.md",
+      "sha256": "76706b68292a21dbe5eaec92067b316f9054bc018f5e53a2b118d00b0b2eecae"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r15.md",
+      "sha256": "7ef3e0d697f2b36ec1a4de0b55f84939f48b08a7260e533e579ae85ca5163316"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r16.md",
+      "sha256": "b6490a8324f865aa96762888981d1b811792f6a29d827ae03c9e403799521d52"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r17.md",
+      "sha256": "5e238dba99d7a09fba21f059f9938d5cbb43a14d4f14fc81ca0dae911778f592"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r18.md",
+      "sha256": "3f0471946913724e6014d4ab790ef20e40060b6056cffe0606c0ad3d88d94874"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r19.md",
+      "sha256": "d0af20c7a61219ee207bba9f6debb4513235455605c00dab24eb7fbd40a55427"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r20.md",
+      "sha256": "87d1e8eb2c94771e3947173a5e0ebaaf8c91597d7d2abed604ea121f88aa5438"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r21.md",
+      "sha256": "b644543be665209971240899e3edfcb65348416e05d6a1bb6b9eff70303e5db7"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r22.md",
+      "sha256": "3d29285c377a15fc1697775a0a069ad17cc15a14a01b7f4186621b61b708c243"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r23.md",
+      "sha256": "b80765c35b261b04d5bf3fa44458bb1e2ba45bc90df36d4368269a0af2eb246e"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r24.md",
+      "sha256": "0202e1612c4228f81d75ee7bf4bb39ae8057c3c01f69b7c91a5091a9d48cf7af"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r25.md",
+      "sha256": "edf3c79f5967fc1c48bd17a68bc7bc44bb700f67f99fdf4985bfef230084463b"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r26.md",
+      "sha256": "58ab8650eb08d6939e5a41f7138cf2fc68f9c984dff5c9151f2d187007188070"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r27.md",
+      "sha256": "35e2d1dd0e73125dba4bd14061d5e19f632d3658de00060c8b1ac091a11d58df"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r28.md",
+      "sha256": "1d71bd016510dba8e2938b4ef3927313733ed5b0615451cc0119105bd63a0559"
+    },
+    {
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r29.md",
+      "sha256": "0cd12f0696a5f0d22aa24a7ea83e5a46bff164cc5dea3d295f09016314995d19"
+    }
+  ],
+  "accepted": {
+    "a1": {
+      "ruling": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r20.md",
+      "snapshot": {
+        "path": ".qa-local/s6-staging-api-repin-build-a1-2026-10-28-snapshot-r9/SHA256SUMS",
+        "sha256": "914e643d9575336365c8f7c954c4c2df311506f60b0e9b685fc865b0cbb4fb47"
+      }
+    },
+    "a2ra": {
+      "ruling": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r26.md",
+      "snapshot": {
+        "path": ".qa-local/s6-staging-api-repin-build-a2ra-2026-10-28-snapshot-r6/SHA256SUMS",
+        "sha256": "c1ed1a246c690e1668f08ab46a5301c197860e9a162ddc46539dfd5d2014e384"
+      }
+    },
+    "lane": {
+      "ruling": ".qa-local/s6-staging-repin-design-2026-10-28/root-ruling-r26.md",
+      "snapshot": {
+        "path": ".qa-local/s6-staging-api-repin-build-adp-2026-10-28-snapshot-r5/SHA256SUMS",
+        "sha256": "b41682401777209c5230f5e3126160aa25aad148e620b450990defabeb5f7d5c"
+      }
+    }
+  },
+  "installed": {
+    "note": "After the packet pins were set: A1 and A2RA differ from the accepted snapshots only in the four packet-pin constants of the core; runners, builder, lane and copied blocks are byte-equal.",
+    "a1": {
+      "snapshot": {
+        "path": ".qa-local/s6-staging-api-repin-build-a1-2026-10-28-snapshot-r10/SHA256SUMS",
+        "sha256": "a781520f7f1675c6cc419a5cbe2825dc7bcbf28c4d153a5de86c2cbc95d455c9"
+      }
+    },
+    "a2ra": {
+      "snapshot": {
+        "path": ".qa-local/s6-staging-api-repin-build-a2ra-2026-10-28-snapshot-r7/SHA256SUMS",
+        "sha256": "acd27c45e774a31bf26e3446fa358a81d12a3e5748b2c7318e53779c38f115b5"
+      }
+    },
+    "lane": {
+      "snapshot": {
+        "path": ".qa-local/s6-staging-api-repin-build-adp-2026-10-28-snapshot-r5/SHA256SUMS",
+        "sha256": "b41682401777209c5230f5e3126160aa25aad148e620b450990defabeb5f7d5c"
+      }
+    }
+  },
+  "pins": {
+    "a1Core": "d15a80f204d027965b5ba0012e5c7931067841a2b111b39d6a7856e1dabb579d",
+    "a1Runner": "6aff5ff69280cf7cc0e000a0ed1e8f9af0a8ca7a0d843194ed8a28fa63a6b205",
+    "a1Build": "218a993ada94dfda2b08b6c24c2ccd4c3534260e84cf2458ff17461f9a46eaa1",
+    "raCore": "69d3fa88bd040065cd1733603e9e098f0b589d1c945b6dc2171d9ce75aa9ba65",
+    "raRunner": "adbe52232ccbfbc7ea4ad9c8e0744b37b018deafd24c15c0785d8ccf0cb51f5a",
+    "adpBlock": "1b8ab94ec569dee2eb1d4d628185e56a4cea3e2a2022838e948c9ce0ecad05f6"
+  },
+  "rootRun": {
+    "note": "Every suite after the pins were set, one process at a time, no placeholder allowance; A2RA in core mode and in region mode; the lane raw and compact.",
+    "a1": {
+      "pass": 278,
+      "fail": 0,
+      "skipped": 0
+    },
+    "a2raCore": {
+      "pass": 921,
+      "fail": 0,
+      "skipped": 0
+    },
+    "a2raRegion": {
+      "pass": 921,
+      "fail": 0,
+      "skipped": 0
+    },
+    "laneRaw": {
+      "pass": 193,
+      "fail": 0,
+      "skipped": 0
+    },
+    "laneCompact": {
+      "pass": 193,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "reviews": [
+    {
+      "round": "A1 round 3",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "accepted by ruling R20 with the adopted kill tests",
+      "path": ".qa-local/s6-staging-api-repin-review-a1-2026-10-28/audit-a1-r3.md",
+      "sha256": "01f44f2205527b757f27854563d6cd5db37c0539ef5493b2595ffdcf098e9efc"
+    },
+    {
+      "round": "A2RA follow-up (fix round 4)",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-api-repin-review-a2ra-2026-10-28/audit-a2ra-r5.md",
+      "sha256": "af9bce2998625532174a45194de25dbed68e2f622264a56f0c98fdc1e88bb737"
+    },
+    {
+      "round": "A2RA follow-up (fix round 4)",
+      "role": "second opinion, Opus 5.5 / high (Fable substitute)",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-api-repin-review-a2ra-2026-10-28/second-opinion-a2ra-r5.md",
+      "sha256": "553a0cdb811b5887720fee1699e0014a9d50be8449ff38eeb15af2a1053d5984"
+    },
+    {
+      "round": "A2RA fix round 5",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-api-repin-review-a2ra-2026-10-28/audit-a2ra-r6.md",
+      "sha256": "3542fe6b739a1deb93670c5f9c23c72967fb3225bac160ad4d99ceb6fc7eafae"
+    },
+    {
+      "round": "A2RA fix round 5",
+      "role": "second opinion, Opus 5.5 / high (Fable substitute)",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-api-repin-review-a2ra-2026-10-28/second-opinion-a2ra-r6.md",
+      "sha256": "8170f650e159192e1bf69b9ef45241ae59ca03cd78de553d15756b962b1c5647"
+    },
+    {
+      "round": "A2RA fix round 6",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-api-repin-review-a2ra-2026-10-28/audit-a2ra-r7.md",
+      "sha256": "ff32a56e1e8ef14011fae2c83a2c02746775c981817d9b3f3e9fd11f5cd7714d"
+    },
+    {
+      "round": "A2RA fix round 6",
+      "role": "second opinion, Opus 5.5 / high (Fable substitute)",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "one P2 on packet text, ruled by R26 item 2",
+      "path": ".qa-local/s6-staging-api-repin-review-a2ra-2026-10-28/second-opinion-a2ra-r7.md",
+      "sha256": "0de4e5064e057417d370251d0082517198d6901c7d8f5490771be9687a1906f1"
+    },
+    {
+      "round": "A2RA fix round 6",
+      "role": "tester, Sonnet 5.5 / medium",
+      "verdict": "PASS",
+      "path": ".qa-local/s6-staging-api-repin-review-a2ra-2026-10-28/tester-a2ra-r7/tester-report.md",
+      "sha256": "856ca64f504cb90dec50343d19090173a4726256a3bc334a387056f553e2b3e1"
+    },
+    {
+      "round": "packet draft 11",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "note": "final audit against the fix round 6 core",
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/packet-r7-audit-r10.md",
+      "sha256": "366726e2e6c1bd6574e5299c96181948603b153fb720d6832d83582e44ab3db7"
+    },
+    {
+      "round": "packet draft 12",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/packet-r7-audit-r11.md",
+      "sha256": "4aeceed9ca71d0b3aeeb4d4b73415c887e77584a0fcca69763f03384723c3359"
+    },
+    {
+      "round": "packet draft 13",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO_WITH_CONDITIONS",
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/packet-r7-audit-r12.md",
+      "sha256": "757cb4bb90adfd3c090874c624e40b6a1dbaaae50427a46d6ee100c1cdd4bb3e"
+    },
+    {
+      "round": "packet draft 14 (installed)",
+      "role": "architecture auditor, Opus 5.5 / high",
+      "verdict": "GO",
+      "path": ".qa-local/s6-staging-repin-design-2026-10-28/packet-r7-audit-r13.md",
+      "sha256": "eb6557d92421bc1f6145ad903cb4135a9bca6be2615205b147d9d82950436a35"
+    }
+  ],
+  "residuals": [
+    "The 4-second tree-walk cap and the 50-second IMMEDIATE cap are not measured on the host; a slow walk refuses before an effect or sends no start, and a slow IMMEDIATE pass ends with no command (packet section 12).",
+    "After the run limit, apiAtEnd can read UNKNOWN with the reason LIMIT.",
+    "RA case 5 with a failed stop command and a read of stopped records stopProved false, where A2 records true; RA fails closed.",
+    "Some generated tool comments predate the G1 rule that a failed API counts as stopped only with an empty job queue; the behaviour follows G1.",
+    "Private acceptance is not run; READY stays false; P13j and N1 stay held."
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateSource": "LOCAL_ONLY",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "NONE",
+    "hostWrite": "NONE",
+    "deployment": "NOT_RUN"
+  }
+}
