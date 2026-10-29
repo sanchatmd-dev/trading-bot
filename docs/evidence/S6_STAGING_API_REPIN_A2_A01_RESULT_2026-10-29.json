@@ -1,36 +1,32 @@
 {
   "schemaVersion": 1,
   "id": "S6_STAGING_API_REPIN_A2_A01_RESULT_2026-10-29",
-  "recordedAt": "2026-10-29T09:35:27Z",
+  "recordedAt": "2026-10-29T09:57:44Z",
   "packetId": "S6-STAGING-API-REPIN-1",
   "packetRevision": 8,
   "packetSha256": "ea6b463f7dc36412256e73e3fcbb64ca9babf4ae85c4c3f14a8f89d0e5df14cb",
-  "phase": "A2",
+  "phases": [
+    "A2",
+    "A2M"
+  ],
   "attemptId": "a01",
   "priorAttempts": [],
   "environment": "Staging QL-P2 Prototype",
-  "status": "A2_PASS_ACCEPTANCE_PENDING_OWNER_BROWSER_STEPS_AND_A2M",
-  "authority": "Owner GO-A2 typed in chat at 2026-10-29T09:25:35Z in reply to the Root request of the revision 8 GO-A2 line; named risks E, 2, 4, 6 and 8 as Root proposed; notAfter 2026-10-30T09:00:00Z (24-hour precedent); GO record text sha256 794bbc30f13654d7312f526e06e519638ef0caf68570753d751229bb4e136a51; A2 consumed, no retry; A2M runs under the same GO after the owner browser steps.",
+  "status": "A2_ACCEPTED",
+  "authority": "Owner GO-A2 typed in chat at 2026-10-29T09:25:35Z in reply to the Root request of the revision 8 GO-A2 line (A2 and the A2M clause); named risks E, 2, 4, 6 and 8 as Root proposed; notAfter 2026-10-30T09:00:00Z (24-hour precedent); GO record text sha256 794bbc30f13654d7312f526e06e519638ef0caf68570753d751229bb4e136a51; A2 and A2M consumed, no retry.",
   "a2": {
     "jobId": "s6-a2-a01-88460b85adb72d0bdb9a5048",
-    "goWindow": {
-      "approvedAt": "2026-10-29T09:25:46.646Z",
-      "expiresAt": "2026-10-29T09:27:46.646Z"
-    },
     "workerStart": "2026-10-29T09:26:00Z",
     "hostStarted": "2026-10-29T09:26:02.435Z",
     "hostEnded": "2026-10-29T09:30:34.887Z",
     "hostSeconds": 272,
     "verdict": "A2_PASS",
     "code": "A2_PASSED",
-    "stage": "DONE",
-    "effectPhase": "DONE",
     "endRow": "LL-n",
     "runnerExit": 0,
     "stderrBytes": 0,
     "immediateFailed": [],
     "delayedFailed": [],
-    "startSent": true,
     "units": {
       "stagingApi": "RUNNING",
       "tradingWorker": "RUNNING",
@@ -40,49 +36,146 @@
       "collectorService": "INACTIVE"
     },
     "productionEqual": true,
-    "heartbeat": {
-      "rows": 1,
-      "fresh": 1
-    },
-    "host": {
-      "nodeMajor": 24,
-      "systemdVersion": 255,
-      "killUserProcesses": "no"
-    },
-    "rcq36Memory": {
-      "before": {
-        "rssMiB": 183,
-        "availMiB": 6847
-      },
-      "immediate": {
-        "rssMiB": 96,
-        "availMiB": 6889,
-        "limitMiB": null
-      },
-      "afterDelayedCheck": {
-        "rssMiB": 89,
-        "availMiB": 6907,
-        "limitMiB": null
-      },
-      "apiMemoryLimitSet": false
-    },
-    "record": {
-      "made": true,
-      "lines": 7
-    },
     "linkage": {
       "receiptSha256": "48b2a051e558e37edc1eae215f569699f3854a2130f33c97c818c0f239c7503e",
-      "manifestSha256": "5b85214552b7a006a54dfc753227c097dde3809a2f3790fc782e0a77a30ca4bc",
-      "toolSourceSha": "9f691f0645e7fa4b644f209a83b6142640f8f57fb06a41fcb43b83aec07bb610"
+      "manifestSha256": "5b85214552b7a006a54dfc753227c097dde3809a2f3790fc782e0a77a30ca4bc"
     }
   },
-  "stagingNow": "The staging API runs the tree of pin 33e5a8c (QR-2 fixes F, the L2 hints and the long-range degrade D) with the P5a flag layer and the revision 8 re-pin layer; the trading worker stays on ba1a433.",
-  "pending": [
-    "owner browser steps of packet section 6.9 (Week, Month and All Time in English and Thai; liveEnabled false)",
-    "Root timing record of those requests (range label, status code and durations only)",
-    "A2M a01 (read-only memory job)",
-    "Root acceptance of A2"
+  "a2m": {
+    "jobId": "s6-a2m-a01-75304ab77ae56d24a8a0a12f",
+    "workerStart": "2026-10-29T09:56:41Z",
+    "hostStarted": "2026-10-29T09:56:43.205Z",
+    "hostEnded": "2026-10-29T09:56:43.307Z",
+    "verdict": "A2M_PASS",
+    "code": "A2M_RETURNED",
+    "runnerExit": 0,
+    "stderrBytes": 0,
+    "apiClass": "RUNNING",
+    "workerThread": "YES",
+    "sameApiProcessAsA2": true,
+    "linkage": {
+      "receiptSha256": "5796915ff14ae8b4643b2727d432931a4e1877dd4067a4b1f19a166dafb4dc73",
+      "manifestSha256": "81099e4f85a2da352a3b3bc287ca5e176404b77128cb304f7b7c8b07e1f120ba"
+    }
+  },
+  "rcq36Memory": {
+    "note": "API resident memory and host available memory, MiB; the API has no memory limit; Root case 4 estimate 384 MB",
+    "beforeSwitch": {
+      "rssMiB": 183,
+      "availMiB": 6847
+    },
+    "immediateCheck": {
+      "rssMiB": 96,
+      "availMiB": 6889
+    },
+    "delayedCheck": {
+      "rssMiB": 89,
+      "availMiB": 6907
+    },
+    "afterOwnerRequests": {
+      "rssMiB": 176,
+      "availMiB": 6869,
+      "qr2WorkerThread": "YES"
+    }
+  },
+  "ownerBrowserStep": {
+    "how": "At the owner request, Root timed the per-Bot reports and read the panel texts in its own tab of the owner logged-in session (owner port forwarding); the owner confirmed identity for admin health; Root entered no credential and restored the language to English.",
+    "servedAssets": "i18n.js and paper-performance.js with the pin cache token qr2o9",
+    "timings": [
+      {
+        "bot": "Bot 3 (most fills)",
+        "range": "WEEK",
+        "status": 200,
+        "totalMs": 144,
+        "readMs": 64,
+        "computeMs": 4,
+        "report": "UNAVAILABLE (RECONCILIATION_FAILED, pre-existing ledger-rule replay finding)",
+        "barCoverage": "COMPLETE 4907 of 4907 minutes"
+      },
+      {
+        "bot": "Bot 3 (most fills)",
+        "range": "MONTH",
+        "status": 200,
+        "totalMs": 152,
+        "readMs": 77,
+        "computeMs": 4,
+        "report": "UNAVAILABLE (RECONCILIATION_FAILED)",
+        "barCoverage": "not checked (COVERAGE_BUDGET_EXCEEDED)"
+      },
+      {
+        "bot": "Bot 3 (most fills)",
+        "range": "ALL_TIME",
+        "status": 200,
+        "totalMs": 128,
+        "readMs": 48,
+        "computeMs": 12,
+        "report": "UNAVAILABLE (RECONCILIATION_FAILED)",
+        "barCoverage": "not checked (COVERAGE_BUDGET_EXCEEDED)"
+      },
+      {
+        "bot": "Main Bot",
+        "range": "WEEK",
+        "status": 200,
+        "totalMs": 102,
+        "readMs": 33,
+        "computeMs": 1,
+        "report": "COMPLETE",
+        "barCoverage": "COMPLETE 4907 of 4907 minutes"
+      },
+      {
+        "bot": "Main Bot",
+        "range": "MONTH",
+        "status": 200,
+        "totalMs": 119,
+        "readMs": 46,
+        "computeMs": 2,
+        "report": "COMPLETE",
+        "barCoverage": "not checked (COVERAGE_BUDGET_EXCEEDED)"
+      },
+      {
+        "bot": "Main Bot",
+        "range": "ALL_TIME",
+        "status": 200,
+        "totalMs": 109,
+        "readMs": 37,
+        "computeMs": 2,
+        "report": "COMPLETE",
+        "barCoverage": "not checked (COVERAGE_BUDGET_EXCEEDED)"
+      }
+    ],
+    "beforeA2": {
+      "note": "pre-switch reading at 09:2xZ on the ba1a433 tree",
+      "mainBotMonth": "503 QR2_REPORT_FAILED"
+    },
+    "panelTexts": {
+      "english": "Week: Inspection completed; no stored candle is missing. Month and All Time: Inspection unavailable: this range is over the bar coverage check limit, so bar coverage was not checked.",
+      "thai": "Week: ตรวจเสร็จสิ้น. Month and All Time: ตรวจไม่ได้ ... จึงไม่ได้ตรวจความครอบคลุมแท่งราคา",
+      "languageRestored": "en"
+    },
+    "liveEnabled": false,
+    "liveEnabledReadAt": "2026-10-29T09:56:11.416Z"
+  },
+  "observations": [
+    "Bots 2 and 3 (the Bots with fills) report status UNAVAILABLE with reason RECONCILIATION_FAILED: replay check RT finds LEDGER_RULE_UNREPLAYABLE from one early-October fill (QR-2 contract rule). The re-pin changed no ledger or reconciliation code, so this predates A2. Their bar coverage and facts are shown; their financial totals are null.",
+    "The owner port forwarding dropped after the switch and the owner reopened it."
   ],
+  "acceptance": {
+    "accepted": true,
+    "by": "Claude Root",
+    "basis": "packet revision 8 section 6.9: A2 passed, the owner browser step (timings, Week coverage complete, Month and All Time returned with bar coverage not checked, English and Thai texts, liveEnabled false) and A2M passed",
+    "checks": {
+      "a2Linkage": true,
+      "a2PassedChecks": true,
+      "a2mLinkage": true,
+      "a2mSameApiProcess": true,
+      "weekCoverageComplete": true,
+      "monthAllTimeReturned": true,
+      "textsEnglishThai": true,
+      "liveEnabledFalse": true
+    }
+  },
+  "stagingNow": "The staging API runs the tree of pin 33e5a8c (QR-2 fixes F, the L2 hints and the long-range degrade D) with the P5a flag layer and the revision 8 re-pin layer; the trading worker stays on ba1a433; the market stream and the collector timer stay on.",
+  "rollback": "RA (its own GO-RA) archives the re-pin layer and returns the API to ba1a433.",
   "gates": {
     "spotPaperOnly": true,
     "liveTrading": "HARD_LOCKED_IN_CODE",
