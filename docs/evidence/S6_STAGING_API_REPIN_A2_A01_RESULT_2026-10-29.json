@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_API_REPIN_A2_A01_RESULT_2026-10-29",
+  "recordedAt": "2026-10-29T09:35:27Z",
+  "packetId": "S6-STAGING-API-REPIN-1",
+  "packetRevision": 8,
+  "packetSha256": "ea6b463f7dc36412256e73e3fcbb64ca9babf4ae85c4c3f14a8f89d0e5df14cb",
+  "phase": "A2",
+  "attemptId": "a01",
+  "priorAttempts": [],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "A2_PASS_ACCEPTANCE_PENDING_OWNER_BROWSER_STEPS_AND_A2M",
+  "authority": "Owner GO-A2 typed in chat at 2026-10-29T09:25:35Z in reply to the Root request of the revision 8 GO-A2 line; named risks E, 2, 4, 6 and 8 as Root proposed; notAfter 2026-10-30T09:00:00Z (24-hour precedent); GO record text sha256 794bbc30f13654d7312f526e06e519638ef0caf68570753d751229bb4e136a51; A2 consumed, no retry; A2M runs under the same GO after the owner browser steps.",
+  "a2": {
+    "jobId": "s6-a2-a01-88460b85adb72d0bdb9a5048",
+    "goWindow": {
+      "approvedAt": "2026-10-29T09:25:46.646Z",
+      "expiresAt": "2026-10-29T09:27:46.646Z"
+    },
+    "workerStart": "2026-10-29T09:26:00Z",
+    "hostStarted": "2026-10-29T09:26:02.435Z",
+    "hostEnded": "2026-10-29T09:30:34.887Z",
+    "hostSeconds": 272,
+    "verdict": "A2_PASS",
+    "code": "A2_PASSED",
+    "stage": "DONE",
+    "effectPhase": "DONE",
+    "endRow": "LL-n",
+    "runnerExit": 0,
+    "stderrBytes": 0,
+    "immediateFailed": [],
+    "delayedFailed": [],
+    "startSent": true,
+    "units": {
+      "stagingApi": "RUNNING",
+      "tradingWorker": "RUNNING",
+      "researchWorker": "INACTIVE",
+      "marketStream": "RUNNING",
+      "collectorTimer": "RUNNING",
+      "collectorService": "INACTIVE"
+    },
+    "productionEqual": true,
+    "heartbeat": {
+      "rows": 1,
+      "fresh": 1
+    },
+    "host": {
+      "nodeMajor": 24,
+      "systemdVersion": 255,
+      "killUserProcesses": "no"
+    },
+    "rcq36Memory": {
+      "before": {
+        "rssMiB": 183,
+        "availMiB": 6847
+      },
+      "immediate": {
+        "rssMiB": 96,
+        "availMiB": 6889,
+        "limitMiB": null
+      },
+      "afterDelayedCheck": {
+        "rssMiB": 89,
+        "availMiB": 6907,
+        "limitMiB": null
+      },
+      "apiMemoryLimitSet": false
+    },
+    "record": {
+      "made": true,
+      "lines": 7
+    },
+    "linkage": {
+      "receiptSha256": "48b2a051e558e37edc1eae215f569699f3854a2130f33c97c818c0f239c7503e",
+      "manifestSha256": "5b85214552b7a006a54dfc753227c097dde3809a2f3790fc782e0a77a30ca4bc",
+      "toolSourceSha": "9f691f0645e7fa4b644f209a83b6142640f8f57fb06a41fcb43b83aec07bb610"
+    }
+  },
+  "stagingNow": "The staging API runs the tree of pin 33e5a8c (QR-2 fixes F, the L2 hints and the long-range degrade D) with the P5a flag layer and the revision 8 re-pin layer; the trading worker stays on ba1a433.",
+  "pending": [
+    "owner browser steps of packet section 6.9 (Week, Month and All Time in English and Thai; liveEnabled false)",
+    "Root timing record of those requests (range label, status code and durations only)",
+    "A2M a01 (read-only memory job)",
+    "Root acceptance of A2"
+  ],
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD"
+  }
+}
