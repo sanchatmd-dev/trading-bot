@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_STAGING_API_REPIN_A1_A01_RESULT_2026-10-29",
+  "recordedAt": "2026-10-29T06:53:50Z",
+  "packetId": "S6-STAGING-API-REPIN-1",
+  "packetRevision": 7,
+  "packetSha256": "2fc19d82e638aecf18bb8986a490da6af819762b3870b13d8cca2095d21e10eb",
+  "phase": "A1",
+  "attemptId": "a01",
+  "priorAttempts": [],
+  "environment": "Staging QL-P2 Prototype",
+  "status": "A1_PASS_TREE_STAGED_LAYER_NAME_DOES_NOT_FIT",
+  "authority": "GO-A1 attempt a01 issued by Root under the owner standing authority of 2026-10-28 (GO-A1 and GO-A2 when ready; notAfter 2026-10-29T19:00:00Z); consumed, no retry. GO-A2 is not requested: the authority needs an A1 record with layerNameFits true.",
+  "a1": {
+    "jobId": "s6-a1-a01-8e67fefbb3b432c73c989a09",
+    "goWindow": {
+      "approvedAt": "2026-10-29T06:50:32.126Z",
+      "expiresAt": "2026-10-29T06:52:32.126Z"
+    },
+    "workerStart": "2026-10-29T06:50:45Z",
+    "hostStarted": "2026-10-29T06:50:47.410Z",
+    "hostEnded": "2026-10-29T06:50:59.204Z",
+    "hostSeconds": 11.8,
+    "verdict": "A1_PASS",
+    "toolVerdict": "A1_STAGED",
+    "code": null,
+    "runnerExit": 0,
+    "stderrBytes": 0,
+    "gate": {
+      "nodeMajor": 24,
+      "livePayloadCount": 0,
+      "heavyJobs": 0,
+      "jobsPending": 0,
+      "needReload": 0,
+      "recordDirOk": true
+    },
+    "transport": {
+      "receivedBytes": 56080900,
+      "files": 4,
+      "framingOk": true,
+      "shaOk": true,
+      "checkListsOk": true
+    },
+    "tree": {
+      "label": "STAGED_EXACT",
+      "files": 1660,
+      "bytes": 54603529,
+      "bad": 0,
+      "missing": 0,
+      "extra": 0,
+      "digestEqualsManifest": true,
+      "nodeChecks": 145,
+      "nodeCheckFailures": 0,
+      "stageDirPreserved": true
+    },
+    "units": {
+      "stagingApi": "RUNNING",
+      "tradingWorker": "RUNNING",
+      "researchWorker": "INACTIVE",
+      "marketStream": "RUNNING",
+      "collectorTimer": "RUNNING",
+      "collectorService": "INACTIVE",
+      "sameProcess": {
+        "API": true,
+        "TRADING": true,
+        "STREAM": true
+      },
+      "productionEqual": true,
+      "endEqual": {
+        "API": true,
+        "TRADING": true,
+        "STREAM": true
+      },
+      "unitChanged": false,
+      "prodChanged": false
+    },
+    "referenceEqualsC1": true,
+    "dropIns": {
+      "layerNameFits": false,
+      "admissionOffFound": true,
+      "p5aLayerFound": true,
+      "live": 18,
+      "afterP5a": 0,
+      "archived": 0,
+      "privateExportPresent": true
+    },
+    "effects": {
+      "record": "DONE",
+      "progress": "DONE",
+      "incoming": "DONE",
+      "incomingFiles": "DONE",
+      "partial": "DONE",
+      "write": "DONE",
+      "rename": "DONE",
+      "result": "DONE"
+    },
+    "linkage": {
+      "receiptSha256": "d3cea2092d3346555e1adc1c8a253913a5f62bd248172ea713792131c86759a5",
+      "manifestSha256": "ef63ff4f28ae4ad04a1bda0df01c9fedc433970ef22915a355be84f7ff6cd258",
+      "toolSourceSha": "9c83fc75445be15e3eff79e6f23e8d4658fb03576611d9436b98ca3239b806c4"
+    }
+  },
+  "acceptance": {
+    "stagedTreeAccepted": true,
+    "acceptedForA2": false,
+    "conditions": {
+      "layerNameFits": false,
+      "admissionOffFound": true,
+      "p5aLayerFound": true,
+      "admissionOffDigestPresent": true,
+      "p5aLayerDigestExactlyOnce": true,
+      "liveCountEqualsLayerCount": true,
+      "listDigestEqualsC1": true,
+      "treeExact": true,
+      "endReadingEqualsGate": true
+    },
+    "cause": "The P5a flag layer and the admission-off layer share one two-digit prefix, and none of the 100 reviewed candidate names sorts after the P5a flag layer, so no re-pin layer name fits between them (Root local check, booleans only)."
+  },
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD",
+    "serviceChange": "NONE",
+    "deployment": "NOT_RUN"
+  }
+}
