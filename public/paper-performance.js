@@ -108,6 +108,32 @@
     fees: 'Fees (information only)', unbacked_equity: 'Unbacked equity', flows_total: 'Capital flows', money_pnl: 'Money PnL',
     twr: 'TWR', mwr: 'Modified Dietz', max_drawdown: 'Max drawdown'
   };
+  // QR-2 reconciliation note (RC-Q47). Each listed first-failure reason has one fixed sentence. A reason that is not a key of this map (an unknown
+  // or hostile string) gets the generic sentence and is never used as a label key. The note holds text only: no number of the response is shown.
+  const RECONCILE_NOTES = {
+    EPOCH_UNKNOWN: 'Stopped by design: no ledger rule period is recorded for this fill time. Values from this fill on stay unavailable. Later ledger rows are not checked.',
+    FILL_WITHOUT_JOURNAL: 'A fill has no matching cash journal row.',
+    JOURNAL_WITHOUT_FILL: 'A cash journal row has no matching fill.',
+    DUPLICATE_FILL_KEY: 'Two fills share one fill key.',
+    DUPLICATE_JOURNAL_KEY: 'Two cash journal rows share one key.',
+    FOREIGN_JOURNAL_ROW: 'A cash journal row in this account names another account.'
+  };
+  const RECONCILE_GENERIC = 'The first failed check is listed in the server details below.';
+  function reconcileNote(reconciliation) {
+    const failure = reconciliation.first_failure && typeof reconciliation.first_failure === 'object' ? reconciliation.first_failure : null;
+    const reason = typeof failure?.reason === 'string' ? failure.reason : null;
+    const section = document.createElement('section');
+    section.className = 'pp-reconcile-note';
+    section.append(label('Why reconciliation failed', 'h4'),
+      label(reason !== null && Object.hasOwn(RECONCILE_NOTES, reason) ? RECONCILE_NOTES[reason] : RECONCILE_GENERIC, 'p'));
+    const code = reason ?? (typeof failure?.code === 'string' ? failure.code : null);
+    if (code !== null) {
+      const line = document.createElement('p');
+      line.append(label('Reason code'), ' ', raw(code));
+      section.append(line);
+    }
+    return section;
+  }
   // QR-2 O7 bar coverage. Server coverage is shown as reported: no arithmetic, no merging, no filling of gaps.
   const COVERAGE_VERSION = 'qr2-bar-coverage-v1', OWNER_COVERAGE_VERSION = 'qr2-owner-bar-coverage-v1', EPOCH_LIMIT = 8640000000000000;
   const COVERAGE_NOTICES = [
@@ -271,6 +297,7 @@
     fragment.append(label(owner ? 'Owner accounts · one currency' : 'Bot account', 'h3'));
     const identity = document.createElement('p');
     identity.append(serverValue(body.scope), raw(body.currency)); fragment.append(identity);
+    if (!owner && body.reconciliation && typeof body.reconciliation === 'object' && body.reconciliation.state === 'RECONCILIATION_FAILED') fragment.append(reconcileNote(body.reconciliation));
     const metrics = document.createElement('dl'); metrics.className = 'pp-metrics';
     const row = (name, value) => {
       const item = document.createElement('div'), description = document.createElement('dd');

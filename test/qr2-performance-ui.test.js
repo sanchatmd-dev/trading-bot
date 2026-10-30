@@ -1257,9 +1257,118 @@ test('D2 a panel without the C7 branch fails closed on a C7 body; the real panel
   }
 });
 
-test('D2 cache tokens: i18n.js and paper-performance.js load with qr2o9; the stylesheet token is unchanged',()=>{
+test('D2 cache tokens: i18n.js and paper-performance.js load with qr2o10; the stylesheet token is unchanged',()=>{
   const html=publicFile('index.html');
-  assert.ok(html.includes('/i18n.js?v=qr2o9'));assert.ok(html.includes('/paper-performance.js?v=qr2o9'));
+  assert.ok(html.includes('/i18n.js?v=qr2o10'));assert.ok(html.includes('/paper-performance.js?v=qr2o10'));
   assert.ok(html.includes('/paper-performance.css?v=qr2o7'));
   assert.equal(html.includes('qr2o8'),false,'no asset keeps the previous token');
+});
+
+// QR-2 W3 (RC-Q47): the per-Bot reconciliation note. The English sentences are literals here, so a changed sentence in the panel fails this test.
+const RECONCILE_EN={
+  EPOCH_UNKNOWN:'Stopped by design: no ledger rule period is recorded for this fill time. Values from this fill on stay unavailable. Later ledger rows are not checked.',
+  FILL_WITHOUT_JOURNAL:'A fill has no matching cash journal row.',
+  JOURNAL_WITHOUT_FILL:'A cash journal row has no matching fill.',
+  DUPLICATE_FILL_KEY:'Two fills share one fill key.',
+  DUPLICATE_JOURNAL_KEY:'Two cash journal rows share one key.',
+  FOREIGN_JOURNAL_ROW:'A cash journal row in this account names another account.'
+};
+const RECONCILE_GENERIC_EN='The first failed check is listed in the server details below.';
+const RECONCILE_TH_EPOCH='หยุดตามการออกแบบ: ยังไม่มีการบันทึกช่วงกฎของ Ledger สำหรับเวลาของ Fill นี้ ค่าตั้งแต่ Fill นี้เป็นต้นไปจึงไม่แสดง และยังไม่ได้ตรวจแถว Ledger ที่ตามมา';
+const failedBody=(state,firstFailure)=>{
+  const body=structuredClone(fixture.botUnavailable);
+  body.reconciliation={...body.reconciliation,state,failed_from:null,failed_whole_account:state==='RECONCILIATION_FAILED',first_failure:firstFailure};
+  return body;
+};
+const failure=(reason,code='LEDGER_RULE_UNREPLAYABLE')=>({check:'RT',code,event_key:'1:1',reason});
+const noteOf=p=>p.get('ppResult').querySelector('.pp-reconcile-note');
+
+test('U1 RECONCILIATION_FAILED with EPOCH_UNKNOWN shows the note in English and Thai with the raw code',async()=>{
+  for(const language of ['en','th']){
+    const p=setup({language,answer:()=>ok(failedBody('RECONCILIATION_FAILED',failure('EPOCH_UNKNOWN')))});
+    try{
+      await p.boot();p.change('ppScope','bot');await p.load();
+      const note=noteOf(p);
+      assert.ok(note,language+': the note exists');
+      assert.equal(p.get('ppResult').querySelectorAll('.pp-reconcile-note').length,1);
+      const heading=note.querySelector('h4'),sentence=note.querySelector('p');
+      assert.equal(heading.textContent,language==='en'?'Why reconciliation failed':'สาเหตุที่กระทบยอดไม่ผ่าน');
+      assert.equal(sentence.textContent,language==='en'?RECONCILE_EN.EPOCH_UNKNOWN:RECONCILE_TH_EPOCH);
+      assert.equal(/\d/.test(heading.textContent+sentence.textContent),false,'the note text holds no number');
+      assert.ok(note.textContent.includes('EPOCH_UNKNOWN'),'the raw code is shown');
+      assert.equal(/undamaged|not ledger damage|no damage|intact/i.test(note.textContent),false,'no claim that the ledger is undamaged');
+    }finally{p.close();}
+  }
+});
+
+test('U2 every listed reason, a null reason and an unknown reason; OK, ACCOUNT_UNAVAILABLE and owner views show no note',async()=>{
+  const cases=[...Object.entries(RECONCILE_EN).map(([reason,sentence])=>[failure(reason),sentence,reason]),
+    [failure(null,'SELL_EXCEEDS_POSITION'),RECONCILE_GENERIC_EN,'SELL_EXCEEDS_POSITION'],
+    [failure('NEW_REASON'),RECONCILE_GENERIC_EN,'NEW_REASON'],
+    [failure('constructor'),RECONCILE_GENERIC_EN,'constructor'],
+    [{check:null,code:null,event_key:null,reason:null},RECONCILE_GENERIC_EN,null]];
+  for(const [firstFailure,sentence,code] of cases){
+    const p=setup({answer:()=>ok(failedBody('RECONCILIATION_FAILED',firstFailure))});
+    try{
+      await p.boot();p.change('ppScope','bot');await p.load();
+      const note=noteOf(p);
+      assert.ok(note,String(firstFailure.reason??firstFailure.code));
+      assert.equal(note.querySelector('p').textContent,sentence);
+      if(code!==null)assert.ok(note.textContent.includes(code));
+      else assert.equal(note.querySelectorAll('p').length,1,'no code line without a code');
+    }finally{p.close();}
+  }
+  const noFirst=setup({answer:()=>ok(failedBody('RECONCILIATION_FAILED',null))});
+  try{await noFirst.boot();noFirst.change('ppScope','bot');await noFirst.load();assert.equal(noteOf(noFirst).querySelector('p').textContent,RECONCILE_GENERIC_EN);}finally{noFirst.close();}
+  for(const state of ['OK','ACCOUNT_UNAVAILABLE']){
+    const p=setup({answer:()=>ok(failedBody(state,failure('EPOCH_UNKNOWN')))});
+    try{await p.boot();p.change('ppScope','bot');await p.load();assert.equal(noteOf(p),null,state+': no note');}finally{p.close();}
+  }
+  const owner=structuredClone(fixture.owner);owner.reconciliation={state:'RECONCILIATION_FAILED',first_failure:failure('EPOCH_UNKNOWN')};
+  const o=setup({answer:()=>ok(owner)});
+  try{await o.boot();o.change('ppScope','owner');await o.load();assert.equal(noteOf(o),null,'owner view: no note');assert.ok(o.text().includes('NOT_AN_OWNER_PORTFOLIO'),'the owner view still rendered');}finally{o.close();}
+});
+
+test('U3 a hostile reason stays text: generic sentence, raw text shown, no element created, no script flag set',async()=>{
+  const hostile='<img src=x onerror="window.__pwned=1">';
+  const p=setup({answer:()=>ok(failedBody('RECONCILIATION_FAILED',failure(hostile)))});
+  try{
+    await p.boot();p.change('ppScope','bot');await p.load();
+    const note=noteOf(p);
+    assert.ok(note);
+    assert.equal(note.querySelector('p').textContent,RECONCILE_GENERIC_EN);
+    assert.ok(note.textContent.includes(hostile),'the hostile string is shown as plain text');
+    assert.equal(p.get('ppResult').querySelectorAll('img').length,0);
+    assert.equal(note.querySelectorAll('[data-ui-label]').length,3,'only the heading, the sentence and the code caption are labels');
+    await settle();
+    assert.equal(p.w.__pwned,undefined);
+  }finally{p.close();}
+});
+
+function reconcileI18n(){
+  const dom=new JSDOM(publicFile('index.html'),{url:'https://robot.test',runScripts:'outside-only'}),w=dom.window;
+  w.MutationObserver=class{observe(){}disconnect(){}};
+  try{
+    w.eval(publicFile('i18n.js')+';window.__pairs=uiPairs;window.__mine=qr2ReconcilePairs;');
+    const mine=new Set(w.__mine);
+    return [...w.__pairs].map(pair=>({en:pair[0],th:pair[1],mine:mine.has(pair)}));
+  }finally{w.close();}
+}
+
+test('U4 qr2ReconcilePairs is collision-free: 8 pairs, no duplicate, no collision, no em dash, currency or market token',()=>{
+  const pairs=reconcileI18n(),mine=pairs.filter(pair=>pair.mine),others=pairs.filter(pair=>!pair.mine),texts=new Set(others.flatMap(pair=>[pair.en,pair.th]));
+  assert.equal(mine.length,8);
+  assert.equal(new Set(mine.map(pair=>pair.en)).size,8,'no duplicate EN');
+  assert.equal(new Set(mine.map(pair=>pair.th)).size,8,'no duplicate TH');
+  const flat=mine.flatMap(pair=>[pair.en,pair.th]);
+  assert.equal(new Set(flat).size,flat.length,'no EN equals a TH inside the array');
+  for(const {en,th} of mine){
+    assert.notEqual(en,th);
+    assert.equal(texts.has(en),false,'EN collides with an existing text: '+en);
+    assert.equal(texts.has(th),false,'TH collides with an existing text: '+th);
+    assert.equal(/[—€$฿]|USDT|THB|BTCUSDT/.test(en+th),false,'em dash, currency or market token in: '+en);
+  }
+  const english=new Set(mine.map(pair=>pair.en));
+  for(const sentence of [...Object.values(RECONCILE_EN),RECONCILE_GENERIC_EN,'Why reconciliation failed'])assert.ok(english.has(sentence),'pair for: '+sentence);
+  assert.equal(mine.find(pair=>pair.en===RECONCILE_EN.EPOCH_UNKNOWN).th,RECONCILE_TH_EPOCH);
 });

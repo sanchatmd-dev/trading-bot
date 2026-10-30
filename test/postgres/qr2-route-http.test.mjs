@@ -251,6 +251,7 @@ test('H8 product boundary record UNRECORDED: an account with fills is UNAVAILABL
   assert.equal(withFills.status,200);
   assert.equal(withFills.body.status.status,'UNAVAILABLE');
   assert.equal(withFills.body.reconciliation.first_failure.code,'LEDGER_RULE_UNREPLAYABLE');
+  assert.equal(withFills.body.reconciliation.first_failure.reason,'EPOCH_UNKNOWN');
   for(const key of ['nav','twr','money_pnl','mwr','max_drawdown'])assert.equal(withFills.body.account[key].value,null,key);
   assert.equal(validateResponse(withFills.body).ok,true);
 });

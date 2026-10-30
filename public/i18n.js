@@ -938,7 +938,19 @@ const qr2CoveragePairs=[
   ['Accounts using this coverage','บัญชีที่ใช้ความครอบคลุมนี้'],
   ['The chosen range is too long for the performance report (a report size limit was reached). A shorter range, for example Week or a Custom range, should work.','ช่วงที่เลือกยาวเกินไปสำหรับรายงานผลการดำเนินงาน (ถึงขีดจำกัดขนาดรายงานแล้ว) ลองเลือกช่วงที่สั้นลง เช่น สัปดาห์ หรือช่วงกำหนดเอง ก็น่าจะใช้ได้']
 ];
+// QR-2 reconciliation note (RC-Q47): one sentence per listed first-failure reason, plus a generic sentence for every other case.
+const qr2ReconcilePairs=[
+  ['Why reconciliation failed','สาเหตุที่กระทบยอดไม่ผ่าน'],
+  ['Stopped by design: no ledger rule period is recorded for this fill time. Values from this fill on stay unavailable. Later ledger rows are not checked.','หยุดตามการออกแบบ: ยังไม่มีการบันทึกช่วงกฎของ Ledger สำหรับเวลาของ Fill นี้ ค่าตั้งแต่ Fill นี้เป็นต้นไปจึงไม่แสดง และยังไม่ได้ตรวจแถว Ledger ที่ตามมา'],
+  ['A fill has no matching cash journal row.','มี Fill ที่ไม่มีแถวบันทึกเงินสดที่ตรงกัน'],
+  ['A cash journal row has no matching fill.','มีแถวบันทึกเงินสดที่ไม่มี Fill ที่ตรงกัน'],
+  ['Two fills share one fill key.','มี Fill สองรายการที่ใช้คีย์เดียวกัน'],
+  ['Two cash journal rows share one key.','มีแถวบันทึกเงินสดสองแถวที่ใช้คีย์เดียวกัน'],
+  ['A cash journal row in this account names another account.','มีแถวบันทึกเงินสดในบัญชีนี้ที่ระบุบัญชีอื่น'],
+  ['The first failed check is listed in the server details below.','การตรวจแรกที่ไม่ผ่านแสดงอยู่ในรายละเอียดจากเซิร์ฟเวอร์ด้านล่าง']
+];
 uiPairs.push(...qr2CoveragePairs);
+uiPairs.push(...qr2ReconcilePairs);
 uiPairs.push(...pfrPairs);for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}

@@ -14,6 +14,9 @@ import {QR2_COVERAGE_LIMITS} from './qr2-coverage-limits.js';
 export const QR2_CONTRACT_ID='QR2_PAPER_PERFORMANCE_CONTRACT_V1';
 export const QR2_NOTICE_IDS=Object.freeze(['QR2_NOTICE_ACTUAL_PAPER','QR2_NOTICE_BOOK_EQUITY']);
 export const QR2_MAX_FINDINGS=50;
+// RC-Q47: the only reasons that may travel with the first reconciliation failure. A reason outside this list is reported as null.
+export const QR2_FIRST_FAILURE_REASONS=Object.freeze(['EPOCH_UNKNOWN','FILL_WITHOUT_JOURNAL','JOURNAL_WITHOUT_FILL','DUPLICATE_FILL_KEY','DUPLICATE_JOURNAL_KEY','FOREIGN_JOURNAL_ROW']);
+const FIRST_FAILURE_REASON_SET=new Set(QR2_FIRST_FAILURE_REASONS);
 // Every top-level key a response may carry: the buildHeader keys plus the body blocks below.
 const HEADER_KEYS=['valuation_method','return_method','lot_method','legacy_method','order_method','period_method','drawdown_grid','rounding','price_policy',
   'contract_id','declaration_version','ledger_rule_epochs','lot_epochs','fee_source','alloc_method','range_flags','basis','execution','historical_simulation',
@@ -90,6 +93,12 @@ function findingsOf(list){
     out.push(item);
   }
   return {total:out.length,capped:out.length>QR2_MAX_FINDINGS,items:out.slice(0,QR2_MAX_FINDINGS)};
+}
+
+// Four named keys only (RC-Q47): no expected or actual value, quantity, amount or user id of the finding crosses. reason is a listed code or null.
+function firstFailureOf(f){
+  if(!f)return null;
+  return {check:text(f.check),code:text(f.code),event_key:text(f.event_key),reason:typeof f.reason==='string'&&FIRST_FAILURE_REASON_SET.has(f.reason)?f.reason:null};
 }
 
 function header(view,requestTime){
@@ -227,7 +236,7 @@ function viewBody(view,requestTime){
       failed_from:integer(effects.failed_from),
       failed_whole_account:effects.failed_whole_account===true,
       ledger_invariant_violated:effects.ledger_invariant_violated===true,
-      first_failure:effects.first_failure?{check:text(effects.first_failure.check),code:text(effects.first_failure.code),event_key:text(effects.first_failure.event_key)}:null
+      first_failure:firstFailureOf(effects.first_failure)
     },
     legacy_seeds:seedsOf(view.seeds),
     marker_counts:countsOf(view.marker_counts,['AGREES','DISAGREES','ABSENT']),
