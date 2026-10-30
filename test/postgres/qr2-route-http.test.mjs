@@ -18,7 +18,7 @@ import {validateResponse} from '../../src/portfolio/qr2-labels.js';
 import {Qr2Error} from '../../src/portfolio/qr2-constants.js';
 
 // QR-2 S3a route (RC-Q28 to RC-Q33; design tests H1 to H15). Isolated local PostgreSQL only (TEST_DATABASE_URL). Two groups:
-// HTTP: server.js with the S3b compute pool (server.js:68, real worker thread) (forked by the fixture, QR2_PERFORMANCE_ENABLED=1, product boundary record UNRECORDED), real auth and the
+// HTTP: server.js with the S3b compute pool (server.js:68, real worker thread) (forked by the fixture, QR2_PERFORMANCE_ENABLED=1, product default boundary record: the staging record of the registry), real auth and the
 // SERIALIZABLE dispatcher. IN-PROCESS: the route function on a Store with the S2 fixture ledger and the LOCAL_FIXTURE_E2 test record, driven
 // like the dispatcher drives it (phase 1, then the deferred function through the real runMarketDeferred, then the after-commit function).
 // S3b: the route computes through an injected compute; the IN-PROCESS tests inject an in-thread executeQr2Job; the HTTP tests compute through the server's real worker pool. The worker pool has its own files
@@ -236,7 +236,7 @@ test('H6 admission: ledger rows exactly at the limit are read, one more is refus
   assert.equal(grid.body.detail.limit,'grid_instants');assert.equal(grid.body.detail.max,5000);
 });
 
-test('H8 product boundary record UNRECORDED: an account with fills is UNAVAILABLE (LEDGER_RULE_UNREPLAYABLE); a funding-only account keeps NAV and returns',async()=>{
+test('H8 product default boundary record is the staging record: a fill booked now is in the open E2 row and reconciles; a funding-only account keeps NAV and returns',async()=>{
   const owner=await account('USER');const session=await loginOf(owner);
   const funded=await createBot(f.store,owner,10000);
   const traded=await createBot(f.store,owner,10000);
@@ -249,10 +249,10 @@ test('H8 product boundary record UNRECORDED: an account with fills is UNAVAILABL
   assert.notEqual(only.body.status.status,'UNAVAILABLE');
   const withFills=await get(session,`bot_id=${traded.id}&period=DAY`);
   assert.equal(withFills.status,200);
-  assert.equal(withFills.body.status.status,'UNAVAILABLE');
-  assert.equal(withFills.body.reconciliation.first_failure.code,'LEDGER_RULE_UNREPLAYABLE');
-  assert.equal(withFills.body.reconciliation.first_failure.reason,'EPOCH_UNKNOWN');
-  for(const key of ['nav','twr','money_pnl','mwr','max_drawdown'])assert.equal(withFills.body.account[key].value,null,key);
+  // No price bar is stored in this group, so only the reconciliation is asserted here (valuation is covered with a price in qr2-boundary-wiring and
+  // qr2-boundary-server). The fail-closed answer of the UNRECORDED product default is covered where it can be given explicitly: qr2-boundary-wiring P2 and P3.
+  assert.equal(withFills.body.reconciliation.state,'OK',JSON.stringify(withFills.body.reconciliation));
+  assert.equal(withFills.body.reconciliation.first_failure,null);
   assert.equal(validateResponse(withFills.body).ok,true);
 });
 

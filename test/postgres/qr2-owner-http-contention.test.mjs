@@ -7,7 +7,7 @@ import {quantPreflightHttpFixture} from '../helpers/quant-preflight-http-fixture
 import {createBot,ledgerDigest} from '../helpers/qr2-reader-fixture.mjs';
 import {hashPassword} from '../../src/security.js';
 
-// Actual server.js/auth/dispatcher/pool, with unchanged UNRECORDED boundaries.
+// Actual server.js/auth/dispatcher/pool, with the registry default boundary record (funding-only Bot: no fill, so no epoch is read).
 // A database lock observes the first phase-2 reader after shared-slot admission.
 // This proves admission through read completion, not physical worker-stop timing.
 const OWNER='/api/paper-performance/owner?currency=USDT&period=DAY';

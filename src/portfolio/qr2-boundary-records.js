@@ -34,8 +34,25 @@ export function buildBoundaryRegistry(entries){
   return Object.freeze({get:id=>byId.get(id),has:id=>byId.has(id),size:byId.size,list:()=>[...byId.values()]});
 }
 
-/** The shipped registry. Empty until a reviewed values slice adds a staging record from deployment evidence. */
-export const QR2_BOUNDARY_RECORDS=buildBoundaryRegistry([]);
+/**
+ * The shipped registry: one staging record, with values copied from deployment evidence (OD-Q6). The epoch edges come from the deployment
+ * records and the read-only staging boundary read that the evidence path cites. The lot boundaries stay null: an absent boundary only bites a
+ * lot that fails the current formula, and then the replay says so (LOT_EPOCH_UNKNOWN). A change to any value needs a new golden digest in
+ * test/qr2-boundary-records.test.js in the same reviewed diff, and a new pin.
+ */
+export const QR2_BOUNDARY_RECORDS=buildBoundaryRegistry([
+  {environment:'staging',record:{
+    record_id:'STAGING_QL_P2_PROTOTYPE_20261030',
+    epochs:[
+      {epoch:'E0',from:1790871360000,to:1792016261152},
+      {epoch:'E1',from:1792016273400,to:1792990177825},
+      {epoch:'E2',from:1792990177825,to:null}
+    ],
+    lot_fee_boundary:null,
+    lot_table_boundary:null,
+    evidence:'docs/evidence/S6_QR2_BOUNDARY_READ_1_A01_RESULT_2026-10-30.json'
+  }}
+]);
 
 /**
  * The default record of a registry: the staging record when there is one, else the product default object QR2_BOUNDARY_RECORD_UNRECORDED

@@ -14,8 +14,8 @@ import {validateOwnerResponse} from '../../src/portfolio/qr2-owner-response.js';
 
 // QR-2 boundary record wiring (contract 6.2; RC-Q46) with PostgreSQL: the real route, the real reader and the real worker pool. The record given as
 // deps.boundaries turns a fill-bearing account from RECONCILIATION_FAILED into OK, and a spy in front of the pool proves the record reached the compute
-// call. With no deps.boundaries the route takes QR2_BOUNDARY_RECORD_DEFAULT; this file is written for the empty registry of the mechanism slice, so that
-// default is UNRECORDED and the answers are today's. The values slice that adds a staging record updates the control assertions with its review.
+// call. With no deps.boundaries the route takes QR2_BOUNDARY_RECORD_DEFAULT; after the values slice that is the staging record, whose last epoch is open,
+// so a fill booked now is E2 and replays OK. The fail-closed contrast is the product default UNRECORDED passed explicitly as deps.boundaries.
 // Isolated local PostgreSQL only (TEST_DATABASE_URL). Every fixture row comes through the live Store and ExecutionWorker; nothing here is evidence.
 
 let fx,store;
@@ -42,9 +42,11 @@ async function drive(route,path,query,actor,deps){
   return res.phase2Deferred?runMarketDeferred(res.phase2Deferred):res.phase2Result;
 }
 
-test('P2 per-Bot route: the given record turns a fill-bearing account OK; the default stays UNRECORDED; the record reaches the compute call',async()=>{
-  assert.equal(QR2_BOUNDARY_RECORDS.size,0,'the mechanism slice ships an empty registry');
-  assert.equal(QR2_BOUNDARY_RECORD_DEFAULT,QR2_BOUNDARY_RECORD_UNRECORDED);
+test('P2 per-Bot route: the given record turns a fill-bearing account OK; the registry default (staging record) is OK for a fresh fill; UNRECORDED given explicitly still fails closed; the record reaches the compute call',async()=>{
+  assert.equal(QR2_BOUNDARY_RECORDS.size,1,'the values slice ships one staging record');
+  assert.notEqual(QR2_BOUNDARY_RECORD_DEFAULT,QR2_BOUNDARY_RECORD_UNRECORDED);
+  const lastEpoch=QR2_BOUNDARY_RECORD_DEFAULT.epochs.at(-1);
+  assert.equal(lastEpoch.to,null,'the last epoch is open');assert.ok(Date.now()>=lastEpoch.from,'a fill booked now falls in the open last epoch');
   const owner=await createOwner(store),bot=await tradedBot(owner);
   const pool=createQr2ComputePool();
   try{
@@ -56,19 +58,26 @@ test('P2 per-Bot route: the given record turns a fill-bearing account OK; the de
     assert.notEqual(ok.body.status.status,'UNAVAILABLE');assert.notEqual(ok.body.account.nav.value,null);
     assert.equal(validateResponse(ok.body).ok,true);
     assert.equal(given.calls.length,1);assert.deepEqual(given.calls[0].input.boundaries,LOCAL_FIXTURE_E2,'the record crossed the route into the compute input');
+    const byDefault=spied(pool);
+    const defaulted=await drive(qr2PerformanceRoute,QR2_PERFORMANCE_PATH,query,owner,{compute:byDefault});
+    assert.equal(defaulted.status,200,JSON.stringify(defaulted.body));
+    assert.equal(byDefault.calls.length,1);assert.deepEqual(byDefault.calls[0].input.boundaries,QR2_BOUNDARY_RECORD_DEFAULT,'no deps.boundaries: the route takes the registry default');
+    assert.equal(defaulted.body.reconciliation.state,'OK',JSON.stringify(defaulted.body.reconciliation));assert.equal(defaulted.body.reconciliation.first_failure,null);
+    assert.notEqual(defaulted.body.status.status,'UNAVAILABLE');assert.notEqual(defaulted.body.account.nav.value,null);
+    assert.equal(validateResponse(defaulted.body).ok,true);
     const control=spied(pool);
-    const failed=await drive(qr2PerformanceRoute,QR2_PERFORMANCE_PATH,query,owner,{compute:control});
+    const failed=await drive(qr2PerformanceRoute,QR2_PERFORMANCE_PATH,query,owner,{compute:control,boundaries:QR2_BOUNDARY_RECORD_UNRECORDED});
     assert.equal(failed.status,200,JSON.stringify(failed.body));
-    assert.equal(control.calls.length,1);assert.deepEqual(control.calls[0].input.boundaries,QR2_BOUNDARY_RECORD_DEFAULT,'no deps.boundaries: the route takes the registry default');
+    assert.equal(control.calls.length,1);assert.deepEqual(control.calls[0].input.boundaries,QR2_BOUNDARY_RECORD_UNRECORDED,'UNRECORDED given explicitly reaches the compute call');
     assert.equal(failed.body.reconciliation.state,'RECONCILIATION_FAILED');assert.equal(failed.body.reconciliation.first_failure.code,'LEDGER_RULE_UNREPLAYABLE');
     assert.equal(failed.body.status.status,'UNAVAILABLE');assert.equal(failed.body.account.nav.value,null);
     assert.equal(validateResponse(failed.body).ok,true);
-    assert.equal(pool.counters.completed,2);assert.equal(pool.counters.crash+pool.counters.timeout+pool.counters.spawn,0);
+    assert.equal(pool.counters.completed,3);assert.equal(pool.counters.crash+pool.counters.timeout+pool.counters.spawn,0);
   }finally{await pool.close();}
 });
 
-test('P3 owner route: the given record reaches every member read and turns a fill-bearing member OK; the default stays UNRECORDED',async()=>{
-  assert.equal(QR2_BOUNDARY_RECORD_DEFAULT,QR2_BOUNDARY_RECORD_UNRECORDED);
+test('P3 owner route: the given record reaches every member read and turns a fill-bearing member OK; the registry default is OK for a fresh fill; UNRECORDED given explicitly still fails closed',async()=>{
+  assert.notEqual(QR2_BOUNDARY_RECORD_DEFAULT,QR2_BOUNDARY_RECORD_UNRECORDED);
   const owner=await createOwner(store),traded=await tradedBot(owner),funded=await createBot(store,owner,5000);
   const pool=createQr2ComputePool();
   try{
@@ -84,13 +93,21 @@ test('P3 owner route: the given record reaches every member read and turns a fil
     const members=given.calls[0].snapshot.accounts;
     assert.ok(members.length>=2,'both child Bots are read');
     for(const member of members)assert.deepEqual(member.input.boundaries,LOCAL_FIXTURE_E2,'the record crossed the owner route into every member read');
+    const byDefault=spied(pool);
+    const defaulted=await drive(qr2OwnerPerformanceRoute,QR2_OWNER_PERFORMANCE_PATH,query,owner,{compute:byDefault});
+    assert.equal(defaulted.status,200,JSON.stringify(defaulted.body));
+    assert.equal(validateOwnerResponse(defaulted.body),true);
+    assert.equal(byDefault.calls.length,1);
+    for(const member of byDefault.calls[0].snapshot.accounts)assert.deepEqual(member.input.boundaries,QR2_BOUNDARY_RECORD_DEFAULT,'no deps.boundaries: the route takes the registry default');
+    assert.notEqual(memberOf(defaulted.body,traded).status.status,'UNAVAILABLE');assert.notEqual(memberOf(defaulted.body,traded).nav_to.value,null);
+    assert.notEqual(memberOf(defaulted.body,funded).nav_to.value,null);
     const control=spied(pool);
-    const failed=await drive(qr2OwnerPerformanceRoute,QR2_OWNER_PERFORMANCE_PATH,query,owner,{compute:control});
+    const failed=await drive(qr2OwnerPerformanceRoute,QR2_OWNER_PERFORMANCE_PATH,query,owner,{compute:control,boundaries:QR2_BOUNDARY_RECORD_UNRECORDED});
     assert.equal(failed.status,200,JSON.stringify(failed.body));
     assert.equal(validateOwnerResponse(failed.body),true);
-    for(const member of control.calls[0].snapshot.accounts)assert.deepEqual(member.input.boundaries,QR2_BOUNDARY_RECORD_DEFAULT,'no deps.boundaries: the route takes the registry default');
+    for(const member of control.calls[0].snapshot.accounts)assert.deepEqual(member.input.boundaries,QR2_BOUNDARY_RECORD_UNRECORDED,'UNRECORDED given explicitly reaches every member read');
     assert.equal(memberOf(failed.body,traded).status.status,'UNAVAILABLE');assert.equal(memberOf(failed.body,traded).nav_to.value,null);
     assert.notEqual(memberOf(failed.body,funded).nav_to.value,null,'a funding-only account keeps its NAV');
-    assert.equal(pool.counters.completed,2);assert.equal(pool.counters.crash+pool.counters.timeout+pool.counters.spawn,0);
+    assert.equal(pool.counters.completed,3);assert.equal(pool.counters.crash+pool.counters.timeout+pool.counters.spawn,0);
   }finally{await pool.close();}
 });
