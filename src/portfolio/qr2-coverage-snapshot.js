@@ -6,6 +6,9 @@ export const COVERAGE_BUDGET_KEYS=Object.freeze(['union_minutes','timestamp_rows
 // the row capacity keeps data-time input bytes inside the budget, so a claim on it can only come from a corrupt registry. unique_windows is not a member either.
 export const COVERAGE_DEGRADABLE_LIMITS=Object.freeze(['union_minutes','timestamp_rows','derivation_visits','output_intervals','coverage_output_bytes']);
 const MAX=Number.MAX_SAFE_INTEGER,M=60000;
+// Work units between two cooperative yields of the coverage build (QR-2 product change (b), slice b-1b). Frozen like QR2_COVERAGE_CHUNK_ROWS: not a budget key, never
+// in a registry, a worker input or a response. A unit is one timestamp in the union check loop, one window in the derive loop and one value in the gap loop.
+export const COVERAGE_SLICE_UNITS=8192;
 const CHARGES=['union_minutes','timestamp_rows','unique_windows','derivation_visits','output_intervals','input_bytes_upper_bound','output_bytes_upper_bound'];
 // The error stays a plain Error: the worker path relies on that (Stage 3B). An optional detail {limit,value,max} names the limit that refused the read;
 // only the reader boundary (qr2-coverage-reader.js) turns a refusal with its detail into a Qr2Error that the routes answer as 422.
@@ -22,6 +25,7 @@ function shape(value,names,check=input){
   check(Reflect.ownKeys(value).length===names.length&&names.every(k=>Object.hasOwn(value,k)));
   for(const key of names)check(Object.getOwnPropertyDescriptor(value,key)?.get===undefined&&Object.getOwnPropertyDescriptor(value,key)?.set===undefined);
 }
+// Residual block of slice b-1b: this own-keys/hasOwn loop is not yet cooperative (audit b1b P3-2).
 function array(value,limit,check=input){
   check(Array.isArray(value));if(check===report)check(value.length<=limit);else cap(value.length,limit);
   check(Reflect.ownKeys(value).length===value.length+1);
@@ -143,7 +147,14 @@ function claimPossible(plan,budgets,limit){
   return estimates(plan,plan.windows.map(w=>fields(w,{})),0,intervals).output_bytes_upper_bound>budgets.coverage_output_bytes;
 }
 function upperBound(values,target){let lo=0,hi=values.length;while(lo<hi){const mid=lo+Math.floor((hi-lo)/2);if(values[mid]<=target)lo=mid+1;else hi=mid;}return lo;}
-function unionFacts(plan,facts,budgets,check){
+// One implementation of the union validation and the derivation (slice b-1b). Both are generators that yield only at the start of a work unit, after COVERAGE_SLICE_UNITS
+// units since the last yield: never after the last unit, and never between a computation and its cap check (every cap below runs in the same turn as the computation
+// it bounds, and before the next unit begins). The synchronous drain (derive, buildCoverageSnapshot, buildDegradedCoverageSnapshot, validateCoverageSnapshot, so the worker
+// validator) ignores the yields and runs the statements in the same order as before; the cooperative drain (buildCoverageSnapshotCooperative, the reader only) turns each
+// yield into one macrotask turn. The meter counts units across both generators of one build.
+// Residual block, not sliced (kept as is by ruling GL-B1): array() on a union's timestamps runs Reflect.ownKeys (one native call, one key string per element) and
+// a hasOwn loop over every index inside one turn. Its cost grows with the row count; the L-b gate measures it.
+function* unionFactsSteps(plan,facts,budgets,check,meter){
   array(facts,plan.unions.length,check);check(facts.length===plan.unions.length);
   let total=0,degraded=null;
   for(let i=0;i<facts.length;i++){
@@ -160,16 +171,22 @@ function unionFacts(plan,facts,budgets,check){
     checkBytes(estimates(plan,plan.windows.map(w=>fields(w,{})),total,plan.windows.map(()=>0)),budgets);
     array(fact.timestamps,fact.timestamps.length,check);
     let previous=plan.unions[i].window.from;
-    for(const time of fact.timestamps){check(safe(time)&&time%M===0&&time>previous&&time<=plan.unions[i].window.to);previous=time;}
+    for(const time of fact.timestamps){
+      if(meter.units===COVERAGE_SLICE_UNITS){meter.units=0;yield;}
+      meter.units++;
+      check(safe(time)&&time%M===0&&time>previous&&time<=plan.unions[i].window.to);previous=time;
+    }
   }
   if(degraded!==null){check(facts.every(f=>f.state==='BUDGET_EXCEEDED'));check(claimPossible(plan,budgets,degraded));}
   return {total,degraded};
 }
-function derive(plan,facts,budgets,check=report){
-  const {total:rows}=unionFacts(plan,facts,budgets,check),windows=[];
+function* deriveSteps(plan,facts,budgets,check=report,meter={units:0}){
+  const {total:rows}=yield* unionFactsSteps(plan,facts,budgets,check,meter),windows=[];
   let visits=0,outputIntervals=0,unionMinutes=0;
   for(const union of plan.unions)unionMinutes=add(unionMinutes,(union.window.to-union.window.from)/M);
   for(const w of plan.windows){
+    if(meter.units===COVERAGE_SLICE_UNITS){meter.units=0;yield;}
+    meter.units++;
     const d=domain(w.resolved_range,w.market);
     if(w.union_id===null){windows.push(fields(w,w.market===null?{}:{expected_minutes:0,stored_minutes:0,missing_minutes:0,interval_count:0}));continue;}
     const fact=facts[w.union_id];
@@ -178,7 +195,11 @@ function derive(plan,facts,budgets,check=report){
     const start=upperBound(values,from),end=upperBound(values,to),n=end-start;
     visits=add(visits,n);cap(visits,budgets.derivation_visits,'derivation_visits');
     let count=0,previous=from;
-    for(let i=start;i<end;i++){if(values[i]-previous>M)count++;previous=values[i];}
+    for(let i=start;i<end;i++){
+      if(meter.units===COVERAGE_SLICE_UNITS){meter.units=0;yield;}
+      meter.units++;
+      if(values[i]-previous>M)count++;previous=values[i];
+    }
     if(previous<to)count++;
     outputIntervals=add(outputIntervals,count);cap(outputIntervals,budgets.output_intervals,'output_intervals');
     const expected=(to-from)/M;
@@ -187,11 +208,28 @@ function derive(plan,facts,budgets,check=report){
   const bytes=estimates(plan,windows,rows,windows.map(w=>w.interval_count??0));checkBytes(bytes,budgets);
   return {windows,charges:{union_minutes:unionMinutes,timestamp_rows:rows,unique_windows:windows.length,derivation_visits:visits,output_intervals:outputIntervals,...bytes}};
 }
-/** No final recursive build/validate: construction performs one union pass and one per-window slice pass. */
-export function buildCoverageSnapshot({accounts,budgets,facts}){
-  const plan=planCoverage({accounts,budgets}),derived=derive(plan,facts,budgets);
+// Synchronous drain: runs a steps generator to its end in one turn and returns its value. A thrown refusal leaves the generator at once, as the old plain function did.
+function drain(steps){let step=steps.next();while(!step.done)step=steps.next();return step.value;}
+const derive=(plan,facts,budgets,check)=>drain(deriveSteps(plan,facts,budgets,check));
+/** The build as one generator (plan, union validation, derivation, assembly). Exported for the two drains and for tests; product code uses buildCoverageSnapshot or
+ * buildCoverageSnapshotCooperative. A yield value carries no data. No final recursive build/validate: construction performs one union pass and one per-window slice pass.
+ */
+export function* buildCoverageSnapshotSteps({accounts,budgets,facts}){
+  const plan=planCoverage({accounts,budgets}),derived=yield* deriveSteps(plan,facts,budgets);
   // Arrays are retained once by union; windows contain only indexes. Caller transfers ownership of facts.
   return {version:COVERAGE_SNAPSHOT_VERSION,unions:plan.unions.map((u,i)=>({...u,fact:facts[i]})),windows:derived.windows,bindings:plan.bindings,charges:derived.charges};
+}
+/** Synchronous build: every existing caller. The result is byte-identical to the cooperative build. */
+export function buildCoverageSnapshot(args){return drain(buildCoverageSnapshotSteps(args));}
+/** Cooperative build for the coverage reader only (src/postgres/qr2-coverage-reader.js): the same generator, one macrotask turn (setImmediate) at every yield, so a large
+ * build does not hold the event loop for its whole run. The global setImmediate keeps this module free of a new module dependency (the module is in the worker's graph). A refusal rejects the
+ * promise with the same error the synchronous build throws. Nothing else may call this function: the worker validator and the other builders stay synchronous.
+ */
+export async function buildCoverageSnapshotCooperative(args){
+  const steps=buildCoverageSnapshotSteps(args);
+  let step=steps.next();
+  while(!step.done){await new Promise(resolve=>setImmediate(resolve));step=steps.next();}
+  return step.value;
 }
 /** Degraded registry for a request whose coverage read hit a degradable budget (OD-S5-D). No timestamps, no counts, no intervals: the bar coverage of every
  * inspected window reads UNAVAILABLE / COVERAGE_BUDGET_EXCEEDED. A zero-row byte refusal is raised as in planCoverage (the caller keeps F's 422 for it);

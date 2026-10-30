@@ -1,4 +1,4 @@
-import {planCoverage,buildCoverageSnapshot,buildDegradedCoverageSnapshot,admitCoverageRows,coverageRowCapacity,coverageError,COVERAGE_DEGRADABLE_LIMITS} from '../portfolio/qr2-coverage-snapshot.js';
+import {planCoverage,buildCoverageSnapshot,buildCoverageSnapshotCooperative,buildDegradedCoverageSnapshot,admitCoverageRows,coverageRowCapacity,coverageError,COVERAGE_DEGRADABLE_LIMITS} from '../portfolio/qr2-coverage-snapshot.js';
 import {Qr2Error} from '../portfolio/qr2-constants.js';
 import {QR2_COVERAGE_CHUNK_ROWS} from '../portfolio/qr2-coverage-limits.js';
 
@@ -114,9 +114,11 @@ async function readCoverageSnapshotUnchecked({transaction,accounts,budgets},chun
       if(latched!==null)throw latched;
       total+=timestamps.length;facts.push({state:'COMPLETE',timestamps});
     }
-    // One macrotask yield so the build does not run in the same turn as the last statement's decode.
+    // One macrotask yield so the build does not run in the same turn as the last statement's decode. The build itself is cooperative (slice b-1b): it yields one
+    // macrotask every COVERAGE_SLICE_UNITS work units and refuses at the same points as the synchronous build. This is the only caller of the cooperative drain. The
+    // await sits inside this try block, so a refusal of the build reaches the degrade mapping below exactly as the synchronous throw did.
     await yieldToEventLoop();
-    return buildCoverageSnapshot({accounts,budgets,facts});
+    return await buildCoverageSnapshotCooperative({accounts,budgets,facts});
   }catch(error){
     // Data-time stop (timestamp_rows sentinel, visits, intervals, output bytes): the transaction checks already passed. Decoded timestamps are dropped.
     const limit=degradableLimit(error);
