@@ -4,7 +4,7 @@ import {writeQr2Audit} from './qr2-audit.js';
 import {parseQr2OwnerParameters,assertQr2History,answerOfError} from './qr2-routes.js';
 import {periodWindow,allTimeWindow} from '../portfolio/qr2-periods.js';
 import {Qr2Error} from '../portfolio/qr2-constants.js';
-import {QR2_BOUNDARY_RECORD_UNRECORDED} from '../portfolio/qr2-boundaries.js';
+import {QR2_BOUNDARY_RECORD_DEFAULT} from '../portfolio/qr2-boundary-records.js';
 import {refusalAnswer} from '../portfolio/qr2-response.js';
 import {validateOwnerResponse} from '../portfolio/qr2-owner-response.js';
 
@@ -12,7 +12,7 @@ export const QR2_OWNER_PERFORMANCE_PATH='/api/paper-performance/owner';
 // Caller performs session and own:read checks. Same disabled-by-default flag, process slot and compute pool as account GET.
 export async function qr2OwnerPerformanceRoute(req,res,url,actor,deps){
   if(url.pathname!==QR2_OWNER_PERFORMANCE_PATH||deps.enabled!==true)return false;
-  const {store,json,slot,compute,clock=Date.now,boundaries=QR2_BOUNDARY_RECORD_UNRECORDED,limits,readSnapshot=readQr2OwnerSnapshot,writeAudit=writeQr2Audit}=deps;
+  const {store,json,slot,compute,clock=Date.now,boundaries=QR2_BOUNDARY_RECORD_DEFAULT,limits,readSnapshot=readQr2OwnerSnapshot,writeAudit=writeQr2Audit}=deps;
   if(req.method!=='GET'){json(res,405,{error:'Method not allowed'});return true;}
   const requestTime=clock();let plan;
   try{

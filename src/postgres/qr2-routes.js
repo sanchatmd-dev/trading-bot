@@ -2,7 +2,7 @@ import {hasPermission} from '../permissions.js';
 import {getQuota} from './quotas.js';
 import {readQr2Snapshot} from './qr2-reader.js';
 import {writeQr2Audit} from './qr2-audit.js';
-import {QR2_BOUNDARY_RECORD_UNRECORDED} from '../portfolio/qr2-boundaries.js';
+import {QR2_BOUNDARY_RECORD_DEFAULT} from '../portfolio/qr2-boundary-records.js';
 import {QR2_DAY_MS,Qr2Error} from '../portfolio/qr2-constants.js';
 import {periodWindow,customWindow,allTimeWindow,utcMidnight} from '../portfolio/qr2-periods.js';
 import {refusalAnswer} from '../portfolio/qr2-response.js';
@@ -98,12 +98,12 @@ export function answerOfError(error,phase=1){
 }
 
 /**
- * deps: {store, auth, json, enabled, slot, compute, boundaries?, limits?, clock?, readSnapshot?, writeAudit?}. compute is the QR-2 compute
+ * deps: {store, auth, json, enabled, slot, compute, boundaries? (default QR2_BOUNDARY_RECORD_DEFAULT, RC-Q46), limits?, clock?, readSnapshot?, writeAudit?}. compute is the QR-2 compute
  * pool (qr2-compute-pool.js, RC-Q35): the product passes it, there is no in-thread default, and a missing one answers 503. readSnapshot and
  * writeAudit exist for tests; the product uses the defaults. Returns false when the route is off or the path is not this one (the router then answers 404).
  */
 export async function qr2PerformanceRoute(req,res,url,actor,deps){
-  const {store,auth,json,enabled,slot,boundaries=QR2_BOUNDARY_RECORD_UNRECORDED,limits,clock=Date.now,
+  const {store,auth,json,enabled,slot,boundaries=QR2_BOUNDARY_RECORD_DEFAULT,limits,clock=Date.now,
     readSnapshot=readQr2Snapshot,writeAudit=writeQr2Audit,compute}=deps;
   if(url.pathname!==QR2_PERFORMANCE_PATH||enabled!==true)return false;
   if(req.method!=='GET'){json(res,405,{error:'Method not allowed'});return true;}
