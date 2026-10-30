@@ -19,7 +19,7 @@ const BOT='bot-1',OWNER='owner-1';
 const REFUSED_TEXT='The request is over a limit';
 const REPORT_FAILED={code:'QR2_REPORT_FAILED',error:'Performance report could not be produced'};
 
-function transaction({isolation='repeatable read',readOnly='on',table='pine_market_bars',rowsOf=limit=>Array.from({length:limit},(_,i)=>String((i+1)*M)),fail,over}={}){
+function transaction({isolation='repeatable read',readOnly='on',table='pine_market_bars',rowsOf=(limit,params)=>Array.from({length:limit},(_,i)=>String(params[3]+(i+1)*M)),fail,over}={}){   // honours the keyset cursor $4: the reader reads in chunks (QR-2 product change (b))
   const calls=[];
   return {isTransaction:true,calls,async query(sql,params){
     calls.push({sql,params});
@@ -29,7 +29,7 @@ function transaction({isolation='repeatable read',readOnly='on',table='pine_mark
     if(sql===COVERAGE_SQL.ISOLATION)return {rows:twice([{transaction_isolation:isolation}])};
     if(sql===COVERAGE_SQL.READ_ONLY)return {rows:twice([{transaction_read_only:readOnly}])};
     if(sql===COVERAGE_SQL.PROBE)return {rows:twice([{name:table}])};
-    if(sql===COVERAGE_SQL.ROWS)return {rows:rowsOf(params[5],params).map(bar_time=>({bar_time}))};
+    if(sql===COVERAGE_SQL.ROWS)return {rows:rowsOf(params[5],params).filter(t=>!(Number(t)>params[4])).map(bar_time=>({bar_time}))};   // clips at $5 (window end, inclusive) like the database; the LIMIT $6 is deliberately not enforced so a driver that ignores it can be simulated
     throw new Error('unexpected SQL');
   }};
 }
@@ -185,7 +185,7 @@ for(const [name,drive,reader] of drivers){
       assert.equal(answer.status,503,sql);assert.deepEqual(answer.body,REPORT_FAILED,sql);
     }
     // The row query asked for capacity plus one row; one row more than that comes from a driver that ignored its LIMIT.
-    const answer=await drive(reader(budgetsOf({timestamp_rows:5}),transaction({rowsOf:limit=>Array.from({length:limit+1},(_,i)=>String((i+1)*M))})));
+    const answer=await drive(reader(budgetsOf({timestamp_rows:5}),transaction({rowsOf:(limit,params)=>Array.from({length:limit+1},(_,i)=>String(params[3]+(i+1)*M))})));
     assert.equal(answer.status,503);assert.deepEqual(answer.body,REPORT_FAILED);
   });
 }
@@ -212,7 +212,7 @@ test('the reader throws a plain QR2_REPORT_FAILED for a driver result over a one
     const error=await attempt(budgetsOf({}),transaction({over:sql}));
     assert.equal(error instanceof Qr2Error,false,sql);assert.equal(error.name,'Error',sql);assert.equal(error.code,'QR2_REPORT_FAILED',sql);assert.equal(error.detail,undefined,sql);
   }
-  const ignored=await attempt(budgetsOf({timestamp_rows:2}),transaction({rowsOf:limit=>Array.from({length:limit+1},(_,i)=>String((i+1)*M))}));
+  const ignored=await attempt(budgetsOf({timestamp_rows:2}),transaction({rowsOf:(limit,params)=>Array.from({length:limit+1},(_,i)=>String(params[3]+(i+1)*M))}),[accountOf('a',0,10*M)]);
   assert.equal(ignored instanceof Qr2Error,false);assert.equal(ignored.code,'QR2_REPORT_FAILED');
   expectDegraded(await attempt(budgetsOf({timestamp_rows:2}),transaction()),'timestamp_rows');
 });

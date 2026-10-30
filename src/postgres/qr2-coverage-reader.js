@@ -1,5 +1,6 @@
 import {planCoverage,buildCoverageSnapshot,buildDegradedCoverageSnapshot,admitCoverageRows,coverageRowCapacity,coverageError,COVERAGE_DEGRADABLE_LIMITS} from '../portfolio/qr2-coverage-snapshot.js';
 import {Qr2Error} from '../portfolio/qr2-constants.js';
+import {QR2_COVERAGE_CHUNK_ROWS} from '../portfolio/qr2-coverage-limits.js';
 
 export const COVERAGE_SQL=Object.freeze({
   ISOLATION:'SHOW transaction_isolation',
@@ -7,7 +8,11 @@ export const COVERAGE_SQL=Object.freeze({
   PROBE:"SELECT to_regclass('public.pine_market_bars')::text AS name",
   ROWS:'SELECT bar_time::text AS bar_time FROM public.pine_market_bars WHERE broker=$1 AND symbol=$2 AND timeframe=$3 AND bar_time>$4::bigint AND bar_time<=$5::bigint ORDER BY public.pine_market_bars.bar_time LIMIT $6'
 });
+// One macrotask turn. The global setImmediate keeps the static import graph free of a new bare module: qr2-reader.js (pure half) is in the worker's graph.
+const yieldToEventLoop=()=>new Promise(resolve=>setImmediate(resolve));
 const failed=()=>{throw coverageError('QR2_REPORT_FAILED');};
+const rowShape=row=>{if(row===null||typeof row!=='object'||Array.isArray(row)||Reflect.ownKeys(row).length!==1||!Object.hasOwn(row,'bar_time'))failed();};
+const cursorOf=row=>{rowShape(row);return decodeCoverageTimestamp(row.bar_time);};
 export function decodeCoverageTimestamp(text){
   if(typeof text!=='string'||text.length>16||!/^(0|[1-9][0-9]*)$/.test(text))failed();
   const value=BigInt(text);if(value>BigInt(Number.MAX_SAFE_INTEGER))failed();
@@ -23,8 +28,15 @@ function rowsOf(result,limit){
  * Pass schedule: one strict union decode here; one union validation and per-window derivation in construction.
  * A caller may perform at most one independent final registry validation for this invocation.
  */
-export async function readCoverageSnapshot(args){
-  try{return await readCoverageSnapshotUnchecked(args);}
+export async function readCoverageSnapshot(args){return readMapped(args,QR2_COVERAGE_CHUNK_ROWS);}
+/** Test seam (never called by product code): the same read with a chunk size lowered below QR2_COVERAGE_CHUNK_ROWS. A value that is not a safe
+ * integer in [1, QR2_COVERAGE_CHUNK_ROWS] is QR2_INPUT_INVALID before any query. Product callers use readCoverageSnapshot, which has no chunk parameter. */
+export async function readCoverageSnapshotWithChunkRows(args,chunkRows){
+  if(!Number.isSafeInteger(chunkRows)||chunkRows<1||chunkRows>QR2_COVERAGE_CHUNK_ROWS)throw coverageError('QR2_INPUT_INVALID');
+  return readMapped(args,chunkRows);
+}
+async function readMapped(args,chunkRows){
+  try{return await readCoverageSnapshotUnchecked(args,chunkRows);}
   catch(error){
     // Reader path only: a range over a read limit is a request refusal (contract 10, 422 QR2_RANGE_ADMISSION_REFUSED with the limit). Every other
     // error keeps its plain-Error form and answers 503. The worker path never calls this function and keeps its own mapping (Stage 3B).
@@ -42,7 +54,7 @@ async function verifyTransaction(transaction){
 const transactionOk=transaction=>transaction?.isTransaction===true&&typeof transaction.query==='function';
 // A range or data stop over a degradable budget (OD-S5-D). A refusal that is already a Qr2Error, one without a detail and every other limit are not degradable.
 const degradableLimit=error=>error?.code==='QR2_RANGE_ADMISSION_REFUSED'&&!(error instanceof Qr2Error)&&COVERAGE_DEGRADABLE_LIMITS.includes(error.detail?.limit)?error.detail.limit:null;
-async function readCoverageSnapshotUnchecked({transaction,accounts,budgets}){
+async function readCoverageSnapshotUnchecked({transaction,accounts,budgets},chunkRows){
   let plan;
   try{plan=planCoverage({accounts,budgets});}
   catch(error){
@@ -72,21 +84,38 @@ async function readCoverageSnapshotUnchecked({transaction,accounts,budgets}){
       const remaining=retainedCapacity-total;
       if(remaining===Number.MAX_SAFE_INTEGER)failed();
       const limit=remaining+1;
-      const rows=rowsOf(await transaction.query(COVERAGE_SQL.ROWS,[union.market.broker,union.market.symbol,union.market.timeframe,union.window.from,union.window.to,limit]),limit);
-      if(rows.length>remaining)throw coverageError('QR2_RANGE_ADMISSION_REFUSED',{limit:'timestamp_rows',max:retainedCapacity});
-      admitCoverageRows({accounts,budgets,rowCount:total+rows.length});
-      const timestamps=[];let previous=union.window.from;
-      for(let i=0;i<rows.length;i++){
-        const row=rows[i];
-        if(row===null||typeof row!=='object'||Array.isArray(row)||Reflect.ownKeys(row).length!==1||!Object.hasOwn(row,'bar_time'))failed();
-        const time=decodeCoverageTimestamp(row.bar_time);
-        if(time%60000!==0||time<=previous||time>union.window.to)failed();
-        timestamps.push(time);previous=time;
-        // Release driver row objects as soon as strict decoding succeeds. They are owned by this query result.
-        rows[i]=null;
+      // Keyset chunks inside the caller's one REPEATABLE READ snapshot. The sentinel limit is the same as for one statement; $4 is the cursor (the last bar time read
+      // in this union) and $6 is the chunk limit. A decode failure is latched (first error object) and thrown at the union end, after the sentinel and admission.
+      const timestamps=[];let previous=union.window.from,cursor=union.window.from,fetched=0,latched=null;
+      for(;;){
+        const want=Math.min(chunkRows,limit-fetched);
+        const rows=rowsOf(await transaction.query(COVERAGE_SQL.ROWS,[union.market.broker,union.market.symbol,union.market.timeframe,cursor,union.window.to,want]),want);
+        fetched+=rows.length;
+        const more=rows.length===want&&fetched<limit;
+        // The next cursor is the integer value of the last row of a full chunk: shape check and integer decode only, no grid, order or window check.
+        if(more)cursor=cursorOf(rows[rows.length-1]);
+        for(let i=0;i<rows.length;i++){
+          if(latched===null){
+            try{
+              const row=rows[i];
+              rowShape(row);
+              const time=decodeCoverageTimestamp(row.bar_time);
+              if(time%60000!==0||time<=previous||time>union.window.to)failed();
+              timestamps.push(time);previous=time;
+            }catch(error){latched=error;timestamps.length=0;}
+          }
+          // Release driver row objects as soon as they are handled. They are owned by this query result.
+          rows[i]=null;
+        }
+        if(!more)break;
       }
+      if(fetched>remaining)throw coverageError('QR2_RANGE_ADMISSION_REFUSED',{limit:'timestamp_rows',max:retainedCapacity});
+      admitCoverageRows({accounts,budgets,rowCount:total+fetched});
+      if(latched!==null)throw latched;
       total+=timestamps.length;facts.push({state:'COMPLETE',timestamps});
     }
+    // One macrotask yield so the build does not run in the same turn as the last statement's decode.
+    await yieldToEventLoop();
     return buildCoverageSnapshot({accounts,budgets,facts});
   }catch(error){
     // Data-time stop (timestamp_rows sentinel, visits, intervals, output bytes): the transaction checks already passed. Decoded timestamps are dropped.

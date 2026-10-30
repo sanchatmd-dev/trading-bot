@@ -2,6 +2,9 @@ import {Qr2Error} from './qr2-constants.js';
 
 // Provisional local/off qualification envelope. Production selection remains gated.
 export const QR2_COVERAGE_LIMITS=Object.freeze({union_minutes:43200,timestamp_rows:21600,unique_windows:20,derivation_visits:100000,output_intervals:4096,coverage_input_bytes:524288,coverage_output_bytes:1048576});
+// Frozen keyset chunk size of one coverage statement (QR-2 product change (b), slice b-1a). It is not a budget key: it never enters coverageReadBudgets,
+// the registry, the worker input or any response, and no caller can raise it. The reader may only be lowered below it by the test seam.
+export const QR2_COVERAGE_CHUNK_ROWS=8192;
 export function coverageReadBudgets(given={}){
   if(!given||typeof given!=='object'||Array.isArray(given)||![Object.prototype,null].includes(Object.getPrototypeOf(given)))throw new Qr2Error('QR2_INPUT_INVALID');
   const budgets={...QR2_COVERAGE_LIMITS};
