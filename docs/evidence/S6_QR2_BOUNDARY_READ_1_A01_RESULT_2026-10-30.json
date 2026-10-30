@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 1,
+  "id": "S6_QR2_BOUNDARY_READ_1_A01_RESULT_2026-10-30",
+  "recordedAt": "2026-10-30T14:24:43Z",
+  "packetId": "S6-QR2-BOUNDARY-READ-1",
+  "packetSha": "4a063ead5c34b912b7287966be5af99f7e66608ea9c24f4b545561ca0e4d6c27",
+  "attemptId": "a01",
+  "priorAttempts": [],
+  "phase": "BR",
+  "environment": "Staging QL-P2 Prototype",
+  "verdict": "BR_PASS",
+  "code": null,
+  "stage": "DONE",
+  "readerVerdict": "BR_COLLECTED",
+  "startedUtc": "2026-10-30T14:16:19.913Z",
+  "endedUtc": "2026-10-30T14:16:20.055Z",
+  "elapsedMs": 142,
+  "runnerStartedUtc": "2026-10-30T14:16:18.688Z",
+  "runnerEndedUtc": "2026-10-30T14:16:19.981Z",
+  "rollback": "ROLLED_BACK",
+  "receiptSha256Prefix": "59aee61d8ee29b0d",
+  "manifestSha256": "35fefd9492e30be989862045fac88e4cd778e13e8f35158ec401bc324bbb1301",
+  "envelopeSha256": "9c00476942444f43950faf89c54e3bd0f6d5bb02750a21989e4072edd06f4763",
+  "retainedSha256": "75f82b591b892c6da8f931a08d11413b7b0fac35cbe93ce4980e4ece6ce1deb3",
+  "querySetSha256": "acf520b746bee2a8829325fd8e1f67e9b73a2335b32d055fd9aa1b11a588ea0e",
+  "toolSourceSha256": "2545b83847c327ac9de0a568b05504daa0ec606be738b60e150cfc952a25ad61",
+  "pins": {
+    "core": "56832238f179d23c7d64ddb152925f4ce92a22871fb768a92a783ae9e95bd2e6",
+    "runner": "8fbe54d140d8616ecf4a0e30c0a65f0c73a00688fb8ec54de3db87c2eb9e984a",
+    "packet": "4a063ead5c34b912b7287966be5af99f7e66608ea9c24f4b545561ca0e4d6c27",
+    "allowlist": "0f590dc9270c81a27f4f5e390dfe82a134beab8716ac2714c4d589af68048d47"
+  },
+  "go": {
+    "reference": "GO-BR a01 owner GO (s6-br-a01-go.json sha256 c870667eaa759ecd)",
+    "approvedAt": "2026-10-30T14:16:04.458Z",
+    "expiresAt": "2026-10-30T14:18:04.458Z",
+    "notAfter": "2026-10-31T14:00:00.000Z",
+    "noRetry": true
+  },
+  "pin": "ba1a433e05bf814f836ce41f54a0fc9b38654c08",
+  "constants": [
+    {
+      "name": "E0_FROM",
+      "value": 1790871360000,
+      "source": "docs/ROADMAP.md",
+      "field": "paragraph \"P0 status, 2026-10-01 16:16 UTC\" (staging API and trading worker run 533755b); the switch was at or before this status stamp"
+    },
+    {
+      "name": "GAP_FROM",
+      "value": 1792016261152,
+      "source": "docs/evidence/DP1S_C02_STAGING_SWITCH_2026-10-15.json",
+      "field": "switch.finished minus switch.transportMs"
+    },
+    {
+      "name": "GAP_TO",
+      "value": 1792016273400,
+      "source": "docs/evidence/DP1S_C02_STAGING_SWITCH_2026-10-15.json",
+      "field": "switch.finished"
+    },
+    {
+      "name": "POST0_AT",
+      "value": 1792016344757,
+      "source": "docs/evidence/DP1S_C02_STAGING_SWITCH_2026-10-15.json",
+      "field": "post0.finished"
+    },
+    {
+      "name": "E2_FROM",
+      "value": 1792990177825,
+      "source": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_X4_A02_RESULT_2026-10-26.json",
+      "field": "measured.preSwitchBackup.takenAtUtc"
+    },
+    {
+      "name": "E2_WORKER_BY",
+      "value": 1792990192453,
+      "source": "docs/evidence/S6_STAGING_PROTOTYPE_DEPLOY_P4_X4_A02_RESULT_2026-10-26.json",
+      "field": "attempt.runnerEndedUtc"
+    },
+    {
+      "name": "P2_SIGNAL",
+      "value": 66,
+      "source": "docs/evidence/P2_NATURAL_PAPER_BUY_2026-10-03.json",
+      "field": "firstBuy.signalId"
+    },
+    {
+      "name": "P2_CUMQTY",
+      "value": "0.01179",
+      "source": "docs/evidence/P2_NATURAL_PAPER_BUY_2026-10-03.json",
+      "field": "firstBuy.quantity"
+    }
+  ],
+  "db": {
+    "readOnly": true,
+    "pgMajor": 16,
+    "identityEqual": true,
+    "schemaVersion": 14,
+    "requiredColumns": 37,
+    "observedAtMs": 1793369779956
+  },
+  "scopes": [
+    {
+      "scopeOrd": 1,
+      "ownerOrd": 1,
+      "brokerOrd": 1,
+      "slot": 2,
+      "isChild": true,
+      "fills": 3,
+      "buys": 2,
+      "sells": 1,
+      "nonPaper": 0,
+      "firstAt": 1790422622310,
+      "lastAt": 1790469242322,
+      "preE0": 3,
+      "preE0LastAt": 1790469242322,
+      "firstIsP2Key": false,
+      "hasP2Signal": false,
+      "legacyOpen": false
+    },
+    {
+      "scopeOrd": 2,
+      "ownerOrd": 1,
+      "brokerOrd": 1,
+      "slot": 3,
+      "isChild": true,
+      "fills": 24,
+      "buys": 12,
+      "sells": 12,
+      "nonPaper": 0,
+      "firstAt": 1791028922172,
+      "lastAt": 1791425107815,
+      "preE0": 0,
+      "preE0LastAt": null,
+      "firstIsP2Key": true,
+      "hasP2Signal": true,
+      "legacyOpen": false
+    }
+  ],
+  "edges": [
+    {
+      "edge": "E0_FROM",
+      "sideOfEdge": "AT_OR_AFTER",
+      "at": 1791028922172,
+      "side": "BUY",
+      "marker": "ABSENT",
+      "bucket": "E0",
+      "scopeOrd": 2
+    },
+    {
+      "edge": "E0_FROM",
+      "sideOfEdge": "BEFORE",
+      "at": 1790469242322,
+      "side": "BUY",
+      "marker": "ABSENT",
+      "bucket": "PRE_E0",
+      "scopeOrd": 1
+    },
+    {
+      "edge": "E2_FROM",
+      "sideOfEdge": "AT_OR_AFTER",
+      "at": null,
+      "side": null,
+      "marker": null,
+      "bucket": null,
+      "scopeOrd": null
+    },
+    {
+      "edge": "E2_FROM",
+      "sideOfEdge": "BEFORE",
+      "at": 1791425107815,
+      "side": "SELL",
+      "marker": "ABSENT",
+      "bucket": "E0",
+      "scopeOrd": 2
+    },
+    {
+      "edge": "GAP_FROM",
+      "sideOfEdge": "AT_OR_AFTER",
+      "at": null,
+      "side": null,
+      "marker": null,
+      "bucket": null,
+      "scopeOrd": null
+    },
+    {
+      "edge": "GAP_FROM",
+      "sideOfEdge": "BEFORE",
+      "at": 1791425107815,
+      "side": "SELL",
+      "marker": "ABSENT",
+      "bucket": "E0",
+      "scopeOrd": 2
+    },
+    {
+      "edge": "GAP_TO",
+      "sideOfEdge": "AT_OR_AFTER",
+      "at": null,
+      "side": null,
+      "marker": null,
+      "bucket": null,
+      "scopeOrd": null
+    },
+    {
+      "edge": "GAP_TO",
+      "sideOfEdge": "BEFORE",
+      "at": 1791425107815,
+      "side": "SELL",
+      "marker": "ABSENT",
+      "bucket": "E0",
+      "scopeOrd": 2
+    }
+  ],
+  "cells": [
+    {
+      "scopeOrd": 1,
+      "bucket": "PRE_E0",
+      "side": "BUY",
+      "marker": "ABSENT",
+      "n": 2,
+      "signals": 2,
+      "minAt": 1790422622310,
+      "maxAt": 1790469242322
+    },
+    {
+      "scopeOrd": 1,
+      "bucket": "PRE_E0",
+      "side": "SELL",
+      "marker": "ABSENT",
+      "n": 1,
+      "signals": 1,
+      "minAt": 1790423282632,
+      "maxAt": 1790423282632
+    },
+    {
+      "scopeOrd": 2,
+      "bucket": "E0",
+      "side": "BUY",
+      "marker": "ABSENT",
+      "n": 12,
+      "signals": 12,
+      "minAt": 1791028922172,
+      "maxAt": 1791421267373
+    },
+    {
+      "scopeOrd": 2,
+      "bucket": "E0",
+      "side": "SELL",
+      "marker": "ABSENT",
+      "n": 12,
+      "signals": 12,
+      "minAt": 1791056706382,
+      "maxAt": 1791425107815
+    }
+  ],
+  "worker": {
+    "lastIntentBeforeE2": 1791425107818,
+    "backlogN": 0,
+    "backlogFirstAt": null,
+    "backlogScopes": 0,
+    "fillsAfterBacklogStart": 0,
+    "lateFillsNoIntent": 0,
+    "crossBucketSignals": 0,
+    "hbOldN": 0,
+    "hbOldMin": null,
+    "hbOldMax": null,
+    "hbOtherRoleN": 0,
+    "hbN": 1,
+    "orphanLotScopes": 0
+  },
+  "lots": [
+    {
+      "scopeOrd": 1,
+      "lots": 2,
+      "firstLotAt": 1790422622306,
+      "lastLotAt": 1790469242320,
+      "buysBeforeFirstLot": 0,
+      "buysBeforeFirstLotLastAt": null,
+      "sellsBeforeFirstLot": 0,
+      "pairsWithFee": 2,
+      "pairsWithoutFee": 0,
+      "pairsNeither": 0,
+      "pairsTie": 0,
+      "pairsNoQuote": 0,
+      "pairsQtyDiffers": 0,
+      "lotSignalsNotChecked": 0
+    },
+    {
+      "scopeOrd": 2,
+      "lots": 12,
+      "firstLotAt": 1791028922170,
+      "lastLotAt": 1791421267371,
+      "buysBeforeFirstLot": 0,
+      "buysBeforeFirstLotLastAt": null,
+      "sellsBeforeFirstLot": 0,
+      "pairsWithFee": 12,
+      "pairsWithoutFee": 0,
+      "pairsNeither": 0,
+      "pairsTie": 0,
+      "pairsNoQuote": 0,
+      "pairsQtyDiffers": 0,
+      "lotSignalsNotChecked": 0
+    }
+  ],
+  "outcomes": {
+    "U1": {
+      "result": "E0_FROM_REFUTED_FOR_SLOT_2_ONLY",
+      "slot2PreE0Fills": 3,
+      "slot2FirstPreE0At": 1790422622310,
+      "slot2LastPreE0At": 1790469242322,
+      "slot3PreE0Fills": 0,
+      "slot3FirstIsP2Key": true,
+      "failedFromConfirmed": true
+    },
+    "U2": {
+      "result": "NOT_REFUTED_VACUOUS",
+      "note": "no fill at or after the gap; last fill 1791425107815 sits in E0"
+    },
+    "E1E2Edges": {
+      "result": "NOT_REFUTED_VACUOUS",
+      "note": "no fill after 2026-10-08"
+    },
+    "U4": {
+      "result": "ALL_ABSENT",
+      "preE0Absent": 3,
+      "e0Absent": 24
+    },
+    "U5": {
+      "result": "lot_fee_boundary null confirmed",
+      "pairsWithFee": [
+        2,
+        12
+      ]
+    },
+    "U6": {
+      "result": "lot_table_boundary null confirmed",
+      "buysBeforeFirstLot": [
+        0,
+        0
+      ],
+      "sellsBeforeFirstLot": [
+        0,
+        0
+      ]
+    },
+    "U7": {
+      "result": "NO_SIGN",
+      "note": "T8 stays unsettled by this read (hbOldN 0)"
+    },
+    "U8": {
+      "result": "NO_SIGN"
+    },
+    "Q6": {
+      "result": "legacyOpen false in both scopes"
+    },
+    "E0EarlierStart": {
+      "result": "NOT_PROVEN",
+      "note": "no tracked record names the worker tree of 2026-09-26..27; code inference is not deployment evidence; the packet rule forbids moving E0 earlier on inference"
+    }
+  },
+  "recommendation": "Keep the proven E0 record (from 2026-10-01T16:16Z). Owner decides.",
+  "stateNow": "Staging unchanged: API pin 33e5a8c, trading worker ba1a433. Production untouched. No database write, no unit command.",
+  "gates": {
+    "spotPaperOnly": true,
+    "liveTrading": "HARD_LOCKED_IN_CODE",
+    "privateAcceptance": "NOT_RUN",
+    "ready": false,
+    "P13j": "HELD",
+    "N1": "HELD"
+  }
+}
