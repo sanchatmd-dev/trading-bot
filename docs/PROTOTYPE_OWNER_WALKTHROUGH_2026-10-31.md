@@ -31,6 +31,8 @@ Type the GO only in the exact form Root supplies in chat.
 
 ## Part 2. Browser steps after A2 (packet section 6.9)
 
+**Done on 2026-11-01 (PASS).** You signed in; Root took the readings in its own tab of your session, then ran A2M and accepted A2. The steps below are kept for reference.
+
 Time needed: about 30 minutes. Do it while your port forward is up and before 18:00 UTC. Use English first, then switch to Thai.
 
 **Root reads alongside you (packet 6.9 items 2 and 3).** Do these steps in your Chrome with the Claude in Chrome extension connected. Root reads, view only, the status code and timing of each report request, and each Bot's report response in its own tab of your signed-in session. Root enters no credential, changes no setting, and records only the range label, the status code and the durations, never an address or identifier. Tell Root in chat when your port forward is up and you are signed in.
@@ -100,6 +102,19 @@ Root's recommendation is shown first on each line.
 
 Reply in one line, for example: "Q3 adopt with Root's clause; Q3-a boundary only".
 
+### P1-F scope decisions (added 2026-11-02)
+
+Root's acceptance record for the walkthrough is `docs/P1F_ACCEPTANCE_RECORD_TEMPLATE_2026-11-02.md`. Before the walkthrough, Root needs these answers. Root's recommendation is shown first.
+
+- **D-P1F-0. Which reading governs P1-F?** (A) strict: every matrix row passes on the current pin; steps 3 and 5 then need a research-worker deployment, R7 capacity and PF-2 activation and a new admitted run, each under its own GO. (B) the six-step journey with gaps recorded honestly: PF-2 historical Preflight and a new optimizer run are shown as "not available yet", and the 2026-10-02 run is carried as historical evidence. Recommendation: **(B)** for this prototype, recorded as a narrower acceptance, never as a full matrix pass; the reading A items stay on the Roadmap as follow-up packets.
+- **D-S2-1. Is step 2 satisfied by a generated, stored and compiled ten-input draft that is not activated?** Activating it would change the live Pine Bridge deployment and need a new alert. Recommendation: **yes, generate and store, do not activate.**
+- **D-S2-2. May Root use a bounded development window (no holdout access) and the existing parity method for the step 2 effects proof?** Recommendation: **yes**; the replay runs locally on the private source and does not touch private acceptance.
+- **D-S3-1. May you save a PF-4 suggested-Risk proposal on a staging Bot during the walkthrough?** It changes that Bot's saved Risk values (not Risk Manager code) and needs the Bot stopped first. Recommendation: **preview only**; if you want a save, use a Bot that is not the Pine Bridge alert target, after the part 3 alert check.
+- **D-S5-1. Which input lock would a new optimizer run use?** Only relevant under reading A. Recommendation: the new slot-10 lock of 2026-10-23, after its gates.
+- **D-S6-1. Is the library freeze (P06-02) part of P1-F?** Recommendation: **no**; record it as a gap with its own migration GO later.
+
+Reply in one line, for example: "D-P1F-0 B; D-S2-1 yes; D-S2-2 yes; D-S3-1 preview only; D-S6-1 no".
+
 ## Status line
 
-Spot/Paper only. Live locked. Private acceptance NOT RUN. READY false. GO-A2 covers A2 and A2M only, until 18:00 UTC; no other GO is open.
+Spot/Paper only. Live locked. Private acceptance NOT RUN. READY false. Parts 1 and 2 are done: REPIN-2 is complete (A2 accepted 2026-11-01T20:34Z; [A2 result](S6_STAGING_API_REPIN_2_A2_A01_RESULT_2026-10-31.md)). No GO is open.
