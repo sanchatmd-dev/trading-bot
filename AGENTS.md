@@ -321,10 +321,12 @@ other platform to bypass a stop. The only exception is the owner-triggered
 API-credit continuation below. No exact token balance or guaranteed future task
 cost can be inferred from percentages.
 
-Owner updated the usage floor to 3% on 2026-10-16. Reserve 3 percentage points as
-a project policy, not a platform guarantee. Above 30%, admit only short
-checkpointable slices with aggregate reservations below the known
-remaining-minus-reserve budget. Above 3% up to 30%, one tiny task at a time.
+Owner updated the usage floor to 3% on 2026-10-16. Owner rule (2026-11-02): the
+one-tiny-task band starts only when more than 95% is used, so it now covers
+remaining above 3% up to 5%. Reserve 3 percentage points as a project policy, not
+a platform guarantee. Above 5%, admit only short checkpointable slices with
+aggregate reservations below the known remaining-minus-reserve budget. Above 3%
+up to 5%, one tiny task at a time.
 At or below 3%, stop admitting new work, save a safe checkpoint under the handoff
 rules above and start no new substantive task; resume only after refreshed usage
 is above 3% or the owner explicitly changes the threshold for a named continuation.
@@ -336,8 +338,8 @@ Never automatically redeem reset credits, buy credits or switch accounts, except
 that an owner-triggered API-credit continuation (below) may run in Astra on the
 owner's API credits; it never buys credits or enables auto-reload.
 
-The bands bind Claude ultracode workflows. Above 30%, the reservation covers the
-whole wave of agents. Above 3% up to 30%, run no fan-out: one tiny task with at
+The bands bind Claude ultracode workflows. Above 5%, the reservation covers the
+whole wave of agents. Above 3% up to 5%, run no fan-out: one tiny task with at
 most one agent. At or below 3%, or with all usage unknown, start no workflow.
 Unknown short-window data allows only small provisional waves, never long
 unattended runs. Workflow scripts cannot read usage, so root admits a whole
