@@ -1,6 +1,6 @@
 # S6 staging set B packet r7: erratum E-FR5 (read-only fetch job B0F)
 
-Document ID: **S6-STAGING-SETB-1-R7-ERRATA-FR5**. Date: 2026-11-04. Status: **APPROVED by the owner on 2026-11-04 (about 14:53Z UTC)** (Root ruling SB122; decision Q5 is asked at the set B close). Author: documentation role (Sonnet 5.5 / low), child of "Root: astra-vps-trade-bot-v2".
+Document ID: **S6-STAGING-SETB-1-R7-ERRATA-FR5**. Date: 2026-11-04. Status: **APPROVED by the owner on 2026-11-04 (about 14:53Z UTC)** (Root ruling SB122; decision Q5 is asked at the set B close). **Amended by the owner on 2026-11-04 (about 16:40Z UTC)**: the file change-time check is removed and attempt f04 is added (Root rulings SB127 and SB128). Author: documentation role (Sonnet 5.5 / low), child of "Root: astra-vps-trade-bot-v2".
 
 ## 0. What this document is
 
@@ -43,7 +43,7 @@ Document ID: **S6-STAGING-SETB-1-R7-ERRATA-FR5**. Date: 2026-11-04. Status: **AP
 ## 3. Authorization
 
 1. B0F needs its own owner GO, GO-B0F, as every listed job does.
-2. One GO record. Attempts: f01 for the a02 export; f02 for the a03 export, receipt and private file; spare f03 for a transport failure. Each attempt is spent once. The record covers nothing else.
+2. One GO record. Attempts: f01 for the a02 export; f02 for the a03 export, receipt and private file; spare f03 for a transport failure; f04 for the a02 export (added on 2026-11-04 after f01 stopped at the removed change-time check without fetching anything). Each attempt is spent once. The record covers nothing else.
 3. Each run: one operations worker, serial and alone, no other set B admission in flight. A Root runner GO window opens each run. Root reviews the receipt.
 4. Root writes the GO record only after the owner approves this erratum.
 
@@ -56,7 +56,7 @@ Document ID: **S6-STAGING-SETB-1-R7-ERRATA-FR5**. Date: 2026-11-04. Status: **AP
 5. a02 export: its API and trading-worker AR-form members equal the a02 runner receipt members. A difference means a restart during the run, and Root does not adopt the export.
 6. a03 files: the private file size equals the size the B0 runner receipt publishes. The export hash and size equal the fetched receipt pins. The private file hash and size equal the receipt private-file pin. The digest of the export AR form equals the receipt export digest. The receipt verdict is compared with the pinned runner code.
 7. The B1 prep and B2 prep repeat the same ties.
-8. Residual: the a02 export has no pin carried through the B0 output, so an actor with the job user's rights could craft one. The file change time must also lie in the run window. This narrows the residual but does not close it. A later B0 revision may add public file digests.
+8. Residual: the a02 export has no pin carried through the B0 output, so an actor with the job user's rights could craft one. The file change time is not checked: a provider scanner on the host re-touches the change time of every new file within minutes to hours, so that check stopped a valid fetch (f01, 2026-11-04) and was removed by the owner the same day. A later B0 revision may add public file digests.
 9. Residual: the receipt pin travels only after the fetch.
 10. Residual: a B0 pass does not prove the record root owner and mode. Root checks them from accepted evidence before GO-B0F.
 
@@ -77,7 +77,7 @@ Document ID: **S6-STAGING-SETB-1-R7-ERRATA-FR5**. Date: 2026-11-04. Status: **AP
 | Question | Options | Owner decision |
 | --- | --- | --- |
 | Q1 Approve E-FR5 | Approve job B0F as described, or change it | Approved 2026-11-04 |
-| Q2 GO-B0F attempts | f01 (a02 export), f02 (a03 three files) and spare f03; or change | Approved 2026-11-04: f01, f02 and spare f03 |
+| Q2 GO-B0F attempts | f01 (a02 export), f02 (a03 three files) and spare f03; or change | Approved 2026-11-04: f01, f02 and spare f03; f04 (the a02 export) added on 2026-11-04 after f01 |
 | Q3 a02 now | Run the a02 first read now on B0 r3h, fetch its export later (proposed yes) | Approved 2026-11-04 |
 | Q4 POSIX happy run | Where the real-uid POSIX happy run of B0F happens: a local Linux environment, or fake-world tests plus the first real run as the real-uid run | Approved 2026-11-04: fake-world tests plus the first real run (f01) |
 | Q5 Retention | Keep the fetched private files after set B closes, or remove them by exact path at set B close | Open: kept until the set B close, then asked |
