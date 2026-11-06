@@ -106,9 +106,9 @@ const apiError=(code,status=503)=>Object.assign(new Error(code||'Request failed'
 test('index.html loads the library script before journey.js with its cache token; the panel is created closed on the Quant page with the fixed banner',()=>{
   const html=publicFile('index.html'),dom=new JSDOM(html),d=dom.window.document;
   try{
-    const order=['/pine-bridge.js?v=','/readiness.js?v=','/research-library.js?v=rel20261007','/journey.js?v=jd2'].map(part=>html.indexOf(part));
+    const order=['/pine-bridge.js?v=','/readiness.js?v=','/research-library.js?v=qr3l1','/journey.js?v=jd2'].map(part=>html.indexOf(part));
     assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'the library script loads after the Bridge panel and before journey.js');
-    assert.ok(html.includes('/styles-v2.css?v=pa1')&&html.includes('/i18n.js?v=th1'));
+    assert.ok(html.includes('/styles-v2.css?v=pa1')&&html.includes('/i18n.js?v=qr3i2'));
   }finally{dom.window.close();}
   const p=setup({handler:router()});
   try{
@@ -188,11 +188,12 @@ test('compare selection: two to four runs; another context is only hinted and th
     const path=p.calls.at(-1).path;
     assert.equal(path,'/api/quant/library/compare?'+[2,5,1].map(i=>'run_id='+run(i).run_id).join('&'));assert.ok(p.calls.at(-1).options.method===undefined);
     const view=p.panel.querySelector('.qrl-compare-view');
-    assert.equal(view.hidden,false);assert.equal(view.querySelector('.qrl-title').textContent,'Comparison');
+    assert.equal(view.hidden,false);assert.equal(view.querySelector('.qrl-title').textContent,'Same-source context check');assert.equal(view.querySelector('.qrl-verdict').textContent,'Comparable');
     assert.equal(view.querySelector('.qrl-winner').textContent,WINNER);
     const table=view.querySelector('table');assert.ok(table.closest('.qrl-scroll'),'the table scrolls inside its wrapper');
     const headers=[...table.querySelectorAll('thead th')].map(cell=>cell.textContent);assert.deepEqual(headers,['Metric','3f2a9c1e','3f2a9c1e']);
     const line=name=>[...table.querySelectorAll('tbody tr')].find(tr=>tr.querySelector('th').textContent===name);
+    assert.equal(line('Library context key (library-compat-v1)').querySelectorAll('td').length,2,'the library context key of each run is shown');
     assert.deepEqual([...line('Development score').querySelectorAll('td')].map(cell=>cell.textContent),['3.20','— Not evaluated']);
     assert.deepEqual([...line('Validation return %').querySelectorAll('td')].map(cell=>cell.textContent),['3.20','—']);
     assert.deepEqual([...line('Seed').querySelectorAll('td')].map(cell=>cell.textContent),['7','99'],'the search configuration is disclosed');
@@ -208,7 +209,7 @@ test('an incomparable pair shows Not comparable with the differing fields and no
     await p.open();p.pick(2);p.pick(4);
     p.click(p.panel.querySelector('.qrl-compare'));await settle();
     const view=p.panel.querySelector('.qrl-compare-view');
-    assert.equal(view.querySelector('.qrl-title').textContent,'Not comparable');
+    assert.equal(view.querySelector('.qrl-title').textContent,'Same-source context check');assert.equal(view.querySelector('.qrl-verdict').textContent,'Not comparable');
     assert.deepEqual([...view.querySelectorAll('.qrl-sub')].map(item=>item.textContent),['Dataset','Engine']);
     assert.ok(view.textContent.includes('{"bar_count":1000}')&&view.textContent.includes('{"bar_count":2000}'));assert.ok(view.textContent.includes('3f2a9c1e'));
     assert.equal(view.querySelectorAll('table').length,1,'only the identity table');
@@ -318,11 +319,11 @@ test('Thai switch translates the panel, the list, the detail and both comparison
     assert.equal(view.querySelector('.qrl-sec:last-child tbody tr:last-child').textContent,'G8การตรวจสอบ QL-4Cไม่ผ่านQL4C_VALIDATION_NOT_AVAILABLE');
     p.click(view.querySelector('.qrl-back'));
     p.pick(2);p.pick(4);p.click(p.panel.querySelector('.qrl-compare'));await settle();
-    assert.equal(p.panel.querySelector('.qrl-compare-view .qrl-title').textContent,'การเปรียบเทียบ');
+    assert.equal(p.panel.querySelector('.qrl-compare-view .qrl-title').textContent,'ตรวจบริบทของซอร์สเดียวกัน');
     const language=d.querySelector('#language');
     language.value='en';language.dispatchEvent(new w.Event('change'));await settle();
     assert.equal(p.panel.querySelector('.qrl-banner').textContent,BANNER);assert.equal(p.panel.querySelector('.qrl-status').textContent,'9 runs in library');
-    assert.equal(p.card(1).querySelector('.qrl-card-head .qrl-chip').textContent,'No valid candidate');assert.equal(p.panel.querySelector('.qrl-compare-view .qrl-title').textContent,'Comparison');
+    assert.equal(p.card(1).querySelector('.qrl-card-head .qrl-chip').textContent,'No valid candidate');assert.equal(p.panel.querySelector('.qrl-compare-view .qrl-title').textContent,'Same-source context check');
     language.value='th';language.dispatchEvent(new w.Event('change'));await settle();
     assert.equal(p.panel.querySelector('.qrl-status').textContent,'มี 9 การรันในคลัง');
     for(const element of p.panel.querySelectorAll('[data-ui-label]')){const text=element.dataset.uiLabel;assert.equal(element.textContent,w.translate(text),text);}
@@ -334,7 +335,7 @@ test('the Thai comparison of an incomparable pair names the fields in Thai while
   try{
     await p.open();p.pick(2);p.pick(4);p.click(p.panel.querySelector('.qrl-compare'));await settle();
     const view=p.panel.querySelector('.qrl-compare-view');
-    assert.equal(view.querySelector('.qrl-title').textContent,'เปรียบเทียบไม่ได้');
+    assert.equal(view.querySelector('.qrl-title').textContent,'ตรวจบริบทของซอร์สเดียวกัน');assert.equal(view.querySelector('.qrl-verdict').textContent,'เปรียบเทียบไม่ได้');
     assert.deepEqual([...view.querySelectorAll('.qrl-sub')].map(item=>item.textContent),['ชุดข้อมูล','เอนจิน']);
     assert.ok(view.textContent.includes('{"bar_count":1000}')&&view.textContent.includes(H('e')));
   }finally{p.close();}
@@ -428,7 +429,7 @@ test('Research Library translations are complete, unique, free of collisions, ke
   try{
     w.localStorage.setItem('robotLanguage','th');
     w.eval(publicFile('i18n.js')+';window.__pairs=uiPairs;window.__mine=qr1Pairs;');
-    const library=publicFile('research-library.js'),journey=publicFile('journey.js');
+    const library=publicFile('research-library.js'),journey=publicFile('journey.js'),fair=publicFile('qr3-comparison.js');
     const literals=new Set([BANNER,WINNER]);
     for(const source of [library,journey])for(const match of source.matchAll(CALLS))literals.add(match[1]);
     for(const match of library.matchAll(TABLE_VALUES))literals.add(match[1]);
@@ -441,7 +442,7 @@ test('Research Library translations are complete, unique, free of collisions, ke
     const english=new Set(mine.map(pair=>pair[0])),thai=new Set(mine.map(pair=>pair[1]));
     assert.ok(mine.length>140);assert.equal(english.size,mine.length,'duplicate English key');assert.equal(thai.size,mine.length,'duplicate Thai text');
     for(const [en,th] of mine){
-      assert.notEqual(en,th);assert.ok(library.includes("'"+en+"'")||journey.includes("'"+en+"'"),'pair for text no longer shown: '+en);
+      assert.notEqual(en,th);assert.ok(library.includes("'"+en+"'")||journey.includes("'"+en+"'")||fair.includes("'"+en+"'"),'pair for text no longer shown: '+en);
       assert.deepEqual([...en.matchAll(HOLDERS)].map(m=>m[1]).sort(),[...th.matchAll(HOLDERS)].map(m=>m[1]).sort(),'placeholders differ: '+en);
     }
     for(const [en,th] of others)for(const text of [en,th])assert.ok(!english.has(text)&&!thai.has(text),'collides with an existing pair: '+text);

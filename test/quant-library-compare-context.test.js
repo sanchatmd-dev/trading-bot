@@ -59,7 +59,7 @@ test('compatible comparison: the Shared context block names the asset, the date 
   try{
     await p.compareNow();
     const view=p.panel.querySelector('.qrl-compare-view');
-    assert.equal(view.hidden,false);assert.equal(view.querySelector('.qrl-title').textContent,'Comparison');
+    assert.equal(view.hidden,false);assert.equal(view.querySelector('.qrl-title').textContent,'Same-source context check');
     const shared=view.querySelector('.qrl-shared');
     assert.ok(shared,'the shared context block is shown');
     assert.equal(shared.querySelector('.qrl-sub').textContent,'Shared context');
@@ -79,7 +79,7 @@ test('incomparable runs show the differing fields and no Shared context block',a
   try{
     await p.compareNow();
     const view=p.panel.querySelector('.qrl-compare-view');
-    assert.equal(view.hidden,false);assert.equal(view.querySelector('.qrl-title').textContent,'Not comparable');
+    assert.equal(view.hidden,false);assert.equal(view.querySelector('.qrl-title').textContent,'Same-source context check');assert.equal(view.querySelector('.qrl-verdict').textContent,'Not comparable');
     assert.equal(view.querySelector('.qrl-shared'),null);
     assert.ok(view.textContent.includes('These runs differ in a fixed context field, so no metrics are compared.'));
   }finally{p.close();}

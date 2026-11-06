@@ -245,17 +245,20 @@
   function renderCompare(body){
     const back=label('Back to list','button','ghost qrl-back');back.type='button';
     const runs=body.runs||[],ok=body.verdict==='COMPATIBLE';
-    const head=make('h3','qrl-title',label(ok?'Comparison':'Not comparable'));head.tabIndex=-1;
-    const nodes=[back,head,make('p','qrl-winner',label('Qualified recommendations: none. No qualified winner.'))];
+    // QR-3 OD-C14: this view is the same-source context check of the library, not the QR-3 fair comparison. It shows the library context key only.
+    const head=make('h3','qrl-title',label('Same-source context check'));head.tabIndex=-1;
+    const nodes=[back,head,make('p','qrl-verdict',chip(ok?'Comparable':'Not comparable',ok?'ok':'warn')),
+      note('This checks that the selected runs share one library context. It is not the fair comparison. The Fair comparison panel holds the fair comparison.'),
+      make('p','qrl-winner',label('Qualified recommendations: none. No qualified winner.'))];
     if(!ok){
       nodes.push(note('These runs differ in a fixed context field, so no metrics are compared.'));
       for(const item of body.mismatches||[])nodes.push(make('div','qrl-block',make('h4','qrl-sub',known(FIELDS,item.field)),
         ...(item.values||[]).map(value=>row('Run ID',hash(short(value.run_id)),' ',make('span','qrl-v-text',dash(value.value))))));
-      nodes.push(table(['Run ID','Group','Status','Qualification'],runs.map(run=>[short(run.run_id),known(CLASSES,run.library_class),dash(run.status),qualOf(run.qualification)])));
+      nodes.push(table(['Run ID','Group','Status','Qualification','Library context key (library-compat-v1)'],runs.map(run=>[short(run.run_id),known(CLASSES,run.library_class),dash(run.status),qualOf(run.qualification),hash(run.compatibility_key)])));
     }else{
       const cols=runs.map(run=>short(run.run_id)),cell=(run,get)=>{const value=get(run);return value===null||value===undefined?'—':value;};
       const selected=run=>run.metrics?.selected;
-      const lines=[['Group',run=>known(CLASSES,run.library_class)],['Status',run=>dash(run.status)],['Created (UTC)',run=>utc(run.created_at)],
+      const lines=[['Library context key (library-compat-v1)',run=>hash(run.compatibility_key)],['Group',run=>known(CLASSES,run.library_class)],['Status',run=>dash(run.status)],['Created (UTC)',run=>utc(run.created_at)],
         ['Candidates evaluated',run=>dash(run.metrics?.candidates?.evaluated)],['Candidates passed screening',run=>dash(run.metrics?.candidates?.screen_passed)],
         ['Development score',run=>scoreOf(run.metrics?.development_score||{value:null,reason:run.metrics_reason})],
         ['Validation return %',run=>dash(selected(run)?.validation?.net_return_percent)],['Validation trades',run=>dash(selected(run)?.validation?.closed_trades)],
@@ -308,7 +311,7 @@
       state[view]=data;render(data);reveal(target);
     }catch(error){
       if(seq!==state.viewSeq)return;
-      failView(target,view==='detail'?'Research run':'Comparison',errorCode(error));reveal(target);
+      failView(target,view==='detail'?'Research run':'Same-source context check',errorCode(error));reveal(target);
     }finally{if(seq===state.viewSeq){state.busy=false;renderList();}}
   }
   const inspect=id=>show('/api/quant/library/runs/'+encodeURIComponent(id),renderDetail,'detail',{kind:'inspect',run:id});
