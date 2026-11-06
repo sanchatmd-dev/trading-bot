@@ -70,7 +70,7 @@ test('frozen oracle is the 95e6cec reader: only its two import lines differ, pro
 });
 
 test('constant and SQL: the chunk size is frozen, is not a budget key, and the SQL text is unchanged',()=>{
-  assert.equal(QR2_COVERAGE_CHUNK_ROWS,8192);
+  assert.equal(QR2_COVERAGE_CHUNK_ROWS,4096);
   assert.equal(Object.hasOwn(QR2_COVERAGE_LIMITS,'QR2_COVERAGE_CHUNK_ROWS'),false);
   assert.throws(()=>coverageReadBudgets({QR2_COVERAGE_CHUNK_ROWS:1}),{code:'QR2_INPUT_INVALID'});
   assert.throws(()=>coverageReadBudgets({chunk_rows:1}),{code:'QR2_INPUT_INVALID'});
@@ -78,28 +78,28 @@ test('constant and SQL: the chunk size is frozen, is not a budget key, and the S
   assert.equal(sha(COVERAGE_SQL.ROWS),sha('SELECT bar_time::text AS bar_time FROM public.pine_market_bars WHERE broker=$1 AND symbol=$2 AND timeframe=$3 AND bar_time>$4::bigint AND bar_time<=$5::bigint ORDER BY public.pine_market_bars.bar_time LIMIT $6'));
 });
 
-test('seam: a chunk size outside [1, 8192] or not a safe integer is QR2_INPUT_INVALID before any query; the product entry point takes no chunk argument',async()=>{
-  for(const bad of [0,-1,1.5,8193,2**53,Infinity,NaN,'8',null,undefined,{},[8]]){
+test('seam: a chunk size outside [1, 4096] or not a safe integer is QR2_INPUT_INVALID before any query; the product entry point takes no chunk argument',async()=>{
+  for(const bad of [0,-1,1.5,4097,8192,8193,2**53,Infinity,NaN,'8',null,undefined,{},[8]]){
     const tx=database(dense(1,3));
     await assert.rejects(readCoverageSnapshotWithChunkRows({transaction:tx,accounts:[account('a',0,5*M)],budgets:budgetsOf({})},bad),{code:'QR2_INPUT_INVALID'},String(bad));
     assert.equal(tx.calls.length,0);
   }
   // The product entry point ignores a chunkRows property: product code cannot lower or raise the chunk.
-  for(const extra of [1,2,8192,99999]){
+  for(const extra of [1,2,4096,8192,99999]){
     const tx=database(dense(1,3));
     await readCoverageSnapshot({transaction:tx,accounts:[account('a',0,5*M)],budgets:budgetsOf({}),chunkRows:extra});
-    assert.deepEqual(rowsCalls(tx).map(c=>c.params[5]),[8192]);
+    assert.deepEqual(rowsCalls(tx).map(c=>c.params[5]),[4096]);
   }
 });
 
-test('every product read at default budgets sends $6 = 8192 (not 21601); a read under the chunk size is one statement',async()=>{
+test('every product read at default budgets sends $6 = 4096 (not 21601); a read under the chunk size is one statement',async()=>{
   const tx=database(dense(1,10));
   const registry=await readCoverageSnapshot({transaction:tx,accounts:[account('a',0,12*M)],budgets:budgetsOf({})});
   assert.equal(registry.unions[0].fact.timestamps.length,10);
-  assert.deepEqual(rowsCalls(tx).map(c=>c.params),[['binance-global','BTCUSDT','1',0,12*M,8192]]);
+  assert.deepEqual(rowsCalls(tx).map(c=>c.params),[['binance-global','BTCUSDT','1',0,12*M,4096]]);
   // The sentinel limit itself is still remaining + 1 = 21601; only the per-statement limit is the chunk.
   const small=database(dense(1,10));
-  await readCoverageSnapshotWithChunkRows({transaction:small,accounts:[account('a',0,12*M)],budgets:budgetsOf({timestamp_rows:5})},8192);
+  await readCoverageSnapshotWithChunkRows({transaction:small,accounts:[account('a',0,12*M)],budgets:budgetsOf({timestamp_rows:5})},4096);
   assert.deepEqual(rowsCalls(small).map(c=>c.params[5]),[6]);
 });
 
@@ -135,7 +135,7 @@ test('byte-derived capacity: the admission byte estimate and the order sentinel 
   // and the sentinel outranks a latched failure while a failure at 4 fetched rows is admitted and then thrown.
   const budgets=budgetsOf({coverage_input_bytes:3400});
   const state=r=>JSON.parse(r.text).unions[0].fact.state;
-  for(const chunk of [undefined,2,8192]){
+  for(const chunk of [undefined,2,4096]){
     const at=await same(dense(1,4),{accounts:[account('a',0,7*M)],budgets},chunk);
     assert.equal(at.ok,true);assert.equal(state(at),'COMPLETE');
     const over=await same(dense(1,5),{accounts:[account('a',0,7*M)],budgets},chunk);
@@ -149,28 +149,28 @@ test('byte-derived capacity: the admission byte estimate and the order sentinel 
   }
 });
 
-test('differential at and across chunk boundaries (default budgets, default chunk): 0, 1, 8191, 8192, 8193, 16384, 16385, 21600, 21601 dense rows',async()=>{
-  for(const count of [0,1,8191,8192,8193,16384,16385,21600,21601]){
+test('differential at and across chunk boundaries (default budgets, default chunk): 0, 1, 4095, 4096, 4097, 8191, 8192, 8193, 16384, 16385, 21600, 21601 dense rows',async()=>{
+  for(const count of [0,1,4095,4096,4097,8191,8192,8193,16384,16385,21600,21601]){
     const result=await same(dense(1,count),{accounts:[account('a',0,(count+2)*M)],budgets:budgetsOf({})},undefined);
     assert.equal(result.ok,true);
     assert.equal(JSON.parse(result.text).unions[0].fact.state,count>21600?'BUDGET_EXCEEDED':'COMPLETE',String(count));
   }
 });
 
-test('differential across chunk boundaries with lowered chunk sizes: 1, 2, 3, 7, 59, 60, 61, 4096, 8192 on 8191..16385 rows and a gappy union',async()=>{
-  for(const chunk of [1,2,3,7,59,60,61,4096,8192]){
+test('differential across chunk boundaries with lowered chunk sizes: 1, 2, 3, 7, 59, 60, 61, 1000, 2048, 4096 on 8191..16385 rows and a gappy union',async()=>{
+  for(const chunk of [1,2,3,7,59,60,61,1000,2048,4096]){
     // Small chunks on large data would issue tens of thousands of statements; they run on the small data below. Large data uses the larger chunk sizes.
-    if(chunk<4096)continue;
+    if(chunk<1000)continue;
     for(const count of [8191,8192,8193,16384,16385])await same(dense(1,count),{accounts:[account('a',0,(count+2)*M)],budgets:budgetsOf({})},chunk);
   }
   // Every fifth minute is missing: a gap per five stored minutes.
   const gappy=Array.from({length:12000},(_,i)=>(i+1+Math.floor(i/5))*M);
-  for(const chunk of [1000,4096,8192])await same(gappy,{accounts:[account('a',0,(gappy.at(-1)/M+2)*M)],budgets:budgetsOf({})},chunk);
+  for(const chunk of [1000,2048,4096])await same(gappy,{accounts:[account('a',0,(gappy.at(-1)/M+2)*M)],budgets:budgetsOf({})},chunk);
 });
 
 test('differential matrix: chunk sizes x capacities x row counts x one or two unions, on small data',async()=>{
   let complete=0,degraded=0;
-  for(const chunk of [1,2,3,7,59,60,61,8192])for(const capacity of [1,2,5,7,60])for(const count of [0,1,capacity-1,capacity,capacity+1,capacity+2,2*chunk,2*chunk+1,chunk-1,chunk,chunk+1].filter(c=>c>=0&&c<=200)){
+  for(const chunk of [1,2,3,7,59,60,61,4096])for(const capacity of [1,2,5,7,60])for(const count of [0,1,capacity-1,capacity,capacity+1,capacity+2,2*chunk,2*chunk+1,chunk-1,chunk,chunk+1].filter(c=>c>=0&&c<=200)){
     const budgets=budgetsOf({timestamp_rows:capacity});
     const one=await same(dense(1,count),{accounts:[account('a',0,(count+3)*M)],budgets},chunk);
     JSON.parse(one.text).unions[0].fact.state==='COMPLETE'?complete++:degraded++;
@@ -201,7 +201,7 @@ test('seeded differential: random data with off-grid rows, random capacity and c
 test('latched decode failure keeps the oracle precedence: sentinel first, then admission, then the first failure; an earlier union ends before a later one',async()=>{
   const budgets=budgetsOf({timestamp_rows:5});
   const offGridEarly=[M,2*M+1,3*M,4*M,5*M,6*M,7*M];                    // off-grid row in the first chunk, overflow (7 rows > capacity 5) later
-  for(const chunk of [1,2,3,4,7,8192]){
+  for(const chunk of [1,2,3,4,7,4096]){
     const over=await same(offGridEarly,{accounts:[account('a',0,9*M)],budgets},chunk);
     assert.equal(over.ok,true);assert.deepEqual(JSON.parse(over.text).unions[0].fact,{state:'BUDGET_EXCEEDED',limit:'timestamp_rows'});
     const noOver=await same(offGridEarly.slice(0,4),{accounts:[account('a',0,9*M)],budgets},chunk);
@@ -234,7 +234,7 @@ test('a fixed driver stream with corrupt rows (duplicate, unsorted, before the w
     afterWindow:['60000','120000','180000','240000',String(21*M)],
     firstRowAtFrom:['0','120000','180000','240000','300000']
   };
-  for(const [name,list] of Object.entries(corrupt))for(const chunk of [1,2,4,8192]){
+  for(const [name,list] of Object.entries(corrupt))for(const chunk of [1,2,4,4096]){
     const lists={[20*M]:list,[110*M]:overflow};
     const a=await outcome(oracle.readCoverageSnapshot,database([],{hook:make(lists)}),{accounts,budgets});
     const b=await outcome(x=>readCoverageSnapshotWithChunkRows(x,chunk),database([],{hook:make(lists)}),{accounts,budgets});
@@ -327,7 +327,7 @@ test('golden digests from the oracle: registry and projected public coverage are
     const {times,accounts}=make(),args={accounts,budgets:budgetsOf({})},context=args;
     const fromOracle=digestsOf(await outcome(oracle.readCoverageSnapshot,database(times),args),context);
     actual[name]=fromOracle;
-    for(const chunk of [undefined,8192,4096,1000]){
+    for(const chunk of [undefined,4096,2048,1000]){
       const fromNew=digestsOf(await outcome(chunk===undefined?readCoverageSnapshot:x=>readCoverageSnapshotWithChunkRows(x,chunk),database(times),args),context);
       assert.deepEqual(fromNew,fromOracle,name+' chunk '+chunk);
     }
@@ -342,6 +342,56 @@ test('yield: the reader gives the event loop one macrotask turn between the last
   try{await readCoverageSnapshotWithChunkRows({transaction:tx,accounts:[account('a',0,25*M)],budgets:budgetsOf({})},8);}finally{active=false;}
   assert.ok(atLastRows>=0);
   assert.ok(ticks-atLastRows>=1,'a macrotask ran after the last statement answered and before the read returned: '+atLastRows+' -> '+ticks);
+});
+
+// ---------------------------------------------------------------------------------------------------------------- slice b-2
+test('E3: the chunk size is 4096 and a 44640-row union takes 11 ROWS statements (10 full chunks, then 3681); the default budgets over the cap take 6', async()=>{
+  assert.equal(QR2_COVERAGE_CHUNK_ROWS,4096);
+  // Option-A shaped read: 44640 stored minutes, sentinel limit 44641. 10 x 4096 = 40960 rows, then want = 44641 - 40960 = 3681 and 3680 rows answer (short): 11 statements.
+  const budgets=budgetsOf({union_minutes:44700,timestamp_rows:44640,coverage_input_bytes:1048576,derivation_visits:223200});
+  const tx=database(dense(1,44640));
+  const registry=await readCoverageSnapshot({transaction:tx,accounts:[account('a',0,44642*M)],budgets});
+  assert.equal(registry.unions[0].fact.state,'COMPLETE');assert.equal(registry.unions[0].fact.timestamps.length,44640);
+  const calls=rowsCalls(tx);
+  assert.equal(calls.length,11);
+  assert.deepEqual(calls.map(c=>c.params[5]),[...Array(10).fill(4096),3681]);
+  assert.deepEqual(calls.map(c=>c.params[3]),[0,...Array.from({length:10},(_,i)=>(i+1)*4096*M)]);
+  // The old chunk of 8192 gave 6 statements for the same read; the new count is the ceiling of the sentinel limit over the chunk.
+  assert.equal(Math.ceil(44641/4096),11);assert.equal(Math.ceil(44641/8192),6);
+  // The default budgets (21600 rows, sentinel limit 21601) over the cap: 5 x 4096 = 20480, then want 1121.
+  const over=database(dense(1,21601));
+  const degraded=await readCoverageSnapshot({transaction:over,accounts:[account('a',0,21603*M)],budgets:budgetsOf({})});
+  assert.deepEqual(degraded.unions[0].fact,{state:'BUDGET_EXCEEDED',limit:'timestamp_rows'});
+  assert.deepEqual(rowsCalls(over).map(c=>c.params[5]),[4096,4096,4096,4096,4096,1121]);
+});
+
+test('E1: the reader yield is two chained setImmediate callbacks: the build starts only after a full loop turn that follows the first callback, and no timer is used', async()=>{
+  const reader=fs.readFileSync(new URL('../src/postgres/qr2-coverage-reader.js',import.meta.url),'utf8').replaceAll('\r\n','\n');
+  assert.equal(reader.split('setImmediate(()=>setImmediate(resolve))').length,2,'one double setImmediate');
+  const code=reader.split(/\r?\n/).filter(line=>!line.trim().startsWith('//')).join(' ');
+  assert.equal(code.includes('setTimeout'),false,'never setTimeout in the reader code');
+  assert.equal(reader.split('await yieldToEventLoop()').length,2,'one awaited yield before the build');
+  const realImmediate=globalThis.setImmediate,realTimeout=globalThis.setTimeout,events=[];
+  let scheduled=0,timers=0,tickActive=true;
+  const tick=()=>{events.push('tick');if(tickActive)realImmediate(tick);};
+  // Every read of the budgets object is a marker: admission reads it before the yield, planCoverage again when the build starts after it.
+  const budgets=new Proxy(budgetsOf({}),{get(target,key,receiver){if(typeof key==='string')events.push('budgets');return Reflect.get(target,key,receiver);}});
+  globalThis.setImmediate=(fn,...rest)=>{const id=scheduled++;events.push('sched'+id);return realImmediate(()=>{events.push('run'+id);fn(...rest);});};
+  globalThis.setTimeout=(...rest)=>{timers++;return realTimeout(...rest);};
+  let registry;
+  try{
+    realImmediate(tick);
+    registry=await readCoverageSnapshot({transaction:database(dense(1,20)),accounts:[account('a',0,25*M)],budgets});
+  }finally{tickActive=false;globalThis.setImmediate=realImmediate;globalThis.setTimeout=realTimeout;}
+  assert.equal(registry.unions[0].fact.timestamps.length,20);
+  assert.equal(timers,0,'no setTimeout during the read');
+  assert.equal(scheduled,2,'exactly two setImmediate callbacks (a 20-row build has no slice yield)');
+  const at=name=>events.indexOf(name);
+  const sched0=at('sched0'),run0=at('run0'),sched1=at('sched1'),run1=at('run1');
+  assert.ok(sched0>=0&&run0>sched0&&sched1>run0&&run1>sched1,'order: '+events.filter(e=>e!=='budgets').join(' '));
+  assert.ok(events.slice(run0,run1).includes('tick'),'a full loop turn (the independent tick callback) runs between the first and the second callback');
+  assert.equal(events.slice(sched0,run1).includes('budgets'),false,'the build reads no budget before the second callback has run');
+  assert.ok(events.slice(run1).includes('budgets'),'the build starts after the second callback');
 });
 
 test('ALS after the yield: the per-Bot facade (AsyncLocalStorage transaction of PostgresDatabase) keeps its transaction between chunks and after the build yield',async()=>{

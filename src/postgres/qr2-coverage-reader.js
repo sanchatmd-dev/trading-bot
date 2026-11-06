@@ -8,8 +8,11 @@ export const COVERAGE_SQL=Object.freeze({
   PROBE:"SELECT to_regclass('public.pine_market_bars')::text AS name",
   ROWS:'SELECT bar_time::text AS bar_time FROM public.pine_market_bars WHERE broker=$1 AND symbol=$2 AND timeframe=$3 AND bar_time>$4::bigint AND bar_time<=$5::bigint ORDER BY public.pine_market_bars.bar_time LIMIT $6'
 });
-// One macrotask turn. The global setImmediate keeps the static import graph free of a new bare module: qr2-reader.js (pure half) is in the worker's graph.
-const yieldToEventLoop=()=>new Promise(resolve=>setImmediate(resolve));
+// Two chained setImmediate callbacks (slice b-2, E1): the first runs in the check phase of the current or next loop turn, the second is queued from inside that check
+// phase, so it always runs in the next loop turn, after that turn's timers and poll phase (a zero-timeout poll). Work that became ready during the last statement's decode
+// (driver continuations, other requests) therefore runs before the build starts, instead of after it. Never setTimeout: on Windows it can add up to about 15.6 ms of idle.
+// The global setImmediate keeps the static import graph free of a new bare module: qr2-reader.js (pure half) is in the worker's graph.
+const yieldToEventLoop=()=>new Promise(resolve=>setImmediate(()=>setImmediate(resolve)));
 const failed=()=>{throw coverageError('QR2_REPORT_FAILED');};
 const rowShape=row=>{if(row===null||typeof row!=='object'||Array.isArray(row)||Reflect.ownKeys(row).length!==1||!Object.hasOwn(row,'bar_time'))failed();};
 const cursorOf=row=>{rowShape(row);return decodeCoverageTimestamp(row.bar_time);};

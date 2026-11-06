@@ -40,8 +40,8 @@ async function triple(args){
   return frozen;
 }
 /** Steps the shared generator by hand: the number of yields before it returns or throws, and what it did. */
-function trace(args){
-  const steps=live.buildCoverageSnapshotSteps(args);let yields=0;
+function trace(args,cooperative=false){
+  const steps=live.buildCoverageSnapshotSteps(args,cooperative);let yields=0;
   try{for(;;){const step=steps.next();if(step.done)return {yields,ok:true,value:step.value};yields++;}}
   catch(error){return {yields,ok:false,error};}
 }
@@ -86,6 +86,13 @@ test('source: every unchanged function is textually the 95e6cec function; the th
   // unionFactsSteps -> unionFacts
   let union=squash(declaration(LIVE,'unionFactsSteps'));
   assert.equal(union.split(METER).length,2,'one counter statement in the union check loop');
+  // Slice b-2, E2: three cooperative-only statements (the full array() check is skipped, the loop is indexed, the per-index hasOwn check). Each appears once and each is
+  // removed or rewritten back to the frozen form below; what remains must be the frozen function.
+  for(const [lean,frozen] of [
+    ['if(meter.cooperative!==true)array(fact.timestamps,fact.timestamps.length,check);','array(fact.timestamps,fact.timestamps.length,check);'],
+    ['consttimes=fact.timestamps;for(letk=0;k<times.length;k++){','for(consttimeoffact.timestamps){'],
+    ['if(meter.cooperative===true)check(Object.hasOwn(times,k));consttime=times[k];','']
+  ]){assert.equal(union.split(lean).length,2,'one cooperative statement: '+lean);union=union.replace(lean,()=>frozen);}
   union=union.replace(METER,'').replace('function*unionFactsSteps(plan,facts,budgets,check,meter)','functionunionFacts(plan,facts,budgets,check)');
   assert.equal(union,squash(declaration(FROZEN,'unionFacts')));
   // deriveSteps -> derive: two counter statements (window loop, gap loop)
@@ -94,18 +101,22 @@ test('source: every unchanged function is textually the 95e6cec function; the th
   derive=derive.replaceAll(METER,'').replace('function*deriveSteps(plan,facts,budgets,check=report,meter={units:0})','functionderive(plan,facts,budgets,check=report)').replace('yield*unionFactsSteps(plan,facts,budgets,check,meter)','unionFacts(plan,facts,budgets,check)');
   assert.equal(derive,squash(declaration(FROZEN,'derive')));
   // buildCoverageSnapshotSteps -> buildCoverageSnapshot
-  const build=squash(declaration(LIVE,'buildCoverageSnapshotSteps')).replace('exportfunction*buildCoverageSnapshotSteps','exportfunctionbuildCoverageSnapshot').replace('yield*deriveSteps(plan,facts,budgets)','derive(plan,facts,budgets)');
+  const build=squash(declaration(LIVE,'buildCoverageSnapshotSteps')).replace('exportfunction*buildCoverageSnapshotSteps','exportfunctionbuildCoverageSnapshot').replace(',cooperative=false)',')').replace('yield*deriveSteps(plan,facts,budgets,report,{units:0,cooperative})','derive(plan,facts,budgets)');
   assert.equal(build,squash(declaration(FROZEN,'buildCoverageSnapshot')));
   // derive is the synchronous drain of deriveSteps.
   assert.equal(squash(declaration(LIVE,'derive')),squash('const derive=(plan,facts,budgets,check)=>drain(deriveSteps(plan,facts,budgets,check));'));
 });
 
-test('source: exactly three yield statements, each the counter statement at the start of a work unit; the residual hasOwn block is named; only the reader uses the cooperative drain',()=>{
+test('source: exactly three yield statements, each the counter statement at the start of a work unit; the E2 contract delta is named; only the reader uses the cooperative drain',()=>{
   const code=LIVE.replace(/\/\*[\s\S]*?\*\//g,'').split('\n').filter(line=>!line.trim().startsWith('//')).join('\n');
   assert.equal(code.match(/\byield\b/g).length,3+code.match(/yield\*/g).length,'three plain yields besides the delegations');
   assert.equal(squash(code).split(METER).length,4,'each plain yield is the counter statement');
   assert.equal(code.match(/yield\*/g).length,2);
-  assert.match(LIVE,/Residual block, not sliced[^]*hasOwn loop/);
+  assert.match(LIVE,/Slice b-2, E2[^]*Contract delta: the cooperative build no longer refuses an extra own property[^]*still refuse the expando/);
+  // The cooperative flag is set at one place only: the cooperative drain. The synchronous drain and every other caller of the steps keep the default (false).
+  assert.equal(LIVE.split('buildCoverageSnapshotSteps(args,true)').length,2,'the cooperative drain passes true');
+  assert.equal(LIVE.split('buildCoverageSnapshotSteps(args)').length,2,'the synchronous drain passes nothing');
+  assert.equal(squash(declaration(LIVE,'buildCoverageSnapshot')),'exportfunctionbuildCoverageSnapshot(args){returndrain(buildCoverageSnapshotSteps(args));}');
   assert.equal(live.COVERAGE_SLICE_UNITS,8192);
   assert.equal(Object.hasOwn(QR2_COVERAGE_LIMITS,'COVERAGE_SLICE_UNITS'),false,'not a budget key');
   const repo=fileURLToPath(new URL('..',import.meta.url)),users=[];
@@ -347,6 +358,87 @@ test('the cooperative drain gives the event loop one macrotask turn per yield an
   assert.ok(promise instanceof Promise);
   await assert.rejects(promise,error=>error.code==='QR2_RANGE_ADMISSION_REFUSED'&&error.name==='Error'&&!(error instanceof Qr2Error)&&error.detail.limit==='derivation_visits');
   await assert.rejects(live.buildCoverageSnapshotCooperative({accounts:null,budgets:{},facts:[]}));
+});
+
+// ---------------------------------------------------------------------------------------------------------------- slice b-2, E2: cooperative array check
+// The cooperative build (the coverage reader's build) skips Reflect.ownKeys on the reader-built fact.timestamps array and checks hasOwn per index inside the metered
+// loop. Contract delta: it no longer refuses an extra own property on that array. The synchronous build, the frozen 95e6cec module and the worker validator keep the
+// full array() check. A hole is refused on every path, with the same error.
+const EXPANDOS={
+  'string key':a=>{a.extra=1;},
+  'symbol key':a=>{a[Symbol('extra')]=1;},
+  'non-enumerable key':a=>{Object.defineProperty(a,'hidden',{value:1,enumerable:false});}
+};
+const cleanArgs=()=>({accounts:[account('a',0,52*M)],budgets:budgetsOf({}),facts:[{state:'COMPLETE',timestamps:dense(1,50)}]});
+const withExpando=mark=>{const args=cleanArgs();mark(args.facts[0].timestamps);return args;};
+
+test('E2 parity on valid inputs: the cooperative steps equal the synchronous steps in registry bytes and in yield count, at the slice edges',()=>{
+  for(const count of [100,4095,4096,8191,8192,8193,12288,16385,21600]){
+    for(const shape of ['dense','gappy','windows']){
+      const {accounts,times}=largeCase(shape,count),args={accounts,budgets:budgetsOf({}),facts:[{state:'COMPLETE',timestamps:times}]};
+      const sync=trace(args),coop=trace(args,true);
+      assert.equal(sync.ok,true,shape+count);assert.equal(coop.ok,true,shape+count);
+      assert.equal(coop.yields,sync.yields,shape+count);
+      assert.equal(JSON.stringify(coop.value),JSON.stringify(sync.value),shape+count);
+      assert.equal(JSON.stringify(coop.value),JSON.stringify(old.buildCoverageSnapshot(args)),shape+count);
+    }
+  }
+  // Two unions and a TABLE_ABSENT union: the per-union check runs for each COMPLETE union.
+  const {accounts,facts}=unions([5000,3000,10]);
+  facts.splice(1,0,{state:'TABLE_ABSENT'});accounts.splice(1,0,account('absent',0,5*M));
+  assert.equal(JSON.stringify(trace({accounts,facts,budgets:budgetsOf({})},true).value),JSON.stringify(trace({accounts,facts,budgets:budgetsOf({})}).value));
+});
+
+test('E2 contract delta: an extra own property on the reader-built timestamps array is accepted by the cooperative build and refused by the synchronous build, the frozen module and the worker validator',async()=>{
+  const clean=cleanArgs(),expected=runSync(()=>old.buildCoverageSnapshot(clean));
+  assert.equal(expected.ok,true);
+  for(const [name,mark] of Object.entries(EXPANDOS)){
+    // Cooperative: accepted, and the registry bytes equal the clean build (an array's JSON has no room for the extra property).
+    assert.deepEqual(await runAsync(()=>live.buildCoverageSnapshotCooperative(withExpando(mark))),expected,'cooperative accepts '+name);
+    const traced=trace(withExpando(mark),true);
+    assert.equal(traced.ok,true,name);assert.equal(JSON.stringify(traced.value),expected.text,name);
+    // Synchronous drain, the steps by hand without the flag, and the frozen module: refused as a corrupt report.
+    for(const [label,build] of [['live sync',a=>live.buildCoverageSnapshot(a)],['frozen',a=>old.buildCoverageSnapshot(a)]]){
+      const result=runSync(()=>build(withExpando(mark)));
+      assert.equal(result.ok,false,label+' '+name);assert.equal(result.code,'QR2_REPORT_FAILED',label+' '+name);
+    }
+    refused(trace(withExpando(mark)),'QR2_REPORT_FAILED');
+    // Worker validator: a registry whose timestamps array carries the extra property is refused, by the live and the frozen validator alike.
+    const registry=JSON.parse(expected.text);mark(registry.unions[0].fact.timestamps);
+    const context={accounts:clean.accounts,budgets:clean.budgets};
+    const liveValidate=runSync(()=>live.validateCoverageSnapshot(registry,context));
+    assert.equal(liveValidate.ok,false,'validator '+name);assert.equal(liveValidate.code,'QR2_REPORT_FAILED','validator '+name);
+    assert.deepEqual(liveValidate,runSync(()=>old.validateCoverageSnapshot(registry,context)),'frozen validator '+name);
+  }
+  // The validator still accepts the same registry without the extra property.
+  assert.deepEqual(live.validateCoverageSnapshot(JSON.parse(expected.text),{accounts:clean.accounts,budgets:clean.budgets}),{ok:true});
+});
+
+test('E2: a hole in the timestamps array is refused on every path with the same error, with or without an extra property that keeps the own-key count balanced; the cooperative refusal falls in the unit that holds the hole',async()=>{
+  const holes={
+    'hole in the middle':a=>{delete a[20];},
+    'trailing holes':a=>{a.length=60;},
+    'hole and one extra key (own-key count balanced)':a=>{delete a[20];a.extra=1;},
+    'two holes and two extra keys':a=>{delete a[3];delete a[40];a.extra=1;a[Symbol('s')]=1;},
+    'first index missing':a=>{delete a[0];}
+  };
+  for(const [name,mark] of Object.entries(holes)){
+    const make=()=>{const args=cleanArgs();mark(args.facts[0].timestamps);return args;};
+    const frozen=runSync(()=>old.buildCoverageSnapshot(make()));
+    assert.equal(frozen.ok,false,name);assert.equal(frozen.code,'QR2_REPORT_FAILED',name);
+    assert.deepEqual(runSync(()=>live.buildCoverageSnapshot(make())),frozen,'sync '+name);
+    assert.deepEqual(await runAsync(()=>live.buildCoverageSnapshotCooperative(make())),frozen,'cooperative '+name);
+  }
+  // Position: the cooperative check fails in the unit that holds the hole (after the yield that precedes that unit); the synchronous full check fails before any unit.
+  for(const index of [100,8190,8191,8192,8193]){
+    const timestamps=dense(1,9000);delete timestamps[index];
+    const args=()=>({accounts:[account('a',0,9002*M)],budgets:budgetsOf({}),facts:[{state:'COMPLETE',timestamps}]});
+    const coop=trace(args(),true);
+    refused(coop,'QR2_REPORT_FAILED');
+    assert.equal(coop.yields,yieldsFor(index+1),'cooperative hole at index '+index);
+    const sync=trace(args());
+    refused(sync,'QR2_REPORT_FAILED');assert.equal(sync.yields,0,'the synchronous check refuses before the first unit');
+  }
 });
 
 // ---------------------------------------------------------------------------------------------------------------- reader end to end

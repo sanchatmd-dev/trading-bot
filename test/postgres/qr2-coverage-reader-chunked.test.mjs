@@ -48,7 +48,7 @@ test('schema pin: the keyset statement relies on the primary key (broker, symbol
 test('plan: a chunk statement with a mid-window cursor walks the primary key in order, with no sort and no sequential scan',{timeout:60000},async()=>{
   await clearBars();await insertMinutes(range(1,21600));
   await f.db.query('ANALYZE public.pine_market_bars');
-  const params=['binance-global','BTCUSDT','1',8192*M,21601*M,8192];
+  const params=['binance-global','BTCUSDT','1',4096*M,21601*M,4096];
   const {rows}=await inSnapshot(()=>f.db.query('EXPLAIN (FORMAT JSON) '+COVERAGE_SQL.ROWS,params));
   const plan=rows[0]['QUERY PLAN'][0].Plan,nodes=[];(function walk(node){nodes.push(node);for(const child of node.Plans??[])walk(child);})(plan);
   const types=nodes.map(n=>n['Node Type']);
@@ -58,7 +58,7 @@ test('plan: a chunk statement with a mid-window cursor walks the primary key in 
   assert.ok(nodes.every(n=>n['Relation Name']===undefined||n['Relation Name']==='pine_market_bars'));
 });
 
-test('differential on real rows: 21600 dense, 21601 (sentinel), a gappy history, and an off-grid row, chunked at 8192, 4096, 1000 and 7',{timeout:300000},async()=>{
+test('differential on real rows: 21600 dense, 21601 (sentinel), a gappy history, and an off-grid row, chunked at 4096, 2048 and 1000 (the product chunk is 4096)',{timeout:300000},async()=>{
   const accounts=[account('a',0,21700*M)];
   const cases=[
     ['dense 8191',range(1,8191),[]],['dense 8192',range(1,8192),[]],['dense 8193',range(1,8193),[]],['dense 16385',range(1,16385),[]],
@@ -66,12 +66,12 @@ test('differential on real rows: 21600 dense, 21601 (sentinel), a gappy history,
     ['gappy',range(1,21700).filter(m=>m%7!==0),[]],
     ['off-grid early, within capacity',range(1,9000),[2*M+13]],
     ['off-grid early, overflow later',range(1,21601),[2*M+13]],
-    ['off-grid as the cursor row of chunk 1, overflow later',range(1,21602).filter(m=>m!==8192),[8192*M+5]]
+    ['off-grid as the cursor row of chunk 1, overflow later',range(1,21602).filter(m=>m!==4096),[4096*M+5]]
   ];
   const seen={complete:0,degraded:0,failed:0};
   for(const [label,minutes,extra] of cases){
     await clearBars();await insertMinutes(minutes,extra);
-    const result=await same({accounts,budgets:budgetsOf({})},[8192,4096,1000],label);
+    const result=await same({accounts,budgets:budgetsOf({})},[4096,2048,1000],label);
     if(!result.ok)seen.failed++;else if(JSON.parse(result.text).unions[0].fact.state==='COMPLETE')seen.complete++;else seen.degraded++;
   }
   assert.deepEqual(seen,{complete:6,degraded:3,failed:1});
@@ -81,7 +81,7 @@ test('differential on real rows at small chunk sizes (7, 60, 61) with a lowered 
   await clearBars();await insertMinutes(range(1,150).filter(m=>m%9!==0),[40*M+1]);
   for(const capacity of [30,100,135])for(const accounts of [
     [account('a',0,60*M)],[account('a',0,80*M),account('b',100*M,160*M)],[account('a',0,155*M),account('b',50*M,155*M)]
-  ])await same({accounts,budgets:budgetsOf({timestamp_rows:capacity,union_minutes:200})},[1,7,60,61,8192],'capacity '+capacity+' '+accounts.length+' windows');
+  ])await same({accounts,budgets:budgetsOf({timestamp_rows:capacity,union_minutes:200})},[1,7,60,61,4096],'capacity '+capacity+' '+accounts.length+' windows');
 });
 
 test('snapshot consistency: bars committed by another connection between chunks are never seen, whatever the chunk size',{timeout:120000},async()=>{
@@ -114,4 +114,15 @@ test('an empty table answers one empty chunk statement and the oracle result',as
   assert.equal(empty.unions[0].fact.timestamps.length,0);
   assert.deepEqual(issued.filter(x=>Array.isArray(x)),[['binance-global','BTCUSDT','1',0,10*M,3]]);
   assert.deepEqual(JSON.stringify(empty),(await outcome(oracle.readCoverageSnapshot,args)).text);
+});
+
+test('slice b-2, E3, on real rows: a 44640-minute union under option-A budgets takes 11 ROWS statements at the 4096-row chunk and equals the oracle result',{timeout:120000},async()=>{
+  await clearBars();await insertMinutes(range(1,44640));
+  const args={accounts:[account('a',0,44642*M)],budgets:budgetsOf({union_minutes:44700,timestamp_rows:44640,coverage_input_bytes:1048576,derivation_visits:223200})};
+  const issued=[];const wrapper={get isTransaction(){return f.db.isTransaction;},async query(sql,params){if(sql===COVERAGE_SQL.ROWS)issued.push(params[5]);return f.db.query(sql,params);}};
+  const read=await inSnapshot(()=>readCoverageSnapshot({transaction:wrapper,...args}));
+  assert.equal(read.unions[0].fact.state,'COMPLETE');assert.equal(read.unions[0].fact.timestamps.length,44640);
+  assert.equal(issued.length,11);
+  assert.deepEqual(issued,[...Array(10).fill(4096),3681]);
+  assert.equal(JSON.stringify(read),(await outcome(oracle.readCoverageSnapshot,args)).text,'the registry equals the oracle (95e6cec single-statement) read');
 });

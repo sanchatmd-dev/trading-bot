@@ -25,7 +25,8 @@ function shape(value,names,check=input){
   check(Reflect.ownKeys(value).length===names.length&&names.every(k=>Object.hasOwn(value,k)));
   for(const key of names)check(Object.getOwnPropertyDescriptor(value,key)?.get===undefined&&Object.getOwnPropertyDescriptor(value,key)?.set===undefined);
 }
-// Residual block of slice b-1b: this own-keys/hasOwn loop is not yet cooperative (audit b1b P3-2).
+// The synchronous build and every validator use this full check (own keys plus a hasOwn per index). The cooperative build does not call it for the reader-built
+// fact.timestamps array: see unionFactsSteps (slice b-2, E2).
 function array(value,limit,check=input){
   check(Array.isArray(value));if(check===report)check(value.length<=limit);else cap(value.length,limit);
   check(Reflect.ownKeys(value).length===value.length+1);
@@ -152,8 +153,12 @@ function upperBound(values,target){let lo=0,hi=values.length;while(lo<hi){const 
 // it bounds, and before the next unit begins). The synchronous drain (derive, buildCoverageSnapshot, buildDegradedCoverageSnapshot, validateCoverageSnapshot, so the worker
 // validator) ignores the yields and runs the statements in the same order as before; the cooperative drain (buildCoverageSnapshotCooperative, the reader only) turns each
 // yield into one macrotask turn. The meter counts units across both generators of one build.
-// Residual block, not sliced (kept as is by ruling GL-B1): array() on a union's timestamps runs Reflect.ownKeys (one native call, one key string per element) and
-// a hasOwn loop over every index inside one turn. Its cost grows with the row count; the L-b gate measures it.
+// Slice b-2, E2: the full array() check of a union's timestamps (Reflect.ownKeys: one native call and one key string per element, then a hasOwn loop over every index)
+// was one unsliced block that cost 5 to 10 ms at 21600 rows. The cooperative build (meter.cooperative, set only by buildCoverageSnapshotCooperative, the coverage reader's
+// build) skips Reflect.ownKeys on fact.timestamps and checks hasOwn(timestamps,k) per index inside the metered loop, so a hole still fails in the unit that holds it.
+// Contract delta: the cooperative build no longer refuses an extra own property (an expando, a symbol key or a non-index key) on that array. That is safe only because the
+// reader builds the array itself with push (dense, no extra property) and hands it to nothing else before the build. The synchronous build and validateCoverageSnapshot
+// (the worker validator) keep the full array() check and still refuse the expando.
 function* unionFactsSteps(plan,facts,budgets,check,meter){
   array(facts,plan.unions.length,check);check(facts.length===plan.unions.length);
   let total=0,degraded=null;
@@ -169,11 +174,14 @@ function* unionFactsSteps(plan,facts,budgets,check,meter){
     if(fact.state==='TABLE_ABSENT')continue;
     check(Array.isArray(fact.timestamps));total=add(total,fact.timestamps.length);cap(total,budgets.timestamp_rows,'timestamp_rows');
     checkBytes(estimates(plan,plan.windows.map(w=>fields(w,{})),total,plan.windows.map(()=>0)),budgets);
-    array(fact.timestamps,fact.timestamps.length,check);
+    if(meter.cooperative!==true)array(fact.timestamps,fact.timestamps.length,check);
     let previous=plan.unions[i].window.from;
-    for(const time of fact.timestamps){
+    const times=fact.timestamps;
+    for(let k=0;k<times.length;k++){
       if(meter.units===COVERAGE_SLICE_UNITS){meter.units=0;yield;}
       meter.units++;
+      if(meter.cooperative===true)check(Object.hasOwn(times,k));
+      const time=times[k];
       check(safe(time)&&time%M===0&&time>previous&&time<=plan.unions[i].window.to);previous=time;
     }
   }
@@ -214,8 +222,8 @@ const derive=(plan,facts,budgets,check)=>drain(deriveSteps(plan,facts,budgets,ch
 /** The build as one generator (plan, union validation, derivation, assembly). Exported for the two drains and for tests; product code uses buildCoverageSnapshot or
  * buildCoverageSnapshotCooperative. A yield value carries no data. No final recursive build/validate: construction performs one union pass and one per-window slice pass.
  */
-export function* buildCoverageSnapshotSteps({accounts,budgets,facts}){
-  const plan=planCoverage({accounts,budgets}),derived=yield* deriveSteps(plan,facts,budgets);
+export function* buildCoverageSnapshotSteps({accounts,budgets,facts},cooperative=false){
+  const plan=planCoverage({accounts,budgets}),derived=yield* deriveSteps(plan,facts,budgets,report,{units:0,cooperative});
   // Arrays are retained once by union; windows contain only indexes. Caller transfers ownership of facts.
   return {version:COVERAGE_SNAPSHOT_VERSION,unions:plan.unions.map((u,i)=>({...u,fact:facts[i]})),windows:derived.windows,bindings:plan.bindings,charges:derived.charges};
 }
@@ -224,9 +232,10 @@ export function buildCoverageSnapshot(args){return drain(buildCoverageSnapshotSt
 /** Cooperative build for the coverage reader only (src/postgres/qr2-coverage-reader.js): the same generator, one macrotask turn (setImmediate) at every yield, so a large
  * build does not hold the event loop for its whole run. The global setImmediate keeps this module free of a new module dependency (the module is in the worker's graph). A refusal rejects the
  * promise with the same error the synchronous build throws. Nothing else may call this function: the worker validator and the other builders stay synchronous.
+ * It runs the steps with cooperative=true: the union check skips Reflect.ownKeys on the reader-built timestamps arrays (slice b-2, E2; see unionFactsSteps for the contract delta).
  */
 export async function buildCoverageSnapshotCooperative(args){
-  const steps=buildCoverageSnapshotSteps(args);
+  const steps=buildCoverageSnapshotSteps(args,true);
   let step=steps.next();
   while(!step.done){await new Promise(resolve=>setImmediate(resolve));step=steps.next();}
   return step.value;
