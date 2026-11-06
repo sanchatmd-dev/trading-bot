@@ -951,6 +951,60 @@ const qr2ReconcilePairs=[
 ];
 uiPairs.push(...qr2CoveragePairs);
 uiPairs.push(...qr2ReconcilePairs);
+// Quant Lab synthetic backtest tab, Risk manager policy and Order Preview labels, and the managed-Quant Analytics notice.
+// One named block so a test can prove these pairs stay unique and complete. The Thai wording is a proposal for owner review.
+// Kept in English on purpose: Quant Lab, Total Equity, Stop Loss, InnovestX (THB), Settrade (THB). OFFLINE_RESEARCH_ONLY is a server mode code and stays in Latin script.
+const quantRiskTextPairs=[
+  ['Historical analytics is unavailable while managed Quant execution is enabled.','ยังดู Analytics ย้อนหลังไม่ได้ เพราะเปิดใช้การทำงานแบบ Quant ที่ระบบจัดการอยู่'],
+  ['Paper-safe workspace','พื้นที่ทำงานที่ปลอดภัยแบบ Paper'],
+  ['Robot Trade · strategy research on synthetic data. No broker connection, no order routing.','Robot Trade · วิจัยกลยุทธ์บนข้อมูลสังเคราะห์ ไม่เชื่อมต่อ Broker และไม่ส่งต่อคำสั่ง'],
+  ['Ready · OFFLINE_RESEARCH_ONLY','พร้อมใช้งาน · OFFLINE_RESEARCH_ONLY'],
+  ['Synthetic research engine ready · OFFLINE_RESEARCH_ONLY. Data capability is checked separately.','Engine วิจัยข้อมูลสังเคราะห์พร้อมใช้งาน · OFFLINE_RESEARCH_ONLY ส่วนความสามารถด้านข้อมูลตรวจแยกต่างหาก'],
+  ['Risk Preview','ดูตัวอย่าง Risk'],
+  ['Trend filter','ตัวกรองแนวโน้ม'],
+  ['EMA crossover','EMA ตัดกัน'],
+  ['EMA fast','EMA เร็ว'],
+  ['EMA slow','EMA ช้า'],
+  ['Volatility stop','จุดหยุดตามความผันผวน'],
+  ['ATR trailing','ATR แบบ Trailing'],
+  ['ATR period','ช่วงคำนวณ ATR'],
+  ['Data & capital','ข้อมูลและทุน'],
+  ['Synthetic candles','แท่งเทียนสังเคราะห์'],
+  ['1H bars · deterministic input','แท่ง 1 ชม. · Input แบบกำหนดแน่นอน'],
+  ['Starting balance','ยอดเงินเริ่มต้น'],
+  ['Run backtest','รัน Backtest'],
+  ['Long-only · research estimate · fees included where configured.','Long เท่านั้น · ค่าประมาณเพื่อการวิจัย · รวมค่าธรรมเนียมเมื่อมีการตั้งค่า'],
+  ['Backtest results','ผล Backtest'],
+  ['Awaiting run','รอการรัน'],
+  ['No completed run','ยังไม่มีการรันที่เสร็จสมบูรณ์'],
+  ['Run a backtest to calculate','รัน Backtest เพื่อคำนวณ'],
+  ['Peak to trough','จากจุดสูงสุดถึงจุดต่ำสุด'],
+  ['Wins and losses','ชนะและแพ้'],
+  ['Completed signals','สัญญาณที่ดำเนินการครบ'],
+  ['Mark-to-market includes open position value at each bar close.','Mark-to-market รวมมูลค่า Position ที่ยังเปิดอยู่ ณ ราคาปิดของแต่ละแท่ง'],
+  ['Run a backtest to draw the mark-to-market equity curve.','รัน Backtest เพื่อวาดกราฟ Equity แบบ Mark-to-market'],
+  ['Bot Risk Policy','นโยบาย Risk ของ Bot'],
+  ['Saved policy governs server checks. Edit and save while the bot is in setup. UTC trading day.','นโยบายที่บันทึกใช้เป็นเกณฑ์ตรวจของเซิร์ฟเวอร์ แก้ไขและบันทึกได้ขณะ Bot อยู่ในสถานะตั้งค่า วันเทรดตาม UTC'],
+  ['Capital — configured Paper funding','ทุน — เงินทุน Paper ที่กำหนด'],
+  ['Order Preview','ตัวอย่างคำสั่ง (Order Preview)'],
+  ['Preview authority','ตัวอย่างอิงจาก'],
+  ['Saved server policy and capital','นโยบายและทุนที่บันทึกไว้ในเซิร์ฟเวอร์'],
+  ['Hypothetical draft policy and capital','นโยบายและทุนสมมติแบบฉบับร่าง'],
+  ['Preview source','ที่มาของตัวอย่าง'],
+  ['Generic Spot signal','สัญญาณ Spot ทั่วไป'],
+  ['Deployed Bridge intent','Bridge intent ที่ Deploy แล้ว'],
+  ['Size mode','โหมดขนาดคำสั่ง'],
+  ['Percent equity','เปอร์เซ็นต์ของ Equity'],
+  ['Fixed notional','มูลค่าคำสั่งคงที่'],
+  ['Size value (percent / notional / quantity)','ค่าขนาดคำสั่ง (เปอร์เซ็นต์ / มูลค่า / จำนวน)'],
+  ['Reduce-only SELL','SELL เพื่อลดสถานะเท่านั้น'],
+  ['Target Trade ID (SELL)','รหัสการเทรดเป้าหมาย (SELL)'],
+  ['News risk','ความเสี่ยงจากข่าว'],
+  ['Volatility (%) — empty means unknown','ความผันผวน (%) — เว้นว่างหมายถึงไม่ทราบค่า'],
+  ['Symbols held or reserved / remaining','สัญลักษณ์ที่ถือหรือกันไว้ / ที่เหลือ'],
+  ['Daily execution allowance','โควตาการทำรายการรายวัน']
+];
+uiPairs.push(...quantRiskTextPairs);
 uiPairs.push(...pfrPairs);for (const [en,th] of uiPairs) {uiTranslations.set(en,{en,th});uiTranslations.set(th,{en,th});}
 let uiLanguage='en';
 try {if(localStorage.getItem('robotLanguage')==='th')uiLanguage='th';} catch {}

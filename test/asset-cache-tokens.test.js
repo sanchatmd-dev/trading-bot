@@ -15,7 +15,7 @@ const PINNED={
   '/market-chart.css':['mc3','40b284a5bccd776f'],
   '/theme-hud.css':['r7ui1','08a46fadfa694f41'],
   '/paper-performance.css':['qr2o7','a5c500d4983317dd'],
-  '/i18n.js':['qr2o10','7170674f845f8124'],
+  '/i18n.js':['th1','74bb625d4b91f1fd'],
   '/app.js':['rel20261007','e5c805b49a8669be'],
   '/analytics.js':['rel20261007','6ae87c8d66996569'],
   '/bots.js':['qr2s5a1','31127683f617bed3'],
