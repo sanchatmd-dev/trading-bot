@@ -8,6 +8,7 @@ import {qr3Routes,planCreate,qr3AuditFailureCount,READ_BUDGET,REFUSAL_CODES,QR3_
 import {validateSpec} from '../src/comparison/ranking.js';
 import {resolvePeriod} from '../src/comparison/period.js';
 import {requestKeyHash} from '../src/postgres/comparison-store.js';
+import {INDEPENDENCE_BUDGET} from '../src/postgres/qr3-independence.js';
 
 // QR-3 S4 owner API over a STUB store: the route module, the dispatcher's deferred phase (emulated, as the real dispatcher runs res.phase2Deferred after COMMIT),
 // a scripted database and a recording audit writer. The real store, the real auth and the real dispatcher run in test/postgres/qr3-routes.test.mjs.
@@ -38,7 +39,9 @@ const LABELLED=parentOf(null),PLAIN=parentOf('//@version=6\nindicator("an owner 
 function scripted(over={}){
   const state={owner:OWNER,gate:{library:true,comparison:true,modes:true,market:true},mode:'FOUNDATION',runs:{'run-a':LABELLED,'run-b':LABELLED},bytes:{},
     bounds:{first_time:FIRST,last_time:END},span:{n:COUNT,first_time:FIRST,last_time:END,bad:0,digest:hash('content')},times:null,
-    spec:{owner:OWNER,id:'cmp-1'},seq:2,terminal:false,existing:null,throwOn:null,...over};
+    spec:{owner:OWNER,id:'cmp-1'},seq:2,terminal:false,existing:null,throwOn:null,
+    // independence sources (SB191 slice A): no earlier run, no boundary row, the boundary table present and the library tables absent (no gate snapshot)
+    holdoutRows:[],searchedRows:[],boundaryTable:'quant_holdout_boundaries',boundaryRows:[],libraryPresent:false,frozen:[],...over};
   const log=[];
   const db={isTransaction:false,
     async transaction(work,options={}){
@@ -61,6 +64,20 @@ function scripted(over={}){
       if(text.startsWith('SELECT min(bar_time)'))return {rows:[state.bounds]};
       if(text.startsWith('SELECT count(*)::int n'))return {rows:[state.span]};
       if(text.startsWith('SELECT bar_time FROM'))return {rows:(state.times??[]).map(bar_time=>({bar_time}))};
+      if(text.startsWith('WITH earlier AS MATERIALIZED'))return {rows:state.holdoutRows.slice(0,params[1])};
+      if(text.startsWith('SELECT j.run_id,j.contract#>'))return {rows:state.searchedRows.slice(0,params[2])};
+      if(text==="SELECT to_regclass('public.quant_holdout_boundaries') AS boundaries")return {rows:[{boundaries:state.boundaryTable}]};
+      if(text.startsWith('SELECT (SELECT min(sibling.holdout_start_time)'))return {rows:state.boundaryRows};
+      if(text.startsWith('SELECT f.present,f.foundation'))return {rows:[{present:state.libraryPresent}]};
+      // the store writers of a successful create (the freeze texts are captured, so a test can read what the route froze)
+      if(text.startsWith('LOCK TABLE'))return {rows:[]};
+      if(text==="SELECT current_setting('transaction_isolation') AS level")return {rows:[{level:'serializable'}]};
+      if(text.startsWith("SELECT to_regclass('public.quant_exposure_register')"))return {rows:[{register:'quant_exposure_register',marker:'quant_exposure_register_schema'}]};
+      if(text.startsWith('SELECT version FROM public.quant_exposure_register_schema'))return {rows:[{version:1}]};
+      if(text.startsWith('SELECT exposure_id,kind'))return {rows:[]};
+      if(text.startsWith('INSERT INTO public.quant_exposure_register'))return {rows:[Object.fromEntries('exposure_id,kind,owner_id,broker,symbol,timeframe,start_ms,end_ms,comparison_id,participant_run_id,source_hash,selection_id,at_ms'.split(',').map((name,index)=>[name,params[index]]))]};
+      if(text.startsWith('INSERT INTO public.quant_comparison_specs'))return {rows:[{frozen_at_ms:1700000000000}]};
+      if(text.startsWith('INSERT INTO public.quant_comparison_participants')){state.frozen.push({participant_id:params[1],freeze:JSON.parse(params[7])});return {rows:[]};}
       if(text.startsWith('SELECT comparison_id,spec_body_hash,frozen_at_ms FROM public.quant_comparison_specs'))return {rows:state.existing?[state.existing]:[]};
       if(text.startsWith('SELECT spec_hash,context_key FROM public.quant_comparison_specs'))return {rows:params[1]===state.spec.owner&&params[0]===state.spec.id?[{spec_hash:'0'.repeat(64),context_key:'0'.repeat(64)}]:[]};
       if(text.startsWith('SELECT comparison_id,owner_id,parent_comparison_id'))return {rows:[]};
@@ -346,6 +363,101 @@ test('create reaches the store with the owner and a request key: a repeat of the
   const clash=await other.call('POST',QR3_PATH,{body:OK});
   assert.deepEqual([clash.status,clash.body.code,clash.body.detail],[409,'QR3_SPEC_IMMUTABLE','REQUEST_KEY_REUSED']);
   assert.deepEqual(other.audits,[]);
+});
+
+/* ---- SB191 slice A: the independence facts frozen at create ---- */
+
+const BAR_MARKET=Object.freeze({broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'});
+/** A library run row as the scans return it. Holdout open times S+V*m to S+(T-1)*m, searched open times S to S+(V-1)*m. */
+const libRow=(run_id,{start,validation_end,test_end,market=BAR_MARKET})=>({run_id,market,split:{validation_end,test_end},start_time:start});
+const WINDOW=(from,to)=>({start_ms:from,end_ms:to});
+
+test('create freezes the independence block of every participant in its create snapshot: overlap lists, own parent holdout apart, boundary, no defaults',async()=>{
+  const script=scripted({
+    holdoutRows:[libRow('run-a',{start:START-100*MINUTE,validation_end:50,test_end:150}),libRow('h-over',{start:START-100*MINUTE,validation_end:50,test_end:150}),
+      libRow('h-touch',{start:START-100*MINUTE,validation_end:50,test_end:100}),libRow('h-one',{start:START-100*MINUTE,validation_end:50,test_end:101}),
+      libRow('h-eth',{start:START-100*MINUTE,validation_end:50,test_end:150,market:{...BAR_MARKET,symbol:'ETHUSDT'}}),libRow('h-far',{start:START-9000*MINUTE,validation_end:50,test_end:150})],
+    searchedRows:[libRow('s-over',{start:START-10*MINUTE,validation_end:100,test_end:200}),libRow('s-far',{start:START-9000*MINUTE,validation_end:100,test_end:200}),
+      libRow('s-eth',{start:START-10*MINUTE,validation_end:100,test_end:200,market:{...BAR_MARKET,symbol:'ETHUSDT'}})],
+    boundaryRows:[{holdout_start_time:String(START-5000*MINUTE)}]});
+  const h=harness({script});
+  const answer=await h.call('POST',QR3_PATH,{body:OK});
+  assert.equal(answer.status,201,JSON.stringify(answer.body));
+  assert.deepEqual(script.state.frozen.map(item=>item.participant_id),['run-a','run-b']);
+  const [a,b]=script.state.frozen.map(item=>item.freeze.independence);
+  const over=WINDOW(START-50*MINUTE,START+50*MINUTE),one=WINDOW(START-50*MINUTE,START+MINUTE),searched=WINDOW(START-10*MINUTE,START+90*MINUTE);
+  for(const block of [a,b]){
+    assert.equal(block.version,'qr3-independence-v1');
+    assert.deepEqual(block.searched_windows,[{run_id:'s-over',window:searched}]);
+    assert.deepEqual(block.registered_boundary,{state:'SET',start_ms:START-5000*MINUTE});
+    assert.deepEqual(block.scanned,{holdout_rows:6,searched_rows:3});
+    assert.equal(block.library_gates,null,'no library tables: an explicit null gate snapshot, never an empty list');
+  }
+  // the touching window (h-touch) does not overlap, one more minute (h-one) does; another market and a far window are not listed
+  assert.deepEqual(a.earlier_holdouts,[{run_id:'h-over',window:over},{run_id:'h-one',window:one}]);
+  assert.deepEqual([a.source_holdout_state,a.source_holdout_window],['SET',over],'the own parent holdout is the source window and never an earlier holdout');
+  // the other participant sees the first parent as an earlier holdout, and its own run left no holdout row
+  assert.deepEqual(b.earlier_holdouts,[{run_id:'run-a',window:over},{run_id:'h-over',window:over},{run_id:'h-one',window:one}]);
+  assert.deepEqual([b.source_holdout_state,b.source_holdout_window],['NONE',null]);
+  // SB191 P2: the source-holdout register is frozen next to the window: [] for a readable empty register (a SET window) or no window (NONE), never absent
+  assert.deepEqual([a.source_holdout_register,b.source_holdout_register],[[],[]]);
+  // every scan is the owner's and runs inside the READ ONLY snapshot, before any store statement
+  const scans=script.log.filter(entry=>entry.sql.startsWith('WITH earlier AS MATERIALIZED')||entry.sql.startsWith('SELECT j.run_id,j.contract#>'));
+  assert.equal(scans.length,4);
+  assert.ok(scans.every(entry=>entry.params[0]===OWNER));
+  assert.deepEqual(scans[1].params[1],[F.c.source_hash]);
+  assert.ok(script.log.findIndex(entry=>entry.sql.startsWith('LOCK TABLE'))>script.log.findIndex(entry=>entry.sql.startsWith('SELECT (SELECT min(sibling.holdout_start_time)')));
+  assert.ok(script.log.filter(entry=>entry.sql.startsWith('SELECT (SELECT min(sibling.holdout_start_time)')).every(entry=>entry.params[0]===OWNER&&entry.params[1]===OWNER&&entry.params.slice(2).join(',')==='binance-global,SPOT,BTCUSDT,1'));
+});
+
+test('an unreadable independence source is stored as an explicit unavailable state, never as an empty list or no boundary',async()=>{
+  const frozen=async over=>{
+    const script=scripted(over);
+    const answer=await harness({script}).call('POST',QR3_PATH,{body:OK});
+    assert.equal(answer.status,201,JSON.stringify(answer.body));
+    return script.state.frozen.map(item=>item.freeze.independence);
+  };
+  // a holdout row that cannot be read (no split) nulls the whole holdout list; a searched row that cannot be read nulls the searched list
+  const [bad]=await frozen({holdoutRows:[{run_id:'h-bad',market:BAR_MARKET,split:null,start_time:START}],searchedRows:[libRow('s-bad',{start:START,validation_end:0,test_end:5})]});
+  assert.equal(bad.earlier_holdouts,null);
+  assert.equal(bad.searched_windows,null);
+  // an unreadable row of another market is skipped, an unreadable market is not
+  const [skipped]=await frozen({holdoutRows:[{run_id:'h-bad',market:{...BAR_MARKET,symbol:'ETHUSDT'},split:null,start_time:START}]});
+  assert.deepEqual(skipped.earlier_holdouts,[]);
+  const [nomarket]=await frozen({holdoutRows:[{run_id:'h-bad',market:null,split:null,start_time:START}]});
+  assert.equal(nomarket.earlier_holdouts,null);
+  // the own parent holdout window cannot be read: UNAVAILABLE for that participant, the other lists stay intact
+  const [own,other]=await frozen({holdoutRows:[{run_id:'run-a',market:BAR_MARKET,split:null,start_time:START}]});
+  assert.deepEqual([own.source_holdout_state,own.source_holdout_window,own.earlier_holdouts],['UNAVAILABLE',null,[]]);
+  assert.deepEqual([other.source_holdout_state,other.earlier_holdouts],['NONE',null],'for the other participant the unreadable row is an earlier holdout it cannot read');
+  // boundary: no row is NONE; an absent table, a null value and a non-integer value are UNAVAILABLE
+  assert.deepEqual((await frozen({}))[0].registered_boundary,{state:'NONE'});
+  assert.deepEqual((await frozen({boundaryTable:null}))[0].registered_boundary,{state:'UNAVAILABLE'});
+  assert.deepEqual((await frozen({boundaryRows:[{holdout_start_time:null}]}))[0].registered_boundary,{state:'UNAVAILABLE'});
+  assert.deepEqual((await frozen({boundaryRows:[{holdout_start_time:'12x'}]}))[0].registered_boundary,{state:'UNAVAILABLE'});
+});
+
+test('the independence read budget: one scan above the fixed row budget refuses the create with INDEPENDENCE_ROWS and writes nothing; the budget itself is allowed',async()=>{
+  const rows=count=>Array.from({length:count},(_,index)=>libRow('far-'+index,{start:START-9000*MINUTE,validation_end:50,test_end:150}));
+  for(const over of [{holdoutRows:rows(INDEPENDENCE_BUDGET.max_rows_per_scan+1)},{searchedRows:rows(INDEPENDENCE_BUDGET.max_rows_per_scan+1)}]){
+    const script=scripted(over);
+    const answer=await harness({script}).call('POST',QR3_PATH,{body:OK});
+    assert.deepEqual([answer.status,answer.body.code,answer.body.detail,answer.body.budget],[429,'QR3_READ_BUDGET_EXCEEDED','INDEPENDENCE_ROWS',{...READ_BUDGET,...INDEPENDENCE_BUDGET}]);
+    assert.deepEqual(script.state.frozen,[]);
+    assert.equal(script.log.some(entry=>/^(INSERT|LOCK)/.test(entry.sql)),false,'nothing is written');
+  }
+  const edge=scripted({holdoutRows:rows(INDEPENDENCE_BUDGET.max_rows_per_scan),searchedRows:rows(INDEPENDENCE_BUDGET.max_rows_per_scan)});
+  assert.equal((await harness({script:edge}).call('POST',QR3_PATH,{body:OK})).status,201);
+});
+
+test('a database error while the independence facts are read fails the create closed (503, 409 for a serialization failure) and freezes nothing',async()=>{
+  for(const [prefix,code,status] of [['WITH earlier AS MATERIALIZED','42501',503],['SELECT j.run_id,j.contract#>','08006',503],['SELECT (SELECT min(sibling.holdout_start_time)','42501',503],['SELECT f.present','40001',409]]){
+    const script=scripted({throwOn:sql=>sql.startsWith(prefix)});script.state.error=Object.assign(Error('could not read'),{code});
+    const answer=await harness({script}).call('POST',QR3_PATH,{body:OK});
+    assert.equal(answer.status,status,prefix);
+    assert.deepEqual(script.state.frozen,[]);
+    assert.equal(script.log.some(entry=>entry.sql.startsWith('INSERT')),false);
+  }
 });
 
 /* ---- view and cancel ---- */

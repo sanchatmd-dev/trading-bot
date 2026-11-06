@@ -346,6 +346,18 @@ export class QuantLibraryService{
   }
 }
 
+/**
+ * The G1 to G8 gate states of one run (library-qualification-v2) as {version, gates:[{gate,state,code}]}, read on the CALLER's handle: the caller owns the READ ONLY
+ * transaction (QR-3 create freezes this snapshot, hardening packet SB191). Returns null when the library tables are absent, so the caller records an explicit
+ * unavailable state and never an empty list. A missing or foreign run throws NOT_FOUND and a database error passes through. G8 always carries QL4C_VALIDATION_NOT_AVAILABLE.
+ */
+export async function gateSnapshot(db,owner,runId){
+  const flags=(await db.query(PRESENT)).rows[0];
+  if(flags?.present!==true)return null;
+  const {quality}=await new QuantLibraryService(db).load(owner,runId,flags);
+  return {version:quality.version,gates:quality.gates.map(item=>({gate:item.gate,state:item.state,code:item.code??null}))};
+}
+
 // bot_id is sent by the shared api() helper. The library is owner-scoped, so the value is ignored. Any other key, and any
 // repeated key (except run_id on the compare route), is refused before anything is read.
 function checkedQuery(url,allowed,repeatable=[]){

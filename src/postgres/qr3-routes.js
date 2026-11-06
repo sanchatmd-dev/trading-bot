@@ -10,6 +10,9 @@ import {excessReturn} from '../comparison/valuation.js';
 import {createComparison,cancelComparison,readComparison,readComparisonResults} from './comparison-store.js';
 import {validateResearchContractV2,CONTENT_DIGEST_SQL} from '../quant-research/research-contract-v2.js';
 import {buildParticipantContext,warmupBarsOf} from './qr3-participant-context.js';
+import {readIndependence,INDEPENDENCE_BUDGET} from './qr3-independence.js';
+import {gateSnapshot} from './quant-library.js';
+import {marketKey} from '../quant-library/derive.js';
 
 /**
  * QR-3 S4 owner API (contract 11.3, root rulings SB177 and SB184 RR-12): four owner-scoped actions behind QR3_COMPARISON_ENABLED, off by default.
@@ -27,6 +30,12 @@ import {buildParticipantContext,warmupBarsOf} from './qr3-participant-context.js
  * deferred phase after COMMIT (res.phase2Deferred, the QR-2 pattern): the pure checks and the answer to a refusal happen in phase one, which is repeatable
  * and writes nothing. The read phases run in their own REPEATABLE READ READ ONLY transaction. The audit row of a create and of a cancel is written with
  * store.audit after the action committed (root ruling RR-9); a failed audit write is counted (qr3AuditFailureCount) and never changes the answer.
+ *
+ * Independence facts (hardening packet SB191, slice A). Create reads, in the same REPEATABLE READ READ ONLY snapshot as the parent reads, the earlier holdouts and the
+ * searched windows that overlap the frozen period, the registered boundary of the parent Bot and the G1 to G8 gate snapshot of every parent run, and freezes them
+ * in each participant freeze under `independence` (src/postgres/qr3-independence.js). Nothing is defaulted: a source that cannot be read is stored as an explicit
+ * unavailable state (a null list, UNAVAILABLE, a null gate snapshot), and a scan above the read budget refuses the create. The later evaluation wiring reads the
+ * stored block only (slice B, not part of this module). The view shows the stored block unchanged and stays read only.
  *
  * Create needs two values only the evaluation closure can supply (the engine hash, C7, and the shared dataset digest, C6). This module names no module of
  * that closure, so deps.engineHash and deps.datasetDigest are injected; without them create refuses QR3_ADMISSION_CLOSED with detail CREATE_NOT_WIRED
@@ -209,7 +218,14 @@ async function readCreate(db,deps,owner,plan){
     }
     const digest=await deps.datasetDigest({db,first_close_ms:first,last_close_ms:period.end_ms,bar_count:count,data_profile:profile,content_digest:span.digest});
     if(typeof digest!=='string'||!/^[a-f0-9]{64}$/.test(digest))stop(CODES.QR3_DATASET_UNAVAILABLE,'DIGEST');
-    return {ok:true,parents,warmup,period:structuredClone(period),digest};
+    const independence=new Map();
+    for(const parent of parents){
+      const read=await readIndependence(db,{owner_id:owner,run_id:parent.id,bot_id:parent.run.bot_id,source_hash:parent.contract.source_hash,market_key:marketKey(parent.contract),
+        period:{start_ms:period.start_ms,end_ms:period.end_ms}});
+      if(!read.ok)stop(ROUTE_CODES.QR3_READ_BUDGET_EXCEEDED,read.detail,{budget:{...READ_BUDGET,...INDEPENDENCE_BUDGET}});
+      independence.set(parent.id,{...read.block,library_gates:await gateSnapshot(db,owner,parent.id)});
+    }
+    return {ok:true,parents,warmup,period:structuredClone(period),digest,independence};
   });
 }
 
@@ -236,7 +252,7 @@ async function runCreate(store,deps,owner,plan){
       period:{start_ms:read.period.start_ms,end_ms:read.period.end_ms},warmup_bars:read.warmup,dataset_digest:read.digest,engine_hash:engine});
     if(!built.ok)return answer(built);
     participants.push({participant_id:parent.id,position:index+1,source_hash:parent.contract.source_hash,origin:plan.fixture?'FIXTURE':'LIBRARY_RUN',fixture:plan.fixture,
-      context_key:built.context_key,freeze:built.freeze});
+      context_key:built.context_key,freeze:{...built.freeze,independence:read.independence.get(parent.id)}});
   }
   // The declared comparison context is the one of the participant at position 1; a participant whose own key differs is shown with its mismatches and is not
   // compatible. The admission re-checks every field at enqueue, so a difference stops the evaluation there and changes no stored number.
@@ -289,12 +305,20 @@ async function runReplay(store,deps,owner,id){
 
 /* ---- the view ---- */
 
+/** The stored independence facts as frozen, without the gate snapshot (shown apart); null for a freeze that holds no block (a comparison frozen before slice A). Never defaulted. */
+const independenceView=block=>{
+  if(!isObject(block))return null;
+  const {library_gates:_gates,...facts}=block;
+  return facts;
+};
+
 function participantsView(base){
   const entries=base.participants.map(row=>({participant_id:row.participant_id,fields:contextFields(row.participant_id,row.freeze.context).fields}));
   return {mismatches:contextMismatches(entries),
     list:base.participants.map(row=>({participant_id:row.participant_id,position:row.position,source_hash:row.source_hash,origin:row.origin,fixture:row.fixture,
       context_key:row.context_key,compatible:row.context_key===base.comparison.context_key,freeze_hash:row.freeze_hash,context:row.freeze.context??null,
-      subject:row.freeze.subject??null,parent:row.freeze.parent??null,prior_exposed_by:row.freeze.prior_exposed_by??[]}))};
+      subject:row.freeze.subject??null,parent:row.freeze.parent??null,prior_exposed_by:row.freeze.prior_exposed_by??[],
+      independence:independenceView(row.freeze.independence),library_gates:isObject(row.freeze.independence)?row.freeze.independence.library_gates??null:null}))};
 }
 const nullable=(value,reason)=>({value:value??null,reason:value===null||value===undefined?reason:null});
 

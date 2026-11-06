@@ -21,6 +21,11 @@ import {validateComparisonView,NO_WINNER_TEXT} from '../../src/comparison/labels
 import {hashPassword} from '../../src/security.js';
 import {httpClient} from '../helpers.mjs';
 import {hash} from '../../src/pine-bridge/source.js';
+import {windowsOverlap} from '../../src/comparison/evidence.js';
+import {appendExposures} from '../../src/postgres/exposure-register.js';
+import {readIndependence,INDEPENDENCE_BUDGET,INDEPENDENCE_VERSION} from '../../src/postgres/qr3-independence.js';
+import {gateSnapshot} from '../../src/postgres/quant-library.js';
+import {marketKey} from '../../src/quant-library/derive.js';
 
 // QR-3 S4 owner API on a real PostgreSQL cluster: the real store, the real comparison tables and exposure register, the real fixed-evaluation admission and the REAL
 // dispatcher (SERIALIZABLE request transaction, buffered answer, deferred phase) for create, view and cancel; then the real application server with its real auth, CSRF
@@ -161,6 +166,23 @@ after(async()=>{await new Promise(resolve=>{if(!server)return resolve();server.c
 
 /* ---- 1. create ---- */
 
+/** SB191 slice A: the frozen independence block of one participant freeze, with the facts every create must carry. The fixture has no boundary table until the test below installs it. */
+function independenceOf(freeze,{boundary}){
+  const block=freeze.independence;
+  assert.equal(block.version,INDEPENDENCE_VERSION);
+  assert.deepEqual(block.registered_boundary,boundary);
+  assert.ok(Array.isArray(block.earlier_holdouts)&&Array.isArray(block.searched_windows),'a readable scan is a list, never null');
+  assert.ok(['NONE','SET','UNAVAILABLE'].includes(block.source_holdout_state));
+  assert.ok(block.source_holdout_register===null?block.source_holdout_state==='UNAVAILABLE':Array.isArray(block.source_holdout_register),'the source-holdout register is a list or an explicit null, never absent');
+  // the G1 to G8 snapshot: eight gates in order, G8 never available (library-qualification-v2)
+  assert.equal(block.library_gates.version,'library-qualification-v2');
+  assert.deepEqual(block.library_gates.gates.map(item=>item.gate),['G1','G2','G3','G4','G5','G6','G7','G8']);
+  assert.ok(block.library_gates.gates.every(item=>['PASS','FAIL','NOT_REACHED'].includes(item.state)&&(item.state==='PASS'?item.code===null:true)));
+  assert.deepEqual(block.library_gates.gates[7],{gate:'G8',state:'FAIL',code:'QL4C_VALIDATION_NOT_AVAILABLE'});
+  return block;
+}
+
+
 test('create freezes the spec in SPEC_FROZEN with one exposure event per participant, starts nothing, audits once, and the real fixed-evaluation admission accepts the frozen contexts',async()=>{
   const owner=f.owner,before=await everything();
   const answer=await api(owner,'POST',QR3_PATH,createBody());
@@ -199,6 +221,7 @@ test('create freezes the spec in SPEC_FROZEN with one exposure event per partici
     assert.equal(contextFields(row.participant_id,freeze.context).missing.length,0);
     assert.equal(freeze.context.engine,f.context.engine);
     assert.equal(freeze.subject.source_hash,f.c.source_hash);
+    independenceOf(freeze,{boundary:{state:'UNAVAILABLE'}});
   }
   // C1 to C16 pin against the REAL admission: it re-reads every field of every participant at enqueue and accepts them (a drift would be FIXED_EVAL_CONTEXT_MISMATCH)
   const job=await f.service.enqueue(owner,{purpose:'QR3_COMPARISON',object_id:id,participant_id:f.state.parents[0].run_id},'pg_qr3_routes_'+randomUUID().slice(0,12));
@@ -308,6 +331,137 @@ test('the exposure register and the comparison tables absent: QR3_EXPOSURE_REGIS
     }
   }finally{await f.db.query('ALTER TABLE public.quant_comparison_specs_hidden RENAME TO quant_comparison_specs');}
   assert.equal((await api(owner,'GET',QR3_PATH+'/'+view.id)).status,200);
+});
+
+/* ---- 1b. SB191 slice A: independence facts frozen at create ---- */
+
+const readOnlyTx=work=>f.db.transaction(async()=>{await f.db.query('SET TRANSACTION READ ONLY');return work();},{isolation:'REPEATABLE READ'});
+let runSerial=0;
+/** A labelled library-like run row of an owner (same source by default): the contract fields the independence scans read, result.holdout_evaluated as given. */
+async function addRun(owner,name,{start,validation_end=50,test_end=150,market=MARKET,holdout=true,mode,split,source=f.c.source_hash,bot=owner}){
+  const contract={version:'ql3a-research-job-v2',...(mode?{mode}:{}),source_hash:source,snapshot:{market},split:split===undefined?{validation_end,test_end}:split,dataset:{start_time:start}};
+  const at=Date.now()-1000000+(runSerial+=1);
+  await f.db.query("INSERT INTO public.quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,status,created_at,updated_at,deadline,result) VALUES($1,$2,$3,$4,$5,$6,$7,$8,'FAILED',$9,$9,$10,$11)",
+    [name,owner,bot,f.state.parents[0].deployment_id,'ind:'+name,hash('submission'),hash('contract '+name),JSON.stringify(contract),at,at+900000,JSON.stringify({holdout_evaluated:holdout})]);
+}
+const frozenOf=async id=>(await rowsOf('SELECT participant_id,freeze_canonical FROM public.quant_comparison_participants WHERE comparison_id=$1 ORDER BY position',[id])).map(row=>({participant_id:row.participant_id,freeze:JSON.parse(row.freeze_canonical)}));
+
+test('SB191 slice A on the real cluster: create freezes the earlier holdouts, searched windows, registered boundary and G1 to G8 snapshot of every participant; the view shows them unchanged',async()=>{
+  const owner=f.owner,W=f.registration.window,m=MINUTE,parents=f.state.parents.map(row=>row.run_id);
+  // a baseline create: the two fixture parents only (their windows are far from the period); the boundary table is not installed yet, so the boundary is UNAVAILABLE
+  assert.equal((await rowsOf("SELECT to_regclass('public.quant_holdout_boundaries') AS t"))[0].t,null);
+  const base=await api(owner,'POST',QR3_PATH,createBody());
+  assert.equal(base.status,201,JSON.stringify(base.body));
+  const baseBlocks=(await frozenOf(base.body.comparison_id)).map(item=>independenceOf(item.freeze,{boundary:{state:'UNAVAILABLE'}}));
+  for(const block of baseBlocks){
+    assert.deepEqual([block.earlier_holdouts,block.searched_windows],[[],[]]);
+    assert.ok(block.scanned.holdout_rows>=2&&block.scanned.searched_rows>=2,'the two parents are scanned');
+  }
+  // the gate snapshot is the library's own G1 to G8 of the run, read in the same snapshot
+  const direct=await readOnlyTx(()=>gateSnapshot(f.db,owner,parents[0]));
+  const frozenFirst=(await frozenOf(base.body.comparison_id)).find(item=>item.participant_id===parents[0]);
+  assert.deepEqual(frozenFirst.freeze.independence.library_gates,direct);
+  // install the boundary table (exactly the table, its function and its trigger of the preflight schema) and register one Bot boundary
+  const preflight=await fs.readFile(new URL('../../src/postgres/quant-preflight-schema.sql',import.meta.url),'utf8'),begin=preflight.indexOf('CREATE TABLE quant_holdout_boundaries('),end='EXECUTE FUNCTION quant_holdout_boundary_write_once();';
+  assert.ok(begin>=0&&preflight.indexOf(end)>begin);
+  await f.db.transaction(()=>f.db.query(preflight.slice(begin,preflight.indexOf(end)+end.length)));
+  const boundary=W.start_ms-5000*m;
+  await f.db.query('INSERT INTO public.quant_holdout_boundaries(owner_id,bot_id,venue,market,symbol,timeframe,holdout_start_time,created_by,created_at) VALUES($1,$1,$2,$3,$4,$5,$6,$7,$8)',
+    [owner,'binance-global','SPOT','BTCUSDT','1',boundary,'qr3-test',Date.now()]);
+  // earlier runs of the owner: holdout windows (open times S+V*m to S+(T-1)*m) and searched windows (S to S+(V-1)*m), against the period starting at W.start_ms
+  const ETH={...MARKET,symbol:'ETHUSDT'},start=W.start_ms-100*m;
+  await addRun(owner,'ind-hold-over',{start});                              // holdout [W-50m, W+49m]: overlaps
+  await addRun(owner,'ind-hold-touch',{start,test_end:100});                // holdout [W-50m, W-1m]: touches the period, no overlap
+  await addRun(owner,'ind-hold-one',{start,test_end:101});                  // holdout [W-50m, W]: one minute of overlap
+  await addRun(owner,'ind-hold-eth',{start,market:ETH});                    // other market: skipped
+  await addRun(owner,'ind-hold-no',{start,holdout:false});                  // no holdout evaluated: not an earlier holdout
+  await addRun(owner,'ind-hold-fixed',{start,mode:'FIXED_INPUT_EVAL'});     // a fixed evaluation is never a search or a holdout
+  await addRun(owner,'ind-search-over',{start:W.start_ms-10*m,validation_end:100,test_end:120,holdout:false}); // searched [W-10m, W+89m]
+  await addRun(owner,'ind-search-other',{start:W.start_ms-10*m,validation_end:100,test_end:120,holdout:false,source:hash('another source')}); // other source: not listed
+  await addRun(intruder,'ind-foreign',{start});                             // another owner: never read
+  const answer=await api(owner,'POST',QR3_PATH,createBody());
+  assert.equal(answer.status,201,JSON.stringify(answer.body));
+  const id=answer.body.comparison_id,stored=await frozenOf(id);
+  const over={start_ms:W.start_ms-50*m,end_ms:W.start_ms+50*m},one={start_ms:W.start_ms-50*m,end_ms:W.start_ms+m};
+  for(const [index,item] of stored.entries()){
+    const block=independenceOf(item.freeze,{boundary:{state:'SET',start_ms:boundary}});
+    assert.deepEqual(block.earlier_holdouts,[{run_id:'ind-hold-over',window:over},{run_id:'ind-hold-one',window:one}]);
+    assert.deepEqual(block.searched_windows,[{run_id:'ind-search-over',window:{start_ms:W.start_ms-10*m,end_ms:W.start_ms+90*m}}]);
+    assert.equal(block.scanned.holdout_rows,baseBlocks[index].scanned.holdout_rows+4,'over, touch, one and eth are scanned; the no-holdout, fixed and foreign rows are not');
+    assert.equal(block.scanned.searched_rows,baseBlocks[index].scanned.searched_rows+6,'six same-source runs of the owner; the other source, the fixed run and the foreign run are not');
+  }
+  // the freeze is hash-bound
+  const hashes=await rowsOf('SELECT freeze_canonical,freeze_hash FROM public.quant_comparison_participants WHERE comparison_id=$1',[id]);
+  assert.ok(hashes.every(row=>hash(row.freeze_canonical)===row.freeze_hash));
+  // the view shows the stored block unchanged (read only), the gate snapshot apart
+  const before=await everything();
+  const seen=await api(owner,'GET',QR3_PATH+'/'+id);
+  assert.equal(seen.status,200,JSON.stringify(seen.body));
+  for(const item of seen.body.participants){
+    const freeze=stored.find(entry=>entry.participant_id===item.participant_id).freeze.independence,{library_gates:gates,...facts}=freeze;
+    assert.deepEqual(item.independence,facts);
+    assert.deepEqual(item.library_gates,gates);
+  }
+  assert.deepEqual(await everything(),before,'the view wrote nothing');
+});
+
+test('SB191 slice A, real SQL: an unreadable scan row is a null list, an unreadable own holdout is UNAVAILABLE, the boundary follows B0, and the row budget refuses',async()=>{
+  const W=f.registration.window,m=MINUTE,start=W.start_ms-100*m,period={start_ms:W.start_ms,end_ms:W.end_ms};
+  const fresh=async()=>(await f.store.createUser({email:'ind-'+randomUUID()+'@example.test',passwordHash:'unused-labelled-fixture-hash'})).id;
+  const read=(owner,over={})=>readOnlyTx(()=>readIndependence(f.db,{owner_id:owner,run_id:'ind-own-'+owner,bot_id:owner,source_hash:f.c.source_hash,market_key:marketKey(f.c),period,...over}));
+  // an unreadable holdout row (no split) of the same market: the holdout list is null; a run of another source is not a searched row
+  const a=await fresh();
+  await addRun(a,'ind-bad-'+a,{start,split:null,source:hash('elsewhere')});
+  let block=(await read(a)).block;
+  assert.deepEqual([block.earlier_holdouts,block.searched_windows,block.source_holdout_state],[null,[],'NONE']);
+  // the same row with the run's own source and no holdout is an unreadable searched row only
+  const b=await fresh();
+  await addRun(b,'ind-bad-'+b,{start,split:null,holdout:false});
+  block=(await read(b)).block;
+  assert.deepEqual([block.earlier_holdouts,block.searched_windows],[[],null]);
+  // the own parent holdout cannot be read: UNAVAILABLE, and the own row is not an earlier holdout
+  const c=await fresh();
+  await addRun(c,'ind-own-'+c,{start,split:null});
+  block=(await read(c)).block;
+  assert.deepEqual([block.source_holdout_state,block.source_holdout_window,block.earlier_holdouts],['UNAVAILABLE',null,[]]);
+  const d=await fresh();
+  await addRun(d,'ind-own-'+d,{start});
+  block=(await read(d)).block;
+  assert.deepEqual([block.source_holdout_state,block.source_holdout_window,block.earlier_holdouts],['SET',{start_ms:W.start_ms-50*m,end_ms:W.start_ms+50*m},[]],'the own holdout never flags itself');
+  // SB191 P2: an exposure that overlaps the parent's holdout but not the comparison period is frozen in source_holdout_register; the period-scoped prior list never holds it
+  const h=await fresh();
+  await addRun(h,'ind-own-'+h,{start});                                               // own holdout [W-50m, W+50m), the period starts at W
+  const quiet=await read(h,{period:{start_ms:W.end_ms+500*m,end_ms:W.end_ms+600*m}});  // a period far after the holdout
+  assert.deepEqual([quiet.block.source_holdout_state,quiet.block.source_holdout_register],['SET',[]],'a readable empty register is [] with a SET window');
+  const exposureWindow={start_ms:W.start_ms-20*m,end_ms:W.start_ms+10*m},selection='sel-'+randomUUID().slice(0,8);
+  const appended=await f.db.transaction(()=>appendExposures(f.db,{owner_id:h,...MARKET,events:[{kind:'QR4_SELECTION',window:exposureWindow,selection_id:selection}],now:()=>Date.now()+60000}),{isolation:'SERIALIZABLE'});
+  assert.equal(appended.ok,true,JSON.stringify(appended));
+  const otherMarket=await f.db.transaction(()=>appendExposures(f.db,{owner_id:h,broker:MARKET.broker,symbol:'ETHUSDT',timeframe:MARKET.timeframe,events:[{kind:'QR4_SELECTION',window:exposureWindow,selection_id:'sel-eth'}]}),{isolation:'SERIALIZABLE'});
+  assert.equal(otherMarket.ok,true);
+  const outside=await read(h,{period:{start_ms:W.end_ms+500*m,end_ms:W.end_ms+600*m}});
+  assert.deepEqual(outside.block.source_holdout_register,[{kind:'QR4_SELECTION',id:selection,window:exposureWindow,at_ms:appended.rows[0].at_ms}],'overlaps the holdout, not the period; the other market is not listed');
+  assert.equal(windowsOverlap(exposureWindow,{start_ms:W.end_ms+500*m,end_ms:W.end_ms+600*m}),false);
+  assert.deepEqual((await read(c)).block.source_holdout_register,null,'an unreadable own holdout window: null, never []');
+  assert.deepEqual((await read(a)).block.source_holdout_register,[],'no own holdout: nothing to overlap');
+  // boundary: no row is NONE; the effective boundary is the earliest of the owner's Bots (B0 EFFECTIVE_BOUNDARY_SQL), read for the parent's Bot only
+  const e=await fresh(),sibling=await fresh();
+  assert.deepEqual((await read(e)).block.registered_boundary,{state:'NONE'});
+  const insert=(owner,bot,at)=>f.db.query('INSERT INTO public.quant_holdout_boundaries(owner_id,bot_id,venue,market,symbol,timeframe,holdout_start_time,created_by,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+    [owner,bot,'binance-global','SPOT','BTCUSDT','1',at,'qr3-test',Date.now()]);
+  await insert(e,e,W.start_ms-1000*m);
+  await insert(e,sibling,W.start_ms-3000*m);
+  assert.deepEqual((await read(e)).block.registered_boundary,{state:'SET',start_ms:W.start_ms-3000*m});
+  assert.deepEqual((await read(e,{bot_id:sibling})).block.registered_boundary,{state:'SET',start_ms:W.start_ms-3000*m});
+  assert.deepEqual((await read(e,{bot_id:await fresh()})).block.registered_boundary,{state:'NONE'},'a Bot without its own boundary row has none');
+  // budget: three scanned rows with a limit of two refuse, three with a limit of three are read
+  const g=await fresh();
+  for(const name of ['x1','x2','x3'])await addRun(g,'ind-'+name+'-'+g,{start:W.start_ms-9000*m});
+  assert.deepEqual(await read(g,{limit:2}),{ok:false,detail:'INDEPENDENCE_ROWS'});
+  assert.equal((await read(g,{limit:3})).ok,true);
+  assert.ok(INDEPENDENCE_BUDGET.max_rows_per_scan>=1);
+  // the scans write nothing: they run inside a READ ONLY transaction
+  const mode=await readOnlyTx(async()=>{await readIndependence(f.db,{owner_id:g,run_id:'none',bot_id:g,source_hash:f.c.source_hash,market_key:marketKey(f.c),period});return (await f.db.query("SELECT current_setting('transaction_read_only') AS mode")).rows[0].mode;});
+  assert.equal(mode,'on');
 });
 
 /* ---- 2. view ---- */
