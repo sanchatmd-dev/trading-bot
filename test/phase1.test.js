@@ -58,7 +58,7 @@ test('MFA login creates no session until verified and recovery codes are single 
   await r('/api/auth/logout','POST',{},admin.session);
   const challenge=await r('/api/auth/login','POST',loginBody),s=challenge.session;
   assert.equal(challenge.body.mfaRequired,true);assert.equal((await r('/api/me','GET',undefined,s)).status,401);
-  assert.equal((await r('/api/auth/mfa/login','POST',{code:totp(admin.secret)},s)).status,401,'Enrollment code cannot be replayed');
+  assert.equal((await r('/api/auth/mfa/login','POST',{code:admin.code},s)).status,401,'Enrollment code cannot be replayed');
   assert.equal((await r('/api/auth/mfa/login','POST',{code:admin.recoveryCodes[0]},s)).status,200);
   assert.equal((await r('/api/auth/mfa/login','POST',{code:admin.recoveryCodes[1]},s)).status,401,'Challenge is consumed');
   const before=s.cookie.robot_session;

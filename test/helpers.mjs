@@ -49,6 +49,8 @@ export async function authFixture(t,{smtp=false}={}){
 }
 export async function enroll(request,session,password='temporary-test-password'){
   const setup=await request('/api/auth/mfa/setup','POST',{password},session);assert.equal(setup.status,200,JSON.stringify(setup.body));
-  const enabled=await request('/api/auth/mfa/enable','POST',{code:totp(setup.body.secret)},session);assert.equal(enabled.status,200,JSON.stringify(enabled.body));
-  return {secret:setup.body.secret,recoveryCodes:enabled.body.recoveryCodes};
+  // The exact enrollment code is returned so a replay test reuses it; recomputing it later can cross a 30 s step and yield a fresh, valid code.
+  const code=totp(setup.body.secret);
+  const enabled=await request('/api/auth/mfa/enable','POST',{code},session);assert.equal(enabled.status,200,JSON.stringify(enabled.body));
+  return {secret:setup.body.secret,recoveryCodes:enabled.body.recoveryCodes,code};
 }
