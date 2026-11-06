@@ -9,10 +9,11 @@ const settle=(ms=30)=>new Promise(resolve=>setTimeout(resolve,ms));
 // Test fixtures only: Pine Bridge overview, signal and readiness answers for one Bot.
 const FRESH={bridge_enabled:true,sources:{count:1,latest:null},jobs:{by_status:{},latest:null},deployments:{by_state:{},latest_ready:null}};
 const BUILT={bridge_enabled:true,sources:{count:2},jobs:{by_status:{SUCCEEDED:2},latest:{job_status:'SUCCEEDED',has_draft:true}},deployments:{by_state:{DRAFT:1,READY:1},latest_ready:{deployment_id:'d1'}}};
-const reply=({bridge=FRESH,signals=[],verdict='INSUFFICIENT_ACTIVITY'}={})=>path=>{
+// ready: this Bot's own readiness report carries a READY Bridge deployment (the overview above is owner-wide).
+const reply=({bridge=FRESH,signals=[],verdict='INSUFFICIENT_ACTIVITY',ready=false}={})=>path=>{
   if(path==='/api/quant/pine-bridge/overview'){if(bridge instanceof Error)throw bridge;return bridge;}
   if(path==='/api/signals?limit=1')return signals;
-  if(path==='/api/risk/readiness-report')return {verdict};
+  if(path==='/api/risk/readiness-report')return {verdict,blockers:ready?[]:[{code:'NO_READY_DEPLOYMENT'}],current:{deployment:ready?{deployment_id:'d1',state:'READY'}:null}};
   throw new Error('Unexpected '+path);
 };
 
@@ -65,14 +66,14 @@ test('A new Bot: step 2 is current, later Bridge steps wait, and status comes fr
 });
 
 test('A built and running Bot shows Setup complete; an unsaved policy keeps step 6 open with its reason',async()=>{
-  const done=setup({handler:reply({bridge:BUILT,signals:[{id:1}],verdict:'READY_TO_START_PAPER'}),session:'RUNNING'});
+  const done=setup({handler:reply({bridge:BUILT,signals:[{id:1}],verdict:'READY_TO_START_PAPER',ready:true}),session:'RUNNING'});
   try{
     await done.open();
     assert.equal(done.d.querySelector('.sg-count').textContent,'Setup complete');
     assert.equal(done.d.querySelectorAll('.sg-go').length,0,'no action is offered for finished steps');
     assert.equal(done.d.querySelectorAll('.sg-seg.sg-done').length,7);
   }finally{done.w.close();}
-  const unsaved=setup({handler:reply({bridge:BUILT,signals:[{id:1}],verdict:'READY_TO_START_PAPER'}),saved:false});
+  const unsaved=setup({handler:reply({bridge:BUILT,signals:[{id:1}],verdict:'READY_TO_START_PAPER',ready:true}),saved:false});
   try{
     await unsaved.open();
     assert.equal(unsaved.step('risk').getAttribute('aria-current'),'step');
@@ -92,7 +93,7 @@ test('A failed status read shows Unavailable instead of guessing',async()=>{
 });
 
 test('Buttons only navigate, copy or focus: Copy webhook uses the Bot card button and Go to Run never presses Run',async()=>{
-  const p=setup({handler:reply({bridge:BUILT,signals:[{id:1}],verdict:'READY_TO_START_PAPER'})});
+  const p=setup({handler:reply({bridge:BUILT,signals:[{id:1}],verdict:'READY_TO_START_PAPER',ready:true})});
   try{
     await p.open();
     const copied=[],ran=[],views=[];

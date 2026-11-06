@@ -1257,9 +1257,9 @@ test('D2 a panel without the C7 branch fails closed on a C7 body; the real panel
   }
 });
 
-test('D2 cache tokens: i18n.js loads with qr3i2 and paper-performance.js with qr2o10; the stylesheet token is unchanged',()=>{
+test('D2 cache tokens: i18n.js loads with qr3i3 and paper-performance.js with qr2o10; the stylesheet token is unchanged',()=>{
   const html=publicFile('index.html');
-  assert.ok(html.includes('/i18n.js?v=qr3i2'));assert.ok(html.includes('/paper-performance.js?v=qr2o10'));
+  assert.ok(html.includes('/i18n.js?v=qr3i3'));assert.ok(html.includes('/paper-performance.js?v=qr2o10'));
   assert.ok(html.includes('/paper-performance.css?v=qr2o7'));
   assert.equal(html.includes('qr2o8'),false,'no asset keeps the previous token');
 });

@@ -815,6 +815,7 @@ const overviewPairs=[
   ['Create the Bot','สร้าง Bot'],['Each Bot has its own webhook, risk policy and Paper funds.','แต่ละ Bot มี Webhook นโยบายความเสี่ยง และเงิน Paper ของตัวเอง'],
   ['Analyze your indicator with AI','ให้ AI วิเคราะห์ Indicator'],
   ['Quant Lab, Build Pine Bridge: add your Pine indicator, check its inputs, then run Analyze.','ไปที่ Quant Lab หัวข้อ Build Pine Bridge ใส่ Pine indicator ตรวจ input แล้วกด Analyze'],
+  ['Checked for your whole account, not for one Bot.','ตรวจจากทั้งบัญชีของคุณ ไม่ใช่เฉพาะ Bot เดียว'],
   ['Generate the draft Pine','สร้าง Pine ฉบับร่าง'],
   ['Choose the BUY and exit variables, the ATR multiplier and RR, then generate the draft and its setup guide.','เลือกตัวแปร BUY และตัวแปรปิดสถานะ ตัวคูณ ATR และ RR แล้วสร้างฉบับร่างพร้อมคู่มือตั้งค่า'],
   ['Activate the draft for Paper','Activate ฉบับร่างสำหรับ Paper'],

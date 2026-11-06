@@ -7,8 +7,8 @@
   if(!page||!slots)return;
   const STEPS=[
     {key:'bot',title:'Create the Bot',text:'Each Bot has its own webhook, risk policy and Paper funds.'},
-    {key:'analyze',title:'Analyze your indicator with AI',text:'Quant Lab, Build Pine Bridge: add your Pine indicator, check its inputs, then run Analyze.',action:'Open Pine Bridge',go:'bridge'},
-    {key:'draft',title:'Generate the draft Pine',text:'Choose the BUY and exit variables, the ATR multiplier and RR, then generate the draft and its setup guide.',action:'Open Pine Bridge',go:'bridge'},
+    {key:'analyze',title:'Analyze your indicator with AI',text:'Quant Lab, Build Pine Bridge: add your Pine indicator, check its inputs, then run Analyze.',scope:'account',action:'Open Pine Bridge',go:'bridge'},
+    {key:'draft',title:'Generate the draft Pine',text:'Choose the BUY and exit variables, the ATR multiplier and RR, then generate the draft and its setup guide.',scope:'account',action:'Open Pine Bridge',go:'bridge'},
     {key:'activate',title:'Activate the draft for Paper',text:'Activation makes the draft the READY Bridge of this Bot. No real orders are sent.',action:'Open Pine Bridge',go:'bridge'},
     {key:'alert',title:'Connect the TradingView alert',text:'Add the generated Pine to your TradingView chart and paste the webhook of this Bot into its alert. Done when the first signal arrives.',action:'Copy webhook',go:'copy'},
     {key:'risk',title:'Set risk limits and check readiness',text:'Save the risk policy and Paper funding of this Bot, then read its readiness report.',action:'Open Risk manager',go:'risk'},
@@ -45,8 +45,17 @@
     const verdict=data?.report?.verdict,session=sessionOf(data?.id);
     // A disabled Bridge (bridge_enabled not true) reads like a failed Bridge read: unavailable, never todo.
     const bridgeState=done=>!data?'loading':data.bridgeError||bridge?.bridge_enabled!==true?'unknown':done?'done':'todo';
+    // Analyze and draft stay account-wide: the Bridge overview is owner-scoped and holds no per-Bot fact for them.
+    // Activate is per Bot and comes only from this Bot's readiness report; a missing or unreadable report is unknown.
+    const current=data?.report?.current,codes=Array.isArray(data?.report?.blockers)?data.report.blockers.map(item=>item?.code):[];
+    const activateState=()=>{
+      const base=bridgeState(false);
+      if(base!=='todo')return base;
+      if(!current||typeof current!=='object'||!Array.isArray(data.report.blockers)||codes.includes('BRIDGE_DISABLED')||codes.includes('AMBIGUOUS_READY_DEPLOYMENT'))return 'unknown';
+      return current.deployment&&current.deployment.state==='READY'?'done':'todo';
+    };
     return {
-      bot:'done',analyze:bridgeState(analyzed),draft:bridgeState(drafted),activate:bridgeState((by.READY||0)>0),
+      bot:'done',analyze:bridgeState(analyzed),draft:bridgeState(drafted),activate:activateState(),
       alert:!data?'loading':data.signalsError?'unknown':Array.isArray(data.signals)&&data.signals.length?'done':'todo',
       risk:!data?'loading':!policy.ready||BLOCKING.includes(verdict)?'todo':verdict==='READY_TO_START_PAPER'?'done':'warn',
       run:session==='RUNNING'?'done':session==='PAUSED'||session==='STOPPED'?'warn':'todo',
@@ -79,6 +88,8 @@
       const body=make('div','sg-body',make('div','sg-line',label(step.title,'strong','sg-name'),chipOf(step.key,status,isCurrent,info)));
       if(status!=='done'||isCurrent)body.append(label(step.text,'p','sg-text'));
       if(step.key==='risk'&&info.policyReason&&status!=='done')body.append(make('p','sg-reason',info.policyReason));
+      // The Bridge overview is owner-scoped: say so in every state, Done included.
+      if(step.scope==='account')body.append(label('Checked for your whole account, not for one Bot.','p','sg-scope'));
       if(status==='unknown')body.append(label('Could not read this status.','p','sg-reason'));
       // Buttons only where they help now: the current step, a step needing attention, or an independent step not covered by the current button.
       const useful=isCurrent||status==='warn'||(status==='todo'&&step.key!=='run'&&step.go!==STEPS[current]?.go);
