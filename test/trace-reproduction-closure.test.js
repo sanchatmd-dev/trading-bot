@@ -14,7 +14,7 @@ import {PF2_ENGINE_FILES, PF2_EVALUATOR_FILES} from '../src/quant-research/prefl
 import {INGESTION_ENGINE_FILES} from '../src/postgres/quant-data.js';
 import {MP_COMBINED_ENGINE_FILES} from '../src/multi-pine/engine-closure.js';
 import {LIBRARY_VERSIONS} from '../src/quant-library/derive.js';
-import {TRACE_FILES, CANDIDATE_BLOCKERS, OWNER_RECOMMENDATION_CONTRACT_VERSIONS, MULTI_PINE_CONTRACT_VERSION, evaluateProvenance} from '../src/quant-library/package-gates.js';
+import {TRACE_FILES, CANDIDATE_BLOCKERS, OWNER_RECOMMENDATION_CONTRACT_VERSIONS, MULTI_PINE_CONTRACT_VERSION, evaluateProvenance, ownerRecommendationGate} from '../src/quant-library/package-gates.js';
 import {renderPackage} from '../src/quant-library/package-render.js';
 import {
   TRACE_EXECUTION_PROFILES, TRACE_PROFILE_DEFERRED, TRACE_REPRODUCTION_CLOSURE_VERSION, TRACE_REPRODUCTION_FILES,
@@ -164,10 +164,12 @@ test('C1 one changed byte in any listed file rotates the hash; one dropped file 
 
 /** Candidate engine hashes over LF-normalised bytes. FE-2b has the owner's 2026-10-22 implementation GO.
  * Its release evidence records old/new hashes. Stored historical contracts remain unchanged. Update only with an authorized engine change. */
+/* Rotated by the L6 recommendation contract slice (GO-L6-LOCAL, 2026-11-06): research_engine.py accepts v3, quant-research.js builds v3, the new research-contract-v3.js joins the
+ * runtime manifest. Old to new: LEGACY 988171145615b423... to a6be760ef6c72a8f...; FOUNDATION 3b29eb619f2b4eda... to 329f39c65e897334...; FIXED_EVAL b3acd0c8af04a06f... to da1488a8cc2a15ad.... */
 const BASE_HASHES = Object.freeze({
-  LEGACY: '988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a',
-  FOUNDATION: '3b29eb619f2b4eda1e8abb924e965965c221282462daf238d2cfdd0707386c22',
-  FIXED_EVAL: 'b3acd0c8af04a06f17ad5d54946c55e892869f12f64200271f84c200df39bf88'});
+  LEGACY: 'a6be760ef6c72a8f8739ac43382de3d0e69fd4070697ddafd9bca012607f97f9',
+  FOUNDATION: '329f39c65e89733401632ad26fa43859980f5abdd00f4f029e3f1bd76cdaaa81',
+  FIXED_EVAL: 'da1488a8cc2a15ad14fd81e26e79c7452c7fbcf3d54e5cb825b1c0fda2f2aa23'});
 const fixedEvalFormula = async () => hash(canonical({version: 'fixed-eval-closure-v1', files: Object.fromEntries(await Promise.all(FIXED_EVAL_ENGINE_FILES.map(async name => [name, hash(Buffer.from((await read(name)).toString('latin1').replaceAll('\r\n', '\n'), 'latin1'))])))}));
 
 test('C1 the engine hashes of the checkout equal the authorized candidate pins', async () => {
@@ -178,7 +180,7 @@ test('C1 the engine hashes of the checkout equal the authorized candidate pins',
 
 /* ================================ C5: classification coverage (R-CV1) ================================ */
 
-const LITERAL_VERSIONS = {active: ['ql3a-research-job-v1'], deferred: ['ql3a-research-job-multi-v1', 'ql3a-research-job-v2', 'ql3a-research-job-v3']};
+const LITERAL_VERSIONS = {active: ['ql3a-research-job-v1', 'ql3a-research-job-v3'], deferred: ['ql3a-research-job-multi-v1', 'ql3a-research-job-v2']};
 const classified = (versions, active = TRACE_EXECUTION_PROFILES, deferred = TRACE_PROFILE_DEFERRED) => versions.filter(version => Object.hasOwn(active, version) || Object.hasOwn(deferred, version));
 const unclassified = (versions, active = TRACE_EXECUTION_PROFILES, deferred = TRACE_PROFILE_DEFERRED) => versions.filter(version => !classified([version], active, deferred).length);
 /** The closure each profile names, as a file list. A profile that names a closure this table does not know fails C5. */
@@ -195,11 +197,14 @@ test('C5 every G7-listed version and the multi-Pine version is classified ACTIVE
   assert.equal(TRACE_PROFILE_DEFERRED['ql3a-research-job-v2'].execution_backend, 'quant-foundation-v1');
 });
 
-test('C5 ACTIVE is exactly the v1 key today (the slice that defines the next research contract changes this pin and adds its own profile and closure)', () => {
+test('C5 V3-P6 ACTIVE is exactly the v1 and v3 keys, DEFERRED exactly multi-v1 and v2; v3 shares the v1 legacy closure (root ruling R1)', () => {
   assert.deepEqual(Object.keys(TRACE_EXECUTION_PROFILES), LITERAL_VERSIONS.active);
   assert.deepEqual(Object.keys(TRACE_PROFILE_DEFERRED).sort(), LITERAL_VERSIONS.deferred);
-  assert.equal(TRACE_EXECUTION_PROFILES['ql3a-research-job-v1'].state, 'ACTIVE');
-  for (const version of [...OWNER_RECOMMENDATION_CONTRACT_VERSIONS, MULTI_PINE_CONTRACT_VERSION]) assert.ok(!Object.hasOwn(TRACE_EXECUTION_PROFILES, version), version + ' is not ACTIVE');
+  for (const version of LITERAL_VERSIONS.active) assert.equal(TRACE_EXECUTION_PROFILES[version].state, 'ACTIVE', version);
+  assert.deepEqual(TRACE_EXECUTION_PROFILES['ql3a-research-job-v3'], TRACE_EXECUTION_PROFILES['ql3a-research-job-v1'], 'v3 names the same closure and path as v1');
+  assert.equal(TRACE_EXECUTION_PROFILES['ql3a-research-job-v3'].closure, 'engineHash(false)');
+  for (const version of OWNER_RECOMMENDATION_CONTRACT_VERSIONS) assert.ok(Object.hasOwn(TRACE_EXECUTION_PROFILES, version), version + ' (G7-listed) is ACTIVE');
+  assert.ok(!Object.hasOwn(TRACE_EXECUTION_PROFILES, MULTI_PINE_CONTRACT_VERSION), 'the multi-Pine version is not ACTIVE');
 });
 
 test('C5 every ACTIVE profile names an existing closure whose file list is a subset of the trace closure', async () => {
@@ -220,12 +225,17 @@ test('C5 rename probe: the keys are literal strings, so a renamed G7 placeholder
   assert.notDeepEqual(renamed, real, 'the probe renames the v3 placeholder');
   assert.deepEqual(unclassified(renamed), ['ql3a-research-job-v3-renamed']);
   assert.deepEqual(unclassified(['ql3a-research-job-v4', 'ql3a-research-job-multi-v2']), ['ql3a-research-job-v4', 'ql3a-research-job-multi-v2']);
-  // Mutant M20: a dropped DEFERRED key is caught.
-  const {['ql3a-research-job-v3']: dropped, ...withoutV3} = TRACE_PROFILE_DEFERRED;
+  // Mutant M20: a dropped ACTIVE v3 key (the G7-listed version) is caught.
+  const {['ql3a-research-job-v3']: dropped, ...withoutV3} = TRACE_EXECUTION_PROFILES;
   assert.ok(dropped);
-  assert.deepEqual(unclassified(real, TRACE_EXECUTION_PROFILES, withoutV3), ['ql3a-research-job-v3']);
-  // Mutant M21: v3 added to ACTIVE with the legacy closure is caught by the pins above.
-  assert.notDeepEqual(Object.keys({...TRACE_EXECUTION_PROFILES, 'ql3a-research-job-v3': {state: 'ACTIVE', closure: 'engineHash(false)'}}), LITERAL_VERSIONS.active);
+  assert.deepEqual(unclassified(real, withoutV3, TRACE_PROFILE_DEFERRED), ['ql3a-research-job-v3']);
+  assert.notDeepEqual(Object.keys(withoutV3), LITERAL_VERSIONS.active);
+  // Mutant M21: v3 moved back to DEFERRED (or listed in both tables) is caught by the pins above and by the disjointness check of the first C5 test.
+  const both = {...TRACE_PROFILE_DEFERRED, 'ql3a-research-job-v3': {owner: 'mutant'}};
+  assert.notDeepEqual(Object.keys(both).sort(), LITERAL_VERSIONS.deferred);
+  assert.deepEqual(Object.keys(TRACE_EXECUTION_PROFILES).filter(version => Object.hasOwn(both, version)), ['ql3a-research-job-v3']);
+  // Mutant M23: a v3 profile that names a closure this table does not know fails the closure check of the next C5 test.
+  assert.ok(!Object.hasOwn(CLOSURE_FILES, 'engineHash(v3-only)'));
   // Mutant M22: a table computed from the G7 constant or the multi-Pine constant would follow the rename. The module names neither constant.
   const source = await fs.readFile(path.join(repoRoot, 'src/quant-library/trace-reproduction.js'), 'utf8');
   assert.ok(!/OWNER_RECOMMENDATION_CONTRACT_VERSIONS|MULTI_PINE_CONTRACT_VERSION/.test(source), 'the profile tables must not be computed from the gate constants');
@@ -329,22 +339,27 @@ async function ensureFixture() {
     const evaluate = (c, parameters, kind, signal, {slice = true} = {}) => runPython(engineScript, {
       contract: kind === 'HOLDOUT' || !slice ? c : {...c, dataset: {...c.dataset, bars: c.dataset.bars.slice(0, c.split.validation_end)}}, parameters, kind});
     const traceEvaluate = (c, parameters, signal) => driverEvaluation(c, parameters, signal, {python: PYTHON, args: ['-P', driverScript], timeoutMs: 60000});
-    const ports = {evaluate, traceEvaluate, engineHash: () => engineHash(false)};
+    const ports = {evaluate, traceEvaluate, engineHash: () => engineHash(false), closure: 'engineHash(false)'};
     // The stored run: the real QuantResearchWorker.step and run loop, its storage and lease replaced, its evaluation the real engine.
+    const storeRun = async (runContract, runId) => {
     const worker = Object.create(QuantResearchWorker.prototype), stored = [], steps = [];
     let finished = null;
     worker.controller = {signal: new AbortController().signal};
     worker.clock = () => 1;
     worker.steps = async () => stored;
-    worker.engineHash = async () => contract.engine_hash;
+    worker.engineHash = async () => runContract.engine_hash;
     worker.fenced = async (job, work) => work({evaluations_started: 0});
     worker.current = async () => {};
     worker.db = {prepare: sql => ({run: async (...values) => { if (/INSERT INTO quant_job_steps/.test(sql)) { const [runId, stepId, kind, parameters, result] = values; stored.push({step_id: stepId, kind, parameters: JSON.parse(parameters), result: JSON.parse(result)}); steps.push([stepId, kind]); } }})};
     worker.evaluate = evaluate;
     worker.finish = async (job, status, result) => { finished = {status, result: JSON.parse(JSON.stringify(result))}; };
-    await worker.run({contract, contract_hash: contractHash, run_id: 'run-s3c-0001'});
-    const run = clone({owner_id: OWNER, bot_id: BOT, run_id: 'run-s3c-0001', status: finished.status, contract, contract_hash: contractHash, result: finished.result});
-    return {dir, ports, run, steps, stored, evaluate, engineScript, driverScript};
+    const runHash = hash(canonical(runContract));
+    await worker.run({contract: runContract, contract_hash: runHash, run_id: runId});
+    const run = clone({owner_id: OWNER, bot_id: BOT, run_id: runId, status: finished.status, contract: runContract, contract_hash: runHash, result: finished.result});
+    return {run, steps, stored};
+    };
+    const first = await storeRun(contract, 'run-s3c-0001');
+    return {dir, ports, run: first.run, steps: first.steps, stored: first.stored, evaluate, engineScript, driverScript, storeRun};
   })();
   return scratch;
 }
@@ -445,6 +460,29 @@ test('C2 (' + LABEL + ') the real trace: every partition has rows, partitions fo
     const closed = new Set(trades.rows.map(row => row[0]));
     for (const ref of entries) if (!filled(ref, 'EXIT')) assert.ok(!closed.has(ref), 'open entry ' + ref + ' has a trade row');
     assert.equal(closed.size, trades.rows.length, 'one row per entry_ref');
+  });
+
+test('C2 V3 (labelled fixture, policy_version fixture-v1) a v3 run stored by the real worker loop and real engine reproduces through S3 with digests equal to the stored steps, byte-identical to the v1 run, and passes G7 where v1 does not',
+  {skip: NO_PYTHON, timeout: 240000}, async () => {
+    const {fixture, value: one} = await reproduction();
+    const v3 = clone(fixture.run.contract);
+    Object.assign(v3, {version: 'ql3a-research-job-v3', policy_version: 'fixture-v1', policy_hash: v3.snapshot.policy_hash, acceptance_blockers: [...CANDIDATE_BLOCKERS]});
+    const stored = await fixture.storeRun(v3, 'run-s3c-0003');
+    assert.equal(stored.run.status, 'SUCCEEDED', JSON.stringify(stored.run.result?.selected?.screen_reasons));
+    assert.equal(stored.run.result.completion_reason, 'RESEARCH_CANDIDATE_PENDING_ACCEPTANCE');
+    assert.equal(ownerRecommendationGate({contract: stored.run.contract, result: stored.run.result}).state, 'PASS');
+    assert.equal(ownerRecommendationGate({contract: fixture.run.contract, result: fixture.run.result}).state, 'FAIL');
+    // The engine never reads the version: every stored step and the selection equal the v1 run's.
+    assert.deepEqual(stored.stored.map(step => [step.step_id, step.kind, step.parameters, step.result]), fixture.stored.map(step => [step.step_id, step.kind, step.parameters, step.result]));
+    assert.ok(canonical(stored.run.result.selected) === canonical(fixture.run.result.selected), 'the selected record is byte-identical to the v1 run');
+    const value = await reproduceRun({run: stored.run, ports: fixture.ports});
+    const digests = storedDigests(stored.run.result.selected);
+    assert.equal(value.steps_digest, digests.steps);
+    assert.equal(value.holdout_digest, digests.holdout);
+    assert.equal(value.steps_digest, one.steps_digest);
+    assert.ok(canonical(value.trace) === canonical(one.trace), 'the reproduced trace equals the v1 trace');
+    // v3 ports bound to another closure never reach the engine
+    await assert.rejects(reproduceRun({run: stored.run, ports: {...fixture.ports, closure: 'engineHash(true)'}}), {code: 'TRACE_REPRODUCTION_UNSUPPORTED'});
   });
 
 test('C2 (' + LABEL + ') mutant M8: a non-HOLDOUT step given the full bars is refused by the real engine; the holdout slice is what the module relies on', {skip: NO_PYTHON, timeout: 180000}, async () => {

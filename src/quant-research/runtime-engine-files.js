@@ -92,6 +92,7 @@ export const QUANT_RUNTIME_ENGINE_FILES=Object.freeze([
   'src/quant-research/profile-contract.js',
   'src/quant-research/profile-pipeline-v2.js',
   'src/quant-research/research-contract-v2.js',
+  'src/quant-research/research-contract-v3.js',
   'src/quant-research/research-dataset-store.js',
   'src/quant-research/resource-health.js',
   'src/quant-research/runtime-engine-files.js',

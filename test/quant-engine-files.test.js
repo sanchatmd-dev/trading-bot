@@ -36,6 +36,17 @@ test('reviewed worker and API import closure is hashed by every runtime engine',
   'quant_lab/src/robot_quant/research_chunk.py','quant_lab/src/robot_quant/pf2_replay.py'])
   assert.ok(QUANT_RUNTIME_ENGINE_FILES.includes(file));
 });
+test('V3-P14 the v3 research contract module is in the runtime import closure and the manifest; without the manifest entry the closure rule names exactly that module',async()=>{
+ const v3='src/quant-research/research-contract-v3.js',imports=await closure();
+ assert.ok(imports.has(v3),'quant-research.js imports the v3 contract module');
+ assert.ok(QUANT_RUNTIME_ENGINE_FILES.includes(v3));
+ assert.ok(!LEGACY_ENGINE_FILES.includes(v3),'the legacy run closure does not hash the admission-side contract module');
+ for(const files of [INGESTION_ENGINE_FILES,FOUNDATION_ENGINE_FILES,PF2_ENGINE_FILES]){
+  assert.ok(files.includes(v3));
+  const without=files.filter(file=>file!==v3);
+  assert.deepEqual([...imports].filter(file=>!without.includes(file)&&!shared.has(file)),[v3],'mutant: the manifest entry removed gives an unhashed dependency naming the module');
+ }
+});
 test('missing runtime file and changed enrollment semantics invalidate ingestion identity',async()=>{
  const target=new URL('../src/postgres/quant-profile-enrollment-schema.sql',import.meta.url).href;
  const baseline=await ingestionEngineHash();

@@ -18,6 +18,7 @@ import {canonical,hash} from '../../src/pine-bridge/source.js';
 import {LIBRARY_VERSIONS} from '../../src/quant-library/derive.js';
 import {PACKAGE_FILES,TRACE_FILES,CANDIDATE_BLOCKERS,ENGINEERING_SCOPE,evaluateProvenance} from '../../src/quant-library/package-gates.js';
 import {renderPackage} from '../../src/quant-library/package-render.js';
+import {ownerRecommendationGate} from '../../src/quant-library/owner-recommendation.js';
 import {driverEvaluation,gateTraceReproduction,reproduceRun,resolveInterpreter,traceReproductionEngineHash,traceReproductionRecords} from '../../src/quant-library/trace-reproduction.js';
 import {FIXTURE_LABEL,contractOf,hex,MINUTE,T0} from '../helpers/quant-library-fixture.mjs';
 
@@ -317,14 +318,19 @@ function c3Subject(storedRun,trace,recordRows){
 }
 const c3Codes=subject=>[...evaluateProvenance(subject).codes];
 
-/** The shared C3 fixture: the run stored by the real worker into PostgreSQL JSONB, read back, reproduced by the real driver. */
-let premise=null;
-const roundTrip=()=>premise??=(async()=>{
-  const who=await newOwner('s3c-c3');
+/** The shared C3 fixture: the run stored by the real worker into PostgreSQL JSONB, read back, reproduced by the real driver.
+ * shape(contract) turns the v1 fixture contract into the form under test (identity for v1; the v3 label plus the OD-12 policy fields for v3). */
+let premise=null,premiseV3=null;
+const roundTrip=()=>premise??=storeAndReproduce('s3c-c3',contract=>contract);
+const V3_LABEL='C3 evidence on a v3 fixture run (policy_version fixture-v1), not B0 or build evidence';
+const toV3=contract=>Object.assign(contract,{version:'ql3a-research-job-v3',policy_version:'fixture-v1',policy_hash:contract.snapshot.policy_hash});
+const roundTripV3=()=>premiseV3??=storeAndReproduce('s3c-v3',toV3);
+const storeAndReproduce=(label,shape)=>(async()=>{
+  const who=await newOwner(label);
   const engineScript=path.join(scratchDir,'engine.py'),driverScript=path.join(scratchDir,'driver.py');
   await fs.writeFile(engineScript,BOOTSTRAP('research_engine.main()'));
   await fs.writeFile(driverScript,BOOTSTRAP('trace_reproduction.main()'));
-  const contract=await fixtureContract(who),contractHash=hash(canonical(contract)),runId='run-s3c-'+randomUUID();
+  const contract=shape(await fixtureContract(who)),contractHash=hash(canonical(contract)),runId='run-s3c-'+randomUUID();
   const now=Date.now(),leaseToken='lease-'+randomUUID();
   await owner.query(`INSERT INTO quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,status,phase,created_at,updated_at,deadline,attempt,lease_token,lease_until)
     VALUES($1,$2,$2,$3,$4,$5,$6,$7,'RUNNING','CANDIDATES',$8,$8,$9,1,$10,$9)`,[runId,who.id,who.deployment,'idem-'+runId,hex('submission'),contractHash,JSON.stringify(contract),now,now+3600000,leaseToken]);
@@ -344,10 +350,35 @@ const roundTrip=()=>premise??=(async()=>{
   const row=(await owner.query('SELECT * FROM quant_jobs WHERE run_id=$1',[runId])).rows[0];
   const steps=(await owner.query('SELECT step_id,kind,parameters,result FROM quant_job_steps WHERE run_id=$1 ORDER BY step_id',[runId])).rows;
   const run={owner_id:row.owner_id,bot_id:row.bot_id,run_id:row.run_id,status:row.status,contract:row.contract,contract_hash:row.contract_hash,result:row.result};
-  const ports={evaluate,traceEvaluate:(c,parameters,signal)=>driverEvaluation(c,parameters,signal,{python:PYTHON,args:['-P',driverScript],timeoutMs:60000}),engineHash:()=>engineHash(false)};
+  const ports={evaluate,traceEvaluate:(c,parameters,signal)=>driverEvaluation(c,parameters,signal,{python:PYTHON,args:['-P',driverScript],timeoutMs:60000}),engineHash:()=>engineHash(false),closure:'engineHash(false)'};
   const value=await reproduceRun({run,ports});
   return {who,run,row,steps,inMemoryResult,value,contract};
 })();
+
+test('V3-G2 ('+V3_LABEL+') a v3 run stored by the real worker into JSONB reads back whole, passes G7, reproduces through the real driver with digests equal to the stored steps, and is byte-identical to the v1 run of the same fixture',{skip:NO_PYTHON,timeout:480000},async()=>{
+  const v1=await roundTrip(),v3=await roundTripV3();
+  const {run,row,steps,value}=v3;
+  assert.equal(run.status,'SUCCEEDED',JSON.stringify(run.result?.selected?.screen_reasons));
+  assert.equal(run.contract.version,'ql3a-research-job-v3');assert.ok(!Object.hasOwn(run.contract,'execution_backend'));
+  assert.equal(run.result.completion_reason,'RESEARCH_CANDIDATE_PENDING_ACCEPTANCE');assert.equal(run.result.holdout_evaluated,true);
+  assert.equal(row.lease_token,null);
+  assert.equal(hash(canonical(run.contract)),run.contract_hash,'the v3 contract hash survives the JSONB round trip');
+  assert.deepEqual(ownerRecommendationGate({contract:run.contract,result:run.result}),{gate:'G7',state:'PASS',code:null},'v3 derives G7 PASS from the reason and the version');
+  assert.equal(ownerRecommendationGate({contract:v1.run.contract,result:v1.run.result}).state,'FAIL','the v1 run of the same fixture does not');
+  const stored=storedDigests(run.result.selected);
+  assert.equal(value.steps_digest,stored.steps,'recomputed steps digest equals the digest of the stored (read-back) steps');
+  assert.equal(value.holdout_digest,stored.holdout,'recomputed holdout digest equals the digest of the stored (read-back) test');
+  assert.equal(value.run_engine_hash,run.contract.engine_hash);
+  assert.equal(value.trace_engine_hash,await traceReproductionEngineHash());
+  // V3-P11 at the storage level: the engine does not read the version, so every stored step and the whole selection are byte-identical to the v1 run.
+  assert.equal(steps.length,v1.steps.length);
+  assert.deepEqual(steps.map(step=>[step.step_id,step.kind,step.parameters,step.result]),v1.steps.map(step=>[step.step_id,step.kind,step.parameters,step.result]));
+  assert.equal(canonical(run.result.selected),canonical(v1.run.result.selected));
+  assert.equal(value.steps_digest,v1.value.steps_digest);assert.equal(value.holdout_digest,v1.value.holdout_digest);
+  // The entry references carry the deployment id (a separate fixture owner per run), so compare with that id masked.
+  const masked=(trace,deployment)=>canonical(trace).replaceAll(deployment,'<deployment>');
+  assert.ok(masked(value.trace,v3.contract.deployment_id)===masked(v1.value.trace,v1.contract.deployment_id),'the reproduced trace is the same up to the deployment id');
+});
 
 test('C3 ('+LABEL+') the run stored by the real worker into JSONB reads back whole: contract hash, status, completion and every step',{skip:NO_PYTHON,timeout:240000},async()=>{
   const {run,row,steps,contract}=await roundTrip();

@@ -21,14 +21,17 @@ const NEW_NODE_FILES = ['src/multi-pine/candidate-plan.js', 'src/multi-pine/comb
 const NEW_PYTHON_FILES = ['quant_lab/src/robot_quant/mp_combined_job.py', 'quant_lab/src/robot_quant/mp_combined_paper.py'];
 const NEW_FILES = [...NEW_NODE_FILES, ...NEW_PYTHON_FILES];
 const RUNTIME_ROOTS = ['src/postgres/quant-research-main.js', 'src/quant-research/io-profile-worker.js', 'src/postgres/quant-preflight-wiring.js', 'src/postgres/quant-preflight-routes.js'];
-/** Candidate closure pins. Update only with an authorized engine change and an old/new closure inventory. */
+/** Candidate closure pins. Update only with an authorized engine change and an old/new closure inventory.
+ * L6 (GO-L6-LOCAL, 2026-11-06; research_engine.py accepts v3, quant-research.js builds v3, new research-contract-v3.js in the runtime manifest). Old to new:
+ * legacy 988171145615... to a6be760ef6c7...; foundation 3b29eb619f2b... to 329f39c65e89...; ingestion e10687a3f45e... to c000a54a36e5...;
+ * pf2_engine 046422ce7627... to 9256ea2d9bc3...; fixed_eval b3acd0c8af04... to da1488a8cc2a...; pf2_evaluator unchanged. Also rotated, not pinned here: mp-combined 8c5d847c6562... to f8a9723af23a..., trace d6131e75df97... to 833e4c1e8eda...; mp-package-trace unchanged. */
 const BASE_HASHES = Object.freeze({
-  legacy: '988171145615b423393760f11c0cf050c2df2b1c9d27df5cfebd972f88c6e63a',
-  foundation: '3b29eb619f2b4eda1e8abb924e965965c221282462daf238d2cfdd0707386c22',
-  ingestion: 'e10687a3f45eba8cc285c4612ae580db14d94367af3e1fc0b5005346dffa65ce',
-  pf2_engine: '046422ce7627f136983f8e0ee2d382141d1d915f5858e03b48815ee661ea42b7',
+  legacy: 'a6be760ef6c72a8f8739ac43382de3d0e69fd4070697ddafd9bca012607f97f9',
+  foundation: '329f39c65e89733401632ad26fa43859980f5abdd00f4f029e3f1bd76cdaaa81',
+  ingestion: 'c000a54a36e5fecb460439721c95137951f17bf9cfd3bc9c3df6bde64722e4d3',
+  pf2_engine: '9256ea2d9bc3dfbf8c29ec22e56a1df01e18aa3949f6f16b9e1cd290399563b0',
   pf2_evaluator: '3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada',
-  fixed_eval: 'b3acd0c8af04a06f17ad5d54946c55e892869f12f64200271f84c200df39bf88'
+  fixed_eval: 'da1488a8cc2a15ad14fd81e26e79c7452c7fbcf3d54e5cb825b1c0fda2f2aa23'
 });
 
 const listed = new Set(MP_COMBINED_ENGINE_FILES);

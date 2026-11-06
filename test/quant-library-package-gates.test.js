@@ -1584,20 +1584,51 @@ test('R13: MULTI_PINE without the internal path has its own code and never reuse
   assert.equal(B0({...internal,internal:'true'}).codes.includes('BI_MULTI_PINE_INTERNAL_ONLY'),true,'only an explicit true opens the internal path');
 });
 
-test('R17 todo 2: the G7 version is a placeholder and no research-contract builder emits it yet',()=>{
+test('R17 todo 2: the G7 version is the named ql3a-research-job-v3 (owner kept the name, Q1); exactly one research-contract module emits it and it is a LABELLED FIXTURE form',()=>{
   assert.deepEqual([...OWNER_RECOMMENDATION_CONTRACT_VERSIONS],['ql3a-research-job-v3']);
   const directory=new URL('../src/quant-research/',import.meta.url);
   const sources=fs.readdirSync(directory).filter(name=>name.endsWith('.js'));
   assert.ok(sources.length>5,'the research contract sources were found');
-  for(const name of sources){
-    const body=fs.readFileSync(new URL(name,directory),'utf8');
-    assert.ok(!body.includes(OWNER_RECOMMENDATION_CONTRACT_VERSIONS[0]),name+' must not emit the placeholder contract version before the root names it');
-  }
+  assert.deepEqual(sources.filter(name=>fs.readFileSync(new URL(name,directory),'utf8').includes(OWNER_RECOMMENDATION_CONTRACT_VERSIONS[0])),['research-contract-v3.js'],'only the v3 contract module names the G7 version');
   const emitted=sources.flatMap(name=>[...fs.readFileSync(new URL(name,directory),'utf8').matchAll(/ql3a-research-job-v\d+/g)].map(match=>match[0]));
-  assert.ok(emitted.length>0&&emitted.every(version=>['ql3a-research-job-v1','ql3a-research-job-v2'].includes(version)),'builders emit v1 and v2 only: '+[...new Set(emitted)].join(','));
-  for(const version of emitted)assert.equal(ownerRecommendationGate({contract:{version},result:{completion_reason:'RESEARCH_CANDIDATE_PENDING_ACCEPTANCE'}}).state,'FAIL');
+  assert.ok(emitted.length>0&&emitted.every(version=>['ql3a-research-job-v1','ql3a-research-job-v2','ql3a-research-job-v3'].includes(version)),'builders emit v1, v2 and v3 only: '+[...new Set(emitted)].join(','));
+  for(const version of emitted)assert.equal(ownerRecommendationGate({contract:{version},result:{completion_reason:'RESEARCH_CANDIDATE_PENDING_ACCEPTANCE'}}).state,version===NEW_VERSION?'PASS':'FAIL');
   // RC-11: the multi-Pine version is a placeholder too, and no builder emits it before the root names it
   for(const name of sources)assert.ok(!fs.readFileSync(new URL(name,directory),'utf8').includes(MULTI_PINE_CONTRACT_VERSION),name+' must not emit the placeholder multi-Pine contract version');
+});
+
+test('V3-P4 G7 for the v3 contract (OD-18): PASS needs the v3 version and the completion reason; v1 and v2 never pass; a supplied owner_recommendation_ready changes nothing',()=>{
+  const PENDING='RESEARCH_CANDIDATE_PENDING_ACCEPTANCE';
+  const gate=(version,reason,ready)=>ownerRecommendationGate({contract:{version},result:{completion_reason:reason,...(ready===undefined?{}:{owner_recommendation_ready:ready})}});
+  assert.deepEqual(gate(NEW_VERSION,PENDING),{gate:'G7',state:'PASS',code:null});
+  for(const reason of ['CANDIDATE_FAILED_CHECKS','NO_VALID_TRAIN_VALIDATION_CANDIDATE',undefined,null,'',5])
+    assert.deepEqual(gate(NEW_VERSION,reason),{gate:'G7',state:'FAIL',code:'OWNER_RECOMMENDATION_NOT_READY'},'v3 with reason '+String(reason));
+  for(const version of ['ql3a-research-job-v1','ql3a-research-job-v2',MULTI_PINE_CONTRACT_VERSION,'ql3a-research-job-v4',undefined])
+    assert.equal(gate(version,PENDING).state,'FAIL','version '+String(version));
+  for(const ready of [true,false,'true',1]){
+    assert.equal(gate(NEW_VERSION,PENDING,ready).state,'PASS','ready flag '+String(ready)+' does not remove a PASS');
+    assert.equal(gate(NEW_VERSION,'CANDIDATE_FAILED_CHECKS',ready).state,'FAIL','ready flag '+String(ready)+' does not create a PASS');
+    assert.equal(gate('ql3a-research-job-v1',PENDING,ready).state,'FAIL');
+  }
+});
+
+test('V3-P5 B0 on a v3 fixture run: no capability blocker, no G7 code and no binding gap from a missing policy field',()=>{
+  const subject=golden({contract:c=>{c.policy_version='fixture-v1';c.policy_hash=c.snapshot.policy_hash;}});
+  assert.equal(subject.run.contract.version,NEW_VERSION);
+  const result=B0(subject);
+  assert.equal(result.pass,true);expectCodes(result,[]);
+  assert.equal(result.g7.state,'PASS');
+  assert.ok(!subject.run.contract.acceptance_blockers.some(code=>CAPABILITY_BLOCKERS.includes(code)),'OD-3: the v3 contract never freezes a capability blocker');
+  assert.equal(subject.binding.policy_version,'fixture-v1');assert.equal(subject.binding.policy_hash,subject.run.contract.snapshot.policy_hash);
+});
+
+test('V3-P13 relabel without shape check, B0 half: the v1 form relabelled v3 (capability blocker frozen, no policy fields) is refused by B0 with BI_CAPABILITY_BLOCKER_PRESENT and BI_BINDING_INCOMPLETE',()=>{
+  const relabelled=golden({contract:c=>{c.acceptance_blockers=[...CANDIDATE_BLOCKERS,...CAPABILITY_BLOCKERS];delete c.policy_version;delete c.policy_hash;}});
+  assert.equal(relabelled.run.contract.version,NEW_VERSION);
+  const result=B0(relabelled);
+  assert.equal(result.pass,false);
+  for(const code of ['BI_CAPABILITY_BLOCKER_PRESENT','BI_BINDING_INCOMPLETE'])assert.ok(result.codes.includes(code),code);
+  assert.ok(!result.codes.includes('OWNER_RECOMMENDATION_NOT_READY'),'the relabel does pass G7: the refusal comes from the blocker and the binding');
 });
 
 test('R17 todo 3: a hard failure is a FAIL with at least one non-retryable code',()=>{

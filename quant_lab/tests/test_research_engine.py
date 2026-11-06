@@ -1,3 +1,4 @@
+import json
 from dataclasses import replace
 from types import SimpleNamespace
 
@@ -59,3 +60,42 @@ def test_locked_dimensions_and_grid_fail_closed(calculations):
     for parameters in [{"atrLenInput": 15, "atr_multiplier": 60, "rr": 1.5}, {"atrLenInput": 14, "atr_multiplier": 60, "rr": 1.5, "fixed": 1}, {"atrLenInput": True, "atr_multiplier": 60, "rr": 1.5}]:
         with pytest.raises(ValueError):
             research_engine.evaluate(request_for(frozen, parameters, "CANDIDATE"))
+
+
+V3 = "ql3a-research-job-v3"
+V3_BLOCKERS = ["VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED", "CUSTOM_REPAINT_EVIDENCE_REQUIRED"]
+V1_BLOCKERS = [*V3_BLOCKERS, "CUSTOMER_QUANT_CAPABILITY_NOT_REGISTERED"]
+
+
+def v1_and_v3():
+    """The same labelled fixture contract as a v1 and a v3 contract: they differ only in version, policy fields and blockers (V3-P11)."""
+    base = contract()
+    v1 = {**base, "acceptance_blockers": list(V1_BLOCKERS)}
+    v3 = {**base, "version": V3, "policy_version": "fixture-v1", "policy_hash": "a" * 64, "acceptance_blockers": list(V3_BLOCKERS)}
+    return v1, v3
+
+
+def test_v3_step_results_are_byte_identical_to_v1_and_never_ready(calculations):
+    v1, v3 = v1_and_v3()
+    for kind in ["CANDIDATE", "SENSITIVITY", "STRESS", "HOLDOUT"]:
+        parameters = v1["input_lock"]["baseline"]
+        one = research_engine.evaluate(request_for(v1, parameters, kind))
+        three = research_engine.evaluate(request_for(v3, parameters, kind))
+        assert json.dumps(one, sort_keys=True, separators=(",", ":")) == json.dumps(three, sort_keys=True, separators=(",", ":"))
+        assert three["owner_recommendation_ready"] is False
+        assert ("test" in three) == (kind == "HOLDOUT")
+    # The policy fields and the blocker list are not inputs of the evaluation: the replay saw equal calls for both versions.
+    assert len(calculations) == 8
+    assert [call[1]["model"] for call in calculations[0::2]] == [call[1]["model"] for call in calculations[1::2]]
+
+
+def test_unsupported_versions_and_scopes_still_fail_closed(calculations):
+    v1, v3 = v1_and_v3()
+    parameters = v1["input_lock"]["baseline"]
+    for version in ["ql3a-research-job-v2", "ql3a-research-job-v4", "ql3a-research-job-multi-v1", "ql3a-research-job-v3 ", "QL3A-RESEARCH-JOB-V3", ""]:
+        with pytest.raises(ValueError, match="UNSUPPORTED_RESEARCH_CONTRACT"):
+            research_engine.evaluate(request_for({**v3, "version": version}, parameters, "CANDIDATE"))
+    for frozen in [v1, v3]:
+        for scope in ["SPT_CUSTOM_RESEARCH", "", "spt_custom_engineering_only"]:
+            with pytest.raises(ValueError, match="UNSUPPORTED_RESEARCH_CONTRACT"):
+                research_engine.evaluate(request_for({**frozen, "scope": scope}, parameters, "CANDIDATE"))

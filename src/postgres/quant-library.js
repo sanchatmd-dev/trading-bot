@@ -106,7 +106,8 @@ const exposureFlags=(exposure,quality)=>{
   return comparison_ids.length+selection_ids.length>0?[{code:EXPOSURE_CODE,informational:true,comparison_ids,selection_ids}]:[];
 };
 const emptyTotals=()=>({all:0,...Object.fromEntries(LIBRARY_GROUPS.map(group=>[group,0]))});
-const familyOf=c=>c.execution_backend==='quant-foundation-v1'||c.version==='ql3a-research-job-v2'?'FOUNDATION':c.version==='ql3a-research-job-v1'?'LEGACY':null;
+/** v3 is the LEGACY backend form (bars inline, no execution_backend key), so it classifies with v1. */
+export const familyOf=c=>c.execution_backend==='quant-foundation-v1'||c.version==='ql3a-research-job-v2'?'FOUNDATION':c.version==='ql3a-research-job-v1'||c.version==='ql3a-research-job-v3'?'LEGACY':null;
 const marketOf=c=>{const m=object(object(c.snapshot).market);return text(m.broker)&&text(m.symbol)&&text(m.timeframe)?{broker:m.broker,symbol:m.symbol,timeframe:m.timeframe}:null;};
 const datasetOf=fields=>isObject(fields.dataset)?{start_time:fields.dataset.start_time,end_time:fields.dataset.end_time,warmup_bars:fields.dataset.warmup_bars,
   bar_count:fields.dataset.bar_count,digest_kind:text(fields.dataset.digest_kind),digest:text(fields.dataset.digest,128)}:null;

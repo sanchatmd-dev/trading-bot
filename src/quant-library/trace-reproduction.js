@@ -64,14 +64,14 @@ const MAX_MS=253402300799999;
  * stored contract's version. Every version outside the ACTIVE table, and any contract that carries an `execution_backend` key, is refused with
  * TRACE_REPRODUCTION_UNSUPPORTED before any port call and before any engine-hash read.
  */
-/** The one ACTIVE profile: a legacy research contract carries its bars inline and is checked against the legacy run closure engineHash(false). */
+/** The two ACTIVE profiles: a legacy research contract (v1, and v3 since the recommendation contract slice) carries its bars inline and is checked against the legacy run closure engineHash(false) (root ruling R1). */
 export const TRACE_EXECUTION_PROFILES=Object.freeze({
-  'ql3a-research-job-v1':Object.freeze({state:'ACTIVE',closure:'engineHash(false)',path:'pythonEvaluation + trace driver'})});
+  'ql3a-research-job-v1':Object.freeze({state:'ACTIVE',closure:'engineHash(false)',path:'pythonEvaluation + trace driver'}),
+  'ql3a-research-job-v3':Object.freeze({state:'ACTIVE',closure:'engineHash(false)',path:'pythonEvaluation + trace driver'})});
 /** Known forms that S3 does not reproduce yet, each with the slice that owns them. Refused exactly like an unknown form. */
 export const TRACE_PROFILE_DEFERRED=Object.freeze({
   'ql3a-research-job-v2':Object.freeze({execution_backend:'quant-foundation-v1',owner:'S3d (J4)'}),
-  'ql3a-research-job-multi-v1':Object.freeze({owner:'F11 trace producer'}),
-  'ql3a-research-job-v3':Object.freeze({owner:'the slice that defines the next research contract (OD-3, OD-12, OD-18)'})});
+  'ql3a-research-job-multi-v1':Object.freeze({owner:'F11 trace producer'})});
 /** The profile of a stored contract, or one UNSUPPORTED refusal. Reads only `version` and the presence of `execution_backend`. */
 function executionProfile(contract){
   const version=contract.version;
@@ -129,7 +129,7 @@ function readRun(run){
   const contract=run.contract;
   if(typeof run.contract_hash!=='string'||digestOf(contract)!==run.contract_hash)throw unresolved();
   // The version dispatch comes before every plan check: a deferred or unknown form is UNSUPPORTED whatever its plan looks like (pinned by test B6c).
-  executionProfile(contract);
+  const profile=executionProfile(contract);
   const selected=result.selected;
   if(!isObject(selected)||!isObject(selected.parameters))throw unresolved();
   const parameters=clone(selected.parameters),plan=contract.plan?.candidates,domains=contract.input_lock?.domains,fixedInputs=contract.input_lock?.selection?.fixed_inputs;
@@ -137,7 +137,7 @@ function readRun(run){
   if(plan.filter(candidate=>canonical(candidate)===canonical(parameters)).length!==1)throw unresolved();
   for(const [name,grid] of Object.entries(domains))if(!Array.isArray(grid)||!grid.includes(parameters[name]))throw unresolved();
   if(fixedInputs.some(item=>!isObject(item)||typeof item.pine_variable!=='string'))throw unresolved();
-  return {contract,parameters,plan,domains,fixed:Object.fromEntries(fixedInputs.map(item=>[item.pine_variable,item.effective_value]))};
+  return {profile,contract,parameters,plan,domains,fixed:Object.fromEntries(fixedInputs.map(item=>[item.pine_variable,item.effective_value]))};
 }
 
 /** Bars exist, match the split and are gapless one-minute rows. Checked before any process starts. */
@@ -219,18 +219,22 @@ function coded(error){
 }
 function checkPorts(ports){
   if(!isObject(ports)||!['evaluate','traceEvaluate','engineHash'].every(name=>typeof ports[name]==='function'))throw new TypeError('trace reproduction ports require evaluate, traceEvaluate and engineHash');
+  if(typeof ports.closure!=='string'||ports.closure.length===0)throw new TypeError('trace reproduction ports require the closure text that names what engineHash computes');
   if(ports.traceEngineHash!==undefined&&typeof ports.traceEngineHash!=='function')throw new TypeError('ports.traceEngineHash must be a function');
 }
 
 /**
  * Recompute the selected candidate's steps and the trace tables for one run view {owner_id, bot_id, run_id, status, contract,
  * contract_hash, result}. ports: evaluate(contract, parameters, kind, signal) like pythonEvaluation; traceEvaluate(contract,
- * parameters, signal) returning the driver reply; engineHash() returning the live legacy closure hash; optional traceEngineHash().
+ * parameters, signal) returning the driver reply; engineHash() returning the live hash of the closure that ports.closure names; closure (text, required); optional traceEngineHash().
  * Throws one coded refusal; a refusal produces no output.
  */
 export async function reproduceRun({run,ports,signal}={}){
   checkPorts(ports);
   const read=readRun(run),{contract,parameters}=read;
+  // Ports are bound to a closure (RC-35, root ruling R2): ports built for another closure than the profile names refuse here, after the run checks and before
+  // the bars and before every port call, the engine hash read included. The refusal reuses the module's UNSUPPORTED code.
+  if(ports.closure!==read.profile.closure)throw fail(UNSUPPORTED);
   const bars=checkBars(contract),steps=planSteps(read);
   const live=async()=>{
     if(signal?.aborted)throw fail('RESEARCH_INTERRUPTED');
@@ -357,13 +361,17 @@ export function driverEvaluation(contract,parameters,signal,{python,args=DRIVER_
   });
 }
 
+/** The closure names a ports object can be bound to, each with the function that computes its live hash. Today only the legacy run closure exists. */
+const PORT_CLOSURES=Object.freeze({'engineHash(false)':()=>engineHash(false)});
 /**
- * The ports a real build uses: the unchanged legacy evaluation call, the driver spawner and the live legacy closure hash. The interpreter is
- * resolved once and the same one serves the legacy evaluation and the driver. Only python and timeoutMs are forwarded (no args, cwd or env seam).
+ * The ports a real build uses: the unchanged legacy evaluation call, the driver spawner and the live hash of the named closure. `closure` is required and
+ * must name a known closure (an unknown or missing name throws). The ports carry that name so reproduceRun can refuse a profile with another closure. The interpreter is
+ * resolved once and the same one serves the legacy evaluation and the driver. Only closure, python and timeoutMs are forwarded (no args, cwd or env seam).
  */
-export function defaultPorts({python,timeoutMs}={}){
+export function defaultPorts({closure,python,timeoutMs}={}){
+  if(typeof closure!=='string'||!Object.hasOwn(PORT_CLOSURES,closure))throw new TypeError('defaultPorts requires a known closure name');
   const interpreter=resolveInterpreter({python});
   const options={...(timeoutMs!==undefined?{timeoutMs}:{})};
   const evaluate=(contract,parameters,kind,signal)=>interpreter?pythonEvaluation(contract,parameters,kind,signal,{python:interpreter,...options}):Promise.reject(fail('QUANT_PYTHON_UNAVAILABLE'));
-  return {evaluate,traceEvaluate:(contract,parameters,signal)=>interpreter?driverEvaluation(contract,parameters,signal,{python:interpreter,...options}):Promise.reject(fail('QUANT_PYTHON_UNAVAILABLE')),engineHash:()=>engineHash(false)};
+  return {evaluate,traceEvaluate:(contract,parameters,signal)=>interpreter?driverEvaluation(contract,parameters,signal,{python:interpreter,...options}):Promise.reject(fail('QUANT_PYTHON_UNAVAILABLE')),engineHash:PORT_CLOSURES[closure],closure};
 }

@@ -13,12 +13,15 @@ from robot_quant.bridge_replay import BridgeBar, PaperModel
 from robot_quant.ql3a import mark_period
 from robot_quant.spt_custom_evaluator import CustomOptimizationPlan, evaluate_bars
 
+SUPPORTED_VERSIONS = ("ql3a-research-job-v1", "ql3a-research-job-v3")
+
 
 def evaluate(request: dict) -> dict:
     if set(request) != {"contract", "parameters", "kind"}:
         raise ValueError("INVALID_RESEARCH_REQUEST")
     contract, parameters, kind = (request[k] for k in ("contract", "parameters", "kind"))
-    if contract["version"] != "ql3a-research-job-v1" or contract["scope"] != "SPT_CUSTOM_ENGINEERING_ONLY":
+    # v3 (ql3a-research-job-v3) is the same legacy evaluation: its policy_version and policy_hash fields are not read here.
+    if contract["version"] not in SUPPORTED_VERSIONS or contract["scope"] != "SPT_CUSTOM_ENGINEERING_ONLY":
         raise ValueError("UNSUPPORTED_RESEARCH_CONTRACT")
     if kind not in {"CANDIDATE", "SENSITIVITY", "STRESS", "HOLDOUT"}:
         raise ValueError("UNSUPPORTED_RESEARCH_STEP")

@@ -6,13 +6,13 @@ import os from 'node:os';
 import path from 'node:path';
 import {canonical, hash} from '../src/pine-bridge/source.js';
 import {QuantResearchWorker, pythonEvaluation} from '../src/postgres/quant-research-worker.js';
-import {LEGACY_ENGINE_FILES, FOUNDATION_ENGINE_FILES} from '../src/postgres/quant-research.js';
+import {LEGACY_ENGINE_FILES, FOUNDATION_ENGINE_FILES, engineHash} from '../src/postgres/quant-research.js';
 import {QUANT_RUNTIME_ENGINE_FILES} from '../src/quant-research/runtime-engine-files.js';
 import {FIXED_EVAL_ENGINE_FILES} from '../src/postgres/quant-fixed-eval-engine.js';
 import {PF2_ENGINE_FILES, PF2_EVALUATOR_FILES} from '../src/quant-research/preflight-resolver.js';
 import {INGESTION_ENGINE_FILES} from '../src/postgres/quant-data.js';
 import {LIBRARY_VERSIONS} from '../src/quant-library/derive.js';
-import {TRACE_FILES, CANDIDATE_BLOCKERS, OWNER_RECOMMENDATION_CONTRACT_VERSIONS, evaluateProvenance} from '../src/quant-library/package-gates.js';
+import {TRACE_FILES, CANDIDATE_BLOCKERS, OWNER_RECOMMENDATION_CONTRACT_VERSIONS, evaluateProvenance, ownerRecommendationGate} from '../src/quant-library/package-gates.js';
 import {renderPackage} from '../src/quant-library/package-render.js';
 import {
   DRIVER_ARGS, TRACE_COLUMNS, TRACE_EXECUTION_PROFILES, TRACE_PROFILE_DEFERRED, TRACE_REFUSAL_CODES, TRACE_REPRODUCTION_CLOSURE_VERSION, TRACE_REPRODUCTION_FILES, DRIVER_REPLY_LIMIT, DRIVER_REQUEST_LIMIT,
@@ -27,8 +27,10 @@ import {contractOf, metricsOf, hex, MINUTE, T0} from './helpers/quant-library-fi
  * a real interpreter is skipped with a reason unless an interpreter resolves (QUANT_RESEARCH_PYTHON, else quant_lab/.venv; never a bare python from PATH).
  *
  * Fixture convention (root ruling R-CV1): every run here is a worker-shaped legacy v1 run (ql3a-research-job-v1, bars inline, no execution_backend key)
- * with policy_version added by hand, because no real v1 or v2 run passes the package gates today. This is fixture evidence, not build evidence. No test
- * accepts the v3 placeholder, the multi-Pine version or a foundation run as reproducible: those forms only appear in refusal tests (B6, B6b, B6c).
+ * with policy_version added by hand, because no real v1 or v2 run passes the package gates today. This is fixture evidence, not build evidence. The v3 form
+ * (V3 tests) is this same fixture under the ql3a-research-job-v3 label with the two OD-12 policy fields; since the recommendation contract slice (GO-L6-LOCAL)
+ * v3 is an ACTIVE profile on the same legacy closure. No test accepts the multi-Pine version or a foundation run as reproducible: those forms only appear in
+ * refusal tests (B6, B6b, B6c).
  */
 
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -132,10 +134,11 @@ function fakeReply() {
   return {result: fakeEval('HOLDOUT', clone(SEL)), trades, decisions, equity};
 }
 
-function makePorts({engine = ENGINE, evaluate, trace, reply = fakeReply, traceEngineHash = () => TRACE_HASH} = {}) {
+function makePorts({engine = ENGINE, evaluate, trace, reply = fakeReply, traceEngineHash = () => TRACE_HASH, closure = 'engineHash(false)'} = {}) {
   const log = [];
   let engineCalls = 0;
   const ports = {
+    closure,
     evaluate: async (contract, parameters, kind, signal) => { log.push(['evaluate', kind, clone(parameters)]); return evaluate ? evaluate(contract, parameters, kind, signal) : fakeEval(kind, parameters); },
     traceEvaluate: async (contract, parameters, signal) => { log.push(['trace', clone(parameters)]); return trace ? trace(contract, parameters, signal) : reply(); },
     engineHash: async () => { log.push(['engineHash']); engineCalls++; return typeof engine === 'function' ? engine(engineCalls) : engine; },
@@ -306,7 +309,10 @@ const REFUSALS = [
   ['a contract without a plan', run => { delete run.contract.plan; }, 'BI_PROVENANCE_UNRESOLVED', true],
   ['a foundation backend contract', run => { run.contract.execution_backend = 'quant-foundation-v1'; }, 'TRACE_REPRODUCTION_UNSUPPORTED', true],
   ['a foundation contract version without bars', run => { run.contract.version = 'ql3a-research-job-v2'; run.contract.execution_backend = 'quant-foundation-v1'; delete run.contract.dataset.bars; }, 'TRACE_REPRODUCTION_UNSUPPORTED', true],
-  ['the v3 placeholder version (deferred to the slice that defines the next contract)', run => { run.contract.version = 'ql3a-research-job-v3'; }, 'TRACE_REPRODUCTION_UNSUPPORTED', true],
+  ['a v3 contract that carries an execution_backend key', run => { run.contract.version = 'ql3a-research-job-v3'; run.contract.execution_backend = 'quant-foundation-v1'; }, 'TRACE_REPRODUCTION_UNSUPPORTED', true],
+  ['a v3 contract that carries an execution_backend key set to null', run => { run.contract.version = 'ql3a-research-job-v3'; run.contract.execution_backend = null; }, 'TRACE_REPRODUCTION_UNSUPPORTED', true],
+  ['a v3 contract without bars', run => { run.contract.version = 'ql3a-research-job-v3'; delete run.contract.dataset.bars; }, 'BI_DATASET_UNAVAILABLE', true],
+  ['a v3 contract without a plan', run => { run.contract.version = 'ql3a-research-job-v3'; delete run.contract.plan; }, 'BI_PROVENANCE_UNRESOLVED', true],
   ['the multi-Pine version (deferred to the F11 trace producer)', run => { run.contract.version = 'ql3a-research-job-multi-v1'; }, 'TRACE_REPRODUCTION_UNSUPPORTED', true],
   ['a v1 contract that carries an execution_backend key set to null', run => { run.contract.execution_backend = null; }, 'TRACE_REPRODUCTION_UNSUPPORTED', true],
   ['a version that is a number', run => { run.contract.version = 1; }, 'TRACE_REPRODUCTION_UNSUPPORTED', true],
@@ -330,9 +336,11 @@ for (const [name, edit, code, rehash] of REFUSALS) {
   });
 }
 
-test('B6 the execution profile tables are frozen literals: one ACTIVE key, three DEFERRED keys with an owner, no overlap', () => {
-  assert.deepEqual(Object.keys(TRACE_EXECUTION_PROFILES), ['ql3a-research-job-v1']);
-  assert.deepEqual(Object.keys(TRACE_PROFILE_DEFERRED).sort(), ['ql3a-research-job-multi-v1', 'ql3a-research-job-v2', 'ql3a-research-job-v3']);
+test('B6 (V3-P6) the execution profile tables are frozen literals: ACTIVE is exactly v1 and v3, DEFERRED is exactly multi-v1 and v2 with an owner, no overlap', () => {
+  assert.deepEqual(Object.keys(TRACE_EXECUTION_PROFILES), ['ql3a-research-job-v1', 'ql3a-research-job-v3']);
+  assert.deepEqual(Object.keys(TRACE_PROFILE_DEFERRED).sort(), ['ql3a-research-job-multi-v1', 'ql3a-research-job-v2']);
+  assert.deepEqual(TRACE_EXECUTION_PROFILES['ql3a-research-job-v3'], {state: 'ACTIVE', closure: 'engineHash(false)', path: 'pythonEvaluation + trace driver'});
+  assert.ok(!Object.hasOwn(TRACE_EXECUTION_PROFILES['ql3a-research-job-v3'], 'execution_backend'), 'the v3 profile has no execution_backend key either');
   assert.ok(Object.isFrozen(TRACE_EXECUTION_PROFILES) && Object.isFrozen(TRACE_PROFILE_DEFERRED));
   assert.ok(Object.values(TRACE_EXECUTION_PROFILES).every(Object.isFrozen) && Object.values(TRACE_PROFILE_DEFERRED).every(Object.isFrozen));
   assert.ok(Object.values(TRACE_PROFILE_DEFERRED).every(entry => typeof entry.owner === 'string' && entry.owner.length > 0));
@@ -341,10 +349,10 @@ test('B6 the execution profile tables are frozen literals: one ACTIVE key, three
   for (const key of Object.keys(TRACE_PROFILE_DEFERRED)) assert.ok(!Object.hasOwn(TRACE_EXECUTION_PROFILES, key), key);
 });
 
-test('B6b no shape dispatch: a v3-labelled or multi-Pine-labelled contract that is otherwise byte-identical to the v1 fixture (bars inline, correct legacy engine hash, contract_hash recomputed) is refused', async () => {
+test('B6b no shape dispatch: a multi-Pine-labelled or v2-labelled contract that is otherwise byte-identical to the v1 fixture (bars inline, correct legacy engine hash, contract_hash recomputed) is refused', async () => {
   const good = await reproduce(BASE_RUN);
   assert.ok(good.value, 'the same contract under the v1 label is reproduced');
-  for (const version of ['ql3a-research-job-v3', 'ql3a-research-job-multi-v1', 'ql3a-research-job-v2']) {
+  for (const version of ['ql3a-research-job-multi-v1', 'ql3a-research-job-v2']) {
     const run = runWith(copy => { copy.contract.version = version; });
     assert.ok(Array.isArray(run.contract.dataset.bars) && run.contract.engine_hash === ENGINE && !Object.hasOwn(run.contract, 'execution_backend'));
     const log = await refused(run, 'TRACE_REPRODUCTION_UNSUPPORTED', {label: version});
@@ -354,12 +362,15 @@ test('B6b no shape dispatch: a v3-labelled or multi-Pine-labelled contract that 
 
 test('B6c check order is pinned: run state and contract hash first, then the version dispatch, then the plan checks, then the bars', async () => {
   // The version dispatch comes before the plan checks, so a deferred form with a broken plan is UNSUPPORTED, never BI_PROVENANCE_UNRESOLVED.
-  for (const version of ['ql3a-research-job-v2', 'ql3a-research-job-v3']) {
+  for (const version of ['ql3a-research-job-v2', 'ql3a-research-job-multi-v1']) {
     const brokenPlan = runWith(run => { run.contract.version = version; delete run.contract.plan; });
     assert.deepEqual(await refused(brokenPlan, 'TRACE_REPRODUCTION_UNSUPPORTED', {label: version + ' with a broken plan'}), []);
     const validPlan = runWith(run => { run.contract.version = version; run.contract.execution_backend = 'quant-foundation-v1'; });
     assert.deepEqual(await refused(validPlan, 'TRACE_REPRODUCTION_UNSUPPORTED', {label: version + ' with a valid plan'}), []);
   }
+  // v3 is ACTIVE: the same broken plan stays BI_PROVENANCE_UNRESOLVED, and a backend key is still UNSUPPORTED (the version dispatch includes the backend key).
+  await refused(runWith(run => { run.contract.version = 'ql3a-research-job-v3'; delete run.contract.plan; }), 'BI_PROVENANCE_UNRESOLVED');
+  assert.deepEqual(await refused(runWith(run => { run.contract.version = 'ql3a-research-job-v3'; run.contract.execution_backend = 'quant-foundation-v1'; }), 'TRACE_REPRODUCTION_UNSUPPORTED'), []);
   // A v1 run with the same broken plan stays BI_PROVENANCE_UNRESOLVED: the plan checks still run for the ACTIVE profile.
   await refused(runWith(run => { delete run.contract.plan; }), 'BI_PROVENANCE_UNRESOLVED');
   // Run state and the contract hash are checked before the version.
@@ -930,12 +941,14 @@ test('the trace engine hash is hash(canonical({version, files})) over the raw by
   }
 });
 
-test('defaultPorts uses the legacy evaluation call, a driver spawner and the live legacy closure hash', async () => {
-  const ports = defaultPorts();
+test('defaultPorts uses the legacy evaluation call, a driver spawner and the live legacy closure hash, and carries the closure text', async () => {
+  const ports = defaultPorts({closure: 'engineHash(false)'});
   assert.equal(typeof ports.evaluate, 'function');
   assert.equal(typeof ports.traceEvaluate, 'function');
   assert.match(await ports.engineHash(), HEX64);
-  assert.deepEqual(Object.keys(ports).sort(), ['engineHash', 'evaluate', 'traceEvaluate']);
+  assert.equal(await ports.engineHash(), await engineHash(false));
+  assert.equal(ports.closure, 'engineHash(false)');
+  assert.deepEqual(Object.keys(ports).sort(), ['closure', 'engineHash', 'evaluate', 'traceEvaluate']);
   assert.equal(DRIVER_REQUEST_LIMIT, 8 * 1024 * 1024);
   assert.equal(DRIVER_REPLY_LIMIT, 16 * 1024 * 1024);
 });
@@ -945,7 +958,7 @@ test('defaultPorts resolves one interpreter for both calls, forwards only python
   try {
     delete process.env.QUANT_RESEARCH_PYTHON;
     const missing = path.join(STUB_DIR, 'no-such-interpreter');
-    const ports = defaultPorts({python: missing, timeoutMs: 5000, args: ['-c', 'x'], cwd: '/', env: {DATABASE_URL: 'x'}});
+    const ports = defaultPorts({closure: 'engineHash(false)', python: missing, timeoutMs: 5000, args: ['-c', 'x'], cwd: '/', env: {DATABASE_URL: 'x'}});
     // The one resolved interpreter serves both calls (both fail to start it); the unknown options are ignored.
     await stubCode(ports.traceEvaluate({}, {}, undefined), 'QUANT_PYTHON_UNAVAILABLE');
     await stubCode(ports.evaluate({dataset: {bars: []}, split: {validation_end: 0}}, {}, 'CANDIDATE', undefined), 'QUANT_PYTHON_UNAVAILABLE');
@@ -962,13 +975,13 @@ test('defaultPorts resolves one interpreter for both calls, forwards only python
 });
 
 test('defaultPorts with no usable interpreter rejects both calls with QUANT_PYTHON_UNAVAILABLE and never re-resolves one', async () => {
-  const ports = defaultPorts({python: ''});
+  const ports = defaultPorts({closure: 'engineHash(false)', python: ''});
   await stubCode(ports.traceEvaluate({}, {}, undefined), 'QUANT_PYTHON_UNAVAILABLE');
   await stubCode(ports.evaluate({dataset: {bars: []}, split: {validation_end: 0}}, {}, 'CANDIDATE', undefined), 'QUANT_PYTHON_UNAVAILABLE');
 });
 
 test('defaultPorts does not forward args, cwd or env: the child runs the fixed -P driver list (a node binary refuses -P, a forwarded stub would reply)', async () => {
-  const ports = defaultPorts({python: process.execPath, timeoutMs: 20000, args: [STUB, 'env'], cwd: STUB_DIR, env: {SECRET_TOKEN: 's'}});
+  const ports = defaultPorts({closure: 'engineHash(false)', python: process.execPath, timeoutMs: 20000, args: [STUB, 'env'], cwd: STUB_DIR, env: {SECRET_TOKEN: 's'}});
   // Forwarded args would run the stub and resolve with its environment report; the fixed list makes node fail on its own bad option -P.
   await stubCode(ports.traceEvaluate({}, {}, undefined), 'EVALUATION_FAILED');
 });
@@ -984,6 +997,76 @@ test('driverEvaluation ignores cwd and env options and spawns the fixed environm
 
 test('B10 a synchronous spawn failure (a NUL byte in the interpreter string) is a coded QUANT_PYTHON_UNAVAILABLE, not a raw error', async () => {
   await stubCode(driverEvaluation({}, {}, undefined, {python: 'bad\0interpreter', args: [], timeoutMs: 5000}), 'QUANT_PYTHON_UNAVAILABLE');
+});
+
+/* ---------------- V3: the ql3a-research-job-v3 ACTIVE profile (GO-L6-LOCAL; every run here is the labelled engineering fixture under the v3 label) ---------------- */
+
+const V3 = 'ql3a-research-job-v3';
+/** The fixture run as a v3 run: the version label plus the two OD-12 policy fields (fixture value fixture-v1; policy_hash equals snapshot.policy_hash). */
+const v3Run = edit => runWith(run => { Object.assign(run.contract, {version: V3, policy_version: 'fixture-v1', policy_hash: run.contract.snapshot.policy_hash}); edit?.(run); });
+
+test('V3-P6 a v3 run reproduces through the unchanged legacy path: the same digests, the same trace and the same call log as the v1 run of the same steps', async () => {
+  const one = await reproduce(BASE_RUN), three = await reproduce(v3Run());
+  assert.deepEqual(three.value, one.value, 'v1 and v3 reproduce byte-identically');
+  assert.deepEqual(three.log, one.log);
+  assert.equal(three.value.steps_digest, STORED.steps);
+  assert.equal(three.value.holdout_digest, STORED.holdout);
+  assert.equal(three.value.run_engine_hash, ENGINE);
+});
+
+test('V3-P8 no shape dispatch: a v1-labelled contract that also carries the v3 fields dispatches as v1 by version alone and still fails G7; a v3 contract with an execution_backend key is UNSUPPORTED before any port call', async () => {
+  const v1WithFields = runWith(run => { Object.assign(run.contract, {policy_version: 'fixture-v1', policy_hash: run.contract.snapshot.policy_hash}); });
+  assert.ok((await reproduce(v1WithFields)).value, 'dispatch is by version: v1');
+  assert.equal(ownerRecommendationGate({contract: v1WithFields.contract, result: {completion_reason: 'RESEARCH_CANDIDATE_PENDING_ACCEPTANCE'}}).state, 'FAIL', 'v1 never passes G7');
+  assert.equal(ownerRecommendationGate({contract: v3Run().contract, result: {completion_reason: 'RESEARCH_CANDIDATE_PENDING_ACCEPTANCE'}}).state, 'PASS', 'v3 passes G7');
+  for (const backend of ['quant-foundation-v1', null, 'other']) {
+    const log = await refused(v3Run(run => { run.contract.execution_backend = backend; }), 'TRACE_REPRODUCTION_UNSUPPORTED', {label: 'backend ' + String(backend)});
+    assert.deepEqual(log, [], 'no port call and no engine hash read');
+  }
+});
+
+test('V3-P9 closure-bound ports: defaultPorts needs a known closure name, ports without the text fail checkPorts, and a ports closure that differs from the profile closure refuses before any port call', async () => {
+  assert.throws(() => defaultPorts(), TypeError);
+  assert.throws(() => defaultPorts({}), TypeError);
+  assert.throws(() => defaultPorts({closure: 'engineHash(true)'}), TypeError, 'an unknown closure name');
+  assert.throws(() => defaultPorts({closure: 'constructor'}), TypeError, 'a name that is an Object.prototype member');
+  assert.throws(() => defaultPorts({closure: 5}), TypeError);
+  assert.equal(defaultPorts({closure: 'engineHash(false)'}).closure, 'engineHash(false)');
+  for (const version of ['ql3a-research-job-v1', V3]) {
+    const run = runWith(copy => { copy.contract.version = version; });
+    // ports without the closure text: a caller error, as for a missing function
+    const bare = makePorts().ports;
+    delete bare.closure;
+    await assert.rejects(() => reproduceRun({run, ports: bare}), TypeError, version + ' without closure text');
+    await assert.rejects(() => reproduceRun({run, ports: {...bare, closure: ''}}), TypeError, version + ' with an empty closure text');
+    await assert.rejects(() => reproduceRun({run, ports: {...bare, closure: 5}}), TypeError, version + ' with a non-text closure');
+    // ports bound to another closure than the profile names: UNSUPPORTED, no port call, no engine hash read, no output
+    for (const closure of ['engineHash(true)', 'trace-reproduction-closure-v1', 'ENGINEHASH(FALSE)']) {
+      const log = await refused(run, 'TRACE_REPRODUCTION_UNSUPPORTED', {closure, label: version + ' with closure ' + closure});
+      assert.deepEqual(log, [], 'no port call, engine hash read included');
+    }
+  }
+  // The check sits after the run checks (state, hash, version dispatch, plan) and before the bars: pinned order.
+  const wrong = {closure: 'engineHash(true)'};
+  await refused(runWith(run => { run.status = 'QUEUED'; }), 'STATUS_NOT_COMPLETED', wrong);
+  await refused(v3Run(run => { delete run.contract.plan; }), 'BI_PROVENANCE_UNRESOLVED', wrong);
+  await refused(v3Run(run => { run.contract.execution_backend = 'quant-foundation-v1'; }), 'TRACE_REPRODUCTION_UNSUPPORTED', wrong);
+  assert.deepEqual(await refused(v3Run(run => { delete run.contract.dataset.bars; }), 'TRACE_REPRODUCTION_UNSUPPORTED', wrong), [], 'closure check before the bars check');
+  await refused(v3Run(run => { delete run.contract.dataset.bars; }), 'BI_DATASET_UNAVAILABLE');
+});
+
+test('V3-P10 engine hash drift: a v3 reproduction whose live legacy closure differs from the contract (before, or in flight) refuses with BI_ENGINE_HASH_MISMATCH and no output', async () => {
+  const before = await refused(v3Run(), 'BI_ENGINE_HASH_MISMATCH', {engine: hex('a changed legacy closure')});
+  assert.deepEqual(evaluations(before), [], 'no evaluation ran');
+  const inFlight = await refused(v3Run(), 'BI_ENGINE_HASH_MISMATCH', {engine: calls => calls === 1 ? ENGINE : hex('changed-in-flight')});
+  assert.equal(inFlight.filter(entry => entry[0] === 'trace').length, 1);
+});
+
+test('V3-P13 relabel without shape check: the v1 fixture relabelled v3 (capability blocker frozen, no policy fields, contract hash recomputed) reproduces in S3', async () => {
+  const relabelled = runWith(run => { run.contract.version = V3; run.contract.acceptance_blockers = [...CANDIDATE_BLOCKERS, 'CUSTOMER_QUANT_CAPABILITY_NOT_REGISTERED']; delete run.contract.policy_version; });
+  assert.ok(!Object.hasOwn(relabelled.contract, 'policy_hash') && !Object.hasOwn(relabelled.contract, 'policy_version'));
+  const {value} = await reproduce(relabelled);
+  assert.equal(value.steps_digest, STORED.steps, 'S3 checks the engine path only; the shape is the admission validator, the freeze trigger and B0 (the B0 half is in the package gates test)');
 });
 
 test('ports and run are required: a missing port is a caller error, not a coded refusal', async () => {

@@ -14,7 +14,9 @@ import {CONTENT_DIGEST_SQL,buildResearchContractV2,expectedFoundationRequestV2,
 import {StorageBudget} from '../quant-research/storage-budget.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
 import {QUANT_RUNTIME_ENGINE_FILES} from '../quant-research/runtime-engine-files.js';
+import {buildResearchContractV3,RESEARCH_V3_VERSION} from '../quant-research/research-contract-v3.js';
 
+const RESEARCH_V1_VERSION='ql3a-research-job-v1';
 export const TERMINAL=new Set(['SUCCEEDED','NO_VALID_CANDIDATE','FAILED','CANCELLED','TIMED_OUT']);
 const engineFiles=['src/quant-research/contract.js','src/postgres/quant-research-worker.js','quant_lab/src/robot_quant/research_engine.py','quant_lab/src/robot_quant/spt_custom_evaluator.py','quant_lab/src/robot_quant/spt_evaluator.py','quant_lab/src/robot_quant/bridge_paper.py','quant_lab/src/robot_quant/bridge_replay.py','quant_lab/src/robot_quant/risk_evaluator.py','quant_lab/src/robot_quant/ql3a.py','quant_lab/src/robot_quant/analytics.py'];
 function engineFileList(foundation=false){
@@ -37,7 +39,10 @@ export async function engineHash(foundation=false){
 }
 
 export class QuantResearchService{
- constructor({pineService,clock=Date.now,supportedSourceHash=SOURCE_HASH,foundation=process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1',datasetStore}){
+ /** capabilityReader: injected port {isRegistered(source_hash,effective_input_hash)} for v3 admission (root ruling R4). Production wires none,
+  * so every v3 request is refused (Q4 open); a fixture test supplies a reader that reports one fixture source as registered. */
+ constructor({pineService,clock=Date.now,supportedSourceHash=SOURCE_HASH,foundation=process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1',datasetStore,capabilityReader=null}){
+  this.capabilityReader=capabilityReader;
   this.pine=pineService;this.store=pineService.store;this.db=pineService.db;this.clock=clock;this.supportedSourceHash=supportedSourceHash;this.foundation=foundation;this.managedStorage=foundation&&!datasetStore;
   if(this.managedStorage){
    if(!process.env.QUANT_STORAGE_LIMITS_FILE)throw fail('QUANT_STORAGE_LIMITS_REQUIRED');
@@ -54,11 +59,23 @@ export class QuantResearchService{
   const row=(await this.db.query('SELECT mode FROM quant_research_executor_mode WHERE singleton FOR SHARE')).rows[0];
   if(row?.mode!==(this.foundation?'FOUNDATION':'LEGACY'))throw fail('RESEARCH_EXECUTOR_MODE_MISMATCH',503);
  }
+ /** v3 admission rule (OD-3): refuse while a customer capability blocker applies. No reader, an unreadable reader or anything but true refuses; no row is written. */
+ async requireCapability(source){
+  let registered=false;
+  try{registered=(await this.capabilityReader.isRegistered(source.source_hash,source.analysis.effective_inputs_hash))===true;}catch{registered=false;}
+  if(!registered)throw fail('CUSTOMER_QUANT_CAPABILITY_NOT_REGISTERED',409);
+ }
  async enqueue(owner,body,key){
-  keys(body,['bot_id','deployment_id','parameter_slots','bridge_domains','dataset','budget','seed','deadline_seconds'],['bot_id','deployment_id','parameter_slots','bridge_domains','dataset','budget','seed']);
+  // contract_version is an optional selector inside the submission hash (root ruling R5): a v1 body without the key keeps its hash,
+  // and the same idempotency key with another version answers IDEMPOTENCY_CONFLICT below.
+  keys(body,['bot_id','deployment_id','parameter_slots','bridge_domains','dataset','budget','seed','deadline_seconds','contract_version'],['bot_id','deployment_id','parameter_slots','bridge_domains','dataset','budget','seed']);
+  if(Object.hasOwn(body,'contract_version')&&![RESEARCH_V1_VERSION,RESEARCH_V3_VERSION].includes(body.contract_version))throw fail('UNSUPPORTED_RESEARCH_CONTRACT_VERSION');
+  const version=body.contract_version??RESEARCH_V1_VERSION;
   if(typeof key!=='string'||!/^[A-Za-z0-9_-]{8,128}$/.test(key))throw fail('IDEMPOTENCY_KEY_REQUIRED');
   await this.pine.authorize(owner,body.bot_id);
   await this.executorMode();
+  // The v3 contract is the LEGACY backend form (V3-G6): a service in FOUNDATION mode refuses it before any lock or row.
+  if(version===RESEARCH_V3_VERSION&&this.foundation)throw fail('RESEARCH_EXECUTOR_MODE_MISMATCH',503);
   if(this.managedStorage)await assertQuantStorageOwner(this.db,this.datasetStore.root);
   if(this.foundation)await this.db.query('SELECT singleton FROM quant_foundation_scheduler FOR UPDATE');
   await this.db.lock('quant:research:queue');
@@ -80,6 +97,7 @@ export class QuantResearchService{
   if(source.source_hash!==this.supportedSourceHash||hash(source.source)!==source.source_hash)throw fail('UNSUPPORTED_SOURCE_HASH');
   const review=source.analysis.effective_input_review;
   if(source.analysis.inputs.length!==58||!review||review.source_hash!==source.source_hash||review.effective_inputs_hash!==source.analysis.effective_inputs_hash||review.input_count!==58||!review.reviewed_by||!Number.isSafeInteger(review.reviewed_at))throw fail('CUSTOM_EFFECTIVE_INPUT_REVIEW_REQUIRED');
+  if(version===RESEARCH_V3_VERSION)await this.requireCapability(source);
   const effective=Object.fromEntries(source.analysis.inputs.map(i=>[i.pine_variable,i.effective_value]));
   const settings={preset:'Custom',tradeDirectionectionection:'Long + Exit',useSlowFilter:true,useMTF:false,useRSIFilter:false,requireBOS:false,requireSweep:false,slMode:'Zone + ATR',useSession:false,confirmMode:'Any',notifyEnabled:false};
   if(Object.entries(settings).some(([name,value])=>effective[name]!==value))throw fail('UNSUPPORTED_CUSTOM_SETTING');
@@ -133,7 +151,9 @@ export class QuantResearchService{
   const capital=snapshot.capital.find(c=>c.broker===snapshot.market.broker);
   if(!capital||!D(capital.configuredEquity).gt(0)||!D(capital.configuredBalance).gt(0))throw fail('RESEARCH_CAPITAL_REQUIRED');
   const count=rows.length-warmup;
-  contract={version:'ql3a-research-job-v1',scope:'SPT_CUSTOM_ENGINEERING_ONLY',owner_id:owner,bot_id:body.bot_id,deployment_id:deployment.deployment_id,pine_import_id:deployment.pine_import_id,source_version:deployment.source_version,source:source.source,source_hash:source.source_hash,baseline_snapshot_hash:deployment.snapshot_hash,snapshot:{...snapshot,selection:lock.selection},input_lock:lock,plan,model,rules:RULES,engine_hash:await engineHash(),dataset:{...body.dataset,bar_count:rows.length,bars:rows.map(r=>r.bar),sha256:hash(canonical(rows.map(r=>({bar:r.bar,content_hash:r.content_hash,provenance:r.provenance}))))},split:{warmup,train_end:warmup+Math.floor(count*.6),validation_end:warmup+Math.floor(count*.8),test_end:rows.length},capital:{equity:capital.configuredEquity,cash:capital.configuredBalance},ledger_initialization:'Independent historical flat Paper simulation; live daily/streak counters are neither consumed nor reset.',max_evaluations:plan.planned_candidates+2*Object.keys(lock.domains).length+2+3,acceptance_blockers:['VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED','CUSTOM_REPAINT_EVIDENCE_REQUIRED','CUSTOMER_QUANT_CAPABILITY_NOT_REGISTERED']};
+  if(version===RESEARCH_V3_VERSION)contract=buildResearchContractV3({owner_id:owner,bot_id:body.bot_id,deployment,source,snapshot,lock,plan,model,rules:RULES,capital,engine_hash:await engineHash(),
+   dataset:{...body.dataset,bars:rows.map(r=>r.bar),sha256:hash(canonical(rows.map(r=>({bar:r.bar,content_hash:r.content_hash,provenance:r.provenance}))))}});
+  else contract={version:RESEARCH_V1_VERSION,scope:'SPT_CUSTOM_ENGINEERING_ONLY',owner_id:owner,bot_id:body.bot_id,deployment_id:deployment.deployment_id,pine_import_id:deployment.pine_import_id,source_version:deployment.source_version,source:source.source,source_hash:source.source_hash,baseline_snapshot_hash:deployment.snapshot_hash,snapshot:{...snapshot,selection:lock.selection},input_lock:lock,plan,model,rules:RULES,engine_hash:await engineHash(),dataset:{...body.dataset,bar_count:rows.length,bars:rows.map(r=>r.bar),sha256:hash(canonical(rows.map(r=>({bar:r.bar,content_hash:r.content_hash,provenance:r.provenance}))))},split:{warmup,train_end:warmup+Math.floor(count*.6),validation_end:warmup+Math.floor(count*.8),test_end:rows.length},capital:{equity:capital.configuredEquity,cash:capital.configuredBalance},ledger_initialization:'Independent historical flat Paper simulation; live daily/streak counters are neither consumed nor reset.',max_evaluations:plan.planned_candidates+2*Object.keys(lock.domains).length+2+3,acceptance_blockers:['VARIED_INPUT_TRADINGVIEW_PARITY_REQUIRED','CUSTOM_REPAINT_EVIDENCE_REQUIRED','CUSTOMER_QUANT_CAPABILITY_NOT_REGISTERED']};
   }
   const now=this.clock(),id=randomUUID();
   await this.db.prepare("INSERT INTO quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,status,created_at,updated_at,deadline) VALUES(?,?,?,?,?,?,?,?,'QUEUED',?,?,?)").run(id,owner,body.bot_id,deployment.deployment_id,key,submissionHash,hash(canonical(contract)),JSON.stringify(contract),now,now,now+seconds*1000);

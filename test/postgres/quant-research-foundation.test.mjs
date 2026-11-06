@@ -91,6 +91,29 @@ test('default legacy mode accepts contracts without execution_backend and reject
  await db.transaction(()=>legacy.get(x.a,queued.run_id,true));
  await db.query("UPDATE quant_research_executor_mode SET mode='FOUNDATION'");
 });
+test('V3-G6 a v3 request is refused in FOUNDATION mode (RESEARCH_EXECUTOR_MODE_MISMATCH) by a foundation service and by a legacy service while the stored mode is FOUNDATION; no row is written and the legacy worker refuses',async()=>{
+ await db.query("UPDATE quant_research_executor_mode SET mode='FOUNDATION'");
+ const x=await baseline(),body={...x.body,contract_version:'ql3a-research-job-v3'};
+ const reader={calls:0,isRegistered:async()=>{reader.calls++;return true;}};
+ const legacy=new QuantResearchService({pineService:pine,clock:()=>now,supportedSourceHash:hash(source),foundation:false,capabilityReader:reader});
+ const withReader=new QuantResearchService({pineService:pine,clock:()=>now,supportedSourceHash:hash(source),foundation:true,datasetStore:service.datasetStore,capabilityReader:reader});
+ const jobs=async()=>(await db.query('SELECT count(*)::int n FROM quant_jobs')).rows[0].n,before=await jobs();
+ for(const svc of [service,withReader,legacy])
+  await assert.rejects(db.transaction(()=>svc.enqueue(x.a,body,randomUUID())),{code:'RESEARCH_EXECUTOR_MODE_MISMATCH',status:503});
+ assert.equal(reader.calls,0,'refused before the capability reader is asked');
+ assert.equal(await jobs(),before,'no v3 row');
+ await assert.rejects(new QuantResearchWorker({service:withReader}).claim(),{code:'RESEARCH_FOUNDATION_WORKER_REQUIRED'});
+ // LEGACY mode: the same legacy service admits the v3 request (the engine-side run is covered by quant-research-v3.test.mjs)
+ await db.query("UPDATE quant_research_executor_mode SET mode='LEGACY'");
+ try{
+  const queued=await db.transaction(()=>legacy.enqueue(x.a,body,randomUUID()));
+  const row=(await db.query('SELECT contract FROM quant_jobs WHERE run_id=$1',[queued.run_id])).rows[0];
+  assert.equal(row.contract.version,'ql3a-research-job-v3');assert.equal(Object.hasOwn(row.contract,'execution_backend'),false);
+  assert.equal(reader.calls,1);
+  await assert.rejects(db.transaction(()=>service.enqueue(x.a,body,randomUUID())),{code:'RESEARCH_EXECUTOR_MODE_MISMATCH'},'a foundation service in LEGACY mode is refused by the stored mode check');
+  await db.transaction(()=>legacy.get(x.a,queued.run_id,true));
+ }finally{await db.query("UPDATE quant_research_executor_mode SET mode='FOUNDATION'");}
+});
 test('real research enqueue stores range/digest without files; claim prepares immutable references',async()=>{
  const x=await baseline(),files=await datasetListing();
  let publications=0;const publish=service.datasetStore.publish.bind(service.datasetStore);
