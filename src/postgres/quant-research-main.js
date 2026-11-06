@@ -18,6 +18,7 @@ import {assertCapacityPolicyEvaluator,loadQuantCapacityPolicy} from './quant-cap
 import {pf2ExecutableHashes} from '../quant-research/preflight-resolver.js';
 import {assertProfileV2Configuration,wireQuantProfileV2} from './quant-profile-wiring.js';
 import {assertQuantStorageOwner} from './quant-storage-retention.js';
+import {Qr3EvaluationDriver} from './qr3-comparison-wiring.js';
 import {config,assertProductionConfig} from '../config.js';
 assertProductionConfig();
 if(process.env.QUANT_RESEARCH_ENABLED!=='1'||process.env.PINE_BRIDGE_ENV!=='staging'||!config.paperTrading)throw Error('Dedicated Quant research worker requires Paper staging');
@@ -25,6 +26,8 @@ const foundation=process.env.QUANT_RESEARCH_FOUNDATION_ENABLED==='1';
 const profileV2Enabled=assertProfileV2Configuration();
 const preflightEnabled=process.env.QUANT_PREFLIGHT_ENABLED==='1';
 const fixedEvalEnabled=process.env.QUANT_FIXED_EVAL_ENABLED==='1';
+// QR-3 evaluation driver (L8-W): only when fixed evaluation and the QR-3 comparison flag are both exactly '1'.
+const qr3DriverEnabled=fixedEvalEnabled&&process.env.QR3_COMPARISON_ENABLED==='1';
 const enrollmentEnabled=process.env.QUANT_PROFILE_V2_ENROLLMENT_ENABLED==='1';
 if(preflightEnabled&&!foundation)throw Error('PREFLIGHT requires foundation mode');
 if(fixedEvalEnabled&&!foundation)throw Error('Fixed evaluation requires foundation mode');
@@ -39,7 +42,7 @@ const rows=(await db.query('SELECT version FROM quant_job_schema')).rows;
 if(rows.length!==1||rows[0].version!==1)throw Error('Initialize Quant research extension 1 offline');
 const service=new QuantResearchService({pineService:new PineBridgeService(new Store(db),{defaultRisk:config.defaultRisk}),foundation});
 await db.transaction(()=>service.executorMode());
-let worker,healthDb;
+let worker,healthDb,qr3Driver;
 if(foundation){
  if(process.platform!=='linux')throw Error('Foundation worker requires Linux systemd resource isolation');
  for(const table of ['quant_foundation_schema','quant_research_foundation_schema']){
@@ -80,8 +83,9 @@ if(foundation){
  const fixedEvalService=fixedEvalEnabled?new QuantFixedEvalService({pineService:service.pine}):undefined;
  worker=new QuantResearchFoundationWorker({service,dataService,profileService,preflightService,fixedEvalService,health,ioControls,profileV2Enabled,capacityPolicy});
  if(profileV2Enabled)await wireQuantProfileV2({worker,db,capacityPolicy,recoveryPolicy,ioControls,health});
+ if(qr3DriverEnabled)qr3Driver=new Qr3EvaluationDriver({fixedEvalService});
 }else worker=new QuantResearchWorker({service});
-worker.start();console.log('Dedicated PostgreSQL Quant research worker started');
+worker.start();qr3Driver?.start();console.log('Dedicated PostgreSQL Quant research worker started');
 let stopping=false;
-async function stop(){if(stopping)return;stopping=true;await worker.stop();await healthDb?.close();await db.close();}
+async function stop(){if(stopping)return;stopping=true;await qr3Driver?.stop();await worker.stop();await healthDb?.close();await db.close();}
 process.on('SIGTERM',stop);process.on('SIGINT',stop);

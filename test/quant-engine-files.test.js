@@ -11,7 +11,7 @@ import {SHARED_APPLICATION_FILES} from './helpers/runtime-shared-boundary.js';
 
 const shared=new Set(SHARED_APPLICATION_FILES);
 const roots=['src/postgres/quant-research-main.js','src/quant-research/io-profile-worker.js',
- 'src/postgres/quant-preflight-wiring.js','src/postgres/quant-preflight-routes.js'];
+ 'src/postgres/quant-preflight-wiring.js','src/postgres/quant-preflight-routes.js','src/postgres/qr3-comparison-wiring.js'];
 async function closure(){
  const visited=new Set();
  async function visit(file){
@@ -46,6 +46,33 @@ test('V3-P14 the v3 research contract module is in the runtime import closure an
   const without=files.filter(file=>file!==v3);
   assert.deepEqual([...imports].filter(file=>!without.includes(file)&&!shared.has(file)),[v3],'mutant: the manifest entry removed gives an unhashed dependency naming the module');
  }
+});
+/** L8-W (owner GO OG-1): the QR-3 wiring module and every module it newly brings into the runtime import closure. */
+const L8W_ENTRIES=['src/comparison/evaluation-record.js','src/comparison/period.js','src/comparison/valuation.js','src/postgres/comparison-finalizer.js',
+ 'src/postgres/comparison-store.js','src/postgres/qr3-comparison-wiring.js'];
+test('L8-W the QR-3 wiring closure is reachable from the worker main, listed in the manifest, and each removed entry names exactly that module',async()=>{
+ const imports=await closure();
+ const fromMain=new Set();
+ const visit=async file=>{
+  if(fromMain.has(file))return;fromMain.add(file);
+  for(const match of (await fs.readFile(file,'utf8')).matchAll(/(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)['"](\.[^'"]+)['"]/g))
+   await visit(path.posix.normalize(path.posix.join(path.posix.dirname(file),match[1])));
+ };
+ await visit('src/postgres/quant-research-main.js');
+ for(const file of L8W_ENTRIES){
+  assert.ok(imports.has(file),file+' is in the runtime import closure');
+  assert.ok(fromMain.has(file),file+' is reachable from the fixed-evaluation worker main');
+  assert.ok(QUANT_RUNTIME_ENGINE_FILES.includes(file),file+' is in the runtime manifest');
+  assert.ok(!LEGACY_ENGINE_FILES.includes(file)&&!PF2_EVALUATOR_FILES.includes(file),file+' stays outside the legacy and PF2 evaluator closures');
+  assert.ok(!shared.has(file),file+' is not a shared application file');
+  for(const files of [INGESTION_ENGINE_FILES,FOUNDATION_ENGINE_FILES,PF2_ENGINE_FILES]){
+   assert.ok(files.includes(file));
+   const without=files.filter(item=>item!==file);
+   assert.deepEqual([...imports].filter(item=>!without.includes(item)&&!shared.has(item)),[file],'mutant: removing '+file+' names exactly that module');
+  }
+ }
+ for(const file of ['src/postgres/server.js','src/postgres/qr3-routes.js','src/postgres/qr3-participant-context.js','src/postgres/quant-library.js'])
+  assert.ok(!imports.has(file)&&!QUANT_RUNTIME_ENGINE_FILES.includes(file),file+' stays outside the runtime closure');
 });
 test('missing runtime file and changed enrollment semantics invalidate ingestion identity',async()=>{
  const target=new URL('../src/postgres/quant-profile-enrollment-schema.sql',import.meta.url).href;

@@ -54,15 +54,32 @@ test('the finalizer takes no scheduler lock and no row lock, and never writes a 
   assert.equal(/INSERT INTO public\.quant_comparison_status_events/.test(read('src/postgres/comparison-store.js')),true,'the status writers live in the store');
 });
 
-test('nothing imports the finalizer: not the S1 index, not any src file, not the worker root, the server root or the evaluation closure manifest',()=>{
+test('L8-W: the finalizer is imported only by the QR-3 wiring module, reached through it from the worker and server roots, and listed in the manifest',()=>{
+  const WIRING='src/postgres/qr3-comparison-wiring.js';
   assert.equal(/comparison-finalizer|evaluation-record/.test(read('src/comparison/index.js')),false);
-  const importers=walk('src').filter(file=>file!==FINALIZER&&/comparison-finalizer/.test(read(file)));
-  assert.deepEqual(importers,[]);
-  for(const entry of ['src/postgres/quant-research-main.js','src/postgres/server.js','src/server.js','src/worker.js','src/postgres/worker-main.js']){
-    assert.equal(closure([entry]).has(FINALIZER),false,entry+' must not reach the finalizer');
+  const importers=walk('src').filter(file=>file!==FINALIZER&&specifiers(read(file)).some(name=>/comparison-finalizer/.test(name)));
+  assert.deepEqual(importers,[WIRING]);
+  // the only other src text that names it is the manifest entry
+  assert.deepEqual(walk('src').filter(file=>file!==FINALIZER&&/comparison-finalizer/.test(read(file))),[WIRING,'src/quant-research/runtime-engine-files.js']);
+  for(const entry of ['src/postgres/quant-research-main.js','src/postgres/server.js']){
+    const reached=closure([entry]);
+    assert.equal(reached.has(FINALIZER),true,entry+' reaches the finalizer');
+    assert.equal(reached.has(WIRING),true,entry+' reaches the wiring module');
+    // every path from the root to the finalizer passes the wiring module: without it the finalizer is unreachable
+    const without=new Set();
+    const visit=file=>{
+      if(file===WIRING||without.has(file)||!fs.existsSync(path.join(root,file)))return;
+      without.add(file);
+      for(const match of read(file).matchAll(IMPORTS))visit(path.posix.normalize(path.posix.join(path.posix.dirname(file),match[1])));
+    };
+    visit(entry);
+    assert.equal(without.has(FINALIZER),false,entry+' reaches the finalizer only through the wiring module');
   }
-  assert.equal(QUANT_RUNTIME_ENGINE_FILES.includes(FINALIZER),false);
-  assert.equal(FIXED_EVAL_ENGINE_FILES.includes(FINALIZER),false);
+  for(const entry of ['src/server.js','src/worker.js','src/postgres/worker-main.js'])assert.equal(closure([entry]).has(FINALIZER),false,entry+' must not reach the finalizer');
+  for(const file of [FINALIZER,WIRING,'src/postgres/comparison-store.js','src/comparison/evaluation-record.js']){
+    assert.equal(QUANT_RUNTIME_ENGINE_FILES.includes(file),true,file+' is in the runtime manifest');
+    assert.equal(FIXED_EVAL_ENGINE_FILES.includes(file),true,file+' is hashed by the fixed-evaluation closure');
+  }
   assert.equal(closure([FINALIZER]).has('src/postgres/comparison-store.js'),true,'control: the closure walker follows the imports');
 });
 

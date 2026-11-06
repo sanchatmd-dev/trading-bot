@@ -166,10 +166,13 @@ test('C1 one changed byte in any listed file rotates the hash; one dropped file 
  * Its release evidence records old/new hashes. Stored historical contracts remain unchanged. Update only with an authorized engine change. */
 /* Rotated by the L6 recommendation contract slice (GO-L6-LOCAL, 2026-11-06): research_engine.py accepts v3, quant-research.js builds v3, the new research-contract-v3.js joins the
  * runtime manifest. Old to new: LEGACY 988171145615b423... to a6be760ef6c72a8f...; FOUNDATION 3b29eb619f2b4eda... to 329f39c65e897334...; FIXED_EVAL b3acd0c8af04a06f... to da1488a8cc2a15ad.... */
+/* Rotated by L8-W (owner GO OG-1, 2026-11-06): the QR-3 wiring module, the finalizer, the comparison store, the S3a module, valuation.js and period.js join the runtime
+ * manifest. Old to new: FOUNDATION 329f39c65e897334... to 6ac7670086b22483...; FIXED_EVAL da1488a8cc2a15ad... to af986ecbad354e85.... LEGACY unchanged (a6be760ef6c72a8f...),
+ * and the trace closure itself is unchanged (833e4c1e8eda2de2..., asserted in test/mp-engine-closure.test.js). */
 const BASE_HASHES = Object.freeze({
   LEGACY: 'a6be760ef6c72a8f8739ac43382de3d0e69fd4070697ddafd9bca012607f97f9',
-  FOUNDATION: '329f39c65e89733401632ad26fa43859980f5abdd00f4f029e3f1bd76cdaaa81',
-  FIXED_EVAL: 'da1488a8cc2a15ad14fd81e26e79c7452c7fbcf3d54e5cb825b1c0fda2f2aa23'});
+  FOUNDATION: '6ac7670086b22483e9413e1df0a44f2de91d030f904c850d4f97cf49f64faa39',
+  FIXED_EVAL: 'af986ecbad354e855f2ad9ab565cad5cc9414ebcb53d4bc076ee113511100aab'});
 const fixedEvalFormula = async () => hash(canonical({version: 'fixed-eval-closure-v1', files: Object.fromEntries(await Promise.all(FIXED_EVAL_ENGINE_FILES.map(async name => [name, hash(Buffer.from((await read(name)).toString('latin1').replaceAll('\r\n', '\n'), 'latin1'))])))}));
 
 test('C1 the engine hashes of the checkout equal the authorized candidate pins', async () => {

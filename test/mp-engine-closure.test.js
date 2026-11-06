@@ -10,6 +10,8 @@ import {FOUNDATION_ENGINE_FILES, LEGACY_ENGINE_FILES, engineHash} from '../src/p
 import {PF2_ENGINE_FILES, PF2_EVALUATOR_FILES, pf2ExecutableHashes} from '../src/quant-research/preflight-resolver.js';
 import {FIXED_EVAL_ENGINE_FILES, fixedEvalEngineHash} from '../src/postgres/quant-fixed-eval-engine.js';
 import {QUANT_IO_MODULES} from '../src/quant-research/process-supervisor.js';
+import {mpPackageTraceClosureHash} from '../src/multi-pine/package-closure.js';
+import {traceReproductionEngineHash} from '../src/quant-library/trace-reproduction.js';
 
 /*
  * F11 S3: the multi-Pine engine closure mp-combined-closure-v1 (RD-MP-31). Its dedicated files stay outside the research closures.
@@ -24,14 +26,24 @@ const RUNTIME_ROOTS = ['src/postgres/quant-research-main.js', 'src/quant-researc
 /** Candidate closure pins. Update only with an authorized engine change and an old/new closure inventory.
  * L6 (GO-L6-LOCAL, 2026-11-06; research_engine.py accepts v3, quant-research.js builds v3, new research-contract-v3.js in the runtime manifest). Old to new:
  * legacy 988171145615... to a6be760ef6c7...; foundation 3b29eb619f2b... to 329f39c65e89...; ingestion e10687a3f45e... to c000a54a36e5...;
- * pf2_engine 046422ce7627... to 9256ea2d9bc3...; fixed_eval b3acd0c8af04... to da1488a8cc2a...; pf2_evaluator unchanged. Also rotated, not pinned here: mp-combined 8c5d847c6562... to f8a9723af23a..., trace d6131e75df97... to 833e4c1e8eda...; mp-package-trace unchanged. */
+ * pf2_engine 046422ce7627... to 9256ea2d9bc3...; fixed_eval b3acd0c8af04... to da1488a8cc2a...; pf2_evaluator unchanged. Also rotated, not pinned here: mp-combined 8c5d847c6562... to f8a9723af23a..., trace d6131e75df97... to 833e4c1e8eda...; mp-package-trace unchanged.
+ * L8-W (owner GO OG-1, 2026-11-06; the QR-3 wiring module, the finalizer, the comparison store, the S3a module, valuation.js and period.js join the runtime manifest).
+ * Old to new: foundation 329f39c65e89... to 6ac7670086b2...; ingestion c000a54a36e5... to 7f6b48aa53ba...; pf2_engine 9256ea2d9bc3... to 43340272423e...;
+ * fixed_eval da1488a8cc2a... to af986ecbad35...; mp-combined f8a9723af23a... to 2e31e235a289... (now pinned below, closes L6 audit P3). Unchanged: legacy a6be760ef6c7...,
+ * pf2_evaluator 3fb2d465215e..., trace 833e4c1e8eda... and mp-package-trace d2c4f358af62... (both pinned below as unchanged). */
 const BASE_HASHES = Object.freeze({
   legacy: 'a6be760ef6c72a8f8739ac43382de3d0e69fd4070697ddafd9bca012607f97f9',
-  foundation: '329f39c65e89733401632ad26fa43859980f5abdd00f4f029e3f1bd76cdaaa81',
-  ingestion: 'c000a54a36e5fecb460439721c95137951f17bf9cfd3bc9c3df6bde64722e4d3',
-  pf2_engine: '9256ea2d9bc3dfbf8c29ec22e56a1df01e18aa3949f6f16b9e1cd290399563b0',
+  foundation: '6ac7670086b22483e9413e1df0a44f2de91d030f904c850d4f97cf49f64faa39',
+  ingestion: '7f6b48aa53ba88f2049005e0dc452e9e6ff18b55ee3dd6d1292901f642ac8a2c',
+  pf2_engine: '43340272423eb51a2b447f6b2cf566ddaf94eb7d7f179c1a2d8566f232af7989',
   pf2_evaluator: '3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada',
-  fixed_eval: 'da1488a8cc2a15ad14fd81e26e79c7452c7fbcf3d54e5cb825b1c0fda2f2aa23'
+  fixed_eval: 'af986ecbad354e855f2ad9ab565cad5cc9414ebcb53d4bc076ee113511100aab'
+});
+/** L8-W: the multi-Pine combined closure pin (it rotates with the shared runtime manifest) and the two closures that must stay unchanged. */
+const OTHER_HASHES = Object.freeze({
+  mp_combined: '2e31e235a289aa9db84685843260313396d488cccaa44128cf7d47ed62953232',
+  trace: '833e4c1e8eda2de2e63084aeec6ecbf7cad8538d8860f22f53a7b758113a6ab2',
+  mp_package_trace: 'd2c4f358af62b70ea3269282711c1a5444d7b1bf7b0f218fa9d1e6192fd1c2ed'
 });
 
 const listed = new Set(MP_COMBINED_ENGINE_FILES);
@@ -189,4 +201,10 @@ test('the six engine closure hashes equal the authorized candidate pins', async 
     legacy: await researchHash(LEGACY_ENGINE_FILES, lfReadFile), foundation: await researchHash(FOUNDATION_ENGINE_FILES, lfReadFile),
     ingestion: await ingestionEngineHash(lfReadFile), pf2_engine: pf2.engine_hash, pf2_evaluator: pf2.evaluator_hash, fixed_eval: await fixedEvalEngineHash(lfReadFile)
   }, BASE_HASHES);
+});
+
+test('the multi-Pine combined, trace and multi-Pine package trace closure hashes equal their pins', async () => {
+  assert.deepEqual({
+    mp_combined: await mpCombinedEngineHash(lfReadFile), trace: await traceReproductionEngineHash(lfReadFile), mp_package_trace: await mpPackageTraceClosureHash(lfReadFile)
+  }, OTHER_HASHES);
 });

@@ -12,12 +12,12 @@ import {validateResearchContractV2,CONTENT_DIGEST_SQL} from '../quant-research/r
 import {buildParticipantContext,warmupBarsOf} from './qr3-participant-context.js';
 
 /**
- * QR-3 S4 owner API (contract 11.3, root rulings SB177): three owner-scoped actions behind QR3_COMPARISON_ENABLED, off by default.
+ * QR-3 S4 owner API (contract 11.3, root rulings SB177 and SB184 RR-12): four owner-scoped actions behind QR3_COMPARISON_ENABLED, off by default.
  *   POST /api/quant/comparisons              create: freezes the spec and writes one exposure event per participant (SPEC_FROZEN). Starts no evaluation.
  *   GET  /api/quant/comparisons/:id          view: spec, statuses, stored results once COMPLETE, derived STALE. Read only.
  *   POST /api/quant/comparisons/:id/cancel   cancel: SPEC_FROZEN or EVALUATING to CANCELLED.
- * Nothing else is mounted (no replay request: carried to the wiring slice). When the flag is off the module answers false before it reads anything, so
- * every path falls through to the router's own 404.
+ *   POST /api/quant/comparisons/:id/replay   record replay of a COMPLETE comparison (RR-12): confirm token, one replay event, the outcome row never changes.
+ * Nothing else is mounted. When the flag is off the module answers false before it reads anything, so every path falls through to the router's own 404.
  *
  * The caller (the user router) has already required a session with own:read or own:write and, for POST, the canonical CSRF check; the module asks the auth
  * object again for a POST and refuses a session that is not the routed actor. The owner is always the session user: no body or query field selects an owner,
@@ -30,11 +30,15 @@ import {buildParticipantContext,warmupBarsOf} from './qr3-participant-context.js
  *
  * Create needs two values only the evaluation closure can supply (the engine hash, C7, and the shared dataset digest, C6). This module names no module of
  * that closure, so deps.engineHash and deps.datasetDigest are injected; without them create refuses QR3_ADMISSION_CLOSED with detail CREATE_NOT_WIRED
- * (fail closed). The wiring slice supplies them. View and cancel need neither.
+ * (fail closed). The wiring slice supplies them. View and cancel need neither. Replay runs deps.replay of the same wiring module (re-read of the stored runs and
+ * their verified bars, rebuild with the pure functions, one replay event); without it replay refuses QR3_ADMISSION_CLOSED with detail REPLAY_NOT_WIRED. A replay
+ * of a comparison that is not COMPLETE is QR3_ADMISSION_CLOSED with detail REPLAY_NOT_COMPLETE, and a replay while another one runs in this process is
+ * QR3_ADMISSION_CLOSED with detail REPLAY_BUSY (single flight). The audit row is written after the replay event committed, as for create and cancel.
  */
 export const QR3_PATH='/api/quant/comparisons';
 export const QR3_CREATE_EVENT='qr3.comparison_created';
 export const QR3_CANCEL_EVENT='qr3.comparison_cancelled';
+export const QR3_REPLAY_EVENT='qr3.comparison_replay_requested';
 /** Fixed read budget (RD-6, root ruling RR-5): 2 to 4 participants, each parent contract at most this many bytes (the create reads it in full). Not a timeout. */
 export const READ_BUDGET=Object.freeze({min_participants:2,max_participants:4,max_contract_bytes:1048576});
 const ROUTE_CODES=Object.freeze({NOT_FOUND:'NOT_FOUND',METHOD_NOT_ALLOWED:'METHOD_NOT_ALLOWED',QUANT_LIBRARY_UNAVAILABLE:'QUANT_LIBRARY_UNAVAILABLE',
@@ -267,6 +271,22 @@ async function runCancel(store,owner,id){
   return {status:200,body:{ok:true,comparison_id:id,status:'CANCELLED',seq:cancelled.seq,at_ms:cancelled.at_ms,at_utc:iso(cancelled.at_ms),exposure_events:'KEPT'}};
 }
 
+async function runReplay(store,deps,owner,id){
+  const db=store.db;
+  const present=await readOnly(db,async()=>{
+    const state=await gate(db);
+    if(!state.comparison)stop(ROUTE_CODES.QR3_SCHEMA_ABSENT);
+    return {ok:true};
+  });
+  if(!present.ok)return answer(present);
+  if(typeof deps?.replay!=='function')return answer(refusal(ROUTE_CODES.QR3_ADMISSION_CLOSED,'REPLAY_NOT_WIRED'));
+  const replayed=await deps.replay({owner_id:owner,comparison_id:id});
+  if(!replayed.ok)return answer(fromStore(replayed));
+  await audit(store,owner,QR3_REPLAY_EVENT,{comparison_id:id,status:'COMPLETE',kind:replayed.kind,first_differing_code:replayed.first_differing_code??null,outcome:'REPLAYED'});
+  return {status:200,body:{ok:true,comparison_id:id,kind:replayed.kind,first_differing_code:replayed.first_differing_code??null,replay_event_id:replayed.replay_event_id,
+    at_ms:replayed.at_ms,at_utc:iso(replayed.at_ms),outcome_unchanged:true,derived_status:replayed.kind==='REPLAY_MISMATCH'?'STALE':null}};
+}
+
 /* ---- the view ---- */
 
 function participantsView(base){
@@ -351,6 +371,7 @@ function parseTarget(path){
   if(parts[0]==='')return null;
   if(parts.length===1)return {kind:'item',id:parts[0]};
   if(parts.length===2&&parts[1]==='cancel')return {kind:'cancel',id:parts[0]};
+  if(parts.length===2&&parts[1]==='replay')return {kind:'replay',id:parts[0]};
   return null;
 }
 
@@ -380,6 +401,11 @@ export async function qr3Routes(req,res,url,actor,{store,auth,json,enabled,deps}
   if(target.kind==='cancel'){
     if(!isObject(body)||Object.keys(body).length>0)return send(answer(refusal(CODES.INVALID_FIELDS,'BODY')));
     return defer(()=>runCancel(store,owner,target.id));
+  }
+  if(target.kind==='replay'){
+    if(!isObject(body)||Object.keys(body).some(name=>name!=='confirmed'))return send(answer(refusal(CODES.INVALID_FIELDS,'BODY')));
+    if(body.confirmed!==true)return send(answer(refusal(ROUTE_CODES.QR3_CONFIRMATION_REQUIRED)));
+    return defer(()=>runReplay(store,deps,owner,target.id));
   }
   const planned=planCreate(body);
   if(!planned.ok)return send(answer(planned));

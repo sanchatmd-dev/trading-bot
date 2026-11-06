@@ -23,6 +23,7 @@ import {qr2OwnerPerformanceRoute} from './qr2-owner-route.js';
 import {qr2PerformanceRoute,createQr2Slot} from './qr2-routes.js';
 import {qr2CapitalModelRoute} from './qr2-capital-model-route.js';
 import {qr3Routes} from './qr3-routes.js';
+import {createQr3ApiDeps} from './qr3-comparison-wiring.js';
 import {createQr2ComputePool} from './qr2-compute-pool.js';
 import { PostgresDatabase } from './db.js';
 import {requirePaperLedgerFence} from './paper-ledger-fence.js';
@@ -67,8 +68,8 @@ const store = new Store(database);
 const pineBridgeEnabled=process.env.PINE_BRIDGE_ENABLED==='1';
 // QR-2 per-Bot performance route (RC-Q32): off unless QR2_PERFORMANCE_ENABLED=1; one computation slot per process (RC-Q30).
 const qr2PerformanceEnabled=process.env.QR2_PERFORMANCE_ENABLED==='1';
-// QR-3 owner comparison routes (create, view, cancel): off unless QR3_COMPARISON_ENABLED=1, and nothing is mounted otherwise. Create is fail closed (no engine hash and no
-// dataset digest reader are wired here) until the wiring slice supplies them; this file names no module of the fixed-evaluation closure.
+// QR-3 owner comparison routes (create, view, cancel, replay): off unless QR3_COMPARISON_ENABLED=1, and nothing is mounted or built otherwise. The engine hash,
+// the dataset digest and the record replay come from the QR-3 wiring module of the runtime manifest; this file names no other module of that closure.
 const qr3ComparisonEnabled=process.env.QR3_COMPARISON_ENABLED==='1';
 const qr2Slot=createQr2Slot();
 const qr2Compute=createQr2ComputePool();
@@ -88,6 +89,7 @@ if(pineBridgeEnabled) {
   if(rows.length!==1||rows[0].version!==1)throw new Error('Initialize Pine Bridge extension 1 offline');
 }
 const pineBridgeService=new PineBridgeService(store,{defaultRisk:config.defaultRisk,aiQuota:pineBridgeAiQuota});
+const qr3Deps=qr3ComparisonEnabled?createQr3ApiDeps({pineService:pineBridgeService}):undefined;
 const quantResearchEnabled=process.env.QUANT_RESEARCH_ENABLED==='1';
 if(quantResearchEnabled){
   if(!pineBridgeEnabled||process.env.PINE_BRIDGE_ENV!=='staging'||!config.paperTrading)throw new Error('Quant research requires explicitly configured Paper staging');
@@ -303,7 +305,7 @@ async function userRoutes(req, res, url) {
   if (await qr2CapitalModelRoute(req, res, url, actor, {store, auth, json, enabled: qr2PerformanceEnabled})) return;
   if (await qr2OwnerPerformanceRoute(req, res, url, actor, {store, auth, json, enabled: qr2PerformanceEnabled, slot: qr2Slot, compute: qr2Compute})) return;
   if (await qr2PerformanceRoute(req, res, url, actor, {store, auth, json, enabled: qr2PerformanceEnabled, slot: qr2Slot, compute: qr2Compute})) return;
-  if (await qr3Routes(req, res, url, actor, {store, auth, json, enabled: qr3ComparisonEnabled})) return;
+  if (await qr3Routes(req, res, url, actor, {store, auth, json, enabled: qr3ComparisonEnabled, deps: qr3Deps})) return;
   if (req.method === 'GET' && url.pathname === '/api/bots') {
     const plan = await store.activePlan(actor.id);
     const quota = getQuota(plan);

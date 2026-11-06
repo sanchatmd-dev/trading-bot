@@ -422,7 +422,8 @@ test('FE-2b hashes its pure library dependencies while the library API and serve
   for(const files of [FOUNDATION_ENGINE_FILES,INGESTION_ENGINE_FILES,PF2_ENGINE_FILES,FIXED_EVAL_ENGINE_FILES,QUANT_RUNTIME_ENGINE_FILES])for(const file of execution)assert.ok(files.includes(file),file+' must be hashed for fixed evaluation');
   for(const files of [LEGACY_ENGINE_FILES,PF2_EVALUATOR_FILES])for(const file of execution)assert.ok(!files.includes(file),file+' changes a separate evaluator boundary');
   // The same closure the engine-files test walks from the worker and API roots.
-  const roots=['src/postgres/quant-research-main.js','src/quant-research/io-profile-worker.js','src/postgres/quant-preflight-wiring.js','src/postgres/quant-preflight-routes.js'];
+  const roots=['src/postgres/quant-research-main.js','src/quant-research/io-profile-worker.js','src/postgres/quant-preflight-wiring.js','src/postgres/quant-preflight-routes.js',
+    'src/postgres/qr3-comparison-wiring.js'];
   const visited=new Set();
   const visit=file=>{
     if(visited.has(file))return;visited.add(file);

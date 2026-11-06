@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import {Readable} from 'node:stream';
 import {canonical,hash} from '../src/pine-bridge/source.js';
 import {fixedEvalFixture} from './helpers/quant-fixed-eval-fixture.mjs';
-import {qr3Routes,planCreate,qr3AuditFailureCount,READ_BUDGET,REFUSAL_CODES,QR3_PATH,QR3_CANCEL_EVENT} from '../src/postgres/qr3-routes.js';
+import {qr3Routes,planCreate,qr3AuditFailureCount,READ_BUDGET,REFUSAL_CODES,QR3_PATH,QR3_CANCEL_EVENT,QR3_REPLAY_EVENT} from '../src/postgres/qr3-routes.js';
 import {validateSpec} from '../src/comparison/ranking.js';
 import {resolvePeriod} from '../src/comparison/period.js';
 import {requestKeyHash} from '../src/postgres/comparison-store.js';
@@ -116,21 +116,23 @@ test('flag off: every path and method is unhandled, reads nothing and answers no
   for(const path of ['/api/quant/comparisonsX','/api/quant/library','/api/quant','/api/quant/comparison'])assert.equal((await on.call('GET',path)).handled,false,path);
 });
 
-test('flag on: exactly create, view and cancel; no other POST, no replay request, wrong methods answer 405, unknown shapes 404',async()=>{
+test('flag on: exactly create, view, cancel and replay (RR-12); no other POST, wrong methods answer 405, unknown shapes 404',async()=>{
   const h=harness();
   const posts=[],others=[];
   for(const path of [QR3_PATH,QR3_PATH+'/cmp-1',QR3_PATH+'/cmp-1/cancel',QR3_PATH+'/cmp-1/replay',QR3_PATH+'/cmp-1/cancel/extra',QR3_PATH+'/',QR3_PATH+'/cmp-1/start',QR3_PATH+'/cmp-1/apply']){
     const answer=await h.call('POST',path,{body:{}});
     (answer.status===404||answer.status===405?others:posts).push([path,answer.status]);
   }
-  // only the collection (create, refused here for the missing confirm token, so 400) and the cancel path (a deferred answer) pass the method and path gate
-  assert.deepEqual(posts.map(item=>item[0]),[QR3_PATH,QR3_PATH+'/cmp-1/cancel']);
-  assert.deepEqual(Object.fromEntries(others),{[QR3_PATH+'/cmp-1']:405,[QR3_PATH+'/cmp-1/replay']:404,[QR3_PATH+'/cmp-1/cancel/extra']:404,[QR3_PATH+'/']:404,[QR3_PATH+'/cmp-1/start']:404,[QR3_PATH+'/cmp-1/apply']:404});
+  // only the collection (create, refused here for the missing confirm token, so 400), the cancel path (a deferred answer) and the replay path (refused for the
+  // missing confirm token, so 400) pass the method and path gate
+  assert.deepEqual(posts.map(item=>item[0]),[QR3_PATH,QR3_PATH+'/cmp-1/cancel',QR3_PATH+'/cmp-1/replay']);
+  assert.deepEqual(Object.fromEntries(others),{[QR3_PATH+'/cmp-1']:405,[QR3_PATH+'/cmp-1/cancel/extra']:404,[QR3_PATH+'/']:404,[QR3_PATH+'/cmp-1/start']:404,[QR3_PATH+'/cmp-1/apply']:404});
   for(const method of ['PUT','PATCH','DELETE','HEAD','OPTIONS']){
-    for(const path of [QR3_PATH,QR3_PATH+'/cmp-1',QR3_PATH+'/cmp-1/cancel'])assert.equal((await h.call(method,path,{body:{}})).status,405,method+' '+path);
+    for(const path of [QR3_PATH,QR3_PATH+'/cmp-1',QR3_PATH+'/cmp-1/cancel',QR3_PATH+'/cmp-1/replay'])assert.equal((await h.call(method,path,{body:{}})).status,405,method+' '+path);
   }
   assert.equal((await h.call('GET',QR3_PATH)).status,405);
   assert.equal((await h.call('GET',QR3_PATH+'/cmp-1/cancel')).status,405);
+  assert.equal((await h.call('GET',QR3_PATH+'/cmp-1/replay')).status,405);
   // the source has no route other than the three: one POST for the collection, one for cancel, one GET
   const text=await fs.readFile(new URL('../src/postgres/qr3-routes.js',import.meta.url),'utf8');
   assert.equal(/'(?:PUT|PATCH|DELETE)'/.test(text),false);
@@ -387,6 +389,59 @@ test('a failed audit write after a committed cancel is counted and never changes
   const done=await h.call('POST',QR3_PATH+'/cmp-1/cancel',{body:{}});
   assert.deepEqual([done.status,done.body.ok,done.body.status],[200,true,'CANCELLED']);
   assert.equal(qr3AuditFailureCount(),before+1);
+});
+
+/* ---- replay (L8-W, RR-12) over a stub replay dependency; the real record replay runs in test/postgres/qr3-end-to-end.test.mjs ---- */
+
+test('replay: confirm token and exact body in phase one; the deferred phase calls deps.replay with the session owner only, audits once after it, and maps refusals',async()=>{
+  const calls=[];
+  const replayed={ok:true,code:null,detail:null,comparison_id:'cmp-1',kind:'REPLAY_MATCH',first_differing_code:null,replay_event_id:'00000000-0000-4000-8000-000000000001',at_ms:1234567890000};
+  const replay=async input=>{calls.push(input);return replayed;};
+  // phase one: body shape and confirm token, nothing read, nothing called
+  for(const [body,code,detail] of [[{},'QR3_CONFIRMATION_REQUIRED',null],[{confirmed:false},'QR3_CONFIRMATION_REQUIRED',null],[{confirmed:true,owner_id:'x'},'INVALID_FIELDS','BODY'],
+    [{confirmed:true,comparison_id:'cmp-2'},'INVALID_FIELDS','BODY']]){
+    const h=harness({deps:{replay}});
+    const answer=await h.call('POST',QR3_PATH+'/cmp-1/replay',{body});
+    assert.deepEqual([answer.status,answer.body.code,answer.body.detail,answer.deferred,answer.phase1Statements],[400,code,detail,false,0],JSON.stringify(body));
+    assert.deepEqual(h.audits,[]);
+  }
+  assert.deepEqual(calls,[]);
+  // CSRF: refused by the canonical auth before anything
+  const csrf=harness({deps:{replay}});
+  await assert.rejects(csrf.call('POST',QR3_PATH+'/cmp-1/replay',{body:{confirmed:true},csrf:false}),{status:403});
+  assert.deepEqual(calls,[]);
+  // accepted: one call with the session owner, one audit row with ids and codes only
+  const ok=harness({deps:{replay}});
+  const done=await ok.call('POST',QR3_PATH+'/cmp-1/replay',{body:{confirmed:true}});
+  assert.equal(done.phase1Statements,0);
+  assert.deepEqual([done.status,done.body.ok,done.body.kind,done.body.first_differing_code,done.body.outcome_unchanged,done.body.derived_status],[200,true,'REPLAY_MATCH',null,true,null]);
+  assert.deepEqual(calls,[{owner_id:OWNER,comparison_id:'cmp-1'}]);
+  assert.deepEqual(ok.audits,[[OWNER,QR3_REPLAY_EVENT,null,{comparison_id:'cmp-1',status:'COMPLETE',kind:'REPLAY_MATCH',first_differing_code:null,outcome:'REPLAYED'}]]);
+  // a mismatch is shown as STALE
+  const stale=harness({deps:{replay:async()=>({...replayed,kind:'REPLAY_MISMATCH',first_differing_code:'OUTCOME_MISMATCH'})}});
+  const mismatch=await stale.call('POST',QR3_PATH+'/cmp-1/replay',{body:{confirmed:true}});
+  assert.deepEqual([mismatch.status,mismatch.body.kind,mismatch.body.first_differing_code,mismatch.body.derived_status],[200,'REPLAY_MISMATCH','OUTCOME_MISMATCH','STALE']);
+  // refusals: not COMPLETE, busy, absent or foreign; no audit row for any of them
+  for(const [result,status,code,detail] of [[{ok:false,code:'QR3_ADMISSION_CLOSED',detail:'REPLAY_NOT_COMPLETE'},409,'QR3_ADMISSION_CLOSED','REPLAY_NOT_COMPLETE'],
+    [{ok:false,code:'QR3_ADMISSION_CLOSED',detail:'REPLAY_BUSY'},409,'QR3_ADMISSION_CLOSED','REPLAY_BUSY'],[{ok:false,code:'NOT_FOUND',detail:null},404,'NOT_FOUND',null],
+    [{ok:false,code:'QR3_INTEGRITY_FAILED',detail:'quant_comparison_guard'},409,'QR3_INTEGRITY_FAILED',null]]){
+    const h=harness({deps:{replay:async()=>result}});
+    const answer=await h.call('POST',QR3_PATH+'/cmp-1/replay',{body:{confirmed:true}});
+    assert.deepEqual([answer.status,answer.body.ok,answer.body.code,answer.body.detail],[status,false,code,detail],JSON.stringify(result));
+    assert.deepEqual(h.audits,[]);
+  }
+  // not wired: fail closed
+  for(const options of [{wired:false},{deps:{replay:undefined}}]){
+    const h=harness(options);
+    const answer=await h.call('POST',QR3_PATH+'/cmp-1/replay',{body:{confirmed:true}});
+    assert.deepEqual([answer.status,answer.body.code,answer.body.detail],[409,'QR3_ADMISSION_CLOSED','REPLAY_NOT_WIRED']);
+    assert.deepEqual(h.audits,[]);
+  }
+  // schema absent: refused before the replay is called
+  const absent=harness({deps:{replay},script:scripted({gate:{library:true,comparison:false,modes:true,market:true}})});
+  const before=calls.length;
+  assert.equal((await absent.call('POST',QR3_PATH+'/cmp-1/replay',{body:{confirmed:true}})).body.code,'QR3_SCHEMA_ABSENT');
+  assert.equal(calls.length,before);
 });
 
 test('contract 9.1 coverage: the stub suite reaches every code except the store-only and the unreachable ones, which are named',()=>{

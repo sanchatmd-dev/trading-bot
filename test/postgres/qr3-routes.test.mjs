@@ -513,7 +513,7 @@ test('real server, flag off: every path and method answers 404 and nothing is cr
   }finally{await app.close();}
 });
 
-test('real server, flag on: session, canonical CSRF, owner scope, fail-closed create, view, cancel and audit',async()=>{
+test('real server, flag on: session, canonical CSRF, owner scope, wired create (L8-W), view, cancel, replay and audit',async()=>{
   const {ownerEmail,intruderEmail}=await accounts();
   const c=await completeFixture(2);
   const open=await api(f.owner,'POST',QR3_PATH,createBody());
@@ -530,6 +530,7 @@ test('real server, flag on: session, canonical CSRF, owner scope, fail-closed cr
       const bad={cookie:{...session.cookie},csrf};
       assert.equal((await app.request(QR3_PATH,'POST',createBody(),bad)).status,403);
       assert.equal((await app.request(QR3_PATH+'/'+openId+'/cancel','POST',{},bad)).status,403);
+      assert.equal((await app.request(QR3_PATH+'/'+c.id+'/replay','POST',{confirmed:true},bad)).status,403);
     }
     assert.deepEqual(withoutAudit(await everything()),withoutAudit(state));
     // GET needs no token and returns the owner's view
@@ -541,15 +542,25 @@ test('real server, flag on: session, canonical CSRF, owner scope, fail-closed cr
     const absent=[await app.request(QR3_PATH+'/'+randomUUID(),'GET',undefined,other),await app.request(QR3_PATH+'/'+randomUUID()+'/cancel','POST',{},other)];
     for(const answer of [...foreign,...absent])assert.deepEqual([answer.status,answer.body],[404,{ok:false,code:'NOT_FOUND',detail:null}]);
     assert.deepEqual((await events(openId)).map(item=>item[1]),['SPEC_FROZEN']);
-    // create over the real server: foreign participants are one 404; with every check passed the closure values are not wired in the server, so create fails closed
+    // create over the real server, now wired (L8-W): foreign participants are the absent 404; the owner's create freezes the live engine hash and the real dataset digest
     const stranger=await app.request(QR3_PATH,'POST',createBody(),other);
-    assert.deepEqual([stranger.status,stranger.body.code,stranger.body.detail],[409,'QR3_ADMISSION_CLOSED','CREATE_NOT_WIRED'],'nothing about the foreign runs is revealed');
-    const refused=await app.request(QR3_PATH,'POST',createBody(),session);
-    assert.deepEqual([refused.status,refused.body.code,refused.body.detail],[409,'QR3_ADMISSION_CLOSED','CREATE_NOT_WIRED']);
+    assert.deepEqual([stranger.status,stranger.body],[404,{ok:false,code:'NOT_FOUND',detail:null}],'nothing about the foreign runs is revealed');
+    const wired=await app.request(QR3_PATH,'POST',createBody(),session);
+    assert.deepEqual([wired.status,wired.body.status,wired.body.evaluation_started],[201,'SPEC_FROZEN',false],JSON.stringify(wired.body));
+    const frozen=JSON.parse((await rowsOf('SELECT freeze_canonical FROM public.quant_comparison_participants WHERE comparison_id=$1 AND position=1',[wired.body.comparison_id]))[0].freeze_canonical);
+    assert.deepEqual([frozen.context.engine,frozen.context.dataset.digest],[f.context.engine,f.freeze.dataset_hash]);
     // a pure refusal and the method and path gate
     assert.equal((await app.request(QR3_PATH,'POST',createBody({confirmed:undefined}),session)).body.code,'QR3_CONFIRMATION_REQUIRED');
     assert.equal((await app.request(QR3_PATH+'/'+openId,'POST',{},session)).status,405);
-    assert.equal((await app.request(QR3_PATH+'/'+openId+'/replay','POST',{},session)).status,404);
+    // replay (RR-12): confirm token, COMPLETE only, owner scope; this COMPLETE fixture has no stored fixed runs, so the record replay is REPRODUCTION_DISABLED
+    assert.equal((await app.request(QR3_PATH+'/'+openId+'/replay','POST',{},session)).body.code,'QR3_CONFIRMATION_REQUIRED');
+    const notComplete=await app.request(QR3_PATH+'/'+openId+'/replay','POST',{confirmed:true},session);
+    assert.deepEqual([notComplete.status,notComplete.body.code,notComplete.body.detail],[409,'QR3_ADMISSION_CLOSED','REPLAY_NOT_COMPLETE']);
+    assert.deepEqual([(await app.request(QR3_PATH+'/'+c.id+'/replay','POST',{confirmed:true},other)).status],[404]);
+    const replayed=await app.request(QR3_PATH+'/'+c.id+'/replay','POST',{confirmed:true},session);
+    assert.deepEqual([replayed.status,replayed.body.kind,replayed.body.outcome_unchanged],[200,'REPRODUCTION_DISABLED',true],JSON.stringify(replayed.body));
+    assert.equal((await audits(f.owner,'qr3.comparison_replay_requested')).filter(row=>row.details.comparison_id===c.id).length,1);
+    assert.equal(await countOf('quant_comparison_replay_events',c.id),1);
     assert.equal((await app.request(QR3_PATH+'?user_id='+intruder,'POST',createBody(),session)).body.detail,'QUERY');
     assert.equal((await app.request(QR3_PATH+'/'+c.id+'?user_id='+intruder,'GET',undefined,session)).body.detail,'QUERY');
     // cancel with the token: CANCELLED, one audit row, exposure events stay; a second cancel is refused
