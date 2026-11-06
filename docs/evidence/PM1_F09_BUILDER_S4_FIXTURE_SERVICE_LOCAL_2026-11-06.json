@@ -1,0 +1,31 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-11-06",
+  "root": "Claude local root",
+  "baseRevision": "4dc9fbd",
+  "scope": "Local implementation of F09 builder slice S4 plus the one-Pine attempt evaluator core (plan lane L7): BiFixturePackageService in src/postgres/bi-package-store.js builds one labelled fixture Best Inputs package from a stored v3 fixture research run and validates it through the package gates to a fixture EXPORT_VALIDATED with a fixture ql4c_validation row. Local engineering evidence only; no route, worker, runtime root, service, staging install or deployment imports or uses it.",
+  "method": "Root pre-implementation rulings (memory capacity, terminal-entry lifetime, cancellation, commit retry bound, deadlock handling, cross-process exclusion, I bar) before dispatch; Sonnet coder (high); independent Sonnet tester with mutants on copies (PASS after one fix round that added the in-transaction B0 refusal test, killing the surviving mutant); Opus auditor (READY, P3 only) and re-audit (READY). PostgreSQL tests ran on throwaway clusters with real non-owner roles and the real Python interpreter. Depends on the v3 trace profile accepted at faa3179 under the owner GO for the local engine-closure change. Reports are kept locally, not tracked.",
+  "files": {
+    "src/postgres/bi-package-store.js": "4bc7969090041fcbc81736ac3ac4a03e164085809348f3a441ec565d65febe84",
+    "test/postgres/bi-package-build.test.mjs": "16491ddc7c2137ff6961caa8ccb4216f9602f6e0b89eea62af5ab0863e90d060",
+    "test/bi-package-store-static-isolation.test.js": "8b09e42ff0e0cedf22ae62f0e9298986b8f9a7e27befaa96e4cbc45e06b5c293"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it, at f38048b.",
+  "newHostSteps": 0,
+  "go": null,
+  "productionQualified": false,
+  "result": "Local: bi-package-build 15 tests (14 pass, 1 skipped CI-only interpreter assertion) plus the in-transaction B0 refusal test added in the fix round (22 pass, 1 skipped with the static isolation test); static isolation 7/7; package-gate, render, trace, closure, selection and grant regressions pass. E1 runs the real research worker, real Python engine and trace driver, real renderer, B0, store and exposure register reader; every file and trace SHA-256 recomputed independently; the exposure register, quant_jobs and Pine tables unchanged by the build. Refusal matrix writes zero rows. Single-flight gives one reproduction; a two-instance final-transaction race gives one export; HOLDOUT invocations stay one across commit restarts. CI on f38048b passed all 9 checks (read by root at 16:33Z UTC), including the PostgreSQL job that asserts an interpreter under CI=true.",
+  "limits": [
+    "Local engineering evidence only; nothing is installed, routed or wired; READY false; fixture labels forced.",
+    "Only E1 exercises the real engine per reproduction; other cases replay E1 engine replies on cloned runs and test mechanics.",
+    "defaultPorts are not exercised end to end (the private source gate is replaced in tests, as in the S3 acceptance).",
+    "No cross-process exclusion: single process only; duplicate pre-insert evaluation by two processes stays possible, which is why no runtime root may import the module.",
+    "Recorded limitations from the audit: record writers accept a caller method and operator role; the GATES test hook receives live references; export_id is not shape-checked; no constructor role guard (any wiring must add a fixture-role guard); stored file hashes are not compared with manifest entries on LOAD; live policy_version and input lock echo the binding (no live source before owner question Q3).",
+    "OD-21 (holdout trace content) stays open; only fixture packages may exist. No qualified real candidate, TradingView compile record or staging evidence exists, so F09-01 V and T are not affected."
+  ],
+  "rootAcceptance": {
+    "by": "Claude local root",
+    "date": "2026-11-06",
+    "statement": "Root accepts the F09 one-Pine fixture build and attempt service as local engineering evidence (ruling SB183). Under Root ruling SB176 item 10 this meets the P6 bar for F09-01 stage I (a builder and an evaluator use the gate module, the tables, the renderer and the trace reproduction on the labelled fixture path; no route or view is needed for I). A successor scorecard may move F09-01 I from 0 to 1 citing this record; V and T stay as they are. No credit moves before that scorecard."
+  }
+}
