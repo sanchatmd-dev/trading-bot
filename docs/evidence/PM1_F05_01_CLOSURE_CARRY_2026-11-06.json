@@ -1,0 +1,194 @@
+{
+  "record": "PM-1 F05-01 evaluator baseline: closure carry reconciliation on the current engine (plan item L1, L1b)",
+  "date": "2026-11-06T10:45Z",
+  "revision": "6aac4a6d6a4e1f725897a5c5c0257790ce35e0d7",
+  "scope": "Local rerun of F05-01 evaluator-baseline carry checks on HEAD bytes. Evidence for a successor scorecard; changes no PM-1 credit, gate or runtime state. Host local only; no PostgreSQL.",
+  "method": "Read-only hash reconciliation of the 16 pinned QL-2A closure files (E023 implementation_sha256) and 8 unpinned closure files at HEAD, plus a tester rerun of the evaluator, risk and bridge suites on HEAD; independent Opus audit; Root acceptance. No product file changed.",
+  "pins": {
+    "source": "docs/evidence/QL_2A_BASELINE_2026-09-26.json implementation_sha256",
+    "files": {
+      "quant_lab/src/robot_quant/ql2a.py": {
+        "pinned": "73ecadec45dba0deb652a9f8397921ac8e87fecd3e8243cece35ec332cffd952",
+        "head": "73ecadec45dba0deb652a9f8397921ac8e87fecd3e8243cece35ec332cffd952",
+        "at138644c": "73ecadec45dba0deb652a9f8397921ac8e87fecd3e8243cece35ec332cffd952",
+        "headEqualsPin": true
+      },
+      "quant_lab/src/robot_quant/spt_evaluator.py": {
+        "pinned": "59d57efe5811330256ecafe2a95fae16668e5d67c911b5d9e704f75a10d3231b",
+        "head": "59d57efe5811330256ecafe2a95fae16668e5d67c911b5d9e704f75a10d3231b",
+        "at138644c": "59d57efe5811330256ecafe2a95fae16668e5d67c911b5d9e704f75a10d3231b",
+        "headEqualsPin": true
+      },
+      "quant_lab/src/robot_quant/spt_checkpoint.py": {
+        "pinned": "25e4dc88ec3d320087d2952a303439c10218bee397352c1eced00eec509f5b87",
+        "head": "25e4dc88ec3d320087d2952a303439c10218bee397352c1eced00eec509f5b87",
+        "at138644c": "25e4dc88ec3d320087d2952a303439c10218bee397352c1eced00eec509f5b87",
+        "headEqualsPin": true
+      },
+      "quant_lab/src/robot_quant/spt_repaint.py": {
+        "pinned": "cef50f057ee93c830eef0fe2460def52073fadc0610ea2b061f5075bc7ef1149",
+        "head": "cef50f057ee93c830eef0fe2460def52073fadc0610ea2b061f5075bc7ef1149",
+        "at138644c": "cef50f057ee93c830eef0fe2460def52073fadc0610ea2b061f5075bc7ef1149",
+        "headEqualsPin": true
+      },
+      "quant_lab/src/robot_quant/bridge_replay.py": {
+        "pinned": "ad6a9f60c8134b25e81c976ea009cbec843dc3d8a9bd3fd3cd5e8577b6639d02",
+        "head": "ad6a9f60c8134b25e81c976ea009cbec843dc3d8a9bd3fd3cd5e8577b6639d02",
+        "at138644c": "ad6a9f60c8134b25e81c976ea009cbec843dc3d8a9bd3fd3cd5e8577b6639d02",
+        "headEqualsPin": true
+      },
+      "quant_lab/src/robot_quant/bridge_paper.py": {
+        "pinned": "8c777beb0c16dee12d681bce6ba527bafbe9cda0c9885d1b49d5da35d435d425",
+        "head": "8c777beb0c16dee12d681bce6ba527bafbe9cda0c9885d1b49d5da35d435d425",
+        "at138644c": "8c777beb0c16dee12d681bce6ba527bafbe9cda0c9885d1b49d5da35d435d425",
+        "headEqualsPin": true
+      },
+      "quant_lab/src/robot_quant/risk_evaluator.py": {
+        "pinned": "9afff97912921f11592da9c9fdce124c73b1ecd4337fe6c0808c4817124c882e",
+        "head": "4e31f2011aef3f317a777130e3a261cd1bd2cfaaaa97dc747541cf17c684b31f",
+        "at138644c": "4e31f2011aef3f317a777130e3a261cd1bd2cfaaaa97dc747541cf17c684b31f",
+        "headEqualsPin": false
+      },
+      "scripts/quant-bridge-reference.mjs": {
+        "pinned": "8b508fac62178d5b94211f7fec738468b5d5da74ec2784828e333cce6fbb44b7",
+        "head": "8b508fac62178d5b94211f7fec738468b5d5da74ec2784828e333cce6fbb44b7",
+        "at138644c": "8b508fac62178d5b94211f7fec738468b5d5da74ec2784828e333cce6fbb44b7",
+        "headEqualsPin": true
+      },
+      "src/postgres/risk.js": {
+        "pinned": "f0d8959a1560011d6359a24042e6755bd539fb8ba5eeeaf920b2c16258506e83",
+        "head": "8aa321ea6d0bd2baeee40afaa74364c6309e99774d889e8cdd1ed0c841449458",
+        "at138644c": "8aa321ea6d0bd2baeee40afaa74364c6309e99774d889e8cdd1ed0c841449458",
+        "headEqualsPin": false
+      },
+      "src/postgres/ledger.js": {
+        "pinned": "dc71af1ec7b18be474eab1d0b08e41ad39781fa112d8fc72fa26ccff0df56bbd",
+        "head": "98cc44be8e0f9f1635c349fe62313abd48112eda1e91434e22867cbb086db65e",
+        "at138644c": "98cc44be8e0f9f1635c349fe62313abd48112eda1e91434e22867cbb086db65e",
+        "headEqualsPin": false
+      },
+      "src/postgres/pine-bridge-execution.js": {
+        "pinned": "80b37f623de5fd5a943f90f0801f07b46f8b8f31d783fdf683b86bbc5bd1b7a7",
+        "head": "80b37f623de5fd5a943f90f0801f07b46f8b8f31d783fdf683b86bbc5bd1b7a7",
+        "at138644c": "80b37f623de5fd5a943f90f0801f07b46f8b8f31d783fdf683b86bbc5bd1b7a7",
+        "headEqualsPin": true
+      },
+      "src/pine-bridge/contract.js": {
+        "pinned": "841ea612e9c9f13b3e35cc21920ef5897a99921ec0d8a4df44a2b75a85ebabb0",
+        "head": "841ea612e9c9f13b3e35cc21920ef5897a99921ec0d8a4df44a2b75a85ebabb0",
+        "at138644c": "841ea612e9c9f13b3e35cc21920ef5897a99921ec0d8a4df44a2b75a85ebabb0",
+        "headEqualsPin": true
+      },
+      "src/pine-bridge/source.js": {
+        "pinned": "d8dab38c2ee521a597a216215a08eb0f4ff0e841e770f33ad94850f5a62a3bdc",
+        "head": "d8dab38c2ee521a597a216215a08eb0f4ff0e841e770f33ad94850f5a62a3bdc",
+        "at138644c": "d8dab38c2ee521a597a216215a08eb0f4ff0e841e770f33ad94850f5a62a3bdc",
+        "headEqualsPin": true
+      },
+      "src/money.js": {
+        "pinned": "3e3b7a80fd25cb5be30fbb262c1466b26b6c6b53ecfaf34a30233f0b2e82bdcf",
+        "head": "3e3b7a80fd25cb5be30fbb262c1466b26b6c6b53ecfaf34a30233f0b2e82bdcf",
+        "at138644c": "3e3b7a80fd25cb5be30fbb262c1466b26b6c6b53ecfaf34a30233f0b2e82bdcf",
+        "headEqualsPin": true
+      },
+      "quant_lab/uv.lock": {
+        "pinned": "ee758ad79370c8629bb7000f260cbf0f35476634fb2861357ed3609d8b45112e",
+        "head": "ee758ad79370c8629bb7000f260cbf0f35476634fb2861357ed3609d8b45112e",
+        "at138644c": "ee758ad79370c8629bb7000f260cbf0f35476634fb2861357ed3609d8b45112e",
+        "headEqualsPin": true
+      },
+      "package-lock.json": {
+        "pinned": "30c7ead0dbc18689097313bfc9a7f8c2021d67e138a04f74b42ab5d7c4484f62",
+        "head": "30c7ead0dbc18689097313bfc9a7f8c2021d67e138a04f74b42ab5d7c4484f62",
+        "at138644c": "30c7ead0dbc18689097313bfc9a7f8c2021d67e138a04f74b42ab5d7c4484f62",
+        "headEqualsPin": true
+      }
+    },
+    "headEqualsPin": 13,
+    "total": 16,
+    "drift": [
+      "quant_lab/src/robot_quant/risk_evaluator.py and src/postgres/risk.js: news guard (commit 34e8652), only newsRisk true rejects; no recorded decision changes (E076 policy blockDuringNews=false)",
+      "src/postgres/ledger.js: Paper ledger fence and FIFO exit cost; hashed by ql2a.py but imported by no closure member"
+    ],
+    "unpinnedDrift": [
+      "src/postgres/pine-bridge-readiness.js (also accepts paper-close-cost-v2; paper-close-v1 unchanged)",
+      "quant_lab/src/robot_quant/__init__.py (lazy exports)"
+    ]
+  },
+  "commands": [
+    {
+      "id": "C1",
+      "cwd": "quant_lab",
+      "command": "PYTHONDONTWRITEBYTECODE=1 .venv/Scripts/python.exe -m pytest -p no:cacheprovider -q tests/test_audit_regressions.py tests/test_catalog_parity.py tests/test_custom_effects.py tests/test_fixed_eval.py tests/test_node_direct_parity.py tests/test_parity_risk.py tests/test_parity_analytics.py tests/test_backtest.py tests/test_contracts.py tests/test_records.py tests/test_strategy.py tests/test_package_exports.py"
+    },
+    {
+      "id": "C2",
+      "cwd": "quant_lab",
+      "command": "PYTHONDONTWRITEBYTECODE=1 .venv/Scripts/python.exe -m pytest -p no:cacheprovider -q tests"
+    },
+    {
+      "id": "C3",
+      "cwd": ".",
+      "command": "node --test test/spt-bridge.test.js test/news-block.test.js test/news-windows.test.js test/risk-readiness-bridge.test.js test/risk-readiness.test.js test/risk-policy-review.test.js test/paper-cost-model.test.js test/scale-in.test.js test/quant-engine-files.test.js test/mp-engine-closure.test.js test/multi-pine-combined-oracle.test.js test/pf3-rejection-classes.test.js test/export.test.js test/pf4-risk-proposals.test.js test/ci-scope.test.js"
+    },
+    {
+      "id": "C4",
+      "command": "E076 differential probe (219 decisions plus news-guard control)",
+      "run": false,
+      "reason": "Probe scripts not tracked; inputs (a private checkpoint market file, private policy) are private and out of scope for this tester."
+    }
+  ],
+  "results": {
+    "C1": {
+      "exit": 0,
+      "passed": 367,
+      "failed": 0,
+      "skipped": 0,
+      "equalsE076": "not comparable: E076 recorded Python 186 passed for an unnamed set"
+    },
+    "C2": {
+      "exit": 0,
+      "passed": 702,
+      "failed": 0,
+      "skipped": 2,
+      "equalsE076": "not comparable"
+    },
+    "C3": {
+      "exit": 0,
+      "passed": 248,
+      "failed": 0,
+      "skipped": 0,
+      "equalsE076": "not comparable: E076 recorded Node 100 and 55 passed for unnamed files"
+    },
+    "C4": {
+      "differentialEqual": null,
+      "differentialDifferent": null,
+      "newsGuardControl": "not run"
+    }
+  },
+  "environment": {
+    "python": "3.12.14 (quant_lab/.venv)",
+    "node": "v24.19.0",
+    "note": "versions not pinned by QL-2A",
+    "workingTree": "clean in the closure; uncommitted UI text files in public/ and test/ outside the closure"
+  },
+  "independence": "Hash audit: Opus 5.5 auditor; hash recompute: Sonnet 5.5 tester (own script); suite rerun: Sonnet 5.5 tester; rerun audit: Opus 5.5 auditor (READY_FOR_ROOT). Fable paused.",
+  "limitations": [
+    "E076 does not name its targeted suite files or the probe script paths; C1 to C3 are a reconstructed set, so counts do not equal E076's 186 / 100 / 55 and prove no like-for-like match.",
+    "The 219-decision differential and the news-guard control were not rerun on HEAD (probe scripts untracked; checkpoint market file and policy private). E076 ran them at 138644c, and git diff 138644c..HEAD over the 24 closure files changes only quant_lab/src/robot_quant/__init__.py (eager exports made lazy); the residual gap is that lazy import path, covered dynamically by the HEAD suites C1 and C2 (package exports and parity tests), not by a differential.",
+    "The 92 recorded decisions and 130/130 repaint observations are not re-observed; chart exports are not in the repository.",
+    "No PostgreSQL suites run.",
+    "News-guard semantics differ from baseline for any policy with blockDuringNews=true.",
+    "Node v24.19.0 and Python 3.12.14 used; versions not pinned by QL-2A.",
+    "spt_custom_evaluator.py not reconciled.",
+    "No claim about production Paper ledger behaviour."
+  ],
+  "rootAcceptance": {
+    "status": "ACCEPTED",
+    "by": "Claude root",
+    "date": "2026-11-06T10:45Z",
+    "ruling": "SB169",
+    "statement": "Root ruling P4 is resolved for the frozen-policy carry scope: reason (a) is closed by the HEAD suites and the static review of the lazy __init__ path; reason (b), re-observing the 92 decisions and 130 repaint checks, is waived for this scope because the evaluator, checkpoint, repaint and bridge bytes are identical, E076 ran the differential and the news-guard control on closure bytes equal to HEAD except __init__, and the chart exports are not in the repository. A successor scorecard may cite this record for F05-01 V and T (local target) with the limitations above. No credit moves until that scorecard."
+  },
+  "status": "ACCEPTED_BY_ROOT_FOR_CARRY"
+}
