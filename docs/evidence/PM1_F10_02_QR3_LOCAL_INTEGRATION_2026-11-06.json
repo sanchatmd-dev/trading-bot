@@ -1,0 +1,51 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-11-06",
+  "root": "Claude local root",
+  "baseRevision": "faa3179",
+  "scope": "Local implementation and integration of QR-3 fair comparison, STANDARDIZED mode (plan lane L8, slices L8-A finalizer with cancel and fail, L8-B owner API, L8-C UI in English and Thai, L8-W wiring into the fixed-evaluation closure under the owner local-only GO OG-1). Reachable through the worker root and the server root only behind QUANT_FIXED_EVAL_ENABLED and QR3_COMPARISON_ENABLED, both off by default. Not deployed and not on staging.",
+  "method": "Per slice: Root packet and rulings (SB170, SB174, SB177, SB178, SB180, SB181, SB184 to SB188), coder or debugger, independent Sonnet tester with mutants on copies, Opus auditor, one fix round each where needed; Root rendered check of the UI on a local stub at 1280 and 375 px in English and Thai (SB186); Root integration rerun of the closure, identity and static tests. PostgreSQL suites on throwaway clusters with the real store, real fixed-evaluation service, real foundation worker and the actual Python evaluator.",
+  "commits": {
+    "L8A": "0d51ed3",
+    "L8B": "ce66c78",
+    "L8C": "32ec0d8",
+    "L8W": "0fe7644"
+  },
+  "files": {
+    "src/postgres/comparison-finalizer.js": "17d3b22efc334e2d9698b7a09c2b2bc9880c514cd9e54c8a7b9808926e5d6aa2",
+    "src/postgres/comparison-store.js": "542427b335fde7990d7fe39e5f08f0d080271e7162117a5411904120133ad0c8",
+    "src/postgres/qr3-routes.js": "bb8bf1e81bfce735860e4743317a879d48a4c7252898de6844bae37920f0df89",
+    "src/postgres/qr3-participant-context.js": "42aabbf5040028cb73c774d40521d073550e0b20d12c2abc7ae8e43b77bbc53d",
+    "src/postgres/qr3-comparison-wiring.js": "e619c1c74c60620d8b36eb0cf7b0d928a2ce3d9847d7bdc900c3a14d9c5c8969",
+    "src/postgres/server.js": "9632f33d386e41445631b6934764077578d84b59c591ecdfe37ecbb0aa15339c",
+    "src/postgres/quant-research-main.js": "677cb5ebd12be2e086d0bd045af4fa30dc8aa57cd58dda93dc28d93c2f3ced91",
+    "src/quant-research/runtime-engine-files.js": "e38ed5d77feb29bcf15b5fde5be9ff531876688e9af360166b90fe69f90ab4d4",
+    "public/qr3-comparison.js": "2ab027c38948fb8a34bea3460eff355c6d5224cde20c1acb3609b21e7b3bbd4e",
+    "test/postgres/qr3-finalizer.test.mjs": "38b332c9b8b5f62918c68edbe404f089506c817f0924737eb29f91f4505d371a",
+    "test/postgres/qr3-routes.test.mjs": "6ea44c108762d9c5879af4c8b5ff984591e308cf728c7e0a7492b749e3fcd169",
+    "test/postgres/qr3-end-to-end.test.mjs": "e97843ac222533f8ec67b49e5d75c4bb7eb6c17903a9a16e1f96538e01697cfa",
+    "test/qr3-routes.test.js": "42a85934f89eb25c2954e2c0793375c33a578ecd57c52e8c8ef341277bffb467",
+    "test/qr3-participant-context.test.js": "09a1ed164dd000a991c36760f51478cf28c4f5eed47e3e517fb541926a5824ef",
+    "test/qr3-wiring-static.test.js": "7314f82b5b7a6283cc9aa35c2b0b7d0faaca8cca9763cdaddc23420c8da8ed08",
+    "test/qr3-comparison-ui.test.js": "23ff34105131406f110ddbd4d7d1e147fbe23d629823b5066dfa66279849279f",
+    "test/mp-engine-closure.test.js": "78a696f524f176a8358fb6f93c4bdddfb8a46ad880035b60803da6647e4aea0b"
+  },
+  "hashNote": "SHA-256 of the line-feed content as Git stores it, at 0fe7644.",
+  "newHostSteps": 0,
+  "go": "OG-1 (owner, 2026-11-06, local engine and runtime closure change only)",
+  "productionQualified": false,
+  "result": "End-to-end PostgreSQL suite 11/11 at 0fe7644: comparisons with 2 and 4 participants frozen through the wired API, one fixed evaluation per participant enqueued by the driver and run on the real worker, finalized to COMPLETE with outcome NO_QUALIFIED_RESULT; participant run failure and cancellation, admission refusal classes, bounded finalizer retry, record replay MATCH, MISMATCH and REPRODUCTION_DISABLED, old engine hash refusals and flag-off paths covered. Owner API suite 14/14 (real server, owner scope on every participant, CSRF, identical 404 for foreign and absent ids, read-only view by row digests); UI JSDOM tests and the rendered check; engine identities foundation, ingestion, pf2_engine and fixed_eval rotated with new pins, legacy, trace, pf2_evaluator and mp-package-trace unchanged and asserted, mp-combined newly pinned. CI passed all 9 checks on 0d51ed3, ce66c78, 32ec0d8 and 0fe7644 (read by root via the REST check-runs).",
+  "limits": [
+    "STANDARDIZED only; ACTUAL_BOT not implemented (contract RC-C42 and owner decision OD-C20: after QR-2 S3). Root ruling SB188 (RR-7) allows stage I without it.",
+    "Labelled fixtures only; every outcome is NO_QUALIFIED_RESULT under the V8 hold (R1); OPEN-1 and OPEN-2 fail closed; no qualified label, rank or apply.",
+    "Record replay only: it re-verifies stored results and data; it does not re-run the Python evaluator (contract I4 engine re-run not built).",
+    "MUST-FIX before the V8 hold lifts or a gate snapshot is added (SB187): participant inputs pass empty earlier holdouts and searched windows and a null registered boundary; an unreadable prior-exposure register falls back to development evidence.",
+    "Other recorded limitations: replay marks transient database errors as REPRODUCTION_DISABLED; admission retries non-application errors without a bound; finalizer header comments stale; driver stop has no abort; audit rows only for committed create or cancel; evidence class, robustness rows and rank not shown in the UI.",
+    "Release only with REPIN-3 under its own owner GOs; comparisons frozen before the identity rotation cannot be evaluated; the staging drain-or-cancel choice stays with the owner. Thai UI text awaits owner review before staging."
+  ],
+  "rootAcceptance": {
+    "by": "Claude local root",
+    "date": "2026-11-06",
+    "statement": "Root accepts QR-3 STANDARDIZED fair comparison as locally implemented and integrated behind default-off flags (rulings SB174, SB181, SB185, SB186, SB187). Under Root ruling SB188 (RR-7) a successor scorecard may move F10-02 stage I from 0 to 1 citing this record; V and T stay 0. No credit moves before that scorecard."
+  }
+}

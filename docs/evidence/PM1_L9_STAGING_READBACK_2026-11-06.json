@@ -1,0 +1,23 @@
+{
+  "schema": "PM1_READBACK_EVIDENCE_V1",
+  "date": "2026-11-06",
+  "root": "Claude local root",
+  "environment": "staging (API pin 75c7a5b and trading worker ba1a433 as recorded; no API commit identity read)",
+  "kind": "Root read-alongside (Root-driven read-only readback in the owner signed-in session), page-driven reads only; desktop; English",
+  "authority": "Owner chat request to continue the project with the owner signed in (2026-11-06); Root ruling SB171 item 1 (page-driven reads need no separate GO; typed reads need one) and SB173 (battery packet accepted). No typed read, no database read, no host step.",
+  "method": "The responses the page itself received were captured read-only in the browser page while Root operated the UI (Research Library list, Inspect, Compare; Risk manager report refresh; Overview market chart poll; Prototype journey; Bot Manager setup guide). Only named fields were extracted; captured bodies were cleared and the page was reloaded afterwards. No save, start, submit or proposal button was pressed.",
+  "results": {
+    "F08_01_and_P06_01": "Library list 200 (schema present, qualified total 0, no winner, 3 terminal runs: 2 completed without a valid candidate, 1 failed); 3 detail reads 200 with owner and research provenance (source, input, dataset, engine, cost policy, validation, foundation) and explicit unavailable metrics (completion reason, not-screened or not-evaluated reasons, completeness with missing parts, holdout not evaluated); exposure.checked false on all three runs (register state not shown).",
+    "P06_03": "Two compare reads 200: INCOMPATIBLE (dataset, split, engine), metrics withheld, base fields only, qualified total 0, no winner, no rank field. Compatible outcome not run (no compatible pair on staging).",
+    "F04_04_and_P03_02": "Readiness report 200 pf3-readiness-v1: six flags exact (diagnostic only, saves nothing, starts nothing, no run approval, no holdout access, not AI authoritative); verdict CAPABILITY_UNAVAILABLE with blockers NO_READY_DEPLOYMENT and PF2_DISABLED; historical evidence UNAVAILABLE (PF2_DISABLED); limitations include DIAGNOSTIC_ONLY and READY_IS_NOT_RUN_APPROVAL.",
+    "F04_02": "Market chart poll 200 market-ohlcv-v2 from Binance public REST, fresh (not stale), badge and chart state consistent. Stale and limited states did not occur.",
+    "F01_03": "Journey page: 4 page GETs 200, Bridge enabled, chips present, status stamp present, next-dependency texts of steps 2 to 5 match the fixed wording. Setup guide: DEFECT, the activate step showed Done for the selected Bot although that Bot has no READY Bridge deployment (its own readiness report says NO_READY_DEPLOYMENT); the guide used owner-wide Bridge counts. Phone width not run.",
+    "static_bytes": "Not run (no typed re-fetch)."
+  },
+  "rootRulings": "SB189: F08-01 T 1, P06-01 T 1, P06-03 T 1, F04-04 T 1, P03-02 T 1 (each with the limitation above); F04-02 T stays UNKNOWN (current state only); F01-03 T 0 (setup-guide defect; local fix lane L13; T can return to 1 only after a fixed release is read back on staging).",
+  "limits": [
+    "Pins as recorded; no GET names the API commit.",
+    "The register grant question (E114) stays open for a run with a readable holdout window.",
+    "A successor scorecard is the only place a T value moves."
+  ]
+}
