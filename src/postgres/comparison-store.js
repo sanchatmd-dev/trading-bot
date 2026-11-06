@@ -499,3 +499,43 @@ export async function readComparisonResults(db,{owner_id:owner,comparison_id:com
   if(!text(owner)||typeof comparisonId!=='string'||!ID.test(comparisonId))return refuse(STORE_CODES.NOT_FOUND);
   return inReadOnly(db,()=>readResultRows(db,owner,comparisonId));
 }
+
+/* ---- S3b: owner cancel and failed status writers ---- */
+
+/**
+ * Appends one terminal status event to a comparison that is still SPEC_FROZEN or EVALUATING (contract 8.1; SQL status guard). The status guard of the
+ * database decides the edge, so a comparison that is already COMPLETE, FAILED or CANCELLED answers {ok:false, code:'QR3_NOT_CANCELLABLE',
+ * detail:'quant_comparison_status_transition'} (RC-C38), also when it lost the race to a concurrent finalizer or cancel. The exposure events written
+ * by the create transaction stay (RC-C32). Absent, foreign and malformed ids answer NOT_FOUND alike. SERIALIZABLE with the same bounded retry as the
+ * result writers; the time comes from the database clock (RC-C39). A fixed-evaluation job of the comparison is not touched here: its next fence
+ * (CLAIM, RUN or COMMIT) re-reads the comparison status and refuses.
+ */
+async function terminalStatus(db,input,status,reasonCode){
+  return resultTransaction(db,async()=>{
+    await ownedSpec(db,input.owner_id,input.comparison_id);
+    const last=(await db.query('SELECT max(seq) AS seq FROM public.quant_comparison_status_events WHERE comparison_id=$1',[input.comparison_id])).rows[0];
+    const seq=Number(last.seq)+1;
+    const row=(await db.query('INSERT INTO public.quant_comparison_status_events(comparison_id,seq,status,reason_code) VALUES($1,$2,$3,$4) RETURNING at_ms',
+      [input.comparison_id,seq,status,reasonCode])).rows[0];
+    return {ok:true,comparison_id:input.comparison_id,status,seq,reason_code:reasonCode,at_ms:integer(row.at_ms)};
+  });
+}
+
+/**
+ * Owner cancel: SPEC_FROZEN or EVALUATING to CANCELLED, no reason code. input: {owner_id, comparison_id}.
+ * Returns {ok:true, comparison_id, status:'CANCELLED', seq, reason_code:null, at_ms, attempts} or {ok:false, code, detail}.
+ */
+export async function cancelComparison(db,input){
+  const bad=target(input);if(bad)return bad;
+  return terminalStatus(db,input,'CANCELLED',null);
+}
+
+/**
+ * Failed comparison: SPEC_FROZEN or EVALUATING to FAILED with a reason code (^[A-Z][A-Z0-9_]{1,63}$, required by the database). input: {owner_id,
+ * comparison_id, reason_code}. Same answers as cancelComparison. Partial metrics are never shown for a FAILED comparison (contract 8.1).
+ */
+export async function failComparison(db,input){
+  const bad=target(input);if(bad)return bad;
+  if(typeof input.reason_code!=='string'||!CODE.test(input.reason_code))return refuse(CODES.INVALID_FIELDS,'REASON_CODE');
+  return terminalStatus(db,input,'FAILED',input.reason_code);
+}
