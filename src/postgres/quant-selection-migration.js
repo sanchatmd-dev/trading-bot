@@ -10,7 +10,8 @@ import {classifyBestInputsPackage} from './best-inputs-package-migration.js';
  * table quant_selection_schema, version 1); the base schema_version stays 14. The install needs the version-1 research extension
  * (quant_job_schema version 1), the base users table, the exposure register extension (INSTALLED) and the Best Inputs package extension
  * (INSTALLED, the participant foreign key and guard read its tables). Nothing calls this module from db.migrate. Slice S2-2 added the freeze, start,
- * outcome and replay tables to the same uninstalled SQL file and to this module; slice S3 extends them again.
+ * outcome and replay tables to the same uninstalled SQL file and to this module. Slice Q4-S added the quant_jobs foreign key on evaluation_run_id and the QR004 guard
+ * quant_selection_start_job (inside quant_selection_guard_start, so the function list is unchanged); the store maps that guard name only in slice Q4-W.
  *
  * Both directions CLASSIFY the live catalog before they write anything, because the SQL is plain CREATE statements and an unclassified
  * install could collide with, or silently accept, a foreign object that carries a selection name. The states are:
@@ -43,7 +44,7 @@ const TABLES=[MARKER_TABLE,...SELECTION_TABLES];
 /** The QR004 guard names (USING CONSTRAINT) that the application maps by name, never by message text. */
 export const SELECTION_GUARD_NAMES=Object.freeze(['quant_selection_registration_clock','quant_selection_universe_member','quant_selection_participant_ready','quant_selection_participant_member',
   'quant_selection_status_transition','quant_selection_exposure_bind','quant_selection_registration_complete','quant_selection_freeze_order','quant_selection_start_order','quant_selection_start_deadline',
-  'quant_selection_start_ready','quant_selection_outcome_order','quant_selection_outcome_complete','quant_selection_first_start_complete','quant_selection_replay_order']);
+  'quant_selection_start_ready','quant_selection_start_job','quant_selection_outcome_order','quant_selection_outcome_complete','quant_selection_first_start_complete','quant_selection_replay_order']);
 const FUNCTIONS=Object.freeze(['quant_selection_version','quant_selection_now_ms','quant_selection_in_this_transaction','quant_selection_transitions','quant_selection_insert_only','quant_selection_require_serializable',
   'quant_selection_stamp_registration','quant_selection_stamp_event','quant_selection_guard_registration','quant_selection_guard_universe','quant_selection_guard_participant',
   'quant_selection_guard_status_event','quant_selection_check_registration_complete','quant_selection_stamp_freeze','quant_selection_stamp_start','quant_selection_stamp_outcome',
@@ -65,6 +66,7 @@ const CONSTRAINTS=Object.freeze({
   quant_selection_evaluation_starts_dataset_check:["c","CHECK ((dataset_hash ~ '^[0-9a-f]{64}$'::text))"],
   quant_selection_evaluation_starts_engine_check:["c","CHECK ((engine_hash ~ '^[0-9a-f]{64}$'::text))"],
   quant_selection_evaluation_starts_parent_check:["c","CHECK ((length(parent_run_id) > 0))"],
+  quant_selection_evaluation_starts_job_fkey:["f","FOREIGN KEY (evaluation_run_id) REFERENCES quant_jobs(run_id)"],
   quant_selection_evaluation_starts_participant_fkey:["f","FOREIGN KEY (selection_id, export_id) REFERENCES quant_selection_participants(selection_id, export_id)"],
   quant_selection_evaluation_starts_pkey:["p","PRIMARY KEY (selection_id, export_id)"],
   quant_selection_evaluation_starts_run_id_check:["c","CHECK (((length(evaluation_run_id) > 0) AND (length(evaluation_run_id) <= 200)))"],

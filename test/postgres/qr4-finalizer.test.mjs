@@ -585,10 +585,11 @@ test('the runs must pair exactly with the start rows: a run without a start, two
   await succeedAll(b);
   await insertRun(b,b.registration.participants[0],0);
   refusal(await finalize(b,depsOf(b)),'INTEGRITY_CHECK_FAILED','RUN_AMBIGUOUS');
-  // a start row whose run row is gone (the order of slice Q4-S makes this impossible once its foreign key exists)
+  // a start row whose run row is gone (the foreign key of slice Q4-S forbids the delete, so the probe deletes with foreign-key triggers off: session_replication_role replica, this transaction only)
   const c=await startRuns(await prepared({daysAgo:22}));
   await succeedAll(c);
-  await db.query('DELETE FROM public.quant_jobs WHERE run_id=$1',[c.runs[1].runId]);
+  await db.transaction(async()=>{await db.query('SET LOCAL session_replication_role=replica');await db.query('DELETE FROM public.quant_jobs WHERE run_id=$1',[c.runs[1].runId]);});
+  assert.equal((await db.query('SELECT count(*)::int n FROM public.quant_jobs WHERE run_id=$1',[c.runs[1].runId])).rows[0].n,0);
   const beforeC=await rowsOf(db,c.id);
   refusal(await finalize(c,depsOf(c)),'INTEGRITY_CHECK_FAILED','START_WITHOUT_RUN');
   assert.deepEqual(await rowsOf(db,c.id),beforeC);
@@ -602,10 +603,14 @@ test('the runs must pair exactly with the start rows: a run without a start, two
   // a run whose contract names another parent than the start row of its participant
   const e=await prepared({daysAgo:24});
   const first=e.registration.participants[0];
-  const wrong=await insertRun(e,first,0,{world:worldOf(e,first,0,{parentRunId:'run-elsewhere'})});
-  const started=await startEvaluation(rt,{owner_id:e.owner.id,selection_id:e.id,export_id:first.export_id,evaluation_run_id:wrong.runId});
+  // the start guard of slice Q4-S refuses a job naming another parent, so the job starts with its true contract and is rewritten afterwards (triggers off, this transaction only)
+  const good=await insertRun(e,first,0);
+  const started=await startEvaluation(rt,{owner_id:e.owner.id,selection_id:e.id,export_id:first.export_id,evaluation_run_id:good.runId});
   assert.equal(started.ok,true,JSON.stringify(started));
-  e.runs[0]={...wrong,export_id:first.export_id};
+  const wrongWorld=worldOf(e,first,0,{parentRunId:'run-elsewhere'});
+  await db.transaction(async()=>{await db.query('SET LOCAL session_replication_role=replica');
+    await db.query('UPDATE public.quant_jobs SET contract=$2,contract_hash=$3 WHERE run_id=$1',[good.runId,JSON.stringify(wrongWorld.contract),hash(canonical(wrongWorld.contract))]);});
+  e.runs[0]={...good,world:wrongWorld,export_id:first.export_id};
   await startRuns(e,[1,2]);
   await succeedAll(e);
   refusal(await finalize(e,depsOf(e)),'INTEGRITY_CHECK_FAILED','RUN_START_MISMATCH');

@@ -11,7 +11,7 @@
 --          failure by guard name and not by message text. Guard names: quant_selection_registration_clock, quant_selection_universe_member,
 --          quant_selection_participant_ready, quant_selection_participant_member, quant_selection_status_transition, quant_selection_exposure_bind
 --          (FIRST_EVALUATION_START needs the one register row of the selection, written by the same transaction), quant_selection_registration_complete (C1),
---          quant_selection_freeze_order, quant_selection_start_order, quant_selection_start_deadline, quant_selection_start_ready, quant_selection_outcome_order,
+--          quant_selection_freeze_order, quant_selection_start_order, quant_selection_start_deadline, quant_selection_start_ready, quant_selection_start_job, quant_selection_outcome_order,
 --          quant_selection_outcome_complete (C2), quant_selection_first_start_complete (C3) and quant_selection_replay_order.
 -- The QR4_SELECTION exposure register row is written only together with FIRST_EVALUATION_START: the writer appends it under the register lock in the same
 -- SERIALIZABLE transaction and then inserts the event, whose guard requires that row (written by this transaction), and C3 requires it again at commit. No
@@ -196,7 +196,8 @@ CREATE TABLE public.quant_selection_window_freezes(
  CONSTRAINT quant_selection_window_freezes_frozen_at_check CHECK(frozen_at_ms>=0 AND frozen_at_ms<=253402300799999)
 );
 
--- S2-2: one row per started participant evaluation. evaluation_run_id has no foreign key here (slice S3 adds the quant_jobs link to this same file).
+-- S2-2: one row per started participant evaluation. evaluation_run_id is a foreign key to quant_jobs(run_id) (Q4-S, RC-S24): the fixed-evaluation job row of the
+-- run exists before its start row, in the same transaction, and quant_selection_start_job (the start guard) judges what that job is.
 CREATE TABLE public.quant_selection_evaluation_starts(
  selection_id UUID NOT NULL,
  export_id UUID NOT NULL,
@@ -207,6 +208,7 @@ CREATE TABLE public.quant_selection_evaluation_starts(
  started_at_ms BIGINT NOT NULL,
  CONSTRAINT quant_selection_evaluation_starts_pkey PRIMARY KEY(selection_id,export_id),
  CONSTRAINT quant_selection_evaluation_starts_run_key UNIQUE(evaluation_run_id),
+ CONSTRAINT quant_selection_evaluation_starts_job_fkey FOREIGN KEY(evaluation_run_id) REFERENCES public.quant_jobs(run_id),
  CONSTRAINT quant_selection_evaluation_starts_participant_fkey FOREIGN KEY(selection_id,export_id) REFERENCES public.quant_selection_participants(selection_id,export_id),
  CONSTRAINT quant_selection_evaluation_starts_run_id_check CHECK(pg_catalog.length(evaluation_run_id)>0 AND pg_catalog.length(evaluation_run_id)<=200),
  CONSTRAINT quant_selection_evaluation_starts_parent_check CHECK(pg_catalog.length(parent_run_id)>0),
@@ -606,11 +608,14 @@ END $fn$;
 -- QR004 quant_selection_start_order: an evaluation start needs the status SELECTION_EVALUATING (the first start writes FIRST_EVALUATION_START before this
 -- row), the frozen dataset, the participant of the registration, the dataset hash of the freeze, the registered engine hash and the participant run as parent.
 -- QR004 quant_selection_start_deadline: not after the admission deadline by the database stamp. QR004 quant_selection_start_ready: the export of the
--- participant is still a validated one-Pine export of the owner (the same predicate as quant_selection_participant_ready).
+-- participant is still a validated one-Pine export of the owner (the same predicate as quant_selection_participant_ready). QR004 quant_selection_start_job
+-- (Q4-S, RC-S24, checked last): the quant_jobs row of evaluation_run_id exists (the fixed-evaluation service writes it before the start row, in the same
+-- transaction) and its stored contract is mode FIXED_INPUT_EVAL, purpose QR4_SELECTION, lineage.object_id = the selection, lineage.parent_run_id = the participant
+-- run and engine_hash = the registered scope.engine. The foreign key quant_selection_evaluation_starts_job_fkey repeats the existence of the job row.
 CREATE FUNCTION public.quant_selection_guard_start() RETURNS trigger
  LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
 AS $fn$
-DECLARE reg RECORD; part RECORD; pkg RECORD; latest TEXT; frozen TEXT;
+DECLARE reg RECORD; part RECORD; pkg RECORD; job RECORD; latest TEXT; frozen TEXT;
 BEGIN
  SELECT r.owner_id, r.fixture, r.admission_deadline_ms, r.body_canonical::pg_catalog.jsonb -> 'scope' ->> 'engine' AS engine,
    public.quant_selection_in_this_transaction(r.xmin) AS in_register INTO reg FROM public.quant_selection_registrations r WHERE r.selection_id = NEW.selection_id;
@@ -641,6 +646,12 @@ BEGIN
     OR pkg.package_hash IS DISTINCT FROM part.package_hash OR latest IS DISTINCT FROM 'EXPORT_VALIDATED'
     OR NOT EXISTS (SELECT 1 FROM public.ql4c_validation v WHERE v.export_id = NEW.export_id AND v.package_hash = part.package_hash AND v.fixture = reg.fixture AND v.validated_at_utc = part.validated_at_utc) THEN
   RAISE EXCEPTION 'The participant export is no longer a validated one-Pine export of the selection owner' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_start_ready';
+ END IF;
+ SELECT j.contract INTO job FROM public.quant_jobs j WHERE j.run_id = NEW.evaluation_run_id;
+ IF job.contract IS NULL OR job.contract ->> 'mode' IS DISTINCT FROM 'FIXED_INPUT_EVAL' OR job.contract ->> 'purpose' IS DISTINCT FROM 'QR4_SELECTION'
+    OR job.contract -> 'lineage' ->> 'object_id' IS DISTINCT FROM NEW.selection_id::text OR job.contract -> 'lineage' ->> 'parent_run_id' IS DISTINCT FROM part.run_id
+    OR job.contract ->> 'engine_hash' IS DISTINCT FROM reg.engine THEN
+  RAISE EXCEPTION 'An evaluation start needs its fixed-evaluation job of this selection: purpose QR4_SELECTION, the participant run as parent and the registered engine hash' USING ERRCODE = 'QR004', CONSTRAINT = 'quant_selection_start_job';
  END IF;
  RETURN NEW;
 END $fn$;

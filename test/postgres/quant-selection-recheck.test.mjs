@@ -12,7 +12,7 @@ import {migrateBestInputsPackage} from '../../src/postgres/best-inputs-package-m
 import {migrateQuantSelection} from '../../src/postgres/quant-selection-migration.js';
 import {appendExposures,readExposures,readExposuresLocked,toComparisonEntries} from '../../src/postgres/exposure-register.js';
 import {QUALIFICATION_VERSION} from '../../src/selection/eligibility.js';
-import {registerSelection,cancelSelection,readSelection,freezeWindow,startEvaluation,writeOutcome,replaySelectionOutcome,markWindowDataUnavailable,findOrphanSelectionExposures,EVALUATIONS_UNAVAILABLE} from '../../src/postgres/selection-store.js';
+import {registerSelection,cancelSelection,readSelection,freezeWindow,startEvaluation as storeStartEvaluation,writeOutcome,replaySelectionOutcome,markWindowDataUnavailable,findOrphanSelectionExposures,EVALUATIONS_UNAVAILABLE} from '../../src/postgres/selection-store.js';
 import {OBJECTIVE_REGISTRY,transitionSelection,TRANSITIONS,INCOMPLETE_CODES,rankSelection,digest} from '../../src/selection/index.js';
 import {canonical} from '../../src/pine-bridge/source.js';
 import {PACKAGE_FILES} from '../../src/quant-library/package-gates.js';
@@ -149,10 +149,37 @@ async function newSet(owner,{n=3,fixture=false}={}){
 const requestOf=(owner,set,{startDays=10,fixture=false,over={}}={})=>({owner_id:owner.id,confirmed:true,fixture,scope:structuredClone(SCOPE),
   window:{kind:'PROSPECTIVE',start_ms:BASE+startDays*DAY,end_ms:BASE+startDays*DAY+1000*MS,warmup_bars:200},objective:{id:OBJECTIVE_ID},
   filters:{drawdown_limit_percent:'20',episode_floor:5,beats_buy_and_hold:false},admission_deadline_ms:BASE+startDays*DAY+1000*MS+DAY,universe:set.members,...over});
-const researchDigest=async target=>(await target.query(`SELECT encode(sha256(convert_to((SELECT COALESCE(string_agg(row_to_json(j)::text,'|' ORDER BY j.run_id),'') FROM quant_jobs j)
+const researchDigest=async target=>(await target.query(`SELECT encode(sha256(convert_to((SELECT COALESCE(string_agg(row_to_json(j)::text,'|' ORDER BY j.run_id),'') FROM quant_jobs j WHERE j.contract->>'purpose' IS DISTINCT FROM 'QR4_SELECTION')
   ||(SELECT COALESCE(string_agg(row_to_json(e)::text,'|' ORDER BY e.export_id),'') FROM bi_exports e)
   ||(SELECT COALESCE(string_agg(row_to_json(s)::text,'|' ORDER BY s.export_id,s.seq),'') FROM bi_status_events s)
   ||(SELECT COALESCE(string_agg(row_to_json(v)::text,'|' ORDER BY v.export_id),'') FROM ql4c_validation v),'UTF8')),'hex') d`)).rows[0].d;
+
+/* ---- Q4-S (RC-S24): every evaluation start row needs the fixed-evaluation job row of its run, inserted first (the service writes the job, then the start row) ---- */
+
+const UUID_TEXT=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+/** The stored contract of a labelled fixture QR4_SELECTION evaluation job (the fields the start guard reads, plus the labels of the fixed-evaluation contract). */
+const evaluationContractOf=(part,selectionId)=>({version:'fixed-eval-job-v1',mode:'FIXED_INPUT_EVAL',purpose:'QR4_SELECTION',label:FIXTURE_LABEL,owner_id:part.owner_id,bot_id:part.bot_id,deployment_id:part.deployment_id,
+  lineage:{parent_run_id:part.run_id,parent_contract_hash:part.contract_hash,object_kind:'QR4_SELECTION',object_id:selectionId},engine_hash:part.engine});
+/**
+ * Inserts the QUEUED job row of an evaluation run before its start row (admin pool, so the row is committed and visible to the start transaction). args is the argument of
+ * startEvaluation; arguments the store refuses anyway (not a UUID, an empty run id) insert nothing. mutate may change the stored contract to build a wrong job.
+ * An existing run id is left as it is (ON CONFLICT DO NOTHING), so a reused run id keeps the lineage of its first use.
+ */
+async function insertEvaluationJob({selection_id:selectionId,export_id:exportId,evaluation_run_id:runId},{mutate=null}={}){
+  if(typeof selectionId!=='string'||typeof exportId!=='string'||!UUID_TEXT.test(selectionId)||!UUID_TEXT.test(exportId)||typeof runId!=='string'||runId.length===0)return null;
+  const part=(await db.query(`SELECT p.run_id,j.owner_id,j.bot_id,j.deployment_id,j.contract_hash,r.body_canonical::jsonb->'scope'->>'engine' AS engine
+    FROM public.quant_selection_participants p JOIN public.quant_jobs j ON j.run_id=p.run_id JOIN public.quant_selection_registrations r ON r.selection_id=p.selection_id
+    WHERE p.selection_id=$1 AND p.export_id=$2`,[selectionId,exportId])).rows[0];
+  if(!part)return null;
+  const contract=evaluationContractOf(part,selectionId);
+  if(mutate)mutate(contract,part);
+  await db.query(`INSERT INTO public.quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,status,phase,created_at,updated_at,deadline)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,'QUEUED','FIXED_EVAL',$9,$9,$10) ON CONFLICT (run_id) DO NOTHING`,
+    [runId,part.owner_id,part.bot_id,part.deployment_id,'fixed:'+runId,hex('submission:'+runId),hex('contract:'+runId),JSON.stringify(contract),T0,T0+900000]);
+  return runId;
+}
+/** The store writer with the job row first, as the fixed-evaluation service does. */
+const startEvaluation=async(target,args)=>{await insertEvaluationJob(args);return storeStartEvaluation(target,args);};
 
 /* ---- helpers of the S2-2 tests: FORWARD_PAST selections (their window has closed, so W can be frozen), disjoint windows, evaluations ---- */
 
@@ -293,7 +320,11 @@ test('first start (T-START1): rechecks under the register lock, appends the one 
   const repeat=await startOne(p,0);assert.deepEqual([repeat.ok,repeat.code,repeat.detail],[false,'QR4_TRANSITION_INVALID','ALREADY_STARTED']);
   const taken=(await readSelection(rt,{owner_id:p.owner.id,selection_id:p.id})).selection.starts[0].evaluation_run_id;
   const q=await prepared({daysAgo:12});
-  const duplicate=await startOne(q,0,{evaluation_run_id:taken});
+  // Q4-S: the job row of a taken run id belongs to the other selection, so the start guard (BEFORE INSERT, ahead of the unique index) refuses first with quant_selection_start_job;
+  // the store does not map that guard until slice Q4-W, so it rethrows (fail closed). The unique index answer is still mapped: shown with a raced unique violation.
+  await assert.rejects(startOne(q,0,{evaluation_run_id:taken}),error=>error.code===QR004&&error.constraint==='quant_selection_start_job');
+  const raceUnique=spyOf(sql=>/^INSERT INTO public\.quant_selection_evaluation_starts/.test(sql)?Object.assign(Error('raced'),{code:'23505',constraint:'quant_selection_evaluation_starts_run_key'}):null);
+  const duplicate=await storeStartEvaluation(raceUnique.spy,{owner_id:q.owner.id,selection_id:q.id,export_id:q.exports[0],evaluation_run_id:'ev-'+randomUUID()});
   assert.deepEqual([duplicate.ok,duplicate.code,duplicate.detail],[false,'INVALID_FIELDS','EVALUATION_RUN_ID_TAKEN']);
   assert.equal(await statusOf(db,q.id),'SELECTION_REGISTERED');assert.deepEqual(await ownRegisterRows(db,q.id),[],'the failed start left no register row (it rolled back)');
   for(const bad of [{export_id:'x'},{export_id:randomUUID()},{evaluation_run_id:''},{selection_id:'x'},{owner_id:''}]){
@@ -412,23 +443,24 @@ test('deadline and participant checks: a passed admission deadline or a stale pa
   assert.deepEqual(await ownRegisterRows(db,s.id),[]);
   // guard layer: a start after the deadline by the database stamp (QR004 start_deadline) and a participant that is no longer validated (start_ready)
   const g=await prepared({daysAgo:26,over:{admission_deadline_ms:BASE-26*DAY+1000*MS}});
-  const rawStart=(target,p,over='')=>target.transaction(async()=>{
+  const rawStart=async(target,p,over='')=>{const runId='ev-'+randomUUID();await insertEvaluationJob({selection_id:p.id,export_id:p.exports[0],evaluation_run_id:runId});return target.transaction(async()=>{
     await appendExposures(target,{owner_id:p.owner.id,...MARKET,events:[{kind:'QR4_SELECTION',window:windowOf(p),selection_id:p.id}]});
     await target.query("INSERT INTO public.quant_selection_status_events(selection_id,seq,event,status) VALUES($1,2,'FIRST_EVALUATION_START','SELECTION_EVALUATING')",[p.id]);
     if(over)await target.query(over);
     await target.query('INSERT INTO public.quant_selection_evaluation_starts(selection_id,export_id,evaluation_run_id,parent_run_id,dataset_hash,engine_hash) VALUES($1,$2,$3,$4,$5,$6)',
-      [p.id,p.exports[0],'ev-'+randomUUID(),p.registration.participants.find(item=>item.export_id===p.exports[0]).run_id,p.dataset,ENGINE]);
-  },{isolation:'SERIALIZABLE'});
+      [p.id,p.exports[0],runId,p.registration.participants.find(item=>item.export_id===p.exports[0]).run_id,p.dataset,ENGINE]);
+  },{isolation:'SERIALIZABLE'});};
   await guardFailure(rawStart(rt,g),'quant_selection_start_deadline');
   assert.deepEqual(await ownRegisterRows(db,g.id),[],'the failed transaction rolled the register row back');
   const h=await prepared({daysAgo:27});
+  const hRun=await insertEvaluationJob({selection_id:h.id,export_id:h.exports[0],evaluation_run_id:'ev-'+randomUUID()});
   await guardFailure(db.transaction(async()=>{
     await db.query('ALTER TABLE public.ql4c_validation DISABLE TRIGGER USER');
     await db.query('DELETE FROM public.ql4c_validation WHERE export_id=$1',[h.exports[0]]);
     await appendExposures(db,{owner_id:h.owner.id,...MARKET,events:[{kind:'QR4_SELECTION',window:windowOf(h),selection_id:h.id}]});
     await db.query("INSERT INTO public.quant_selection_status_events(selection_id,seq,event,status) VALUES($1,2,'FIRST_EVALUATION_START','SELECTION_EVALUATING')",[h.id]);
     await db.query('INSERT INTO public.quant_selection_evaluation_starts(selection_id,export_id,evaluation_run_id,parent_run_id,dataset_hash,engine_hash) VALUES($1,$2,$3,$4,$5,$6)',
-      [h.id,h.exports[0],'ev-'+randomUUID(),h.registration.participants.find(item=>item.export_id===h.exports[0]).run_id,h.dataset,ENGINE]);
+      [h.id,h.exports[0],hRun,h.registration.participants.find(item=>item.export_id===h.exports[0]).run_id,h.dataset,ENGINE]);
   },{isolation:'SERIALIZABLE'}),'quant_selection_start_ready');
   assert.equal((await db.query('SELECT count(*)::int n FROM public.ql4c_validation WHERE export_id=$1',[h.exports[0]])).rows[0].n,1,'the tamper rolled back');
   // the writer maps a start guard that fires in a race to the ending of the selection in a new transaction
@@ -439,6 +471,72 @@ test('deadline and participant checks: a passed admission deadline or a stale pa
     assert.deepEqual([out.ok,out.ended,out.code,out.event],[false,true,code,event],JSON.stringify(out));
     assert.deepEqual(await ownRegisterRows(db,p.id),[],'the register row of the failed transaction rolled back');
   }
+});
+
+/* ---- 2b. Q4-S (RC-S24): the evaluation job link ---- */
+
+/** One raw first-start transaction (no store judgement): the QR4_SELECTION register row, FIRST_EVALUATION_START and the start row of participant index for the given run id. */
+const rawFirstStart=(target,p,runId,index=0)=>target.transaction(async()=>{
+  await appendExposures(target,{owner_id:p.owner.id,...MARKET,events:[{kind:'QR4_SELECTION',window:windowOf(p),selection_id:p.id}]});
+  await target.query("INSERT INTO public.quant_selection_status_events(selection_id,seq,event,status) VALUES($1,2,'FIRST_EVALUATION_START','SELECTION_EVALUATING')",[p.id]);
+  await target.query('INSERT INTO public.quant_selection_evaluation_starts(selection_id,export_id,evaluation_run_id,parent_run_id,dataset_hash,engine_hash) VALUES($1,$2,$3,$4,$5,$6)',
+    [p.id,p.exports[index],runId,p.registration.participants[index].run_id,p.dataset,ENGINE]);
+},{isolation:'SERIALIZABLE'});
+const startCount=async id=>(await db.query('SELECT count(*)::int n FROM public.quant_selection_evaluation_starts WHERE selection_id=$1',[id])).rows[0].n;
+
+test('Q4-S quant_selection_start_job (RC-S24): a start row needs the quant_jobs row of its run: purpose QR4_SELECTION, this selection, the participant run as parent, the registered engine; each wrong job and a missing job is refused by name',async()=>{
+  const p=await prepared({daysAgo:5}),other=await prepared({daysAgo:6});
+  const wrong={
+    'another selection':c=>{c.lineage.object_id=other.id;},
+    'another parent (the run of the second participant)':c=>{c.lineage.parent_run_id=p.registration.participants[1].run_id;},
+    'another purpose':c=>{c.purpose='QR3_COMPARISON';},
+    'another mode':c=>{c.mode='RESEARCH';},
+    'another engine hash':c=>{c.engine_hash=hex('other-engine');},
+    'no engine hash':c=>{delete c.engine_hash;},
+    'no lineage':c=>{delete c.lineage;},
+    'a lineage that is not an object':c=>{c.lineage='x';},
+    'no purpose':c=>{delete c.purpose;}};
+  const untouched=async label=>{
+    assert.equal(await statusOf(db,p.id),'SELECTION_REGISTERED',label);assert.deepEqual(await ownRegisterRows(db,p.id),[],label+': the register row rolled back');assert.equal(await startCount(p.id),0,label);
+  };
+  // no job row at all: the guard (BEFORE INSERT) answers before the foreign key can
+  await guardFailure(rawFirstStart(rt,p,'ev-'+randomUUID()),'quant_selection_start_job');await untouched('no job row');
+  // the research run of the participant is a job row, but not an evaluation job
+  await guardFailure(rawFirstStart(rt,p,p.registration.participants[0].run_id),'quant_selection_start_job');await untouched('the participant research run as evaluation run');
+  for(const [label,mutate] of Object.entries(wrong)){
+    const runId='ev-'+randomUUID();
+    await insertEvaluationJob({selection_id:p.id,export_id:p.exports[0],evaluation_run_id:runId},{mutate});
+    await guardMessage(rawFirstStart(rt,p,runId),'quant_selection_start_job','An evaluation start needs its fixed-evaluation job of this selection: purpose QR4_SELECTION, the participant run as parent and the registered engine hash');
+    await untouched(label);
+  }
+  // a job that fits another participant of the same selection is refused for this one (the parent is the run of participant 1, the start row is participant 2)
+  const swapped='ev-'+randomUUID();
+  await insertEvaluationJob({selection_id:p.id,export_id:p.exports[1],evaluation_run_id:swapped});
+  await guardFailure(rawFirstStart(rt,p,swapped,0),'quant_selection_start_job');await untouched('the job of the second participant');
+  // the store has no mapping for the guard until slice Q4-W: it rethrows, the transaction rolls back, nothing is written (fail closed)
+  const bad='ev-'+randomUUID();
+  await insertEvaluationJob({selection_id:p.id,export_id:p.exports[0],evaluation_run_id:bad},{mutate:c=>{c.engine_hash=hex('other-engine');}});
+  await assert.rejects(storeStartEvaluation(rt,{owner_id:p.owner.id,selection_id:p.id,export_id:p.exports[0],evaluation_run_id:bad}),error=>error.code===QR004&&error.constraint==='quant_selection_start_job');
+  await untouched('the store start over a wrong job');
+  // the right job commits; its stored contract is what the guard judged
+  const good=await startEvaluation(rt,{owner_id:p.owner.id,selection_id:p.id,export_id:p.exports[0],evaluation_run_id:'ev-'+randomUUID()});
+  assert.equal(good.ok,true,JSON.stringify(good));
+  const start=(await db.query('SELECT * FROM public.quant_selection_evaluation_starts WHERE selection_id=$1',[p.id])).rows[0];
+  const job=(await db.query('SELECT contract FROM public.quant_jobs WHERE run_id=$1',[start.evaluation_run_id])).rows[0].contract;
+  assert.deepEqual([job.mode,job.purpose,job.lineage.object_id,job.lineage.parent_run_id,job.engine_hash],['FIXED_INPUT_EVAL','QR4_SELECTION',p.id,start.parent_run_id,start.engine_hash]);
+  // the foreign key stands on its own: the job row of a start row cannot be deleted
+  await assert.rejects(db.query('DELETE FROM public.quant_jobs WHERE run_id=$1',[start.evaluation_run_id]),error=>error.code==='23503'&&error.constraint==='quant_selection_evaluation_starts_job_fkey');
+  // ... and it refuses a start row without a job also when the guard trigger is out of the way (the probe is rolled back)
+  const f=await prepared({daysAgo:7});
+  await assert.rejects(db.transaction(async()=>{
+    await db.query('ALTER TABLE public.quant_selection_evaluation_starts DISABLE TRIGGER quant_selection_evaluation_starts_guard');
+    await appendExposures(db,{owner_id:f.owner.id,...MARKET,events:[{kind:'QR4_SELECTION',window:windowOf(f),selection_id:f.id}]});
+    await db.query("INSERT INTO public.quant_selection_status_events(selection_id,seq,event,status) VALUES($1,2,'FIRST_EVALUATION_START','SELECTION_EVALUATING')",[f.id]);
+    await db.query('INSERT INTO public.quant_selection_evaluation_starts(selection_id,export_id,evaluation_run_id,parent_run_id,dataset_hash,engine_hash) VALUES($1,$2,$3,$4,$5,$6)',
+      [f.id,f.exports[0],'ev-'+randomUUID(),f.registration.participants[0].run_id,f.dataset,ENGINE]);
+  },{isolation:'SERIALIZABLE'}),error=>error.code==='23503'&&error.constraint==='quant_selection_evaluation_starts_job_fkey');
+  assert.equal(await statusOf(db,f.id),'SELECTION_REGISTERED');assert.equal(await startCount(f.id),0);
+  assert.equal((await db.query("SELECT tgenabled FROM pg_trigger WHERE tgname='quant_selection_evaluation_starts_guard'")).rows[0].tgenabled,'A','the probe left the guard enabled');
 });
 
 /* ---- 3. the exposure order: a register row only together with FIRST_EVALUATION_START ---- */
@@ -791,13 +889,14 @@ test('QR-4 S2-2 round 2: a freeze, an evaluation start, an outcome and FIRST_EVA
 test('QR-4 S2-2 round 2: the exposure bind accepts a register row written in a subtransaction of the same transaction (savepoint), and still refuses an older orphan row',async()=>{
   const p=await prepared({daysAgo:8});
   const part=p.registration.participants.find(item=>item.export_id===p.exports[0]);
+  const spRun=await insertEvaluationJob({selection_id:p.id,export_id:p.exports[0],evaluation_run_id:'ev-'+randomUUID()});
   await rt.transaction(async()=>{
     await rt.query('SAVEPOINT sp_register');
     await appendExposures(rt,{owner_id:p.owner.id,...MARKET,events:[{kind:'QR4_SELECTION',window:windowOf(p),selection_id:p.id}]});
     await rt.query('RELEASE SAVEPOINT sp_register');
     await rt.query("INSERT INTO public.quant_selection_status_events(selection_id,seq,event,status) VALUES($1,2,'FIRST_EVALUATION_START','SELECTION_EVALUATING')",[p.id]);
     await rt.query('INSERT INTO public.quant_selection_evaluation_starts(selection_id,export_id,evaluation_run_id,parent_run_id,dataset_hash,engine_hash) VALUES($1,$2,$3,$4,$5,$6)',
-      [p.id,p.exports[0],'ev-'+randomUUID(),part.run_id,p.dataset,ENGINE]);
+      [p.id,p.exports[0],spRun,part.run_id,p.dataset,ENGINE]);
   },{isolation:'SERIALIZABLE'});
   assert.equal(await statusOf(db,p.id),'SELECTION_EVALUATING');assert.equal((await ownRegisterRows(db,p.id)).length,1);
   // the older orphan row (committed by an earlier transaction, so its xmin is not this transaction's) never satisfies the bind, savepoint or not

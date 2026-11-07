@@ -289,11 +289,15 @@ test('install: ABSENT to INSTALLED in one transaction; the base schema, other ta
   const again=await migrateQuantSelection(db,{runtimeRole:roleName});
   assert.equal(again.ok,true);assert.equal(again.previous_state,'INSTALLED');assert.deepEqual(await catalogDigest(db),settled,'a second install writes nothing, not even a row version');
   assert.equal((await classifyQuantSelection(db)).state,'INSTALLED');
-  assert.deepEqual(SELECTION_GUARD_NAMES.filter(name=>!Object.hasOwn(GUARD_REFUSALS,name)),[],'every guard name the SQL raises is mapped by the store');
+  // RR-Q4-10: quant_selection_start_job is raised by the SQL now; its store mapping (selection-store.js is a member of the engine closure) waits for slice Q4-W, so until
+  // then the store rethrows it (fail closed). Any other guard name must be mapped.
+  const PENDING_STORE_MAPPING=['quant_selection_start_job'];
+  assert.deepEqual(SELECTION_GUARD_NAMES.filter(name=>!Object.hasOwn(GUARD_REFUSALS,name)&&!PENDING_STORE_MAPPING.includes(name)),[],'every guard name the SQL raises is mapped by the store, except the pending one');
+  assert.deepEqual(PENDING_STORE_MAPPING.filter(name=>!SELECTION_GUARD_NAMES.includes(name)),[],'a pending name is a real guard name');
   // pin: the names the SQL text raises (USING ... CONSTRAINT = '...') equal the migration list and the store map
   const raised=[...new Set([...(await sqlText('quant-selection.sql')).matchAll(/CONSTRAINT = '([a-z0-9_]+)'/g)].map(match=>match[1]))].sort();
   assert.deepEqual(raised,[...SELECTION_GUARD_NAMES].sort(),'the guard names raised by the SQL equal SELECTION_GUARD_NAMES');
-  assert.deepEqual(raised,Object.keys(GUARD_REFUSALS).sort(),'the guard names raised by the SQL equal the GUARD_REFUSALS keys');
+  assert.deepEqual(raised,[...new Set([...Object.keys(GUARD_REFUSALS),...PENDING_STORE_MAPPING])].sort(),'the guard names raised by the SQL equal the GUARD_REFUSALS keys plus the pending name');
 });
 
 test('transaction-membership helper: own xid true, earlier or system xid false, a future-looking xid answers false and never raises; the install text qualifies gen_random_uuid',async()=>{
@@ -327,6 +331,8 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
   const noop="CREATE FUNCTION public.qsm_noop() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$;";
   const R='ALTER TABLE public.quant_selection_registrations ';
   const redo=(name,table,when,fn)=>`DROP TRIGGER ${name} ON public.${table}; CREATE TRIGGER ${name} ${when} ON public.${table} FOR EACH ROW EXECUTE FUNCTION public.${fn}();`;
+  // the real start guard text with the Q4-S job check cut out (a guard that looks complete but no longer judges the job)
+  const withoutJobCheck=(await sqlText('quant-selection.sql')).match(/CREATE FUNCTION public\.quant_selection_guard_start\(\)[\s\S]*?\$fn\$;/)[0].replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION').replace(/ IF job\.contract IS NULL[\s\S]*?END IF;/,'');
   const body=name=>`CREATE OR REPLACE FUNCTION public.${name}() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$ BEGIN RETURN NEW; END $$`;
   const cases=[
     ['freeze body replaced',body('quant_selection_insert_only'),'FUNCTION_DEFINITION:quant_selection_insert_only:BODY'],
@@ -360,6 +366,10 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
     ['outcome body hash check dropped','ALTER TABLE public.quant_selection_outcomes DROP CONSTRAINT quant_selection_outcomes_body_hash_check','TABLE_DEFINITION:quant_selection_outcomes:CONSTRAINTS'],
     ['replay recomputed check dropped','ALTER TABLE public.quant_selection_replay_events DROP CONSTRAINT quant_selection_replay_events_recomputed_check','TABLE_DEFINITION:quant_selection_replay_events:CONSTRAINTS'],
     ['evaluation run id unique dropped','ALTER TABLE public.quant_selection_evaluation_starts DROP CONSTRAINT quant_selection_evaluation_starts_run_key','TABLE_DEFINITION:quant_selection_evaluation_starts:'],
+    ['evaluation job foreign key dropped (Q4-S)','ALTER TABLE public.quant_selection_evaluation_starts DROP CONSTRAINT quant_selection_evaluation_starts_job_fkey','TABLE_DEFINITION:quant_selection_evaluation_starts:CONSTRAINTS'],
+    ['evaluation job foreign key made CASCADE (Q4-S)','ALTER TABLE public.quant_selection_evaluation_starts DROP CONSTRAINT quant_selection_evaluation_starts_job_fkey, ADD CONSTRAINT quant_selection_evaluation_starts_job_fkey FOREIGN KEY(evaluation_run_id) REFERENCES public.quant_jobs(run_id) ON DELETE CASCADE','TABLE_DEFINITION:quant_selection_evaluation_starts:CONSTRAINTS'],
+    ['evaluation job foreign key aimed at the participant run (Q4-S)','ALTER TABLE public.quant_selection_evaluation_starts DROP CONSTRAINT quant_selection_evaluation_starts_job_fkey, ADD CONSTRAINT quant_selection_evaluation_starts_job_fkey FOREIGN KEY(parent_run_id) REFERENCES public.quant_jobs(run_id)','TABLE_DEFINITION:quant_selection_evaluation_starts:CONSTRAINTS'],
+    ['start guard job check removed (Q4-S)',withoutJobCheck,'FUNCTION_DEFINITION:quant_selection_guard_start:BODY'],
     ['window freeze foreign key dropped','ALTER TABLE public.quant_selection_window_freezes DROP CONSTRAINT quant_selection_window_freezes_selection_id_fkey','TABLE_DEFINITION:quant_selection_window_freezes:CONSTRAINTS'],
     ['replay column collation changed','ALTER TABLE public.quant_selection_replay_events ALTER COLUMN kind TYPE text COLLATE "C"','TABLE_DEFINITION:quant_selection_replay_events:COLLATION'],
     ['replay table re-owned','CREATE ROLE qsm_other NOLOGIN; ALTER TABLE public.quant_selection_replay_events OWNER TO qsm_other','OWNER_MISMATCH:quant_selection_replay_events'],
@@ -422,7 +432,7 @@ test('installed: every tampered object classifies OTHER and is reported; a repla
 });
 
 test('installed: the internal foreign key triggers are judged on every selection table, on a referenced table and one trigger at a time; the keys of other extensions are not judged',async()=>{
-  const KEY_COUNT=10;
+  const KEY_COUNT=11;
   const keys=(await db.query(`SELECT k.oid AS key_oid,k.conname,c.relname AS child,r.relname AS parent FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid JOIN pg_class r ON r.oid=k.confrelid
     WHERE k.contype='f' AND c.relnamespace='public'::regnamespace AND c.relname LIKE ANY($1) ORDER BY k.conname`,[['quant\\_selection\\_%']])).rows;
   assert.equal(keys.length,KEY_COUNT,'every foreign key of the extension: '+keys.map(key=>key.conname).join());

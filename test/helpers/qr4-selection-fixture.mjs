@@ -192,9 +192,17 @@ export function registerViaStore(world,owner,{startDays=10,fixture=true,over={},
 /**
  * The quant_jobs row of one selection evaluation run (SB203 item 8: inserted BEFORE the evaluation start row, so a fixture stays valid when the start table links to quant_jobs).
  * mode FIXED_INPUT_EVAL, purpose QR4_SELECTION, and no top-level source_hash, so the universe read and readSearchedWindows keep excluding it. The parent is a seeded run (seedRunWithPackage result).
+ * The contract carries the shape the start guard quant_selection_start_job checks: lineage {parent_run_id, parent_contract_hash, object_kind QR4_SELECTION, object_id = the selection} and engine_hash =
+ * the registered scope.engine. The selection is selectionId, or the one selection that has the parent run as a participant (a parent in several selections needs selectionId).
  */
-export async function seedEvaluationJob(world,owner,parent,evaluationRunId,{status='SUCCEEDED'}={}){
-  const contract={mode:'FIXED_INPUT_EVAL',purpose:'QR4_SELECTION',parent_run_id:parent.runId,snapshot:{market:structuredClone(MARKET)},label:FIXTURE_LABEL};
+export async function seedEvaluationJob(world,owner,parent,evaluationRunId,{status='SUCCEEDED',selectionId=null}={}){
+  const found=(await world.db.query(`SELECT p.selection_id,j.contract_hash,r.body_canonical::jsonb->'scope'->>'engine' AS engine
+    FROM public.quant_selection_participants p JOIN public.quant_jobs j ON j.run_id=p.run_id JOIN public.quant_selection_registrations r ON r.selection_id=p.selection_id
+    WHERE p.run_id=$1 AND ($2::uuid IS NULL OR p.selection_id=$2::uuid)`,[parent.runId,selectionId])).rows;
+  if(found.length!==1)throw new Error('seedEvaluationJob needs exactly one selection for the parent run '+parent.runId+', found '+found.length+' (pass selectionId)');
+  const [{selection_id:object_id,contract_hash:parentHash,engine}]=found;
+  const contract={version:'fixed-eval-job-v1',mode:'FIXED_INPUT_EVAL',purpose:'QR4_SELECTION',parent_run_id:parent.runId,
+    lineage:{parent_run_id:parent.runId,parent_contract_hash:parentHash,object_kind:'QR4_SELECTION',object_id},engine_hash:engine,snapshot:{market:structuredClone(MARKET)},label:FIXTURE_LABEL};
   await world.db.query(`INSERT INTO public.quant_jobs(run_id,owner_id,bot_id,deployment_id,idempotency_key,submission_hash,contract_hash,contract,status,created_at,updated_at,deadline)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10,$11)`,[evaluationRunId,owner.id,parent.botId,parent.deployment,'idem-'+evaluationRunId,hex('s:'+evaluationRunId),hash(canonical(contract)),JSON.stringify(contract),status,T0+9_000_000,T0+9_900_000]);
   return evaluationRunId;
