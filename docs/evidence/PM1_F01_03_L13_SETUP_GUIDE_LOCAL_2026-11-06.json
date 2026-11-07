@@ -1,0 +1,38 @@
+{
+  "schema": "PM1_SLICE_EVIDENCE_V1",
+  "date": "2026-11-06",
+  "root": "Claude local root",
+  "revision": "66550ec",
+  "scope": "Lane L13: the Bot Manager setup guide shows the activate step per Bot from that Bot's own readiness report, instead of account-wide Bridge counts. Fixes the defect found by the staging readback E159 (PM1_L9_STAGING_READBACK_2026-11-06.json, F01_03). Local code; not deployed and not on staging.",
+  "behaviour": "Activate step: Done only when the selected Bot's readiness report has a READY current deployment; todo when the deployment is null; unavailable when the report fails or is missing, or for BRIDGE_DISABLED or AMBIGUOUS_READY_DEPLOYMENT. The disabled-Bridge rule is kept. Analyze and draft stay account-wide, with a visible scope label in every state. Cache tokens bumped (setup-guide sg3, i18n qr3i3).",
+  "method": "Root packet; routine worker (Sonnet 5.5, medium); independent tester with 5 mutants caught; Opus 5.5 audit NOT_READY on one P2 (the account-wide note was hidden in the Done state); one fix round moved it to its own label shown in every state; retest PASS 220 of 220; re-audit READY (one cosmetic P3: the new label has no CSS rule). Root rerun: each of the 9 L13 test files passes alone with 0 failures.",
+  "files": {
+    "public/i18n.js": "c0adf5a6e46f0cf25e30f2af2d9e5cde872fd6606cd4aa6bd6b4864a7de8621b",
+    "public/index.html": "aae9630b6596bc0133908bb5a3fe4251caa71abad395fc1b69d965a001a96e58",
+    "public/setup-guide.js": "4544142df6e140a04280688f403186bf81abe142acf8b52b4ed88ecc93d3b629",
+    "test/asset-cache-tokens.test.js": "458c73d34d5add4e9db6f556ff91a3bb09f94b48cc7807bf91a47d5daa4da0b6",
+    "test/bridge-wizard-ui.test.js": "0ee46cff1deb2410141307eb2f25b91ba1ae0edaa39fac7725864296bd56280f",
+    "test/journey-ui.test.js": "60be3c598ae0f4bfcdc50ed221c324ca05de379b903ba34a7524b2271c7e50c2",
+    "test/market-chart-ui.test.js": "354072356bb8377eaa4b5c060997e3f608352a2a0fe10a085bf36189caabe287",
+    "test/pf3-readiness-ui.test.js": "4d16a7de8c5f698d23168b46acd1b8b93105d59f3bd6964940b74558e7a0a2a0",
+    "test/qr2-performance-ui.test.js": "4c96d632231980e95f473872aae4f8ce84381b94208b2af5ba1e215c68a024d9",
+    "test/quant-library-ui.test.js": "c4403a1c4af666212414ce6a5fa342f3e0d949cebd7e7b3902c47866839c8735",
+    "test/setup-guide-per-bot.test.js": "eeca52e2e277f82f00767ff6ae07ed701bdc5a33fd7a279f158f82596007d996",
+    "test/setup-guide-ui.test.js": "dda4b28fc7a59c7656d214d8a4a547a682ffea65357c53b4c0849b759460f020"
+  },
+  "hashNote": "SHA-256 of the content as Git stores it, at 66550ec.",
+  "ci": "GitHub check runs on 66550ec: 9 of 9 success (read by Root through the REST check-runs on 2026-11-07T19:07Z).",
+  "newHostSteps": 0,
+  "productionQualified": false,
+  "limits": [
+    "Local only. F01-03 T needs a staging readback of a release that contains this commit (Root ruling SB189 ruling 5, SB193 ruling 1).",
+    "A READY deployment with a stale or integrity-failed snapshot still counts as activated; the risk step carries the readiness verdict (SB193 ruling 2).",
+    "The scope label is unstyled (cosmetic P3 for a later UI pass).",
+    "Phone width not checked."
+  ],
+  "rootAcceptance": {
+    "by": "Claude local root",
+    "date": "2026-11-06",
+    "statement": "Root accepted L13 locally (ruling SB193). Under SB192 ruling 1 and SB193 ruling 1, a successor scorecard may return F01-03 stage V from 0 to 1 citing this record with the CI above; T stays 0 until a staging readback of a release with this fix. No credit moves before that scorecard."
+  }
+}

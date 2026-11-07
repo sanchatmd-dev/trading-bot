@@ -1,0 +1,19 @@
+{
+  "schema": "PM1_READBACK_EVIDENCE_V1",
+  "date": "2026-11-06",
+  "root": "Claude local root",
+  "environment": "staging (API pin 75c7a5b and trading worker ba1a433 as recorded; no API commit identity read)",
+  "kind": "Root read-alongside in the owner signed-in session; desktop; English labels with some Thai",
+  "authority": "Clause 2.4: owner GO for one staging read (Root ruling SB178 ruling 3, owner chat 2026-11-06 about 14:37Z, notAfter 2026-11-06T23:59Z; consumed by this read, no second read). Sizing preview: owner choice \"Root picks\" for the numbers (about 14:44Z); page-driven only, Preview creates no order and nothing was saved. No host step, no database read.",
+  "results": {
+    "clause_2_4": "Page-driven first: Risk manager, readiness report \"Open\": the page GET of the readiness report returned 200 but its body was not readable with the browser tool, so the typed fallback T-3 (one GET of the readiness report, the read the GO allowed) was used: 200, current deployment null. The rendered report (report Bot = Main Bot) shows blockers NO_READY_DEPLOYMENT and PF2_DISABLED, saved policy CONSISTENT, market data PASS 1440 of 1440. The server-side snapshot hash recheck (src/postgres/pf3-readiness-service.js line 96) runs only for a READY deployment; none exists, so there is no stored deployment snapshot to recheck. Result: RECORDED GAP (the honest not-available state was seen), not FAIL. The stored Bridge result bindings hold 7 of the ten slots (earlier pass).",
+    "sizing_preview_clause_3_7": "Risk manager Order Preview, authority saved server policy and capital, generic Spot signal, BTCUSDT BUY, percent equity 1, entry 90624.59 (latest close on the page chart), stop loss 88812.10 (2 percent below). Run 1 with volatility empty: the page showed missing volatility data and that the saved policy rejects the order, with no sizes. Run 2 with volatility 2: risk amount 10, quantity 0.005517271819, notional about 500.0005 (equal to 10 / (90624.59 - 88812.10) times the entry), balance 1000, daily execution allowance 10, advisories only (costs and venue filters not verified, Paper only, point in time). Candidate PASS for clause 3.7 (type values by hand and rerun the preview); clause 3.4 (proposal with provenance) is a different area and unchanged.",
+    "phone_width": "NOT RUN: the owner browser window was minimized, so a phone-width check could not be done (still blocked on 2026-11-07)."
+  },
+  "limits": [
+    "Pins as recorded; no GET names the API commit.",
+    "One read under the GO; no repeat.",
+    "Desktop only; no phone width; the Thai pass is partial.",
+    "A successor scorecard is the only place a credit moves; P1-F is not accepted by this record."
+  ]
+}
