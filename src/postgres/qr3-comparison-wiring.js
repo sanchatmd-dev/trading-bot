@@ -8,10 +8,11 @@ import {fixedEvalEngineHash} from './quant-fixed-eval-engine.js';
 import {finalizeComparison} from './comparison-finalizer.js';
 import {readComparison,readComparisonResults,failComparison,writeReplayEvent} from './comparison-store.js';
 import {evaluationRecordBody,benchmarkRecordBody,outcomeRecord} from '../comparison/evaluation-record.js';
-import {classifyEvidence} from '../comparison/evidence.js';
+import {classifyEvidence,windowsOverlap} from '../comparison/evidence.js';
 import {checkCoverage} from '../comparison/period.js';
 import {contextFields,contextKey} from '../comparison/context.js';
 import {CODES,MINUTE,isObject} from '../comparison/common.js';
+import {LIBRARY_VERSIONS} from '../quant-library/derive.js';
 
 /**
  * QR-3 wiring inside the fixed-evaluation closure (L8-W, owner GO OG-1; Root rulings SB180 RR-2 and RR-3, SB184 RR-10, RR-11 and RR-12). This module is listed in
@@ -22,7 +23,10 @@ import {CODES,MINUTE,isObject} from '../comparison/common.js';
  *     fixed-evaluation service (idempotent key from the comparison id and the participant id) and then calls the finalizer. The finalizer runs outside any
  *     transaction and outside the scheduler lock; this module takes no lock of its own.
  *     Admission refusals (RR-10): retry on the next tick with no status change for ADMISSION_RETRY codes, any SQLSTATE and any non-application error; no-op for
- *     ADMISSION_NOOP codes; every other application refusal fails the comparison with PARTICIPANT_ADMISSION_REFUSED.
+ *     ADMISSION_NOOP codes; every other application refusal fails the comparison with PARTICIPANT_ADMISSION_REFUSED. Bound (hardening slice B, owner GO OG-2):
+ *     a SQLSTATE or non-application admission error, and a thrown driver error, count per comparison per process; the comparison skips 2^min(n,5) ticks and
+ *     is held after ADMISSION_HOLD_BOUND consecutive failures (logged, no status written, left for owner cancel). The global back-pressure codes of
+ *     ADMISSION_RETRY never count. stop() starts nothing new and waits at most stop_grace_ms for the pass in flight.
  *     Finalizer refusals (RR-11): QR3_INTEGRITY_FAILED with a FINALIZE_TRANSIENT detail is retried on later ticks up to FINALIZE_RETRY_BOUND consecutive attempts per
  *     process, then the comparison is held (logged, left for owner cancel); every other refusal fails the comparison with QR3_INTEGRITY_FAILED.
  *  2. The finalizer dependencies (createFinalizerDeps): the contract validators, readEvaluation (one READ ONLY read of the stored run, its validated contract and
@@ -33,21 +37,29 @@ import {CODES,MINUTE,isObject} from '../comparison/common.js';
  *
  * Record replay (RR-12) re-reads every fixed run, re-verifies its bars against the binding hash and rebuilds the bodies, the benchmark and the outcome with the
  * same pure functions and the same RR-3 inputs. It writes one replay event: REPLAY_MATCH, REPLAY_MISMATCH with the first differing code, or REPRODUCTION_DISABLED
- * when a run or its bars cannot be read. The outcome row never changes. It does not re-run the Python evaluator (recorded limitation). It runs single-flight
- * per process. It starts no job.
+ * only when a run or its bars are gone or no longer verify (REPLAY_DISABLED_CODES); a transient database error records nothing and is thrown. The outcome row
+ * never changes. It does not re-run the Python evaluator (recorded limitation). It runs single-flight per process. It starts no job.
  *
- * Library gates: the freeze holds no create-time gate snapshot, so participantInputs passes none; every gate then fails closed (QR3_NOT_QUALIFIED) and the gate
- * codes list is empty (recorded display gap, SB180 item 4). The V8 hold stays: every evaluated participant is DEVELOPMENT_EVIDENCE and the outcome is
- * NO_QUALIFIED_RESULT. Nothing here reads a clock or a random source of its own.
+ * Independence facts and library gates (hardening slice B, owner GO OG-2, Root ruling SB194 item 3): participantInputs maps the create-time independence block
+ * of the participant freeze (earlier holdouts, searched windows, registered boundary, source holdout window and register, G1 to G8 gate snapshot) into the
+ * evidence classifier and fails closed on every explicit unavailable state (independenceInputs). An unreadable stored register excludes the participant on
+ * integrity. The V8 hold stays: every evaluated participant is DEVELOPMENT_EVIDENCE and the outcome is NO_QUALIFIED_RESULT. Nothing here reads a clock or a
+ * random source of its own.
  */
-export const DRIVER_LIMITS=Object.freeze({tick_ms:15000,comparisons_per_tick:8});
+export const DRIVER_LIMITS=Object.freeze({tick_ms:15000,comparisons_per_tick:8,stop_grace_ms:10000});
 export const FINALIZE_RETRY_BOUND=5;
+/** SB187 item 3 (d), hardening packet RR-10a: consecutive counted admission failures before a hold, and the backoff cap (skip 2^min(n,5) ticks, at most 32). */
+export const ADMISSION_HOLD_BOUND=20;
+export const ADMISSION_BACKOFF_MAX_EXPONENT=5;
 export const ADMISSION_RETRY=Object.freeze(['FOUNDATION_QUEUE_FULL','RESEARCH_EXECUTOR_MODE_MISMATCH','FIXED_EVAL_IMMUTABLE_AUTHORITY_REQUIRED','FIXED_EVAL_AUTHORITY_UNAVAILABLE']);
 export const ADMISSION_NOOP=Object.freeze(['FIXED_EVAL_ALREADY_STARTED','FIXED_EVAL_OBJECT_NOT_EVALUATING']);
 export const FINALIZE_TRANSIENT=Object.freeze(['READ_EVALUATION','READ_ROWS','PARTICIPANT_INPUTS']);
 export const ADMISSION_REFUSED_REASON='PARTICIPANT_ADMISSION_REFUSED';
 export const REPLAY_CODES=Object.freeze({CLOSED:'QR3_ADMISSION_CLOSED',NOT_COMPLETE:'REPLAY_NOT_COMPLETE',BUSY:'REPLAY_BUSY'});
 const REPLAY_VERSION='qr3-record-replay-v1';
+/** The version of the create-time independence block (restated; the create module is outside this closure and is never imported here, SB194 item 3). */
+export const INDEPENDENCE_VERSION='qr3-independence-v1';
+const readableWindow=value=>windowsOverlap(value,value);
 const SQLSTATE=/^[0-9A-Z]{5}$/;
 const REASON=/^[A-Z][A-Z0-9_]{1,63}$/;
 const TERMINAL=Object.freeze(['COMPLETE','FAILED','CANCELLED']);
@@ -140,11 +152,39 @@ async function readRowsOf(db,owner,runId,binding){
   });
 }
 
-/** The exposure register of the evidence classifier, rebuilt from the create-time prior exposures of the freeze (never a live register read). */
-function priorRegister(owner,marketKey,prior){
-  if(!Array.isArray(prior))return null;
-  return prior.map(item=>isObject(item)?{owner_id:owner,market_key:marketKey,window:item.window,kind:item.kind,at_ms:item.at_ms,
+/** Register entries of the evidence classifier from one stored create-time list ({kind, id, window, at_ms}), with the owner and market key added; null when unreadable. */
+function registerEntries(owner,marketKey,list){
+  if(!Array.isArray(list))return null;
+  return list.map(item=>isObject(item)?{owner_id:owner,market_key:marketKey,window:item.window,kind:item.kind,at_ms:item.at_ms,
     ...(item.kind==='QR4_SELECTION'?{selection_id:item.id}:{comparison_id:item.id})}:null);
+}
+/** Library gate snapshot (gateSnapshot shape {version, gates:[{gate, state, code}]}) to the classifier shape [{gate, state, codes}]; null (every gate FAIL) when unreadable. */
+function libraryGates(snapshot){
+  if(!isObject(snapshot)||snapshot.version!==LIBRARY_VERSIONS.qualification||!Array.isArray(snapshot.gates))return null;
+  return snapshot.gates.map(item=>isObject(item)?{gate:item.gate,state:item.state,codes:typeof item.code==='string'?[item.code]:[]}:null);
+}
+
+/**
+ * The create-time independence facts of one participant (hardening slice B, owner GO OG-2; Root ruling SB194 item 3) mapped to the classifier inputs. Every explicit
+ * unavailable state fails closed: a null or malformed list stays null (the classifier adds QR3_INTEGRITY_FAILED); a boundary that is not NONE or SET with an integer
+ * start becomes a non-integer (QR3_WINDOW_BEFORE_REGISTERED_BOUNDARY); a missing or unknown-version block, a source holdout that is UNAVAILABLE or unknown, or a SET
+ * source holdout without a readable window and register sets integrity false; a missing gate snapshot makes every gate FAIL. The one exposure register is the
+ * stored prior_exposed_by merged with the stored source_holdout_register (null when either is unreadable). Nothing is defaulted and nothing is read live.
+ */
+export function independenceInputs({owner_id:owner,market_key:marketKey,participant}){
+  const freeze=isObject(participant?.freeze)?participant.freeze:{},block=freeze.independence;
+  const prior=registerEntries(owner,marketKey,freeze.prior_exposed_by);
+  const base={imported:participant?.origin==='IMPORTED',earlier_holdouts:null,searched_windows:null,source_holdout_window:null,exposure_register:prior,registered_boundary_ms:'UNREADABLE',library_gates:null};
+  if(!isObject(block)||block.version!==INDEPENDENCE_VERSION)return {integrity_ok:false,classifier:base};
+  const holdouts=Array.isArray(block.earlier_holdouts)?block.earlier_holdouts.map(item=>({owner_id:owner,market_key:marketKey,window:isObject(item)?item.window:null})):null;
+  const searched=Array.isArray(block.searched_windows)?block.searched_windows.map(item=>({owner_id:owner,source_hash:participant.source_hash,window:isObject(item)?item.window:null})):null;
+  const boundary=block.registered_boundary;
+  const boundaryMs=isObject(boundary)&&boundary.state==='NONE'?null:isObject(boundary)&&boundary.state==='SET'&&Number.isSafeInteger(boundary.start_ms)?boundary.start_ms:'UNREADABLE';
+  const state=block.source_holdout_state,sourceRegister=registerEntries(owner,marketKey,block.source_holdout_register);
+  const sourceOk=state==='NONE'?sourceRegister!==null:state==='SET'?readableWindow(block.source_holdout_window)&&sourceRegister!==null:false;
+  const register=prior!==null&&sourceRegister!==null?[...prior,...sourceRegister]:null;
+  return {integrity_ok:sourceOk,classifier:{...base,earlier_holdouts:holdouts,searched_windows:searched,source_holdout_window:state==='SET'&&sourceOk?block.source_holdout_window:null,
+    exposure_register:register,registered_boundary_ms:boundaryMs,library_gates:libraryGates(block.library_gates)}};
 }
 
 /**
@@ -177,14 +217,15 @@ async function participantInputsOf(service,owner,comparisonId,participantId){
     const covered=d?{start_ms:d.start_time+d.warmup_bars*MINUTE-MINUTE,end_ms:d.end_time}:null;
     const coverage=checkCoverage({period:comparison.spec.period,covered});
     const market=comparison.market,marketKey=market.broker+':'+market.symbol+':'+market.timeframe;
+    const facts=independenceInputs({owner_id:owner,market_key:marketKey,participant});
     const classified=classifyEvidence({participant_id:participantId,owner_id:owner,market_key:marketKey,source_hash:participant.source_hash,window:comparison.spec.period,
       record_created_at_ms:stored?stored.created_at_ms:null,record_comparison_id:stored?.record_comparison_id??null,record_spec_hash:stored?.record_spec_hash??null,
       spec_hash:comparison.spec_hash,frozen_at_ms:comparison.frozen_at_ms,as_of_ms:comparison.frozen_at_ms,comparison_id:comparisonId,
-      viewable_before_freeze:false,from_stored_view:false,imported:false,earlier_holdouts:[],searched_windows:[],
-      exposure_register:priorRegister(owner,marketKey,participant.freeze.prior_exposed_by),registered_boundary_ms:null});
+      viewable_before_freeze:false,from_stored_view:false,...facts.classifier});
+    // SB187 item 3 (b): an unreadable stored register is a damaged freeze row, so the participant is excluded on integrity (metrics hidden); the code stays in the reasons
     const evidence=classified.ok===false?{evidence_class:stored?'DEVELOPMENT_EVIDENCE':'NOT_EVALUATED',reasons:[classified.code]}
       :{evidence_class:classified.evidence_class,reasons:[...classified.reasons],failing_gates:[...classified.failing_gates],gate_codes:[...classified.gate_codes],exposed_by:[...classified.exposed_by]};
-    const inputs={integrity_ok:integrity,unavailable:false,compatibility:{compatible},coverage:{state:coverage.state},evidence,episode_gate_available:false};
+    const inputs={integrity_ok:integrity&&facts.integrity_ok&&classified.ok!==false,unavailable:false,compatibility:{compatible},coverage:{state:coverage.state},evidence,episode_gate_available:false};
     if(stored)inputs.completed_episodes=stored.body.completed_episodes;
     return inputs;
   });
@@ -204,19 +245,42 @@ export function createFinalizerDeps({fixedEvalService:service}){
  * tickMs; stop() ends the loop and waits for the pass in flight.
  */
 export class Qr3EvaluationDriver{
-  constructor({fixedEvalService,deps=null,tickMs=DRIVER_LIMITS.tick_ms,perTick=DRIVER_LIMITS.comparisons_per_tick,retryBound=FINALIZE_RETRY_BOUND,log=null}={}){
+  constructor({fixedEvalService,deps=null,tickMs=DRIVER_LIMITS.tick_ms,perTick=DRIVER_LIMITS.comparisons_per_tick,retryBound=FINALIZE_RETRY_BOUND,
+    admissionBound=ADMISSION_HOLD_BOUND,stopGraceMs=DRIVER_LIMITS.stop_grace_ms,log=null}={}){
     if(!fixedEvalService?.db||typeof fixedEvalService.enqueue!=='function')throw Error('QR-3 evaluation driver requires the fixed-evaluation service');
-    if(!Number.isSafeInteger(tickMs)||tickMs<1||!Number.isSafeInteger(perTick)||perTick<1||!Number.isSafeInteger(retryBound)||retryBound<1)throw Error('QR-3 evaluation driver limits are invalid');
+    if(![tickMs,perTick,retryBound,admissionBound].every(value=>Number.isSafeInteger(value)&&value>=1)||!Number.isSafeInteger(stopGraceMs)||stopGraceMs<0)
+      throw Error('QR-3 evaluation driver limits are invalid');
     this.service=fixedEvalService;this.db=fixedEvalService.db;this.deps=deps??createFinalizerDeps({fixedEvalService});
-    this.tickMs=tickMs;this.perTick=perTick;this.retryBound=retryBound;
+    this.tickMs=tickMs;this.perTick=perTick;this.retryBound=retryBound;this.admissionBound=admissionBound;this.stopGraceMs=stopGraceMs;
     this.log=typeof log==='function'?log:event=>console.log(JSON.stringify(event));
     this.transient=new Map();this.held=new Set();this.timer=null;this.running=null;this.stopping=false;
+    // per process: consecutive counted admission failures {count, resume_tick} and the tick counter of the backoff
+    this.backoff=new Map();this.ticks=0;
   }
-  /** At most perTick SPEC_FROZEN or EVALUATING comparisons of every owner, oldest freeze first, held ones excluded. READ ONLY. */
+  /** Comparisons that are held or still backing off; pending() leaves them out, so they never take one of the perTick slots. */
+  excluded(){
+    return [...this.held,...[...this.backoff].filter(([,entry])=>entry.resume_tick>this.ticks).map(([id])=>id)];
+  }
+  /** At most perTick SPEC_FROZEN or EVALUATING comparisons of every owner, oldest freeze first, held and backing-off ones excluded. READ ONLY. */
   async pending(){
     return inReadOnly(this.db,async()=>(await this.db.query(`SELECT s.comparison_id,s.owner_id,e.status FROM public.quant_comparison_specs s
       JOIN LATERAL (SELECT status FROM public.quant_comparison_status_events WHERE comparison_id=s.comparison_id ORDER BY seq DESC LIMIT 1) e ON true
-      WHERE e.status IN ('SPEC_FROZEN','EVALUATING') AND s.comparison_id<>ALL($1::text[]) ORDER BY s.frozen_at_ms,s.comparison_id LIMIT $2`,[[...this.held],this.perTick])).rows);
+      WHERE e.status IN ('SPEC_FROZEN','EVALUATING') AND s.comparison_id<>ALL($1::text[]) ORDER BY s.frozen_at_ms,s.comparison_id LIMIT $2`,[this.excluded(),this.perTick])).rows);
+  }
+  /**
+   * SB187 item 3 (d): one counted failure (a SQLSTATE or non-application admission error, or a thrown driver error). The comparison skips the next
+   * 2^min(n, ADMISSION_BACKOFF_MAX_EXPONENT) ticks; after admissionBound consecutive failures it is held (logged, no status written, left for owner cancel).
+   * The global back-pressure codes of ADMISSION_RETRY are never counted: they block every comparison alike.
+   */
+  counted(comparisonId,code){
+    const count=(this.backoff.get(comparisonId)?.count??0)+1;
+    if(count>=this.admissionBound){
+      this.backoff.delete(comparisonId);this.held.add(comparisonId);
+      this.log({event:'qr3.admission_held',comparison_id:comparisonId,code,attempts:count});
+      return {held:true,attempts:count};
+    }
+    this.backoff.set(comparisonId,{count,resume_tick:this.ticks+2**Math.min(count,ADMISSION_BACKOFF_MAX_EXPONENT)});
+    return {held:false,attempts:count};
   }
   async fail(item,reason,cause){
     const failed=await failComparison(this.db,{owner_id:item.owner_id,comparison_id:item.comparison_id,reason_code:reason});
@@ -234,6 +298,7 @@ export class Qr3EvaluationDriver{
     const enqueued=[];
     for(const participant of head.participants){
       if(started.has(participant.participant_id))continue;
+      if(this.stopping)return {comparison_id:item.comparison_id,result:'STOPPED',enqueued};
       try{
         const job=await this.service.enqueue(item.owner_id,{purpose:'QR3_COMPARISON',object_id:item.comparison_id,participant_id:participant.participant_id},
           admissionKey(item.comparison_id,participant.participant_id));
@@ -241,7 +306,12 @@ export class Qr3EvaluationDriver{
       }catch(error){
         const kind=classifyAdmission(error),code=typeof error?.code==='string'?error.code:null;
         if(kind==='NOOP')continue;
-        if(kind==='RETRY'){this.log({event:'qr3.admission_retry',comparison_id:item.comparison_id,code});return {comparison_id:item.comparison_id,result:'ADMISSION_RETRY',code,enqueued};}
+        if(kind==='RETRY'){
+          this.log({event:'qr3.admission_retry',comparison_id:item.comparison_id,code});
+          if(ADMISSION_RETRY.includes(code))return {comparison_id:item.comparison_id,result:'ADMISSION_RETRY',code,enqueued};
+          const bound=this.counted(item.comparison_id,code);
+          return {comparison_id:item.comparison_id,result:bound.held?'ADMISSION_HELD':'ADMISSION_RETRY',code,attempts:bound.attempts,enqueued};
+        }
         return this.fail(item,ADMISSION_REFUSED_REASON,code);
       }
     }
@@ -267,18 +337,30 @@ export class Qr3EvaluationDriver{
   }
   async drive(item){
     const admitted=await this.admit(item);
-    if(admitted)return admitted;
-    return this.finalize(item);
+    if(admitted){
+      if(['TERMINAL','FAILED','FAIL_NOT_WRITTEN'].includes(admitted.result))this.backoff.delete(item.comparison_id);
+      return admitted;
+    }
+    const done=await this.finalize(item);
+    // a pass that reaches the finalizer and returns has admitted every participant: the count of consecutive admission failures restarts
+    this.backoff.delete(item.comparison_id);
+    return done;
   }
-  /** One pass. A thrown database error ends that comparison's pass with no status change; the next tick retries it. */
+  /**
+   * One pass. A thrown database error ends that comparison's pass with no status change and counts toward the admission bound (backoff, then hold); a later tick
+   * retries it. A stop request ends the pass before the next comparison.
+   */
   async tick(){
     const summary=[];
+    this.ticks+=1;
     for(const item of await this.pending()){
+      if(this.stopping)break;
       try{summary.push(await this.drive({comparison_id:item.comparison_id,owner_id:item.owner_id}));}
       catch(error){
         const code=typeof error?.code==='string'?error.code:null;
         this.log({event:'qr3.driver_error',comparison_id:item.comparison_id,code});
-        summary.push({comparison_id:item.comparison_id,result:'ERROR',code});
+        const bound=this.counted(item.comparison_id,code);
+        summary.push({comparison_id:item.comparison_id,result:'ERROR',code,attempts:bound.attempts,held:bound.held});
       }
     }
     return summary;
@@ -293,14 +375,33 @@ export class Qr3EvaluationDriver{
     };
     this.timer=setTimeout(loop,0);
   }
-  async stop(){
+  /**
+   * SB187 item 3 (f): ends the loop. No new comparison or admission starts after this call. It waits for the pass in flight or for graceMs, whichever ends first
+   * (the grace timer is unref'd and always cleared). A pass left running stops between steps: every finalizer write is its own insert-only transaction and the
+   * next call recovers a stop after any single write.
+   */
+  async stop({graceMs=this.stopGraceMs}={}){
     this.stopping=true;
     if(this.timer!==null){clearTimeout(this.timer);this.timer=null;}
-    if(this.running)await this.running;
+    if(!this.running)return;
+    let grace=null;
+    try{await Promise.race([this.running,new Promise(resolve=>{grace=setTimeout(resolve,graceMs);grace.unref?.();})]);}
+    finally{clearTimeout(grace);}
   }
 }
 
 /* ---- RR-12: record replay ---- */
+
+/**
+ * SB187 item 3 (c), contract I5: the application codes of the replay read path that mean the archived data or the evaluator artifact is gone or no longer
+ * verifies. Only these record REPRODUCTION_DISABLED. Every other error (a SQLSTATE, a lost connection, a non-application error, a read-only or transaction
+ * guard, any other code) is thrown: no replay event is written and the route answers RETRY_TRANSACTION or QUANT_LIBRARY_UNAVAILABLE.
+ */
+export const REPLAY_DISABLED_CODES=Object.freeze(['NOT_FOUND','FIXED_EVAL_RUN_NOT_SUCCEEDED','FIXED_EVAL_RESULT_INVALID','FIXED_EVAL_AUTHORITY_INVALID',
+  'FIXED_EVAL_DATASET_SHA_MISMATCH','FIXED_EVAL_DATASET_BINDING_INVALID','FIXED_EVAL_DATASET_CHANGED','VERIFIED_MARKET_DATA_REQUIRED','MARKET_METADATA_MISMATCH',
+  'INSUFFICIENT_OR_GAPPED_RESEARCH_DATASET','FIXED_EVAL_RECORDS_INVALID','INVALID_MARKET_BAR']);
+/** True only for an application refusal (an Error with an integer status) whose code is in REPLAY_DISABLED_CODES. */
+export const replayDisables=error=>classifyAdmission(error)==='FAIL'&&REPLAY_DISABLED_CODES.includes(error.code);
 
 const differing=answer=>typeof answer?.detail==='string'&&REASON.test(answer.detail)?answer.detail:typeof answer?.code==='string'&&REASON.test(answer.code)?answer.code:'REPLAY_REFUSED';
 
@@ -332,7 +433,7 @@ export async function replayComparison(db,{owner_id:owner,comparison_id:comparis
     if(!run||run.status!=='SUCCEEDED')return record('REPRODUCTION_DISABLED',null,null);
     let evaluated,rows;
     try{evaluated=await deps.readEvaluation(owner,run.run_id);rows=await deps.readRows(owner,run.run_id,evaluated.binding);}
-    catch{return record('REPRODUCTION_DISABLED',null,null);}
+    catch(error){if(!replayDisables(error))throw error;return record('REPRODUCTION_DISABLED',null,null);}
     const body=evaluationRecordBody({comparison_id:comparisonId,spec_hash:comparison.spec_hash,spec:comparison.spec,participant_id:item.participant_id,evaluation_run_id:run.run_id,
       fixed_contract:evaluated.contract,binding:evaluated.binding,fixed_result:evaluated.result,rows},deps.validators);
     const line=benchmarkRecordBody({comparison_id:comparisonId,spec_hash:comparison.spec_hash,spec:comparison.spec,fixed_contract:evaluated.contract,rows},deps.validators);
@@ -350,7 +451,8 @@ export async function replayComparison(db,{owner_id:owner,comparison_id:comparis
     const entries=[];
     for(const item of rebuilt){
       let inputs;
-      try{inputs=await deps.participantInputs(owner,comparisonId,item.participant_id);}catch{return record('REPRODUCTION_DISABLED',null,null);}
+      try{inputs=await deps.participantInputs(owner,comparisonId,item.participant_id);}
+      catch(error){if(!replayDisables(error))throw error;return record('REPRODUCTION_DISABLED',null,null);}
       entries.push({participant_id:item.participant_id,status_input:inputs,evaluation:{body:item.body.body,created_at_ms:item.view.created_at_ms}});
     }
     const decided=outcomeRecord({spec:comparison.spec,spec_hash:comparison.spec_hash,context_key:comparison.context_key,participants:entries});

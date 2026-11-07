@@ -169,10 +169,13 @@ test('C1 one changed byte in any listed file rotates the hash; one dropped file 
 /* Rotated by L8-W (owner GO OG-1, 2026-11-06): the QR-3 wiring module, the finalizer, the comparison store, the S3a module, valuation.js and period.js join the runtime
  * manifest. Old to new: FOUNDATION 329f39c65e897334... to 6ac7670086b22483...; FIXED_EVAL da1488a8cc2a15ad... to af986ecbad354e85.... LEGACY unchanged (a6be760ef6c72a8f...),
  * and the trace closure itself is unchanged (833e4c1e8eda2de2..., asserted in test/mp-engine-closure.test.js). */
+/* Rotated by QR-3 hardening slice B (owner GO OG-2, 2026-11-07): the QR-3 wiring module and the finalizer header comments changed; no manifest entry added.
+ * Old to new: FOUNDATION 6ac7670086b22483... to 904395187c44a093...; FIXED_EVAL af986ecbad354e85... to 39c390dec437100c.... LEGACY unchanged (a6be760ef6c72a8f...),
+ * and the trace closure itself is unchanged (833e4c1e8eda2de2...). */
 const BASE_HASHES = Object.freeze({
   LEGACY: 'a6be760ef6c72a8f8739ac43382de3d0e69fd4070697ddafd9bca012607f97f9',
-  FOUNDATION: '6ac7670086b22483e9413e1df0a44f2de91d030f904c850d4f97cf49f64faa39',
-  FIXED_EVAL: 'af986ecbad354e855f2ad9ab565cad5cc9414ebcb53d4bc076ee113511100aab'});
+  FOUNDATION: '904395187c44a0933d2cf51639fb41070d3e73e8702da1f9c4389e83066f8a6f',
+  FIXED_EVAL: '39c390dec437100cdd4e6f7e029adfd7169929a7fa8178025782904c57853994'});
 const fixedEvalFormula = async () => hash(canonical({version: 'fixed-eval-closure-v1', files: Object.fromEntries(await Promise.all(FIXED_EVAL_ENGINE_FILES.map(async name => [name, hash(Buffer.from((await read(name)).toString('latin1').replaceAll('\r\n', '\n'), 'latin1'))])))}));
 
 test('C1 the engine hashes of the checkout equal the authorized candidate pins', async () => {

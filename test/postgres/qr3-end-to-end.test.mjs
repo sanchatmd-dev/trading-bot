@@ -21,7 +21,8 @@ import {datasetBindingIdentity} from '../../src/quant-research/research-contract
 import {expectedFoundationRequestV2} from '../../src/quant-research/research-contract-v2.js';
 import {qr3Routes,QR3_PATH,QR3_REPLAY_EVENT} from '../../src/postgres/qr3-routes.js';
 import {createComparison,readComparison,readComparisonResults,cancelComparison} from '../../src/postgres/comparison-store.js';
-import {Qr3EvaluationDriver,createQr3ApiDeps,createFinalizerDeps,replayComparison,admissionKey,ADMISSION_REFUSED_REASON} from '../../src/postgres/qr3-comparison-wiring.js';
+import {Qr3EvaluationDriver,createQr3ApiDeps,createFinalizerDeps,replayComparison,admissionKey,ADMISSION_REFUSED_REASON,INDEPENDENCE_VERSION} from '../../src/postgres/qr3-comparison-wiring.js';
+import {LIBRARY_VERSIONS} from '../../src/quant-library/derive.js';
 import {contextFields,contextKey} from '../../src/comparison/context.js';
 import {validateSpec,specHashOf} from '../../src/comparison/ranking.js';
 import {CODES} from '../../src/comparison/common.js';
@@ -97,7 +98,7 @@ async function createViaApi(ids){
   return answer.body.comparison_id;
 }
 /** A comparison created through the store directly with a chosen engine hash in every frozen context (for the old-hash cases). */
-async function createWithEngine(engine,ids=participants(2)){
+async function createWithEngine(engine,ids=participants(2),extraFreeze=()=>({})){
   const w=f.registration.window;
   const spec=validateSpec({mode:'STANDARDIZED',participants:ids,period:{start_ms:w.start_ms,end_ms:w.end_ms},objective:'qr3-obj-net-return-v1',risk_filter:{max_drawdown_percent:'20'},
     adequacy:{min_episodes_floor:5,min_episodes_ranking:20},tie:{band_pp:'0.50'},benchmark:'qr3-bh-close-same-cost-v1',uncertainty:{method:null}}).spec;
@@ -107,7 +108,8 @@ async function createWithEngine(engine,ids=participants(2)){
   context.validation_protocol=fixedEvalComparisonProtocolHash(f.c,spec);
   const fields=contextFields(ids[0],context).fields,key=contextKey(fields);
   const created=await createComparison(f.db,{owner_id:f.owner,fixture:true,market:f.c.snapshot.market,spec,spec_hash:specHashOf(spec),context_key:key,request_key:'e2e-old-'+randomUUID(),
-    participants:ids.map((id,index)=>({participant_id:id,position:index+1,source_hash:f.c.source_hash,origin:'FIXTURE',fixture:true,context_key:key,freeze:{context:structuredClone(fields)}}))});
+    participants:ids.map((id,index)=>({participant_id:id,position:index+1,source_hash:f.c.source_hash,origin:'FIXTURE',fixture:true,context_key:key,
+      freeze:{context:structuredClone(fields),...extraFreeze(index)}}))});
   assert.equal(created.ok,true,JSON.stringify(created));
   return created.comparison_id;
 }
@@ -525,6 +527,167 @@ test('E6 a restart after the first stored records completes with the same hashes
   assert.deepEqual([failed.result,failed.reason_code],['FAILED',CODES.QR3_INTEGRITY_FAILED]);
   assert.match(failed.cause,/^(?:EVALUATION_MISMATCH|BENCHMARK_MISMATCH|CROSS_CHECK_[A-Z_]+)$/);
   assert.deepEqual(await statusOf(other),[3,'FAILED',CODES.QR3_INTEGRITY_FAILED]);
+  await closeOpen();
+});
+
+/* ---- hardening slice B (owner GO OG-2; SB187 item 3, SB194 item 3) ---- */
+
+test('E12 slice B (a, g): a comparison frozen by the slice A create maps its stored block and gate snapshot (G8 QL4C_VALIDATION_NOT_AVAILABLE), integrity holds',async()=>{
+  assert.ok(complete,'E2 produced a COMPLETE comparison');
+  const head=await readComparison(f.db,{owner_id:f.owner,comparison_id:complete.id});
+  const deps=createFinalizerDeps({fixedEvalService:f.service});
+  for(const participant of head.participants){
+    const block=participant.freeze.independence;
+    assert.equal(block.version,INDEPENDENCE_VERSION);
+    assert.equal(block.library_gates.version,LIBRARY_VERSIONS.qualification);
+    assert.equal(block.library_gates.gates.length,8);
+    const inputs=await deps.participantInputs(f.owner,complete.id,participant.participant_id);
+    assert.equal(inputs.integrity_ok,true,JSON.stringify({block,inputs}));
+    assert.ok(inputs.evidence.failing_gates.includes('G8'));
+    assert.ok(inputs.evidence.gate_codes.includes('QL4C_VALIDATION_NOT_AVAILABLE'));
+    assert.ok(inputs.evidence.reasons.includes(CODES.QR3_NOT_QUALIFIED));
+    // the stored lists reach the classifier: a frozen earlier holdout or searched window overlapping the period shows its reason
+    if(block.earlier_holdouts?.length)assert.ok(inputs.evidence.reasons.includes(CODES.QR3_WINDOW_OVERLAPS_EARLIER_HOLDOUT));
+    if(block.searched_windows?.length)assert.ok(inputs.evidence.reasons.includes(CODES.QR3_WINDOW_OVERLAPS_SEARCHED_DATA));
+  }
+  assert.equal((await api.replay({owner_id:f.owner,comparison_id:complete.id})).kind,'REPLAY_MATCH');
+});
+
+test('E13 slice B (a, b, g): stored facts give their reasons; a missing block and an unreadable register exclude on integrity; COMPLETE lists every participant; replay MATCH',async()=>{
+  const w=f.registration.window,inside={start_ms:w.start_ms+MINUTE,end_ms:w.start_ms+10*MINUTE};
+  const snapshot={version:LIBRARY_VERSIONS.qualification,gates:['G1','G2','G3','G4','G5','G6','G7'].map(gate=>({gate,state:'PASS',code:null})).concat([{gate:'G8',state:'FAIL',code:'QL4C_VALIDATION_NOT_AVAILABLE'}])};
+  const clean={version:INDEPENDENCE_VERSION,earlier_holdouts:[],searched_windows:[],registered_boundary:{state:'NONE'},source_holdout_state:'NONE',source_holdout_window:null,
+    source_holdout_register:[],scanned:{holdout_rows:0,searched_rows:0},library_gates:snapshot};
+  const blocks=[
+    {...clean,earlier_holdouts:[{run_id:'earlier-1',window:inside}],searched_windows:[{run_id:'searched-1',window:inside}],registered_boundary:{state:'SET',start_ms:w.start_ms+MINUTE}},
+    undefined,                                                   // frozen before slice A: no block
+    {...clean,earlier_holdouts:null,searched_windows:null},      // unreadable lists
+    clean];                                                      // its stored register is damaged below (item b)
+  const ids=participants(4);
+  const id=await createWithEngine(await fixedEvalEngineHash(),ids,index=>blocks[index]===undefined?{}:{independence:blocks[index]});
+  await driverOf().drive(item(id));
+  assert.equal((await runQueued()).length,4);
+  const deps=createFinalizerDeps({fixedEvalService:f.service});
+  // store the evaluations and the benchmark first (a stop before the outcome), then damage participant 4's stored register (LABELLED test-only DDL)
+  const stop={...deps,participantInputs:async()=>{throw Object.assign(new Error('stop'),{code:'08006'});}};
+  assert.equal((await new Qr3EvaluationDriver({fixedEvalService:f.service,deps:stop,log}).drive(item(id))).result,'FINALIZE_RETRY');
+  const row=(await rowsOf('SELECT freeze_canonical FROM public.quant_comparison_participants WHERE comparison_id=$1 AND participant_id=$2',[id,ids[3]]))[0];
+  const damaged=canonical({...JSON.parse(row.freeze_canonical),prior_exposed_by:[{kind:'QR3_COMPARISON',id:'broken'}]});
+  await f.db.query('ALTER TABLE public.quant_comparison_participants DISABLE TRIGGER quant_comparison_participants_no_change');
+  try{await f.db.query('UPDATE public.quant_comparison_participants SET freeze_canonical=$3,freeze_hash=$4 WHERE comparison_id=$1 AND participant_id=$2',[id,ids[3],damaged,hash(damaged)]);}
+  finally{await f.db.query('ALTER TABLE public.quant_comparison_participants ENABLE ALWAYS TRIGGER quant_comparison_participants_no_change');}
+  const inputs=[];
+  for(const participant of ids)inputs.push(await deps.participantInputs(f.owner,id,participant));
+  assert.equal(inputs[0].integrity_ok,true);
+  for(const reason of [CODES.QR3_WINDOW_OVERLAPS_EARLIER_HOLDOUT,CODES.QR3_WINDOW_OVERLAPS_SEARCHED_DATA,CODES.QR3_WINDOW_BEFORE_REGISTERED_BOUNDARY,CODES.QR3_NOT_QUALIFIED])
+    assert.ok(inputs[0].evidence.reasons.includes(reason),reason);
+  assert.deepEqual([inputs[0].evidence.failing_gates,inputs[0].evidence.gate_codes],[['G8'],['QL4C_VALIDATION_NOT_AVAILABLE']]);
+  assert.equal(inputs[1].integrity_ok,false,'no independence block');
+  assert.deepEqual([inputs[2].integrity_ok,inputs[2].evidence.reasons.includes(CODES.QR3_INTEGRITY_FAILED)],[true,true],'null lists');
+  assert.deepEqual([inputs[3].integrity_ok,inputs[3].evidence.reasons],[false,[CODES.QR3_EXPOSURE_REGISTER_UNAVAILABLE]],'item b');
+  const done=await driverOf().drive(item(id));
+  assert.equal(done.result,'COMPLETE',JSON.stringify(done));
+  const results=await readComparisonResults(f.db,{owner_id:f.owner,comparison_id:id});
+  assert.equal(results.outcome.outcome,'NO_QUALIFIED_RESULT');
+  const statuses=Object.fromEntries(results.outcome.record.participants.map(entry=>[entry.id,entry.status]));
+  assert.deepEqual(ids.map(participant=>statuses[participant]),['DEVELOPMENT_EVIDENCE','EXCLUDED_INTEGRITY','DEVELOPMENT_EVIDENCE','EXCLUDED_INTEGRITY']);
+  assert.equal((await api.replay({owner_id:f.owner,comparison_id:id})).kind,'REPLAY_MATCH');
+  await closeOpen();
+});
+
+test('E14 slice B (c): a transient database error in record replay writes no event, answers 503 or 409, releases the single flight; data gone still disables',async()=>{
+  assert.ok(complete,'E2 produced a COMPLETE comparison');
+  const id=complete.id,count=async()=>(await rowsOf('SELECT count(*)::int n FROM public.quant_comparison_replay_events WHERE comparison_id=$1',[id]))[0].n;
+  const before=await count();
+  const deps=createFinalizerDeps({fixedEvalService:f.service});
+  const timeout=()=>Object.assign(new Error('canceling statement due to statement timeout'),{code:'57014'});
+  await assert.rejects(replayComparison(f.db,{owner_id:f.owner,comparison_id:id},{...deps,readRows:async()=>{throw timeout();}}),{code:'57014'});
+  await assert.rejects(replayComparison(f.db,{owner_id:f.owner,comparison_id:id},{...deps,participantInputs:async()=>{throw new TypeError('bug');}}),TypeError);
+  await assert.rejects(replayComparison(f.db,{owner_id:f.owner,comparison_id:id},{...deps,readEvaluation:async()=>{throw Object.assign(Error('read only'),{code:'QR3_READ_ONLY_REQUIRED',status:409});}}),{code:'QR3_READ_ONLY_REQUIRED'});
+  assert.equal(await count(),before,'no replay event for a transient error');
+  // through the owner route: 503 for a statement timeout, 409 RETRY_TRANSACTION for a serialization failure; the second request is not REPLAY_BUSY
+  const saved=api;
+  try{
+    for(const [code,status,body] of [['57014',503,'QUANT_LIBRARY_UNAVAILABLE'],['40001',409,'RETRY_TRANSACTION']]){
+      const failing=Object.create(f.service,{read:{value:async()=>{throw Object.assign(new Error('transient'),{code});}}});
+      api=createQr3ApiDeps({pineService:new PineBridgeService(f.store),fixedEvalService:failing});
+      for(let attempt=0;attempt<2;attempt++){
+        const answer=await route('POST',QR3_PATH+'/'+id+'/replay',{confirmed:true});
+        assert.deepEqual([answer.status,answer.body.code],[status,body],code+' '+attempt);
+      }
+    }
+  }finally{api=saved;}
+  assert.equal(await count(),before);
+  // data gone: an allowlisted code still records REPRODUCTION_DISABLED
+  const gone=await replayComparison(f.db,{owner_id:f.owner,comparison_id:id},{...deps,readRows:async()=>{throw Object.assign(Error('gap'),{code:'INSUFFICIENT_OR_GAPPED_RESEARCH_DATASET',status:409});}});
+  assert.equal(gone.kind,'REPRODUCTION_DISABLED');
+  assert.equal(await count(),before+1);
+  // fix round: evaluator chunk or step records gone or damaged (validateFixedEvalRecords complete:true) also records REPRODUCTION_DISABLED, exactly once
+  const damaged=await replayComparison(f.db,{owner_id:f.owner,comparison_id:id},{...deps,readEvaluation:async()=>{throw Object.assign(Error('records'),{code:'FIXED_EVAL_RECORDS_INVALID',status:409});}});
+  assert.deepEqual([damaged.kind,damaged.first_differing_code,damaged.replay_outcome_hash],['REPRODUCTION_DISABLED',null,null]);
+  assert.equal(await count(),before+2);
+  assert.equal((await rowsOf('SELECT kind FROM public.quant_comparison_replay_events WHERE comparison_id=$1 AND replay_event_id=$2',[id,damaged.replay_event_id]))[0]?.kind,'REPRODUCTION_DISABLED');
+  assert.equal((await api.replay({owner_id:f.owner,comparison_id:id})).kind,'REPLAY_MATCH');
+});
+
+test('E15 slice B (d): a comparison whose admission keeps failing on a database error is held after the bound with no status event; the one behind it is admitted',async()=>{
+  const bad=await createViaApi(participants(2));
+  await new Promise(resolve=>setTimeout(resolve,5));
+  const good=await createViaApi(participants(2));
+  const failing=Object.create(f.service,{enqueue:{value:async(owner,body,key)=>{
+    if(body.object_id===bad)throw Object.assign(new Error('invalid input syntax'),{code:'22P02'});
+    return f.service.enqueue(owner,body,key);
+  }}});
+  const driver=new Qr3EvaluationDriver({fixedEvalService:failing,perTick:1,admissionBound:3,log});
+  const seen=[];
+  for(let tick=0;tick<8;tick++)seen.push(...(await driver.tick()).map(entry=>[driver.ticks,entry.comparison_id===bad?'bad':'good',entry.result]));
+  assert.deepEqual(seen.filter(entry=>entry[1]==='bad').map(entry=>[entry[0],entry[2]]),[[1,'ADMISSION_RETRY'],[3,'ADMISSION_RETRY'],[7,'ADMISSION_HELD']]);
+  assert.deepEqual(seen.find(entry=>entry[1]==='good'),[2,'good','WAITING'],'head-of-line: the next comparison is admitted while the first backs off');
+  assert.equal(driver.held.has(bad),true);
+  assert.deepEqual(await events(bad),[[1,'SPEC_FROZEN',null]],'no status written for a held comparison');
+  assert.equal((await runsOf(bad)).length,0);
+  assert.equal((await runsOf(good)).length,2);
+  assert.ok(logs.some(event=>event.event==='qr3.admission_held'&&event.comparison_id===bad&&event.code==='22P02'&&event.attempts===3));
+  await closeOpen();
+  // global back-pressure (FOUNDATION_QUEUE_FULL) never counts toward the bound
+  const busy=await createViaApi(participants(2));
+  const full=Object.create(f.service,{enqueue:{value:async()=>{throw Object.assign(new Error('full'),{code:'FOUNDATION_QUEUE_FULL',status:409});}}});
+  const patient=new Qr3EvaluationDriver({fixedEvalService:full,perTick:1,admissionBound:2,log});
+  const answers=[];
+  for(let tick=0;tick<5;tick++)answers.push(...(await patient.tick()).map(entry=>entry.result));
+  assert.deepEqual(answers,['ADMISSION_RETRY','ADMISSION_RETRY','ADMISSION_RETRY','ADMISSION_RETRY','ADMISSION_RETRY']);
+  assert.equal(patient.held.size+patient.backoff.size,0);
+  assert.deepEqual(await events(busy),[[1,'SPEC_FROZEN',null]]);
+  await closeOpen();
+});
+
+test('E16 slice B (f): stop during a finalize returns within the grace and starts nothing new; a fresh driver completes with the same stored hashes and replay MATCH',async()=>{
+  const id=await createViaApi(participants(2));
+  await driverOf().drive(item(id));
+  await runQueued();
+  const later=await createViaApi(participants(2));
+  const deps=createFinalizerDeps({fixedEvalService:f.service});
+  let entered,release;
+  const reached=new Promise(resolve=>{entered=resolve;});
+  const slow={...deps,participantInputs:async()=>{entered();await new Promise((resolve,reject)=>{release=reject;});}};
+  const driver=new Qr3EvaluationDriver({fixedEvalService:f.service,deps:slow,log});
+  driver.start();
+  await reached;
+  const begin=performance.now();
+  await driver.stop({graceMs:100});
+  assert.ok(performance.now()-begin<2000);
+  assert.equal(driver.timer,null);
+  release(Object.assign(new Error('stopped'),{code:'08006'}));
+  await driver.running;
+  assert.equal((await runsOf(later)).length,0,'no comparison admitted after stop');
+  assert.deepEqual(await events(later),[[1,'SPEC_FROZEN',null]]);
+  const partial=await readComparisonResults(f.db,{owner_id:f.owner,comparison_id:id});
+  assert.deepEqual([partial.evaluations.length,!!partial.benchmark,partial.outcome],[2,true,null]);
+  const done=await driverOf().drive(item(id));
+  assert.equal(done.result,'COMPLETE');
+  const final=await readComparisonResults(f.db,{owner_id:f.owner,comparison_id:id});
+  assert.deepEqual(final.evaluations.map(view=>[view.body_hash,view.created_at_ms]),partial.evaluations.map(view=>[view.body_hash,view.created_at_ms]));
+  assert.equal((await api.replay({owner_id:f.owner,comparison_id:id})).kind,'REPLAY_MATCH');
   await closeOpen();
 });
 

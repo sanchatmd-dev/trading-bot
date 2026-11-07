@@ -30,18 +30,23 @@ const RUNTIME_ROOTS = ['src/postgres/quant-research-main.js', 'src/quant-researc
  * L8-W (owner GO OG-1, 2026-11-06; the QR-3 wiring module, the finalizer, the comparison store, the S3a module, valuation.js and period.js join the runtime manifest).
  * Old to new: foundation 329f39c65e89... to 6ac7670086b2...; ingestion c000a54a36e5... to 7f6b48aa53ba...; pf2_engine 9256ea2d9bc3... to 43340272423e...;
  * fixed_eval da1488a8cc2a... to af986ecbad35...; mp-combined f8a9723af23a... to 2e31e235a289... (now pinned below, closes L6 audit P3). Unchanged: legacy a6be760ef6c7...,
- * pf2_evaluator 3fb2d465215e..., trace 833e4c1e8eda... and mp-package-trace d2c4f358af62... (both pinned below as unchanged). */
+ * pf2_evaluator 3fb2d465215e..., trace 833e4c1e8eda... and mp-package-trace d2c4f358af62... (both pinned below as unchanged).
+ * QR-3 hardening slice B (owner GO OG-2, 2026-11-07; the QR-3 wiring module maps the create-time independence facts and gate snapshot, bounds admission retries
+ * and the driver stop, records no replay event for a transient error; finalizer header comments corrected; no manifest entry added). Old to new: foundation
+ * 6ac7670086b2... to 904395187c44...; ingestion 7f6b48aa53ba... to 7410459bbd43...; pf2_engine 43340272423e... to 6090066f27c1...; fixed_eval af986ecbad35... to
+ * 39c390dec437...; mp-combined 2e31e235a289... to b6deab3ba036.... Unchanged: legacy a6be760ef6c7..., pf2_evaluator 3fb2d465215e..., trace 833e4c1e8eda...,
+ * mp-package-trace d2c4f358af62.... */
 const BASE_HASHES = Object.freeze({
   legacy: 'a6be760ef6c72a8f8739ac43382de3d0e69fd4070697ddafd9bca012607f97f9',
-  foundation: '6ac7670086b22483e9413e1df0a44f2de91d030f904c850d4f97cf49f64faa39',
-  ingestion: '7f6b48aa53ba88f2049005e0dc452e9e6ff18b55ee3dd6d1292901f642ac8a2c',
-  pf2_engine: '43340272423eb51a2b447f6b2cf566ddaf94eb7d7f179c1a2d8566f232af7989',
+  foundation: '904395187c44a0933d2cf51639fb41070d3e73e8702da1f9c4389e83066f8a6f',
+  ingestion: '7410459bbd439c7ae0b40f078b15871ae42365d1ff1b4f2839cbae07f73ce666',
+  pf2_engine: '6090066f27c1901842adf7a30f7c2f79faa14f4f461c93488807aa9d7635276e',
   pf2_evaluator: '3fb2d465215ea2473aaa5d5e458d18fcd526aea239348063a3372e661d630ada',
-  fixed_eval: 'af986ecbad354e855f2ad9ab565cad5cc9414ebcb53d4bc076ee113511100aab'
+  fixed_eval: '39c390dec437100cdd4e6f7e029adfd7169929a7fa8178025782904c57853994'
 });
 /** L8-W: the multi-Pine combined closure pin (it rotates with the shared runtime manifest) and the two closures that must stay unchanged. */
 const OTHER_HASHES = Object.freeze({
-  mp_combined: '2e31e235a289aa9db84685843260313396d488cccaa44128cf7d47ed62953232',
+  mp_combined: 'b6deab3ba036d0c99e2279a805836dba92443c86e2f8a94465745a074b13043f',
   trace: '833e4c1e8eda2de2e63084aeec6ecbf7cad8538d8860f22f53a7b758113a6ab2',
   mp_package_trace: 'd2c4f358af62b70ea3269282711c1a5444d7b1bf7b0f218fa9d1e6192fd1c2ed'
 });

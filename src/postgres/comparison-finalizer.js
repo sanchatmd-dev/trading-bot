@@ -6,9 +6,8 @@ import {readComparison,readComparisonResults,writeEvaluation,writeBenchmark,writ
  * QR-3 slice S3b (docs/QR3_S3A_EVALUATION_RECORD_PACKET_2026-10-24.md, section 13; docs/QR_3_FAIR_COMPARISON_CONTRACT.md 8.1, RC-C38, RC-C45): the database
  * half of the evaluation orchestration. finalizeComparison reads one comparison and the terminal fixed-evaluation runs of its participants, builds the record
  * bodies with the S3a pure module, stores the evaluations, the benchmark and the outcome (COMPLETE) through the S2c-2 writers, and records a FAILED status
- * when a participant run cannot finish. NOTHING IMPORTS THIS MODULE: no route, worker, service or runtime root, no flag and no export from
- * src/comparison/index.js. It is therefore outside the reviewed evaluation closure. Wiring it in is a later slice that needs its own owner GO because it
- * changes the engine closure manifest.
+ * when a participant run cannot finish. Only the QR-3 wiring module imports it (L8-W, owner GO OG-1, Root ruling SB187); there is no route, flag or export
+ * from src/comparison/index.js for it. It is listed in the runtime engine manifest, so every byte here, comments included, is part of the engine identities.
  *
  * Every access to the fixed-evaluation lifecycle comes in through the injected dependencies, so this text names none of the guarded evaluation modules
  * (the importer guard of the evaluation closure test); the required validators of the evaluation contract are one of those dependencies.
@@ -25,7 +24,7 @@ import {readComparison,readComparisonResults,writeEvaluation,writeBenchmark,writ
  *  1. Read the comparison. A terminal status answers ALREADY_TERMINAL and nothing else runs; SPEC_FROZEN answers WAITING (no run has been admitted).
  *  2. Find the single fixed run of each participant (owner, QR3 purpose, lineage object id = comparison id, lineage parent run id = participant id) in a READ
  *     ONLY transaction. A participant without a run, or with a QUEUED or RUNNING one, is WAITING. A FAILED, TIMED_OUT, NO_VALID_CANDIDATE or CANCELLED run
- *     fails the comparison (see RUN_FAILURE_REASONS; root ruling RR-2 of the L8 packet is still open, so this is the conservative choice and one table).
+ *     fails the comparison (see RUN_FAILURE_REASONS; Root ruling RR-2, adopted in SB180 item 3, with the contract deviation recorded as a limitation).
  *  3. For every participant rebuild the evaluation body. A stored body is compared by hash with the rebuilt one: a difference refuses
  *     QR3_INTEGRITY_FAILED / EVALUATION_MISMATCH and nothing is overwritten (the rows are insert-only). Missing bodies are written one by one, so a stop
  *     after any single write is recovered by the next call, which writes only what is missing and reads back the same hashes.
@@ -43,7 +42,7 @@ import {readComparison,readComparisonResults,writeEvaluation,writeBenchmark,writ
  * malformed id; a pure-module refusal passes through unchanged).
  */
 export const FINALIZER_STATES=Object.freeze(['WAITING','COMPLETE','FAILED','CANCELLED','ALREADY_TERMINAL']);
-/** Fixed-run status to the reason code of the FAILED comparison (RR-2, provisional). Any other status is waiting (QUEUED, RUNNING) or ready (SUCCEEDED). */
+/** Fixed-run status to the reason code of the FAILED comparison (RR-2, adopted in SB180 item 3). Any other status is waiting (QUEUED, RUNNING) or ready (SUCCEEDED). */
 export const RUN_FAILURE_REASONS=Object.freeze({FAILED:'PARTICIPANT_RUN_FAILED',TIMED_OUT:'PARTICIPANT_RUN_FAILED',NO_VALID_CANDIDATE:'PARTICIPANT_RUN_FAILED',CANCELLED:'PARTICIPANT_RUN_CANCELLED'});
 
 const TERMINAL=Object.freeze(['COMPLETE','FAILED','CANCELLED']);
