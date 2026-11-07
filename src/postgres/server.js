@@ -24,6 +24,7 @@ import {qr2PerformanceRoute,createQr2Slot} from './qr2-routes.js';
 import {qr2CapitalModelRoute} from './qr2-capital-model-route.js';
 import {qr3Routes} from './qr3-routes.js';
 import {createQr3ApiDeps} from './qr3-comparison-wiring.js';
+import {qr4Routes,botPolicyReader} from './qr4-routes.js';
 import {createQr2ComputePool} from './qr2-compute-pool.js';
 import { PostgresDatabase } from './db.js';
 import {requirePaperLedgerFence} from './paper-ledger-fence.js';
@@ -71,6 +72,10 @@ const qr2PerformanceEnabled=process.env.QR2_PERFORMANCE_ENABLED==='1';
 // QR-3 owner comparison routes (create, view, cancel, replay): off unless QR3_COMPARISON_ENABLED=1, and nothing is mounted or built otherwise. The engine hash,
 // the dataset digest and the record replay come from the QR-3 wiring module of the runtime manifest; this file names no other module of that closure.
 const qr3ComparisonEnabled=process.env.QR3_COMPARISON_ENABLED==='1';
+// QR-4 owner selection routes (register, list, detail, cancel, replay, open_package): off unless QR4_SELECTION_ENABLED=1, and nothing is mounted or built otherwise. No evaluation
+// wiring exists yet (slice Q4-W), so register and replay answer QR4_EVALUATION_MODE_UNAVAILABLE. Fixture selections need QR4_FIXTURE_SELECTIONS_ENABLED=1 as well (off by default).
+const qr4SelectionEnabled=process.env.QR4_SELECTION_ENABLED==='1';
+const qr4FixtureSelectionsAllowed=qr4SelectionEnabled&&process.env.QR4_FIXTURE_SELECTIONS_ENABLED==='1';
 const qr2Slot=createQr2Slot();
 const qr2Compute=createQr2ComputePool();
 const pineCaptureEnabled=process.env.PINE_BRIDGE_CAPTURE_ENABLED==='1';
@@ -90,6 +95,7 @@ if(pineBridgeEnabled) {
 }
 const pineBridgeService=new PineBridgeService(store,{defaultRisk:config.defaultRisk,aiQuota:pineBridgeAiQuota});
 const qr3Deps=qr3ComparisonEnabled?createQr3ApiDeps({pineService:pineBridgeService}):undefined;
+const qr4ReadBotState=qr4SelectionEnabled?botPolicyReader({store,defaultRisk:config.defaultRisk}):undefined;
 const quantResearchEnabled=process.env.QUANT_RESEARCH_ENABLED==='1';
 if(quantResearchEnabled){
   if(!pineBridgeEnabled||process.env.PINE_BRIDGE_ENV!=='staging'||!config.paperTrading)throw new Error('Quant research requires explicitly configured Paper staging');
@@ -306,6 +312,7 @@ async function userRoutes(req, res, url) {
   if (await qr2OwnerPerformanceRoute(req, res, url, actor, {store, auth, json, enabled: qr2PerformanceEnabled, slot: qr2Slot, compute: qr2Compute})) return;
   if (await qr2PerformanceRoute(req, res, url, actor, {store, auth, json, enabled: qr2PerformanceEnabled, slot: qr2Slot, compute: qr2Compute})) return;
   if (await qr3Routes(req, res, url, actor, {store, auth, json, enabled: qr3ComparisonEnabled, deps: qr3Deps})) return;
+  if (await qr4Routes(req, res, url, actor, {store, auth, json, enabled: qr4SelectionEnabled, deps: undefined, readBotState: qr4ReadBotState, fixtureSelectionsAllowed: qr4FixtureSelectionsAllowed})) return;
   if (req.method === 'GET' && url.pathname === '/api/bots') {
     const plan = await store.activePlan(actor.id);
     const quota = getQuota(plan);
