@@ -4,6 +4,7 @@ import {LIBRARY_VERSIONS,LIBRARY_GROUPS,QUALIFIED_TOTAL,QUALIFIED_WINNER,isObjec
   compatibilityMismatches,contractHashVerified,resultSha256,stepsDigest,reportMatchesCheckpoints,holdoutWindow,windowsOverlap,
   marketKey,qualification,holdoutExposure,EXPOSURE_CODE} from '../quant-library/derive.js';
 import {readExposures,toComparisonEntries} from './exposure-register.js';
+import {CODES,DEVELOPMENT_NAME_PREFIXES,keyTokens} from '../selection/codes.js';
 
 /**
  * Quant Research Library (QR-1 view, minimum QR-3 comparison, QR-4 qualification presentation). Three GET routes, all
@@ -358,9 +359,22 @@ export async function gateSnapshot(db,owner,runId){
   return {version:quality.version,gates:quality.gates.map(item=>({gate:item.gate,state:item.state,code:item.code??null}))};
 }
 
-// bot_id is sent by the shared api() helper. The library is owner-scoped, so the value is ignored. Any other key, and any
-// repeated key (except run_id on the compare route), is refused before anything is read.
+/**
+ * QR-4 contract 3.3 D1 (RC-S12): a query key that asks to sort, order or rank the library by development score. The key is
+ * split into word tokens like a response field name (D2), so a joined or digit-suffixed form (sortby, rankby, top10, best3,
+ * leader) is caught without an exact-spelling list. The library keeps its own accepted keys (limit, before, bot_id, run_id),
+ * so the lifecycle allow-list is not imported: every other unknown key still gives INVALID_FIELDS (ruling SB203 item 6).
+ */
+const SORT_NAME_PREFIXES=Object.freeze([...DEVELOPMENT_NAME_PREFIXES,'sort']);
+function rankLikeKey(key){
+  const tokens=keyTokens(key),joined=tokens.join('');
+  return tokens.some(token=>SORT_NAME_PREFIXES.some(prefix=>token.startsWith(prefix)))||joined==='order'||joined.startsWith('orderby');
+}
+// bot_id is sent by the shared api() helper. The library is owner-scoped, so the value is ignored. A rank-like key is refused first
+// with QR4_DEVELOPMENT_SCORE_NOT_RANKABLE. Any other key, and any repeated key (except run_id on the compare route), is refused with
+// INVALID_FIELDS. Both happen before anything is read.
 function checkedQuery(url,allowed,repeatable=[]){
+  for(const key of url.searchParams.keys())if(rankLikeKey(key))throw fail(CODES.QR4_DEVELOPMENT_SCORE_NOT_RANKABLE);
   const seen=new Set();
   for(const key of url.searchParams.keys()){
     if(!allowed.includes(key)||(seen.has(key)&&!repeatable.includes(key)))throw fail('INVALID_FIELDS');
