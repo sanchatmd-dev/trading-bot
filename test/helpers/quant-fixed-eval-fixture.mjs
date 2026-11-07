@@ -15,6 +15,8 @@ import {expectedFoundationRequestV2} from '../../src/quant-research/research-con
 import {PACKAGE_FILES} from '../../src/quant-library/package-gates.js';
 import {freezeWindow} from '../../src/postgres/selection-store.js';
 import {fixedEvalEngineHash} from '../../src/postgres/quant-fixed-eval-engine.js';
+import {Money} from '../../src/money.js';
+import {buildFixedEvalContract,buildFixedEvalResult,fixedEvalBindingParameters,fixedEvalPendingMetadata} from '../../src/quant-research/fixed-eval-contract.js';
 
 /** LABELLED TEST FIXTURE. This deterministic SQL double exercises admission decisions and rollback composition;
  * it does not certify PostgreSQL guards, grants, serialization or process execution. Root owns that isolated evidence.
@@ -222,4 +224,88 @@ export async function fixedEvalPostgresFixture(connection){
   const service=new QuantFixedEvalService({pineService:new PineBridgeService(store),supportedSourceHash:f.c.source_hash,engineHash:async()=>f.context.engine});
   return {...f,db,store,service,close,connectionString:target.toString()};
  }catch(error){await close();throw error;}
+}
+
+/* ---- QR-4 slice Q4-A: a LABELLED SYNTHETIC fixed-evaluation run for one participant of one object (selection or comparison) ----
+ * The contract, binding, dataset rows and fixed-eval-result-v1 are built through the real builders (so the real validators accept them). The "evaluator"
+ * figures come from an independent Money ledger, never from the code under test. Every fill, price and number is a fixture, never a research result.
+ * Scenario: scored bar 2k closes at closes[0] and bar 2k+1 at closes[1]; trade k buys on bar 2k and sells on bar 2k+1 (k below trades), so the run is flat
+ * after the last sell. Base prices are the close plus or minus 0.1 (slippage 0.1 per unit), stress prices plus or minus 0.2; fees are fee_bps of the notional.
+ */
+const QR4_MINUTE=60000;
+const QR4_POLICY={killSwitch:false,maxSignalAgeSeconds:120,maxTradesPerDay:1000,maxDailyLossR:10000,pauseAfterLossStreak:10000,blockHighVolatility:false,maxVolatilityPercent:100,
+ blockDuringNews:false,allowedSymbols:['BTCUSDT'],sideMode:'BOTH',maxOpenPositions:3,onePositionPerSymbol:false,capPercentEquitySize:true,maxRiskPercent:100,maxOrderNotional:10000,
+ maxDailyNotional:100000000};
+const QR4_INPUTS={ema_fast:3,ema_slow:8,atr_len:14,st_factor:3.2,zone_atr_mult:1.15,setup_expiry:48,cooldown:0,confirm_lookback:5,sl_atr_buffer:0.6,min_risk_atr:0.5};
+const QR4_COST={version:'paper-close-v1',data_profile:'closed-ohlcv-atr14-v1',price_tick:'0.01',quantity_step:'0.001',fee_bps:'10',slippage_bps:'10',risk_percent:'1'};
+
+/** Independent ledger of the fixture: cash, inventory, mark-to-close NAV on the scored closes, drawdown from the initial NAV, in-market bars. */
+export function qr4Ledger(closes,fills,cash0){
+ let cash=new Money(cash0),held=new Money(0),peak=cash,drawdown=new Money(0),fees=new Money(0),slippage=new Money(0),inMarket=0,nav=cash;
+ closes.forEach((close,bar)=>{
+  for(const fill of fills.filter(item=>item.bar===bar)){
+   const notional=new Money(fill.quantity).mul(fill.price);
+   cash=fill.side==='BUY'?cash.minus(notional).minus(fill.fee):cash.plus(notional).minus(fill.fee);
+   held=fill.side==='BUY'?held.plus(fill.quantity):held.minus(fill.quantity);
+   fees=fees.plus(fill.fee);slippage=slippage.plus(fill.cost);
+  }
+  nav=cash.plus(held.mul(close));
+  if(held.gt(0))inMarket+=1;
+  if(nav.gt(peak))peak=nav;
+  const down=peak.minus(nav).div(peak).mul(100);
+  if(down.gt(drawdown))drawdown=down;
+ });
+ return {nav,fees,slippage,inMarket,held,drawdown,returnPercent:nav.div(cash0).minus(1).mul(100)};
+}
+
+/**
+ * window: {start_ms, end_ms, warmup_bars, evaluation_bars, total_bars} (a registration window or the period of a comparison with its warm-up).
+ * Returns {contract, binding, rows, result, closes, base, stress} where base and stress are the plain (cloneable, decimal string) ledger figures of the two steps.
+ * purpose QR3_COMPARISON gives step results with selection_id null (the fixed-evaluation contract rule), QR4_SELECTION the object id.
+ */
+export function qr4FixedRunWorld({purpose='QR4_SELECTION',objectId,parentRunId,window,engine,datasetSha=hash('qr4-fixture-files'),owner='owner-1',bot='bot-1',deployment='deployment-1',
+ cash='10000',trades=6,size='10',closes:pair=['100','110'],cost={},quantityStep='0.001',parentHash=hash('qr4-fixture-parent-contract')}={}){
+ const warmup=window.warmup_bars,bars=window.total_bars,first=window.start_ms-warmup*QR4_MINUTE+QR4_MINUTE,end=window.end_ms,S=window.start_ms;
+ if(bars!==warmup+window.evaluation_bars||2*trades>window.evaluation_bars)throw Error('The fixture window cannot hold the trades');
+ const model={...QR4_COST,quantity_step:quantityStep,...cost};
+ const contract=buildFixedEvalContract({purpose,owner_id:owner,bot_id:bot,deployment_id:deployment,lineage:{parent_run_id:parentRunId,parent_contract_hash:parentHash,object_id:objectId},
+  engine_hash:engine,parameters:{inputs:{...QR4_INPUTS},atr_multiplier:'2',rr:'1.5'},capital:{initial_cash:cash,initial_equity:cash,initial_inventory:'0',quote:'USDT'},
+  policy:{...QR4_POLICY},parent_policy:{...QR4_POLICY,paperTrading:true,requireReduceOnlySell:true},cost_model:model,
+  dataset:{start_time:first,end_time:end,warmup_bars:warmup,content_digest:hash('qr4-fixture-content')},parent_dataset_range:{start_time:first-5000*QR4_MINUTE,end_time:first-QR4_MINUTE}});
+ const metadata=fixedEvalPendingMetadata(contract);
+ const sidecar={sha256:hash('qr4-fixture-sidecar'),bar_count:bars,first_time:first,profile:'closed-ohlcv-atr14-v1',price_tick:'0.01',quantity_step:quantityStep};
+ const binding=fixedEvalBindingParameters(contract,{references:{raw:{dataset_id:hash('qr4-fixture-raw'),sha256:hash('qr4-fixture-raw'),metadata},sidecar},dataset_sha256:datasetSha});
+ const evaluated=bars-warmup;
+ const closes=Array.from({length:evaluated},(_,index)=>pair[index%2]);
+ const rows=Array.from({length:bars},(_,index)=>({time:first+index*QR4_MINUTE,open:'100',high:'111',low:'98',close:index<warmup?'100':closes[index-warmup],volume:'1',atr14:'1.5'}));
+ const fillsOf=factor=>{
+  const slip=new Money('0.1').mul(factor),bps=new Money(model.fee_bps).mul(factor),list=[];
+  for(let k=0;k<trades;k++){
+   const buy=new Money(pair[0]).plus(slip),sell=new Money(pair[1]).minus(slip);
+   for(const [bar,side,price] of [[2*k,'BUY',buy],[2*k+1,'SELL',sell]])
+    list.push({bar,side,quantity:size,price:price.toFixed(),fee:new Money(size).mul(price).mul(bps).div(10000).toFixed(),cost:new Money(size).mul(slip).toFixed()});
+  }
+  return list;
+ };
+ const step=(kind,fills)=>{
+  const factor=kind==='EVALUATION_STRESS'?2:1,led=qr4Ledger(closes,fills,cash),sells=fills.filter(fill=>fill.side==='SELL').length;
+  return {version:'fixed-eval-v1',evaluator_closure:'fixed-eval-closure-v1',kind,cost_stress:{fee_multiplier:String(factor),slippage_multiplier:String(factor)},
+   model:{price_tick:'0.01',quantity_step:quantityStep,fee_bps:new Money(model.fee_bps).mul(factor).toFixed(),slippage_bps:new Money(model.slippage_bps).mul(factor).toFixed(),
+    risk_percent:model.risk_percent,version:'paper-close-v1'},
+   bridge:{atr_multiplier:'2',rr:'1.5'},initial_equity:cash,split:{warmup,end:bars,evaluated_bars:evaluated},engine_hash:engine,dataset_sha256:binding.dataset_sha256,
+   parent_run_id:parentRunId,selection_id:purpose==='QR4_SELECTION'?objectId:null,metrics_precision:80,
+   metrics:{end_equity:led.nav.toFixed(),net_return_percent:led.returnPercent.toFixed(),max_drawdown_percent:led.drawdown.toFixed(),closed_trades:sells},
+   fills:fills.map((fill,index)=>({event_type:fill.side==='BUY'?'BUY':'EXIT',time:S+fill.bar*QR4_MINUTE+QR4_MINUTE,price:fill.price,quantity:fill.quantity,fee:fill.fee,sequence:index+1,
+    notional:new Money(fill.quantity).mul(fill.price).toFixed(),bar_time_ms:S+fill.bar*QR4_MINUTE,side:fill.side,slippage_cost_incl_tick:fill.cost})),
+   fees_total:led.fees.toFixed(),slippage_cost_incl_tick_total:led.slippage.toFixed(),
+   exposure:{bars_in_market:led.inMarket,bars:evaluated,fraction:new Money(led.inMarket).div(evaluated).toDecimalPlaces(18,Money.ROUND_HALF_EVEN).toFixed()},
+   episodes:{completed_count:trades,completed:Array.from({length:trades},(_,k)=>({open_bar_time_ms:S+2*k*QR4_MINUTE,allocations:1,close_bar_time_ms:S+(2*k+1)*QR4_MINUTE}))},closed_allocations:sells,
+   open_position:{quantity:led.held.toFixed(),allocations:0,mark_close:closes[closes.length-1],open_episode:null},
+   rejected:{total:3,intents_total:2,orphan_exits:{warmup_entry:1,refused_entry:0},
+    by_event_type_and_reason:[{event_type:'BUY',reason:'MAX_OPEN_POSITIONS',count:2},{event_type:'EXIT',reason:'TARGET_NOT_OPEN',count:1}]}};
+ };
+ const baseFills=fillsOf(1),stressFills=fillsOf(2);
+ const result=buildFixedEvalResult(contract,binding,{base:step('EVALUATION',baseFills),stress:step('EVALUATION_STRESS',stressFills)},{version:'fixed-eval-closure-v1',hash:engine});
+ const plain=led=>({nav:led.nav.toFixed(),fees:led.fees.toFixed(),slippage:led.slippage.toFixed(),drawdown:led.drawdown.toFixed(),returnPercent:led.returnPercent.toFixed(),inMarket:led.inMarket});
+ return {contract,binding,rows,result,closes,base:plain(qr4Ledger(closes,baseFills,cash)),stress:plain(qr4Ledger(closes,stressFills,cash))};
 }
