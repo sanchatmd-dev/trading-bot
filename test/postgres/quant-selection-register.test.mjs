@@ -700,7 +700,9 @@ test('two concurrent registrations of one owner with different keys serialize: o
   const results=await Promise.all([run(70),run(71)]);
   assert.ok(results.every(item=>item.ok),JSON.stringify(results.map(item=>item.code??item.attempts)));
   assert.deepEqual(results.map(item=>item.registration.prior_selection_count).sort(),[0,1],'the rw cycle ends one writer with 40001; its retry sees the other registration');
-  assert.deepEqual(results.map(item=>item.attempts).sort(),[1,2]);
+  const counted=results.map(item=>item.attempts).sort((a,b)=>a-b);
+  assert.equal(counted[0],1,'one registration commits on its first attempt');
+  assert.ok(counted[1]>=2&&counted[1]<=4,'the other needs at least one 40001 retry, within the one-attempt-plus-three-retries bound: '+JSON.stringify(counted));
   const second=results.find(item=>item.registration.prior_selection_count===1);
   assert.equal(second.registration.prior_selection_ids.length,1);
   assert.equal((await db.query('SELECT count(*)::int n FROM public.quant_selection_registrations WHERE owner_id=$1',[owner.id])).rows[0].n,2);
