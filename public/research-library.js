@@ -50,6 +50,8 @@
   const panel=make('details','panel qrl');panel.id='qrlPanel';
   const banner=label('Inspection only. Development scores are not recommendations. Applying settings or starting a Bot is a separate owner action.','p','qrl-banner');banner.setAttribute('role','note');
   const scopeNote=label('Runs from every Bot of this account. Inspect a run to see its Bot.','p','qrl-scope');
+  // OD-S20: the panel that shows development scores says so. Nothing in it is ranked.
+  const devPanel=label('Development scores, not a ranking.','p','qrl-note qrl-dev-panel');
   const winner=label('Qualified recommendations: none. No qualified winner.','p','qrl-winner');winner.setAttribute('role','status');
   const chips=make('div','qrl-chips');chips.setAttribute('role','group');
   const refresh=label('Refresh library','button','ghost qrl-refresh');refresh.type='button';
@@ -62,7 +64,7 @@
   const compareView=make('section','qrl-view qrl-compare-view');compareView.hidden=true;
   const detailView=make('section','qrl-view qrl-detail-view');detailView.hidden=true;
   // The views sit directly above the list, so Inspect and Compare show their answer at the top of the panel, not below every card.
-  panel.append(label('Research Library','summary','qrl-summary'),banner,scopeNote,winner,make('div','qrl-toolbar',chips,refresh),status,integrityNote,compareView,detailView,
+  panel.append(label('Research Library','summary','qrl-summary'),banner,scopeNote,devPanel,winner,make('div','qrl-toolbar',chips,refresh),status,integrityNote,compareView,detailView,
     listBox,more,make('div','qrl-compare-bar',compareButton,selectedNote));
   host.append(panel);
 

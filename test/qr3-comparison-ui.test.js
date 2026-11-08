@@ -94,7 +94,7 @@ const after=(p,first,second)=>Boolean(first.compareDocumentPosition(second)&p.w.
 
 test('index.html loads the script after the library with its cache token; the panel is created closed on the Quant page and requests nothing',()=>{
   const html=publicFile('index.html');
-  const order=['/i18n.js?v=','/app.js?v=','/research-library.js?v=qr3l1','/qr3-comparison.js?v=qr3c2','/journey.js?v=jd2'].map(part=>html.indexOf(part));
+  const order=['/i18n.js?v=','/app.js?v=','/research-library.js?v=qr3l1q4','/qr3-comparison.js?v=qr3c2','/journey.js?v=jd2'].map(part=>html.indexOf(part));
   assert.ok(order.every(index=>index>=0)&&order.every((index,at)=>at===0||index>order[at-1]),'the script loads after i18n.js and the library, before journey.js');
   const p=setup();
   try{

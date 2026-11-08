@@ -1,7 +1,7 @@
 import {canonical,hash} from '../pine-bridge/source.js';
 import {readJson} from './http.js';
-import {CODES,QR3_VERSIONS,QR4_VERSIONS,OBJECTIVE_IDS,WEIGHT_KEYS,DEVELOPMENT_NAME_PREFIXES,STATUSES,OUTCOMES,isObject,keyTokens,validateObjective,checkRouteAction,metricsVisible,
-  deriveOverlays} from '../selection/index.js';
+import {CODES,QR3_VERSIONS,QR4_VERSIONS,OBJECTIVE_IDS,WEIGHT_KEYS,DEVELOPMENT_NAME_PREFIXES,STATUSES,OUTCOMES,MIN_PARTICIPANTS,MAX_PARTICIPANTS,isObject,isSha,text,decString,norm,
+  marketIsRequired,keyTokens,validateObjective,checkRouteAction,metricsVisible,deriveOverlays,evaluateEligibility} from '../selection/index.js';
 import {registerSelection,cancelSelection,readSelection,REGISTRATION_TOO_SLOW,EVALUATIONS_UNAVAILABLE} from './selection-store.js';
 import {readSelectionInputs,readPackageState} from './selection-inputs.js';
 
@@ -14,6 +14,9 @@ import {readSelectionInputs,readPackageState} from './selection-inputs.js';
  *   POST /api/quant/selections/:id/cancel                      cancel: confirm token, SELECTION_REGISTERED or SELECTION_EVALUATING to SELECTION_CANCELLED.
  *   POST /api/quant/selections/:id/replay                      replay_outcome: recompute the pure ranking (13.2). Refuses until the evaluation wiring supplies deps.replay.
  *   GET  /api/quant/selections/:id/package/:export_id          open_package: the export id and its READY state only. No link (no package review view exists, SB203 item 5).
+ *   POST /api/quant/selections/preview                         universe and eligibility preview (contract 12.1, SB213 item 3): a READ ONLY view. The CSRF-checked POST only carries the
+ *                                                              optional declared scope, because no query key is accepted. It reads the universe of the session owner in creation order, runs the
+ *                                                              pure eligibility checks per member and returns the first failing code and the member scope. No metric, rank, write, audit row or run.
  * Nothing else is mounted. Any POST that names apply, import, start, email, alert, a Bot or a session answers 403 QR4_APPLY_REFUSED. When the flag is off the module
  * answers false before it reads anything, so every path falls through to the router's own 404.
  *
@@ -108,6 +111,36 @@ export function planRegister(body){
     objective:structuredClone(body.objective),filters:structuredClone(body.filters)}};
 }
 
+const PREVIEW_KEYS=Object.freeze(['fixture','scope']);
+const PREVIEW_SCOPE_KEYS=Object.freeze(['market','data_model','cost_model','capital','policy']);
+/**
+ * The pure part of the preview (no database). The body is {} or {scope, fixture}. Check order: forbidden words (apply, import, start, a Bot), rank-like keys, unknown keys, the
+ * fixture flag, then the declared scope. A declared scope has the four fields that eligibility compares (data_model, cost_model, capital, policy) and an optional market;
+ * capital is normalised exactly like the registration does, so the same declared scope gives the same E5 answer in the preview and in the registration. The UI sends the decimal
+ * strings in canonical form. Returns a refusal or {ok:true, plan:{fixture, scope|null}}.
+ */
+export function planPreview(body){
+  if(!isObject(body))return refusal(CODES.INVALID_FIELDS,'BODY');
+  const names=Object.keys(body);
+  if(names.some(applyLike))return refusal(CODES.QR4_APPLY_REFUSED,'ACTION_NOT_ALLOWED');
+  if(names.some(rankLike))return refusal(CODES.QR4_DEVELOPMENT_SCORE_NOT_RANKABLE,'BODY');
+  if(names.some(name=>!PREVIEW_KEYS.includes(name)))return refusal(CODES.INVALID_FIELDS,'BODY');
+  if(body.fixture!==undefined&&typeof body.fixture!=='boolean')return refusal(CODES.INVALID_FIELDS,'FIXTURE');
+  const fixture=body.fixture===true;
+  if(body.scope===undefined||body.scope===null)return {ok:true,plan:{fixture,scope:null}};
+  const input=body.scope;
+  if(!isObject(input)||Object.keys(input).some(name=>!PREVIEW_SCOPE_KEYS.includes(name)))return refusal(CODES.INVALID_FIELDS,'SCOPE_KEYS');
+  if(input.market!==undefined&&!marketIsRequired(input.market))return refusal(CODES.BI_MARKET_SCOPE_INVALID,'MARKET');
+  if(!isObject(input.data_model))return refusal(CODES.QR4_SCOPE_INCOMPATIBLE,'data_model');
+  if(!isObject(input.cost_model))return refusal(CODES.QR4_SCOPE_INCOMPATIBLE,'cost_model');
+  const capital=input.capital;
+  if(!isObject(capital)||decString(capital.equity)===null||decString(capital.cash)===null)return refusal(CODES.QR4_SCOPE_INCOMPATIBLE,'capital');
+  const policy=input.policy;
+  if(!isObject(policy)||!text(policy.policy_version)||!isSha(policy.policy_hash))return refusal(CODES.QR4_SCOPE_INCOMPATIBLE,'policy');
+  return {ok:true,plan:{fixture,scope:{data_model:structuredClone(input.data_model),cost_model:structuredClone(input.cost_model),
+    capital:{equity:norm(capital.equity),cash:norm(capital.cash)},policy:{policy_version:policy.policy_version,policy_hash:policy.policy_hash}}}};
+}
+
 /* ---- database phases ---- */
 
 const GATE=`SELECT to_regclass('public.quant_selection_registrations') IS NOT NULL AND to_regclass('public.quant_selection_universe') IS NOT NULL
@@ -119,6 +152,7 @@ const LIST=`SELECT r.selection_id,r.fixture,r.window_kind,r.start_ms,r.end_ms,r.
  e.status,e.code,e.outcome FROM public.quant_selection_registrations r
  JOIN LATERAL (SELECT x.status,x.code,x.outcome FROM public.quant_selection_status_events x WHERE x.selection_id=r.selection_id ORDER BY x.seq DESC LIMIT 1) e ON true
  WHERE r.owner_id=$1 ORDER BY r.frozen_at_ms,r.selection_id LIMIT $2`;
+const NOW='SELECT public.quant_selection_now_ms() AS now_ms';
 const num=value=>value===null||value===undefined?null:Number(value);
 
 class Stop extends Error{constructor(result){super(result.code);this.result=result;}}
@@ -321,6 +355,42 @@ async function runPackage(store,options,owner,id,exportId){
   return answer(refusal(CODES.QR4_PARTICIPANT_NOT_READY,reason));
 }
 
+/**
+ * The universe and eligibility preview (12.1): every terminal research run of the owner on the required market in creation order, each with its eligibility result. It is built on the
+ * inputs reader and the pure eligibility function the registration uses, in one REPEATABLE READ READ ONLY transaction, so what it shows is what a registration would judge. Without a
+ * declared scope the scope check (E5) is not run and is reported NOT_REACHED; each member carries its own scope so that the owner can declare one of them. The row has no metric, no
+ * rank and no order other than creation. Nothing is written and no audit row is made.
+ */
+async function runPreview(store,options,owner,plan){
+  const db=store.db;
+  const found=await readOnly(db,async()=>{
+    if((await db.query(GATE)).rows[0].selection!==true)stop(ROUTE_CODES.QR4_SCHEMA_ABSENT);
+    const now=num((await db.query(NOW)).rows[0].now_ms);
+    if(now===null)stop(ROUTE_CODES.QR4_UNAVAILABLE);
+    const inputs=await readSelectionInputs(db,{owner_id:owner,registered_at_ms:now,fixture:plan.fixture,policy_hash:plan.scope===null?null:plan.scope.policy.policy_hash},{readBotState:options.readBotState});
+    return {ok:true,inputs};
+  });
+  if(!found.ok)return answer(found);
+  const {universe,context}=found.inputs;
+  if(!Array.isArray(universe)||!Number.isSafeInteger(context?.universe_cap))return answer(refusal(ROUTE_CODES.QR4_UNAVAILABLE));
+  if(universe.length>context.universe_cap)return answer(refusal(CODES.QR4_UNIVERSE_TOO_LARGE,String(universe.length),{universe_cap:context.universe_cap}));
+  const members=universe.map(member=>{
+    const own=isObject(member.scope)?member.scope:{};
+    const memberScope={data_model:own.data_model??null,cost_model:own.cost_model??null,capital:own.capital??null,policy:own.policy??null};
+    const declared=plan.scope!==null;
+    const result=evaluateEligibility(member,{owner_id:owner,requester_owner_id:owner,scope:declared?plan.scope:own,fixture:plan.fixture});
+    return {run_id:result.run_id,export_id:result.export_id,created_at_ms:result.created_at_ms,created_at_utc:iso(result.created_at_ms),kind:result.kind,
+      run_status:safe(member.run_status),library_class:result.library_class,qualification_label:result.qualification_label,package_status:result.package_status,
+      eligible:result.eligible,status:result.status,code:result.code,detail:safe(result.detail),
+      checks:{...result.checks,...(declared?{}:{E5:'NOT_REACHED'})},failures:result.failures.map(item=>({check:item.check,code:item.code,detail:safe(item.detail)})),
+      mismatched_fields:declared?[...result.mismatched_fields]:[],scope:memberScope};
+  });
+  const count=status=>members.filter(item=>item.status===status).length;
+  return {status:200,body:{ok:true,order:'CREATION',fixture:plan.fixture,scope_declared:plan.scope!==null,declared_scope:plan.scope,universe_cap:context.universe_cap,
+    universe_count:members.length,participant_count:count('PARTICIPANT'),stale_count:count('QUALIFIED_STALE'),excluded_count:count('EXCLUDED'),
+    min_participants:MIN_PARTICIPANTS,max_participants:MAX_PARTICIPANTS,registration_wired:typeof options.deps?.engineHash==='function',members}};
+}
+
 /* ---- the route ---- */
 
 function parseTarget(path){
@@ -328,12 +398,12 @@ function parseTarget(path){
   if(rest==='')return {kind:'collection',id:null};
   const parts=rest.slice(1).split('/');
   if(parts[0]==='')return null;
-  if(parts.length===1)return {kind:'item',id:parts[0]};
+  if(parts.length===1)return parts[0]==='preview'?{kind:'preview'}:{kind:'item',id:parts[0]};
   if(parts.length===2)return parts[1]==='cancel'?{kind:'cancel',id:parts[0]}:parts[1]==='replay'?{kind:'replay',id:parts[0]}:{kind:'action',id:parts[0],name:parts[1]};
   if(parts.length===3&&parts[1]==='package'&&parts[2]!=='')return {kind:'package',id:parts[0],exportId:parts[2]};
   return null;
 }
-const METHODS=Object.freeze({collection:['GET','POST'],item:['GET'],cancel:['POST'],replay:['POST'],package:['GET'],action:['POST']});
+const METHODS=Object.freeze({collection:['GET','POST'],item:['GET'],preview:['POST'],cancel:['POST'],replay:['POST'],package:['GET'],action:['POST']});
 
 /**
  * options: {store, auth, json, enabled, deps, readBotState, fixtureSelectionsAllowed}. deps is the evaluation wiring of slice Q4-W ({engineHash, replay, evaluation_mode,
@@ -372,6 +442,13 @@ export async function qr4Routes(req,res,url,actor,options={}){
   if(target.kind==='item')return defer(()=>runDetail(store,options,owner,target.id));
   if(target.kind==='package')return defer(()=>runPackage(store,options,owner,target.id,target.exportId));
   const body=await readJson(req);
+  if(target.kind==='preview'){
+    const previewed=planPreview(body);
+    if(!previewed.ok)return send(answer(previewed));
+    // A fixture preview needs the same server flag as a fixture registration (RR-Q4-11); the request flag alone never reads fixture runs.
+    if(previewed.plan.fixture&&options.fixtureSelectionsAllowed!==true)return send(answer(refusal(CODES.QR4_FIXTURE_PARTICIPANT,'FIXTURE_SELECTION_NOT_ALLOWED')));
+    return defer(()=>runPreview(store,options,owner,previewed.plan));
+  }
   if(target.kind==='cancel'){
     if(isObject(body)&&Object.keys(body).some(applyLike))return send(answer(refusal(CODES.QR4_APPLY_REFUSED,'ACTION_NOT_ALLOWED')));
     if(!isObject(body)||Object.keys(body).some(name=>name!=='confirmed'))return send(answer(refusal(CODES.INVALID_FIELDS,'BODY')));

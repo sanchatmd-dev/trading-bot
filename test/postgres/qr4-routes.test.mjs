@@ -17,6 +17,7 @@ import {qr4Routes,QR4_PATH,QR4_CANCEL_EVENT,QR4_REPLAY_EVENT} from '../../src/po
 import {registerSelection,readSelection,freezeWindow,startEvaluation,writeOutcome,replaySelectionOutcome} from '../../src/postgres/selection-store.js';
 import {readSelectionInputs} from '../../src/postgres/selection-inputs.js';
 import {digest} from '../../src/selection/codes.js';
+import {developmentRowViolations} from '../../src/selection/index.js';
 import {hex} from '../helpers/quant-library-fixture.mjs';
 
 // QR-4 slice Q4-B owner API on a real PostgreSQL cluster: the real store, the real selection tables and exposure register, the real inputs reader and the REAL dispatcher (SERIALIZABLE
@@ -491,4 +492,90 @@ test('real server, flag on: session, canonical CSRF, owner scope, the real Bot p
     assert.equal((await app.request(QR4_PATH+'/'+S1.selection_id,'POST',{},session)).status,405);
     assert.deepEqual(await never(),state,'Bot policy, session state, the outbox, the ledger and the research and package rows are unchanged');
   }finally{await app.close();}
+});
+
+/* ---- the universe and eligibility preview (Q4-C, SB213 item 3) ---- */
+
+const PREVIEW=QR4_PATH+'/preview';
+const creationOrder=set=>[...set].sort((a,b)=>(a.run.created_at-b.run.created_at)||(a.runId<b.runId?-1:a.runId>b.runId?1:0)).map(item=>item.runId);
+const auditCount=async owner=>(await world.db.query('SELECT count(*)::int n FROM public.audit WHERE user_id=$1',[owner])).rows[0].n;
+
+test('preview (fixture flag on): the universe of the owner in creation order, every member with its eligibility checks, its scope and no metric; READ ONLY; nothing is written',async()=>{
+  resetProbe();
+  const before_=await everything(),audits=await auditCount(A.id);
+  const answer=await api(A.id,'POST',PREVIEW,{fixture:true});
+  assert.equal(answer.status,200,JSON.stringify(answer.body).slice(0,400));
+  const body=answer.body;
+  assert.deepEqual([body.order,body.fixture,body.scope_declared,body.declared_scope,body.universe_count,body.participant_count,body.excluded_count,body.registration_wired],['CREATION',true,false,null,3,3,0,false]);
+  assert.deepEqual(body.members.map(item=>item.run_id),creationOrder(SET_A),'creation order, the metrics never matter');
+  for(const member of body.members){
+    assert.deepEqual([member.status,member.eligible,member.code,member.failures],['PARTICIPANT',true,null,[]]);
+    assert.deepEqual(member.checks,{E1:'PASS',E2:'PASS',E3:'PASS',E4:'PASS',E5:'NOT_REACHED',E6:'PASS'},'no scope was declared, so the scope check is not run');
+    assert.deepEqual(member.scope,{data_model:SCOPE.data_model,cost_model:SCOPE.cost_model,capital:SCOPE.capital,policy:SCOPE.policy},'the member scope is the one the fixed evaluation compares');
+    assert.ok(SET_A.some(item=>item.export.exportId===member.export_id&&item.runId===member.run_id));
+    assert.deepEqual(Object.keys(member).filter(key=>/net_return|drawdown|score|rank|best|top|winner|leader|metric/i.test(key)),[]);
+  }
+  assert.deepEqual(developmentRowViolations(body),[]);
+  const statements=probe.log.filter(item=>item.readOnly!==null);
+  assert.ok(statements.length>=5&&statements.every(item=>item.readOnly===true),'every statement ran under SET TRANSACTION READ ONLY: '+JSON.stringify(statements.filter(item=>!item.readOnly).slice(0,3)));
+  assert.equal(probe.log.some(item=>/^(INSERT|UPDATE|DELETE|LOCK)/i.test(item.text)),false);
+  assert.deepEqual(await everything(),before_,'no table changed');
+  assert.equal(await auditCount(A.id),audits,'a preview writes no audit row');
+});
+
+test('preview: a declared scope runs the scope check E5 with the registration comparison; a different fee gives QR4_SCOPE_INCOMPATIBLE with the field named; capital is compared normalised',async()=>{
+  const same=await api(A.id,'POST',PREVIEW,{fixture:true,scope:{...SCOPE,capital:{equity:'1000.0',cash:'1000.00'}}});
+  assert.equal(same.status,200,JSON.stringify(same.body).slice(0,300));
+  assert.deepEqual([same.body.scope_declared,same.body.participant_count,same.body.declared_scope.capital],[true,3,{equity:'1000',cash:'1000'}]);
+  assert.ok(same.body.members.every(item=>item.checks.E5==='PASS'&&item.mismatched_fields.length===0));
+  const other=await api(A.id,'POST',PREVIEW,{fixture:true,scope:{...SCOPE,cost_model:{...SCOPE.cost_model,fee_bps:'11'}}});
+  assert.equal(other.status,200);
+  assert.deepEqual([other.body.participant_count,other.body.excluded_count],[0,3]);
+  for(const member of other.body.members){
+    assert.deepEqual([member.status,member.code,member.detail,member.mismatched_fields,member.checks.E5],['EXCLUDED','QR4_SCOPE_INCOMPATIBLE','cost_model',['cost_model'],'FAIL']);
+    assert.deepEqual(member.failures,[{check:'E5',code:'QR4_SCOPE_INCOMPATIBLE',detail:'cost_model'}]);
+  }
+  // the risk percent is part of the cost model: an owner that leaves it out does not match the stored form
+  const noRisk=await api(A.id,'POST',PREVIEW,{fixture:true,scope:{...SCOPE,cost_model:{version:'paper-close-v1',fee_bps:'10',slippage_bps:'1'}}});
+  assert.deepEqual(noRisk.body.members.map(item=>item.mismatched_fields),[['cost_model'],['cost_model'],['cost_model']]);
+  // the same declared scope gives the registration answer: the registration through the store accepts exactly this scope
+  const unequal=await api(A.id,'POST',PREVIEW,{fixture:true,scope:{...SCOPE,policy:{policy_version:'risk-v1',policy_hash:'b'.repeat(64)}}});
+  assert.ok(unequal.body.members.every(item=>item.mismatched_fields.join()==='policy'));
+});
+
+test('preview: a customer preview leaves out the labelled fixture runs; another owner sees only its own members; without the server flag a fixture preview is refused',async()=>{
+  const customer=await api(A.id,'POST',PREVIEW,{});
+  assert.deepEqual([customer.status,customer.body.universe_count,customer.body.members],[200,0,[]],'labelled synthetic runs are not in a customer universe');
+  const other=await api(B.id,'POST',PREVIEW,{fixture:true});
+  assert.equal(other.status,200);
+  assert.equal(other.body.universe_count,2);
+  assert.ok(other.body.members.every(item=>!SET_A.some(entry=>entry.runId===item.run_id)),'no member of another owner');
+  fixtureAllowed=false;
+  try{
+    resetProbe();
+    const refused=await api(A.id,'POST',PREVIEW,{fixture:true});
+    assert.deepEqual([refused.status,refused.body.code,refused.body.detail],[400,'QR4_FIXTURE_PARTICIPANT','FIXTURE_SELECTION_NOT_ALLOWED']);
+    assert.equal(probe.log.length,0,'nothing was read');
+  }finally{fixtureAllowed=true;}
+});
+
+test('preview of a customer run whose package is not READY and which is not qualified: excluded with the first failing code, no metric; a Bot id in the body is refused before any read',async()=>{
+  const owner=await newOwner(world,'q4-pv-customer');
+  const real=await seedRunWithPackage(world,owner,{tag:'pv-real',package:{fixture:false}});
+  const answer=await api(owner.id,'POST',PREVIEW,{});
+  assert.equal(answer.status,200,JSON.stringify(answer.body).slice(0,300));
+  assert.equal(answer.body.universe_count,1);
+  const member=answer.body.members[0];
+  assert.deepEqual([member.run_id,member.eligible,member.status],[real.runId,false,'EXCLUDED']);
+  assert.ok(typeof member.code==='string'&&member.code.startsWith('QR4_'),'the first failing code is named: '+member.code);
+  assert.equal(member.failures[0].code,member.code,'the first failure is the first failing code');
+  assert.equal(answer.body.participant_count,0);
+  resetProbe();
+  const bot=await api(owner.id,'POST',PREVIEW,{bot_id:real.botId});
+  assert.deepEqual([bot.status,bot.body.code],[403,'QR4_APPLY_REFUSED']);
+  const sorted=await api(owner.id,'POST',PREVIEW,{sort:'net_return'});
+  assert.deepEqual([sorted.status,sorted.body.code],[400,'QR4_DEVELOPMENT_SCORE_NOT_RANKABLE']);
+  const get=await api(owner.id,'GET',PREVIEW);
+  assert.equal(get.status,405);
+  assert.equal(probe.log.length,0);
 });

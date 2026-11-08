@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {Readable} from 'node:stream';
-import {qr4Routes,planRegister,productionDependencies,registrationRequestOf,registrationContextOf,botPolicyReader,qr4AuditFailureCount,QR4_PATH,QR4_CANCEL_EVENT,LIST_LIMIT,ADMISSION_DEADLINE_ALLOWANCE_MS} from '../src/postgres/qr4-routes.js';
+import {qr4Routes,planRegister,planPreview,productionDependencies,registrationRequestOf,registrationContextOf,botPolicyReader,qr4AuditFailureCount,QR4_PATH,QR4_CANCEL_EVENT,LIST_LIMIT,ADMISSION_DEADLINE_ALLOWANCE_MS} from '../src/postgres/qr4-routes.js';
 import {UNIVERSE_CAP,POLICY_DRAWDOWN_FIELDS,policySnapshotOf,scopeOfContract,dataWindowsOf,labelOfGates} from '../src/postgres/selection-inputs.js';
-import {ROUTE_ACTIONS,CODE_LIST,CODE_PATTERN,OBJECTIVE_REGISTRY,buildRegistration,rankSelection,EXPOSURE_SENTENCE,NO_SIGNIFICANCE_SENTENCE,NO_PROFIT_SENTENCE} from '../src/selection/index.js';
+import {ROUTE_ACTIONS,CODE_LIST,CODE_PATTERN,OBJECTIVE_REGISTRY,buildRegistration,rankSelection,developmentRowViolations,EXPOSURE_SENTENCE,NO_SIGNIFICANCE_SENTENCE,NO_PROFIT_SENTENCE} from '../src/selection/index.js';
 import {registrationBodyText} from '../src/postgres/selection-store.js';
 import {QUANT_RUNTIME_ENGINE_FILES} from '../src/quant-research/runtime-engine-files.js';
 import {canonical,hash} from '../src/pine-bridge/source.js';
@@ -599,4 +599,125 @@ test('cancel of a stored selection: the status guard decides; a terminal selecti
   const answer=await h.call('POST',QR4_PATH+'/'+SELECTION_ID+'/cancel',{body:{confirmed:true}});
   assert.deepEqual([answer.status,answer.body.code],[409,'QR4_TRANSITION_INVALID']);
   assert.deepEqual(h.audits,[]);
+});
+
+/* ---- the universe and eligibility preview (Q4-C, SB213 item 3) ---- */
+
+const PREVIEW=QR4_PATH+'/preview';
+const PREVIEW_SCOPE=Object.freeze({market:{broker:'binance-global',symbol:'BTCUSDT',timeframe:'1'},data_model:{data_profile:'closed-ohlcv-atr14-v1',price_tick:'0.01',quantity_step:'0.001'},
+  cost_model:{version:'paper-close-v1',fee_bps:'10',slippage_bps:'1',risk_percent:'1'},capital:{equity:'1000',cash:'1000'},policy:{policy_version:'risk-v1',policy_hash:'a'.repeat(64)}});
+/** A scripted database for the statements of the inputs reader when the universe is empty (or above the cap). */
+function universeOf(runIds=[],over={}){
+  const script=scripted(over);
+  script.state.extra=text=>{
+    if(text.startsWith('SELECT public.quant_selection_now_ms()'))return {rows:[{now_ms:'1900000000000'}]};
+    if(text.startsWith('SELECT run_id FROM public.quant_jobs'))return {rows:runIds.map(run_id=>({run_id}))};
+    if(text.startsWith('SELECT j.run_id,j.bot_id'))return {rows:[]};
+    if(text.startsWith("SELECT to_regclass('public.bi_exports')"))return {rows:[{packages:true,boundaries:true}]};
+    return null;
+  };
+  return script;
+}
+
+test('preview: flag off it is unhandled; with the flag on only POST is a method of it (GET, PUT, DELETE answer 405) and a refused shape reads nothing',async()=>{
+  const off=harness({enabled:false});
+  for(const method of ['GET','POST','PUT','DELETE']){
+    const answer=await off.call(method,PREVIEW,{body:{}});
+    assert.deepEqual([answer.handled,answer.status,answer.deferred],[false,null,false],method);
+  }
+  assert.equal(off.script.log.length,0);assert.deepEqual(off.authCalls,[]);
+  const h=harness();
+  for(const method of ['GET','PUT','DELETE','PATCH']){
+    const answer=await h.call(method,PREVIEW,{body:{}});
+    assert.deepEqual([answer.status,answer.body.code],[405,'METHOD_NOT_ALLOWED'],method);
+  }
+  assert.equal((await h.call('POST',PREVIEW+'/x',{body:{}})).status,403,'a deeper path is an action name, refused like any other');
+  assert.equal(h.script.log.length,0);
+  assert.deepEqual(ROUTE_ACTIONS,['register','cancel','replay_outcome','open_package','list','detail'],'preview is a view, not a seventh action');
+});
+
+test('preview: the body is refused in phase one with nothing read: forbidden words (a Bot, apply, start), rank-like keys, unknown keys, a bad fixture flag, a bad scope',async()=>{
+  const h=harness({fixtureSelectionsAllowed:true});
+  const refused=async(body,status,code,detail=null)=>{
+    const answer=await h.call('POST',PREVIEW,{body});
+    assert.deepEqual([answer.status,answer.body.code,answer.body.detail,answer.deferred,answer.phase1Statements],[status,code,detail,false,0],JSON.stringify(body).slice(0,100));
+  };
+  for(const key of ['bot_id','apply','import','start','email','alert','session','optimize'])await refused({[key]:'x'},403,'QR4_APPLY_REFUSED','ACTION_NOT_ALLOWED');
+  for(const key of ['sort','order_by','rank','top','best','winner','leader','sortby','top10'])await refused({[key]:'net_return'},400,'QR4_DEVELOPMENT_SCORE_NOT_RANKABLE','BODY');
+  for(const key of ['owner_id','limit','objective','window','filters','confirmed','universe','selection_id'])await refused({[key]:1},400,'INVALID_FIELDS','BODY');
+  await refused({fixture:'yes'},400,'INVALID_FIELDS','FIXTURE');
+  await refused({scope:'x'},400,'INVALID_FIELDS','SCOPE_KEYS');
+  await refused({scope:{...PREVIEW_SCOPE,engine:'a'.repeat(64)}},400,'INVALID_FIELDS','SCOPE_KEYS');
+  await refused({scope:{...PREVIEW_SCOPE,bot_id:'b'}},400,'INVALID_FIELDS','SCOPE_KEYS');
+  await refused({scope:{...PREVIEW_SCOPE,market:{broker:'x',symbol:'BTCUSDT',timeframe:'1'}}},400,'BI_MARKET_SCOPE_INVALID','MARKET');
+  await refused({scope:{...PREVIEW_SCOPE,data_model:undefined}},400,'QR4_SCOPE_INCOMPATIBLE','data_model');
+  await refused({scope:{...PREVIEW_SCOPE,cost_model:[]}},400,'QR4_SCOPE_INCOMPATIBLE','cost_model');
+  await refused({scope:{...PREVIEW_SCOPE,capital:{equity:'x',cash:'1'}}},400,'QR4_SCOPE_INCOMPATIBLE','capital');
+  await refused({scope:{...PREVIEW_SCOPE,capital:{equity:'1',cash:1000}}},400,'QR4_SCOPE_INCOMPATIBLE','capital');
+  await refused({scope:{...PREVIEW_SCOPE,policy:{policy_version:'risk-v1',policy_hash:'zz'}}},400,'QR4_SCOPE_INCOMPATIBLE','policy');
+  await refused({scope:{...PREVIEW_SCOPE,policy:{policy_hash:'a'.repeat(64)}}},400,'QR4_SCOPE_INCOMPATIBLE','policy');
+  const query=await h.call('POST',PREVIEW,{body:{},query:'?bot_id=b'});
+  assert.deepEqual([query.status,query.body.code,query.body.detail,query.phase1Statements],[400,'INVALID_FIELDS','QUERY',0]);
+  const ranked=await h.call('POST',PREVIEW,{body:{},query:'?sort=net_return'});
+  assert.deepEqual([ranked.status,ranked.body.code],[400,'QR4_DEVELOPMENT_SCORE_NOT_RANKABLE']);
+  await assert.rejects(h.call('POST',PREVIEW,{body:{},csrf:false}),/CSRF/);
+  const foreign=await harness({authorize:false}).call('POST',PREVIEW,{body:{}});
+  assert.deepEqual([foreign.status,foreign.body.code,foreign.deferred],[404,'NOT_FOUND',false]);
+  assert.equal(h.script.log.length,0);assert.deepEqual(h.audits,[]);
+});
+
+test('planPreview: the declared scope is normalised like the registration (capital), the fixture flag defaults to false and nothing else is carried',()=>{
+  assert.deepEqual(planPreview({}),{ok:true,plan:{fixture:false,scope:null}});
+  assert.deepEqual(planPreview({scope:null,fixture:true}),{ok:true,plan:{fixture:true,scope:null}});
+  const plan=planPreview({scope:{...PREVIEW_SCOPE,capital:{equity:'1000.00',cash:'0500.50'}}});
+  assert.equal(plan.ok,true);
+  assert.deepEqual(plan.plan.scope.capital,{equity:'1000',cash:'500.5'});
+  assert.deepEqual(Object.keys(plan.plan.scope).sort(),['capital','cost_model','data_model','policy'],'the market is checked and not carried');
+  assert.deepEqual(plan.plan.scope.policy,PREVIEW_SCOPE.policy);
+  assert.equal(planPreview([]).detail,'BODY');
+  assert.equal(planPreview(null).detail,'BODY');
+});
+
+test('preview: a fixture preview needs the server flag before anything is read; without it the answer is 400 QR4_FIXTURE_PARTICIPANT',async()=>{
+  const off=harness({script:universeOf()});
+  const refused=await off.call('POST',PREVIEW,{body:{fixture:true}});
+  assert.deepEqual([refused.status,refused.body.code,refused.body.detail,refused.deferred],[400,'QR4_FIXTURE_PARTICIPANT','FIXTURE_SELECTION_NOT_ALLOWED',false]);
+  assert.equal(off.script.log.length,0);
+  const on=harness({script:universeOf(),fixtureSelectionsAllowed:true});
+  const done=await on.call('POST',PREVIEW,{body:{fixture:true}});
+  assert.deepEqual([done.status,done.body.fixture],[200,true]);
+});
+
+test('preview of an empty universe: counts, the creation order marker, no scope check, READ ONLY statements only, no audit row and no registration wiring claimed',async()=>{
+  const script=universeOf();
+  const h=harness({script});
+  const done=await h.call('POST',PREVIEW,{body:{}});
+  assert.equal(done.status,200,JSON.stringify(done.body));
+  assert.deepEqual(done.body,{ok:true,order:'CREATION',fixture:false,scope_declared:false,declared_scope:null,universe_cap:UNIVERSE_CAP,universe_count:0,participant_count:0,stale_count:0,excluded_count:0,
+    min_participants:2,max_participants:4,registration_wired:false,members:[]});
+  assert.equal(script.log[0].sql,'SET TRANSACTION READ ONLY');
+  assert.ok(script.log.every(item=>!/^\s*(INSERT|UPDATE|DELETE|LOCK|CREATE|ALTER)/i.test(item.sql)),'no write statement');
+  assert.deepEqual(h.audits,[],'a preview writes no audit row');
+  const declared=await harness({script:universeOf(),deps:{engineHash:async()=>'b'.repeat(64)}}).call('POST',PREVIEW,{body:{scope:PREVIEW_SCOPE}});
+  assert.deepEqual([declared.body.scope_declared,declared.body.registration_wired,declared.body.declared_scope.capital],[true,true,{equity:'1000',cash:'1000'}]);
+  assert.equal('market' in declared.body.declared_scope,false);
+  assert.deepEqual(developmentRowViolations(done.body),[],'no field name that reads as a rank, best, top, winner or leader');
+});
+
+test('preview: the owner id of the session is the only owner passed to the reader; a universe above the cap is QR4_UNIVERSE_TOO_LARGE and nothing is listed',async()=>{
+  const script=universeOf();
+  const h=harness({script});
+  await h.call('POST',PREVIEW,{body:{}});
+  const ids=script.log.find(item=>item.sql.startsWith('SELECT run_id FROM public.quant_jobs'));
+  assert.equal(ids.params[0],OWNER);
+  assert.equal(ids.params[3],false,'a customer preview leaves out labelled synthetic runs');
+  const over=universeOf(Array.from({length:UNIVERSE_CAP+1},(_,index)=>'run-'+index));
+  const refused=await harness({script:over}).call('POST',PREVIEW,{body:{}});
+  assert.deepEqual([refused.status,refused.body.code,refused.body.detail,refused.body.universe_cap],[409,'QR4_UNIVERSE_TOO_LARGE',String(UNIVERSE_CAP+1),UNIVERSE_CAP]);
+  assert.equal('members' in refused.body,false);
+});
+
+test('preview: with the schema absent the answer is QR4_SCHEMA_ABSENT (503)',async()=>{
+  const answer=await harness({script:scripted({schema:false})}).call('POST',PREVIEW,{body:{}});
+  assert.deepEqual([answer.status,answer.body.code],[503,'QR4_SCHEMA_ABSENT']);
 });
