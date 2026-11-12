@@ -1,0 +1,511 @@
+{
+  "schema": "pm1-ci-read-v1",
+  "date": "2026-11-12",
+  "readAt": "2026-11-12T20:01:05Z",
+  "readBy": "Claude root",
+  "method": "GitHub REST check-runs per commit (unauthenticated, read only)",
+  "repo": "sanchatmd-dev/trading-bot",
+  "scope": "Every product commit in the PM-1 S6 window 5be0968..e278721 (the product tree at HEAD equals e278721; later commits are docs only).",
+  "commits": [
+    {
+      "commit": "66550ecafce7170f19ce8a6b1f7132ff7543b0e7",
+      "short": "66550ec",
+      "subject": "fix(ui): show setup-guide activation per Bot from its readiness report",
+      "checkRuns": 9,
+      "success": 9,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "commit": "5a361438b913346e6f688832193eaa2cd0ab3c03",
+      "short": "5a36143",
+      "subject": "feat(qr3): freeze independence facts and library gates at comparison create",
+      "checkRuns": 9,
+      "success": 7,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "commit": "3a4cb8788ff32421569f62177fdd40adadf0abce",
+      "short": "3a4cb87",
+      "subject": "test: replay the exact MFA enrollment code in the phase 1 replay check",
+      "checkRuns": 9,
+      "success": 9,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "commit": "816c65659c040d416d0d6f932ef5e95dd49f3fe8",
+      "short": "816c656",
+      "subject": "feat(qr3): read the frozen independence facts fail-closed in the comparison wiring",
+      "checkRuns": 9,
+      "success": 9,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "commit": "ab1c1f194cd20c3953a9b9628adc6322895058f1",
+      "short": "ab1c1f1",
+      "subject": "feat(postgres): add the targeted runtime grant for the QR-3 comparison tables",
+      "checkRuns": 9,
+      "success": 9,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "commit": "f3f392d0412f7d37df9be8d7e1a3a90edb435a19",
+      "short": "f3f392d",
+      "subject": "feat(qr4): add the selection evaluation adapter and finalizer (unwired)",
+      "checkRuns": 9,
+      "success": 9,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "commit": "d682b3fc69bae67790ae74469a6e6c6d3fd64fa7",
+      "short": "d682b3f",
+      "subject": "feat(qr4): add the selection inputs reader and owner API behind a flag",
+      "checkRuns": 9,
+      "success": 8,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "failure"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "commit": "a488d500e14a1d3ceb4ae63bd9a50605dd4a7c87",
+      "short": "a488d50",
+      "subject": "feat(quant-library): refuse rank-like query keys on the development view",
+      "checkRuns": 9,
+      "success": 9,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "commit": "33a3b0b1238dc1890095013eca13e31b21e5f0eb",
+      "short": "33a3b0b",
+      "subject": "feat(postgres): link QR-4 evaluation starts to their fixed-evaluation jobs",
+      "checkRuns": 9,
+      "success": 9,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "commit": "17e2bb986f5f0f424c6963c5bec751de0a645d18",
+      "short": "17e2bb9",
+      "subject": "feat(ui): add the QR-4 qualified selection page in English and Thai",
+      "checkRuns": 9,
+      "success": 9,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "commit": "e2787218216e7eb2420ef8423ae8a64a2e8e9746",
+      "short": "e278721",
+      "subject": "test(postgres): accept any bounded retry count in the concurrent registration test",
+      "checkRuns": 9,
+      "success": 9,
+      "runs": [
+        {
+          "name": "container",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        },
+        {
+          "name": "postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "quant (windows-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "scope",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (ubuntu-latest)",
+          "conclusion": "success"
+        },
+        {
+          "name": "test (windows-latest)",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "5a36143: one failure and one cancelled run; the failing test is the phase 1 TOTP replay check, fixed test-only by 3a4cb87 (green).",
+    "d682b3f: one PostgreSQL timing flake, fixed test-only by e278721 (green).",
+    "The staging API and trading worker run ab1c1f1 (docs/ROADMAP.md REPIN-3 A2 paragraph at 4db161b)."
+  ]
+}
