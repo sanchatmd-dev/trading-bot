@@ -1,5 +1,18 @@
 # Time Management — Project execution and data collection
 
+Local work log, 2026-11-13 13:50Z to 18:30Z (UTC): actual work only; local only, no host run, no GO used or open, nothing deployed, and Spot/Paper only. Times:
+- second check, recompute and seal plan ruling to about 14:20Z (SB413);
+- host-value check, skipped-dynamic map and packet r6b check to 14:39Z (SB414);
+- packet revise, recheck and Root correction to 14:50Z (SB415);
+- packet install 14:53Z (SB416);
+- three fill rounds to 15:08Z (SB417);
+- full mutant sets on a quiet machine: SM 15:08Z to 17:25Z, SMR 17:25Z to 17:44Z, R0 17:44Z to 18:06Z (SB418, SB419);
+- seal snapshots and records 18:09Z;
+- independent seal check 18:10Z to 18:21Z;
+- Root sums and real-binding dry check 18:25Z to 18:27Z (SB420).
+
+The SM full mutant set took about 2 h 16 min of machine time, the largest share of the session. The staging session stayed valid, and the keep-alive tab was replaced at 15:13Z and 16:13Z. No speed claim is made from agent count.
+
 Local work log, 2026-11-13 06:15Z to 13:50Z (UTC): actual work only; local only, no host run, no GO used or open, nothing deployed, and Spot/Paper only. Times: pass lane design, review and revise 06:18Z to about 07:05Z (SB400, SB401); recheck about 07:06Z to 07:20Z (SB402); revise to r2 and recheck about 07:24Z to 07:44Z (SB403); build 07:44Z to 08:29Z, then verify to about 08:45Z (SB404); fix rounds 2 to 5 about 08:47Z to 09:15Z, 09:19Z to 09:44Z, 10:04Z to 10:26Z and 12:00Z to 12:23Z, each with its verify panel (SB406 to SB411); W4 pass p130951 09:45Z to 10:01Z (stopped at S3, SB408); pass p131032 10:27Z to 11:57Z (all holds passed, finish failed, SB410); pass p131226 12:24Z to 13:48Z (complete, SB412). Each full pass took about 84 minutes of machine time including the RAM waits; the SM and SMR holds took about 12 minutes each. The staging session stayed valid; the keep-alive tab was replaced once (10:14Z) and the port loop was restarted at 11:03Z. No speed claim is made from agent count.
 
 Local work log, 2026-11-13 03:45Z to 06:15Z (UTC): actual work only; local only, no host run, no GO used or open, nothing deployed, and Spot/Paper only. Times: SMR lane round 5 03:40Z to about 04:05Z (SB393); Root rerun of the lane mutants and holds H02, H04, H05 and H08 04:05Z to 04:39Z (SB394); lane round 6 with a read-only debugger about 04:40Z to 05:11Z (SB395); H05 rerun 05:11Z to 05:23Z (SB396); a read-only debug run about 05:24Z to 05:30Z (SB397); lane round 7 05:30Z to 05:55Z (SB398); the final H05 rerun 05:55Z to 06:08Z (SB399). Each H05 rerun with its lane mutant run took about 12 to 13 minutes. The staging session and the port keep-alive stayed valid. No speed claim is made from agent count.
