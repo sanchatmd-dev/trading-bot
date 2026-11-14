@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+Local work log, 2026-11-14 10:55Z to 14:15Z (UTC): SM/SMR prep design r0 and review (SB435); round F (SB436); PRM design r1 to r3 with reviews and rechecks (SB437 to SB439, about 11:27Z to 12:39Z); PRM build rounds B1 to B3 (SB440 to SB442, about 12:40Z to 14:00Z); packet draft, review and r1, plus the prep-sm S0b and age fixes (SB443, SB444). No host run; no GO.
+
 Local work log, 2026-11-14 09:15Z to 09:40Z (UTC): pin fill and tester 09:14Z to 09:16Z; Root's full pre-read mutant run 09:16:17Z to 09:16:45Z (37 of 37 killed); seal at 09:17:27Z (SB432); independent seal check 09:18Z to 09:26Z (SB433); prep post-seal fix and tester to 09:35Z (SB434). No host run; no GO.
 
 Local work log, 2026-11-14 06:30Z to 09:15Z (UTC): actual work only; local only, no host run, no GO. Times:
