@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+Work log, 2026-11-14 16:20Z to 21:45Z (UTC): prep mutant run 1, 16:19Z to 18:30Z (invalid); run 2, 18:33Z to 21:06Z (about 2.5 h, slowed by BelowNormal priority so that Chrome stayed responsive); test round r3, 21:08Z to 21:29Z; targeted rerun, 21:29Z to 21:40Z; PRM inputs, check and rehearsal, 21:41Z to 21:44Z.
+
 Work log, 2026-11-14 15:55Z to 16:20Z (UTC): admission-scan fix and PR rehearsal 15:54Z to 16:01Z (SB454); GO-SETC-PR a01 typed 16:05:04Z, run 16:05:10Z to 16:05:12Z; R0 check and rehearsal 16:07Z; GO-SETC-R0 a01 typed 16:16:20Z, run 16:16:30Z to 16:17:09Z (40 s against the packet estimate of 30 to 60 minutes; the staging database is 124 MiB). Owner wall time for the two GOs: about 15 minutes.
 
 Work log, 2026-11-14 14:30Z to 15:55Z (UTC): GO-AR3 a07 used 14:34:37Z (about 3 s); the RW fill refusal and the feasibility audit 14:36Z to 14:52Z (one Opus auditor, about 12 min); owner decision D1 14:56Z; the H3-deferral rounds 14:58Z to 15:50Z (three workflows: prep r2 with two fix rounds, the amendment in three review rounds, the flag-9 audit and the F3a proof); Root real check PR 15:48Z. Root started the prep r2 full mutant run and stopped it after its first mutant (about 2 h estimated) to keep the machine quiet for the GOs; it is deferred.
