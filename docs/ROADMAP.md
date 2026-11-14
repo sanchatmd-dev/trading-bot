@@ -1,5 +1,11 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+Staging readback, 2026-11-14 06:08Z to 06:22Z (UTC): page-driven, read-only, in the owner's signed-in session, after the owner opened staging. There was no typed read, no database read, no host step and no GO. The served page matches the pin ab1c1f1: all eight asset cache tokens equal its index.html. Evidence: docs/evidence/PM1_S6_STAGING_READBACK_O2_O3_2026-11-14.json (SB422).
+- Readback O2, the setup guide, passed at desktop width in English and Thai. A Bot without a READY deployment no longer shows the activate step as Done, and the analyze and draft steps say they are checked for the whole account. Phone width was not run, because the browser window was minimized.
+- Readback O3, the L9 battery, was re-read at the pin, and every fact matches the earlier readback. It covered the Library list, Inspect and Compare, the readiness report, the market chart and the journey. It also read the first compatible comparison on staging: metrics are shown per run, with no rank and no winner.
+
+F01-03 T = 1 is a candidate for the next scorecard, with a desktop-only limitation. The five L9 T credits now rest on a direct readback instead of a carry. No score moves until the next scorecard.
+
 Owner decisions, 2026-11-14 06:03Z (UTC): the owner answered the set C owner decisions with the recommended options (SB421). The answers are listed below; nothing ran on a host, and no GO is open.
 - QR1B-D1 (a): refuse every DELETE on quant_jobs.
 - QR1B-D2 (a): a read-only privilege check in the window; any revoke later, under its own GO.

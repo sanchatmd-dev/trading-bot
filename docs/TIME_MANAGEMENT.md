@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+Staging readback, 2026-11-14 06:08Z to 06:22Z (UTC): Root read O2 and O3 page-driven in about 14 minutes, then recorded them to about 06:25Z (SB422). Chrome froze the background keep-alive tab twice during the session, and it was replaced each time. No host run; no GO used or open.
+
 Owner decisions, 2026-11-14 06:03Z (UTC): the owner answered the set C decisions by phone with the recommended options; Root recorded them from 06:04Z to about 06:10Z (SB421). There was no host run, and no GO was used or opened. The staging session expired at 2026-11-13 19:51Z and the owner signed in again at 2026-11-14 05:30Z.
 
 Local work log, 2026-11-13 13:50Z to 18:30Z (UTC): actual work only; local only, no host run, no GO used or open, nothing deployed, and Spot/Paper only. Times:
