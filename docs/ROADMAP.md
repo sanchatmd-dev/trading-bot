@@ -1,5 +1,7 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+Owner decision, 2026-11-14 06:24Z (UTC): the owner approved the Thai text of the QR-4 qualified selection page (OD-S19), all 194 strings as last changed by 17e2bb9 (SB423). QR-4 stays local only and off by default. OD-S3 and OG-Q4-1 stay open.
+
 Staging readback, 2026-11-14 06:08Z to 06:22Z (UTC): page-driven, read-only, in the owner's signed-in session, after the owner opened staging. There was no typed read, no database read, no host step and no GO. The served page matches the pin ab1c1f1: all eight asset cache tokens equal its index.html. Evidence: docs/evidence/PM1_S6_STAGING_READBACK_O2_O3_2026-11-14.json (SB422).
 - Readback O2, the setup guide, passed at desktop width in English and Thai. A Bot without a READY deployment no longer shows the activate step as Done, and the analyze and draft steps say they are checked for the whole account. Phone width was not run, because the browser window was minimized.
 - Readback O3, the L9 battery, was re-read at the pin, and every fact matches the earlier readback. It covered the Library list, Inspect and Compare, the readiness report, the market chart and the journey. It also read the first compatible comparison on staging: metrics are shown per run, with no rank and no winner.
