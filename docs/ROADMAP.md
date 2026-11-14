@@ -1,5 +1,20 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+Local work, 2026-11-14 09:15Z to 09:40Z (UTC): local work only, no host run, no GO used or open, nothing deployed, Spot/Paper only. The set C pre-read tool is sealed (s1) and has passed an independent seal check by a tester and an Opus auditor (SB432, SB433). Before the seal, three steps ran:
+- the packet pin was filled with the installed packet;
+- Root's full mutant run killed all 37 of 37 mutants;
+- the seal record, seal-setc-pr-s1.json, was written.
+
+The set C preparation tool (PR, R0 and SV modes) is accepted as a local tool (SB434). It pins the pre-read seal, and in fake-world runs it builds every execution folder and reaches a clean dry admission with no spawn. All local preparation for the first set C host GO is now done. What remains is owner-gated, in order:
+- the four RW ids;
+- the RW chain (GO-AR3 a07, RWP and GO-RW-D1, which is REPIN-3 H3);
+- Root's preparation check and rehearsal on real inputs;
+- GO-SETC-PR;
+- the R0 preparation and its full dry admission;
+- GO-SETC-R0.
+
+Each GO needs the owner awake and reachable; a GO by phone is accepted. Owner items still open: OD-S3, OG-Q4-1 and the four RW ids; GO-FLT-1 stays held.
+
 Local work, 2026-11-14 06:30Z to 09:15Z (UTC): local work only, no host run, no GO used or open, nothing deployed, Spot/Paper only. Root planned the first set C host GO, GO-SETC-R0, and found four blockers (SB424):
 - REPIN-3 H3 has not run. It is the RW chain, which waits for the owner's four ids.
 - There is no set C preparation tool.
