@@ -1,5 +1,17 @@
 # Robot Trade — Pine → Bot → Quant → Owner Workflow
 
+Local work, 2026-11-14 06:30Z to 09:15Z (UTC): local work only, no host run, no GO used or open, nothing deployed, Spot/Paper only. Root planned the first set C host GO, GO-SETC-R0, and found four blockers (SB424):
+- REPIN-3 H3 has not run. It is the RW chain, which waits for the owner's four ids.
+- There is no set C preparation tool.
+- No accepted record holds the unit digests in the form R0 reads.
+- The cross-field labels need a mapping.
+
+Root ruled the mapping (SB425). The digest gap needs a fresh read-only host read before each GO-SETC-R0 (and before GO-SETC-R), so a small read-only pre-read packet and tool were added: S6-STAGING-SETC-PREREAD-1, with its own owner GO, GO-SETC-PR. The set C packet and the sealed set C tools are unchanged. Two tools were designed and independently reviewed, then revised (SB426, SB427), built in two rounds with a tester and an Opus auditor on each lane (SB428, SB429), and given small fixes (SB430):
+- the pre-read tool, which copies R0's read functions byte for byte;
+- the set C preparation tool, which builds the execution folder, manifest and precondition record and runs a dry admission.
+
+In fake-world integration, the pre-read output passes the sealed R0 unit check unchanged. A real-PostgreSQL sweep on a throwaway local cluster showed that the pre-read and R0 read the same server version, selector class and size, and that the session is read only (SB431). The pre-read packet is installed as docs/S6_STAGING_SETC_PREREAD_PACKET_2026-11-14.md. Next, all local: the packet pin fill, the full mutant run, the seal and the independent seal check. Before any set C GO: the owner's four RW ids and the RW chain (H3), then GO-SETC-PR, then GO-SETC-R0. Owner items still open: OD-S3, OG-Q4-1 and the four RW ids; GO-FLT-1 stays held.
+
 Owner decision, 2026-11-14 06:24Z (UTC): the owner approved the Thai text of the QR-4 qualified selection page (OD-S19), all 194 strings as last changed by 17e2bb9 (SB423). QR-4 stays local only and off by default. OD-S3 and OG-Q4-1 stay open.
 
 Staging readback, 2026-11-14 06:08Z to 06:22Z (UTC): page-driven, read-only, in the owner's signed-in session, after the owner opened staging. There was no typed read, no database read, no host step and no GO. The served page matches the pin ab1c1f1: all eight asset cache tokens equal its index.html. Evidence: docs/evidence/PM1_S6_STAGING_READBACK_O2_O3_2026-11-14.json (SB422).
