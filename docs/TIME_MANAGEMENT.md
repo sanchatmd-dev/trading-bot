@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+Work log, 2026-11-14 14:30Z to 15:55Z (UTC): GO-AR3 a07 used 14:34:37Z (about 3 s); the RW fill refusal and the feasibility audit 14:36Z to 14:52Z (one Opus auditor, about 12 min); owner decision D1 14:56Z; the H3-deferral rounds 14:58Z to 15:50Z (three workflows: prep r2 with two fix rounds, the amendment in three review rounds, the flag-9 audit and the F3a proof); Root real check PR 15:48Z. Root started the prep r2 full mutant run and stopped it after its first mutant (about 2 h estimated) to keep the machine quiet for the GOs; it is deferred.
+
 Local work log, 2026-11-14 14:15Z to 14:30Z (UTC): Root's PRM mutant run 14:14:45Z to 14:15:31Z; seal at 14:16:27Z (one wrong record was recreated, SB445); prep-sm seal pin and the independent seal check 14:17Z to 14:30Z (SB446); the RW id selection from staging pages with the owner present, about 14:20Z to 14:25Z. No host run; no GO.
 
 Local work log, 2026-11-14 10:55Z to 14:15Z (UTC): SM/SMR prep design r0 and review (SB435); round F (SB436); PRM design r1 to r3 with reviews and rechecks (SB437 to SB439, about 11:27Z to 12:39Z); PRM build rounds B1 to B3 (SB440 to SB442, about 12:40Z to 14:00Z); packet draft, review and r1, plus the prep-sm S0b and age fixes (SB443, SB444). No host run; no GO.
