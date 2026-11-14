@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+Work log, 2026-11-14 15:55Z to 16:20Z (UTC): admission-scan fix and PR rehearsal 15:54Z to 16:01Z (SB454); GO-SETC-PR a01 typed 16:05:04Z, run 16:05:10Z to 16:05:12Z; R0 check and rehearsal 16:07Z; GO-SETC-R0 a01 typed 16:16:20Z, run 16:16:30Z to 16:17:09Z (40 s against the packet estimate of 30 to 60 minutes; the staging database is 124 MiB). Owner wall time for the two GOs: about 15 minutes.
+
 Work log, 2026-11-14 14:30Z to 15:55Z (UTC): GO-AR3 a07 used 14:34:37Z (about 3 s); the RW fill refusal and the feasibility audit 14:36Z to 14:52Z (one Opus auditor, about 12 min); owner decision D1 14:56Z; the H3-deferral rounds 14:58Z to 15:50Z (three workflows: prep r2 with two fix rounds, the amendment in three review rounds, the flag-9 audit and the F3a proof); Root real check PR 15:48Z. Root started the prep r2 full mutant run and stopped it after its first mutant (about 2 h estimated) to keep the machine quiet for the GOs; it is deferred.
 
 Local work log, 2026-11-14 14:15Z to 14:30Z (UTC): Root's PRM mutant run 14:14:45Z to 14:15:31Z; seal at 14:16:27Z (one wrong record was recreated, SB445); prep-sm seal pin and the independent seal check 14:17Z to 14:30Z (SB446); the RW id selection from staging pages with the owner present, about 14:20Z to 14:25Z. No host run; no GO.
