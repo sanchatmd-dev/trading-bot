@@ -1,5 +1,20 @@
 # Time Management — Project execution and data collection
 
+Work log, 2026-11-15 10:10Z to 23:00Z (UTC):
+- 10:10Z to 14:27Z: r13 design r0 and R13-A design r1, with reviews and owner answers.
+- 14:28Z to 17:27Z: build R13A-1 and its review.
+- 17:27Z to 18:16Z: Root reruns and the r13a mutant rows.
+- About 18:40Z: owner machine reboot; recovery check at 19:08Z.
+- 19:15Z to 21:08Z: full mutant set (849 rows, about 1 h 53 min).
+- 19:20Z to 19:56Z: harness rounds R13A-4 and R13A-5.
+- 21:09Z to 21:57Z: Root chain (suites 32 min, rehearsal 15 min).
+- 21:57Z to 22:12Z: first seal and the seal check by two Opus checkers.
+- 22:00Z to 22:38Z: test and harness rounds R13A-6 to R13A-8.
+- 22:38Z to 22:49Z: the second chain.
+- 22:49Z to 22:57Z: seal s2, the delta seal check and the a08 dry fill (ADMITTED, no spawn).
+- 19:40Z to 20:55Z, in parallel: GH-C2 designs r0 to r3 with four reviews, and the QR-3 brief with two checks.
+Usage: 47 to 51 percent of the weekly window used.
+
 Work log, 2026-11-15 08:30Z to 10:10Z (UTC): GO-SETC-PR a02 prepared 08:37Z, typed 09:08:26Z, run 09:08:35Z to 09:08:38Z; SV check found the smPost placeholder 09:09Z; prep r4 fix and review 09:10Z to 09:29Z (two Sonnet agents, about 19 min); SV check and rehearsal 09:30Z; GO-SETC-R typed 10:08:36Z, run 10:08:50Z to 10:09:19Z (29 s). Set C took two days of owner GOs (PR, R0, PRM, M, PR a02, R).
 
 Work log, 2026-11-15 02:10Z to 08:25Z (UTC): GO-SETC-PRM typed 07:20:29Z, run 07:20:33Z to 07:20:36Z; SM check, rehearsal, clause fills (one Opus agent, 2 min) and the F3a read, 07:21Z to 07:26Z; GO-SETC-M typed 08:12:06Z; two prep refusals fixed (reach and notAfter margin) 08:12Z to 08:13Z; window 08:13:27Z to 08:23:56Z (10.5 min, mostly the 10-minute delayed check; the packet estimate was about 77 min).
