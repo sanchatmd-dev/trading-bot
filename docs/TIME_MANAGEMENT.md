@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+Work log, 2026-11-15 02:10Z to 08:25Z (UTC): GO-SETC-PRM typed 07:20:29Z, run 07:20:33Z to 07:20:36Z; SM check, rehearsal, clause fills (one Opus agent, 2 min) and the F3a read, 07:21Z to 07:26Z; GO-SETC-M typed 08:12:06Z; two prep refusals fixed (reach and notAfter margin) 08:12Z to 08:13Z; window 08:13:27Z to 08:23:56Z (10.5 min, mostly the 10-minute delayed check; the packet estimate was about 77 min).
+
 Work log, 2026-11-14 16:20Z to 21:45Z (UTC): prep mutant run 1, 16:19Z to 18:30Z (invalid); run 2, 18:33Z to 21:06Z (about 2.5 h, slowed by BelowNormal priority so that Chrome stayed responsive); test round r3, 21:08Z to 21:29Z; targeted rerun, 21:29Z to 21:40Z; PRM inputs, check and rehearsal, 21:41Z to 21:44Z.
 
 Work log, 2026-11-14 15:55Z to 16:20Z (UTC): admission-scan fix and PR rehearsal 15:54Z to 16:01Z (SB454); GO-SETC-PR a01 typed 16:05:04Z, run 16:05:10Z to 16:05:12Z; R0 check and rehearsal 16:07Z; GO-SETC-R0 a01 typed 16:16:20Z, run 16:16:30Z to 16:17:09Z (40 s against the packet estimate of 30 to 60 minutes; the staging database is 124 MiB). Owner wall time for the two GOs: about 15 minutes.
