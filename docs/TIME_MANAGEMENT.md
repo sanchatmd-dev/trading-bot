@@ -1,5 +1,72 @@
 # Time Management — Project execution and data collection
 
+Work log, 2026-11-20 00:00Z to 10:28Z (UTC): REPIN-3 stays local-tool work plus bounded read-only host runs; no RW pass.
+- 00:00Z to 02:33Z: r13f Root chain (22:48:31Z on 11-19 to 02:33:59Z, about 3 h 45 min): catalog equal, mutants 1226 of 1228 (two allowlisted survivors, one re-verified as killed 6 of 6), suites 18 files and 481 tests, 57 of 57 rehearsal results ok.
+- 02:36Z: r13f sealed. The first seal run refused on a stale expectation; Root fixed it and the second run was ok.
+- 02:39Z to 02:47Z: seal check A (Opus, READY, 4 P3, erratum) and check B (Sonnet, PASS), plus the RC fill re-point and its tester; seal accepted (SB555).
+- 02:48Z: RC a01 fill ADMITTED and GO-RC requested.
+- 03:11:21Z to 03:11:23Z: GO-RC a01 run (RC_PASSED, read only, no effect). Answer IO_NOT_DELEGATED_TO_USER_SLICE: the io controller stops at the user slice. SB556 at 03:12Z.
+- 03:12Z to 10:28Z: no further ruling is recorded. The fix is not applied on the host. Owner questions on who applies the system-level io delegation and on the maintenance window stay open; no RW attempt before a verifying GO-RC.
+- About 10:28Z: owner asked the Claude root to hand the whole project and the latest work to a Codex root.
+
+Work log, 2026-11-19 00:00Z to 24:00Z (UTC): all REPIN-3 read-only lanes; no RW run.
+- 00:00Z to 01:18Z: r13e fix round 1 and its verify (SB543, SB544).
+- 01:18:33Z to 04:46:50Z: r13e Root chain (about 3 h 28 min): mutants 1095 of 1096 (one allowlisted), suites 17 files and 448 tests, 41 of 41 results ok. Sealed 04:48Z (SB545).
+- 04:51Z to 05:02Z: seal checks (A READY with erratum, B PASS) and the RD fill re-point (SB546). RD a01 filled and GO-RD requested.
+- 06:50Z: latest start of GO-RD a01 passed with no owner line; it lapsed unused (SB547, 06:58Z).
+- 09:32Z: staging UI login expired (not needed for RD). Signed in again by the owner at about 18:08Z.
+- About 13:30Z: owner asked for the RD a02 fill; GO-RD a02 goIssued 13:39:30Z, run at about 13:39:31Z (under 1 s), RD_PASSED (SB548).
+- Result: the research worker refused at startup, io.max missing in its own cgroup (measured). That the io controller is not delegated to the user manager was inferred then, and confirmed by GO-RC on 11-20.
+- About 16:54Z: owner asked to check and fix. Design r13f (RC lane) r0 to r1 with Opus reviews, 16:55Z to 17:38Z (SB550).
+- 17:42Z to 20:09Z: r13f build round 1 (lane tool, fill, root scripts); accepted as base (SB551).
+- 20:10Z to 21:51Z: fix round 1 (its coder packet failed the output schema; work was on disk and Root recovered it) and the verify workflow (SB552).
+- 21:52Z to 22:48Z: fix round 2 (test side) accepted (SB553). Root chain r13f started 22:48:31Z.
+
+Work log, 2026-11-18 00:00Z to 24:00Z (UTC): the r13c chain, the r13d round, and the REPIN-3 GO sequence.
+- 00:00Z to 02:33Z: r13c chain run 1 (started 23:02:40Z on 11-17): mutants 941 of 941, one suite test failed on a Root comment wording (SB520). Chain run 2: 02:42:39Z to 06:20:21Z, passed, 28 of 28 results ok.
+- 02:57Z: P1 found for RW (J1 and J2 could record a false pass); Root held the whole GO sequence (SB521). Owner chose the re-scope (option i) at about 03:00Z.
+- 03:01Z to 04:09Z: r13d design r0 to r2 with Opus reviews (NOT_READY twice, then READY; SB522 to SB525).
+- 06:20Z to 06:22Z: r13c sealed after two seal-script bar fixes (SB526 to SB528).
+- 06:27Z to 11:23Z: r13d build, continuation (K14 size ruling SB529), audit NOT_READY with Root seal-script fixes (SB530), fix round accepted (SB531).
+- 07:53Z: staging login expired; about 09:31Z the owner signed in again.
+- 11:26:08Z to 15:05:52Z: r13d Root chain (about 3 h 40 min): mutants 975 of 976 (one allowlisted), suites 16 files and 409 tests, 31 of 31 results ok. Sealed (SB533).
+- 15:38Z to 15:46Z: seal checks (A READY, B PASS) and the AR3 fill pin; a10 dry fill ADMITTED (SB534, SB535).
+- 18:31:09Z to 18:31:15Z: GO-AR3 a10 (read only) AR3_PASSED. 18:34:54Z to 18:34:59Z: GO-RWP p03 RWP_PASSED.
+- 18:53:24Z to 18:55:04Z: GO-RW-D1 a01 stopped after effect at READY (RW_STOPPED_AFTER_EFFECT); set a01 spent.
+- 19:06:57Z to 19:10:05Z: GO-RWR a01 RWR_PASSED; the RW effects were rolled back and staging was back at its pre-RW configuration (SB540).
+- 19:38Z to 23:30Z: r13e design (RD lane) r0 to r1 with a review, build round 1 (audit NOT_READY, tester FAIL on K14 and stale rows) and the fix ruling (SB541 to SB543).
+Usage: 83 percent of the weekly window at 02:42Z, 86 percent at about 07:30Z; the window reset at 09:00Z.
+
+Work log, 2026-11-17 00:00Z to 24:00Z (UTC): r13b sealed, the first RWP and read-only host runs, and the r13c build.
+- 00:00Z to 01:47Z: r13b chain run 3 (22:37:03Z on 11-16 to 01:47:05Z, about 3 h 10 min): mutants 914 of 914, suites 14 files and 386 tests, 26 of 26 results ok. Sealed 01:48Z (SB505).
+- 01:50Z to 02:00Z: seal checks (tester PASS, auditor READY); a09 dry fill ADMITTED (SB506, SB507).
+- 02:05Z to 06:52Z: RW, RWP and RWR fill rounds (about 3.9 h plus a 55 min fix round); all three READY (SB508, SB509).
+- 03:12:25Z: staging login expired (24 h absolute session); the owner signed in again at about 07:52Z.
+- 08:00:55Z to 08:00:59Z: GO-AR3 a09 (read only) AR3_PASSED (SB511).
+- 08:56Z: GO-RWP p01 lapsed unused (the owner line came about 09:18Z, after its notAfter; not run).
+- About 09:22Z: GO-RWP p02 run; RWP_STOPPED_AFTER_EFFECT at the dry plan. Only host effect: one request folder and two request files (SB513).
+- 10:34Z to 10:40Z: the browser could not read the staging capacity policy; a one-off read-only host read (about 10:38Z) gave budget 300000 ms and terminal 70000 ms, so the claim window of 225000 ms was below the RWP bar of 390000 ms (SB514, SB515).
+- 10:40Z to 11:08Z: Opus analysis; owner chose the r13c tool fix at 11:08Z (SB516, SB517). Workflows paused until the weekly reset (usage 71 percent).
+- 17:19Z: owner allowed work at the maximum cap down to the 3 percent floor. 17:21Z to 17:52Z: design r13c r0 and review.
+- 17:52Z to 23:03Z: r13c build workflow (8 agents) accepted for the chain (SB519). Owner asleep from about 19:38Z; local work only, no host GO. Chain run 1 started 23:02:40Z.
+Usage: 68 percent at 05:57Z, 74 percent at 17:47Z, 81 percent at 22:51Z.
+
+Work log, 2026-11-16 03:12Z to 24:00Z (UTC): R13-A reference run, R13-B and GH-C2 designs, and the r13b chains.
+- 03:12Z to 03:16Z: owner signed in and answered the open decisions as recommended; a08 fill ADMITTED (SB489).
+- 03:20:24Z to 03:20:30Z: GO-AR3 a08 (read only) AR3_PASSED; r13 feasibility 27 FEASIBLE, 1 OWNER_DECISION, 0 INFEASIBLE, 0 UNKNOWN (SB490).
+- 03:27Z: Node 24.21.0 downloaded with the owner's permission and checked (SB491).
+- About 03:27Z to 05:55Z: R13-B and GH-C2 TR designs r0 to r4, each round with an Opus review; both READY at r4 (SB492).
+- 05:56Z to 08:27Z: builds R13B-1 and TR-1 and the R-7 amendment draft (about 2.5 h); the first two stopped (SB493).
+- 08:32Z to 08:34Z: OPS1-E8 readback part 1 PASS; part 2 (UI clicks) open (SB494).
+- 09:10Z to 12:00Z: R13B-2 and TR-3 builds accepted for the chains; owner answered four questions at about 10:29Z (SB495 to SB497).
+- 12:12Z to 13:01Z: R13B-3 and R13B-4 harness rounds, GH-C2 packet r4 and r5 (SB498).
+- 13:01Z to 16:32Z: r13b chain run 1: mutants 907 of 915, rehearsal 17 of 26 failed; not sealable (SB500). 16:42Z to 17:16Z: diagnosis, harness faults only (SB501).
+- 17:16Z to 18:42Z: R13B-6 workflow (4 agents, about 83 min) accepted (SB502).
+- 18:43Z to 22:32Z: r13b chain run 2: suites 14 of 14, rehearsal 25 of 26, mutants 906 of 914 (a test-name typo); fixed by Root (SB504).
+- About 19:00Z: owner asleep; keep staging alive and logged in. Prep workflows 19:05Z to 19:40Z, no test runs (SB503).
+- 22:37:03Z: r13b chain run 3 started.
+Usage: 55 percent at 05:24Z, 63 percent at about 16:30Z, 65 percent at 19:20Z.
+
 Work log, 2026-11-15 10:10Z to 23:00Z (UTC):
 - 10:10Z to 14:27Z: r13 design r0 and R13-A design r1, with reviews and owner answers.
 - 14:28Z to 17:27Z: build R13A-1 and its review.
