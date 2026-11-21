@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+On 2026-11-21 from about 17:30 to 18:06 UTC, two review workflows built and checked the F1-I a02 and stage L l02 local tools. The install workflow took 14.1 minutes with six agents and one fix round. The reload workflow took 13.0 minutes with six agents and one fix round. Root then reran sixteen suites, all passing, and checked the new suites against a simulated real window. The owner went to sleep at about 18:00 UTC, so no window or host step was requested. A local staging keep-alive runs overnight without entering any credentials.
+
 On 2026-11-21 Codex handed root back to Claude at 16:56 UTC, and the owner restarted work at 17:09 UTC. The unused F1-JOBS a01 request lapsed at 17:15 UTC. Root resealed the same diagnostic as a02, changing only the attempt label and deadline. An auditor and a tester each returned GO, and the nine fixture tests passed again. The owner approved a02 at 17:18 UTC. One submission ran at 17:21:48 UTC and finished in 537 ms. Root closed the console tab after reading the result. The four handed documents were reviewed and committed before the run.
 
 On 2026-11-21 root reconciled the November 6 prototype walkthrough draft with its follow-up observations. The review closed the request for sizing values and identified the exact evidence still missing for the Library reason, phone walkthrough and ten-slot proof. The sizing calculation used the recorded inputs and displayed quantity. [Walkthrough evidence update](P1F_ACCEPTANCE_ADDENDUM_2026-11-21.md)
