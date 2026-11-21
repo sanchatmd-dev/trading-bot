@@ -1,5 +1,23 @@
 # Time Management — Project execution and data collection
 
+On 2026-11-21 root reconciled the November 6 prototype walkthrough draft with its follow-up observations. The review closed the request for sizing values and identified the exact evidence still missing for the Library reason, phone walkthrough and ten-slot proof. The sizing calculation used the recorded inputs and displayed quantity. [Walkthrough evidence update](P1F_ACCEPTANCE_ADDENDUM_2026-11-21.md)
+
+After F1-I stopped, nine local fixture tests passed for the read-only job diagnostic. The proposed diagnostic samples the manager count and job list three times within 25 seconds. Its separately requested authority expires at 17:15 UTC on 2026-11-21.
+
+On 2026-11-21 the reviewer checked the GO-I source and input before the single authorized staging attempt. The local approval marker was consumed at 16:43:09 UTC. The console returned STOP / MANAGER_JOBS before directory creation or file publication. The receipt checksum matched the canonical zero-effect result. The 16:30–16:45 UTC maintenance window ended without installation or reload. Host execution duration was not measured.
+
+The local F1 reload controller passed 15 fixture tests. Three packet tests covered receipt binding, transport and missing evidence. Without the real installation receipt the builder returned REQUIRED_LOCAL_EVIDENCE_MISSING and created no reload proposal.
+
+The F1 installation receipt reader passed 13 local fixture tests on 2026-11-21. These cover incomplete or damaged console output, the exact consumed approval, file metadata, the deadline and partial installation. Separate reload readers passed 13 service-health and 6 file-provenance fixture tests. Staging output is still required to decide whether to request a reload.
+
+For the owner-selected F1 staging window of 16:30–16:45 UTC on 2026-11-21, root verified the sealed installation proposal against its local sources. Sixteen health tests, ten controller tests and four packet tests passed locally. The packet tests used a print-only fixture to check transport integrity. The maintenance window is a scheduling commitment. Staging execution time begins with an authorized attempt.
+
+The F1 file precheck passed 16 filesystem fixture cases after a review found a filename collision across directories. The dpkg lock reader passed 10 fixture cases; the 11 existing install and rollback fragment checks also passed. These checks ran locally.
+
+The 2026-11-21 page-driven UI readback ran around 15:56–16:00 UTC while the F1 maintenance decision was pending. It completed the phone-width guide check and observed both Library context results from existing runs. No optimizer or host run was involved.
+
+On 2026-11-21 Codex verified the handoff and three REPIN-3 snapshot seals, restored the requested staging keep-alive and reviewed F1-PRE a01. The single authorized read-only run took 1.227 seconds, from 14:41:09.591 to 14:41:10.818 UTC. Its receipt arrived on the first connection. The owner subsequently provided a root console. The console preflight began at 15:08 UTC and the result was recorded by 15:14 UTC. This interval includes local preparation and browser interaction. Host probe runtime was not measured. The read completed in one attempt. The maintenance proposal allows 15 minutes to start approved effects. Recovery or a lost-receipt wait may extend beyond that interval. Four prototype UI suites passed 52 local fixture tests in 47.482 seconds. Eleven F1 file-operation mock checks passed. Host execution time remains unmeasured.
+
 Work log, 2026-11-20 00:00Z to 10:28Z (UTC): REPIN-3 stays local-tool work plus bounded read-only host runs; no RW pass.
 - 00:00Z to 02:33Z: r13f Root chain (22:48:31Z on 11-19 to 02:33:59Z, about 3 h 45 min): catalog equal, mutants 1226 of 1228 (two allowlisted survivors, one re-verified as killed 6 of 6), suites 18 files and 481 tests, 57 of 57 rehearsal results ok.
 - 02:36Z: r13f sealed. The first seal run refused on a stale expectation; Root fixed it and the second run was ok.

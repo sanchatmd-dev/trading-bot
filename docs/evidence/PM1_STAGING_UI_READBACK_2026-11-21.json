@@ -1,0 +1,76 @@
+{
+  "schema": "PM1_READBACK_EVIDENCE_V1",
+  "date": "2026-11-21",
+  "environment": "Authenticated Paper staging, English and Thai, Chrome. Prior release record ab1c1f1. This session did not independently read the service revision.",
+  "kind": "Page-driven readback by Codex root",
+  "authority": "Standing page-driven read authority recorded in SB171/SB173 and the SB494 continuation. No direct API request or host command.",
+  "method": "Used a separate tab. Observed the rendered journey, Bot Manager guide, same-Bot readiness report, Library detail and comparisons, and Overview chart. Used a temporary 390 by 844 CSS-pixel viewport override for the guide. Restored the original viewport and English language. Evidence below is transcribed from rendered UI and DOM; no response bodies or response codes were captured.",
+  "results": {
+    "setupGuide": {
+      "assetReference": "/setup-guide.js?v=sg3",
+      "bot": "Main Bot",
+      "readiness": [
+        "CAPABILITY_UNAVAILABLE",
+        "NO_READY_DEPLOYMENT",
+        "PF2_DISABLED"
+      ],
+      "layouts": [
+        {
+          "kind": "desktop",
+          "clientWidth": 1905,
+          "pageWidth": 1905,
+          "guideWidth": 1657
+        },
+        {
+          "kind": "phone-width emulation",
+          "override": [
+            390,
+            844
+          ],
+          "clientWidth": 375,
+          "pageWidth": 375,
+          "guideWidth": 343
+        }
+      ],
+      "english": {
+        "analysisAndDraft": "Done; each explicitly says it was checked for the whole account.",
+        "activation": "Do this now"
+      },
+      "thai": {
+        "analysisAndDraft": "เสร็จแล้ว — ตรวจจากทั้งบัญชีของคุณ ไม่ใช่เฉพาะ Bot เดียว",
+        "activation": "ทำขั้นนี้"
+      },
+      "finding": "At both widths and in both languages, the selected Bot's missing READY deployment matched its activation step. No horizontal document overflow at either sampled width."
+    },
+    "journey": "All six step headings rendered with evidence and next-dependency sections. The Library section showed three terminal runs, including two completed runs with no valid candidate and one failure.",
+    "library": {
+      "inspectedHeaders": [
+        "7552f3e6 NO_VALID_CANDIDATE",
+        "8e64bfa8 FAILED",
+        "10d7ccc1 NO_VALID_CANDIDATE"
+      ],
+      "differentContext": {
+        "runs": [
+          "7552f3e6",
+          "10d7ccc1"
+        ],
+        "rendered": "Not comparable. The rendered result withheld metrics."
+      },
+      "sharedContext": {
+        "runs": [
+          "7552f3e6",
+          "8e64bfa8"
+        ],
+        "rendered": "Comparable. Entries listed by creation time, with no ranking and no qualified winner."
+      },
+      "scope": "Context check only. The fair-comparison workflow was not run."
+    },
+    "market": "Overview displayed Connected and a BTCUSDT public REST chart with 365 daily bars, showing a cache age of zero seconds in the displayed snapshot. This does not validate 1m execution or data freshness beyond that snapshot."
+  },
+  "limits": [
+    "Phone-width browser emulation; a physical handset was not tested.",
+    "The asset URL was read from the displayed document. Its bytes were not independently hashed.",
+    "No fresh signals, data collection, optimizer run, holdout access, persistence-after-restart test, settings application, trading action or host mutation.",
+    "No HTTP-status assertions, refreshed deployment pin, new scorecard credit or full P1-F walkthrough acceptance."
+  ]
+}
