@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+On 2026-11-22 the F4 build and review workflow took 16.7 minutes with six agents and one fix round. The packet was sealed at 05:55 UTC and lapsed unused at the end of its 06:30–06:45 UTC window. The staging session stayed signed in from the overnight keep-alive until the stop at 08:31 UTC.
+
 On 2026-11-22 the owner woke at about 04:00 UTC and chose an immediate window. Root set the window and reran ten suites. Sealing F1-I a02 took about one minute, and the owner approved it at 04:04 UTC. Its run took under 30 seconds of the 15-minute window. The reload approval arrived two minutes after the window closed. A reload packet with its own window was built and reviewed in about eight minutes and sealed at 04:40 UTC. The reload ran at 05:30 UTC and finished in about 20 seconds. The read-only RC a02 check ran at 05:36 UTC and took 8 seconds. Each host step had its own byte-equal owner approval and exactly one submission.
 
 On 2026-11-21 from about 17:30 to 18:06 UTC, two review workflows built and checked the F1-I a02 and stage L l02 local tools. The install workflow took 14.1 minutes with six agents and one fix round. The reload workflow took 13.0 minutes with six agents and one fix round. Root then reran sixteen suites, all passing, and checked the new suites against a simulated real window. The owner went to sleep at about 18:00 UTC, so no window or host step was requested. A local staging keep-alive runs overnight without entering any credentials.
