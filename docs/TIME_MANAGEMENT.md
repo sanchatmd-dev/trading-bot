@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+On 2026-11-22 after the owner resumed at 15:18 UTC, resealing F4 as a02 took about two minutes. The owner approved it at 15:21 UTC, and it ran at the start of its 15:45 UTC window and finished in about 15 seconds. RC a03 was filled and approved within eight minutes and ran in 8 seconds at 15:53 UTC. The staging keep-alive restarted at 15:19 UTC.
+
 On 2026-11-22 the F4 build and review workflow took 16.7 minutes with six agents and one fix round. The packet was sealed at 05:55 UTC and lapsed unused at the end of its 06:30–06:45 UTC window. The staging session stayed signed in from the overnight keep-alive until the stop at 08:31 UTC.
 
 On 2026-11-22 the owner woke at about 04:00 UTC and chose an immediate window. Root set the window and reran ten suites. Sealing F1-I a02 took about one minute, and the owner approved it at 04:04 UTC. Its run took under 30 seconds of the 15-minute window. The reload approval arrived two minutes after the window closed. A reload packet with its own window was built and reviewed in about eight minutes and sealed at 04:40 UTC. The reload ran at 05:30 UTC and finished in about 20 seconds. The read-only RC a02 check ran at 05:36 UTC and took 8 seconds. Each host step had its own byte-equal owner approval and exactly one submission.
