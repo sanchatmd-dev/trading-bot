@@ -124,7 +124,7 @@ jobs:
         if: always()
         run: |
           f="$RUNNER_TEMP/systemd-probe.txt"
-          set -- MAJORS:16 ROWS:40 ROW_L:48 ROW_N:48 UNITPATH:900 FORMS:160 LINUX_ROWS:400
+          set -- MAJORS:16 ROWS:40 ROW_L:48 ROW_N:48 UNITPATH:900 FORMS:160 LINUX_ROWS:400 DIAG:300
           if [ ! -f "$f" ] || [ "$(wc -l < "$f")" -ne "$#" ]; then
             echo "::error title=SYSTEMD_PROBE ${{ matrix.os }}::no sanitized summary"
             exit 1

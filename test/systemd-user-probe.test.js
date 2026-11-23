@@ -8,9 +8,12 @@
 // Skip rule: the test is skipped only when SYSTEMD_PROBE is not '1', so the ordinary `npm test` run skips it. With
 // SYSTEMD_PROBE=1 it never skips: a non-Linux platform, an unreachable user manager or any setup error fails it.
 //
-// Summary file: $RUNNER_TEMP/systemd-probe.txt holds exactly seven newline-terminated lines in a fixed order, each
+// Summary file: $RUNNER_TEMP/systemd-probe.txt holds exactly eight newline-terminated lines in a fixed order, each
 // KEY=value with a value from the closed token alphabet [A-Za-z0-9_.,:/<>-] and its own length cap. The workflow
-// publish step re-checks every line. No runner path, user name or host name leaves the probe.
+// publish step re-checks every line. No runner path, user name or host name leaves the probe. The eighth line is
+// DIAG (C15): one token <row>:<stage>:<observed> for every row that is not PASS, with stage and observed taken only
+// from the closed lists DIAG_STAGES and DIAG_OBSERVED below, so a failing row can be diagnosed from the public check
+// annotations alone. Row h always adds its U8 observation (h:U8:HOLDS or h:U8:NOT_HERE). DIAG is a record only.
 //
 // ---------------------------------------------------------------------------------------------------------------
 // LINUX_ROWS fixed id list and result forms (SB586 C3). The probe and the fill both check the full list, in this
@@ -34,6 +37,10 @@
 //   readdir:IDENTICAL             readdir of a fixture root leaves it byte-identical
 //   zpipe:SHA_OK_NL3              C12: base64 -d | gzip -dc into a shell variable, sha256sum matches, a here-string
 //                                 hands the text to node, and the three trailing newlines survive
+//   zbad:EXIT86_NONODE            SB589 ruling 5: the packer's compressed-payload script construct (EXIT trap, brace
+//                                 group, pipefail decode, sha256 check, exec of a stub node) with a corrupted base64
+//                                 line, a changed hash and three truncations: each exits 86 with PAYLOAD_INTEGRITY on
+//                                 stderr and the stub never starts; an unchanged script runs the stub with the exact text
 // A row that gives another form is written as `<id>:FAIL` and fails the probe test. A row never run is `<id>:NOTRUN`.
 // ---------------------------------------------------------------------------------------------------------------
 import test from 'node:test';
@@ -64,20 +71,53 @@ const LINUX_ROW_FORMS=Object.freeze([
   ['sizecap','SIZE_FIRST'],
   ['readdir','IDENTICAL'],
   ['zpipe','SHA_OK_NL3'],
+  ['zbad','EXIT86_NONODE'],
 ]);
 const GATING=Object.freeze(['a','b','c','d','e','f','g','h','i','j','k','m','n']);
 const ROW_ORDER=Object.freeze(['f','a','b','c','d','e','g','h','i','j','k','l','m','n']);
 const GATING_TOTAL=13;
-const NOTICE_KEYS=Object.freeze([['MAJORS',16],['ROWS',40],['ROW_L',48],['ROW_N',48],['UNITPATH',900],['FORMS',160],['LINUX_ROWS',400]]);
+const NOTICE_KEYS=Object.freeze([['MAJORS',16],['ROWS',40],['ROW_L',48],['ROW_N',48],['UNITPATH',900],['FORMS',160],['LINUX_ROWS',400],['DIAG',300]]);
+// C15 closed lists. A DIAG token is <row>:<stage>:<observed>; nothing outside these lists (and the row ids) is ever printed.
+const DIAG_ROWS=Object.freeze(['setup',...GATING,'l',...LINUX_ROW_FORMS.map(([id])=>id)]);
+const DIAG_STAGES=Object.freeze([
+  'ROW','SETUP','NOTRUN','GUARD_SELF','U8',
+  'STOP_HOLD','RELOAD_1','UNLOAD_WAIT','LINK_MAKE','LINK_NO_RELOAD','LINK_DROP','AFTER_UNLINK','RELOAD_2','LOAD_FINAL',   // row h
+  'L_SETUP','L_NO_BUSCTL','L_MONITOR','L_ORDER',                                                                       // row l
+  'SPAWN','PID_LINE','PID_VALID','GROUP_LIVE','ESC_LIVE','SESSION','GROUP_KILL','LEADER_EXIT','ESC_AFTER',              // pgsetsid
+  'Z_CONTROL','Z_B64_BAD','Z_B64_FLIP','Z_HASH','Z_CUT_HEAD','Z_CUT_PAYLOAD','Z_CUT_EXEC',                              // zbad
+  'UNKNOWN_STAGE']);
+const DIAG_OBSERVED=Object.freeze([
+  'HOLDS','NOT_HERE','NOT_RUN',
+  'LS_loaded','LS_masked','LS_notfound','LS_empty','LS_other',
+  'LIVE','NONE','EPERM','UNKNOWN',
+  'SESS_OWN','SESS_SAME','SESS_OTHER','SESS_NOPROC',
+  'CMD_FAIL','NOT_LOADED','STILL_LOADED','CF_PRESENT','TIMEOUT','CHECK','ERROR','SPAWN_ERR',
+  'NO_TRUE_EXITED','NO_TRUE_8S','TRUE_EXITED','MONITOR_DEAD','ORDER_BAD',
+  'CODE_0','CODE_1','CODE_2','CODE_86','CODE_OTHER','SIGNAL','NO_LABEL','STUB_RAN','STUB_SILENT','GOT_DIFF',
+  'THROW_ESCAPED','REJECT_ESCAPED','BAD_RECORD',
+  'UNKNOWN_OBS']);
 const TOKEN=/^[A-Za-z0-9_.,:/<>-]+$/;
 const REV_PROPS=Object.freeze(['RequiredBy','RequisiteOf','BoundBy','UpheldBy','WantedBy','PartOf','OnFailureOf','OnSuccessOf','BusName']);
 const PRODUCT_SHOW=Object.freeze(['LoadState','ActiveState','SubState','ControlGroup','Job','MainPID','KillMode','TimeoutStopUSec']);
 const VERSION_FORM=/^[0-9]{3}(?:[.~+-][0-9A-Za-z.~+-]{0,60})?$/;
 
-class ProbeFail extends Error{}
+class ProbeFail extends Error{
+  constructor(message,obs){super(message);this.obs=obs;}      // obs: an optional DIAG_OBSERVED value for the failing stage
+}
 class ProbeInconclusive extends Error{}
-const ok=(condition,message)=>{if(!condition)throw new ProbeFail(message);};
-const eq=(actual,expected,message)=>{if(actual!==expected)throw new ProbeFail(`${message}: got ${JSON.stringify(actual)} want ${JSON.stringify(expected)}`);};
+const ok=(condition,message,obs)=>{if(!condition)throw new ProbeFail(message,obs);};
+const eq=(actual,expected,message,obs)=>{if(actual!==expected)throw new ProbeFail(`${message}: got ${JSON.stringify(actual)} want ${JSON.stringify(expected)}`,obs);};
+// Process-state strings (groupState, pidState) are themselves DIAG_OBSERVED values.
+const eqState=(actual,expected,message)=>{if(actual!==expected)throw new ProbeFail(`${message}: got ${actual}`,actual);};
+// The stage a row is in; a failure records the stage that was current when it happened.
+let STAGE='ROW';
+const at=stage=>{STAGE=stage;};
+const lsObs=value=>value==='loaded'?'LS_loaded':value==='masked'?'LS_masked':value==='not-found'?'LS_notfound':value===''||value===undefined?'LS_empty':'LS_other';
+function classify(failure){
+  if(failure&&DIAG_OBSERVED.includes(failure.obs))return failure.obs;
+  if(failure instanceof ProbeFail)return / failed code=/.test(failure.message)?'CMD_FAIL':/NOT_LOADED/.test(failure.message)?'NOT_LOADED':'CHECK';
+  return 'ERROR';
+}
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function waitUntil(predicate,limitMs,stepMs=50){
   const end=Date.now()+limitMs;
@@ -177,7 +217,8 @@ function newState(){
     forms:{ver:'unknown',frag:'unknown',empty:'unknown',k:'unknown'},
     rowN:{B:'unknown',M:'unknown',S:'unknown',U:'unknown'},
     rowL:{outcome:'INCONCLUSIVE',attempts:0,form:'none'},
-    results:{},linux:{},notes:[],cleanupFailed:[],
+    u8:'NOT_RUN',guard:'NOT_RUN',fatalDiag:null,
+    results:{},linux:{},linuxDiag:{},notes:[],cleanupFailed:[],
   };
 }
 function writeUnit(name,text){
@@ -220,7 +261,8 @@ function fragForm(fragment){
   if(fragment===S.LNK||fragment.startsWith(`${S.CF}/`))return 'LINK';
   return 'OTHER';
 }
-const versionForm=value=>sanitize(value.replace(/[0-9]+/g,'N').replace(/[A-Za-z]+/g,'a'));
+// Letters first, then digits: the digit token N must not be turned into a letter token afterwards (first run gave a.a-a.a).
+const versionForm=value=>sanitize(value.replace(/[A-Za-z]+/g,'a').replace(/[0-9]+/g,'N'));
 function classifyElapse(value){
   if(value===''||value===undefined)return 'EMPTY';
   if(value==='n/a')return 'NA';
@@ -231,6 +273,7 @@ function classifyElapse(value){
 // ---------------------------------------------------------------------------------------------------------------
 // Setup.
 async function setup(){
+  at('SETUP');
   const clientOut=await exec('systemctl',['--user','--version']);
   const clientMatch=/^systemd (\d+)/m.exec(clientOut.stdout);
   ok(clientOut.code===0&&clientMatch,'systemctl --version unreadable');
@@ -261,7 +304,7 @@ async function setup(){
 // ---------------------------------------------------------------------------------------------------------------
 // Rows a to n.
 async function rowF(){
-  if(S.cfExistedAtStart)return {r:'INCONCLUSIVE',note:'CF_PRESENT_AT_START'};
+  if(S.cfExistedAtStart)return {r:'INCONCLUSIVE',note:'CF_PRESENT_AT_START',stage:'ROW',obs:'CF_PRESENT'};
   const entries=S.unitPathStart;
   ok(entries.length>0,'UNITPATH_EMPTY');
   const rank=entry=>entries.indexOf(entry);
@@ -343,19 +386,35 @@ async function rowE(){
 async function rowG(){
   ok(S.gB===true&&S.gE===true,'row b or row e did not show the new LoadState right after the reload');
 }
+// Row h (C16). U8 (an unloaded unit, loaded on demand after the link and with no reload, sees the link) is a fact the
+// design never relies on for safety, so row h only records which way it went: masked is U8:HOLDS, loaded is U8:NOT_HERE.
+// Any other LoadState, or any command error, at any stage is a FAIL, as is a closing reload that does not load the unit.
 async function rowH(){
   try{
+    at('STOP_HOLD');
     await scOk(['stop',S.hold],'stop holder');
+    at('RELOAD_1');
     await reload();
+    at('UNLOAD_WAIT');
     const gone=await waitUntil(async()=>!(await isLoaded(S.probe)),10000,250);
-    if(!gone)return {r:'INCONCLUSIVE',note:'STILL_LOADED_10S'};
+    if(!gone)return {r:'INCONCLUSIVE',note:'STILL_LOADED_10S',stage:'UNLOAD_WAIT',obs:'STILL_LOADED'};
+    at('LINK_MAKE');
     ensureCF();
     makeLink();
-    eq(await loadState(S.probe),'masked','row h on-demand load after link, no reload');
+    at('LINK_NO_RELOAD');
+    const first=await loadState(S.probe);
+    if(first==='masked')S.u8='HOLDS';
+    else if(first==='loaded')S.u8='NOT_HERE';
+    else throw new ProbeFail(`row h LoadState after link, no reload: ${JSON.stringify(first)}`,lsObs(first));
+    at('LINK_DROP');
     dropLink();
+    at('AFTER_UNLINK');
     S.notes.push(`hAfterUnlink:${await loadState(S.probe)}`);
+    at('RELOAD_2');
     await reload();
-    eq(await loadState(S.probe),'loaded','row h after unlink and reload');
+    at('LOAD_FINAL');
+    const last=await loadState(S.probe);
+    if(last!=='loaded')throw new ProbeFail(`row h LoadState after unlink and reload: ${JSON.stringify(last)}`,lsObs(last));
     return {r:'PASS'};
   }finally{
     dropLink();
@@ -485,16 +544,18 @@ async function rowN(){
 // Row l: a guarded record row. It never fails the test or the job (C1); its outcome goes only to ROW_L.
 async function rowL(){
   const bulk=[];
+  let stage='L_SETUP';
   const monitorArgs=(json)=>['--user','--match=type=signal,interface=org.freedesktop.systemd1.Manager,member=Reloading',...(json?['--json=short']:[]),'monitor'];
   try{
     await requireLoaded(S.probe);
     const help=await exec('busctl',['--help']);
-    if(help.spawnError)return {outcome:'INCONCLUSIVE',attempts:0,form:'nobusctl'};
+    if(help.spawnError)return {outcome:'INCONCLUSIVE',attempts:0,form:'nobusctl',stage:'L_NO_BUSCTL',obs:'SPAWN_ERR'};
     const json=help.stdout.includes('--json=');
     const stdbuf=(await exec('stdbuf',['--version'])).code===0;
     for(let i=0;i<200;i++)bulk.push(writeUnit(`j1r-bulk-${S.suffix}-${String(i).padStart(3,'0')}.service`,unitText(['[Unit]','Description=probe','',...oneshot])));
     ensureCF();
-    let attempts=0,last='none';
+    let attempts=0,last='none',lastObs='NO_TRUE_8S';
+    stage='L_MONITOR';
     while(attempts<5){
       attempts++;
       dropLink();
@@ -531,7 +592,10 @@ async function rowL(){
         await waitUntil(()=>events.some(event=>event.v===true)||client.exitCode!==null||client.signalCode!==null,8000,5);
         const sawTrue=events.some(event=>event.v===true);
         const alive=client.exitCode===null&&client.signalCode===null;
-        if(!(sawTrue&&alive)){last='none';await new Promise(resolve=>{if(client.exitCode!==null||client.signalCode!==null)resolve();else client.on('exit',resolve);});continue;}
+        if(!(sawTrue&&alive)){
+          const dead=monitor.exitCode!==null||monitor.signalCode!==null;
+          lastObs=dead?'MONITOR_DEAD':sawTrue?'TRUE_EXITED':alive?'NO_TRUE_8S':'NO_TRUE_EXITED';
+          last='none';await new Promise(resolve=>{if(client.exitCode!==null||client.signalCode!==null)resolve();else client.on('exit',resolve);});continue;}
         const tKill=Number(process.hrtime.bigint());
         client.kill('SIGKILL');
         const answer=await showMap(S.probe,['LoadState']);
@@ -543,7 +607,7 @@ async function rowL(){
         const tags=[['RT',tTrue],['K',tKill],['RF',tFalse],['S',tShow]].filter(([,at])=>at!==null).sort((x,y)=>x[1]-y[1]).map(([tag])=>tag);
         const form=tags.join('<');
         const orderOk=tFalse!==null&&tTrue<tKill&&tKill<tFalse&&tFalse<=tShow&&answer.LoadState==='masked';
-        return {outcome:orderOk?'PASS':'FAIL',attempts,form};
+        return orderOk?{outcome:'PASS',attempts,form}:{outcome:'FAIL',attempts,form,stage:'L_ORDER',obs:'ORDER_BAD'};
       }finally{
         if(client&&client.exitCode===null&&client.signalCode===null)client.kill('SIGKILL');
         if(monitor.exitCode===null&&monitor.signalCode===null){
@@ -555,9 +619,9 @@ async function rowL(){
         await sc(['daemon-reload']);
       }
     }
-    return {outcome:'INCONCLUSIVE',attempts,form:last};
+    return {outcome:'INCONCLUSIVE',attempts,form:last,stage:'L_MONITOR',obs:lastObs};
   }catch(failure){
-    return {outcome:failure instanceof ProbeFail?'FAIL':'INCONCLUSIVE',attempts:0,form:failure instanceof ProbeFail?'check':'error'};
+    return {outcome:failure instanceof ProbeFail?'FAIL':'INCONCLUSIVE',attempts:0,form:failure instanceof ProbeFail?'check':'error',stage,obs:classify(failure)};
   }finally{
     try{
       for(const file of bulk){removeMadeFile(file);S.made.files=S.made.files.filter(entry=>entry!==file);}
@@ -567,14 +631,41 @@ async function rowL(){
   }
 }
 
+// The row-l guard wrapper (C1, SB588 A13). It turns a throw, a rejection or a malformed result of the row into a record,
+// so row l can never fail the node test or the job. The test runs guardSelfCheck first and fails unless the wrapper
+// returns a record, without throwing, for a function that throws and for one that rejects.
+const ROW_L_ERROR=Object.freeze({outcome:'INCONCLUSIVE',attempts:0,form:'error',stage:'L_MONITOR',obs:'ERROR'});
+async function guardRowL(work){
+  try{
+    const record=await work();
+    if(record&&typeof record==='object'&&typeof record.outcome==='string'&&typeof record.attempts==='number'&&typeof record.form==='string')return record;
+    return {...ROW_L_ERROR,obs:'BAD_RECORD'};
+  }catch{
+    return {...ROW_L_ERROR};
+  }
+}
+async function guardSelfCheck(){
+  const cases=[
+    ['THROW_ESCAPED',()=>{throw new Error('guard self-check throw');}],
+    ['REJECT_ESCAPED',()=>Promise.reject(new Error('guard self-check reject'))],
+  ];
+  for(const [escaped,work] of cases){
+    let record=null;
+    try{record=await guardRowL(work);}catch{return escaped;}
+    if(!record||record.outcome!=='INCONCLUSIVE'||record.form!=='error')return 'BAD_RECORD';
+  }
+  return 'OK';
+}
+
 const ROW_FUNCTIONS={f:rowF,a:rowA,b:rowB,c:rowC,d:rowD,e:rowE,g:rowG,h:rowH,i:rowI,j:rowJ,k:rowK,m:rowM,n:rowN};
 async function runRow(letter){
+  at('ROW');
   try{
     const outcome=await ROW_FUNCTIONS[letter]();
     S.results[letter]=outcome&&outcome.r?outcome:{r:'PASS'};
-    if(S.results[letter].r==='INCONCLUSIVE'&&letter!=='f'&&letter!=='h')S.results[letter]={r:'FAIL',note:'INCONCLUSIVE_NOT_ALLOWED'};
+    if(S.results[letter].r==='INCONCLUSIVE'&&letter!=='f'&&letter!=='h')S.results[letter]={r:'FAIL',note:'INCONCLUSIVE_NOT_ALLOWED',stage:'ROW',obs:'CHECK'};
   }catch(failure){
-    S.results[letter]={r:'FAIL',note:String(failure&&failure.message||failure).slice(0,160)};
+    S.results[letter]={r:'FAIL',note:String(failure&&failure.message||failure).slice(0,160),stage:STAGE,obs:classify(failure)};
   }
 }
 
@@ -589,7 +680,7 @@ function pidState(pid){
 function readFirstLine(stream,limitMs){
   return new Promise((resolve,reject)=>{
     let text='';
-    const timer=setTimeout(()=>reject(new ProbeFail('no pid line')),limitMs);
+    const timer=setTimeout(()=>reject(new ProbeFail('no pid line','TIMEOUT')),limitMs);
     stream.on('data',data=>{
       text+=data.toString('utf8');
       const at=text.indexOf('\n');
@@ -648,20 +739,50 @@ async function linuxPgnone(){
   eq(code,'ENOENT','pgnone code');
   return 'ENOENT';
 }
+// Probe bug fixed on review (first CI run gave pgsetsid:FAIL): the escapee pid used to be `$!` of `setsid sleep 300 &`,
+// which is the pid of the setsid command, not necessarily of the process that is left running. util-linux setsid forks
+// and lets the parent exit at once when it is a process group leader, and then `$!` is a pid that is gone. Now the
+// escapee prints its own pid (`echo $$` in the process that then execs sleep, so the pid stays the same) after it has
+// been through setsid, whether setsid forks or not. A plain `sleep 300 &` stays in the leader group so the leader shell
+// keeps waiting and the group is never empty when it is killed. The expected form ESCAPEE_ALIVE is unchanged.
+const PGSETSID_SCRIPT="sleep 300 & setsid sh -c 'echo $$; exec sleep 300' & wait";
+function sessionOf(pid,leader){
+  try{
+    const stat=fs.readFileSync(`/proc/${pid}/stat`,'utf8');
+    const fields=stat.slice(stat.lastIndexOf(')')+2).split(' ');   // state ppid pgrp session ...
+    const session=Number(fields[3]);
+    return session===pid?'SESS_OWN':session===leader?'SESS_SAME':'SESS_OTHER';
+  }catch{return 'SESS_NOPROC';}
+}
 async function linuxPgsetsid(){
-  const child=spawn('sh',['-c','setsid sleep 300 & echo $!; wait'],{detached:true,stdio:['ignore','pipe','ignore']});
-  const gone=exited(child);
+  at('SPAWN');
+  const child=spawn('sh',['-c',PGSETSID_SCRIPT],{detached:true,stdio:['ignore','pipe','ignore']});
+  child.on('error',()=>{});
+  const leader=child.pid;
   let escapee=0;
   try{
+    ok(Number.isInteger(leader)&&leader>1,'pgsetsid spawn','SPAWN_ERR');
+    at('PID_LINE');
     escapee=Number(await readFirstLine(child.stdout,5000));
-    ok(Number.isInteger(escapee)&&escapee>1,'pgsetsid pid');
-    process.kill(-child.pid,'SIGKILL');
-    await gone;
+    at('PID_VALID');
+    ok(Number.isInteger(escapee)&&escapee>1&&escapee!==leader,'pgsetsid pid','CHECK');
+    at('GROUP_LIVE');
+    eqState(groupState(leader),'LIVE','pgsetsid leader group live before the kill');
+    at('ESC_LIVE');
+    eqState(pidState(escapee),'LIVE','pgsetsid escapee live before the kill');
+    at('SESSION');
+    const session=sessionOf(escapee,leader);
+    ok(session!=='SESS_SAME','pgsetsid escapee is still in the leader session',session);
+    at('GROUP_KILL');
+    try{process.kill(-leader,'SIGKILL');}catch(failure){throw new ProbeFail(`pgsetsid group kill ${failure.code}`,failure.code==='ESRCH'?'NONE':failure.code==='EPERM'?'EPERM':'ERROR');}
+    at('LEADER_EXIT');
+    ok(await waitUntil(()=>child.exitCode!==null||child.signalCode!==null,5000,20),'pgsetsid leader still running after the kill','TIMEOUT');
     await sleep(300);
-    eq(pidState(escapee),'LIVE','pgsetsid escapee survives the group kill');
+    at('ESC_AFTER');
+    eqState(pidState(escapee),'LIVE','pgsetsid escapee survives the group kill');
     return 'ESCAPEE_ALIVE';
   }finally{
-    try{process.kill(-child.pid,'SIGKILL');}catch{/* already gone */}
+    try{process.kill(-leader,'SIGKILL');}catch{/* already gone */}
     if(escapee>1){try{process.kill(escapee,'SIGKILL');}catch{/* already gone */}}
   }
 }
@@ -863,17 +984,98 @@ async function linuxZpipe(){
   eq(seen.tail,'0a0a0a0a','zpipe trailing newlines');
   return 'SHA_OK_NL3';
 }
+// zbad (SB589 ruling 5): the script construct of payloadScriptZ (tool/r3-pack.mjs, the r13h block), line for line, with a
+// stub in place of node. The stub writes a marker file inside the probe's own temp folder only if it starts, then keeps
+// its stdin. The unchanged script must run the stub with the exact text; a corrupted base64 line, a changed hash and
+// three truncations must each end with exit 86 and PAYLOAD_INTEGRITY on stderr, and the stub must never start.
+const ZBAD_DELIM='S6_STAGING_R3_JS';
+function zbadLines(stub,b64Lines,hash){
+  return [
+    "trap 'echo PAYLOAD_INTEGRITY >&2; exit 86' EXIT",
+    'export XDG_RUNTIME_DIR=/run/user/$(id -u)',
+    'export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus',
+    '{',
+    `Z=$(set -o pipefail; base64 -d <<'${ZBAD_DELIM}' 2>/dev/null | gzip -dc 2>/dev/null && printf x`,
+    ...b64Lines,
+    ZBAD_DELIM,
+    ') || exit 86',
+    'Z=${Z%x}',
+    `[ "$(printf %s "$Z" | sha256sum | cut -d' ' -f1)" = "${hash}" ] || exit 86`,
+    "Z=${Z%$'\\n'}",
+    'trap - EXIT',
+    `exec env -i PATH="$PATH" HOME="$HOME" LC_ALL=C TZ=UTC XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" ${stub} --input-type=module 3<&0 <<<"$Z"`,
+    '}',
+  ];
+}
+const codeObs=result=>result.signal?'SIGNAL':result.code===0?'CODE_0':result.code===1?'CODE_1':result.code===2?'CODE_2':result.code===86?'CODE_86':'CODE_OTHER';
+async function linuxZbad(){
+  const folder=tmpFolder('j1r-zbad-');
+  const stub=path.join(folder,'node'),marker=path.join(folder,'started'),got=path.join(folder,'got');
+  fs.writeFileSync(stub,`#!/bin/sh\nprintf started > "${marker}"\ncat > "${got}"\n`,{mode:0o755});
+  // The node input: one first line, 76 lines of random base64 text and a final empty line, so the text ends with two line feeds.
+  const chars=crypto.randomBytes(4500).toString('base64');
+  let text='globalThis.S6_R3_BOUND={"probe":true};\n';
+  for(let i=0;i<chars.length;i+=79)text+=`${chars.slice(i,i+79)}\n`;
+  text+='\n';
+  const hash=crypto.createHash('sha256').update(text).digest('hex');
+  const gz=await exec('gzip',['-9','-c'],{input:text});
+  eq(gz.code,0,'zbad gzip');
+  const b64=gz.stdoutBuf.toString('base64');
+  const lines=[];
+  for(let i=0;i<b64.length;i+=76)lines.push(b64.slice(i,i+76));
+  ok(lines.length>=8,'zbad payload line count');
+  const mid=lines.length>>1;
+  const build=(payload,expect)=>`${zbadLines(stub,payload,expect).join('\n')}\n`;
+  const full=build(lines,hash);
+  const runIt=async script=>{
+    for(const file of [marker,got]){try{fs.unlinkSync(file);}catch(failure){if(failure.code!=='ENOENT')throw failure;}}
+    return exec('bash',['-s'],{env:{PATH:'/usr/bin:/bin',HOME:folder},input:script,timeoutMs:60000});
+  };
+  at('Z_CONTROL');
+  const control=await runIt(full);
+  if(control.timedOut)throw new ProbeFail('zbad control timeout','TIMEOUT');
+  if(control.code!==0)throw new ProbeFail(`zbad control exit ${control.code}`,codeObs(control));
+  if(lstatOrNull(marker)===null)throw new ProbeFail('zbad control stub did not start','STUB_SILENT');
+  if(fs.readFileSync(got,'utf8')!==text)throw new ProbeFail('zbad control stub input differs','GOT_DIFF');
+  const invalid=lines.slice();
+  invalid[mid]=`${lines[mid].slice(0,10)}!${lines[mid].slice(11)}`;
+  const flipped=lines.slice();
+  flipped[mid]=`${lines[mid].slice(0,20)}${lines[mid][20]==='A'?'B':'A'}${lines[mid].slice(21)}`;
+  const otherHash=`${hash[0]==='0'?'1':'0'}${hash.slice(1)}`;
+  const braceAt=full.indexOf('{\n'),payloadAt=full.indexOf(lines[mid]),execAt=full.indexOf('exec env');
+  ok(braceAt>0&&payloadAt>braceAt&&execAt>payloadAt,'zbad cut points');
+  const cases=[
+    ['Z_B64_BAD',build(invalid,hash)],
+    ['Z_B64_FLIP',build(flipped,hash)],
+    ['Z_HASH',build(lines,otherHash)],
+    ['Z_CUT_HEAD',full.slice(0,braceAt+2)],                // after the opening brace line
+    ['Z_CUT_PAYLOAD',full.slice(0,payloadAt+30)],          // inside the base64 lines
+    ['Z_CUT_EXEC',full.slice(0,execAt+40)],                // inside the exec line
+  ];
+  for(const [stage,script] of cases){
+    at(stage);
+    const result=await runIt(script);
+    if(result.timedOut)throw new ProbeFail(`zbad ${stage} timeout`,'TIMEOUT');
+    if(lstatOrNull(marker)!==null)throw new ProbeFail(`zbad ${stage} stub started`,'STUB_RAN');
+    if(result.code!==86)throw new ProbeFail(`zbad ${stage} exit ${result.code}`,codeObs(result));
+    if(!result.stderr.includes('PAYLOAD_INTEGRITY'))throw new ProbeFail(`zbad ${stage} no label`,'NO_LABEL');
+  }
+  return 'EXIT86_NONODE';
+}
 const LINUX_FUNCTIONS={pgkill:linuxPgkill,pgexit0:linuxPgexit0,pgsig:linuxPgsig,pgnone:linuxPgnone,pgsetsid:linuxPgsetsid,
   stubpath:linuxStubpath,envkeys:linuxEnvkeys,symlinkexist:linuxSymlinkexist,readlink:linuxReadlink,lstatbig:linuxLstatbig,
   unlinklink:linuxUnlinklink,mkdirerr:linuxMkdirerr,nofollow:linuxNofollow,fifo:linuxFifo,inodecmp:linuxInodecmp,
-  sizecap:linuxSizecap,readdir:linuxReaddir,zpipe:linuxZpipe};
+  sizecap:linuxSizecap,readdir:linuxReaddir,zpipe:linuxZpipe,zbad:linuxZbad};
 async function runLinuxRows(){
   for(const [id,form] of LINUX_ROW_FORMS){
+    at('ROW');
     try{
       const got=await LINUX_FUNCTIONS[id]();
       S.linux[id]=got===form?form:'FAIL';
+      if(got!==form)S.linuxDiag[id]={stage:'ROW',obs:'CHECK'};
     }catch(failure){
       S.linux[id]='FAIL';
+      S.linuxDiag[id]={stage:STAGE,obs:classify(failure)};
       S.notes.push(`linux ${id}: ${String(failure&&failure.message||failure).slice(0,120)}`);
     }
   }
@@ -924,7 +1126,39 @@ function noticeLine(key,value,cap){
   if(!TOKEN.test(text)||text.length>cap)throw new ProbeFail(`bad notice ${key}`);
   return `${key}=${text}\n`;
 }
-function gatingResult(letter){return S.results[letter]||{r:'FAIL',note:'NOTRUN'};}
+function gatingResult(letter){return S.results[letter]||{r:'FAIL',note:'NOTRUN',stage:'NOTRUN',obs:'NOT_RUN'};}
+// C15: the DIAG value. Tokens are <row>:<stage>:<observed>, each part from the closed lists; a part that is not in its
+// list is printed as UNKNOWN_STAGE or UNKNOWN_OBS. Whole tokens only: a token that would pass the cap ends the list.
+function diagText(){
+  const tokens=[];
+  const add=(row,stage,observed)=>{
+    if(!DIAG_ROWS.includes(row))return;
+    tokens.push(`${row}:${DIAG_STAGES.includes(stage)?stage:'UNKNOWN_STAGE'}:${DIAG_OBSERVED.includes(observed)?observed:'UNKNOWN_OBS'}`);
+  };
+  if(S.fatalDiag)add('setup',S.fatalDiag.stage,S.fatalDiag.obs);
+  if(S.guard!=='OK')add('l','GUARD_SELF',S.guard);
+  for(const letter of GATING){
+    if(letter==='h')add('h','U8',S.u8);
+    const outcome=gatingResult(letter);
+    if(outcome.r!=='PASS')add(letter,outcome.stage||'ROW',outcome.obs||'CHECK');
+  }
+  if(S.rowL.outcome!=='PASS')add('l',S.rowL.stage||'L_MONITOR',S.rowL.obs||'ERROR');
+  for(const [id,form] of LINUX_ROW_FORMS){
+    const got=S.linux[id];
+    if(got===form)continue;
+    const found=S.linuxDiag[id];
+    if(got===undefined)add(id,'NOTRUN','NOT_RUN');
+    else add(id,found?found.stage:'ROW',found?found.obs:'CHECK');
+  }
+  const cap=Object.fromEntries(NOTICE_KEYS).DIAG;
+  let text='';
+  for(const token of tokens){
+    const next=text===''?token:`${text},${token}`;
+    if(next.length>cap)break;
+    text=next;
+  }
+  return text;
+}
 function summaryText(){
   const passed=GATING.filter(letter=>gatingResult(letter).r==='PASS').length;
   const inconclusive=GATING.filter(letter=>gatingResult(letter).r==='INCONCLUSIVE').length;
@@ -943,6 +1177,7 @@ function summaryText(){
     ['UNITPATH',unitPath],
     ['FORMS',`ver:${S.forms.ver},frag:${S.forms.frag},empty:${S.forms.empty},k:${S.forms.k}`],
     ['LINUX_ROWS',linuxRows],
+    ['DIAG',diagText()],
   ];
   const caps=Object.fromEntries(NOTICE_KEYS);
   return lines.map(([key,value])=>noticeLine(key,value,caps[key])).join('');
@@ -964,22 +1199,27 @@ test('systemd user manager probe (SYSTEMD_PROBE=1 only)',{skip:ENABLED?false:'SY
     await setup();
     for(const letter of ROW_ORDER){
       if(letter==='l'){
+        S.guard=await guardSelfCheck();             // SB588 A13: the wrapper must hold before row l runs
         await t.test('row l (record only, never gates)',async()=>{
-          try{S.rowL=await rowL();}catch{S.rowL={outcome:'INCONCLUSIVE',attempts:0,form:'error'};}
+          S.rowL=await guardRowL(rowL);
         });
       }else await runRow(letter);
     }
   }catch(failure){
     fatal=failure;
+    S.fatalDiag={stage:STAGE,obs:classify(failure)};
   }finally{
     await cleanup();
     try{writeSummary();}catch(failure){fatal=fatal||failure;}
   }
   for(const [letter,outcome] of Object.entries(S.results))console.log(`row ${letter}: ${outcome.r}${outcome.note?` (${outcome.note})`:''}`);
   console.log(`row l: ${S.rowL.outcome} (record only)`);
+  console.log(`row l guard self-check: ${S.guard}`);
+  console.log(`row h U8: ${S.u8}`);
   for(const note of S.notes)console.log(`note ${note}`);
   const problems=[];
   if(fatal)problems.push(`setup or summary: ${String(fatal.message||fatal).slice(0,160)}`);
+  if(S.guard!=='OK')problems.push(`row l guard self-check ${S.guard}`);
   for(const letter of GATING){
     const outcome=gatingResult(letter);
     if(outcome.r!=='PASS')problems.push(`row ${letter} ${outcome.r}${outcome.note?` ${outcome.note}`:''}`);
