@@ -90,3 +90,53 @@ jobs:
         run: |
           summary=$(awk '/failing tests:/{found=1} found' postgres-test.log | grep -v -E '^[[:space:]]+at |^[[:space:]]*$' | sed -n '1,80p' | cut -c1-200 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
           echo "::error title=PostgreSQL failing tests::${summary:-no failing test summary found}"
+  systemd-probe:
+    needs: scope
+    if: always() && (needs.scope.result != 'success' || needs.scope.outputs.node == 'true')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-22.04]
+    continue-on-error: ${{ matrix.os == 'ubuntu-22.04' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Start a lingering user manager
+        run: |
+          sudo apt-get update && sudo apt-get install -y dbus-user-session
+          sudo loginctl enable-linger "$USER"
+          uid=$(id -u)
+          for i in $(seq 1 60); do [ -S "/run/user/$uid/systemd/private" ] && [ -S "/run/user/$uid/bus" ] && break; sleep 1; done
+          test -S "/run/user/$uid/systemd/private"
+          test -S "/run/user/$uid/bus"
+      - name: Probe the user manager
+        env:
+          SYSTEMD_PROBE: '1'
+        run: |
+          export XDG_RUNTIME_DIR=/run/user/$(id -u)
+          export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
+          node --test test/systemd-user-probe.test.js
+      - name: Publish the sanitized probe summary
+        if: always()
+        run: |
+          f="$RUNNER_TEMP/systemd-probe.txt"
+          set -- MAJORS:16 ROWS:40 ROW_L:48 ROW_N:48 UNITPATH:900 FORMS:160 LINUX_ROWS:400
+          if [ ! -f "$f" ] || [ "$(wc -l < "$f")" -ne "$#" ]; then
+            echo "::error title=SYSTEMD_PROBE ${{ matrix.os }}::no sanitized summary"
+            exit 1
+          fi
+          n=0
+          for kc in "$@"; do
+            n=$((n + 1)); k="${kc%%:*}"; c="${kc##*:}"
+            line=$(sed -n "${n}p" "$f")
+            if printf '%s\n' "$line" | grep -qE "^${k}=[A-Za-z0-9_.,:/<>-]{1,${c}}\$"; then
+              echo "::notice title=SYSTEMD_PROBE ${{ matrix.os }} ${k}::${line}"
+            else
+              echo "::error title=SYSTEMD_PROBE ${{ matrix.os }}::bad ${k} line"
+              exit 1
+            fi
+          done
