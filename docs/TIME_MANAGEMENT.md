@@ -1,5 +1,7 @@
 # Time Management — Project execution and data collection
 
+On 2026-11-23 the JD tool round took about 20 hours, from the start of the build at 20:12 UTC on 2026-11-22 to the run at 16:15 UTC. That covered six build and fix rounds (about 13 hours and 30 agents) and three chain runs: the first failed on six surviving mutants and three rehearsal checks, the second was stopped because each mutant copy had grown too large, and the third passed in 4 hours 34 minutes. Sealing needed seven corrections to the seal script and its generator, and two seal reviews followed. The JD run itself took 2 seconds. Weekly usage rose from 41% to 49%.
+
 On 2026-11-22 the two J1 designs took about 2 hours 50 minutes, from 17:15 to 20:05 UTC. This covered one design round and five fix rounds, with about 20 Opus agents and about 4.5 million subagent tokens. Weekly usage rose from 38% to 41%. The diagnosis design closed at round r3. The recovery design needed two more rounds, because each review found a time-sum gap of a few seconds, so Root moved the final check into a build-time test.
 
 On 2026-11-22 the RW sequence took 35 minutes from the start of the AR3 a11 fill at 15:57 UTC to the end of RWR a02 at 16:30 UTC. AR3 a11 ran in 4 seconds and RWP a02-p01 in about 20 seconds. RW a02 ran for 4 minutes 45 seconds, including a 12-second market wait, and RWR a02 ran in 2 seconds. Between steps, most of the time went to fills and owner approvals.
